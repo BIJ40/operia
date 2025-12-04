@@ -53,6 +53,24 @@ export const caGlobalHt: StatDefinition = {
       }
     }
     
+    // Calculer les totaux séparés pour l'explication
+    let factureTotal = 0;
+    let avoirTotal = 0;
+    
+    for (const facture of factures) {
+      const meta = extractFactureMeta(facture);
+      if (!isFactureStateIncluded(facture.state)) continue;
+      if (meta.date) {
+        const date = new Date(meta.date);
+        if (date < params.dateRange.start || date > params.dateRange.end) continue;
+      }
+      if (meta.isAvoir) {
+        avoirTotal += Math.abs(meta.montantNetHT);
+      } else {
+        factureTotal += meta.montantNetHT;
+      }
+    }
+    
     return {
       value: totalCA,
       metadata: {
@@ -63,6 +81,8 @@ export const caGlobalHt: StatDefinition = {
       breakdown: {
         factureCount,
         avoirCount,
+        factureTotal,
+        avoirTotal,
       }
     };
   }

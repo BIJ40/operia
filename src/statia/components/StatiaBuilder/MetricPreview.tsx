@@ -19,6 +19,7 @@ import { STAT_DEFINITIONS } from '../../definitions';
 import { apogeeProxy } from '@/services/apogeeProxy';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
+import { MetricExplanation } from './MetricExplanation';
 
 interface MetricPreviewProps {
   definition: CustomMetricDefinition | null;
@@ -45,6 +46,8 @@ const getAvailableMonths = () => {
 export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPreviewProps) {
   const [isRunning, setIsRunning] = useState(false);
   const [previewResult, setPreviewResult] = useState<number | Record<string, number> | null>(null);
+  const [previewBreakdown, setPreviewBreakdown] = useState<Record<string, any> | null>(null);
+  const [previewDateRange, setPreviewDateRange] = useState<{ start: Date; end: Date } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [recordCount, setRecordCount] = useState<number>(0);
   
@@ -206,6 +209,8 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
       }
 
       setPreviewResult(displayValue);
+      setPreviewBreakdown(result.breakdown || null);
+      setPreviewDateRange(dateRange);
       setRecordCount(result.metadata?.recordCount || 0);
     } catch (err: any) {
       console.error('StatIA Preview Error:', err);
@@ -416,9 +421,6 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
                   {contextLabel}
                 </div>
               )}
-              <div className="text-xs text-muted-foreground">
-                {recordCount > 0 && `${recordCount} enregistrements traités`}
-              </div>
             </div>
           ) : error ? (
             <div className="flex items-center justify-center gap-2 text-destructive">
@@ -439,6 +441,34 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
           )}
         </div>
 
+        {/* Explication contextuelle */}
+        {previewResult !== null && previewDateRange && definition?.measure && (
+          <MetricExplanation
+            measureId={definition.measure}
+            measureLabel={measureLabel || definition.measure}
+            value={previewResult}
+            breakdown={previewBreakdown || undefined}
+            dateRange={previewDateRange}
+            agencySlug={effectiveSlug}
+            dimensions={{
+              mois: hasDimension('mois') && selectedMonth ? availableMonths.find(m => m.value === selectedMonth)?.label : undefined,
+              technicien: hasDimension('technicien') && selectedTechnician ? { 
+                id: selectedTechnician, 
+                name: technicians.find((t: any) => t.id === selectedTechnician)?.name || selectedTechnician 
+              } : undefined,
+              univers: hasDimension('univers') && selectedUnivers ? { 
+                id: selectedUnivers, 
+                name: univers.find((u: any) => u.id === selectedUnivers)?.name || selectedUnivers 
+              } : undefined,
+              apporteur: hasDimension('apporteur') && selectedApporteur ? { 
+                id: selectedApporteur, 
+                name: apporteurs.find((a: any) => a.id === selectedApporteur)?.name || selectedApporteur 
+              } : undefined,
+            }}
+            recordCount={recordCount}
+          />
+        )}
+
         {/* Bouton exécuter */}
         <Button 
           className="w-full" 
@@ -458,21 +488,6 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
           )}
         </Button>
 
-        {/* Lien pour vérifier sur Apogée */}
-        {previewResult !== null && (
-          <div className="pt-2 border-t">
-            <Button variant="outline" size="sm" className="w-full text-xs" asChild>
-              <a 
-                href={`https://${effectiveSlug}.hc-apogee.fr`} 
-                target="_blank" 
-                rel="noopener noreferrer"
-              >
-                <ExternalLink className="h-3 w-3 mr-2" />
-                Vérifier sur Apogée ({effectiveSlug})
-              </a>
-            </Button>
-          </div>
-        )}
 
         {/* Détails de la définition */}
         {definition?.measure && (

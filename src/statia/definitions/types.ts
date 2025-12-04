@@ -41,7 +41,20 @@ export interface LoadedData {
 
 export interface StatResult {
   value: number | Record<string, number>;
-  breakdown?: Record<string, any>;
+  breakdown?: {
+    factureCount?: number;
+    avoirCount?: number;
+    factureTotal?: number;
+    avoirTotal?: number;
+    devisCount?: number;
+    devisValides?: number;
+    dossierCount?: number;
+    savCount?: number;
+    total?: number;
+    monthCount?: number;
+    error?: string;
+    [key: string]: any;
+  };
   metadata?: {
     computedAt: Date;
     source: DataSource;
