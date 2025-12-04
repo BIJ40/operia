@@ -3156,6 +3156,48 @@ export type Database = {
           },
         ]
       }
+      statia_custom_metrics: {
+        Row: {
+          agency_slug: string | null
+          category: string
+          created_at: string
+          created_by: string
+          definition_json: Json
+          description: string | null
+          id: string
+          is_active: boolean
+          label: string
+          scope: string
+          updated_at: string | null
+        }
+        Insert: {
+          agency_slug?: string | null
+          category?: string
+          created_at?: string
+          created_by: string
+          definition_json: Json
+          description?: string | null
+          id: string
+          is_active?: boolean
+          label: string
+          scope: string
+          updated_at?: string | null
+        }
+        Update: {
+          agency_slug?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string
+          definition_json?: Json
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string
+          scope?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       storage_quota_alerts: {
         Row: {
           cache_keys: Json | null
