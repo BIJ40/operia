@@ -1301,6 +1301,189 @@ export const RULES_JSON_CONFIG = {
     par: 'groupBy',
     sur_la_periode: 'date between {{date_from}} and {{date_to}}',
   },
+
+  // ==========================================================================
+  // 14. STRUCTURE DOSSIERS APOGÉE (STRUCT_DOSSIER_BASE)
+  // ==========================================================================
+  dossierStructure: {
+    /** 1 client → N dossiers, 1 dossier → N RDV indépendants */
+    hierarchy: 'client → dossiers → interventions',
+    /** 1 dossier → N devis, 1 dossier → 1 facture finale */
+    invoicing: 'one_final_invoice_per_dossier',
+    /** Nouveau dossier si travaux différents (nouveau périmètre) */
+    newDossierTrigger: 'different_work_scope',
+  },
+
+  // ==========================================================================
+  // 15. TYPES DE RDV (STRUCT_RDV_TYPES)
+  // ==========================================================================
+  rdvTypes: {
+    main: ['depannage', 'devis', 'travaux', 'sav'],
+    /** Chaque RDV a son contexte propre, pas de dépendance implicite */
+    independence: true,
+    /** Le type conditionne les écrans / relevés / stats */
+    determinesUI: true,
+  },
+
+  // ==========================================================================
+  // 16. RELEVÉS TECHNIQUES (RT_*)
+  // ==========================================================================
+  releveTechnique: {
+    /** RT_TYPE_CHIFFRAGE: 2 options de relevé */
+    types: {
+      standard: 'Relevé technique standard (cas simples)',
+      prebuilt: 'Modèles pré-construits (cas complexes)',
+    },
+    /** Modèles pré-construits : champs obligatoires, structure arbre, logique conditionnelle */
+    prebuiltFeatures: ['required_fields', 'tree_structure', 'conditional_logic'],
+    
+    /** RT_COMPLEMENTAIRE_APRES_0606: À partir du 6 juin, RT complémentaire pris en charge */
+    complementaryRTDate: '2024-06-06',
+    
+    /** RT_MODULE_FRANCHISE: Si franchise renseignée, module franchise apparaît */
+    franchiseModule: {
+      trigger: 'franchise_amount_set',
+      actions: ['click_blue_plus', 'click_yellow_button_to_save_check'],
+    },
+    
+    /** RT_DEGAT_EAU_COMPLEXE: Tous les RT dégât des eaux sont complexes */
+    degatEauComplexe: {
+      alwaysComplex: true,
+      requiredFields: ['piece', 'surface', 'surface_totale', 'm2_endommages', 'm2_non_endommages', 'surface_controle'],
+      example: 'Cuisine, Plafond, 9 m², 3 m², 6 m²',
+      purpose: 'coherence_devis_conformite_assurance',
+    },
+    
+    /** RT_DEVIS_LINK: 1 RT rattaché à 1 projet, devis généré à partir du RT */
+    devisLink: {
+      rtToProject: 'projectId',
+      rtWithoutDevis: 'detect_for_auto_proposal',
+      externalDevis: 'ignore_in_learning',
+    },
+  },
+
+  // ==========================================================================
+  // 17. UNIVERS NORMALISATION (UNIVERS_NORMALISATION / UNIVERS_EXCLUS_STATS)
+  // ==========================================================================
+  universNormalisation: {
+    /** Univers normalisés vers set réduit */
+    canonical: [
+      'plomberie', 'électricité', 'menuiserie', 'vitrerie', 
+      'serrurerie', 'volets_roulants', 'peinture', 'autres',
+    ],
+    /** Univers exclus des stats principales (CA, production) */
+    excludedFromStats: ['mobilier', 'travaux_exterieurs'],
+    /** Utilisation: stats agence, stats réseau, heatmap */
+    usedIn: ['stats_agence', 'stats_reseau', 'heatmap', 'ca_univers', 'ca_techniciens'],
+  },
+
+  // ==========================================================================
+  // 18. SAV AVANCÉ (SAV_RATTACHEMENT_TECH_ORIGINE / SAV_TYPAGE)
+  // ==========================================================================
+  savAdvanced: {
+    /** SAV_RATTACHEMENT_TECH_ORIGINE: SAV rattaché au technicien d'origine */
+    technicienOrigine: {
+      rule: 'always_attach_to_origin_tech',
+      evenIfDifferentExecutor: true,
+      impacts: ['compteur_sav_tech', 'cout_sav_tech'],
+    },
+    /** SAV_TYPAGE: 2 dimensions possibles */
+    typage: {
+      interne: 'cost_supported_by_agency',
+      facture: 'cost_billed_to_client_or_apporteur',
+      distinction: ['cout_qualite_interne', 'cout_refacture', 'stats_qualite_apporteur'],
+    },
+  },
+
+  // ==========================================================================
+  // 19. PERMISSIONS / RÔLES (ROLES_GLOBAL_V2 / SUPPORT_AGENT_ROLE / MODULE_GATING)
+  // ==========================================================================
+  permissions: {
+    /** ROLES_GLOBAL_V2: GlobalRoles N0 à N6 */
+    globalRoles: {
+      N0: 'utilisateur_standard_collaborateur_technicien',
+      N1_N4: 'managers_direction_agence_animateurs_reseau',
+      N5_N6: 'franchiseur_super_admin',
+    },
+    /** Accès modules conditionné par: globalRole, scope agence, enabled_modules */
+    moduleAccess: ['globalRole', 'manageScope', 'viewScope', 'enabled_modules'],
+    
+    /** SUPPORT_AGENT_ROLE: Accès console Support */
+    supportAgent: {
+      condition: 'enabled_modules.support.options.agent',
+      anyRole: true,
+      chatFlottant: ['N3', 'N4'],
+      consoleFull: 'agent_declared',
+    },
+    
+    /** MODULE_GATING_PAR_ROLE: voir ≠ piloter ≠ administrer */
+    moduleGating: {
+      visibility: 'globalRole_minimal',
+      options: 'module_options_agence',
+      specialRights: ['RH', 'Pilotage', 'Franchiseur', 'Support'],
+      principle: 'voir_neq_piloter_neq_administrer',
+    },
+  },
+
+  // ==========================================================================
+  // 20. RH / DOCUMENTS / COFFRE-FORT
+  // ==========================================================================
+  rhDocuments: {
+    /** RH_BULLETIN_EXTRACTION_CHAMPS: Extraction automatique des bulletins */
+    bulletinExtraction: {
+      automatic: true,
+      fields: [
+        'periode', 'identite_salarie', 'identite_employeur', 'classification',
+        'base', 'heures', 'primes', 'zones', 'totaux', 'nets', 'cumul',
+        'conges', 'cout_employeur',
+      ],
+      purpose: 'statia_rh_couts_charges_heures',
+    },
+    
+    /** RH_COFFRE_FORT_NOTIF: Notification automatique au salarié */
+    coffreFortNotif: {
+      autoStore: true,
+      notifyEmployee: true,
+      categoryExplicit: true,
+      example: 'Demandes RH / Réponses',
+    },
+    
+    /** RH_DOCUMENT_REQUEST_WORKFLOW: Workflow demande document */
+    documentRequestWorkflow: {
+      steps: ['request_create', 'company_review', 'stamp_validate_or_reject', 'pdf_generate'],
+      pdfContent: ['company_stamp', 'processor_name'],
+      archiveTo: 'coffre_fort_salarie',
+    },
+    
+    /** RH_CONTRAT_AUTO_DOCX: Génération contrat automatique */
+    contratAutoDocx: {
+      templates: ['CDI', 'CDD', 'autres'],
+      mapping: 'profile_fields_to_docx_fields',
+      export: 'PDF',
+      requirement: 'all_contract_fields_on_fiche_salarie',
+    },
+  },
+
+  // ==========================================================================
+  // 21. RÉCEPTION DE TRAVAUX (TRAVAUX_RECEPTION_*)
+  // ==========================================================================
+  receptionTravaux: {
+    /** TRAVAUX_RECEPTION_OBLIGATOIRE: Obligatoire pour travaux décennale */
+    obligatoire: {
+      scope: 'travaux_decennale',
+      purpose: 'point_depart_garanties_legales_assurances',
+      noReception: 'pas_de_couverture_juridique',
+    },
+    
+    /** TRAVAUX_RECEPTION_MODALITES */
+    modalites: {
+      timing: 'apres_achevement_ouvrage',
+      byTranches: true,
+      initiative: ['client', 'professionnel'],
+      presenceObligatoire: ['client', 'professionnel'],
+      pvArchive: 'rattache_dossier_travaux',
+    },
+  },
 } as const;
 
 export type RulesJsonConfig = typeof RULES_JSON_CONFIG;
