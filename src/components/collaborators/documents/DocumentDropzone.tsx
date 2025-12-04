@@ -1,12 +1,20 @@
 /**
  * Zone de drag & drop multi-fichiers - Finder RH
+ * RH-P1-02: Utilise la validation centralisée des fichiers
  */
 
 import { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, FileUp } from 'lucide-react';
+import { Upload, FileUp, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DocumentType } from '@/types/collaboratorDocument';
+import { toast } from 'sonner';
+import { 
+  validateFile, 
+  ALLOWED_MIME_TYPES, 
+  MAX_FILE_SIZE_BYTES,
+  MAX_FILE_SIZE_MB 
+} from '@/utils/fileValidation';
 
 interface DocumentDropzoneProps {
   onFilesDropped: (files: File[], suggestedType?: DocumentType) => void;
@@ -15,8 +23,6 @@ interface DocumentDropzoneProps {
   className?: string;
 }
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
-
 export function DocumentDropzone({
   onFilesDropped,
   activeCategory,
@@ -24,13 +30,26 @@ export function DocumentDropzone({
   className,
 }: DocumentDropzoneProps) {
   const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
-      // Filter files that are too large
-      const validFiles = acceptedFiles.filter((file) => {
-        if (file.size > MAX_FILE_SIZE) {
-          return false;
+    (acceptedFiles: File[], rejectedFiles: { file: File; errors: { code: string; message: string }[] }[]) => {
+      // Show errors for rejected files
+      rejectedFiles.forEach(({ file, errors }) => {
+        const errorMessages = errors.map(e => {
+          if (e.code === 'file-too-large') return `Fichier trop volumineux (max ${MAX_FILE_SIZE_MB} Mo)`;
+          if (e.code === 'file-invalid-type') return 'Type de fichier non autorisé';
+          return e.message;
+        });
+        toast.error(`${file.name}: ${errorMessages.join(', ')}`);
+      });
+
+      // Additional validation with our centralized validator
+      const validFiles: File[] = [];
+      acceptedFiles.forEach((file) => {
+        const validation = validateFile(file);
+        if (validation.valid) {
+          validFiles.push(file);
+        } else {
+          toast.error(`${file.name}: ${validation.error}`);
         }
-        return true;
       });
 
       if (validFiles.length > 0) {
@@ -46,13 +65,10 @@ export function DocumentDropzone({
     onDrop,
     multiple: true,
     disabled: isUploading,
-    accept: {
-      'application/pdf': ['.pdf'],
-      'image/*': ['.png', '.jpg', '.jpeg', '.webp'],
-      'application/msword': ['.doc'],
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-    },
-    maxSize: MAX_FILE_SIZE,
+    accept: Object.fromEntries(
+      Object.entries(ALLOWED_MIME_TYPES).map(([mime, exts]) => [mime, exts])
+    ),
+    maxSize: MAX_FILE_SIZE_BYTES,
   });
 
   return (
@@ -70,7 +86,14 @@ export function DocumentDropzone({
       <input {...getInputProps()} />
       
       <div className="flex flex-col items-center gap-2">
-        {isDragActive ? (
+        {isDragActive && isDragReject ? (
+          <>
+            <AlertCircle className="h-10 w-10 text-destructive" />
+            <p className="font-medium text-destructive">
+              Type de fichier non autorisé
+            </p>
+          </>
+        ) : isDragActive ? (
           <>
             <FileUp className="h-10 w-10 text-helpconfort-blue animate-bounce" />
             <p className="font-medium text-helpconfort-blue">
@@ -92,7 +115,7 @@ export function DocumentDropzone({
         )}
         
         <p className="text-xs text-muted-foreground mt-2">
-          PDF, images, Word • Max 10 Mo par fichier
+          PDF, images, Word, Excel • Max {MAX_FILE_SIZE_MB} Mo par fichier
         </p>
         
         {activeCategory !== 'ALL' && (
