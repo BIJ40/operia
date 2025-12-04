@@ -19,7 +19,6 @@ export interface DashboardTile {
   color: 'primary' | 'accent';
   group: 'help_academy' | 'pilotage' | 'rh' | 'support' | 'projects' | 'franchiseur' | 'admin' | 'communication';
   requiresAdmin?: boolean;
-  requiresSupport?: boolean;
   requiresFranchisor?: boolean; // N3+ (franchisor_user)
   requiresModule?: ModuleKey; // Requires specific module to be enabled
   requiresModuleOption?: string; // Requires specific module option (e.g., 'coffre' for rh_parc.coffre)
@@ -180,7 +179,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: SCOPE_SLUGS.SUPPORT_TICKETS,
     color: 'accent',
     group: 'support',
-    requiresSupport: true,
+    // F-NAV-1: requiresSupport supprimé - filtrage via canAccessSupportConsoleUI uniquement
   },
   // Communication / Messagerie
   {

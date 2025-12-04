@@ -24,6 +24,19 @@ export default function Landing() {
     return DASHBOARD_TILES.filter(tile => {
       const isAdminUser = globalRole === 'superadmin' || globalRole === 'platform_admin';
       
+      // F-NAV-4: Vérifier requiresFranchisor (N3+)
+      if (tile.requiresFranchisor && !caps.canAccessFranchiseur && !isAdminUser) {
+        return false;
+      }
+      
+      // F-NAV-6: Pour les tiles admin, vérifier au niveau tile pas groupe
+      // Permet à ADMIN_USERS (requiresFranchisor) d'être visible pour N3+
+      if (tile.group === 'admin') {
+        if (tile.requiresAdmin && !caps.canAccessAdmin) return false;
+        if (tile.requiresFranchisor && !caps.canAccessFranchiseur && !isAdminUser) return false;
+        return canAccessTile(globalRole, tile.id, { agence, canAccessSupportConsoleUI });
+      }
+      
       // 1. Vérifier si la tuile nécessite un module spécifique
       if (tile.requiresModule) {
         if (isAdminUser) {
@@ -54,7 +67,7 @@ export default function Landing() {
       
       return canAccessTile(globalRole, tile.id, { agence, canAccessSupportConsoleUI });
     });
-  }, [globalRole, agence, canAccessSupportConsoleUI, enabledModules]);
+  }, [globalRole, agence, canAccessSupportConsoleUI, enabledModules, caps]);
 
   // Grouper les tuiles visibles par catégorie
   const tilesByGroup = useMemo(() => {
