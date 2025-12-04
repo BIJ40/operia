@@ -86,28 +86,7 @@ Deno.serve(async (req) => {
       ));
     }
 
-    // 2. Rate limiting (30 req/min par utilisateur)
-    const rateLimitKey = `proxy-apogee:${user.id}`;
-    const rateCheck = await checkRateLimit(rateLimitKey, { limit: 30, windowMs: 60 * 1000 });
-    if (!rateCheck.allowed) {
-      console.log(`[PROXY-APOGEE] Rate limit exceeded for user ${user.id}`);
-      return rateLimitResponse(rateCheck.retryAfter!, corsHeaders);
-    }
-
-    // 3. Parser la requête
-    const body: ProxyRequest = await req.json();
-    const { endpoint, agencySlug: requestedAgency, filters } = body;
-
-    // 4. Valider l'endpoint (whitelist)
-    if (!endpoint || !ALLOWED_ENDPOINTS.includes(endpoint)) {
-      console.warn(`[PROXY-APOGEE] Endpoint non autorisé: ${endpoint}`);
-      return withCors(req, new Response(
-        JSON.stringify({ success: false, error: `Endpoint non autorisé: ${endpoint}` }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      ));
-    }
-
-    // 5. Récupérer le profil utilisateur
+    // 2. Récupérer le profil utilisateur (déplacé avant rate limit pour adapter la limite)
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('agence, global_role')
@@ -121,15 +100,36 @@ Deno.serve(async (req) => {
       ));
     }
 
+    // 3. Rate limiting adapté au rôle (120 req/min pour franchiseur, 30 pour les autres)
+    const isFranchiseurRole = ['franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(profile.global_role || '');
+    const rateLimit = isFranchiseurRole ? 120 : 30; // Franchiseur = 120 (dashboard multi-agences), autres = 30
+    const rateLimitKey = `proxy-apogee:${user.id}`;
+    const rateCheck = await checkRateLimit(rateLimitKey, { limit: rateLimit, windowMs: 60 * 1000 });
+    if (!rateCheck.allowed) {
+      console.log(`[PROXY-APOGEE] Rate limit exceeded for user ${user.id} (limit: ${rateLimit})`);
+      return rateLimitResponse(rateCheck.retryAfter!, corsHeaders);
+    }
+
+    // 4. Parser la requête
+    const body: ProxyRequest = await req.json();
+    const { endpoint, agencySlug: requestedAgency, filters } = body;
+
+    // 5. Valider l'endpoint (whitelist)
+    if (!endpoint || !ALLOWED_ENDPOINTS.includes(endpoint)) {
+      console.warn(`[PROXY-APOGEE] Endpoint non autorisé: ${endpoint}`);
+      return withCors(req, new Response(
+        JSON.stringify({ success: false, error: `Endpoint non autorisé: ${endpoint}` }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      ));
+    }
+
     // 6. Déterminer l'agence cible avec contrôle d'accès
     let targetAgency = profile.agence;
     
     // Si une agence spécifique est demandée (pour franchiseur)
     if (requestedAgency && requestedAgency !== profile.agence) {
-      // Vérifier que l'utilisateur a le droit d'accéder à cette agence
-      const isFranchiseur = ['franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(profile.global_role || '');
-      
-      if (!isFranchiseur) {
+      // Vérifier que l'utilisateur a le droit d'accéder à cette agence (déjà calculé dans isFranchiseurRole)
+      if (!isFranchiseurRole) {
         console.warn(`[PROXY-APOGEE] Accès refusé: user ${user.id} tente d'accéder à l'agence ${requestedAgency}`);
         return withCors(req, new Response(
           JSON.stringify({ success: false, error: 'Accès non autorisé à cette agence' }),
