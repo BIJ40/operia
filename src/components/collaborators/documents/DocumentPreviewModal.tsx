@@ -81,52 +81,52 @@ export function DocumentPreviewModal({
   return (
     <Dialog open={!!document} onOpenChange={(open) => !open && onClose()}>
       <DialogContent 
-        className="max-w-5xl w-full h-[90vh] p-0 gap-0 overflow-hidden"
+        className="max-w-5xl w-full h-[90vh] sm:h-[90vh] max-h-[100dvh] p-0 gap-0 overflow-hidden"
         onKeyDown={handleKeyDown}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/30">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold truncate">{displayDoc.title}</h3>
-            <p className="text-sm text-muted-foreground">
+        {/* Header - Responsive */}
+        <div className="flex items-center justify-between px-2 sm:px-4 py-2 sm:py-3 border-b bg-muted/30">
+          <div className="flex-1 min-w-0 mr-2">
+            <h3 className="font-semibold truncate text-sm sm:text-base">{displayDoc.title}</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground">
               {currentIndex + 1} / {documents.length}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => onDownload(displayDoc)}
-              className="gap-2"
+              className="gap-1 sm:gap-2 h-8 px-2 sm:px-3"
             >
               <Download className="h-4 w-4" />
-              Télécharger
+              <span className="hidden sm:inline">Télécharger</span>
             </Button>
             {signedUrl && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => window.open(signedUrl, '_blank')}
-                className="gap-2"
+                className="gap-1 sm:gap-2 h-8 px-2 sm:px-3"
               >
                 <ExternalLink className="h-4 w-4" />
-                Ouvrir
+                <span className="hidden sm:inline">Ouvrir</span>
               </Button>
             )}
-            <Button variant="ghost" size="icon" onClick={onClose}>
+            <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
               <X className="h-5 w-5" />
             </Button>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 relative bg-muted/10 overflow-hidden">
+        {/* Content - Responsive */}
+        <div className="flex-1 relative bg-muted/10 overflow-hidden min-h-0">
           {isLoading ? (
             <div className="absolute inset-0 flex items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : signedUrl && canPreview ? (
-            <div className="absolute inset-0 flex items-center justify-center p-4">
+            <div className="absolute inset-0 flex items-center justify-center p-2 sm:p-4">
               {isImage ? (
                 <img
                   src={signedUrl}
@@ -142,10 +142,10 @@ export function DocumentPreviewModal({
               ) : null}
             </div>
           ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
-              <FileText className="h-16 w-16 mb-4 opacity-30" />
-              <p className="text-lg font-medium">Aperçu non disponible</p>
-              <p className="text-sm">Téléchargez le fichier pour le consulter</p>
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground p-4">
+              <FileText className="h-12 w-12 sm:h-16 sm:w-16 mb-4 opacity-30" />
+              <p className="text-base sm:text-lg font-medium text-center">Aperçu non disponible</p>
+              <p className="text-xs sm:text-sm text-center">Téléchargez le fichier pour le consulter</p>
               <Button
                 variant="outline"
                 className="mt-4 gap-2"
@@ -157,34 +157,34 @@ export function DocumentPreviewModal({
             </div>
           )}
 
-          {/* Navigation arrows */}
+          {/* Navigation arrows - Responsive */}
           {documents.length > 1 && (
             <>
               <Button
                 variant="secondary"
                 size="icon"
                 className={cn(
-                  'absolute left-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full shadow-lg',
+                  'absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 h-8 w-8 sm:h-10 sm:w-10 rounded-full shadow-lg',
                   'bg-background/90 backdrop-blur-sm hover:bg-background',
                   currentIndex === 0 && 'opacity-50 cursor-not-allowed'
                 )}
                 onClick={handlePrevious}
                 disabled={currentIndex === 0}
               >
-                <ChevronLeft className="h-6 w-6" />
+                <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
               </Button>
               <Button
                 variant="secondary"
                 size="icon"
                 className={cn(
-                  'absolute right-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full shadow-lg',
+                  'absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 h-8 w-8 sm:h-10 sm:w-10 rounded-full shadow-lg',
                   'bg-background/90 backdrop-blur-sm hover:bg-background',
                   currentIndex === documents.length - 1 && 'opacity-50 cursor-not-allowed'
                 )}
                 onClick={handleNext}
                 disabled={currentIndex === documents.length - 1}
               >
-                <ChevronRight className="h-6 w-6" />
+                <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
               </Button>
             </>
           )}

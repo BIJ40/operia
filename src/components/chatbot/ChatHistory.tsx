@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { parseChatbotConversation, type ChatbotMessage } from '@/types/chatbotConversation';
 
 type Message = {
   role: 'user' | 'assistant' | 'support';
@@ -18,21 +19,6 @@ interface ChatHistoryProps {
   onRenderMessageWithLinks: (content: string) => React.ReactNode;
 }
 
-// Parse chatbot_conversation safely (can be array or JSON string)
-function parseConversation(data: unknown): Message[] {
-  if (!data) return [];
-  if (Array.isArray(data)) return data;
-  if (typeof data === 'string') {
-    try {
-      const parsed = JSON.parse(data);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  }
-  return [];
-}
-
 export function ChatHistory({
   messages,
   supportMessages,
@@ -43,8 +29,11 @@ export function ChatHistory({
   isUserTyping,
   onRenderMessageWithLinks,
 }: ChatHistoryProps) {
-  // Parse conversation safely
-  const conversation = useMemo(() => parseConversation(activeTicket?.chatbot_conversation), [activeTicket?.chatbot_conversation]);
+  // Parse conversation safely using Zod-validated parser
+  const conversation = useMemo(
+    () => parseChatbotConversation(activeTicket?.chatbot_conversation), 
+    [activeTicket?.chatbot_conversation]
+  );
 
   if (activeTicket) {
     return (
