@@ -4,10 +4,11 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { TechIntervention, RtStatus } from '../types';
-import { format, isToday, isTomorrow, addDays, parseISO, startOfDay, endOfDay } from 'date-fns';
+import { format, addDays, parseISO, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { apogeeProxy } from '@/services/apogeeProxy';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 export type DateFilter = 'today' | 'tomorrow' | 'all';
 
@@ -20,6 +21,8 @@ interface UseTechPlanningResult {
   updateRtStatus: (interventionId: string, status: RtStatus) => void;
   getIntervention: (id: string) => TechIntervention | undefined;
   refetch: () => void;
+  technicienName: string | null;
+  apogeeUserId: number | null;
 }
 
 // Mapping de l'intervention API vers TechIntervention
@@ -67,31 +70,97 @@ function mapApiInterventionToTech(apiIntervention: any, project?: any, client?: 
   };
 }
 
+// Normaliser une chaîne pour comparaison (sans accents, lowercase)
+function normalizeString(str: string): string {
+  return str
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+// Trouver l'ID Apogée du technicien en matchant par nom
+function findApogeeUserId(
+  users: any[],
+  firstName: string,
+  lastName: string
+): number | null {
+  const normalizedFirst = normalizeString(firstName);
+  const normalizedLast = normalizeString(lastName);
+
+  for (const user of users) {
+    const userFirst = normalizeString(user.firstname || '');
+    const userLast = normalizeString(user.name || '');
+    
+    // Match exact ou partiel
+    if (
+      (userFirst === normalizedFirst && userLast === normalizedLast) ||
+      (userFirst.includes(normalizedFirst) && userLast.includes(normalizedLast)) ||
+      (normalizedFirst.includes(userFirst) && normalizedLast.includes(userLast))
+    ) {
+      return user.id;
+    }
+  }
+  return null;
+}
+
 export function useTechPlanning(): UseTechPlanningResult {
-  const { agence } = useAuth();
+  const { agence, user } = useAuth();
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
   const [rtStatuses, setRtStatuses] = useState<Record<string, RtStatus>>({});
+
+  // Récupérer le profil utilisateur avec first_name, last_name
+  const { data: profileData } = useQuery({
+    queryKey: ['tech-profile', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', user.id)
+        .single();
+      return data;
+    },
+    enabled: !!user?.id,
+  });
 
   // Récupérer les interventions via l'API
   const { data: apiData, isLoading, error, refetch } = useQuery({
     queryKey: ['tech-interventions', agence],
     queryFn: async () => {
       if (!agence) {
-        return { interventions: [], projects: [], clients: [] };
+        return { interventions: [], projects: [], clients: [], users: [] };
       }
 
-      // Récupérer interventions, projets et clients en parallèle
-      const [interventions, projects, clients] = await Promise.all([
+      // Récupérer interventions, projets, clients et users en parallèle
+      const [interventions, projects, clients, users] = await Promise.all([
         apogeeProxy.getInterventions(),
         apogeeProxy.getProjects(),
         apogeeProxy.getClients(),
+        apogeeProxy.getUsers(),
       ]);
 
-      return { interventions, projects, clients };
+      return { interventions, projects, clients, users };
     },
     enabled: !!agence,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+
+  // Trouver l'ID Apogée du technicien connecté
+  const apogeeUserId = useMemo(() => {
+    if (!profileData?.first_name || !profileData?.last_name || !apiData?.users) {
+      return null;
+    }
+    return findApogeeUserId(
+      apiData.users,
+      profileData.first_name,
+      profileData.last_name
+    );
+  }, [profileData, apiData?.users]);
+
+  const technicienName = profileData 
+    ? `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() 
+    : null;
 
   // Transformer et filtrer les interventions
   const interventions = useMemo(() => {
@@ -109,13 +178,16 @@ export function useTechPlanning(): UseTechPlanningResult {
     const today = startOfDay(new Date());
     const tomorrow = startOfDay(addDays(new Date(), 1));
 
-    // TODO: Filtrer par technicien connecté quand on aura le mapping profile → apogee_user_id
-    // Pour l'instant on affiche toutes les interventions
-
     const mapped = apiData.interventions
       .filter((int: any) => {
         // Exclure les interventions annulées
         if (int.state === 'cancelled' || int.state === 'canceled') return false;
+        
+        // Filtrer par technicien connecté
+        if (apogeeUserId) {
+          const intUserId = int.userId || int.user_id;
+          if (intUserId !== apogeeUserId) return false;
+        }
         
         const intDate = int.date || int.dateIntervention;
         if (!intDate) return false;
@@ -148,7 +220,7 @@ export function useTechPlanning(): UseTechPlanningResult {
       ...int,
       rtStatus: rtStatuses[int.id] || int.rtStatus,
     }));
-  }, [apiData, dateFilter, rtStatuses]);
+  }, [apiData, dateFilter, rtStatuses, apogeeUserId]);
 
   const updateRtStatus = (interventionId: string, status: RtStatus) => {
     setRtStatuses(prev => ({ ...prev, [interventionId]: status }));
@@ -167,6 +239,8 @@ export function useTechPlanning(): UseTechPlanningResult {
     updateRtStatus,
     getIntervention,
     refetch,
+    technicienName,
+    apogeeUserId,
   };
 }
 
