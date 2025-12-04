@@ -9,6 +9,7 @@ import { CollaboratorDocument, CollaboratorDocumentFormData } from '@/types/coll
 import { toast } from 'sonner';
 import { useHasMinLevel } from '@/hooks/useHasGlobalRole';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLogRHAction } from '@/hooks/rh/useRHAuditLog';
 
 const BUCKET_NAME = 'rh-documents';
 
@@ -56,6 +57,7 @@ export function useCollaboratorDocuments(collaboratorId: string | undefined) {
   const queryClient = useQueryClient();
   const canManage = useHasMinLevel(2);
   const { agencyId, user } = useAuth();
+  const logAction = useLogRHAction();
 
   const { data: documents = [], isLoading, error } = useQuery({
     queryKey: ['collaborator-documents', collaboratorId],
@@ -129,8 +131,17 @@ export function useCollaboratorDocuments(collaboratorId: string | undefined) {
 
       return doc;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (doc, variables) => {
       queryClient.invalidateQueries({ queryKey: ['collaborator-documents', variables.collaborator_id] });
+      // Log audit
+      logAction.mutate({
+        actionType: 'DOCUMENT_UPLOAD',
+        entityType: 'document',
+        collaboratorId: variables.collaborator_id,
+        entityId: doc.id,
+        newValues: { title: doc.title, doc_type: doc.doc_type },
+        metadata: { filename: doc.file_name, fileSize: doc.file_size },
+      });
       toast.success('Document ajouté');
     },
     onError: (error: Error) => {
@@ -150,8 +161,16 @@ export function useCollaboratorDocuments(collaboratorId: string | undefined) {
       if (error) throw error;
       return result as CollaboratorDocument;
     },
-    onSuccess: () => {
+    onSuccess: (result, variables) => {
       queryClient.invalidateQueries({ queryKey: ['collaborator-documents', collaboratorId] });
+      // Log audit
+      logAction.mutate({
+        actionType: 'DOCUMENT_UPDATE',
+        entityType: 'document',
+        collaboratorId: result.collaborator_id,
+        entityId: variables.id,
+        newValues: variables.data,
+      });
       toast.success('Document mis à jour');
     },
     onError: (error: Error) => {
@@ -178,8 +197,17 @@ export function useCollaboratorDocuments(collaboratorId: string | undefined) {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, doc) => {
       queryClient.invalidateQueries({ queryKey: ['collaborator-documents', collaboratorId] });
+      // Log audit
+      logAction.mutate({
+        actionType: 'DOCUMENT_DELETE',
+        entityType: 'document',
+        collaboratorId: doc.collaborator_id,
+        entityId: doc.id,
+        oldValues: { title: doc.title, doc_type: doc.doc_type },
+        metadata: { filename: doc.file_name },
+      });
       toast.success('Document supprimé');
     },
     onError: (error: Error) => {
