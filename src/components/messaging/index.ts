@@ -7,3 +7,4 @@ export { GroupMembersPanel } from './GroupMembersPanel';
 export { NewConversationModal } from './NewConversationModal';
 export { AddMembersModal } from './AddMembersModal';
 export { RenameGroupModal } from './RenameGroupModal';
+export { MessagingWidget } from './MessagingWidget';
