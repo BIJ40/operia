@@ -55,6 +55,7 @@ const CollaborateursPage = lazy(() => import("./pages/CollaborateursPage"));
 const CollaborateurProfilePage = lazy(() => import("./pages/CollaborateurProfilePage"));
 const MonCoffreRH = lazy(() => import("./pages/MonCoffreRH"));
 const DemandesRHPage = lazy(() => import("./pages/DemandesRHPage"));
+const RHDashboardPage = lazy(() => import("./pages/RHDashboardPage"));
 
 // Lazy loaded pages - Support
 const SupportIndex = lazy(() => import("./pages/SupportIndex"));
@@ -230,6 +231,9 @@ function AppContent() {
           
           {/* Demandes RH - Vue agence (Dirigeant/RH avec option rh_viewer OU rh_admin) */}
           <Route path="/hc-agency/demandes-rh" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><DemandesRHPage /></ModuleGuard></RoleGuard></MainLayout>} />
+          
+          {/* Dashboard RH - Statistiques RH (Dirigeant/RH avec option rh_admin) */}
+          <Route path="/hc-agency/dashboard-rh" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOption="rh_admin"><RHDashboardPage /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* SUPPORT V2 - Unified Support System */}

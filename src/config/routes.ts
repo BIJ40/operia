@@ -62,6 +62,8 @@ export const ROUTES = {
     monCoffreRh: '/pilotage/mon-coffre-rh',
     // Demandes RH (vue agence - Dirigeant/RH)
     demandesRh: '/hc-agency/demandes-rh',
+    // Dashboard RH (statistiques RH - Dirigeant/RH)
+    dashboardRh: '/hc-agency/dashboard-rh',
   },
 
   // ============================================

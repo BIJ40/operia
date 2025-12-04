@@ -105,6 +105,15 @@ const pilotageModules: PilotageModule[] = [
     category: 'rh',
   },
   {
+    id: 'dashboard_rh',
+    title: 'Dashboard RH',
+    description: 'Statistiques et indicateurs RH',
+    icon: BarChart3,
+    href: ROUTES.pilotage.dashboardRh,
+    requiresModuleOptions: { module: 'rh', options: ['rh_admin'] },
+    category: 'rh',
+  },
+  {
     id: 'ged',
     title: 'G.E.D',
     description: 'Dépôt et gestion des documents collaborateurs',
