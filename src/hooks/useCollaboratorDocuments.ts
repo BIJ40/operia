@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { useHasMinLevel } from '@/hooks/useHasGlobalRole';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLogRHAction } from '@/hooks/rh/useRHAuditLog';
+import { validateFile } from '@/utils/fileValidation';
 
 const BUCKET_NAME = 'rh-documents';
 
@@ -79,6 +80,12 @@ export function useCollaboratorDocuments(collaboratorId: string | undefined) {
     mutationFn: async (formData: CollaboratorDocumentFormData & { collaborator_id: string }) => {
       if (!agencyId) throw new Error('Agence requise');
       if (!user?.id) throw new Error('Utilisateur requis');
+
+      // RH-P1-02: Validate file before upload
+      const validation = validateFile(formData.file);
+      if (!validation.valid) {
+        throw new Error(validation.error);
+      }
 
       // 1) Upload file to storage
       const fileExt = formData.file.name.split('.').pop();
