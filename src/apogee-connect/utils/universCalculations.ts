@@ -1,4 +1,6 @@
 import { parseISO, isWithinInterval } from "date-fns";
+// Import centralié depuis StatIA normalizers (source unique de vérité)
+import { normalizeUniversSlug } from "@/statia/engine/normalizers";
 
 export interface UniversStats {
   univers: string;
@@ -15,20 +17,10 @@ export interface MonthlyUniversCA {
 }
 
 /**
- * Normaliser les slugs d'univers de l'API vers nos labels
- * Table de correspondance HARD-CODÉE (identique à enrichmentService)
+ * Normaliser les slugs d'univers - utilise le normalizer centralisé StatIA
  */
 const normalizeUniverseSlug = (slug: string): string => {
-  const normalizationMap: Record<string, string> = {
-    'amelioration_logement': 'pmr',
-    'amelioration-logement': 'pmr',
-    'ame_logement': 'pmr',
-    'volets': 'volet_roulant',
-    'volet': 'volet_roulant',
-  };
-
-  const normalized = normalizationMap[slug.toLowerCase()];
-  return normalized || slug.toLowerCase();
+  return normalizeUniversSlug(slug);
 };
 
 /**
