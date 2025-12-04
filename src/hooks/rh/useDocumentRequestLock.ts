@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 import { useLogRHAction } from '@/hooks/rh/useRHAuditLog';
+import { handleRHError, showRHWarning } from '@/utils/rhErrorHandler';
 
 interface LockResult {
   success: boolean;
@@ -12,7 +12,6 @@ interface LockResult {
 
 export function useLockDocumentRequest() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
   const logAction = useLogRHAction();
 
   return useMutation({
@@ -25,11 +24,7 @@ export function useLockDocumentRequest() {
     },
     onSuccess: (data, requestId) => {
       if (!data.success) {
-        toast({
-          title: "Impossible de verrouiller",
-          description: data.error || "Cette demande est en cours de traitement",
-          variant: "destructive"
-        });
+        showRHWarning('Impossible de verrouiller', data.error || 'Cette demande est en cours de traitement');
       } else {
         // Log audit on successful lock
         logAction.mutate({
@@ -41,18 +36,13 @@ export function useLockDocumentRequest() {
       queryClient.invalidateQueries({ queryKey: ['document-requests'] });
     },
     onError: (error) => {
-      toast({
-        title: "Erreur",
-        description: "Impossible de verrouiller la demande",
-        variant: "destructive"
-      });
+      handleRHError(error, 'LOCK_FAILED', { entity: 'document_request' });
     }
   });
 }
 
 export function useUnlockDocumentRequest() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
   const logAction = useLogRHAction();
 
   return useMutation({
@@ -65,11 +55,7 @@ export function useUnlockDocumentRequest() {
     },
     onSuccess: (data, requestId) => {
       if (!data.success) {
-        toast({
-          title: "Erreur",
-          description: data.error,
-          variant: "destructive"
-        });
+        handleRHError(new Error(data.error || 'Unlock failed'), 'LOCK_FAILED');
       } else {
         // Log audit on successful unlock
         logAction.mutate({
@@ -81,11 +67,7 @@ export function useUnlockDocumentRequest() {
       queryClient.invalidateQueries({ queryKey: ['document-requests'] });
     },
     onError: (error) => {
-      toast({
-        title: "Erreur",
-        description: "Impossible de déverrouiller la demande",
-        variant: "destructive"
-      });
+      handleRHError(error, 'LOCK_FAILED', { entity: 'document_request' });
     }
   });
 }

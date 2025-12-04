@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
 import { useLogRHAction } from '@/hooks/rh/useRHAuditLog';
+import { handleRHError, showRHSuccess } from '@/utils/rhErrorHandler';
+import { logError } from '@/lib/logger';
 import type {
   DocumentRequest,
   DocumentRequestWithDoc,
@@ -78,17 +79,10 @@ export function useMyDocumentRequests() {
         newValues: { request_type: data.request_type, status: data.status },
         metadata: { request_type: data.request_type },
       });
-      toast({
-        title: 'Demande envoyée',
-        description: 'Votre demande a été transmise au service RH',
-      });
+      showRHSuccess('Demande envoyée', 'Votre demande a été transmise au service RH');
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Erreur',
-        description: error.message,
-        variant: 'destructive',
-      });
+      handleRHError(error, 'CREATE_FAILED', { entity: 'document_request' });
     },
   });
 
@@ -106,7 +100,7 @@ export function useMyDocumentRequests() {
       queryClient.invalidateQueries({ queryKey: ['my-document-requests'] });
     },
     onError: (error: Error) => {
-      console.error('Error marking request as seen:', error.message);
+      logError(error.message, 'rh-module', { action: 'markAsSeen' });
     },
   });
 
@@ -181,17 +175,10 @@ export function useAgencyDocumentRequests() {
         newValues: { status: variables.status, response_note: variables.response_note },
         metadata: { status: variables.status },
       });
-      toast({
-        title: 'Demande mise à jour',
-        description: 'Le statut de la demande a été enregistré',
-      });
+      showRHSuccess('Demande mise à jour', 'Le statut de la demande a été enregistré');
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Erreur',
-        description: error.message,
-        variant: 'destructive',
-      });
+      handleRHError(error, 'UPDATE_FAILED', { entity: 'document_request' });
     },
   });
 
