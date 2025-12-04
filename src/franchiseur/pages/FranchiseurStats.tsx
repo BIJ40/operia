@@ -102,16 +102,8 @@ export default function FranchiseurStats() {
 
   return (
     <div className="space-y-6">
-      {/* En-tête */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-            Statistiques Détaillées
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Matrices de performance Univers × Apporteurs et Univers × Techniciens
-          </p>
-        </div>
+      {/* Sélecteur de période */}
+      <div className="flex justify-end">
         <NetworkPeriodSelector />
       </div>
 
