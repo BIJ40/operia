@@ -2,7 +2,8 @@ import {
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
   MessageSquare, Network, Users, Database, Settings, LucideIcon,
   PieChart, Coins, LifeBuoy, Headphones, GraduationCap, Kanban, Activity,
-  HelpCircle, Calendar, UserCog, Briefcase, Inbox, Building2, GitCompare
+  HelpCircle, Calendar, UserCog, Briefcase, Inbox, Building2, GitCompare,
+  MessagesSquare
 } from 'lucide-react';
 import { ROUTES } from './routes';
 import { ModuleKey } from '@/types/modules';
@@ -16,7 +17,7 @@ export interface DashboardTile {
   route: string;
   scopeSlug: string;
   color: 'primary' | 'accent';
-  group: 'help_academy' | 'pilotage' | 'rh' | 'support' | 'projects' | 'franchiseur' | 'admin';
+  group: 'help_academy' | 'pilotage' | 'rh' | 'support' | 'projects' | 'franchiseur' | 'admin' | 'communication';
   requiresAdmin?: boolean;
   requiresSupport?: boolean;
   requiresFranchisor?: boolean; // N3+ (franchisor_user)
@@ -181,6 +182,17 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     group: 'support',
     requiresSupport: true,
   },
+  // Communication / Messagerie
+  {
+    id: 'MESSAGING',
+    title: 'Messages',
+    description: 'Discussions internes et groupes',
+    icon: MessagesSquare,
+    route: ROUTES.messages,
+    scopeSlug: SCOPE_SLUGS.MESSAGING,
+    color: 'primary',
+    group: 'communication',
+  },
   // Gestion de Projet
   {
     id: 'PROJET_INDEX',
@@ -337,6 +349,12 @@ export const DASHBOARD_GROUPS = {
     icon: MessageSquare,
     colorClass: 'text-primary',
     indexUrl: ROUTES.support.index,
+  },
+  communication: {
+    title: 'Communication',
+    icon: MessagesSquare,
+    colorClass: 'text-helpconfort-blue',
+    indexUrl: ROUTES.messages,
   },
   projects: {
     title: 'Gestion de Projet',

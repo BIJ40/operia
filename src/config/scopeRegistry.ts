@@ -38,6 +38,9 @@ export const SCOPE_SLUGS = {
 
   // Apogée Ticketing
   APOGEE_TICKETS: 'apogee_tickets',
+
+  // Messaging
+  MESSAGING: 'messaging',
 } as const;
 
 export type ScopeSlug = typeof SCOPE_SLUGS[keyof typeof SCOPE_SLUGS];
