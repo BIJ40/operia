@@ -220,6 +220,7 @@ serve(async (req) => {
                 chunk_text: chunkText,
                 chunk_index: i,
                 embedding: embedding,
+                context_type: 'apogee', // Required NOT NULL field
                 metadata: {
                   source: 'apogee',
                   section_id: section.id,
