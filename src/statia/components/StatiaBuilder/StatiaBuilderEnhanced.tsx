@@ -144,13 +144,29 @@ export function StatiaBuilderEnhanced({ mode, fixedAgencySlug }: StatiaBuilderEn
           <Card>
             <CardHeader><CardTitle className="text-base">Métriques personnalisées</CardTitle></CardHeader>
             <CardContent>
-              <MetricsList agencySlug={effectiveAgency || undefined} onEdit={(m) => { setState({ measure: m.definition_json.measure, dimensions: m.definition_json.dimensions || [], filters: (m.definition_json.filters || {}) as Record<string, boolean> }); setActiveTab('builder'); }} />
+              <MetricsList 
+                mode={mode}
+                agencySlug={effectiveAgency || undefined} 
+                onEdit={(m) => { 
+                  // En mode agency, ne peut pas éditer les métriques globales
+                  if (mode === 'agency' && m.scope === 'global') return;
+                  setState({ measure: m.definition_json.measure, dimensions: m.definition_json.dimensions || [], filters: (m.definition_json.filters || {}) as Record<string, boolean> }); 
+                  setActiveTab('builder'); 
+                }} 
+              />
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
 
-      <SaveMetricDialog open={showSaveDialog} onOpenChange={setShowSaveDialog} definitionJson={buildDefinitionJson()} onSuccess={() => setActiveTab('saved')} />
+      <SaveMetricDialog 
+        open={showSaveDialog} 
+        onOpenChange={setShowSaveDialog} 
+        definitionJson={buildDefinitionJson()} 
+        onSuccess={() => setActiveTab('saved')}
+        mode={mode}
+        agencySlug={effectiveAgency || undefined}
+      />
     </div>
   );
 }
