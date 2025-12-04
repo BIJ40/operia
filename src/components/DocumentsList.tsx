@@ -22,6 +22,7 @@ interface DocumentsListProps {
 
 export function DocumentsList({ blockId, scope }: DocumentsListProps) {
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -46,6 +47,20 @@ export function DocumentsList({ blockId, scope }: DocumentsListProps) {
 
       if (error) throw error;
       setDocuments(data || []);
+      
+      // Generate signed URLs for all documents (P1-01: Security fix)
+      if (data && data.length > 0) {
+        const urls: Record<string, string> = {};
+        for (const doc of data) {
+          const { data: signedData } = await supabase.storage
+            .from('documents')
+            .createSignedUrl(doc.file_path, 3600); // 1 hour expiry
+          if (signedData?.signedUrl) {
+            urls[doc.id] = signedData.signedUrl;
+          }
+        }
+        setSignedUrls(urls);
+      }
     } catch (error) {
       logError('DOCUMENTS', 'Error loading documents', { error });
     } finally {
@@ -53,9 +68,8 @@ export function DocumentsList({ blockId, scope }: DocumentsListProps) {
     }
   };
 
-  const getDownloadUrl = (filePath: string) => {
-    const { data } = supabase.storage.from('documents').getPublicUrl(filePath);
-    return data.publicUrl;
+  const getDownloadUrl = (docId: string): string => {
+    return signedUrls[docId] || '';
   };
 
   const formatFileSize = (bytes: number | null) => {
@@ -109,7 +123,11 @@ export function DocumentsList({ blockId, scope }: DocumentsListProps) {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => window.open(getDownloadUrl(doc.file_path), '_blank')}
+                  onClick={() => {
+                    const url = getDownloadUrl(doc.id);
+                    if (url) window.open(url, '_blank');
+                  }}
+                  disabled={!signedUrls[doc.id]}
                   title="Voir le document"
                 >
                   <Eye className="w-4 h-4 mr-1" />
@@ -118,11 +136,15 @@ export function DocumentsList({ blockId, scope }: DocumentsListProps) {
                 <Button
                   size="sm"
                   onClick={() => {
-                    const link = document.createElement('a');
-                    link.href = getDownloadUrl(doc.file_path);
-                    link.download = doc.title;
-                    link.click();
+                    const url = getDownloadUrl(doc.id);
+                    if (url) {
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.download = doc.title;
+                      link.click();
+                    }
                   }}
+                  disabled={!signedUrls[doc.id]}
                   title="Télécharger"
                 >
                   <Download className="w-4 h-4 mr-1" />
