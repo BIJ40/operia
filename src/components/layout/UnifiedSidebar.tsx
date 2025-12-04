@@ -24,7 +24,7 @@ import { ROUTES } from '@/config/routes';
 import { useMenuLabels } from '@/hooks/use-page-metadata';
 import logoHelpconfortServices from '@/assets/help-confort-services-logo.png';
 import { useState, useEffect, ReactNode } from 'react';
-import { useChatbotTest } from '@/components/Chatbot';
+
 import { getCurrentVersion } from '@/config/changelog';
 
 // Mapping route → pageKey pour récupérer le menu_label
@@ -99,7 +99,7 @@ export function UnifiedSidebar() {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const menuLabels = useMenuLabels();
-  const { isTestMode, setTestMode } = useChatbotTest();
+  
   
   // Helper pour obtenir le label d'un item (menu_label personnalisé ou titre par défaut)
   const getItemLabel = (item: NavItem): string => {
@@ -374,25 +374,6 @@ export function UnifiedSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               
-              {/* Mme Michu - Admin test mode only */}
-              {isAdmin && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    onClick={() => setTestMode(!isTestMode)}
-                    className={`cursor-pointer ${isTestMode ? 'bg-helpconfort-blue/10 text-helpconfort-blue border-l-2 border-helpconfort-blue' : ''}`}
-                  >
-                    <div className="group/item flex items-center gap-2 py-1.5">
-                      <MessageCircle className={`w-4 h-4 transition-all duration-300 ${isTestMode ? 'text-helpconfort-blue' : ''}`} />
-                      {!collapsed && (
-                        <span className="text-sm flex items-center gap-2">
-                          Mme Michu
-                          {isTestMode && <span className="text-[10px] bg-green-500 text-white px-1.5 py-0.5 rounded-full">ON</span>}
-                        </span>
-                      )}
-                    </div>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
