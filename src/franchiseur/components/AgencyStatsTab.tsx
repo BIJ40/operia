@@ -3,10 +3,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FileText, Euro, FolderOpen, Loader2 } from "lucide-react";
 import { PeriodSelector } from "@/apogee-connect/components/filters/PeriodSelector";
 import { useFilters } from "@/apogee-connect/contexts/FiltersContext";
-import { DataService } from "@/apogee-connect/services/dataService";
+import { apogeeProxy } from "@/services/apogeeProxy";
 import { calculateCaJour, calculateDevisJour, calculateDossiersJour } from "@/apogee-connect/utils/dashboardCalculations";
 import { formatEuros } from "@/apogee-connect/utils/formatters";
-import { setApiBaseUrl, getApiBaseUrl } from "@/apogee-connect/services/api";
 import { logApogee } from "@/lib/logger";
 import { RecouvrementTile } from "@/apogee-connect/components/kpi/RecouvrementTile";
 
@@ -20,48 +19,38 @@ export function AgencyStatsTab({ agencySlug }: AgencyStatsTabProps) {
   const { data, isLoading } = useQuery({
     queryKey: ['franchiseur-agency-stats', agencySlug, filters.dateRange],
     queryFn: async () => {
-      // 🔧 CRITICAL: Configurer temporairement l'API pour l'agence ciblée
-      const originalBaseUrl = getApiBaseUrl();
-      const targetBaseUrl = `https://${agencySlug}.hc-apogee.fr/api/`;
+      logApogee.debug('🎯 AgencyStatsTab - Chargement données via proxy sécurisé', { agencySlug });
       
-      logApogee.debug('🎯 AgencyStatsTab - Configuration API pour agence cible', {
+      // Charger toutes les données via le proxy sécurisé pour l'agence cible
+      const [factures, devis, projects, clients] = await Promise.all([
+        apogeeProxy.getFactures({ agencySlug }),
+        apogeeProxy.getDevis({ agencySlug }),
+        apogeeProxy.getProjects({ agencySlug }),
+        apogeeProxy.getClients({ agencySlug }),
+      ]);
+      
+      logApogee.debug('📊 AgencyStatsTab - Données chargées via proxy', {
         agencySlug,
-        originalBaseUrl,
-        targetBaseUrl
+        nbFactures: factures?.length || 0,
+        nbProjects: projects?.length || 0,
       });
       
-      setApiBaseUrl(targetBaseUrl);
-      
-      try {
-        const allData = await DataService.loadAllData(true, true); // Force refresh pour nouvelle agence
-        
-        logApogee.debug('📊 AgencyStatsTab - Données chargées', {
-          agencySlug,
-          nbFactures: allData.factures?.length || 0,
-          nbProjects: allData.projects?.length || 0,
-          facturesSample: allData.factures?.slice(0, 3).map(f => ({
-            id: f.id,
-            totalTTC: f.totalTTC,
-            calc: f.calc
-          }))
-        });
-      
       const { caTotal } = calculateCaJour(
-        allData.factures,
-        allData.clients,
-        allData.projects,
+        factures,
+        clients,
+        projects,
         filters.dateRange,
         agencySlug
       );
       
       const { nbDevis, caDevis } = calculateDevisJour(
-        allData.devis,
+        devis,
         filters.dateRange,
         agencySlug
       );
       
       const nbDossiers = calculateDossiersJour(
-        allData.projects,
+        projects,
         filters.dateRange,
         agencySlug
       );
@@ -71,14 +60,9 @@ export function AgencyStatsTab({ agencySlug }: AgencyStatsTabProps) {
         nbDossiers,
         volumeDevis: caDevis,
       };
-    } finally {
-      // 🔧 Restaurer l'URL d'origine après le chargement
-      logApogee.debug('🔄 AgencyStatsTab - Restauration BASE_URL originale', { originalBaseUrl });
-      setApiBaseUrl(originalBaseUrl);
-    }
     },
     enabled: !!agencySlug,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
 

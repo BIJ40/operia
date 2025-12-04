@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { addWeeks, subWeeks } from "date-fns";
 import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
-import { api } from "@/apogee-connect/services/api";
+import { apogeeProxy } from "@/services/apogeeProxy";
 import {
   buildPlanningByTech,
   buildWeeklyTechPlanning,
@@ -39,8 +39,8 @@ export function useWeeklyTechPlanning(techFilterId?: number, showInactiveTechs =
   } = useQuery<RawCreneau[] | null>({
     queryKey: ["planning-creneaux"],
     queryFn: async () => {
-      logApogee.debug("Fetching créneaux planning...");
-      const result = await api.getInterventionsCreneaux();
+      logApogee.debug("Fetching créneaux planning via proxy...");
+      const result = await apogeeProxy.getInterventionsCreneaux();
       logApogee.debug(`Créneaux récupérés: ${(result as RawCreneau[] | null)?.length || 0}`);
       return result as RawCreneau[] | null;
     },
@@ -56,8 +56,8 @@ export function useWeeklyTechPlanning(techFilterId?: number, showInactiveTechs =
   } = useQuery<RawUser[]>({
     queryKey: ["planning-users"],
     queryFn: async () => {
-      logApogee.debug("Fetching users for planning...");
-      const result = await api.getUsers();
+      logApogee.debug("Fetching users for planning via proxy...");
+      const result = await apogeeProxy.getUsers();
       return (result || []) as RawUser[];
     },
     enabled: isAgencyReady,
@@ -72,8 +72,8 @@ export function useWeeklyTechPlanning(techFilterId?: number, showInactiveTechs =
   } = useQuery<RawIntervention[]>({
     queryKey: ["planning-interventions"],
     queryFn: async () => {
-      logApogee.debug("Fetching interventions for planning...");
-      const result = await api.getInterventions();
+      logApogee.debug("Fetching interventions for planning via proxy...");
+      const result = await apogeeProxy.getInterventions();
       return (result || []) as RawIntervention[];
     },
     enabled: isAgencyReady,
@@ -88,8 +88,8 @@ export function useWeeklyTechPlanning(techFilterId?: number, showInactiveTechs =
   } = useQuery<RawProject[]>({
     queryKey: ["planning-projects"],
     queryFn: async () => {
-      logApogee.debug("Fetching projects for planning...");
-      const result = await api.getProjects();
+      logApogee.debug("Fetching projects for planning via proxy...");
+      const result = await apogeeProxy.getProjects();
       return (result || []) as RawProject[];
     },
     enabled: isAgencyReady,
@@ -104,8 +104,8 @@ export function useWeeklyTechPlanning(techFilterId?: number, showInactiveTechs =
   } = useQuery<RawClient[]>({
     queryKey: ["planning-clients"],
     queryFn: async () => {
-      logApogee.debug("Fetching clients for planning...");
-      const result = await api.getClients();
+      logApogee.debug("Fetching clients for planning via proxy...");
+      const result = await apogeeProxy.getClients();
       return (result || []) as RawClient[];
     },
     enabled: isAgencyReady,

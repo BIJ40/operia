@@ -6,7 +6,7 @@ import { TechWeeklyPlanningList } from "@/apogee-connect/components/TechWeeklyPl
 import { AgencyProvider, useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { ApiToggleProvider } from "@/apogee-connect/contexts/ApiToggleContext";
 import { useTechniciens } from "@/apogee-connect/hooks/useTechniciens";
-import { api } from "@/apogee-connect/services/api";
+import { apogeeProxy } from "@/services/apogeeProxy";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,7 +19,7 @@ function PlanningHebdoContent() {
   const { data: usersData, isLoading: loadingUsers } = useQuery<any[]>({
     queryKey: ["planning-users-select"],
     queryFn: async () => {
-      const result = await api.getUsers();
+      const result = await apogeeProxy.getUsers();
       return (result || []) as any[];
     },
     enabled: isAgencyReady,
