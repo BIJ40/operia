@@ -107,17 +107,41 @@ serve(async (req) => {
     // Supprimer toutes les dépendances avant de supprimer l'utilisateur
     console.log(`[delete-user] Suppression des dépendances pour ${userId}`)
     
-    // 1. Supprimer les assignments d'agences
+    // === TABLES AVEC FK SANS CASCADE ===
+    
+    // 1. agency_rh_roles (granted_by sans CASCADE)
+    await supabaseAdmin.from('agency_rh_roles').update({ granted_by: null }).eq('granted_by', userId)
+    await supabaseAdmin.from('agency_rh_roles').delete().eq('user_id', userId)
+    
+    // 2. Supprimer les assignments d'agences
     await supabaseAdmin.from('franchiseur_agency_assignments').delete().eq('user_id', userId)
     
-    // 2. Supprimer les rôles franchiseur
+    // 3. Supprimer les rôles franchiseur
     await supabaseAdmin.from('franchiseur_roles').delete().eq('user_id', userId)
     
-    // 3. Supprimer les collaborateurs créés par cet utilisateur
-    await supabaseAdmin.from('agency_collaborators').update({ created_by: null }).eq('created_by', userId)
-    await supabaseAdmin.from('agency_collaborators').delete().eq('user_id', userId)
+    // 4. Collaborators (anciennement agency_collaborators) - SET NULL sur user_id et created_by
+    await supabaseAdmin.from('collaborators').update({ created_by: null }).eq('created_by', userId)
+    await supabaseAdmin.from('collaborators').update({ user_id: null }).eq('user_id', userId)
     
-    // 4. Supprimer les tickets support et dépendances
+    // 5. collaborator_documents (uploaded_by sans CASCADE)
+    await supabaseAdmin.from('collaborator_documents').update({ uploaded_by: null }).eq('uploaded_by', userId)
+    
+    // 6. document_requests (processed_by sans CASCADE)
+    await supabaseAdmin.from('document_requests').update({ processed_by: null }).eq('processed_by', userId)
+    
+    // 7. employment_contracts (created_by sans CASCADE)
+    await supabaseAdmin.from('employment_contracts').update({ created_by: null }).eq('created_by', userId)
+    
+    // 8. salary_history (decided_by sans CASCADE)
+    await supabaseAdmin.from('salary_history').update({ decided_by: null }).eq('decided_by', userId)
+    
+    // 9. Messages (sender_id sans CASCADE)
+    await supabaseAdmin.from('messages').delete().eq('sender_id', userId)
+    
+    // 10. ticket_duplicate_suggestions (reviewed_by sans CASCADE)
+    await supabaseAdmin.from('ticket_duplicate_suggestions').update({ reviewed_by: null }).eq('reviewed_by', userId)
+    
+    // 11. Supprimer les tickets support et dépendances
     const { data: supportTickets } = await supabaseAdmin
       .from('support_tickets')
       .select('id')
@@ -132,18 +156,19 @@ serve(async (req) => {
     await supabaseAdmin.from('support_tickets').delete().eq('user_id', userId)
     await supabaseAdmin.from('support_tickets').update({ assigned_to: null }).eq('assigned_to', userId)
     
-    // 5. Supprimer les tickets Apogée
-    await supabaseAdmin.from('apogee_ticket_comments').delete().eq('created_by_user_id', userId)
+    // 12. Supprimer les tickets Apogée (FK sans CASCADE)
+    await supabaseAdmin.from('apogee_ticket_comments').update({ created_by_user_id: null }).eq('created_by_user_id', userId)
     await supabaseAdmin.from('apogee_ticket_history').delete().eq('user_id', userId)
-    await supabaseAdmin.from('apogee_ticket_attachments').delete().eq('uploaded_by', userId)
+    await supabaseAdmin.from('apogee_ticket_attachments').update({ uploaded_by: null }).eq('uploaded_by', userId)
     await supabaseAdmin.from('apogee_ticket_views').delete().eq('user_id', userId)
+    await supabaseAdmin.from('apogee_ticket_user_roles').delete().eq('user_id', userId)
     await supabaseAdmin.from('apogee_tickets').update({ 
       created_by_user_id: null,
       last_modified_by_user_id: null,
       qualified_by: null
     }).or(`created_by_user_id.eq.${userId},last_modified_by_user_id.eq.${userId},qualified_by.eq.${userId}`)
     
-    // 6. Supprimer les autres données
+    // 13. Supprimer les autres données (avec CASCADE ou à nettoyer)
     await supabaseAdmin.from('chatbot_queries').delete().eq('user_id', userId)
     await supabaseAdmin.from('favorites').delete().eq('user_id', userId)
     await supabaseAdmin.from('announcement_reads').delete().eq('user_id', userId)
@@ -154,16 +179,26 @@ serve(async (req) => {
     }).or(`requester_id.eq.${userId},approver_id.eq.${userId}`)
     await supabaseAdmin.from('planning_signatures').update({ signed_by_user_id: null }).eq('signed_by_user_id', userId)
     
-    // 7. Supprimer le profil (cascade devrait gérer mais on force)
-    await supabaseAdmin.from('profiles').delete().eq('id', userId)
+    // 14. Conversation members et typing status (avec CASCADE normalement)
+    await supabaseAdmin.from('typing_status').delete().eq('user_id', userId)
+    await supabaseAdmin.from('conversation_members').delete().eq('user_id', userId)
+    
+    // 15. Supprimer le profil
+    console.log(`[delete-user] Suppression du profil`)
+    const { error: profileDeleteError } = await supabaseAdmin.from('profiles').delete().eq('id', userId)
+    
+    if (profileDeleteError) {
+      console.error('[delete-user] Erreur suppression profil:', profileDeleteError)
+      throw new Error(`Erreur suppression profil: ${profileDeleteError.message}`)
+    }
 
-    console.log(`[delete-user] Dépendances supprimées, suppression de l'utilisateur`)
+    console.log(`[delete-user] Profil supprimé, suppression de l'utilisateur auth`)
 
-    // 8. Supprimer l'utilisateur de auth.users
+    // 16. Supprimer l'utilisateur de auth.users
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId)
 
     if (deleteError) {
-      console.error('[delete-user] Erreur suppression:', deleteError)
+      console.error('[delete-user] Erreur suppression auth:', deleteError)
       throw deleteError
     }
 
