@@ -1,6 +1,7 @@
 /**
  * Composant de filtres avancés pour les tickets support
  * Phase 3 - UI : Filtres par statut, priorité, service
+ * P2: Ajout export CSV
  */
 
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,8 @@ import {
   type TicketService,
 } from '@/services/supportService';
 import { getHeatPriorityConfig } from '@/utils/heatPriority';
+import { TicketExportCSV } from './TicketExportCSV';
+import { SupportTicket } from '@/hooks/use-admin-support';
 
 interface TicketFiltersProps {
   statusFilter: TicketStatus | 'all';
@@ -30,6 +33,7 @@ interface TicketFiltersProps {
   heatPriorityMax: number;
   serviceFilter: TicketService | 'all';
   assignmentFilter: 'all' | 'mine' | 'unassigned';
+  filteredTickets?: SupportTicket[];
   onStatusChange: (value: TicketStatus | 'all') => void;
   onHeatPriorityChange: (min: number, max: number) => void;
   onServiceChange: (value: TicketService | 'all') => void;
@@ -43,6 +47,7 @@ export function TicketFilters({
   heatPriorityMax,
   serviceFilter,
   assignmentFilter,
+  filteredTickets = [],
   onStatusChange,
   onHeatPriorityChange,
   onServiceChange,
@@ -66,17 +71,21 @@ export function TicketFilters({
           <Filter className="w-4 h-4" />
           Filtres
         </div>
-        {hasActiveFilters && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClearFilters}
-            className="h-7 text-xs"
-          >
-            <X className="w-3 h-3 mr-1" />
-            Effacer
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {/* P2: Export CSV */}
+          <TicketExportCSV tickets={filteredTickets} />
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClearFilters}
+              className="h-7 text-xs"
+            >
+              <X className="w-3 h-3 mr-1" />
+              Effacer
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
