@@ -69,37 +69,38 @@ export function OwnerSideSlider({ value, onChange, disabled }: OwnerSideSliderPr
       </div>
       
       {/* Slider */}
-      <div 
-        className="relative pt-1"
-        onClick={(e) => {
-          // Si indéterminé et clic sur le slider, forcer la valeur à 50
-          if (isUndetermined && !disabled) {
-            onChange(50);
-          }
-        }}
-      >
+      <div className="relative pt-1">
         <Slider
           value={[currentValue]}
-          onValueChange={([v]) => handleSliderChange(v)}
+          onValueChange={([v]) => {
+            // Snap to nearest step value
+            const snappedValue = STEPS.reduce((prev, curr) => 
+              Math.abs(curr.value - v) < Math.abs(prev.value - v) ? curr : prev
+            ).value;
+            handleSliderChange(snappedValue);
+          }}
           min={0}
           max={100}
-          step={25}
+          step={1}
           disabled={disabled}
           className={cn("cursor-pointer", isUndetermined && "opacity-50")}
           trackClassName="h-3 bg-gradient-to-r from-blue-500 via-purple-500 to-orange-500"
           rangeClassName="bg-transparent"
         />
         
-        {/* Step markers */}
-        <div className="absolute top-1 left-0 right-0 flex justify-between pointer-events-none">
+        {/* Step markers - cliquables */}
+        <div className="absolute top-1 left-0 right-0 flex justify-between">
           {STEPS.map((step) => (
-            <div
+            <button
               key={step.value}
+              type="button"
+              onClick={() => !disabled && handleSliderChange(step.value)}
+              disabled={disabled}
               className={cn(
-                "w-3 h-3 rounded-full border-2 transition-all",
+                "w-3 h-3 rounded-full border-2 transition-all cursor-pointer hover:scale-110",
                 !isUndetermined && currentValue === step.value
                   ? "bg-white border-primary scale-125"
-                  : "bg-white/50 border-white/70"
+                  : "bg-white/50 border-white/70 hover:bg-white hover:border-white"
               )}
             />
           ))}
