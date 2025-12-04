@@ -74,7 +74,7 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
     },
     reseau_franchiseur: {
       enabled: true,
-      options: { dashboard: true, stats: true, agences: true, redevances: false, comparatifs: true }
+      options: { dashboard: true, stats: true, agences: true, redevances: false, periodes: true }
     },
     support: {
       enabled: true,
@@ -94,7 +94,7 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
     },
     reseau_franchiseur: {
       enabled: true,
-      options: { dashboard: true, stats: true, agences: true, redevances: true, comparatifs: true }
+      options: { dashboard: true, stats: true, agences: true, redevances: true, periodes: true }
     },
     support: {
       enabled: true,
@@ -114,7 +114,7 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
     },
     reseau_franchiseur: {
       enabled: true,
-      options: { dashboard: true, stats: true, agences: true, redevances: true, comparatifs: true }
+      options: { dashboard: true, stats: true, agences: true, redevances: true, periodes: true }
     },
     support: {
       enabled: true,
@@ -138,7 +138,7 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
     },
     reseau_franchiseur: {
       enabled: true,
-      options: { dashboard: true, stats: true, agences: true, redevances: true, comparatifs: true }
+      options: { dashboard: true, stats: true, agences: true, redevances: true, periodes: true }
     },
     support: {
       enabled: true,
