@@ -5,9 +5,16 @@ import { GLOBAL_ROLES, getRoleLevel, canResetPassword } from '../_shared/roles.t
 import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts'
 
 serve(async (req) => {
+  console.log(`[reset-user-password] === FUNCTION CALLED === Method: ${req.method}, Origin: ${req.headers.get('origin')}`)
+  
   // Handle CORS preflight or reject unauthorized origins
   const corsResult = handleCorsPreflightOrReject(req);
-  if (corsResult) return corsResult;
+  if (corsResult) {
+    console.log(`[reset-user-password] CORS rejected or OPTIONS handled`)
+    return corsResult;
+  }
+  
+  console.log(`[reset-user-password] CORS passed, processing request...`)
 
   try {
     const supabaseAdmin = createClient(
