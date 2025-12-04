@@ -1,8 +1,8 @@
 import * as Sentry from "@sentry/react";
 import { logWarn, logInfo } from "@/lib/logger";
 
-// Sentry DSN - safe to expose in frontend code
-const SENTRY_DSN = "https://e1979a94b181809d1377b522ee77e214@o4510453309571072.ingest.de.sentry.io/4510453328183376";
+// Sentry DSN from environment variable
+const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
 
 // Determine environment
 function getEnvironment(): string {
