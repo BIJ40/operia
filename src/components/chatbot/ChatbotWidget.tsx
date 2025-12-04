@@ -249,11 +249,15 @@ export function ChatbotWidget() {
         </span>
       </button>
 
-      {/* Dropdown panel */}
+      {/* Dropdown panel - responsive positioning */}
       <div
         className={cn(
-          "absolute top-full left-0 mt-2 w-[380px] bg-background border rounded-xl shadow-2xl overflow-hidden z-50",
-          "transition-all duration-300 ease-out origin-top-left",
+          "absolute top-full mt-2 bg-background border rounded-xl shadow-2xl overflow-hidden z-50",
+          "transition-all duration-300 ease-out",
+          // Mobile: right-aligned, smaller width
+          "right-0 w-[calc(100vw-2rem)] max-w-[380px]",
+          // Desktop: left-aligned
+          "sm:left-0 sm:right-auto sm:w-[380px] sm:origin-top-left",
           isOpen 
             ? "opacity-100 scale-100 translate-y-0" 
             : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
