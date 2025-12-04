@@ -1,13 +1,14 @@
 /**
- * StatIA Builder - Version complète avec capsules, filtres et prévisualisation
+ * StatIA Builder - Version complète alimentée par STAT_DEFINITIONS
+ * Source unique de vérité = registre StatIA
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Save, List, PlusCircle, Target, Layers, Filter, X, Euro, TrendingUp, Percent, Hash, Clock } from 'lucide-react';
+import { Save, List, PlusCircle, Target, Layers, Filter, X, Euro, TrendingUp, Percent, Hash, Clock, User, Building2, Calendar, Shield, FolderOpen, Wallet, AlertTriangle, FileCheck, Calculator, Sparkles, ChevronDown, ChevronRight } from 'lucide-react';
 import { AgencySelector } from './AgencySelector';
 import { MetricsList } from './MetricsList';
 import { MetricPreview } from './MetricPreview';
@@ -15,6 +16,9 @@ import { SaveMetricDialog } from './SaveMetricDialog';
 import { useStatiaBuilderContext } from '../../hooks/useCustomMetrics';
 import { CustomMetricDefinition } from '../../services/customMetricsService';
 import { cn } from '@/lib/utils';
+import { getMeasuresByCategory, getMeasureById, DIMENSIONS, MeasureConfig } from './config';
+import { STAT_DEFINITIONS } from '../../definitions';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 export interface BuilderState {
   measure: string | null;
@@ -27,29 +31,51 @@ interface StatiaBuilderEnhancedProps {
   fixedAgencySlug?: string;
 }
 
-const MEASURES = [
-  { id: 'ca_global_ht', label: 'CA Global HT', unit: '€ HT', sources: ['factures'], icon: Euro, category: 'ca' },
-  { id: 'ca_mensuel', label: 'CA Mensuel', unit: '€ HT/mois', sources: ['factures'], icon: TrendingUp, category: 'ca' },
-  { id: 'ca_par_technicien', label: 'CA par Technicien', unit: '€ HT', sources: ['factures', 'interventions'], icon: Euro, category: 'ca' },
-  { id: 'taux_sav_global', label: 'Taux SAV', unit: '%', sources: ['interventions'], icon: Percent, category: 'sav' },
-  { id: 'taux_transformation', label: 'Taux Transformation', unit: '%', sources: ['devis', 'factures'], icon: Percent, category: 'devis' },
-  { id: 'nb_interventions', label: 'Nb Interventions', unit: '', sources: ['interventions'], icon: Hash, category: 'activite' },
-  { id: 'delai_moyen_facturation', label: 'Délai Facturation', unit: 'jours', sources: ['factures', 'interventions'], icon: Clock, category: 'recouvrement' },
-];
+// Map des icônes par catégorie
+const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  'Chiffre d\'Affaires': Euro,
+  'Devis': FileCheck,
+  'Univers': Layers,
+  'Apporteurs': Building2,
+  'Techniciens': User,
+  'SAV': AlertTriangle,
+  'Recouvrement': Wallet,
+  'Dossiers': FolderOpen,
+  'Qualité': Shield,
+  'Productivité': TrendingUp,
+  'Personnalisé': Sparkles,
+};
 
-const DIMENSIONS = [
-  { id: 'technicien', label: 'Par Technicien', description: 'Ventilation par intervenant' },
-  { id: 'univers', label: 'Par Univers', description: 'Par métier (plomberie, élec...)' },
-  { id: 'apporteur', label: 'Par Apporteur', description: 'Par source de dossier' },
-  { id: 'mois', label: 'Par Mois', description: 'Évolution mensuelle' },
-  { id: 'semaine', label: 'Par Semaine', description: 'Évolution hebdomadaire' },
-];
+// Map des icônes par unité
+const UNIT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  '€': Euro,
+  '%': Percent,
+  'h': Clock,
+  'jours': Calendar,
+  '': Hash,
+};
 
-const FILTERS = [
+// Filtres disponibles avec description
+const AVAILABLE_FILTERS = [
   { id: 'exclude_sav', label: 'Exclure SAV', description: 'Retire les interventions SAV du calcul' },
   { id: 'exclude_rt', label: 'Exclure RT', description: 'Retire les relevés techniques' },
   { id: 'only_productive', label: 'Productif uniquement', description: 'Uniquement dépannages et travaux' },
   { id: 'exclude_avoirs', label: 'Exclure avoirs', description: 'Ne pas soustraire les avoirs' },
+];
+
+// Catégories ordonnées pour l'affichage
+const CATEGORY_ORDER = [
+  'Chiffre d\'Affaires',
+  'Techniciens',
+  'Univers',
+  'Apporteurs',
+  'Devis',
+  'Recouvrement',
+  'SAV',
+  'Dossiers',
+  'Qualité',
+  'Productivité',
+  'Personnalisé',
 ];
 
 export function StatiaBuilderEnhanced({ mode, fixedAgencySlug }: StatiaBuilderEnhancedProps) {
@@ -58,14 +84,64 @@ export function StatiaBuilderEnhanced({ mode, fixedAgencySlug }: StatiaBuilderEn
   const [selectedAgency, setSelectedAgency] = useState(fixedAgencySlug || userAgencySlug || 'dax');
   const [activeTab, setActiveTab] = useState('builder');
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
+    'Chiffre d\'Affaires': true,
+    'Techniciens': true,
+  });
 
   const effectiveAgency = mode === 'agency' ? (fixedAgencySlug || userAgencySlug) : selectedAgency;
-  const measureConfig = state.measure ? MEASURES.find(m => m.id === state.measure) : null;
+
+  // Récupérer les mesures dynamiquement depuis STAT_DEFINITIONS
+  const measuresByCategory = useMemo(() => getMeasuresByCategory(), []);
+  
+  // Ordonner les catégories
+  const orderedCategories = useMemo(() => {
+    const categories = Object.keys(measuresByCategory);
+    return CATEGORY_ORDER.filter(c => categories.includes(c))
+      .concat(categories.filter(c => !CATEGORY_ORDER.includes(c)));
+  }, [measuresByCategory]);
+
+  // Récupérer la config de la mesure sélectionnée
+  const measureConfig = useMemo(() => {
+    return state.measure ? getMeasureById(state.measure) : null;
+  }, [state.measure]);
+
+  // Dimensions supportées par la mesure sélectionnée
+  const supportedDimensions = useMemo(() => {
+    if (!state.measure) return DIMENSIONS;
+    const def = STAT_DEFINITIONS[state.measure];
+    if (!def?.dimensions?.length) return DIMENSIONS;
+    return DIMENSIONS.filter(d => (def.dimensions as string[])?.includes(d.id));
+  }, [state.measure]);
+
+  // Filtres applicables selon la source de données
+  const applicableFilters = useMemo(() => {
+    if (!measureConfig) return AVAILABLE_FILTERS;
+    const source = measureConfig.source;
+    const sources = Array.isArray(source) ? source : [source];
+    
+    // Filtres SAV/RT applicables si interventions impliquées
+    const hasInterventions = sources.includes('interventions');
+    // Filtre avoirs applicable si factures impliquées
+    const hasFactures = sources.includes('factures');
+    
+    return AVAILABLE_FILTERS.filter(f => {
+      if (f.id === 'exclude_sav' || f.id === 'exclude_rt' || f.id === 'only_productive') {
+        return hasInterventions || hasFactures;
+      }
+      if (f.id === 'exclude_avoirs') {
+        return hasFactures;
+      }
+      return true;
+    });
+  }, [measureConfig]);
 
   const buildDefinitionJson = (): CustomMetricDefinition => ({
     measure: state.measure || '',
-    aggregation: measureConfig?.unit === '%' ? 'ratio' : 'sum',
-    sources: measureConfig?.sources || ['factures'],
+    aggregation: measureConfig?.aggregation as any || 'sum',
+    sources: measureConfig?.source 
+      ? (Array.isArray(measureConfig.source) ? measureConfig.source : [measureConfig.source])
+      : ['factures'],
     dimensions: state.dimensions,
     filters: state.filters,
     time: { field: 'dateReelle', mode: 'periode', granularity: 'mois' },
@@ -87,18 +163,15 @@ export function StatiaBuilderEnhanced({ mode, fixedAgencySlug }: StatiaBuilderEn
     }));
   };
 
-  const measuresByCategory = MEASURES.reduce((acc, m) => {
-    if (!acc[m.category]) acc[m.category] = [];
-    acc[m.category].push(m);
-    return acc;
-  }, {} as Record<string, typeof MEASURES>);
+  const toggleCategory = (category: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
+  };
 
-  const categoryLabels: Record<string, string> = {
-    ca: 'Chiffre d\'affaires',
-    sav: 'SAV & Qualité',
-    devis: 'Devis',
-    activite: 'Activité',
-    recouvrement: 'Recouvrement',
+  const getUnitIcon = (unit: string) => {
+    return UNIT_ICONS[unit] || Hash;
   };
 
   return (
@@ -113,6 +186,9 @@ export function StatiaBuilderEnhanced({ mode, fixedAgencySlug }: StatiaBuilderEn
               Agence: <span className="font-medium text-foreground">{effectiveAgency}</span>
             </div>
           )}
+          <Badge variant="outline" className="text-xs">
+            {Object.values(measuresByCategory).flat().length} métriques disponibles
+          </Badge>
         </div>
         <div className="flex items-center gap-2">
           <Button 
@@ -147,45 +223,87 @@ export function StatiaBuilderEnhanced({ mode, fixedAgencySlug }: StatiaBuilderEn
 
         <TabsContent value="builder">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-            {/* Colonne 1: Mesures */}
-            <Card>
+            {/* Colonne 1: Mesures - ALIMENTÉES PAR STAT_DEFINITIONS */}
+            <Card className="lg:row-span-2">
               <CardHeader className="py-3">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Target className="h-4 w-4" />
                   Mesures
+                  <Badge variant="secondary" className="ml-auto text-xs">
+                    {Object.values(measuresByCategory).flat().length}
+                  </Badge>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4 max-h-[500px] overflow-y-auto">
-                {Object.entries(measuresByCategory).map(([cat, measures]) => (
-                  <div key={cat} className="space-y-2">
-                    <div className="text-xs font-medium text-muted-foreground uppercase">
-                      {categoryLabels[cat] || cat}
-                    </div>
-                    {measures.map(m => {
-                      const Icon = m.icon;
-                      return (
-                        <button
-                          key={m.id}
-                          className={cn(
-                            "w-full flex items-center gap-2 p-2 rounded-md text-left text-sm transition-colors",
-                            state.measure === m.id
-                              ? "bg-primary text-primary-foreground"
-                              : "hover:bg-muted"
+              <CardContent className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
+                {orderedCategories.map(category => {
+                  const measures = measuresByCategory[category] || [];
+                  if (!measures.length) return null;
+                  
+                  const CategoryIcon = CATEGORY_ICONS[category] || Calculator;
+                  const isExpanded = expandedCategories[category] !== false;
+                  
+                  return (
+                    <Collapsible 
+                      key={category} 
+                      open={isExpanded}
+                      onOpenChange={() => toggleCategory(category)}
+                    >
+                      <CollapsibleTrigger className="w-full">
+                        <div className="flex items-center gap-2 p-2 rounded-md hover:bg-muted text-left w-full">
+                          {isExpanded ? (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
                           )}
-                          onClick={() => setState(s => ({ ...s, measure: m.id }))}
-                        >
-                          <Icon className="h-4 w-4 shrink-0" />
-                          <span className="flex-1 truncate">{m.label}</span>
-                          {m.unit && (
-                            <Badge variant="outline" className="text-[10px] shrink-0">
-                              {m.unit}
-                            </Badge>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ))}
+                          <CategoryIcon className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-xs font-medium flex-1">{category}</span>
+                          <Badge variant="outline" className="text-[10px]">
+                            {measures.length}
+                          </Badge>
+                        </div>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="pl-4 space-y-1">
+                        {measures.map((m: MeasureConfig) => {
+                          const UnitIcon = getUnitIcon(m.unit);
+                          return (
+                            <button
+                              key={m.id}
+                              className={cn(
+                                "w-full flex items-center gap-2 p-2 rounded-md text-left text-sm transition-colors",
+                                state.measure === m.id
+                                  ? "bg-primary text-primary-foreground"
+                                  : "hover:bg-muted"
+                              )}
+                              onClick={() => {
+                                setState(s => ({ 
+                                  ...s, 
+                                  measure: m.id,
+                                  // Reset dimensions si la nouvelle mesure ne les supporte pas
+                                  dimensions: s.dimensions.filter(dim => {
+                                    const def = STAT_DEFINITIONS[m.id];
+                                    return !def?.dimensions?.length || def.dimensions.includes(dim as any);
+                                  })
+                                }));
+                              }}
+                              title={m.description}
+                            >
+                              <UnitIcon className="h-3.5 w-3.5 shrink-0 opacity-70" />
+                              <span className="flex-1 truncate text-xs">{m.label}</span>
+                              {m.unit && (
+                                <Badge 
+                                  variant={state.measure === m.id ? "secondary" : "outline"} 
+                                  className="text-[9px] shrink-0 px-1"
+                                >
+                                  {m.unit}
+                                </Badge>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  );
+                })}
               </CardContent>
             </Card>
 
@@ -195,24 +313,34 @@ export function StatiaBuilderEnhanced({ mode, fixedAgencySlug }: StatiaBuilderEn
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Layers className="h-4 w-4" />
                   Dimensions
+                  {supportedDimensions.length < DIMENSIONS.length && (
+                    <Badge variant="secondary" className="text-[10px] ml-auto">
+                      {supportedDimensions.length} disponibles
+                    </Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {DIMENSIONS.map(d => (
-                  <button
-                    key={d.id}
-                    className={cn(
-                      "w-full flex flex-col items-start p-2 rounded-md text-left transition-colors",
-                      state.dimensions.includes(d.id)
-                        ? "bg-secondary text-secondary-foreground"
-                        : "hover:bg-muted"
-                    )}
-                    onClick={() => toggleDimension(d.id)}
-                  >
-                    <span className="text-sm font-medium">{d.label}</span>
-                    <span className="text-xs text-muted-foreground">{d.description}</span>
-                  </button>
-                ))}
+                {DIMENSIONS.map(d => {
+                  const isSupported = supportedDimensions.some(sd => sd.id === d.id);
+                  return (
+                    <button
+                      key={d.id}
+                      disabled={!isSupported}
+                      className={cn(
+                        "w-full flex flex-col items-start p-2 rounded-md text-left transition-colors",
+                        !isSupported && "opacity-40 cursor-not-allowed",
+                        state.dimensions.includes(d.id)
+                          ? "bg-secondary text-secondary-foreground"
+                          : isSupported ? "hover:bg-muted" : ""
+                      )}
+                      onClick={() => isSupported && toggleDimension(d.id)}
+                    >
+                      <span className="text-sm font-medium">{d.label}</span>
+                      <span className="text-xs text-muted-foreground">{d.description}</span>
+                    </button>
+                  );
+                })}
               </CardContent>
 
               <CardHeader className="py-3 pt-0 border-t">
@@ -222,21 +350,26 @@ export function StatiaBuilderEnhanced({ mode, fixedAgencySlug }: StatiaBuilderEn
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {FILTERS.map(f => (
-                  <button
-                    key={f.id}
-                    className={cn(
-                      "w-full flex flex-col items-start p-2 rounded-md text-left transition-colors",
-                      state.filters[f.id]
-                        ? "bg-orange-100 dark:bg-orange-900/30 text-orange-900 dark:text-orange-100"
-                        : "hover:bg-muted"
-                    )}
-                    onClick={() => toggleFilter(f.id)}
-                  >
-                    <span className="text-sm font-medium">{f.label}</span>
-                    <span className="text-xs text-muted-foreground">{f.description}</span>
-                  </button>
-                ))}
+                {AVAILABLE_FILTERS.map(f => {
+                  const isApplicable = applicableFilters.some(af => af.id === f.id);
+                  return (
+                    <button
+                      key={f.id}
+                      disabled={!isApplicable}
+                      className={cn(
+                        "w-full flex flex-col items-start p-2 rounded-md text-left transition-colors",
+                        !isApplicable && "opacity-40 cursor-not-allowed",
+                        state.filters[f.id]
+                          ? "bg-orange-100 dark:bg-orange-900/30 text-orange-900 dark:text-orange-100"
+                          : isApplicable ? "hover:bg-muted" : ""
+                      )}
+                      onClick={() => isApplicable && toggleFilter(f.id)}
+                    >
+                      <span className="text-sm font-medium">{f.label}</span>
+                      <span className="text-xs text-muted-foreground">{f.description}</span>
+                    </button>
+                  );
+                })}
               </CardContent>
             </Card>
 
@@ -251,9 +384,15 @@ export function StatiaBuilderEnhanced({ mode, fixedAgencySlug }: StatiaBuilderEn
                   <div className="text-xs font-medium text-muted-foreground uppercase">Mesure</div>
                   {measureConfig ? (
                     <div className="flex items-center gap-2 p-3 rounded-lg border bg-background">
-                      <measureConfig.icon className="h-4 w-4 shrink-0" />
-                      <span className="font-medium flex-1">{measureConfig.label}</span>
-                      <Badge variant="secondary">{measureConfig.unit}</Badge>
+                      {(() => {
+                        const UnitIcon = getUnitIcon(measureConfig.unit);
+                        return <UnitIcon className="h-4 w-4 shrink-0" />;
+                      })()}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm truncate">{measureConfig.label}</div>
+                        <div className="text-xs text-muted-foreground truncate">{measureConfig.description}</div>
+                      </div>
+                      <Badge variant="secondary">{measureConfig.unit || '-'}</Badge>
                       <button 
                         onClick={() => setState(s => ({ ...s, measure: null }))} 
                         className="text-muted-foreground hover:text-foreground"
@@ -267,6 +406,20 @@ export function StatiaBuilderEnhanced({ mode, fixedAgencySlug }: StatiaBuilderEn
                     </div>
                   )}
                 </div>
+
+                {/* Source de données */}
+                {measureConfig && (
+                  <div className="space-y-2">
+                    <div className="text-xs font-medium text-muted-foreground uppercase">Sources</div>
+                    <div className="flex flex-wrap gap-1">
+                      {(Array.isArray(measureConfig.source) ? measureConfig.source : [measureConfig.source]).map(src => (
+                        <Badge key={src} variant="outline" className="text-xs">
+                          {src}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Dimensions sélectionnées */}
                 <div className="space-y-2">
@@ -294,7 +447,7 @@ export function StatiaBuilderEnhanced({ mode, fixedAgencySlug }: StatiaBuilderEn
                   <div className="text-xs font-medium text-muted-foreground uppercase">Filtres actifs</div>
                   <div className="flex flex-wrap gap-2 min-h-[32px]">
                     {Object.entries(state.filters).filter(([_, v]) => v).map(([id]) => {
-                      const f = FILTERS.find(x => x.id === id);
+                      const f = AVAILABLE_FILTERS.find(x => x.id === id);
                       return (
                         <Badge key={id} variant="outline" className="gap-1 bg-orange-50 dark:bg-orange-900/20">
                           {f?.label}
@@ -309,6 +462,14 @@ export function StatiaBuilderEnhanced({ mode, fixedAgencySlug }: StatiaBuilderEn
                     )}
                   </div>
                 </div>
+
+                {/* Agrégation */}
+                {measureConfig && (
+                  <div className="space-y-2">
+                    <div className="text-xs font-medium text-muted-foreground uppercase">Agrégation</div>
+                    <Badge variant="outline">{measureConfig.aggregation}</Badge>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
