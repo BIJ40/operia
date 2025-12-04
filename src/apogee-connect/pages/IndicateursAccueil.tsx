@@ -6,14 +6,14 @@ import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { Card } from "@/components/ui/card";
 import { FolderOpen, ClipboardCheck, FileText, Euro } from "lucide-react";
 import { formatEuros } from "@/apogee-connect/utils/formatters";
-import { calculateDashboardStats } from "@/apogee-connect/utils/dashboardCalculations";
-import { calculateTauxSAVGlobal } from "@/apogee-connect/utils/apporteursCalculations";
 import { PeriodSelector } from "@/apogee-connect/components/filters/PeriodSelector";
 import { calculateMonthlyCA } from "@/apogee-connect/utils/monthlyCalculations";
 import { MonthlyCAChart } from "@/apogee-connect/components/widgets/MonthlyCAChart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import { logWarn, logError } from "@/lib/logger";
+// StatIA V1 - Migration Phase 3
+import { useStatiaIndicateurs } from "@/statia/hooks/useStatiaIndicateurs";
 
 export default function IndicateursAccueil() {
   const { filters } = useFilters();
@@ -22,109 +22,30 @@ export default function IndicateursAccueil() {
   const userAgency = currentAgency?.id || "";
   const [selectedYear, setSelectedYear] = useState<number>(2025);
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["kpis-overview", filters, isApiEnabled, agencyChangeCounter, selectedYear],
+  // StatIA V1: Hook centralisé pour les indicateurs
+  const { data: statiaData, isLoading: statiaLoading, error: statiaError } = useStatiaIndicateurs(selectedYear);
+
+  // Chargement séparé pour le graphique mensuel (sera migré vers StatIA plus tard)
+  const { data: monthlyData } = useQuery({
+    queryKey: ["monthly-ca", isApiEnabled, agencyChangeCounter, selectedYear],
     enabled: isAgencyReady && isApiEnabled,
     queryFn: async () => {
-      if (!currentAgency?.id) {
-        logWarn('INDICATEURS', 'Agence non définie - Chargement des données annulé');
-        return null;
-      }
-      
+      if (!currentAgency?.id) return null;
       const apiData = await DataService.loadAllData(isApiEnabled);
-      
-      const stats = calculateDashboardStats({
-        projects: apiData.projects || [],
-        interventions: apiData.interventions || [],
-        factures: apiData.factures || [],
-        devis: apiData.devis || [],
-        clients: apiData.clients || [],
-        users: apiData.users || [],
-      }, filters.dateRange, userAgency);
-      
-      const { calculateDelaiMoyenDossierFacture, calculateTauxDossiersComplexes, calculatePanierMoyen, calculateTauxTransformationDevis } = await import("@/apogee-connect/utils/dashboardCalculations");
-      const delaiDossierFacture = calculateDelaiMoyenDossierFacture(
-        apiData.factures || [],
-        apiData.projects || [],
-        undefined
-      );
-      
-      const dossiersComplexes = calculateTauxDossiersComplexes(
-        apiData.interventions || [],
-        filters.dateRange
-      );
-      
-      const panierMoyen = calculatePanierMoyen(
-        apiData.factures || [],
-        filters.dateRange
-      );
-      
-      const tauxTransformationDevis = calculateTauxTransformationDevis(
-        apiData.devis || [],
-        filters.dateRange
-      );
-      
-      const { calculateNbMoyenInterventionsParDossier, calculateNbMoyenVisitesParIntervention } = await import("@/apogee-connect/utils/dashboardCalculations");
-      const nbMoyenInterventionsParDossier = calculateNbMoyenInterventionsParDossier(
-        apiData.interventions || [],
-        undefined
-      );
-      
-      const nbMoyenVisitesParIntervention = calculateNbMoyenVisitesParIntervention(
-        apiData.interventions || [],
-        undefined
-      );
-      
-      const { calculateTauxDossiersMultiUnivers, calculateTauxDossiersSansDevis } = await import("@/apogee-connect/utils/dashboardCalculations");
-      const tauxDossiersMultiUnivers = calculateTauxDossiersMultiUnivers(
-        apiData.projects || [],
-        undefined
-      );
-      
-      const tauxDossiersSansDevis = calculateTauxDossiersSansDevis(
-        apiData.projects || [],
-        apiData.factures || [],
-        apiData.devis || [],
-        undefined
-      );
-      
-      const { calculateTauxDossiersMultiTechniciens, calculatePolyvalenceTechniciens } = await import("@/apogee-connect/utils/dashboardCalculations");
-      const tauxDossiersMultiTechniciens = calculateTauxDossiersMultiTechniciens(
-        apiData.interventions || [],
-        undefined
-      );
-      
-      const polyvalenceTechniciens = calculatePolyvalenceTechniciens(
-        apiData.interventions || [],
-        apiData.projects || [],
-        apiData.users || []
-      );
-      
-      const { calculateDelaiMoyenDossierPremierDevis } = await import("@/apogee-connect/utils/dashboardCalculations");
-      const delaiDossierPremierDevis = calculateDelaiMoyenDossierPremierDevis(
-        apiData.projects || [],
-        apiData.devis || []
-      );
-      
-      const monthlyCAData = calculateMonthlyCA(
+      return calculateMonthlyCA(
         apiData.factures || [],
         apiData.clients || [],
         apiData.projects || [],
         selectedYear,
         userAgency
       );
-      
-      const tauxSAVGlobal = calculateTauxSAVGlobal(
-        apiData.interventions || [],
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.clients || [],
-        filters.dateRange
-      );
-      
-      return { ...stats, monthlyCAData, tauxSAVGlobal, delaiDossierFacture, dossiersComplexes, panierMoyen, tauxTransformationDevis, nbMoyenInterventionsParDossier, nbMoyenVisitesParIntervention, tauxDossiersMultiUnivers, tauxDossiersSansDevis, tauxDossiersMultiTechniciens, polyvalenceTechniciens, delaiDossierPremierDevis };
     },
   });
+
+  // Combine StatIA data with monthly data
+  const data = statiaData ? { ...statiaData, monthlyCAData: monthlyData } : null;
+  const isLoading = statiaLoading;
+  const error = statiaError;
 
   if (!isAgencyReady) {
     return (
@@ -353,8 +274,8 @@ export default function IndicateursAccueil() {
                 </div>
                 <div className="flex items-baseline gap-1">
                   <p className="text-xl font-bold">{data?.delaiDossierFacture?.delaiMoyen || 0}j</p>
-                  {data?.delaiDossierFacture?.nbFactures !== undefined && (
-                    <span className="text-[10px] text-muted-foreground">({data.delaiDossierFacture.nbFactures})</span>
+                  {data?.delaiDossierFacture?.nbDossiers !== undefined && (
+                    <span className="text-[10px] text-muted-foreground">({data.delaiDossierFacture.nbDossiers})</span>
                   )}
                 </div>
               </Card>
@@ -508,9 +429,6 @@ export default function IndicateursAccueil() {
                 </div>
                 <div className="flex items-baseline gap-1">
                   <p className="text-xl font-bold">{data?.delaiDossierPremierDevis?.delaiMoyen || 0}j</p>
-                  {data?.delaiDossierPremierDevis?.nbDossiers !== undefined && (
-                    <span className="text-[10px] text-muted-foreground">({data.delaiDossierPremierDevis.nbDossiers})</span>
-                  )}
                 </div>
               </Card>
             </div>
