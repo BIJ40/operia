@@ -14,11 +14,104 @@
  * });
  */
 
-// Types
-export * from './types';
+// Types - from types/index.ts
+export type {
+  AggregationType as FormulaAggregationType,
+  FilterCondition,
+  FormulaDefinition,
+  ApogeeSourceName,
+  InputSource,
+  MetricScope,
+  ValidationStatus,
+  ComputeHint,
+  VisibilityTarget,
+  MetricDefinition,
+  MetricParams,
+  LoadDebugInfo,
+  MetricResult,
+  MetricError,
+  ComputeContext,
+  ComputeComplexity
+} from './types';
+export { isValidAggregationType, isValidScope } from './types';
 
-// Rules Engine v1.0
-export * from './rules';
+// Rules Engine v1.0 - exports from rules/rules.ts
+export { 
+  STATIA_RULES_JSON,
+  resolveInterventionType,
+  isProductiveIntervention,
+  isSAVIntervention,
+  getDateField,
+  normalizeSynonym,
+  parseNLPGroupBy,
+  extractFactureMeta,
+  isFactureStateIncluded as isFactureStateIncludedRule,
+  getGroupByConfig,
+  type FactureMeta
+} from './rules/rules';
+
+// Domain Rules - only export what's not already exported
+export { STATIA_RULES } from './domain/rules';
+
+// === StatIA V1 API ===
+// API principale
+export { 
+  getMetric, 
+  getMetrics, 
+  isValidMetric, 
+  getMetricInfo, 
+  listAvailableMetrics,
+  clearComputeCache 
+} from './api/getMetric';
+
+// API Agence
+export { 
+  getMetricForAgency, 
+  getMetricsForAgency, 
+  getAgencyDashboard,
+  type AgencyMetricParams 
+} from './api/getMetricForAgency';
+
+// API Réseau/Franchiseur
+export { 
+  getMetricForNetwork, 
+  getMetricsForNetwork, 
+  getNetworkDashboard,
+  type NetworkMetricParams,
+  type NetworkStatResult 
+} from './api/getMetricForNetwork';
+
+// Hooks StatIA V1
+export { 
+  useStatiaMetric, 
+  useStatiaMetrics, 
+  useStatiaForAgency, 
+  useStatiaForNetwork 
+} from './hooks/useStatia';
+
+// Définitions de métriques
+export { 
+  STAT_DEFINITIONS, 
+  getStatDefinition, 
+  hasStatDefinition, 
+  listStatDefinitions,
+  listStatDefinitionsByCategory,
+  listCategories,
+  getRegistrySummary
+} from './definitions';
+
+// Types de définitions
+export type { 
+  StatDefinition, 
+  StatParams, 
+  StatResult, 
+  LoadedData, 
+  DateRange,
+  StatCategory,
+  DataSource,
+  Dimension,
+  AggregationType
+} from './definitions/types';
 
 // Schema Apogée
 export { APOGEE_SOURCES, getSourceDefinition, getFieldDefinition, canJoin, getJoinKeys, getAggregableFields, getGroupableFields } from './schema/apogeeSchema';
@@ -30,7 +123,7 @@ export { computeMetric, evaluateComplexity, determineExecutionTarget } from './e
 export { runMetric } from './engine/metricEngine';
 export type { MetricExecutionParams, MetricDefinitionJSON, MetricExecutionResult } from './engine/metricEngine';
 
-// Hooks
+// Hooks legacy
 export { useMetric, useAvailableMetrics, useMetricDefinition } from './hooks/useMetric';
 export type { UseMetricOptions, UseMetricReturn } from './hooks/useMetric';
 

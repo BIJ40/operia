@@ -4,10 +4,9 @@
  */
 
 import { StatParams, StatResult, DateRange, AggregationType } from '../definitions/types';
-import { getMetric, getMetrics } from './getMetric';
+import { getMetric } from './getMetric';
 import { getStatDefinition } from '../definitions';
 import { ApogeeDataServices } from '../engine/loaders';
-import { STATIA_RULES } from '../domain/rules';
 
 /**
  * Paramètres pour les métriques réseau

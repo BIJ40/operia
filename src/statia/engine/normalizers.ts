@@ -3,8 +3,6 @@
  * Normalisation centralisée des données Apogée selon STATIA_RULES
  */
 
-import { STATIA_RULES } from '../domain/rules';
-
 /**
  * Normalise un slug d'univers selon les règles STATIA
  */
@@ -71,17 +69,22 @@ export function normalizeInterventionType(type: string | null | undefined): stri
   return mappings[normalized] || normalized;
 }
 
+// Types productifs selon STATIA_RULES
+const PRODUCTIVE_TYPES = ['depannage', 'repair', 'travaux', 'work'];
+const NON_PRODUCTIVE_TYPES = ['rt', 'rdv', 'rdvtech', 'sav', 'diagnostic', 'th'];
+const VALID_INTERVENTION_STATES = ['validated', 'done', 'finished'];
+const INCLUDED_FACTURE_STATES = ['sent', 'paid', 'partial', 'partially_paid', 'overdue', 'draft'];
+
 /**
  * Vérifie si un type d'intervention est productif selon STATIA_RULES
  */
 export function isProductiveInterventionType(type: string): boolean {
   const normalized = normalizeInterventionType(type);
-  const productiveTypes = STATIA_RULES.technicians.productiveTypes as readonly string[];
   
   // Cas spécial : "recherche de fuite" est toujours productif
   if (normalized === 'recherche_fuite') return true;
   
-  return productiveTypes.includes(normalized);
+  return PRODUCTIVE_TYPES.includes(normalized);
 }
 
 /**
@@ -89,9 +92,7 @@ export function isProductiveInterventionType(type: string): boolean {
  */
 export function isNonProductiveInterventionType(type: string): boolean {
   const normalized = normalizeInterventionType(type);
-  const nonProductiveTypes = STATIA_RULES.technicians.nonProductiveTypes as readonly string[];
-  
-  return nonProductiveTypes.includes(normalized);
+  return NON_PRODUCTIVE_TYPES.includes(normalized);
 }
 
 /**
@@ -174,9 +175,7 @@ export function extractProjectUniverses(project: any): string[] {
  */
 export function isFactureStateIncluded(state: string | undefined): boolean {
   if (!state) return true; // Inclure par défaut si pas d'état
-  
-  const includedStates = STATIA_RULES.CA.includeStates as readonly string[];
-  return includedStates.includes(state.toLowerCase());
+  return INCLUDED_FACTURE_STATES.includes(state.toLowerCase());
 }
 
 /**
@@ -184,9 +183,7 @@ export function isFactureStateIncluded(state: string | undefined): boolean {
  */
 export function isValidInterventionState(state: string | undefined): boolean {
   if (!state) return false;
-  
-  const validStates = STATIA_RULES.interventions.validStates as readonly string[];
-  return validStates.includes(state.toLowerCase());
+  return VALID_INTERVENTION_STATES.includes(state.toLowerCase());
 }
 
 /**
