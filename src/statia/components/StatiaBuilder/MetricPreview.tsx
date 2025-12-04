@@ -143,15 +143,52 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
     };
   };
 
+  // Déterminer la bonne métrique StatIA en fonction de la mesure + dimensions
+  const resolveMetricId = (measure: string, dimensions: string[]): string => {
+    // Si dimension univers sélectionnée, utiliser ca_par_univers pour les métriques CA
+    if (dimensions.includes('univers')) {
+      if (measure === 'ca_mensuel' || measure === 'ca_global_ht' || measure === 'ca_par_mois') {
+        return 'ca_par_univers';
+      }
+      if (measure === 'ca_par_technicien') {
+        // Pour CA technicien + univers, utiliser ca_par_univers comme fallback
+        return 'ca_par_univers';
+      }
+    }
+    
+    // Si dimension technicien sélectionnée
+    if (dimensions.includes('technicien')) {
+      if (measure === 'ca_mensuel' || measure === 'ca_global_ht' || measure === 'ca_par_mois') {
+        return 'ca_par_technicien';
+      }
+    }
+    
+    // Si dimension apporteur sélectionnée
+    if (dimensions.includes('apporteur')) {
+      if (measure === 'ca_mensuel' || measure === 'ca_global_ht' || measure === 'ca_par_mois') {
+        return 'ca_par_apporteur';
+      }
+    }
+    
+    // Sinon utiliser la mesure telle quelle
+    return measure;
+  };
+
   const handleRunPreview = async () => {
     if (!definition?.measure) {
       setError('Aucune mesure sélectionnée');
       return;
     }
 
+    // Résoudre la métrique réelle à utiliser
+    const effectiveMetricId = resolveMetricId(
+      definition.measure, 
+      definition.dimensions || []
+    );
+
     // Vérifier que la métrique existe dans StatIA
-    if (!STAT_DEFINITIONS[definition.measure]) {
-      setError(`Métrique "${definition.measure}" non trouvée dans StatIA`);
+    if (!STAT_DEFINITIONS[effectiveMetricId]) {
+      setError(`Métrique "${effectiveMetricId}" non trouvée dans StatIA`);
       return;
     }
 
@@ -183,9 +220,9 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
         filters.apporteurId = selectedApporteur;
       }
 
-      // Appeler l'API StatIA avec les vraies données
+      // Appeler l'API StatIA avec la métrique résolue
       const result = await getMetric(
-        definition.measure,
+        effectiveMetricId,
         {
           dateRange,
           agencySlug: effectiveSlug,

@@ -226,9 +226,26 @@ export const panierMoyen: StatDefinition = {
   }
 };
 
+/**
+ * CA Mensuel (alias de ca_par_mois pour le Builder)
+ * Groupé par mois avec détail mensuel
+ */
+export const caMensuel: StatDefinition = {
+  id: 'ca_mensuel',
+  label: 'CA Mensuel',
+  description: 'Chiffre d\'affaires HT ventilé par mois',
+  category: 'ca',
+  source: 'factures',
+  dimensions: ['mois'],
+  aggregation: 'sum',
+  unit: '€',
+  compute: caParMois.compute,
+};
+
 export const caDefinitions = {
   ca_global_ht: caGlobalHt,
   ca_par_mois: caParMois,
+  ca_mensuel: caMensuel,
   du_client: duClient,
   panier_moyen: panierMoyen,
 };
