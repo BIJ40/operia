@@ -50,8 +50,6 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     color: 'primary',
     group: 'help_academy',
     requiresModule: 'help_academy',
-    badge: 'Bientôt',
-    isDisabled: true,
   },
   {
     id: 'BASE_DOCUMENTAIRE',
