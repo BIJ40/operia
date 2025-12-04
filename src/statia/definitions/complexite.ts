@@ -127,18 +127,31 @@ export const tauxDossiersComplexes: StatDefinition = {
     const { projects, interventions, factures } = data;
     const { dateRange } = params;
     
+    // Construire un Set des projectIds qui ont au moins une facture (dossiers facturés)
+    const projectIdsFactures = new Set<string>();
+    for (const facture of factures) {
+      const projectId = facture.projectId || facture.data?.projectId;
+      if (projectId) {
+        projectIdsFactures.add(projectId);
+      }
+    }
+    
     logDebug('STATIA', 'tauxDossiersComplexes - START', {
       nbProjects: projects.length,
       nbInterventions: interventions.length,
       nbFactures: factures.length,
+      nbProjectsFactures: projectIdsFactures.size,
       dateRange: dateRange ? { start: dateRange.start.toISOString(), end: dateRange.end.toISOString() } : 'none'
     });
     
-    // Filtrer les projets par période si fournie
-    let projectsFiltres = projects;
-    
-    if (dateRange) {
-      projectsFiltres = projects.filter(project => {
+    // Filtrer les projets : uniquement les FACTURÉS et dans la période
+    let projectsFiltres = projects.filter(project => {
+      const projectId = project.id || project.data?.id;
+      // Doit avoir au moins une facture
+      if (!projectIdsFactures.has(projectId)) return false;
+      
+      // Filtre par période si fournie
+      if (dateRange) {
         const date = project.date || project.data?.date || project.createdAt;
         if (!date) return false;
         
@@ -148,11 +161,14 @@ export const tauxDossiersComplexes: StatDefinition = {
         } catch {
           return false;
         }
-      });
-    }
+      }
+      
+      return true;
+    });
     
     logDebug('STATIA', 'tauxDossiersComplexes - FILTERED', {
       nbProjectsFiltres: projectsFiltres.length,
+      info: 'Uniquement dossiers FACTURÉS'
     });
     
     if (projectsFiltres.length === 0) {
@@ -166,7 +182,7 @@ export const tauxDossiersComplexes: StatDefinition = {
       };
     }
     
-    // Analyser chaque projet avec debug
+    // Analyser chaque projet facturé avec debug
     let nbComplexes = 0;
     const debugResults: Array<{ projectId: string; ref?: string; visites: number; caHt: number; univers: number; isComplexe: boolean }> = [];
     
@@ -190,6 +206,7 @@ export const tauxDossiersComplexes: StatDefinition = {
       nbMatchingUnivers: debugResults.filter(r => r.univers >= DOSSIER_COMPLEXE_RULES.minUnivers).length,
     });
     
+    // Taux calculé sur les dossiers FACTURÉS uniquement
     const tauxComplexite = projectsFiltres.length > 0
       ? (nbComplexes / projectsFiltres.length) * 100
       : 0;
@@ -197,7 +214,7 @@ export const tauxDossiersComplexes: StatDefinition = {
     logDebug('STATIA', 'tauxDossiersComplexes - RESULT', {
       tauxComplexite: Math.round(tauxComplexite * 10) / 10,
       nbComplexes,
-      nbTotal: projectsFiltres.length
+      nbDossiersFactures: projectsFiltres.length
     });
     
     return {
