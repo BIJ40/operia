@@ -5,7 +5,7 @@ import { UnifiedHeader } from './UnifiedHeader';
 import { PublicLanding } from './PublicLanding';
 import { LoginDialog } from '@/components/LoginDialog';
 import { ImageModal } from '@/components/ImageModal';
-import { Chatbot, ChatbotTestProvider } from '@/components/Chatbot';
+import { ChatbotTestProvider } from '@/components/Chatbot';
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useStorageQuota } from '@/hooks/use-storage-quota';
@@ -69,7 +69,6 @@ export function MainLayout({
         </div>
 
         <ImageModal />
-        <Chatbot />
         <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
       </SidebarProvider>
     </ChatbotTestProvider>
