@@ -64,10 +64,18 @@ export function AnnouncementGate({ userId }: AnnouncementGateProps) {
     // Le useEffect rouvrira la modale s'il reste des annonces non lues
   };
 
-  const handleLater = () => {
+  const handleLater = async () => {
     if (!currentAnnouncement) return;
 
-    // Marquer comme vue dans cette session uniquement (réapparaîtra à la prochaine connexion)
+    // Marquer comme "later" en DB pour traçabilité (réapparaîtra à la prochaine connexion)
+    // Note: le status 'later' n'est pas filtré dans useUnreadAnnouncements, donc l'annonce reviendra
+    await markAsRead.mutateAsync({
+      announcementId: currentAnnouncement.id,
+      userId,
+      status: 'later',
+    });
+
+    // Marquer comme vue dans cette session uniquement
     setViewedInSession((prev) => new Set([...prev, currentAnnouncement.id]));
 
     // Si c'était la dernière, fermer la modale et reset l'index
