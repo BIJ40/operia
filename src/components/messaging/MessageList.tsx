@@ -69,7 +69,7 @@ export function MessageList({ messages, currentUserId, isGroupChat, typingUsers,
   });
 
   return (
-    <ScrollArea className="flex-1 max-h-[calc(100vh-16rem)]" ref={scrollAreaRef}>
+    <ScrollArea className="flex-1 max-h-[calc(100vh-22rem)]" ref={scrollAreaRef}>
       <div className="p-4 space-y-4">
         {groupedMessages.map((group, groupIndex) => (
           <div key={groupIndex} className="space-y-3">
