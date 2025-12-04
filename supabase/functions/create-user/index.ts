@@ -273,7 +273,7 @@ serve(async (req) => {
         `
 
         await resend.emails.send({
-          from: 'HelpConfort Services <support@helpconfort.services>',
+          from: 'HelpConfort Services <onboarding@resend.dev>',
           to: [email],
           subject: '🎉 Bienvenue sur HelpConfort Services',
           html: emailHtml,
