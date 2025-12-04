@@ -381,30 +381,21 @@ export const delaiDossierPremierDevis: StatDefinition = {
   source: 'projects',
   aggregation: 'avg',
   unit: 'jours',
-  compute: (data: LoadedData, params: StatParams): StatResult => {
+  compute: (data: LoadedData, _params: StatParams): StatResult => {
     const { projects } = data;
     
     const delais: number[] = [];
     
+    // Note: Pas de filtre de date - on calcule sur TOUS les projets (comportement legacy)
     for (const project of projects) {
       // Ignorer les projets annulés
       if (project.state === 'canceled') continue;
       
-      // Filtre par date de création dans la période
       const createdAtStr = project.created_at;
       if (!createdAtStr) continue;
       
-      let createdAt: Date;
-      try {
-        createdAt = new Date(createdAtStr);
-        if (isNaN(createdAt.getTime())) continue;
-        
-        if (!isWithinInterval(createdAt, { start: params.dateRange.start, end: params.dateRange.end })) {
-          continue;
-        }
-      } catch {
-        continue;
-      }
+      const createdAt = new Date(createdAtStr);
+      if (isNaN(createdAt.getTime())) continue;
       
       // Chercher le premier événement "Devis envoyé" dans l'historique
       const history = project.data?.history ?? [];
@@ -420,7 +411,7 @@ export const delaiDossierPremierDevis: StatDefinition = {
       const diffMs = dateDevis.getTime() - createdAt.getTime();
       const diffDays = diffMs / (1000 * 60 * 60 * 24);
       
-      // Ignorer les valeurs négatives ou aberrantes
+      // Ignorer les valeurs négatives
       if (diffDays >= 0) {
         delais.push(diffDays);
       }
