@@ -31,6 +31,8 @@ interface SaveMetricDialogProps {
   onOpenChange: (open: boolean) => void;
   definitionJson: CustomMetricDefinition;
   onSuccess?: () => void;
+  mode: 'admin' | 'agency';
+  agencySlug?: string;
 }
 
 const CATEGORIES = [
@@ -47,28 +49,37 @@ export function SaveMetricDialog({
   onOpenChange,
   definitionJson,
   onSuccess,
+  mode,
+  agencySlug,
 }: SaveMetricDialogProps) {
-  const { isAdmin, canCreateGlobal, userAgencySlug } = useStatiaBuilderContext();
+  const { canCreateGlobal, userAgencySlug } = useStatiaBuilderContext();
   const createMutation = useCreateCustomMetric();
+  
+  // En mode agency, forcer scope='agency' - ne peut pas créer de métriques globales
+  const canSelectGlobalScope = mode === 'admin' && canCreateGlobal;
+  const effectiveAgencySlug = agencySlug || userAgencySlug;
 
   const [formData, setFormData] = useState({
     id: '',
     label: '',
     description: '',
     category: 'custom',
-    scope: isAdmin ? 'global' : 'agency' as 'global' | 'agency',
+    scope: canSelectGlobalScope ? 'global' : 'agency' as 'global' | 'agency',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // En mode agency, forcer scope='agency'
+    const finalScope = mode === 'agency' ? 'agency' : formData.scope;
+    
     const payload = {
       id: formData.id.toLowerCase().replace(/\s+/g, '_'),
       label: formData.label,
       description: formData.description || undefined,
       category: formData.category,
-      scope: formData.scope,
-      agency_slug: formData.scope === 'agency' ? userAgencySlug : undefined,
+      scope: finalScope,
+      agency_slug: finalScope === 'agency' ? effectiveAgencySlug : undefined,
       definition_json: definitionJson,
     };
 
@@ -82,7 +93,7 @@ export function SaveMetricDialog({
         label: '',
         description: '',
         category: 'custom',
-        scope: isAdmin ? 'global' : 'agency',
+        scope: canSelectGlobalScope ? 'global' : 'agency',
       });
     } catch {
       // Error handled by mutation
@@ -152,7 +163,8 @@ export function SaveMetricDialog({
             </Select>
           </div>
 
-          {canCreateGlobal && (
+          {/* Sélection de portée: uniquement en mode admin avec permissions */}
+          {canSelectGlobalScope ? (
             <div className="space-y-2">
               <Label>Portée</Label>
               <RadioGroup
@@ -173,10 +185,15 @@ export function SaveMetricDialog({
                   <RadioGroupItem value="agency" id="scope-agency" />
                   <Label htmlFor="scope-agency" className="flex items-center gap-1 cursor-pointer">
                     <Building2 className="h-4 w-4" />
-                    Locale ({userAgencySlug})
+                    Locale ({effectiveAgencySlug})
                   </Label>
                 </div>
               </RadioGroup>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 p-3 rounded-lg border bg-muted/50">
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">Métrique locale pour <strong>{effectiveAgencySlug}</strong></span>
             </div>
           )}
 
