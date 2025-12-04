@@ -90,7 +90,7 @@ export const ROUTES = {
     animateurs: '/hc-reseau/animateurs',
     animateurProfile: (animatorId: string) => `/hc-reseau/animateurs/${animatorId}`,
     users: '/hc-reseau/utilisateurs',
-    stats: '/hc-reseau/stats',
+    tableaux: '/hc-reseau/tableaux',
     comparatifs: '/hc-reseau/comparatifs',
     redevances: '/hc-reseau/redevances',
     parametres: '/hc-reseau/parametres',
@@ -214,7 +214,7 @@ type StaticRoutes =
   | typeof ROUTES['reseau']['dashboard']
   | typeof ROUTES['reseau']['agences']
   | typeof ROUTES['reseau']['animateurs']
-  | typeof ROUTES['reseau']['stats']
+  | typeof ROUTES['reseau']['tableaux']
   | typeof ROUTES['reseau']['comparatifs']
   | typeof ROUTES['reseau']['redevances']
   | typeof ROUTES['admin']['index']

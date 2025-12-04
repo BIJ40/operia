@@ -61,7 +61,7 @@ const ROUTE_TO_PAGE_KEY: Record<string, string> = {
   [ROUTES.reseau.dashboard]: 'reseau_dashboard',
   [ROUTES.reseau.agences]: 'reseau_agences',
   [ROUTES.reseau.animateurs]: 'reseau_animateurs',
-  [ROUTES.reseau.stats]: 'reseau_stats',
+  [ROUTES.reseau.tableaux]: 'reseau_stats',
   [ROUTES.reseau.comparatifs]: 'reseau_comparatifs',
   [ROUTES.reseau.redevances]: 'reseau_redevances',
   // Admin
@@ -270,7 +270,7 @@ export function UnifiedSidebar() {
         { title: 'Dashboard Réseau', url: ROUTES.reseau.dashboard, icon: Network },
         { title: 'Agences', url: ROUTES.reseau.agences, icon: Building2 },
         { title: 'Animateurs', url: ROUTES.reseau.animateurs, icon: Users, minRole: 'franchisor_admin' },
-        { title: 'Statistiques', url: ROUTES.reseau.stats, icon: PieChart },
+        { title: 'Tableaux', url: ROUTES.reseau.tableaux, icon: PieChart },
         { title: 'Comparatifs', url: ROUTES.reseau.comparatifs, icon: GitCompare },
         { title: 'Redevances', url: ROUTES.reseau.redevances, icon: Coins, minRole: 'franchisor_admin' },
       ],

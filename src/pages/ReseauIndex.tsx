@@ -10,7 +10,7 @@ const ROUTE_TO_PAGE_KEY: Record<string, string> = {
   [ROUTES.reseau.agences]: 'reseau_agences',
   [ROUTES.reseau.users]: 'reseau_users',
   [ROUTES.reseau.animateurs]: 'reseau_animateurs',
-  [ROUTES.reseau.stats]: 'reseau_stats',
+  [ROUTES.reseau.tableaux]: 'reseau_stats',
   [ROUTES.reseau.comparatifs]: 'reseau_comparatifs',
   [ROUTES.reseau.redevances]: 'reseau_redevances',
 };
@@ -53,7 +53,7 @@ export default function ReseauIndex() {
       title: 'Statistiques',
       description: 'Statistiques consolidées du réseau',
       icon: PieChart,
-      href: ROUTES.reseau.stats,
+      href: ROUTES.reseau.tableaux,
       visible: true,
     },
     {

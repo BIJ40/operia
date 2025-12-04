@@ -271,7 +271,7 @@ function AppContent() {
             <Route index element={<FranchiseurAnimateurs />} />
             <Route path=":animatorId" element={<AnimatorProfile />} />
           </Route>
-          <Route path="/hc-reseau/stats" element={<MainLayout><RoleGuard minRole="franchisor_user"><ModuleGuard moduleKey="reseau_franchiseur"><FranchiseurLayout /></ModuleGuard></RoleGuard></MainLayout>}>
+          <Route path="/hc-reseau/tableaux" element={<MainLayout><RoleGuard minRole="franchisor_user"><ModuleGuard moduleKey="reseau_franchiseur"><FranchiseurLayout /></ModuleGuard></RoleGuard></MainLayout>}>
             <Route index element={<FranchiseurStats />} />
           </Route>
           <Route path="/hc-reseau/comparatifs" element={<MainLayout><RoleGuard minRole="franchisor_user"><ModuleGuard moduleKey="reseau_franchiseur"><FranchiseurLayout /></ModuleGuard></RoleGuard></MainLayout>}>

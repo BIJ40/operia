@@ -46,7 +46,7 @@ export const PAGE_DEFAULTS: PageDefaultConfig[] = [
   { pageKey: 'reseau_dashboard', defaultTitle: 'Dashboard Réseau', defaultSubtitle: 'Vue d\'ensemble du réseau', route: ROUTES.reseau.dashboard },
   { pageKey: 'reseau_agences', defaultTitle: 'Agences du Réseau', defaultSubtitle: 'Gestion des agences franchisées', route: ROUTES.reseau.agences },
   { pageKey: 'reseau_animateurs', defaultTitle: 'Gestion Animateurs', defaultSubtitle: 'Équipe d\'animation réseau', route: ROUTES.reseau.animateurs },
-  { pageKey: 'reseau_stats', defaultTitle: 'Statistiques Réseau', defaultSubtitle: 'KPI consolidés du réseau', route: ROUTES.reseau.stats },
+  { pageKey: 'reseau_stats', defaultTitle: 'Tableaux Réseau', defaultSubtitle: 'KPI consolidés du réseau', route: ROUTES.reseau.tableaux },
   { pageKey: 'reseau_comparatifs', defaultTitle: 'Comparatifs', defaultSubtitle: 'Comparaison entre agences', route: ROUTES.reseau.comparatifs },
   { pageKey: 'reseau_redevances', defaultTitle: 'Redevances', defaultSubtitle: 'Calcul et suivi des redevances', route: ROUTES.reseau.redevances },
   
@@ -183,7 +183,7 @@ export const PAGE_HEADER_MATCHERS: PageHeaderConfig[] = [
   { match: (path) => path === '/hc-reseau/utilisateurs', pageKey: 'reseau_utilisateurs', defaultTitle: 'Utilisateurs Réseau', defaultSubtitle: 'Gestion des utilisateurs des agences', icon: 'Users', parentRoute: '/hc-reseau', parentLabel: 'Espace Franchiseur' },
   { match: (path) => /^\/hc-reseau\/animateurs\/[^/]+$/.test(path), pageKey: 'reseau_animateur_profile', defaultTitle: 'Profil Animateur', defaultSubtitle: 'Détails et agences assignées', icon: 'UserCog', parentRoute: '/hc-reseau/animateurs', parentLabel: 'Animateurs' },
   { match: (path) => path === '/hc-reseau/animateurs', pageKey: 'reseau_animateurs', defaultTitle: 'Gestion Animateurs', defaultSubtitle: 'Équipe d\'animation réseau', icon: 'UserCog', parentRoute: '/hc-reseau', parentLabel: 'Espace Franchiseur' },
-  { match: (path) => path === '/hc-reseau/stats', pageKey: 'reseau_stats', defaultTitle: 'Statistiques Réseau', defaultSubtitle: 'KPI consolidés du réseau', icon: 'PieChart', parentRoute: '/hc-reseau', parentLabel: 'Espace Franchiseur' },
+  { match: (path) => path === '/hc-reseau/tableaux', pageKey: 'reseau_stats', defaultTitle: 'Tableaux Réseau', defaultSubtitle: 'KPI consolidés du réseau', icon: 'PieChart', parentRoute: '/hc-reseau', parentLabel: 'Espace Franchiseur' },
   { match: (path) => path === '/hc-reseau/comparatifs', pageKey: 'reseau_comparatifs', defaultTitle: 'Comparatifs', defaultSubtitle: 'Comparaison entre agences', icon: 'GitCompare', parentRoute: '/hc-reseau', parentLabel: 'Espace Franchiseur' },
   { match: (path) => path === '/hc-reseau/redevances', pageKey: 'reseau_redevances', defaultTitle: 'Redevances', defaultSubtitle: 'Calcul et suivi des redevances', icon: 'Calculator', parentRoute: '/hc-reseau', parentLabel: 'Espace Franchiseur' },
   { match: (path) => path === '/hc-reseau/parametres', pageKey: 'reseau_parametres', defaultTitle: 'Paramètres Réseau', defaultSubtitle: 'Configuration du réseau franchiseur', icon: 'Settings', parentRoute: '/hc-reseau', parentLabel: 'Espace Franchiseur' },
