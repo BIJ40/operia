@@ -28,11 +28,12 @@ export interface IndicateursData {
   
   // Taux
   tauxSAVGlobal: number;
+  tauxSAVGlobalBreakdown?: { nbInterventionsInitiales: number; nbInterventionsSAV: number; nbDossiers: number };
   tauxTransformationDevis: { tauxTransformation: number; nbAcceptes: number; nbEnvoyes: number };
   
   // Délais
   delaiDossierFacture: { delaiMoyen: number; nbDossiers: number };
-  delaiDossierPremierDevis: { delaiMoyen: number };
+  delaiDossierPremierDevis: { delaiMoyen: number; mediane?: number; min?: number; max?: number; nbDossiers?: number };
   
   // Complexité
   dossiersComplexes: { tauxComplexite: number; nbComplexes: number; nbTotal: number };
@@ -133,7 +134,7 @@ export function useStatiaIndicateurs(selectedYear?: number) {
           delaiPremierDevisStat,
         ] = await Promise.all([
           computeStatSafe('ca_global_ht', loadedData, params),
-          computeStatSafe('taux_sav_global', loadedData, params),
+          computeStatSafe('taux_sav_global', loadedData, params), // Nouvelle formule: nb_SAV / nb_interventions_initiales
           computeStatSafe('taux_transformation_devis_nombre', loadedData, params),
           computeStatSafe('nombre_devis', loadedData, params),
           computeStatSafe('montant_devis', loadedData, params),
@@ -141,7 +142,7 @@ export function useStatiaIndicateurs(selectedYear?: number) {
           computeStatSafe('duree_moyenne_dossier', loadedData, params),
           computeStatSafe('nb_dossiers_crees', loadedData, params),
           computeStatSafe('taux_dossiers_complexes', loadedData, params),
-          computeStatSafe('delai_dossier_premier_devis', loadedData, params),
+          computeStatSafe('delai_premier_devis', loadedData, params), // Nouvelle métrique: délai intervention initiale → premier devis
         ]);
 
         // Calculs legacy pour les métriques non encore migrées
@@ -198,6 +199,11 @@ export function useStatiaIndicateurs(selectedYear?: number) {
           caJour: caGlobal?.value as number ?? 0,
           nbFacturesCA: caGlobal?.breakdown?.factureCount ?? 0,
           tauxSAVGlobal: tauxSav?.value as number ?? 0,
+          tauxSAVGlobalBreakdown: {
+            nbInterventionsInitiales: tauxSav?.breakdown?.nbInterventionsInitiales ?? 0,
+            nbInterventionsSAV: tauxSav?.breakdown?.nbInterventionsSAV ?? 0,
+            nbDossiers: tauxSav?.breakdown?.nbDossiers ?? 0,
+          },
           panierMoyen: {
             panierMoyen: panierMoyen?.value as number ?? 0,
             nbDossiers: panierMoyen?.breakdown?.factureCount ?? 0,
@@ -221,6 +227,10 @@ export function useStatiaIndicateurs(selectedYear?: number) {
           },
           delaiDossierPremierDevis: {
             delaiMoyen: delaiPremierDevisStat?.value as number ?? 0,
+            mediane: delaiPremierDevisStat?.breakdown?.mediane ?? 0,
+            min: delaiPremierDevisStat?.breakdown?.min ?? 0,
+            max: delaiPremierDevisStat?.breakdown?.max ?? 0,
+            nbDossiers: delaiPremierDevisStat?.breakdown?.nbDossiers ?? 0,
           },
           dossiersComplexes: {
             tauxComplexite: dossiersComplexesStat?.value as number ?? 0,

@@ -67,25 +67,38 @@ function projectHasSAV(project: any, interventions: any[]): boolean {
 }
 
 /**
- * Taux SAV Global
- * Pourcentage de dossiers ayant généré un SAV
+ * Identifie si une intervention est "réalisée" (terminée)
+ */
+function isInterventionRealisee(intervention: any): boolean {
+  const state = (intervention.state || intervention.statut || intervention.data?.state || '').toLowerCase();
+  return ['done', 'finished', 'validated', 'completed', 'réalisée', 'terminée'].includes(state);
+}
+
+/**
+ * Taux SAV Global (basé interventions)
+ * taux = nb_interventions_SAV / nb_interventions_initiales
+ * Intervention initiale = première intervention réalisée par dossier (min date)
  */
 export const tauxSavGlobal: StatDefinition = {
   id: 'taux_sav_global',
   label: 'Taux SAV Global',
-  description: 'Pourcentage de dossiers ayant généré un SAV',
+  description: 'Taux de SAV = nb interventions SAV / nb interventions initiales (par dossier)',
   category: 'sav',
-  source: ['projects', 'interventions'],
+  source: ['interventions'],
   aggregation: 'ratio',
   unit: '%',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { projects, interventions } = data;
+    const { interventions } = data;
     
-    let totalProjects = 0;
-    let savProjects = 0;
+    console.log('[StatIA] TAUX_SAV_GLOBAL - START', { nbInterventions: interventions.length });
     
-    for (const project of projects) {
-      const dateStr = project.date || project.created_at;
+    // 1. Filtrer interventions réalisées dans la période
+    const interventionsRealisees: any[] = [];
+    
+    for (const intervention of interventions) {
+      if (!isInterventionRealisee(intervention)) continue;
+      
+      const dateStr = intervention.dateReelle || intervention.date || intervention.data?.dateReelle || intervention.created_at;
       if (dateStr) {
         try {
           const date = parseISO(dateStr);
@@ -97,26 +110,75 @@ export const tauxSavGlobal: StatDefinition = {
         }
       }
       
-      totalProjects++;
+      interventionsRealisees.push(intervention);
+    }
+    
+    console.log('[StatIA] TAUX_SAV_GLOBAL - Interventions réalisées:', interventionsRealisees.length);
+    
+    // 2. Grouper par dossier et identifier intervention initiale
+    const parDossier = new Map<string | number, { interventions: any[], dateMin: Date | null }>();
+    
+    for (const intervention of interventionsRealisees) {
+      const projectId = intervention.projectId || intervention.project_id;
+      if (!projectId) continue;
       
-      if (projectHasSAV(project, interventions)) {
-        savProjects++;
+      if (!parDossier.has(projectId)) {
+        parDossier.set(projectId, { interventions: [], dateMin: null });
+      }
+      
+      const group = parDossier.get(projectId)!;
+      group.interventions.push(intervention);
+      
+      const dateStr = intervention.dateReelle || intervention.date || intervention.data?.dateReelle;
+      if (dateStr) {
+        try {
+          const date = parseISO(dateStr);
+          if (!group.dateMin || date < group.dateMin) {
+            group.dateMin = date;
+          }
+        } catch {}
       }
     }
     
-    const taux = totalProjects > 0 ? (savProjects / totalProjects) * 100 : 0;
+    // 3. Compter interventions initiales et SAV
+    let nbInterventionsInitiales = 0;
+    let nbInterventionsSAV = 0;
+    
+    for (const [projectId, group] of parDossier) {
+      // Chaque dossier a une intervention initiale
+      nbInterventionsInitiales++;
+      
+      // Compter les SAV dans ce dossier
+      for (const intervention of group.interventions) {
+        if (isSAVIntervention(intervention)) {
+          nbInterventionsSAV++;
+        }
+      }
+    }
+    
+    console.log('[StatIA] TAUX_SAV_GLOBAL - Résultat:', { 
+      nbDossiers: parDossier.size,
+      nbInterventionsInitiales, 
+      nbInterventionsSAV 
+    });
+    
+    // 4. Calculer taux
+    const taux = nbInterventionsInitiales > 0 
+      ? (nbInterventionsSAV / nbInterventionsInitiales) * 100 
+      : 0;
     
     return {
       value: Math.round(taux * 10) / 10,
       metadata: {
         computedAt: new Date(),
-        source: 'projects',
-        recordCount: totalProjects,
+        source: 'interventions',
+        recordCount: interventionsRealisees.length,
       },
       breakdown: {
-        totalProjects,
-        savProjects,
-        projetsSansSAV: totalProjects - savProjects,
+        nbInterventionsInitiales,
+        nbInterventionsSAV,
+        nbDossiers: parDossier.size,
+        taux: Math.round(taux * 10) / 10,
       }
     };
   }

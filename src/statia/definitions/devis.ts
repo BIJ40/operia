@@ -249,9 +249,163 @@ export const montantDevis: StatDefinition = {
   }
 };
 
+/**
+ * Délai Premier Devis
+ * Délai entre intervention initiale du dossier et premier devis émis
+ */
+export const delaiPremierDevis: StatDefinition = {
+  id: 'delai_premier_devis',
+  label: 'Délai Premier Devis',
+  description: 'Délai moyen entre intervention initiale et premier devis (en jours)',
+  category: 'devis',
+  source: ['interventions', 'devis'],
+  aggregation: 'avg',
+  unit: 'jours',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { interventions, devis } = data;
+    
+    console.log('[StatIA] DELAI_PREMIER_DEVIS - START', { 
+      nbInterventions: interventions.length,
+      nbDevis: devis.length 
+    });
+    
+    // 1. Trouver intervention initiale par dossier (min date réalisée)
+    const interventionInitialeParDossier = new Map<string | number, { date: Date, intervention: any }>();
+    
+    for (const intervention of interventions) {
+      const projectId = intervention.projectId || intervention.project_id;
+      if (!projectId) continue;
+      
+      // Vérifier état réalisé
+      const state = (intervention.state || intervention.statut || intervention.data?.state || '').toLowerCase();
+      const isRealise = ['done', 'finished', 'validated', 'completed', 'réalisée', 'terminée'].includes(state);
+      if (!isRealise) continue;
+      
+      const dateStr = intervention.dateReelle || intervention.date || intervention.data?.dateReelle;
+      if (!dateStr) continue;
+      
+      let date: Date;
+      try {
+        date = new Date(dateStr);
+        if (isNaN(date.getTime())) continue;
+      } catch {
+        continue;
+      }
+      
+      // Filtrer par période
+      if (date < params.dateRange.start || date > params.dateRange.end) continue;
+      
+      const existing = interventionInitialeParDossier.get(projectId);
+      if (!existing || date < existing.date) {
+        interventionInitialeParDossier.set(projectId, { date, intervention });
+      }
+    }
+    
+    console.log('[StatIA] DELAI_PREMIER_DEVIS - Dossiers avec intervention initiale:', interventionInitialeParDossier.size);
+    
+    // 2. Trouver premier devis par dossier (exclure brouillons/annulés)
+    const premierDevisParDossier = new Map<string | number, { date: Date, devis: any }>();
+    
+    for (const d of devis) {
+      const projectId = d.projectId || d.project_id;
+      if (!projectId) continue;
+      
+      // Exclure brouillons et annulés
+      const state = (d.state || d.statut || d.data?.state || d.data?.statut || '').toLowerCase();
+      if (state === 'draft' || state === 'brouillon' || state === 'cancelled' || state === 'annule') {
+        continue;
+      }
+      
+      const dateStr = d.dateReelle || d.date || d.dateCreation || d.data?.dateReelle || d.data?.date;
+      if (!dateStr) continue;
+      
+      let date: Date;
+      try {
+        date = new Date(dateStr);
+        if (isNaN(date.getTime())) continue;
+      } catch {
+        continue;
+      }
+      
+      const existing = premierDevisParDossier.get(projectId);
+      if (!existing || date < existing.date) {
+        premierDevisParDossier.set(projectId, { date, devis: d });
+      }
+    }
+    
+    console.log('[StatIA] DELAI_PREMIER_DEVIS - Dossiers avec devis:', premierDevisParDossier.size);
+    
+    // 3. Calculer délais pour les dossiers ayant les deux
+    const delais: number[] = [];
+    
+    for (const [projectId, interventionData] of interventionInitialeParDossier) {
+      const devisData = premierDevisParDossier.get(projectId);
+      if (!devisData) continue;
+      
+      // Délai en jours
+      const diffMs = devisData.date.getTime() - interventionData.date.getTime();
+      const delaiJours = diffMs / (1000 * 60 * 60 * 24);
+      
+      // Ignorer délais négatifs (devis avant intervention)
+      if (delaiJours >= 0) {
+        delais.push(delaiJours);
+      }
+    }
+    
+    console.log('[StatIA] DELAI_PREMIER_DEVIS - Délais calculés:', delais.length);
+    
+    // 4. Calculer stats
+    if (delais.length === 0) {
+      return {
+        value: 0,
+        metadata: {
+          computedAt: new Date(),
+          source: 'devis',
+          recordCount: 0,
+        },
+        breakdown: {
+          moyenne: 0,
+          mediane: 0,
+          min: 0,
+          max: 0,
+          nbDossiers: 0,
+        }
+      };
+    }
+    
+    delais.sort((a, b) => a - b);
+    
+    const moyenne = delais.reduce((sum, d) => sum + d, 0) / delais.length;
+    const mediane = delais.length % 2 === 0
+      ? (delais[delais.length / 2 - 1] + delais[delais.length / 2]) / 2
+      : delais[Math.floor(delais.length / 2)];
+    const min = delais[0];
+    const max = delais[delais.length - 1];
+    
+    console.log('[StatIA] DELAI_PREMIER_DEVIS - Résultat:', { moyenne, mediane, min, max });
+    
+    return {
+      value: Math.round(moyenne * 10) / 10,
+      metadata: {
+        computedAt: new Date(),
+        source: 'devis',
+        recordCount: delais.length,
+      },
+      breakdown: {
+        moyenne: Math.round(moyenne * 10) / 10,
+        mediane: Math.round(mediane * 10) / 10,
+        min: Math.round(min * 10) / 10,
+        max: Math.round(max * 10) / 10,
+        nbDossiers: delais.length,
+      }
+    };
+  }
+};
+
 export const devisDefinitions = {
   taux_transformation_devis_nombre: tauxTransformationDevisNombre,
   taux_transformation_devis_montant: tauxTransformationDevisMontant,
   nombre_devis: nombreDevis,
   montant_devis: montantDevis,
+  delai_premier_devis: delaiPremierDevis,
 };
