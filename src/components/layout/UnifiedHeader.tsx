@@ -333,9 +333,10 @@ export function UnifiedHeader() {
         {/* Subtitle bar - below main header */}
         {displaySubtitle && (
           <div 
-            className={`px-4 py-2 border-t border-border/50 ${subtitleBgClass} flex items-center justify-between`}
+            className={`px-4 py-2 border-t border-border/50 ${subtitleBgClass} grid grid-cols-[auto_1fr_auto] items-center gap-4`}
           >
-            <p className={`${subtitleTextSizeClass} text-muted-foreground truncate flex-1`}>
+            <div className="w-12" /> {/* Spacer to balance the widget */}
+            <p className={`${subtitleTextSizeClass} text-muted-foreground truncate text-center`}>
               {displaySubtitle}
             </p>
             <MessagingWidget />
