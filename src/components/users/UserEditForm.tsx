@@ -319,7 +319,7 @@ export function UserEditForm({
             Générer
           </Button>
           <Button 
-            variant="outline" 
+            variant="default" 
             onClick={() => { 
               onResetPassword(newPassword, sendEmail); 
               setNewPassword(''); 
@@ -327,7 +327,8 @@ export function UserEditForm({
             disabled={!newPassword || isPasswordPending}
             title="Appliquer le nouveau mot de passe"
           >
-            {isPasswordPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
+            {isPasswordPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <KeyRound className="w-4 h-4 mr-1" />}
+            Appliquer
           </Button>
         </div>
         <div className="flex items-center space-x-2">
