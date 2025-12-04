@@ -22,6 +22,7 @@ export interface HeatPriorityConfig {
 
 /**
  * Configuration complète des niveaux de priorité heat
+ * P2: Support dark mode avec classes Tailwind dark:
  */
 export function getHeatPriorityConfig(heat: number): HeatPriorityConfig {
   if (heat >= 11) {
@@ -29,8 +30,8 @@ export function getHeatPriorityConfig(heat: number): HeatPriorityConfig {
       value: heat,
       label: 'Critique',
       emoji: '🔴',
-      color: 'text-red-700',
-      bgColor: 'bg-red-100',
+      color: 'text-red-700 dark:text-red-300',
+      bgColor: 'bg-red-100 dark:bg-red-900/40',
       slaHours: 4,
     };
   }
@@ -40,8 +41,8 @@ export function getHeatPriorityConfig(heat: number): HeatPriorityConfig {
       value: heat,
       label: 'Élevé',
       emoji: '🟠',
-      color: 'text-orange-700',
-      bgColor: 'bg-orange-100',
+      color: 'text-orange-700 dark:text-orange-300',
+      bgColor: 'bg-orange-100 dark:bg-orange-900/40',
       slaHours: 8,
     };
   }
@@ -51,8 +52,8 @@ export function getHeatPriorityConfig(heat: number): HeatPriorityConfig {
       value: heat,
       label: 'Moyen',
       emoji: '🟡',
-      color: 'text-yellow-700',
-      bgColor: 'bg-yellow-100',
+      color: 'text-yellow-700 dark:text-yellow-300',
+      bgColor: 'bg-yellow-100 dark:bg-yellow-900/40',
       slaHours: 24,
     };
   }
@@ -61,8 +62,8 @@ export function getHeatPriorityConfig(heat: number): HeatPriorityConfig {
     value: heat,
     label: 'Faible',
     emoji: '🟢',
-    color: 'text-green-700',
-    bgColor: 'bg-green-100',
+    color: 'text-green-700 dark:text-green-300',
+    bgColor: 'bg-green-100 dark:bg-green-900/40',
     slaHours: 72,
   };
 }

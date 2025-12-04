@@ -1,6 +1,7 @@
 /**
  * Détails d'un ticket support - Phase 3
  * Affiche infos complètes + actions (statut, priorité, escalade)
+ * P2: Ajout historique des actions
  */
 
 import { useState } from 'react';
@@ -18,6 +19,7 @@ import { TicketStatusBadge } from './TicketStatusBadge';
 import { HeatPriorityBadge } from '@/components/support/HeatPriorityBadge';
 import { HeatPrioritySelector } from '@/components/support/HeatPrioritySelector';
 import { ServiceBadge } from '@/components/tickets/ServiceBadge';
+import { TicketActionHistory } from './TicketActionHistory';
 import {
   TICKET_STATUSES,
   TICKET_STATUS_LABELS,
@@ -70,7 +72,7 @@ export function TicketDetails({
           <div className="flex items-center gap-2">
             {/* Bouton Escalade */}
             {canEscalate && !isResolved && onEscalate && (
-              <Button onClick={onEscalate} variant="outline" size="sm" className="text-orange-600 border-orange-300 hover:bg-orange-50">
+              <Button onClick={onEscalate} variant="outline" size="sm" className="text-orange-600 border-orange-300 hover:bg-orange-50 dark:hover:bg-orange-950/30">
                 <ArrowUpCircle className="w-4 h-4 mr-1" />
                 Escalader N{(ticket.support_level || 1) + 1}
               </Button>
@@ -97,7 +99,7 @@ export function TicketDetails({
           <HeatPriorityBadge priority={ticket.heat_priority} />
           <ServiceBadge service={ticket.service} />
           {ticket.support_level && (
-            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-300">
+            <Badge variant="outline" className="bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700">
               Niveau {ticket.support_level}
             </Badge>
           )}
@@ -122,7 +124,7 @@ export function TicketDetails({
                   <SelectTrigger className="h-8">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-background z-50">
                     {Object.entries(TICKET_STATUS_LABELS).map(([value, label]) => (
                       <SelectItem key={value} value={value}>
                         {label}
@@ -176,6 +178,9 @@ export function TicketDetails({
           )}
         </div>
 
+        {/* P2: Historique des actions */}
+        <TicketActionHistory ticketId={ticket.id} />
+
         {/* Historique d'escalade */}
         {ticket.escalation_history && Array.isArray(ticket.escalation_history) && ticket.escalation_history.length > 0 && (
           <div className="border-t pt-4">
@@ -190,7 +195,7 @@ export function TicketDetails({
                 <AccordionContent>
                   <div className="space-y-2">
                     {ticket.escalation_history.map((entry: any, idx: number) => (
-                      <div key={idx} className="p-2 bg-orange-50 rounded text-sm">
+                      <div key={idx} className="p-2 bg-orange-50 dark:bg-orange-900/30 rounded text-sm">
                         <p className="font-medium">
                           N{entry.from_level} → N{entry.to_level}
                         </p>
@@ -237,8 +242,8 @@ export function TicketDetails({
                             key={idx}
                             className={`p-3 rounded-lg ${
                               msg.role === 'user'
-                                ? 'bg-blue-50 text-blue-900'
-                                : 'bg-gray-50 text-gray-900'
+                                ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100'
+                                : 'bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
                             }`}
                           >
                             <p className="text-xs font-medium mb-1">
