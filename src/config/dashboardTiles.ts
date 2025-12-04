@@ -3,7 +3,7 @@ import {
   MessageSquare, Network, Users, Database, Settings, LucideIcon,
   PieChart, Coins, LifeBuoy, Headphones, GraduationCap, Kanban, Activity,
   HelpCircle, Calendar, UserCog, Briefcase, Inbox, Building2, GitCompare,
-  MessagesSquare
+  MessagesSquare, Wrench
 } from 'lucide-react';
 import { ROUTES } from './routes';
 import { ModuleKey } from '@/types/modules';
@@ -17,7 +17,7 @@ export interface DashboardTile {
   route: string;
   scopeSlug: string;
   color: 'primary' | 'accent';
-  group: 'help_academy' | 'pilotage' | 'rh' | 'support' | 'projects' | 'franchiseur' | 'admin' | 'communication';
+  group: 'help_academy' | 'pilotage' | 'rh' | 'support' | 'projects' | 'franchiseur' | 'admin' | 'communication' | 'technicien';
   requiresAdmin?: boolean;
   requiresFranchisor?: boolean; // N3+ (franchisor_user)
   requiresModule?: ModuleKey; // Requires specific module to be enabled
@@ -214,6 +214,17 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     group: 'projects',
     requiresModule: 'apogee_tickets',
   },
+  // Espace Technicien
+  {
+    id: 'TECH_APP',
+    title: 'APP',
+    description: 'Interventions et relevés techniques',
+    icon: Wrench,
+    route: ROUTES.pilotage.techInterventions,
+    scopeSlug: SCOPE_SLUGS.RH_TECH,
+    color: 'accent',
+    group: 'technicien',
+  },
   // Franchiseur
   {
     id: 'RESEAU_FRANCHISEUR',
@@ -392,5 +403,11 @@ export const DASHBOARD_GROUPS = {
     icon: Settings,
     colorClass: 'text-destructive',
     indexUrl: ROUTES.admin.index,
+  },
+  technicien: {
+    title: 'Espace Technicien',
+    icon: Wrench,
+    colorClass: 'text-helpconfort-orange',
+    indexUrl: ROUTES.pilotage.techInterventions,
   },
 } as const;
