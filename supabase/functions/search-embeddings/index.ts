@@ -84,7 +84,7 @@ serve(async (req) => {
 
     // Rate limit: 30 req/min per user
     const rateLimitKey = `search-embeddings:${userId || 'anonymous'}`;
-    const rateCheck = checkRateLimit(rateLimitKey, { limit: 30, windowMs: 60 * 1000 });
+    const rateCheck = await checkRateLimit(rateLimitKey, { limit: 30, windowMs: 60 * 1000 });
     if (!rateCheck.allowed) {
       console.log(`[SEARCH-EMBEDDINGS] Rate limit exceeded for ${rateLimitKey}`);
       return rateLimitResponse(rateCheck.retryAfter!, corsHeaders);

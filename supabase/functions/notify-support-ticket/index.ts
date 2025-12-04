@@ -63,7 +63,7 @@ serve(async (req) => {
 
     // Rate limit: 10 req/min per user
     const rateLimitKey = `notify-support-ticket:${user.id}`;
-    const rateCheck = checkRateLimit(rateLimitKey, { limit: 10, windowMs: 60 * 1000 });
+    const rateCheck = await checkRateLimit(rateLimitKey, { limit: 10, windowMs: 60 * 1000 });
     if (!rateCheck.allowed) {
       console.log(`[NOTIFY-SUPPORT-TICKET] Rate limit exceeded for ${rateLimitKey}`);
       return rateLimitResponse(rateCheck.retryAfter!, corsHeaders);
