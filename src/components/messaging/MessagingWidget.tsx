@@ -75,27 +75,32 @@ export function MessagingWidget() {
 
   return (
     <div className="relative">
-      {/* Bubble button */}
-      <Button
-        variant="ghost"
-        size="icon"
+      {/* Bubble button with label */}
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "relative rounded-full transition-all duration-200 h-10 w-10",
+          "flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-200",
+          "bg-primary/10 hover:bg-primary/20 border border-primary/20",
           isOpen && "bg-primary text-primary-foreground"
         )}
       >
         {isOpen ? (
-          <ChevronDown className="w-5 h-5" />
+          <ChevronDown className="w-4 h-4" />
         ) : (
-          <MessageCircle className="w-5 h-5" />
+          <MessageCircle className="w-4 h-4 text-primary" />
         )}
+        <span className={cn(
+          "text-xs font-semibold uppercase tracking-wide",
+          isOpen ? "text-primary-foreground" : "text-primary"
+        )}>
+          Messagerie interne
+        </span>
         {!isOpen && unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+          <span className="bg-destructive text-destructive-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
-      </Button>
+      </button>
 
       {/* Dropdown panel */}
       <div
