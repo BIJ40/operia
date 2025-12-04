@@ -1,39 +1,17 @@
-import { useAuth } from '@/contexts/AuthContext';
-import { useQuery } from '@tanstack/react-query';
-import { DataService } from '@/apogee-connect/services/dataService';
-import { calculateDashboardStats } from '@/apogee-connect/utils/dashboardCalculations';
-import { calculateMonthlyCA } from '@/apogee-connect/utils/monthlyCalculations';
-import { calculateUniversStats } from '@/apogee-connect/utils/universCalculations';
-import { calculateTop10Apporteurs } from '@/apogee-connect/utils/apporteursCalculations';
-import { calculateSAVGlobalStats } from '@/apogee-connect/utils/savCalculations';
-import { buildTechMap } from '@/apogee-connect/utils/techTools';
 import { formatEuros, formatPercent, formatUniverseLabel } from '@/apogee-connect/utils/formatters';
-import { startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 import { Card } from '@/components/ui/card';
 import { TrendingUp, Target, Users, Star, DollarSign, AlertCircle } from 'lucide-react';
 import { DiffusionSettings } from '@/hooks/use-diffusion-settings';
+import { useDiffusionKpisStatia } from './useDiffusionKpisStatia';
 
 interface DiffusionKpiTilesProps {
   currentMonthIndex: number;
   settings: DiffusionSettings;
 }
 
-const monthNames = [
-  'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin',
-  'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'
-];
-
 export const DiffusionKpiTiles = ({ currentMonthIndex, settings }: DiffusionKpiTilesProps) => {
-  const { agence } = useAuth();
-
-  const { data, isLoading } = useQuery({
-    queryKey: ['diffusion-kpis', agence, currentMonthIndex],
-    queryFn: async () => {
-      const allData = await DataService.loadAllData(true);
-      return allData;
-    },
-    enabled: !!agence,
-  });
+  // Hook StatIA pour les KPIs
+  const { data, isLoading } = useDiffusionKpisStatia(currentMonthIndex);
 
   if (isLoading || !data) {
     return (
@@ -45,74 +23,20 @@ export const DiffusionKpiTiles = ({ currentMonthIndex, settings }: DiffusionKpiT
     );
   }
 
-  const currentDate = new Date();
-  currentDate.setMonth(currentMonthIndex);
-  
-  const dateRange = {
-    start: startOfMonth(currentDate),
-    end: endOfMonth(currentDate),
-  };
+  const {
+    currentMonthCA,
+    tauxSAV,
+    tauxTransfo,
+    topUnivers,
+    caMoyenParTech,
+    nbTechsActifs,
+    topApporteur,
+    moyenneParJour,
+    currentDay,
+    nbSAVProjects,
+    nbTotalProjects,
+  } = data;
 
-  const yearRange = {
-    start: startOfYear(currentDate),
-    end: endOfYear(currentDate),
-  };
-
-  // Calculs
-  const dashboardStats = calculateDashboardStats(
-    {
-      projects: data.projects || [],
-      interventions: data.interventions || [],
-      factures: data.factures || [],
-      devis: data.devis || [],
-      clients: data.clients || [],
-      users: data.users || [],
-    },
-    dateRange,
-    agence || ''
-  );
-  
-  const monthlyCA = calculateMonthlyCA(
-    data.factures || [],
-    data.clients || [],
-    data.projects || [],
-    currentDate.getFullYear(),
-    agence || ''
-  );
-  const currentMonthCA = monthlyCA.find(m => m.month === monthNames[currentMonthIndex])?.ca || 0;
-  
-  const universStats = calculateUniversStats(
-    data.factures || [],
-    data.projects || [],
-    data.interventions || [],
-    dateRange
-  );
-  const topUnivers = [...universStats].sort((a, b) => b.caHT - a.caHT)[0];
-  
-  const techMap = buildTechMap(data.users || []);
-  const nbTechsActifs = Object.keys(techMap).length;
-  const caMoyenParTech = nbTechsActifs > 0 ? currentMonthCA / nbTechsActifs : 0;
-  
-  const topApporteurs = calculateTop10Apporteurs(
-    data.factures || [],
-    data.projects || [],
-    data.devis || [],
-    data.clients || [],
-    yearRange
-  );
-  const topApporteur = topApporteurs[0];
-  
-  const daysInMonth = new Date(currentDate.getFullYear(), currentMonthIndex + 1, 0).getDate();
-  const currentDay = currentDate.getMonth() === new Date().getMonth() ? new Date().getDate() : daysInMonth;
-  const moyenneParJour = currentDay > 0 ? currentMonthCA / currentDay : 0;
-  
-  const savStats = calculateSAVGlobalStats(
-    data.projects || [],
-    data.factures || [],
-    data.interventions || [],
-    dateRange
-  );
-  
   const ecartObjectif = currentMonthCA - settings.objectif_amount;
 
   const tiles = [
@@ -132,7 +56,7 @@ export const DiffusionKpiTiles = ({ currentMonthIndex, settings }: DiffusionKpiT
     },
     {
       title: 'Taux de conversion',
-      value: formatPercent(dashboardStats.tauxTransformationDevis || 0),
+      value: formatPercent(tauxTransfo || 0),
       subtitle: `Devis du mois`,
       icon: TrendingUp,
       color: 'from-green-500 to-green-600',
@@ -167,8 +91,8 @@ export const DiffusionKpiTiles = ({ currentMonthIndex, settings }: DiffusionKpiT
     },
     {
       title: 'SAV - Mois courant',
-      value: `${savStats.nbSAVProjects}/${savStats.nbTotalProjects}`,
-      subtitle: formatPercent(savStats.tauxSAV) + ' des dossiers',
+      value: `${nbSAVProjects}/${nbTotalProjects}`,
+      subtitle: formatPercent(tauxSAV) + ' des dossiers',
       icon: AlertCircle,
       color: 'from-orange-500 to-orange-600',
     },
