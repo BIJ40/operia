@@ -67,6 +67,7 @@ export type { ApogeeDataServices } from './engine/loaders';
 
 // === Hooks ===
 export { useStatiaMetric, useStatiaMetrics, useStatiaForAgency, useStatiaForNetwork } from './hooks/useStatia';
+export { useStatiaIndicateurs, useStatiaKpi, type IndicateursData } from './hooks/useStatiaIndicateurs';
 
 // === Components ===
 export { StatiaBuilder } from './components/StatiaBuilder';
