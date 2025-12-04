@@ -1,5 +1,9 @@
 import { RHDashboard } from '@/components/rh/dashboard';
 
 export default function RHDashboardPage() {
-  return <RHDashboard />;
+  return (
+    <div className="container mx-auto py-8 px-4">
+      <RHDashboard />
+    </div>
+  );
 }
