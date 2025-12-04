@@ -34,6 +34,7 @@ import { Label } from '@/components/ui/label';
 import { useSupportNotifications } from '@/hooks/use-support-notifications';
 import { usePageMetadata, useUpsertPageMetadata } from '@/hooks/use-page-metadata';
 import { GLOBAL_ROLES, GlobalRole } from '@/types/globalRoles';
+import { isModuleEnabled } from '@/types/modules';
 import {
   Tooltip,
   TooltipContent,
@@ -83,9 +84,12 @@ function formatHelpTitle(title: string): React.ReactNode {
 export function UnifiedHeader() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAdmin, canAccessSupportConsoleUI, isLoggingOut, logout, globalRole } = useAuth();
+  const { isAdmin, canAccessSupportConsoleUI, isLoggingOut, logout, globalRole, enabledModules } = useAuth();
   const { toggleSidebar } = useSidebar();
   const { hasNewTickets, newTicketsCount, hasChatHumanRequests, hasTicketRequests, chatHumanCount, ticketRequestCount } = useSupportNotifications();
+
+  // P0-01: Check if messaging module is enabled (or admin N5+)
+  const canAccessMessaging = isAdmin || isModuleEnabled(enabledModules, 'messaging');
 
   // Déterminer la classe de clignotement du header pour SU
   const getHeaderBlinkClass = () => {
@@ -358,7 +362,8 @@ export function UnifiedHeader() {
             <p className={`${subtitleTextSizeClass} text-muted-foreground truncate text-center`}>
               {displaySubtitle}
             </p>
-            <MessagingWidget />
+            {canAccessMessaging && <MessagingWidget />}
+            {!canAccessMessaging && <div />}
           </div>
         )}
         
@@ -367,7 +372,8 @@ export function UnifiedHeader() {
           <div className="px-4 py-1 border-t border-border/50 bg-background grid grid-cols-[auto_1fr_auto] items-center gap-4">
             <ChatbotWidget />
             <div /> {/* Empty center */}
-            <MessagingWidget />
+            {canAccessMessaging && <MessagingWidget />}
+            {!canAccessMessaging && <div />}
           </div>
         )}
       </header>

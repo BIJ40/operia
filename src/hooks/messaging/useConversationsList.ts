@@ -37,32 +37,50 @@ export function useConversationsList(searchQuery?: string) {
       if (convError) throw convError;
       if (!conversations?.length) return [];
 
-      // Enrich each conversation with members and last message
+      // Batch load all members for all conversations (P1-02 fix)
+      const { data: allMembers } = await supabase
+        .from('conversation_members')
+        .select(`
+          *,
+          user:profiles(id, first_name, last_name, email)
+        `)
+        .in('conversation_id', conversationIds);
+
+      // Batch load last messages for all conversations
+      const { data: allMessages } = await supabase
+        .from('messages')
+        .select(`
+          *,
+          sender:profiles(id, first_name, last_name, email)
+        `)
+        .in('conversation_id', conversationIds)
+        .eq('is_deleted', false)
+        .order('created_at', { ascending: false });
+
+      // Group members and messages by conversation
+      const membersByConv = new Map<string, any[]>();
+      const lastMessageByConv = new Map<string, any>();
+
+      (allMembers || []).forEach(m => {
+        const existing = membersByConv.get(m.conversation_id) || [];
+        existing.push(m);
+        membersByConv.set(m.conversation_id, existing);
+      });
+
+      (allMessages || []).forEach(msg => {
+        if (!lastMessageByConv.has(msg.conversation_id)) {
+          lastMessageByConv.set(msg.conversation_id, msg);
+        }
+      });
+
+      // Enrich each conversation
       const enrichedConversations = await Promise.all(
         conversations.map(async (conv) => {
-          // Get members with user info
-          const { data: members } = await supabase
-            .from('conversation_members')
-            .select(`
-              *,
-              user:profiles(id, first_name, last_name, email)
-            `)
-            .eq('conversation_id', conv.id);
-
-          // Get last message
-          const { data: messages } = await supabase
-            .from('messages')
-            .select(`
-              *,
-              sender:profiles(id, first_name, last_name, email)
-            `)
-            .eq('conversation_id', conv.id)
-            .eq('is_deleted', false)
-            .order('created_at', { ascending: false })
-            .limit(1);
-
+          const members = membersByConv.get(conv.id) || [];
+          const lastMessage = lastMessageByConv.get(conv.id) || null;
+          
           // Get unread count
-          const membership = members?.find(m => m.user_id === user.id);
+          const membership = members.find(m => m.user_id === user.id);
           const lastReadAt = membership?.last_read_at;
           
           let unreadCount = 0;
@@ -86,7 +104,7 @@ export function useConversationsList(searchQuery?: string) {
           return {
             ...conv,
             members: members || [],
-            last_message: messages?.[0] || null,
+            last_message: lastMessage,
             unread_count: unreadCount,
             other_user: otherUser,
           } as Conversation;
@@ -111,7 +129,7 @@ export function useConversationsList(searchQuery?: string) {
     return conv.name?.toLowerCase().includes(searchLower);
   });
 
-  // Subscribe to realtime updates
+  // Subscribe to realtime updates (P2-03: optimized channel)
   useEffect(() => {
     if (!user?.id) return;
 
@@ -119,7 +137,7 @@ export function useConversationsList(searchQuery?: string) {
       .channel('conversations-list')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'messages' },
+        { event: 'INSERT', schema: 'public', table: 'messages' },
         () => {
           queryClient.invalidateQueries({ queryKey: ['conversations', user.id] });
         }

@@ -4,6 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Conversation, Message, ConversationMember, TypingStatus } from '@/types/messaging';
 import { useEffect, useState, useCallback } from 'react';
 
+const MESSAGES_LIMIT = 100; // P1-03: Limite des messages
+
 export function useConversation(conversationId: string | null) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -27,7 +29,7 @@ export function useConversation(conversationId: string | null) {
     enabled: !!conversationId,
   });
 
-  // Fetch messages with pagination
+  // Fetch messages with pagination (P1-03: limit 100)
   const messagesQuery = useQuery({
     queryKey: ['messages', conversationId],
     queryFn: async (): Promise<Message[]> => {
@@ -41,10 +43,12 @@ export function useConversation(conversationId: string | null) {
         `)
         .eq('conversation_id', conversationId)
         .eq('is_deleted', false)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: false })
+        .limit(MESSAGES_LIMIT);
 
       if (error) throw error;
-      return data || [];
+      // Reverse to show oldest first
+      return (data || []).reverse();
     },
     enabled: !!conversationId,
   });

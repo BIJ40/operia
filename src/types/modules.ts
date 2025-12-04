@@ -17,6 +17,7 @@ export const MODULES = {
   apogee_tickets: 'apogee_tickets',
   rh: 'rh',     // Module RH séparé
   parc: 'parc', // Module Parc séparé
+  messaging: 'messaging', // Chat interne
 } as const;
 
 export type ModuleKey = keyof typeof MODULES;
@@ -69,6 +70,10 @@ export const MODULE_OPTIONS = {
     vehicules: 'parc.vehicules',     // Gestion flotte véhicules
     epi: 'parc.epi',                 // Gestion EPI
     equipements: 'parc.equipements', // Autres équipements
+  },
+  messaging: {
+    dm: 'messaging.dm',       // Messages directs
+    groups: 'messaging.groups', // Groupes de discussion
   },
 } as const;
 
@@ -206,6 +211,18 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'equipements', path: 'parc.equipements', label: 'Équipements', description: 'Autres équipements professionnels', defaultEnabled: true },
     ],
   },
+  {
+    key: 'messaging',
+    label: 'Messagerie interne',
+    description: 'Chat interne entre utilisateurs',
+    icon: 'MessageCircle',
+    defaultForRoles: ['franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
+    minRole: 'franchisee_user',
+    options: [
+      { key: 'dm', path: 'messaging.dm', label: 'Messages directs', description: 'Conversations privées à deux', defaultEnabled: true },
+      { key: 'groups', path: 'messaging.groups', label: 'Groupes', description: 'Créer et gérer des groupes de discussion', defaultEnabled: true },
+    ],
+  },
 ];
 
 // Structure de stockage des modules activés (JSONB dans profiles)
@@ -218,6 +235,7 @@ export interface EnabledModules {
   apogee_tickets?: boolean | ModuleOptionsState;
   rh?: boolean | ModuleOptionsState;
   parc?: boolean | ModuleOptionsState;
+  messaging?: boolean | ModuleOptionsState;
 }
 
 export interface ModuleOptionsState {
