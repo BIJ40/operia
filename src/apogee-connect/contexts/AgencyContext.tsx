@@ -1,13 +1,12 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { setApiBaseUrl } from '@/apogee-connect/services/api';
 import { DataService } from '@/apogee-connect/services/dataService';
 import { logApogee } from '@/lib/logger';
 
 interface Agency {
   id: string;
   name: string;
-  baseUrl: string;
+  slug: string;
 }
 
 interface AgencyContextType {
@@ -27,7 +26,7 @@ export function AgencyProvider({ children }: { children: ReactNode }) {
     ? {
         id: agence,
         name: agence,
-        baseUrl: `https://${agence}.hc-apogee.fr/api/`
+        slug: agence
       }
     : null;
 
@@ -35,26 +34,24 @@ export function AgencyProvider({ children }: { children: ReactNode }) {
     // Reset le flag si l'auth recharge
     if (isAuthLoading) {
       setIsApiConfigured(false);
-      logApogee.debug('Authentification en cours - Attente avant configuration API');
+      logApogee.debug('Authentification en cours - Attente avant configuration');
       return;
     }
 
     // Auth OK mais aucune agence
     if (!agence) {
-      logApogee.warn('Aucune agence définie pour l\'utilisateur - BASE_URL ne sera pas initialisée');
-      setApiBaseUrl("");
+      logApogee.warn('Aucune agence définie pour l\'utilisateur');
       setIsApiConfigured(true); // Marqué comme configuré même sans agence
       return;
     }
 
-    // Auth OK et agence présente
-    if (currentAgency?.baseUrl) {
-      logApogee.info(`Configuration de l'agence: ${currentAgency.id}`);
-      setApiBaseUrl(currentAgency.baseUrl);
+    // Auth OK et agence présente - Le proxy gère automatiquement le routing
+    if (currentAgency) {
+      logApogee.info(`Configuration de l'agence: ${currentAgency.id} (via proxy sécurisé)`);
       DataService.clearCache();
-      setIsApiConfigured(true); // API configurée avec succès
+      setIsApiConfigured(true);
     }
-  }, [isAuthLoading, agence, currentAgency?.baseUrl]);
+  }, [isAuthLoading, agence, currentAgency?.id]);
 
   // isAgencyReady = auth terminée + agence définie + API configurée
   const isAgencyReady = !isAuthLoading && !!agence && isApiConfigured;

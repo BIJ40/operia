@@ -18,8 +18,7 @@ import {
 } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { APOGEE_SCHEMA, buildAgencyBaseUrl } from '../schema/apogeeSchemaV2';
-import { setApiBaseUrl, getApiBaseUrl } from '@/apogee-connect/services/api';
-import { DataService } from '@/apogee-connect/services/dataService';
+import { apogeeProxy } from '@/services/apogeeProxy';
 import type { ApogeeSourceName, FilterCondition, FormulaDefinition } from '../types';
 import { 
   STATIA_RULES_JSON,
@@ -258,13 +257,26 @@ async function loadSourceData(
   sources: string[],
   params: MetricExecutionParams
 ): Promise<{ datasets: Map<string, LoadedDataset>; debug: ExecutionDebug['endpoints'] }> {
-  // Configurer l'URL de l'agence
   const apiUrl = buildAgencyBaseUrl(params.agency_slug);
-  setApiBaseUrl(apiUrl);
-  DataService.clearCache();
   
-  // Charger toutes les données nécessaires
-  const allData = await DataService.loadAllData(true);
+  // Charger toutes les données nécessaires via le proxy sécurisé
+  const [interventions, projects, factures, devis, users, clients] = await Promise.all([
+    apogeeProxy.getInterventions({ agencySlug: params.agency_slug }),
+    apogeeProxy.getProjects({ agencySlug: params.agency_slug }),
+    apogeeProxy.getFactures({ agencySlug: params.agency_slug }),
+    apogeeProxy.getDevis({ agencySlug: params.agency_slug }),
+    apogeeProxy.getUsers({ agencySlug: params.agency_slug }),
+    apogeeProxy.getClients({ agencySlug: params.agency_slug }),
+  ]);
+  
+  const allData = {
+    interventions: interventions || [],
+    projects: projects || [],
+    factures: factures || [],
+    devis: devis || [],
+    users: users || [],
+    clients: clients || [],
+  };
   
   const sourceMapping: Record<string, keyof typeof allData> = {
     interventions: 'interventions',
