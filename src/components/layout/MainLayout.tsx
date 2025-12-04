@@ -62,7 +62,8 @@ export function MainLayout({
           <div className="flex-1 flex flex-col min-h-screen min-w-0">
             {showHeader && <UnifiedHeader />}
             
-            <main className="flex-1 overflow-auto p-6">
+            {/* P2 FIX: id pour skip link accessibilité */}
+            <main id="main-content" className="flex-1 overflow-auto p-6" role="main">
               {children}
             </main>
           </div>
