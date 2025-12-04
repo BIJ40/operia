@@ -1,14 +1,9 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { NetworkDataService } from "@/franchiseur/services/networkDataService";
-import { useAgencies } from "@/franchiseur/hooks/useAgencies";
-import { useFranchiseur } from "@/franchiseur/contexts/FranchiseurContext";
-import { useNetworkFilters } from "@/franchiseur/contexts/NetworkFiltersContext";
+import { useFranchiseurStatsStatia } from "@/franchiseur/hooks/useFranchiseurStatsStatia";
 import { NetworkPeriodSelector } from "@/franchiseur/components/filters/NetworkPeriodSelector";
 import { UniversApporteurMatrix } from "@/apogee-connect/components/widgets/UniversApporteurMatrix";
 import { TechnicienUniversHeatmap } from "@/apogee-connect/components/widgets/TechnicienUniversHeatmap";
-import { aggregateUniversApporteurMatrix } from "@/franchiseur/utils/networkCalculations";
-import { aggregateTechUniversStatsMultiAgency, type TechUniversStats } from "@/shared/utils/technicienUniversEngine";
+import type { TechUniversStats } from "@/shared/utils/technicienUniversEngine";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -28,65 +23,12 @@ const UNIVERSES = [
 ];
 
 export default function FranchiseurStats() {
-  const { data: agencies, isLoading: isLoadingAgencies } = useAgencies();
-  const { selectedAgencies, isLoading: isLoadingContext } = useFranchiseur();
-  const { dateRange } = useNetworkFilters();
   const [techMode, setTechMode] = useState<"ca" | "heures" | "caParHeure">("ca");
+  
+  // Hook StatIA pour les données
+  const { data, isLoading, error, agenciesToLoad } = useFranchiseurStatsStatia();
 
-  // Déterminer les agences à charger
-  const agenciesToLoad = agencies?.filter(a => {
-    if (!a.is_active) return false;
-    if (selectedAgencies.length === 0) return true;
-    return selectedAgencies.includes(a.id);
-  }) || [];
-
-  // Charger les données de toutes les agences
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["franchiseur-stats-matrices", agenciesToLoad.map(a => a.slug).join(","), dateRange],
-    queryFn: async () => {
-      if (agenciesToLoad.length === 0) {
-        return { universApporteurMatrix: {}, technicienStats: [] };
-      }
-
-      // Charger les données de toutes les agences séquentiellement
-      const agencySlugs = agenciesToLoad.map(a => a.slug);
-      const agencyDataResults = await NetworkDataService.loadMultiAgencyData(agencySlugs, dateRange);
-
-      // Enrichir avec les labels
-      const enrichedData = agencyDataResults.map(result => ({
-        ...result,
-        agencyLabel: agencies?.find(a => a.slug === result.agencyId)?.label || result.agencyId,
-      }));
-
-      // Calculer la matrice Univers × Apporteurs
-      const universApporteurMatrix = aggregateUniversApporteurMatrix(
-        enrichedData,
-        { start: dateRange.from, end: dateRange.to }
-      );
-
-      // Calculer les stats Technicien × Univers via le moteur unifié
-      // Préparer les données pour le nouveau format attendu par le moteur
-      const agenciesDataForStats = enrichedData
-        .filter(agency => agency.data?.factures && agency.data?.projects && agency.data?.interventions && agency.data?.users)
-        .map(agency => ({
-          factures: agency.data.factures,
-          projects: agency.data.projects,
-          interventions: agency.data.interventions,
-          users: agency.data.users,
-        }));
-
-      const technicienStats = aggregateTechUniversStatsMultiAgency(
-        agenciesDataForStats,
-        { start: dateRange.from, end: dateRange.to }
-      );
-
-      return { universApporteurMatrix, technicienStats };
-    },
-    enabled: !isLoadingAgencies && !isLoadingContext && agenciesToLoad.length > 0,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-
-  if (isLoadingAgencies || isLoadingContext) {
+  if (isLoading && !data.agenciesLoaded) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-12 w-64" />
@@ -108,13 +50,13 @@ export default function FranchiseurStats() {
       </div>
 
       {/* Info agences */}
-      {agenciesToLoad.length > 0 && (
+      {data.agenciesTotal > 0 && (
         <div className="rounded-xl border border-helpconfort-blue/15 p-4
           bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white dark:via-background dark:to-background
           shadow-sm border-l-4 border-l-helpconfort-blue">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">
-              Données agrégées de <span className="font-semibold text-foreground">{agenciesToLoad.length}</span> agence{agenciesToLoad.length > 1 ? 's' : ''}
+              Données agrégées de <span className="font-semibold text-foreground">{data.agenciesLoaded}</span> agence{data.agenciesLoaded > 1 ? 's' : ''}
             </span>
             {isLoading && (
               <div className="flex items-center gap-2">

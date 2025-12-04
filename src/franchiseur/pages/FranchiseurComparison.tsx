@@ -8,7 +8,7 @@ import {
   ArrowUpRight, ArrowDownRight, Minus, TrendingUp, FileText, Wrench, AlertCircle,
   Calendar, BarChart3
 } from 'lucide-react';
-import { usePeriodComparison } from '../hooks/usePeriodComparison';
+import { usePeriodComparisonStatia } from '../hooks/usePeriodComparisonStatia';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   LineChart, Line, Legend
@@ -136,8 +136,8 @@ export default function FranchiseurComparison() {
   const [period2Year, setPeriod2Year] = useState(currentYear);
   const [period2Month, setPeriod2Month] = useState(currentMonth);
 
-  // Fetch real data using the comparison hook
-  const { period1: p1Data, period2: p2Data, isLoading } = usePeriodComparison(
+  // Fetch real data using StatIA comparison hook
+  const { period1: p1Data, period2: p2Data, isLoading } = usePeriodComparisonStatia(
     { type: period1Type, year: period1Year, month: period1Month },
     { type: period2Type, year: period2Year, month: period2Month }
   );

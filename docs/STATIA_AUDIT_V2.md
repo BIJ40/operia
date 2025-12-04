@@ -130,17 +130,19 @@
 4. ✅ StatIA Builder UI créé
 5. ✅ Rules.ts enrichi avec règles métier complètes
 
-### Phase 2: Migration Agence 🔄 EN COURS
+### Phase 2: Migration Agence ✅ TERMINÉE
 1. ✅ Adaptateur DataService → ApogeeDataServices créé
 2. ✅ Hooks useStatiaAgency* créés (contexte agence intégré)
 3. ✅ **Dashboard.tsx migré vers StatIA** (5 KPIs: CA, Taux SAV, Taux Transfo, Panier Moyen, Montant Restant)
-4. ⏳ Migration IndicateursUnivers.tsx vers StatIA
-5. ⏳ Migration MesIndicateursCard.tsx vers StatIA
-6. ⏳ Migration DiffusionKpiTiles.tsx vers StatIA
+4. ✅ **IndicateursUnivers.tsx migré vers StatIA** (CA par univers, Dossiers, Panier moyen)
+5. ✅ **MesIndicateursCard.tsx migré vers StatIA** (CA, Taux SAV, Délai facturation, Nb dossiers)
+6. ✅ **DiffusionKpiTiles.tsx migré vers StatIA** (CA, Taux SAV, Taux Transfo, CA par univers)
 
-### Phase 3: Migration Franchiseur
-1. Utiliser `getMetricForNetwork()`
-2. Supprimer `networkCalculations.ts`
+### Phase 3: Migration Franchiseur ✅ TERMINÉE
+1. ✅ **FranchiseurStats.tsx (Tableaux)** → `useFranchiseurStatsStatia.ts` (matrices Univers×Apporteurs, Tech×Univers)
+2. ✅ **FranchiseurComparison.tsx (Périodes)** → `usePeriodComparisonStatia.ts` (comparaison CA, dossiers, SAV)
+3. ✅ **ReseauGraphiquesPage.tsx** déjà StatIA (`useStatiaReseauDashboard`, `useStatiaComparatifAgences`)
+4. ⏳ Suppression progressive de `networkCalculations.ts` (après validation production)
 
 ---
 
