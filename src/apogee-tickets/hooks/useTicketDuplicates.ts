@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { errorToast, successToast } from "@/lib/toastHelpers";
+import { logError } from "@/lib/logger";
 import type { MergeTicketsPayload } from "../types";
 
 // Lightweight ticket type for duplicate suggestions
@@ -54,7 +55,7 @@ export function useTicketDuplicates(ticketId?: string) {
         .order("similarity", { ascending: false });
 
       if (error) {
-        console.error("Error fetching suggestions:", error);
+        logError('[TICKET-DUPLICATES] Error fetching suggestions', error);
         return [];
       }
 
@@ -76,7 +77,7 @@ export function useTicketDuplicates(ticketId?: string) {
       await refetch();
       return data;
     } catch (error: unknown) {
-      console.error("Scan error:", error);
+      logError('[TICKET-DUPLICATES] Scan error', error);
       const message = error instanceof Error ? error.message : "Erreur lors du scan des doublons";
       errorToast(message);
       throw error;
@@ -169,7 +170,7 @@ export function usePendingDuplicates() {
         .order("similarity", { ascending: false });
 
       if (error) {
-        console.error("Error fetching pending suggestions:", error);
+        logError('[TICKET-DUPLICATES] Error fetching pending suggestions', error);
         return [];
       }
 
@@ -177,7 +178,7 @@ export function usePendingDuplicates() {
     },
   });
 
-  // Batch scan all recent tickets
+  // Batch scan all recent tickets - parallelized by batches of 5
   const batchScan = async () => {
     const { data: recentTickets } = await supabase
       .from("apogee_tickets")
@@ -189,15 +190,25 @@ export function usePendingDuplicates() {
     if (!recentTickets?.length) return { scanned: 0 };
 
     let scanned = 0;
-    for (const ticket of recentTickets) {
-      try {
-        await supabase.functions.invoke("scan-ticket-duplicates", {
-          body: { ticket_id: ticket.id },
-        });
-        scanned++;
-      } catch (e) {
-        console.error("Batch scan error for ticket:", ticket.id, e);
-      }
+    const BATCH_SIZE = 5;
+    
+    for (let i = 0; i < recentTickets.length; i += BATCH_SIZE) {
+      const batch = recentTickets.slice(i, i + BATCH_SIZE);
+      const results = await Promise.allSettled(
+        batch.map(ticket => 
+          supabase.functions.invoke("scan-ticket-duplicates", {
+            body: { ticket_id: ticket.id },
+          })
+        )
+      );
+      
+      results.forEach((result, idx) => {
+        if (result.status === 'fulfilled') {
+          scanned++;
+        } else {
+          logError(`[TICKET-DUPLICATES] Batch scan error for ticket: ${batch[idx].id}`, result.reason);
+        }
+      });
     }
 
     await refetch();
