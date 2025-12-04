@@ -14,6 +14,7 @@ import { indexProjectsById, indexClientsById } from '../engine/loaders';
 /**
  * CA par Apporteur
  * Conforme à calculateApporteurStats de apporteursCalculations.ts
+ * SUPPORTE les filtres croisés: univers
  */
 export const caParApporteur: StatDefinition = {
   id: 'ca_par_apporteur',
@@ -34,6 +35,11 @@ export const caParApporteur: StatDefinition = {
     let totalCA = 0;
     let recordCount = 0;
     
+    // Filtre univers si spécifié
+    const filterUnivers = params.filters?.univers 
+      ? String(params.filters.univers).toLowerCase().trim()
+      : null;
+    
     for (const facture of factures) {
       const meta = extractFactureMeta(facture);
       
@@ -45,6 +51,17 @@ export const caParApporteur: StatDefinition = {
       // Récupérer le projet lié
       const projectId = facture.projectId || facture.project_id;
       const project = projectId ? projectsById.get(projectId) : null;
+      
+      // FILTRE UNIVERS: si spécifié, vérifier que la facture appartient à cet univers
+      if (filterUnivers) {
+        const projectUniverses = project 
+          ? (project.data?.universes || project.universes || []).map((u: string) => u.toLowerCase().trim())
+          : ['non-classe'];
+        
+        if (!projectUniverses.includes(filterUnivers)) {
+          continue; // Skip cette facture, elle n'appartient pas à l'univers sélectionné
+        }
+      }
       
       // Identifier l'apporteur
       const apporteurId = project ? normalizeApporteurId(project) : 'direct';
@@ -89,6 +106,7 @@ export const caParApporteur: StatDefinition = {
         labels,
         counts,
         apporteurCount: Object.keys(byApporteur).length,
+        filterUnivers,
       }
     };
   }
