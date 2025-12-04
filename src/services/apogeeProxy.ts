@@ -111,6 +111,12 @@ export const apogeeProxy = {
     callProxy<any[]>('apiGetDevis', options),
 
   /**
+   * Récupère les créneaux d'interventions
+   */
+  getInterventionsCreneaux: (options?: ApogeeProxyOptions) => 
+    callProxy<any[]>('GetInterventionsCreneaux', options),
+
+  /**
    * Récupère toutes les données en parallèle
    */
   getAllData: async (options?: ApogeeProxyOptions) => {
