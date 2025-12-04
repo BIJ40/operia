@@ -4,6 +4,7 @@
  */
 
 import { StatDefinition, LoadedData, StatParams, StatResult } from './types';
+import { logDebug } from '@/lib/logger';
 // Note: isDevisValidated n'est plus utilisé, logique inline pour clarté
 
 /**
@@ -179,21 +180,44 @@ export const montantDevis: StatDefinition = {
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const { devis } = data;
     
+    logDebug('STATIA', 'montantDevis - START', {
+      nbDevisTotal: devis.length,
+      dateRange: params.dateRange ? { 
+        start: params.dateRange.start.toISOString(), 
+        end: params.dateRange.end.toISOString() 
+      } : 'none',
+      sampleDevis: devis.slice(0, 3).map(d => ({
+        id: d.id,
+        state: d.state || d.statut || d.data?.state,
+        totalHT: d.data?.totalHT ?? d.totalHT,
+        date: d.dateReelle || d.date || d.data?.dateReelle || d.data?.date,
+      }))
+    });
+    
     let totalHT = 0;
     let count = 0;
+    let skippedByDate = 0;
+    let skippedByState = 0;
     
     for (const d of devis) {
       // Filtre par date
       const dateStr = d.dateReelle || d.date || d.dateCreation || d.data?.dateReelle || d.data?.date || d.created_at;
       if (dateStr && params.dateRange) {
         const date = new Date(dateStr);
-        if (isNaN(date.getTime())) continue;
-        if (date < params.dateRange.start || date > params.dateRange.end) continue;
+        if (isNaN(date.getTime())) {
+          skippedByDate++;
+          continue;
+        }
+        if (date < params.dateRange.start || date > params.dateRange.end) {
+          skippedByDate++;
+          continue;
+        }
       }
       
       // Exclure uniquement les brouillons et annulés
       const state = (d.state || d.statut || d.data?.state || d.data?.statut || '').toString().toLowerCase();
       if (state === 'draft' || state === 'brouillon' || state === 'cancelled' || state === 'annule') {
+        skippedByState++;
         continue;
       }
       
@@ -202,6 +226,13 @@ export const montantDevis: StatDefinition = {
       totalHT += montant;
       count++;
     }
+    
+    logDebug('STATIA', 'montantDevis - RESULT', {
+      totalHT,
+      count,
+      skippedByDate,
+      skippedByState,
+    });
     
     return {
       value: totalHT,

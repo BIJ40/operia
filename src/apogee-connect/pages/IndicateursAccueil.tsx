@@ -144,7 +144,7 @@ export default function IndicateursAccueil() {
                 </div>
                 <div className="flex items-baseline gap-1">
                   <p className="text-xl font-bold">{data?.devisJour || 0}</p>
-                  {data?.caDevis !== undefined && (
+                  {data?.caDevis !== undefined && data.caDevis > 0 && (
                     <span className="text-[10px] text-muted-foreground">({formatEuros(data.caDevis)})</span>
                   )}
                 </div>
