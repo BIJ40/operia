@@ -658,6 +658,7 @@ export function calculateMultiUniverseRate(agencyData: AgencyData[]): number {
 
 /**
  * Calculate total CA for a period
+ * STATIA_RULES: Avoirs traités comme montants négatifs
  */
 export function calculateTotalCA(agencyData: AgencyData[], dateRange?: { start: Date; end: Date }): number {
   const now = new Date();
@@ -669,7 +670,6 @@ export function calculateTotalCA(agencyData: AgencyData[], dateRange?: { start: 
 
     const ca = agency.data.factures
       .filter((f: any) => {
-        if (f.type === 'avoir') return false;
         const dateReelle = f.dateReelle || f.dateEmission || f.created_at;
         const factureDate = parseDate(dateReelle);
         return factureDate && isWithinInterval(factureDate, { start, end });
@@ -677,7 +677,10 @@ export function calculateTotalCA(agencyData: AgencyData[], dateRange?: { start: 
       .reduce((sum: number, f: any) => {
         const montantRaw = f.data?.totalHT || f.totalHT || f.montantHT || 0;
         const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, '')) || 0;
-        return sum + montant;
+        // STATIA_RULES: Avoirs soustraits comme montants négatifs
+        const typeFacture = (f.type || f.typeFacture || '').toLowerCase();
+        const montantNet = typeFacture === 'avoir' ? -Math.abs(montant) : montant;
+        return sum + montantNet;
       }, 0);
 
     return total + ca;
@@ -811,8 +814,6 @@ export function aggregateUniversApporteurMatrix(
     const clientsMap = new Map(agency.data.clients.map((c: any) => [c.id, c]));
 
     agency.data.factures.forEach((facture: any) => {
-      if (facture.type === 'avoir') return;
-
       const dateReelle = facture.dateReelle || facture.dateEmission || facture.created_at;
       const factureDate = parseDate(dateReelle);
       if (!factureDate) return;
@@ -830,7 +831,10 @@ export function aggregateUniversApporteurMatrix(
       // API returns "universes" (plural) not "univers" (singular)
       const universList = project.data?.universes || project.data?.univers || project.universes || project.univers || [];
       const montantRaw = facture.data?.totalHT || facture.totalHT || facture.montantHT || 0;
-      const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, '')) || 0;
+      const montantBrut = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, '')) || 0;
+      // STATIA_RULES: Avoirs soustraits comme montants négatifs
+      const typeFacture = (facture.type || facture.typeFacture || '').toLowerCase();
+      const montant = typeFacture === 'avoir' ? -Math.abs(montantBrut) : montantBrut;
 
       // Get apporteur type from client
       const apporteurType = client.data?.type || client.type || 'particulier';

@@ -237,3 +237,67 @@ export function isDevisValidated(devis: any): boolean {
   
   return validatedStates.includes(state);
 }
+
+// ============================================================================
+// P1-01: HELPERS CENTRALISÉS (remplacent duplications dans networkCalculations.ts)
+// ============================================================================
+
+/**
+ * Parse une date en gérant les formats ISO et FR (DD/MM/YYYY)
+ * Centralisé pour éviter duplication
+ */
+export function parseDateSafe(dateString: string | undefined | null): Date | null {
+  if (!dateString) return null;
+  
+  try {
+    // Format ISO
+    const isoDate = new Date(dateString);
+    if (!isNaN(isoDate.getTime())) return isoDate;
+  } catch {}
+  
+  try {
+    // Format FR DD/MM/YYYY
+    const parts = dateString.split('/');
+    if (parts.length === 3) {
+      const [day, month, year] = parts;
+      const frDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      if (!isNaN(frDate.getTime())) return frDate;
+    }
+  } catch {}
+  
+  return null;
+}
+
+/** États valides pour une intervention "réalisée" */
+export const INTERVENTION_REALIZED_STATES: readonly string[] = [
+  'done', 'finished', 'validated', 'completed', 'réalisée', 'terminée'
+];
+
+/**
+ * Vérifie si une intervention est réalisée selon STATIA_RULES
+ * Centralisé pour éviter duplication
+ */
+export function isInterventionRealisee(intervention: any): boolean {
+  const state = (
+    intervention.state || 
+    intervention.statut || 
+    intervention.data?.state || 
+    ''
+  ).toLowerCase();
+  return INTERVENTION_REALIZED_STATES.includes(state);
+}
+
+/**
+ * Vérifie si une intervention est de type SAV
+ */
+export function isSAVIntervention(intervention: any): boolean {
+  const type2 = (intervention.data?.type2 || intervention.type2 || '').toLowerCase();
+  const type = (intervention.data?.type || intervention.type || '').toLowerCase();
+  return type2.includes('sav') || type.includes('sav');
+}
+
+/** Labels des mois en français (constante centralisée P2-04) */
+export const MONTHS_FR: readonly string[] = [
+  'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 
+  'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'
+];

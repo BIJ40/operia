@@ -7,8 +7,22 @@ import { startOfYear, endOfYear, format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { NetworkDataService } from '@/franchiseur/services/networkDataService';
 import { extractFactureMeta } from '../rules/rules';
-import { isFactureStateIncluded } from '../engine/normalizers';
+import { 
+  isFactureStateIncluded, 
+  parseDateSafe, 
+  isInterventionRealisee as isInterventionRealiseeNorm,
+  isSAVIntervention as isSAVInterventionNorm,
+  MONTHS_FR 
+} from '../engine/normalizers';
 import { logNetwork } from '@/lib/logger';
+
+// P2-01: Debug conditionnel
+const DEBUG_STATIA = import.meta.env.DEV && import.meta.env.VITE_DEBUG_STATIA === 'true';
+function debugLog(message: string, data?: any) {
+  if (DEBUG_STATIA) {
+    console.log(`[StatIA] ${message}`, data || '');
+  }
+}
 
 // ============================================================================
 // TYPES
@@ -63,28 +77,19 @@ interface AgencyData {
 }
 
 // ============================================================================
-// HELPERS
+// HELPERS (utilisent les normalizers centralisés)
 // ============================================================================
 
 function parseDate(dateString: string | undefined | null): Date | null {
-  if (!dateString) return null;
-  try {
-    const d = new Date(dateString);
-    return isNaN(d.getTime()) ? null : d;
-  } catch {
-    return null;
-  }
+  return parseDateSafe(dateString);
 }
 
 function isInterventionRealisee(intervention: any): boolean {
-  const state = (intervention.state || intervention.statut || intervention.data?.state || '').toLowerCase();
-  return ['done', 'finished', 'validated', 'completed', 'réalisée', 'terminée'].includes(state);
+  return isInterventionRealiseeNorm(intervention);
 }
 
 function isSAVIntervention(intervention: any): boolean {
-  const type2 = (intervention.data?.type2 || intervention.type2 || '').toLowerCase();
-  const type = (intervention.data?.type || intervention.type || '').toLowerCase();
-  return type2.includes('sav') || type.includes('sav');
+  return isSAVInterventionNorm(intervention);
 }
 
 // ============================================================================
@@ -92,7 +97,7 @@ function isSAVIntervention(intervention: any): boolean {
 // ============================================================================
 
 export async function computeReseauDashboard(params: ReseauDashboardParams): Promise<ReseauDashboardData> {
-  console.log('[StatIA] computeReseauDashboard - START', { 
+  debugLog('computeReseauDashboard - START', { 
     params,
     scopeAgencesLength: params.scopeAgences?.length,
     scopeAgencesValue: params.scopeAgences 
@@ -109,9 +114,8 @@ export async function computeReseauDashboard(params: ReseauDashboardParams): Pro
     .select('id, slug, label')
     .eq('is_active', true);
   
-  console.log('[StatIA] Agences chargées depuis Supabase:', {
+  debugLog('Agences chargées depuis Supabase:', {
     count: agencies?.length,
-    agencies: agencies?.map(a => ({ id: a.id, slug: a.slug, label: a.label })),
     error: agenciesError
   });
   
@@ -125,12 +129,9 @@ export async function computeReseauDashboard(params: ReseauDashboardParams): Pro
     ? agencies.filter(a => params.scopeAgences!.includes(a.id))
     : agencies;
   
-  console.log('[StatIA] Agences après filtrage:', {
+  debugLog('Agences après filtrage:', {
     filteredCount: filteredAgencies.length,
     agencies: filteredAgencies.map(a => a.slug),
-    scopeAgences: params.scopeAgences,
-    scopeAgencesIsArray: Array.isArray(params.scopeAgences),
-    scopeAgencesLength: params.scopeAgences?.length
   });
   
   logNetwork.debug(`[StatIA] Chargement de ${filteredAgencies.length} agences...`);
@@ -139,15 +140,13 @@ export async function computeReseauDashboard(params: ReseauDashboardParams): Pro
   const agencyData: AgencyData[] = [];
   const failedAgencies: string[] = [];
   
-  console.log(`[StatIA] Début chargement de ${filteredAgencies.length} agences:`, filteredAgencies.map(a => a.slug));
-  
   for (const agency of filteredAgencies) {
     try {
-      console.log(`[StatIA] Chargement agence: ${agency.slug}...`);
+      debugLog(`Chargement agence: ${agency.slug}...`);
       const data = await NetworkDataService.loadAgencyData(agency.slug);
       
       if (data) {
-        console.log(`[StatIA] ✅ ${agency.slug} chargée:`, {
+        debugLog(`✅ ${agency.slug} chargée:`, {
           factures: data.factures?.length || 0,
           projects: data.projects?.length || 0,
           interventions: data.interventions?.length || 0,
@@ -158,17 +157,16 @@ export async function computeReseauDashboard(params: ReseauDashboardParams): Pro
           data,
         });
       } else {
-        console.log(`[StatIA] ⚠️ ${agency.slug} retourne null`);
+        debugLog(`⚠️ ${agency.slug} retourne null`);
         failedAgencies.push(agency.slug);
       }
     } catch (err) {
-      console.error(`[StatIA] ❌ ${agency.slug} erreur:`, err);
-      failedAgencies.push(agency.slug);
       logNetwork.warn(`[StatIA] Erreur chargement ${agency.slug}`, err);
+      failedAgencies.push(agency.slug);
     }
   }
   
-  console.log('[StatIA] Résumé chargement:', {
+  debugLog('Résumé chargement:', {
     total: filteredAgencies.length,
     success: agencyData.length,
     failed: failedAgencies.length,
@@ -200,6 +198,17 @@ export async function computeReseauDashboard(params: ReseauDashboardParams): Pro
   const blocSav = computeBlocSav(allProjects, allInterventions, params, agencyData);
   const blocCA = computeBlocCA(allFactures, agencyData, params, yearStart, yearEnd);
   const blocApporteurs = computeBlocApporteurs(allFactures, allProjects, allClients, params);
+  
+  // P1-03: Assertion de cohérence sum(CA agences) vs CA réseau
+  if (process.env.NODE_ENV === 'development' || import.meta.env.DEV) {
+    const sumAgencyCA = blocCA.partCAParAgence.reduce((sum, a) => sum + a.ca, 0);
+    const networkCA = tuilesHautes.caAnneeEnCours;
+    const delta = Math.abs(networkCA - sumAgencyCA);
+    const tolerance = 1; // 1€ de tolérance pour arrondis
+    if (delta > tolerance) {
+      logNetwork.warn(`[StatIA] Incohérence CA: réseau=${networkCA.toFixed(2)}€, Σagences=${sumAgencyCA.toFixed(2)}€, delta=${delta.toFixed(2)}€`);
+    }
+  }
   
   return {
     tuilesHautes,
