@@ -20,6 +20,7 @@ const formatApporteurType = (type: string): string => {
     'entreprise': 'Professionnel',
     'professionnel': 'Professionnel',
     'particulier': 'Clients directs',
+    'direct': 'Clients directs', // Factures sans commanditaire
     'bailleur_social': 'Bailleur Social',
   };
   return labels[type.toLowerCase()] || type;
