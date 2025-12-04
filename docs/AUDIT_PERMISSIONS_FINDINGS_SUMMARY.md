@@ -101,14 +101,14 @@
 11. ✅ **CORRIGÉ** - canEditRoleAgence prop passé correctement (F-EDIT-3)
 12. ✅ **VALIDÉ** - N0 peut créer tickets support (F-PERM-4 - comportement correct confirmé)
 
-### Phase 4 – Documentation (2h)
-13. ⏳ Créer table de vérité permissions par rôle
-14. ⏳ Documenter guards et leur usage
-15. ⏳ Mettre à jour DOC_PERMISSIONS.md
+### Phase 4 – Documentation (2h) ✅ TERMINÉE
+13. ✅ **CRÉÉ** - Table de vérité permissions par rôle → `docs/PERMISSIONS_TRUTH_TABLE.md`
+14. ✅ **CRÉÉ** - Documentation guards et leur usage → `docs/GUARDS_DOCUMENTATION.md`
+15. ✅ **MIS À JOUR** - DOC_PERMISSIONS.md → `docs/DOC_PERMISSIONS.md`
 
 ---
 
 **Total findings**: 12 (dont 3 duplications, donc 9 uniques)  
-**Phases 1-3 terminées**: 12/15 actions complétées ✅  
-**Reste**: Phase 4 Documentation (3 items)  
-**Effort restant estimé**: ~2h
+**Toutes les phases terminées**: 15/15 actions complétées ✅  
+**Statut**: AUDIT COMPLET ✅  
+**Date de clôture**: 2025-12-04
