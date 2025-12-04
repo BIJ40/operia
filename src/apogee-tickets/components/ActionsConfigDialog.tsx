@@ -312,6 +312,20 @@ export function ActionsConfigDialog({
     const toDelete = existingIds.filter(id => !currentIds.includes(id));
     
     if (toDelete.length > 0) {
+      // First delete transitions that reference these statuses (FK constraint)
+      const deleteTransitionsResult = await safeMutation(
+        supabase.from('apogee_ticket_transitions')
+          .delete()
+          .or(`from_status.in.(${toDelete.join(',')}),to_status.in.(${toDelete.join(',')})`),
+        'APOGEE_CONFIG_DELETE_TRANSITIONS'
+      );
+      if (!deleteTransitionsResult.success) {
+        logError('apogee-config', 'Error deleting transitions', deleteTransitionsResult.error);
+        errorToast('Erreur lors de la suppression des transitions liées');
+        return;
+      }
+
+      // Then delete the statuses
       const deleteResult = await safeMutation(
         supabase.from('apogee_ticket_statuses').delete().in('id', toDelete),
         'APOGEE_CONFIG_DELETE_STATUSES'
