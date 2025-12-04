@@ -92,6 +92,7 @@ export const ROUTES = {
     users: '/hc-reseau/utilisateurs',
     tableaux: '/hc-reseau/tableaux',
     periodes: '/hc-reseau/periodes',
+    comparatif: '/hc-reseau/comparatif',
     redevances: '/hc-reseau/redevances',
     parametres: '/hc-reseau/parametres',
   },

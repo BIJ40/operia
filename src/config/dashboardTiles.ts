@@ -256,6 +256,16 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     group: 'franchiseur',
   },
   {
+    id: 'FRANCHISEUR_COMPARATIF',
+    title: 'Comparatif',
+    description: 'Tableau comparatif KPI par agence',
+    icon: BarChart3,
+    route: ROUTES.reseau.comparatif,
+    scopeSlug: SCOPE_SLUGS.FRANCHISEUR_KPI,
+    color: 'accent',
+    group: 'franchiseur',
+  },
+  {
     id: 'FRANCHISEUR_ROYALTIES',
     title: 'Redevances',
     description: 'Calcul et suivi mensuel des redevances',
