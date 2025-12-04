@@ -192,7 +192,7 @@ export default function SupportUser() {
               Chat IA
             </CardTitle>
             <p className="text-xs text-muted-foreground break-words whitespace-normal">
-              Contextes disponibles: {allowedContexts.join(', ')}
+              Contextes disponibles: {allowedContexts.map(c => c === 'documents' ? 'docs' : c).join(', ')}
             </p>
           </CardHeader>
           <CardContent className="flex-1 p-0">
