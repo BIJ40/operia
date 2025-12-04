@@ -38,6 +38,9 @@ export const ROUTES = {
   // ============================================
   pilotage: {
     index: '/hc-agency',
+    // Module RT Technicien
+    techInterventions: '/hc-agency/tech-interventions',
+    techRtRunner: (interventionId: string) => `/hc-agency/tech-interventions/rt/${interventionId}`,
     // Hub Statistiques (nouvelle page centrale)
     statsHub: '/hc-agency/statistiques',
     // Indicateurs (pages détaillées)
