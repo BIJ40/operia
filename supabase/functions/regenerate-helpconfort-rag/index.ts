@@ -218,6 +218,7 @@ serve(async (req) => {
                 chunk_text: chunkText,
                 chunk_index: i,
                 embedding: embedding,
+                context_type: 'helpconfort', // Required NOT NULL field
                 metadata: {
                   family: 'helpconfort',
                   source: 'helpconfort',
