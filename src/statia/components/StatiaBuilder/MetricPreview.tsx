@@ -1,9 +1,9 @@
 /**
- * StatIA Builder - Prévisualisation avec sélecteurs de valeurs spécifiques
- * Permet de valider les données en comparant avec Apogée
+ * StatIA Builder - Prévisualisation avec données RÉELLES
+ * Appelle l'API StatIA pour afficher les vraies valeurs
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +13,12 @@ import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { CustomMetricDefinition } from '../../services/customMetricsService';
 import { cn } from '@/lib/utils';
-import { DimensionType } from './config';
+import { DimensionType, getMeasureById } from './config';
+import { getMetric } from '../../api/getMetric';
+import { STAT_DEFINITIONS } from '../../definitions';
+import { apogeeProxy } from '@/services/apogeeProxy';
+import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
 
 interface MetricPreviewProps {
   definition: CustomMetricDefinition | null;
@@ -30,40 +35,18 @@ const getAvailableMonths = () => {
     months.push({
       value: format(date, 'yyyy-MM'),
       label: format(date, 'MMMM yyyy', { locale: fr }),
+      start: startOfMonth(date),
+      end: endOfMonth(date),
     });
   }
   return months;
 };
 
-// Techniciens simulés (en prod, charger depuis API)
-const MOCK_TECHNICIANS = [
-  { id: '1', name: 'Jean Dupont' },
-  { id: '2', name: 'Marie Martin' },
-  { id: '3', name: 'Pierre Durand' },
-  { id: '4', name: 'Sophie Bernard' },
-];
-
-// Univers simulés (en prod, charger depuis API)
-const MOCK_UNIVERS = [
-  { id: 'plomberie', name: 'Plomberie' },
-  { id: 'electricite', name: 'Électricité' },
-  { id: 'chauffage', name: 'Chauffage' },
-  { id: 'climatisation', name: 'Climatisation' },
-  { id: 'serrurerie', name: 'Serrurerie' },
-];
-
-// Apporteurs simulés (en prod, charger depuis API)
-const MOCK_APPORTEURS = [
-  { id: 'direct', name: 'Direct' },
-  { id: 'axa', name: 'AXA Assurances' },
-  { id: 'maif', name: 'MAIF' },
-  { id: 'generali', name: 'Generali' },
-];
-
 export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPreviewProps) {
   const [isRunning, setIsRunning] = useState(false);
-  const [previewResult, setPreviewResult] = useState<number | null>(null);
+  const [previewResult, setPreviewResult] = useState<number | Record<string, number> | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [recordCount, setRecordCount] = useState<number>(0);
   
   // Valeurs sélectionnées pour chaque dimension
   const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
@@ -72,10 +55,82 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
   const [selectedApporteur, setSelectedApporteur] = useState<string>('');
 
   const availableMonths = useMemo(() => getAvailableMonths(), []);
+  
+  // Charger les données réelles pour les sélecteurs
+  const { user } = useAuth();
+  const effectiveSlug = agencySlug || (user as any)?.agence || '';
+  
+  // Hook pour récupérer les données réelles des sélecteurs
+  const { data: apogeeData, isLoading: isLoadingData } = useQuery({
+    queryKey: ['apogee-preview-data', effectiveSlug],
+    queryFn: async () => {
+      if (!effectiveSlug) return null;
+      return apogeeProxy.getAllData({ agencySlug: effectiveSlug });
+    },
+    enabled: !!effectiveSlug,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Extraire les listes réelles depuis les données
+  const technicians = useMemo(() => {
+    if (!apogeeData?.users) return [];
+    return apogeeData.users
+      .filter((u: any) => u.isTechnicien || u.type === 'technicien' || 
+        (u.type === 'utilisateur' && u.data?.universes?.length > 0))
+      .filter((u: any) => u.is_on !== false && u.isActive !== false)
+      .map((u: any) => ({
+        id: String(u.id),
+        name: `${u.firstname || ''} ${u.lastname || ''}`.trim() || u.name || `Tech ${u.id}`,
+      }))
+      .sort((a: any, b: any) => a.name.localeCompare(b.name));
+  }, [apogeeData?.users]);
+
+  const univers = useMemo(() => {
+    if (!apogeeData?.projects) return [];
+    const universSet = new Set<string>();
+    apogeeData.projects.forEach((p: any) => {
+      const projectUniverses = p.data?.universes || p.universes || [];
+      projectUniverses.forEach((u: string) => universSet.add(u));
+    });
+    return Array.from(universSet)
+      .filter(u => u && u !== 'null')
+      .map(u => ({ id: u, name: u.charAt(0).toUpperCase() + u.slice(1).replace(/_/g, ' ') }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [apogeeData?.projects]);
+
+  const apporteurs = useMemo(() => {
+    if (!apogeeData?.clients) return [];
+    // Filtrer pour ne garder que les apporteurs (clients qui sont commanditaires)
+    const apporteurIds = new Set<number>();
+    apogeeData.projects?.forEach((p: any) => {
+      const cmdId = p.data?.commanditaireId || p.commanditaireId;
+      if (cmdId) apporteurIds.add(cmdId);
+    });
+    
+    return apogeeData.clients
+      .filter((c: any) => apporteurIds.has(c.id))
+      .map((c: any) => ({
+        id: String(c.id),
+        name: c.nom || c.name || c.displayName || `Client ${c.id}`,
+      }))
+      .sort((a: any, b: any) => a.name.localeCompare(b.name));
+  }, [apogeeData?.clients, apogeeData?.projects]);
 
   // Vérifier quelles dimensions sont actives
   const hasDimension = (dim: DimensionType) => {
     return definition?.dimensions?.includes(dim);
+  };
+
+  // Créer les services pour l'API StatIA
+  const createServices = () => {
+    return {
+      getFactures: async () => apogeeData?.factures || [],
+      getDevis: async () => apogeeData?.devis || [],
+      getInterventions: async () => apogeeData?.interventions || [],
+      getProjects: async () => apogeeData?.projects || [],
+      getUsers: async () => apogeeData?.users || [],
+      getClients: async () => apogeeData?.clients || [],
+    };
   };
 
   const handleRunPreview = async () => {
@@ -84,21 +139,15 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
       return;
     }
 
-    // Vérifier que toutes les dimensions requises ont une valeur
-    if (hasDimension('mois') && !selectedMonth) {
-      setError('Sélectionnez un mois');
+    // Vérifier que la métrique existe dans StatIA
+    if (!STAT_DEFINITIONS[definition.measure]) {
+      setError(`Métrique "${definition.measure}" non trouvée dans StatIA`);
       return;
     }
-    if (hasDimension('technicien') && !selectedTechnician) {
-      setError('Sélectionnez un technicien');
-      return;
-    }
-    if (hasDimension('univers') && !selectedUnivers) {
-      setError('Sélectionnez un univers');
-      return;
-    }
-    if (hasDimension('apporteur') && !selectedApporteur) {
-      setError('Sélectionnez un apporteur');
+
+    // Vérifier que les données sont chargées
+    if (!apogeeData || isLoadingData) {
+      setError('Chargement des données en cours...');
       return;
     }
 
@@ -106,37 +155,95 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
     setError(null);
 
     try {
-      // TODO: Appeler l'API StatIA avec les filtres spécifiques
-      // getMetricForAgency(agencySlug, definition.measure, { 
-      //   month: selectedMonth, 
-      //   technicianId: selectedTechnician,
-      //   univers: selectedUnivers,
-      //   apporteur: selectedApporteur
-      // })
+      // Déterminer la période
+      const monthData = availableMonths.find(m => m.value === selectedMonth);
+      const dateRange = monthData 
+        ? { start: monthData.start, end: monthData.end }
+        : { start: startOfMonth(new Date()), end: endOfMonth(new Date()) };
+
+      // Construire les filtres
+      const filters: Record<string, any> = {};
+      if (hasDimension('technicien') && selectedTechnician) {
+        filters.technicienId = selectedTechnician;
+      }
+      if (hasDimension('univers') && selectedUnivers) {
+        filters.univers = selectedUnivers;
+      }
+      if (hasDimension('apporteur') && selectedApporteur) {
+        filters.apporteurId = selectedApporteur;
+      }
+
+      // Appeler l'API StatIA avec les vraies données
+      const result = await getMetric(
+        definition.measure,
+        {
+          dateRange,
+          agencySlug: effectiveSlug,
+          filters,
+        },
+        createServices()
+      );
+
+      // Extraire la valeur selon le type de résultat
+      let displayValue: number | Record<string, number> = 0;
       
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Valeur simulée pour la démo
-      const simulatedValue = definition.measure.includes('taux') 
-        ? Math.random() * 10 + 2 
-        : Math.random() * 50000 + 10000;
-      
-      setPreviewResult(simulatedValue);
+      if (typeof result.value === 'number') {
+        displayValue = result.value;
+      } else if (typeof result.value === 'object') {
+        // Si c'est un objet avec des ventilations, filtrer selon les dimensions sélectionnées
+        if (hasDimension('technicien') && selectedTechnician && result.value[selectedTechnician] !== undefined) {
+          displayValue = result.value[selectedTechnician];
+        } else if (hasDimension('univers') && selectedUnivers && result.value[selectedUnivers] !== undefined) {
+          displayValue = result.value[selectedUnivers];
+        } else if (hasDimension('apporteur') && selectedApporteur && result.value[selectedApporteur] !== undefined) {
+          displayValue = result.value[selectedApporteur];
+        } else if (hasDimension('mois') && selectedMonth && result.value[selectedMonth] !== undefined) {
+          displayValue = result.value[selectedMonth];
+        } else {
+          // Retourner la valeur complète ou la somme
+          displayValue = result.value;
+        }
+      }
+
+      setPreviewResult(displayValue);
+      setRecordCount(result.metadata?.recordCount || 0);
     } catch (err: any) {
+      console.error('StatIA Preview Error:', err);
       setError(err.message || 'Erreur lors du calcul');
     } finally {
       setIsRunning(false);
     }
   };
 
-  const formatValue = (value: number) => {
-    if (definition?.measure?.includes('taux')) {
+  const formatValue = (value: number | Record<string, number>) => {
+    if (typeof value === 'object') {
+      // Afficher un résumé pour les objets
+      const keys = Object.keys(value);
+      if (keys.length === 0) return '0';
+      if (keys.length <= 3) {
+        return keys.map(k => `${k}: ${formatSingleValue(value[k])}`).join('\n');
+      }
+      const total = Object.values(value).reduce((sum, v) => sum + (v || 0), 0);
+      return formatSingleValue(total) + ` (${keys.length} entrées)`;
+    }
+    return formatSingleValue(value);
+  };
+
+  const formatSingleValue = (value: number) => {
+    const measureConfig = definition?.measure ? getMeasureById(definition.measure) : null;
+    const unit = measureConfig?.unit || '€';
+    const measureId = definition?.measure || '';
+    
+    if (unit === '%' || measureId.includes('taux')) {
       return `${value.toFixed(2)} %`;
     }
-    if (definition?.measure?.includes('heure') || definition?.measure?.includes('duree')) {
+    if (unit === 'h' || measureId.includes('heure') || measureId.includes('duree')) {
       return `${value.toFixed(1)} h`;
     }
-    if (definition?.measure?.includes('nb_') || definition?.measure?.includes('dossiers')) {
+    if (unit === 'jours' || measureId.includes('delai') || measureId.includes('jour')) {
+      return `${Math.round(value)} jours`;
+    }
+    if (measureId.includes('nb_') || measureId.includes('dossiers') || measureId.includes('nombre') || measureId.includes('count')) {
       return Math.round(value).toString();
     }
     return new Intl.NumberFormat('fr-FR', {
@@ -156,17 +263,17 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
     }
     
     if (hasDimension('technicien') && selectedTechnician) {
-      const tech = MOCK_TECHNICIANS.find(t => t.id === selectedTechnician);
+      const tech = technicians.find((t: any) => t.id === selectedTechnician);
       parts.push(tech?.name || selectedTechnician);
     }
     
     if (hasDimension('univers') && selectedUnivers) {
-      const uni = MOCK_UNIVERS.find(u => u.id === selectedUnivers);
+      const uni = univers.find((u: any) => u.id === selectedUnivers);
       parts.push(uni?.name || selectedUnivers);
     }
     
     if (hasDimension('apporteur') && selectedApporteur) {
-      const app = MOCK_APPORTEURS.find(a => a.id === selectedApporteur);
+      const app = apporteurs.find((a: any) => a.id === selectedApporteur);
       parts.push(app?.name || selectedApporteur);
     }
     
@@ -184,13 +291,21 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
             <TrendingUp className="h-4 w-4" />
             Prévisualisation
           </span>
-          <Badge variant="outline" className="text-xs">
-            {agencySlug}
-          </Badge>
+          <div className="flex items-center gap-2">
+            {isLoadingData && (
+              <Badge variant="outline" className="text-xs">
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                Chargement...
+              </Badge>
+            )}
+            <Badge variant="outline" className="text-xs">
+              {effectiveSlug}
+            </Badge>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Sélecteurs de dimension */}
+        {/* Sélecteurs de dimension - avec données RÉELLES */}
         {hasDimensions && (
           <div className="space-y-3 p-3 bg-muted/30 rounded-lg border border-dashed">
             <div className="text-xs font-medium text-muted-foreground uppercase flex items-center gap-1">
@@ -218,16 +333,16 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
                 </div>
               )}
 
-              {/* Sélecteur Technicien */}
+              {/* Sélecteur Technicien - DONNÉES RÉELLES */}
               {hasDimension('technicien') && (
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4 text-muted-foreground" />
                   <Select value={selectedTechnician} onValueChange={setSelectedTechnician}>
                     <SelectTrigger className="flex-1 h-8 text-xs">
-                      <SelectValue placeholder="Choisir un technicien" />
+                      <SelectValue placeholder={isLoadingData ? "Chargement..." : `Choisir parmi ${technicians.length} techniciens`} />
                     </SelectTrigger>
                     <SelectContent>
-                      {MOCK_TECHNICIANS.map(tech => (
+                      {technicians.map((tech: any) => (
                         <SelectItem key={tech.id} value={tech.id}>
                           {tech.name}
                         </SelectItem>
@@ -237,16 +352,16 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
                 </div>
               )}
 
-              {/* Sélecteur Univers */}
+              {/* Sélecteur Univers - DONNÉES RÉELLES */}
               {hasDimension('univers') && (
                 <div className="flex items-center gap-2">
                   <Layers className="h-4 w-4 text-muted-foreground" />
                   <Select value={selectedUnivers} onValueChange={setSelectedUnivers}>
                     <SelectTrigger className="flex-1 h-8 text-xs">
-                      <SelectValue placeholder="Choisir un univers" />
+                      <SelectValue placeholder={isLoadingData ? "Chargement..." : `Choisir parmi ${univers.length} univers`} />
                     </SelectTrigger>
                     <SelectContent>
-                      {MOCK_UNIVERS.map(uni => (
+                      {univers.map((uni: any) => (
                         <SelectItem key={uni.id} value={uni.id}>
                           {uni.name}
                         </SelectItem>
@@ -256,16 +371,16 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
                 </div>
               )}
 
-              {/* Sélecteur Apporteur */}
+              {/* Sélecteur Apporteur - DONNÉES RÉELLES */}
               {hasDimension('apporteur') && (
                 <div className="flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-muted-foreground" />
                   <Select value={selectedApporteur} onValueChange={setSelectedApporteur}>
                     <SelectTrigger className="flex-1 h-8 text-xs">
-                      <SelectValue placeholder="Choisir un apporteur" />
+                      <SelectValue placeholder={isLoadingData ? "Chargement..." : `Choisir parmi ${apporteurs.length} apporteurs`} />
                     </SelectTrigger>
                     <SelectContent>
-                      {MOCK_APPORTEURS.map(app => (
+                      {apporteurs.map((app: any) => (
                         <SelectItem key={app.id} value={app.id}>
                           {app.name}
                         </SelectItem>
@@ -288,17 +403,22 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
           {isRunning ? (
             <div className="flex items-center justify-center gap-2">
               <Loader2 className="h-5 w-5 animate-spin" />
-              <span className="text-sm text-muted-foreground">Calcul en cours...</span>
+              <span className="text-sm text-muted-foreground">Calcul StatIA en cours...</span>
             </div>
           ) : previewResult !== null ? (
             <div className="space-y-2">
-              <div className="text-2xl font-bold">{formatValue(previewResult)}</div>
+              <div className="text-2xl font-bold whitespace-pre-line">
+                {formatValue(previewResult)}
+              </div>
               <div className="text-xs text-muted-foreground">{measureLabel || definition?.measure}</div>
               {contextLabel && (
                 <div className="text-xs text-primary font-medium pt-1 border-t border-dashed">
                   {contextLabel}
                 </div>
               )}
+              <div className="text-xs text-muted-foreground">
+                {recordCount > 0 && `${recordCount} enregistrements traités`}
+              </div>
             </div>
           ) : error ? (
             <div className="flex items-center justify-center gap-2 text-destructive">
@@ -308,9 +428,11 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
           ) : (
             <div className="text-sm text-muted-foreground">
               {definition?.measure 
-                ? hasDimensions 
-                  ? 'Sélectionnez les valeurs puis cliquez sur Exécuter'
-                  : 'Cliquez sur Exécuter pour voir le résultat'
+                ? isLoadingData
+                  ? 'Chargement des données Apogée...'
+                  : hasDimensions 
+                    ? 'Sélectionnez les valeurs puis cliquez sur Exécuter'
+                    : 'Cliquez sur Exécuter pour voir le résultat'
                 : 'Sélectionnez une mesure pour prévisualiser'
               }
             </div>
@@ -321,17 +443,17 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
         <Button 
           className="w-full" 
           onClick={handleRunPreview}
-          disabled={!definition?.measure || isRunning}
+          disabled={!definition?.measure || isRunning || isLoadingData}
         >
           {isRunning ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Calcul...
+              Calcul StatIA...
             </>
           ) : (
             <>
               <Play className="h-4 w-4 mr-2" />
-              Exécuter
+              Exécuter (données réelles)
             </>
           )}
         </Button>
@@ -341,12 +463,12 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
           <div className="pt-2 border-t">
             <Button variant="outline" size="sm" className="w-full text-xs" asChild>
               <a 
-                href={`https://${agencySlug}.hc-apogee.fr`} 
+                href={`https://${effectiveSlug}.hc-apogee.fr`} 
                 target="_blank" 
                 rel="noopener noreferrer"
               >
                 <ExternalLink className="h-3 w-3 mr-2" />
-                Vérifier sur Apogée ({agencySlug})
+                Vérifier sur Apogée ({effectiveSlug})
               </a>
             </Button>
           </div>
@@ -355,8 +477,12 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
         {/* Détails de la définition */}
         {definition?.measure && (
           <div className="pt-2 border-t space-y-2">
-            <div className="text-xs font-medium text-muted-foreground uppercase">Configuration</div>
+            <div className="text-xs font-medium text-muted-foreground uppercase">Configuration StatIA</div>
             <div className="text-xs space-y-1">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Métrique:</span>
+                <span className="font-mono">{definition.measure}</span>
+              </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Sources:</span>
                 <span>{definition.sources?.join(', ') || 'factures'}</span>
