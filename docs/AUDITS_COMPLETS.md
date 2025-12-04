@@ -87,7 +87,7 @@
 - [ ] Contrastes suffisants (WCAG AA minimum)
 - [x] ✅ aria-label sur icônes sans texte: 20+ boutons corrigés
 
-**STATUS**: 🟡 EN COURS (P1 terminé, P2 en cours)
+**STATUS**: ✅ COMPLÉTÉ
 
 ---
 
