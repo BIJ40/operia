@@ -44,8 +44,6 @@ export function calculateTop5Agencies(agencyData: AgencyData[]) {
 
       const ca = agency.data.factures
         .filter((f: any) => {
-          if (f.type === 'avoir') return false;
-          
           const dateReelle = f.dateReelle || f.dateEmission || f.created_at;
           if (!dateReelle) return false;
 
@@ -57,7 +55,10 @@ export function calculateTop5Agencies(agencyData: AgencyData[]) {
         .reduce((sum: number, f: any) => {
           const montantRaw = f.data?.totalHT || f.totalHT || f.montantHT || 0;
           const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, '')) || 0;
-          return sum + montant;
+          // Avoirs soustraits comme montants négatifs (STATIA_RULES)
+          const typeFacture = (f.type || f.typeFacture || '').toLowerCase();
+          const montantNet = typeFacture === 'avoir' ? -Math.abs(montant) : montant;
+          return sum + montantNet;
         }, 0);
 
       return { agencyId: agency.agencyId, agencyLabel: agency.agencyLabel, ca };
@@ -102,8 +103,6 @@ export function calculateBestApporteur(agencyData: AgencyData[]) {
     );
 
     agency.data.factures.forEach((facture: any) => {
-      if (facture.type === 'avoir') return;
-
       const dateReelle = facture.dateReelle || facture.dateEmission || facture.created_at;
       if (!dateReelle) return;
 
@@ -130,7 +129,10 @@ export function calculateBestApporteur(agencyData: AgencyData[]) {
       
       const montantRaw = facture.data?.totalHT || facture.totalHT || facture.montantHT || 0;
       const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, '')) || 0;
-      existing.ca += montant;
+      // Avoirs soustraits comme montants négatifs (STATIA_RULES)
+      const typeFacture = (facture.type || facture.typeFacture || '').toLowerCase();
+      const montantNet = typeFacture === 'avoir' ? -Math.abs(montant) : montant;
+      existing.ca += montantNet;
       
       // Count unique projects per apporteur
       apporteurMap.set(commanditaireId, existing);
@@ -201,8 +203,6 @@ export function calculateTop3Apporteurs(agencyData: AgencyData[]): Array<{ name:
     );
 
     agency.data.factures.forEach((facture: any) => {
-      if (facture.type === 'avoir') return;
-
       const dateReelle = facture.dateReelle || facture.dateEmission || facture.created_at;
       if (!dateReelle) return;
 
@@ -229,7 +229,10 @@ export function calculateTop3Apporteurs(agencyData: AgencyData[]): Array<{ name:
       
       const montantRaw = facture.data?.totalHT || facture.totalHT || facture.montantHT || 0;
       const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, '')) || 0;
-      existing.ca += montant;
+      // Avoirs soustraits comme montants négatifs (STATIA_RULES)
+      const typeFacture = (facture.type || facture.typeFacture || '').toLowerCase();
+      const montantNet = typeFacture === 'avoir' ? -Math.abs(montant) : montant;
+      existing.ca += montantNet;
       
       apporteurMap.set(commanditaireId, existing);
     });
@@ -447,8 +450,6 @@ export function calculateMonthlyCAEvolution(agencyData: AgencyData[]) {
     if (!agency.data?.factures) return;
 
     agency.data.factures.forEach((facture: any) => {
-      if (facture.type === 'avoir') return;
-
       const dateReelle = facture.dateReelle || facture.dateEmission || facture.created_at;
       const factureDate = parseDate(dateReelle);
       
@@ -457,8 +458,11 @@ export function calculateMonthlyCAEvolution(agencyData: AgencyData[]) {
       const monthIndex = factureDate.getMonth();
       const montantRaw = facture.data?.totalHT || facture.totalHT || facture.montantHT || 0;
       const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, '')) || 0;
+      // Avoirs soustraits comme montants négatifs (STATIA_RULES)
+      const typeFacture = (facture.type || facture.typeFacture || '').toLowerCase();
+      const montantNet = typeFacture === 'avoir' ? -Math.abs(montant) : montant;
       
-      monthlyData[monthIndex].ca += montant;
+      monthlyData[monthIndex].ca += montantNet;
       monthlyData[monthIndex].nbFactures += 1;
     });
   });
@@ -482,7 +486,6 @@ export function calculateCAByAgency(agencyData: AgencyData[]) {
 
       const ca = agency.data.factures
         .filter((f: any) => {
-          if (f.type === 'avoir') return false;
           const dateReelle = f.dateReelle || f.dateEmission || f.created_at;
           const factureDate = parseDate(dateReelle);
           return factureDate && isWithinInterval(factureDate, { start: yearStart, end: yearEnd });
@@ -490,7 +493,10 @@ export function calculateCAByAgency(agencyData: AgencyData[]) {
         .reduce((sum: number, f: any) => {
           const montantRaw = f.data?.totalHT || f.totalHT || f.montantHT || 0;
           const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, '')) || 0;
-          return sum + montant;
+          // Avoirs soustraits comme montants négatifs (STATIA_RULES)
+          const typeFacture = (f.type || f.typeFacture || '').toLowerCase();
+          const montantNet = typeFacture === 'avoir' ? -Math.abs(montant) : montant;
+          return sum + montantNet;
         }, 0);
 
       return { agencyLabel: agency.agencyLabel, ca };
