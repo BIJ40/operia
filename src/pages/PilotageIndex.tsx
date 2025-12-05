@@ -1,4 +1,4 @@
-import { BarChart3, ListTodo, Calendar, Users, Inbox, Briefcase, PieChart, TrendingUp, Building2, FileText, Info } from 'lucide-react';
+import { BarChart3, ListTodo, Calendar, Users, Inbox, Briefcase, PieChart, TrendingUp, Building2, FileText, Info, ShoppingCart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
@@ -137,6 +137,15 @@ const pilotageModules: PilotageModule[] = [
     description: 'Informations et paramètres de l\'agence',
     icon: Info,
     href: '#infos-agence',
+    category: 'autres',
+  },
+  {
+    id: 'commercial',
+    title: 'Commercial',
+    description: 'Outils et suivi commercial',
+    icon: ShoppingCart,
+    href: ROUTES.pilotage.commercial,
+    badge: 'Nouveau',
     category: 'autres',
   },
 ];
