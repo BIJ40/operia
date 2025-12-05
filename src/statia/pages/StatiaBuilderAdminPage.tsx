@@ -8,13 +8,7 @@ import { AllMetricsViewer } from '../components/AllMetricsViewer';
 
 export default function StatiaBuilderAdminPage() {
   return (
-    <div className="container mx-auto py-8 px-4 space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-bold">StatIA - Toutes les métriques</h1>
-        <p className="text-muted-foreground">
-          Visualisez et vérifiez toutes les métriques StatIA disponibles. Survolez pour voir les détails.
-        </p>
-      </div>
+    <div className="container mx-auto py-6 px-4">
       <AllMetricsViewer mode="admin" />
     </div>
   );

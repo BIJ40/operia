@@ -445,6 +445,7 @@ export const PAGE_TITLES: Record<string, string> = {
   [ROUTES.admin.systemHealth]: 'Santé Système',
   [ROUTES.admin.storageQuota]: 'Stockage',
   [ROUTES.admin.pageMetadata]: 'Métadonnées Pages',
+  [ROUTES.admin.statia]: 'StatIA by BIJ',
   // Gestion de Projet (V2 routes)
   [ROUTES.projects.index]: 'Gestion de Projet',
   [ROUTES.projects.kanban]: 'Kanban Projet',
