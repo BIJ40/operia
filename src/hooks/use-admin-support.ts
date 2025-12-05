@@ -47,6 +47,8 @@ export interface SupportTicket {
   // Notification clignotante
   last_message_at?: string | null;
   last_message_by?: string | null;
+  // Fusion de tickets
+  merged_into_ticket_id?: string | null;
 }
 
 export interface SupportMessage {
