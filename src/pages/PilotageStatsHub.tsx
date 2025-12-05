@@ -174,7 +174,7 @@ function PilotageStatsHubContent() {
         computeStatSafe('panier_moyen', loadedData, params),
         computeStatSafe('duree_moyenne_dossier', loadedData, params),
         computeStatSafe('nb_dossiers_crees', loadedData, params),
-        computeStatSafe('delai_premier_devis', loadedData, params)
+        computeStatSafe('delai_dossier_premier_devis', loadedData, params)
       ]);
 
       return {
