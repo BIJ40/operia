@@ -35,27 +35,48 @@ function getProjectDate(project: any): Date | null {
 
 /**
  * Détection SAV robuste - vérifie si un projet est un SAV
+ * Vérifie multiples champs possibles dans Apogée
  */
 function isSavProject(project: any): boolean {
   const d = project.data || {};
 
-  // Flags explicites
+  // Flags explicites (plusieurs variantes)
   if (d.isSav === true || d.is_sav === true || d.isSAV === true) return true;
+  if (project.isSav === true || project.is_sav === true) return true;
 
-  // Parent project ID (dossier enfant)
-  if (project.parentProjectId || project.parent_project_id || d.parentId) return true;
+  // Parent project ID (dossier enfant = SAV)
+  if (project.parentProjectId || project.parent_project_id || d.parentId || d.parent_id) return true;
+  if (project.parentId || project.parent_id) return true;
+  
+  // Dossier lié (linked dossier = potentiel SAV)
+  if (d.linkedProjectId || d.linkedDossierId || d.dossierId) return true;
 
-  // Origine / type / catégorie
-  const origine = (
-    d.origineDossier || 
-    d.origine || 
-    d.typeDossier || 
-    d.categorie || 
-    project.type ||
-    ''
-  ).toString().toLowerCase();
+  // Origine / type / catégorie / state contenant SAV
+  const fieldsToCheck = [
+    d.origineDossier,
+    d.origine,
+    d.typeDossier,
+    d.categorie,
+    d.type,
+    d.sinistre,
+    d.nature,
+    project.type,
+    project.state,
+    project.label,
+    project.ref,
+  ];
+  
+  for (const field of fieldsToCheck) {
+    if (field && String(field).toLowerCase().includes('sav')) {
+      return true;
+    }
+  }
 
-  if (origine.includes('sav')) return true;
+  // Pictos contenant SAV
+  const pictos = d.pictosInterv || d.pictos || project.pictosInterv || [];
+  if (Array.isArray(pictos) && pictos.some((p: any) => String(p).toLowerCase().includes('sav'))) {
+    return true;
+  }
 
   // Tags éventuels
   const tags = (d.tags || project.tags || []) as any[];
@@ -64,6 +85,35 @@ function isSavProject(project: any): boolean {
   }
 
   return false;
+}
+
+// Debug: Log sample projects to understand data structure (temporary)
+let _savDebugLogged = false;
+function debugSavDetection(projects: any[]): void {
+  if (_savDebugLogged || projects.length === 0) return;
+  _savDebugLogged = true;
+  
+  const samples = projects.slice(0, 3);
+  console.log('[StatIA SAV DEBUG] Sample projects structure:', samples.map(p => ({
+    id: p.id,
+    ref: p.ref,
+    label: p.label,
+    state: p.state,
+    type: p.type,
+    parentId: p.parentId,
+    parentProjectId: p.parentProjectId,
+    data_keys: p.data ? Object.keys(p.data).slice(0, 20) : [],
+    data_parentId: p.data?.parentId,
+    data_isSav: p.data?.isSav,
+    data_origine: p.data?.origineDossier || p.data?.origine,
+    data_sinistre: p.data?.sinistre,
+    data_pictosInterv: p.data?.pictosInterv,
+    isSav: isSavProject(p),
+  })));
+  
+  // Count SAV
+  const savCount = projects.filter(p => isSavProject(p)).length;
+  console.log(`[StatIA SAV DEBUG] Total projects: ${projects.length}, SAV detected: ${savCount}`);
 }
 
 /**
@@ -354,6 +404,9 @@ export const tauxSavParUnivers: StatDefinition = {
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const { projects } = data;
 
+    // Debug SAV detection
+    debugSavDetection(projects);
+
     const totalByUnivers: Record<string, number> = {};
     const savByUnivers: Record<string, number> = {};
 
@@ -419,6 +472,9 @@ export const tauxSavParApporteur: StatDefinition = {
 
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const { projects, clients } = data;
+
+    // Debug SAV detection
+    debugSavDetection(projects);
 
     const apporteursById = mapApporteurs(clients);
 
@@ -564,6 +620,9 @@ export const nbSavGlobal: StatDefinition = {
   aggregation: 'count',
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const { projects } = data;
+    
+    // Debug SAV detection
+    debugSavDetection(projects);
     
     let nbSav = 0;
     
