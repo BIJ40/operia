@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bot, X, Send, RotateCcw, BookOpen, Users, Building2, HelpCircle, Headphones } from 'lucide-react';
+import { Bot, X, Send, RotateCcw, BookOpen, Users, Building2, HelpCircle, Headphones, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -10,6 +10,8 @@ import { getApogeeContext, getNoContentResponse } from '@/lib/rag-michu';
 import { safeQuery } from '@/lib/safeQuery';
 import { logError } from '@/lib/logger';
 import { useNavigate } from 'react-router-dom';
+import { useSupportTicket } from '@/hooks/use-support-ticket';
+import { toast } from 'sonner';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -29,6 +31,7 @@ const themes = [
 export function ChatbotWidget() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { createSupportTicket, isCreating } = useSupportTicket();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -45,19 +48,35 @@ export function ChatbotWidget() {
     setSelectedContext(null);
   };
 
-  const handleSelectTheme = (theme: ChatContext) => {
+  const handleSelectTheme = async (theme: ChatContext) => {
     if (theme === 'support') {
-      // Navigate to support page and close chatbot
+      // Create a chat_human ticket and navigate to it
+      const ticket = await createSupportTicket(
+        [{ role: 'user', content: 'Demande de discussion en direct avec le support' }],
+        'chat_human'
+      );
       setIsOpen(false);
-      navigate('/support/mes-demandes');
+      if (ticket) {
+        toast.success('Un agent va vous répondre très rapidement');
+        navigate('/support/mes-demandes', { state: { openTicketId: ticket.id } });
+      } else {
+        navigate('/support/mes-demandes');
+      }
     } else {
       setSelectedContext(theme);
     }
   };
 
-  const handleContactSupport = () => {
+  const handleContactSupport = async () => {
+    // Create a chat_human ticket from existing conversation
+    const ticket = await createSupportTicket(messages, 'chat_human');
     setIsOpen(false);
-    navigate('/support/mes-demandes');
+    if (ticket) {
+      toast.success('Un agent va vous répondre très rapidement');
+      navigate('/support/mes-demandes', { state: { openTicketId: ticket.id } });
+    } else {
+      navigate('/support/mes-demandes');
+    }
   };
 
   const buildContextualQuery = (currentQuery: string, conversationHistory: Message[]): string => {
@@ -299,11 +318,13 @@ export function ChatbotWidget() {
                     <button
                       key={theme.id}
                       onClick={() => handleSelectTheme(theme.id)}
+                      disabled={isSupport && isCreating}
                       className={cn(
                         "w-full group border rounded-lg px-3 py-2 transition-all duration-200 flex items-center gap-3",
                         isSupport 
                           ? "border-helpconfort-orange/40 bg-helpconfort-orange/5 hover:bg-helpconfort-orange/10 hover:border-helpconfort-orange/60"
-                          : "border-border hover:border-primary/40 bg-muted/30 hover:bg-muted/60"
+                          : "border-border hover:border-primary/40 bg-muted/30 hover:bg-muted/60",
+                        isSupport && isCreating && "opacity-70 cursor-wait"
                       )}
                     >
                       <div className={cn(
@@ -312,18 +333,22 @@ export function ChatbotWidget() {
                           ? "bg-helpconfort-orange/10 group-hover:bg-helpconfort-orange/20"
                           : "bg-background border border-border group-hover:border-primary/40"
                       )}>
-                        <Icon className={cn(
-                          "h-3.5 w-3.5 transition-colors",
-                          isSupport
-                            ? "text-helpconfort-orange"
-                            : "text-muted-foreground group-hover:text-primary"
-                        )} />
+                        {isSupport && isCreating ? (
+                          <Loader2 className="h-3.5 w-3.5 text-helpconfort-orange animate-spin" />
+                        ) : (
+                          <Icon className={cn(
+                            "h-3.5 w-3.5 transition-colors",
+                            isSupport
+                              ? "text-helpconfort-orange"
+                              : "text-muted-foreground group-hover:text-primary"
+                          )} />
+                        )}
                       </div>
                       <span className={cn(
                         "font-medium text-sm",
                         isSupport && "text-helpconfort-orange"
                       )}>
-                        {theme.label}
+                        {isSupport && isCreating ? 'Connexion...' : theme.label}
                       </span>
                     </button>
                   );
