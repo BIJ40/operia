@@ -15,6 +15,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: 'V0.6.6',
+    date: '2025-12-05',
+    title: 'Synchronisation Auto Collaborateurs & Corrections UI',
+    changes: [
+      { type: 'feature', description: 'Trigger auto_create_collaborator : création automatique du collaborateur quand un utilisateur est affecté à une agence' },
+      { type: 'fix', description: 'Correction alignement liste utilisateurs admin (colonnes fixes, badges MDP provisoire)' },
+      { type: 'fix', description: 'Correction décalage visuel modal ajout documents RH (footer aligné)' },
+    ]
+  },
+  {
     version: 'V0.6.5',
     date: '2025-12-05',
     title: 'Gestion de Projet V2 & Template Email',
