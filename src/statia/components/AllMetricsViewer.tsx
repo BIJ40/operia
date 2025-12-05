@@ -239,6 +239,16 @@ export function AllMetricsViewer({ mode, fixedAgencySlug }: AllMetricsViewerProp
     toast.success('Métrique validée');
   };
 
+  const handleUnvalidate = (metricId: string) => {
+    const newStatus = {
+      ...metricsStatus,
+      [metricId]: { ...metricsStatus[metricId], validated: false }
+    };
+    setMetricsStatus(newStatus);
+    saveMetricsStatus(newStatus);
+    toast.success('Métrique marquée comme non validée');
+  };
+
   const handleHide = (metricId: string) => {
     const newStatus = {
       ...metricsStatus,
@@ -508,10 +518,17 @@ export function AllMetricsViewer({ mode, fixedAgencySlug }: AllMetricsViewerProp
                                 Voir le calcul
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => handleValidate(def.id)}>
-                                <Check className="h-4 w-4 mr-2 text-green-500" />
-                                {isValidated ? 'Déjà validé' : 'Valider'}
-                              </DropdownMenuItem>
+                              {isValidated ? (
+                                <DropdownMenuItem onClick={() => handleUnvalidate(def.id)}>
+                                  <XCircle className="h-4 w-4 mr-2 text-red-500" />
+                                  Dévalider
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem onClick={() => handleValidate(def.id)}>
+                                  <Check className="h-4 w-4 mr-2 text-green-500" />
+                                  Valider
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuItem onClick={() => handleOpenSuggestion(def.id, def.label)}>
                                 <Lightbulb className="h-4 w-4 mr-2 text-purple-500" />
                                 {hasSuggestion ? 'Modifier suggestion' : 'Suggérer calcul'}
