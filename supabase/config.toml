@@ -95,3 +95,6 @@ verify_jwt = true
 
 [functions.export-my-data]
 verify_jwt = true
+
+[functions.sensitive-data]
+verify_jwt = true
