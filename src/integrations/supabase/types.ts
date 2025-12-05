@@ -2149,6 +2149,51 @@ export type Database = {
         }
         Relationships: []
       }
+      formation_content: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          extracted_images: Json | null
+          generated_at: string | null
+          generated_summary: string | null
+          id: string
+          source_block_id: string
+          source_block_title: string
+          source_category_id: string | null
+          source_category_title: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          extracted_images?: Json | null
+          generated_at?: string | null
+          generated_summary?: string | null
+          id?: string
+          source_block_id: string
+          source_block_title: string
+          source_category_id?: string | null
+          source_category_title?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          extracted_images?: Json | null
+          generated_at?: string | null
+          generated_summary?: string | null
+          id?: string
+          source_block_id?: string
+          source_block_title?: string
+          source_category_id?: string | null
+          source_category_title?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       franchiseur_agency_assignments: {
         Row: {
           agency_id: string

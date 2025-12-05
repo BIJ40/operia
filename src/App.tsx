@@ -32,6 +32,7 @@ const CategoryApporteur = lazy(() => import("./pages/CategoryApporteur"));
 const HelpConfort = lazy(() => import("./pages/HelpConfort"));
 const CategoryHelpConfort = lazy(() => import("./pages/CategoryHelpConfort"));
 const Documents = lazy(() => import("./pages/Documents"));
+const FormationApogee = lazy(() => import("./pages/FormationApogee"));
 
 // Lazy loaded pages - Pilotage Agence
 const PilotageStatsHub = lazy(() => import("./pages/PilotageStatsHub"));
@@ -100,6 +101,7 @@ const AdminApogeeGuides = lazy(() => import("./pages/AdminApogeeGuides"));
 const AdminChatbotRag = lazy(() => import("./pages/AdminChatbotRag"));
 const AdminSystemHealth = lazy(() => import("./pages/AdminSystemHealth"));
 const AdminAnnouncements = lazy(() => import("./pages/admin/AdminAnnouncements"));
+const FormationGenerator = lazy(() => import("./pages/admin/FormationGenerator"));
 const StatiaBuilderAdminPage = lazy(() => import("./statia/pages/StatiaBuilderAdminPage"));
 const StatiaBuilderAgencyPage = lazy(() => import("./statia/pages/StatiaBuilderAgencyPage"));
 
@@ -188,6 +190,7 @@ function AppContent() {
           {/* Guide Apogée */}
           <Route path="/academy/apogee" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><ApogeeGuide /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/academy/apogee/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><Category /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/academy/apogee/formation" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><FormationApogee /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* Guide Apporteurs */}
           <Route path="/academy/apporteurs" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><ApporteurGuide /></ModuleGuard></RoleGuard></MainLayout>} />
@@ -343,6 +346,7 @@ function AppContent() {
           <Route path="/admin/system-health" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminSystemHealth /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/statia-by-bij" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><StatiaBuilderAdminPage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/statia-builder" element={<Navigate to="/admin/statia-by-bij" replace />} />
+          <Route path="/admin/formation-generator" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><FormationGenerator /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* GESTION DE PROJET (ex Apogée Tickets) */}
