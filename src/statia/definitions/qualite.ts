@@ -130,71 +130,6 @@ export const tauxDossiersSansDevis: StatDefinition = {
 };
 
 /**
- * Délai moyen validation devis
- * Temps entre émission et validation d'un devis
- */
-export const delaiValidationDevis: StatDefinition = {
-  id: 'delai_validation_devis',
-  label: 'Délai validation devis',
-  description: 'Nombre de jours moyen entre émission et validation du devis',
-  category: 'qualite',
-  source: 'devis',
-  aggregation: 'avg',
-  unit: 'jours',
-  compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { devis } = data;
-    
-    const delais: number[] = [];
-    
-    for (const d of devis) {
-      const dateEmission = d.dateReelle || d.date || d.created_at;
-      if (!dateEmission) continue;
-      
-      // Seulement les devis validés
-      const state = (d.state || '').toLowerCase();
-      if (!['validated', 'signed', 'order', 'accepted'].includes(state)) continue;
-      
-      const dateValidation = d.dateValidation || d.data?.dateValidation;
-      if (!dateValidation) continue;
-      
-      try {
-        const emissionDate = parseISO(dateEmission);
-        const validationDate = parseISO(dateValidation);
-        
-        if (!isWithinInterval(emissionDate, { start: params.dateRange.start, end: params.dateRange.end })) {
-          continue;
-        }
-        
-        const delai = differenceInDays(validationDate, emissionDate);
-        if (delai >= 0) {
-          delais.push(delai);
-        }
-      } catch {
-        continue;
-      }
-    }
-    
-    const moyenne = delais.length > 0 
-      ? delais.reduce((a, b) => a + b, 0) / delais.length 
-      : 0;
-    
-    return {
-      value: Math.round(moyenne * 10) / 10,
-      metadata: {
-        computedAt: new Date(),
-        source: 'devis',
-        recordCount: delais.length,
-      },
-      breakdown: {
-        nbDevisValides: delais.length,
-        min: delais.length > 0 ? Math.min(...delais) : 0,
-        max: delais.length > 0 ? Math.max(...delais) : 0,
-      }
-    };
-  }
-};
-
-/**
  * Taux de factures avec avoir
  * Pourcentage de factures ayant généré un avoir
  */
@@ -423,7 +358,6 @@ export const delaiDossierPremierDevis: StatDefinition = {
 export const qualiteDefinitions = {
   taux_dossiers_multi_univers: tauxDossiersMultiUnivers,
   taux_dossiers_sans_devis: tauxDossiersSansDevis,
-  delai_validation_devis: delaiValidationDevis,
   delai_dossier_premier_devis: delaiDossierPremierDevis,
   taux_factures_avec_avoir: tauxFacturesAvecAvoir,
   montant_total_avoirs: montantTotalAvoirs,
