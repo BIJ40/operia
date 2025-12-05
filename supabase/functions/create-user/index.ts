@@ -235,45 +235,39 @@ serve(async (req) => {
         const emailHtml = `
           <!DOCTYPE html>
           <html>
-            <head>
-              <style>
-                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .header { background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-                .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }
-                .credentials { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2563eb; }
-                .credential-item { margin: 15px 0; }
-                .credential-label { font-weight: bold; color: #666; font-size: 14px; }
-                .credential-value { font-size: 18px; color: #2563eb; font-weight: bold; font-family: monospace; }
-                .link { color: #2563eb; text-decoration: underline; }
-                .footer { text-align: center; color: #666; font-size: 12px; margin-top: 30px; }
-              </style>
-            </head>
-            <body>
-              <div class="container">
-                <div class="header">
-                  <h1>🎉 Bienvenue sur HelpConfort Services</h1>
-                </div>
-                <div class="content">
-                  <p>Bonjour <strong>${firstName} ${lastName}</strong>,</p>
-                  <p>Votre compte a été créé avec succès. Voici vos identifiants de connexion :</p>
-                  <div class="credentials">
-                    <div class="credential-item">
-                      <div class="credential-label">📧 Email de connexion :</div>
-                      <div class="credential-value">${email}</div>
-                    </div>
-                    <div class="credential-item">
-                      <div class="credential-label">🔑 Mot de passe temporaire :</div>
-                      <div class="credential-value">${password}</div>
-                    </div>
-                  </div>
-                  <p><strong>⚠️ Important :</strong> Ce mot de passe est temporaire. Vous devrez le modifier lors de votre première connexion.</p>
-                  <p>👉 <a href="${Deno.env.get('APP_URL') || 'https://www.helpconfort.services'}" class="link">Se connecter à HelpConfort Services</a></p>
-                  <div class="footer">
-                    <p>© ${new Date().getFullYear()} HelpConfort Services</p>
-                  </div>
-                </div>
-              </div>
+            <body style="margin: 0; padding: 20px; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto;">
+                <tr>
+                  <td style="background-color: #2563eb; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 24px;">🎉 Bienvenue sur HelpConfort Services</h1>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="background-color: #ffffff; padding: 30px; border-radius: 0 0 10px 10px;">
+                    <p style="color: #333333; margin: 0 0 15px 0;">Bonjour <strong>${firstName} ${lastName}</strong>,</p>
+                    <p style="color: #333333; margin: 0 0 20px 0;">Votre compte a été créé avec succès. Voici vos identifiants de connexion :</p>
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin: 20px 0; border-left: 4px solid #2563eb; background-color: #f8fafc;">
+                      <tr>
+                        <td style="padding: 20px;">
+                          <p style="margin: 0 0 5px 0; color: #666666; font-size: 14px;">📧 Email de connexion :</p>
+                          <p style="font-size: 18px; font-weight: bold; color: #2563eb; margin: 0 0 15px 0;">${email}</p>
+                          <p style="margin: 0 0 5px 0; color: #666666; font-size: 14px;">🔑 Mot de passe temporaire :</p>
+                          <p style="font-size: 18px; font-weight: bold; color: #f97316; margin: 0; font-family: monospace;">${password}</p>
+                        </td>
+                      </tr>
+                    </table>
+                    <p style="color: #ef4444; margin: 20px 0;"><strong>⚠️ Important :</strong> Ce mot de passe est temporaire. Vous devrez le modifier lors de votre première connexion.</p>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td align="center" style="padding: 20px 0;">
+                          <a href="${Deno.env.get('APP_URL') || 'https://www.helpconfort.services'}" style="display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 15px 30px; border-radius: 8px; font-weight: bold; font-size: 16px;">Se connecter à HelpConfort Services</a>
+                        </td>
+                      </tr>
+                    </table>
+                    <p style="color: #999999; font-size: 12px; text-align: center; margin: 20px 0 0 0;">© ${new Date().getFullYear()} HelpConfort Services</p>
+                  </td>
+                </tr>
+              </table>
             </body>
           </html>
         `
