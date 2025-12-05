@@ -3984,6 +3984,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_consents: {
+        Row: {
+          consent_type: string
+          created_at: string
+          granted_at: string | null
+          id: string
+          ip_address: unknown
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+          version: string
+          withdrawn_at: string | null
+        }
+        Insert: {
+          consent_type: string
+          created_at?: string
+          granted_at?: string | null
+          id?: string
+          ip_address?: unknown
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+          version?: string
+          withdrawn_at?: string | null
+        }
+        Update: {
+          consent_type?: string
+          created_at?: string
+          granted_at?: string | null
+          id?: string
+          ip_address?: unknown
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+          version?: string
+          withdrawn_at?: string | null
+        }
+        Relationships: []
+      }
       user_creation_requests: {
         Row: {
           agency_id: string
