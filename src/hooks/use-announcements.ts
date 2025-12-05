@@ -72,7 +72,7 @@ export function useUnreadAnnouncements(userId: string | undefined, globalRole?: 
     },
     enabled: !!userId,
     refetchOnMount: true,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -132,7 +132,7 @@ export function useAllAnnouncements(): ReturnType<typeof useQuery<AnnouncementWi
       }));
     },
     refetchOnMount: true,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
   });
 }
 
