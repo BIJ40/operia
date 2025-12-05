@@ -15,6 +15,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: 'V0.6.5',
+    date: '2025-12-05',
+    title: 'Template Email Bienvenue & Corrections',
+    changes: [
+      { type: 'feature', description: 'Template email de bienvenue professionnel (couleurs HelpConfort, responsive)' },
+      { type: 'fix', description: 'Correction lien email : www.helpconfort.services (au lieu de helpconfort.services)' },
+    ]
+  },
+  {
     version: 'V0.6.4',
     date: '2025-12-04',
     title: 'Audits Pré-production & Corrections Complètes',
