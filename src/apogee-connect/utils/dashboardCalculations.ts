@@ -1209,6 +1209,7 @@ function parseFrHistoryDate(dateStr: string): Date | null {
 
 /**
  * Calcul du délai pour un projet entre création et premier "Devis envoyé"
+ * Aligné avec StatIA delai_dossier_premier_devis
  */
 function getDelayCreationToFirstDevisSent(project: any): number | null {
   const createdAt = project.created_at ? new Date(project.created_at) : null;
@@ -1216,21 +1217,30 @@ function getDelayCreationToFirstDevisSent(project: any): number | null {
 
   const history = project.data?.history ?? [];
 
-  // On prend le PREMIER événement dont le label contient "Devis envoyé"
-  const devisEvent = history.find((h: any) =>
-    (h.labelKind || "").toLowerCase().includes("devis envoyé".toLowerCase())
-  );
+  // Filtrer les transitions "=> Devis envoyé" (kind=2)
+  // On utilise endsWith pour éviter de capturer "Devis envoyé => À commander"
+  const devisEnvoyeEntries = history.filter((h: any) => {
+    if (h.kind !== 2) return false;
+    const label = (h.labelKind || '').toLowerCase();
+    return label.endsWith(' => devis envoyé') || label.endsWith('=> devis envoyé');
+  });
 
-  if (!devisEvent) return null;
+  if (devisEnvoyeEntries.length === 0) return null;
 
-  const dateDevis = parseFrHistoryDate(devisEvent.dateModif);
-  if (!dateDevis || isNaN(dateDevis.getTime())) return null;
+  // Parser toutes les dates et prendre la première chronologiquement
+  const parsedDates = devisEnvoyeEntries
+    .map((h: any) => parseFrHistoryDate(h.dateModif))
+    .filter((d: Date | null): d is Date => d !== null && !isNaN(d.getTime()));
 
-  const diffMs = dateDevis.getTime() - createdAt.getTime();
+  if (parsedDates.length === 0) return null;
+
+  const firstDevisDate = parsedDates.reduce((min, d) => d < min ? d : min);
+
+  const diffMs = firstDevisDate.getTime() - createdAt.getTime();
   const diffDays = diffMs / (1000 * 60 * 60 * 24);
 
-  // On ignore les valeurs négatives ou aberrantes
-  if (diffDays < 0) return null;
+  // Filtrer délais négatifs et outliers > 60 jours
+  if (diffDays < 0 || diffDays > 60) return null;
 
   return diffDays;
 }
