@@ -21,7 +21,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Clock, GripVertical, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MessageSquare, Clock, GripVertical, ChevronLeft, ChevronRight, GitMerge } from 'lucide-react';
 import { HeatPriorityBadge } from './HeatPriorityBadge';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -40,8 +40,10 @@ interface TicketKanbanProps {
   ownerSides?: ApogeeOwnerSide[];
   onStatusChange: (ticketId: string, newStatus: string) => void;
   onTicketClick: (ticket: ApogeeTicket) => void;
+  onMerge?: (ticket: ApogeeTicket) => void;
   columnWidth?: number;
   onColumnWidthChange?: (width: number) => void;
+  filterBlinkingOnly?: boolean;
 }
 
 // Palette de couleurs Tailwind
@@ -80,12 +82,14 @@ function getColumnStyle(colorName: string | null): React.CSSProperties {
 function DraggableTicketCard({
   ticket,
   onClick,
+  onMerge,
   modules = [],
   ownerSides = [],
   shouldBlink = false,
 }: {
   ticket: ApogeeTicket;
   onClick: () => void;
+  onMerge?: (ticket: ApogeeTicket) => void;
   modules?: ApogeeModule[];
   ownerSides?: ApogeeOwnerSide[];
   shouldBlink?: boolean;
@@ -163,6 +167,19 @@ function DraggableTicketCard({
               </Badge>
             )}
           </div>
+          {/* Bouton fusion - violet HelpConfort */}
+          {onMerge && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onMerge(ticket);
+              }}
+              className="p-1.5 rounded hover:bg-purple-100 transition-colors opacity-0 group-hover:opacity-100"
+              title="Fusionner avec un autre ticket"
+            >
+              <GitMerge className="w-4 h-4 text-purple-500 hover:text-purple-700" />
+            </button>
+          )}
         </div>
 
         {/* Titre */}
@@ -264,6 +281,7 @@ function DroppableColumn({
   status,
   tickets,
   onTicketClick,
+  onMerge,
   modules,
   ownerSides,
   columnWidth = 288,
@@ -275,6 +293,7 @@ function DroppableColumn({
   status: ApogeeTicketStatus;
   tickets: ApogeeTicket[];
   onTicketClick: (ticket: ApogeeTicket) => void;
+  onMerge?: (ticket: ApogeeTicket) => void;
   modules?: ApogeeModule[];
   ownerSides?: ApogeeOwnerSide[];
   columnWidth?: number;
@@ -368,6 +387,7 @@ function DroppableColumn({
             key={ticket.id}
             ticket={ticket}
             onClick={() => onTicketClick(ticket)}
+            onMerge={onMerge}
             modules={modules}
             ownerSides={ownerSides}
             shouldBlink={getTicketShouldBlink(ticket)}
@@ -383,7 +403,7 @@ function DroppableColumn({
   );
 }
 
-export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusChange, onTicketClick, columnWidth = 288, onColumnWidthChange }: TicketKanbanProps) {
+export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusChange, onTicketClick, onMerge, columnWidth = 288, onColumnWidthChange, filterBlinkingOnly = false }: TicketKanbanProps) {
   const { user } = useAuth();
   const [activeTicket, setActiveTicket] = useState<ApogeeTicket | null>(null);
   const canTransition = useCanTransition();
@@ -459,14 +479,18 @@ export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusC
     useSensor(KeyboardSensor)
   );
 
-  // Grouper les tickets par statut
+  // Grouper les tickets par statut (avec filtre optionnel "blinking only")
   const ticketsByStatus = useMemo(() => {
     const grouped: Record<string, ApogeeTicket[]> = {};
     statuses.forEach((status) => {
-      grouped[status.id] = tickets.filter((t) => t.kanban_status === status.id);
+      let statusTickets = tickets.filter((t) => t.kanban_status === status.id);
+      if (filterBlinkingOnly) {
+        statusTickets = statusTickets.filter(getTicketShouldBlink);
+      }
+      grouped[status.id] = statusTickets;
     });
     return grouped;
-  }, [tickets, statuses]);
+  }, [tickets, statuses, filterBlinkingOnly, getTicketShouldBlink]);
 
   const handleDragStart = (event: DragStartEvent) => {
     const ticket = tickets.find((t) => t.id === event.active.id);
@@ -521,6 +545,7 @@ export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusC
             status={status}
             tickets={ticketsByStatus[status.id] || []}
             onTicketClick={onTicketClick}
+            onMerge={onMerge}
             modules={modules}
             ownerSides={ownerSides}
             columnWidth={columnWidth}

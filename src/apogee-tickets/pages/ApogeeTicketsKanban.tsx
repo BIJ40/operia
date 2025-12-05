@@ -17,7 +17,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns, Eye, Shield, Loader2, ShieldAlert, Download, FileText, Sheet, FileDown, LayoutGrid, List, FileCheck, AlertTriangle, Copy, RotateCcw, Clock } from 'lucide-react';
+import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns, Eye, Shield, Loader2, ShieldAlert, Download, FileText, Sheet, FileDown, LayoutGrid, List, FileCheck, AlertTriangle, Copy, RotateCcw, Clock, Filter, MessageSquare } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { usePersistedFilters } from '../hooks/usePersistedFilters';
@@ -32,8 +32,12 @@ import { exportToCSV, exportToExcel, exportToPDF } from '../utils/exportKanban';
 import { useMyTicketRole, TicketRoleInfo } from '../hooks/useTicketPermissions';
 import type { ApogeeTicket, TicketFilters as Filters } from '../types';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { ROUTES } from '@/config/routes';
 import { useMyRecentlyModifiedTickets } from '../hooks/useMyRecentlyModifiedTickets';
+import { useMyTicketViews } from '../hooks/useTicketViews';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function ApogeeTicketsKanbanPage() {
   const { data: myTicketRole, isLoading: isLoadingRole, error: roleError } = useMyTicketRole();
@@ -94,7 +98,9 @@ export default function ApogeeTicketsKanbanPage() {
 function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) {
   const { isAdmin, isSupport, ticketRole, canManage, canImport, canViewKanban } = roleInfo;
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { data: recentTickets = [] } = useMyRecentlyModifiedTickets(5);
+  const { data: myViews = [] } = useMyTicketViews();
   
   // Persistance des filtres et du ticket sélectionné
   const { 
@@ -111,6 +117,7 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [columnWidth, setColumnWidth] = useState(288); // 288px = w-72
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
+  const [filterBlinkingOnly, setFilterBlinkingOnly] = useState(false);
 
   const toggleColumnVisibility = (statusId: string) => {
     setHiddenColumns(prev => {
@@ -156,6 +163,15 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
   const incompleteCount = tickets.filter(t => t.needs_completion && t.kanban_status !== 'EN_PROD').length;
   const unqualifiedCount = tickets.filter(t => !t.is_qualified).length;
   const toClassifyCount = tickets.filter(t => t.kanban_status === 'SPEC_A_FAIRE').length;
+
+  // Compteur de tickets avec nouvelles modifications (blinking)
+  const blinkingTicketsCount = tickets.filter(ticket => {
+    if (!user?.id || !ticket.last_modified_by_user_id || !ticket.last_modified_at) return false;
+    if (ticket.last_modified_by_user_id === user.id) return false;
+    const myView = myViews.find(v => v.ticket_id === ticket.id);
+    if (!myView) return true;
+    return new Date(ticket.last_modified_at).getTime() > new Date(myView.viewed_at).getTime();
+  }).length;
 
   const handleStatusChange = (ticketId: string, newStatus: string) => {
     updateKanbanStatus.mutate({ ticketId, newStatus });
@@ -421,7 +437,32 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
       />
 
       {/* Contrôles colonnes */}
-      <div className="flex items-center gap-4 ml-auto">
+      <div className="flex items-center gap-4 flex-wrap">
+          {/* Filtre "Nouvelles réponses" */}
+          <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-1.5">
+            <Switch
+              id="filter-blinking-apogee"
+              checked={filterBlinkingOnly}
+              onCheckedChange={setFilterBlinkingOnly}
+              className="data-[state=checked]:bg-green-500"
+            />
+            <Label 
+              htmlFor="filter-blinking-apogee" 
+              className="text-sm cursor-pointer flex items-center gap-2"
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-green-600" />
+              Nouvelles modifs
+              {blinkingTicketsCount > 0 && (
+                <Badge 
+                  variant="secondary" 
+                  className="bg-green-100 text-green-700 border-green-300 animate-pulse text-xs"
+                >
+                  {blinkingTicketsCount}
+                </Badge>
+              )}
+            </Label>
+          </div>
+
           {/* Visibilité colonnes */}
           <Popover>
             <PopoverTrigger asChild>
@@ -495,6 +536,7 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
           onStatusChange={handleStatusChange}
           onTicketClick={handleTicketClick}
           columnWidth={columnWidth}
+          filterBlinkingOnly={filterBlinkingOnly}
         />
       )}
 
