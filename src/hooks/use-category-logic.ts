@@ -42,26 +42,17 @@ export function useCategoryLogic({
   // Memoized sections
   const sections = useMemo(() => {
     if (!categoryId || !blocks || blocks.length === 0) {
-      console.log('[CategoryLogic] Empty sections - categoryId:', categoryId, 'blocks length:', blocks?.length);
       return [];
     }
     
     const filtered = blocks.filter(b => {
       const isSection = b.type === 'section';
       const hasParent = b.parentId === categoryId;
-      const notHidden = !b.hideFromSidebar;
-      
-      if (isSection && !hasParent) {
-        console.log('[CategoryLogic] Section without matching parent:', b.id, b.title, 'parentId:', b.parentId, 'categoryId:', categoryId);
-      }
-      
-      return isSection && hasParent && notHidden;
+      // Note: hideFromSidebar only affects sidebar visibility, NOT page content
+      return isSection && hasParent;
     });
     
-    const sorted = filtered.sort((a, b) => a.order - b.order) as Section[];
-    console.log('[CategoryLogic] Sections loaded:', sorted.length, 'for category:', categoryId);
-    
-    return sorted;
+    return filtered.sort((a, b) => a.order - b.order) as Section[];
   }, [blocks, categoryId]);
 
   // State
