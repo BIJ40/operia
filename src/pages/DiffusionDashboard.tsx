@@ -105,9 +105,9 @@ export default function DiffusionDashboard() {
 
           {/* Conteneur principal */}
           <div className="container max-w-[1920px] mx-auto px-8 py-6 space-y-6">
-            {/* Tuiles KPI */}
+            {/* Tuiles KPI - TOUJOURS le mois actuel, pas la rotation */}
             <DiffusionKpiTiles 
-              currentMonthIndex={rotation.currentMonthIndex}
+              currentMonthIndex={new Date().getMonth()}
               settings={settings}
             />
 
