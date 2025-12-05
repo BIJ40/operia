@@ -799,10 +799,115 @@ export const caParTechnicienTemps: StatDefinition = {
   }
 };
 
+// ============= METRIC: CA moyen par heure tous techniciens =============
+
+/**
+ * CA moyen par heure travaillée (tous techniciens)
+ * Ratio CA HT total techniciens / heures totales travaillées
+ */
+export const caMoyenParHeureTousTechniciens: StatDefinition = {
+  id: 'ca_moyen_par_heure_tous_techniciens',
+  label: 'CA moyen par heure travaillée (tous techniciens)',
+  description:
+    "Chiffre d'affaires HT moyen généré par heure travaillée, tous techniciens confondus",
+  category: 'technicien',
+  source: ['factures', 'interventions', 'projects', 'users'],
+  unit: '€ / h',
+  dimensions: [],
+  aggregation: 'avg',
+
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const factures = data.factures || [];
+    const projects = data.projects || [];
+    const interventions = data.interventions || [];
+    const users = data.users || [];
+
+    const projectsById = indexProjectsById(projects);
+    const usersById = indexUsersById(users);
+
+    // Calculer le temps par technicien par projet (même logique que caParTechnicienTemps)
+    const { dureeTechParProjet, dureeTotaleParProjet } = calculateTechTimeByProject(
+      interventions,
+      projectsById
+    );
+
+    // Structure pour accumuler les stats par technicien
+    const techStats = new Map<string | number, { ca: number; heures: number }>();
+
+    // Parcourir les factures
+    for (const facture of factures) {
+      const meta = extractFactureMeta(facture);
+
+      // Vérifier état facture
+      const factureState = facture.state || facture.status || facture.statut
+        || facture.data?.state || facture.data?.status || facture.paymentStatus || '';
+      if (!isFactureStateIncluded(factureState)) continue;
+
+      // Filtrer par période
+      const date = meta.date ? new Date(meta.date) : null;
+      if (!date || date < params.dateRange.start || date > params.dateRange.end) continue;
+
+      // Exclure proforma
+      const typeFacture = (facture.typeFacture || facture.type || facture.data?.type || '').toLowerCase();
+      if (typeFacture === 'proforma' || typeFacture === 'pro_forma') continue;
+
+      const projectId = String(facture.projectId || facture.project_id);
+
+      // Récupérer le temps des techniciens sur ce projet
+      const projectTechTime = dureeTechParProjet.get(projectId);
+      const totalProjectTime = dureeTotaleParProjet.get(projectId) || 0;
+
+      if (!projectTechTime || totalProjectTime === 0) continue;
+
+      // Répartir le CA proportionnellement au temps
+      for (const [techId, techTime] of projectTechTime.entries()) {
+        const proportion = techTime / totalProjectTime;
+        const techCA = meta.montantNetHT * proportion;
+
+        if (!techStats.has(techId)) {
+          techStats.set(techId, { ca: 0, heures: 0 });
+        }
+        const stats = techStats.get(techId)!;
+        stats.ca += techCA;
+        stats.heures += techTime / 60; // Convertir minutes en heures
+      }
+    }
+
+    // Agréger tous techniciens
+    let caTotal = 0;
+    let heuresTotales = 0;
+    let techCount = 0;
+
+    for (const stats of techStats.values()) {
+      caTotal += stats.ca;
+      heuresTotales += stats.heures;
+      techCount++;
+    }
+
+    const caParHeure = heuresTotales > 0 ? caTotal / heuresTotales : 0;
+    const value = Math.round(caParHeure * 100) / 100;
+
+    return {
+      value,
+      metadata: {
+        computedAt: new Date(),
+        source: 'factures',
+        recordCount: techCount,
+      },
+      breakdown: {
+        caTotalHT: Math.round(caTotal * 100) / 100,
+        heuresTotales: Math.round(heuresTotales * 100) / 100,
+        techniciensPrisEnCompte: techCount,
+      },
+    };
+  },
+};
+
 export const techniciensDefinitions = {
   ca_par_technicien_univers: caParTechnicienUnivers,
   ca_par_technicien: caParTechnicien,
   ca_par_technicien_temps: caParTechnicienTemps,
   top_techniciens_ca: topTechniciensCA,
   ca_moyen_par_tech: caMoyenParTech,
+  ca_moyen_par_heure_tous_techniciens: caMoyenParHeureTousTechniciens,
 };
