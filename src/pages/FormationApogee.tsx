@@ -11,10 +11,12 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Maximize2,
+  Minimize2,
   Image as ImageIcon,
   ExternalLink,
   GraduationCap,
-  SkipForward
+  SkipForward,
+  X
 } from "lucide-react";
 import { useFormationContentList, FormationContent } from "@/hooks/useFormationContent";
 import { cn } from "@/lib/utils";
@@ -79,6 +81,31 @@ export default function FormationApogee() {
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [presentationMode, setPresentationMode] = useState(false);
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Toggle fullscreen
+  const toggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch (err) {
+      console.error("Fullscreen error:", err);
+    }
+  };
+
+  // Handle presentation mode close
+  const closePresentationMode = async () => {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+    setPresentationMode(false);
+  };
 
   // Fetch categories
   const { data: categories } = useQuery({
@@ -332,8 +359,11 @@ export default function FormationApogee() {
       </Dialog>
 
       {/* Presentation mode dialog */}
-      <Dialog open={presentationMode} onOpenChange={setPresentationMode}>
-        <DialogContent className="max-w-6xl h-[90vh] p-0 flex flex-col">
+      <Dialog open={presentationMode} onOpenChange={closePresentationMode}>
+        <DialogContent className={cn(
+          "p-0 flex flex-col",
+          isFullscreen ? "fixed inset-0 max-w-none h-screen w-screen rounded-none" : "max-w-6xl h-[90vh]"
+        )}>
           <DialogTitle className="sr-only">Mode présentation</DialogTitle>
           
           {currentSection && (
@@ -352,12 +382,32 @@ export default function FormationApogee() {
                   </div>
                   <h2 className="text-xl font-bold">{currentSection.source_block_title}</h2>
                 </div>
-                <div className="text-right">
-                  <div className="text-sm text-muted-foreground">
-                    Section {currentSectionIndex + 1}/{currentCategoryContent.length}
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <div className="text-sm text-muted-foreground">
+                      Section {currentSectionIndex + 1}/{currentCategoryContent.length}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Global: {globalSectionIndex + 1}/{totalSections}
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    Global: {globalSectionIndex + 1}/{totalSections}
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={toggleFullscreen}
+                      title={isFullscreen ? "Quitter le plein écran" : "Plein écran"}
+                    >
+                      {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={closePresentationMode}
+                      title="Fermer"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
               </div>
