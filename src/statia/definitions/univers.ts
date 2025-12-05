@@ -84,8 +84,10 @@ export const caParUnivers: StatDefinition = {
         if (meta.date < params.dateRange.start || meta.date > params.dateRange.end) continue;
       }
       
-      const projectId = facture.projectId;
-      const project = projectsById.get(projectId);
+      const projectIdRaw = facture.projectId || facture.project_id || facture.data?.projectId;
+      const projectId = projectIdRaw ? String(projectIdRaw) : null;
+      // Try both string and number lookup for project
+      const project = projectId ? (projectsById.get(projectId) || projectsById.get(Number(projectId))) : null;
       
       // Extraire univers (même logique que technicienUniversEngine)
       const universes = extractUniversesFromProject(project);
@@ -222,8 +224,9 @@ export const panierMoyenParUnivers: StatDefinition = {
         if (meta.date < params.dateRange.start || meta.date > params.dateRange.end) continue;
       }
       
-      const projectId = facture.projectId;
-      const project = projectsById.get(projectId);
+      const projectIdRaw = facture.projectId || facture.project_id || facture.data?.projectId;
+      const projectId = projectIdRaw ? String(projectIdRaw) : null;
+      const project = projectId ? (projectsById.get(projectId) || projectsById.get(Number(projectId))) : null;
       
       const universes = extractUniversesFromProject(project);
       const finalUniverses = universes.length > 0 ? universes : ['non-classe'];
