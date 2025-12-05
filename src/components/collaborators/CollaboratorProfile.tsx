@@ -1,5 +1,6 @@
 /**
  * Profil 360° d'un collaborateur avec onglets
+ * RGPD: Les données sensibles sont chargées séparément via useSensitiveData
  */
 
 import { useState } from 'react';
@@ -40,6 +41,7 @@ import {
 import { Collaborator, CollaboratorTab, COLLABORATOR_TABS } from '@/types/collaborator';
 import { ContractSalaryTab } from './ContractSalaryTab';
 import { DocumentsTab } from './DocumentsTab';
+import { useSensitiveData } from '@/hooks/useSensitiveData';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -63,6 +65,9 @@ export function CollaboratorProfile({
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<CollaboratorTab>(defaultTab);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  // RGPD: Charger les données sensibles séparément
+  const { sensitiveData } = useSensitiveData(collaborator.id);
 
   const initials = `${collaborator.first_name?.[0] || ''}${collaborator.last_name?.[0] || ''}`.toUpperCase();
   const isActive = !collaborator.leaving_date;
@@ -153,9 +158,9 @@ export function CollaboratorProfile({
                 <InfoRow icon={User} label="Nom complet" value={`${collaborator.first_name} ${collaborator.last_name}`} />
                 <InfoRow icon={Mail} label="Email" value={collaborator.email} />
                 <InfoRow icon={Phone} label="Téléphone" value={collaborator.phone} />
-                <InfoRow icon={Calendar} label="Date de naissance" value={formatDate(collaborator.birth_date)} />
+                <InfoRow icon={Calendar} label="Date de naissance" value={formatDate(sensitiveData.birth_date)} />
                 <InfoRow icon={MapPin} label="Lieu de naissance" value={collaborator.birth_place} />
-                <InfoRow icon={FileText} label="N° Sécurité sociale" value={collaborator.social_security_number} />
+                <InfoRow icon={FileText} label="N° Sécurité sociale" value={sensitiveData.social_security_number} />
                 <Separator />
                 <InfoRow icon={MapPin} label="Rue" value={collaborator.street} />
                 <InfoRow icon={MapPin} label="Code postal" value={collaborator.postal_code} />
@@ -193,8 +198,8 @@ export function CollaboratorProfile({
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <InfoRow icon={User} label="Nom" value={collaborator.emergency_contact} />
-                <InfoRow icon={Phone} label="Téléphone" value={collaborator.emergency_phone} />
+                <InfoRow icon={User} label="Nom" value={sensitiveData.emergency_contact} />
+                <InfoRow icon={Phone} label="Téléphone" value={sensitiveData.emergency_phone} />
               </CardContent>
             </Card>
 

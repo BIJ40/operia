@@ -1473,14 +1473,11 @@ export type Database = {
           address: string | null
           agency_id: string
           apogee_user_id: number | null
-          birth_date: string | null
           birth_place: string | null
           city: string | null
           created_at: string
           created_by: string | null
           email: string | null
-          emergency_contact: string | null
-          emergency_phone: string | null
           first_name: string
           hiring_date: string | null
           id: string
@@ -1491,7 +1488,6 @@ export type Database = {
           phone: string | null
           postal_code: string | null
           role: string
-          social_security_number: string | null
           street: string | null
           type: string | null
           updated_at: string
@@ -1501,14 +1497,11 @@ export type Database = {
           address?: string | null
           agency_id: string
           apogee_user_id?: number | null
-          birth_date?: string | null
           birth_place?: string | null
           city?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
-          emergency_contact?: string | null
-          emergency_phone?: string | null
           first_name: string
           hiring_date?: string | null
           id?: string
@@ -1519,7 +1512,6 @@ export type Database = {
           phone?: string | null
           postal_code?: string | null
           role?: string
-          social_security_number?: string | null
           street?: string | null
           type?: string | null
           updated_at?: string
@@ -1529,14 +1521,11 @@ export type Database = {
           address?: string | null
           agency_id?: string
           apogee_user_id?: number | null
-          birth_date?: string | null
           birth_place?: string | null
           city?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
-          emergency_contact?: string | null
-          emergency_phone?: string | null
           first_name?: string
           hiring_date?: string | null
           id?: string
@@ -1547,7 +1536,6 @@ export type Database = {
           phone?: string | null
           postal_code?: string | null
           role?: string
-          social_security_number?: string | null
           street?: string | null
           type?: string | null
           updated_at?: string

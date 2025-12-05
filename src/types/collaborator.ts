@@ -1,5 +1,6 @@
 /**
  * Types pour le module RH & Parc - Collaborateurs
+ * RGPD: Les données sensibles (birth_date, SSN, contacts urgence) sont dans collaborator_sensitive_data
  */
 
 export type CollaboratorType = 
@@ -35,17 +36,15 @@ export interface Collaborator {
   notes: string | null;
   hiring_date: string | null;
   leaving_date: string | null;
-  birth_date: string | null;
+  // RGPD: birth_date déplacé vers collaborator_sensitive_data
   address: string | null; // Legacy - conserver pour compatibilité
   street: string | null;
   postal_code: string | null;
   city: string | null;
-  social_security_number: string | null;
+  // RGPD: social_security_number déplacé vers collaborator_sensitive_data
   birth_place: string | null;
   
-  // Contact urgence
-  emergency_contact: string | null;
-  emergency_phone: string | null;
+  // RGPD: emergency_contact et emergency_phone déplacés vers collaborator_sensitive_data
   
   // Lien Apogée
   apogee_user_id: number | null;

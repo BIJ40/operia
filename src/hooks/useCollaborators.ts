@@ -1,5 +1,6 @@
 /**
  * Hook pour la gestion des collaborateurs (Module RH & Parc)
+ * RGPD: Les données sensibles sont stockées séparément dans collaborator_sensitive_data
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -8,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Collaborator, CollaboratorFormData } from '@/types/collaborator';
 import { toast } from 'sonner';
 import { useHasMinLevel } from '@/hooks/useHasGlobalRole';
+import { saveSensitiveData } from './useSensitiveData';
 
 export function useCollaborators(agencyId?: string) {
   const { agencyId: userAgencyId } = useAuth();
@@ -33,11 +35,12 @@ export function useCollaborators(agencyId?: string) {
     enabled: !!effectiveAgencyId,
   });
 
-  // Create collaborator
+  // Create collaborator - données sensibles stockées séparément (RGPD)
   const createMutation = useMutation({
     mutationFn: async (formData: CollaboratorFormData) => {
       if (!effectiveAgencyId) throw new Error('Agency ID required');
 
+      // Insert collaborateur (sans données sensibles)
       const { data, error } = await supabase
         .from('collaborators')
         .insert({
@@ -51,17 +54,27 @@ export function useCollaborators(agencyId?: string) {
           notes: formData.notes || null,
           hiring_date: formData.hiring_date || null,
           leaving_date: formData.leaving_date || null,
-          birth_date: formData.birth_date || null,
-          address: formData.address || null,
-          social_security_number: formData.social_security_number || null,
-          emergency_contact: formData.emergency_contact || null,
-          emergency_phone: formData.emergency_phone || null,
+          street: formData.street || null,
+          postal_code: formData.postal_code || null,
+          city: formData.city || null,
+          birth_place: formData.birth_place || null,
           apogee_user_id: formData.apogee_user_id || null,
         })
         .select()
         .single();
 
       if (error) throw error;
+
+      // Sauvegarder les données sensibles séparément (RGPD)
+      if (data?.id) {
+        await saveSensitiveData(data.id, {
+          birth_date: formData.birth_date,
+          social_security_number: formData.social_security_number,
+          emergency_contact: formData.emergency_contact,
+          emergency_phone: formData.emergency_phone,
+        });
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -73,13 +86,17 @@ export function useCollaborators(agencyId?: string) {
     },
   });
 
-  // Update collaborator
+  // Update collaborator - données sensibles mises à jour séparément
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<CollaboratorFormData> }) => {
+      // Extraire les données sensibles
+      const { birth_date, social_security_number, emergency_contact, emergency_phone, ...safeData } = data;
+
+      // Update collaborateur (sans données sensibles)
       const { data: result, error } = await supabase
         .from('collaborators')
         .update({
-          ...data,
+          ...safeData,
           updated_at: new Date().toISOString(),
         })
         .eq('id', id)
@@ -87,11 +104,24 @@ export function useCollaborators(agencyId?: string) {
         .single();
 
       if (error) throw error;
+
+      // Mettre à jour les données sensibles si fournies
+      if (birth_date !== undefined || social_security_number !== undefined || 
+          emergency_contact !== undefined || emergency_phone !== undefined) {
+        await saveSensitiveData(id, {
+          birth_date,
+          social_security_number,
+          emergency_contact,
+          emergency_phone,
+        });
+      }
+
       return result;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['collaborators', effectiveAgencyId] });
       queryClient.invalidateQueries({ queryKey: ['collaborator', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['sensitive-data', variables.id] });
       toast.success('Collaborateur mis à jour');
     },
     onError: (error: Error) => {
