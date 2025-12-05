@@ -1,9 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { handleCorsPreflightOrReject, withCors } from "../_shared/cors.ts";
 
 // =============================================================
 // PROMPT SYSTÈME ULTIME - STATiA-BY-BIJ ENGINE V2
@@ -506,18 +502,18 @@ sum, count, avg, min, max, median, ratio
 `;
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight or reject unauthorized origins
+  const corsResult = handleCorsPreflightOrReject(req);
+  if (corsResult) return corsResult;
 
   try {
     const { query } = await req.json();
     
     if (!query || typeof query !== 'string') {
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: "Query is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      ));
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -558,16 +554,16 @@ Réponds UNIQUEMENT avec le JSON, sans markdown, sans explication.`
 
     if (!response.ok) {
       if (response.status === 429) {
-        return new Response(
+        return withCors(req, new Response(
           JSON.stringify({ error: "Limite de requêtes atteinte, réessayez dans quelques instants." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+          { status: 429, headers: { "Content-Type": "application/json" } }
+        ));
       }
       if (response.status === 402) {
-        return new Response(
+        return withCors(req, new Response(
           JSON.stringify({ error: "Crédits IA insuffisants." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+          { status: 402, headers: { "Content-Type": "application/json" } }
+        ));
       }
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
@@ -655,16 +651,16 @@ Réponds UNIQUEMENT avec le JSON, sans markdown, sans explication.`
       };
     }
 
-    return new Response(
+    return withCors(req, new Response(
       JSON.stringify(analysisResult),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+      { headers: { "Content-Type": "application/json" } }
+    ));
 
   } catch (error) {
     console.error("statia-analyze-metric error:", error);
-    return new Response(
+    return withCors(req, new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    ));
   }
 });

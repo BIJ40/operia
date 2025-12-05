@@ -1,18 +1,14 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { handleCorsPreflightOrReject, withCors } from "../_shared/cors.ts";
 
 interface LeaveDecisionRequest {
   leaveRequestId: string;
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
+  // Handle CORS preflight or reject unauthorized origins
+  const corsResult = handleCorsPreflightOrReject(req);
+  if (corsResult) return corsResult;
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -211,21 +207,21 @@ Deno.serve(async (req) => {
 
     if (docError) throw docError;
 
-    return new Response(
+    return withCors(req, new Response(
       JSON.stringify({ 
         success: true, 
         documentId: docData.id,
         filePath,
         message: 'Document de décision généré et stocké dans le coffre-fort' 
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+      { headers: { 'Content-Type': 'application/json' } }
+    ));
   } catch (error) {
     console.error('Error generating leave decision:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(
+    return withCors(req, new Response(
       JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    ));
   }
 });

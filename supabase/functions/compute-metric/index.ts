@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { handleCorsPreflightOrReject, withCors } from "../_shared/cors.ts";
 
 const APOGEE_API_KEY = Deno.env.get('APOGEE_API_KEY');
 
@@ -389,9 +385,9 @@ function calculateAggregation(
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight or reject unauthorized origins
+  const corsResult = handleCorsPreflightOrReject(req);
+  if (corsResult) return corsResult;
 
   const startTime = Date.now();
 
@@ -399,10 +395,10 @@ serve(async (req) => {
     const { metric_id, metric_definition, params } = await req.json();
     
     if (!metric_id && !metric_definition) {
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: 'metric_id ou metric_definition requis' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      ));
     }
 
     const supabase = createClient(
@@ -420,10 +416,10 @@ serve(async (req) => {
         .single();
 
       if (metricError || !metric) {
-        return new Response(
+        return withCors(req, new Response(
           JSON.stringify({ code: 'NOT_FOUND', message: `Métrique ${metric_id} non trouvée` }),
-          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+          { status: 404, headers: { 'Content-Type': 'application/json' } }
+        ));
       }
       
       definition = {
@@ -436,10 +432,10 @@ serve(async (req) => {
 
     const agencySlug = params?.agency_slug;
     if (!agencySlug) {
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ code: 'VALIDATION_ERROR', message: 'agency_slug requis' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      ));
     }
 
     console.log(`[COMPUTE] Starting metric ${definition.id} for agency ${agencySlug}`);
@@ -613,15 +609,15 @@ serve(async (req) => {
 
     console.log(`[COMPUTE] Completed in ${Date.now() - startTime}ms, value: ${value}`);
 
-    return new Response(
+    return withCors(req, new Response(
       JSON.stringify(result),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+      { headers: { 'Content-Type': 'application/json' } }
+    ));
 
   } catch (error) {
     console.error('[COMPUTE] Error:', error);
     const message = error instanceof Error ? error.message : 'Erreur inconnue';
-    return new Response(
+    return withCors(req, new Response(
       JSON.stringify({ 
         success: false,
         code: 'COMPUTE_ERROR', 
@@ -630,7 +626,7 @@ serve(async (req) => {
           durationMs: Date.now() - startTime,
         }
       }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    ));
   }
 });

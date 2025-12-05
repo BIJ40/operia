@@ -2,11 +2,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { PDFDocument, rgb, StandardFonts } from "https://esm.sh/pdf-lib@1.17.1";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { handleCorsPreflightOrReject, withCors } from "../_shared/cors.ts";
 
 interface GenerateDocumentRequest {
   request_id: string;
@@ -43,10 +39,9 @@ interface ValidatorInfo {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight or reject unauthorized origins
+  const corsResult = handleCorsPreflightOrReject(req);
+  if (corsResult) return corsResult;
 
   try {
     // Get auth header
@@ -488,7 +483,7 @@ serve(async (req) => {
 
     console.log('[generate-hr-document] Document generated successfully:', filePath);
 
-    return new Response(
+    return withCors(req, new Response(
       JSON.stringify({
         success: true,
         data: {
@@ -499,21 +494,21 @@ serve(async (req) => {
         },
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
       }
-    );
+    ));
 
   } catch (error) {
     console.error('[generate-hr-document] Error:', error);
-    return new Response(
+    return withCors(req, new Response(
       JSON.stringify({
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
       }),
       {
         status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
       }
-    );
+    ));
   }
 });
