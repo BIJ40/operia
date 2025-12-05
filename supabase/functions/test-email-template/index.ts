@@ -92,7 +92,7 @@ serve(async (req) => {
     `;
 
     const emailResponse = await resend.emails.send({
-      from: "HelpConfort <noreply@helpconfort.services>",
+      from: "HelpConfort <onboarding@resend.dev>",
       to: [email],
       subject: "Test - Bienvenue sur HelpConfort",
       html: emailHtml,
