@@ -467,9 +467,30 @@ export const delaiDossierPremierDevis: StatDefinition = {
         continue;
       }
       
+      // DEBUG: Log les 3 premiers dossiers avec leurs données
+      if (debugStats.ok < 3) {
+        console.log('[StatIA] EXEMPLE DOSSIER:', {
+          projectId: project.id,
+          ref: project.ref,
+          created_at: createdAtStr,
+          createdAtParsed: createdAt.toISOString(),
+          historyEntries: devisEnvoyeEntries.map((h: any) => ({
+            labelKind: h.labelKind,
+            dateModif: h.dateModif,
+            kind: h.kind
+          }))
+        });
+      }
+      
       // Parser les dateModif (format "dd/MM/yyyy HH:mm:ss")
       const parsedDates = devisEnvoyeEntries
-        .map((h: any) => parseDateModifApogee(h.dateModif))
+        .map((h: any) => {
+          const parsed = parseDateModifApogee(h.dateModif);
+          if (debugStats.ok < 3 && parsed) {
+            console.log('[StatIA] dateModif parsed:', h.dateModif, '=>', parsed.toISOString());
+          }
+          return parsed;
+        })
         .filter((d: Date | null): d is Date => d !== null);
       
       if (parsedDates.length === 0) {
@@ -483,6 +504,15 @@ export const delaiDossierPremierDevis: StatDefinition = {
       
       const diffMs = firstDevisDate.getTime() - createdAt.getTime();
       const diffDays = diffMs / (1000 * 60 * 60 * 24);
+      
+      // DEBUG: Log les 3 premiers calculs
+      if (debugStats.ok < 3) {
+        console.log('[StatIA] DELAI CALCUL:', {
+          created: createdAt.toISOString(),
+          devis: firstDevisDate.toISOString(),
+          diffDays: Math.round(diffDays)
+        });
+      }
       
       // Ignorer les délais négatifs ou aberrants
       if (!Number.isFinite(diffDays) || diffDays < 0) {
