@@ -204,36 +204,147 @@ export const caParTechnicienUnivers: StatDefinition = {
 };
 
 /**
- * CA par Technicien (simplifié)
+ * CA par Technicien
+ * 
+ * RÈGLE MÉTIER (conforme spec CA_PAR_TECHNICIEN):
+ * - Pour chaque facture de la période, récupérer le projectId
+ * - Identifier les techniciens productifs uniques (set de usersIds des visites validées + productives)
+ * - Répartir CA_HT_total / nbTechsProductifs de manière ÉGALE (pas au prorata du temps)
+ * - Avoirs intégrés en négatif
+ * - Exclure RT, SAV non-facturant, visites annulées
  */
 export const caParTechnicien: StatDefinition = {
   id: 'ca_par_technicien',
   label: 'CA par Technicien',
-  description: 'Chiffre d\'affaires attribué à chaque technicien',
+  description: 'Répartition du CA HT facturé par technicien productif, en divisant le CA des dossiers par le nombre de techniciens intervenus en production.',
   category: 'technicien',
   source: ['factures', 'projects', 'interventions', 'users'],
   dimensions: ['technicien'],
   aggregation: 'sum',
   unit: '€',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    // Réutiliser le calcul détaillé
-    const detailedResult = caParTechnicienUnivers.compute(data, params);
+    const { factures, projects, interventions, users } = data;
     
-    // Simplifier pour ne garder que le CA par technicien
+    const projectsById = indexProjectsById(projects);
+    const usersById = indexUsersById(users);
+    
+    // Indexer les interventions par projectId
+    const interventionsByProject = new Map<string, any[]>();
+    for (const intervention of interventions) {
+      const projectId = String(intervention.projectId || intervention.project_id);
+      if (!projectId) continue;
+      if (!interventionsByProject.has(projectId)) {
+        interventionsByProject.set(projectId, []);
+      }
+      interventionsByProject.get(projectId)!.push(intervention);
+    }
+    
+    // Structure pour accumuler CA par technicien
+    const techCA = new Map<string | number, number>();
+    const techNames = new Map<string | number, string>();
+    
+    let totalCADistribue = 0;
+    let facturesTraitees = 0;
+    let dossiersIgnores = 0;
+    
+    // Parcourir les factures
+    for (const facture of factures) {
+      const meta = extractFactureMeta(facture);
+      
+      // Filtrer par période
+      const date = meta.date ? new Date(meta.date) : null;
+      if (!date || date < params.dateRange.start || date > params.dateRange.end) continue;
+      
+      // Exclure proforma
+      const typeFacture = (facture.typeFacture || facture.type || facture.data?.type || '').toLowerCase();
+      if (typeFacture === 'proforma' || typeFacture === 'pro_forma') continue;
+      
+      const projectId = String(facture.projectId || facture.project_id);
+      if (!projectId) continue;
+      
+      // Récupérer les interventions du projet
+      const projectInterventions = interventionsByProject.get(projectId) || [];
+      
+      // Construire le SET des techniciens productifs uniques
+      const techsProductifs = new Set<string | number>();
+      
+      for (const intervention of projectInterventions) {
+        // Filtrer les interventions non-productives (RT, SAV, TH, diagnostic)
+        const type = normalizeInterventionType(intervention.type || intervention.type2);
+        if (isNonProductiveInterventionType(type)) continue;
+        
+        // Vérifier l'état de l'intervention
+        if (!isValidInterventionState(intervention.state)) continue;
+        
+        // Parcourir les visites validées
+        const visites = intervention.visites || [];
+        for (const visite of visites) {
+          // Seules les visites validées/done comptent
+          if (visite.state !== 'validated' && visite.state !== 'done') continue;
+          
+          // Collecter les techniciens de cette visite
+          const techIds = visite.usersIds || [intervention.userId];
+          for (const techId of techIds) {
+            if (techId) {
+              techsProductifs.add(techId);
+            }
+          }
+        }
+      }
+      
+      // Nombre de techniciens productifs uniques
+      const nbTechsProductifs = techsProductifs.size;
+      
+      // Si aucun technicien productif identifié, ignorer ce dossier (sécurité)
+      if (nbTechsProductifs === 0) {
+        dossiersIgnores++;
+        continue;
+      }
+      
+      // CA HT de la facture (avoirs en négatif via extractFactureMeta)
+      const caHT = meta.montantNetHT;
+      
+      // Quote-part égale pour chaque technicien
+      const quotePart = caHT / nbTechsProductifs;
+      
+      // Attribuer à chaque technicien du set
+      for (const techId of techsProductifs) {
+        techCA.set(techId, (techCA.get(techId) || 0) + quotePart);
+        
+        // Stocker le nom si pas encore fait
+        if (!techNames.has(techId)) {
+          const user = usersById.get(techId);
+          techNames.set(techId, user ? `${user.firstname || ''} ${user.lastname || ''}`.trim() : `Tech ${techId}`);
+        }
+      }
+      
+      totalCADistribue += caHT;
+      facturesTraitees++;
+    }
+    
+    // Formater le résultat
     const result: Record<string, number> = {};
     const names: Record<string, string> = {};
     
-    for (const [techId, stats] of Object.entries(detailedResult.value as Record<string, any>)) {
-      result[techId] = stats.ca;
-      names[techId] = stats.name;
+    for (const [techId, ca] of techCA.entries()) {
+      result[String(techId)] = ca;
+      names[String(techId)] = techNames.get(techId) || `Tech ${techId}`;
     }
     
     return {
       value: result,
-      metadata: detailedResult.metadata,
+      metadata: {
+        computedAt: new Date(),
+        source: 'factures',
+        recordCount: techCA.size,
+      },
       breakdown: {
-        ...detailedResult.breakdown,
         names,
+        total: totalCADistribue,
+        technicianCount: techCA.size,
+        facturesTraitees,
+        dossiersIgnores,
+        formule: 'CA_HT / nbTechsProductifs (répartition égale)',
       }
     };
   }
