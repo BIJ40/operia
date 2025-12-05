@@ -4,13 +4,75 @@
  */
 
 import { StatDefinition, LoadedData, StatParams, StatResult } from './types';
-import { isFactureStateIncluded } from '../engine/normalizers';
+import { isFactureStateIncluded, isSAVIntervention } from '../engine/normalizers';
 import { extractFactureMeta } from '../rules/rules';
 import { indexProjectsById } from '../engine/loaders';
 
+// ==================== TYPES ====================
+
+type ApporteurInfo = {
+  id: string;
+  name: string;
+  type: string; // type d'apporteur normalisé
+};
+
+// ==================== HELPERS ====================
+
 /**
- * Mapping apporteurId → nom lisible
- * Cherche dans plusieurs champs possibles du client
+ * Normalise le type d'apporteur brut vers un label lisible
+ */
+function normalizeApporteurType(raw: any): string {
+  const v = String(raw || '').trim().toLowerCase();
+  if (!v) return 'Clients Directs';
+
+  if (['assureur', 'assurance', 'assureurs'].includes(v)) return 'Assureurs';
+  if (['bailleur', 'bailleurs', 'bailleur_social'].includes(v)) return 'Bailleurs';
+  if (['syndic', 'copro', 'copropriete'].includes(v)) return 'Syndics';
+  if (['maintenance', 'mainteneur'].includes(v)) return 'Maintenance';
+  if (['gestion', 'gestionnaire'].includes(v)) return 'Gestionnaires';
+  if (['pro', 'professionnel', 'professionnels'].includes(v)) return 'Professionnels';
+
+  // fallback générique: capitalize first letter
+  return v.charAt(0).toUpperCase() + v.slice(1);
+}
+
+/**
+ * Mapping apporteurId → { id, name, type }
+ */
+function mapApporteurInfos(clients: any[]): Map<string, ApporteurInfo> {
+  const map = new Map<string, ApporteurInfo>();
+
+  for (const c of clients) {
+    const id = String(c.id);
+    const name =
+      c.displayName ||
+      c.raisonSociale ||
+      c.nom ||
+      c.name ||
+      c.label ||
+      c.data?.nom ||
+      c.data?.name ||
+      c.data?.raisonSociale ||
+      `Apporteur ${id}`;
+
+    const rawType =
+      c.data?.type ||
+      c.data?.typeApporteur ||
+      c.data?.categorie ||
+      c.categorie ||
+      c.type ||
+      null;
+
+    const type = normalizeApporteurType(rawType);
+
+    map.set(id, { id, name, type });
+  }
+
+  return map;
+}
+
+/**
+ * Mapping apporteurId → nom lisible (legacy helper)
  */
 function mapApporteurs(clients: any[]): Map<string, string> {
   const map = new Map<string, string>();
@@ -32,6 +94,43 @@ function mapApporteurs(clients: any[]): Map<string, string> {
   }
 
   return map;
+}
+
+/**
+ * Retourne le type d'apporteur pour un projet
+ */
+function getApporteurTypeForProject(
+  project: any,
+  apporteursInfoById: Map<string, ApporteurInfo>
+): string {
+  const cmdId = project?.data?.commanditaireId || project?.commanditaireId;
+  if (!cmdId) {
+    return 'Clients Directs';
+  }
+
+  const info = apporteursInfoById.get(String(cmdId));
+  return info?.type || 'Clients Directs';
+}
+
+/**
+ * Vérifie si un projet est un dossier SAV
+ */
+function isSavProject(project: any): boolean {
+  // Vérifier le flag SAV direct
+  if (project?.data?.isSav || project?.isSav) return true;
+  
+  // Vérifier si c'est un dossier enfant/lié (SAV = reprise)
+  if (project?.data?.parentProjectId || project?.parentProjectId) return true;
+  
+  // Vérifier dans les univers
+  const universes = project?.data?.universes || project?.universes || [];
+  if (universes.some((u: string) => String(u).toLowerCase().includes('sav'))) return true;
+  
+  // Vérifier le label
+  const label = (project?.label || project?.data?.label || '').toLowerCase();
+  if (label.includes('sav') || label.includes('garantie') || label.includes('reprise')) return true;
+  
+  return false;
 }
 
 /**
@@ -385,10 +484,402 @@ export const apporteursInactifs: StatDefinition = {
   }
 };
 
+// ==================== MÉTRIQUES PAR TYPE D'APPORTEUR ====================
+
+/**
+ * CA par Type d'Apporteur
+ * Ventile le CA HT par catégorie d'apporteur (Assureurs, Bailleurs, etc.)
+ */
+export const caParTypeApporteur: StatDefinition = {
+  id: 'ca_par_type_apporteur',
+  label: 'CA par Type d\'Apporteur',
+  description: 'Chiffre d\'affaires HT ventilé par type d\'apporteur',
+  category: 'apporteur',
+  source: ['factures', 'projects', 'clients'],
+  dimensions: ['type_apporteur'],
+  aggregation: 'sum',
+  unit: '€',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { factures, projects, clients } = data;
+    
+    const projectsById = indexProjectsById(projects);
+    const apporteursInfoById = mapApporteurInfos(clients);
+    
+    const caByType: Record<string, number> = {};
+    let totalCA = 0;
+    let recordCount = 0;
+    
+    for (const facture of factures) {
+      const meta = extractFactureMeta(facture);
+      
+      if (!isFactureStateIncluded(facture.state)) continue;
+      
+      const date = meta.date ? new Date(meta.date) : null;
+      if (!date || date < params.dateRange.start || date > params.dateRange.end) continue;
+      
+      const projectId = facture.projectId || facture.project_id;
+      const project = projectId ? projectsById.get(projectId) : null;
+      
+      const typeApporteur = getApporteurTypeForProject(project, apporteursInfoById);
+      
+      caByType[typeApporteur] = (caByType[typeApporteur] || 0) + meta.montantNetHT;
+      totalCA += meta.montantNetHT;
+      recordCount++;
+    }
+    
+    return {
+      value: caByType,
+      metadata: {
+        computedAt: new Date(),
+        source: 'factures',
+        recordCount,
+      },
+      breakdown: {
+        total: totalCA,
+        typeCount: Object.keys(caByType).length,
+      }
+    };
+  }
+};
+
+/**
+ * Dossiers par Type d'Apporteur
+ * Nombre de dossiers facturés par type d'apporteur
+ */
+export const dossiersParTypeApporteur: StatDefinition = {
+  id: 'dossiers_par_type_apporteur',
+  label: 'Dossiers par Type d\'Apporteur',
+  description: 'Nombre de dossiers par type d\'apporteur',
+  category: 'apporteur',
+  source: ['factures', 'projects', 'clients'],
+  dimensions: ['type_apporteur'],
+  aggregation: 'count',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { factures, projects, clients } = data;
+    
+    const projectsById = indexProjectsById(projects);
+    const apporteursInfoById = mapApporteurInfos(clients);
+    
+    // Set de projectIds par type pour éviter les doublons
+    const projectsByType = new Map<string, Set<string>>();
+    let recordCount = 0;
+    
+    for (const facture of factures) {
+      const meta = extractFactureMeta(facture);
+      
+      if (!isFactureStateIncluded(facture.state)) continue;
+      
+      const date = meta.date ? new Date(meta.date) : null;
+      if (!date || date < params.dateRange.start || date > params.dateRange.end) continue;
+      
+      const projectId = facture.projectId || facture.project_id;
+      if (!projectId) continue;
+      
+      const project = projectsById.get(projectId);
+      const typeApporteur = getApporteurTypeForProject(project, apporteursInfoById);
+      
+      if (!projectsByType.has(typeApporteur)) {
+        projectsByType.set(typeApporteur, new Set());
+      }
+      projectsByType.get(typeApporteur)!.add(String(projectId));
+      recordCount++;
+    }
+    
+    const result: Record<string, number> = {};
+    let totalDossiers = 0;
+    
+    projectsByType.forEach((projectIds, type) => {
+      result[type] = projectIds.size;
+      totalDossiers += projectIds.size;
+    });
+    
+    return {
+      value: result,
+      metadata: {
+        computedAt: new Date(),
+        source: 'factures',
+        recordCount,
+      },
+      breakdown: {
+        total: totalDossiers,
+        typeCount: projectsByType.size,
+      }
+    };
+  }
+};
+
+/**
+ * Panier Moyen par Type d'Apporteur
+ * CA HT / nb dossiers par type d'apporteur
+ */
+export const panierMoyenParTypeApporteur: StatDefinition = {
+  id: 'panier_moyen_par_type_apporteur',
+  label: 'Panier Moyen par Type d\'Apporteur',
+  description: 'Panier moyen (CA/dossier) par type d\'apporteur',
+  category: 'apporteur',
+  source: ['factures', 'projects', 'clients'],
+  dimensions: ['type_apporteur'],
+  aggregation: 'avg',
+  unit: '€',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { factures, projects, clients } = data;
+    
+    const projectsById = indexProjectsById(projects);
+    const apporteursInfoById = mapApporteurInfos(clients);
+    
+    const caByType: Record<string, number> = {};
+    const projectsByType = new Map<string, Set<string>>();
+    let recordCount = 0;
+    
+    for (const facture of factures) {
+      const meta = extractFactureMeta(facture);
+      
+      if (!isFactureStateIncluded(facture.state)) continue;
+      
+      const date = meta.date ? new Date(meta.date) : null;
+      if (!date || date < params.dateRange.start || date > params.dateRange.end) continue;
+      
+      const projectId = facture.projectId || facture.project_id;
+      const project = projectId ? projectsById.get(projectId) : null;
+      const typeApporteur = getApporteurTypeForProject(project, apporteursInfoById);
+      
+      // Accumuler le CA
+      caByType[typeApporteur] = (caByType[typeApporteur] || 0) + meta.montantNetHT;
+      
+      // Compter les dossiers uniques
+      if (projectId) {
+        if (!projectsByType.has(typeApporteur)) {
+          projectsByType.set(typeApporteur, new Set());
+        }
+        projectsByType.get(typeApporteur)!.add(String(projectId));
+      }
+      recordCount++;
+    }
+    
+    // Calculer le panier moyen par type
+    const result: Array<{
+      typeApporteur: string;
+      caHT: number;
+      nbDossiers: number;
+      panierMoyen: number;
+    }> = [];
+    
+    const allTypes = new Set([...Object.keys(caByType), ...projectsByType.keys()]);
+    
+    allTypes.forEach(type => {
+      const ca = caByType[type] || 0;
+      const nbDossiers = projectsByType.get(type)?.size || 0;
+      const panierMoyen = nbDossiers > 0 ? ca / nbDossiers : 0;
+      
+      result.push({
+        typeApporteur: type,
+        caHT: Math.round(ca * 100) / 100,
+        nbDossiers,
+        panierMoyen: Math.round(panierMoyen * 100) / 100,
+      });
+    });
+    
+    // Trier par CA décroissant
+    result.sort((a, b) => b.caHT - a.caHT);
+    
+    // Créer aussi un Record simple pour value
+    const valueRecord: Record<string, number> = {};
+    result.forEach(r => {
+      valueRecord[r.typeApporteur] = r.panierMoyen;
+    });
+    
+    return {
+      value: valueRecord,
+      metadata: {
+        computedAt: new Date(),
+        source: 'factures',
+        recordCount,
+      },
+      breakdown: {
+        rows: result,
+        typeCount: result.length,
+      }
+    };
+  }
+};
+
+/**
+ * Taux de Transformation par Type d'Apporteur
+ * nb devis acceptés / nb devis émis par type d'apporteur
+ */
+export const tauxTransfoParTypeApporteur: StatDefinition = {
+  id: 'taux_transfo_par_type_apporteur',
+  label: 'Taux Transfo par Type d\'Apporteur',
+  description: 'Taux de transformation devis→factures par type d\'apporteur',
+  category: 'apporteur',
+  source: ['devis', 'projects', 'clients'],
+  dimensions: ['type_apporteur'],
+  aggregation: 'ratio',
+  unit: '%',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { devis, projects, clients } = data;
+    
+    const projectsById = indexProjectsById(projects);
+    const apporteursInfoById = mapApporteurInfos(clients);
+    
+    const statsByType = new Map<string, {
+      emis: number;
+      acceptes: number;
+      caEmis: number;
+      caAcceptes: number;
+    }>();
+    
+    for (const d of devis) {
+      const dateStr = d.dateReelle || d.date || d.created_at;
+      if (dateStr) {
+        try {
+          const date = new Date(dateStr);
+          if (date < params.dateRange.start || date > params.dateRange.end) continue;
+        } catch {
+          continue;
+        }
+      }
+      
+      const projectId = d.projectId;
+      const project = projectId ? projectsById.get(projectId) : null;
+      const typeApporteur = getApporteurTypeForProject(project, apporteursInfoById);
+      
+      if (!statsByType.has(typeApporteur)) {
+        statsByType.set(typeApporteur, { emis: 0, acceptes: 0, caEmis: 0, caAcceptes: 0 });
+      }
+      
+      const stats = statsByType.get(typeApporteur)!;
+      const montant = d.totalHT || d.data?.totalHT || 0;
+      const state = (d.state || '').toLowerCase();
+      
+      // Devis émis
+      if (['sent', 'accepted', 'validated', 'signed', 'order', 'refused'].includes(state)) {
+        stats.emis++;
+        stats.caEmis += montant;
+      }
+      
+      // Devis acceptés
+      if (['accepted', 'validated', 'signed', 'order'].includes(state)) {
+        stats.acceptes++;
+        stats.caAcceptes += montant;
+      }
+    }
+    
+    const result: Record<string, number> = {};
+    const details: Record<string, any> = {};
+    
+    statsByType.forEach((stats, type) => {
+      const tauxNb = stats.emis > 0 ? (stats.acceptes / stats.emis) * 100 : 0;
+      const tauxCa = stats.caEmis > 0 ? (stats.caAcceptes / stats.caEmis) * 100 : 0;
+      
+      result[type] = Math.round(tauxNb * 10) / 10;
+      details[type] = {
+        tauxNb: Math.round(tauxNb * 10) / 10,
+        tauxCa: Math.round(tauxCa * 10) / 10,
+        emis: stats.emis,
+        acceptes: stats.acceptes,
+        caEmis: Math.round(stats.caEmis * 100) / 100,
+        caAcceptes: Math.round(stats.caAcceptes * 100) / 100,
+      };
+    });
+    
+    return {
+      value: result,
+      metadata: {
+        computedAt: new Date(),
+        source: 'devis',
+        recordCount: statsByType.size,
+      },
+      breakdown: { details }
+    };
+  }
+};
+
+/**
+ * Taux SAV par Type d'Apporteur
+ * nb dossiers SAV / nb dossiers total par type d'apporteur
+ */
+export const tauxSavParTypeApporteur: StatDefinition = {
+  id: 'taux_sav_par_type_apporteur',
+  label: 'Taux SAV par Type d\'Apporteur',
+  description: 'Taux de SAV par type d\'apporteur',
+  category: 'apporteur',
+  source: ['projects', 'clients'],
+  dimensions: ['type_apporteur'],
+  aggregation: 'ratio',
+  unit: '%',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { projects, clients } = data;
+    
+    const apporteursInfoById = mapApporteurInfos(clients);
+    
+    const totalByType: Record<string, number> = {};
+    const savByType: Record<string, number> = {};
+    let recordCount = 0;
+    
+    for (const project of projects) {
+      const dateStr = project.date || project.created_at;
+      if (dateStr) {
+        try {
+          const date = new Date(dateStr);
+          if (date < params.dateRange.start || date > params.dateRange.end) continue;
+        } catch {
+          continue;
+        }
+      }
+      
+      const typeApporteur = getApporteurTypeForProject(project, apporteursInfoById);
+      
+      totalByType[typeApporteur] = (totalByType[typeApporteur] || 0) + 1;
+      
+      if (isSavProject(project)) {
+        savByType[typeApporteur] = (savByType[typeApporteur] || 0) + 1;
+      }
+      
+      recordCount++;
+    }
+    
+    const result: Record<string, number> = {};
+    const details: Record<string, any> = {};
+    
+    Object.keys(totalByType).forEach(type => {
+      const total = totalByType[type];
+      const sav = savByType[type] || 0;
+      const tauxSav = total > 0 ? (sav / total) * 100 : 0;
+      
+      result[type] = Math.round(tauxSav * 10) / 10;
+      details[type] = {
+        tauxSav: Math.round(tauxSav * 10) / 10,
+        total,
+        sav,
+      };
+    });
+    
+    return {
+      value: result,
+      metadata: {
+        computedAt: new Date(),
+        source: 'projects',
+        recordCount,
+      },
+      breakdown: { details }
+    };
+  }
+};
+
+// ==================== EXPORTS ====================
+
 export const apporteursDefinitions = {
+  // Par apporteur (existant)
   ca_par_apporteur: caParApporteur,
   dossiers_par_apporteur: dossiersParApporteur,
   top_apporteurs_ca: topApporteursCA,
   taux_transformation_apporteur: tauxTransformationApporteur,
   apporteurs_inactifs: apporteursInactifs,
+  // Par TYPE d'apporteur (nouveau)
+  ca_par_type_apporteur: caParTypeApporteur,
+  dossiers_par_type_apporteur: dossiersParTypeApporteur,
+  panier_moyen_par_type_apporteur: panierMoyenParTypeApporteur,
+  taux_transfo_par_type_apporteur: tauxTransfoParTypeApporteur,
+  taux_sav_par_type_apporteur: tauxSavParTypeApporteur,
 };

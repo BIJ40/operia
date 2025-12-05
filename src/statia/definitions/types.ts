@@ -18,7 +18,7 @@ export type StatCategory =
 
 export type DataSource = 'factures' | 'devis' | 'interventions' | 'projects' | 'users' | 'clients';
 
-export type Dimension = 'univers' | 'apporteur' | 'technicien' | 'mois' | 'agence';
+export type Dimension = 'univers' | 'apporteur' | 'type_apporteur' | 'technicien' | 'mois' | 'agence';
 
 export type AggregationType = 'sum' | 'count' | 'avg' | 'min' | 'max' | 'median' | 'ratio';
 
