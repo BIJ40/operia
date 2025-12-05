@@ -83,17 +83,38 @@ function DroppableColumn({ id, children }: { id: string; children: React.ReactNo
   );
 }
 
-/** Pastille clignotante pour nouvelle réponse */
-function BlinkingIndicator() {
+/** Icône bulle verte clignotante pour nouvelle réponse */
+function BlinkingReplyIndicator({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
   return (
-    <span 
-      className="absolute top-2 right-2 w-3 h-3 rounded-full bg-orange-500 animate-pulse"
+    <button
+      onClick={onClick}
+      className="absolute top-2 right-2 p-1 rounded-full bg-green-100 hover:bg-green-200 transition-colors z-10"
+      title="Nouvelle réponse - Cliquer pour marquer comme lu"
+    >
+      <MessageSquare 
+        className="w-4 h-4 text-green-600 animate-pulse"
+        style={{ 
+          animation: 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          filter: 'drop-shadow(0 0 4px rgba(34, 197, 94, 0.6))'
+        }}
+      />
+    </button>
+  );
+}
+
+/** Badge compteur clignotant pour colonne */
+function BlinkingCountBadge({ count }: { count: number }) {
+  return (
+    <Badge 
+      variant="secondary" 
+      className="text-xs bg-green-100 text-green-700 border-green-300 animate-pulse"
       style={{ 
-        animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        boxShadow: '0 0 8px rgba(249, 115, 22, 0.6)'
+        animation: 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        boxShadow: '0 0 6px rgba(34, 197, 94, 0.4)'
       }}
-      title="Nouvelle réponse"
-    />
+    >
+      {count}
+    </Badge>
   );
 }
 
@@ -139,6 +160,12 @@ function SortableTicketCard({ ticket, onSelect, shouldBlink, onMarkAsViewed }: S
     setWasDragging(false);
   };
 
+  // Clic sur l'indicateur : marquer comme lu sans ouvrir le ticket
+  const handleIndicatorClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onMarkAsViewed(ticket.id);
+  };
+
   // Classes conditionnelles basées sur la priorité (plus de SLA)
   const cardClasses = `relative rounded-xl p-4 mb-3 cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02] ${
     isUrgent 
@@ -155,8 +182,8 @@ function SortableTicketCard({ ticket, onSelect, shouldBlink, onMarkAsViewed }: S
       onClick={handleClick}
       className={cardClasses}
     >
-      {/* Pastille clignotante si nouvelle réponse */}
-      {shouldBlink && <BlinkingIndicator />}
+      {/* Icône bulle verte clignotante si nouvelle réponse */}
+      {shouldBlink && <BlinkingReplyIndicator onClick={handleIndicatorClick} />}
       
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
@@ -385,6 +412,8 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate, isCollaps
           {columns.map((column) => {
             const columnTickets = getTicketsByStatus(column.status);
             const isColumnCollapsed = collapsedColumns[column.id];
+            // Vérifier si la colonne contient des tickets avec nouvelles réponses
+            const hasBlinkingTickets = columnTickets.some(t => blinkStatus[t.id]);
             
             return (
               <DroppableColumn key={column.id} id={column.status}>
@@ -399,9 +428,13 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate, isCollaps
                         title={`Déplier ${column.title}`}
                       >
                         <ChevronRight className="w-4 h-4" />
-                        <Badge variant="secondary" className="text-xs">
-                          {columnTickets.length}
-                        </Badge>
+                        {hasBlinkingTickets ? (
+                          <BlinkingCountBadge count={columnTickets.length} />
+                        ) : (
+                          <Badge variant="secondary" className="text-xs">
+                            {columnTickets.length}
+                          </Badge>
+                        )}
                         <span 
                           className="text-xs font-medium text-center"
                           style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
@@ -413,9 +446,13 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate, isCollaps
                       <CardTitle className="flex items-center justify-between text-sm">
                         <span className="truncate">{column.title}</span>
                         <div className="flex items-center gap-1 shrink-0">
-                          <Badge variant="secondary" className="text-xs">
-                            {columnTickets.length}
-                          </Badge>
+                          {hasBlinkingTickets ? (
+                            <BlinkingCountBadge count={columnTickets.length} />
+                          ) : (
+                            <Badge variant="secondary" className="text-xs">
+                              {columnTickets.length}
+                            </Badge>
+                          )}
                           <button
                             onClick={() => toggleColumn(column.id)}
                             className="p-1 hover:bg-muted rounded transition-colors"
