@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { handleCorsPreflightOrReject, withCors } from "../_shared/cors.ts";
 
 // Cosine similarity calculation
 function cosineSimilarity(a: number[], b: number[]): number {
@@ -25,18 +21,18 @@ function cosineSimilarity(a: number[], b: number[]): number {
 }
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight or reject unauthorized origins
+  const corsResult = handleCorsPreflightOrReject(req);
+  if (corsResult) return corsResult;
 
   try {
     const { ticket_id, threshold = 0.82, topK = 10 } = await req.json();
     
     if (!ticket_id) {
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: "ticket_id is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      ));
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -64,10 +60,10 @@ serve(async (req) => {
       });
 
       if (!genResponse.ok) {
-        return new Response(
+        return withCors(req, new Response(
           JSON.stringify({ error: "Failed to generate embedding for source ticket" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+          { status: 500, headers: { "Content-Type": "application/json" } }
+        ));
       }
 
       // Re-fetch embedding
@@ -78,10 +74,10 @@ serve(async (req) => {
         .single();
 
       if (sourceEmbeddingData.error || !sourceEmbeddingData.data) {
-        return new Response(
+        return withCors(req, new Response(
           JSON.stringify({ error: "Failed to retrieve generated embedding" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+          { status: 500, headers: { "Content-Type": "application/json" } }
+        ));
       }
     }
     
@@ -95,10 +91,10 @@ serve(async (req) => {
 
     if (embeddingsError) {
       console.error("Error loading embeddings:", embeddingsError);
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: "Failed to load embeddings" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      ));
     }
 
     // Get tickets to filter out merged ones
@@ -109,10 +105,10 @@ serve(async (req) => {
 
     if (ticketsError) {
       console.error("Error loading tickets:", ticketsError);
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: "Failed to load tickets" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      ));
     }
 
     const activeTicketIds = new Set(tickets?.map(t => t.id) || []);
@@ -180,22 +176,22 @@ serve(async (req) => {
 
     console.log(`Scan complete for ticket ${ticket_id}: ${suggestionsCreated.length} suggestions created`);
     
-    return new Response(
+    return withCors(req, new Response(
       JSON.stringify({ 
         success: true, 
         ticket_id,
         suggestions_count: suggestionsCreated.length,
         suggestions: suggestionsCreated 
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+      { headers: { "Content-Type": "application/json" } }
+    ));
 
   } catch (error: unknown) {
     console.error("Error:", error);
     const message = error instanceof Error ? error.message : "Internal server error";
-    return new Response(
+    return withCors(req, new Response(
       JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    ));
   }
 });

@@ -5,12 +5,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { isOriginAllowed, withCors } from "../_shared/cors.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { handleCorsPreflightOrReject, withCors } from "../_shared/cors.ts";
 
 interface ExportRequest {
   type: 'documents_zip' | 'collaborators_csv' | 'requests_csv';
@@ -26,18 +21,9 @@ interface ExportRequest {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  const origin = req.headers.get('origin');
-  if (origin && !isOriginAllowed(origin)) {
-    return new Response(JSON.stringify({ error: 'Forbidden' }), {
-      status: 403,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
+  // Handle CORS preflight or reject unauthorized origins
+  const corsResult = handleCorsPreflightOrReject(req);
+  if (corsResult) return corsResult;
 
   try {
     const supabaseClient = createClient(
@@ -53,10 +39,10 @@ serve(async (req) => {
     // Get user
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return withCors(req, new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+        headers: { 'Content-Type': 'application/json' },
+      }));
     }
 
     const body: ExportRequest = await req.json();
@@ -70,10 +56,10 @@ serve(async (req) => {
       .single();
 
     if (!profile) {
-      return new Response(JSON.stringify({ error: 'Profile not found' }), {
+      return withCors(req, new Response(JSON.stringify({ error: 'Profile not found' }), {
         status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+        headers: { 'Content-Type': 'application/json' },
+      }));
     }
 
     const effectiveAgencyId = agency_id || profile.agency_id;
@@ -84,17 +70,17 @@ serve(async (req) => {
         // For now, return list of signed URLs (client will download individually)
         // Full ZIP generation would require more memory/processing
         if (!document_ids || document_ids.length === 0) {
-          return new Response(JSON.stringify({ error: 'No documents specified' }), {
+          return withCors(req, new Response(JSON.stringify({ error: 'No documents specified' }), {
             status: 400,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
+            headers: { 'Content-Type': 'application/json' },
+          }));
         }
 
         if (document_ids.length > 50) {
-          return new Response(JSON.stringify({ error: 'Maximum 50 documents per export' }), {
+          return withCors(req, new Response(JSON.stringify({ error: 'Maximum 50 documents per export' }), {
             status: 400,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
+            headers: { 'Content-Type': 'application/json' },
+          }));
         }
 
         // Fetch documents
@@ -120,13 +106,13 @@ serve(async (req) => {
           })
         );
 
-        return new Response(JSON.stringify({ 
+        return withCors(req, new Response(JSON.stringify({ 
           type: 'documents_urls',
           data: downloadUrls,
           count: downloadUrls.length,
         }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+          headers: { 'Content-Type': 'application/json' },
+        }));
       }
 
       case 'collaborators_csv': {
@@ -178,13 +164,12 @@ serve(async (req) => {
           ...rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(';'))
         ].join('\n');
 
-        return new Response(csvContent, {
+        return withCors(req, new Response(csvContent, {
           headers: {
-            ...corsHeaders,
             'Content-Type': 'text/csv; charset=utf-8',
             'Content-Disposition': `attachment; filename="collaborateurs_${new Date().toISOString().split('T')[0]}.csv"`,
           },
-        });
+        }));
       }
 
       case 'requests_csv': {
@@ -240,27 +225,26 @@ serve(async (req) => {
           ...rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(';'))
         ].join('\n');
 
-        return new Response(csvContent, {
+        return withCors(req, new Response(csvContent, {
           headers: {
-            ...corsHeaders,
             'Content-Type': 'text/csv; charset=utf-8',
             'Content-Disposition': `attachment; filename="demandes_rh_${new Date().toISOString().split('T')[0]}.csv"`,
           },
-        });
+        }));
       }
 
       default:
-        return new Response(JSON.stringify({ error: 'Invalid export type' }), {
+        return withCors(req, new Response(JSON.stringify({ error: 'Invalid export type' }), {
           status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+          headers: { 'Content-Type': 'application/json' },
+        }));
     }
   } catch (error: unknown) {
     console.error('Export error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    return withCors(req, new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+      headers: { 'Content-Type': 'application/json' },
+    }));
   }
 });
