@@ -116,6 +116,19 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
   const [columnWidth, setColumnWidth] = useState(288); // 288px = w-72
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
   const [filterBlinkingOnly, setFilterBlinkingOnly] = useState(false);
+  const [selectedPEC, setSelectedPEC] = useState<Set<string>>(new Set());
+
+  const togglePECFilter = (pecId: string) => {
+    setSelectedPEC(prev => {
+      const next = new Set(prev);
+      if (next.has(pecId)) {
+        next.delete(pecId);
+      } else {
+        next.add(pecId);
+      }
+      return next;
+    });
+  };
 
   const toggleColumnVisibility = (statusId: string) => {
     setHiddenColumns(prev => {
@@ -456,6 +469,47 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
             )}
           </button>
 
+          {/* Filtre P.E.C */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className={`gap-2 ${selectedPEC.size > 0 ? 'border-helpconfort-blue text-helpconfort-blue' : ''}`}>
+                <Filter className="h-4 w-4" />
+                P.E.C
+                {selectedPEC.size > 0 && (
+                  <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs bg-helpconfort-blue/20 text-helpconfort-blue">
+                    {selectedPEC.size}
+                  </Badge>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-48 bg-background z-50">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">P.E.C</span>
+                  {selectedPEC.size > 0 && (
+                    <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => setSelectedPEC(new Set())}>
+                      Réinitialiser
+                    </Button>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  {ownerSides.map((pec) => (
+                    <label
+                      key={pec.id}
+                      className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded px-2 py-1"
+                    >
+                      <Checkbox
+                        checked={selectedPEC.has(pec.id)}
+                        onCheckedChange={() => togglePECFilter(pec.id)}
+                      />
+                      <span className="text-sm">{pec.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+
           {/* Visibilité colonnes */}
           <Popover>
             <PopoverTrigger asChild>
@@ -522,7 +576,7 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
         </div>
       ) : (
         <TicketKanban
-          tickets={tickets}
+          tickets={selectedPEC.size > 0 ? tickets.filter(t => t.owner_side && selectedPEC.has(t.owner_side)) : tickets}
           statuses={statuses.filter(s => !hiddenColumns.has(s.id))}
           modules={modules}
           ownerSides={ownerSides}
