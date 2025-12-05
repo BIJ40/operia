@@ -108,26 +108,13 @@ export default function FormationApogee() {
   };
 
   // Toggle fullscreen
-  const toggleFullscreen = async () => {
-    try {
-      if (!document.fullscreenElement) {
-        await document.documentElement.requestFullscreen();
-        setIsFullscreen(true);
-      } else {
-        await document.exitFullscreen();
-        setIsFullscreen(false);
-      }
-    } catch (err) {
-      console.error("Fullscreen error:", err);
-    }
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
   };
 
   // Handle presentation mode close
-  const closePresentationMode = async () => {
-    if (document.fullscreenElement) {
-      await document.exitFullscreen();
-      setIsFullscreen(false);
-    }
+  const closePresentationMode = () => {
+    setIsFullscreen(false);
     setPresentationMode(false);
   };
 
@@ -419,7 +406,9 @@ export default function FormationApogee() {
       <Dialog open={presentationMode} onOpenChange={closePresentationMode}>
         <DialogContent className={cn(
           "p-0 flex flex-col",
-          isFullscreen ? "fixed inset-0 max-w-none h-screen w-screen rounded-none" : "max-w-6xl h-[90vh]"
+          isFullscreen 
+            ? "!fixed !inset-0 !max-w-none !h-screen !w-screen !rounded-none !translate-x-0 !translate-y-0 !top-0 !left-0 z-[100]" 
+            : "max-w-6xl h-[90vh]"
         )}>
           <DialogTitle className="sr-only">Mode présentation</DialogTitle>
           
