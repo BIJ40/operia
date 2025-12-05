@@ -1,0 +1,318 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { MainLayout } from "@/components/layout/MainLayout";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { 
+  Sparkles, 
+  ChevronDown, 
+  ChevronRight, 
+  CheckCircle2, 
+  Clock, 
+  AlertCircle,
+  Loader2,
+  RefreshCw,
+  BookOpen,
+  Image as ImageIcon
+} from "lucide-react";
+import { 
+  useFormationContentList, 
+  useGenerateFormationContent,
+  useFormationStats,
+  FormationContent
+} from "@/hooks/useFormationContent";
+import { cn } from "@/lib/utils";
+
+interface Block {
+  id: string;
+  title: string;
+  parent_id: string | null;
+  type: string;
+  order: number;
+}
+
+interface CategoryWithSections {
+  id: string;
+  title: string;
+  sections: Block[];
+}
+
+export default function FormationGenerator() {
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [generatingBlocks, setGeneratingBlocks] = useState<Set<string>>(new Set());
+
+  // Fetch all Apogée categories and sections
+  const { data: blocks, isLoading: blocksLoading } = useQuery({
+    queryKey: ["blocks-apogee-all"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("blocks")
+        .select("id, title, parent_id, type, order")
+        .order("order", { ascending: true });
+
+      if (error) throw error;
+      return data as Block[];
+    }
+  });
+
+  const { data: formationContent } = useFormationContentList();
+  const { data: stats } = useFormationStats();
+  const generateMutation = useGenerateFormationContent();
+
+  // Build category → sections map
+  const categories: CategoryWithSections[] = [];
+  if (blocks) {
+    const categoryBlocks = blocks.filter(b => b.type === "category");
+    categoryBlocks.forEach(cat => {
+      const sections = blocks
+        .filter(b => b.type === "section" && b.parent_id === cat.id)
+        .sort((a, b) => a.order - b.order);
+      if (sections.length > 0) {
+        categories.push({
+          id: cat.id,
+          title: cat.title,
+          sections
+        });
+      }
+    });
+  }
+
+  // Get formation content status for a block
+  const getBlockStatus = (blockId: string): FormationContent | undefined => {
+    return formationContent?.find(fc => fc.source_block_id === blockId);
+  };
+
+  const toggleCategory = (catId: string) => {
+    setExpandedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(catId)) {
+        next.delete(catId);
+      } else {
+        next.add(catId);
+      }
+      return next;
+    });
+  };
+
+  const handleGenerate = async (blockId: string) => {
+    setGeneratingBlocks(prev => new Set(prev).add(blockId));
+    try {
+      await generateMutation.mutateAsync(blockId);
+    } finally {
+      setGeneratingBlocks(prev => {
+        const next = new Set(prev);
+        next.delete(blockId);
+        return next;
+      });
+    }
+  };
+
+  const handleGenerateAll = async (category: CategoryWithSections) => {
+    for (const section of category.sections) {
+      const status = getBlockStatus(section.id);
+      if (!status || status.status !== "complete") {
+        await handleGenerate(section.id);
+      }
+    }
+  };
+
+  const getStatusBadge = (status?: FormationContent) => {
+    if (!status) {
+      return <Badge variant="outline" className="text-muted-foreground">Non généré</Badge>;
+    }
+    switch (status.status) {
+      case "complete":
+        return <Badge className="bg-green-500/20 text-green-600 border-green-500/30"><CheckCircle2 className="w-3 h-3 mr-1" />Généré</Badge>;
+      case "processing":
+        return <Badge className="bg-blue-500/20 text-blue-600 border-blue-500/30"><Loader2 className="w-3 h-3 mr-1 animate-spin" />En cours</Badge>;
+      case "error":
+        return <Badge variant="destructive"><AlertCircle className="w-3 h-3 mr-1" />Erreur</Badge>;
+      default:
+        return <Badge variant="outline"><Clock className="w-3 h-3 mr-1" />En attente</Badge>;
+    }
+  };
+
+  const getCategoryProgress = (category: CategoryWithSections) => {
+    const complete = category.sections.filter(s => getBlockStatus(s.id)?.status === "complete").length;
+    return { complete, total: category.sections.length };
+  };
+
+  if (blocksLoading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </div>
+      </MainLayout>
+    );
+  }
+
+  return (
+    <MainLayout>
+      <div className="container mx-auto py-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <Sparkles className="w-6 h-6 text-violet-500" />
+              Générateur de Formation IA
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Génère des résumés pédagogiques à partir des sections du guide Apogée
+            </p>
+          </div>
+          <Button variant="outline" asChild>
+            <a href="/academy/apogee/formation" target="_blank">
+              <BookOpen className="w-4 h-4 mr-2" />
+              Voir le parcours formation
+            </a>
+          </Button>
+        </div>
+
+        {/* Stats */}
+        {stats && (
+          <div className="grid grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="pt-4">
+                <div className="text-2xl font-bold">{stats.total}</div>
+                <div className="text-sm text-muted-foreground">Total</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4">
+                <div className="text-2xl font-bold text-green-600">{stats.complete}</div>
+                <div className="text-sm text-muted-foreground">Générés</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4">
+                <div className="text-2xl font-bold text-blue-600">{stats.processing}</div>
+                <div className="text-sm text-muted-foreground">En cours</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4">
+                <div className="text-2xl font-bold text-red-600">{stats.error}</div>
+                <div className="text-sm text-muted-foreground">Erreurs</div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Categories list */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Modules Apogée</CardTitle>
+            <CardDescription>
+              {categories.length} catégories • {categories.reduce((sum, c) => sum + c.sections.length, 0)} sections
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[600px] pr-4">
+              <div className="space-y-2">
+                {categories.map(category => {
+                  const isExpanded = expandedCategories.has(category.id);
+                  const progress = getCategoryProgress(category);
+                  const allComplete = progress.complete === progress.total;
+
+                  return (
+                    <Collapsible key={category.id} open={isExpanded}>
+                      <div className="border rounded-lg">
+                        <CollapsibleTrigger asChild>
+                          <button
+                            onClick={() => toggleCategory(category.id)}
+                            className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+                          >
+                            <div className="flex items-center gap-3">
+                              {isExpanded ? (
+                                <ChevronDown className="w-4 h-4" />
+                              ) : (
+                                <ChevronRight className="w-4 h-4" />
+                              )}
+                              <span className="font-medium">{category.title}</span>
+                              <Badge variant="secondary" className="ml-2">
+                                {progress.complete}/{progress.total}
+                              </Badge>
+                              {allComplete && (
+                                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                              )}
+                            </div>
+                            <Button
+                              size="sm"
+                              variant={allComplete ? "outline" : "default"}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleGenerateAll(category);
+                              }}
+                              disabled={generatingBlocks.size > 0}
+                            >
+                              {allComplete ? (
+                                <>
+                                  <RefreshCw className="w-3 h-3 mr-1" />
+                                  Régénérer tout
+                                </>
+                              ) : (
+                                <>
+                                  <Sparkles className="w-3 h-3 mr-1" />
+                                  Générer tout
+                                </>
+                              )}
+                            </Button>
+                          </button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="border-t px-4 py-2 space-y-2 bg-muted/20">
+                            {category.sections.map(section => {
+                              const status = getBlockStatus(section.id);
+                              const isGenerating = generatingBlocks.has(section.id);
+
+                              return (
+                                <div
+                                  key={section.id}
+                                  className="flex items-center justify-between py-2 px-3 rounded-md bg-background"
+                                >
+                                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                                    <span className="text-sm truncate">{section.title}</span>
+                                    {getStatusBadge(status)}
+                                    {status?.extracted_images && status.extracted_images.length > 0 && (
+                                      <Badge variant="outline" className="text-xs">
+                                        <ImageIcon className="w-3 h-3 mr-1" />
+                                        {status.extracted_images.length}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleGenerate(section.id)}
+                                    disabled={isGenerating || generatingBlocks.size > 3}
+                                  >
+                                    {isGenerating ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : status?.status === "complete" ? (
+                                      <RefreshCw className="w-4 h-4" />
+                                    ) : (
+                                      <Sparkles className="w-4 h-4" />
+                                    )}
+                                  </Button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </CollapsibleContent>
+                      </div>
+                    </Collapsible>
+                  );
+                })}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      </div>
+    </MainLayout>
+  );
+}
