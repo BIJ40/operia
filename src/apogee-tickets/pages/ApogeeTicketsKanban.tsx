@@ -32,8 +32,6 @@ import { exportToCSV, exportToExcel, exportToPDF } from '../utils/exportKanban';
 import { useMyTicketRole, TicketRoleInfo } from '../hooks/useTicketPermissions';
 import type { ApogeeTicket, TicketFilters as Filters } from '../types';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { ROUTES } from '@/config/routes';
 import { useMyRecentlyModifiedTickets } from '../hooks/useMyRecentlyModifiedTickets';
 import { useMyTicketViews } from '../hooks/useTicketViews';
@@ -438,30 +436,23 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
 
       {/* Contrôles colonnes */}
       <div className="flex items-center gap-4 flex-wrap">
-          {/* Filtre "Nouvelles réponses" */}
-          <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-1.5">
-            <Switch
-              id="filter-blinking-apogee"
-              checked={filterBlinkingOnly}
-              onCheckedChange={setFilterBlinkingOnly}
-              className="data-[state=checked]:bg-green-500"
-            />
-            <Label 
-              htmlFor="filter-blinking-apogee" 
-              className="text-sm cursor-pointer flex items-center gap-2"
-            >
-              <MessageSquare className="w-3.5 h-3.5 text-green-600" />
-              Nouvelles modifs
-              {blinkingTicketsCount > 0 && (
-                <Badge 
-                  variant="secondary" 
-                  className="bg-green-100 text-green-700 border-green-300 animate-pulse text-xs"
-                >
-                  {blinkingTicketsCount}
-                </Badge>
-              )}
-            </Label>
-          </div>
+          {/* Filtres cliquables */}
+          <button
+            onClick={() => setFilterBlinkingOnly(prev => !prev)}
+            className={`text-sm flex items-center gap-1.5 px-2 py-1 rounded transition-colors ${
+              filterBlinkingOnly 
+                ? 'bg-helpconfort-blue/10 text-helpconfort-blue font-medium' 
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+            }`}
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            Nouvelles modifs
+            {blinkingTicketsCount > 0 && (
+              <Badge variant="secondary" className="bg-helpconfort-blue/20 text-helpconfort-blue text-xs px-1.5">
+                {blinkingTicketsCount}
+              </Badge>
+            )}
+          </button>
 
           {/* Visibilité colonnes */}
           <Popover>
