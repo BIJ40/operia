@@ -3,12 +3,12 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LogOut, User, Settings, Headset, Loader2, Menu, Pencil, FileEdit, ArrowLeft,
   BarChart3, CheckSquare, Tv, CalendarDays, Users, Gauge,
-  BookOpen, Handshake, FolderOpen, GraduationCap,
+  BookOpen, Handshake, FolderOpen, GraduationCap, FolderKanban, Kanban,
   MessageSquare, LifeBuoy, HelpCircle,
   LayoutDashboard, Building2, UserCog, PieChart, GitCompare, Calculator, Network,
   Building, Database, FileText, Home, ListTodo, Activity,
   Upload, Bug, AlertCircle, Tags, Eye, Shield, UserMinus, ArrowUpCircle, HardDrive, Star, Heart,
-  Sparkles,
+  Sparkles, Copy,
   LucideIcon
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -55,12 +55,12 @@ import { RHNotificationBadge } from '@/components/rh/RHNotificationBadge';
 // Mapping des noms d'icônes vers les composants
 const ICON_MAP: Record<string, LucideIcon> = {
   BarChart3, CheckSquare, Tv, CalendarDays, Users, Gauge,
-  BookOpen, Handshake, FolderOpen, GraduationCap,
+  BookOpen, Handshake, FolderOpen, GraduationCap, FolderKanban, Kanban,
   MessageSquare, LifeBuoy, Headset, HelpCircle,
   LayoutDashboard, Building2, UserCog, PieChart, GitCompare, Calculator, Network,
   Building, Database, FileText, Home, Settings, ListTodo, Activity,
   Upload, Bug, AlertCircle, Tags, Eye, Shield, UserMinus, ArrowUpCircle, HardDrive, Star, User,
-  Sparkles,
+  Sparkles, Copy,
 };
 
 // Vérifier si l'utilisateur peut éditer les métadonnées (N5/N6)
