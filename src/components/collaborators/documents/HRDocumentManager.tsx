@@ -612,7 +612,7 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
             </div>
           )}
 
-          <DialogFooter className="flex-col sm:flex-row gap-2">
+          <DialogFooter className="flex flex-row justify-end gap-2 pt-4">
             <Button variant="outline" onClick={() => setShowUploadDialog(false)}>
               Annuler
             </Button>
