@@ -83,15 +83,17 @@ export const caParApporteur: StatDefinition = {
       recordCount++;
     }
     
-    // Formater le résultat
+    // Formater le résultat - utiliser les NOMS comme clés (pas les IDs)
     const result: Record<string, number> = {};
     const labels: Record<string, string> = {};
     const counts: Record<string, number> = {};
     
     for (const [id, data] of Object.entries(byApporteur)) {
-      result[id] = data.ca;
-      labels[id] = data.label;
-      counts[id] = data.count;
+      // Utiliser le label (nom) comme clé, pas l'ID
+      const key = data.label || `Apporteur ${id}`;
+      result[key] = (result[key] || 0) + data.ca; // Additionner si même nom
+      labels[key] = data.label;
+      counts[key] = (counts[key] || 0) + data.count;
     }
     
     return {
