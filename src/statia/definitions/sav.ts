@@ -113,6 +113,72 @@ function mapApporteurs(clients: any[]): Map<string, string> {
   return map;
 }
 
+// ============================================================================
+// HELPERS POUR TYPE D'APPORTEUR
+// ============================================================================
+
+type ApporteurInfo = {
+  id: string;
+  name: string;
+  type: string;
+};
+
+/**
+ * Normalise le type d'apporteur en catégorie standardisée
+ */
+function normalizeApporteurType(raw: any): string {
+  const v = String(raw || '').trim().toLowerCase();
+  if (!v) return 'Clients Directs';
+
+  if (['assureur', 'assurance', 'assureurs'].includes(v)) return 'Assureurs';
+  if (['bailleur', 'bailleurs', 'bailleur_social'].includes(v)) return 'Bailleurs';
+  if (['syndic', 'copro', 'copropriete'].includes(v)) return 'Syndics';
+  if (['maintenance', 'mainteneur'].includes(v)) return 'Maintenance';
+  if (['gestion', 'gestionnaire'].includes(v)) return 'Gestionnaires';
+  if (['pro', 'professionnel', 'professionnels'].includes(v)) return 'Professionnels';
+
+  // fallback générique: capitalize first letter
+  return v.charAt(0).toUpperCase() + v.slice(1);
+}
+
+/**
+ * Mapping apporteurId → ApporteurInfo (nom + type)
+ */
+function mapApporteurInfos(clients: any[]): Map<string, ApporteurInfo> {
+  const map = new Map<string, ApporteurInfo>();
+
+  for (const c of clients) {
+    const id = String(c.id);
+    const name =
+      c.displayName ||
+      c.raisonSociale ||
+      c.nom ||
+      c.name ||
+      c.label ||
+      c.data?.nom ||
+      c.data?.name ||
+      c.data?.raisonSociale ||
+      `Apporteur ${id}`;
+
+    const rawType =
+      c.data?.type ||
+      c.data?.typeApporteur ||
+      c.data?.categorie ||
+      c.categorie ||
+      null;
+
+    const type = normalizeApporteurType(rawType);
+
+    map.set(id, { id, name, type });
+  }
+
+  return map;
+}
+
+// ============================================================================
+// HELPERS INTERVENTIONS SAV
+// ============================================================================
+
 /**
  * Détecte si une intervention est de type SAV
  */
@@ -411,6 +477,80 @@ export const tauxSavParApporteur: StatDefinition = {
 };
 
 /**
+ * Taux de SAV par type d'apporteur
+ * Proportion de dossiers SAV par type d'apporteur (Assureurs, Bailleurs, etc.)
+ */
+export const tauxSavParTypeApporteur: StatDefinition = {
+  id: 'taux_sav_par_type_apporteur',
+  label: "Taux de SAV par type d'apporteur",
+  description: "Proportion de dossiers SAV par type d'apporteur/commanditaire",
+  category: 'sav',
+  source: ['projects', 'clients'],
+  unit: '%',
+  dimensions: ['type_apporteur'],
+  aggregation: 'ratio',
+
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { projects, clients } = data;
+
+    const apporteursInfoById = mapApporteurInfos(clients);
+
+    const totalByType: Record<string, number> = {};
+    const savByType: Record<string, number> = {};
+
+    for (const project of projects) {
+      const date = getProjectDate(project);
+      if (!date) continue;
+
+      if (params.dateRange && (date < params.dateRange.start || date > params.dateRange.end)) {
+        continue;
+      }
+
+      const cmdIdRaw = project.data?.commanditaireId || project.commanditaireId;
+
+      let typeApporteur: string;
+
+      if (!cmdIdRaw) {
+        typeApporteur = 'Clients Directs';
+      } else {
+        const info = apporteursInfoById.get(String(cmdIdRaw));
+        typeApporteur = info?.type || 'Clients Directs';
+      }
+
+      const isSav = isSavProject(project);
+
+      totalByType[typeApporteur] = (totalByType[typeApporteur] || 0) + 1;
+      if (isSav) {
+        savByType[typeApporteur] = (savByType[typeApporteur] || 0) + 1;
+      }
+    }
+
+    const result: Record<string, number> = {};
+    const details: Record<string, { total: number; sav: number; taux: number }> = {};
+
+    for (const type of Object.keys(totalByType)) {
+      const total = totalByType[type] || 0;
+      const sav = savByType[type] || 0;
+      const taux = total > 0 ? (sav / total) * 100 : 0;
+      const tauxRounded = Math.round(taux * 10) / 10;
+
+      result[type] = tauxRounded;
+      details[type] = { total, sav, taux: tauxRounded };
+    }
+
+    return {
+      value: result,
+      metadata: {
+        computedAt: new Date(),
+        source: 'projects',
+        recordCount: projects.length,
+      },
+      breakdown: { details },
+    };
+  },
+};
+
+/**
  * Nombre de SAV sur la période
  * Compte les dossiers SAV (projets enfants/liés)
  */
@@ -556,6 +696,7 @@ export const savDefinitions = {
   taux_sav_global: tauxSavGlobal,
   taux_sav_par_univers: tauxSavParUnivers,
   taux_sav_par_apporteur: tauxSavParApporteur,
+  taux_sav_par_type_apporteur: tauxSavParTypeApporteur,
   nb_sav_global: nbSavGlobal,
   nb_interventions_sav: nbInterventionsSav,
   ca_impacte_sav: caImpacteSav,
