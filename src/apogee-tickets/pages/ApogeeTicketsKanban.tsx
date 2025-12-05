@@ -17,7 +17,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns, Eye, Shield, Loader2, ShieldAlert, Download, FileText, Sheet, FileDown, LayoutGrid, List, FileCheck, AlertTriangle, Copy, RotateCcw, Clock, Filter, MessageSquare } from 'lucide-react';
+import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns, Eye, Shield, Loader2, ShieldAlert, Download, FileText, Sheet, FileDown, LayoutGrid, List, FileCheck, AlertTriangle, Copy, RotateCcw, Clock } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { usePersistedFilters } from '../hooks/usePersistedFilters';
@@ -439,77 +439,23 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
         </div>
       </div>
 
-      {/* Filtres */}
+      {/* Filtres + Contrôles */}
       <TicketFilters
         filters={filters}
         onFiltersChange={setFilters}
         modules={modules}
         priorities={priorities}
+        ownerSides={ownerSides}
+        selectedPEC={selectedPEC}
+        onTogglePEC={togglePECFilter}
+        onClearPEC={() => setSelectedPEC(new Set())}
+        blinkingTicketsCount={blinkingTicketsCount}
+        filterBlinkingOnly={filterBlinkingOnly}
+        onToggleBlinkingFilter={() => setFilterBlinkingOnly(prev => !prev)}
       />
 
       {/* Contrôles colonnes */}
       <div className="flex items-center gap-4 flex-wrap">
-          {/* Filtres cliquables */}
-          <button
-            onClick={() => setFilterBlinkingOnly(prev => !prev)}
-            className={`text-sm flex items-center gap-1.5 px-2 py-1 rounded transition-colors ${
-              filterBlinkingOnly 
-                ? 'bg-helpconfort-blue/10 text-helpconfort-blue font-medium' 
-                : blinkingTicketsCount > 0
-                  ? 'text-green-600 animate-pulse font-medium'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-            }`}
-          >
-            <MessageSquare className={`w-3.5 h-3.5 ${blinkingTicketsCount > 0 && !filterBlinkingOnly ? 'text-green-600' : ''}`} />
-            Nouveaux messages
-            {blinkingTicketsCount > 0 && (
-              <Badge variant="secondary" className={`text-xs px-1.5 ${filterBlinkingOnly ? 'bg-helpconfort-blue/20 text-helpconfort-blue' : 'bg-green-100 text-green-700 animate-pulse'}`}>
-                {blinkingTicketsCount}
-              </Badge>
-            )}
-          </button>
-
-          {/* Filtre P.E.C */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className={`gap-2 ${selectedPEC.size > 0 ? 'border-helpconfort-blue text-helpconfort-blue' : ''}`}>
-                <Filter className="h-4 w-4" />
-                P.E.C
-                {selectedPEC.size > 0 && (
-                  <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs bg-helpconfort-blue/20 text-helpconfort-blue">
-                    {selectedPEC.size}
-                  </Badge>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="start" className="w-48 bg-background z-50">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">P.E.C</span>
-                  {selectedPEC.size > 0 && (
-                    <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => setSelectedPEC(new Set())}>
-                      Réinitialiser
-                    </Button>
-                  )}
-                </div>
-                <div className="space-y-1">
-                  {ownerSides.map((pec) => (
-                    <label
-                      key={pec.id}
-                      className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded px-2 py-1"
-                    >
-                      <Checkbox
-                        checked={selectedPEC.has(pec.id)}
-                        onCheckedChange={() => togglePECFilter(pec.id)}
-                      />
-                      <span className="text-sm">{pec.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
-
           {/* Visibilité colonnes */}
           <Popover>
             <PopoverTrigger asChild>
