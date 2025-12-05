@@ -1,7 +1,9 @@
 /**
  * Hook principal pour la gestion des tickets Apogée
+ * Inclut souscription Realtime pour rafraîchissement automatique
  */
 
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -201,6 +203,30 @@ export function useApogeeTickets(filters?: TicketFilters) {
       return data;
     },
   });
+
+  // Souscription Realtime pour rafraîchir les tickets automatiquement
+  useEffect(() => {
+    const channel = supabase
+      .channel('apogee-tickets-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'apogee_tickets',
+        },
+        () => {
+          // Rafraîchir les tickets et les vues quand un ticket est modifié
+          queryClient.invalidateQueries({ queryKey: ['apogee-tickets'] });
+          queryClient.invalidateQueries({ queryKey: ['apogee-ticket-views'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   // Create ticket
   const createTicket = useMutation({
