@@ -56,7 +56,24 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
       });
 
       if (signInError) {
-        throw new Error('Email ou mot de passe incorrect');
+        console.error('[LoginDialog] Auth error:', signInError.message, signInError.status, signInError);
+        
+        // Afficher le vrai message d'erreur pour le debug
+        let errorMessage = 'Email ou mot de passe incorrect';
+        if (signInError.message.includes('Invalid login credentials')) {
+          errorMessage = 'Email ou mot de passe incorrect';
+        } else if (signInError.message.includes('Email not confirmed')) {
+          errorMessage = 'Veuillez confirmer votre email';
+        } else if (signInError.message.includes('Too many requests')) {
+          errorMessage = 'Trop de tentatives. Réessayez dans quelques minutes.';
+        } else if (signInError.message.includes('Network')) {
+          errorMessage = 'Erreur réseau. Vérifiez votre connexion.';
+        } else {
+          // Pour debug: afficher l'erreur réelle
+          errorMessage = `Erreur: ${signInError.message}`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       onOpenChange(false);
