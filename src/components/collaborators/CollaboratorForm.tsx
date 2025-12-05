@@ -1,5 +1,6 @@
 /**
  * Formulaire de création/édition de collaborateur
+ * RGPD: Les données sensibles sont chargées séparément via useSensitiveData
  */
 
 import { useForm } from 'react-hook-form';
@@ -33,6 +34,7 @@ import {
 } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { Collaborator, CollaboratorFormData, COLLABORATOR_TYPES } from '@/types/collaborator';
+import { useSensitiveData } from '@/hooks/useSensitiveData';
 
 const formSchema = z.object({
   first_name: z.string().min(1, 'Prénom requis'),
@@ -72,6 +74,11 @@ export function CollaboratorForm({
   collaborator,
   mode = 'create',
 }: CollaboratorFormProps) {
+  // RGPD: Charger les données sensibles séparément en mode édition
+  const { sensitiveData, isLoading: loadingSensitive } = useSensitiveData(
+    mode === 'edit' ? collaborator?.id : undefined
+  );
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -85,18 +92,18 @@ export function CollaboratorForm({
       hiring_date: '',
       leaving_date: '',
       birth_date: '',
-        street: '',
-        postal_code: '',
-        city: '',
-        social_security_number: '',
-        birth_place: '',
-        emergency_contact: '',
+      street: '',
+      postal_code: '',
+      city: '',
+      social_security_number: '',
+      birth_place: '',
+      emergency_contact: '',
       emergency_phone: '',
       apogee_user_id: undefined,
     },
   });
 
-  // Reset form when dialog opens or collaborator changes
+  // Reset form when dialog opens, collaborator changes, or sensitive data loads
   useEffect(() => {
     if (open) {
       form.reset({
@@ -109,18 +116,19 @@ export function CollaboratorForm({
         notes: collaborator?.notes || '',
         hiring_date: collaborator?.hiring_date || '',
         leaving_date: collaborator?.leaving_date || '',
-        birth_date: collaborator?.birth_date || '',
+        // RGPD: Données sensibles depuis collaborator_sensitive_data
+        birth_date: sensitiveData.birth_date || '',
         street: collaborator?.street || '',
         postal_code: collaborator?.postal_code || '',
         city: collaborator?.city || '',
-        social_security_number: collaborator?.social_security_number || '',
+        social_security_number: sensitiveData.social_security_number || '',
         birth_place: collaborator?.birth_place || '',
-        emergency_contact: collaborator?.emergency_contact || '',
-        emergency_phone: collaborator?.emergency_phone || '',
+        emergency_contact: sensitiveData.emergency_contact || '',
+        emergency_phone: sensitiveData.emergency_phone || '',
         apogee_user_id: collaborator?.apogee_user_id || undefined,
       });
     }
-  }, [open, collaborator, form]);
+  }, [open, collaborator, sensitiveData, form]);
 
   const handleSubmit = (values: z.infer<typeof formSchema>) => {
     onSubmit({
