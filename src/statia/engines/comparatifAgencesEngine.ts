@@ -283,38 +283,73 @@ function computeAgencyKPIs(
   const tauxOneShot = nbDossiersBase > 0 ? Math.round((oneShot / nbDossiersBase) * 1000) / 10 : null;
   const tauxMultiVisites = nbDossiersBase > 0 ? Math.round((multiVisites / nbDossiersBase) * 1000) / 10 : null;
 
-  // Délai premier devis
+  // Délai premier devis - basé sur project.data.history (événement "=> Devis envoyé")
+  // Aligné avec StatIA delai_dossier_premier_devis
   const projectsMap = new Map(projects.map(p => [p.id, p]));
-  const firstDevisByProject = new Map<string, Date>();
   
-  for (const d of devis) {
-    const state = (d.state || '').toLowerCase();
-    if (state !== 'sent') continue;
-    const dateStr = d.dateReelle;
-    if (!dateStr) continue;
-    const date = parseDate(dateStr);
-    if (!date) continue;
-    const projectId = d.projectId || d.project_id;
-    if (!projectId) continue;
-    const existing = firstDevisByProject.get(projectId);
-    if (!existing || date < existing) {
-      firstDevisByProject.set(projectId, date);
+  // Parser dateModif format "dd/MM/yyyy HH:mm:ss"
+  const parseDateModif = (dateStr: string): Date | null => {
+    if (!dateStr) return null;
+    // Format dd/MM/yyyy HH:mm:ss
+    const match = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2}):(\d{2})$/);
+    if (match) {
+      const [, day, month, year, hour, minute, second] = match;
+      return new Date(
+        parseInt(year, 10),
+        parseInt(month, 10) - 1,
+        parseInt(day, 10),
+        parseInt(hour, 10),
+        parseInt(minute, 10),
+        parseInt(second, 10)
+      );
     }
-  }
+    // Fallback ISO
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? null : d;
+  };
 
   let totalDelaiDevis = 0;
   let countDelaiDevis = 0;
-  for (const [projectId, devisDate] of firstDevisByProject) {
-    const project = projectsMap.get(projectId);
-    if (!project) continue;
-    const projectDate = parseDate(project.created_at || project.date || project.createdAt);
-    if (!projectDate) continue;
-    if (devisDate < params.dateStart || devisDate > params.dateEnd) continue;
-    const diffDays = Math.floor((devisDate.getTime() - projectDate.getTime()) / (1000 * 60 * 60 * 24));
-    if (diffDays < 0) continue;
+  
+  for (const project of projects) {
+    if (project.state === 'canceled') continue;
+    
+    const createdAtStr = project.created_at || project.createdAt;
+    if (!createdAtStr) continue;
+    const createdAt = new Date(createdAtStr);
+    if (isNaN(createdAt.getTime())) continue;
+    
+    // Chercher dans l'historique les transitions "=> Devis envoyé"
+    const history = project.data?.history || [];
+    const devisEnvoyeEntries = history.filter((h: any) => {
+      if (h.kind !== 2) return false;
+      const label = (h.labelKind || '').toLowerCase();
+      return label.endsWith(' => devis envoyé') || label.endsWith('=> devis envoyé');
+    });
+    
+    if (devisEnvoyeEntries.length === 0) continue;
+    
+    // Parser les dates et prendre la première (chronologiquement)
+    const parsedDates = devisEnvoyeEntries
+      .map((h: any) => parseDateModif(h.dateModif))
+      .filter((d: Date | null): d is Date => d !== null);
+    
+    if (parsedDates.length === 0) continue;
+    
+    const firstDevisDate = parsedDates.reduce((min, d) => d < min ? d : min);
+    
+    // Vérifier que le devis est dans la période
+    if (firstDevisDate < params.dateStart || firstDevisDate > params.dateEnd) continue;
+    
+    const diffDays = Math.floor((firstDevisDate.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+    
+    // Filtrer délais négatifs et outliers > 60 jours
+    if (diffDays < 0 || diffDays > 60) continue;
+    
     totalDelaiDevis += diffDays;
     countDelaiDevis++;
   }
+  
   const delaiPremierDevis = countDelaiDevis > 0 ? Math.round(totalDelaiDevis / countDelaiDevis) : null;
 
   // Délai ouverture dossier (project → première intervention)
