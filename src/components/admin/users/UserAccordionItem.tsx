@@ -111,78 +111,80 @@ export const UserAccordionItem = memo(function UserAccordionItem({
   return (
     <AccordionItem value={user.id} className={`border-0 ${isDeactivated ? 'opacity-60 bg-muted/30' : ''}`}>
       <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 hover:no-underline">
-        <div className="flex items-center gap-4 flex-1 text-left">
+        <div className="flex items-center gap-3 flex-1 text-left min-w-0">
           {/* Avatar */}
           <div className={`w-10 h-10 rounded-full flex items-center justify-center font-medium shrink-0 ${isDeactivated ? 'bg-muted text-muted-foreground' : 'bg-primary/10 text-primary'}`}>
             {getInitials()}
           </div>
           
-          {/* User Info */}
-          <div className="flex-1 min-w-0">
+          {/* User Info - fixed width */}
+          <div className="w-44 shrink-0 min-w-0">
             <div className="font-medium truncate">{getDisplayName()}</div>
             <div className="text-sm text-muted-foreground truncate">{user.email || 'Pas d\'email'}</div>
           </div>
 
-          {/* Agency */}
-          <div className="hidden md:block w-32 text-sm text-muted-foreground truncate">
+          {/* Agency - fixed width */}
+          <div className="hidden md:block w-24 shrink-0 text-sm text-muted-foreground truncate">
             {user.agence || 'Sans agence'}
           </div>
 
-          {/* Poste */}
-          <div className="hidden lg:block w-28 text-sm text-muted-foreground">
+          {/* Poste - fixed width */}
+          <div className="hidden lg:block w-24 shrink-0 text-sm text-muted-foreground truncate">
             {ROLE_AGENCE_LABELS[user.role_agence || ''] || user.role_agence || '-'}
           </div>
 
-          {/* Global Role */}
-          <div className="w-40">
+          {/* Global Role - fixed width */}
+          <div className="w-44 shrink-0">
             {effectiveRole ? (
-              <Badge className={GLOBAL_ROLE_COLORS[effectiveRole] || 'bg-muted'}>
+              <Badge className={`${GLOBAL_ROLE_COLORS[effectiveRole] || 'bg-muted'} text-xs`}>
                 N{GLOBAL_ROLES[effectiveRole]} – {GLOBAL_ROLE_LABELS[effectiveRole]}
               </Badge>
             ) : (
-              <Badge variant="outline" className="text-muted-foreground">Non défini</Badge>
+              <Badge variant="outline" className="text-muted-foreground text-xs">Non défini</Badge>
             )}
           </div>
 
-          {/* Badges */}
-          {isModified && (
-            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
-              Modifié
-            </Badge>
-          )}
+          {/* Badges - fixed width container */}
+          <div className="w-40 shrink-0 flex items-center gap-1 flex-wrap">
+            {isModified && (
+              <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 text-xs">
+                Modifié
+              </Badge>
+            )}
 
-          {isDeactivated && (
-            <Badge variant="destructive" className="shrink-0">
-              <UserX className="w-3 h-3 mr-1" />
-              Désactivé
-            </Badge>
-          )}
+            {isDeactivated && (
+              <Badge variant="destructive" className="text-xs">
+                <UserX className="w-3 h-3 mr-1" />
+                Désactivé
+              </Badge>
+            )}
 
-          {user.must_change_password && !isDeactivated && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge variant="outline" className="shrink-0 border-amber-500 text-amber-600 bg-amber-50 dark:bg-amber-950/30">
-                  <AlertCircle className="w-3 h-3 mr-1" />
-                  Mot de passe provisoire
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent>
-                L'utilisateur n'a pas encore changé son mot de passe provisoire
-              </TooltipContent>
-            </Tooltip>
-          )}
+            {user.must_change_password && !isDeactivated && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="outline" className="border-amber-500 text-amber-600 bg-amber-50 dark:bg-amber-950/30 text-xs">
+                    <AlertCircle className="w-3 h-3 mr-1" />
+                    MDP provisoire
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  L'utilisateur n'a pas encore changé son mot de passe provisoire
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
 
-          {/* Actions */}
-          <div className="flex gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+          {/* Actions - fixed width */}
+          <div className="flex gap-2 shrink-0 w-32 justify-end" onClick={(e) => e.stopPropagation()}>
             {canEdit ? (
-              <Button size="sm" variant="outline" onClick={onSaveChanges} disabled={!isModified || isSaving}>
+              <Button size="sm" variant="outline" onClick={onSaveChanges} disabled={!isModified || isSaving} className="h-8">
                 <Save className="w-4 h-4 mr-1" />
                 Sauver
               </Button>
             ) : (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Badge variant="outline" className="text-muted-foreground">Lecture seule</Badge>
+                  <Badge variant="outline" className="text-muted-foreground text-xs">Lecture seule</Badge>
                 </TooltipTrigger>
                 <TooltipContent>
                   Vous ne pouvez pas modifier cet utilisateur (niveau supérieur ou autre agence)
@@ -197,7 +199,7 @@ export const UserAccordionItem = memo(function UserAccordionItem({
                     <MoreHorizontal className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" className="bg-background z-50">
                   <DropdownMenuItem onClick={onEditUser}>
                     <Pencil className="w-4 h-4 mr-2" />
                     Modifier les informations
