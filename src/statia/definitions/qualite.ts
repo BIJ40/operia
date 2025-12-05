@@ -8,7 +8,7 @@ import { StatDefinition, LoadedData, StatParams, StatResult } from './types';
 import { parseISO, isWithinInterval, differenceInDays } from 'date-fns';
 import { extractFactureMeta } from '../rules/rules';
 import { extractProjectUniverses } from '../engine/normalizers';
-
+import { calculateDelaiPremierDevis } from '../shared/delaiPremierDevis';
 /**
  * Taux de dossiers multi-univers
  * Pourcentage de dossiers impliquant plusieurs univers métiers
@@ -395,155 +395,26 @@ export const delaiDossierPremierDevis: StatDefinition = {
     const { projects } = data;
     console.log('[StatIA] delai_dossier_premier_devis - projects:', projects?.length ?? 0);
     
-    const delais: number[] = [];
-    let debugStats = { 
-      totalProjets: 0, 
-      horsPeriode: 0,
-      canceled: 0, 
-      noCreatedAt: 0, 
-      noHistory: 0,
-      noDevisEnvoye: 0, 
-      invalidDateModif: 0,
-      negative: 0, 
-      ok: 0 
-    };
-    
-    for (const project of projects) {
-      debugStats.totalProjets++;
-      
-      // Ignorer les projets annulés
-      if (project.state === 'canceled') {
-        debugStats.canceled++;
-        continue;
-      }
-      
-      // Date de création du dossier = project.created_at (format ISO)
-      const createdAtStr = project.created_at;
-      if (!createdAtStr) {
-        debugStats.noCreatedAt++;
-        continue;
-      }
-      
-      const createdAt = new Date(createdAtStr);
-      if (isNaN(createdAt.getTime())) {
-        debugStats.noCreatedAt++;
-        continue;
-      }
-      
-      // Filtre de période sur la date de création
-      if (!isWithinInterval(createdAt, { start: params.dateRange.start, end: params.dateRange.end })) {
-        debugStats.horsPeriode++;
-        continue;
-      }
-      
-      // Chercher dans data.history
-      const history = project.data?.history || [];
-      if (!Array.isArray(history) || history.length === 0) {
-        debugStats.noHistory++;
-        continue;
-      }
-      
-      // Trouver toutes les transitions "* => Devis envoyé" (kind=2)
-      // labelKind doit se terminer par " => Devis envoyé" (avec espace avant =>)
-      const devisEnvoyeEntries = history
-        .filter((h: any) => {
-          // kind === 2 = transition d'état (optionnel mais recommandé)
-          const kind = h.kind;
-          const labelKind = (h.labelKind || '').trim();
-          
-          // Le labelKind doit se terminer par " => Devis envoyé" ou "=> Devis envoyé"
-          const endsWithDevisEnvoye = labelKind.toLowerCase().endsWith('=> devis envoyé');
-          
-          // Si kind est défini, vérifier qu'il est égal à 2
-          if (kind !== undefined && kind !== 2) {
-            return false;
-          }
-          
-          return endsWithDevisEnvoye;
-        });
-      
-      if (devisEnvoyeEntries.length === 0) {
-        debugStats.noDevisEnvoye++;
-        continue;
-      }
-      
-      // DEBUG: Log les 3 premiers dossiers avec leurs données
-      if (debugStats.ok < 3) {
-        console.log('[StatIA] EXEMPLE DOSSIER:', {
-          projectId: project.id,
-          ref: project.ref,
-          created_at: createdAtStr,
-          createdAtParsed: createdAt.toISOString(),
-          historyEntries: devisEnvoyeEntries.map((h: any) => ({
-            labelKind: h.labelKind,
-            dateModif: h.dateModif,
-            kind: h.kind
-          }))
-        });
-      }
-      
-      // Parser les dateModif (format "dd/MM/yyyy HH:mm:ss")
-      const parsedDates = devisEnvoyeEntries
-        .map((h: any) => {
-          const parsed = parseDateModifApogee(h.dateModif);
-          if (debugStats.ok < 3 && parsed) {
-            console.log('[StatIA] dateModif parsed:', h.dateModif, '=>', parsed.toISOString());
-          }
-          return parsed;
-        })
-        .filter((d: Date | null): d is Date => d !== null);
-      
-      if (parsedDates.length === 0) {
-        debugStats.invalidDateModif++;
-        continue;
-      }
-      
-      // Trier par date croissante et prendre la PREMIÈRE (premier envoi de devis)
-      parsedDates.sort((a, b) => a.getTime() - b.getTime());
-      const firstDevisDate = parsedDates[0];
-      
-      const diffMs = firstDevisDate.getTime() - createdAt.getTime();
-      const diffDays = diffMs / (1000 * 60 * 60 * 24);
-      
-      // DEBUG: Log les 3 premiers calculs
-      if (debugStats.ok < 3) {
-        console.log('[StatIA] DELAI CALCUL:', {
-          created: createdAt.toISOString(),
-          devis: firstDevisDate.toISOString(),
-          diffDays: Math.round(diffDays)
-        });
-      }
-      
-      // Ignorer les délais négatifs, aberrants ou > 60 jours (outliers)
-      if (!Number.isFinite(diffDays) || diffDays < 0 || diffDays > 60) {
-        debugStats.negative++;
-        continue;
-      }
-      
-      delais.push(diffDays);
-      debugStats.ok++;
-    }
-    
-    console.log('[StatIA] delai_dossier_premier_devis debug:', debugStats);
-    console.log('[StatIA] delais sample (jours):', delais.slice(0, 10).map(d => Math.round(d)));
-    
-    // Si aucun dossier avec devis envoyé → renvoyer null, pas 0
-    const moyenne = delais.length > 0 
-      ? Math.round(delais.reduce((a, b) => a + b, 0) / delais.length)
-      : null;
+    // Utiliser la fonction partagée - SOURCE UNIQUE DE VÉRITÉ
+    const result = calculateDelaiPremierDevis(projects, {
+      dateStart: params.dateRange.start,
+      dateEnd: params.dateRange.end,
+      maxDelaiJours: 60,
+      debug: true
+    });
     
     return {
-      value: moyenne,
+      value: result.moyenne,
       metadata: {
         computedAt: new Date(),
         source: 'projects',
-        recordCount: delais.length,
+        recordCount: result.nbDossiersAvecDevis,
       },
       breakdown: {
-        nbDossiersAvecDevis: delais.length,
-        min: delais.length > 0 ? Math.round(Math.min(...delais)) : null,
-        max: delais.length > 0 ? Math.round(Math.max(...delais)) : null,
-        debug: debugStats,
+        nbDossiersAvecDevis: result.nbDossiersAvecDevis,
+        min: result.min,
+        max: result.max,
+        debug: result.debug,
       }
     };
   }
