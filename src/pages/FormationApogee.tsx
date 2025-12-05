@@ -13,7 +13,8 @@ import {
   Maximize2,
   Image as ImageIcon,
   ExternalLink,
-  GraduationCap
+  GraduationCap,
+  SkipForward
 } from "lucide-react";
 import { useFormationContentList, FormationContent } from "@/hooks/useFormationContent";
 import { cn } from "@/lib/utils";
@@ -71,26 +72,65 @@ export default function FormationApogee() {
     return categories?.filter(cat => contentByCategory.has(cat.id)) || [];
   }, [categories, contentByCategory]);
 
+  // Current category index
+  const currentCategoryIndex = useMemo(() => {
+    return categoriesWithContent.findIndex(cat => cat.id === (selectedCategoryId || categoriesWithContent[0]?.id));
+  }, [categoriesWithContent, selectedCategoryId]);
+
   // Auto-select first category
   const effectiveCategoryId = selectedCategoryId || categoriesWithContent[0]?.id;
   const currentCategoryContent = effectiveCategoryId 
     ? contentByCategory.get(effectiveCategoryId) || []
     : [];
 
-  // Presentation mode navigation
+  // Calculate total sections across all modules for global progress
+  const totalSections = useMemo(() => {
+    return categoriesWithContent.reduce((sum, cat) => sum + (contentByCategory.get(cat.id)?.length || 0), 0);
+  }, [categoriesWithContent, contentByCategory]);
+
+  const globalSectionIndex = useMemo(() => {
+    let count = 0;
+    for (let i = 0; i < currentCategoryIndex; i++) {
+      count += contentByCategory.get(categoriesWithContent[i]?.id)?.length || 0;
+    }
+    return count + currentSectionIndex;
+  }, [currentCategoryIndex, currentSectionIndex, categoriesWithContent, contentByCategory]);
+
+  // Presentation mode navigation - cross-module
   const currentSection = currentCategoryContent[currentSectionIndex];
-  const hasNext = currentSectionIndex < currentCategoryContent.length - 1;
-  const hasPrev = currentSectionIndex > 0;
+  
+  const hasNextSection = currentSectionIndex < currentCategoryContent.length - 1;
+  const hasNextModule = currentCategoryIndex < categoriesWithContent.length - 1;
+  const hasPrevSection = currentSectionIndex > 0;
+  const hasPrevModule = currentCategoryIndex > 0;
+
+  const hasNext = hasNextSection || hasNextModule;
+  const hasPrev = hasPrevSection || hasPrevModule;
 
   const goNext = () => {
-    if (hasNext) setCurrentSectionIndex(i => i + 1);
+    if (hasNextSection) {
+      setCurrentSectionIndex(i => i + 1);
+    } else if (hasNextModule) {
+      // Passer au module suivant
+      const nextCat = categoriesWithContent[currentCategoryIndex + 1];
+      setSelectedCategoryId(nextCat.id);
+      setCurrentSectionIndex(0);
+    }
   };
 
   const goPrev = () => {
-    if (hasPrev) setCurrentSectionIndex(i => i - 1);
+    if (hasPrevSection) {
+      setCurrentSectionIndex(i => i - 1);
+    } else if (hasPrevModule) {
+      // Revenir au module précédent (dernière section)
+      const prevCat = categoriesWithContent[currentCategoryIndex - 1];
+      const prevCatContent = contentByCategory.get(prevCat.id) || [];
+      setSelectedCategoryId(prevCat.id);
+      setCurrentSectionIndex(prevCatContent.length - 1);
+    }
   };
 
-  // Reset index when category changes
+  // Reset index when category changes manually
   const handleCategoryChange = (catId: string) => {
     setSelectedCategoryId(catId);
     setCurrentSectionIndex(0);
@@ -274,14 +314,33 @@ export default function FormationApogee() {
               {/* Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b bg-muted/30">
                 <div>
-                  <Badge variant="outline" className="mb-1">
-                    {categories?.find(c => c.id === effectiveCategoryId)?.title}
-                  </Badge>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="outline">
+                      Module {currentCategoryIndex + 1}/{categoriesWithContent.length}
+                    </Badge>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="text-sm font-medium">
+                      {categories?.find(c => c.id === effectiveCategoryId)?.title}
+                    </span>
+                  </div>
                   <h2 className="text-xl font-bold">{currentSection.source_block_title}</h2>
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  {currentSectionIndex + 1} / {currentCategoryContent.length}
+                <div className="text-right">
+                  <div className="text-sm text-muted-foreground">
+                    Section {currentSectionIndex + 1}/{currentCategoryContent.length}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Global: {globalSectionIndex + 1}/{totalSections}
+                  </div>
                 </div>
+              </div>
+
+              {/* Progress bar */}
+              <div className="h-1 bg-muted">
+                <div 
+                  className="h-full bg-helpconfort-blue transition-all duration-300"
+                  style={{ width: `${((globalSectionIndex + 1) / totalSections) * 100}%` }}
+                />
               </div>
 
               {/* Content */}
@@ -316,13 +375,23 @@ export default function FormationApogee() {
                   disabled={!hasPrev}
                 >
                   <ChevronLeft className="w-4 h-4 mr-2" />
-                  Précédent
+                  {hasPrevSection ? "Précédent" : hasPrevModule ? "Module précédent" : "Précédent"}
                 </Button>
+                
+                {/* Module indicator when transitioning */}
+                {!hasNextSection && hasNextModule && (
+                  <div className="flex items-center gap-2 text-sm text-helpconfort-blue">
+                    <SkipForward className="w-4 h-4" />
+                    <span>Module suivant: {categoriesWithContent[currentCategoryIndex + 1]?.title}</span>
+                  </div>
+                )}
+                
                 <Button
                   onClick={goNext}
                   disabled={!hasNext}
+                  className={!hasNextSection && hasNextModule ? "bg-helpconfort-orange hover:bg-helpconfort-orange/90" : ""}
                 >
-                  Suivant
+                  {hasNextSection ? "Suivant" : hasNextModule ? "Module suivant" : "Terminer"}
                   <ChevronRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
