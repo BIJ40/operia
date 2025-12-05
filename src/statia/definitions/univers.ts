@@ -1,18 +1,19 @@
 /**
  * StatIA V1 - Définitions des métriques par Univers
- * UTILISE LE MOTEUR technicienUniversEngine pour garantir la cohérence
- * avec ca_par_technicien_univers
+ * 
+ * LOGIQUE SIMPLE basée sur factures + projects:
+ * - Même extraction d'univers que technicienUniversEngine
+ * - Mais inclut TOUTES les factures (pas de filtre par temps productif)
+ * - 'non-classe' si aucun univers exploitable
  */
 
 import { StatDefinition, LoadedData, StatParams, StatResult } from './types';
 import { 
   normalizeUniversSlug, 
-  isFactureStateIncluded,
-  normalizeApporteurId
+  isFactureStateIncluded
 } from '../engine/normalizers';
 import { extractFactureMeta } from '../rules/rules';
 import { indexProjectsById } from '../engine/loaders';
-import { computeTechUniversStatsForAgency } from '@/shared/utils/technicienUniversEngine';
 
 // Univers à exclure (identique au moteur technicien)
 const EXCLUDED_UNIVERSES = new Set([
@@ -22,40 +23,85 @@ const EXCLUDED_UNIVERSES = new Set([
 ]);
 
 /**
+ * Extrait et normalise les univers d'un projet
+ * MÊME LOGIQUE que technicienUniversEngine (lignes 262-270)
+ */
+function extractUniversesFromProject(project: any): string[] {
+  if (!project) return [];
+  
+  // Même ordre de lecture que technicienUniversEngine
+  const universesRaw: string[] = 
+    project.data?.universes || 
+    project.data?.univers || 
+    project.universes || 
+    project.univers || 
+    [];
+  
+  // Normaliser et filtrer les univers exclus
+  return universesRaw
+    .map((u: string) => normalizeUniversSlug(u))
+    .filter((u: string) => !EXCLUDED_UNIVERSES.has(u));
+}
+
+/**
  * CA par Univers
- * RÉÉCRIT pour utiliser le même moteur que ca_par_technicien_univers
- * Agrège les stats technicien×univers en ignorant la dimension technicien
+ * 
+ * RÈGLES:
+ * - Source: factures + projects
+ * - Filtre: isFactureStateIncluded + dateRange
+ * - Univers: extractUniversesFromProject (même logique que technicienUniversEngine)
+ * - Si multi-univers: CA réparti au prorata
+ * - Si aucun univers: classé dans 'non-classe'
  */
 export const caParUnivers: StatDefinition = {
   id: 'ca_par_univers',
   label: 'CA par Univers',
   description: 'Chiffre d\'affaires HT ventilé par univers métier',
   category: 'univers',
-  source: ['factures', 'projects', 'interventions', 'users'],
+  source: ['factures', 'projects'],
   dimensions: ['univers'],
   aggregation: 'sum',
   unit: '€',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { factures, projects, interventions, users } = data;
+    const { factures, projects } = data;
     
-    // Utiliser le moteur technicien×univers comme source de vérité
-    const techUniversStats = computeTechUniversStatsForAgency(
-      factures,
-      projects,
-      interventions,
-      users,
-      params.dateRange
-    );
-    
-    // Agréger le CA par univers en ignorant la dimension technicien
+    const projectsById = indexProjectsById(projects);
     const byUnivers: Record<string, number> = {};
     let totalCA = 0;
+    let nbFacturesTraitees = 0;
     
-    for (const techStat of techUniversStats) {
-      for (const [universKey, universData] of Object.entries(techStat.universes)) {
-        byUnivers[universKey] = (byUnivers[universKey] || 0) + universData.caHT;
-        totalCA += universData.caHT;
+    for (const facture of factures) {
+      const meta = extractFactureMeta(facture);
+      
+      // RÈGLE: Exclure états invalides
+      if (!isFactureStateIncluded(facture.state)) continue;
+      
+      // RÈGLE: Ignorer montants nuls
+      if (meta.montantNetHT === 0) continue;
+      
+      // RÈGLE: Filtre période (si définie)
+      if (params.dateRange && meta.date) {
+        if (meta.date < params.dateRange.start || meta.date > params.dateRange.end) continue;
       }
+      
+      const projectId = facture.projectId;
+      const project = projectsById.get(projectId);
+      
+      // Extraire univers (même logique que technicienUniversEngine)
+      const universes = extractUniversesFromProject(project);
+      
+      // Si pas d'univers exploitable → 'non-classe'
+      const finalUniverses = universes.length > 0 ? universes : ['non-classe'];
+      
+      // RÈGLE: CA réparti au prorata entre univers
+      const montantParUnivers = meta.montantNetHT / finalUniverses.length;
+      
+      for (const univers of finalUniverses) {
+        byUnivers[univers] = (byUnivers[univers] || 0) + montantParUnivers;
+      }
+      
+      totalCA += meta.montantNetHT;
+      nbFacturesTraitees++;
     }
     
     // Arrondir les valeurs
@@ -68,39 +114,24 @@ export const caParUnivers: StatDefinition = {
       metadata: {
         computedAt: new Date(),
         source: 'factures',
-        recordCount: factures.length,
+        recordCount: nbFacturesTraitees,
       },
       breakdown: {
         total: Math.round(totalCA * 100) / 100,
         universCount: Object.keys(byUnivers).length,
-        technicienCount: techUniversStats.length,
       }
     };
   }
 };
 
 /**
- * Helper: Extrait les univers d'un projet avec la même logique que technicienUniversEngine
- */
-function extractUniversesFromProject(project: any): string[] {
-  const universesRaw: string[] = 
-    project?.data?.universes || 
-    project?.data?.univers || 
-    project?.universes || 
-    project?.univers || 
-    [];
-  
-  // Normaliser et filtrer les univers exclus
-  const universes = universesRaw
-    .map((u: string) => normalizeUniversSlug(u))
-    .filter((u: string) => !EXCLUDED_UNIVERSES.has(u));
-  
-  return universes.length > 0 ? universes : [];
-}
-
-/**
  * Nombre de dossiers par Univers
- * Utilise la même normalisation que le moteur technicien
+ * 
+ * RÈGLES:
+ * - Source: projects
+ * - Filtre: dateRange sur date création
+ * - 1 dossier compté par univers (pas de prorata)
+ * - Si aucun univers: classé dans 'non-classe'
  */
 export const dossiersParUnivers: StatDefinition = {
   id: 'dossiers_par_univers',
@@ -117,22 +148,23 @@ export const dossiersParUnivers: StatDefinition = {
     let totalCount = 0;
     
     for (const project of projects) {
-      // Filtrer par date de création du projet si dateRange est défini
+      // Filtrer par date de création si dateRange défini
       if (params.dateRange) {
         const dateStr = project.date || project.created_at;
         if (dateStr) {
           const date = new Date(dateStr);
+          if (isNaN(date.getTime())) continue;
           if (date < params.dateRange.start || date > params.dateRange.end) continue;
         }
       }
       
       const universes = extractUniversesFromProject(project);
       
-      // Si aucun univers valide, ignorer (même logique que technicienUniversEngine)
-      if (universes.length === 0) continue;
+      // Si pas d'univers → 'non-classe'
+      const finalUniverses = universes.length > 0 ? universes : ['non-classe'];
       
-      // Compter 1 dossier par univers (pas de prorata pour le count)
-      for (const univers of universes) {
+      // RÈGLE: 1 dossier par univers (pas de prorata pour le count)
+      for (const univers of finalUniverses) {
         byUnivers[univers] = (byUnivers[univers] || 0) + 1;
       }
       
@@ -155,65 +187,60 @@ export const dossiersParUnivers: StatDefinition = {
 
 /**
  * Panier Moyen par Univers
- * Agrège depuis le moteur technicien×univers puis calcule les moyennes
+ * 
+ * RÈGLES:
+ * - Source: factures + projects
+ * - Panier = CA univers / nb factures univers
  */
 export const panierMoyenParUnivers: StatDefinition = {
   id: 'panier_moyen_par_univers',
   label: 'Panier Moyen par Univers',
-  description: 'Montant moyen par dossier ventilé par univers',
+  description: 'Montant moyen par facture ventilé par univers',
   category: 'univers',
-  source: ['factures', 'projects', 'interventions', 'users'],
+  source: ['factures', 'projects'],
   dimensions: ['univers'],
   aggregation: 'avg',
   unit: '€',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { factures, projects, interventions, users } = data;
+    const { factures, projects } = data;
     
-    // Utiliser le moteur technicien×univers comme source de vérité
-    const techUniversStats = computeTechUniversStatsForAgency(
-      factures,
-      projects,
-      interventions,
-      users,
-      params.dateRange
-    );
-    
-    // Agréger CA et nbDossiers par univers
+    const projectsById = indexProjectsById(projects);
     const caByUnivers: Record<string, number> = {};
-    const dossiersParUnivers: Record<string, Set<string>> = {};
+    const nbFacturesParUnivers: Record<string, number> = {};
     
-    for (const techStat of techUniversStats) {
-      for (const [universKey, universData] of Object.entries(techStat.universes)) {
-        caByUnivers[universKey] = (caByUnivers[universKey] || 0) + universData.caHT;
-        
-        // Compter les dossiers uniques (nbDossiers dans techUniversStats est déjà par technicien)
-        // On ne peut pas juste additionner car le même dossier peut être compté plusieurs fois
-        // On utilise plutôt le nombre de dossiers directement
-        if (!dossiersParUnivers[universKey]) {
-          dossiersParUnivers[universKey] = new Set();
-        }
+    for (const facture of factures) {
+      const meta = extractFactureMeta(facture);
+      
+      // RÈGLE: Exclure états invalides
+      if (!isFactureStateIncluded(facture.state)) continue;
+      
+      // RÈGLE: Ignorer montants nuls
+      if (meta.montantNetHT === 0) continue;
+      
+      // RÈGLE: Filtre période
+      if (params.dateRange && meta.date) {
+        if (meta.date < params.dateRange.start || meta.date > params.dateRange.end) continue;
+      }
+      
+      const projectId = facture.projectId;
+      const project = projectsById.get(projectId);
+      
+      const universes = extractUniversesFromProject(project);
+      const finalUniverses = universes.length > 0 ? universes : ['non-classe'];
+      
+      // CA réparti au prorata
+      const montantParUnivers = meta.montantNetHT / finalUniverses.length;
+      
+      for (const univers of finalUniverses) {
+        caByUnivers[univers] = (caByUnivers[univers] || 0) + montantParUnivers;
+        nbFacturesParUnivers[univers] = (nbFacturesParUnivers[univers] || 0) + 1;
       }
     }
     
-    // Pour le panier moyen, on utilise nbDossiers depuis le techUniversStats
-    // Mais comme c'est comptabilisé par technicien, on doit agréger différemment
-    // Utilisons le CA total / nombre d'univers comme approximation
-    // Ou mieux: agréger les nbDossiers max par univers
-    const nbDossiersParUnivers: Record<string, number> = {};
-    for (const techStat of techUniversStats) {
-      for (const [universKey, universData] of Object.entries(techStat.universes)) {
-        // Prendre le max des nbDossiers car ils peuvent se chevaucher entre techniciens
-        nbDossiersParUnivers[universKey] = Math.max(
-          nbDossiersParUnivers[universKey] || 0,
-          universData.nbDossiers
-        );
-      }
-    }
-    
-    // Calculer les moyennes
+    // Calculer panier moyen
     const avgByUnivers: Record<string, number> = {};
     for (const univers of Object.keys(caByUnivers)) {
-      const nb = nbDossiersParUnivers[univers] || 1;
+      const nb = nbFacturesParUnivers[univers] || 1;
       avgByUnivers[univers] = Math.round((caByUnivers[univers] / nb) * 100) / 100;
     }
     
@@ -222,11 +249,11 @@ export const panierMoyenParUnivers: StatDefinition = {
       metadata: {
         computedAt: new Date(),
         source: 'factures',
-        recordCount: factures.length,
+        recordCount: Object.values(nbFacturesParUnivers).reduce((a, b) => a + b, 0),
       },
       breakdown: {
         caByUnivers,
-        nbDossiersParUnivers,
+        nbFacturesParUnivers,
       }
     };
   }
