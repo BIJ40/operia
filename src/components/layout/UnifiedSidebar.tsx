@@ -220,6 +220,7 @@ export function UnifiedSidebar() {
           ]
         },
         { title: 'Actions à Mener', url: ROUTES.pilotage.actions, icon: ListTodo, description: 'Suivi des actions et tâches en cours' },
+        { title: 'Commercial', url: ROUTES.pilotage.commercial, icon: Briefcase, description: 'Outils et suivi commercial' },
         { title: 'Diffusion', url: ROUTES.pilotage.diffusion, icon: Tv, description: 'Mode affichage TV agence', badge: 'En cours' },
         { title: 'Validation plannings', url: ROUTES.pilotage.rhTech, icon: Calendar, description: 'Validation des plannings hebdomadaires', badge: 'Bientôt', isDisabled: true },
       ],

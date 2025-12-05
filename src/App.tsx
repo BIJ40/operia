@@ -61,6 +61,7 @@ const FaireUneDemande = lazy(() => import("./pages/FaireUneDemande"));
 const GestionConges = lazy(() => import("./pages/GestionConges"));
 const DemandesRHPage = lazy(() => import("./pages/DemandesRHPage"));
 const RHDashboardPage = lazy(() => import("./pages/RHDashboardPage"));
+const CommercialPage = lazy(() => import("./pages/CommercialPage"));
 
 // Lazy loaded pages - Support
 const SupportIndex = lazy(() => import("./pages/SupportIndex"));
@@ -256,6 +257,9 @@ function AppContent() {
           
           {/* StatIA Builder - Construction de métriques personnalisées (N2+) */}
           <Route path="/hc-agency/statia-builder" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><StatiaBuilderAgencyPage /></ModuleGuard></RoleGuard></MainLayout>} />
+          
+          {/* Commercial - Outils commerciaux agence */}
+          <Route path="/hc-agency/commercial" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><CommercialPage /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* SUPPORT V2 - Unified Support System */}
