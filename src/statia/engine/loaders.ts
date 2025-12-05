@@ -134,13 +134,19 @@ export function indexProjectsById(projects: any[]): Map<string | number, any> {
 
 /**
  * Crée un index des users par ID pour les jointures rapides
+ * Triple indexation pour éviter les type mismatch
  */
 export function indexUsersById(users: any[]): Map<string | number, any> {
   const index = new Map<string | number, any>();
   
   for (const user of users) {
-    if (user.id) {
+    if (user.id !== undefined && user.id !== null) {
       index.set(user.id, user);
+      index.set(String(user.id), user);
+      const numId = Number(user.id);
+      if (!isNaN(numId)) {
+        index.set(numId, user);
+      }
     }
   }
   
@@ -149,13 +155,19 @@ export function indexUsersById(users: any[]): Map<string | number, any> {
 
 /**
  * Crée un index des clients par ID pour les jointures rapides
+ * Triple indexation pour éviter les type mismatch (commanditaireId peut être string ou number)
  */
 export function indexClientsById(clients: any[]): Map<string | number, any> {
   const index = new Map<string | number, any>();
   
   for (const client of clients) {
-    if (client.id) {
+    if (client.id !== undefined && client.id !== null) {
       index.set(client.id, client);
+      index.set(String(client.id), client);
+      const numId = Number(client.id);
+      if (!isNaN(numId)) {
+        index.set(numId, client);
+      }
     }
   }
   
