@@ -221,8 +221,9 @@ export const montantDevis: StatDefinition = {
         continue;
       }
       
-      // Sommer le montant HT
-      const montant = d.data?.totalHT ?? d.totalHT ?? 0;
+      // Sommer le montant HT (forcer en number pour éviter concaténation de strings)
+      const rawMontant = d.data?.totalHT ?? d.totalHT ?? 0;
+      const montant = typeof rawMontant === 'string' ? parseFloat(rawMontant) || 0 : Number(rawMontant) || 0;
       totalHT += montant;
       count++;
     }
