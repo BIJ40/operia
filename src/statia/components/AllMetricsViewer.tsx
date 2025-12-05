@@ -12,7 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { 
   Euro, Percent, Clock, Calendar, Hash, User, Building2, Layers, 
   AlertTriangle, Wallet, FolderOpen, Shield, TrendingUp, FileCheck, Calculator,
-  RefreshCw, Info, CheckCircle2, XCircle, MoreVertical, Trash2, Check, Lightbulb
+  RefreshCw, Info, CheckCircle2, XCircle, MoreVertical, Trash2, Check, Lightbulb, Eye
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AgencySelector } from './StatiaBuilder/AgencySelector';
@@ -26,7 +26,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
+import { MetricCalculationDetails } from './MetricCalculationDetails';
 
 // Icônes par catégorie
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -111,6 +113,7 @@ export function AllMetricsViewer({ mode, fixedAgencySlug }: AllMetricsViewerProp
   const [showHidden, setShowHidden] = useState(false);
   const [suggestionDialog, setSuggestionDialog] = useState<{ open: boolean; metricId: string; metricLabel: string } | null>(null);
   const [suggestionText, setSuggestionText] = useState('');
+  const [detailsDialog, setDetailsDialog] = useState<{ open: boolean; definition: StatDefinition; value: any } | null>(null);
   const services = getGlobalApogeeDataServices();
 
   // Calculer la date range selon la période sélectionnée
@@ -423,6 +426,11 @@ export function AllMetricsViewer({ mode, fixedAgencySlug }: AllMetricsViewerProp
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => setDetailsDialog({ open: true, definition: def, value })}>
+                                <Eye className="h-4 w-4 mr-2 text-blue-500" />
+                                Voir le calcul
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => handleValidate(def.id)}>
                                 <Check className="h-4 w-4 mr-2 text-green-500" />
                                 {isValidated ? 'Déjà validé' : 'Valider'}
@@ -564,6 +572,52 @@ export function AllMetricsViewer({ mode, fixedAgencySlug }: AllMetricsViewerProp
               </Button>
               <Button onClick={handleSaveSuggestion}>
                 Enregistrer
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog de détails du calcul */}
+        <Dialog open={detailsDialog?.open || false} onOpenChange={(open) => !open && setDetailsDialog(null)}>
+          <DialogContent className="sm:max-w-2xl max-h-[85vh]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Calculator className="h-5 w-5 text-primary" />
+                Détails du calcul
+              </DialogTitle>
+              <DialogDescription>
+                <span className="font-semibold text-foreground">{detailsDialog?.definition.label}</span>
+                {' '}- {detailsDialog?.definition.description || 'Pas de description'}
+              </DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="max-h-[60vh] pr-4">
+              {detailsDialog?.definition && (
+                <div className="space-y-4">
+                  {/* Valeur actuelle */}
+                  <div className="p-4 bg-muted rounded-lg">
+                    <span className="text-sm text-muted-foreground">Valeur actuelle:</span>
+                    <div className="text-2xl font-bold text-primary">
+                      {formatValue(detailsDialog.value, detailsDialog.definition.unit)}
+                    </div>
+                  </div>
+                  
+                  {/* Détails du calcul */}
+                  <MetricCalculationDetails definition={detailsDialog.definition} />
+                </div>
+              )}
+            </ScrollArea>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDetailsDialog(null)}>
+                Fermer
+              </Button>
+              <Button onClick={() => {
+                if (detailsDialog) {
+                  handleOpenSuggestion(detailsDialog.definition.id, detailsDialog.definition.label);
+                  setDetailsDialog(null);
+                }
+              }}>
+                <Lightbulb className="h-4 w-4 mr-2" />
+                Suggérer une modification
               </Button>
             </DialogFooter>
           </DialogContent>
