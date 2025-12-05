@@ -38,7 +38,7 @@ export const useCategory = () => {
   const sections = useMemo(() => {
     if (!category) return [];
     return blocks
-      .filter((b) => b.parentId === category.id && !b.hideFromSidebar)
+      .filter((b) => b.parentId === category.id)
       .sort((a, b) => a.order - b.order);
   }, [blocks, category]);
 
