@@ -465,7 +465,10 @@ export const caParTechnicienTemps: StatDefinition = {
   aggregation: 'sum',
   unit: '€',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { factures, projects, interventions, users } = data;
+    const factures = data.factures || [];
+    const projects = data.projects || [];
+    const interventions = data.interventions || [];
+    const users = data.users || [];
     
     const projectsById = indexProjectsById(projects);
     const usersById = indexUsersById(users);
