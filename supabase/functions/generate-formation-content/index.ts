@@ -73,7 +73,7 @@ serve(async (req) => {
     // Fetch the block content
     const { data: block, error: blockError } = await supabase
       .from("blocks")
-      .select("id, title, content, parentId")
+      .select("id, title, content, parent_id")
       .eq("id", blockId)
       .single();
 
@@ -87,11 +87,11 @@ serve(async (req) => {
 
     // Fetch parent category info
     let categoryTitle = null;
-    if (block.parentId) {
+    if (block.parent_id) {
       const { data: category } = await supabase
         .from("blocks")
         .select("title")
-        .eq("id", block.parentId)
+        .eq("id", block.parent_id)
         .single();
       categoryTitle = category?.title;
     }
@@ -102,7 +102,7 @@ serve(async (req) => {
       .upsert({
         source_block_id: blockId,
         source_block_title: block.title,
-        source_category_id: block.parentId,
+        source_category_id: block.parent_id,
         source_category_title: categoryTitle,
         status: "processing",
         error_message: null
