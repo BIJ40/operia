@@ -141,41 +141,34 @@ export default function FormationGenerator() {
     return { complete, total: category.sections.length };
   };
 
-  // Keywords that identify Apogée SOFTWARE modules (the actual software features)
-  const APOGEE_SOFTWARE_KEYWORDS = [
-    "devis", "facture", "planning", "dossier", "intervention", "règlement", "reglement",
-    "stock", "chiffrage", "sav", "fournisseur", "produit", "prestation",
-    "chantier", "travaux", "sinistre", "relance", "tableau de bord", "statistique",
-    "export", "import", "paramètre", "config", "utilisateur", "base article",
-    "modèle", "template", "compte rendu", "cr ", "mail", "sms", "rappel",
-    "signature", "bon de commande", "avoir", "acompte", "photo", "image", "navigation"
-  ];
+  // Apogée SOFTWARE categories have IDs starting with "cat-" or specific block IDs
+  const APOGEE_IDS = new Set([
+    "cat-1", "cat-2", "cat-3", "cat-4", "cat-5", "cat-6", "cat-7", "cat-8", "cat-9", "cat-12",
+    "block-1763071521876-c8sdc0odr", // 2 - Généralités
+    "block-1763324145731-nbn6tean2", // 6 - Le Planning
+    "block-1763482223891-n1zg4hncz", // 8 - Gestion des articles
+    "block-1764001677016-1gwdu5pcd", // 10 - Commandes
+    "block-1763071678015-p41ao70z8", // 15 - Les Paramètres
+    "block-1763802287662-om2hpd60s", // 16 - Gestion des listes
+  ]);
 
-  // Keywords that identify HelpConfort FRANCHISE modules (business/franchise content)
-  const HELPCONFORT_KEYWORDS = [
-    "help confort", "helpconfort", "help! confort", "franchise", "entreprise",
-    "local", "agence", "introduction", "principes", "généralités", "generalites",
-    "présentation", "creation", "juridique", "social", "rh", "formation",
-    "commercial", "marketing", "communication", "ouverture", "accompagnement",
-    "réseau", "animateur", "redevance", "royalt"
-  ];
+  // Separate categories: Apogée (logiciel) vs HelpConfort (franchise)
+  const apogeeCategories = categories
+    .filter(cat => APOGEE_IDS.has(cat.id))
+    .sort((a, b) => {
+      // Extract number from title like "3 - Clients" -> 3
+      const numA = parseInt(a.title.match(/^(\d+)/)?.[1] || "99");
+      const numB = parseInt(b.title.match(/^(\d+)/)?.[1] || "99");
+      return numA - numB;
+    });
 
-  // Separate categories into Apogée SOFTWARE vs HelpConfort FRANCHISE
-  const apogeeCategories = categories.filter(cat => {
-    const titleLower = cat.title.toLowerCase();
-    const isHelpConfort = HELPCONFORT_KEYWORDS.some(kw => titleLower.includes(kw));
-    const isApogee = APOGEE_SOFTWARE_KEYWORDS.some(kw => titleLower.includes(kw));
-    // If it matches Apogée keywords OR doesn't match HelpConfort keywords
-    return isApogee || !isHelpConfort;
-  });
-
-  const helpconfortCategories = categories.filter(cat => {
-    const titleLower = cat.title.toLowerCase();
-    const isHelpConfort = HELPCONFORT_KEYWORDS.some(kw => titleLower.includes(kw));
-    const isApogee = APOGEE_SOFTWARE_KEYWORDS.some(kw => titleLower.includes(kw));
-    // HelpConfort if matches HelpConfort keywords AND doesn't match Apogée
-    return isHelpConfort && !isApogee;
-  });
+  const helpconfortCategories = categories
+    .filter(cat => !APOGEE_IDS.has(cat.id))
+    .sort((a, b) => {
+      const numA = parseInt(a.title.match(/^(\d+)/)?.[1] || "99");
+      const numB = parseInt(b.title.match(/^(\d+)/)?.[1] || "99");
+      return numA - numB;
+    });
 
   if (blocksLoading) {
     return (
