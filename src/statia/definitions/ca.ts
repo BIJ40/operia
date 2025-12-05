@@ -133,12 +133,12 @@ export const caParMois: StatDefinition = {
 };
 
 /**
- * Dû Client (reste à encaisser)
+ * Dû Client TTC (reste à encaisser)
  */
 export const duClient: StatDefinition = {
   id: 'du_client',
-  label: 'Dû Client',
-  description: 'Montant total restant à encaisser',
+  label: 'Dû Client TTC',
+  description: 'Montant total TTC restant à encaisser',
   category: 'ca',
   source: 'factures',
   aggregation: 'sum',
