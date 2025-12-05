@@ -446,9 +446,137 @@ export const caMoyenParTech: StatDefinition = {
   }
 };
 
+/**
+ * CA par Technicien – pondéré au temps
+ * 
+ * RÈGLE MÉTIER:
+ * - Pour chaque facture, récupérer le CA HT (avoirs en négatif)
+ * - Identifier les visites productives (validated, travaux/dépannage/recherche de fuite)
+ * - Calculer le temps par technicien sur chaque dossier (durée visite / nb techs présents)
+ * - Répartir le CA au prorata du temps : CA_T = CA_HT × (temps_T / temps_total_dossier)
+ */
+export const caParTechnicienTemps: StatDefinition = {
+  id: 'ca_par_technicien_temps',
+  label: 'CA par Technicien – pondéré au temps',
+  description: 'Répartition du CA HT facturé par dossier entre les techniciens en fonction du temps productif réellement passé sur le dossier.',
+  category: 'technicien',
+  source: ['factures', 'projects', 'interventions', 'users'],
+  dimensions: ['technicien'],
+  aggregation: 'sum',
+  unit: '€',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { factures, projects, interventions, users } = data;
+    
+    const projectsById = indexProjectsById(projects);
+    const usersById = indexUsersById(users);
+    
+    // Calculer le temps par technicien par projet
+    const { dureeTechParProjet, dureeTotaleParProjet } = calculateTechTimeByProject(
+      interventions, 
+      projectsById
+    );
+    
+    // Structure pour accumuler CA et temps par technicien
+    const techStats = new Map<string | number, { caHt: number; temps: number }>();
+    const techNames = new Map<string | number, string>();
+    
+    let totalCADistribue = 0;
+    let facturesTraitees = 0;
+    let dossiersIgnores = 0;
+    
+    // Parcourir les factures
+    for (const facture of factures) {
+      const meta = extractFactureMeta(facture);
+      
+      // Filtrer par période
+      const date = meta.date ? new Date(meta.date) : null;
+      if (!date || date < params.dateRange.start || date > params.dateRange.end) continue;
+      
+      // Exclure proforma
+      const typeFacture = (facture.typeFacture || facture.type || facture.data?.type || '').toLowerCase();
+      if (typeFacture === 'proforma' || typeFacture === 'pro_forma') continue;
+      
+      const projectId = String(facture.projectId || facture.project_id);
+      if (!projectId) continue;
+      
+      // Récupérer le temps des techniciens sur ce projet
+      const projectTechTime = dureeTechParProjet.get(projectId);
+      const totalProjectTime = dureeTotaleParProjet.get(projectId) || 0;
+      
+      // Si aucun temps technicien identifié, ignorer ce dossier
+      if (!projectTechTime || totalProjectTime === 0) {
+        dossiersIgnores++;
+        continue;
+      }
+      
+      // CA HT de la facture (avoirs en négatif via extractFactureMeta)
+      const caHT = meta.montantNetHT;
+      
+      // Répartir le CA au prorata du temps
+      for (const [techId, techTime] of projectTechTime.entries()) {
+        const proportion = techTime / totalProjectTime;
+        const techCA = caHT * proportion;
+        
+        // Initialiser les stats du technicien si nécessaire
+        if (!techStats.has(techId)) {
+          techStats.set(techId, { caHt: 0, temps: 0 });
+          const user = usersById.get(techId);
+          techNames.set(techId, user ? `${user.firstname || ''} ${user.lastname || ''}`.trim() : `Tech ${techId}`);
+        }
+        
+        const stats = techStats.get(techId)!;
+        stats.caHt += techCA;
+        stats.temps += techTime;
+      }
+      
+      totalCADistribue += caHT;
+      facturesTraitees++;
+    }
+    
+    // Formater le résultat : { techId: caHt }
+    const result: Record<string, number> = {};
+    const names: Record<string, string> = {};
+    const details: Array<{ techId: string; techName: string; caHt: number; temps: number }> = [];
+    
+    for (const [techId, stats] of techStats.entries()) {
+      const id = String(techId);
+      result[id] = stats.caHt;
+      names[id] = techNames.get(techId) || `Tech ${techId}`;
+      details.push({
+        techId: id,
+        techName: names[id],
+        caHt: stats.caHt,
+        temps: stats.temps, // en heures
+      });
+    }
+    
+    // Trier par CA décroissant
+    details.sort((a, b) => b.caHt - a.caHt);
+    
+    return {
+      value: result,
+      metadata: {
+        computedAt: new Date(),
+        source: 'factures',
+        recordCount: techStats.size,
+      },
+      breakdown: {
+        names,
+        details,
+        total: totalCADistribue,
+        technicianCount: techStats.size,
+        facturesTraitees,
+        dossiersIgnores,
+        formule: 'CA_HT × (temps_technicien / temps_total_dossier)',
+      }
+    };
+  }
+};
+
 export const techniciensDefinitions = {
   ca_par_technicien_univers: caParTechnicienUnivers,
   ca_par_technicien: caParTechnicien,
+  ca_par_technicien_temps: caParTechnicienTemps,
   top_techniciens_ca: topTechniciensCA,
   ca_moyen_par_tech: caMoyenParTech,
 };
