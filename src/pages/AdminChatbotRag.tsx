@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePersistedTab } from '@/hooks/usePersistedTab';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Bot, FileText, Database, MessageSquare, Bug, FolderTree, BarChart3, HelpCircle, Activity } from 'lucide-react';
 
@@ -19,14 +20,8 @@ import {
 
 export default function AdminChatbotRag() {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
   const { isAdmin } = useAuth();
-  
-  // Persist active tab in URL
-  const activeTab = searchParams.get('tab') || 'sources';
-  const setActiveTab = (tab: string) => {
-    setSearchParams({ tab }, { replace: true });
-  };
+  const [activeTab, setActiveTab] = usePersistedTab('sources');
 
   useEffect(() => {
     if (!isAdmin) {

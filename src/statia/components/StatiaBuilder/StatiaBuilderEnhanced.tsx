@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
+import { usePersistedTab } from '@/hooks/usePersistedTab';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -82,7 +83,7 @@ export function StatiaBuilderEnhanced({ mode, fixedAgencySlug }: StatiaBuilderEn
   const { userAgencySlug } = useStatiaBuilderContext();
   const [state, setState] = useState<BuilderState>({ measure: null, dimensions: [], filters: {} });
   const [selectedAgency, setSelectedAgency] = useState(fixedAgencySlug || userAgencySlug || 'dax');
-  const [activeTab, setActiveTab] = useState('builder');
+  const [activeTab, setActiveTab] = usePersistedTab('builder', 'statia-tab');
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
     'Chiffre d\'Affaires': true,

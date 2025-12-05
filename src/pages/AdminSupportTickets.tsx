@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { usePersistedTab } from '@/hooks/usePersistedTab';
 import { useAdminTickets } from '@/hooks/use-admin-tickets';
 import { Ticket } from '@/hooks/use-user-tickets';
 import { useAuth } from '@/contexts/AuthContext';
@@ -59,7 +60,7 @@ export default function AdminSupportTickets() {
 
   const [newMessage, setNewMessage] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
-  const [activeTab, setActiveTab] = useState<'actifs' | 'archives'>('actifs');
+  const [activeTab, setActiveTab] = usePersistedTab('actifs');
   const [isKanbanCollapsed, setIsKanbanCollapsed] = useState(false);
   const [showScreenShare, setShowScreenShare] = useState(false);
 
