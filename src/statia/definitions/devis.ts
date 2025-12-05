@@ -372,115 +372,7 @@ function normalizeApporteurType(raw: any): string {
   return v.charAt(0).toUpperCase() + v.slice(1);
 }
 
-// ============= METRIC: Délai moyen d'acceptation =============
-
-/**
- * Délai moyen entre émission et validation du devis
- * Pour chaque devis validé/accepté : délai = date_validation - date_émission
- * États validés : accepted, validated, signed, order, invoice
- * Date émission : date ou dateReelle (champ Apogée principal)
- * Date validation : dateValidation ou dateAcceptation ou dateSignature
- */
-export const delaiMoyenAcceptationDevis: StatDefinition = {
-  id: 'delai_moyen_acceptation_devis',
-  label: 'Délai Moyen Validation Devis',
-  description: 'Nombre de jours moyen entre émission et validation du devis',
-  category: 'devis',
-  source: 'devis',
-  aggregation: 'avg',
-  unit: 'jours',
-  dimensions: [],
-  compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { devis } = data;
-    // États considérés comme "validés/acceptés"
-    const VALIDATED_STATES = ['accepted', 'validated', 'signed', 'order', 'invoice'];
-
-    let sumDelais = 0;
-    let count = 0;
-    let minDelai: number | null = null;
-    let maxDelai: number | null = null;
-
-    for (const d of devis || []) {
-      // 1) Vérifier l'état du devis (doit être validé)
-      const state = String(d.state || d.statut || d.data?.state || '').toLowerCase();
-      if (!VALIDATED_STATES.includes(state)) continue;
-
-      // 2) Date d'émission (date principale Apogée)
-      const dateEmisStr = d.date || d.dateReelle || d.data?.date || d.data?.dateReelle || d.created_at;
-      if (!dateEmisStr) continue;
-
-      const dateEmis = new Date(dateEmisStr);
-      if (isNaN(dateEmis.getTime())) continue;
-
-      // 3) Filtre période sur date d'émission
-      if (params.dateRange) {
-        if (dateEmis < params.dateRange.start || dateEmis > params.dateRange.end) {
-          continue;
-        }
-      }
-
-      // 4) Date de validation/acceptation
-      // Essayer plusieurs champs possibles dans l'ordre de priorité
-      // Fallback vers updated_at quand le devis est dans un état validé
-      const dateValStr =
-        d.dateValidation ||
-        d.data?.dateValidation ||
-        d.dateAcceptation ||
-        d.data?.dateAcceptation ||
-        d.dateSignature ||
-        d.data?.dateSignature ||
-        d.dateSigned ||
-        d.data?.dateSigned ||
-        d.updated_at ||  // Fallback : si validé, updated_at = date changement d'état
-        d.data?.updated_at;
-
-      // Si pas de date de validation, on ne peut pas calculer le délai
-      if (!dateValStr) continue;
-
-      const dateVal = new Date(dateValStr);
-      if (isNaN(dateVal.getTime())) continue;
-
-      // 5) Calcul du délai en jours
-      const diffMs = dateVal.getTime() - dateEmis.getTime();
-      const delaiJours = diffMs / (1000 * 60 * 60 * 24);
-
-      // Ignorer les délais négatifs (incohérence de données)
-      if (delaiJours < 0) continue;
-      
-      // Ignorer les délais > 365 jours (probablement erreur de données)
-      if (delaiJours > 365) continue;
-
-      sumDelais += delaiJours;
-      count++;
-
-      if (minDelai === null || delaiJours < minDelai) minDelai = delaiJours;
-      if (maxDelai === null || delaiJours > maxDelai) maxDelai = delaiJours;
-    }
-
-    const delaiMoyen = count > 0 ? sumDelais / count : 0;
-
-    logDebug('STATIA', 'delaiMoyenAcceptationDevis - RESULT', {
-      count,
-      delaiMoyen: Math.round(delaiMoyen * 10) / 10,
-      minDelai,
-      maxDelai,
-    });
-
-    return {
-      value: Math.round(delaiMoyen * 10) / 10,
-      metadata: {
-        computedAt: new Date(),
-        source: 'devis',
-        recordCount: count,
-      },
-      breakdown: {
-        nbDevisAnalyses: count,
-        min: minDelai !== null ? Math.round(minDelai * 10) / 10 : null,
-        max: maxDelai !== null ? Math.round(maxDelai * 10) / 10 : null,
-      },
-    };
-  },
-};
+// ============= METRIC: Répartition devis par univers =============
 
 // ============= METRIC: Répartition devis par univers =============
 
@@ -826,7 +718,6 @@ export const devisDefinitions = {
   nombre_devis: nombreDevis,
   montant_devis: montantDevis,
   devis_signes_non_factures: devisSignesNonFactures,
-  delai_moyen_acceptation_devis: delaiMoyenAcceptationDevis,
   delai_moyen_validation_devis: delaiMoyenValidationDevis,
   repartition_devis_par_univers: repartitionDevisParUnivers,
   repartition_devis_par_type_apporteur: repartitionDevisParTypeApporteur,
