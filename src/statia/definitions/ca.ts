@@ -143,19 +143,16 @@ export const duClient: StatDefinition = {
   source: 'factures',
   aggregation: 'sum',
   unit: '€',
-  compute: (data: LoadedData, params: StatParams): StatResult => {
+  compute: (data: LoadedData, _params: StatParams): StatResult => {
     const { factures } = data;
     
     let totalDu = 0;
     let factureCount = 0;
     
+    // Dû Client = snapshot global de TOUTES les factures impayées (pas de filtre date)
     for (const facture of factures) {
-      const meta = extractFactureMeta(facture);
-      const date = meta.date ? new Date(meta.date) : null;
-      if (!date || date < params.dateRange.start || date > params.dateRange.end) continue;
-      
       // Utiliser data.calcReglementsReste (montant TTC restant à encaisser)
-      const reste = facture.data?.calcReglementsReste ?? 0;
+      const reste = facture.data?.calcReglementsReste ?? facture.calcReglementsReste ?? 0;
       
       if (reste > 0) {
         totalDu += reste;
