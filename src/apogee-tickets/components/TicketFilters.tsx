@@ -174,21 +174,6 @@ export function TicketFilters({ filters, onFiltersChange, modules, priorities }:
           </SelectContent>
         </Select>
 
-        {/* Qualification IA */}
-        <Select
-          value={filters.is_qualified === undefined ? 'all' : filters.is_qualified ? 'qualified' : 'unqualified'}
-          onValueChange={(v) => updateFilter('is_qualified', v === 'all' ? undefined : v === 'qualified')}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Qualification IA" />
-          </SelectTrigger>
-          <SelectContent className="bg-background z-50">
-            <SelectItem value="all">Toutes qualifications</SelectItem>
-            <SelectItem value="qualified">✓ Qualifiés IA</SelectItem>
-            <SelectItem value="unqualified">À qualifier</SelectItem>
-          </SelectContent>
-        </Select>
-
         {/* Tags Filter */}
         <Popover>
           <PopoverTrigger asChild>
