@@ -117,11 +117,13 @@ export const dossiersParUnivers: StatDefinition = {
     let totalCount = 0;
     
     for (const project of projects) {
-      // Filtrer par date de création du projet
-      const dateStr = project.date || project.created_at;
-      if (dateStr) {
-        const date = new Date(dateStr);
-        if (date < params.dateRange.start || date > params.dateRange.end) continue;
+      // Filtrer par date de création du projet si dateRange est défini
+      if (params.dateRange) {
+        const dateStr = project.date || project.created_at;
+        if (dateStr) {
+          const date = new Date(dateStr);
+          if (date < params.dateRange.start || date > params.dateRange.end) continue;
+        }
       }
       
       const universes = extractUniversesFromProject(project);
