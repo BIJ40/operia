@@ -4,8 +4,8 @@
  */
 
 import { StatDefinition, LoadedData, StatParams, StatResult } from './types';
+import { isFactureStateIncluded } from '../engine/normalizers';
 import { logDebug } from '@/lib/logger';
-// Note: isDevisValidated n'est plus utilisé, logique inline pour clarté
 
 /**
  * Taux de Transformation Devis (en nombre)
@@ -259,92 +259,84 @@ export const montantDevis: StatDefinition = {
 export const devisSignesNonFactures: StatDefinition = {
   id: 'devis_signes_non_factures',
   label: 'Devis Signés Non Facturés',
-  description: 'Stock de CA : devis acceptés/signés sans facture associée',
+  description: 'Stock de devis acceptés/signés sans aucune facture associée',
   category: 'devis',
-  source: ['devis', 'factures', 'projects'],
+  source: ['devis', 'factures'],
   aggregation: 'sum',
   unit: '€',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { devis, factures, projects } = data;
+    const { devis, factures } = data;
     
     // États considérés comme "signés/acceptés"
     const SIGNED_STATES = ['accepted', 'validated', 'signed', 'order'];
     
-    // Indexer les projets par ID (string et number)
-    const projectsById = new Map<string, any>();
-    for (const p of projects || []) {
-      projectsById.set(String(p.id), p);
-      if (typeof p.id === 'number') projectsById.set(p.id.toString(), p);
-    }
-    
-    // Calculer le CA facturé par projet
-    const caFactureParProjet = new Map<string, number>();
+    // 1) Index des projets facturés (utilisant isFactureStateIncluded, sans filtre de date)
+    const facturedProjectIds = new Set<string>();
     for (const f of factures || []) {
-      const projectId = String(f.projectId || f.data?.projectId || '');
-      if (!projectId) continue;
+      const factureState = f.state || f.status || f.statut 
+        || f.data?.state || f.data?.status || f.paymentStatus || '';
       
-      // Exclure les avoirs du calcul du CA facturé
-      const typeFacture = (f.typeFacture || f.data?.typeFacture || '').toString().toLowerCase();
-      if (typeFacture === 'avoir') continue;
+      // Utiliser la même règle que pour le CA
+      if (!isFactureStateIncluded(factureState)) continue;
       
-      const rawMontant = f.data?.totalHT ?? f.totalHT ?? 0;
-      const montant = typeof rawMontant === 'string' ? parseFloat(rawMontant) || 0 : Number(rawMontant) || 0;
-      
-      caFactureParProjet.set(projectId, (caFactureParProjet.get(projectId) || 0) + montant);
+      const pidRaw = f.projectId || f.project_id || f.data?.projectId;
+      if (!pidRaw) continue;
+      facturedProjectIds.add(String(pidRaw));
     }
     
-    let totalHT = 0;
+    let montantTotalHT = 0;
     let nbDevis = 0;
-    const projetsIds = new Set<string>();
+    const projetsNonFactures = new Set<string>();
     
+    // 2) Parcours des devis signés de la période
     for (const d of devis || []) {
-      // Filtre par date
-      const dateStr = d.dateReelle || d.date || d.dateCreation || d.data?.dateReelle || d.data?.date || d.created_at;
-      if (dateStr && params.dateRange) {
-        const date = new Date(dateStr);
-        if (isNaN(date.getTime())) continue;
-        if (date < params.dateRange.start || date > params.dateRange.end) continue;
-      }
-      
       // Vérifier l'état du devis (signé/accepté)
       const state = (d.state || d.statut || d.data?.state || d.data?.statut || '').toString().toLowerCase();
       if (!SIGNED_STATES.includes(state)) continue;
       
-      // Récupérer le projet
-      const projectId = String(d.projectId || d.data?.projectId || '');
-      if (!projectId) continue;
+      // Filtre par date (date du devis)
+      const dateStr = d.dateReelle || d.date || d.created_at;
+      if (!dateStr) continue;
       
-      // Vérifier que le projet n'a pas de facture (ou facture à 0)
-      const caFacture = caFactureParProjet.get(projectId) || 0;
-      if (caFacture > 0) continue; // Projet déjà facturé, on l'ignore
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) continue;
+      if (params.dateRange && (date < params.dateRange.start || date > params.dateRange.end)) continue;
       
-      // Ajouter au stock
-      const rawMontant = d.data?.totalHT ?? d.totalHT ?? 0;
-      const montant = typeof rawMontant === 'string' ? parseFloat(rawMontant) || 0 : Number(rawMontant) || 0;
+      // Récupérer le projectId
+      const pidRaw = d.projectId || d.data?.projectId;
+      if (!pidRaw) continue;
+      const pid = String(pidRaw);
       
-      totalHT += montant;
+      // PROJET DEJA FACTURÉ ? → on ignore ce devis
+      if (facturedProjectIds.has(pid)) continue;
+      
+      // Calcul du montant
+      const montantRaw = d.data?.totalHT ?? d.totalHT ?? d.montantHT ?? 0;
+      const montant = typeof montantRaw === 'string' ? parseFloat(montantRaw) || 0 : Number(montantRaw) || 0;
+      
+      montantTotalHT += montant;
       nbDevis++;
-      projetsIds.add(projectId);
+      projetsNonFactures.add(pid);
     }
     
     logDebug('STATIA', 'devisSignesNonFactures - RESULT', {
-      totalHT,
+      montantTotalHT: Math.round(montantTotalHT * 100) / 100,
       nbDevis,
-      nbProjets: projetsIds.size,
+      nbProjets: projetsNonFactures.size,
+      facturedProjectsCount: facturedProjectIds.size,
     });
     
     return {
-      value: totalHT,
+      value: {
+        montantTotalHT: Math.round(montantTotalHT * 100) / 100,
+        nbDevis,
+        nbProjets: projetsNonFactures.size,
+      },
       metadata: {
         computedAt: new Date(),
         source: 'devis',
         recordCount: nbDevis,
       },
-      breakdown: {
-        montantHT: totalHT,
-        nbDevis: nbDevis,
-        nbProjets: projetsIds.size,
-      }
     };
   }
 };
