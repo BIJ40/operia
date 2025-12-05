@@ -68,10 +68,11 @@ function getInterventionDate(intervention: any): Date | null {
 
 /**
  * Filtre état intervention (uniquement réalisées)
+ * États Apogée valides: validated, done, finished
  */
 function isInterventionCompleted(state: any): boolean {
   const v = String(state || '').toLowerCase();
-  return v === 'completed';
+  return ['validated', 'done', 'finished'].includes(v);
 }
 
 // ============================================================================
