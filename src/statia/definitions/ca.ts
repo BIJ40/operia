@@ -150,15 +150,15 @@ export const duClient: StatDefinition = {
     let factureCount = 0;
     
     for (const facture of factures) {
-      // Utiliser calcReglementsReste selon STATIA_RULES
-      const reste = facture.data?.calcReglementsReste ?? facture.calcReglementsReste ?? 0;
+      // Utiliser restePaidTTC pour le montant TTC restant à encaisser
+      const resteTTC = facture.restePaidTTC ?? facture.data?.restePaidTTC ?? 0;
       
       const meta = extractFactureMeta(facture);
       const date = meta.date ? new Date(meta.date) : null;
       if (!date || date < params.dateRange.start || date > params.dateRange.end) continue;
       
-      if (reste > 0) {
-        totalDu += reste;
+      if (resteTTC > 0) {
+        totalDu += resteTTC;
         factureCount++;
       }
     }
