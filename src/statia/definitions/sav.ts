@@ -254,67 +254,82 @@ export const tauxSavParUnivers: StatDefinition = {
 };
 
 /**
+ * Helper: map apporteur ID → nom lisible
+ */
+function mapApporteurs(clients: any[]): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const client of clients) {
+    const id = String(client.id);
+    const nom = client.raisonSociale || client.nom || client.name || `Apporteur ${id}`;
+    map.set(id, nom);
+  }
+  return map;
+}
+
+/**
  * Taux SAV par Apporteur
+ * Proportion de dossiers SAV par apporteur/commanditaire
  */
 export const tauxSavParApporteur: StatDefinition = {
   id: 'taux_sav_par_apporteur',
-  label: 'Taux SAV par Apporteur',
-  description: 'Taux de SAV ventilé par apporteur',
+  label: 'Taux de SAV par Apporteur',
+  description: 'Proportion de dossiers SAV par apporteur/commanditaire',
   category: 'sav',
-  source: ['projects', 'interventions', 'clients'],
+  source: ['projects', 'clients'],
+  unit: '%',
   dimensions: ['apporteur'],
   aggregation: 'ratio',
-  unit: '%',
+
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { projects, interventions, clients } = data;
-    
-    const clientsMap = new Map(clients.map(c => [c.id, c]));
-    const statsByApporteur = new Map<string, { total: number; sav: number; name: string }>();
-    
+    const { projects, clients } = data;
+
+    const apporteursById = mapApporteurs(clients);
+
+    const totalByApporteur: Record<string, number> = {};
+    const savByApporteur: Record<string, number> = {};
+
     for (const project of projects) {
       const dateStr = project.date || project.created_at;
-      if (dateStr) {
-        try {
-          const date = parseISO(dateStr);
-          if (!isWithinInterval(date, { start: params.dateRange.start, end: params.dateRange.end })) {
-            continue;
-          }
-        } catch {
-          continue;
+      if (!dateStr) continue;
+
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) continue;
+
+      if (params.dateRange && (date < params.dateRange.start || date > params.dateRange.end)) {
+        continue;
+      }
+
+      const apporteurIdRaw = project.data?.commanditaireId || project.commanditaireId;
+
+      const keyNom = (() => {
+        if (!apporteurIdRaw) {
+          return 'Clients Directs';
         }
-      }
-      
-      const commanditaireId = project.data?.commanditaireId || project.commanditaireId;
-      const apporteurKey = commanditaireId ? String(commanditaireId) : 'direct';
-      const client = commanditaireId ? clientsMap.get(commanditaireId) : null;
-      const apporteurName = client?.nom || client?.name || (commanditaireId ? `Apporteur ${commanditaireId}` : 'Direct');
-      
-      if (!statsByApporteur.has(apporteurKey)) {
-        statsByApporteur.set(apporteurKey, { total: 0, sav: 0, name: apporteurName });
-      }
-      
-      const stats = statsByApporteur.get(apporteurKey)!;
-      stats.total++;
-      
-      if (projectHasSAV(project, interventions)) {
-        stats.sav++;
+        const idStr = String(apporteurIdRaw);
+        return apporteursById.get(idStr) || `Apporteur ${idStr}`;
+      })();
+
+      const isSav = isSAVProject(project);
+
+      totalByApporteur[keyNom] = (totalByApporteur[keyNom] || 0) + 1;
+      if (isSav) {
+        savByApporteur[keyNom] = (savByApporteur[keyNom] || 0) + 1;
       }
     }
-    
+
     const result: Record<string, number> = {};
-    const details: Record<string, any> = {};
-    
-    statsByApporteur.forEach((stats, apporteurId) => {
-      const taux = stats.total > 0 ? (stats.sav / stats.total) * 100 : 0;
-      result[stats.name] = Math.round(taux * 10) / 10;
-      details[apporteurId] = {
-        name: stats.name,
-        total: stats.total,
-        sav: stats.sav,
-        taux: Math.round(taux * 10) / 10,
-      };
-    });
-    
+    const details: Record<string, { total: number; sav: number; taux: number }> = {};
+
+    for (const nom of Object.keys(totalByApporteur)) {
+      const total = totalByApporteur[nom] || 0;
+      const sav = savByApporteur[nom] || 0;
+      const taux = total > 0 ? (sav / total) * 100 : 0;
+      const tauxRounded = Math.round(taux * 10) / 10;
+
+      result[nom] = tauxRounded;
+      details[nom] = { total, sav, taux: tauxRounded };
+    }
+
     return {
       value: result,
       metadata: {
@@ -322,9 +337,9 @@ export const tauxSavParApporteur: StatDefinition = {
         source: 'projects',
         recordCount: projects.length,
       },
-      breakdown: details
+      breakdown: { details },
     };
-  }
+  },
 };
 
 /**
