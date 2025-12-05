@@ -621,23 +621,26 @@ export const delaiDevisApresIntervention: StatDefinition = {
 
 /**
  * Délai moyen validation devis
- * Pour chaque devis validé : délai = date_validation - date_émission
- * Filtre période sur la date d'émission du devis
+ * Nombre de jours moyen entre l'émission (dateReelle) et la validation (dateStateCommande)
+ * États validés : order, invoice (devis commandés/facturés)
+ * Filtre période sur la date d'émission (dateReelle)
  */
 export const delaiMoyenValidationDevis: StatDefinition = {
   id: 'delai_moyen_validation_devis',
   label: 'Délai moyen validation devis',
   description:
-    "Nombre de jours moyen entre l'émission et la validation des devis",
+    "Nombre de jours moyen entre l'émission (dateReelle) et la validation (dateStateCommande) des devis",
   category: 'devis',
-  source: 'devis',
+  source: ['devis'],
   unit: 'jours',
   dimensions: [],
   aggregation: 'avg',
 
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const { devis } = data;
-    const VALIDATED_STATES = ['validated', 'signed', 'order'];
+
+    // États validés : order (commandé), invoice (facturé)
+    const VALIDATED_STATES = ['order', 'invoice'];
 
     let sumDelais = 0;
     let count = 0;
@@ -648,18 +651,14 @@ export const delaiMoyenValidationDevis: StatDefinition = {
       const state = String(d.state || '').toLowerCase();
       if (!VALIDATED_STATES.includes(state)) continue;
 
-      // Date d'émission
-      const dateEmisStr =
-        d.dateEnvoi ||
-        d.dateReelle ||
-        d.date ||
-        d.created_at;
-
+      // Date d'émission = dateReelle (champ principal GetDevis)
+      const dateEmisStr: string | null = d.dateReelle || null;
       if (!dateEmisStr) continue;
+
       const dateEmis = new Date(dateEmisStr);
       if (isNaN(dateEmis.getTime())) continue;
 
-      // Filtre période sur date d'émission
+      // Filtre période sur la date d'émission
       if (params.dateRange) {
         if (
           dateEmis < params.dateRange.start ||
@@ -669,21 +668,17 @@ export const delaiMoyenValidationDevis: StatDefinition = {
         }
       }
 
-      // Date de validation
-      const dateValStr =
-        d.data?.dateValidation ||
-        d.dateValidation ||
-        d.data?.dateAcceptation ||
-        d.updated_at;
-
+      // Date de validation = dateStateCommande (présent dans GetDevis)
+      const dateValStr: string | null = d.dateStateCommande || null;
       if (!dateValStr) continue;
+
       const dateVal = new Date(dateValStr);
       if (isNaN(dateVal.getTime())) continue;
 
       const diffMs = dateVal.getTime() - dateEmis.getTime();
       const delaiJours = diffMs / (1000 * 60 * 60 * 24);
 
-      // On ignore les valeurs négatives
+      // On ignore les valeurs négatives (données incohérentes)
       if (delaiJours < 0) continue;
 
       sumDelais += delaiJours;
