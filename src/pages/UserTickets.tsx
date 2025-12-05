@@ -49,13 +49,22 @@ export default function UserTickets() {
   const [showCreateForm, setShowCreateForm] = useState(false);
 
   // Auto-open create form if navigated with openCreate state
+  // Or auto-select ticket if navigated with openTicketId state
   useEffect(() => {
     if (location.state?.openCreate) {
       setShowCreateForm(true);
       // Clear the state to prevent reopening on refresh
       window.history.replaceState({}, document.title);
     }
-  }, [location]);
+    if (location.state?.openTicketId && tickets.length > 0) {
+      const ticketToOpen = tickets.find(t => t.id === location.state.openTicketId);
+      if (ticketToOpen) {
+        setSelectedTicket(ticketToOpen);
+        // Clear the state to prevent reopening on refresh
+        window.history.replaceState({}, document.title);
+      }
+    }
+  }, [location, tickets, setSelectedTicket]);
   const [newTicket, setNewTicket] = useState({
     subject: '',
     service: 'apogee',
