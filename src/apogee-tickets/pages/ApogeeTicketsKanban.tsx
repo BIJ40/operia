@@ -17,7 +17,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns, Eye, Shield, Loader2, ShieldAlert, Download, FileText, Sheet, FileDown, LayoutGrid, List, FileCheck, AlertTriangle, Copy, RotateCcw } from 'lucide-react';
+import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns, Eye, Shield, Loader2, ShieldAlert, Download, FileText, Sheet, FileDown, LayoutGrid, List, FileCheck, AlertTriangle, Copy, RotateCcw, Clock } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { usePersistedFilters } from '../hooks/usePersistedFilters';
@@ -33,6 +33,7 @@ import { useMyTicketRole, TicketRoleInfo } from '../hooks/useTicketPermissions';
 import type { ApogeeTicket, TicketFilters as Filters } from '../types';
 import { Badge } from '@/components/ui/badge';
 import { ROUTES } from '@/config/routes';
+import { useMyRecentlyModifiedTickets } from '../hooks/useMyRecentlyModifiedTickets';
 
 export default function ApogeeTicketsKanbanPage() {
   const { data: myTicketRole, isLoading: isLoadingRole, error: roleError } = useMyTicketRole();
@@ -93,6 +94,7 @@ export default function ApogeeTicketsKanbanPage() {
 function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) {
   const { isAdmin, isSupport, ticketRole, canManage, canImport, canViewKanban } = roleInfo;
   const navigate = useNavigate();
+  const { data: recentTickets = [] } = useMyRecentlyModifiedTickets(5);
   
   // Persistance des filtres et du ticket sélectionné
   const { 
@@ -209,6 +211,55 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
               <span className="hidden sm:inline">Nouveau ticket</span>
             </Button>
           )}
+          {/* Menu dernières modifications */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="sm:size-default">
+                <Clock className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Dernières modif</span>
+                <ChevronDown className="h-4 w-4 sm:ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="bg-background border shadow-lg z-50 w-80">
+              {recentTickets.length === 0 ? (
+                <div className="px-3 py-2 text-sm text-muted-foreground">
+                  Aucune modification récente
+                </div>
+              ) : (
+                recentTickets.map((ticket) => (
+                  <DropdownMenuItem 
+                    key={ticket.id}
+                    onClick={() => {
+                      const fullTicket = tickets.find(t => t.id === ticket.id);
+                      if (fullTicket) {
+                        handleTicketClick(fullTicket);
+                      }
+                    }}
+                    className="cursor-pointer flex flex-col items-start gap-1"
+                  >
+                    <div className="flex items-center gap-2 w-full">
+                      <Badge variant="outline" className="text-xs shrink-0">
+                        #{ticket.ticket_number}
+                      </Badge>
+                      <span className="truncate text-sm font-medium flex-1">
+                        {ticket.element_concerne}
+                      </span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {ticket.last_modified_at 
+                        ? new Date(ticket.last_modified_at).toLocaleString('fr-FR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })
+                        : '—'}
+                    </span>
+                  </DropdownMenuItem>
+                ))
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
           {canImport && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
