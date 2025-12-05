@@ -123,7 +123,9 @@ export function calculateDelaiPremierDevis(
 
     // Chercher les événements "=> Devis envoyé" (insensible à la casse du début)
     const devisEnvoyeEntries = history.filter((h: any) => {
-      const kind = (h.kind || h.labelKind || '').toLowerCase();
+      // S'assurer que kind est bien une string (peut être un objet ou nombre dans certains cas)
+      const rawKind = h.kind || h.labelKind || '';
+      const kind = typeof rawKind === 'string' ? rawKind.toLowerCase() : String(rawKind).toLowerCase();
       return kind.endsWith('=> devis envoyé') || kind.includes('devis envoyé');
     });
 
