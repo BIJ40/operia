@@ -1,6 +1,7 @@
 import { isToday, parseISO, differenceInDays, startOfDay, endOfDay, subDays, isWithinInterval } from "date-fns";
 import { logDebug, logWarn } from "@/lib/logger";
 import { extractFactureMeta } from "@/statia/rules/rules";
+import { calculateDelaiPremierDevis } from "@/statia/shared/delaiPremierDevis";
 
 // ====================================================================
 // RE-EXPORTS DEPUIS MODULES EXTRAITS (pour rétro-compatibilité)
@@ -1247,38 +1248,22 @@ function getDelayCreationToFirstDevisSent(project: any): number | null {
 
 /**
  * Calculer le délai moyen entre ouverture dossier et envoi du premier devis
- * BASÉ SUR project.data.history (événement "Devis envoyé")
+ * UTILISE LA SOURCE UNIQUE DE VÉRITÉ: calculateDelaiPremierDevis de StatIA
  */
 export function calculateDelaiMoyenDossierPremierDevis(
   projects: any[],
-  _devis: any[] // Non utilisé dans cette version
+  _devis: any[] // Non utilisé
 ): { delaiMoyen: number; nbDossiers: number } {
-  const deltas: number[] = [];
-
-  for (const project of projects) {
-    // éventuel filtre : on ignore les annulés
-    if (project.state === "canceled") continue;
-
-    const delay = getDelayCreationToFirstDevisSent(project);
-    if (delay !== null) deltas.push(delay);
-  }
+  const result = calculateDelaiPremierDevis(projects, {
+    maxDelaiJours: 60,
+    debug: false
+  });
 
   logDebug('DASHBOARD_CALC', 'KPI 16 - Projets analysés:', projects.length);
-  logDebug('DASHBOARD_CALC', 'KPI 16 - Projets avec délai calculé:', deltas.length);
-  if (deltas.length > 0) {
-    logDebug('DASHBOARD_CALC', 'KPI 16 - Exemples de délais:', deltas.slice(0, 5).map(d => d.toFixed(1)));
-  }
+  logDebug('DASHBOARD_CALC', 'KPI 16 - Projets avec délai calculé:', result.nbDossiersAvecDevis);
 
-  if (deltas.length === 0) {
-    return { delaiMoyen: 0, nbDossiers: 0 };
-  }
-
-  const sum = deltas.reduce((a, b) => a + b, 0);
-  const avg = sum / deltas.length;
-
-  // KPI au jour près (arrondi)
   return {
-    delaiMoyen: Math.round(avg),
-    nbDossiers: deltas.length
+    delaiMoyen: result.moyenne ?? 0,
+    nbDossiers: result.nbDossiersAvecDevis
   };
 }
