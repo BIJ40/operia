@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { usePersistedTab } from "@/hooks/usePersistedTab";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Settings, Users, Building2, Sliders, Shield, Save, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,7 +30,7 @@ interface RoyaltyConfig {
 
 export default function FranchiseurSettings() {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("baremes");
+  const [activeTab, setActiveTab] = usePersistedTab("baremes");
 
   // Fetch royalty configurations
   const { data: royaltyConfigs, isLoading: loadingConfigs } = useQuery({
