@@ -62,7 +62,7 @@ serve(async (req) => {
               <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
                 <tr>
                   <td align="center">
-                    <a href="https://helpconfort.services" 
+                    <a href="https://www.helpconfort.services" 
                        style="display: inline-block; background-color: #0066CC; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-size: 16px; font-weight: bold;">
                       Se connecter
                     </a>
