@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { 
   BookOpen, 
   ChevronLeft, 
@@ -23,7 +24,9 @@ import {
   Pencil,
   Save,
   XCircle,
-  Trash2
+  Trash2,
+  ChevronsUpDown,
+  Grip
 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useFormationContentList, useUpdateFormationContent, useDeleteFormationContent, useReorderFormationContent, FormationContent } from "@/hooks/useFormationContent";
@@ -94,6 +97,27 @@ export default function FormationApogee() {
   const [editContent, setEditContent] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<FormationContent | null>(null);
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+
+  const toggleCollapse = (id: string) => {
+    setCollapsedSections(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const collapseAll = () => {
+    setCollapsedSections(new Set(currentCategoryContent.map(c => c.id)));
+  };
+
+  const expandAll = () => {
+    setCollapsedSections(new Set());
+  };
 
   const updateMutation = useUpdateFormationContent();
   const deleteMutation = useDeleteFormationContent();
@@ -338,107 +362,137 @@ export default function FormationApogee() {
                   {currentCategoryContent.length} sections dans ce module
                 </p>
               </div>
-              <Button onClick={() => setPresentationMode(true)}>
-                <Maximize2 className="w-4 h-4 mr-2" />
-                Mode présentation
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={collapseAll}>
+                  <ChevronsUpDown className="w-4 h-4 mr-1" />
+                  Tout replier
+                </Button>
+                <Button variant="outline" size="sm" onClick={expandAll}>
+                  Tout déplier
+                </Button>
+                <Button onClick={() => setPresentationMode(true)}>
+                  <Maximize2 className="w-4 h-4 mr-2" />
+                  Mode présentation
+                </Button>
+              </div>
             </div>
 
             {/* Sections grid */}
-            <div className="space-y-6">
+            <div className="space-y-3">
               {currentCategoryContent.map((content, idx) => {
                 const isEditing = editingId === content.id;
+                const isCollapsed = collapsedSections.has(content.id);
                 
                 return (
-                  <Card key={content.id} className="overflow-hidden">
-                    <CardHeader className="bg-muted/30 py-4">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <span className="bg-helpconfort-blue text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">
-                            {idx + 1}
-                          </span>
-                          {content.source_block_title}
-                        </CardTitle>
-                        {!isEditing && (
-                          <div className="flex items-center gap-1">
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => handleMoveSection("up", idx)}
-                              disabled={idx === 0 || reorderMutation.isPending}
-                              title="Monter"
-                            >
-                              <ChevronUp className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => handleMoveSection("down", idx)}
-                              disabled={idx === currentCategoryContent.length - 1 || reorderMutation.isPending}
-                              title="Descendre"
-                            >
-                              <ChevronDown className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleStartEdit(content)}
-                            >
-                              <Pencil className="w-4 h-4 mr-1" />
-                              Éditer
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => handleDeleteClick(content)}
-                              className="text-destructive hover:text-destructive"
-                              title="Supprimer"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-4">
-                      {isEditing ? (
-                        <div className="space-y-4">
-                          <Textarea
-                            value={editContent}
-                            onChange={(e) => setEditContent(e.target.value)}
-                            className="min-h-[300px] font-mono text-sm"
-                            placeholder="Contenu en markdown..."
-                          />
-                          <div className="flex justify-end gap-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={handleCancelEdit}
-                            >
-                              <XCircle className="w-4 h-4 mr-1" />
-                              Annuler
-                            </Button>
-                            <Button 
-                              size="sm"
-                              onClick={() => handleSaveEdit(content.id)}
-                              disabled={updateMutation.isPending}
-                            >
-                              <Save className="w-4 h-4 mr-1" />
-                              {updateMutation.isPending ? "Enregistrement..." : "Enregistrer"}
-                            </Button>
-                          </div>
+                  <Collapsible 
+                    key={content.id} 
+                    open={!isCollapsed}
+                    onOpenChange={() => toggleCollapse(content.id)}
+                  >
+                    <Card className="overflow-hidden">
+                      <CardHeader className={cn(
+                        "py-3 transition-colors",
+                        isCollapsed ? "bg-muted/50" : "bg-muted/30"
+                      )}>
+                        <div className="flex items-center justify-between">
+                          <CollapsibleTrigger asChild>
+                            <button className="flex items-center gap-2 text-left flex-1 group">
+                              <Grip className="w-4 h-4 text-muted-foreground" />
+                              <span className="bg-helpconfort-blue text-white w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0">
+                                {idx + 1}
+                              </span>
+                              <span className="font-semibold group-hover:text-helpconfort-blue transition-colors truncate">
+                                {content.source_block_title}
+                              </span>
+                              <ChevronRight className={cn(
+                                "w-4 h-4 text-muted-foreground transition-transform flex-shrink-0",
+                                !isCollapsed && "rotate-90"
+                              )} />
+                            </button>
+                          </CollapsibleTrigger>
+                          {!isEditing && (
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={(e) => { e.stopPropagation(); handleMoveSection("up", idx); }}
+                                disabled={idx === 0 || reorderMutation.isPending}
+                                title="Monter"
+                              >
+                                <ChevronUp className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={(e) => { e.stopPropagation(); handleMoveSection("down", idx); }}
+                                disabled={idx === currentCategoryContent.length - 1 || reorderMutation.isPending}
+                                title="Descendre"
+                              >
+                                <ChevronDown className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={(e) => { e.stopPropagation(); handleStartEdit(content); }}
+                              >
+                                <Pencil className="w-4 h-4 mr-1" />
+                                Éditer
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={(e) => { e.stopPropagation(); handleDeleteClick(content); }}
+                                className="text-destructive hover:text-destructive"
+                                title="Supprimer"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          )}
                         </div>
-                      ) : (
-                        <div className="prose prose-sm max-w-none dark:prose-invert">
-                          <FormationContentWithImages 
-                            summary={content.generated_summary || ""} 
-                            images={content.extracted_images || []}
-                            onImageClick={setSelectedImageUrl}
-                          />
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                      </CardHeader>
+                      <CollapsibleContent>
+                        <CardContent className="pt-4">
+                          {isEditing ? (
+                            <div className="space-y-4">
+                              <Textarea
+                                value={editContent}
+                                onChange={(e) => setEditContent(e.target.value)}
+                                className="min-h-[300px] font-mono text-sm"
+                                placeholder="Contenu en markdown..."
+                              />
+                              <div className="flex justify-end gap-2">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={handleCancelEdit}
+                                >
+                                  <XCircle className="w-4 h-4 mr-1" />
+                                  Annuler
+                                </Button>
+                                <Button 
+                                  size="sm"
+                                  onClick={() => handleSaveEdit(content.id)}
+                                  disabled={updateMutation.isPending}
+                                >
+                                  <Save className="w-4 h-4 mr-1" />
+                                  {updateMutation.isPending ? "Enregistrement..." : "Enregistrer"}
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="prose prose-sm max-w-none dark:prose-invert">
+                              <FormationContentWithImages 
+                                summary={content.generated_summary || ""} 
+                                images={content.extracted_images || []}
+                                onImageClick={setSelectedImageUrl}
+                              />
+                            </div>
+                          )}
+                        </CardContent>
+                      </CollapsibleContent>
+                    </Card>
+                  </Collapsible>
                 );
               })}
             </div>
