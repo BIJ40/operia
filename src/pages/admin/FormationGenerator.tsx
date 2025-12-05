@@ -98,26 +98,29 @@ export default function FormationGenerator() {
     });
   };
 
-  const handleGenerate = async (blockId: string) => {
+  const handleGenerate = (blockId: string) => {
+    if (generatingBlocks.has(blockId)) return;
+    
     setGeneratingBlocks(prev => new Set(prev).add(blockId));
-    try {
-      await generateMutation.mutateAsync(blockId);
-    } finally {
-      setGeneratingBlocks(prev => {
-        const next = new Set(prev);
-        next.delete(blockId);
-        return next;
+    
+    generateMutation.mutateAsync(blockId)
+      .finally(() => {
+        setGeneratingBlocks(prev => {
+          const next = new Set(prev);
+          next.delete(blockId);
+          return next;
+        });
       });
-    }
   };
 
-  const handleGenerateAll = async (category: CategoryWithSections) => {
-    for (const section of category.sections) {
+  const handleGenerateAll = (category: CategoryWithSections) => {
+    // Lance toutes les générations en parallèle
+    category.sections.forEach(section => {
       const status = getBlockStatus(section.id);
       if (!status || status.status !== "complete") {
-        await handleGenerate(section.id);
+        handleGenerate(section.id);
       }
-    }
+    });
   };
 
   const getStatusBadge = (status?: FormationContent) => {
@@ -291,7 +294,6 @@ export default function FormationGenerator() {
                             size="sm"
                             variant={allComplete ? "outline" : "default"}
                             onClick={() => handleGenerateAll(category)}
-                            disabled={generatingBlocks.size > 0}
                           >
                             {allComplete ? (
                               <>
@@ -331,7 +333,7 @@ export default function FormationGenerator() {
                                     size="sm"
                                     variant="ghost"
                                     onClick={() => handleGenerate(section.id)}
-                                    disabled={isGenerating || generatingBlocks.size > 3}
+                                    disabled={isGenerating}
                                   >
                                     {isGenerating ? (
                                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -399,7 +401,6 @@ export default function FormationGenerator() {
                               size="sm"
                               variant={allComplete ? "outline" : "default"}
                               onClick={() => handleGenerateAll(category)}
-                              disabled={generatingBlocks.size > 0}
                             >
                               {allComplete ? (
                                 <>
@@ -439,7 +440,7 @@ export default function FormationGenerator() {
                                       size="sm"
                                       variant="ghost"
                                       onClick={() => handleGenerate(section.id)}
-                                      disabled={isGenerating || generatingBlocks.size > 3}
+                                      disabled={isGenerating}
                                     >
                                       {isGenerating ? (
                                         <Loader2 className="w-4 h-4 animate-spin" />
