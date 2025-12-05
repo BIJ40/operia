@@ -150,15 +150,23 @@ export const duClient: StatDefinition = {
     let factureCount = 0;
     
     for (const facture of factures) {
-      // Utiliser restePaidTTC pour le montant TTC restant à encaisser
-      const resteTTC = facture.restePaidTTC ?? facture.data?.restePaidTTC ?? 0;
-      
       const meta = extractFactureMeta(facture);
       const date = meta.date ? new Date(meta.date) : null;
       if (!date || date < params.dateRange.start || date > params.dateRange.end) continue;
       
-      if (resteTTC > 0) {
-        totalDu += resteTTC;
+      // Sommer items.data.calcReglementsReste pour chaque facture
+      const items = facture.items ?? facture.data?.items ?? [];
+      let factureReste = 0;
+      
+      for (const item of items) {
+        const itemReste = item?.data?.calcReglementsReste ?? 0;
+        if (itemReste > 0) {
+          factureReste += itemReste;
+        }
+      }
+      
+      if (factureReste > 0) {
+        totalDu += factureReste;
         factureCount++;
       }
     }
