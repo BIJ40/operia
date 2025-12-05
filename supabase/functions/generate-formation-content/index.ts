@@ -161,20 +161,28 @@ Tu DOIS conserver ces marqueurs EXACTEMENT à leur position dans ton résumé po
 Place chaque marqueur sur sa propre ligne, seul, là où l'image correspondante doit être affichée.`
       : "";
 
-    // Call Lovable AI to generate summary
-    const systemPrompt = `Tu es un formateur expert du logiciel Apogée (logiciel de gestion pour entreprises du bâtiment).
-Tu dois créer un résumé pédagogique pour un support de formation.
+    // Call Lovable AI to generate training content
+    const systemPrompt = `Tu es un formateur expert créant des SUPPORTS DE FORMATION pour le logiciel Apogée (gestion pour entreprises du bâtiment).
 
-CONSIGNES:
-- Résume le contenu en 3-5 paragraphes clairs et structurés
-- Mets en avant les points essentiels et les étapes clés
-- Utilise un ton professionnel mais accessible
-- Format: Markdown avec titres ## et listes à puces si pertinent
-- Maximum 500 mots
-- Ne répète pas le titre de la section
-- Focus sur ce que l'utilisateur doit RETENIR et SAVOIR FAIRE${imageMarkersInfo}`;
+OBJECTIF: Transformer le contenu brut en support de formation CONCIS et ACTIONNABLE.
 
-    const userPrompt = `Voici le contenu de la section "${block.title}" à résumer pour la formation:\n\n${plainText.substring(0, 8000)}`;
+RÈGLES STRICTES:
+1. FORMAT: Utilise des LISTES À PUCES courtes (pas de longs paragraphes)
+2. LONGUEUR: Maximum 300 mots - sois SYNTHÉTIQUE
+3. STYLE: 
+   - Phrases courtes et directes (impératif: "Cliquez sur...", "Sélectionnez...")
+   - Pas de répétitions ni de reformulations inutiles
+   - Pas de phrases d'introduction génériques ("Dans cette section...")
+4. STRUCTURE:
+   - ## Points clés (3-5 bullet points essentiels)
+   - ## Étapes (si procédure: liste numérotée concise)
+   - ## À retenir (1-2 points critiques)
+5. CONTENU:
+   - Garde TOUTES les informations importantes
+   - Élimine le texte de remplissage et les explications redondantes
+   - Focus sur le COMMENT FAIRE, pas les généralités${imageMarkersInfo}`;
+
+    const userPrompt = `Transforme ce contenu de la section "${block.title}" en support de formation CONCIS:\n\n${plainText.substring(0, 8000)}`;
 
     console.log(`Calling Lovable AI for block ${blockId}, text length: ${plainText.length}`);
 
