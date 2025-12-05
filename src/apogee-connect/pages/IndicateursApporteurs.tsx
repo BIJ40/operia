@@ -9,9 +9,9 @@ import { FolderOpen, Euro, Percent, ShoppingCart, Clock, Users, TrendingUp, Hear
 import { formatEuros } from "@/apogee-connect/utils/formatters";
 import { SecondaryPeriodSelector } from "@/apogee-connect/components/filters/SecondaryPeriodSelector";
 import { 
-  calculateTop10Apporteurs, 
   calculateDossiersConfiesParApporteur, 
-  calculateFlop10Apporteurs,
+  ApporteurStats,
+  FlopApporteurStats,
 } from "@/apogee-connect/utils/apporteursCalculations";
 import { calculateTypesApporteursStats } from "@/apogee-connect/utils/typesApporteursCalculations";
 import { calculateParticuliersStats } from "@/apogee-connect/utils/particuliersCalculations";
@@ -55,22 +55,7 @@ export default function IndicateursApporteurs() {
       
       const apiData = await DataService.loadAllData(isApiEnabled);
       
-      const top10Apporteurs = calculateTop10Apporteurs(
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.devis || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange
-      );
-      
       const dossiersConfiesParApporteur = calculateDossiersConfiesParApporteur(
-        apiData.projects || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange
-      );
-      
-      const flop10Apporteurs = calculateFlop10Apporteurs(
-        apiData.factures || [],
         apiData.projects || [],
         apiData.clients || [],
         secondaryFilters.dateRange
@@ -103,9 +88,7 @@ export default function IndicateursApporteurs() {
       );
       
       return {
-        top10Apporteurs,
         dossiersConfiesParApporteur,
-        flop10Apporteurs,
         typesApporteursStats,
         particuliersStats,
         segmentationData,
@@ -116,6 +99,30 @@ export default function IndicateursApporteurs() {
       };
     },
   });
+
+  // ========== TRANSFORMATION STATIA → WIDGETS ==========
+  // Transforme les données StatIA pour les widgets Top Apporteurs et Encours
+  const topApporteursForWidget = useMemo((): ApporteurStats[] => {
+    if (!statiaKpis?.topApporteurs?.length) return [];
+    return statiaKpis.topApporteurs.map((item, idx) => ({
+      apporteurId: idx + 1, // ID fictif basé sur le rang
+      name: item.name,
+      caHT: item.ca,
+      nbDossiers: statiaKpis.dossiersParApporteur[item.name] || 0,
+      nbDevis: 0, // Non disponible via StatIA actuellement
+      tauxTransformation: statiaKpis.tauxTransfoParApporteur[item.name] || 0,
+    }));
+  }, [statiaKpis]);
+
+  const flopApporteursForWidget = useMemo((): FlopApporteurStats[] => {
+    if (!statiaKpis?.topEncours?.length) return [];
+    return statiaKpis.topEncours.map((item, idx) => ({
+      apporteurId: idx + 1,
+      name: item.name,
+      duTotal: item.encours,
+      nbFacturesImpayees: 1, // Approximation, non disponible précisément
+    }));
+  }, [statiaKpis]);
 
   // KPIs étendus (legacy - conservés pour compatibilité)
   const delaiPaiement = useMemo(() => {
@@ -381,8 +388,8 @@ export default function IndicateursApporteurs() {
 
       {/* Widgets TOP/FLOP + Dossiers confiés */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <TopApporteursWidget data={widgetsData?.top10Apporteurs || []} />
-        <FlopApporteursWidget data={widgetsData?.flop10Apporteurs || []} />
+        <TopApporteursWidget data={topApporteursForWidget} />
+        <FlopApporteursWidget data={flopApporteursForWidget} />
         <DossiersConfiesWidget dossiers={widgetsData?.dossiersConfiesParApporteur || []} />
       </div>
 

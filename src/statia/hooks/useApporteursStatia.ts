@@ -11,6 +11,17 @@ import { getMetricForAgency } from '../api/getMetricForAgency';
 import { StatResult } from '../definitions/types';
 import { logApogee } from '@/lib/logger';
 
+export interface TopApporteurItem {
+  name: string;
+  ca: number;
+  rank: number;
+}
+
+export interface EncoursApporteurItem {
+  name: string;
+  encours: number;
+}
+
 export interface ApporteursKPIs {
   // KPIs principaux
   duGlobal: number;
@@ -28,6 +39,10 @@ export interface ApporteursKPIs {
   dossiersParApporteur: Record<string, number>;
   tauxTransfoParApporteur: Record<string, number>;
   
+  // Top apporteurs triés
+  topApporteurs: TopApporteurItem[];
+  topEncours: EncoursApporteurItem[];
+  
   // Breakdown utiles
   caTotal: number;
 }
@@ -43,6 +58,8 @@ const DEFAULT_KPIS: ApporteursKPIs = {
   caParApporteur: {},
   dossiersParApporteur: {},
   tauxTransfoParApporteur: {},
+  topApporteurs: [],
+  topEncours: [],
   caTotal: 0,
 };
 
@@ -78,12 +95,14 @@ export function useApporteursStatia() {
         tauxTransfoResult,
         montantRestantResult,
         panierMoyenResult,
+        encoursParApporteurResult,
       ] = await Promise.all([
         getMetricForAgency('ca_par_apporteur', agencySlug, { dateRange }, services),
         getMetricForAgency('dossiers_par_apporteur', agencySlug, { dateRange }, services),
         getMetricForAgency('taux_transformation_apporteur', agencySlug, { dateRange }, services),
         getMetricForAgency('montant_restant', agencySlug, { dateRange }, services),
         getMetricForAgency('panier_moyen_par_type_apporteur', agencySlug, { dateRange }, services),
+        getMetricForAgency('encours_par_apporteur', agencySlug, { dateRange }, services),
       ]);
       
       // Extraire les données
@@ -112,6 +131,20 @@ export function useApporteursStatia() {
         ? panierValues.reduce((sum, p) => sum + p, 0) / panierValues.length
         : (dossiersConfiesTotal > 0 ? caTotal / dossiersConfiesTotal : 0);
       
+      // Top apporteurs triés par CA décroissant
+      const topApporteurs: TopApporteurItem[] = Object.entries(caParApporteur)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([name, ca], idx) => ({ name, ca, rank: idx + 1 }));
+      
+      // Top encours par apporteur (factures impayées)
+      const encoursParApporteur = (encoursParApporteurResult?.value || {}) as Record<string, number>;
+      const topEncours: EncoursApporteurItem[] = Object.entries(encoursParApporteur)
+        .filter(([, encours]) => encours > 0)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([name, encours]) => ({ name, encours }));
+      
       return {
         duGlobal: Number(montantRestantResult.value) || 0,
         dossiersConfiesTotal,
@@ -123,6 +156,8 @@ export function useApporteursStatia() {
         caParApporteur,
         dossiersParApporteur,
         tauxTransfoParApporteur,
+        topApporteurs,
+        topEncours,
         caTotal,
       };
     },
