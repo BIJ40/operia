@@ -144,6 +144,53 @@ export function useDeleteFormationContent() {
   });
 }
 
+// Reorder formation content (swap two items)
+export function useReorderFormationContent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      items, 
+      direction, 
+      currentIndex 
+    }: { 
+      items: FormationContent[]; 
+      direction: "up" | "down"; 
+      currentIndex: number;
+    }) => {
+      const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+      if (newIndex < 0 || newIndex >= items.length) return;
+
+      const currentItem = items[currentIndex];
+      const swapItem = items[newIndex];
+
+      // Swap source_block_title order in DB by swapping source_block_id references
+      // We'll update the generated_at timestamps to control order
+      const now = new Date();
+      const { error: error1 } = await supabase
+        .from("formation_content")
+        .update({ generated_at: new Date(now.getTime() + (direction === "up" ? -1 : 1)).toISOString() })
+        .eq("id", currentItem.id);
+
+      if (error1) throw error1;
+
+      const { error: error2 } = await supabase
+        .from("formation_content")
+        .update({ generated_at: now.toISOString() })
+        .eq("id", swapItem.id);
+
+      if (error2) throw error2;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["formation-content"] });
+      toast.success("Ordre modifié");
+    },
+    onError: (error: Error) => {
+      toast.error("Erreur: " + error.message);
+    }
+  });
+}
+
 // Get generation stats
 export function useFormationStats() {
   return useQuery({

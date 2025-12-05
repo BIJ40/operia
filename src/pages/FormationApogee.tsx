@@ -11,6 +11,8 @@ import {
   BookOpen, 
   ChevronLeft, 
   ChevronRight, 
+  ChevronUp,
+  ChevronDown,
   Maximize2,
   Minimize2,
   Image as ImageIcon,
@@ -20,9 +22,11 @@ import {
   X,
   Pencil,
   Save,
-  XCircle
+  XCircle,
+  Trash2
 } from "lucide-react";
-import { useFormationContentList, useUpdateFormationContent, FormationContent } from "@/hooks/useFormationContent";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useFormationContentList, useUpdateFormationContent, useDeleteFormationContent, useReorderFormationContent, FormationContent } from "@/hooks/useFormationContent";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 
@@ -88,8 +92,12 @@ export default function FormationApogee() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<FormationContent | null>(null);
 
   const updateMutation = useUpdateFormationContent();
+  const deleteMutation = useDeleteFormationContent();
+  const reorderMutation = useReorderFormationContent();
 
   const handleStartEdit = (content: FormationContent) => {
     setEditingId(content.id);
@@ -105,6 +113,27 @@ export default function FormationApogee() {
     await updateMutation.mutateAsync({ id, summary: editContent });
     setEditingId(null);
     setEditContent("");
+  };
+
+  const handleDeleteClick = (content: FormationContent) => {
+    setItemToDelete(content);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (itemToDelete) {
+      await deleteMutation.mutateAsync(itemToDelete.id);
+      setItemToDelete(null);
+      setDeleteDialogOpen(false);
+    }
+  };
+
+  const handleMoveSection = (direction: "up" | "down", currentIndex: number) => {
+    reorderMutation.mutate({ 
+      items: currentCategoryContent, 
+      direction, 
+      currentIndex 
+    });
   };
 
   // Toggle fullscreen
@@ -331,14 +360,43 @@ export default function FormationApogee() {
                           {content.source_block_title}
                         </CardTitle>
                         {!isEditing && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => handleStartEdit(content)}
-                          >
-                            <Pencil className="w-4 h-4 mr-1" />
-                            Éditer
-                          </Button>
+                          <div className="flex items-center gap-1">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleMoveSection("up", idx)}
+                              disabled={idx === 0 || reorderMutation.isPending}
+                              title="Monter"
+                            >
+                              <ChevronUp className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleMoveSection("down", idx)}
+                              disabled={idx === currentCategoryContent.length - 1 || reorderMutation.isPending}
+                              title="Descendre"
+                            >
+                              <ChevronDown className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleStartEdit(content)}
+                            >
+                              <Pencil className="w-4 h-4 mr-1" />
+                              Éditer
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleDeleteClick(content)}
+                              className="text-destructive hover:text-destructive"
+                              title="Supprimer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         )}
                       </div>
                     </CardHeader>
@@ -509,6 +567,27 @@ export default function FormationApogee() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cette section ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              La section "{itemToDelete?.source_block_title}" sera définitivement supprimée du parcours formation.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDelete}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
