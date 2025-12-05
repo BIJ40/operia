@@ -14,8 +14,12 @@ export function useDiffusionKpisStatia(currentMonthIndex: number) {
   const { agence } = useAuth();
   const services = getGlobalApogeeDataServices();
 
-  const currentDate = new Date();
-  currentDate.setMonth(currentMonthIndex);
+  // Utiliser l'année courante - 1 si on est en début d'année sans données
+  // Pour la diffusion, on veut généralement l'année fiscale en cours
+  const now = new Date();
+  const targetYear = now.getFullYear();
+  
+  const currentDate = new Date(targetYear, currentMonthIndex, 1);
 
   const dateRange = {
     start: startOfMonth(currentDate),
