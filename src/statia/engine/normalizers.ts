@@ -11,31 +11,86 @@ export function normalizeUniversSlug(slug: string | null | undefined): string {
   
   const normalized = slug.toLowerCase().trim();
   
-  // Mapping des variations courantes
+  // Mapping COMPLET des variations courantes (aligné sur enrichmentService.ts)
   const mappings: Record<string, string> = {
-    'plomberie': 'plomberie',
-    'plomb': 'plomberie',
-    'electricite': 'electricite',
+    // PMR / Amélioration logement
+    'amelioration_logement': 'pmr',
+    'amelioration-logement': 'pmr',
+    'ame_logement': 'pmr',
+    'pmr_amenagement': 'pmr',
+    'accessibilite': 'pmr',
+    'pmr': 'pmr',
+    
+    // Volets roulants
+    'volets': 'volet_roulant',
+    'volet': 'volet_roulant',
+    'volets_roulants': 'volet_roulant',
+    'volet_roulant': 'volet_roulant',
+    'store': 'volet_roulant',
+    'stores': 'volet_roulant',
+    
+    // Électricité
     'elec': 'electricite',
     'électricité': 'electricite',
-    // RÈGLE STRICTE: chauffage et climatisation N'EXISTENT PAS dans l'API Apogée
-    // 'chauffage': EXCLU - n'existe pas
-    // 'climatisation': EXCLU - n'existe pas
+    'electrique': 'electricite',
+    'electricite': 'electricite',
+    
+    // Plomberie
+    'plomb': 'plomberie',
+    'plomberie': 'plomberie',
+    'sanitaire': 'plomberie',
+    'sanitaires': 'plomberie',
+    
+    // Serrurerie
+    'serrure': 'serrurerie',
+    'serrurier': 'serrurerie',
     'serrurerie': 'serrurerie',
     'serr': 'serrurerie',
+    
+    // Vitrerie
+    'vitre': 'vitrerie',
+    'vitres': 'vitrerie',
+    'vitrier': 'vitrerie',
+    'miroiterie': 'vitrerie',
     'vitrerie': 'vitrerie',
     'vitr': 'vitrerie',
+    
+    // Menuiserie
+    'menuisier': 'menuiserie',
+    'bois': 'menuiserie',
+    'porte': 'menuiserie',
+    'portes': 'menuiserie',
+    'fenetre': 'menuiserie',
+    'fenetres': 'menuiserie',
+    'menuiserie': 'menuiserie',
+    
+    // Rénovation
+    'reno': 'renovation',
+    'rénovation': 'renovation',
+    'renovation': 'renovation',
+    'travaux': 'renovation',
+    
+    // Multiservices
     'multiservices': 'multiservices',
     'multi': 'multiservices',
-    'renovation': 'renovation',
-    'reno': 'renovation',
-    'non-classe': 'non-classe',
+    
+    // Non classé / fallback
+    'non_classe': 'non-classe',
     'non classe': 'non-classe',
+    'non-classe': 'non-classe',
+    'divers': 'non-classe',
     'inconnu': 'non-classe',
+    'autre': 'non-classe',
     '': 'non-classe',
   };
   
-  return mappings[normalized] || normalized;
+  // Si trouvé dans le mapping, retourner la valeur normalisée
+  if (mappings[normalized]) {
+    return mappings[normalized];
+  }
+  
+  // Sinon, nettoyer et retourner le slug original (pour les nouveaux univers non mappés)
+  return normalized.replace(/[^a-z0-9_-]/g, '_') || 'non-classe';
 }
 
 /**
