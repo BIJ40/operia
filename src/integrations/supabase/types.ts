@@ -1414,6 +1414,60 @@ export type Database = {
           },
         ]
       }
+      collaborator_sensitive_data: {
+        Row: {
+          birth_date_encrypted: string | null
+          collaborator_id: string
+          created_at: string | null
+          emergency_contact_encrypted: string | null
+          emergency_phone_encrypted: string | null
+          id: string
+          last_accessed_at: string | null
+          last_accessed_by: string | null
+          social_security_number_encrypted: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          birth_date_encrypted?: string | null
+          collaborator_id: string
+          created_at?: string | null
+          emergency_contact_encrypted?: string | null
+          emergency_phone_encrypted?: string | null
+          id?: string
+          last_accessed_at?: string | null
+          last_accessed_by?: string | null
+          social_security_number_encrypted?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          birth_date_encrypted?: string | null
+          collaborator_id?: string
+          created_at?: string | null
+          emergency_contact_encrypted?: string | null
+          emergency_phone_encrypted?: string | null
+          id?: string
+          last_accessed_at?: string | null
+          last_accessed_by?: string | null
+          social_security_number_encrypted?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collaborator_sensitive_data_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: true
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collaborator_sensitive_data_last_accessed_by_fkey"
+            columns: ["last_accessed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       collaborators: {
         Row: {
           address: string | null
@@ -3286,6 +3340,48 @@ export type Database = {
           },
         ]
       }
+      sensitive_data_access_log: {
+        Row: {
+          access_type: string
+          accessed_at: string | null
+          accessed_by: string
+          collaborator_id: string
+          id: string
+          ip_address: string | null
+        }
+        Insert: {
+          access_type: string
+          accessed_at?: string | null
+          accessed_by: string
+          collaborator_id: string
+          id?: string
+          ip_address?: string | null
+        }
+        Update: {
+          access_type?: string
+          accessed_at?: string | null
+          accessed_by?: string
+          collaborator_id?: string
+          id?: string
+          ip_address?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sensitive_data_access_log_accessed_by_fkey"
+            columns: ["accessed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sensitive_data_access_log_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       statia_custom_metrics: {
         Row: {
           agency_slug: string | null
@@ -4049,6 +4145,15 @@ export type Database = {
         Returns: boolean
       }
       cleanup_expired_request_locks: { Args: never; Returns: number }
+      get_collaborator_sensitive_data: {
+        Args: { p_collaborator_id: string }
+        Returns: {
+          birth_date: string
+          emergency_contact: string
+          emergency_phone: string
+          ssn: string
+        }[]
+      }
       get_current_collaborator_id: { Args: never; Returns: string }
       get_unread_rh_notifications_count: { Args: never; Returns: number }
       get_user_agency: { Args: { _user_id: string }; Returns: string }
