@@ -311,7 +311,6 @@ export const NAV_GROUPS: NavGroup[] = [
       { title: 'Comparatif', url: ROUTES.reseau.comparatif, icon: BarChart3, scope: 'franchiseur_kpi' },
       { title: 'Graphiques', url: ROUTES.reseau.graphiques, icon: BarChart3, scope: 'franchiseur_kpi' },
       { title: 'Redevances', url: ROUTES.reseau.redevances, icon: Coins, scope: 'franchiseur_royalties' },
-      { title: 'Paramètres', url: ROUTES.reseau.parametres, icon: Settings, scope: 'franchiseur_dashboard' },
     ],
   },
   {
@@ -429,7 +428,6 @@ export const PAGE_TITLES: Record<string, string> = {
   [ROUTES.reseau.tableaux]: 'Tableaux Réseau',
   [ROUTES.reseau.periodes]: 'Périodes',
   [ROUTES.reseau.redevances]: 'Redevances',
-  [ROUTES.reseau.parametres]: 'Paramètres Réseau',
   
   // Admin (V2 routes)
   [ROUTES.admin.index]: 'Administration',

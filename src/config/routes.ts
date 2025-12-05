@@ -102,7 +102,6 @@ export const ROUTES = {
     comparatif: '/hc-reseau/comparatif',
     graphiques: '/hc-reseau/graphiques',
     redevances: '/hc-reseau/redevances',
-    parametres: '/hc-reseau/parametres',
   },
 
   // ============================================
