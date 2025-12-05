@@ -15,6 +15,18 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: 'V0.6.7',
+    date: '2025-12-05',
+    title: 'Partage d\'écran Support & WebRTC',
+    changes: [
+      { type: 'feature', description: 'Partage d\'écran temps réel entre utilisateur et agent support via WebRTC' },
+      { type: 'feature', description: 'Bouton "Voir l\'écran" dans console support pour chat humain' },
+      { type: 'feature', description: 'Signaling WebRTC via Supabase Realtime (offres/réponses SDP, candidats ICE)' },
+      { type: 'improvement', description: 'Interface de consentement utilisateur avant partage d\'écran' },
+      { type: 'improvement', description: 'Indicateurs visuels de connexion peer-to-peer' },
+    ]
+  },
+  {
     version: 'V0.6.6',
     date: '2025-12-05',
     title: 'Synchronisation Auto Collaborateurs & Corrections UI',
