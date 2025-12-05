@@ -448,7 +448,7 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
             }`}
           >
             <MessageSquare className={`w-3.5 h-3.5 ${blinkingTicketsCount > 0 && !filterBlinkingOnly ? 'text-green-600' : ''}`} />
-            Nouvelles modifs
+            Tickets mis à jour
             {blinkingTicketsCount > 0 && (
               <Badge variant="secondary" className={`text-xs px-1.5 ${filterBlinkingOnly ? 'bg-helpconfort-blue/20 text-helpconfort-blue' : 'bg-green-100 text-green-700 animate-pulse'}`}>
                 {blinkingTicketsCount}
