@@ -442,13 +442,15 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
             className={`text-sm flex items-center gap-1.5 px-2 py-1 rounded transition-colors ${
               filterBlinkingOnly 
                 ? 'bg-helpconfort-blue/10 text-helpconfort-blue font-medium' 
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                : blinkingTicketsCount > 0
+                  ? 'text-green-600 animate-pulse font-medium'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
             }`}
           >
-            <MessageSquare className="w-3.5 h-3.5" />
+            <MessageSquare className={`w-3.5 h-3.5 ${blinkingTicketsCount > 0 && !filterBlinkingOnly ? 'text-green-600' : ''}`} />
             Nouvelles modifs
             {blinkingTicketsCount > 0 && (
-              <Badge variant="secondary" className="bg-helpconfort-blue/20 text-helpconfort-blue text-xs px-1.5">
+              <Badge variant="secondary" className={`text-xs px-1.5 ${filterBlinkingOnly ? 'bg-helpconfort-blue/20 text-helpconfort-blue' : 'bg-green-100 text-green-700 animate-pulse'}`}>
                 {blinkingTicketsCount}
               </Badge>
             )}
