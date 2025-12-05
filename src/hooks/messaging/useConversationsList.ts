@@ -14,11 +14,12 @@ export function useConversationsList(searchQuery?: string) {
     queryFn: async (): Promise<Conversation[]> => {
       if (!user?.id) return [];
 
-      // Get all conversations where user is a member
+      // Get all conversations where user is a member and not deleted
       const { data: memberships, error: memberError } = await supabase
         .from('conversation_members')
         .select('conversation_id')
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .is('deleted_at', null);
 
       if (memberError) throw memberError;
       if (!memberships?.length) return [];
@@ -235,6 +236,30 @@ export function useCreateConversation() {
       if (memberError) throw memberError;
 
       return conversation;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    },
+  });
+}
+
+export function useDeleteConversation() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (conversationId: string) => {
+      if (!user?.id) throw new Error('Non authentifié');
+
+      // Soft delete - only mark as deleted for this user
+      const { error } = await supabase
+        .from('conversation_members')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('conversation_id', conversationId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      return conversationId;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });

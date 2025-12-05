@@ -3,7 +3,7 @@ import { MessageCircle, X, ChevronDown, ArrowLeft, ChevronRight, Plus, User, Use
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
-import { useConversationsList, useCreateConversation } from '@/hooks/messaging/useConversationsList';
+import { useConversationsList, useCreateConversation, useDeleteConversation } from '@/hooks/messaging/useConversationsList';
 import { useConversation } from '@/hooks/messaging/useConversation';
 import { useSendMessage } from '@/hooks/messaging/useSendMessage';
 import { ConversationList, MessageList, ChatBox } from '@/components/messaging';
@@ -30,6 +30,20 @@ export function MessagingWidget() {
   } = useConversation(selectedConversationId);
   const { sendMessage, handleTyping, isLoading: isSending } = useSendMessage(selectedConversationId);
   const createConversation = useCreateConversation();
+  const deleteConversation = useDeleteConversation();
+
+  // Handle delete conversation
+  const handleDeleteConversation = (conversationId: string) => {
+    deleteConversation.mutate(conversationId, {
+      onSuccess: () => {
+        toast.success('Conversation supprimée');
+        if (selectedConversationId === conversationId) {
+          setSelectedConversationId(null);
+        }
+      },
+      onError: () => toast.error('Erreur lors de la suppression'),
+    });
+  };
 
   // Handle send message
   const handleSendMessage = (content: string, attachments?: File[]) => {
@@ -253,6 +267,7 @@ export function MessagingWidget() {
                   conversations={conversations || []}
                   selectedId={selectedConversationId}
                   onSelect={setSelectedConversationId}
+                  onDelete={handleDeleteConversation}
                   isLoading={isLoadingList}
                 />
               </div>

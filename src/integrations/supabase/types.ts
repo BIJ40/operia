@@ -1580,6 +1580,7 @@ export type Database = {
       conversation_members: {
         Row: {
           conversation_id: string
+          deleted_at: string | null
           id: string
           is_muted: boolean
           joined_at: string
@@ -1589,6 +1590,7 @@ export type Database = {
         }
         Insert: {
           conversation_id: string
+          deleted_at?: string | null
           id?: string
           is_muted?: boolean
           joined_at?: string
@@ -1598,6 +1600,7 @@ export type Database = {
         }
         Update: {
           conversation_id?: string
+          deleted_at?: string | null
           id?: string
           is_muted?: boolean
           joined_at?: string
