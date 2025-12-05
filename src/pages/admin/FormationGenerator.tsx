@@ -113,11 +113,12 @@ export default function FormationGenerator() {
       });
   };
 
-  const handleGenerateAll = (category: CategoryWithSections) => {
+  const handleGenerateAll = (category: CategoryWithSections, forceRegenerate = false) => {
     // Lance toutes les générations en parallèle
     category.sections.forEach(section => {
       const status = getBlockStatus(section.id);
-      if (!status || status.status !== "complete") {
+      // Si forceRegenerate, on régénère tout. Sinon, seulement les non-complets
+      if (forceRegenerate || !status || status.status !== "complete") {
         handleGenerate(section.id);
       }
     });
@@ -293,7 +294,7 @@ export default function FormationGenerator() {
                           <Button
                             size="sm"
                             variant={allComplete ? "outline" : "default"}
-                            onClick={() => handleGenerateAll(category)}
+                            onClick={() => handleGenerateAll(category, allComplete)}
                           >
                             {allComplete ? (
                               <>
@@ -400,7 +401,7 @@ export default function FormationGenerator() {
                             <Button
                               size="sm"
                               variant={allComplete ? "outline" : "default"}
-                              onClick={() => handleGenerateAll(category)}
+                              onClick={() => handleGenerateAll(category, allComplete)}
                             >
                               {allComplete ? (
                                 <>
