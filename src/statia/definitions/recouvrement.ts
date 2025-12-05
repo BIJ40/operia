@@ -8,12 +8,14 @@ import { extractFactureMeta } from '../rules/rules';
 import { isFactureStateIncluded } from '../engine/normalizers';
 
 /**
- * Taux de Recouvrement Global
+ * Taux de Recouvrement Global (en flux sur la période)
+ * Numérateur = encaissements HT sur la période
+ * Dénominateur = facturations HT sur la période
  */
 export const tauxRecouvrementGlobal: StatDefinition = {
   id: 'taux_recouvrement_global',
   label: 'Taux de Recouvrement',
-  description: 'Pourcentage du CA encaissé par rapport au CA facturé',
+  description: 'Pourcentage du CA encaissé HT par rapport au CA facturé HT sur la période',
   category: 'recouvrement',
   source: 'factures',
   aggregation: 'ratio',
@@ -21,55 +23,67 @@ export const tauxRecouvrementGlobal: StatDefinition = {
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const { factures } = data;
     
-    let totalFactureTTC = 0;
-    let totalEncaisseTTC = 0;
+    // États considérés comme "encaissés"
+    const PAID_STATES = ['paid', 'partially_paid', 'closed'];
+    
+    let caFactureHT = 0;
+    let montantEncaisseHT = 0;
     let factureCount = 0;
+    let encaisseCount = 0;
     
     for (const facture of factures) {
       const meta = extractFactureMeta(facture);
       
-      if (!isFactureStateIncluded(facture.state)) continue;
-      
-      const date = meta.date ? new Date(meta.date) : null;
-      if (!date || date < params.dateRange.start || date > params.dateRange.end) continue;
-      
-      // Exclure les avoirs du calcul du recouvrement
+      // Exclure les avoirs
       if (meta.isAvoir) continue;
       
-      const totalTTC = facture.data?.totalTTC ?? facture.totalTTC ?? 0;
-      const reste = facture.data?.calcReglementsReste ?? facture.calcReglementsReste ?? 0;
-      const encaisse = totalTTC - reste;
+      if (!isFactureStateIncluded(facture.state)) continue;
       
-      totalFactureTTC += totalTTC;
-      totalEncaisseTTC += Math.max(0, encaisse);
+      const dateFacture = meta.date ? new Date(meta.date) : null;
+      if (!dateFacture || dateFacture < params.dateRange.start || dateFacture > params.dateRange.end) continue;
+      
+      const totalHT = facture.data?.totalHT ?? facture.totalHT ?? 0;
+      
+      // CA facturé HT sur la période
+      caFactureHT += Number(totalHT) || 0;
       factureCount++;
+      
+      // Montant encaissé HT : factures payées sur la période
+      const state = String(facture.state || '').toLowerCase();
+      if (PAID_STATES.includes(state)) {
+        montantEncaisseHT += Number(totalHT) || 0;
+        encaisseCount++;
+      }
     }
     
-    const taux = totalFactureTTC > 0 ? (totalEncaisseTTC / totalFactureTTC) * 100 : 0;
+    const taux = caFactureHT > 0 ? (montantEncaisseHT / caFactureHT) * 100 : 0;
     
     return {
-      value: taux,
+      value: Math.round(taux * 10) / 10,
       metadata: {
         computedAt: new Date(),
         source: 'factures',
         recordCount: factureCount,
       },
       breakdown: {
-        totalFactureTTC,
-        totalEncaisseTTC,
-        totalResteTTC: totalFactureTTC - totalEncaisseTTC,
+        caFactureHT: Math.round(caFactureHT * 100) / 100,
+        montantEncaisseHT: Math.round(montantEncaisseHT * 100) / 100,
+        ecart: Math.round((caFactureHT - montantEncaisseHT) * 100) / 100,
+        nbFactures: factureCount,
+        nbEncaissees: encaisseCount,
       }
     };
   }
 };
 
 /**
- * Montant Encaissé
+ * Montant Encaissé Global (HT)
+ * Somme des factures payées/soldées sur la période
  */
 export const montantEncaisse: StatDefinition = {
   id: 'montant_encaisse',
-  label: 'Montant Encaissé',
-  description: 'Total des encaissements reçus',
+  label: 'Montant Encaissé (HT)',
+  description: 'Total des encaissements HT reçus sur la période',
   category: 'recouvrement',
   source: 'factures',
   aggregation: 'sum',
@@ -77,33 +91,43 @@ export const montantEncaisse: StatDefinition = {
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const { factures } = data;
     
-    let totalEncaisse = 0;
+    // États considérés comme "encaissés"
+    const PAID_STATES = ['paid', 'partially_paid', 'closed'];
+    
+    let totalEncaisseHT = 0;
     let factureCount = 0;
     
     for (const facture of factures) {
       const meta = extractFactureMeta(facture);
       
-      if (!isFactureStateIncluded(facture.state)) continue;
-      
-      const date = meta.date ? new Date(meta.date) : null;
-      if (!date || date < params.dateRange.start || date > params.dateRange.end) continue;
-      
+      // Exclure les avoirs
       if (meta.isAvoir) continue;
       
-      const totalTTC = facture.data?.totalTTC ?? facture.totalTTC ?? 0;
-      const reste = facture.data?.calcReglementsReste ?? facture.calcReglementsReste ?? 0;
-      const encaisse = Math.max(0, totalTTC - reste);
+      if (!isFactureStateIncluded(facture.state)) continue;
       
-      totalEncaisse += encaisse;
-      if (encaisse > 0) factureCount++;
+      // Date d'encaissement = dateReelle ou date de la facture payée
+      const dateEncaissement = meta.date ? new Date(meta.date) : null;
+      if (!dateEncaissement || dateEncaissement < params.dateRange.start || dateEncaissement > params.dateRange.end) continue;
+      
+      // Vérifier si la facture est encaissée
+      const state = String(facture.state || '').toLowerCase();
+      if (!PAID_STATES.includes(state)) continue;
+      
+      const totalHT = facture.data?.totalHT ?? facture.totalHT ?? 0;
+      
+      totalEncaisseHT += Number(totalHT) || 0;
+      factureCount++;
     }
     
     return {
-      value: totalEncaisse,
+      value: Math.round(totalEncaisseHT * 100) / 100,
       metadata: {
         computedAt: new Date(),
         source: 'factures',
         recordCount: factureCount,
+      },
+      breakdown: {
+        nbFacturesEncaissees: factureCount,
       }
     };
   }
