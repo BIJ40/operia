@@ -4,12 +4,35 @@
  */
 
 import { StatDefinition, LoadedData, StatParams, StatResult } from './types';
-import { 
-  normalizeApporteurId,
-  isFactureStateIncluded 
-} from '../engine/normalizers';
+import { isFactureStateIncluded } from '../engine/normalizers';
 import { extractFactureMeta } from '../rules/rules';
-import { indexProjectsById, indexClientsById } from '../engine/loaders';
+import { indexProjectsById } from '../engine/loaders';
+
+/**
+ * Mapping apporteurId → nom lisible
+ * Cherche dans plusieurs champs possibles du client
+ */
+function mapApporteurs(clients: any[]): Map<string, string> {
+  const map = new Map<string, string>();
+
+  for (const c of clients) {
+    const id = String(c.id);
+    const nom =
+      c.displayName ||
+      c.raisonSociale ||
+      c.nom ||
+      c.name ||
+      c.label ||
+      c.data?.nom ||
+      c.data?.name ||
+      c.data?.raisonSociale ||
+      `Apporteur ${id}`;
+
+    map.set(id, nom);
+  }
+
+  return map;
+}
 
 /**
  * CA par Apporteur
@@ -29,9 +52,10 @@ export const caParApporteur: StatDefinition = {
     const { factures, projects, clients } = data;
     
     const projectsById = indexProjectsById(projects);
-    const clientsById = indexClientsById(clients);
+    const apporteursById = mapApporteurs(clients);
     
-    const byApporteur: Record<string, { ca: number; label: string; count: number }> = {};
+    const result: Record<string, number> = {};
+    const counts: Record<string, number> = {};
     let totalCA = 0;
     let recordCount = 0;
     
@@ -59,41 +83,23 @@ export const caParApporteur: StatDefinition = {
           : ['non-classe'];
         
         if (!projectUniverses.includes(filterUnivers)) {
-          continue; // Skip cette facture, elle n'appartient pas à l'univers sélectionné
+          continue;
         }
       }
       
       // Identifier l'apporteur - UNIQUEMENT les dossiers AVEC commanditaire
-      const apporteurId = project ? normalizeApporteurId(project) : 'direct';
+      const apporteurId = project?.data?.commanditaireId || project?.commanditaireId;
       
       // Exclure les factures sans apporteur (dossiers "Direct")
-      if (apporteurId === 'direct') continue;
+      if (!apporteurId) continue;
       
-      // Récupérer le label de l'apporteur
-      const client = clientsById.get(apporteurId);
-      const apporteurLabel = client?.name || client?.label || `Apporteur ${apporteurId}`;
+      // Récupérer le NOM de l'apporteur (pas l'ID)
+      const nom = apporteursById.get(String(apporteurId)) || `Apporteur ${apporteurId}`;
       
-      if (!byApporteur[apporteurId]) {
-        byApporteur[apporteurId] = { ca: 0, label: apporteurLabel, count: 0 };
-      }
-      
-      byApporteur[apporteurId].ca += meta.montantNetHT;
-      byApporteur[apporteurId].count++;
+      result[nom] = (result[nom] || 0) + meta.montantNetHT;
+      counts[nom] = (counts[nom] || 0) + 1;
       totalCA += meta.montantNetHT;
       recordCount++;
-    }
-    
-    // Formater le résultat - utiliser les NOMS comme clés (pas les IDs)
-    const result: Record<string, number> = {};
-    const labels: Record<string, string> = {};
-    const counts: Record<string, number> = {};
-    
-    for (const [id, data] of Object.entries(byApporteur)) {
-      // Utiliser le label (nom) comme clé, pas l'ID
-      const key = data.label || `Apporteur ${id}`;
-      result[key] = (result[key] || 0) + data.ca; // Additionner si même nom
-      labels[key] = data.label;
-      counts[key] = (counts[key] || 0) + data.count;
     }
     
     return {
@@ -105,9 +111,8 @@ export const caParApporteur: StatDefinition = {
       },
       breakdown: {
         total: totalCA,
-        labels,
         counts,
-        apporteurCount: Object.keys(byApporteur).length,
+        apporteurCount: Object.keys(result).length,
         filterUnivers,
       }
     };
@@ -128,8 +133,8 @@ export const dossiersParApporteur: StatDefinition = {
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const { projects, clients } = data;
     
-    const clientsById = indexClientsById(clients);
-    const byApporteur: Record<string, { count: number; label: string }> = {};
+    const apporteursById = mapApporteurs(clients);
+    const result: Record<string, number> = {};
     let totalCount = 0;
     
     for (const project of projects) {
@@ -139,31 +144,16 @@ export const dossiersParApporteur: StatDefinition = {
         if (date < params.dateRange.start || date > params.dateRange.end) continue;
       }
       
-      const apporteurId = normalizeApporteurId(project);
+      const apporteurId = project.data?.commanditaireId || project.commanditaireId;
       
       // Exclure les dossiers sans apporteur (dossiers "Direct")
-      if (apporteurId === 'direct') continue;
+      if (!apporteurId) continue;
       
-      const client = clientsById.get(apporteurId);
-      const apporteurLabel = client?.name || client?.label || `Apporteur ${apporteurId}`;
+      // Récupérer le NOM de l'apporteur
+      const nom = apporteursById.get(String(apporteurId)) || `Apporteur ${apporteurId}`;
       
-      if (!byApporteur[apporteurId]) {
-        byApporteur[apporteurId] = { count: 0, label: apporteurLabel };
-      }
-      
-      byApporteur[apporteurId].count++;
+      result[nom] = (result[nom] || 0) + 1;
       totalCount++;
-    }
-    
-    // Formater le résultat - utiliser les NOMS comme clés (pas les IDs)
-    const result: Record<string, number> = {};
-    const labels: Record<string, string> = {};
-    
-    for (const [id, data] of Object.entries(byApporteur)) {
-      // Utiliser le label (nom) comme clé, pas l'ID
-      const key = data.label || `Apporteur ${id}`;
-      result[key] = (result[key] || 0) + data.count;
-      labels[key] = data.label;
     }
     
     return {
@@ -175,7 +165,6 @@ export const dossiersParApporteur: StatDefinition = {
       },
       breakdown: {
         total: totalCount,
-        labels,
       }
     };
   }
@@ -242,14 +231,14 @@ export const tauxTransformationApporteur: StatDefinition = {
     const { devis, projects, clients } = data;
     
     const projectsById = indexProjectsById(projects);
-    const clientsById = indexClientsById(clients);
+    const apporteursById = mapApporteurs(clients);
     
-    const statsByApporteur = new Map<string, { 
+    // Utiliser le NOM comme clé directement
+    const statsByNom = new Map<string, { 
       emis: number; 
       acceptes: number; 
       caEmis: number;
       caAcceptes: number;
-      label: string 
     }>();
     
     for (const d of devis) {
@@ -265,24 +254,17 @@ export const tauxTransformationApporteur: StatDefinition = {
       
       const projectId = d.projectId;
       const project = projectId ? projectsById.get(projectId) : null;
-      const apporteurId = project ? normalizeApporteurId(project) : 'direct';
+      const apporteurId = project?.data?.commanditaireId || project?.commanditaireId;
       
-      if (apporteurId === 'direct') continue;
+      if (!apporteurId) continue;
       
-      const client = clientsById.get(apporteurId);
-      const apporteurLabel = client?.name || client?.label || `Apporteur ${apporteurId}`;
+      const nom = apporteursById.get(String(apporteurId)) || `Apporteur ${apporteurId}`;
       
-      if (!statsByApporteur.has(apporteurId)) {
-        statsByApporteur.set(apporteurId, { 
-          emis: 0, 
-          acceptes: 0, 
-          caEmis: 0,
-          caAcceptes: 0,
-          label: apporteurLabel 
-        });
+      if (!statsByNom.has(nom)) {
+        statsByNom.set(nom, { emis: 0, acceptes: 0, caEmis: 0, caAcceptes: 0 });
       }
       
-      const stats = statsByApporteur.get(apporteurId)!;
+      const stats = statsByNom.get(nom)!;
       const montant = d.totalHT || d.data?.totalHT || 0;
       const state = (d.state || '').toLowerCase();
       
@@ -300,14 +282,12 @@ export const tauxTransformationApporteur: StatDefinition = {
     }
     
     const result: Record<string, number> = {};
-    const labels: Record<string, string> = {};
     const details: Record<string, any> = {};
     
-    statsByApporteur.forEach((stats, apporteurId) => {
+    statsByNom.forEach((stats, nom) => {
       const tauxNb = stats.emis > 0 ? (stats.acceptes / stats.emis) * 100 : 0;
-      result[apporteurId] = Math.round(tauxNb * 10) / 10;
-      labels[apporteurId] = stats.label;
-      details[apporteurId] = {
+      result[nom] = Math.round(tauxNb * 10) / 10;
+      details[nom] = {
         tauxNb: Math.round(tauxNb * 10) / 10,
         tauxCa: stats.caEmis > 0 ? Math.round((stats.caAcceptes / stats.caEmis) * 1000) / 10 : 0,
         emis: stats.emis,
@@ -320,9 +300,9 @@ export const tauxTransformationApporteur: StatDefinition = {
       metadata: {
         computedAt: new Date(),
         source: 'devis',
-        recordCount: statsByApporteur.size,
+        recordCount: statsByNom.size,
       },
-      breakdown: { labels, details }
+      breakdown: { details }
     };
   }
 };
@@ -342,25 +322,25 @@ export const apporteursInactifs: StatDefinition = {
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const { projects, clients } = data;
     
-    const clientsById = indexClientsById(clients);
-    const lastActivityByApporteur = new Map<string, { date: Date; label: string }>();
+    const apporteursById = mapApporteurs(clients);
+    const lastActivityByApporteur = new Map<string, { date: Date; nom: string }>();
     
     // Identifier la dernière activité de chaque apporteur
     for (const project of projects) {
-      const apporteurId = normalizeApporteurId(project);
-      if (apporteurId === 'direct') continue;
+      const apporteurId = project.data?.commanditaireId || project.commanditaireId;
+      if (!apporteurId) continue;
       
       const dateStr = project.created_at || project.date;
       if (!dateStr) continue;
       
       try {
         const date = new Date(dateStr);
-        const current = lastActivityByApporteur.get(apporteurId);
+        const idStr = String(apporteurId);
+        const current = lastActivityByApporteur.get(idStr);
         
         if (!current || date > current.date) {
-          const client = clientsById.get(apporteurId);
-          const label = client?.name || client?.label || `Apporteur ${apporteurId}`;
-          lastActivityByApporteur.set(apporteurId, { date, label });
+          const nom = apporteursById.get(idStr) || `Apporteur ${apporteurId}`;
+          lastActivityByApporteur.set(idStr, { date, nom });
         }
       } catch {
         continue;
@@ -379,7 +359,7 @@ export const apporteursInactifs: StatDefinition = {
         const joursInactifs = Math.floor((Date.now() - data.date.getTime()) / (1000 * 60 * 60 * 24));
         inactifs.push({
           id: apporteurId,
-          label: data.label,
+          label: data.nom,
           lastActivity: data.date.toISOString().split('T')[0],
           joursInactifs,
         });
