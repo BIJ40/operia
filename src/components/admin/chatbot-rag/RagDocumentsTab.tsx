@@ -27,6 +27,7 @@ import {
   EyeOff,
   Filter,
   Info,
+  AlertTriangle,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -53,6 +54,8 @@ type Document = {
   created_at: string;
   indexed?: boolean;
   chunk_count?: number;
+  source: 'legacy' | 'ingestion'; // Source of the document
+  status?: string; // For ingestion documents
 };
 
 export function RagDocumentsTab() {
@@ -69,27 +72,53 @@ export function RagDocumentsTab() {
   const loadDocuments = async () => {
     setLoading(true);
     
-    const docsResult = await safeQuery<Document[]>(
+    // Load legacy documents from 'documents' table
+    const legacyDocsResult = await safeQuery<{
+      id: string;
+      title: string;
+      description: string | null;
+      file_path: string;
+      file_type: string;
+      scope: string;
+      created_at: string;
+    }[]>(
       supabase
         .from('documents')
         .select('*')
         .order('created_at', { ascending: false }),
-      'RAG_DOCS_LOAD'
+      'RAG_DOCS_LOAD_LEGACY'
     );
 
-    if (!docsResult.success) {
-      logError('rag-docs', 'Error loading documents', docsResult.error);
-      errorToast(docsResult.error!);
+    // Load ingestion documents from 'rag_index_documents' table
+    const ingestionDocsResult = await safeQuery<{
+      id: string;
+      filename: string;
+      file_path: string | null;
+      context_type: string;
+      created_at: string;
+      status: string;
+      chunk_count: number;
+      detected_context: string | null;
+    }[]>(
+      supabase
+        .from('rag_index_documents')
+        .select('*')
+        .order('created_at', { ascending: false }),
+      'RAG_DOCS_LOAD_INGESTION'
+    );
+
+    if (!legacyDocsResult.success && !ingestionDocsResult.success) {
+      logError('rag-docs', 'Error loading documents', legacyDocsResult.error || ingestionDocsResult.error);
+      errorToast(legacyDocsResult.error || ingestionDocsResult.error || 'Erreur de chargement');
       setLoading(false);
       return;
     }
 
-    // Get chunk counts per document
+    // Get chunk counts per document from guide_chunks
     const chunksResult = await safeQuery<{ block_id: string }[]>(
       supabase
         .from('guide_chunks')
-        .select('block_id')
-        .eq('block_type', 'document'),
+        .select('block_id'),
       'RAG_DOCS_LOAD_CHUNKS'
     );
 
@@ -98,11 +127,40 @@ export function RagDocumentsTab() {
       chunkCounts.set(c.block_id, (chunkCounts.get(c.block_id) || 0) + 1);
     });
 
-    setDocuments((docsResult.data || []).map(doc => ({
-      ...doc,
-      indexed: chunkCounts.has(doc.id),
-      chunk_count: chunkCounts.get(doc.id) || 0,
-    })));
+    // Merge both sources
+    const allDocs: Document[] = [];
+
+    // Add legacy documents
+    (legacyDocsResult.data || []).forEach(doc => {
+      allDocs.push({
+        ...doc,
+        source: 'legacy',
+        indexed: chunkCounts.has(doc.id),
+        chunk_count: chunkCounts.get(doc.id) || 0,
+      });
+    });
+
+    // Add ingestion documents (only completed ones)
+    (ingestionDocsResult.data || []).forEach(doc => {
+      allDocs.push({
+        id: doc.id,
+        title: doc.filename,
+        description: doc.detected_context ? `Contexte: ${doc.detected_context}` : null,
+        file_path: doc.file_path || '',
+        file_type: doc.filename.split('.').pop() || 'unknown',
+        scope: doc.context_type || 'documents',
+        created_at: doc.created_at,
+        source: 'ingestion',
+        status: doc.status,
+        indexed: doc.status === 'completed' && doc.chunk_count > 0,
+        chunk_count: doc.chunk_count || 0,
+      });
+    });
+
+    // Sort by date
+    allDocs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    setDocuments(allDocs);
     setLoading(false);
   };
 
@@ -192,14 +250,18 @@ export function RagDocumentsTab() {
 
     try {
       // Storage delete
-      await supabase.storage.from('documents').remove([doc.file_path]);
+      if (doc.file_path) {
+        const bucket = doc.source === 'ingestion' ? 'rag-documents' : 'documents';
+        await supabase.storage.from(bucket).remove([doc.file_path]);
+      }
     } catch (storageError) {
       logError('rag-docs', 'Storage delete error', storageError);
     }
 
-    // Delete document record
+    // Delete document record from appropriate table
+    const tableName = doc.source === 'ingestion' ? 'rag_index_documents' : 'documents';
     const deleteDocResult = await safeMutation(
-      supabase.from('documents').delete().eq('id', doc.id),
+      supabase.from(tableName).delete().eq('id', doc.id),
       'RAG_DOCS_DELETE'
     );
 
@@ -224,13 +286,16 @@ export function RagDocumentsTab() {
     await loadDocuments();
   };
 
-  const getDownloadUrl = (path: string) => {
-    const { data } = supabase.storage.from('documents').getPublicUrl(path);
+  const getDownloadUrl = (doc: Document) => {
+    if (!doc.file_path) return '#';
+    const bucket = doc.source === 'ingestion' ? 'rag-documents' : 'documents';
+    const { data } = supabase.storage.from(bucket).getPublicUrl(doc.file_path);
     return data.publicUrl;
   };
 
-  const notIndexedCount = filteredDocuments.filter(d => !d.indexed).length;
+  const notIndexedCount = filteredDocuments.filter(d => !d.indexed && d.status !== 'failed').length;
   const indexedCount = filteredDocuments.filter(d => d.indexed).length;
+  const failedCount = filteredDocuments.filter(d => d.status === 'failed').length;
 
   return (
     <div className="space-y-6">
@@ -321,6 +386,12 @@ export function RagDocumentsTab() {
                   <EyeOff className="h-3 w-3 text-muted-foreground" />
                   {notIndexedCount} en attente
                 </span>
+                {failedCount > 0 && (
+                  <span className="flex items-center gap-1 text-destructive">
+                    <AlertTriangle className="h-3 w-3" />
+                    {failedCount} échec(s)
+                  </span>
+                )}
               </CardDescription>
             </div>
             <div className="flex gap-2">
@@ -354,12 +425,16 @@ export function RagDocumentsTab() {
           ) : (
             <div className="space-y-2 max-h-[500px] overflow-y-auto">
               {filteredDocuments.map((doc) => (
-                <Card key={doc.id} className="p-3">
+                <Card key={doc.id} className={`p-3 ${doc.status === 'failed' ? 'border-destructive/50' : ''}`}>
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-medium text-sm truncate">{doc.title}</p>
-                        {doc.indexed ? (
+                        {doc.status === 'failed' ? (
+                          <Badge variant="destructive" className="text-xs">
+                            Échec
+                          </Badge>
+                        ) : doc.indexed ? (
                           <Badge variant="default" className="text-xs bg-green-500/10 text-green-600 border-green-200">
                             <Eye className="w-3 h-3 mr-1" />
                             {doc.chunk_count} chunks
@@ -368,6 +443,11 @@ export function RagDocumentsTab() {
                           <Badge variant="secondary" className="text-xs">
                             <EyeOff className="w-3 h-3 mr-1" />
                             Non indexé
+                          </Badge>
+                        )}
+                        {doc.source === 'ingestion' && (
+                          <Badge variant="outline" className="text-xs text-blue-600 border-blue-200">
+                            Ingestion
                           </Badge>
                         )}
                       </div>
@@ -384,25 +464,29 @@ export function RagDocumentsTab() {
                       </div>
                     </div>
                     <div className="flex gap-1 ml-2 shrink-0">
-                      <Button size="icon" variant="ghost" className="h-7 w-7" asChild>
-                        <a href={getDownloadUrl(doc.file_path)} target="_blank" rel="noopener noreferrer" title="Télécharger">
-                          <Download className="w-3 h-3" />
-                        </a>
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7"
-                        onClick={() => handleIndexDocument(doc)}
-                        disabled={indexingDoc === doc.id}
-                        title={doc.indexed ? 'Ré-indexer' : 'Indexer'}
-                      >
-                        {indexingDoc === doc.id ? (
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                        ) : (
-                          <Database className="w-3 h-3" />
-                        )}
-                      </Button>
+                      {doc.file_path && (
+                        <Button size="icon" variant="ghost" className="h-7 w-7" asChild>
+                          <a href={getDownloadUrl(doc)} target="_blank" rel="noopener noreferrer" title="Télécharger">
+                            <Download className="w-3 h-3" />
+                          </a>
+                        </Button>
+                      )}
+                      {doc.source === 'legacy' && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7"
+                          onClick={() => handleIndexDocument(doc)}
+                          disabled={indexingDoc === doc.id}
+                          title={doc.indexed ? 'Ré-indexer' : 'Indexer'}
+                        >
+                          {indexingDoc === doc.id ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <Database className="w-3 h-3" />
+                          )}
+                        </Button>
+                      )}
                       <Button
                         size="icon"
                         variant="ghost"
