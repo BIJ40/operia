@@ -113,13 +113,19 @@ export async function loadDataForSources(
 
 /**
  * Crée un index des projets par ID pour les jointures rapides
+ * Index par BOTH string et number pour garantir le matching
  */
 export function indexProjectsById(projects: any[]): Map<string | number, any> {
   const index = new Map<string | number, any>();
   
   for (const project of projects) {
-    if (project.id) {
+    if (project.id !== undefined && project.id !== null) {
+      // Index par les deux types pour éviter les problèmes de type-mismatch
       index.set(project.id, project);
+      index.set(String(project.id), project);
+      if (typeof project.id === 'string' && !isNaN(Number(project.id))) {
+        index.set(Number(project.id), project);
+      }
     }
   }
   
