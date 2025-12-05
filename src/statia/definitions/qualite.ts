@@ -349,11 +349,39 @@ export const nbMoyenInterventionsParDossier: StatDefinition = {
  * DELAI_CREATION_DOSSIER_PREMIER_DEVIS_ENVOYE
  * Source : apiGetProjects (created_at + data.history)
  * Périmètre : dossiers ayant au moins une transition d'état * => Devis envoyé (kind=2)
- * Date de début : project.created_at
+ * Date de début : project.created_at (timestamp ISO)
  * Date de fin : première history.dateModif où labelKind se termine par " => Devis envoyé"
+ * Format dateModif : "dd/MM/yyyy HH:mm:ss" (heure locale France)
  * Unité : jours
  * Exclusions : dossiers sans devis envoyé, dossiers sans history cohérente
  */
+
+// Parser une date au format "dd/MM/yyyy HH:mm:ss" (format Apogée)
+function parseDateModifApogee(dateStr: string): Date | null {
+  if (!dateStr) return null;
+  
+  // Format attendu: "dd/MM/yyyy HH:mm:ss" ou "dd/MM/yyyy"
+  const match = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}):(\d{2}))?$/);
+  if (!match) {
+    // Essayer format ISO au cas où
+    const isoDate = new Date(dateStr);
+    return isNaN(isoDate.getTime()) ? null : isoDate;
+  }
+  
+  const [, day, month, year, hours = '0', minutes = '0', seconds = '0'] = match;
+  // Créer la date en heure locale (Europe/Paris assumé)
+  const date = new Date(
+    parseInt(year, 10),
+    parseInt(month, 10) - 1, // mois 0-indexé
+    parseInt(day, 10),
+    parseInt(hours, 10),
+    parseInt(minutes, 10),
+    parseInt(seconds, 10)
+  );
+  
+  return isNaN(date.getTime()) ? null : date;
+}
+
 export const delaiDossierPremierDevis: StatDefinition = {
   id: 'delai_dossier_premier_devis',
   label: 'Délai 1er devis',
@@ -375,6 +403,7 @@ export const delaiDossierPremierDevis: StatDefinition = {
       noCreatedAt: 0, 
       noHistory: 0,
       noDevisEnvoye: 0, 
+      invalidDateModif: 0,
       negative: 0, 
       ok: 0 
     };
@@ -388,7 +417,7 @@ export const delaiDossierPremierDevis: StatDefinition = {
         continue;
       }
       
-      // Date de création du dossier = project.created_at
+      // Date de création du dossier = project.created_at (format ISO)
       const createdAtStr = project.created_at;
       if (!createdAtStr) {
         debugStats.noCreatedAt++;
@@ -407,35 +436,50 @@ export const delaiDossierPremierDevis: StatDefinition = {
         continue;
       }
       
-      // Chercher dans data.history (pas history directement)
+      // Chercher dans data.history
       const history = project.data?.history || [];
       if (!Array.isArray(history) || history.length === 0) {
         debugStats.noHistory++;
         continue;
       }
       
-      // Trouver la première entrée où labelKind se termine par " => Devis envoyé"
-      // kind=2 indique une transition d'état
-      const devisEnvoyeEvents = history
+      // Trouver toutes les transitions "* => Devis envoyé" (kind=2)
+      // labelKind doit se terminer par " => Devis envoyé" (avec espace avant =>)
+      const devisEnvoyeEntries = history
         .filter((h: any) => {
-          const labelKind = h.labelKind || '';
-          // labelKind doit se terminer par " => Devis envoyé" (insensible à la casse)
-          return labelKind.toLowerCase().endsWith('=> devis envoyé');
-        })
-        .map((h: any) => {
-          const dateStr = h.dateModif;
-          return dateStr ? new Date(dateStr) : null;
-        })
-        .filter((d: Date | null): d is Date => d !== null && !isNaN(d.getTime()))
-        .sort((a: Date, b: Date) => a.getTime() - b.getTime());
+          // kind === 2 = transition d'état (optionnel mais recommandé)
+          const kind = h.kind;
+          const labelKind = (h.labelKind || '').trim();
+          
+          // Le labelKind doit se terminer par " => Devis envoyé" ou "=> Devis envoyé"
+          const endsWithDevisEnvoye = labelKind.toLowerCase().endsWith('=> devis envoyé');
+          
+          // Si kind est défini, vérifier qu'il est égal à 2
+          if (kind !== undefined && kind !== 2) {
+            return false;
+          }
+          
+          return endsWithDevisEnvoye;
+        });
       
-      if (devisEnvoyeEvents.length === 0) {
+      if (devisEnvoyeEntries.length === 0) {
         debugStats.noDevisEnvoye++;
         continue;
       }
       
-      // Premier devis envoyé = première dateModif trouvée
-      const firstDevisDate = devisEnvoyeEvents[0];
+      // Parser les dateModif (format "dd/MM/yyyy HH:mm:ss")
+      const parsedDates = devisEnvoyeEntries
+        .map((h: any) => parseDateModifApogee(h.dateModif))
+        .filter((d: Date | null): d is Date => d !== null);
+      
+      if (parsedDates.length === 0) {
+        debugStats.invalidDateModif++;
+        continue;
+      }
+      
+      // Trier par date croissante et prendre la PREMIÈRE (premier envoi de devis)
+      parsedDates.sort((a, b) => a.getTime() - b.getTime());
+      const firstDevisDate = parsedDates[0];
       
       const diffMs = firstDevisDate.getTime() - createdAt.getTime();
       const diffDays = diffMs / (1000 * 60 * 60 * 24);
@@ -451,7 +495,7 @@ export const delaiDossierPremierDevis: StatDefinition = {
     }
     
     console.log('[StatIA] delai_dossier_premier_devis debug:', debugStats);
-    console.log('[StatIA] delais sample:', delais.slice(0, 5).map(d => Math.round(d)));
+    console.log('[StatIA] delais sample (jours):', delais.slice(0, 10).map(d => Math.round(d)));
     
     // Si aucun dossier avec devis envoyé → renvoyer null, pas 0
     const moyenne = delais.length > 0 
