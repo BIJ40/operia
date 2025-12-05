@@ -44,6 +44,84 @@ function extractUniversesFromProject(project: any): string[] {
 }
 
 /**
+ * DEBUG - Comptage brut des factures
+ * Pour diagnostic : vérifie que StatIA reçoit des factures
+ */
+export const debugFacturesCount: StatDefinition = {
+  id: 'debug_factures_count',
+  label: 'DEBUG – Nombre de factures',
+  description: 'Diagnostic: nombre de factures chargées et traitées',
+  category: 'ca',
+  source: ['factures', 'projects'],
+  dimensions: [],
+  aggregation: 'count',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { factures, projects } = data;
+    const projectsById = indexProjectsById(projects);
+    
+    let nbTotal = factures.length;
+    let nbAvecDate = 0;
+    let nbDansPeriode = 0;
+    let nbStateOk = 0;
+    let nbMontantOk = 0;
+    let nbAvecProject = 0;
+    let nbAvecUnivers = 0;
+    
+    for (const facture of factures) {
+      const meta = extractFactureMeta(facture);
+      
+      // Check date
+      if (meta.date) nbAvecDate++;
+      
+      // Check period
+      if (params.dateRange && meta.date) {
+        if (meta.date >= params.dateRange.start && meta.date <= params.dateRange.end) {
+          nbDansPeriode++;
+        }
+      } else if (!params.dateRange) {
+        nbDansPeriode++;
+      }
+      
+      // Check state
+      if (isFactureStateIncluded(facture.state)) nbStateOk++;
+      
+      // Check montant
+      if (meta.montantNetHT !== 0) nbMontantOk++;
+      
+      // Check project join
+      const projectIdRaw = facture.projectId || facture.project_id || facture.data?.projectId;
+      const projectId = projectIdRaw ? String(projectIdRaw) : null;
+      const project = projectId ? (projectsById.get(projectId) || projectsById.get(Number(projectId))) : null;
+      if (project) nbAvecProject++;
+      
+      // Check univers
+      if (project) {
+        const universes = extractUniversesFromProject(project);
+        if (universes.length > 0) nbAvecUnivers++;
+      }
+    }
+    
+    return {
+      value: {
+        nbFacturesTotal: nbTotal,
+        nbProjectsCharges: projects.length,
+        nbAvecDate,
+        nbDansPeriode,
+        nbStateOk,
+        nbMontantOk,
+        nbAvecProjectJoin: nbAvecProject,
+        nbAvecUniversExploitable: nbAvecUnivers,
+      },
+      metadata: {
+        computedAt: new Date(),
+        source: 'factures',
+        recordCount: nbTotal,
+      },
+    };
+  }
+};
+
+/**
  * CA par Univers
  * 
  * RÈGLES:
@@ -70,6 +148,9 @@ export const caParUnivers: StatDefinition = {
     let totalCA = 0;
     let nbFacturesTraitees = 0;
     
+    // DEBUG: log pour comprendre
+    console.log('[StatIA ca_par_univers] factures:', factures.length, 'projects:', projects.length);
+    
     for (const facture of factures) {
       const meta = extractFactureMeta(facture);
       
@@ -79,14 +160,13 @@ export const caParUnivers: StatDefinition = {
       // RÈGLE: Ignorer montants nuls
       if (meta.montantNetHT === 0) continue;
       
-      // RÈGLE: Filtre période (si définie)
+      // RÈGLE: Filtre période (si définie) - mais si pas de date, on inclut quand même
       if (params.dateRange && meta.date) {
         if (meta.date < params.dateRange.start || meta.date > params.dateRange.end) continue;
       }
       
       const projectIdRaw = facture.projectId || facture.project_id || facture.data?.projectId;
       const projectId = projectIdRaw ? String(projectIdRaw) : null;
-      // Try both string and number lookup for project
       const project = projectId ? (projectsById.get(projectId) || projectsById.get(Number(projectId))) : null;
       
       // Extraire univers (même logique que technicienUniversEngine)
@@ -105,6 +185,8 @@ export const caParUnivers: StatDefinition = {
       totalCA += meta.montantNetHT;
       nbFacturesTraitees++;
     }
+    
+    console.log('[StatIA ca_par_univers] traites:', nbFacturesTraitees, 'CA total:', totalCA, 'univers:', Object.keys(byUnivers));
     
     // Arrondir les valeurs
     for (const key of Object.keys(byUnivers)) {
@@ -263,6 +345,7 @@ export const panierMoyenParUnivers: StatDefinition = {
 };
 
 export const universDefinitions = {
+  debug_factures_count: debugFacturesCount,
   ca_par_univers: caParUnivers,
   dossiers_par_univers: dossiersParUnivers,
   panier_moyen_par_univers: panierMoyenParUnivers,
