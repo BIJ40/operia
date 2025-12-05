@@ -2,7 +2,7 @@ import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import {
   GraduationCap, FileText, FolderOpen, BarChart3, ListTodo, Tv,
   Headset, Network, Building2, PieChart, GitCompare, Briefcase,
-  Coins, Settings, Users, Database, Activity, ChevronRight, Home, Calendar, LifeBuoy, MessageCircle, Kanban, HelpCircle, Sparkles, Wrench
+  Coins, Settings, Users, Database, Activity, ChevronRight, Home, Calendar, LifeBuoy, MessageCircle, Kanban, FolderKanban, HelpCircle, Sparkles, Wrench
 } from 'lucide-react';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import {
@@ -261,7 +261,7 @@ export function UnifiedSidebar() {
       label: 'Gestion de Projet',
       labelKey: 'projects',
       indexUrl: ROUTES.projects.index,
-      icon: Kanban,
+      icon: FolderKanban,
       items: [
         { title: 'Kanban', url: ROUTES.projects.kanban, icon: Kanban, description: 'Tableau de bord projet' },
         { title: 'Liste', url: ROUTES.projects.list, icon: ListTodo, description: 'Vue liste des tickets' },
