@@ -141,13 +141,40 @@ export default function FormationGenerator() {
     return { complete, total: category.sections.length };
   };
 
-  // Filter only Apogée categories (exclude HelpConfort which have certain patterns)
+  // Keywords that identify Apogée SOFTWARE modules (the actual software features)
+  const APOGEE_SOFTWARE_KEYWORDS = [
+    "devis", "facture", "planning", "dossier", "intervention", "règlement", "reglement",
+    "stock", "chiffrage", "sav", "fournisseur", "produit", "prestation",
+    "chantier", "travaux", "sinistre", "relance", "tableau de bord", "statistique",
+    "export", "import", "paramètre", "config", "utilisateur", "base article",
+    "modèle", "template", "compte rendu", "cr ", "mail", "sms", "rappel",
+    "signature", "bon de commande", "avoir", "acompte", "photo", "image", "navigation"
+  ];
+
+  // Keywords that identify HelpConfort FRANCHISE modules (business/franchise content)
+  const HELPCONFORT_KEYWORDS = [
+    "help confort", "helpconfort", "help! confort", "franchise", "entreprise",
+    "local", "agence", "introduction", "principes", "généralités", "generalites",
+    "présentation", "creation", "juridique", "social", "rh", "formation",
+    "commercial", "marketing", "communication", "ouverture", "accompagnement",
+    "réseau", "animateur", "redevance", "royalt"
+  ];
+
+  // Separate categories into Apogée SOFTWARE vs HelpConfort FRANCHISE
   const apogeeCategories = categories.filter(cat => {
-    // HelpConfort categories usually contain "HelpConfort" or specific terms
-    const isHelpConfort = cat.title.toLowerCase().includes("helpconfort") || 
-                          cat.title.toLowerCase().includes("help confort") ||
-                          cat.title.toLowerCase().includes("franchise");
-    return !isHelpConfort;
+    const titleLower = cat.title.toLowerCase();
+    const isHelpConfort = HELPCONFORT_KEYWORDS.some(kw => titleLower.includes(kw));
+    const isApogee = APOGEE_SOFTWARE_KEYWORDS.some(kw => titleLower.includes(kw));
+    // If it matches Apogée keywords OR doesn't match HelpConfort keywords
+    return isApogee || !isHelpConfort;
+  });
+
+  const helpconfortCategories = categories.filter(cat => {
+    const titleLower = cat.title.toLowerCase();
+    const isHelpConfort = HELPCONFORT_KEYWORDS.some(kw => titleLower.includes(kw));
+    const isApogee = APOGEE_SOFTWARE_KEYWORDS.some(kw => titleLower.includes(kw));
+    // HelpConfort if matches HelpConfort keywords AND doesn't match Apogée
+    return isHelpConfort && !isApogee;
   });
 
   if (blocksLoading) {
@@ -228,16 +255,16 @@ export default function FormationGenerator() {
           </Button>
         </div>
 
-        {/* Categories list */}
+        {/* Categories list - APOGÉE (Logiciel) */}
         <Card>
           <CardHeader>
-            <CardTitle>Modules Apogée</CardTitle>
+            <CardTitle className="text-helpconfort-blue">🖥️ Modules Apogée (Logiciel)</CardTitle>
             <CardDescription>
               {apogeeCategories.length} catégories • {apogeeCategories.reduce((sum, c) => sum + c.sections.length, 0)} sections
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[600px] pr-4">
+            <ScrollArea className="h-[400px] pr-4">
               <div className="space-y-2">
                 {apogeeCategories.map(category => {
                   const isExpanded = expandedCategories.has(category.id);
@@ -246,11 +273,11 @@ export default function FormationGenerator() {
 
                   return (
                     <Collapsible key={category.id} open={isExpanded}>
-                      <div className="border rounded-lg">
+                      <div className="border rounded-lg border-helpconfort-blue/20">
                         <CollapsibleTrigger asChild>
                           <button
                             onClick={() => toggleCategory(category.id)}
-                            className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+                            className="w-full flex items-center justify-between p-4 hover:bg-helpconfort-blue/5 transition-colors"
                           >
                             <div className="flex items-center gap-3">
                               {isExpanded ? (
@@ -337,6 +364,118 @@ export default function FormationGenerator() {
             </ScrollArea>
           </CardContent>
         </Card>
+
+        {/* Categories list - HELPCONFORT (Franchise) */}
+        {helpconfortCategories.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-helpconfort-orange">🏠 Modules Help! Confort (Franchise)</CardTitle>
+              <CardDescription>
+                {helpconfortCategories.length} catégories • {helpconfortCategories.reduce((sum, c) => sum + c.sections.length, 0)} sections
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[400px] pr-4">
+                <div className="space-y-2">
+                  {helpconfortCategories.map(category => {
+                    const isExpanded = expandedCategories.has(category.id);
+                    const progress = getCategoryProgress(category);
+                    const allComplete = progress.complete === progress.total;
+
+                    return (
+                      <Collapsible key={category.id} open={isExpanded}>
+                        <div className="border rounded-lg border-helpconfort-orange/20">
+                          <CollapsibleTrigger asChild>
+                            <button
+                              onClick={() => toggleCategory(category.id)}
+                              className="w-full flex items-center justify-between p-4 hover:bg-helpconfort-orange/5 transition-colors"
+                            >
+                              <div className="flex items-center gap-3">
+                                {isExpanded ? (
+                                  <ChevronDown className="w-4 h-4" />
+                                ) : (
+                                  <ChevronRight className="w-4 h-4" />
+                                )}
+                                <span className="font-medium">{category.title}</span>
+                                <Badge variant="secondary" className="ml-2">
+                                  {progress.complete}/{progress.total}
+                                </Badge>
+                                {allComplete && (
+                                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                )}
+                              </div>
+                              <Button
+                                size="sm"
+                                variant={allComplete ? "outline" : "default"}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleGenerateAll(category);
+                                }}
+                                disabled={generatingBlocks.size > 0}
+                              >
+                                {allComplete ? (
+                                  <>
+                                    <RefreshCw className="w-3 h-3 mr-1" />
+                                    Régénérer tout
+                                  </>
+                                ) : (
+                                  <>
+                                    <Sparkles className="w-3 h-3 mr-1" />
+                                    Générer tout
+                                  </>
+                                )}
+                              </Button>
+                            </button>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            <div className="border-t px-4 py-2 space-y-2 bg-muted/20">
+                              {category.sections.map(section => {
+                                const status = getBlockStatus(section.id);
+                                const isGenerating = generatingBlocks.has(section.id);
+
+                                return (
+                                  <div
+                                    key={section.id}
+                                    className="flex items-center justify-between py-2 px-3 rounded-md bg-background"
+                                  >
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                      <span className="text-sm truncate">{section.title}</span>
+                                      {getStatusBadge(status)}
+                                      {status?.extracted_images && status.extracted_images.length > 0 && (
+                                        <Badge variant="outline" className="text-xs">
+                                          <ImageIcon className="w-3 h-3 mr-1" />
+                                          {status.extracted_images.length}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => handleGenerate(section.id)}
+                                      disabled={isGenerating || generatingBlocks.size > 3}
+                                    >
+                                      {isGenerating ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                      ) : status?.status === "complete" ? (
+                                        <RefreshCw className="w-4 h-4" />
+                                      ) : (
+                                        <Sparkles className="w-4 h-4" />
+                                      )}
+                                    </Button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </CollapsibleContent>
+                        </div>
+                      </Collapsible>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        )}
     </div>
   );
 }
