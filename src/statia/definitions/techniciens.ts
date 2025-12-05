@@ -281,8 +281,63 @@ export const topTechniciensCA: StatDefinition = {
   }
 };
 
+/**
+ * CA Moyen par Technicien (mois en cours)
+ * KPI simple : CA total productif / nombre de techniciens actifs
+ * 
+ * Règle métier :
+ * - Période = dateRange fourni (typiquement mois en cours)
+ * - Factures : normales + avoirs (négatifs) 
+ * - Techniciens actifs = ceux ayant au moins une part de CA > 0
+ * - Formule : CA_total / nb_tech_actifs
+ */
+export const caMoyenParTech: StatDefinition = {
+  id: 'ca_moyen_par_tech',
+  label: 'CA moyen par technicien',
+  description: 'CA productif moyen par technicien sur la période (factures productives, visites validées, répartition prorata techniciens)',
+  category: 'technicien',
+  source: ['factures', 'projects', 'interventions', 'users'],
+  dimensions: [],
+  aggregation: 'avg',
+  unit: '€',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    // Réutiliser le calcul CA par technicien
+    const baseResult = caParTechnicien.compute(data, params);
+    const caByTech = baseResult.value as Record<string, number>;
+    
+    // Filtrer les techniciens actifs (CA > 0)
+    const techsActifs = Object.entries(caByTech).filter(([, ca]) => ca > 0);
+    const nbTechActifs = techsActifs.length;
+    
+    // Calculer CA total productif
+    const caTotal = techsActifs.reduce((sum, [, ca]) => sum + ca, 0);
+    
+    // CA moyen (éviter division par 0)
+    const caMoyen = nbTechActifs > 0 ? caTotal / nbTechActifs : 0;
+    
+    return {
+      value: caMoyen,
+      metadata: {
+        computedAt: new Date(),
+        source: 'factures',
+        recordCount: nbTechActifs,
+      },
+      breakdown: {
+        caTotal,
+        nbTechActifs,
+        techniciens: techsActifs.map(([id, ca]) => ({
+          id,
+          name: baseResult.breakdown?.names?.[id] || `Tech ${id}`,
+          ca,
+        })),
+      }
+    };
+  }
+};
+
 export const techniciensDefinitions = {
   ca_par_technicien_univers: caParTechnicienUnivers,
   ca_par_technicien: caParTechnicien,
   top_techniciens_ca: topTechniciensCA,
+  ca_moyen_par_tech: caMoyenParTech,
 };
