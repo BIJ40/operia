@@ -250,9 +250,109 @@ export const montantDevis: StatDefinition = {
   }
 };
 
+/**
+ * Devis signés mais non facturés
+ * Stock de travaux à lancer / facturer
+ * Périmètre : devis avec état ∈ {accepted, validated, signed, order}
+ * Filtre : aucun mouvement de facture sur le projet (0 facture, ou facture totale = 0)
+ */
+export const devisSignesNonFactures: StatDefinition = {
+  id: 'devis_signes_non_factures',
+  label: 'Devis Signés Non Facturés',
+  description: 'Stock de CA : devis acceptés/signés sans facture associée',
+  category: 'devis',
+  source: ['devis', 'factures', 'projects'],
+  aggregation: 'sum',
+  unit: '€',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { devis, factures, projects } = data;
+    
+    // États considérés comme "signés/acceptés"
+    const SIGNED_STATES = ['accepted', 'validated', 'signed', 'order'];
+    
+    // Indexer les projets par ID (string et number)
+    const projectsById = new Map<string, any>();
+    for (const p of projects || []) {
+      projectsById.set(String(p.id), p);
+      if (typeof p.id === 'number') projectsById.set(p.id.toString(), p);
+    }
+    
+    // Calculer le CA facturé par projet
+    const caFactureParProjet = new Map<string, number>();
+    for (const f of factures || []) {
+      const projectId = String(f.projectId || f.data?.projectId || '');
+      if (!projectId) continue;
+      
+      // Exclure les avoirs du calcul du CA facturé
+      const typeFacture = (f.typeFacture || f.data?.typeFacture || '').toString().toLowerCase();
+      if (typeFacture === 'avoir') continue;
+      
+      const rawMontant = f.data?.totalHT ?? f.totalHT ?? 0;
+      const montant = typeof rawMontant === 'string' ? parseFloat(rawMontant) || 0 : Number(rawMontant) || 0;
+      
+      caFactureParProjet.set(projectId, (caFactureParProjet.get(projectId) || 0) + montant);
+    }
+    
+    let totalHT = 0;
+    let nbDevis = 0;
+    const projetsIds = new Set<string>();
+    
+    for (const d of devis || []) {
+      // Filtre par date
+      const dateStr = d.dateReelle || d.date || d.dateCreation || d.data?.dateReelle || d.data?.date || d.created_at;
+      if (dateStr && params.dateRange) {
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) continue;
+        if (date < params.dateRange.start || date > params.dateRange.end) continue;
+      }
+      
+      // Vérifier l'état du devis (signé/accepté)
+      const state = (d.state || d.statut || d.data?.state || d.data?.statut || '').toString().toLowerCase();
+      if (!SIGNED_STATES.includes(state)) continue;
+      
+      // Récupérer le projet
+      const projectId = String(d.projectId || d.data?.projectId || '');
+      if (!projectId) continue;
+      
+      // Vérifier que le projet n'a pas de facture (ou facture à 0)
+      const caFacture = caFactureParProjet.get(projectId) || 0;
+      if (caFacture > 0) continue; // Projet déjà facturé, on l'ignore
+      
+      // Ajouter au stock
+      const rawMontant = d.data?.totalHT ?? d.totalHT ?? 0;
+      const montant = typeof rawMontant === 'string' ? parseFloat(rawMontant) || 0 : Number(rawMontant) || 0;
+      
+      totalHT += montant;
+      nbDevis++;
+      projetsIds.add(projectId);
+    }
+    
+    logDebug('STATIA', 'devisSignesNonFactures - RESULT', {
+      totalHT,
+      nbDevis,
+      nbProjets: projetsIds.size,
+    });
+    
+    return {
+      value: totalHT,
+      metadata: {
+        computedAt: new Date(),
+        source: 'devis',
+        recordCount: nbDevis,
+      },
+      breakdown: {
+        montantHT: totalHT,
+        nbDevis: nbDevis,
+        nbProjets: projetsIds.size,
+      }
+    };
+  }
+};
+
 export const devisDefinitions = {
   taux_transformation_devis_nombre: tauxTransformationDevisNombre,
   taux_transformation_devis_montant: tauxTransformationDevisMontant,
   nombre_devis: nombreDevis,
   montant_devis: montantDevis,
+  devis_signes_non_factures: devisSignesNonFactures,
 };
