@@ -52,7 +52,8 @@ import { HeatPriorityBadge } from './HeatPriorityBadge';
 import { OwnerSideSlider, ownerSideToSliderValue, sliderValueToOwnerSide } from './OwnerSideSlider';
 import { Slider } from '@/components/ui/slider';
 import { useAuth } from '@/contexts/AuthContext';
-import { useMyTicketRole, useAllowedTransitions, useLogTicketAction } from '../hooks/useTicketPermissions';
+import { useMyTicketRole, useAllowedTransitions, useLogTicketAction, useTicketHistory } from '../hooks/useTicketPermissions';
+import { TicketTimelineTab } from './TicketTimelineTab';
 import { errorToast } from '@/lib/toastHelpers';
 import { TagSelector } from './TagSelector';
 import { TicketDuplicatesSection } from './TicketDuplicatesSection';
@@ -370,10 +371,14 @@ export function TicketDetailDrawer({
         <Tabs defaultValue="main" className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="mx-6 mt-2 w-auto justify-start">
             <TabsTrigger value="main">Ticket</TabsTrigger>
+            <TabsTrigger value="timeline" className="flex items-center gap-1">
+              <History className="h-3 w-3" />
+              Historique
+            </TabsTrigger>
             {ticket.is_qualified && ticket.original_title && (
               <TabsTrigger value="history" className="flex items-center gap-1">
-                <History className="h-3 w-3" />
-                Historique qualif
+                <GitBranch className="h-3 w-3" />
+                Qualif. IA
               </TabsTrigger>
             )}
             <TabsTrigger value="documents" className="flex items-center gap-1">
@@ -730,6 +735,9 @@ export function TicketDetailDrawer({
               </div>
             </ScrollArea>
           </TabsContent>
+
+          {/* Onglet Timeline - Historique complet */}
+          <TicketTimelineTab ticketId={ticket.id} statuses={statuses} />
 
           {/* Onglet Historique Qualification */}
           {ticket.is_qualified && ticket.original_title && (

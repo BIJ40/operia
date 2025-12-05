@@ -3,7 +3,7 @@
  * Avec guard d'accès basé sur les permissions utilisateur
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -17,9 +17,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns, Eye, Shield, Loader2, ShieldAlert, Download, FileText, Sheet, FileDown, LayoutGrid, List, FileCheck, AlertTriangle, Copy } from 'lucide-react';
+import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns, Eye, Shield, Loader2, ShieldAlert, Download, FileText, Sheet, FileDown, LayoutGrid, List, FileCheck, AlertTriangle, Copy, RotateCcw } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
+import { usePersistedFilters } from '../hooks/usePersistedFilters';
 import { TicketKanban } from '../components/TicketKanban';
 import { TicketFilters } from '../components/TicketFilters';
 import { TicketDetailDrawer } from '../components/TicketDetailDrawer';
@@ -92,7 +93,17 @@ export default function ApogeeTicketsKanbanPage() {
 function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) {
   const { isAdmin, isSupport, ticketRole, canManage, canImport, canViewKanban } = roleInfo;
   const navigate = useNavigate();
-  const [filters, setFilters] = useState<Filters>({});
+  
+  // Persistance des filtres et du ticket sélectionné
+  const { 
+    filters, 
+    setFilters, 
+    resetFilters, 
+    selectedTicketId, 
+    setSelectedTicketId,
+    hasActiveFilters 
+  } = usePersistedFilters();
+  
   const [selectedTicket, setSelectedTicket] = useState<ApogeeTicket | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showConfigDialog, setShowConfigDialog] = useState(false);
@@ -129,6 +140,15 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
 
   const { qualifyAllUnqualified, isQualifying } = useTicketQualification();
   
+  // Restaurer le ticket sélectionné depuis l'URL au chargement
+  useEffect(() => {
+    if (selectedTicketId && tickets.length > 0 && !selectedTicket) {
+      const ticket = tickets.find(t => t.id === selectedTicketId);
+      if (ticket) {
+        setSelectedTicket(ticket);
+      }
+    }
+  }, [selectedTicketId, tickets, selectedTicket]);
 
   // Compteurs (exclure EN_PROD pour les incomplets)
   const incompleteCount = tickets.filter(t => t.needs_completion && t.kanban_status !== 'EN_PROD').length;
@@ -141,6 +161,12 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
 
   const handleTicketClick = (ticket: ApogeeTicket) => {
     setSelectedTicket(ticket);
+    setSelectedTicketId(ticket.id);
+  };
+
+  const handleDrawerClose = () => {
+    setSelectedTicket(null);
+    setSelectedTicketId(null);
   };
 
   const handleTicketUpdate = (updates: Partial<ApogeeTicket> & { id: string }) => {
@@ -466,7 +492,7 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
       <TicketDetailDrawer
         ticket={selectedTicket}
         open={!!selectedTicket}
-        onClose={() => setSelectedTicket(null)}
+        onClose={handleDrawerClose}
         modules={modules}
         priorities={priorities}
         statuses={statuses}

@@ -51,6 +51,19 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+/**
+ * Sanitize filename for Supabase Storage
+ * Removes accents, replaces spaces, keeps only safe characters
+ */
+function sanitizeFileName(name: string): string {
+  return name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove accents
+    .replace(/\s+/g, '-')             // Spaces → hyphens
+    .replace(/[^a-zA-Z0-9._-]/g, '')  // Keep only safe characters
+    .toLowerCase();
+}
+
 export function FileManager({ 
   bucketName, 
   recordId, 
@@ -106,7 +119,8 @@ export function FileManager({
   // Upload mutation
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
-      const filePath = `${storagePath}/${Date.now()}-${file.name}`;
+      const sanitizedName = sanitizeFileName(file.name);
+      const filePath = `${storagePath}/${Date.now()}-${sanitizedName}`;
       const { error } = await (supabase.storage as any)
         .from(bucketName)
         .upload(filePath, file);
