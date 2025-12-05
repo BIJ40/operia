@@ -155,12 +155,15 @@ export const dossiersParApporteur: StatDefinition = {
       totalCount++;
     }
     
+    // Formater le résultat - utiliser les NOMS comme clés (pas les IDs)
     const result: Record<string, number> = {};
     const labels: Record<string, string> = {};
     
     for (const [id, data] of Object.entries(byApporteur)) {
-      result[id] = data.count;
-      labels[id] = data.label;
+      // Utiliser le label (nom) comme clé, pas l'ID
+      const key = data.label || `Apporteur ${id}`;
+      result[key] = (result[key] || 0) + data.count;
+      labels[key] = data.label;
     }
     
     return {
