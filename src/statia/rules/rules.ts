@@ -272,15 +272,21 @@ export interface FactureMeta {
 /**
  * Extrait les métadonnées d'une facture de façon unifiée
  * RÈGLES APPLIQUÉES :
- * - Date : dateReelle > dateEmission > created_at
+ * - Date : dateReelle > date > dateEmission > created_at
  * - Type : typeFacture > type > data.type > state
  * - Montant : data.totalHT > totalHT > montantHT
  * - Avoir : montant négatif si type === "avoir"
  */
 export function extractFactureMeta(facture: any): FactureMeta {
-  // Date unifiée avec priorité STATIA_RULES
-  const dateStr = facture.dateReelle || facture.dateEmission || facture.created_at 
-    || facture.data?.dateReelle || facture.data?.dateEmission || null;
+  // Date unifiée avec priorité STATIA_RULES (AJOUT de "date" en 2ème position)
+  const dateStr = facture.dateReelle 
+    || facture.date 
+    || facture.dateEmission 
+    || facture.created_at 
+    || facture.data?.dateReelle 
+    || facture.data?.date
+    || facture.data?.dateEmission 
+    || null;
   
   let date: Date | null = null;
   if (dateStr) {
