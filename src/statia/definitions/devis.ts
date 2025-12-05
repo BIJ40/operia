@@ -421,6 +421,7 @@ export const delaiMoyenAcceptationDevis: StatDefinition = {
 
       // 4) Date de validation/acceptation
       // Essayer plusieurs champs possibles dans l'ordre de priorité
+      // Fallback vers updated_at quand le devis est dans un état validé
       const dateValStr =
         d.dateValidation ||
         d.data?.dateValidation ||
@@ -429,9 +430,11 @@ export const delaiMoyenAcceptationDevis: StatDefinition = {
         d.dateSignature ||
         d.data?.dateSignature ||
         d.dateSigned ||
-        d.data?.dateSigned;
+        d.data?.dateSigned ||
+        d.updated_at ||  // Fallback : si validé, updated_at = date changement d'état
+        d.data?.updated_at;
 
-      // Si pas de date de validation explicite, on ne peut pas calculer le délai
+      // Si pas de date de validation, on ne peut pas calculer le délai
       if (!dateValStr) continue;
 
       const dateVal = new Date(dateValStr);
