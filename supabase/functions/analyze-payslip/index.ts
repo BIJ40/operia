@@ -1,11 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { handleCorsPreflightOrReject, withCors } from "../_shared/cors.ts";
 
 const PAYSLIP_EXTRACTION_PROMPT = `Tu es un expert en analyse de bulletins de paie français. À partir du texte OCR d'un bulletin de paie, tu dois extraire TOUTES les informations et retourner UNIQUEMENT un JSON structuré.
 
@@ -136,18 +132,18 @@ FORMAT JSON ATTENDU:
 IMPORTANT: Retourne UNIQUEMENT le JSON, sans texte avant ou après.`;
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Gestion CORS centralisée
+  const corsResponse = handleCorsPreflightOrReject(req);
+  if (corsResponse) return corsResponse;
 
   try {
     const { documentId, filePath, collaboratorId, agencyId } = await req.json();
 
     if (!documentId || !filePath) {
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: "documentId et filePath requis" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      ));
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -155,10 +151,10 @@ serve(async (req) => {
     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
 
     if (!lovableApiKey) {
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: "LOVABLE_API_KEY non configurée" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      ));
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -191,10 +187,10 @@ serve(async (req) => {
         })
         .eq("document_id", documentId);
 
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: "Impossible de télécharger le fichier", details: downloadError }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      ));
     }
 
     // Convertir le PDF en base64 (utiliser l'encodeur Deno natif pour éviter stack overflow)
@@ -244,10 +240,10 @@ serve(async (req) => {
         })
         .eq("document_id", documentId);
 
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: "Erreur lors de l'analyse AI", details: errorText }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      ));
     }
 
     const aiData = await aiResponse.json();
@@ -280,10 +276,10 @@ serve(async (req) => {
         })
         .eq("document_id", documentId);
 
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: "Erreur parsing JSON", raw: content }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      ));
     }
 
     // Extraire les champs clés pour les colonnes indexées
@@ -325,27 +321,27 @@ serve(async (req) => {
 
     if (updateError) {
       console.error("Erreur mise à jour payslip_data:", updateError);
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: "Erreur sauvegarde données", details: updateError }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      ));
     }
 
-    return new Response(
+    return withCors(req, new Response(
       JSON.stringify({ 
         success: true, 
         data: extractedData,
         warnings: extractedData.warnings || []
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+      { headers: { "Content-Type": "application/json" } }
+    ));
 
   } catch (error) {
     console.error("Erreur analyze-payslip:", error);
     const message = error instanceof Error ? error.message : "Erreur inconnue";
-    return new Response(
+    return withCors(req, new Response(
       JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    ));
   }
 });
