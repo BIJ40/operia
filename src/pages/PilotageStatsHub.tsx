@@ -164,7 +164,8 @@ function PilotageStatsHubContent() {
         nbDevisResult,
         panierMoyenResult,
         dureeDossierResult,
-        nbDossiersResult
+        nbDossiersResult,
+        delaiDevisResult
       ] = await Promise.all([
         computeStatSafe('ca_global_ht', loadedData, params),
         computeStatSafe('taux_sav_global', loadedData, params),
@@ -172,7 +173,8 @@ function PilotageStatsHubContent() {
         computeStatSafe('nombre_devis', loadedData, params),
         computeStatSafe('panier_moyen', loadedData, params),
         computeStatSafe('duree_moyenne_dossier', loadedData, params),
-        computeStatSafe('nb_dossiers_crees', loadedData, params)
+        computeStatSafe('nb_dossiers_crees', loadedData, params),
+        computeStatSafe('delai_premier_devis', loadedData, params)
       ]);
 
       return {
@@ -183,7 +185,7 @@ function PilotageStatsHubContent() {
         panierMoyen: (panierMoyenResult?.value as number) ?? 0,
         delaiDossier: (dureeDossierResult?.value as number) ?? 0,
         nbDossiers: (nbDossiersResult?.value as number) ?? 0,
-        delaiPremierDevis: 0 // TODO: migrate
+        delaiPremierDevis: (delaiDevisResult?.value as number) ?? 0
       };
     },
   });
