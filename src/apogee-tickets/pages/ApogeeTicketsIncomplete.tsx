@@ -86,7 +86,7 @@ function ModuleCombobox({
 
 export default function ApogeeTicketsIncomplete() {
   const navigate = useNavigate();
-  const { tickets: rawIncompleteTickets, isLoading } = useIncompleteTickets();
+  const { tickets: incompleteTickets, isLoading } = useIncompleteTickets();
   const { modules, priorities, statuses, updateTicket, deleteTicket } = useApogeeTickets();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -104,19 +104,15 @@ export default function ApogeeTicketsIncomplete() {
   };
 
   // Initialiser la liste stable une seule fois au chargement
-  // Exclure les tickets EN_PROD (TRAITÉ/PUBLIÉ) qui sont considérés complets
   useEffect(() => {
-    if (!isInitialized.current && rawIncompleteTickets.length > 0) {
-      const filtered = rawIncompleteTickets.filter(t => 
-        getMissingFields(t).length > 0 && t.kanban_status !== 'EN_PROD'
-      );
-      setStableTickets(filtered);
+    if (!isInitialized.current && incompleteTickets.length > 0) {
+      setStableTickets(incompleteTickets);
       isInitialized.current = true;
     }
-  }, [rawIncompleteTickets]);
+  }, [incompleteTickets]);
 
-  // Utiliser la liste stable pour la navigation
-  const incompleteTickets = stableTickets;
+  // Utiliser la liste stable pour la navigation (ou les tickets frais si pas encore init)
+  const ticketsToShow = stableTickets.length > 0 ? stableTickets : incompleteTickets;
 
   // Formulaire par ticket (conserve les valeurs lors de la navigation)
   const [formValuesByTicket, setFormValuesByTicket] = useState<Record<string, {
@@ -126,8 +122,8 @@ export default function ApogeeTicketsIncomplete() {
   }>>({});
 
   // Valeurs du formulaire pour le ticket courant
-  const currentTicketId = incompleteTickets[currentIndex]?.id;
-  const currentTicketData = incompleteTickets[currentIndex];
+  const currentTicketId = ticketsToShow[currentIndex]?.id;
+  const currentTicketData = ticketsToShow[currentIndex];
   const formValues = currentTicketId ? (formValuesByTicket[currentTicketId] || {
     module: null,
     heat_priority: null,
@@ -143,8 +139,8 @@ export default function ApogeeTicketsIncomplete() {
     }
   };
 
-  const currentTicket = incompleteTickets[currentIndex];
-  const totalTickets = incompleteTickets.length;
+  const currentTicket = ticketsToShow[currentIndex];
+  const totalTickets = ticketsToShow.length;
   const progressPercent = totalTickets > 0 ? Math.round(((currentIndex) / totalTickets) * 100) : 0;
 
   // Valeur effective de heat_priority (form > ticket > default)
@@ -408,7 +404,7 @@ export default function ApogeeTicketsIncomplete() {
         onDelete={(id) => {
           deleteTicket.mutate(id);
           setStableTickets(prev => prev.filter(t => t.id !== id));
-          if (currentIndex >= stableTickets.length - 1 && currentIndex > 0) {
+          if (currentIndex >= ticketsToShow.length - 1 && currentIndex > 0) {
             setCurrentIndex(currentIndex - 1);
           }
         }}

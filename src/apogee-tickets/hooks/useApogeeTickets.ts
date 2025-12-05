@@ -430,7 +430,29 @@ export function useApogeeTicket(ticketId: string | null) {
   };
 }
 
-// Hook for incomplete tickets
+// Hook for incomplete tickets - détection dynamique côté client
 export function useIncompleteTickets() {
-  return useApogeeTickets({ needs_completion: true });
+  const { tickets: allTickets, isLoading, ...rest } = useApogeeTickets();
+  
+  // Filtrer côté client les tickets vraiment incomplets
+  // Un ticket est incomplet s'il manque module OU heat_priority
+  // Et qu'il n'est pas en statut final (EN_PROD, CLOS, REFUSE)
+  const FINAL_STATUSES = ['EN_PROD', 'CLOS', 'REFUSE'];
+  
+  const incompleteTickets = allTickets.filter(ticket => {
+    // Ignorer les tickets en statut final
+    if (FINAL_STATUSES.includes(ticket.kanban_status)) return false;
+    
+    // Vérifier les champs manquants
+    const missingModule = !ticket.module;
+    const missingHeatPriority = ticket.heat_priority === null || ticket.heat_priority === undefined;
+    
+    return missingModule || missingHeatPriority;
+  });
+
+  return {
+    tickets: incompleteTickets,
+    isLoading,
+    ...rest
+  };
 }
