@@ -25,7 +25,7 @@ export function useFormationContentList() {
       const { data, error } = await supabase
         .from("formation_content")
         .select("*")
-        .order("source_category_title", { ascending: true });
+        .order("generated_at", { ascending: true, nullsFirst: true });
 
       if (error) throw error;
       return (data || []) as FormationContent[];
