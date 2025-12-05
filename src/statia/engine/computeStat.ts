@@ -108,8 +108,9 @@ export async function computeStat(
     if (!sources.includes('interventions')) sources.push('interventions');
     if (!sources.includes('users')) sources.push('users');
   }
-  if (definition.dimensions?.includes('apporteur')) {
+  if (definition.dimensions?.includes('apporteur') || definition.dimensions?.includes('type_apporteur')) {
     if (!sources.includes('clients')) sources.push('clients');
+    if (!sources.includes('projects')) sources.push('projects');
   }
   if (definition.dimensions?.includes('univers')) {
     if (!sources.includes('projects')) sources.push('projects');
