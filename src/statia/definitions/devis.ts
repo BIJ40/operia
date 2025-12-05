@@ -349,10 +349,379 @@ export const devisSignesNonFactures: StatDefinition = {
   }
 };
 
+// ============= HELPERS =============
+
+function parseNumber(val: any): number {
+  if (typeof val === 'number') return val;
+  if (typeof val === 'string') return parseFloat(val) || 0;
+  return 0;
+}
+
+function extractProjectUniverses(project: any): string[] {
+  const universes = project?.data?.universes || project?.universes || [];
+  if (Array.isArray(universes) && universes.length > 0) {
+    return universes.map((u: any) => {
+      const label = typeof u === 'string' ? u : (u?.label || u?.name || u?.code || '');
+      return label || 'Non catégorisé';
+    }).filter(Boolean);
+  }
+  return ['Non catégorisé'];
+}
+
+function normalizeApporteurType(raw: any): string {
+  const v = String(raw || '').trim().toLowerCase();
+  if (!v) return 'Clients Directs';
+  if (['assureur', 'assurance', 'assureurs'].includes(v)) return 'Assureurs';
+  if (['bailleur', 'bailleurs', 'bailleur_social'].includes(v)) return 'Bailleurs';
+  if (['syndic', 'copro', 'copropriete'].includes(v)) return 'Syndics';
+  if (['maintenance', 'mainteneur'].includes(v)) return 'Maintenance';
+  if (['gestion', 'gestionnaire'].includes(v)) return 'Gestionnaires';
+  if (['pro', 'professionnel', 'professionnels'].includes(v)) return 'Professionnels';
+  return v.charAt(0).toUpperCase() + v.slice(1);
+}
+
+// ============= METRIC: Délai moyen d'acceptation =============
+
+/**
+ * Délai moyen d'acceptation des devis
+ * Pour chaque devis accepté : délai = date_acceptation - date_émission
+ */
+export const delaiMoyenAcceptationDevis: StatDefinition = {
+  id: 'delai_moyen_acceptation_devis',
+  label: 'Délai Moyen Acceptation Devis',
+  description: 'Délai moyen entre émission et acceptation des devis (en jours)',
+  category: 'devis',
+  source: 'devis',
+  aggregation: 'avg',
+  unit: 'jours',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { devis } = data;
+    const ACCEPTED_STATES = ['accepted', 'validated', 'signed', 'order', 'invoice'];
+    
+    const delais: number[] = [];
+    
+    for (const d of devis || []) {
+      const state = (d.state || d.statut || d.data?.state || d.data?.statut || '').toString().toLowerCase();
+      if (!ACCEPTED_STATES.includes(state)) continue;
+      
+      // Date d'émission
+      const dateEmissionStr = d.dateEnvoi || d.data?.dateEnvoi || d.dateReelle || d.date || d.data?.dateReelle || d.data?.date;
+      if (!dateEmissionStr) continue;
+      const dateEmission = new Date(dateEmissionStr);
+      if (isNaN(dateEmission.getTime())) continue;
+      
+      // Filtre par période sur la date d'émission
+      if (params.dateRange) {
+        if (dateEmission < params.dateRange.start || dateEmission > params.dateRange.end) continue;
+      }
+      
+      // Date d'acceptation
+      const dateAcceptationStr = d.dateAcceptation || d.data?.dateAcceptation || d.dateValidation || d.data?.dateValidation;
+      let dateAcceptation: Date | null = null;
+      
+      if (dateAcceptationStr) {
+        dateAcceptation = new Date(dateAcceptationStr);
+      } else {
+        // Chercher dans l'historique
+        const history = d.history || d.data?.history || [];
+        for (const h of history) {
+          const kind = (h.labelKind || h.kind || '').toString().toLowerCase();
+          if (kind.includes('accept') || kind.includes('valid') || kind.includes('sign')) {
+            const histDate = new Date(h.dateModif || h.date);
+            if (!isNaN(histDate.getTime())) {
+              dateAcceptation = histDate;
+              break;
+            }
+          }
+        }
+      }
+      
+      if (!dateAcceptation || isNaN(dateAcceptation.getTime())) continue;
+      
+      const delaiJours = Math.max(0, (dateAcceptation.getTime() - dateEmission.getTime()) / (1000 * 60 * 60 * 24));
+      if (delaiJours <= 365) { // Exclure les délais aberrants > 1 an
+        delais.push(delaiJours);
+      }
+    }
+    
+    if (delais.length === 0) {
+      return {
+        value: null,
+        metadata: { computedAt: new Date(), source: 'devis', recordCount: 0 }
+      };
+    }
+    
+    const moyenne = delais.reduce((a, b) => a + b, 0) / delais.length;
+    const sorted = [...delais].sort((a, b) => a - b);
+    const mediane = sorted[Math.floor(sorted.length / 2)];
+    const min = sorted[0];
+    const max = sorted[sorted.length - 1];
+    
+    return {
+      value: Math.round(moyenne * 10) / 10,
+      metadata: { computedAt: new Date(), source: 'devis', recordCount: delais.length },
+      breakdown: {
+        moyenne: Math.round(moyenne * 10) / 10,
+        mediane: Math.round(mediane * 10) / 10,
+        min: Math.round(min * 10) / 10,
+        max: Math.round(max * 10) / 10,
+        nbDevisAnalyses: delais.length,
+      }
+    };
+  }
+};
+
+// ============= METRIC: Répartition devis par univers =============
+
+/**
+ * Répartition des devis par univers
+ * nb devis, montant HT, panier moyen par univers
+ */
+export const repartitionDevisParUnivers: StatDefinition = {
+  id: 'repartition_devis_par_univers',
+  label: 'Répartition Devis par Univers',
+  description: 'Nombre de devis, montant HT et panier moyen par univers',
+  category: 'devis',
+  source: ['devis', 'projects'],
+  dimensions: ['univers'],
+  aggregation: 'sum',
+  unit: '€',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { devis, projects } = data;
+    const SENT_STATES = ['sent', 'accepted', 'validated', 'signed', 'order', 'invoice'];
+    
+    // Index projects
+    const projectsById = new Map<string, any>();
+    for (const p of projects || []) {
+      projectsById.set(String(p.id), p);
+    }
+    
+    const statsByUnivers: Record<string, { nbDevis: number; montantHT: number }> = {};
+    
+    for (const d of devis || []) {
+      const dateStr = d.dateReelle || d.date || d.data?.dateReelle || d.data?.date || d.created_at;
+      if (dateStr && params.dateRange) {
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) continue;
+        if (date < params.dateRange.start || date > params.dateRange.end) continue;
+      }
+      
+      const state = (d.state || d.statut || d.data?.state || d.data?.statut || '').toString().toLowerCase();
+      if (!SENT_STATES.includes(state)) continue;
+      
+      const projectId = String(d.projectId || d.data?.projectId || '');
+      const project = projectsById.get(projectId);
+      const univers = extractProjectUniverses(project);
+      const montant = parseNumber(d.data?.totalHT ?? d.totalHT);
+      const share = montant / univers.length;
+      
+      for (const u of univers) {
+        if (!statsByUnivers[u]) statsByUnivers[u] = { nbDevis: 0, montantHT: 0 };
+        statsByUnivers[u].nbDevis += 1 / univers.length;
+        statsByUnivers[u].montantHT += share;
+      }
+    }
+    
+    const result: Record<string, { nbDevis: number; montantHT: number; panierMoyen: number }> = {};
+    let totalHT = 0;
+    
+    for (const [univers, stats] of Object.entries(statsByUnivers)) {
+      const nbDevis = Math.round(stats.nbDevis);
+      result[univers] = {
+        nbDevis,
+        montantHT: Math.round(stats.montantHT * 100) / 100,
+        panierMoyen: nbDevis > 0 ? Math.round((stats.montantHT / nbDevis) * 100) / 100 : 0,
+      };
+      totalHT += stats.montantHT;
+    }
+    
+    return {
+      value: result,
+      metadata: { computedAt: new Date(), source: 'devis', recordCount: Object.keys(result).length },
+      breakdown: { totalHT, nbUnivers: Object.keys(result).length }
+    };
+  }
+};
+
+// ============= METRIC: Répartition devis par type d'apporteur =============
+
+/**
+ * Répartition des devis par type d'apporteur
+ */
+export const repartitionDevisParTypeApporteur: StatDefinition = {
+  id: 'repartition_devis_par_type_apporteur',
+  label: 'Répartition Devis par Type Apporteur',
+  description: 'Nombre de devis, montant HT et panier moyen par type d\'apporteur',
+  category: 'devis',
+  source: ['devis', 'projects', 'clients'],
+  dimensions: ['type_apporteur'],
+  aggregation: 'sum',
+  unit: '€',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { devis, projects, clients } = data;
+    const SENT_STATES = ['sent', 'accepted', 'validated', 'signed', 'order', 'invoice'];
+    
+    // Index projects
+    const projectsById = new Map<string, any>();
+    for (const p of projects || []) {
+      projectsById.set(String(p.id), p);
+    }
+    
+    // Index clients for type
+    const clientsById = new Map<string, { type: string }>();
+    for (const c of clients || []) {
+      const rawType = c.data?.type || c.data?.typeApporteur || c.data?.categorie || c.categorie || null;
+      clientsById.set(String(c.id), { type: normalizeApporteurType(rawType) });
+    }
+    
+    const statsByType: Record<string, { nbDevis: number; montantHT: number }> = {};
+    
+    for (const d of devis || []) {
+      const dateStr = d.dateReelle || d.date || d.data?.dateReelle || d.data?.date || d.created_at;
+      if (dateStr && params.dateRange) {
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) continue;
+        if (date < params.dateRange.start || date > params.dateRange.end) continue;
+      }
+      
+      const state = (d.state || d.statut || d.data?.state || d.data?.statut || '').toString().toLowerCase();
+      if (!SENT_STATES.includes(state)) continue;
+      
+      const projectId = String(d.projectId || d.data?.projectId || '');
+      const project = projectsById.get(projectId);
+      const cmdId = project?.data?.commanditaireId || project?.commanditaireId;
+      const typeApporteur = cmdId ? (clientsById.get(String(cmdId))?.type || 'Clients Directs') : 'Clients Directs';
+      
+      const montant = parseNumber(d.data?.totalHT ?? d.totalHT);
+      
+      if (!statsByType[typeApporteur]) statsByType[typeApporteur] = { nbDevis: 0, montantHT: 0 };
+      statsByType[typeApporteur].nbDevis++;
+      statsByType[typeApporteur].montantHT += montant;
+    }
+    
+    const result: Record<string, { nbDevis: number; montantHT: number; panierMoyen: number }> = {};
+    let totalHT = 0;
+    
+    for (const [type, stats] of Object.entries(statsByType)) {
+      result[type] = {
+        nbDevis: stats.nbDevis,
+        montantHT: Math.round(stats.montantHT * 100) / 100,
+        panierMoyen: stats.nbDevis > 0 ? Math.round((stats.montantHT / stats.nbDevis) * 100) / 100 : 0,
+      };
+      totalHT += stats.montantHT;
+    }
+    
+    return {
+      value: result,
+      metadata: { computedAt: new Date(), source: 'devis', recordCount: Object.keys(result).length },
+      breakdown: { totalHT, nbTypes: Object.keys(result).length }
+    };
+  }
+};
+
+// ============= METRIC: Délai émission devis après intervention =============
+
+/**
+ * Délai entre intervention (RDV/RT) et émission du devis
+ * Mesure la réactivité commerciale
+ */
+export const delaiDevisApresIntervention: StatDefinition = {
+  id: 'delai_devis_apres_intervention',
+  label: 'Délai Devis après Intervention',
+  description: 'Délai moyen entre le RDV/relevé technique et l\'émission du devis (en jours)',
+  category: 'devis',
+  source: ['devis', 'projects', 'interventions'],
+  aggregation: 'avg',
+  unit: 'jours',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { devis, projects, interventions } = data;
+    const SENT_STATES = ['sent', 'accepted', 'validated', 'signed', 'order', 'invoice'];
+    
+    // Index projects
+    const projectsById = new Map<string, any>();
+    for (const p of projects || []) {
+      projectsById.set(String(p.id), p);
+    }
+    
+    // Trouver la première intervention (RT/RDV) par projet
+    const firstInterventionByProject = new Map<string, Date>();
+    for (const inter of interventions || []) {
+      const projectId = String(inter.projectId || inter.data?.projectId || '');
+      if (!projectId) continue;
+      
+      const dateStr = inter.dateReelle || inter.date || inter.data?.dateReelle || inter.data?.date;
+      if (!dateStr) continue;
+      const dateInter = new Date(dateStr);
+      if (isNaN(dateInter.getTime())) continue;
+      
+      const existing = firstInterventionByProject.get(projectId);
+      if (!existing || dateInter < existing) {
+        firstInterventionByProject.set(projectId, dateInter);
+      }
+    }
+    
+    const delais: number[] = [];
+    
+    for (const d of devis || []) {
+      const dateDevisStr = d.dateReelle || d.date || d.data?.dateReelle || d.data?.date || d.dateEnvoi || d.data?.dateEnvoi;
+      if (!dateDevisStr) continue;
+      const dateDevis = new Date(dateDevisStr);
+      if (isNaN(dateDevis.getTime())) continue;
+      
+      // Filtre par période
+      if (params.dateRange) {
+        if (dateDevis < params.dateRange.start || dateDevis > params.dateRange.end) continue;
+      }
+      
+      const state = (d.state || d.statut || d.data?.state || d.data?.statut || '').toString().toLowerCase();
+      if (!SENT_STATES.includes(state)) continue;
+      
+      const projectId = String(d.projectId || d.data?.projectId || '');
+      const dateIntervention = firstInterventionByProject.get(projectId);
+      if (!dateIntervention) continue;
+      
+      const delaiJours = (dateDevis.getTime() - dateIntervention.getTime()) / (1000 * 60 * 60 * 24);
+      // Exclure les délais négatifs ou aberrants (> 180 jours)
+      if (delaiJours >= 0 && delaiJours <= 180) {
+        delais.push(delaiJours);
+      }
+    }
+    
+    if (delais.length === 0) {
+      return {
+        value: null,
+        metadata: { computedAt: new Date(), source: 'devis', recordCount: 0 }
+      };
+    }
+    
+    const moyenne = delais.reduce((a, b) => a + b, 0) / delais.length;
+    const sorted = [...delais].sort((a, b) => a - b);
+    const mediane = sorted[Math.floor(sorted.length / 2)];
+    const min = sorted[0];
+    const max = sorted[sorted.length - 1];
+    
+    return {
+      value: Math.round(moyenne * 10) / 10,
+      metadata: { computedAt: new Date(), source: 'devis', recordCount: delais.length },
+      breakdown: {
+        moyenne: Math.round(moyenne * 10) / 10,
+        mediane: Math.round(mediane * 10) / 10,
+        min: Math.round(min * 10) / 10,
+        max: Math.round(max * 10) / 10,
+        nbDevisAnalyses: delais.length,
+      }
+    };
+  }
+};
+
 export const devisDefinitions = {
   taux_transformation_devis_nombre: tauxTransformationDevisNombre,
   taux_transformation_devis_montant: tauxTransformationDevisMontant,
   nombre_devis: nombreDevis,
   montant_devis: montantDevis,
   devis_signes_non_factures: devisSignesNonFactures,
+  delai_moyen_acceptation_devis: delaiMoyenAcceptationDevis,
+  repartition_devis_par_univers: repartitionDevisParUnivers,
+  repartition_devis_par_type_apporteur: repartitionDevisParTypeApporteur,
+  delai_devis_apres_intervention: delaiDevisApresIntervention,
 };
