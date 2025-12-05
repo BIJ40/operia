@@ -15,7 +15,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { SupportTicket } from '@/hooks/use-admin-support';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MessageSquare, ChevronLeft, ChevronRight, GitMerge } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { TicketPriorityBadge } from './TicketPriorityBadge';
@@ -26,6 +26,8 @@ import {
   TICKET_STATUS_COLORS,
 } from '@/services/supportService';
 import { useSupportTicketsBlinkStatus, useMarkSupportTicketAsViewed } from '@/hooks/useSupportTicketViews';
+import { MergeSupportTicketsDialog } from './MergeSupportTicketsDialog';
+import { useMergeSupportTickets } from '@/hooks/useMergeSupportTickets';
 
 interface KanbanViewProps {
   tickets: SupportTicket[];
@@ -123,9 +125,10 @@ interface SortableTicketCardProps {
   onSelect: (ticket: SupportTicket) => void;
   shouldBlink: boolean;
   onMarkAsViewed: (ticketId: string) => void;
+  onMerge: (ticket: SupportTicket) => void;
 }
 
-function SortableTicketCard({ ticket, onSelect, shouldBlink, onMarkAsViewed }: SortableTicketCardProps) {
+function SortableTicketCard({ ticket, onSelect, shouldBlink, onMarkAsViewed, onMerge }: SortableTicketCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
     id: ticket.id,
     data: { type: 'ticket', ticket, status: ticket.status }
@@ -166,6 +169,12 @@ function SortableTicketCard({ ticket, onSelect, shouldBlink, onMarkAsViewed }: S
     onMarkAsViewed(ticket.id);
   };
 
+  // Clic sur le bouton de fusion
+  const handleMergeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onMerge(ticket);
+  };
+
   // Classes conditionnelles basées sur la priorité (plus de SLA)
   const cardClasses = `relative rounded-xl p-4 mb-3 cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02] ${
     isUrgent 
@@ -189,8 +198,18 @@ function SortableTicketCard({ ticket, onSelect, shouldBlink, onMarkAsViewed }: S
         <div className="flex items-center gap-2">
           <span className="font-semibold text-foreground text-sm">#{ticket.id.slice(0, 8)}</span>
         </div>
-        {/* Badge de priorité */}
-        <TicketPriorityBadge priority={ticket.priority} size="sm" />
+        <div className="flex items-center gap-1">
+          {/* Bouton de fusion */}
+          <button
+            onClick={handleMergeClick}
+            className="p-1 rounded hover:bg-muted transition-colors"
+            title="Fusionner avec un autre ticket"
+          >
+            <GitMerge className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />
+          </button>
+          {/* Badge de priorité */}
+          <TicketPriorityBadge priority={ticket.priority} size="sm" />
+        </div>
       </div>
       {ticket.subject && (
         <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{ticket.subject}</p>
@@ -236,8 +255,27 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate, isCollaps
   const blinkStatus = useSupportTicketsBlinkStatus(tickets);
   const { mutate: markAsViewed } = useMarkSupportTicketAsViewed();
 
+  // État et hook pour la fusion de tickets
+  const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
+  const [ticketToMerge, setTicketToMerge] = useState<SupportTicket | null>(null);
+  const { mergeSupportTickets, isMerging } = useMergeSupportTickets();
+
   const handleMarkAsViewed = (ticketId: string) => {
     markAsViewed(ticketId);
+  };
+
+  const handleOpenMergeDialog = (ticket: SupportTicket) => {
+    setTicketToMerge(ticket);
+    setMergeDialogOpen(true);
+  };
+
+  const handleMerge = async (mainTicketId: string, duplicateTicketId: string, options: { mergeMessages: boolean; mergeAttachments: boolean }) => {
+    const success = await mergeSupportTickets(mainTicketId, duplicateTicketId, options);
+    if (success) {
+      setMergeDialogOpen(false);
+      setTicketToMerge(null);
+      onTicketsUpdate();
+    }
   };
 
   useEffect(() => {
@@ -479,6 +517,7 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate, isCollaps
                               onSelect={onSelectTicket}
                               shouldBlink={blinkStatus[ticket.id] || false}
                               onMarkAsViewed={handleMarkAsViewed}
+                              onMerge={handleOpenMergeDialog}
                             />
                           ))}
                           {columnTickets.length === 0 && (
@@ -507,6 +546,18 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate, isCollaps
           </div>
         )}
       </DragOverlay>
+
+      {/* Dialog de fusion de tickets */}
+      {ticketToMerge && (
+        <MergeSupportTicketsDialog
+          open={mergeDialogOpen}
+          onOpenChange={setMergeDialogOpen}
+          sourceTicket={ticketToMerge}
+          allTickets={localTickets.filter(t => !t.merged_into_ticket_id)}
+          onMerge={handleMerge}
+          isMerging={isMerging}
+        />
+      )}
     </DndContext>
   );
 }

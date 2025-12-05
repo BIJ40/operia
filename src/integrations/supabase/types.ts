@@ -3659,6 +3659,7 @@ export type Database = {
           id: string
           last_message_at: string | null
           last_message_by: string | null
+          merged_into_ticket_id: string | null
           priority: string | null
           rating: number | null
           rating_comment: string | null
@@ -3695,6 +3696,7 @@ export type Database = {
           id?: string
           last_message_at?: string | null
           last_message_by?: string | null
+          merged_into_ticket_id?: string | null
           priority?: string | null
           rating?: number | null
           rating_comment?: string | null
@@ -3731,6 +3733,7 @@ export type Database = {
           id?: string
           last_message_at?: string | null
           last_message_by?: string | null
+          merged_into_ticket_id?: string | null
           priority?: string | null
           rating?: number | null
           rating_comment?: string | null
@@ -3746,7 +3749,15 @@ export type Database = {
           user_id?: string
           viewed_by_support_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_merged_into_ticket_id_fkey"
+            columns: ["merged_into_ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ticket_duplicate_suggestions: {
         Row: {
