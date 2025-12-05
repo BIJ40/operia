@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -99,37 +98,33 @@ export default function FormationApogee() {
 
   if (isLoading) {
     return (
-      <MainLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-pulse text-muted-foreground">Chargement du parcours formation...</div>
-        </div>
-      </MainLayout>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-pulse text-muted-foreground">Chargement du parcours formation...</div>
+      </div>
     );
   }
 
   if (formationContent.length === 0) {
     return (
-      <MainLayout>
-        <div className="container mx-auto py-12">
-          <Card className="max-w-lg mx-auto text-center p-8">
-            <GraduationCap className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Parcours formation en préparation</h2>
-            <p className="text-muted-foreground mb-4">
-              Les contenus de formation sont en cours de génération par l'IA.
-            </p>
-            <Button variant="outline" asChild>
-              <a href="/admin/formation-generator">
-                Accéder au générateur
-              </a>
-            </Button>
-          </Card>
-        </div>
-      </MainLayout>
+      <div className="container mx-auto py-12">
+        <Card className="max-w-lg mx-auto text-center p-8">
+          <GraduationCap className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Parcours formation en préparation</h2>
+          <p className="text-muted-foreground mb-4">
+            Les contenus de formation sont en cours de génération par l'IA.
+          </p>
+          <Button variant="outline" asChild>
+            <a href="/admin/formation-generator">
+              Accéder au générateur
+            </a>
+          </Button>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <MainLayout>
+    <>
       <div className="flex h-[calc(100vh-4rem)]">
         {/* Sidebar - Module navigation */}
         <div className="w-64 border-r bg-muted/30 flex-shrink-0">
@@ -335,6 +330,6 @@ export default function FormationApogee() {
           )}
         </DialogContent>
       </Dialog>
-    </MainLayout>
+    </>
   );
 }
