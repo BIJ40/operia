@@ -7,12 +7,12 @@ export const DiffusionBandeau = () => {
   ];
 
   return (
-    <div className="w-full bg-primary py-4 overflow-hidden shadow-lg">
+    <div className="w-full bg-helpconfort-blue py-3 overflow-hidden">
       <div className="animate-marquee whitespace-nowrap">
-        <span className="text-white text-2xl font-semibold mx-8">
+        <span className="text-white text-lg font-medium mx-8">
           {phrases.join(' • ')}
         </span>
-        <span className="text-white text-2xl font-semibold mx-8">
+        <span className="text-white text-lg font-medium mx-8">
           {phrases.join(' • ')}
         </span>
       </div>
@@ -23,7 +23,7 @@ export const DiffusionBandeau = () => {
         }
         .animate-marquee {
           display: inline-block;
-          animation: marquee 40s linear infinite;
+          animation: marquee 45s linear infinite;
         }
       `}</style>
     </div>
