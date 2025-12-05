@@ -900,7 +900,7 @@ export function TicketDetailDrawer({
                 <FileManager
                   bucketName="apogee-ticket-attachments"
                   recordId={ticket.id}
-                  basePath="tickets"
+                  basePath=""
                   maxFileSize={10}
                   className="border-0 shadow-none"
                 />

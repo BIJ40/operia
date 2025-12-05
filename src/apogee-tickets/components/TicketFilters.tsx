@@ -1,6 +1,6 @@
 /**
  * Filtres pour les tickets Apogée
- * Inclut: recherche, module, origine, qualification IA, et slider priorité avec pastilles
+ * Inclut: recherche, module, origine, qualification IA, slider priorité avec pastilles, PEC et nouveaux messages
  */
 
 import { Input } from '@/components/ui/input';
@@ -10,8 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search, X, Snowflake, Flame, Tag } from 'lucide-react';
-import type { ApogeeModule, ApogeePriority, TicketFilters as Filters, ReportedBy, MissingFieldFilter } from '../types';
+import { Search, X, Snowflake, Flame, Tag, Filter, MessageSquare } from 'lucide-react';
+import type { ApogeeModule, ApogeePriority, ApogeeOwnerSide, TicketFilters as Filters, ReportedBy, MissingFieldFilter } from '../types';
 import { cn } from '@/lib/utils';
 
 interface TicketFiltersProps {
@@ -19,6 +19,14 @@ interface TicketFiltersProps {
   onFiltersChange: (filters: Filters) => void;
   modules: ApogeeModule[];
   priorities: ApogeePriority[];
+  // New props for PEC and blinking
+  ownerSides?: ApogeeOwnerSide[];
+  selectedPEC?: Set<string>;
+  onTogglePEC?: (pecId: string) => void;
+  onClearPEC?: () => void;
+  blinkingTicketsCount?: number;
+  filterBlinkingOnly?: boolean;
+  onToggleBlinkingFilter?: () => void;
 }
 
 // Couleurs pour le gradient du slider (bleu glacé -> rouge feu)
@@ -52,7 +60,19 @@ const ORIGINE_OPTIONS: { value: ReportedBy; label: string }[] = [
 // Tags par défaut
 const DEFAULT_TAGS = ['BUG', 'EVO', 'NTH'];
 
-export function TicketFilters({ filters, onFiltersChange, modules, priorities }: TicketFiltersProps) {
+export function TicketFilters({ 
+  filters, 
+  onFiltersChange, 
+  modules, 
+  priorities,
+  ownerSides = [],
+  selectedPEC = new Set(),
+  onTogglePEC,
+  onClearPEC,
+  blinkingTicketsCount = 0,
+  filterBlinkingOnly = false,
+  onToggleBlinkingFilter,
+}: TicketFiltersProps) {
   const updateFilter = (key: keyof Filters, value: any) => {
     onFiltersChange({ ...filters, [key]: value || undefined });
   };
@@ -120,7 +140,7 @@ export function TicketFilters({ filters, onFiltersChange, modules, priorities }:
 
   return (
     <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
-      {/* Ligne 1: Filtres principaux */}
+      {/* Ligne 1: Filtres principaux + PEC + Nouveaux messages */}
       <div className="flex flex-wrap items-center gap-3">
         {/* Recherche */}
         <div className="relative w-[180px]">
@@ -232,6 +252,74 @@ export function TicketFilters({ filters, onFiltersChange, modules, priorities }:
             <SelectItem value="no_description">Description manquante</SelectItem>
           </SelectContent>
         </Select>
+
+        {/* Separator visual */}
+        <div className="h-6 w-px bg-border hidden sm:block" />
+
+        {/* Filtre P.E.C */}
+        {ownerSides.length > 0 && onTogglePEC && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className={`gap-2 ${selectedPEC.size > 0 ? 'border-helpconfort-blue text-helpconfort-blue' : ''}`}>
+                <Filter className="h-4 w-4" />
+                P.E.C
+                {selectedPEC.size > 0 && (
+                  <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs bg-helpconfort-blue/20 text-helpconfort-blue">
+                    {selectedPEC.size}
+                  </Badge>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-48 bg-background z-50">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">P.E.C</span>
+                  {selectedPEC.size > 0 && onClearPEC && (
+                    <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={onClearPEC}>
+                      Réinitialiser
+                    </Button>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  {ownerSides.map((pec) => (
+                    <label
+                      key={pec.id}
+                      className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded px-2 py-1"
+                    >
+                      <Checkbox
+                        checked={selectedPEC.has(pec.id)}
+                        onCheckedChange={() => onTogglePEC(pec.id)}
+                      />
+                      <span className="text-sm">{pec.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
+
+        {/* Nouveaux messages */}
+        {onToggleBlinkingFilter && (
+          <button
+            onClick={onToggleBlinkingFilter}
+            className={`text-sm flex items-center gap-1.5 px-2 py-1 rounded transition-colors ${
+              filterBlinkingOnly 
+                ? 'bg-helpconfort-blue/10 text-helpconfort-blue font-medium' 
+                : blinkingTicketsCount > 0
+                  ? 'text-green-600 animate-pulse font-medium'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+            }`}
+          >
+            <MessageSquare className={`w-3.5 h-3.5 ${blinkingTicketsCount > 0 && !filterBlinkingOnly ? 'text-green-600' : ''}`} />
+            Nouveaux
+            {blinkingTicketsCount > 0 && (
+              <Badge variant="secondary" className={`text-xs px-1.5 ${filterBlinkingOnly ? 'bg-helpconfort-blue/20 text-helpconfort-blue' : 'bg-green-100 text-green-700 animate-pulse'}`}>
+                {blinkingTicketsCount}
+              </Badge>
+            )}
+          </button>
+        )}
 
         {/* Clear */}
         {hasActiveFilters && (
