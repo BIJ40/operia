@@ -8,6 +8,7 @@ import {
   LayoutDashboard, Building2, UserCog, PieChart, GitCompare, Calculator, Network,
   Building, Database, FileText, Home, ListTodo, Activity,
   Upload, Bug, AlertCircle, Tags, Eye, Shield, UserMinus, ArrowUpCircle, HardDrive, Star, Heart,
+  Sparkles,
   LucideIcon
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -59,6 +60,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   LayoutDashboard, Building2, UserCog, PieChart, GitCompare, Calculator, Network,
   Building, Database, FileText, Home, Settings, ListTodo, Activity,
   Upload, Bug, AlertCircle, Tags, Eye, Shield, UserMinus, ArrowUpCircle, HardDrive, Star, User,
+  Sparkles,
 };
 
 // Vérifier si l'utilisateur peut éditer les métadonnées (N5/N6)
