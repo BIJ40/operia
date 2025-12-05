@@ -267,12 +267,12 @@ export default function FormationGenerator() {
                   return (
                     <Collapsible key={category.id} open={isExpanded}>
                       <div className="border rounded-lg border-helpconfort-blue/20">
-                        <CollapsibleTrigger asChild>
-                          <button
-                            onClick={() => toggleCategory(category.id)}
-                            className="w-full flex items-center justify-between p-4 hover:bg-helpconfort-blue/5 transition-colors"
-                          >
-                            <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-between p-4 hover:bg-helpconfort-blue/5 transition-colors">
+                          <CollapsibleTrigger asChild>
+                            <button
+                              onClick={() => toggleCategory(category.id)}
+                              className="flex items-center gap-3 flex-1"
+                            >
                               {isExpanded ? (
                                 <ChevronDown className="w-4 h-4" />
                               ) : (
@@ -285,30 +285,27 @@ export default function FormationGenerator() {
                               {allComplete && (
                                 <CheckCircle2 className="w-4 h-4 text-green-500" />
                               )}
-                            </div>
-                            <Button
-                              size="sm"
-                              variant={allComplete ? "outline" : "default"}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleGenerateAll(category);
-                              }}
-                              disabled={generatingBlocks.size > 0}
-                            >
-                              {allComplete ? (
-                                <>
-                                  <RefreshCw className="w-3 h-3 mr-1" />
-                                  Régénérer tout
-                                </>
-                              ) : (
-                                <>
-                                  <Sparkles className="w-3 h-3 mr-1" />
-                                  Générer tout
-                                </>
-                              )}
-                            </Button>
-                          </button>
-                        </CollapsibleTrigger>
+                            </button>
+                          </CollapsibleTrigger>
+                          <Button
+                            size="sm"
+                            variant={allComplete ? "outline" : "default"}
+                            onClick={() => handleGenerateAll(category)}
+                            disabled={generatingBlocks.size > 0}
+                          >
+                            {allComplete ? (
+                              <>
+                                <RefreshCw className="w-3 h-3 mr-1" />
+                                Régénérer tout
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="w-3 h-3 mr-1" />
+                                Générer tout
+                              </>
+                            )}
+                          </Button>
+                        </div>
                         <CollapsibleContent>
                           <div className="border-t px-4 py-2 space-y-2 bg-muted/20">
                             {category.sections.map(section => {
@@ -378,12 +375,12 @@ export default function FormationGenerator() {
                     return (
                       <Collapsible key={category.id} open={isExpanded}>
                         <div className="border rounded-lg border-helpconfort-orange/20">
-                          <CollapsibleTrigger asChild>
-                            <button
-                              onClick={() => toggleCategory(category.id)}
-                              className="w-full flex items-center justify-between p-4 hover:bg-helpconfort-orange/5 transition-colors"
-                            >
-                              <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-between p-4 hover:bg-helpconfort-orange/5 transition-colors">
+                            <CollapsibleTrigger asChild>
+                              <button
+                                onClick={() => toggleCategory(category.id)}
+                                className="flex items-center gap-3 flex-1"
+                              >
                                 {isExpanded ? (
                                   <ChevronDown className="w-4 h-4" />
                                 ) : (
@@ -396,30 +393,27 @@ export default function FormationGenerator() {
                                 {allComplete && (
                                   <CheckCircle2 className="w-4 h-4 text-green-500" />
                                 )}
-                              </div>
-                              <Button
-                                size="sm"
-                                variant={allComplete ? "outline" : "default"}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleGenerateAll(category);
-                                }}
-                                disabled={generatingBlocks.size > 0}
-                              >
-                                {allComplete ? (
-                                  <>
-                                    <RefreshCw className="w-3 h-3 mr-1" />
-                                    Régénérer tout
-                                  </>
-                                ) : (
-                                  <>
-                                    <Sparkles className="w-3 h-3 mr-1" />
-                                    Générer tout
-                                  </>
-                                )}
-                              </Button>
-                            </button>
-                          </CollapsibleTrigger>
+                              </button>
+                            </CollapsibleTrigger>
+                            <Button
+                              size="sm"
+                              variant={allComplete ? "outline" : "default"}
+                              onClick={() => handleGenerateAll(category)}
+                              disabled={generatingBlocks.size > 0}
+                            >
+                              {allComplete ? (
+                                <>
+                                  <RefreshCw className="w-3 h-3 mr-1" />
+                                  Régénérer tout
+                                </>
+                              ) : (
+                                <>
+                                  <Sparkles className="w-3 h-3 mr-1" />
+                                  Générer tout
+                                </>
+                              )}
+                            </Button>
+                          </div>
                           <CollapsibleContent>
                             <div className="border-t px-4 py-2 space-y-2 bg-muted/20">
                               {category.sections.map(section => {
