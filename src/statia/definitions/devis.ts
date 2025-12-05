@@ -377,6 +377,7 @@ function normalizeApporteurType(raw: any): string {
 /**
  * Délai moyen d'acceptation des devis
  * Pour chaque devis accepté : délai = date_acceptation - date_émission
+ * Filtre période sur la date d'émission du devis
  */
 export const delaiMoyenAcceptationDevis: StatDefinition = {
   id: 'delai_moyen_acceptation_devis',
@@ -386,81 +387,79 @@ export const delaiMoyenAcceptationDevis: StatDefinition = {
   source: 'devis',
   aggregation: 'avg',
   unit: 'jours',
+  dimensions: [],
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const { devis } = data;
-    const ACCEPTED_STATES = ['accepted', 'validated', 'signed', 'order', 'invoice'];
-    
-    const delais: number[] = [];
-    
+    const SIGNED_STATES = ['accepted', 'validated', 'signed', 'order'];
+
+    let sumDelais = 0;
+    let count = 0;
+    let minDelai: number | null = null;
+    let maxDelai: number | null = null;
+
     for (const d of devis || []) {
-      const state = (d.state || d.statut || d.data?.state || d.data?.statut || '').toString().toLowerCase();
-      if (!ACCEPTED_STATES.includes(state)) continue;
-      
+      const state = String(d.state || '').toLowerCase();
+      if (!SIGNED_STATES.includes(state)) continue;
+
       // Date d'émission
-      const dateEmissionStr = d.dateEnvoi || d.data?.dateEnvoi || d.dateReelle || d.date || d.data?.dateReelle || d.data?.date;
-      if (!dateEmissionStr) continue;
-      const dateEmission = new Date(dateEmissionStr);
-      if (isNaN(dateEmission.getTime())) continue;
-      
-      // Filtre par période sur la date d'émission
+      const dateEmisStr =
+        d.dateEnvoi ||
+        d.dateReelle ||
+        d.date ||
+        d.created_at;
+
+      if (!dateEmisStr) continue;
+
+      const dateEmis = new Date(dateEmisStr);
+      if (isNaN(dateEmis.getTime())) continue;
+
+      // Filtre période sur date d'émission
       if (params.dateRange) {
-        if (dateEmission < params.dateRange.start || dateEmission > params.dateRange.end) continue;
-      }
-      
-      // Date d'acceptation
-      const dateAcceptationStr = d.dateAcceptation || d.data?.dateAcceptation || d.dateValidation || d.data?.dateValidation;
-      let dateAcceptation: Date | null = null;
-      
-      if (dateAcceptationStr) {
-        dateAcceptation = new Date(dateAcceptationStr);
-      } else {
-        // Chercher dans l'historique
-        const history = d.history || d.data?.history || [];
-        for (const h of history) {
-          const kind = (h.labelKind || h.kind || '').toString().toLowerCase();
-          if (kind.includes('accept') || kind.includes('valid') || kind.includes('sign')) {
-            const histDate = new Date(h.dateModif || h.date);
-            if (!isNaN(histDate.getTime())) {
-              dateAcceptation = histDate;
-              break;
-            }
-          }
+        if (dateEmis < params.dateRange.start || dateEmis > params.dateRange.end) {
+          continue;
         }
       }
-      
-      if (!dateAcceptation || isNaN(dateAcceptation.getTime())) continue;
-      
-      const delaiJours = Math.max(0, (dateAcceptation.getTime() - dateEmission.getTime()) / (1000 * 60 * 60 * 24));
-      if (delaiJours <= 365) { // Exclure les délais aberrants > 1 an
-        delais.push(delaiJours);
-      }
+
+      // Date d'acceptation
+      const dateAccStr =
+        d.data?.dateAcceptation ||
+        d.dateAcceptation ||
+        d.data?.dateValidation ||
+        d.updated_at;
+
+      if (!dateAccStr) continue;
+
+      const dateAcc = new Date(dateAccStr);
+      if (isNaN(dateAcc.getTime())) continue;
+
+      const diffMs = dateAcc.getTime() - dateEmis.getTime();
+      const delaiJours = diffMs / (1000 * 60 * 60 * 24);
+
+      // On ignore les délais négatifs
+      if (delaiJours < 0) continue;
+
+      sumDelais += delaiJours;
+      count++;
+
+      if (minDelai === null || delaiJours < minDelai) minDelai = delaiJours;
+      if (maxDelai === null || delaiJours > maxDelai) maxDelai = delaiJours;
     }
-    
-    if (delais.length === 0) {
-      return {
-        value: null,
-        metadata: { computedAt: new Date(), source: 'devis', recordCount: 0 }
-      };
-    }
-    
-    const moyenne = delais.reduce((a, b) => a + b, 0) / delais.length;
-    const sorted = [...delais].sort((a, b) => a - b);
-    const mediane = sorted[Math.floor(sorted.length / 2)];
-    const min = sorted[0];
-    const max = sorted[sorted.length - 1];
-    
+
+    const delaiMoyen = count > 0 ? sumDelais / count : 0;
+
     return {
-      value: Math.round(moyenne * 10) / 10,
-      metadata: { computedAt: new Date(), source: 'devis', recordCount: delais.length },
+      value: Math.round(delaiMoyen * 10) / 10,
+      metadata: {
+        computedAt: new Date(),
+        source: 'devis',
+        recordCount: count,
+      },
       breakdown: {
-        moyenne: Math.round(moyenne * 10) / 10,
-        mediane: Math.round(mediane * 10) / 10,
-        min: Math.round(min * 10) / 10,
-        max: Math.round(max * 10) / 10,
-        nbDevisAnalyses: delais.length,
-      }
+        min: minDelai !== null ? Math.round(minDelai * 10) / 10 : null,
+        max: maxDelai !== null ? Math.round(maxDelai * 10) / 10 : null,
+      },
     };
-  }
+  },
 };
 
 // ============= METRIC: Répartition devis par univers =============
