@@ -44,6 +44,9 @@ export interface SupportTicket {
   ai_tags?: string[] | null;
   auto_classified?: boolean;
   ai_classified_at?: string | null;
+  // Notification clignotante
+  last_message_at?: string | null;
+  last_message_by?: string | null;
 }
 
 export interface SupportMessage {
