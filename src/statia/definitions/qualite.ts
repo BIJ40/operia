@@ -366,10 +366,13 @@ export const delaiDossierPremierDevis: StatDefinition = {
     // Indexer les devis "sent" par projet avec dateReelle
     const devisByProject = new Map<string | number, Date[]>();
     
+    // États valides pour un devis "envoyé" selon règles métier
+    const validDevisStates = ['sent', 'validated', 'signed', 'order', 'accepted', 'invoice_sent'];
+    
     for (const d of devis) {
-      // Filtrer: state === "sent" et dateReelle présent
+      // Filtrer: état valide (envoyé/validé) et dateReelle présent
       const state = (d.state || '').toLowerCase();
-      if (state !== 'sent') continue;
+      if (!validDevisStates.includes(state)) continue;
       
       const dateReelleStr = d.dateReelle;
       if (!dateReelleStr) continue;
@@ -385,7 +388,7 @@ export const delaiDossierPremierDevis: StatDefinition = {
       devisByProject.set(projectId, list);
     }
     
-    console.log('[StatIA] delai_dossier_premier_devis - projets avec devis sent:', devisByProject.size);
+    console.log('[StatIA] delai_dossier_premier_devis - projets avec devis envoyés:', devisByProject.size);
     
     const delais: number[] = [];
     let debugStats = { 
