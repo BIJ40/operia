@@ -186,65 +186,71 @@ export const tauxSavGlobal: StatDefinition = {
 
 /**
  * Taux SAV par Univers
+ * Proportion de dossiers SAV par univers
  */
 export const tauxSavParUnivers: StatDefinition = {
   id: 'taux_sav_par_univers',
   label: 'Taux SAV par Univers',
-  description: 'Pourcentage de SAV ventilé par univers métier',
+  description: 'Proportion de dossiers SAV par univers',
   category: 'sav',
-  source: ['projects', 'interventions'],
+  source: ['projects'],
+  unit: '%',
   dimensions: ['univers'],
   aggregation: 'ratio',
-  unit: '%',
+
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { projects, interventions } = data;
-    
-    const statsByUnivers = new Map<string, { total: number; sav: number }>();
-    
+    const { projects } = data;
+
+    const totalByUnivers: Record<string, number> = {};
+    const savByUnivers: Record<string, number> = {};
+
     for (const project of projects) {
       const dateStr = project.date || project.created_at;
-      if (dateStr) {
-        try {
-          const date = parseISO(dateStr);
-          if (!isWithinInterval(date, { start: params.dateRange.start, end: params.dateRange.end })) {
-            continue;
-          }
-        } catch {
-          continue;
-        }
+      if (!dateStr) continue;
+
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) continue;
+
+      if (params.dateRange && (date < params.dateRange.start || date > params.dateRange.end)) {
+        continue;
       }
-      
+
       const universes = extractProjectUniverses(project);
-      if (universes.length === 0) continue;
-      
-      const hasSAV = projectHasSAV(project, interventions);
-      
-      for (const univers of universes) {
-        if (!statsByUnivers.has(univers)) {
-          statsByUnivers.set(univers, { total: 0, sav: 0 });
+      const finalUniverses = universes.length > 0 ? universes : ['non-classe'];
+
+      const isSav = isSAVProject(project);
+
+      for (const u of finalUniverses) {
+        totalByUnivers[u] = (totalByUnivers[u] || 0) + 1;
+        if (isSav) {
+          savByUnivers[u] = (savByUnivers[u] || 0) + 1;
         }
-        const stats = statsByUnivers.get(univers)!;
-        stats.total++;
-        if (hasSAV) stats.sav++;
       }
     }
-    
+
     const result: Record<string, number> = {};
-    statsByUnivers.forEach((stats, univers) => {
-      result[univers] = stats.total > 0 
-        ? Math.round((stats.sav / stats.total) * 1000) / 10 
-        : 0;
-    });
-    
+    const details: Record<string, { total: number; sav: number; taux: number }> = {};
+
+    for (const u of Object.keys(totalByUnivers)) {
+      const total = totalByUnivers[u] || 0;
+      const sav = savByUnivers[u] || 0;
+      const taux = total > 0 ? (sav / total) * 100 : 0;
+      const tauxRounded = Math.round(taux * 10) / 10;
+
+      result[u] = tauxRounded;
+      details[u] = { total, sav, taux: tauxRounded };
+    }
+
     return {
       value: result,
       metadata: {
         computedAt: new Date(),
         source: 'projects',
         recordCount: projects.length,
-      }
+      },
+      breakdown: { details },
     };
-  }
+  },
 };
 
 /**
