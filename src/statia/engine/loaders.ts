@@ -99,7 +99,7 @@ export async function loadDataForSources(
     );
   }
 
-  if (sources.includes('clients') || sources.includes('apporteur')) {
+  if (sources.includes('clients') || sources.includes('apporteur') || sources.includes('type_apporteur')) {
     promises.push(
       services.getClients(params.agencySlug)
         .then(data => { result.clients = data || []; })
