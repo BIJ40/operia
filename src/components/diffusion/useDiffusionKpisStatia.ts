@@ -33,8 +33,8 @@ export function useDiffusionKpisStatia(currentMonthIndex: number) {
     queryFn: async () => {
       if (!agence) throw new Error("Agency manquant");
 
-      // Charger données brutes
-      const allData = await DataService.loadAllData(true);
+      // Charger données brutes pour l'agence spécifique
+      const allData = await DataService.loadAllData(true, false, agence);
 
       // === Métriques StatIA ===
       const [caResult, savResult] = await Promise.all([
