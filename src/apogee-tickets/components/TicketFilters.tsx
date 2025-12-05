@@ -123,7 +123,7 @@ export function TicketFilters({ filters, onFiltersChange, modules, priorities }:
       {/* Ligne 1: Filtres principaux */}
       <div className="flex flex-wrap items-center gap-3">
         {/* Recherche */}
-        <div className="relative flex-1 min-w-[200px]">
+        <div className="relative w-[180px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Rechercher..."
