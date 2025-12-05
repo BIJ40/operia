@@ -5,72 +5,145 @@
 
 import { StatDefinition, LoadedData, StatParams, StatResult } from './types';
 import { parseISO, differenceInDays } from 'date-fns';
+import { isFactureStateIncluded } from '../engine/normalizers';
+
+// ============================================================================
+// HELPERS
+// ============================================================================
 
 /**
- * Durée moyenne dossier (jours entre création et facturation)
+ * Date unifiée dossier
+ */
+function getProjectDate(project: any): Date | null {
+  const dateStr =
+    project.dateReelle ||
+    project.date ||
+    project.created_at ||
+    project.data?.dateReelle ||
+    project.data?.date ||
+    null;
+
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * Date unifiée facture
+ */
+function getFactureDate(facture: any): Date | null {
+  const dateStr =
+    facture.dateReelle ||
+    facture.date ||
+    facture.dateEmission ||
+    facture.created_at ||
+    facture.data?.dateReelle ||
+    facture.data?.date ||
+    facture.data?.dateEmission ||
+    null;
+
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+// ============================================================================
+// MÉTRIQUES
+// ============================================================================
+
+/**
+ * Durée moyenne d'un dossier (jours entre création et première facturation)
  */
 export const dureeMoyenneDossier: StatDefinition = {
   id: 'duree_moyenne_dossier',
-  label: 'Durée moyenne dossier',
-  description: 'Nombre de jours moyen entre création du dossier et facturation',
+  label: 'Durée moyenne d\'un dossier',
+  description: 'Durée moyenne entre la création du dossier et la première facture (en jours)',
   category: 'dossiers',
-  source: ['factures', 'projects'],
+  source: ['projects', 'factures'],
   aggregation: 'avg',
   unit: 'jours',
+  dimensions: [],
+  
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { factures, projects } = data;
-    
-    const projectsMap = new Map(projects.map(p => [p.id, p]));
-    const durees: number[] = [];
-    
-    for (const facture of factures) {
-      const dateFacture = facture.dateReelle || facture.dateEmission || facture.created_at;
-      if (!dateFacture) continue;
-      
+    const { projects, factures } = data;
+
+    // 1) Index première facture par projet
+    const firstFactureDateByProject = new Map<string, Date>();
+
+    for (const f of factures) {
+      // Exclure factures non valides (brouillons, annulées)
+      if (!isFactureStateIncluded(f.state)) continue;
+
       // Exclure avoirs
-      const typeFacture = (facture.typeFacture || facture.data?.type || '').toLowerCase();
+      const typeFacture = (f.typeFacture || f.data?.type || '').toLowerCase();
       if (typeFacture === 'avoir') continue;
-      
-      const project = projectsMap.get(facture.projectId);
-      if (!project) continue;
-      
-      const dateCreation = project.created_at || project.createdAt || project.date;
-      if (!dateCreation) continue;
-      
-      try {
-        const factureDate = parseISO(dateFacture);
-        const creationDate = parseISO(dateCreation);
-        
-        // Filtrer par période sur la date de facture
-        if (factureDate < params.dateRange.start || factureDate > params.dateRange.end) continue;
-        
-        const delai = differenceInDays(factureDate, creationDate);
-        if (delai >= 0) {
-          durees.push(delai);
-        }
-      } catch {
-        continue;
+
+      const pidRaw = f.projectId || f.project_id || f.data?.projectId;
+      if (!pidRaw) continue;
+      const pid = String(pidRaw);
+
+      const dateF = getFactureDate(f);
+      if (!dateF) continue;
+
+      const current = firstFactureDateByProject.get(pid);
+      if (!current || dateF < current) {
+        firstFactureDateByProject.set(pid, dateF);
       }
     }
-    
-    const moyenne = durees.length > 0 
-      ? durees.reduce((a, b) => a + b, 0) / durees.length 
-      : 0;
-    
+
+    // 2) Parcours des projets pour calculer les durées
+    let sumDays = 0;
+    let count = 0;
+    let minDays: number | null = null;
+    let maxDays: number | null = null;
+
+    for (const project of projects) {
+      const dateDossier = getProjectDate(project);
+      if (!dateDossier) continue;
+
+      // Filtrer par période sur la date DOSSIER
+      if (params.dateRange) {
+        if (dateDossier < params.dateRange.start || dateDossier > params.dateRange.end) {
+          continue;
+        }
+      }
+
+      const pid = String(project.id ?? project.projectId ?? '');
+      if (!pid) continue;
+
+      const firstFactureDate = firstFactureDateByProject.get(pid);
+      if (!firstFactureDate) continue; // dossier jamais facturé → exclu
+
+      const diffMs = firstFactureDate.getTime() - dateDossier.getTime();
+      const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+      // On ignore les valeurs négatives aberrantes
+      if (diffDays < 0) continue;
+
+      sumDays += diffDays;
+      count++;
+
+      if (minDays === null || diffDays < minDays) minDays = diffDays;
+      if (maxDays === null || diffDays > maxDays) maxDays = diffDays;
+    }
+
+    const avgDays = count > 0 ? sumDays / count : 0;
+    const avgRounded = Math.round(avgDays * 10) / 10;
+
     return {
-      value: Math.round(moyenne),
+      value: avgRounded,
       metadata: {
         computedAt: new Date(),
-        source: 'factures',
-        recordCount: durees.length,
+        source: 'projects',
+        recordCount: count,
       },
       breakdown: {
-        min: durees.length > 0 ? Math.min(...durees) : 0,
-        max: durees.length > 0 ? Math.max(...durees) : 0,
-        nbDossiers: durees.length,
-      }
+        dossiersPrisEnCompte: count,
+        min: minDays !== null ? Math.round(minDays * 10) / 10 : null,
+        max: maxDays !== null ? Math.round(maxDays * 10) / 10 : null,
+      },
     };
-  }
+  },
 };
 
 /**
