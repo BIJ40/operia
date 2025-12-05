@@ -20,6 +20,54 @@ import { useFormationContentList, FormationContent } from "@/hooks/useFormationC
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 
+// Component to render summary with inline images at their correct positions
+function FormationContentWithImages({ 
+  summary, 
+  images, 
+  onImageClick 
+}: { 
+  summary: string; 
+  images: string[]; 
+  onImageClick: (url: string) => void;
+}) {
+  // Split content by image markers and render with actual images
+  const parts = summary.split(/(\[IMAGE_\d+\])/g);
+  
+  return (
+    <>
+      {parts.map((part, idx) => {
+        const imageMatch = part.match(/\[IMAGE_(\d+)\]/);
+        if (imageMatch) {
+          const imageIndex = parseInt(imageMatch[1], 10);
+          const imageUrl = images[imageIndex];
+          if (imageUrl) {
+            return (
+              <div key={idx} className="my-6 flex justify-center">
+                <button
+                  onClick={() => onImageClick(imageUrl)}
+                  className="block border rounded-lg overflow-hidden hover:ring-2 ring-helpconfort-blue transition-all shadow-sm"
+                >
+                  <img 
+                    src={imageUrl} 
+                    alt={`Illustration ${imageIndex + 1}`}
+                    className="max-w-full max-h-96 w-auto object-contain bg-muted"
+                  />
+                </button>
+              </div>
+            );
+          }
+          return null;
+        }
+        // Render markdown for text parts
+        if (part.trim()) {
+          return <ReactMarkdown key={idx}>{part}</ReactMarkdown>;
+        }
+        return null;
+      })}
+    </>
+  );
+}
+
 interface Category {
   id: string;
   title: string;
@@ -253,34 +301,13 @@ export default function FormationApogee() {
                     </div>
                   </CardHeader>
                   <CardContent className="pt-4">
-                    {/* Images gallery */}
-                    {content.extracted_images && content.extracted_images.length > 0 && (
-                      <div className="mb-4">
-                        <div className="flex items-center gap-2 mb-2 text-sm text-muted-foreground">
-                          <ImageIcon className="w-4 h-4" />
-                          {content.extracted_images.length} image(s)
-                        </div>
-                        <div className="flex gap-2 overflow-x-auto pb-2">
-                          {content.extracted_images.map((img, imgIdx) => (
-                            <button
-                              key={imgIdx}
-                              onClick={() => setSelectedImageUrl(img)}
-                              className="flex-shrink-0 border rounded-md overflow-hidden hover:ring-2 ring-helpconfort-blue transition-all"
-                            >
-                              <img 
-                                src={img} 
-                                alt={`Image ${imgIdx + 1}`}
-                                className="h-20 w-auto object-contain bg-muted"
-                              />
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Summary */}
+                    {/* Summary with inline images */}
                     <div className="prose prose-sm max-w-none dark:prose-invert">
-                      <ReactMarkdown>{content.generated_summary || ""}</ReactMarkdown>
+                      <FormationContentWithImages 
+                        summary={content.generated_summary || ""} 
+                        images={content.extracted_images || []}
+                        onImageClick={setSelectedImageUrl}
+                      />
                     </div>
                   </CardContent>
                 </Card>
@@ -345,25 +372,12 @@ export default function FormationApogee() {
 
               {/* Content */}
               <ScrollArea className="flex-1 p-6">
-                {/* Images */}
-                {currentSection.extracted_images && currentSection.extracted_images.length > 0 && (
-                  <div className="mb-6">
-                    <div className="flex gap-4 justify-center flex-wrap">
-                      {currentSection.extracted_images.slice(0, 3).map((img, imgIdx) => (
-                        <img 
-                          key={imgIdx}
-                          src={img} 
-                          alt={`Image ${imgIdx + 1}`}
-                          className="max-h-48 w-auto object-contain rounded-lg border shadow-sm"
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Summary */}
                 <div className="prose prose-lg max-w-3xl mx-auto dark:prose-invert">
-                  <ReactMarkdown>{currentSection.generated_summary || ""}</ReactMarkdown>
+                  <FormationContentWithImages 
+                    summary={currentSection.generated_summary || ""} 
+                    images={currentSection.extracted_images || []}
+                    onImageClick={setSelectedImageUrl}
+                  />
                 </div>
               </ScrollArea>
 

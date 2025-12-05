@@ -6,34 +6,55 @@ const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-// Extract base64 images from HTML content
-function extractImages(htmlContent: string): string[] {
-  const images: string[] = [];
-  
-  // Match data-src with base64 images
-  const dataSrcRegex = /data-src="(data:image\/[^;]+;base64,[^"]+)"/g;
-  let match;
-  while ((match = dataSrcRegex.exec(htmlContent)) !== null) {
-    images.push(match[1]);
-  }
-  
-  // Match src with base64 images
-  const srcRegex = /src="(data:image\/[^;]+;base64,[^"]+)"/g;
-  while ((match = srcRegex.exec(htmlContent)) !== null) {
-    if (!images.includes(match[1])) {
-      images.push(match[1]);
-    }
-  }
-  
-  // Limit to first 10 images to avoid huge payloads
-  return images.slice(0, 10);
+interface ImageInfo {
+  url: string;
+  index: number;
 }
 
-// Clean HTML to plain text for AI processing
-function htmlToText(html: string): string {
+// Extract base64 images from HTML content with position markers
+function extractImagesWithPositions(htmlContent: string): { images: ImageInfo[], htmlWithMarkers: string } {
+  const images: ImageInfo[] = [];
+  let imageIndex = 0;
+  
+  // Replace img tags with markers while extracting the images
+  let htmlWithMarkers = htmlContent;
+  
+  // Match img tags with data-src or src containing base64
+  const imgTagRegex = /<img[^>]*(?:data-src|src)="(data:image\/[^;]+;base64,[^"]+)"[^>]*>/gi;
+  
+  htmlWithMarkers = htmlWithMarkers.replace(imgTagRegex, (match, imageUrl) => {
+    images.push({ url: imageUrl, index: imageIndex });
+    const marker = `[IMAGE_${imageIndex}]`;
+    imageIndex++;
+    return marker;
+  });
+  
+  // Also handle images with src first then data-src
+  const srcImgRegex = /<img[^>]*src="(data:image\/[^;]+;base64,[^"]+)"[^>]*>/gi;
+  htmlWithMarkers = htmlWithMarkers.replace(srcImgRegex, (match, imageUrl) => {
+    // Check if this image wasn't already captured
+    if (!images.some(img => img.url === imageUrl)) {
+      images.push({ url: imageUrl, index: imageIndex });
+      const marker = `[IMAGE_${imageIndex}]`;
+      imageIndex++;
+      return marker;
+    }
+    return match;
+  });
+  
+  // Limit to first 10 images to avoid huge payloads
+  return {
+    images: images.slice(0, 10),
+    htmlWithMarkers
+  };
+}
+
+// Clean HTML to plain text for AI processing, preserving image markers
+function htmlToTextWithMarkers(html: string): string {
   return html
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    // Keep image markers
     .replace(/<[^>]+>/g, ' ')
     .replace(/&nbsp;/g, ' ')
     .replace(/&amp;/g, '&')
@@ -108,12 +129,12 @@ serve(async (req) => {
         error_message: null
       }, { onConflict: "source_block_id" });
 
-    // Extract images from HTML
-    const extractedImages = extractImages(block.content || "");
+    // Extract images from HTML with position markers
+    const { images: extractedImages, htmlWithMarkers } = extractImagesWithPositions(block.content || "");
     console.log(`Extracted ${extractedImages.length} images from block ${blockId}`);
 
-    // Convert HTML to plain text for AI
-    const plainText = htmlToText(block.content || "");
+    // Convert HTML to plain text for AI, keeping markers
+    const plainText = htmlToTextWithMarkers(htmlWithMarkers);
     
     if (plainText.length < 50) {
       // Content too short, mark as complete with minimal summary
@@ -122,7 +143,7 @@ serve(async (req) => {
         .update({
           status: "complete",
           generated_summary: "Contenu insuffisant pour générer un résumé.",
-          extracted_images: extractedImages,
+          extracted_images: extractedImages.map(img => img.url),
           generated_at: new Date().toISOString()
         })
         .eq("source_block_id", blockId);
@@ -132,6 +153,13 @@ serve(async (req) => {
         { status: 200, headers: { "Content-Type": "application/json" } }
       ));
     }
+
+    // Build image markers info for the AI
+    const imageMarkersInfo = extractedImages.length > 0 
+      ? `\n\nIMPORTANT: Le texte contient ${extractedImages.length} marqueur(s) d'image [IMAGE_0], [IMAGE_1], etc. 
+Tu DOIS conserver ces marqueurs EXACTEMENT à leur position dans ton résumé pour indiquer où les images doivent apparaître.
+Place chaque marqueur sur sa propre ligne, seul, là où l'image correspondante doit être affichée.`
+      : "";
 
     // Call Lovable AI to generate summary
     const systemPrompt = `Tu es un formateur expert du logiciel Apogée (logiciel de gestion pour entreprises du bâtiment).
@@ -144,7 +172,7 @@ CONSIGNES:
 - Format: Markdown avec titres ## et listes à puces si pertinent
 - Maximum 500 mots
 - Ne répète pas le titre de la section
-- Focus sur ce que l'utilisateur doit RETENIR et SAVOIR FAIRE`;
+- Focus sur ce que l'utilisateur doit RETENIR et SAVOIR FAIRE${imageMarkersInfo}`;
 
     const userPrompt = `Voici le contenu de la section "${block.title}" à résumer pour la formation:\n\n${plainText.substring(0, 8000)}`;
 
@@ -195,7 +223,7 @@ CONSIGNES:
       .update({
         status: "complete",
         generated_summary: generatedSummary,
-        extracted_images: extractedImages,
+        extracted_images: extractedImages.map(img => img.url),
         generated_at: new Date().toISOString(),
         error_message: null
       })
