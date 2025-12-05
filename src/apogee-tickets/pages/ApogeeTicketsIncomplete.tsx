@@ -84,12 +84,25 @@ function ModuleCombobox({
   );
 }
 
+// Types d'incomplétude disponibles
+const INCOMPLETENESS_TYPES = [
+  { id: 'module', label: 'Module manquant' },
+  { id: 'heat_priority', label: 'Priorité manquante' },
+  { id: 'temps', label: 'Temps manquant' },
+  { id: 'pec', label: 'PEC manquante' },
+] as const;
+
+type IncompletenessType = typeof INCOMPLETENESS_TYPES[number]['id'];
+
 export default function ApogeeTicketsIncomplete() {
   const navigate = useNavigate();
   const { tickets: incompleteTickets, isLoading } = useIncompleteTickets();
   const { modules, priorities, statuses, updateTicket, deleteTicket } = useApogeeTickets();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  
+  // Filtre par type d'incomplétude (tous par défaut)
+  const [selectedFilters, setSelectedFilters] = useState<IncompletenessType[]>([]);
 
   // Liste stable de tickets pour la session (ne change pas quand on complète un ticket)
   const [stableTickets, setStableTickets] = useState<ApogeeTicket[]>([]);
@@ -114,8 +127,27 @@ export default function ApogeeTicketsIncomplete() {
     }
   }, [incompleteTickets]);
 
-  // Utiliser la liste stable pour la navigation (ou les tickets frais si pas encore init)
-  const ticketsToShow = stableTickets.length > 0 ? stableTickets : incompleteTickets;
+  // Appliquer le filtre d'incomplétude
+  const baseTickets = stableTickets.length > 0 ? stableTickets : incompleteTickets;
+  const ticketsToShow = selectedFilters.length === 0 
+    ? baseTickets 
+    : baseTickets.filter(ticket => {
+        const missing = getMissingFields(ticket);
+        return selectedFilters.some(filter => missing.includes(filter));
+      });
+
+  // Reset index when filter changes
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [selectedFilters]);
+
+  const toggleFilter = (filterId: IncompletenessType) => {
+    setSelectedFilters(prev => 
+      prev.includes(filterId) 
+        ? prev.filter(f => f !== filterId)
+        : [...prev, filterId]
+    );
+  };
 
   // Formulaire par ticket (conserve les valeurs lors de la navigation)
   const [formValuesByTicket, setFormValuesByTicket] = useState<Record<string, {
@@ -236,11 +268,43 @@ export default function ApogeeTicketsIncomplete() {
         </Badge>
       </div>
 
+      {/* Filtres d'incomplétude */}
+      <div className="flex flex-wrap gap-2">
+        {INCOMPLETENESS_TYPES.map(type => {
+          const count = baseTickets.filter(t => getMissingFields(t).includes(type.id)).length;
+          const isActive = selectedFilters.includes(type.id);
+          return (
+            <Button
+              key={type.id}
+              variant={isActive ? "default" : "outline"}
+              size="sm"
+              onClick={() => toggleFilter(type.id)}
+              className="gap-2"
+            >
+              {type.label}
+              <Badge variant={isActive ? "secondary" : "outline"} className="ml-1">
+                {count}
+              </Badge>
+            </Button>
+          );
+        })}
+        {selectedFilters.length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedFilters([])}
+            className="text-muted-foreground"
+          >
+            Réinitialiser
+          </Button>
+        )}
+      </div>
+
       {/* Progress */}
       <div className="space-y-2">
         <Progress value={progressPercent} />
         <p className="text-sm text-center text-muted-foreground">
-          {progressPercent}% complété
+          {progressPercent}% complété ({ticketsToShow.length} ticket{ticketsToShow.length > 1 ? 's' : ''})
         </p>
       </div>
 
