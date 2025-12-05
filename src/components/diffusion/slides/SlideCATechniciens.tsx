@@ -12,7 +12,6 @@ interface SlideCATechniciensProps {
 }
 
 export const SlideCATechniciens = ({ currentMonthIndex }: SlideCATechniciensProps) => {
-  // Utiliser le proxy sécurisé au lieu d'appels directs
   const { data: apiData, isLoading } = useQuery({
     queryKey: ['apogee-data-techniciens'],
     queryFn: async () => {
@@ -25,14 +24,14 @@ export const SlideCATechniciens = ({ currentMonthIndex }: SlideCATechniciensProp
 
       return { projects, interventions, factures, users };
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
   if (isLoading || !apiData) {
     return (
-      <Card className="shadow-2xl border-2 h-full">
+      <Card className="rounded-xl border border-helpconfort-blue/15 border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-helpconfort-blue/10 via-background to-background shadow-sm h-full">
         <CardHeader>
-          <CardTitle className="text-2xl">Évolution du CA par Technicien</CardTitle>
+          <CardTitle className="text-lg font-semibold text-foreground">Évolution du CA par Technicien</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">Chargement des données...</p>
@@ -103,19 +102,23 @@ export const SlideCATechniciens = ({ currentMonthIndex }: SlideCATechniciensProp
   });
 
   return (
-    <Card className="shadow-2xl border-2 h-full">
-      <CardHeader>
-        <CardTitle className="text-2xl">Évolution du CA par Technicien (6 mois)</CardTitle>
+    <Card className="rounded-xl border border-helpconfort-blue/15 border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-helpconfort-blue/10 via-background to-background shadow-sm h-full">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg font-semibold text-foreground">Évolution du CA par Technicien (6 mois)</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={400}>
+        <ResponsiveContainer width="100%" height={380}>
           <BarChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis tickFormatter={(value) => `${(value / 1000).toFixed(0)}k€`} />
+            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+            <XAxis dataKey="month" className="text-xs" />
+            <YAxis tickFormatter={(value) => `${(value / 1000).toFixed(0)}k€`} className="text-xs" />
             <Tooltip 
               formatter={(value: number) => formatEuros(value)}
-              contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', border: '1px solid #ccc' }}
+              contentStyle={{ 
+                backgroundColor: 'hsl(var(--background))', 
+                border: '1px solid hsl(var(--border))',
+                borderRadius: '8px'
+              }}
             />
             <Legend />
             {topTechs.map(techId => (
