@@ -208,7 +208,7 @@ export function UnifiedSidebar() {
       items: [
         { title: 'Mon équipe', url: ROUTES.pilotage.equipe, icon: Users, description: 'Collaborateurs, documents RH et bulletins de salaire' },
         { 
-          title: 'Statistiques', 
+          title: 'Mes Indicateurs', 
           url: ROUTES.pilotage.statsHub,
           icon: PieChart, 
           children: [
