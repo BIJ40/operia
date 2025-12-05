@@ -129,7 +129,15 @@ export function useApogeeTickets(filters?: TicketFilters) {
                      .neq('kanban_status', 'EN_PROD');
       }
       if (filters?.search) {
-        query = query.or(`element_concerne.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
+        // Search in title, description, and ticket reference (APO-XXX)
+        const searchTerm = filters.search.trim();
+        // Check if search is a number (for ticket_number)
+        const numericSearch = searchTerm.replace(/[^0-9]/g, '');
+        if (numericSearch && /^(apo-?)?\d+$/i.test(searchTerm)) {
+          query = query.eq('ticket_number', parseInt(numericSearch, 10));
+        } else {
+          query = query.or(`element_concerne.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+        }
       }
       if (filters?.is_qualified !== undefined) {
         query = query.eq('is_qualified', filters.is_qualified);
@@ -441,7 +449,63 @@ export function useApogeeTicket(ticketId: string | null) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['apogee-ticket-comments', ticketId] });
+      // Update ticket's last_modified to trigger notification for others
+      if (ticketId) {
+        supabase
+          .from('apogee_tickets')
+          .update({ 
+            last_modified_at: new Date().toISOString(),
+            last_modified_by_user_id: user?.id 
+          })
+          .eq('id', ticketId)
+          .then(() => {
+            queryClient.invalidateQueries({ queryKey: ['apogee-tickets'] });
+          });
+      }
       successToast('Commentaire ajouté');
+    },
+    onError: (error: Error) => {
+      errorToast(error.message);
+    },
+  });
+
+  const updateComment = useMutation({
+    mutationFn: async ({ commentId, body }: { commentId: string; body: string }) => {
+      const result = await safeMutation<ApogeeTicketComment>(
+        supabase
+          .from('apogee_ticket_comments')
+          .update({
+            body: body.trim(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', commentId)
+          .eq('created_by_user_id', user?.id) // Only allow editing own comments
+          .select()
+          .single(),
+        'APOGEE_TICKET_COMMENT_UPDATE'
+      );
+      
+      if (!result.success) {
+        throw new Error(result.error?.message || 'Erreur modification commentaire');
+      }
+      return result.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['apogee-ticket-comments', ticketId] });
+      // Update ticket's last_modified to trigger notification for others
+      if (ticketId) {
+        supabase
+          .from('apogee_tickets')
+          .update({ 
+            last_modified_at: new Date().toISOString(),
+            last_modified_by_user_id: user?.id 
+          })
+          .eq('id', ticketId)
+          .then(() => {
+            queryClient.invalidateQueries({ queryKey: ['apogee-tickets'] });
+          });
+      }
+      successToast('Commentaire modifié');
     },
     onError: (error: Error) => {
       errorToast(error.message);
@@ -453,6 +517,7 @@ export function useApogeeTicket(ticketId: string | null) {
     comments,
     isLoading,
     addComment,
+    updateComment,
   };
 }
 

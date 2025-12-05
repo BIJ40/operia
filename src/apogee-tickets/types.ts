@@ -125,6 +125,7 @@ export interface ApogeeTicketComment {
   is_internal: boolean;
   created_by_user_id: string | null;
   created_at: string;
+  updated_at: string | null;
   // Relations
   profiles?: {
     first_name: string | null;
