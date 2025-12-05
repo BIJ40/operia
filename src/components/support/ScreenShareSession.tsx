@@ -144,7 +144,7 @@ export function ScreenShareSession({ ticketId, isAgent = false, onClose }: Scree
   if (!isAgent) {
     if (!hasConsent) {
       return (
-        <div className="fixed inset-0 z-50 bg-background/95 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[9999] bg-background flex items-center justify-center p-4">
           <div className="bg-card border rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-full bg-helpconfort-blue/10 flex items-center justify-center">
@@ -179,8 +179,8 @@ export function ScreenShareSession({ ticketId, isAgent = false, onClose }: Scree
     }
 
     return (
-      <div className="fixed inset-0 z-50 bg-background/95 flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b">
+      <div className="fixed inset-0 z-[9999] bg-background flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b bg-background">
           <div className="flex items-center gap-3">
             <Monitor className="h-5 w-5 text-helpconfort-blue" />
             <span className="font-medium">Diagnostic en cours</span>
@@ -249,8 +249,8 @@ export function ScreenShareSession({ ticketId, isAgent = false, onClose }: Scree
 
   // Agent view - watch stream + point
   return (
-    <div className="fixed inset-0 z-50 bg-background/95 flex flex-col">
-      <div className="flex items-center justify-between p-4 border-b">
+    <div className="fixed inset-0 z-[9999] bg-background flex flex-col">
+      <div className="flex items-center justify-between p-4 border-b bg-background">
         <div className="flex items-center gap-3">
           <Monitor className="h-5 w-5 text-helpconfort-orange" />
           <span className="font-medium">Visualisation écran utilisateur</span>
