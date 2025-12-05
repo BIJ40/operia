@@ -224,52 +224,34 @@ export function useTicketTransitions() {
 }
 
 // Hook to get allowed transitions for current user
+// SIMPLIFIED: Everyone can transition to any status (history is logged)
 export function useAllowedTransitions(fromStatus: string) {
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuth();
   const { data: roleInfo } = useMyTicketRole();
   
   return useQuery({
-    queryKey: ['allowed-transitions', fromStatus, roleInfo?.ticketRole, isAdmin],
+    queryKey: ['allowed-transitions', fromStatus, user?.id],
     queryFn: async () => {
-      // Admin can do everything
-      if (isAdmin) {
-        const { data } = await supabase
-          .from('apogee_ticket_statuses')
-          .select('id')
-          .neq('id', fromStatus);
-        return data?.map(s => s.id) || [];
-      }
-      
-      if (!roleInfo?.ticketRole) return [];
-      
-      const { data, error } = await supabase
-        .from('apogee_ticket_transitions')
-        .select('to_status')
-        .eq('from_status', fromStatus)
-        .eq('allowed_role', roleInfo.ticketRole);
-      
-      if (error) throw error;
-      return data?.map(t => t.to_status) || [];
+      // Anyone with ticketing access can transition to any status
+      const { data } = await supabase
+        .from('apogee_ticket_statuses')
+        .select('id')
+        .neq('id', fromStatus)
+        .order('display_order');
+      return data?.map(s => s.id) || [];
     },
-    enabled: !!fromStatus && (isAdmin || !!roleInfo?.ticketRole),
+    enabled: !!fromStatus && !!user && roleInfo?.canUseTicketing,
   });
 }
 
 // Check if user can transition (client-side helper)
+// SIMPLIFIED: Everyone with ticketing access can transition anywhere
 export function useCanTransition() {
-  const { isAdmin } = useAuth();
-  const { data: transitions } = useTicketTransitions();
   const { data: roleInfo } = useMyTicketRole();
   
-  return (fromStatus: string, toStatus: string): boolean => {
-    if (isAdmin) return true;
-    if (!roleInfo?.ticketRole || !transitions) return false;
-    
-    return transitions.some(
-      t => t.from_status === fromStatus && 
-           t.to_status === toStatus && 
-           t.allowed_role === roleInfo.ticketRole
-    );
+  return (_fromStatus: string, _toStatus: string): boolean => {
+    // Anyone with ticketing access can transition
+    return roleInfo?.canUseTicketing === true;
   };
 }
 
