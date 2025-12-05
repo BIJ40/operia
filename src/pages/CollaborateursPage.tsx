@@ -51,9 +51,10 @@ export default function CollaborateursPage() {
     await createUserMutation.mutateAsync(data, {
       onSuccess: () => {
         setShowCreateDialog(false);
-        // Invalider la liste des collaborateurs car le trigger auto_create_collaborator
-        // a créé automatiquement l'entrée dans collaborators
-        queryClient.invalidateQueries({ queryKey: ['collaborators', agencyId] });
+        // Petit délai pour laisser le trigger auto_create_collaborator s'exécuter côté DB
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ['collaborators', agencyId] });
+        }, 500);
       },
     });
   };
