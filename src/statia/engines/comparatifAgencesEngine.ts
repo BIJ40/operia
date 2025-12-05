@@ -175,7 +175,8 @@ function computeAgencyKPIs(
   
   for (const facture of factures) {
     const meta = extractFactureMeta(facture);
-    const factureState = facture.state || facture.status || facture.data?.state || '';
+    // Vérifier état facture avec paymentStatus (champ Apogée) en priorité
+    const factureState = facture.paymentStatus || facture.state || facture.status || facture.data?.paymentStatus || facture.data?.state || '';
     if (!isFactureStateIncluded(factureState)) continue;
     const date = meta.date ? new Date(meta.date) : null;
     if (!date || date < params.dateStart || date > params.dateEnd) continue;
@@ -189,7 +190,8 @@ function computeAgencyKPIs(
   let caAnnee = 0;
   for (const facture of factures) {
     const meta = extractFactureMeta(facture);
-    const factureState = facture.state || facture.status || facture.data?.state || '';
+    // Vérifier état facture avec paymentStatus (champ Apogée) en priorité
+    const factureState = facture.paymentStatus || facture.state || facture.status || facture.data?.paymentStatus || facture.data?.state || '';
     if (!isFactureStateIncluded(factureState)) continue;
     const date = meta.date ? new Date(meta.date) : null;
     if (!date || date < yearStart || date > yearEnd) continue;
