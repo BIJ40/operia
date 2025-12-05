@@ -73,7 +73,7 @@ export interface LoadedData {
 }
 
 export interface StatResult {
-  value: number | Record<string, number>;
+  value: number | Record<string, number> | Record<string, any>;
   breakdown?: {
     factureCount?: number;
     avoirCount?: number;

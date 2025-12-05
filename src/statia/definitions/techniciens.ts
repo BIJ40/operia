@@ -490,13 +490,15 @@ export const caParTechnicien: StatDefinition = {
     
     console.log(`[StatIA ca_par_technicien] Résultat: ${facturesTraitees} factures traitées, ${techCA.size} techniciens, ${dossiersIgnores} dossiers ignorés, CA total ${totalCADistribue}€`);
     
-    // Formater le résultat
-    const result: Record<string, number> = {};
-    const names: Record<string, string> = {};
+    // Formater le résultat avec nom du technicien (aligné sur ca_par_technicien_univers)
+    const result: Record<string, { name: string; ca: number }> = {};
     
     for (const [techId, ca] of techCA.entries()) {
-      result[String(techId)] = ca;
-      names[String(techId)] = techNames.get(techId) || `Tech ${techId}`;
+      const id = String(techId);
+      result[id] = {
+        name: techNames.get(techId) || `Tech ${techId}`,
+        ca,
+      };
     }
     
     return {
@@ -507,7 +509,6 @@ export const caParTechnicien: StatDefinition = {
         recordCount: techCA.size,
       },
       breakdown: {
-        names,
         total: totalCADistribue,
         technicianCount: techCA.size,
         facturesTraitees,
@@ -532,28 +533,35 @@ export const topTechniciensCA: StatDefinition = {
   unit: '€',
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const baseResult = caParTechnicien.compute(data, params);
+    const baseValue = baseResult.value as Record<string, { name: string; ca: number }>;
     
     // Trier par CA décroissant
-    const entries = Object.entries(baseResult.value as Record<string, number>);
-    entries.sort((a, b) => b[1] - a[1]);
+    const entries = Object.entries(baseValue);
+    entries.sort((a, b) => b[1].ca - a[1].ca);
     
     const topN = params.filters?.topN || 10;
     const topEntries = entries.slice(0, topN);
     
-    const result: Record<string, number> = {};
-    for (const [id, ca] of topEntries) {
-      result[id] = ca;
-    }
+    // Résultat avec nom et CA (aligné sur ca_par_technicien_univers)
+    const result: Record<string, { name: string; ca: number; rank: number }> = {};
+    topEntries.forEach(([id, data], index) => {
+      result[id] = {
+        name: data.name,
+        ca: data.ca,
+        rank: index + 1,
+      };
+    });
     
     return {
       value: result,
       metadata: baseResult.metadata,
       breakdown: {
         ...baseResult.breakdown,
-        ranking: topEntries.map(([id], index) => ({ 
+        ranking: topEntries.map(([id, data], index) => ({ 
           rank: index + 1, 
           id, 
-          name: baseResult.breakdown?.names?.[id] 
+          name: data.name,
+          ca: data.ca,
         })),
       }
     };
@@ -582,14 +590,14 @@ export const caMoyenParTech: StatDefinition = {
   compute: (data: LoadedData, params: StatParams): StatResult => {
     // Réutiliser le calcul CA par technicien
     const baseResult = caParTechnicien.compute(data, params);
-    const caByTech = baseResult.value as Record<string, number>;
+    const caByTech = baseResult.value as Record<string, { name: string; ca: number }>;
     
     // Filtrer les techniciens actifs (CA > 0)
-    const techsActifs = Object.entries(caByTech).filter(([, ca]) => ca > 0);
+    const techsActifs = Object.entries(caByTech).filter(([, data]) => data.ca > 0);
     const nbTechActifs = techsActifs.length;
     
     // Calculer CA total productif
-    const caTotal = techsActifs.reduce((sum, [, ca]) => sum + ca, 0);
+    const caTotal = techsActifs.reduce((sum, [, data]) => sum + data.ca, 0);
     
     // CA moyen (éviter division par 0)
     const caMoyen = nbTechActifs > 0 ? caTotal / nbTechActifs : 0;
@@ -604,10 +612,10 @@ export const caMoyenParTech: StatDefinition = {
       breakdown: {
         caTotal,
         nbTechActifs,
-        techniciens: techsActifs.map(([id, ca]) => ({
+        techniciens: techsActifs.map(([id, techData]) => ({
           id,
-          name: baseResult.breakdown?.names?.[id] || `Tech ${id}`,
-          ca,
+          name: techData.name,
+          ca: techData.ca,
         })),
       }
     };
@@ -720,25 +728,20 @@ export const caParTechnicienTemps: StatDefinition = {
     
     console.log(`[StatIA ca_par_technicien_temps] Résultat: ${facturesTraitees} factures traitées, ${techStats.size} techniciens, ${dossiersIgnores} dossiers ignorés, CA total ${totalCADistribue}€`);
     
-    // Formater le résultat : { techId: caHt }
-    const result: Record<string, number> = {};
-    const names: Record<string, string> = {};
-    const details: Array<{ techId: string; techName: string; caHt: number; temps: number }> = [];
+    // Formater le résultat avec nom du technicien (aligné sur ca_par_technicien_univers)
+    const result: Record<string, { name: string; ca: number; temps: number; caParHeure: number }> = {};
     
     for (const [techId, stats] of techStats.entries()) {
       const id = String(techId);
-      result[id] = stats.caHt;
-      names[id] = techNames.get(techId) || `Tech ${techId}`;
-      details.push({
-        techId: id,
-        techName: names[id],
-        caHt: stats.caHt,
+      const name = techNames.get(techId) || `Tech ${techId}`;
+      const caParHeure = stats.temps > 0 ? stats.caHt / stats.temps : 0;
+      result[id] = {
+        name,
+        ca: stats.caHt,
         temps: stats.temps, // en heures
-      });
+        caParHeure,
+      };
     }
-    
-    // Trier par CA décroissant
-    details.sort((a, b) => b.caHt - a.caHt);
     
     return {
       value: result,
@@ -748,8 +751,6 @@ export const caParTechnicienTemps: StatDefinition = {
         recordCount: techStats.size,
       },
       breakdown: {
-        names,
-        details,
         total: totalCADistribue,
         technicianCount: techStats.size,
         facturesTraitees,
