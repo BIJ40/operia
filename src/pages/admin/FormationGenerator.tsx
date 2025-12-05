@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { UnifiedHeader } from "@/components/layout/UnifiedHeader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -142,22 +141,25 @@ export default function FormationGenerator() {
     return { complete, total: category.sections.length };
   };
 
+  // Filter only Apogée categories (exclude HelpConfort which have certain patterns)
+  const apogeeCategories = categories.filter(cat => {
+    // HelpConfort categories usually contain "HelpConfort" or specific terms
+    const isHelpConfort = cat.title.toLowerCase().includes("helpconfort") || 
+                          cat.title.toLowerCase().includes("help confort") ||
+                          cat.title.toLowerCase().includes("franchise");
+    return !isHelpConfort;
+  });
+
   if (blocksLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <UnifiedHeader />
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <UnifiedHeader />
-
-      <main id="main-content" className="container mx-auto py-6 px-4 space-y-6">
+    <div className="space-y-6">
         {/* Stats tiles with blue gradient */}
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -231,13 +233,13 @@ export default function FormationGenerator() {
           <CardHeader>
             <CardTitle>Modules Apogée</CardTitle>
             <CardDescription>
-              {categories.length} catégories • {categories.reduce((sum, c) => sum + c.sections.length, 0)} sections
+              {apogeeCategories.length} catégories • {apogeeCategories.reduce((sum, c) => sum + c.sections.length, 0)} sections
             </CardDescription>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[600px] pr-4">
               <div className="space-y-2">
-                {categories.map(category => {
+                {apogeeCategories.map(category => {
                   const isExpanded = expandedCategories.has(category.id);
                   const progress = getCategoryProgress(category);
                   const allComplete = progress.complete === progress.total;
@@ -335,7 +337,6 @@ export default function FormationGenerator() {
             </ScrollArea>
           </CardContent>
         </Card>
-      </main>
     </div>
   );
 }
