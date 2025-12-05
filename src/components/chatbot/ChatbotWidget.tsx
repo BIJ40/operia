@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bot, X, Send, RotateCcw, BookOpen, Users, Building2, HelpCircle, Headphones, Loader2, ArrowLeft } from 'lucide-react';
+import { Bot, X, Send, RotateCcw, BookOpen, Users, Building2, HelpCircle, Headphones, Loader2, ArrowLeft, Monitor } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -11,6 +11,7 @@ import { safeQuery } from '@/lib/safeQuery';
 import { logError } from '@/lib/logger';
 import { useSupportTicket } from '@/hooks/use-support-ticket';
 import { toast } from 'sonner';
+import { ScreenShareSession } from '@/components/support/ScreenShareSession';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -37,6 +38,7 @@ export function ChatbotWidget() {
   const [selectedContext, setSelectedContext] = useState<ChatContext | null>(null);
   const [liveChatTicketId, setLiveChatTicketId] = useState<string | null>(null);
   const [liveChatMessages, setLiveChatMessages] = useState<Array<{ id: string; message: string; is_from_support: boolean; created_at: string }>>([]);
+  const [showScreenShare, setShowScreenShare] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -82,6 +84,7 @@ export function ChatbotWidget() {
     setSelectedContext(null);
     setLiveChatTicketId(null);
     setLiveChatMessages([]);
+    setShowScreenShare(false);
   };
 
   const handleSelectTheme = async (theme: ChatContext) => {
@@ -391,7 +394,7 @@ export function ChatbotWidget() {
                 ))}
                 <div ref={messagesEndRef} />
               </ScrollArea>
-              <div className="p-3 border-t">
+              <div className="p-3 border-t space-y-2">
                 <div className="flex gap-2">
                   <Input
                     value={input}
@@ -405,6 +408,13 @@ export function ChatbotWidget() {
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>
+                <button
+                  onClick={() => setShowScreenShare(true)}
+                  className="w-full text-xs text-muted-foreground hover:text-helpconfort-blue transition-colors flex items-center justify-center gap-1"
+                >
+                  <Monitor className="w-3 h-3" />
+                  Lancer un diagnostic à distance
+                </button>
               </div>
             </>
           ) : !selectedContext && messages.length === 0 ? (
@@ -527,6 +537,15 @@ export function ChatbotWidget() {
           )}
         </div>
       </div>
+
+      {/* Screen share modal */}
+      {showScreenShare && liveChatTicketId && (
+        <ScreenShareSession 
+          ticketId={liveChatTicketId} 
+          isAgent={false}
+          onClose={() => setShowScreenShare(false)} 
+        />
+      )}
     </div>
   );
 }
