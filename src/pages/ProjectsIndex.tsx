@@ -1,4 +1,4 @@
-import { Kanban, Upload, ListChecks, Settings, FileText, Bug, Star, AlertTriangle } from 'lucide-react';
+import { Kanban, ListChecks, Settings, Star, AlertTriangle } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { IndexTile, type IndexTileProps } from '@/components/ui/index-tile';
 import { useAuth } from '@/contexts/AuthContext';
@@ -39,33 +39,6 @@ const PROJECT_MODULES: ProjectModule[] = [
   },
 ];
 
-const IMPORT_MODULES: ProjectModule[] = [
-  {
-    title: 'Import principal',
-    description: 'Importer des tickets depuis Excel',
-    icon: Upload,
-    href: ROUTES.projects.import,
-  },
-  {
-    title: 'Import priorités',
-    description: 'Importer les priorités',
-    icon: FileText,
-    href: ROUTES.projects.importPriorities,
-  },
-  {
-    title: 'Import évalués',
-    description: 'Importer les tickets évalués',
-    icon: FileText,
-    href: ROUTES.projects.importEvaluated,
-  },
-  {
-    title: 'Import bugs',
-    description: 'Importer les bugs',
-    icon: Bug,
-    href: ROUTES.projects.importBugs,
-  },
-];
-
 const ADMIN_MODULES: ProjectModule[] = [
   {
     title: 'Permissions',
@@ -99,22 +72,6 @@ export default function ProjectsIndex() {
               description: module.description,
               href: module.href,
               badge: module.badge,
-            };
-            return <IndexTile key={module.href} {...tileProps} />;
-          })}
-        </div>
-      </section>
-
-      {/* Import section */}
-      <section>
-        <h2 className="text-xl font-semibold mb-4 text-foreground">Import de données</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {IMPORT_MODULES.map((module) => {
-            const tileProps: IndexTileProps = {
-              icon: module.icon,
-              title: module.title,
-              description: module.description,
-              href: module.href,
             };
             return <IndexTile key={module.href} {...tileProps} />;
           })}
