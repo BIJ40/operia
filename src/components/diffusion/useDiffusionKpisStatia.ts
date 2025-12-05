@@ -1,21 +1,18 @@
 /**
  * Hook DiffusionKpiTiles migré vers StatIA
- * Utilise exclusivement les métriques StatIA pour les KPIs
+ * 100% métriques StatIA - zéro calcul manuel
  */
 
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { getGlobalApogeeDataServices } from "@/statia/adapters/dataServiceAdapter";
 import { getMetricForAgency } from "@/statia/api/getMetricForAgency";
-import { DataService } from "@/apogee-connect/services/dataService";
 import { startOfMonth, endOfMonth } from "date-fns";
 
 export function useDiffusionKpisStatia(currentMonthIndex: number) {
   const { agence } = useAuth();
   const services = getGlobalApogeeDataServices();
 
-  // Utiliser l'année courante - 1 si on est en début d'année sans données
-  // Pour la diffusion, on veut généralement l'année fiscale en cours
   const now = new Date();
   const targetYear = now.getFullYear();
   
@@ -33,15 +30,21 @@ export function useDiffusionKpisStatia(currentMonthIndex: number) {
     queryFn: async () => {
       if (!agence) throw new Error("Agency manquant");
 
-      // Charger données brutes pour l'agence spécifique
-      const allData = await DataService.loadAllData(true, false, agence);
-
-      // === Métriques StatIA ===
-      const [caResult, savResult, caMoyenResult, topTechResult] = await Promise.all([
+      // === 100% Métriques StatIA ===
+      const [
+        caResult,
+        savResult,
+        caMoyenResult,
+        topTechResult,
+        dossiersResult,
+        caJourResult,
+      ] = await Promise.all([
         getMetricForAgency('ca_global_ht', agence, { dateRange }, services),
         getMetricForAgency('taux_sav_global', agence, { dateRange }, services),
         getMetricForAgency('ca_moyen_par_tech', agence, { dateRange }, services),
         getMetricForAgency('top_techniciens_ca', agence, { dateRange }, services),
+        getMetricForAgency('nb_dossiers_crees', agence, { dateRange }, services),
+        getMetricForAgency('ca_moyen_par_jour', agence, { dateRange }, services),
       ]);
 
       const currentMonthCA = Number(caResult.value) || 0;
@@ -60,16 +63,12 @@ export function useDiffusionKpisStatia(currentMonthIndex: number) {
       // Nombre de techniciens actifs depuis le breakdown de caMoyen
       const nbTechsActifs = (caMoyenResult.breakdown as any)?.nbTechActifs || 0;
 
-      // === Dossiers reçus (projets créés dans le mois) ===
-      const nbDossiersRecus = (allData.projects || []).filter((p: any) => {
-        const pDate = new Date(p.date || p.createdAt);
-        return pDate >= dateRange.start && pDate <= dateRange.end;
-      }).length;
-
-      // === Moyenne CA/jour ===
-      const daysInMonth = new Date(currentDate.getFullYear(), currentMonthIndex + 1, 0).getDate();
-      const currentDay = currentDate.getMonth() === new Date().getMonth() ? new Date().getDate() : daysInMonth;
-      const moyenneParJour = currentDay > 0 ? currentMonthCA / currentDay : 0;
+      // === Métriques StatIA : Dossiers & CA/jour ===
+      const nbDossiersRecus = Number(dossiersResult.value) || 0;
+      const moyenneParJour = Number(caJourResult.value) || 0;
+      
+      // Nombre de jours pour affichage (depuis breakdown)
+      const currentDay = (caJourResult.breakdown as any)?.nbJours || 1;
 
       return {
         currentMonthCA,

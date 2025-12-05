@@ -243,10 +243,56 @@ export const caMensuel: StatDefinition = {
   compute: caParMois.compute,
 };
 
+/**
+ * CA Moyen par Jour
+ * CA global HT / nombre de jours écoulés dans la période
+ */
+export const caMoyenParJour: StatDefinition = {
+  id: 'ca_moyen_par_jour',
+  label: 'CA Moyen par Jour',
+  description: 'Chiffre d\'affaires HT moyen par jour sur la période',
+  category: 'ca',
+  source: 'factures',
+  aggregation: 'avg',
+  unit: '€',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    // Réutiliser le calcul de CA global
+    const caResult = caGlobalHt.compute(data, params);
+    const totalCA = Number(caResult.value) || 0;
+    
+    // Calculer le nombre de jours écoulés
+    const today = new Date();
+    const endDate = params.dateRange.end < today ? params.dateRange.end : today;
+    const startDate = params.dateRange.start;
+    
+    // Nombre de jours entre start et end (inclus)
+    const diffTime = endDate.getTime() - startDate.getTime();
+    const nbJours = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1);
+    
+    const moyenne = totalCA / nbJours;
+    
+    return {
+      value: moyenne,
+      metadata: {
+        computedAt: new Date(),
+        source: 'factures',
+        recordCount: caResult.metadata.recordCount,
+      },
+      breakdown: {
+        totalCA,
+        nbJours,
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+      }
+    };
+  }
+};
+
 export const caDefinitions = {
   ca_global_ht: caGlobalHt,
   ca_par_mois: caParMois,
   ca_mensuel: caMensuel,
+  ca_moyen_par_jour: caMoyenParJour,
   du_client: duClient,
   panier_moyen: panierMoyen,
 };
