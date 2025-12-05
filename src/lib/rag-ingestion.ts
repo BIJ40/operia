@@ -291,8 +291,10 @@ async function processDocument(doc: IngestionDocument): Promise<void> {
     // Use parse-document edge function for complex files
     const extension = doc.filename.split('.').pop()?.toLowerCase();
     
-    if (['pdf', 'docx', 'doc', 'pptx', 'xlsx'].includes(extension || '')) {
-      const parseResult = await safeInvoke<{ raw_text: string; metadata: Record<string, unknown> }>(
+    if (['pdf', 'docx', 'doc', 'pptx', 'ppt', 'xlsx'].includes(extension || '')) {
+      logDebug('rag-ingestion', `Calling parse-document for ${doc.filename} (${extension})`);
+      
+      const parseResult = await safeInvoke<{ text?: string; content?: string; raw_text?: string; metadata?: Record<string, unknown> }>(
         supabase.functions.invoke('parse-document', {
           body: { 
             filePath: doc.file_path,
@@ -302,10 +304,21 @@ async function processDocument(doc: IngestionDocument): Promise<void> {
         'RAG_INGESTION_PARSE'
       );
 
-      if (parseResult.success && parseResult.data?.raw_text) {
-        rawText = parseResult.data.raw_text;
+      logDebug('rag-ingestion', `Parse result for ${doc.filename}:`, {
+        success: parseResult.success,
+        hasText: !!parseResult.data?.text,
+        hasContent: !!parseResult.data?.content,
+        hasRawText: !!parseResult.data?.raw_text,
+        textLength: parseResult.data?.text?.length || parseResult.data?.content?.length || parseResult.data?.raw_text?.length || 0,
+      });
+
+      // Accept any of the text field variants
+      const extractedText = parseResult.data?.text || parseResult.data?.content || parseResult.data?.raw_text;
+      
+      if (parseResult.success && extractedText) {
+        rawText = extractedText;
       } else {
-        throw new Error('Failed to parse document');
+        throw new Error(`Failed to parse document: ${parseResult.error || 'No text extracted'}`);
       }
     } else {
       // Plain text file
