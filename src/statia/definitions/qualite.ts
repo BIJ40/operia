@@ -410,21 +410,21 @@ export const delaiDossierPremierDevis: StatDefinition = {
         continue;
       }
       
-      // Date de création du dossier
-      const createdAtStr = project.created_at;
-      if (!createdAtStr) {
+      // Date d'ouverture du dossier (champ "date" de l'API Apogée, pas created_at)
+      const dateOuvertureStr = project.date || project.created_at;
+      if (!dateOuvertureStr) {
         debugStats.noCreatedAt++;
         continue;
       }
       
-      const createdAt = new Date(createdAtStr);
-      if (isNaN(createdAt.getTime())) {
+      const dateOuverture = new Date(dateOuvertureStr);
+      if (isNaN(dateOuverture.getTime())) {
         debugStats.noCreatedAt++;
         continue;
       }
       
-      // Filtre de période sur la date de création du projet
-      if (!isWithinInterval(createdAt, { start: params.dateRange.start, end: params.dateRange.end })) {
+      // Filtre de période sur la date d'ouverture du projet
+      if (!isWithinInterval(dateOuverture, { start: params.dateRange.start, end: params.dateRange.end })) {
         continue;
       }
       
@@ -438,7 +438,7 @@ export const delaiDossierPremierDevis: StatDefinition = {
       // Premier devis envoyé = dateReelle la plus ancienne
       const firstDevisDate = devisDates.sort((a, b) => a.getTime() - b.getTime())[0];
       
-      const diffMs = firstDevisDate.getTime() - createdAt.getTime();
+      const diffMs = firstDevisDate.getTime() - dateOuverture.getTime();
       const diffDays = diffMs / (1000 * 60 * 60 * 24);
       
       // Ignorer les délais négatifs ou aberrants
