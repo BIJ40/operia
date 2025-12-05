@@ -67,11 +67,11 @@ function getInterventionDate(intervention: any): Date | null {
 }
 
 /**
- * Filtre état intervention (validées/terminées uniquement)
+ * Filtre état intervention (uniquement réalisées)
  */
-function isInterventionStateIncluded(state: any): boolean {
+function isInterventionCompleted(state: any): boolean {
   const v = String(state || '').toLowerCase();
-  return ['done', 'validated', 'completed', 'realisee', 'finished'].includes(v);
+  return v === 'completed';
 }
 
 // ============================================================================
@@ -547,8 +547,8 @@ export const nbMoyenInterventionsParDossier: StatDefinition = {
         continue;
       }
 
-      // Filtrer par état valide
-      if (!isInterventionStateIncluded(interv.state)) continue;
+      // Filtrer par état (uniquement completed)
+      if (!isInterventionCompleted(interv.state)) continue;
 
       const pidRaw =
         interv.projectId ||
