@@ -223,15 +223,6 @@ export default function FranchiseurComparison() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-          Comparatifs de Périodes
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Comparez les performances entre différentes périodes
-        </p>
-      </div>
-
       {/* Period selectors */}
       <Card className="rounded-2xl">
         <CardContent className="pt-6">
