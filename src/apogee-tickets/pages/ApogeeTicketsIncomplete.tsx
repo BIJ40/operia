@@ -154,6 +154,7 @@ export default function ApogeeTicketsIncomplete() {
     module: string | null;
     heat_priority: number | null;
     owner_side_value: number;
+    kanban_status: string | null;
   }>>({});
 
   // Valeurs du formulaire pour le ticket courant
@@ -163,9 +164,10 @@ export default function ApogeeTicketsIncomplete() {
     module: null,
     heat_priority: null,
     owner_side_value: ownerSideToSliderValue(currentTicketData?.owner_side || null),
-  }) : { module: null, heat_priority: null, owner_side_value: 50 };
+    kanban_status: null,
+  }) : { module: null, heat_priority: null, owner_side_value: 50, kanban_status: null };
 
-  const setFormValues = (values: { module: string | null; heat_priority: number | null; owner_side_value: number }) => {
+  const setFormValues = (values: { module: string | null; heat_priority: number | null; owner_side_value: number; kanban_status: string | null }) => {
     if (currentTicketId) {
       setFormValuesByTicket(prev => ({
         ...prev,
@@ -188,6 +190,7 @@ export default function ApogeeTicketsIncomplete() {
     
     if (formValues.module) updates.module = formValues.module;
     if (formValues.heat_priority !== null) updates.heat_priority = formValues.heat_priority;
+    if (formValues.kanban_status) updates.kanban_status = formValues.kanban_status;
     updates.owner_side = sliderValueToOwnerSide(formValues.owner_side_value);
 
     await updateTicket.mutateAsync(updates);
@@ -410,6 +413,56 @@ export default function ApogeeTicketsIncomplete() {
                   onChange={(v) => setFormValues({ ...formValues, owner_side_value: v })}
                   disabled={updateTicket.isPending}
                 />
+              </div>
+
+              {/* Statut / Colonne Kanban */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  Colonne Kanban
+                </label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between"
+                    >
+                      {statuses.find(s => s.id === (formValues.kanban_status || currentTicket?.kanban_status))?.label || "Sélectionner un statut..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Rechercher un statut..." />
+                      <CommandList>
+                        <CommandEmpty>Aucun statut trouvé.</CommandEmpty>
+                        <CommandGroup>
+                          {statuses.map((s) => (
+                            <CommandItem
+                              key={s.id}
+                              value={s.label}
+                              onSelect={() => {
+                                setFormValues({ ...formValues, kanban_status: s.id });
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  (formValues.kanban_status || currentTicket?.kanban_status) === s.id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              <span 
+                                className="w-3 h-3 rounded-full mr-2" 
+                                style={{ backgroundColor: s.color || '#888' }}
+                              />
+                              {s.label}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
             </div>
