@@ -6,12 +6,112 @@
 import { StatDefinition, LoadedData, StatParams, StatResult } from './types';
 import { 
   normalizeUniversSlug,
-  extractProjectUniverses,
   isFactureStateIncluded
 } from '../engine/normalizers';
 import { extractFactureMeta } from '../rules/rules';
 import { indexProjectsById } from '../engine/loaders';
 import { parseISO, isWithinInterval } from 'date-fns';
+
+// ============================================================================
+// HELPERS COMMUNS SAV
+// ============================================================================
+
+/**
+ * Date dossier unifiée - extraction robuste de la date projet
+ */
+function getProjectDate(project: any): Date | null {
+  const dateStr =
+    project.dateReelle ||
+    project.date ||
+    project.created_at ||
+    project.data?.dateReelle ||
+    project.data?.date ||
+    null;
+
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * Détection SAV robuste - vérifie si un projet est un SAV
+ */
+function isSavProject(project: any): boolean {
+  const d = project.data || {};
+
+  // Flags explicites
+  if (d.isSav === true || d.is_sav === true || d.isSAV === true) return true;
+
+  // Parent project ID (dossier enfant)
+  if (project.parentProjectId || project.parent_project_id || d.parentId) return true;
+
+  // Origine / type / catégorie
+  const origine = (
+    d.origineDossier || 
+    d.origine || 
+    d.typeDossier || 
+    d.categorie || 
+    project.type ||
+    ''
+  ).toString().toLowerCase();
+
+  if (origine.includes('sav')) return true;
+
+  // Tags éventuels
+  const tags = (d.tags || project.tags || []) as any[];
+  if (Array.isArray(tags) && tags.some((t) => String(t).toLowerCase().includes('sav'))) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Extraction des univers d'un projet
+ */
+function extractUniversesFromProject(project: any): string[] {
+  if (!project) return [];
+  const d = project.data || {};
+
+  let universes: string[] = [];
+
+  if (Array.isArray(d.universes)) {
+    universes = d.universes;
+  } else if (typeof d.univers === 'string') {
+    universes = [d.univers];
+  } else if (Array.isArray(project.universes)) {
+    universes = project.universes;
+  }
+
+  return universes
+    .map((u) => String(u).trim())
+    .filter((u) => u.length > 0);
+}
+
+/**
+ * Mapping apporteurId → Nom lisible
+ */
+function mapApporteurs(clients: any[]): Map<string, string> {
+  const map = new Map<string, string>();
+
+  for (const c of clients) {
+    const id = String(c.id);
+    const nom =
+      c.displayName ||
+      c.raisonSociale ||
+      c.nom ||
+      c.name ||
+      c.label ||
+      c.data?.nom ||
+      c.data?.name ||
+      c.data?.raisonSociale ||
+      `Apporteur ${id}`;
+
+    map.set(id, nom);
+  }
+
+  return map;
+}
 
 /**
  * Détecte si une intervention est de type SAV
@@ -25,19 +125,6 @@ function isSAVIntervention(intervention: any): boolean {
     type2.includes('sav') || 
     type.includes('sav') || 
     pictos.includes('SAV')
-  );
-}
-
-/**
- * Détecte si un projet est un SAV (dossier enfant/lié)
- */
-function isSAVProject(project: any): boolean {
-  return !!(
-    project.parentProjectId || 
-    project.parent_project_id ||
-    project.data?.parentId ||
-    project.data?.isSAV ||
-    (project.type && project.type.toLowerCase().includes('sav'))
   );
 }
 
@@ -60,8 +147,8 @@ function projectHasSAV(project: any, interventions: any[]): boolean {
   const sinistre = (project.data?.sinistre || '').toLowerCase();
   const hasSAVSinistre = sinistre === 'sav';
   
-  // Via relation parent
-  const isChildSAV = isSAVProject(project);
+  // Via relation parent ou flags
+  const isChildSAV = isSavProject(project);
   
   return hasSAVIntervention || hasSAVPicto || hasSAVSinistre || isChildSAV;
 }
@@ -205,20 +292,17 @@ export const tauxSavParUnivers: StatDefinition = {
     const savByUnivers: Record<string, number> = {};
 
     for (const project of projects) {
-      const dateStr = project.date || project.created_at;
-      if (!dateStr) continue;
-
-      const date = new Date(dateStr);
-      if (isNaN(date.getTime())) continue;
+      const date = getProjectDate(project);
+      if (!date) continue;
 
       if (params.dateRange && (date < params.dateRange.start || date > params.dateRange.end)) {
         continue;
       }
 
-      const universes = extractProjectUniverses(project);
+      const universes = extractUniversesFromProject(project);
       const finalUniverses = universes.length > 0 ? universes : ['non-classe'];
 
-      const isSav = isSAVProject(project);
+      const isSav = isSavProject(project);
 
       for (const u of finalUniverses) {
         totalByUnivers[u] = (totalByUnivers[u] || 0) + 1;
@@ -254,19 +338,6 @@ export const tauxSavParUnivers: StatDefinition = {
 };
 
 /**
- * Helper: map apporteur ID → nom lisible
- */
-function mapApporteurs(clients: any[]): Map<string, string> {
-  const map = new Map<string, string>();
-  for (const client of clients) {
-    const id = String(client.id);
-    const nom = client.raisonSociale || client.nom || client.name || `Apporteur ${id}`;
-    map.set(id, nom);
-  }
-  return map;
-}
-
-/**
  * Taux SAV par Apporteur
  * Proportion de dossiers SAV par apporteur/commanditaire
  */
@@ -289,11 +360,8 @@ export const tauxSavParApporteur: StatDefinition = {
     const savByApporteur: Record<string, number> = {};
 
     for (const project of projects) {
-      const dateStr = project.date || project.created_at;
-      if (!dateStr) continue;
-
-      const date = new Date(dateStr);
-      if (isNaN(date.getTime())) continue;
+      const date = getProjectDate(project);
+      if (!date) continue;
 
       if (params.dateRange && (date < params.dateRange.start || date > params.dateRange.end)) {
         continue;
@@ -309,7 +377,7 @@ export const tauxSavParApporteur: StatDefinition = {
         return apporteursById.get(idStr) || `Apporteur ${idStr}`;
       })();
 
-      const isSav = isSAVProject(project);
+      const isSav = isSavProject(project);
 
       totalByApporteur[keyNom] = (totalByApporteur[keyNom] || 0) + 1;
       if (isSav) {
@@ -360,17 +428,14 @@ export const nbSavGlobal: StatDefinition = {
     let nbSav = 0;
     
     for (const project of projects) {
-      const dateStr = project.date || project.created_at;
-      if (!dateStr) continue;
-      
-      const date = new Date(dateStr);
-      if (isNaN(date.getTime())) continue;
+      const date = getProjectDate(project);
+      if (!date) continue;
       
       if (params.dateRange && (date < params.dateRange.start || date > params.dateRange.end)) {
         continue;
       }
       
-      if (isSAVProject(project)) {
+      if (isSavProject(project)) {
         nbSav++;
       }
     }
