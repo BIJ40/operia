@@ -1,15 +1,17 @@
 /**
  * StatIA V1 - Définitions des métriques par Technicien
  * Réutilise les formules existantes Classe A de technicienUniversEngine
+ * 
+ * SOURCES UTILISÉES:
+ * - apiGetFactures (via loaders.ts)
+ * - apiGetProjects (via loaders.ts)
+ * - apiGetInterventions (via loaders.ts)
+ * - apiGetUsers (via loaders.ts)
  */
 
 import { StatDefinition, LoadedData, StatParams, StatResult } from './types';
 import { 
   normalizeUniversSlug,
-  normalizeInterventionType,
-  isProductiveInterventionType,
-  isNonProductiveInterventionType,
-  isValidInterventionState,
   isFactureStateIncluded
 } from '../engine/normalizers';
 import { extractFactureMeta } from '../rules/rules';
@@ -28,8 +30,119 @@ interface TechnicianStats {
 }
 
 /**
+ * Vérifie si une intervention est de type RT (Relevé Technique) - NON PRODUCTIF
+ * Logique alignée sur DataService.calculateCAByTechnician
+ */
+function isRTIntervention(intervention: any): boolean {
+  const type2 = (intervention.type2 || intervention.data?.type2 || '').toLowerCase();
+  const type = (intervention.type || intervention.data?.type || '').toLowerCase();
+  
+  // RT explicite via type2
+  if (type2.includes('relevé') || type2.includes('releve') || type2.includes('technique')) return true;
+  if (type2 === 'rt') return true;
+  
+  // RT explicite via type
+  if (type.includes('rt')) return true;
+  
+  // RT via flags bi (biRt seul = RT)
+  if (intervention.data?.biRt && !intervention.data?.biDepan && !intervention.data?.biTvx && !intervention.data?.biV3) return true;
+  if (intervention.data?.isRT) return true;
+  
+  return false;
+}
+
+/**
+ * Vérifie si une intervention est de type SAV - NON PRODUCTIF pour les stats technicien
+ */
+function isSAVIntervention(intervention: any): boolean {
+  const type2 = (intervention.type2 || intervention.data?.type2 || '').toLowerCase();
+  const type = (intervention.type || intervention.data?.type || '').toLowerCase();
+  
+  return type2.includes('sav') || type.includes('sav');
+}
+
+/**
+ * Vérifie si une intervention est de type diagnostic - NON PRODUCTIF
+ */
+function isDiagnosticIntervention(intervention: any): boolean {
+  const type2 = (intervention.type2 || intervention.data?.type2 || '').toLowerCase();
+  const type = (intervention.type || intervention.data?.type || '').toLowerCase();
+  
+  return type2.includes('diagnostic') || type.includes('diagnostic');
+}
+
+/**
+ * Vérifie si une intervention "A DÉFINIR" a du travail productif réalisé
+ * Logique alignée sur DataService.calculateCAByTechnician
+ */
+function hasProductiveWorkDone(intervention: any): boolean {
+  const hasDepanWork = intervention.data?.biDepan?.isWorkDone || intervention.data?.biDepan?.tvxEffectues;
+  const hasTvxWork = intervention.data?.biTvx?.isWorkDone || intervention.data?.biTvx?.tvxEffectues;
+  const hasV3Work = intervention.data?.biV3?.items?.length > 0;
+  return hasDepanWork || hasTvxWork || hasV3Work;
+}
+
+/**
+ * Vérifie si une intervention est productive pour le calcul CA technicien
+ * Logique alignée sur DataService.calculateCAByTechnician (FONCTIONNEL)
+ */
+function isProductiveIntervention(intervention: any): boolean {
+  // Exclure les RT, SAV, diagnostics
+  if (isRTIntervention(intervention)) return false;
+  if (isSAVIntervention(intervention)) return false;
+  if (isDiagnosticIntervention(intervention)) return false;
+  
+  const type2 = (intervention.type2 || intervention.data?.type2 || '').toLowerCase();
+  
+  // Cas "RDV à définir" : inclure seulement si travaux réalisés
+  if (type2.includes('définir') || type2.includes('a définir') || type2.includes('à définir')) {
+    return hasProductiveWorkDone(intervention);
+  }
+  
+  // Par défaut : inclure (dépannages, travaux, etc.)
+  return true;
+}
+
+/**
+ * Récupère les techniciens productifs d'une intervention
+ * Collecte les usersIds des visites OU du champ userId principal
+ */
+function getProductiveTechnicians(intervention: any): Set<string | number> {
+  const techIds = new Set<string | number>();
+  
+  // Parcourir les visites si disponibles
+  const visites = intervention.visites || intervention.data?.visites || [];
+  for (const visite of visites) {
+    // Inclure les visites validées/done ou sans state explicite
+    const visiteState = (visite.state || '').toLowerCase();
+    if (visiteState && visiteState !== 'validated' && visiteState !== 'done' && visiteState !== 'finished') {
+      continue;
+    }
+    
+    const userIds = visite.usersIds || visite.userIds || [];
+    for (const techId of userIds) {
+      if (techId) techIds.add(techId);
+    }
+  }
+  
+  // Fallback: userId principal de l'intervention
+  if (techIds.size === 0 && intervention.userId) {
+    techIds.add(intervention.userId);
+  }
+  
+  // Fallback 2: usersIds au niveau intervention
+  if (techIds.size === 0 && intervention.usersIds) {
+    for (const techId of intervention.usersIds) {
+      if (techId) techIds.add(techId);
+    }
+  }
+  
+  return techIds;
+}
+
+/**
  * Calcule le temps passé par technicien par projet
- * Adapté de technicienUniversEngine.calculateTechTimeByProject
+ * Utilisé pour la métrique pondérée au temps
  */
 function calculateTechTimeByProject(
   interventions: any[],
@@ -42,23 +155,23 @@ function calculateTechTimeByProject(
   const dureeTotaleParProjet = new Map<string, number>();
   
   for (const intervention of interventions) {
-    // Filtrer les interventions non-productives (RT, SAV, diagnostic)
-    const type = normalizeInterventionType(intervention.type || intervention.type2);
-    if (isNonProductiveInterventionType(type)) continue;
-    
-    // Vérifier l'état de l'intervention
-    if (!isValidInterventionState(intervention.state)) continue;
+    // Filtrer les interventions non-productives
+    if (!isProductiveIntervention(intervention)) continue;
     
     const projectId = String(intervention.projectId || intervention.project_id);
     if (!projectId) continue;
     
-    // Parcourir les visites validées
-    const visites = intervention.visites || [];
+    // Parcourir les visites
+    const visites = intervention.visites || intervention.data?.visites || [];
     for (const visite of visites) {
-      if (visite.state !== 'validated' && visite.state !== 'done') continue;
+      // Inclure les visites validées ou sans state explicite
+      const visiteState = (visite.state || '').toLowerCase();
+      if (visiteState && visiteState !== 'validated' && visiteState !== 'done') continue;
       
       const duree = visite.duree || visite.duration || 1; // Durée en heures, défaut 1h
-      const techIds = visite.usersIds || [intervention.userId];
+      const techIds = visite.usersIds || visite.userIds || [intervention.userId];
+      const nbTechs = techIds.length || 1;
+      const dureeParTech = duree / nbTechs;
       
       for (const techId of techIds) {
         if (!techId) continue;
@@ -68,11 +181,24 @@ function calculateTechTimeByProject(
           dureeTechParProjet.set(projectId, new Map());
         }
         const projectTechMap = dureeTechParProjet.get(projectId)!;
-        projectTechMap.set(techId, (projectTechMap.get(techId) || 0) + duree);
+        projectTechMap.set(techId, (projectTechMap.get(techId) || 0) + dureeParTech);
         
         // Ajouter au temps total du projet
-        dureeTotaleParProjet.set(projectId, (dureeTotaleParProjet.get(projectId) || 0) + duree);
+        dureeTotaleParProjet.set(projectId, (dureeTotaleParProjet.get(projectId) || 0) + dureeParTech);
       }
+    }
+    
+    // Fallback si pas de visites: utiliser userId avec durée 1h
+    if (visites.length === 0 && intervention.userId) {
+      const duree = 1;
+      const techId = intervention.userId;
+      
+      if (!dureeTechParProjet.has(projectId)) {
+        dureeTechParProjet.set(projectId, new Map());
+      }
+      const projectTechMap = dureeTechParProjet.get(projectId)!;
+      projectTechMap.set(techId, (projectTechMap.get(techId) || 0) + duree);
+      dureeTotaleParProjet.set(projectId, (dureeTotaleParProjet.get(projectId) || 0) + duree);
     }
   }
   
@@ -93,7 +219,11 @@ export const caParTechnicienUnivers: StatDefinition = {
   aggregation: 'sum',
   unit: '€',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { factures, projects, interventions, users } = data;
+    // Defensive array initialization
+    const factures = data.factures || [];
+    const projects = data.projects || [];
+    const interventions = data.interventions || [];
+    const users = data.users || [];
     
     const projectsById = indexProjectsById(projects);
     const usersById = indexUsersById(users);
@@ -128,7 +258,6 @@ export const caParTechnicienUnivers: StatDefinition = {
       const totalProjectTime = dureeTotaleParProjet.get(projectId) || 0;
       
       if (!projectTechTime || totalProjectTime === 0) {
-        // Pas de temps technicien = CA non attribué
         continue;
       }
       
@@ -208,10 +337,16 @@ export const caParTechnicienUnivers: StatDefinition = {
  * 
  * RÈGLE MÉTIER (conforme spec CA_PAR_TECHNICIEN):
  * - Pour chaque facture de la période, récupérer le projectId
- * - Identifier les techniciens productifs uniques (set de usersIds des visites validées + productives)
+ * - Identifier les techniciens productifs uniques (set de usersIds des visites + productives)
  * - Répartir CA_HT_total / nbTechsProductifs de manière ÉGALE (pas au prorata du temps)
  * - Avoirs intégrés en négatif
  * - Exclure RT, SAV non-facturant, visites annulées
+ * 
+ * SOURCES:
+ * - apiGetFactures: CA HT, date, type facture
+ * - apiGetProjects: lien facture → interventions
+ * - apiGetInterventions: visites, usersIds, types
+ * - apiGetUsers: noms techniciens
  */
 export const caParTechnicien: StatDefinition = {
   id: 'ca_par_technicien',
@@ -223,7 +358,13 @@ export const caParTechnicien: StatDefinition = {
   aggregation: 'sum',
   unit: '€',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { factures, projects, interventions, users } = data;
+    // Defensive array initialization
+    const factures = data.factures || [];
+    const projects = data.projects || [];
+    const interventions = data.interventions || [];
+    const users = data.users || [];
+    
+    console.log(`[StatIA ca_par_technicien] Données reçues: ${factures.length} factures, ${projects.length} projets, ${interventions.length} interventions, ${users.length} users`);
     
     const projectsById = indexProjectsById(projects);
     const usersById = indexUsersById(users);
@@ -259,6 +400,9 @@ export const caParTechnicien: StatDefinition = {
       const typeFacture = (facture.typeFacture || facture.type || facture.data?.type || '').toLowerCase();
       if (typeFacture === 'proforma' || typeFacture === 'pro_forma') continue;
       
+      // Vérifier état facture
+      if (!isFactureStateIncluded(facture.state)) continue;
+      
       const projectId = String(facture.projectId || facture.project_id);
       if (!projectId) continue;
       
@@ -269,33 +413,20 @@ export const caParTechnicien: StatDefinition = {
       const techsProductifs = new Set<string | number>();
       
       for (const intervention of projectInterventions) {
-        // Filtrer les interventions non-productives (RT, SAV, TH, diagnostic)
-        const type = normalizeInterventionType(intervention.type || intervention.type2);
-        if (isNonProductiveInterventionType(type)) continue;
+        // Filtrer les interventions non-productives (RT, SAV, diagnostic)
+        if (!isProductiveIntervention(intervention)) continue;
         
-        // Vérifier l'état de l'intervention
-        if (!isValidInterventionState(intervention.state)) continue;
-        
-        // Parcourir les visites validées
-        const visites = intervention.visites || [];
-        for (const visite of visites) {
-          // Seules les visites validées/done comptent
-          if (visite.state !== 'validated' && visite.state !== 'done') continue;
-          
-          // Collecter les techniciens de cette visite
-          const techIds = visite.usersIds || [intervention.userId];
-          for (const techId of techIds) {
-            if (techId) {
-              techsProductifs.add(techId);
-            }
-          }
+        // Collecter les techniciens de cette intervention
+        const interventionTechs = getProductiveTechnicians(intervention);
+        for (const techId of interventionTechs) {
+          techsProductifs.add(techId);
         }
       }
       
       // Nombre de techniciens productifs uniques
       const nbTechsProductifs = techsProductifs.size;
       
-      // Si aucun technicien productif identifié, ignorer ce dossier (sécurité)
+      // Si aucun technicien productif identifié, ignorer ce dossier
       if (nbTechsProductifs === 0) {
         dossiersIgnores++;
         continue;
@@ -321,6 +452,8 @@ export const caParTechnicien: StatDefinition = {
       totalCADistribue += caHT;
       facturesTraitees++;
     }
+    
+    console.log(`[StatIA ca_par_technicien] Résultat: ${facturesTraitees} factures traitées, ${techCA.size} techniciens, ${dossiersIgnores} dossiers ignorés, CA total ${totalCADistribue}€`);
     
     // Formater le résultat
     const result: Record<string, number> = {};
@@ -405,7 +538,7 @@ export const topTechniciensCA: StatDefinition = {
 export const caMoyenParTech: StatDefinition = {
   id: 'ca_moyen_par_tech',
   label: 'CA moyen par technicien',
-  description: 'CA productif moyen par technicien sur la période (factures productives, visites validées, répartition prorata techniciens)',
+  description: 'CA productif moyen par technicien sur la période (factures productives, visites validées, répartition égale entre techniciens)',
   category: 'technicien',
   source: ['factures', 'projects', 'interventions', 'users'],
   dimensions: [],
@@ -454,6 +587,12 @@ export const caMoyenParTech: StatDefinition = {
  * - Identifier les visites productives (validated, travaux/dépannage/recherche de fuite)
  * - Calculer le temps par technicien sur chaque dossier (durée visite / nb techs présents)
  * - Répartir le CA au prorata du temps : CA_T = CA_HT × (temps_T / temps_total_dossier)
+ * 
+ * SOURCES:
+ * - apiGetFactures: CA HT, date, type
+ * - apiGetProjects: lien facture → interventions  
+ * - apiGetInterventions: visites, duree, usersIds
+ * - apiGetUsers: noms techniciens
  */
 export const caParTechnicienTemps: StatDefinition = {
   id: 'ca_par_technicien_temps',
@@ -465,10 +604,13 @@ export const caParTechnicienTemps: StatDefinition = {
   aggregation: 'sum',
   unit: '€',
   compute: (data: LoadedData, params: StatParams): StatResult => {
+    // Defensive array initialization
     const factures = data.factures || [];
     const projects = data.projects || [];
     const interventions = data.interventions || [];
     const users = data.users || [];
+    
+    console.log(`[StatIA ca_par_technicien_temps] Données reçues: ${factures.length} factures, ${projects.length} projets, ${interventions.length} interventions, ${users.length} users`);
     
     const projectsById = indexProjectsById(projects);
     const usersById = indexUsersById(users);
@@ -498,6 +640,9 @@ export const caParTechnicienTemps: StatDefinition = {
       // Exclure proforma
       const typeFacture = (facture.typeFacture || facture.type || facture.data?.type || '').toLowerCase();
       if (typeFacture === 'proforma' || typeFacture === 'pro_forma') continue;
+      
+      // Vérifier état facture
+      if (!isFactureStateIncluded(facture.state)) continue;
       
       const projectId = String(facture.projectId || facture.project_id);
       if (!projectId) continue;
@@ -535,6 +680,8 @@ export const caParTechnicienTemps: StatDefinition = {
       totalCADistribue += caHT;
       facturesTraitees++;
     }
+    
+    console.log(`[StatIA ca_par_technicien_temps] Résultat: ${facturesTraitees} factures traitées, ${techStats.size} techniciens, ${dossiersIgnores} dossiers ignorés, CA total ${totalCADistribue}€`);
     
     // Formater le résultat : { techId: caHt }
     const result: Record<string, number> = {};
