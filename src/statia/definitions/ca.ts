@@ -134,11 +134,12 @@ export const caParMois: StatDefinition = {
 
 /**
  * Dû Client TTC (reste à encaisser)
+ * Formule conforme export Excel : T.T.C. - Paiements reçus
  */
 export const duClient: StatDefinition = {
   id: 'du_client',
   label: 'Dû Client TTC',
-  description: 'Montant total TTC restant à encaisser',
+  description: 'Montant total TTC restant à encaisser (TTC - Paiements)',
   category: 'ca',
   source: 'factures',
   aggregation: 'sum',
@@ -149,11 +150,22 @@ export const duClient: StatDefinition = {
     let totalDu = 0;
     let factureCount = 0;
     
-    // Dû Client = snapshot global de TOUTES les factures impayées (pas de filtre date)
+    // Dû Client = snapshot global de TOUTES les factures (pas de filtre date)
     for (const facture of factures) {
-      // Utiliser data.calcReglementsReste (montant TTC restant à encaisser)
-      const reste = facture.data?.calcReglementsReste ?? facture.calcReglementsReste ?? 0;
+      // Exclure les avoirs et proforma du calcul du Dû
+      const typeFacture = (facture.typeFacture || facture.type || facture.data?.type || '').toLowerCase();
+      if (typeFacture === 'avoir' || typeFacture === 'proforma' || typeFacture === 'pro_forma') continue;
       
+      // Montant TTC de la facture
+      const totalTTC = facture.data?.totalTTC ?? facture.totalTTC ?? 0;
+      
+      // Paiements reçus (calc.paidTTC)
+      const paidTTC = facture.calc?.paidTTC ?? 0;
+      
+      // Calcul conforme Excel : TTC - Paiements reçus
+      const reste = totalTTC - paidTTC;
+      
+      // N'ajouter que les montants positifs (reste dû réel)
       if (reste > 0) {
         totalDu += reste;
         factureCount++;
@@ -166,6 +178,10 @@ export const duClient: StatDefinition = {
         computedAt: new Date(),
         source: 'factures',
         recordCount: factureCount,
+      },
+      breakdown: {
+        facturesAvecDu: factureCount,
+        formule: 'TTC - Paiements reçus'
       }
     };
   }
