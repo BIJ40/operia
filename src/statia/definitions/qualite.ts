@@ -514,8 +514,8 @@ export const delaiDossierPremierDevis: StatDefinition = {
         });
       }
       
-      // Ignorer les délais négatifs ou aberrants
-      if (!Number.isFinite(diffDays) || diffDays < 0) {
+      // Ignorer les délais négatifs, aberrants ou > 60 jours (outliers)
+      if (!Number.isFinite(diffDays) || diffDays < 0 || diffDays > 60) {
         debugStats.negative++;
         continue;
       }
