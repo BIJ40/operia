@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bot, X, Send, RotateCcw, BookOpen, Users, Building2, HelpCircle, Headphones, Loader2 } from 'lucide-react';
+import { Bot, X, Send, RotateCcw, BookOpen, Users, Building2, HelpCircle, Headphones, Loader2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils';
 import { getApogeeContext, getNoContentResponse } from '@/lib/rag-michu';
 import { safeQuery } from '@/lib/safeQuery';
 import { logError } from '@/lib/logger';
-import { useNavigate } from 'react-router-dom';
 import { useSupportTicket } from '@/hooks/use-support-ticket';
 import { toast } from 'sonner';
 
@@ -30,37 +29,72 @@ const themes = [
 
 export function ChatbotWidget() {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const { createSupportTicket, isCreating } = useSupportTicket();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedContext, setSelectedContext] = useState<ChatContext | null>(null);
+  const [liveChatTicketId, setLiveChatTicketId] = useState<string | null>(null);
+  const [liveChatMessages, setLiveChatMessages] = useState<Array<{ id: string; message: string; is_from_support: boolean; created_at: string }>>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, liveChatMessages]);
+
+  // Subscribe to live chat messages
+  useEffect(() => {
+    if (!liveChatTicketId) return;
+
+    // Load existing messages
+    const loadMessages = async () => {
+      const { data } = await supabase
+        .from('support_messages')
+        .select('id, message, is_from_support, created_at')
+        .eq('ticket_id', liveChatTicketId)
+        .order('created_at', { ascending: true });
+      if (data) setLiveChatMessages(data);
+    };
+    loadMessages();
+
+    // Subscribe to new messages
+    const channel = supabase
+      .channel(`live-chat-${liveChatTicketId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'support_messages',
+        filter: `ticket_id=eq.${liveChatTicketId}`
+      }, (payload) => {
+        const newMsg = payload.new as { id: string; message: string; is_from_support: boolean; created_at: string };
+        setLiveChatMessages(prev => [...prev, newMsg]);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [liveChatTicketId]);
 
   const resetConversation = () => {
     setMessages([]);
     setSelectedContext(null);
+    setLiveChatTicketId(null);
+    setLiveChatMessages([]);
   };
 
   const handleSelectTheme = async (theme: ChatContext) => {
     if (theme === 'support') {
-      // Create a chat_human ticket and navigate to it
+      // Create a chat_human ticket and stay in widget
       const ticket = await createSupportTicket(
         [{ role: 'user', content: 'Demande de discussion en direct avec le support' }],
         'chat_human'
       );
-      setIsOpen(false);
       if (ticket) {
         toast.success('Un agent va vous répondre très rapidement');
-        navigate('/support/mes-demandes', { state: { openTicketId: ticket.id } });
-      } else {
-        navigate('/support/mes-demandes');
+        setLiveChatTicketId(ticket.id);
+        setSelectedContext('support');
       }
     } else {
       setSelectedContext(theme);
@@ -68,14 +102,33 @@ export function ChatbotWidget() {
   };
 
   const handleContactSupport = async () => {
-    // Create a chat_human ticket from existing conversation
+    // Create a chat_human ticket from existing conversation and switch to live chat
     const ticket = await createSupportTicket(messages, 'chat_human');
-    setIsOpen(false);
     if (ticket) {
       toast.success('Un agent va vous répondre très rapidement');
-      navigate('/support/mes-demandes', { state: { openTicketId: ticket.id } });
-    } else {
-      navigate('/support/mes-demandes');
+      setLiveChatTicketId(ticket.id);
+      setSelectedContext('support');
+      setMessages([]);
+    }
+  };
+
+  const sendLiveChatMessage = async () => {
+    if (!input.trim() || !liveChatTicketId || isLoading || !user?.id) return;
+    
+    setIsLoading(true);
+    try {
+      await supabase.from('support_messages').insert({
+        ticket_id: liveChatTicketId,
+        message: input.trim(),
+        is_from_support: false,
+        sender_id: user.id
+      });
+      setInput('');
+    } catch (error) {
+      logError('chatbot-widget', 'Send live chat message error', error);
+      toast.error('Erreur lors de l\'envoi du message');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -303,7 +356,58 @@ export function ChatbotWidget() {
 
         {/* Content */}
         <div className="h-[400px] flex flex-col">
-          {!selectedContext && messages.length === 0 ? (
+          {liveChatTicketId ? (
+            /* Live chat with support */
+            <>
+              <div className="px-3 py-2 border-b bg-helpconfort-orange/10 flex items-center gap-2">
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={resetConversation}>
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                </Button>
+                <Headphones className="h-4 w-4 text-helpconfort-orange" />
+                <span className="text-sm font-medium text-helpconfort-orange">Support en direct</span>
+              </div>
+              <ScrollArea className="flex-1 p-4">
+                {liveChatMessages.length === 0 && (
+                  <div className="text-center text-muted-foreground text-sm py-8">
+                    Un agent va vous répondre très rapidement...
+                  </div>
+                )}
+                {liveChatMessages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`mb-4 ${!msg.is_from_support ? 'text-right' : 'text-left'}`}
+                  >
+                    <div
+                      className={cn(
+                        "inline-block max-w-[85%] p-3 rounded-lg text-sm",
+                        !msg.is_from_support
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-helpconfort-orange/20 text-foreground'
+                      )}
+                    >
+                      <div className="whitespace-pre-wrap">{msg.message}</div>
+                    </div>
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </ScrollArea>
+              <div className="p-3 border-t">
+                <div className="flex gap-2">
+                  <Input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyPress={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendLiveChatMessage(); } }}
+                    placeholder="Tapez votre message..."
+                    disabled={isLoading}
+                    className="flex-1"
+                  />
+                  <Button onClick={sendLiveChatMessage} disabled={!input.trim() || isLoading} size="icon" aria-label="Envoyer">
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </>
+          ) : !selectedContext && messages.length === 0 ? (
             /* Theme selector - single line items */
             <div className="flex flex-col items-center justify-center h-full gap-3 px-4 py-6">
               <div className="text-center mb-2">
