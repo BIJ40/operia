@@ -552,7 +552,7 @@ export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusC
             isCollapsed={collapsedColumns.has(status.id)}
             onToggleCollapse={() => toggleColumnCollapse(status.id)}
             getTicketShouldBlink={getTicketShouldBlink}
-            showPECSummary={status.id === 'DEVIS'}
+            showPECSummary={status.id === 'DEVIS' || status.id === 'a_chiffrer'}
           />
         ))}
       </div>
