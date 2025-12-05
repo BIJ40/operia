@@ -136,28 +136,37 @@ serve(async (req) => {
           html: `
             <!DOCTYPE html>
             <html>
-              <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
-                <div style="max-width: 600px; margin: 40px auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-                  <div style="background: linear-gradient(135deg, #0EA5E9 0%, #1e40af 100%); padding: 30px; text-align: center;">
-                    <h1 style="color: white; margin: 0;">Réinitialisation de mot de passe</h1>
-                  </div>
-                  <div style="padding: 30px;">
-                    <p>Bonjour <strong>${userName}</strong>,</p>
-                    <p>Un administrateur a généré un nouveau mot de passe temporaire pour votre compte.</p>
-                    <div style="background: linear-gradient(135deg, #f97316 0%, #fb923c 100%); padding: 3px; border-radius: 12px; margin: 20px 0;">
-                      <div style="background: white; padding: 20px; border-radius: 10px;">
-                        <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">Votre mot de passe temporaire</p>
-                        <p style="font-size: 24px; font-weight: bold; color: #f97316; margin: 0; font-family: monospace;">${newPassword}</p>
-                      </div>
-                    </div>
-                    <p style="color: #ef4444;"><strong>⚠️ Important :</strong> Vous devrez changer ce mot de passe à votre prochaine connexion.</p>
-                    <div style="text-align: center; margin: 30px 0;">
-                      <a href="${Deno.env.get('APP_URL') || 'https://www.helpconfort.services'}" style="display: inline-block; background: linear-gradient(135deg, #f97316 0%, #fb923c 100%); color: white; text-decoration: none; padding: 15px 30px; border-radius: 8px; font-weight: bold;">
-                        Se connecter
-                      </a>
-                    </div>
-                  </div>
-                </div>
+              <body style="margin: 0; padding: 20px; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+                <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto;">
+                  <tr>
+                    <td style="background-color: #0EA5E9; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                      <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Réinitialisation de mot de passe</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color: #ffffff; padding: 30px; border-radius: 0 0 10px 10px;">
+                      <p style="color: #333333; margin: 0 0 15px 0;">Bonjour <strong>${userName}</strong>,</p>
+                      <p style="color: #333333; margin: 0 0 20px 0;">Un administrateur a généré un nouveau mot de passe temporaire pour votre compte.</p>
+                      <table width="100%" cellpadding="0" cellspacing="0" style="margin: 20px 0;">
+                        <tr>
+                          <td style="background-color: #FFF7ED; border: 2px solid #f97316; border-radius: 10px; padding: 20px;">
+                            <p style="margin: 0 0 10px 0; color: #666666; font-size: 14px;">Votre mot de passe temporaire</p>
+                            <p style="font-size: 22px; font-weight: bold; color: #f97316; margin: 0; font-family: monospace; letter-spacing: 1px;">${newPassword}</p>
+                          </td>
+                        </tr>
+                      </table>
+                      <p style="color: #ef4444; margin: 20px 0;"><strong>⚠️ Important :</strong> Vous devrez changer ce mot de passe à votre prochaine connexion.</p>
+                      <table width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td align="center" style="padding: 20px 0;">
+                            <a href="${Deno.env.get('APP_URL') || 'https://www.helpconfort.services'}" style="display: inline-block; background-color: #f97316; color: #ffffff; text-decoration: none; padding: 15px 30px; border-radius: 8px; font-weight: bold; font-size: 16px;">Se connecter</a>
+                          </td>
+                        </tr>
+                      </table>
+                      <p style="color: #999999; font-size: 12px; text-align: center; margin: 20px 0 0 0;">© ${new Date().getFullYear()} HelpConfort Services</p>
+                    </td>
+                  </tr>
+                </table>
               </body>
             </html>
           `,
