@@ -185,9 +185,14 @@ export default function ApogeeTicketsReview() {
               Filtres
             </CardTitle>
             {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters}>
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                onClick={clearFilters}
+                className="animate-pulse hover:animate-none"
+              >
                 <X className="h-4 w-4 mr-1" />
-                Effacer
+                Réinitialiser
               </Button>
             )}
           </div>
