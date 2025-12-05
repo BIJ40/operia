@@ -15,7 +15,9 @@ import { CSS } from '@dnd-kit/utilities';
 import { SupportTicket } from '@/hooks/use-admin-support';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { MessageSquare, ChevronLeft, ChevronRight, GitMerge } from 'lucide-react';
+import { MessageSquare, ChevronLeft, ChevronRight, GitMerge, Filter } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { TicketPriorityBadge } from './TicketPriorityBadge';
@@ -199,13 +201,13 @@ function SortableTicketCard({ ticket, onSelect, shouldBlink, onMarkAsViewed, onM
           <span className="font-semibold text-foreground text-sm">#{ticket.id.slice(0, 8)}</span>
         </div>
         <div className="flex items-center gap-1">
-          {/* Bouton de fusion */}
+          {/* Bouton de fusion - violet HelpConfort */}
           <button
             onClick={handleMergeClick}
-            className="p-1 rounded hover:bg-muted transition-colors"
+            className="p-1.5 rounded hover:bg-purple-100 transition-colors"
             title="Fusionner avec un autre ticket"
           >
-            <GitMerge className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />
+            <GitMerge className="w-4 h-4 text-purple-500 hover:text-purple-700" />
           </button>
           {/* Badge de priorité */}
           <TicketPriorityBadge priority={ticket.priority} size="sm" />
@@ -251,9 +253,15 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate, isCollaps
   // État de collapse par colonne
   const [collapsedColumns, setCollapsedColumns] = useState<Record<string, boolean>>({});
 
+  // Filtre "Nouvelles réponses uniquement"
+  const [filterBlinkingOnly, setFilterBlinkingOnly] = useState(false);
+
   // Hook pour le statut clignotant et marquer comme vu
   const blinkStatus = useSupportTicketsBlinkStatus(tickets);
   const { mutate: markAsViewed } = useMarkSupportTicketAsViewed();
+
+  // Compter les tickets avec nouvelles réponses
+  const blinkingTicketsCount = localTickets.filter(t => blinkStatus[t.id]).length;
 
   // État et hook pour la fusion de tickets
   const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
@@ -296,7 +304,9 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate, isCollaps
   };
 
   const getTicketsByStatus = (status: string) => {
-    return localTickets.filter(ticket => normalizeStatus(ticket.status) === status);
+    return localTickets
+      .filter(ticket => normalizeStatus(ticket.status) === status)
+      .filter(ticket => !filterBlinkingOnly || blinkStatus[ticket.id]);
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -437,16 +447,45 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate, isCollaps
       onDragEnd={handleDragEnd}
     >
       <div className="relative">
-        {onToggleCollapse && (
-          <button 
-            onClick={onToggleCollapse}
-            className="absolute -left-3 top-2 z-10 p-1 bg-background border rounded-full shadow hover:bg-muted transition-colors"
-            title="Replier le Kanban"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-        )}
-        <div className="flex gap-4 h-[calc(100vh-240px)] overflow-x-auto">
+        {/* Barre de filtres */}
+        <div className="flex items-center justify-between mb-3 px-1">
+          <div className="flex items-center gap-3">
+            {onToggleCollapse && (
+              <button 
+                onClick={onToggleCollapse}
+                className="p-1 bg-background border rounded-full shadow hover:bg-muted transition-colors"
+                title="Replier le Kanban"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            )}
+            {/* Filtre nouvelles réponses */}
+            <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-1.5">
+              <Switch
+                id="filter-blinking"
+                checked={filterBlinkingOnly}
+                onCheckedChange={setFilterBlinkingOnly}
+                className="data-[state=checked]:bg-green-500"
+              />
+              <Label 
+                htmlFor="filter-blinking" 
+                className="text-sm cursor-pointer flex items-center gap-2"
+              >
+                <Filter className="w-3.5 h-3.5" />
+                Nouvelles réponses
+                {blinkingTicketsCount > 0 && (
+                  <Badge 
+                    variant="secondary" 
+                    className="bg-green-100 text-green-700 border-green-300 animate-pulse text-xs"
+                  >
+                    {blinkingTicketsCount}
+                  </Badge>
+                )}
+              </Label>
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-4 h-[calc(100vh-280px)] overflow-x-auto">
           {columns.map((column) => {
             const columnTickets = getTicketsByStatus(column.status);
             const isColumnCollapsed = collapsedColumns[column.id];
