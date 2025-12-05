@@ -154,19 +154,11 @@ export const duClient: StatDefinition = {
       const date = meta.date ? new Date(meta.date) : null;
       if (!date || date < params.dateRange.start || date > params.dateRange.end) continue;
       
-      // Sommer items.data.calcReglementsReste pour chaque facture
-      const items = facture.items ?? facture.data?.items ?? [];
-      let factureReste = 0;
+      // Utiliser data.calcReglementsReste (montant TTC restant à encaisser)
+      const reste = facture.data?.calcReglementsReste ?? 0;
       
-      for (const item of items) {
-        const itemReste = item?.data?.calcReglementsReste ?? 0;
-        if (itemReste > 0) {
-          factureReste += itemReste;
-        }
-      }
-      
-      if (factureReste > 0) {
-        totalDu += factureReste;
+      if (reste > 0) {
+        totalDu += reste;
         factureCount++;
       }
     }
