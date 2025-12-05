@@ -164,19 +164,20 @@ export function useReorderFormationContent() {
       const currentItem = items[currentIndex];
       const swapItem = items[newIndex];
 
-      // Swap source_block_title order in DB by swapping source_block_id references
-      // We'll update the generated_at timestamps to control order
-      const now = new Date();
+      // Swap the generated_at timestamps between the two items
+      const currentTimestamp = currentItem.generated_at || new Date().toISOString();
+      const swapTimestamp = swapItem.generated_at || new Date(Date.now() - 1000).toISOString();
+
       const { error: error1 } = await supabase
         .from("formation_content")
-        .update({ generated_at: new Date(now.getTime() + (direction === "up" ? -1 : 1)).toISOString() })
+        .update({ generated_at: swapTimestamp })
         .eq("id", currentItem.id);
 
       if (error1) throw error1;
 
       const { error: error2 } = await supabase
         .from("formation_content")
-        .update({ generated_at: now.toISOString() })
+        .update({ generated_at: currentTimestamp })
         .eq("id", swapItem.id);
 
       if (error2) throw error2;
