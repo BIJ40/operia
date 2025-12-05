@@ -322,44 +322,44 @@ export const tauxSavParApporteur: StatDefinition = {
 };
 
 /**
- * Nombre de SAV
+ * Nombre de SAV sur la période
+ * Compte les dossiers SAV (projets enfants/liés)
  */
-export const nombreSav: StatDefinition = {
-  id: 'nombre_sav',
+export const nbSavGlobal: StatDefinition = {
+  id: 'nb_sav_global',
   label: 'Nombre de SAV',
-  description: 'Nombre total de dossiers SAV',
+  description: 'Nombre de dossiers SAV sur la période',
   category: 'sav',
-  source: ['projects', 'interventions'],
+  source: ['projects'],
+  unit: '',
   aggregation: 'count',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { projects, interventions } = data;
+    const { projects } = data;
     
-    let savCount = 0;
+    let nbSav = 0;
     
     for (const project of projects) {
       const dateStr = project.date || project.created_at;
-      if (dateStr) {
-        try {
-          const date = parseISO(dateStr);
-          if (!isWithinInterval(date, { start: params.dateRange.start, end: params.dateRange.end })) {
-            continue;
-          }
-        } catch {
-          continue;
-        }
+      if (!dateStr) continue;
+      
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) continue;
+      
+      if (params.dateRange && (date < params.dateRange.start || date > params.dateRange.end)) {
+        continue;
       }
       
-      if (projectHasSAV(project, interventions)) {
-        savCount++;
+      if (isSAVProject(project)) {
+        nbSav++;
       }
     }
     
     return {
-      value: savCount,
+      value: nbSav,
       metadata: {
         computedAt: new Date(),
         source: 'projects',
-        recordCount: savCount,
+        recordCount: nbSav,
       }
     };
   }
@@ -470,7 +470,7 @@ export const savDefinitions = {
   taux_sav_global: tauxSavGlobal,
   taux_sav_par_univers: tauxSavParUnivers,
   taux_sav_par_apporteur: tauxSavParApporteur,
-  nombre_sav: nombreSav,
+  nb_sav_global: nbSavGlobal,
   nb_interventions_sav: nbInterventionsSav,
   ca_impacte_sav: caImpacteSav,
 };
