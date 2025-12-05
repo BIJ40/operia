@@ -1,5 +1,6 @@
 /**
  * Hook DiffusionKpiTiles migré vers StatIA
+ * Utilise exclusivement les métriques StatIA pour les KPIs
  */
 
 import { useQuery } from "@tanstack/react-query";
@@ -7,7 +8,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getGlobalApogeeDataServices } from "@/statia/adapters/dataServiceAdapter";
 import { getMetricForAgency } from "@/statia/api/getMetricForAgency";
 import { DataService } from "@/apogee-connect/services/dataService";
-import { computeTechUniversStatsForAgency } from "@/shared/utils/technicienUniversEngine";
 import { startOfMonth, endOfMonth } from "date-fns";
 
 export function useDiffusionKpisStatia(currentMonthIndex: number) {
@@ -37,36 +37,28 @@ export function useDiffusionKpisStatia(currentMonthIndex: number) {
       const allData = await DataService.loadAllData(true, false, agence);
 
       // === Métriques StatIA ===
-      const [caResult, savResult] = await Promise.all([
+      const [caResult, savResult, caMoyenResult, topTechResult] = await Promise.all([
         getMetricForAgency('ca_global_ht', agence, { dateRange }, services),
         getMetricForAgency('taux_sav_global', agence, { dateRange }, services),
+        getMetricForAgency('ca_moyen_par_tech', agence, { dateRange }, services),
+        getMetricForAgency('top_techniciens_ca', agence, { dateRange }, services),
       ]);
 
       const currentMonthCA = Number(caResult.value) || 0;
       const tauxSAV = Number(savResult.value) || 0;
-
-      // === Calculs techniciens ===
-      const techStats = computeTechUniversStatsForAgency(
-        allData.factures || [],
-        allData.projects || [],
-        allData.interventions || [],
-        allData.users || [],
-        dateRange
-      );
-
-      // Agréger CA par technicien
-      const techTotals: Record<string, { nom: string; caHT: number }> = {};
-      techStats.forEach(stat => {
-        if (!techTotals[stat.technicienId]) {
-          techTotals[stat.technicienId] = { nom: stat.technicienNom, caHT: 0 };
-        }
-        techTotals[stat.technicienId].caHT += stat.totaux.caHT;
-      });
-
-      const sortedTechs = Object.values(techTotals).sort((a, b) => b.caHT - a.caHT);
-      const topTechnicien = sortedTechs[0] || null;
-      const nbTechsActifs = sortedTechs.filter(t => t.caHT > 0).length;
-      const caMoyenParTech = nbTechsActifs > 0 ? currentMonthCA / nbTechsActifs : 0;
+      const caMoyenParTech = Number(caMoyenResult.value) || 0;
+      
+      // Extraire top technicien du breakdown
+      const topTechBreakdown = topTechResult.breakdown as any;
+      const ranking = topTechBreakdown?.ranking || [];
+      const topTechData = ranking[0];
+      const topTechnicien = topTechData ? {
+        nom: topTechData.name || `Tech ${topTechData.id}`,
+        caHT: (topTechResult.value as Record<string, number>)?.[topTechData.id] || 0,
+      } : null;
+      
+      // Nombre de techniciens actifs depuis le breakdown de caMoyen
+      const nbTechsActifs = (caMoyenResult.breakdown as any)?.nbTechActifs || 0;
 
       // === Dossiers reçus (projets créés dans le mois) ===
       const nbDossiersRecus = (allData.projects || []).filter((p: any) => {
