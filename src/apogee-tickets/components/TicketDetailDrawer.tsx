@@ -40,7 +40,10 @@ import {
   Flame,
   Snowflake,
   History,
-  GitBranch
+  GitBranch,
+  Pencil,
+  X,
+  Check
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -107,15 +110,47 @@ export function TicketDetailDrawer({
   const { data: allowedTransitions = [] } = useAllowedTransitions(ticket?.kanban_status || '');
   const logAction = useLogTicketAction();
   const markAsViewed = useMarkTicketAsViewed();
-  const { comments, addComment } = useApogeeTicket(ticket?.id || null);
+  const { comments, addComment, updateComment } = useApogeeTicket(ticket?.id || null);
   const { attachments, uploadAttachment, deleteAttachment, isUploading } = useTicketAttachments(ticket?.id || null);
   const { qualifyOne, isQualifying } = useTicketQualification();
   const [newComment, setNewComment] = useState('');
   const [showAllComments, setShowAllComments] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentBody, setEditingCommentBody] = useState('');
 
   // Auto-déterminer le type d'auteur selon le rôle
   // Developer = APOGEE, Tester/Franchiseur = HC
   const autoCommentType: AuthorType = isDeveloper ? 'APOGEE' : 'HC';
+
+  // Draft persistence in localStorage
+  const draftKey = ticket?.id ? `ticket-draft-${ticket.id}` : null;
+
+  // Load draft from localStorage when ticket changes
+  useEffect(() => {
+    if (draftKey && open) {
+      const savedDraft = localStorage.getItem(draftKey);
+      if (savedDraft) {
+        setNewComment(savedDraft);
+      }
+    }
+    // Reset comment when switching tickets
+    if (!open) {
+      setNewComment('');
+      setEditingCommentId(null);
+      setEditingCommentBody('');
+    }
+  }, [draftKey, open]);
+
+  // Save draft to localStorage on change
+  useEffect(() => {
+    if (draftKey && open) {
+      if (newComment.trim()) {
+        localStorage.setItem(draftKey, newComment);
+      } else {
+        localStorage.removeItem(draftKey);
+      }
+    }
+  }, [newComment, draftKey, open]);
 
   // Marquer le ticket comme vu à l'ouverture
   useEffect(() => {
@@ -191,6 +226,32 @@ export function TicketDetailDrawer({
     });
     
     setNewComment('');
+    // Clear draft from localStorage after sending
+    if (draftKey) {
+      localStorage.removeItem(draftKey);
+    }
+  };
+
+  const handleEditComment = async () => {
+    if (!editingCommentId || !editingCommentBody.trim()) return;
+    
+    await updateComment.mutateAsync({
+      commentId: editingCommentId,
+      body: editingCommentBody.trim(),
+    });
+    
+    setEditingCommentId(null);
+    setEditingCommentBody('');
+  };
+
+  const startEditComment = (comment: typeof comments[0]) => {
+    setEditingCommentId(comment.id);
+    setEditingCommentBody(comment.body);
+  };
+
+  const cancelEditComment = () => {
+    setEditingCommentId(null);
+    setEditingCommentBody('');
   };
 
   const handleFieldUpdate = (field: string, value: any) => {
@@ -652,22 +713,74 @@ export function TicketDetailDrawer({
 
                   {/* Liste des commentaires */}
                   <div className="space-y-3">
-                    {visibleComments.map((comment) => (
-                      <div key={comment.id} className="flex gap-3 p-3 bg-background border rounded-lg">
-                        <Badge className={`${AUTHOR_COLORS[comment.author_type]} h-6 shrink-0`}>
-                          {comment.author_name || comment.author_type}
-                        </Badge>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm whitespace-pre-wrap break-words">{comment.body}</p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {format(new Date(comment.created_at), "dd MMM yyyy 'à' HH:mm", { locale: fr })}
-                            {comment.source_field && (
-                              <span className="ml-2 opacity-50">({comment.source_field})</span>
+                    {visibleComments.map((comment) => {
+                      const isEditing = editingCommentId === comment.id;
+                      const canEdit = comment.created_by_user_id === user?.id;
+                      
+                      return (
+                        <div key={comment.id} className="flex gap-3 p-3 bg-background border rounded-lg">
+                          <Badge className={`${AUTHOR_COLORS[comment.author_type]} h-6 shrink-0`}>
+                            {comment.author_name || comment.author_type}
+                          </Badge>
+                          <div className="flex-1 min-w-0">
+                            {isEditing ? (
+                              <div className="space-y-2">
+                                <Textarea
+                                  value={editingCommentBody}
+                                  onChange={(e) => setEditingCommentBody(e.target.value)}
+                                  rows={2}
+                                  className="resize-none"
+                                  autoFocus
+                                />
+                                <div className="flex gap-2 justify-end">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={cancelEditComment}
+                                  >
+                                    <X className="h-4 w-4 mr-1" />
+                                    Annuler
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    onClick={handleEditComment}
+                                    disabled={!editingCommentBody.trim() || updateComment.isPending}
+                                  >
+                                    <Check className="h-4 w-4 mr-1" />
+                                    Enregistrer
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <p className="text-sm whitespace-pre-wrap break-words">{comment.body}</p>
+                                <div className="flex items-center justify-between mt-1">
+                                  <p className="text-xs text-muted-foreground">
+                                    {format(new Date(comment.created_at), "dd MMM yyyy 'à' HH:mm", { locale: fr })}
+                                    {comment.updated_at && (
+                                      <span className="ml-2 text-helpconfort-orange font-medium">(modifié)</span>
+                                    )}
+                                    {comment.source_field && (
+                                      <span className="ml-2 opacity-50">({comment.source_field})</span>
+                                    )}
+                                  </p>
+                                  {canEdit && (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-6 px-2 text-muted-foreground hover:text-foreground"
+                                      onClick={() => startEditComment(comment)}
+                                    >
+                                      <Pencil className="h-3 w-3" />
+                                    </Button>
+                                  )}
+                                </div>
+                              </>
                             )}
-                          </p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
 
                     {comments.length === 0 && (
                       <p className="text-sm text-muted-foreground text-center py-4">

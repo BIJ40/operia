@@ -589,6 +589,7 @@ export type Database = {
           is_internal: boolean | null
           source_field: string | null
           ticket_id: string
+          updated_at: string | null
         }
         Insert: {
           author_name?: string | null
@@ -600,6 +601,7 @@ export type Database = {
           is_internal?: boolean | null
           source_field?: string | null
           ticket_id: string
+          updated_at?: string | null
         }
         Update: {
           author_name?: string | null
@@ -611,6 +613,7 @@ export type Database = {
           is_internal?: boolean | null
           source_field?: string | null
           ticket_id?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
