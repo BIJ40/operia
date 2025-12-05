@@ -47,6 +47,33 @@ function getFactureDate(facture: any): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
+/**
+ * Date unifiée intervention
+ */
+function getInterventionDate(intervention: any): Date | null {
+  const dateStr =
+    intervention.dateReelle ||
+    intervention.date ||
+    intervention.startTime ||
+    intervention.started_at ||
+    intervention.created_at ||
+    intervention.data?.dateReelle ||
+    intervention.data?.date ||
+    null;
+
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * Filtre état intervention (validées/terminées uniquement)
+ */
+function isInterventionStateIncluded(state: any): boolean {
+  const v = String(state || '').toLowerCase();
+  return ['done', 'validated', 'completed', 'realisee', 'finished'].includes(v);
+}
+
 // ============================================================================
 // MÉTRIQUES
 // ============================================================================
@@ -488,6 +515,75 @@ export const nbDossiersCrees: StatDefinition = {
   }
 };
 
+/**
+ * Nombre moyen d'interventions par dossier
+ */
+export const nbMoyenInterventionsParDossier: StatDefinition = {
+  id: 'nb_moyen_interventions_par_dossier',
+  label: "Nombre moyen d'interventions par dossier",
+  description:
+    "Nombre moyen d'interventions réalisées par dossier sur la période",
+  category: 'dossiers',
+  source: ['interventions', 'projects'],
+  unit: 'interventions/dossier',
+  dimensions: [],
+  aggregation: 'avg',
+
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { interventions } = data;
+
+    let totalInterventions = 0;
+    const projectsWithInterventions = new Set<string>();
+
+    for (const interv of interventions) {
+      const date = getInterventionDate(interv);
+      if (!date) continue;
+
+      // Filtrer par période
+      if (
+        params.dateRange &&
+        (date < params.dateRange.start || date > params.dateRange.end)
+      ) {
+        continue;
+      }
+
+      // Filtrer par état valide
+      if (!isInterventionStateIncluded(interv.state)) continue;
+
+      const pidRaw =
+        interv.projectId ||
+        interv.project_id ||
+        interv.data?.projectId ||
+        interv.dossierId;
+
+      if (!pidRaw) continue;
+
+      const pid = String(pidRaw);
+
+      totalInterventions++;
+      projectsWithInterventions.add(pid);
+    }
+
+    const nbDossiers = projectsWithInterventions.size;
+    const avg = nbDossiers > 0 ? totalInterventions / nbDossiers : 0;
+
+    const value = Math.round(avg * 100) / 100;
+
+    return {
+      value,
+      metadata: {
+        computedAt: new Date(),
+        source: 'interventions',
+        recordCount: nbDossiers,
+      },
+      breakdown: {
+        totalInterventions,
+        nbDossiers,
+      },
+    };
+  },
+};
+
 export const dossiersDefinitions = {
   duree_moyenne_dossier: dureeMoyenneDossier,
   duree_mediane_dossier: dureeMedianeDossier,
@@ -495,4 +591,5 @@ export const dossiersDefinitions = {
   nb_rt_par_dossier: nbRtParDossier,
   taux_degats_eaux: tauxDegatsEaux,
   nb_dossiers_crees: nbDossiersCrees,
+  nb_moyen_interventions_par_dossier: nbMoyenInterventionsParDossier,
 };
