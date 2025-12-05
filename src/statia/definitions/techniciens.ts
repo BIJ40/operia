@@ -105,35 +105,41 @@ function isProductiveIntervention(intervention: any): boolean {
 
 /**
  * Récupère les techniciens productifs d'une intervention
- * Collecte les usersIds des visites OU du champ userId principal
+ * Logique alignée sur DataService.calculateCAByTechnician (lignes 396-414)
+ * Collecte de toutes les sources possibles sans filtrage strict
  */
 function getProductiveTechnicians(intervention: any): Set<string | number> {
   const techIds = new Set<string | number>();
   
-  // Parcourir les visites si disponibles
+  // 1. Collecter depuis userId principal
+  if (intervention.userId) {
+    techIds.add(intervention.userId);
+  }
+  
+  // 2. Collecter depuis usersIds au niveau intervention
+  if (intervention.usersIds && Array.isArray(intervention.usersIds)) {
+    intervention.usersIds.forEach((id: any) => {
+      if (id) techIds.add(id);
+    });
+  }
+  
+  // 3. Collecter depuis data.visites (toutes les visites, pas de filtrage strict)
   const visites = intervention.visites || intervention.data?.visites || [];
   for (const visite of visites) {
-    // Inclure les visites validées/done ou sans state explicite
-    const visiteState = (visite.state || '').toLowerCase();
-    if (visiteState && visiteState !== 'validated' && visiteState !== 'done' && visiteState !== 'finished') {
-      continue;
-    }
-    
     const userIds = visite.usersIds || visite.userIds || [];
     for (const techId of userIds) {
       if (techId) techIds.add(techId);
     }
   }
   
-  // Fallback: userId principal de l'intervention
-  if (techIds.size === 0 && intervention.userId) {
-    techIds.add(intervention.userId);
-  }
-  
-  // Fallback 2: usersIds au niveau intervention
-  if (techIds.size === 0 && intervention.usersIds) {
-    for (const techId of intervention.usersIds) {
-      if (techId) techIds.add(techId);
+  // 4. Collecter depuis biV3.items (structure spécifique Apogée)
+  if (intervention.data?.biV3?.items && Array.isArray(intervention.data.biV3.items)) {
+    for (const item of intervention.data.biV3.items) {
+      if (item.usersIds && Array.isArray(item.usersIds)) {
+        item.usersIds.forEach((id: any) => {
+          if (id) techIds.add(id);
+        });
+      }
     }
   }
   
@@ -142,6 +148,7 @@ function getProductiveTechnicians(intervention: any): Set<string | number> {
 
 /**
  * Calcule le temps passé par technicien par projet
+ * Logique alignée sur DataService.calculateCAByTechnician (lignes 339-414)
  * Utilisé pour la métrique pondérée au temps
  */
 function calculateTechTimeByProject(
@@ -161,44 +168,67 @@ function calculateTechTimeByProject(
     const projectId = String(intervention.projectId || intervention.project_id);
     if (!projectId) continue;
     
-    // Parcourir les visites
-    const visites = intervention.visites || intervention.data?.visites || [];
-    for (const visite of visites) {
-      // Inclure les visites validées ou sans state explicite
-      const visiteState = (visite.state || '').toLowerCase();
-      if (visiteState && visiteState !== 'validated' && visiteState !== 'done') continue;
-      
-      const duree = visite.duree || visite.duration || 1; // Durée en heures, défaut 1h
-      const techIds = visite.usersIds || visite.userIds || [intervention.userId];
-      const nbTechs = techIds.length || 1;
-      const dureeParTech = duree / nbTechs;
-      
+    let tempsReparti = false;
+    
+    // Priorité 1: biV3.items avec techTimeStart/techTimeEnd
+    if (intervention.data?.biV3?.items && Array.isArray(intervention.data.biV3.items)) {
+      for (const item of intervention.data.biV3.items) {
+        if (item.techTimeStart && item.techTimeEnd && item.usersIds) {
+          const start = new Date(item.techTimeStart).getTime();
+          const end = new Date(item.techTimeEnd).getTime();
+          const dureeMinutes = (end - start) / (1000 * 60);
+          const nbTechs = item.usersIds.length || 1;
+          const dureeParTech = dureeMinutes / nbTechs;
+          
+          for (const techId of item.usersIds) {
+            if (!techId) continue;
+            if (!dureeTechParProjet.has(projectId)) {
+              dureeTechParProjet.set(projectId, new Map());
+            }
+            const projectTechMap = dureeTechParProjet.get(projectId)!;
+            projectTechMap.set(techId, (projectTechMap.get(techId) || 0) + dureeParTech);
+            dureeTotaleParProjet.set(projectId, (dureeTotaleParProjet.get(projectId) || 0) + dureeParTech);
+          }
+          tempsReparti = true;
+        }
+      }
+    }
+    
+    // Priorité 2: data.visites avec duree + usersIds
+    if (!tempsReparti) {
+      const visites = intervention.visites || intervention.data?.visites || [];
+      for (const visite of visites) {
+        if (visite.duree && visite.usersIds) {
+          const dureeMinutes = visite.duree;
+          const nbTechs = visite.usersIds.length || 1;
+          const dureeParTech = dureeMinutes / nbTechs;
+          
+          for (const techId of visite.usersIds) {
+            if (!techId) continue;
+            if (!dureeTechParProjet.has(projectId)) {
+              dureeTechParProjet.set(projectId, new Map());
+            }
+            const projectTechMap = dureeTechParProjet.get(projectId)!;
+            projectTechMap.set(techId, (projectTechMap.get(techId) || 0) + dureeParTech);
+            dureeTotaleParProjet.set(projectId, (dureeTotaleParProjet.get(projectId) || 0) + dureeParTech);
+          }
+          tempsReparti = true;
+        }
+      }
+    }
+    
+    // Priorité 3 (mode dégradé): collecter tous les techniciens avec 1 minute chacun
+    if (!tempsReparti) {
+      const techIds = getProductiveTechnicians(intervention);
       for (const techId of techIds) {
-        if (!techId) continue;
-        
-        // Ajouter au temps par technicien par projet
+        const dureeMinutes = 1; // Mode dégradé: 1 minute par tech
         if (!dureeTechParProjet.has(projectId)) {
           dureeTechParProjet.set(projectId, new Map());
         }
         const projectTechMap = dureeTechParProjet.get(projectId)!;
-        projectTechMap.set(techId, (projectTechMap.get(techId) || 0) + dureeParTech);
-        
-        // Ajouter au temps total du projet
-        dureeTotaleParProjet.set(projectId, (dureeTotaleParProjet.get(projectId) || 0) + dureeParTech);
+        projectTechMap.set(techId, (projectTechMap.get(techId) || 0) + dureeMinutes);
+        dureeTotaleParProjet.set(projectId, (dureeTotaleParProjet.get(projectId) || 0) + dureeMinutes);
       }
-    }
-    
-    // Fallback si pas de visites: utiliser userId avec durée 1h
-    if (visites.length === 0 && intervention.userId) {
-      const duree = 1;
-      const techId = intervention.userId;
-      
-      if (!dureeTechParProjet.has(projectId)) {
-        dureeTechParProjet.set(projectId, new Map());
-      }
-      const projectTechMap = dureeTechParProjet.get(projectId)!;
-      projectTechMap.set(techId, (projectTechMap.get(techId) || 0) + duree);
-      dureeTotaleParProjet.set(projectId, (dureeTotaleParProjet.get(projectId) || 0) + duree);
     }
   }
   
