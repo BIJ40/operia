@@ -12,7 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { TicketCategoryBadge } from '@/components/tickets/TicketCategoryBadge';
 import { ServiceBadge } from '@/components/tickets/ServiceBadge';
 import { HeatPriorityBadge } from '@/components/support/HeatPriorityBadge';
-import { Loader2, Send, Download, AlertCircle, Clock, CheckCircle2, User, LayoutGrid, List, TicketPlus, MessageSquare, XCircle, Trash2 } from 'lucide-react';
+import { Loader2, Send, Download, AlertCircle, Clock, CheckCircle2, User, LayoutGrid, List, TicketPlus, MessageSquare, XCircle, Trash2, Monitor } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Separator } from '@/components/ui/separator';
@@ -25,6 +25,7 @@ import { EscalateTicketDialog } from '@/components/admin/support/EscalateTicketD
 import { KanbanView } from '@/components/admin/support/KanbanView';
 import { SupportLevelBadge } from '@/components/SupportLevelBadge';
 import { ROUTES } from '@/config/routes';
+import { ScreenShareSession } from '@/components/support/ScreenShareSession';
 
 export default function AdminSupportTickets() {
   const { canManageTickets, user, globalRole } = useAuth();
@@ -60,6 +61,7 @@ export default function AdminSupportTickets() {
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
   const [activeTab, setActiveTab] = useState<'actifs' | 'archives'>('actifs');
   const [isKanbanCollapsed, setIsKanbanCollapsed] = useState(false);
+  const [showScreenShare, setShowScreenShare] = useState(false);
 
   // Auto-switch to archives tab when selected ticket becomes resolved
   useEffect(() => {
@@ -561,6 +563,18 @@ export default function AdminSupportTickets() {
                           </Button>
                         )}
 
+                        {/* Bouton pour voir le partage d'écran */}
+                        {selectedTicket.type === 'chat_human' && (
+                          <Button
+                            variant="outline"
+                            onClick={() => setShowScreenShare(true)}
+                            className="gap-2 text-helpconfort-blue border-helpconfort-blue/30 hover:bg-helpconfort-blue/10"
+                          >
+                            <Monitor className="w-4 h-4" />
+                            Voir l'écran
+                          </Button>
+                        )}
+
                         <Select
                           value={selectedTicket.assigned_to || 'none'}
                           onValueChange={(v) => assignTicket(selectedTicket.id, v === 'none' ? '' : v)}
@@ -830,8 +844,17 @@ export default function AdminSupportTickets() {
               </CardContent>
             </Card>
           </div>
-          )}
-        </div>
+        )}
       </div>
+
+      {/* Screen share viewer for agent */}
+      {showScreenShare && selectedTicket && (
+        <ScreenShareSession 
+          ticketId={selectedTicket.id} 
+          isAgent={true}
+          onClose={() => setShowScreenShare(false)} 
+        />
+      )}
+    </div>
   );
 }
