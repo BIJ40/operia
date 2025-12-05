@@ -415,7 +415,26 @@ export const caParTechnicien: StatDefinition = {
     
     // Structure pour accumuler CA par technicien
     const techCA = new Map<string | number, number>();
-    const techNames = new Map<string | number, string>();
+    const techInfo = new Map<string | number, { name: string; color: string }>();
+    
+    // Helper pour récupérer info user (essayer plusieurs formats d'ID)
+    const getUserInfo = (techId: string | number) => {
+      // Essayer avec l'ID tel quel, puis converti
+      let user = usersById.get(techId);
+      if (!user) user = usersById.get(Number(techId));
+      if (!user) user = usersById.get(String(techId));
+      
+      if (user) {
+        // API Apogée: firstname = prénom, name = nom (pas lastname!)
+        const prenom = (user.firstname || '').trim();
+        const nom = (user.name || user.lastname || '').trim();
+        const fullName = [prenom, nom].filter(Boolean).join(' ') || `Tech ${techId}`;
+        // Couleur depuis data.bgcolor.hex ou bgcolor.hex ou data.color.hex
+        const color = user.data?.bgcolor?.hex || user.bgcolor?.hex || user.data?.color?.hex || user.color?.hex || '#808080';
+        return { name: fullName, color };
+      }
+      return { name: `Tech ${techId}`, color: '#808080' };
+    };
     
     let totalCADistribue = 0;
     let facturesTraitees = 0;
@@ -477,10 +496,9 @@ export const caParTechnicien: StatDefinition = {
       for (const techId of techsProductifs) {
         techCA.set(techId, (techCA.get(techId) || 0) + quotePart);
         
-        // Stocker le nom si pas encore fait
-        if (!techNames.has(techId)) {
-          const user = usersById.get(techId);
-          techNames.set(techId, user ? `${user.firstname || ''} ${user.lastname || ''}`.trim() : `Tech ${techId}`);
+        // Stocker les infos si pas encore fait
+        if (!techInfo.has(techId)) {
+          techInfo.set(techId, getUserInfo(techId));
         }
       }
       
@@ -490,14 +508,16 @@ export const caParTechnicien: StatDefinition = {
     
     console.log(`[StatIA ca_par_technicien] Résultat: ${facturesTraitees} factures traitées, ${techCA.size} techniciens, ${dossiersIgnores} dossiers ignorés, CA total ${totalCADistribue}€`);
     
-    // Formater le résultat avec nom du technicien (aligné sur ca_par_technicien_univers)
-    const result: Record<string, { name: string; ca: number }> = {};
+    // Formater le résultat avec nom et couleur du technicien
+    const result: Record<string, { name: string; ca: number; color: string }> = {};
     
     for (const [techId, ca] of techCA.entries()) {
       const id = String(techId);
+      const info = techInfo.get(techId) || { name: `Tech ${techId}`, color: '#808080' };
       result[id] = {
-        name: techNames.get(techId) || `Tech ${techId}`,
+        name: info.name,
         ca,
+        color: info.color,
       };
     }
     
@@ -533,7 +553,7 @@ export const topTechniciensCA: StatDefinition = {
   unit: '€',
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const baseResult = caParTechnicien.compute(data, params);
-    const baseValue = baseResult.value as Record<string, { name: string; ca: number }>;
+    const baseValue = baseResult.value as Record<string, { name: string; ca: number; color: string }>;
     
     // Trier par CA décroissant
     const entries = Object.entries(baseValue);
@@ -542,12 +562,13 @@ export const topTechniciensCA: StatDefinition = {
     const topN = params.filters?.topN || 10;
     const topEntries = entries.slice(0, topN);
     
-    // Résultat avec nom et CA (aligné sur ca_par_technicien_univers)
-    const result: Record<string, { name: string; ca: number; rank: number }> = {};
-    topEntries.forEach(([id, data], index) => {
+    // Résultat avec nom, CA, couleur et rang
+    const result: Record<string, { name: string; ca: number; color: string; rank: number }> = {};
+    topEntries.forEach(([id, techData], index) => {
       result[id] = {
-        name: data.name,
-        ca: data.ca,
+        name: techData.name,
+        ca: techData.ca,
+        color: techData.color,
         rank: index + 1,
       };
     });
@@ -557,11 +578,12 @@ export const topTechniciensCA: StatDefinition = {
       metadata: baseResult.metadata,
       breakdown: {
         ...baseResult.breakdown,
-        ranking: topEntries.map(([id, data], index) => ({ 
+        ranking: topEntries.map(([id, techData], index) => ({ 
           rank: index + 1, 
           id, 
-          name: data.name,
-          ca: data.ca,
+          name: techData.name,
+          ca: techData.ca,
+          color: techData.color,
         })),
       }
     };
@@ -666,7 +688,23 @@ export const caParTechnicienTemps: StatDefinition = {
     
     // Structure pour accumuler CA et temps par technicien
     const techStats = new Map<string | number, { caHt: number; temps: number }>();
-    const techNames = new Map<string | number, string>();
+    const techInfo = new Map<string | number, { name: string; color: string }>();
+    
+    // Helper pour récupérer info user (essayer plusieurs formats d'ID)
+    const getUserInfo = (techId: string | number) => {
+      let user = usersById.get(techId);
+      if (!user) user = usersById.get(Number(techId));
+      if (!user) user = usersById.get(String(techId));
+      
+      if (user) {
+        const prenom = (user.firstname || '').trim();
+        const nom = (user.name || user.lastname || '').trim();
+        const fullName = [prenom, nom].filter(Boolean).join(' ') || `Tech ${techId}`;
+        const color = user.data?.bgcolor?.hex || user.bgcolor?.hex || user.data?.color?.hex || user.color?.hex || '#808080';
+        return { name: fullName, color };
+      }
+      return { name: `Tech ${techId}`, color: '#808080' };
+    };
     
     let totalCADistribue = 0;
     let facturesTraitees = 0;
@@ -713,8 +751,7 @@ export const caParTechnicienTemps: StatDefinition = {
         // Initialiser les stats du technicien si nécessaire
         if (!techStats.has(techId)) {
           techStats.set(techId, { caHt: 0, temps: 0 });
-          const user = usersById.get(techId);
-          techNames.set(techId, user ? `${user.firstname || ''} ${user.lastname || ''}`.trim() : `Tech ${techId}`);
+          techInfo.set(techId, getUserInfo(techId));
         }
         
         const stats = techStats.get(techId)!;
@@ -728,16 +765,17 @@ export const caParTechnicienTemps: StatDefinition = {
     
     console.log(`[StatIA ca_par_technicien_temps] Résultat: ${facturesTraitees} factures traitées, ${techStats.size} techniciens, ${dossiersIgnores} dossiers ignorés, CA total ${totalCADistribue}€`);
     
-    // Formater le résultat avec nom du technicien (aligné sur ca_par_technicien_univers)
-    const result: Record<string, { name: string; ca: number; temps: number; caParHeure: number }> = {};
+    // Formater le résultat avec nom, couleur, temps du technicien
+    const result: Record<string, { name: string; ca: number; color: string; temps: number; caParHeure: number }> = {};
     
     for (const [techId, stats] of techStats.entries()) {
       const id = String(techId);
-      const name = techNames.get(techId) || `Tech ${techId}`;
+      const info = techInfo.get(techId) || { name: `Tech ${techId}`, color: '#808080' };
       const caParHeure = stats.temps > 0 ? stats.caHt / stats.temps : 0;
       result[id] = {
-        name,
+        name: info.name,
         ca: stats.caHt,
+        color: info.color,
         temps: stats.temps, // en heures
         caParHeure,
       };
