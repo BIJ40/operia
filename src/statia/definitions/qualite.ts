@@ -347,60 +347,33 @@ export const nbMoyenInterventionsParDossier: StatDefinition = {
 
 /**
  * Délai moyen dossier → premier devis
- * Temps entre l'ouverture du dossier (created_at) et l'envoi du premier devis
- * REFACTORÉ: Utilise getDevis avec state === "sent" et dateReelle au lieu de l'historique
+ * Temps entre l'ouverture du dossier (date) et l'envoi du premier devis
+ * RÈGLE: Chercher dans project.history un événement contenant "=> Devis envoyé"
  */
 export const delaiDossierPremierDevis: StatDefinition = {
   id: 'delai_dossier_premier_devis',
   label: 'Délai 1er devis',
   description: 'Nombre de jours moyen entre ouverture du dossier et envoi du premier devis',
   category: 'qualite',
-  source: ['projects', 'devis'],
+  source: ['projects'],
   aggregation: 'avg',
   unit: 'jours',
   compute: (data: LoadedData, params: StatParams): StatResult => {
     console.log('[StatIA] =============== DELAI 1ER DEVIS COMPUTE START ===============');
-    const { projects, devis } = data;
-    console.log('[StatIA] delai_dossier_premier_devis - projects:', projects?.length ?? 0, 'devis:', devis?.length ?? 0);
-    
-    // Indexer les devis "sent" par projet avec dateReelle
-    const devisByProject = new Map<string | number, Date[]>();
-    
-    // États valides pour un devis "envoyé" selon règles métier
-    const validDevisStates = ['sent', 'validated', 'signed', 'order', 'accepted', 'invoice_sent'];
-    
-    for (const d of devis) {
-      // Filtrer: état valide (envoyé/validé) et dateReelle présent
-      const state = (d.state || '').toLowerCase();
-      if (!validDevisStates.includes(state)) continue;
-      
-      const dateReelleStr = d.dateReelle;
-      if (!dateReelleStr) continue;
-      
-      const dateReelle = new Date(dateReelleStr);
-      if (isNaN(dateReelle.getTime())) continue;
-      
-      const projectId = d.projectId;
-      if (!projectId) continue;
-      
-      const list = devisByProject.get(projectId) ?? [];
-      list.push(dateReelle);
-      devisByProject.set(projectId, list);
-    }
-    
-    console.log('[StatIA] delai_dossier_premier_devis - projets avec devis envoyés:', devisByProject.size);
+    const { projects } = data;
+    console.log('[StatIA] delai_dossier_premier_devis - projects:', projects?.length ?? 0);
     
     const delais: number[] = [];
     let debugStats = { 
       totalProjets: 0, 
       canceled: 0, 
-      noCreatedAt: 0, 
-      noDevisSent: 0, 
+      noDateOuverture: 0, 
+      noHistory: 0,
+      noDevisEnvoye: 0, 
       negative: 0, 
       ok: 0 
     };
     
-    // Filtrer les projets dans la période
     for (const project of projects) {
       debugStats.totalProjets++;
       
@@ -410,16 +383,16 @@ export const delaiDossierPremierDevis: StatDefinition = {
         continue;
       }
       
-      // Date d'ouverture du dossier (champ "date" de l'API Apogée, pas created_at)
-      const dateOuvertureStr = project.date || project.created_at;
+      // Date d'ouverture du dossier (champ "date" de l'API Apogée)
+      const dateOuvertureStr = project.date;
       if (!dateOuvertureStr) {
-        debugStats.noCreatedAt++;
+        debugStats.noDateOuverture++;
         continue;
       }
       
       const dateOuverture = new Date(dateOuvertureStr);
       if (isNaN(dateOuverture.getTime())) {
-        debugStats.noCreatedAt++;
+        debugStats.noDateOuverture++;
         continue;
       }
       
@@ -428,15 +401,33 @@ export const delaiDossierPremierDevis: StatDefinition = {
         continue;
       }
       
-      // Récupérer les devis "sent" de ce projet
-      const devisDates = devisByProject.get(project.id);
-      if (!devisDates || devisDates.length === 0) {
-        debugStats.noDevisSent++;
+      // Chercher dans l'historique l'événement "=> Devis envoyé"
+      const history = project.history || project.data?.history || [];
+      if (!Array.isArray(history) || history.length === 0) {
+        debugStats.noHistory++;
         continue;
       }
       
-      // Premier devis envoyé = dateReelle la plus ancienne
-      const firstDevisDate = devisDates.sort((a, b) => a.getTime() - b.getTime())[0];
+      // Trouver le premier événement contenant "=> Devis envoyé"
+      const devisEnvoyeEvents = history
+        .filter((h: any) => {
+          const label = h.labelKind || h.label || h.kind || '';
+          return label.includes('=> Devis envoyé') || label.includes('=> Devis Envoyé');
+        })
+        .map((h: any) => {
+          const dateStr = h.dateModif || h.date || h.created_at;
+          return dateStr ? new Date(dateStr) : null;
+        })
+        .filter((d: Date | null): d is Date => d !== null && !isNaN(d.getTime()))
+        .sort((a: Date, b: Date) => a.getTime() - b.getTime());
+      
+      if (devisEnvoyeEvents.length === 0) {
+        debugStats.noDevisEnvoye++;
+        continue;
+      }
+      
+      // Premier devis envoyé = date la plus ancienne
+      const firstDevisDate = devisEnvoyeEvents[0];
       
       const diffMs = firstDevisDate.getTime() - dateOuverture.getTime();
       const diffDays = diffMs / (1000 * 60 * 60 * 24);
@@ -454,16 +445,16 @@ export const delaiDossierPremierDevis: StatDefinition = {
     console.log('[StatIA] delai_dossier_premier_devis debug:', debugStats);
     console.log('[StatIA] delais sample:', delais.slice(0, 5).map(d => Math.round(d)));
     
-    // IMPORTANT: Si aucun dossier avec devis "sent" → renvoyer null, pas 0
+    // IMPORTANT: Si aucun dossier avec devis envoyé → renvoyer null, pas 0
     const moyenne = delais.length > 0 
       ? Math.round(delais.reduce((a, b) => a + b, 0) / delais.length)
       : null;
     
     return {
-      value: moyenne, // null si aucune donnée exploitable
+      value: moyenne,
       metadata: {
         computedAt: new Date(),
-        source: 'devis',
+        source: 'projects',
         recordCount: delais.length,
       },
       breakdown: {
