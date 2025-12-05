@@ -705,6 +705,101 @@ export const delaiDevisApresIntervention: StatDefinition = {
   }
 };
 
+// ============= METRIC: Délai moyen validation devis =============
+
+/**
+ * Délai moyen validation devis
+ * Pour chaque devis validé : délai = date_validation - date_émission
+ * Filtre période sur la date d'émission du devis
+ */
+export const delaiMoyenValidationDevis: StatDefinition = {
+  id: 'delai_moyen_validation_devis',
+  label: 'Délai moyen validation devis',
+  description:
+    "Nombre de jours moyen entre l'émission et la validation des devis",
+  category: 'devis',
+  source: 'devis',
+  unit: 'jours',
+  dimensions: [],
+  aggregation: 'avg',
+
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { devis } = data;
+    const VALIDATED_STATES = ['validated', 'signed', 'order'];
+
+    let sumDelais = 0;
+    let count = 0;
+    let minDelai: number | null = null;
+    let maxDelai: number | null = null;
+
+    for (const d of devis) {
+      const state = String(d.state || '').toLowerCase();
+      if (!VALIDATED_STATES.includes(state)) continue;
+
+      // Date d'émission
+      const dateEmisStr =
+        d.dateEnvoi ||
+        d.dateReelle ||
+        d.date ||
+        d.created_at;
+
+      if (!dateEmisStr) continue;
+      const dateEmis = new Date(dateEmisStr);
+      if (isNaN(dateEmis.getTime())) continue;
+
+      // Filtre période sur date d'émission
+      if (params.dateRange) {
+        if (
+          dateEmis < params.dateRange.start ||
+          dateEmis > params.dateRange.end
+        ) {
+          continue;
+        }
+      }
+
+      // Date de validation
+      const dateValStr =
+        d.data?.dateValidation ||
+        d.dateValidation ||
+        d.data?.dateAcceptation ||
+        d.updated_at;
+
+      if (!dateValStr) continue;
+      const dateVal = new Date(dateValStr);
+      if (isNaN(dateVal.getTime())) continue;
+
+      const diffMs = dateVal.getTime() - dateEmis.getTime();
+      const delaiJours = diffMs / (1000 * 60 * 60 * 24);
+
+      // On ignore les valeurs négatives
+      if (delaiJours < 0) continue;
+
+      sumDelais += delaiJours;
+      count++;
+
+      if (minDelai === null || delaiJours < minDelai) minDelai = delaiJours;
+      if (maxDelai === null || delaiJours > maxDelai) maxDelai = delaiJours;
+    }
+
+    const delaiMoyen = count > 0 ? sumDelais / count : 0;
+    const value = Math.round(delaiMoyen * 10) / 10;
+
+    return {
+      value,
+      metadata: {
+        computedAt: new Date(),
+        source: 'devis',
+        recordCount: count,
+      },
+      breakdown: {
+        devisPrisEnCompte: count,
+        min: minDelai !== null ? Math.round(minDelai * 10) / 10 : null,
+        max: maxDelai !== null ? Math.round(maxDelai * 10) / 10 : null,
+      },
+    };
+  },
+};
+
 export const devisDefinitions = {
   taux_transformation_devis_nombre: tauxTransformationDevisNombre,
   taux_transformation_devis_montant: tauxTransformationDevisMontant,
@@ -712,6 +807,7 @@ export const devisDefinitions = {
   montant_devis: montantDevis,
   devis_signes_non_factures: devisSignesNonFactures,
   delai_moyen_acceptation_devis: delaiMoyenAcceptationDevis,
+  delai_moyen_validation_devis: delaiMoyenValidationDevis,
   repartition_devis_par_univers: repartitionDevisParUnivers,
   repartition_devis_par_type_apporteur: repartitionDevisParTypeApporteur,
   delai_devis_apres_intervention: delaiDevisApresIntervention,
