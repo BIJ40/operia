@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,9 +12,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { 
   Euro, Percent, Clock, Calendar, Hash, User, Building2, Layers, 
   AlertTriangle, Wallet, FolderOpen, Shield, TrendingUp, FileCheck, Calculator,
-  RefreshCw, Info, CheckCircle2, XCircle, MoreVertical, Trash2, Check, Lightbulb, Eye
+  RefreshCw, Info, CheckCircle2, XCircle, MoreVertical, Trash2, Check, Lightbulb, Eye, EyeOff
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { AgencySelector } from './StatiaBuilder/AgencySelector';
 import { STAT_DEFINITIONS, listStatDefinitions } from '../definitions';
 import { getMetricForAgency } from '../api/getMetricForAgency';
@@ -29,6 +31,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { MetricCalculationDetails } from './MetricCalculationDetails';
+import { softDeleteCustomMetric } from '../services/customMetricsService';
 
 // Icônes par catégorie
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -106,7 +109,24 @@ function saveMetricsStatus(status: Record<string, MetricStatus>) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(status));
 }
 
+// Vérifier si une métrique est custom (en base) ou core (dans le code)
+function isCustomMetric(metricId: string): boolean {
+  return !(metricId in STAT_DEFINITIONS);
+}
+
+// Types pour la double confirmation
+type DeleteStep = 'confirm1' | 'confirm2';
+interface DeleteDialog {
+  open: boolean;
+  metricId: string;
+  metricLabel: string;
+  isCustom: boolean;
+  step: DeleteStep;
+  confirmText: string;
+}
+
 export function AllMetricsViewer({ mode, fixedAgencySlug }: AllMetricsViewerProps) {
+  const queryClient = useQueryClient();
   const [selectedAgency, setSelectedAgency] = useState(fixedAgencySlug || 'dax');
   const [period, setPeriod] = useState<PeriodType>('current_month');
   const [metricsStatus, setMetricsStatus] = useState<Record<string, MetricStatus>>(loadMetricsStatus);
@@ -114,7 +134,20 @@ export function AllMetricsViewer({ mode, fixedAgencySlug }: AllMetricsViewerProp
   const [suggestionDialog, setSuggestionDialog] = useState<{ open: boolean; metricId: string; metricLabel: string } | null>(null);
   const [suggestionText, setSuggestionText] = useState('');
   const [detailsDialog, setDetailsDialog] = useState<{ open: boolean; definition: StatDefinition; value: any } | null>(null);
+  const [deleteDialog, setDeleteDialog] = useState<DeleteDialog | null>(null);
   const services = getGlobalApogeeDataServices();
+
+  // Mutation pour supprimer une métrique custom en base
+  const deleteCustomMetricMutation = useMutation({
+    mutationFn: (metricId: string) => softDeleteCustomMetric(metricId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['custom-metrics'] });
+      toast.success('Métrique supprimée définitivement de la base de données');
+    },
+    onError: (error) => {
+      toast.error(`Erreur lors de la suppression: ${error.message}`);
+    },
+  });
 
   // Calculer la date range selon la période sélectionnée
   const dateRange = useMemo(() => {
@@ -247,6 +280,50 @@ export function AllMetricsViewer({ mode, fixedAgencySlug }: AllMetricsViewerProp
     setSuggestionDialog(null);
     setSuggestionText('');
     toast.success('Suggestion enregistrée');
+  };
+
+  // Ouvrir la dialog de suppression (étape 1)
+  const handleOpenDelete = (metricId: string, metricLabel: string) => {
+    const isCustom = isCustomMetric(metricId);
+    setDeleteDialog({
+      open: true,
+      metricId,
+      metricLabel,
+      isCustom,
+      step: 'confirm1',
+      confirmText: '',
+    });
+  };
+
+  // Passer à l'étape 2 de confirmation
+  const handleDeleteStep2 = () => {
+    if (deleteDialog) {
+      setDeleteDialog({ ...deleteDialog, step: 'confirm2', confirmText: '' });
+    }
+  };
+
+  // Exécuter la suppression finale
+  const handleConfirmDelete = async () => {
+    if (!deleteDialog) return;
+    
+    const { metricId, isCustom, confirmText, metricLabel } = deleteDialog;
+    
+    // Vérifier que l'utilisateur a tapé SUPPRIMER
+    if (confirmText !== 'SUPPRIMER') {
+      toast.error('Veuillez taper SUPPRIMER pour confirmer');
+      return;
+    }
+
+    if (isCustom) {
+      // Supprimer réellement de la base de données
+      await deleteCustomMetricMutation.mutateAsync(metricId);
+    } else {
+      // Masquer uniquement (métrique core)
+      handleHide(metricId);
+      toast.info('Cette métrique est définie dans le code et ne peut pas être supprimée. Elle a été masquée.');
+    }
+    
+    setDeleteDialog(null);
   };
 
   const formatValue = (value: any, unit?: string): string => {
@@ -446,13 +523,22 @@ export function AllMetricsViewer({ mode, fixedAgencySlug }: AllMetricsViewerProp
                                   Restaurer
                                 </DropdownMenuItem>
                               ) : (
-                                <DropdownMenuItem 
-                                  onClick={() => handleHide(def.id)}
-                                  className="text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Supprimer
-                                </DropdownMenuItem>
+                                <>
+                                  <DropdownMenuItem 
+                                    onClick={() => handleHide(def.id)}
+                                    className="text-muted-foreground"
+                                  >
+                                    <EyeOff className="h-4 w-4 mr-2" />
+                                    Masquer
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => handleOpenDelete(def.id, def.label)}
+                                    className="text-destructive"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Supprimer
+                                  </DropdownMenuItem>
+                                </>
                               )}
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -619,6 +705,91 @@ export function AllMetricsViewer({ mode, fixedAgencySlug }: AllMetricsViewerProp
                 <Lightbulb className="h-4 w-4 mr-2" />
                 Suggérer une modification
               </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog de suppression avec double confirmation */}
+        <Dialog open={deleteDialog?.open || false} onOpenChange={(open) => !open && setDeleteDialog(null)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-destructive">
+                <Trash2 className="h-5 w-5" />
+                {deleteDialog?.step === 'confirm1' ? 'Confirmer la suppression' : 'Confirmation finale'}
+              </DialogTitle>
+              <DialogDescription>
+                {deleteDialog?.isCustom ? (
+                  <span>
+                    Cette action supprimera <strong>définitivement</strong> la métrique{' '}
+                    <span className="font-semibold text-foreground">"{deleteDialog?.metricLabel}"</span> de la base de données.
+                  </span>
+                ) : (
+                  <span>
+                    La métrique <span className="font-semibold text-foreground">"{deleteDialog?.metricLabel}"</span>{' '}
+                    est définie dans le code source et ne peut pas être supprimée. Elle sera <strong>masquée</strong> de l'interface.
+                  </span>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+
+            {deleteDialog?.step === 'confirm1' ? (
+              <div className="space-y-4 py-4">
+                <div className="p-4 bg-destructive/10 rounded-lg border border-destructive/20">
+                  <p className="text-sm text-destructive font-medium mb-2">⚠️ Attention</p>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    {deleteDialog?.isCustom ? (
+                      <>
+                        <li>• Cette action est <strong>irréversible</strong></li>
+                        <li>• Toutes les données associées seront perdues</li>
+                        <li>• Les tableaux de bord utilisant cette métrique seront affectés</li>
+                      </>
+                    ) : (
+                      <>
+                        <li>• La métrique sera masquée mais pas supprimée</li>
+                        <li>• Vous pourrez la restaurer plus tard</li>
+                      </>
+                    )}
+                  </ul>
+                </div>
+                <p className="text-sm text-muted-foreground text-center">
+                  Êtes-vous sûr de vouloir continuer ?
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-delete">
+                    Tapez <span className="font-mono font-bold text-destructive">SUPPRIMER</span> pour confirmer
+                  </Label>
+                  <Input
+                    id="confirm-delete"
+                    value={deleteDialog?.confirmText || ''}
+                    onChange={(e) => deleteDialog && setDeleteDialog({ ...deleteDialog, confirmText: e.target.value })}
+                    placeholder="SUPPRIMER"
+                    className="font-mono"
+                    autoFocus
+                  />
+                </div>
+              </div>
+            )}
+
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button variant="outline" onClick={() => setDeleteDialog(null)}>
+                Annuler
+              </Button>
+              {deleteDialog?.step === 'confirm1' ? (
+                <Button variant="destructive" onClick={handleDeleteStep2}>
+                  Continuer
+                </Button>
+              ) : (
+                <Button 
+                  variant="destructive" 
+                  onClick={handleConfirmDelete}
+                  disabled={deleteDialog?.confirmText !== 'SUPPRIMER' || deleteCustomMetricMutation.isPending}
+                >
+                  {deleteCustomMetricMutation.isPending ? 'Suppression...' : 'Supprimer définitivement'}
+                </Button>
+              )}
             </DialogFooter>
           </DialogContent>
         </Dialog>
