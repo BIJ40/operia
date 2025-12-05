@@ -100,23 +100,28 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
   const { data: recentTickets = [] } = useMyRecentlyModifiedTickets(5);
   const { data: myViews = [] } = useMyTicketViews();
   
-  // Persistance des filtres et du ticket sélectionné
+  // Persistance des filtres, UI state et ticket sélectionné
   const { 
     filters, 
     setFilters, 
     resetFilters, 
     selectedTicketId, 
     setSelectedTicketId,
-    hasActiveFilters 
+    hasActiveFilters,
+    // UI State persisté
+    selectedPEC,
+    setSelectedPEC,
+    filterBlinkingOnly,
+    setFilterBlinkingOnly,
+    hiddenColumns,
+    setHiddenColumns,
+    columnWidth,
+    setColumnWidth,
   } = usePersistedFilters();
   
   const [selectedTicket, setSelectedTicket] = useState<ApogeeTicket | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showConfigDialog, setShowConfigDialog] = useState(false);
-  const [columnWidth, setColumnWidth] = useState(288); // 288px = w-72
-  const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
-  const [filterBlinkingOnly, setFilterBlinkingOnly] = useState(false);
-  const [selectedPEC, setSelectedPEC] = useState<Set<string>>(new Set());
 
   const togglePECFilter = (pecId: string) => {
     setSelectedPEC(prev => {
