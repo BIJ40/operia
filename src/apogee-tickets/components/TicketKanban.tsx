@@ -104,15 +104,6 @@ function DraggableTicketCard({
     zIndex: isDragging ? 1000 : 1,
   } : undefined;
 
-  // Gérer le clic sans interférer avec le drag
-  const handleClick = useCallback((e: React.MouseEvent) => {
-    // Ne pas déclencher onClick si on clique sur le handle de drag
-    if ((e.target as HTMLElement).closest('[data-drag-handle]')) {
-      return;
-    }
-    onClick();
-  }, [onClick]);
-
   // Get module color from database
   const moduleColor = useMemo(() => {
     if (!ticket.module) return null;
@@ -139,10 +130,10 @@ function DraggableTicketCard({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "hover:shadow-md transition-shadow mb-2 border-l-4 group",
+        "hover:shadow-md transition-shadow mb-2 border-l-4 group cursor-pointer",
         shouldBlink && "animate-pulse ring-2 ring-green-500 ring-offset-1"
       )}
-      onClick={handleClick}
+      onClick={onClick}
     >
       <CardContent className="p-3 space-y-2">
         {/* Ticket # + Handle de drag + badges */}
@@ -151,7 +142,8 @@ function DraggableTicketCard({
             {...attributes}
             {...listeners}
             data-drag-handle
-            className="cursor-grab active:cursor-grabbing p-1 -ml-1 opacity-40 hover:opacity-100 transition-opacity"
+            className="cursor-grab active:cursor-grabbing p-1 -ml-1 opacity-40 hover:opacity-100 transition-opacity touch-none"
+            onClick={(e) => e.stopPropagation()}
           >
             <GripVertical className="h-4 w-4" />
           </div>
