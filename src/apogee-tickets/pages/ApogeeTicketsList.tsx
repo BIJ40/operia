@@ -1,8 +1,9 @@
 /**
  * Page Liste des tickets Apogée - Vue tabulaire avec filtres et actions
+ * Utilise usePersistedFilters pour persister les filtres et le ticket sélectionné
  */
 
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import {
@@ -36,6 +37,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { useMyTicketRole, useTicketTransitions } from '../hooks/useTicketPermissions';
 import { useTicketQualification } from '../hooks/useTicketQualification';
+import { usePersistedFilters } from '../hooks/usePersistedFilters';
 import { TicketTable } from '../components/TicketTable';
 import { TicketTableFilters } from '../components/TicketTableFilters';
 import { TicketDetailDrawer } from '../components/TicketDetailDrawer';
@@ -94,8 +96,14 @@ function ApogeeTicketsListContent({ roleInfo }: { roleInfo: NonNullable<ReturnTy
   const navigate = useNavigate();
   const { canViewKanban, canImport, canManage, ticketRole, isAdmin } = roleInfo;
 
-  const [filters, setFilters] = useState<Filters>({});
-  const [selectedTicket, setSelectedTicket] = useState<ApogeeTicket | null>(null);
+  // Utiliser les filtres persistés (localStorage + URL pour le ticket sélectionné)
+  const { 
+    filters, 
+    setFilters, 
+    selectedTicketId, 
+    setSelectedTicketId 
+  } = usePersistedFilters();
+  
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [qualifyingTicketId, setQualifyingTicketId] = useState<string | null>(null);
 
@@ -110,6 +118,12 @@ function ApogeeTicketsListContent({ roleInfo }: { roleInfo: NonNullable<ReturnTy
     updateTicket,
     deleteTicket,
   } = useApogeeTickets(filters);
+
+  // Trouver le ticket sélectionné à partir de l'URL
+  const selectedTicket = useMemo(() => {
+    if (!selectedTicketId) return null;
+    return tickets.find(t => t.id === selectedTicketId) ?? null;
+  }, [selectedTicketId, tickets]);
 
   const { qualifyOne } = useTicketQualification();
 
@@ -136,19 +150,16 @@ function ApogeeTicketsListContent({ roleInfo }: { roleInfo: NonNullable<ReturnTy
   }, [allTransitions, statuses, ticketRole, isAdmin]);
 
   const handleTicketClick = (ticket: ApogeeTicket) => {
-    setSelectedTicket(ticket);
+    setSelectedTicketId(ticket.id);
   };
 
   const handleTicketUpdate = (ticketId: string, updates: Partial<ApogeeTicket>) => {
     updateTicket.mutate({ id: ticketId, ...updates });
-    if (selectedTicket && selectedTicket.id === ticketId) {
-      setSelectedTicket({ ...selectedTicket, ...updates });
-    }
   };
 
   const handleTicketDelete = (id: string) => {
     deleteTicket.mutate(id);
-    setSelectedTicket(null);
+    setSelectedTicketId(null);
   };
 
   const handleQualifyTicket = async (ticketId: string) => {
@@ -304,15 +315,12 @@ function ApogeeTicketsListContent({ roleInfo }: { roleInfo: NonNullable<ReturnTy
       <TicketDetailDrawer
         ticket={selectedTicket}
         open={!!selectedTicket}
-        onClose={() => setSelectedTicket(null)}
+        onClose={() => setSelectedTicketId(null)}
         modules={modules}
         priorities={priorities}
         statuses={statuses}
         onUpdate={(updates) => {
           updateTicket.mutate(updates);
-          if (selectedTicket && selectedTicket.id === updates.id) {
-            setSelectedTicket({ ...selectedTicket, ...updates });
-          }
         }}
         onDelete={handleTicketDelete}
       />
