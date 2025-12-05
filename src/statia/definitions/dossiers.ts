@@ -147,65 +147,100 @@ export const dureeMoyenneDossier: StatDefinition = {
 };
 
 /**
- * Durée médiane dossier
+ * Durée médiane d'un dossier (jours entre création et première facturation)
  */
 export const dureeMedianeDossier: StatDefinition = {
   id: 'duree_mediane_dossier',
-  label: 'Durée médiane dossier',
-  description: 'Durée médiane entre création du dossier et facturation',
+  label: 'Durée médiane d\'un dossier',
+  description: 'Durée médiane entre la création du dossier et la première facture (en jours)',
   category: 'dossiers',
-  source: ['factures', 'projects'],
-  aggregation: 'avg',
+  source: ['projects', 'factures'],
   unit: 'jours',
+  dimensions: [],
+  aggregation: 'median',
+
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { factures, projects } = data;
-    
-    const projectsMap = new Map(projects.map(p => [p.id, p]));
-    const durees: number[] = [];
-    
-    for (const facture of factures) {
-      const dateFacture = facture.dateReelle || facture.dateEmission || facture.created_at;
-      if (!dateFacture) continue;
-      
-      const typeFacture = (facture.typeFacture || facture.data?.type || '').toLowerCase();
+    const { projects, factures } = data;
+
+    // 1) Index première facture par projet
+    const firstFactureDateByProject = new Map<string, Date>();
+
+    for (const f of factures) {
+      // Exclure factures non valides
+      if (!isFactureStateIncluded(f.state)) continue;
+
+      // Exclure avoirs
+      const typeFacture = (f.typeFacture || f.data?.type || '').toLowerCase();
       if (typeFacture === 'avoir') continue;
-      
-      const project = projectsMap.get(facture.projectId);
-      if (!project) continue;
-      
-      const dateCreation = project.created_at || project.createdAt || project.date;
-      if (!dateCreation) continue;
-      
-      try {
-        const factureDate = parseISO(dateFacture);
-        const creationDate = parseISO(dateCreation);
-        
-        if (factureDate < params.dateRange.start || factureDate > params.dateRange.end) continue;
-        
-        const delai = differenceInDays(factureDate, creationDate);
-        if (delai >= 0) {
-          durees.push(delai);
-        }
-      } catch {
-        continue;
+
+      const pidRaw = f.projectId || f.project_id || f.data?.projectId;
+      if (!pidRaw) continue;
+      const pid = String(pidRaw);
+
+      const dateF = getFactureDate(f);
+      if (!dateF) continue;
+
+      const current = firstFactureDateByProject.get(pid);
+      if (!current || dateF < current) {
+        firstFactureDateByProject.set(pid, dateF);
       }
     }
-    
-    // Calcul médiane
-    durees.sort((a, b) => a - b);
-    const mediane = durees.length > 0 
-      ? durees.length % 2 === 0
-        ? (durees[durees.length / 2 - 1] + durees[durees.length / 2]) / 2
-        : durees[Math.floor(durees.length / 2)]
-      : 0;
-    
+
+    // 2) Parcours des projets pour construire la liste des durées
+    const durations: number[] = [];
+
+    for (const project of projects) {
+      const dateDossier = getProjectDate(project);
+      if (!dateDossier) continue;
+
+      // Filtrer par période sur la date DOSSIER
+      if (params.dateRange) {
+        if (dateDossier < params.dateRange.start || dateDossier > params.dateRange.end) {
+          continue;
+        }
+      }
+
+      const pid = String(project.id ?? project.projectId ?? '');
+      if (!pid) continue;
+
+      const firstFactureDate = firstFactureDateByProject.get(pid);
+      if (!firstFactureDate) continue; // dossier jamais facturé → exclu
+
+      const diffMs = firstFactureDate.getTime() - dateDossier.getTime();
+      const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+      if (diffDays < 0) continue; // valeurs aberrantes
+
+      durations.push(diffDays);
+    }
+
+    // 3) Calcul de la médiane
+    let median = 0;
+    if (durations.length > 0) {
+      durations.sort((a, b) => a - b);
+      const mid = Math.floor(durations.length / 2);
+
+      if (durations.length % 2 === 0) {
+        median = (durations[mid - 1] + durations[mid]) / 2;
+      } else {
+        median = durations[mid];
+      }
+    }
+
+    const medianRounded = Math.round(median * 10) / 10;
+
     return {
-      value: Math.round(mediane),
+      value: medianRounded,
       metadata: {
         computedAt: new Date(),
-        source: 'factures',
-        recordCount: durees.length,
-      }
+        source: 'projects',
+        recordCount: durations.length,
+      },
+      breakdown: {
+        dossiersPrisEnCompte: durations.length,
+        min: durations.length ? Math.round(Math.min(...durations) * 10) / 10 : null,
+        max: durations.length ? Math.round(Math.max(...durations) * 10) / 10 : null,
+      },
     };
   }
 };
