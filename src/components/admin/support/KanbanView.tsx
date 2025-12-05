@@ -2,9 +2,10 @@
  * Vue Kanban des tickets support
  * Mise à jour Phase 3 : utilise les nouveaux statuts (new, in_progress, waiting_user, resolved, closed)
  * P3#1 : Intégration SLA badges et highlight retard
+ * Notification clignotante : pastille orange quand un autre utilisateur a répondu
  */
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCorners, useDroppable } from '@dnd-kit/core';
@@ -24,6 +25,7 @@ import {
   TICKET_STATUS_LABELS,
   TICKET_STATUS_COLORS,
 } from '@/services/supportService';
+import { useSupportTicketsBlinkStatus, useMarkSupportTicketAsViewed } from '@/hooks/useSupportTicketViews';
 
 interface KanbanViewProps {
   tickets: SupportTicket[];
@@ -81,7 +83,28 @@ function DroppableColumn({ id, children }: { id: string; children: React.ReactNo
   );
 }
 
-function SortableTicketCard({ ticket, onSelect }: { ticket: SupportTicket; onSelect: (ticket: SupportTicket) => void }) {
+/** Pastille clignotante pour nouvelle réponse */
+function BlinkingIndicator() {
+  return (
+    <span 
+      className="absolute top-2 right-2 w-3 h-3 rounded-full bg-orange-500 animate-pulse"
+      style={{ 
+        animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        boxShadow: '0 0 8px rgba(249, 115, 22, 0.6)'
+      }}
+      title="Nouvelle réponse"
+    />
+  );
+}
+
+interface SortableTicketCardProps {
+  ticket: SupportTicket;
+  onSelect: (ticket: SupportTicket) => void;
+  shouldBlink: boolean;
+  onMarkAsViewed: (ticketId: string) => void;
+}
+
+function SortableTicketCard({ ticket, onSelect, shouldBlink, onMarkAsViewed }: SortableTicketCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
     id: ticket.id,
     data: { type: 'ticket', ticket, status: ticket.status }
@@ -109,13 +132,15 @@ function SortableTicketCard({ ticket, onSelect }: { ticket: SupportTicket; onSel
   // Handle click only if we weren't dragging
   const handleClick = () => {
     if (!wasDragging) {
+      // Marquer comme vu avant d'ouvrir
+      onMarkAsViewed(ticket.id);
       onSelect(ticket);
     }
     setWasDragging(false);
   };
 
   // Classes conditionnelles basées sur la priorité (plus de SLA)
-  const cardClasses = `rounded-xl p-4 mb-3 cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02] ${
+  const cardClasses = `relative rounded-xl p-4 mb-3 cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02] ${
     isUrgent 
       ? 'bg-red-50 border-2 border-red-400 ring-1 ring-red-300' 
       : 'bg-white border-2 border-border'
@@ -130,6 +155,9 @@ function SortableTicketCard({ ticket, onSelect }: { ticket: SupportTicket; onSel
       onClick={handleClick}
       className={cardClasses}
     >
+      {/* Pastille clignotante si nouvelle réponse */}
+      {shouldBlink && <BlinkingIndicator />}
+      
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-foreground text-sm">#{ticket.id.slice(0, 8)}</span>
@@ -176,6 +204,14 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate, isCollaps
   
   // État de collapse par colonne
   const [collapsedColumns, setCollapsedColumns] = useState<Record<string, boolean>>({});
+
+  // Hook pour le statut clignotant et marquer comme vu
+  const blinkStatus = useSupportTicketsBlinkStatus(tickets);
+  const { mutate: markAsViewed } = useMarkSupportTicketAsViewed();
+
+  const handleMarkAsViewed = (ticketId: string) => {
+    markAsViewed(ticketId);
+  };
 
   useEffect(() => {
     setLocalTickets(tickets);
@@ -404,6 +440,8 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate, isCollaps
                               key={ticket.id}
                               ticket={ticket}
                               onSelect={onSelectTicket}
+                              shouldBlink={blinkStatus[ticket.id] || false}
+                              onMarkAsViewed={handleMarkAsViewed}
                             />
                           ))}
                           {columnTickets.length === 0 && (

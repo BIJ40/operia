@@ -3608,6 +3608,35 @@ export type Database = {
           },
         ]
       }
+      support_ticket_views: {
+        Row: {
+          id: string
+          ticket_id: string
+          user_id: string
+          viewed_at: string
+        }
+        Insert: {
+          id?: string
+          ticket_id: string
+          user_id: string
+          viewed_at?: string
+        }
+        Update: {
+          id?: string
+          ticket_id?: string
+          user_id?: string
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_ticket_views_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_tickets: {
         Row: {
           agency_slug: string | null
@@ -3628,6 +3657,8 @@ export type Database = {
           has_attachments: boolean
           heat_priority: number | null
           id: string
+          last_message_at: string | null
+          last_message_by: string | null
           priority: string | null
           rating: number | null
           rating_comment: string | null
@@ -3662,6 +3693,8 @@ export type Database = {
           has_attachments?: boolean
           heat_priority?: number | null
           id?: string
+          last_message_at?: string | null
+          last_message_by?: string | null
           priority?: string | null
           rating?: number | null
           rating_comment?: string | null
@@ -3696,6 +3729,8 @@ export type Database = {
           has_attachments?: boolean
           heat_priority?: number | null
           id?: string
+          last_message_at?: string | null
+          last_message_by?: string | null
           priority?: string | null
           rating?: number | null
           rating_comment?: string | null
