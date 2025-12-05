@@ -12,7 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { 
   Euro, Percent, Clock, Calendar, Hash, User, Building2, Layers, 
   AlertTriangle, Wallet, FolderOpen, Shield, TrendingUp, FileCheck, Calculator,
-  RefreshCw, Info, CheckCircle2, XCircle
+  RefreshCw, Info, CheckCircle2, XCircle, MoreVertical, Trash2, Check, Lightbulb
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AgencySelector } from './StatiaBuilder/AgencySelector';
@@ -23,6 +23,10 @@ import { StatDefinition, StatCategory } from '../definitions/types';
 import { startOfMonth, endOfMonth, startOfYear, subMonths } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 
 // Icônes par catégorie
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -78,9 +82,35 @@ interface AllMetricsViewerProps {
 
 type PeriodType = 'current_month' | 'last_month' | 'ytd' | 'last_12_months';
 
+// État local pour les métriques validées/supprimées/suggestions
+type MetricStatus = {
+  validated: boolean;
+  hidden: boolean;
+  suggestion?: string;
+};
+
+const STORAGE_KEY = 'statia-metrics-status';
+
+function loadMetricsStatus(): Record<string, MetricStatus> {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveMetricsStatus(status: Record<string, MetricStatus>) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(status));
+}
+
 export function AllMetricsViewer({ mode, fixedAgencySlug }: AllMetricsViewerProps) {
   const [selectedAgency, setSelectedAgency] = useState(fixedAgencySlug || 'dax');
   const [period, setPeriod] = useState<PeriodType>('current_month');
+  const [metricsStatus, setMetricsStatus] = useState<Record<string, MetricStatus>>(loadMetricsStatus);
+  const [showHidden, setShowHidden] = useState(false);
+  const [suggestionDialog, setSuggestionDialog] = useState<{ open: boolean; metricId: string; metricLabel: string } | null>(null);
+  const [suggestionText, setSuggestionText] = useState('');
   const services = getGlobalApogeeDataServices();
 
   // Calculer la date range selon la période sélectionnée
@@ -107,6 +137,9 @@ export function AllMetricsViewer({ mode, fixedAgencySlug }: AllMetricsViewerProp
     const grouped: Record<string, StatDefinition[]> = {};
     
     for (const def of definitions) {
+      // Filtrer les métriques cachées si showHidden est false
+      if (!showHidden && metricsStatus[def.id]?.hidden) continue;
+      
       if (!grouped[def.category]) {
         grouped[def.category] = [];
       }
@@ -114,7 +147,7 @@ export function AllMetricsViewer({ mode, fixedAgencySlug }: AllMetricsViewerProp
     }
     
     return grouped;
-  }, []);
+  }, [metricsStatus, showHidden]);
 
   // Ordonner les catégories
   const orderedCategories = useMemo(() => {
@@ -159,6 +192,60 @@ export function AllMetricsViewer({ mode, fixedAgencySlug }: AllMetricsViewerProp
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
+  // Actions sur les métriques
+  const handleValidate = (metricId: string) => {
+    const newStatus = {
+      ...metricsStatus,
+      [metricId]: { ...metricsStatus[metricId], validated: true, hidden: false }
+    };
+    setMetricsStatus(newStatus);
+    saveMetricsStatus(newStatus);
+    toast.success('Métrique validée');
+  };
+
+  const handleHide = (metricId: string) => {
+    const newStatus = {
+      ...metricsStatus,
+      [metricId]: { ...metricsStatus[metricId], hidden: true }
+    };
+    setMetricsStatus(newStatus);
+    saveMetricsStatus(newStatus);
+    toast.success('Métrique masquée');
+  };
+
+  const handleRestore = (metricId: string) => {
+    const newStatus = {
+      ...metricsStatus,
+      [metricId]: { ...metricsStatus[metricId], hidden: false }
+    };
+    setMetricsStatus(newStatus);
+    saveMetricsStatus(newStatus);
+    toast.success('Métrique restaurée');
+  };
+
+  const handleOpenSuggestion = (metricId: string, metricLabel: string) => {
+    const existingSuggestion = metricsStatus[metricId]?.suggestion || '';
+    setSuggestionText(existingSuggestion);
+    setSuggestionDialog({ open: true, metricId, metricLabel });
+  };
+
+  const handleSaveSuggestion = () => {
+    if (!suggestionDialog) return;
+    
+    const newStatus = {
+      ...metricsStatus,
+      [suggestionDialog.metricId]: { 
+        ...metricsStatus[suggestionDialog.metricId], 
+        suggestion: suggestionText 
+      }
+    };
+    setMetricsStatus(newStatus);
+    saveMetricsStatus(newStatus);
+    setSuggestionDialog(null);
+    setSuggestionText('');
+    toast.success('Suggestion enregistrée');
+  };
+
   const formatValue = (value: any, unit?: string): string => {
     if (value === null || value === undefined) return '–';
     
@@ -200,8 +287,11 @@ export function AllMetricsViewer({ mode, fixedAgencySlug }: AllMetricsViewerProp
     return 'ok';
   };
 
-  const totalMetrics = listStatDefinitions().length;
-  const loadedCount = results ? Object.keys(results).length : 0;
+  const allDefinitions = listStatDefinitions();
+  const totalMetrics = allDefinitions.length;
+  const hiddenCount = allDefinitions.filter(d => metricsStatus[d.id]?.hidden).length;
+  const validatedCount = allDefinitions.filter(d => metricsStatus[d.id]?.validated).length;
+  const suggestionsCount = allDefinitions.filter(d => metricsStatus[d.id]?.suggestion).length;
   const errorCount = results ? Object.values(results).filter(r => r.error).length : 0;
   const zeroCount = results ? Object.values(results).filter(r => getValueStatus(r.value) === 'zero').length : 0;
 
@@ -233,6 +323,14 @@ export function AllMetricsViewer({ mode, fixedAgencySlug }: AllMetricsViewerProp
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Badge variant="secondary">{totalMetrics} métriques</Badge>
+              <Badge variant="outline" className="text-green-600 border-green-300">
+                {validatedCount} validées
+              </Badge>
+              {suggestionsCount > 0 && (
+                <Badge variant="outline" className="text-purple-600 border-purple-300">
+                  {suggestionsCount} suggestions
+                </Badge>
+              )}
               {results && (
                 <>
                   <Badge variant="outline" className="text-amber-600 border-amber-300">
@@ -244,6 +342,17 @@ export function AllMetricsViewer({ mode, fixedAgencySlug }: AllMetricsViewerProp
                 </>
               )}
             </div>
+            
+            {hiddenCount > 0 && (
+              <Button 
+                variant={showHidden ? "secondary" : "outline"}
+                size="sm" 
+                onClick={() => setShowHidden(!showHidden)}
+              >
+                {showHidden ? 'Masquer supprimées' : `Voir ${hiddenCount} supprimées`}
+              </Button>
+            )}
+            
             <Button 
               variant="outline" 
               size="sm" 
@@ -284,83 +393,142 @@ export function AllMetricsViewer({ mode, fixedAgencySlug }: AllMetricsViewerProp
                       const error = result?.error;
                       const status = error ? 'error' : getValueStatus(value);
                       const UnitIcon = UNIT_ICONS[def.unit || ''] || Hash;
+                      const metricStatus: MetricStatus = metricsStatus[def.id] || { validated: false, hidden: false };
+                      const isValidated = metricStatus.validated;
+                      const isHidden = metricStatus.hidden;
+                      const hasSuggestion = !!metricStatus.suggestion;
                       
                       return (
-                        <Tooltip key={def.id}>
-                          <TooltipTrigger asChild>
-                            <div 
-                              className={cn(
-                                "p-3 rounded-lg border transition-colors cursor-help",
-                                status === 'ok' && "bg-background hover:bg-muted/50",
-                                status === 'zero' && "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800",
-                                status === 'error' && "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800",
-                                status === 'complex' && "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800"
+                        <div 
+                          key={def.id}
+                          className={cn(
+                            "p-3 rounded-lg border transition-colors relative group",
+                            isHidden && "opacity-50",
+                            isValidated && "ring-2 ring-green-500/50",
+                            status === 'ok' && "bg-background hover:bg-muted/50",
+                            status === 'zero' && "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800",
+                            status === 'error' && "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800",
+                            status === 'complex' && "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800"
+                          )}
+                        >
+                          {/* Menu d'actions */}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleValidate(def.id)}>
+                                <Check className="h-4 w-4 mr-2 text-green-500" />
+                                {isValidated ? 'Déjà validé' : 'Valider'}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleOpenSuggestion(def.id, def.label)}>
+                                <Lightbulb className="h-4 w-4 mr-2 text-purple-500" />
+                                {hasSuggestion ? 'Modifier suggestion' : 'Suggérer calcul'}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              {isHidden ? (
+                                <DropdownMenuItem onClick={() => handleRestore(def.id)}>
+                                  <RefreshCw className="h-4 w-4 mr-2" />
+                                  Restaurer
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem 
+                                  onClick={() => handleHide(def.id)}
+                                  className="text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Supprimer
+                                </DropdownMenuItem>
                               )}
-                            >
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-1.5 mb-1">
-                                    <UnitIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                                    <span className="text-xs font-medium truncate">
-                                      {def.label}
-                                    </span>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="cursor-help">
+                                <div className="flex items-start justify-between gap-2 pr-6">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-1.5 mb-1">
+                                      <UnitIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                      <span className="text-xs font-medium truncate">
+                                        {def.label}
+                                      </span>
+                                      {isValidated && (
+                                        <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0" />
+                                      )}
+                                      {hasSuggestion && (
+                                        <Lightbulb className="h-3 w-3 text-purple-500 shrink-0" />
+                                      )}
+                                    </div>
+                                    
+                                    {isLoading ? (
+                                      <Skeleton className="h-6 w-24" />
+                                    ) : (
+                                      <div className={cn(
+                                        "text-lg font-semibold",
+                                        status === 'zero' && "text-amber-600 dark:text-amber-400",
+                                        status === 'error' && "text-red-600 dark:text-red-400",
+                                        status === 'complex' && "text-blue-600 dark:text-blue-400"
+                                      )}>
+                                        {error ? 'Erreur' : formatValue(value, def.unit)}
+                                      </div>
+                                    )}
                                   </div>
                                   
-                                  {isLoading ? (
-                                    <Skeleton className="h-6 w-24" />
-                                  ) : (
-                                    <div className={cn(
-                                      "text-lg font-semibold",
-                                      status === 'zero' && "text-amber-600 dark:text-amber-400",
-                                      status === 'error' && "text-red-600 dark:text-red-400",
-                                      status === 'complex' && "text-blue-600 dark:text-blue-400"
-                                    )}>
-                                      {error ? 'Erreur' : formatValue(value, def.unit)}
-                                    </div>
+                                  <div className="shrink-0">
+                                    {status === 'ok' && !isValidated && <Info className="h-4 w-4 text-muted-foreground" />}
+                                    {status === 'zero' && <AlertTriangle className="h-4 w-4 text-amber-500" />}
+                                    {status === 'error' && <XCircle className="h-4 w-4 text-red-500" />}
+                                    {status === 'complex' && <Info className="h-4 w-4 text-blue-500" />}
+                                  </div>
+                                </div>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-xs">
+                              <div className="space-y-1">
+                                <p className="font-medium">{def.label}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {def.description || 'Aucune description'}
+                                </p>
+                                <div className="flex flex-wrap gap-1 pt-1">
+                                  <Badge variant="outline" className="text-[10px]">
+                                    ID: {def.id}
+                                  </Badge>
+                                  <Badge variant="outline" className="text-[10px]">
+                                    Source: {Array.isArray(def.source) ? def.source.join(', ') : def.source}
+                                  </Badge>
+                                  {def.unit && (
+                                    <Badge variant="outline" className="text-[10px]">
+                                      Unité: {def.unit}
+                                    </Badge>
                                   )}
                                 </div>
-                                
-                                <div className="shrink-0">
-                                  {status === 'ok' && <CheckCircle2 className="h-4 w-4 text-green-500" />}
-                                  {status === 'zero' && <AlertTriangle className="h-4 w-4 text-amber-500" />}
-                                  {status === 'error' && <XCircle className="h-4 w-4 text-red-500" />}
-                                  {status === 'complex' && <Info className="h-4 w-4 text-blue-500" />}
-                                </div>
-                              </div>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="max-w-xs">
-                            <div className="space-y-1">
-                              <p className="font-medium">{def.label}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {def.description || 'Aucune description'}
-                              </p>
-                              <div className="flex flex-wrap gap-1 pt-1">
-                                <Badge variant="outline" className="text-[10px]">
-                                  ID: {def.id}
-                                </Badge>
-                                <Badge variant="outline" className="text-[10px]">
-                                  Source: {Array.isArray(def.source) ? def.source.join(', ') : def.source}
-                                </Badge>
-                                {def.unit && (
-                                  <Badge variant="outline" className="text-[10px]">
-                                    Unité: {def.unit}
-                                  </Badge>
+                                {error && (
+                                  <p className="text-xs text-red-500 pt-1">Erreur: {error}</p>
+                                )}
+                                {hasSuggestion && (
+                                  <div className="pt-2 border-t mt-2">
+                                    <p className="text-xs font-medium text-purple-600">Suggestion:</p>
+                                    <p className="text-xs">{metricStatus.suggestion}</p>
+                                  </div>
+                                )}
+                                {status === 'complex' && typeof value === 'object' && (
+                                  <div className="text-xs pt-1 max-h-32 overflow-auto">
+                                    <pre className="whitespace-pre-wrap">
+                                      {JSON.stringify(value, null, 2)}
+                                    </pre>
+                                  </div>
                                 )}
                               </div>
-                              {error && (
-                                <p className="text-xs text-red-500 pt-1">Erreur: {error}</p>
-                              )}
-                              {status === 'complex' && typeof value === 'object' && (
-                                <div className="text-xs pt-1 max-h-32 overflow-auto">
-                                  <pre className="whitespace-pre-wrap">
-                                    {JSON.stringify(value, null, 2)}
-                                  </pre>
-                                </div>
-                              )}
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
                       );
                     })}
                   </div>
@@ -369,6 +537,37 @@ export function AllMetricsViewer({ mode, fixedAgencySlug }: AllMetricsViewerProp
             );
           })}
         </div>
+
+        {/* Dialog de suggestion */}
+        <Dialog open={suggestionDialog?.open || false} onOpenChange={(open) => !open && setSuggestionDialog(null)}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Suggérer un nouveau calcul</DialogTitle>
+              <DialogDescription>
+                Métrique: <strong>{suggestionDialog?.metricLabel}</strong>
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Textarea 
+                placeholder="Décrivez comment cette métrique devrait être calculée...&#10;&#10;Ex: CA = somme des factures.totalHT où state != 'draft' et typeFacture != 'avoir'"
+                value={suggestionText}
+                onChange={(e) => setSuggestionText(e.target.value)}
+                rows={6}
+              />
+              <p className="text-xs text-muted-foreground">
+                Cette suggestion sera sauvegardée localement. Tu pourras ensuite l'implémenter dans le code.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSuggestionDialog(null)}>
+                Annuler
+              </Button>
+              <Button onClick={handleSaveSuggestion}>
+                Enregistrer
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </TooltipProvider>
   );
