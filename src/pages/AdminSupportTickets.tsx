@@ -563,15 +563,15 @@ export default function AdminSupportTickets() {
                           </Button>
                         )}
 
-                        {/* Bouton pour voir le partage d'écran */}
-                        {selectedTicket.type === 'chat_human' && (
+                        {/* Bouton pour voir le partage d'écran - toujours visible pour chat_human */}
+                        {selectedTicket?.type === 'chat_human' && (
                           <Button
-                            variant="outline"
+                            variant="default"
                             onClick={() => setShowScreenShare(true)}
-                            className="gap-2 text-helpconfort-blue border-helpconfort-blue/30 hover:bg-helpconfort-blue/10"
+                            className="gap-2 bg-helpconfort-blue hover:bg-helpconfort-blue/90 text-white"
                           >
                             <Monitor className="w-4 h-4" />
-                            Voir l'écran
+                            👁️ Voir l'écran
                           </Button>
                         )}
 
