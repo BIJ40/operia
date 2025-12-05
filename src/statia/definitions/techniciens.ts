@@ -241,7 +241,10 @@ export const caParTechnicienUnivers: StatDefinition = {
     for (const facture of factures) {
       const meta = extractFactureMeta(facture);
       
-      if (!isFactureStateIncluded(facture.state)) continue;
+      // Vérifier état facture - extraire depuis plusieurs sources comme dans ca.ts
+      const factureState = facture.state || facture.status || facture.statut 
+        || facture.data?.state || facture.data?.status || facture.paymentStatus || '';
+      if (!isFactureStateIncluded(factureState)) continue;
       
       const date = meta.date ? new Date(meta.date) : null;
       if (!date || date < params.dateRange.start || date > params.dateRange.end) continue;
@@ -400,8 +403,10 @@ export const caParTechnicien: StatDefinition = {
       const typeFacture = (facture.typeFacture || facture.type || facture.data?.type || '').toLowerCase();
       if (typeFacture === 'proforma' || typeFacture === 'pro_forma') continue;
       
-      // Vérifier état facture
-      if (!isFactureStateIncluded(facture.state)) continue;
+      // Vérifier état facture - extraire depuis plusieurs sources comme dans ca.ts
+      const factureState = facture.state || facture.status || facture.statut 
+        || facture.data?.state || facture.data?.status || facture.paymentStatus || '';
+      if (!isFactureStateIncluded(factureState)) continue;
       
       const projectId = String(facture.projectId || facture.project_id);
       if (!projectId) continue;
@@ -641,8 +646,10 @@ export const caParTechnicienTemps: StatDefinition = {
       const typeFacture = (facture.typeFacture || facture.type || facture.data?.type || '').toLowerCase();
       if (typeFacture === 'proforma' || typeFacture === 'pro_forma') continue;
       
-      // Vérifier état facture
-      if (!isFactureStateIncluded(facture.state)) continue;
+      // Vérifier état facture - extraire depuis plusieurs sources comme dans ca.ts
+      const factureState = facture.state || facture.status || facture.statut 
+        || facture.data?.state || facture.data?.status || facture.paymentStatus || '';
+      if (!isFactureStateIncluded(factureState)) continue;
       
       const projectId = String(facture.projectId || facture.project_id);
       if (!projectId) continue;
