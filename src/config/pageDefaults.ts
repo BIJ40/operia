@@ -229,6 +229,7 @@ export const PAGE_HEADER_MATCHERS: PageHeaderConfig[] = [
   { match: (path) => path === '/admin/chatbot-rag', pageKey: 'admin_chatbot_rag', defaultTitle: 'Chatbot RAG', defaultSubtitle: 'Gestion de la base de connaissances Mme MICHU', icon: 'Database', parentRoute: '/admin', parentLabel: 'Admin' },
   { match: (path) => path === '/admin/announcements', pageKey: 'admin_announcements', defaultTitle: 'Annonces Prioritaires', defaultSubtitle: 'Diffusez des informations importantes à vos utilisateurs', icon: 'Bell', parentRoute: '/admin', parentLabel: 'Admin' },
   { match: (path) => path === '/admin/system-health', pageKey: 'admin_system_health', defaultTitle: 'Santé Système', defaultSubtitle: 'Surveillance en temps réel des services', icon: 'Activity', parentRoute: '/admin', parentLabel: 'Admin' },
+  { match: (path) => path === '/admin/formation-generator', pageKey: 'admin_formation_generator', defaultTitle: 'Générateur Formation IA', defaultSubtitle: 'Génère des résumés pédagogiques à partir des guides Apogée', icon: 'Sparkles', parentRoute: '/admin', parentLabel: 'Admin' },
   { match: (path) => path === '/admin', pageKey: 'admin_index', defaultTitle: 'Administration', defaultSubtitle: 'Configuration du système', icon: 'Settings', parentRoute: '/', parentLabel: 'Accueil' },
   
   // ============================================

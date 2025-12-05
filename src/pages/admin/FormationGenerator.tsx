@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { UnifiedHeader } from "@/components/layout/UnifiedHeader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +17,9 @@ import {
   Loader2,
   RefreshCw,
   BookOpen,
-  Image as ImageIcon
+  Image as ImageIcon,
+  FileText,
+  Zap
 } from "lucide-react";
 import { 
   useFormationContentList, 
@@ -25,7 +27,6 @@ import {
   useFormationStats,
   FormationContent
 } from "@/hooks/useFormationContent";
-import { cn } from "@/lib/utils";
 
 interface Block {
   id: string;
@@ -128,7 +129,7 @@ export default function FormationGenerator() {
       case "complete":
         return <Badge className="bg-green-500/20 text-green-600 border-green-500/30"><CheckCircle2 className="w-3 h-3 mr-1" />Généré</Badge>;
       case "processing":
-        return <Badge className="bg-blue-500/20 text-blue-600 border-blue-500/30"><Loader2 className="w-3 h-3 mr-1 animate-spin" />En cours</Badge>;
+        return <Badge className="bg-helpconfort-blue/20 text-helpconfort-blue border-helpconfort-blue/30"><Loader2 className="w-3 h-3 mr-1 animate-spin" />En cours</Badge>;
       case "error":
         return <Badge variant="destructive"><AlertCircle className="w-3 h-3 mr-1" />Erreur</Badge>;
       default:
@@ -143,28 +144,80 @@ export default function FormationGenerator() {
 
   if (blocksLoading) {
     return (
-      <MainLayout>
+      <div className="min-h-screen bg-background">
+        <UnifiedHeader />
         <div className="flex items-center justify-center h-64">
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
-      </MainLayout>
+      </div>
     );
   }
 
   return (
-    <MainLayout>
-      <div className="container mx-auto py-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-violet-500" />
-              Générateur de Formation IA
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Génère des résumés pédagogiques à partir des sections du guide Apogée
-            </p>
+    <div className="min-h-screen bg-background">
+      <UnifiedHeader />
+
+      <main id="main-content" className="container mx-auto py-6 px-4 space-y-6">
+        {/* Stats tiles with blue gradient */}
+        {stats && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-helpconfort-blue/5 via-background to-background">
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-helpconfort-blue/10">
+                    <FileText className="w-5 h-5 text-helpconfort-blue" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">{stats.total}</div>
+                    <div className="text-sm text-muted-foreground">Total sections</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-l-4 border-l-green-500 bg-gradient-to-br from-green-500/5 via-background to-background">
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-green-500/10">
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-green-600">{stats.complete}</div>
+                    <div className="text-sm text-muted-foreground">Générés</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-helpconfort-blue/5 via-background to-background">
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-helpconfort-blue/10">
+                    <Zap className="w-5 h-5 text-helpconfort-blue" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-helpconfort-blue">{stats.processing}</div>
+                    <div className="text-sm text-muted-foreground">En cours</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-l-4 border-l-red-500 bg-gradient-to-br from-red-500/5 via-background to-background">
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-red-500/10">
+                    <AlertCircle className="w-5 h-5 text-red-500" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-red-600">{stats.error}</div>
+                    <div className="text-sm text-muted-foreground">Erreurs</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
+        )}
+
+        {/* Action button */}
+        <div className="flex justify-end">
           <Button variant="outline" asChild>
             <a href="/academy/apogee/formation" target="_blank">
               <BookOpen className="w-4 h-4 mr-2" />
@@ -172,36 +225,6 @@ export default function FormationGenerator() {
             </a>
           </Button>
         </div>
-
-        {/* Stats */}
-        {stats && (
-          <div className="grid grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="pt-4">
-                <div className="text-2xl font-bold">{stats.total}</div>
-                <div className="text-sm text-muted-foreground">Total</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-4">
-                <div className="text-2xl font-bold text-green-600">{stats.complete}</div>
-                <div className="text-sm text-muted-foreground">Générés</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-4">
-                <div className="text-2xl font-bold text-blue-600">{stats.processing}</div>
-                <div className="text-sm text-muted-foreground">En cours</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-4">
-                <div className="text-2xl font-bold text-red-600">{stats.error}</div>
-                <div className="text-sm text-muted-foreground">Erreurs</div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
 
         {/* Categories list */}
         <Card>
@@ -312,7 +335,7 @@ export default function FormationGenerator() {
             </ScrollArea>
           </CardContent>
         </Card>
-      </div>
-    </MainLayout>
+      </main>
+    </div>
   );
 }
