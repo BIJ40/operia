@@ -2,6 +2,7 @@ import { Kanban, ListChecks, Settings, Star, AlertTriangle } from 'lucide-react'
 import { ROUTES } from '@/config/routes';
 import { IndexTile, type IndexTileProps } from '@/components/ui/index-tile';
 import { useAuth } from '@/contexts/AuthContext';
+import { ExcelImportTile } from '@/apogee-tickets/components/ExcelImportTile';
 
 interface ProjectModule {
   title: string;
@@ -75,6 +76,14 @@ export default function ProjectsIndex() {
             };
             return <IndexTile key={module.href} {...tileProps} />;
           })}
+        </div>
+      </section>
+
+      {/* Excel Import Tile */}
+      <section>
+        <h2 className="text-xl font-semibold mb-4 text-foreground">Sources de données</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <ExcelImportTile />
         </div>
       </section>
 
