@@ -751,6 +751,103 @@ export const caImpacteSav: StatDefinition = {
   }
 };
 
+/**
+ * Coût SAV estimé (20% du CA des dossiers parents)
+ * Pour chaque SAV, on prend 20% du CA facturé du dossier parent
+ * Règle métier: le SAV représente un coût de reprise estimé à 20% de la facture initiale
+ */
+export const coutSavEstime: StatDefinition = {
+  id: 'cout_sav_estime',
+  label: 'Coût SAV estimé (20%)',
+  description: 'Estimation du coût SAV = 20% du CA des dossiers ayant généré un SAV',
+  category: 'sav',
+  source: ['factures', 'projects', 'interventions'],
+  aggregation: 'sum',
+  unit: '€',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { factures, projects, interventions } = data;
+    
+    // Index des projets par ID (multi-type pour robustesse)
+    const projectsById = new Map<string, any>();
+    for (const p of projects) {
+      projectsById.set(String(p.id), p);
+      if (typeof p.id === 'number') projectsById.set(String(p.id), p);
+    }
+    
+    // Index des factures par projectId
+    const facturesByProjectId = new Map<string, number>();
+    for (const f of factures) {
+      const meta = extractFactureMeta(f);
+      if (!meta.date) continue;
+      
+      const pid = String(f.projectId || f.project_id || f.data?.projectId || '');
+      if (!pid) continue;
+      
+      const current = facturesByProjectId.get(pid) || 0;
+      facturesByProjectId.set(pid, current + meta.montantNetHT);
+    }
+    
+    // Identifier les projets SAV et leur parent
+    let coutTotalSAV = 0;
+    let nbDossiersSAV = 0;
+    let nbDossiersAvecParent = 0;
+    
+    for (const project of projects) {
+      // Ce projet est-il un SAV ?
+      if (!isSavProject(project)) continue;
+      
+      // Filtre période sur date du projet SAV
+      const dateSAV = getProjectDate(project);
+      if (!dateSAV) continue;
+      if (params.dateRange && (dateSAV < params.dateRange.start || dateSAV > params.dateRange.end)) {
+        continue;
+      }
+      
+      nbDossiersSAV++;
+      
+      // Trouver le parent du SAV
+      const parentIdRaw = 
+        project.parentProjectId || 
+        project.parent_project_id || 
+        project.parentId || 
+        project.parent_id ||
+        project.data?.parentId ||
+        project.data?.parent_id ||
+        project.data?.parentProjectId ||
+        project.data?.linkedProjectId ||
+        project.data?.dossierId;
+      
+      if (!parentIdRaw) continue;
+      
+      const parentId = String(parentIdRaw);
+      
+      // CA facturé du dossier parent
+      const caParent = facturesByProjectId.get(parentId) || 0;
+      if (caParent <= 0) continue;
+      
+      nbDossiersAvecParent++;
+      
+      // 20% du CA parent = coût SAV estimé
+      const coutSAV = caParent * 0.20;
+      coutTotalSAV += coutSAV;
+    }
+    
+    return {
+      value: Math.round(coutTotalSAV * 100) / 100,
+      metadata: {
+        computedAt: new Date(),
+        source: 'factures',
+        recordCount: nbDossiersAvecParent,
+      },
+      breakdown: {
+        nbDossiersSAV,
+        nbDossiersAvecParent,
+        pourcentageApplique: 20,
+      }
+    };
+  }
+};
+
 export const savDefinitions = {
   taux_sav_global: tauxSavGlobal,
   taux_sav_par_univers: tauxSavParUnivers,
@@ -759,4 +856,5 @@ export const savDefinitions = {
   nb_sav_global: nbSavGlobal,
   nb_interventions_sav: nbInterventionsSav,
   ca_impacte_sav: caImpacteSav,
+  cout_sav_estime: coutSavEstime,
 };
