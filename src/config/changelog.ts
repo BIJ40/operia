@@ -15,6 +15,28 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: 'V0.6.8',
+    date: '2025-12-05',
+    title: 'Conformité RGPD & UX Gestion de Projet',
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // CONFORMITÉ RGPD
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'security', description: 'RGPD-03 : Cascade DELETE sur FK collaborateurs (documents, congés, contrats, demandes)' },
+      { type: 'security', description: 'RGPD-05 : Migration données sensibles vers table dédiée (NSS, date naissance, contacts urgence)' },
+      { type: 'feature', description: 'Hook useSensitiveData pour gestion séparée des données personnelles sensibles' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // MODULE GESTION DE PROJET - UX
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Brouillons persistants : messages sauvegardés en localStorage, restaurés à réouverture ticket' },
+      { type: 'feature', description: 'Recherche par numéro ticket : supporte APO-123, apo-123, ou 123' },
+      { type: 'feature', description: 'Édition messages envoyés : modification possible avec marqueur "(modifié)" et notification' },
+      { type: 'improvement', description: 'Filtres PEC et Nouveaux messages déplacés inline avec autres filtres' },
+      { type: 'fix', description: 'Documents joints : correction chemin basePath FileManager pour affichage/téléchargement' },
+    ]
+  },
+  {
     version: 'V0.6.7',
     date: '2025-12-05',
     title: 'Partage d\'écran Support & Messagerie améliorée',
