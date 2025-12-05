@@ -244,7 +244,7 @@ export default function FormationGenerator() {
         {/* Action button */}
         <div className="flex justify-end">
           <Button variant="outline" asChild>
-            <a href="/academy/apogee/formation" target="_blank">
+            <a href="/academy/formation" target="_blank">
               <BookOpen className="w-4 h-4 mr-2" />
               Voir le parcours formation
             </a>
