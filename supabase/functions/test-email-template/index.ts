@@ -1,17 +1,13 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { handleCorsPreflightOrReject, withCors } from "../_shared/cors.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight and reject unauthorized origins
+  const corsResult = handleCorsPreflightOrReject(req);
+  if (corsResult) return corsResult;
 
   try {
     const { email } = await req.json();
@@ -100,15 +96,15 @@ serve(async (req) => {
 
     console.log("Email sent:", emailResponse);
 
-    return new Response(JSON.stringify({ success: true, response: emailResponse }), {
+    return withCors(req, new Response(JSON.stringify({ success: true, response: emailResponse }), {
       status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
+      headers: { "Content-Type": "application/json" },
+    }));
   } catch (error: any) {
     console.error("Error:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return withCors(req, new Response(JSON.stringify({ error: error.message }), {
       status: 500,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
+      headers: { "Content-Type": "application/json" },
+    }));
   }
 });
