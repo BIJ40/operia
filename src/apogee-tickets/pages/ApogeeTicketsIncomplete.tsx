@@ -100,6 +100,9 @@ export default function ApogeeTicketsIncomplete() {
     const missing: string[] = [];
     if (!ticket.module) missing.push('module');
     if (ticket.heat_priority === null || ticket.heat_priority === undefined) missing.push('heat_priority');
+    if ((ticket.h_min === null || ticket.h_min === undefined) && 
+        (ticket.h_max === null || ticket.h_max === undefined)) missing.push('temps');
+    if (!ticket.owner_side) missing.push('pec');
     return missing;
   };
 

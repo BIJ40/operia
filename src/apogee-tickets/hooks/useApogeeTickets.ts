@@ -435,7 +435,7 @@ export function useIncompleteTickets() {
   const { tickets: allTickets, isLoading, ...rest } = useApogeeTickets();
   
   // Filtrer côté client les tickets vraiment incomplets
-  // Un ticket est incomplet s'il manque module OU heat_priority
+  // Un ticket est incomplet s'il manque: module, heat_priority, h_min/h_max (temps), owner_side (PEC)
   // Et qu'il n'est pas en statut final (EN_PROD, CLOS, REFUSE)
   const FINAL_STATUSES = ['EN_PROD', 'CLOS', 'REFUSE'];
   
@@ -446,8 +446,11 @@ export function useIncompleteTickets() {
     // Vérifier les champs manquants
     const missingModule = !ticket.module;
     const missingHeatPriority = ticket.heat_priority === null || ticket.heat_priority === undefined;
+    const missingTime = (ticket.h_min === null || ticket.h_min === undefined) && 
+                        (ticket.h_max === null || ticket.h_max === undefined);
+    const missingOwnerSide = !ticket.owner_side;
     
-    return missingModule || missingHeatPriority;
+    return missingModule || missingHeatPriority || missingTime || missingOwnerSide;
   });
 
   return {
