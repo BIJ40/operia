@@ -5,25 +5,18 @@ import { useSecondaryFilters } from "@/apogee-connect/contexts/SecondaryFiltersC
 import { useApiToggle } from "@/apogee-connect/contexts/ApiToggleContext";
 import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { logWarn, logError } from "@/lib/logger";
-import { Card } from "@/components/ui/card";
 import { FolderOpen, Euro, Percent, ShoppingCart, Clock, Users, TrendingUp, Heart, ArrowUpRight } from "lucide-react";
-import { formatEuros, formatApporteurType } from "@/apogee-connect/utils/formatters";
+import { formatEuros } from "@/apogee-connect/utils/formatters";
 import { SecondaryPeriodSelector } from "@/apogee-connect/components/filters/SecondaryPeriodSelector";
 import { 
   calculateTop10Apporteurs, 
   calculateDossiersConfiesParApporteur, 
-  calculateDuGlobal, 
   calculateFlop10Apporteurs,
-  calculateTauxTransformationMoyen,
-  calculatePanierMoyenHT,
-  calculateDelaiMoyenFacturation
 } from "@/apogee-connect/utils/apporteursCalculations";
 import { calculateTypesApporteursStats } from "@/apogee-connect/utils/typesApporteursCalculations";
 import { calculateParticuliersStats } from "@/apogee-connect/utils/particuliersCalculations";
 import { calculateMonthlySegmentation } from "@/apogee-connect/utils/segmentationCalculations";
 import {
-  calculateApporteursActifs,
-  calculateCAMoyenParApporteur,
   calculateDelaiMoyenPaiement,
   calculateTauxFidelite,
   calculateCroissanceCA
@@ -35,18 +28,26 @@ import { TypesApporteursWidget } from "@/apogee-connect/components/widgets/Types
 import { ParticuliersWidget } from "@/apogee-connect/components/widgets/ParticuliersWidget";
 import { SegmentationChart } from "@/apogee-connect/components/widgets/SegmentationChart";
 import { ApporteurTypeTimeline } from "@/apogee-connect/components/widgets/ApporteurTypeTimeline";
+// StatIA imports
+import { useApporteursStatia } from "@/statia/hooks/useApporteursStatia";
 
 export default function IndicateursApporteurs() {
   const { filters: secondaryFilters } = useSecondaryFilters();
   const { isApiEnabled } = useApiToggle();
   const { agencyChangeCounter, currentAgency, isAgencyReady } = useAgency();
-  const userAgency = currentAgency?.id || "";
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["apporteurs-stats", secondaryFilters, isApiEnabled, agencyChangeCounter],
+  // ========== STATIA KPIs ==========
+  // Utilise les métriques StatIA pour les KPIs principaux
+  const { 
+    data: statiaKpis, 
+    isLoading: isStatiaLoading 
+  } = useApporteursStatia();
+
+  // ========== DONNÉES WIDGETS (legacy - à migrer progressivement) ==========
+  const { data: widgetsData, isLoading: isWidgetsLoading, error } = useQuery({
+    queryKey: ["apporteurs-widgets", secondaryFilters, isApiEnabled, agencyChangeCounter],
     enabled: isAgencyReady && isApiEnabled,
     queryFn: async () => {
-      // GUARD: Ne pas charger si l'agence n'est pas définie
       if (!currentAgency?.id) {
         logWarn('INDICATEURS_APPORTEURS', 'Agence non définie - Chargement des données annulé');
         return null;
@@ -63,13 +64,6 @@ export default function IndicateursApporteurs() {
       );
       
       const dossiersConfiesParApporteur = calculateDossiersConfiesParApporteur(
-        apiData.projects || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange
-      );
-      
-      const duGlobal = calculateDuGlobal(
-        apiData.factures || [],
         apiData.projects || [],
         apiData.clients || [],
         secondaryFilters.dateRange
@@ -100,9 +94,6 @@ export default function IndicateursApporteurs() {
         secondaryFilters.dateRange
       );
       
-      // Calculer l'évolution mensuelle Particuliers vs Apporteurs
-      // Ce graphique est TOTALEMENT INDÉPENDANT du sélecteur de période
-      // Il affiche TOUJOURS l'année en cours complète
       const currentYear = new Date().getFullYear();
       const segmentationData = calculateMonthlySegmentation(
         apiData.factures || [],
@@ -111,39 +102,13 @@ export default function IndicateursApporteurs() {
         currentYear
       );
       
-      const tauxTransformationMoyen = calculateTauxTransformationMoyen(
-        apiData.devis || [],
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange
-      );
-      
-      const panierMoyenHT = calculatePanierMoyenHT(
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange
-      );
-      
-      const delaiMoyenFacturation = calculateDelaiMoyenFacturation(
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange
-      );
-      
       return {
         top10Apporteurs,
         dossiersConfiesParApporteur,
-        duGlobal,
         flop10Apporteurs,
         typesApporteursStats,
         particuliersStats,
         segmentationData,
-        tauxTransformationMoyen,
-        panierMoyenHT,
-        delaiMoyenFacturation,
         rawProjects: apiData.projects || [],
         rawClients: apiData.clients || [],
         apiGetFactures: apiData.factures || [],
@@ -152,31 +117,23 @@ export default function IndicateursApporteurs() {
     },
   });
 
-  // Calculs des 5 nouveaux KPI étendus
-  const apporteursActifs = useMemo(() => {
-    if (!data || !data.apiGetFactures || !data.apiGetProjects) return { nbActifs: 0 };
-    return calculateApporteursActifs(data.apiGetFactures, data.apiGetProjects, secondaryFilters.dateRange);
-  }, [data, secondaryFilters.dateRange]);
-
-  const caMoyenApporteur = useMemo(() => {
-    if (!data || !data.apiGetFactures || !data.apiGetProjects) return { caMoyen: 0, caTotal: 0, nbApporteurs: 0 };
-    return calculateCAMoyenParApporteur(data.apiGetFactures, data.apiGetProjects, secondaryFilters.dateRange);
-  }, [data, secondaryFilters.dateRange]);
-
+  // KPIs étendus (legacy - conservés pour compatibilité)
   const delaiPaiement = useMemo(() => {
-    if (!data || !data.apiGetFactures || !data.apiGetProjects) return { delaiMoyen: 0, nbFactures: 0 };
-    return calculateDelaiMoyenPaiement(data.apiGetFactures, data.apiGetProjects, secondaryFilters.dateRange);
-  }, [data, secondaryFilters.dateRange]);
+    if (!widgetsData?.apiGetFactures || !widgetsData?.apiGetProjects) return { delaiMoyen: 0, nbFactures: 0 };
+    return calculateDelaiMoyenPaiement(widgetsData.apiGetFactures, widgetsData.apiGetProjects, secondaryFilters.dateRange);
+  }, [widgetsData, secondaryFilters.dateRange]);
 
   const tauxFidelite = useMemo(() => {
-    if (!data || !data.apiGetFactures || !data.apiGetProjects) return { tauxFidelite: 0, nbRecurrents: 0, nbTotal: 0, hasDataN1: false };
-    return calculateTauxFidelite(data.apiGetFactures, data.apiGetProjects, secondaryFilters.dateRange);
-  }, [data, secondaryFilters.dateRange]);
+    if (!widgetsData?.apiGetFactures || !widgetsData?.apiGetProjects) return { tauxFidelite: 0, nbRecurrents: 0, nbTotal: 0, hasDataN1: false };
+    return calculateTauxFidelite(widgetsData.apiGetFactures, widgetsData.apiGetProjects, secondaryFilters.dateRange);
+  }, [widgetsData, secondaryFilters.dateRange]);
 
   const croissanceCA = useMemo(() => {
-    if (!data || !data.apiGetFactures || !data.apiGetProjects) return { croissance: 0, caPeriodeN: 0, caPeriodeN1: 0, hasDataN1: false };
-    return calculateCroissanceCA(data.apiGetFactures, data.apiGetProjects, secondaryFilters.dateRange);
-  }, [data, secondaryFilters.dateRange]);
+    if (!widgetsData?.apiGetFactures || !widgetsData?.apiGetProjects) return { croissance: 0, caPeriodeN: 0, caPeriodeN1: 0, hasDataN1: false };
+    return calculateCroissanceCA(widgetsData.apiGetFactures, widgetsData.apiGetProjects, secondaryFilters.dateRange);
+  }, [widgetsData, secondaryFilters.dateRange]);
+
+  const isLoading = isStatiaLoading || isWidgetsLoading;
 
   if (!isAgencyReady) {
     return (
@@ -203,7 +160,7 @@ export default function IndicateursApporteurs() {
     );
   }
 
-  if (!data) {
+  if (!widgetsData) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
         <p className="text-2xl text-muted-foreground">Aucune donnée disponible</p>
@@ -220,7 +177,7 @@ export default function IndicateursApporteurs() {
         <SecondaryPeriodSelector />
       </div>
 
-      {/* Métriques clés en 5 cartes horizontales */}
+      {/* Métriques clés en 5 cartes horizontales - UTILISE STATIA */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         {/* Carte 1: Dû global */}
         <div className="group rounded-xl border border-helpconfort-blue/20 p-4
@@ -235,7 +192,7 @@ export default function IndicateursApporteurs() {
             <p className="text-sm font-bold text-muted-foreground">Dû global TTC</p>
           </div>
           <div className="flex items-baseline gap-2">
-            <p className="text-2xl font-bold text-orange-500">{formatEuros(data?.duGlobal || 0)}</p>
+            <p className="text-2xl font-bold text-orange-500">{formatEuros(statiaKpis?.duGlobal || 0)}</p>
             <p className="text-xs text-muted-foreground">à encaisser</p>
           </div>
         </div>
@@ -254,7 +211,7 @@ export default function IndicateursApporteurs() {
           </div>
           <div className="flex items-baseline gap-2">
             <p className="text-2xl font-bold text-blue-500">
-              {data?.dossiersConfiesParApporteur?.reduce((sum, d) => sum + d.nbDossiers, 0) || 0}
+              {statiaKpis?.dossiersConfiesTotal || 0}
             </p>
             <p className="text-xs text-muted-foreground">total période</p>
           </div>
@@ -273,7 +230,7 @@ export default function IndicateursApporteurs() {
             <p className="text-sm font-bold text-muted-foreground">Taux de transfo moyen</p>
           </div>
           <div className="flex items-baseline gap-2">
-            <p className="text-2xl font-bold text-purple-500">{(data?.tauxTransformationMoyen || 0).toFixed(0)}%</p>
+            <p className="text-2xl font-bold text-purple-500">{(statiaKpis?.tauxTransformationMoyen || 0).toFixed(0)}%</p>
             <p className="text-xs text-muted-foreground">Devis → Factures</p>
           </div>
         </div>
@@ -291,7 +248,7 @@ export default function IndicateursApporteurs() {
             <p className="text-sm font-bold text-muted-foreground">Panier moyen HT</p>
           </div>
           <div className="flex items-baseline gap-2">
-            <p className="text-2xl font-bold text-green-500">{formatEuros(data?.panierMoyenHT || 0)}</p>
+            <p className="text-2xl font-bold text-green-500">{formatEuros(statiaKpis?.panierMoyenHT || 0)}</p>
             <p className="text-xs text-muted-foreground">Dossier apporteur</p>
           </div>
         </div>
@@ -309,13 +266,13 @@ export default function IndicateursApporteurs() {
             <p className="text-sm font-bold text-muted-foreground">Délai moyen</p>
           </div>
           <div className="flex items-baseline gap-2">
-            <p className="text-2xl font-bold text-indigo-500">{Math.round(data?.delaiMoyenFacturation || 0)} j</p>
+            <p className="text-2xl font-bold text-indigo-500">{Math.round(statiaKpis?.delaiMoyenFacturation || 0)} j</p>
             <p className="text-xs text-muted-foreground">Dossier → Facture</p>
           </div>
         </div>
       </div>
 
-      {/* 5 nouveaux KPI avec données réelles */}
+      {/* 5 nouveaux KPI avec données STATIA */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
         {/* KPI 6: Nombre d'apporteurs actifs */}
         <div className="group rounded-xl border border-helpconfort-blue/15 p-4
@@ -330,7 +287,7 @@ export default function IndicateursApporteurs() {
             <p className="text-sm font-bold text-muted-foreground">Apporteurs actifs</p>
           </div>
           <div className="flex items-baseline gap-2">
-            <p className="text-2xl font-bold text-cyan-500">{apporteursActifs.nbActifs}</p>
+            <p className="text-2xl font-bold text-cyan-500">{statiaKpis?.apporteursActifs || 0}</p>
             <p className="text-xs text-muted-foreground">sur la période</p>
           </div>
         </div>
@@ -348,7 +305,7 @@ export default function IndicateursApporteurs() {
             <p className="text-sm font-bold text-muted-foreground">CA moyen / Apporteur</p>
           </div>
           <div className="flex items-baseline gap-2">
-            <p className="text-2xl font-bold text-pink-500">{formatEuros(caMoyenApporteur.caMoyen)}</p>
+            <p className="text-2xl font-bold text-pink-500">{formatEuros(statiaKpis?.caMoyenParApporteur || 0)}</p>
             <p className="text-xs text-muted-foreground">moyenne HT</p>
           </div>
         </div>
@@ -424,24 +381,24 @@ export default function IndicateursApporteurs() {
 
       {/* Widgets TOP/FLOP + Dossiers confiés */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <TopApporteursWidget data={data?.top10Apporteurs || []} />
-        <FlopApporteursWidget data={data?.flop10Apporteurs || []} />
-        <DossiersConfiesWidget dossiers={data?.dossiersConfiesParApporteur || []} />
+        <TopApporteursWidget data={widgetsData?.top10Apporteurs || []} />
+        <FlopApporteursWidget data={widgetsData?.flop10Apporteurs || []} />
+        <DossiersConfiesWidget dossiers={widgetsData?.dossiersConfiesParApporteur || []} />
       </div>
 
       {/* Widget Types d'apporteurs + Graphique Segmentation (2 colonnes) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TypesApporteursWidget data={data?.typesApporteursStats || []} mode="chartOnly" />
-        <SegmentationChart data={data?.segmentationData || []} />
+        <TypesApporteursWidget data={widgetsData?.typesApporteursStats || []} mode="chartOnly" />
+        <SegmentationChart data={widgetsData?.segmentationData || []} />
       </div>
 
       {/* 7 briques alignées : 6 types d'apporteurs + clients directs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4 items-stretch">
         {/* 6 tuiles par type d'apporteur (avec couleurs + icônes) */}
-        <TypesApporteursWidget data={data?.typesApporteursStats || []} mode="cardsOnly" />
+        <TypesApporteursWidget data={widgetsData?.typesApporteursStats || []} mode="cardsOnly" />
 
         {/* 1 tuile Clients Directs (Particuliers) */}
-        <ParticuliersWidget stats={data?.particuliersStats} />
+        <ParticuliersWidget stats={widgetsData?.particuliersStats} />
       </div>
 
       {/* Timeline Apporteurs */}
@@ -453,8 +410,8 @@ export default function IndicateursApporteurs() {
           </p>
         </div>
         <ApporteurTypeTimeline 
-          projects={data?.rawProjects || []} 
-          clients={data?.rawClients || []} 
+          projects={widgetsData?.rawProjects || []} 
+          clients={widgetsData?.rawClients || []} 
         />
       </div>
     </div>
