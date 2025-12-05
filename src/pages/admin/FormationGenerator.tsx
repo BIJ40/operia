@@ -267,6 +267,7 @@ export default function FormationGenerator() {
                   const isExpanded = expandedCategories.has(category.id);
                   const progress = getCategoryProgress(category);
                   const allComplete = progress.complete === progress.total;
+                  const isCategoryGenerating = category.sections.some(s => generatingBlocks.has(s.id));
 
                   return (
                     <Collapsible key={category.id} open={isExpanded}>
@@ -286,8 +287,11 @@ export default function FormationGenerator() {
                               <Badge variant="secondary" className="ml-2">
                                 {progress.complete}/{progress.total}
                               </Badge>
-                              {allComplete && (
+                              {allComplete && !isCategoryGenerating && (
                                 <CheckCircle2 className="w-4 h-4 text-green-500" />
+                              )}
+                              {isCategoryGenerating && (
+                                <Loader2 className="w-4 h-4 animate-spin text-helpconfort-blue" />
                               )}
                             </button>
                           </CollapsibleTrigger>
@@ -295,8 +299,14 @@ export default function FormationGenerator() {
                             size="sm"
                             variant={allComplete ? "outline" : "default"}
                             onClick={() => handleGenerateAll(category, allComplete)}
+                            disabled={isCategoryGenerating}
                           >
-                            {allComplete ? (
+                            {isCategoryGenerating ? (
+                              <>
+                                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                Génération...
+                              </>
+                            ) : allComplete ? (
                               <>
                                 <RefreshCw className="w-3 h-3 mr-1" />
                                 Régénérer tout
@@ -374,6 +384,7 @@ export default function FormationGenerator() {
                     const isExpanded = expandedCategories.has(category.id);
                     const progress = getCategoryProgress(category);
                     const allComplete = progress.complete === progress.total;
+                    const isCategoryGenerating = category.sections.some(s => generatingBlocks.has(s.id));
 
                     return (
                       <Collapsible key={category.id} open={isExpanded}>
@@ -393,8 +404,11 @@ export default function FormationGenerator() {
                                 <Badge variant="secondary" className="ml-2">
                                   {progress.complete}/{progress.total}
                                 </Badge>
-                                {allComplete && (
+                                {allComplete && !isCategoryGenerating && (
                                   <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                )}
+                                {isCategoryGenerating && (
+                                  <Loader2 className="w-4 h-4 animate-spin text-helpconfort-orange" />
                                 )}
                               </button>
                             </CollapsibleTrigger>
@@ -402,8 +416,14 @@ export default function FormationGenerator() {
                               size="sm"
                               variant={allComplete ? "outline" : "default"}
                               onClick={() => handleGenerateAll(category, allComplete)}
+                              disabled={isCategoryGenerating}
                             >
-                              {allComplete ? (
+                              {isCategoryGenerating ? (
+                                <>
+                                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                  Génération...
+                                </>
+                              ) : allComplete ? (
                                 <>
                                   <RefreshCw className="w-3 h-3 mr-1" />
                                   Régénérer tout
