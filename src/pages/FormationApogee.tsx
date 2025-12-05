@@ -309,23 +309,12 @@ export default function FormationApogee() {
               {currentCategoryContent.map((content, idx) => (
                 <Card key={content.id} className="overflow-hidden">
                   <CardHeader className="bg-muted/30 py-4">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <span className="bg-helpconfort-blue text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">
-                          {idx + 1}
-                        </span>
-                        {content.source_block_title}
-                      </CardTitle>
-                      <Button variant="ghost" size="sm" asChild>
-                        <a 
-                          href={`/academy/apogee/category/${content.source_category_id}#${content.source_block_id}`}
-                          target="_blank"
-                        >
-                          <ExternalLink className="w-4 h-4 mr-1" />
-                          Voir détail
-                        </a>
-                      </Button>
-                    </div>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <span className="bg-helpconfort-blue text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">
+                        {idx + 1}
+                      </span>
+                      {content.source_block_title}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-4">
                     {/* Summary with inline images */}
