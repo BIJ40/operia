@@ -21,7 +21,10 @@ export function createApogeeDataServicesAdapter(): ApogeeDataServices {
   let cachedData: CachedData | null = null;
   let cachedAgency: string | null = null;
   let lastLoadTime = 0;
-  const CACHE_TTL = 30 * 1000; // 30 secondes
+  const CACHE_TTL = 120 * 1000; // 2 minutes (augmenté de 30s)
+  
+  // Déduplication des requêtes en vol
+  let loadingPromise: Promise<CachedData> | null = null;
 
   const loadDataIfNeeded = async (agencySlug: string): Promise<CachedData> => {
     const now = Date.now();
@@ -30,27 +33,46 @@ export function createApogeeDataServicesAdapter(): ApogeeDataServices {
     if (cachedAgency && cachedAgency !== agencySlug) {
       logApogee.debug(`[StatIA Adapter] Changement d'agence détecté: ${cachedAgency} -> ${agencySlug}, invalidation du cache`);
       cachedData = null;
+      loadingPromise = null;
       DataService.clearCache();
     }
     
+    // Retourner le cache s'il est valide
     if (cachedData && (now - lastLoadTime) < CACHE_TTL) {
       return cachedData;
     }
     
+    // Si une requête est déjà en cours, attendre sa résolution
+    if (loadingPromise) {
+      logApogee.debug(`[StatIA Adapter] Requête déjà en cours, attente...`);
+      return loadingPromise;
+    }
+    
+    // Créer une nouvelle promesse de chargement
     logApogee.debug(`[StatIA Adapter] Chargement données via DataService pour agence: ${agencySlug}`);
-    const loaded = await DataService.loadAllData(true);
-    cachedData = {
-      users: loaded.users || [],
-      clients: loaded.clients || [],
-      projects: loaded.projects || [],
-      interventions: loaded.interventions || [],
-      factures: loaded.factures || [],
-      devis: loaded.devis || [],
-      creneaux: loaded.creneaux || [],
-    };
-    cachedAgency = agencySlug;
-    lastLoadTime = now;
-    return cachedData;
+    
+    loadingPromise = (async () => {
+      try {
+        const loaded = await DataService.loadAllData(true);
+        const result: CachedData = {
+          users: loaded.users || [],
+          clients: loaded.clients || [],
+          projects: loaded.projects || [],
+          interventions: loaded.interventions || [],
+          factures: loaded.factures || [],
+          devis: loaded.devis || [],
+          creneaux: loaded.creneaux || [],
+        };
+        cachedData = result;
+        cachedAgency = agencySlug;
+        lastLoadTime = Date.now();
+        return result;
+      } finally {
+        loadingPromise = null;
+      }
+    })();
+    
+    return loadingPromise;
   };
 
   return {
