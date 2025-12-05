@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   BookOpen, 
   ChevronLeft, 
@@ -16,9 +17,12 @@ import {
   ExternalLink,
   GraduationCap,
   SkipForward,
-  X
+  X,
+  Pencil,
+  Save,
+  XCircle
 } from "lucide-react";
-import { useFormationContentList, FormationContent } from "@/hooks/useFormationContent";
+import { useFormationContentList, useUpdateFormationContent, FormationContent } from "@/hooks/useFormationContent";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 
@@ -82,6 +86,26 @@ export default function FormationApogee() {
   const [presentationMode, setPresentationMode] = useState(false);
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState("");
+
+  const updateMutation = useUpdateFormationContent();
+
+  const handleStartEdit = (content: FormationContent) => {
+    setEditingId(content.id);
+    setEditContent(content.generated_summary || "");
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditContent("");
+  };
+
+  const handleSaveEdit = async (id: string) => {
+    await updateMutation.mutateAsync({ id, summary: editContent });
+    setEditingId(null);
+    setEditContent("");
+  };
 
   // Toggle fullscreen
   const toggleFullscreen = async () => {
@@ -306,28 +330,72 @@ export default function FormationApogee() {
 
             {/* Sections grid */}
             <div className="space-y-6">
-              {currentCategoryContent.map((content, idx) => (
-                <Card key={content.id} className="overflow-hidden">
-                  <CardHeader className="bg-muted/30 py-4">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <span className="bg-helpconfort-blue text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">
-                        {idx + 1}
-                      </span>
-                      {content.source_block_title}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-4">
-                    {/* Summary with inline images */}
-                    <div className="prose prose-sm max-w-none dark:prose-invert">
-                      <FormationContentWithImages 
-                        summary={content.generated_summary || ""} 
-                        images={content.extracted_images || []}
-                        onImageClick={setSelectedImageUrl}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+              {currentCategoryContent.map((content, idx) => {
+                const isEditing = editingId === content.id;
+                
+                return (
+                  <Card key={content.id} className="overflow-hidden">
+                    <CardHeader className="bg-muted/30 py-4">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <span className="bg-helpconfort-blue text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">
+                            {idx + 1}
+                          </span>
+                          {content.source_block_title}
+                        </CardTitle>
+                        {!isEditing && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleStartEdit(content)}
+                          >
+                            <Pencil className="w-4 h-4 mr-1" />
+                            Éditer
+                          </Button>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-4">
+                      {isEditing ? (
+                        <div className="space-y-4">
+                          <Textarea
+                            value={editContent}
+                            onChange={(e) => setEditContent(e.target.value)}
+                            className="min-h-[300px] font-mono text-sm"
+                            placeholder="Contenu en markdown..."
+                          />
+                          <div className="flex justify-end gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={handleCancelEdit}
+                            >
+                              <XCircle className="w-4 h-4 mr-1" />
+                              Annuler
+                            </Button>
+                            <Button 
+                              size="sm"
+                              onClick={() => handleSaveEdit(content.id)}
+                              disabled={updateMutation.isPending}
+                            >
+                              <Save className="w-4 h-4 mr-1" />
+                              {updateMutation.isPending ? "Enregistrement..." : "Enregistrer"}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="prose prose-sm max-w-none dark:prose-invert">
+                          <FormationContentWithImages 
+                            summary={content.generated_summary || ""} 
+                            images={content.extracted_images || []}
+                            onImageClick={setSelectedImageUrl}
+                          />
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         </div>

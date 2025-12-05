@@ -98,6 +98,29 @@ export function useGenerateFormationContent() {
   });
 }
 
+// Update formation content summary
+export function useUpdateFormationContent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, summary }: { id: string; summary: string }) => {
+      const { error } = await supabase
+        .from("formation_content")
+        .update({ generated_summary: summary, updated_at: new Date().toISOString() })
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["formation-content"] });
+      toast.success("Contenu mis à jour");
+    },
+    onError: (error: Error) => {
+      toast.error("Erreur: " + error.message);
+    }
+  });
+}
+
 // Delete formation content
 export function useDeleteFormationContent() {
   const queryClient = useQueryClient();
