@@ -17,8 +17,22 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     version: 'V0.6.5',
     date: '2025-12-05',
-    title: 'Template Email Bienvenue & Corrections',
+    title: 'Gestion de Projet V2 & Template Email',
     changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // MODULE GESTION DE PROJET - AMÉLIORATIONS MAJEURES
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Transitions universelles : tous les utilisateurs peuvent déplacer les tickets entre tous les statuts (sans restriction de rôle)' },
+      { type: 'feature', description: 'Fusion de tickets dupliqués : sélection du ticket principal, transfert messages/pièces jointes, ticket source marqué "fusionné"' },
+      { type: 'feature', description: 'Filtre "Nouveaux messages" : bouton clignotant vert quand tickets non-lus, badge compteur dans header colonne' },
+      { type: 'feature', description: 'Système de notification clignotant : indicateur vert sur cartes avec nouveaux messages d\'autres utilisateurs' },
+      { type: 'feature', description: 'Détection tickets incomplets : vérification 4 champs (module, heat_priority, h_min/h_max, owner_side/PEC)' },
+      { type: 'improvement', description: 'Page tickets incomplets avec filtres par type d\'incomplétude et changement statut direct' },
+      { type: 'improvement', description: 'Historique complet des transitions accessible à tous les utilisateurs' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // EMAIL & CORRECTIONS
+      // ═══════════════════════════════════════════════════════════════
       { type: 'feature', description: 'Template email de bienvenue professionnel (couleurs HelpConfort, responsive)' },
       { type: 'fix', description: 'Correction lien email : www.helpconfort.services (au lieu de helpconfort.services)' },
     ]
