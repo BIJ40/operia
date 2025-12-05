@@ -867,6 +867,85 @@ export const tauxSavParTypeApporteur: StatDefinition = {
   }
 };
 
+/**
+ * CA Mensuel Segmenté : Apporteurs vs Particuliers
+ * Ventilation mensuelle du CA entre clients directs et apporteurs
+ */
+export const caMensuelSegmente: StatDefinition = {
+  id: 'ca_mensuel_segmente',
+  label: 'CA Mensuel Segmenté',
+  description: 'Répartition mensuelle du CA entre Apporteurs et Particuliers',
+  category: 'apporteur',
+  source: ['factures', 'projects', 'clients'],
+  dimensions: ['mois'],
+  aggregation: 'sum',
+  unit: '€',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { factures, projects } = data;
+    
+    const projectsById = indexProjectsById(projects);
+    
+    // Map mois → { apporteurs, particuliers }
+    const byMonth = new Map<string, { apporteurs: number; particuliers: number }>();
+    let recordCount = 0;
+    
+    for (const facture of factures) {
+      const meta = extractFactureMeta(facture);
+      
+      if (!isFactureStateIncluded(facture.state)) continue;
+      
+      const date = meta.date ? new Date(meta.date) : null;
+      if (!date || date < params.dateRange.start || date > params.dateRange.end) continue;
+      
+      // Clé mois : YYYY-MM ou libellé français
+      const monthKey = date.toLocaleDateString('fr-FR', { month: 'short' });
+      
+      const projectId = facture.projectId || facture.project_id;
+      const project = projectId ? projectsById.get(projectId) : null;
+      const apporteurId = project?.data?.commanditaireId || project?.commanditaireId;
+      
+      if (!byMonth.has(monthKey)) {
+        byMonth.set(monthKey, { apporteurs: 0, particuliers: 0 });
+      }
+      
+      const entry = byMonth.get(monthKey)!;
+      if (apporteurId) {
+        entry.apporteurs += meta.montantNetHT;
+      } else {
+        entry.particuliers += meta.montantNetHT;
+      }
+      recordCount++;
+    }
+    
+    // Construire le résultat sous forme de tableau
+    const result: Array<{ mois: string; apporteurs: number; particuliers: number }> = [];
+    
+    // Ordre des mois selon la période
+    const orderedMonths = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+    
+    for (const mois of orderedMonths) {
+      const data = byMonth.get(mois);
+      if (data) {
+        result.push({ mois, ...data });
+      }
+    }
+    
+    return {
+      value: result,
+      metadata: {
+        computedAt: new Date(),
+        source: 'factures',
+        recordCount,
+      },
+      breakdown: {
+        totalApporteurs: result.reduce((s, r) => s + r.apporteurs, 0),
+        totalParticuliers: result.reduce((s, r) => s + r.particuliers, 0),
+        monthCount: result.length,
+      }
+    };
+  }
+};
+
 // ==================== EXPORTS ====================
 
 export const apporteursDefinitions = {
@@ -876,10 +955,12 @@ export const apporteursDefinitions = {
   top_apporteurs_ca: topApporteursCA,
   taux_transformation_apporteur: tauxTransformationApporteur,
   apporteurs_inactifs: apporteursInactifs,
-  // Par TYPE d'apporteur (nouveau)
+  // Par TYPE d'apporteur
   ca_par_type_apporteur: caParTypeApporteur,
   dossiers_par_type_apporteur: dossiersParTypeApporteur,
   panier_moyen_par_type_apporteur: panierMoyenParTypeApporteur,
   taux_transfo_par_type_apporteur: tauxTransfoParTypeApporteur,
   taux_sav_par_type_apporteur: tauxSavParTypeApporteur,
+  // Segmentation temporelle
+  ca_mensuel_segmente: caMensuelSegmente,
 };

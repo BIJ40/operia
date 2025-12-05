@@ -15,6 +15,39 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: 'V0.6.9',
+    date: '2025-12-06',
+    title: 'StatIA - Migration complète page Apporteurs',
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // STATIA - MÉTRIQUES APPORTEURS
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'StatIA: Métrique ca_par_type_apporteur - ventilation CA HT par catégorie (Assureurs, Bailleurs, Syndics, etc.)' },
+      { type: 'feature', description: 'StatIA: Métrique dossiers_par_type_apporteur - nombre dossiers facturés par type' },
+      { type: 'feature', description: 'StatIA: Métrique panier_moyen_par_type_apporteur - CA/dossier par catégorie' },
+      { type: 'feature', description: 'StatIA: Métrique taux_transfo_par_type_apporteur - taux transformation devis→factures par type' },
+      { type: 'feature', description: 'StatIA: Métrique taux_sav_par_type_apporteur - taux SAV par type d\'apporteur' },
+      { type: 'feature', description: 'StatIA: Métrique ca_mensuel_segmente - répartition mensuelle CA Apporteurs vs Particuliers' },
+      { type: 'feature', description: 'StatIA: Métrique encours_par_apporteur - montant restant à encaisser par apporteur' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // HOOK & PAGE APPORTEURS
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'Hook useApporteursStatia enrichi: 12 métriques en appels parallèles' },
+      { type: 'improvement', description: 'Type TypeApporteurStats avec CA, dossiers, panier, transfo, SAV par type' },
+      { type: 'improvement', description: 'Type SegmentationMensuelle pour graphique Apporteurs vs Particuliers' },
+      { type: 'improvement', description: 'Page Indicateurs Apporteurs: KPIs, Top/Flop widgets alimentés par StatIA' },
+      { type: 'improvement', description: 'Widgets TypesApporteurs et SegmentationChart prêts pour migration StatIA' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // NORMALISATION & RÈGLES MÉTIER
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'Normalisation types apporteurs: Assureurs, Bailleurs, Syndics, Maintenance, Gestionnaires, Professionnels, Clients Directs' },
+      { type: 'improvement', description: 'Helper getApporteurTypeForProject avec fallback "Clients Directs"' },
+      { type: 'improvement', description: 'Helper isSavProject pour détection SAV (flag, parentProjectId, label, univers)' },
+    ]
+  },
+  {
     version: 'V0.6.8',
     date: '2025-12-05',
     title: 'Conformité RGPD & UX Gestion de Projet',
