@@ -736,7 +736,9 @@ async function loadApogeeData(proxyUrl: string, authHeader: string, agencySlug: 
     requests.push(fetch(proxyUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authHeader }, body: JSON.stringify({ endpoint: 'apiGetClients', agencySlug }) }).then(async res => { if (res.ok) data.clients = (await res.json()).data || []; }).catch(e => console.error('[unified-search] Clients error:', e)));
   }
   if (requiredSources.includes('interventions')) {
-    requests.push(fetch(proxyUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authHeader }, body: JSON.stringify({ endpoint: 'getInterventionsCreneaux', agencySlug }) }).then(async res => { if (res.ok) data.interventions = (await res.json()).data || []; console.log(`[loadApogeeData] Loaded ${data.interventions.length} interventions`); }).catch(e => console.error('[unified-search] Interventions error:', e)));
+    // IMPORTANT: Utiliser apiGetInterventions (toutes les interventions) et non getInterventionsCreneaux (seulement créneaux)
+    // Le moteur CA par technicien a besoin de TOUTES les interventions pour mapper factures → projets → interventions → techniciens
+    requests.push(fetch(proxyUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authHeader }, body: JSON.stringify({ endpoint: 'apiGetInterventions', agencySlug }) }).then(async res => { if (res.ok) data.interventions = (await res.json()).data || []; console.log(`[loadApogeeData] Loaded ${data.interventions.length} interventions (apiGetInterventions)`); }).catch(e => console.error('[unified-search] Interventions error:', e)));
   }
   if (requiredSources.includes('users')) {
     requests.push(fetch(proxyUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authHeader }, body: JSON.stringify({ endpoint: 'apiGetUsers', agencySlug }) }).then(async res => { if (res.ok) data.users = (await res.json()).data || []; console.log(`[loadApogeeData] Loaded ${data.users.length} users`); }).catch(e => console.error('[unified-search] Users error:', e)));
