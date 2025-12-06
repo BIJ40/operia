@@ -31,12 +31,23 @@ export default function UnifiedSearchAnimationPlayground() {
   const [activeIds, setActiveIds] = useState<UnifiedSearchAnimationId[]>([]);
   const [showLiveTest, setShowLiveTest] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [testKey, setTestKey] = useState(0);
 
   // Charger les settings au mount
   useEffect(() => {
     const settings = loadUnifiedSearchAnimationSettings();
     setActiveIds(settings.activeAnimationIds);
   }, []);
+
+  const handleLaunchTest = () => {
+    // Sauvegarde temporaire si changements, puis relance le test
+    if (hasChanges && activeIds.length > 0) {
+      saveUnifiedSearchAnimationSettings({ activeAnimationIds: activeIds });
+      setHasChanges(false);
+    }
+    setTestKey(prev => prev + 1);
+    setShowLiveTest(true);
+  };
 
   const handleToggle = (id: UnifiedSearchAnimationId) => {
     setActiveIds(prev => {
@@ -121,13 +132,24 @@ export default function UnifiedSearchAnimationPlayground() {
           </Button>
           
           <Button 
-            variant="secondary"
-            onClick={() => setShowLiveTest(!showLiveTest)}
-            className="gap-2"
+            variant="default"
+            onClick={handleLaunchTest}
+            disabled={activeIds.length === 0}
+            className="gap-2 bg-green-600 hover:bg-green-700"
           >
             <Play className="w-4 h-4" />
-            {showLiveTest ? 'Masquer le test live' : 'Tester en situation réelle'}
+            Lancer le test
           </Button>
+
+          {showLiveTest && (
+            <Button 
+              variant="ghost"
+              onClick={() => setShowLiveTest(false)}
+              className="gap-2"
+            >
+              Masquer
+            </Button>
+          )}
 
           <div className="ml-auto">
             <Badge variant={activeIds.length > 0 ? 'default' : 'destructive'}>
@@ -142,13 +164,12 @@ export default function UnifiedSearchAnimationPlayground() {
             <CardHeader className="pb-2">
               <CardTitle className="text-lg">Test en situation réelle</CardTitle>
               <CardDescription>
-                La barre ci-dessous utilise l'animation actuellement sauvegardée (pas les modifications en cours).
-                Rechargez la page après avoir sauvegardé pour voir le changement.
+                Cliquez sur "Lancer le test" pour tester avec votre configuration actuelle.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="bg-background rounded-lg p-4 border">
-                <UnifiedSearchProvider>
+              <div className="bg-background rounded-lg p-4 border min-h-[100px] flex items-center justify-center">
+                <UnifiedSearchProvider key={testKey}>
                   <UnifiedSearchFloatingBar />
                 </UnifiedSearchProvider>
               </div>
