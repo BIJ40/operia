@@ -1,5 +1,8 @@
 /**
  * Hook unifié pour les métriques SAV depuis StatIA
+ * 
+ * IMPORTANT: Le tableau de gestion SAV est la SOURCE DE VÉRITÉ.
+ * Toutes les métriques sont calculées en respectant les overrides.
  */
 
 import { useQuery } from "@tanstack/react-query";
@@ -10,6 +13,11 @@ import { getGlobalApogeeDataServices } from "@/statia/adapters/dataServiceAdapte
 import { useSavOverrides } from "@/hooks/use-sav-overrides";
 import { supabase } from "@/integrations/supabase/client";
 import type { SAVDossier } from "@/apogee-connect/components/sav/SAVDossierList";
+import { 
+  loadSAVOverridesByAgencyUuid, 
+  isProjectConfirmedSAV,
+  type SAVOverridesData 
+} from "@/statia/services/savOverridesService";
 
 interface SAVMetrics {
   tauxSavGlobal: number;
@@ -29,8 +37,10 @@ export function useStatiaSAVMetrics() {
   
   const agencySlug = currentAgency?.id;
 
-  // Inclure les overrides dans la queryKey pour rafraîchir quand les coûts changent
-  const overridesVersion = overridesMap.size; // Simple version basée sur le nombre d'entrées
+  // Version basée sur le contenu réel des overrides pour invalidation
+  const overridesVersion = Array.from(overridesMap.entries())
+    .map(([k, v]) => `${k}:${v.is_confirmed_sav}:${v.cout_sav_manuel}:${v.techniciens_override?.join(',')}`)
+    .join('|');
 
   return useQuery({
     queryKey: ["statia-sav-metrics", agencySlug, filters.dateRange, overridesVersion],
@@ -54,7 +64,19 @@ export function useStatiaSAVMetrics() {
       
       const agencyUuid = agencyData?.id;
 
-      // Récupérer les métriques depuis StatIA + les overrides manuels
+      // Charger les overrides centralisés (source de vérité)
+      const overridesData = agencyUuid 
+        ? await loadSAVOverridesByAgencyUuid(agencyUuid)
+        : {
+            overrides: [],
+            overridesMap: new Map(),
+            confirmedSavProjectIds: new Set(),
+            infirmedProjectIds: new Set(),
+            techniciensByProject: new Map(),
+            coutsByProject: new Map(),
+          } as SAVOverridesData;
+
+      // Récupérer les métriques depuis StatIA (qui utilisent aussi les overrides)
       const [
         tauxGlobal,
         nbSav,
@@ -62,7 +84,7 @@ export function useStatiaSAVMetrics() {
         tauxApporteur,
         tauxTypeApporteur,
         caImpacte,
-        savOverridesData,
+        coutSav,
       ] = await Promise.all([
         getMetricForAgency("taux_sav_global", agencySlug, { dateRange }, services),
         getMetricForAgency("nb_sav_global", agencySlug, { dateRange }, services),
@@ -70,35 +92,8 @@ export function useStatiaSAVMetrics() {
         getMetricForAgency("taux_sav_par_apporteur", agencySlug, { dateRange }, services),
         getMetricForAgency("taux_sav_par_type_apporteur", agencySlug, { dateRange }, services),
         getMetricForAgency("ca_impacte_sav", agencySlug, { dateRange }, services),
-        // Récupérer les overrides manuels depuis la base (coûts ET statuts)
-        agencyUuid 
-          ? supabase
-              .from("sav_dossier_overrides")
-              .select("project_id, cout_sav_manuel, is_confirmed_sav")
-              .eq("agency_id", agencyUuid)
-          : Promise.resolve({ data: [] }),
+        getMetricForAgency("cout_sav_estime", agencySlug, { dateRange }, services),
       ]);
-
-      // Construire une map des overrides pour les statistiques
-      const overridesForStats = new Map<number, { cout: number | null; isConfirmed: boolean | null }>();
-      for (const row of savOverridesData.data || []) {
-        overridesForStats.set(row.project_id, {
-          cout: row.cout_sav_manuel,
-          isConfirmed: row.is_confirmed_sav,
-        });
-      }
-
-      // Calculer le coût SAV total (exclure les SAV négatifs = is_confirmed_sav === false)
-      const coutSavManuel = (savOverridesData.data || []).reduce((sum, row) => {
-        // Exclure les dossiers infirmés (SAV négatif)
-        if (row.is_confirmed_sav === false) return sum;
-        return sum + (row.cout_sav_manuel || 0);
-      }, 0);
-
-      // Compter les dossiers SAV valides (exclure les négatifs)
-      const nbSavReel = (savOverridesData.data || []).filter(
-        row => row.is_confirmed_sav !== false
-      ).length || (typeof nbSav.value === "number" ? nbSav.value : 0);
 
       // Charger les données brutes pour construire la liste des dossiers
       const [projects, clients, interventions, users] = await Promise.all([
@@ -107,25 +102,24 @@ export function useStatiaSAVMetrics() {
         services.getInterventions(agencySlug, dateRange),
         services.getUsers(agencySlug),
       ]);
-      const data = { projects: projects || [], clients: clients || [], interventions: interventions || [], users: users || [] };
+      const data = { 
+        projects: projects || [], 
+        clients: clients || [], 
+        interventions: interventions || [], 
+        users: users || [] 
+      };
 
       // Construire la liste des dossiers SAV avec détails
-      const dossiersSAV = buildDossiersSAV(data, overridesMap);
-      
-      // Nombre de SAV affichés dans les stats (excluant les négatifs)
-      const nbSavPourStats = dossiersSAV.filter(d => {
-        const override = overridesMap.get(d.projectId);
-        return override?.is_confirmed_sav !== false;
-      }).length;
+      const dossiersSAV = buildDossiersSAV(data, overridesData);
 
       return {
         tauxSavGlobal: typeof tauxGlobal.value === "number" ? tauxGlobal.value : 0,
-        nbSavGlobal: nbSavPourStats, // Utiliser le compte excluant les SAV négatifs
+        nbSavGlobal: typeof nbSav.value === "number" ? nbSav.value : 0,
         tauxSavParUnivers: tauxUnivers.breakdown?.details || {},
         tauxSavParApporteur: tauxApporteur.breakdown?.details || {},
         tauxSavParTypeApporteur: tauxTypeApporteur.breakdown?.details || {},
         caSav: typeof caImpacte.value === "number" ? caImpacte.value : 0,
-        coutSavEstime: coutSavManuel, // Coût réel depuis les enregistrements manuels (hors SAV négatifs)
+        coutSavEstime: typeof coutSav.value === "number" ? coutSav.value : 0,
         dossiersSAV,
       };
     },
@@ -136,10 +130,11 @@ export function useStatiaSAVMetrics() {
 
 /**
  * Construit la liste des dossiers SAV à partir des données chargées
+ * Respecte les overrides (source de vérité)
  */
 function buildDossiersSAV(
   data: any,
-  overridesMap: Map<number, any>
+  overridesData: SAVOverridesData
 ): SAVDossier[] {
   const { projects = [], clients = [], interventions = [], users = [] } = data;
 
@@ -198,10 +193,18 @@ function buildDossiersSAV(
   const result: SAVDossier[] = [];
 
   for (const project of projects) {
-    // Détection SAV
-    if (!isSavProject(project)) continue;
+    const projectId = Number(project.id);
+    
+    // Détection SAV automatique
+    const isAutoSav = isSavProjectAutoDetect(project);
+    
+    // Vérifier via overrides (source de vérité)
+    // On inclut tous les projets auto-détectés + ceux confirmés manuellement
+    // Mais on exclut ceux infirmés
+    if (!isProjectConfirmedSAV(projectId, isAutoSav, overridesData)) {
+      continue;
+    }
 
-    const projectId = project.id;
     const d = project.data || {};
 
     // Extraction données
@@ -265,9 +268,9 @@ function buildDossiersSAV(
 }
 
 /**
- * Détection SAV robuste
+ * Détection SAV automatique (avant application des overrides)
  */
-function isSavProject(project: any): boolean {
+function isSavProjectAutoDetect(project: any): boolean {
   const d = project.data || {};
 
   if (d.isSav === true || d.is_sav === true || d.isSAV === true) return true;
@@ -277,7 +280,7 @@ function isSavProject(project: any): boolean {
   if (project.parentId || project.parent_id) return true;
   if (d.linkedProjectId || d.linkedDossierId || d.dossierId) return true;
 
-  // RÈGLE STRICTE: champs === "sav" (égalité exacte, pas includes)
+  // RÈGLE STRICTE: champs === "sav" (égalité exacte)
   const fieldsToCheck = [
     d.origineDossier,
     d.origine,
