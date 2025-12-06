@@ -782,10 +782,18 @@ export const rentabiliteParUnivers: StatDefinition = {
     const caByUnivers: Record<string, number> = {};
     const heuresByUnivers: Record<string, number> = {};
     
-    // Types productifs (exclure RT, SAV, diagnostic)
+    // Types productifs selon spec: dépannage, travaux (exclure RT, SAV, diagnostic)
     const PRODUCTIVE_TYPES = new Set(['depan', 'tvx', 'depannage', 'travaux', 'work', 'repair', 'recherche_fuite']);
     
+    // DEBUG LOGS
+    console.log('[rentabilite_par_univers] Data:', {
+      factures: factures?.length ?? 0,
+      interventions: interventions?.length ?? 0,
+      projects: projects?.length ?? 0,
+    });
+    
     // 1. Calculer CA par univers (même logique que ca_par_univers)
+    let facturesTraitees = 0;
     for (const facture of factures) {
       const meta = extractFactureMeta(facture);
       
@@ -808,13 +816,18 @@ export const rentabiliteParUnivers: StatDefinition = {
       for (const univers of finalUniverses) {
         caByUnivers[univers] = (caByUnivers[univers] || 0) + montantParUnivers;
       }
+      facturesTraitees++;
     }
     
-    // 2. Calculer heures productives par univers
+    // 2. Calculer heures productives par univers via biV3.items
+    let interventionsTraitees = 0;
+    let visitesTraitees = 0;
+    let totalHeures = 0;
+    
     for (const intervention of interventions || []) {
       // Filtrer par date
       if (params.dateRange) {
-        const dateStr = intervention.date || intervention.created_at;
+        const dateStr = intervention.dateReelle || intervention.date || intervention.created_at;
         if (dateStr) {
           const date = new Date(dateStr);
           if (isNaN(date.getTime())) continue;
@@ -823,18 +836,25 @@ export const rentabiliteParUnivers: StatDefinition = {
       }
       
       // États valides
-      const state = intervention.state?.toLowerCase();
-      if (!['validated', 'done', 'finished', 'completed'].includes(state || '')) continue;
+      const state = (intervention.state || '').toLowerCase();
+      if (!['validated', 'done', 'finished', 'completed'].includes(state)) continue;
       
-      // Parcourir les visites via biV3.items
-      const biV3Items = intervention.data?.biV3?.items || intervention.biV3?.items || [];
+      interventionsTraitees++;
+      
+      // Parcourir les visites via biV3.items (plusieurs chemins possibles dans l'API)
+      const biV3Items = 
+        intervention.data?.biV3?.items || 
+        intervention.biV3?.items ||
+        intervention.data?.visites ||
+        intervention.visites ||
+        [];
       
       for (const visit of biV3Items) {
         // Visite validée uniquement
-        if (!visit.isValidated) continue;
+        if (!visit.isValidated && visit.state !== 'validated') continue;
         
-        // Type productif uniquement
-        const typeRdv = (visit.typeRdv || '').toLowerCase();
+        // Type productif uniquement (check typeRdv et type)
+        const typeRdv = (visit.typeRdv || visit.type || '').toLowerCase();
         if (!PRODUCTIVE_TYPES.has(typeRdv)) continue;
         
         // Calcul heures: duree (minutes) × nbTechs / 60
@@ -843,6 +863,9 @@ export const rentabiliteParUnivers: StatDefinition = {
         const heuresVisite = (duree * nbTechs) / 60;
         
         if (heuresVisite <= 0) continue;
+        
+        visitesTraitees++;
+        totalHeures += heuresVisite;
         
         // Univers de l'intervention
         const projectId = intervention.projectId || intervention.project_id;
@@ -866,6 +889,15 @@ export const rentabiliteParUnivers: StatDefinition = {
       }
     }
     
+    console.log('[rentabilite_par_univers] Stats:', {
+      facturesTraitees,
+      interventionsTraitees,
+      visitesTraitees,
+      totalHeures,
+      caByUnivers,
+      heuresByUnivers,
+    });
+    
     // 3. Calculer rentabilité par univers
     const result: Record<string, number> = {};
     const allUniverses = new Set([...Object.keys(caByUnivers), ...Object.keys(heuresByUnivers)]);
@@ -886,6 +918,7 @@ export const rentabiliteParUnivers: StatDefinition = {
       breakdown: {
         caByUnivers,
         heuresByUnivers,
+        debug: { facturesTraitees, interventionsTraitees, visitesTraitees, totalHeures }
       }
     };
   }
