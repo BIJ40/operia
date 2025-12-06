@@ -349,13 +349,13 @@ export const NAV_GROUPS: NavGroup[] = [
         ]
       },
       { 
-        title: 'Chatbot & RAG', 
-        url: ROUTES.admin.chatbotRag, 
+        title: 'Helpi (IA)', 
+        url: ROUTES.admin.helpi, 
         icon: Database, 
         scope: 'admin_settings',
         description: 'Intelligence artificielle',
         children: [
-          { title: 'Configuration RAG', url: ROUTES.admin.chatbotRag, icon: Database, scope: 'admin_settings' },
+          { title: 'Moteur RAG', url: ROUTES.admin.helpi, icon: Database, scope: 'admin_settings' },
           { title: 'Guides Apogée', url: ROUTES.admin.apogeeGuides, icon: BookOpen, scope: 'admin_settings' },
         ]
       },
@@ -440,7 +440,7 @@ export const PAGE_TITLES: Record<string, string> = {
   [ROUTES.admin.cacheBackup]: 'Cache Backup',
   [ROUTES.admin.userActivity]: 'Activité Utilisateurs',
   [ROUTES.admin.escalationHistory]: 'Historique Escalades',
-  [ROUTES.admin.chatbotRag]: 'Chatbot & RAG',
+  [ROUTES.admin.helpi]: 'Helpi - Moteur IA',
   [ROUTES.admin.apogeeGuides]: 'Guides Apogée (RAG)',
   [ROUTES.admin.systemHealth]: 'Santé Système',
   [ROUTES.admin.storageQuota]: 'Stockage',

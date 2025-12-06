@@ -297,7 +297,6 @@ export function UnifiedSidebar() {
         { title: 'Annonces', url: ROUTES.admin.announcements, icon: MessageCircle, description: 'Annonces prioritaires' },
         { title: 'FAQ', url: ROUTES.admin.faq, icon: HelpCircle, description: 'Gérer les questions fréquentes' },
         { title: 'Helpi', url: ROUTES.admin.helpi, icon: Brain, description: 'Moteur de connaissances IA' },
-        { title: 'Chatbot RAG', url: ROUTES.admin.chatbotRag, icon: Sparkles, description: 'Configuration IA' },
         { title: 'Sauvegardes', url: ROUTES.admin.backup, icon: Database },
         { title: 'Activité', url: ROUTES.admin.userActivity, icon: Activity },
         { title: 'Paramètres', url: ROUTES.admin.index, icon: Settings, description: 'Configuration du système' },

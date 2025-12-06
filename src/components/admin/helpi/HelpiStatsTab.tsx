@@ -25,7 +25,7 @@ type DailyStats = {
   pending: number;
 };
 
-export function RagStatsTab() {
+export function HelpiStatsTab() {
   const [totalQueries, setTotalQueries] = useState(0);
   const [resolvedCount, setResolvedCount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);

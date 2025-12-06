@@ -32,7 +32,7 @@ type ChatQuery = {
   improvement_block_id?: string | null;
 };
 
-export function RagQuestionsTab() {
+export function HelpiQuestionsTab() {
   const [queries, setQueries] = useState<ChatQuery[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'resolved'>('all');
