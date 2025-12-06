@@ -381,24 +381,34 @@ async function loadClientsForAgency(proxyUrl: string, authHeader: string, agency
     const json = await res.json();
     const rawClients = json.data || [];
     
-    // Log sample pour debug des propriétés disponibles
-    if (rawClients.length > 0) {
-      const sample = rawClients.slice(0, 3);
-      console.log(`[loadClientsForAgency] Sample client keys:`, Object.keys(sample[0] || {}));
-      console.log(`[loadClientsForAgency] Sample clients:`, sample.map((c: any) => ({ 
+    // ═══════════════════════════════════════════════════════════════
+    // FILTRAGE CRITIQUE: Ne garder QUE les apporteurs (commanditaires)
+    // Un apporteur est identifié par type = "commanditaire" (pas "particulier")
+    // ═══════════════════════════════════════════════════════════════
+    const apporteursOnly = rawClients.filter((c: any) => {
+      const clientType = (c.type || '').toLowerCase().trim();
+      // Exclure les particuliers, ne garder que les commanditaires/apporteurs
+      return clientType === 'commanditaire' || clientType === 'apporteur';
+    });
+    
+    console.log(`[loadClientsForAgency] Total clients: ${rawClients.length}, Apporteurs filtrés: ${apporteursOnly.length}`);
+    
+    // Log sample pour debug
+    if (apporteursOnly.length > 0) {
+      const sample = apporteursOnly.slice(0, 5);
+      console.log(`[loadClientsForAgency] Sample apporteurs:`, sample.map((c: any) => ({ 
         id: c.id, 
-        name: c.name, 
-        raisonSociale: c.raisonSociale, 
-        displayName: c.displayName,
-        societe: c.societe,
-        company: c.company,
-        nom: c.nom,
-        label: c.label
+        type: c.type,
+        name: c.name || c.raisonSociale || c.displayName,
       })));
+    } else {
+      // Si aucun apporteur trouvé avec le filtre strict, log les types disponibles
+      const types = new Set(rawClients.map((c: any) => c.type || 'null').slice(0, 50));
+      console.log(`[loadClientsForAgency] No apporteurs found. Client types in data:`, [...types]);
     }
     
-    // Mapping étendu pour capturer toutes les variations possibles du nom
-    return rawClients.map((c: any) => {
+    // Mapping pour les apporteurs
+    return apporteursOnly.map((c: any) => {
       const name = c.name || c.raisonSociale || c.displayName || c.societe || c.company || c.nom || c.label || '';
       return { id: c.id, name, company: c.company || c.societe || '' };
     });
