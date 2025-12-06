@@ -3641,6 +3641,50 @@ export type Database = {
         }
         Relationships: []
       }
+      statia_metric_validations: {
+        Row: {
+          created_at: string
+          hidden: boolean
+          id: string
+          metric_id: string
+          suggestion: string | null
+          updated_at: string
+          validated: boolean
+          validated_at: string | null
+          validated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          hidden?: boolean
+          id?: string
+          metric_id: string
+          suggestion?: string | null
+          updated_at?: string
+          validated?: boolean
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          hidden?: boolean
+          id?: string
+          metric_id?: string
+          suggestion?: string | null
+          updated_at?: string
+          validated?: boolean
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "statia_metric_validations_validated_by_fkey"
+            columns: ["validated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       storage_quota_alerts: {
         Row: {
           cache_keys: Json | null

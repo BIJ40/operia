@@ -3,7 +3,7 @@
  * Affiche les résultats groupés par catégorie avec descriptions au survol
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +32,17 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { MetricCalculationDetails } from './MetricCalculationDetails';
 import { softDeleteCustomMetric } from '../services/customMetricsService';
+import { 
+  useMetricValidations, 
+  useValidateMetric, 
+  useUnvalidateMetric, 
+  useHideMetric, 
+  useRestoreMetric, 
+  useSaveSuggestion,
+  migrateFromLocalStorage,
+  MetricStatus
+} from '../hooks/useMetricValidations';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Icônes par catégorie
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -87,28 +98,6 @@ interface AllMetricsViewerProps {
 
 type PeriodType = 'current_month' | 'last_month' | 'ytd' | 'last_12_months';
 
-// État local pour les métriques validées/supprimées/suggestions
-type MetricStatus = {
-  validated: boolean;
-  hidden: boolean;
-  suggestion?: string;
-};
-
-const STORAGE_KEY = 'statia-metrics-status';
-
-function loadMetricsStatus(): Record<string, MetricStatus> {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : {};
-  } catch {
-    return {};
-  }
-}
-
-function saveMetricsStatus(status: Record<string, MetricStatus>) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(status));
-}
-
 // Vérifier si une métrique est custom (en base) ou core (dans le code)
 function isCustomMetric(metricId: string): boolean {
   return !(metricId in STAT_DEFINITIONS);
@@ -127,15 +116,26 @@ interface DeleteDialog {
 
 export function AllMetricsViewer({ mode, fixedAgencySlug }: AllMetricsViewerProps) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [selectedAgency, setSelectedAgency] = useState(fixedAgencySlug || 'dax');
   const [period, setPeriod] = useState<PeriodType>('current_month');
-  const [metricsStatus, setMetricsStatus] = useState<Record<string, MetricStatus>>(loadMetricsStatus);
   const [showHidden, setShowHidden] = useState(false);
   const [suggestionDialog, setSuggestionDialog] = useState<{ open: boolean; metricId: string; metricLabel: string } | null>(null);
   const [suggestionText, setSuggestionText] = useState('');
   const [detailsDialog, setDetailsDialog] = useState<{ open: boolean; definition: StatDefinition; value: any } | null>(null);
   const [deleteDialog, setDeleteDialog] = useState<DeleteDialog | null>(null);
+  const [migrationDone, setMigrationDone] = useState(false);
   const services = getGlobalApogeeDataServices();
+
+  // Charger les validations depuis la base de données
+  const { data: metricsStatus = {}, isLoading: isLoadingValidations } = useMetricValidations();
+
+  // Mutations pour les validations
+  const validateMutation = useValidateMetric();
+  const unvalidateMutation = useUnvalidateMetric();
+  const hideMutation = useHideMetric();
+  const restoreMutation = useRestoreMetric();
+  const saveSuggestionMutation = useSaveSuggestion();
 
   // Mutation pour supprimer une métrique custom en base
   const deleteCustomMetricMutation = useMutation({
@@ -148,6 +148,19 @@ export function AllMetricsViewer({ mode, fixedAgencySlug }: AllMetricsViewerProp
       toast.error(`Erreur lors de la suppression: ${error.message}`);
     },
   });
+
+  // Migration depuis localStorage au premier chargement
+  useEffect(() => {
+    if (!migrationDone && user?.id) {
+      migrateFromLocalStorage(user.id).then((migrated) => {
+        if (migrated) {
+          queryClient.invalidateQueries({ queryKey: ['statia-metric-validations'] });
+          toast.success('Validations migrées depuis le stockage local');
+        }
+        setMigrationDone(true);
+      });
+    }
+  }, [user?.id, migrationDone, queryClient]);
 
   // Calculer la date range selon la période sélectionnée
   const dateRange = useMemo(() => {
@@ -230,43 +243,31 @@ export function AllMetricsViewer({ mode, fixedAgencySlug }: AllMetricsViewerProp
 
   // Actions sur les métriques
   const handleValidate = (metricId: string) => {
-    const newStatus = {
-      ...metricsStatus,
-      [metricId]: { ...metricsStatus[metricId], validated: true, hidden: false }
-    };
-    setMetricsStatus(newStatus);
-    saveMetricsStatus(newStatus);
-    toast.success('Métrique validée');
+    validateMutation.mutate(metricId, {
+      onSuccess: () => toast.success('Métrique validée'),
+      onError: (err) => toast.error(`Erreur: ${err.message}`),
+    });
   };
 
   const handleUnvalidate = (metricId: string) => {
-    const newStatus = {
-      ...metricsStatus,
-      [metricId]: { ...metricsStatus[metricId], validated: false }
-    };
-    setMetricsStatus(newStatus);
-    saveMetricsStatus(newStatus);
-    toast.success('Métrique marquée comme non validée');
+    unvalidateMutation.mutate(metricId, {
+      onSuccess: () => toast.success('Métrique marquée comme non validée'),
+      onError: (err) => toast.error(`Erreur: ${err.message}`),
+    });
   };
 
   const handleHide = (metricId: string) => {
-    const newStatus = {
-      ...metricsStatus,
-      [metricId]: { ...metricsStatus[metricId], hidden: true }
-    };
-    setMetricsStatus(newStatus);
-    saveMetricsStatus(newStatus);
-    toast.success('Métrique masquée');
+    hideMutation.mutate(metricId, {
+      onSuccess: () => toast.success('Métrique masquée'),
+      onError: (err) => toast.error(`Erreur: ${err.message}`),
+    });
   };
 
   const handleRestore = (metricId: string) => {
-    const newStatus = {
-      ...metricsStatus,
-      [metricId]: { ...metricsStatus[metricId], hidden: false }
-    };
-    setMetricsStatus(newStatus);
-    saveMetricsStatus(newStatus);
-    toast.success('Métrique restaurée');
+    restoreMutation.mutate(metricId, {
+      onSuccess: () => toast.success('Métrique restaurée'),
+      onError: (err) => toast.error(`Erreur: ${err.message}`),
+    });
   };
 
   const handleOpenSuggestion = (metricId: string, metricLabel: string) => {
@@ -278,18 +279,17 @@ export function AllMetricsViewer({ mode, fixedAgencySlug }: AllMetricsViewerProp
   const handleSaveSuggestion = () => {
     if (!suggestionDialog) return;
     
-    const newStatus = {
-      ...metricsStatus,
-      [suggestionDialog.metricId]: { 
-        ...metricsStatus[suggestionDialog.metricId], 
-        suggestion: suggestionText 
+    saveSuggestionMutation.mutate(
+      { metricId: suggestionDialog.metricId, suggestion: suggestionText },
+      {
+        onSuccess: () => {
+          setSuggestionDialog(null);
+          setSuggestionText('');
+          toast.success('Suggestion enregistrée');
+        },
+        onError: (err) => toast.error(`Erreur: ${err.message}`),
       }
-    };
-    setMetricsStatus(newStatus);
-    saveMetricsStatus(newStatus);
-    setSuggestionDialog(null);
-    setSuggestionText('');
-    toast.success('Suggestion enregistrée');
+    );
   };
 
   // Ouvrir la dialog de suppression (étape 1)
