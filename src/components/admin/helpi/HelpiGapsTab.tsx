@@ -26,7 +26,7 @@ type QueryRow = {
   is_incomplete: boolean | null;
 };
 
-export function RagGapsTab() {
+export function HelpiGapsTab() {
   const [gaps, setGaps] = useState<GapAnalysis[]>([]);
   const [loading, setLoading] = useState(true);
   const [pendingCount, setPendingCount] = useState(0);

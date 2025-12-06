@@ -143,9 +143,9 @@ export function NavigationCards() {
       description: 'Chatbot Mme MICHU et base de connaissances',
       cards: [
         { 
-          to: ROUTES.admin.chatbotRag, 
+          to: ROUTES.admin.helpi, 
           icon: Bot, 
-          title: 'Chatbot & RAG', 
+          title: 'Helpi (RAG)', 
           description: 'Gestion complète IA',
           children: [
             { to: ROUTES.admin.apogeeGuides, icon: BookOpen, title: 'Guides Apogée' },

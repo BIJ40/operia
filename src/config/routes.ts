@@ -148,7 +148,6 @@ export const ROUTES = {
     storageQuota: '/admin/storage-quota',
     pageMetadata: '/admin/page-metadata',
     apogeeGuides: '/admin/apogee-guides',
-    chatbotRag: '/admin/chatbot-rag',
     helpi: '/admin/helpi',
     systemHealth: '/admin/system-health',
     announcements: '/admin/announcements',

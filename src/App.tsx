@@ -87,7 +87,6 @@ const TDRUsersPage = lazy(() => import("./pages/TDRUsersPage"));
 
 // Lazy loaded pages - Admin
 const AdminIndex = lazy(() => import("./pages/AdminIndex"));
-// AdminDocuments supprimé - redirigé vers AdminChatbotRag
 const AdminSupportTickets = lazy(() => import("./pages/AdminSupportTickets"));
 const AdminSupportStats = lazy(() => import("./pages/AdminSupportStats"));
 const AdminEscalationHistory = lazy(() => import("./pages/AdminEscalationHistory"));
@@ -100,7 +99,6 @@ const AdminUserActivity = lazy(() => import("./pages/AdminUserActivity"));
 const AdminUsersUnified = lazy(() => import("./pages/AdminUsersUnified"));
 const AdminPageMetadata = lazy(() => import("./pages/AdminPageMetadata"));
 const AdminApogeeGuides = lazy(() => import("./pages/AdminApogeeGuides"));
-const AdminChatbotRag = lazy(() => import("./pages/AdminChatbotRag"));
 const AdminHelpi = lazy(() => import("./pages/AdminHelpi"));
 const AdminSystemHealth = lazy(() => import("./pages/AdminSystemHealth"));
 const AdminAnnouncements = lazy(() => import("./pages/admin/AdminAnnouncements"));
@@ -322,7 +320,8 @@ function AppContent() {
           {/* ADMINISTRATION - Section Index + Sous-pages */}
           {/* ============================================ */}
           <Route path="/admin" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminIndex /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/admin/documents" element={<Navigate to="/admin/chatbot-rag" replace />} />
+          <Route path="/admin/documents" element={<Navigate to="/admin/helpi" replace />} />
+          <Route path="/admin/chatbot-rag" element={<Navigate to="/admin/helpi" replace />} />
           <Route path="/admin/support-tickets" element={<MainLayout><RoleGuard minRole="franchisor_user"><ModuleGuard moduleKey="admin_plateforme"><AdminSupportTickets /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/support-stats" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminSupportStats /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/escalation-history" element={<MainLayout><RoleGuard minRole="franchisor_user"><ModuleGuard moduleKey="admin_plateforme"><AdminEscalationHistory /></ModuleGuard></RoleGuard></MainLayout>} />
@@ -338,7 +337,6 @@ function AppContent() {
           <Route path="/admin/user-activity" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminUserActivity /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/page-metadata" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminPageMetadata /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/apogee-guides" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminApogeeGuides /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/admin/chatbot-rag" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminChatbotRag /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/helpi" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminHelpi /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/announcements" element={<MainLayout><RoleGuard minRole="franchisor_user"><ModuleGuard moduleKey="admin_plateforme"><AdminAnnouncements /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/faq" element={<MainLayout><FaqAdminGuard><AdminFaq /></FaqAdminGuard></MainLayout>} />

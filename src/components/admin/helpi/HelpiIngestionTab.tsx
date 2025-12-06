@@ -68,7 +68,7 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-export function RagIngestionTab() {
+export function HelpiIngestionTab() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedFiles, setSelectedFiles] = useState<UploadedFile[]>([]);
