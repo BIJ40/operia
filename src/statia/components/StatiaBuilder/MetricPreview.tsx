@@ -17,7 +17,6 @@ import { DimensionType, getMeasureById } from './config';
 import { getMetric } from '../../api/getMetric';
 import { STAT_DEFINITIONS } from '../../definitions';
 import { apogeeProxy } from '@/services/apogeeProxy';
-import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { MetricExplanation } from './MetricExplanation';
 
@@ -60,18 +59,20 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
   const availableMonths = useMemo(() => getAvailableMonths(), []);
   
   // Charger les données réelles pour les sélecteurs
-  const { user } = useAuth();
-  const effectiveSlug = agencySlug || (user as any)?.agence || '';
+  // CRITICAL: Toujours utiliser agencySlug passé en prop, pas le fallback user.agence
+  // pour éviter les problèmes d'isolation des données (ex: admin sélectionne LE MANS mais voit DAX)
+  const effectiveSlug = agencySlug;
   
   // Hook pour récupérer les données réelles des sélecteurs
   const { data: apogeeData, isLoading: isLoadingData } = useQuery({
     queryKey: ['apogee-preview-data', effectiveSlug],
     queryFn: async () => {
       if (!effectiveSlug) return null;
+      // Toujours passer l'agencySlug explicitement, jamais de fallback
       return apogeeProxy.getAllData({ agencySlug: effectiveSlug });
     },
     enabled: !!effectiveSlug,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 2 * 60 * 1000, // 2 minutes - réduire pour éviter les données stales entre agences
   });
 
   // Extraire les listes réelles depuis les données
