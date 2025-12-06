@@ -96,19 +96,19 @@ export const UNIFIED_SEARCH_ANIMATIONS: UnifiedSearchAnimationPreset[] = [
   {
     id: 'neon_pulse',
     label: 'Neon Pulse',
-    description: 'Anneaux néon très visibles qui se propagent.',
+    description: 'Anneaux néon subtils qui se propagent.',
     buttonMotion: {
       initial: { scale: 1 },
-      animate: { scale: [1, 1.06, 1] },
-      transition: { duration: 1.2, repeat: Infinity, ease: 'easeInOut' },
-      whileHover: { scale: 1.12 },
-      whileTap: { scale: 0.9 }
+      animate: { scale: [1, 1.03, 1] },
+      transition: { duration: 1.8, repeat: Infinity, ease: 'easeInOut' },
+      whileHover: { scale: 1.08 },
+      whileTap: { scale: 0.95 }
     },
     decorators: {
       showNeonRing: true,
       showGlow: true,
       glowColor: 'hsl(var(--primary))',
-      glowIntensity: 'high'
+      glowIntensity: 'medium'
     }
   },
   {
