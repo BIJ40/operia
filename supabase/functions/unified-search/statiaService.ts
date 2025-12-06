@@ -335,41 +335,57 @@ function computeCaParTechnicien(data: ApogeeData, params: StatParams): StatResul
   const filterTechnicienId = params.filters?.technicienId;
   const filterTechnicienName = params.filters?.technicienName;
   
-  // Index projects par id
-  const projectsById = new Map<string | number, any>();
-  for (const p of data.projects) {
-    projectsById.set(p.id, p);
-    projectsById.set(String(p.id), p);
-  }
-  
-  // Index interventions par projectId (API Apogée utilise plusieurs formats possibles)
-  const interventionsByProject = new Map<string, any[]>();
-  let firstIntervSample: any = null;
-  for (const i of data.interventions) {
-    if (!firstIntervSample) firstIntervSample = i;
-    // API Apogée: dossier_id, dossierId, projectId, project_id selon l'endpoint
-    const pId = String(i.dossier_id || i.dossierId || i.projectId || i.data?.projectId || i.project_id || i.data?.dossier_id || '');
-    if (pId && pId !== 'undefined' && pId !== 'null') {
-      if (!interventionsByProject.has(pId)) interventionsByProject.set(pId, []);
-      interventionsByProject.get(pId)!.push(i);
-    }
-  }
-  
-  // Debug: log sample intervention structure
-  if (firstIntervSample && interventionsByProject.size === 0) {
-    console.log(`[computeCaParTechnicien] WARN: No interventions linked! Sample keys: ${Object.keys(firstIntervSample).slice(0, 15).join(', ')}`);
-  }
-  
   // Index users par id pour les noms
   const usersById = new Map<string, any>();
   for (const u of data.users) {
     usersById.set(String(u.id), u);
   }
   
-  console.log(`[computeCaParTechnicien] Indexes: ${projectsById.size} projects, ${interventionsByProject.size} projects avec interventions, ${usersById.size} users`);
+  // ════════════════════════════════════════════════════════════
+  // STRATÉGIE UNIFIÉE:
+  // 1. Récupérer tous les techniciens actifs des interventions/créneaux
+  // 2. Distribuer le CA des factures proportionnellement
+  // ════════════════════════════════════════════════════════════
   
+  // Collecter tous les techniciens uniques des interventions
+  const allTechnicianIds = new Set<string>();
+  for (const i of data.interventions) {
+    // getInterventionsCreneaux: usersIds directement
+    const usersIds = i.usersIds || i.data?.usersIds || [];
+    for (const uid of usersIds) {
+      if (uid) allTechnicianIds.add(String(uid));
+    }
+    // apiGetInterventions: userId + visites
+    if (i.userId) allTechnicianIds.add(String(i.userId));
+    const visites = i.visites || i.data?.visites || [];
+    for (const v of visites) {
+      const vUserIds = v.usersIds || v.userIds || [];
+      for (const uid of vUserIds) {
+        if (uid) allTechnicianIds.add(String(uid));
+      }
+    }
+  }
+  
+  console.log(`[computeCaParTechnicien] Found ${allTechnicianIds.size} unique technicians from interventions`);
+  
+  // Si aucun technicien trouvé dans les interventions, essayer via les factures
+  if (allTechnicianIds.size === 0) {
+    console.log(`[computeCaParTechnicien] No techs from interventions, trying factures.data.technicians`);
+    for (const f of data.factures) {
+      const techs = f.data?.technicians || [];
+      for (const t of techs) {
+        if (t.id) allTechnicianIds.add(String(t.id));
+      }
+    }
+    console.log(`[computeCaParTechnicien] Found ${allTechnicianIds.size} technicians from factures`);
+  }
+  
+  // ════════════════════════════════════════════════════════════
+  // CALCUL DU CA PAR TECHNICIEN
+  // Priorité: 1) facture.data.technicians 2) répartition égale entre techs actifs
+  // ════════════════════════════════════════════════════════════
   let facturesWithTechs = 0;
-  let facturesFromInterventions = 0;
+  let facturesDistributed = 0;
   let facturesNoTechs = 0;
   
   for (const f of data.factures) {
@@ -378,62 +394,25 @@ function computeCaParTechnicien(data: ApogeeData, params: StatParams): StatResul
     const montant = typeof rawMontant === 'string' ? parseFloat(rawMontant) || 0 : rawMontant;
     const netMontant = isAvoir ? -Math.abs(montant) : montant;
     
-    // Stratégie 1: Techniciens directement sur la facture
-    let techs: Array<{ id: string | number; firstname?: string; lastname?: string }> = f.data?.technicians || [];
-    
-    // Stratégie 2: Si pas de techniciens sur facture, chercher via interventions du projet
-    if (techs.length === 0) {
-      const projectId = String(f.projectId ?? f.data?.projectId ?? f.project_id);
-      const interventions = interventionsByProject.get(projectId) || [];
-      
-      // Collecter les techniciens uniques des interventions productives
-      const techSet = new Set<string>();
-      const techInfos: Array<{ id: string; firstname?: string; lastname?: string }> = [];
-      
-      for (const interv of interventions) {
-        // Vérifier si intervention productive (travaux, dépannage, etc.)
-        const type2 = (interv.type2 || interv.data?.type2 || '').toLowerCase();
-        const isProductive = ['travaux', 'depannage', 'dépannage', 'recherche de fuite'].includes(type2) 
-          || (type2 !== 'rt' && type2 !== 'sav' && type2 !== 'diagnostic' && type2 !== 'th');
-        
-        if (!isProductive) continue;
-        
-        // Technicien principal
-        const userId = interv.userId || interv.user_id;
-        if (userId && !techSet.has(String(userId))) {
-          techSet.add(String(userId));
-          const user = usersById.get(String(userId));
-          techInfos.push({
-            id: String(userId),
-            firstname: user?.firstname || user?.prenom || '',
-            lastname: user?.lastname || user?.nom || ''
-          });
-        }
-        
-        // Techniciens des visites
-        const visites = interv.visites || interv.data?.visites || [];
-        for (const v of visites) {
-          const usersIds = v.usersIds || v.userIds || [];
-          for (const uid of usersIds) {
-            if (!techSet.has(String(uid))) {
-              techSet.add(String(uid));
-              const user = usersById.get(String(uid));
-              techInfos.push({
-                id: String(uid),
-                firstname: user?.firstname || user?.prenom || '',
-                lastname: user?.lastname || user?.nom || ''
-              });
-            }
-          }
-        }
-      }
-      
-      if (techInfos.length > 0) {
-        techs = techInfos;
-        facturesFromInterventions++;
-      }
-    } else {
+    // Stratégie 1: Techniciens directement sur la facture (prioritaire)
+    let techs: Array<{ id: string | number; firstname?: string; lastname?: string }> = [];
+    const factureTechs = f.data?.technicians || [];
+    if (factureTechs.length > 0) {
+      techs = factureTechs;
       facturesWithTechs++;
+    }
+    
+    // Stratégie 2: Distribuer proportionnellement entre tous les techniciens actifs
+    if (techs.length === 0 && allTechnicianIds.size > 0) {
+      techs = Array.from(allTechnicianIds).map(id => {
+        const user = usersById.get(id);
+        return {
+          id,
+          firstname: user?.firstname || user?.prenom || '',
+          lastname: user?.lastname || user?.nom || ''
+        };
+      });
+      facturesDistributed++;
     }
     
     if (techs.length === 0) {
@@ -444,7 +423,10 @@ function computeCaParTechnicien(data: ApogeeData, params: StatParams): StatResul
     const share = netMontant / techs.length;
     for (const tech of techs) {
       const id = String(tech.id);
-      const name = `${tech.firstname || ''} ${tech.lastname || ''}`.trim() || `Tech #${tech.id}`;
+      const user = usersById.get(id);
+      const name = user 
+        ? `${user.firstname || user.prenom || ''} ${user.lastname || user.nom || ''}`.trim() 
+        : `${tech.firstname || ''} ${tech.lastname || ''}`.trim() || `Tech #${tech.id}`;
       
       // Si un filtre technicienId est appliqué, ne garder que ce technicien
       if (filterTechnicienId && String(filterTechnicienId) !== id) {
@@ -456,11 +438,11 @@ function computeCaParTechnicien(data: ApogeeData, params: StatParams): StatResul
     }
   }
   
-  console.log(`[computeCaParTechnicien] Source stats: ${facturesWithTechs} factures avec techs directement, ${facturesFromInterventions} via interventions, ${facturesNoTechs} sans techs`);
+  console.log(`[computeCaParTechnicien] Source stats: ${facturesWithTechs} factures avec techs, ${facturesDistributed} distribués, ${facturesNoTechs} sans techs`);
   
   const sorted = Object.entries(caByTech)
     .map(([id, d]) => ({ id, name: d.name, value: Math.round(d.ca) }))
-    .filter(x => x.value > 0)
+    .filter(x => x.value !== 0) // Garder aussi les négatifs (avoirs)
     .sort((a, b) => b.value - a.value);
   
   console.log(`[computeCaParTechnicien] Result: ${sorted.length} techniciens, top 3: ${sorted.slice(0, 3).map(t => `${t.name}=${t.value}€`).join(', ')}`);
@@ -473,20 +455,18 @@ function computeCaParTechnicien(data: ApogeeData, params: StatParams): StatResul
     const techName = filterTechnicienName || techData?.name || `Technicien #${filterTechnicienId}`;
     
     if (techData && techData.value > 0) {
-      // Technicien trouvé avec CA > 0 → valeur unique
       return {
         value: techData.value,
         topItem: { rank: 1, id: techData.id, name: techData.name, value: techData.value },
-        ranking: undefined, // PAS de ranking pour mode filtré
+        ranking: undefined,
         unit: '€',
       };
     }
     
-    // Technicien non trouvé ou CA = 0 → valeur 0 avec nom
     return {
       value: 0,
       topItem: { rank: 1, id: String(filterTechnicienId), name: String(techName), value: 0 },
-      ranking: undefined, // PAS de ranking pour mode filtré
+      ranking: undefined,
       unit: '€',
     };
   }

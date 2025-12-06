@@ -114,14 +114,29 @@ export function validateSources(
     };
   }
   
-  // Pour les métriques de ranking, au moins factures doit avoir des données
-  if (METRICS_NEED_FULL_SOURCES.has(metricId) && emptySources.includes('factures')) {
-    return {
-      isValid: false,
-      missingSources: [],
-      emptySources,
-      errorMessage: `aucune facture trouvée pour cette période`
-    };
+  // Pour les métriques technicien/apporteur/univers, interventions et users sont CRITIQUES
+  if (METRICS_NEED_FULL_SOURCES.has(metricId)) {
+    // Si factures vides → pas de CA à attribuer
+    if (emptySources.includes('factures')) {
+      return {
+        isValid: false,
+        missingSources: [],
+        emptySources,
+        errorMessage: `aucune facture trouvée pour cette période`
+      };
+    }
+    
+    // Pour les métriques technicien, interventions ET users sont indispensables
+    if (metricId.includes('technicien') || metricId.includes('tech')) {
+      if (emptySources.includes('interventions') || emptySources.includes('users')) {
+        return {
+          isValid: false,
+          missingSources: [],
+          emptySources,
+          errorMessage: `données techniciens incomplètes (interventions: ${data.interventions?.length ?? 0}, users: ${data.users?.length ?? 0})`
+        };
+      }
+    }
   }
   
   return {
@@ -153,12 +168,14 @@ export function buildUserFriendlyError(validationResult: SourceValidationResult)
     return `Impossible de calculer cette statistique : les données nécessaires (${validationResult.missingSources.join(', ')}) ne sont pas disponibles. Vérifiez la connexion à Apogée.`;
   }
   
-  if (validationResult.emptySources.includes('factures')) {
-    return `Aucune facture trouvée pour cette période. Vérifiez les dates ou les filtres appliqués.`;
+  // Erreur spécifique techniciens
+  if (validationResult.emptySources.includes('interventions') || 
+      validationResult.emptySources.includes('users')) {
+    return `Les données techniciens ne sont pas disponibles pour cette période (interventions: ${validationResult.emptySources.includes('interventions') ? 'vide' : 'ok'}, users: ${validationResult.emptySources.includes('users') ? 'vide' : 'ok'}). Impossible de calculer le CA par technicien.`;
   }
   
-  if (validationResult.emptySources.includes('interventions')) {
-    return `Aucune intervention trouvée pour cette période. Les données techniciens ne peuvent pas être calculées.`;
+  if (validationResult.emptySources.includes('factures')) {
+    return `Aucune facture trouvée pour cette période. Vérifiez les dates ou les filtres appliqués.`;
   }
   
   return `Les données nécessaires pour ce calcul ne sont pas disponibles.`;
