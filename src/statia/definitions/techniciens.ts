@@ -310,6 +310,12 @@ export const caParTechnicienUnivers: StatDefinition = {
       return { name: `Tech ${techId}`, color: '#808080', isOn: true };
     };
     
+    // Compteurs de diagnostic
+    let facturesTraitees = 0;
+    let facturesSansTemps = 0;
+    let caSansTemps = 0;
+    let caAvecTemps = 0;
+    
     // Parcourir les factures
     for (const facture of factures) {
       const meta = extractFactureMeta(facture);
@@ -321,6 +327,8 @@ export const caParTechnicienUnivers: StatDefinition = {
       
       const date = meta.date ? new Date(meta.date) : null;
       if (!date || date < params.dateRange.start || date > params.dateRange.end) continue;
+      
+      facturesTraitees++;
       
       const projectId = String(facture.projectId || facture.project_id);
       const project = projectId ? projectsById.get(projectId) : null;
@@ -334,8 +342,12 @@ export const caParTechnicienUnivers: StatDefinition = {
       const totalProjectTime = dureeTotaleParProjet.get(projectId) || 0;
       
       if (!projectTechTime || totalProjectTime === 0) {
+        facturesSansTemps++;
+        caSansTemps += meta.montantNetHT;
         continue;
       }
+      
+      caAvecTemps += meta.montantNetHT;
       
       // Répartir le CA proportionnellement au temps
       for (const [techId, techTime] of projectTechTime.entries()) {
@@ -416,6 +428,16 @@ export const caParTechnicienUnivers: StatDefinition = {
       totalCA += stats.totalCA;
     }
     
+    // Log de diagnostic
+    console.log('[ca_par_technicien_univers] Diagnostic CA:', {
+      facturesTraitees,
+      facturesSansTemps,
+      caSansTemps: Math.round(caSansTemps),
+      caAvecTemps: Math.round(caAvecTemps),
+      caTotal: Math.round(totalCA),
+      ecart: Math.round(caSansTemps + caAvecTemps - totalCA),
+    });
+    
     return {
       value: result,
       metadata: {
@@ -426,6 +448,9 @@ export const caParTechnicienUnivers: StatDefinition = {
       breakdown: {
         total: totalCA,
         technicianCount: techStats.size,
+        facturesSansTemps,
+        caSansTemps: Math.round(caSansTemps),
+        caAvecTemps: Math.round(caAvecTemps),
       }
     };
   }
