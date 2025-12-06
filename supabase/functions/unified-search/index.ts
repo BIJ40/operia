@@ -114,9 +114,37 @@ function extractPeriode(query: string): { start: Date; end: Date } | undefined {
   return undefined;
 }
 
-function detectMetricId(query: string): { metricId: string; metricLabel: string } {
+function extractTechnicienName(query: string): string | undefined {
+  // Look for capitalized words that are likely names (not months or universes)
+  const reservedWords = new Set([
+    'ca', 'janvier', 'février', 'mars', 'avril', 'mai', 'juin', 
+    'juillet', 'août', 'aout', 'septembre', 'octobre', 'novembre', 'décembre',
+    'electricite', 'électricité', 'plomberie', 'serrurerie', 'vitrerie', 
+    'volet', 'volets', 'top', 'meilleur', 'technicien', 'tech',
+  ]);
+  
+  // Split by spaces and look for words that start with uppercase (proper nouns)
+  const words = query.split(/\s+/);
+  for (const word of words) {
+    const cleanWord = word.replace(/[^a-zA-ZÀ-ÿ]/g, '');
+    if (cleanWord.length > 2 && 
+        cleanWord[0] === cleanWord[0].toUpperCase() &&
+        !reservedWords.has(cleanWord.toLowerCase())) {
+      return cleanWord;
+    }
+  }
+  
+  return undefined;
+}
+
+function detectMetricId(query: string, hasTechnicienFilter: boolean): { metricId: string; metricLabel: string } {
   const normalized = query.toLowerCase();
 
+  // If a technician name is detected, route to technician CA
+  if (hasTechnicienFilter) {
+    return { metricId: 'ca_technicien_filtre', metricLabel: 'CA du technicien' };
+  }
+  
   if ((normalized.includes('technicien') || normalized.includes('tech')) && 
       (normalized.includes('plus') || normalized.includes('top') || normalized.includes('meilleur'))) {
     return { metricId: 'ca_par_technicien', metricLabel: 'CA par technicien' };
@@ -202,15 +230,19 @@ serve(async (req) => {
 
     // === STATS MODE ===
     if (intent === 'stats') {
-      const { metricId, metricLabel } = detectMetricId(query);
+      const technicienName = extractTechnicienName(query);
+      const { metricId, metricLabel } = detectMetricId(query, !!technicienName);
       const univers = extractUnivers(query);
       const periode = extractPeriode(query);
 
+      console.log(`[unified-search] Stats: metric=${metricId}, technicien=${technicienName || 'none'}, univers=${univers || 'none'}, periode=${periode ? 'yes' : 'none'}`);
+
       // For now, return mock data - in production, call StatIA engine
+      // TODO: Integrate with real StatIA computation via proxy-apogee
       const result: StatSearchResult = {
         type: 'stat',
         metricId,
-        metricLabel,
+        metricLabel: technicienName ? `CA de ${technicienName}` : metricLabel,
         filters: {
           univers,
           periode: periode ? {
@@ -219,13 +251,13 @@ serve(async (req) => {
           } : undefined,
         },
         result: {
-          value: Math.floor(Math.random() * 50000) + 10000,
-          topItem: metricId.includes('technicien') ? {
+          value: technicienName ? 12450 : Math.floor(Math.random() * 50000) + 10000,
+          topItem: (metricId.includes('technicien') || technicienName) ? {
             id: 1,
-            name: 'Jean Dupont',
-            value: Math.floor(Math.random() * 30000) + 15000,
+            name: technicienName || 'Jean Dupont',
+            value: technicienName ? 12450 : Math.floor(Math.random() * 30000) + 15000,
           } : undefined,
-          ranking: metricId.includes('technicien') ? [
+          ranking: metricId === 'ca_par_technicien' ? [
             { rank: 1, id: 1, name: 'Jean Dupont', value: 28450 },
             { rank: 2, id: 2, name: 'Marie Martin', value: 24200 },
             { rank: 3, id: 3, name: 'Pierre Bernard', value: 21800 },
