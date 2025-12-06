@@ -18,6 +18,7 @@ import { complexiteDefinitions } from './complexite';
 import { reseauDefinitions } from './reseau';
 import { advancedDefinitions } from './advanced';
 import { advancedDefinitions2 } from './advanced2';
+import { franchiseurDefinitions } from './franchiseur';
 
 // Export types
 export * from './types';
@@ -67,6 +68,9 @@ export const STAT_DEFINITIONS: StatDefinitionRegistry = {
   
   // V2: Métriques avancées Pack 2
   ...advancedDefinitions2,
+  
+  // V2: Métriques Franchiseur
+  ...franchiseurDefinitions,
 };
 
 /**
