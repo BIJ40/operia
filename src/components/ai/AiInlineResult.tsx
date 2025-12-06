@@ -97,25 +97,25 @@ export function AiInlineResult({ messages, isLoading, onClose, onContactSupport 
           <div className="relative rounded-xl">
             {/* Animated sparkle border */}
             <div className="absolute inset-0 rounded-xl overflow-visible pointer-events-none z-10">
-              {/* Traveling sparkle - subtle */}
+              {/* Traveling sparkle - tiny */}
               <div 
-                className="absolute w-4 h-4 rounded-full animate-sparkle-travel"
+                className="absolute w-2 h-2 rounded-full animate-sparkle-travel"
                 style={{
-                  background: 'radial-gradient(circle, hsl(200 100% 50%) 0%, transparent 70%)',
-                  filter: 'blur(2px)',
-                  boxShadow: '0 0 8px 2px hsl(200 100% 50% / 0.5)',
+                  background: 'radial-gradient(circle, hsl(200 100% 55%) 0%, transparent 70%)',
+                  filter: 'blur(1px)',
+                  boxShadow: '0 0 4px 1px hsl(200 100% 55% / 0.4)',
                 }}
               />
               {/* Corner sparkles */}
-              <div className="absolute top-1 left-1 animate-corner-sparkle">
-                <div className="flex gap-1">
+              <div className="absolute top-0.5 left-0.5 animate-corner-sparkle">
+                <div className="flex gap-0.5">
                   <span 
-                    className="w-1 h-1 rounded-full animate-twinkle" 
-                    style={{ background: 'hsl(200 100% 50%)', animationDelay: '0ms', boxShadow: '0 0 3px 1px hsl(200 100% 50% / 0.6)' }} 
+                    className="w-0.5 h-0.5 rounded-full animate-twinkle" 
+                    style={{ background: 'hsl(200 100% 55%)' }} 
                   />
                   <span 
                     className="w-0.5 h-0.5 rounded-full animate-twinkle" 
-                    style={{ background: 'hsl(200 100% 60%)', animationDelay: '100ms' }} 
+                    style={{ background: 'hsl(200 100% 65%)', animationDelay: '150ms' }} 
                   />
                 </div>
               </div>
