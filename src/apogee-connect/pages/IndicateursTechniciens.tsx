@@ -3,6 +3,7 @@ import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { SecondaryPeriodSelector } from "@/apogee-connect/components/filters/SecondaryPeriodSelector";
 import { TechnicienUniversHeatmap } from "@/apogee-connect/components/widgets/TechnicienUniversHeatmap";
+import { TechnicienMensuelTable } from "@/apogee-connect/components/widgets/TechnicienMensuelTable";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +24,8 @@ export default function IndicateursTechniciens() {
     caParHeureGlobal,
     nbTechniciens,
     topTechniciens,
+    caMensuelParTech,
+    availableMonths,
     isLoading,
   } = useTechniciensStatia();
   
@@ -164,6 +167,13 @@ export default function IndicateursTechniciens() {
           </CardContent>
         </Card>
       )}
+      
+      {/* Tableau mensuel par technicien */}
+      <TechnicienMensuelTable 
+        data={caMensuelParTech}
+        loading={isLoading}
+        availableMonths={availableMonths}
+      />
 
       {/* Onglets pour choisir la vue (Heatmap) */}
       {isLoading ? (

@@ -41,6 +41,13 @@ export interface UniverseInfo {
   colorHex: string;
 }
 
+export interface TechMensuelData {
+  techId: string;
+  name: string;
+  color: string;
+  months: Record<string, number>; // "YYYY-MM" -> CA
+}
+
 export interface TechniciensStatiaData {
   // Stats par technicien × univers (heatmap)
   technicienUniversStats: TechnicienStats[];
@@ -58,7 +65,8 @@ export interface TechniciensStatiaData {
   topTechniciens: Array<{ name: string; ca: number; color: string; rank: number }>;
   
   // CA mensuel par technicien (évolution)
-  caMensuelParTech: Record<string, Record<string, number>>;
+  caMensuelParTech: TechMensuelData[];
+  availableMonths: string[]; // Liste des mois disponibles, du plus récent au plus ancien
   
   // Loading states
   isLoading: boolean;
@@ -73,7 +81,8 @@ const DEFAULT_DATA: TechniciensStatiaData = {
   caParHeureGlobal: 0,
   nbTechniciens: 0,
   topTechniciens: [],
-  caMensuelParTech: {},
+  caMensuelParTech: [],
+  availableMonths: [],
   isLoading: true,
   error: null,
 };
@@ -117,6 +126,7 @@ export function useTechniciensStatia(): TechniciensStatiaData {
         caMoyenParHeureResult,
         heuresProductivesResult,
         interventionsParTechResult,
+        caMensuelParTechResult,
       ] = await Promise.all([
         getMetricForAgency("ca_par_technicien_univers", agencySlug, params, services),
         getMetricForAgency("ca_par_technicien", agencySlug, params, services),
@@ -124,6 +134,7 @@ export function useTechniciensStatia(): TechniciensStatiaData {
         getMetricForAgency("ca_moyen_par_heure_tous_techniciens", agencySlug, params, services),
         getMetricForAgency("nb_heures_productives", agencySlug, params, services),
         getMetricForAgency("nb_interventions_par_technicien", agencySlug, params, services),
+        getMetricForAgency("ca_mensuel_par_technicien", agencySlug, params, services),
       ]);
       
       // Transformer ca_par_technicien_univers en format TechnicienStats[]
@@ -174,6 +185,31 @@ export function useTechniciensStatia(): TechniciensStatiaData {
         .sort((a, b) => (a.rank || 0) - (b.rank || 0))
         .slice(0, 10);
       
+      // CA mensuel par technicien
+      const caMensuelRaw = caMensuelParTechResult.value as Record<string, {
+        name: string;
+        color: string;
+        isOn: boolean;
+        months: Record<string, number>;
+      }> || {};
+      
+      // Collecter tous les mois disponibles
+      const allMonths = new Set<string>();
+      Object.values(caMensuelRaw).forEach(tech => {
+        Object.keys(tech.months).forEach(m => allMonths.add(m));
+      });
+      
+      // Trier les mois du plus récent au plus ancien
+      const availableMonths = Array.from(allMonths).sort((a, b) => b.localeCompare(a));
+      
+      // Transformer en format TechMensuelData[]
+      const caMensuelParTech: TechMensuelData[] = Object.entries(caMensuelRaw).map(([techId, data]) => ({
+        techId,
+        name: data.name,
+        color: data.color,
+        months: data.months,
+      }));
+      
       return {
         technicienUniversStats,
         universes,
@@ -182,7 +218,8 @@ export function useTechniciensStatia(): TechniciensStatiaData {
         caParHeureGlobal,
         nbTechniciens: technicienUniversStats.length,
         topTechniciens,
-        caMensuelParTech: {},
+        caMensuelParTech,
+        availableMonths,
       };
     },
     enabled: isAgencyReady && !isAuthLoading && !!agencySlug,

@@ -19,12 +19,19 @@ export interface TechnicienResolved {
 /**
  * Convertit apiGetUsers en dictionnaire TECHS normalisé
  */
+/**
+ * Convertit apiGetUsers en dictionnaire TECHS normalisé
+ * RÈGLE: Ne prendre que les users avec is_on === true (techniciens actifs)
+ */
 export function buildTechMap(usersData: any[]): Record<number, TechnicienInfo> {
   const TECHS: Record<number, TechnicienInfo> = {};
 
   if (!Array.isArray(usersData)) return TECHS;
 
   for (const u of usersData) {
+    // FILTRE PRIMAIRE: is_on doit être true pour être considéré
+    if (u?.is_on !== true) continue;
+    
     // Ne garder que les techniciens
     // Règle: isTechnicien=true OU type="technicien" OU (type="utilisateur" ET universes non vide)
     const hasUniverses = Array.isArray(u?.data?.universes) && u.data.universes.length > 0;
