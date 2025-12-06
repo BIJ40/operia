@@ -332,6 +332,32 @@ function extractPeriode(query: string, now = new Date()): ParsedPeriod | undefin
     }
   }
 
+  // "au [jour] [mois]" pattern - e.g., "au 30 octobre" = from start of year to that date
+  const auDateMatch = normalized.match(/au\s+(\d{1,2})\s+(janvier|fevrier|mars|avril|mai|juin|juillet|aout|septembre|octobre|novembre|decembre)/i);
+  if (auDateMatch) {
+    const day = parseInt(auDateMatch[1]);
+    const monthIdx = MOIS_MAPPING[auDateMatch[2].toLowerCase()];
+    if (monthIdx !== undefined && day >= 1 && day <= 31) {
+      const yearMatch = normalized.match(/20\d{2}/);
+      const year = yearMatch ? parseInt(yearMatch[0]) : currentYear;
+      return { start: new Date(year, 0, 1), end: new Date(year, monthIdx, day),
+               label: `Du 1er janvier au ${day} ${getMonthName(monthIdx)} ${year}`, isDefault: false };
+    }
+  }
+
+  // "jusqu'au [jour] [mois]" pattern
+  const jusquauMatch = normalized.match(/jusqu['']?au\s+(\d{1,2})\s+(janvier|fevrier|mars|avril|mai|juin|juillet|aout|septembre|octobre|novembre|decembre)/i);
+  if (jusquauMatch) {
+    const day = parseInt(jusquauMatch[1]);
+    const monthIdx = MOIS_MAPPING[jusquauMatch[2].toLowerCase()];
+    if (monthIdx !== undefined && day >= 1 && day <= 31) {
+      const yearMatch = normalized.match(/20\d{2}/);
+      const year = yearMatch ? parseInt(yearMatch[0]) : currentYear;
+      return { start: new Date(year, 0, 1), end: new Date(year, monthIdx, day),
+               label: `Jusqu'au ${day} ${getMonthName(monthIdx)} ${year}`, isDefault: false };
+    }
+  }
+
   // Single month
   for (const [moisName, moisIndex] of Object.entries(MOIS_MAPPING)) {
     const patterns = [new RegExp(`en ${moisName}\\b`, 'i'), new RegExp(`au ${moisName}\\b`, 'i'),
