@@ -3341,6 +3341,53 @@ export type Database = {
           },
         ]
       }
+      sav_dossier_overrides: {
+        Row: {
+          agency_id: string
+          confirmed_at: string | null
+          confirmed_by: string | null
+          cout_sav_manuel: number | null
+          created_at: string
+          id: string
+          is_confirmed_sav: boolean | null
+          notes: string | null
+          project_id: number
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          cout_sav_manuel?: number | null
+          created_at?: string
+          id?: string
+          is_confirmed_sav?: boolean | null
+          notes?: string | null
+          project_id: number
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          cout_sav_manuel?: number | null
+          created_at?: string
+          id?: string
+          is_confirmed_sav?: boolean | null
+          notes?: string | null
+          project_id?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sav_dossier_overrides_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sections: {
         Row: {
           category_id: string
