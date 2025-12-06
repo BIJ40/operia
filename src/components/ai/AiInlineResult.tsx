@@ -93,7 +93,39 @@ export function AiInlineResult({ messages, isLoading, onClose, onContactSupport 
           transition={{ duration: 0.2, ease: 'easeOut' }}
           className="w-full max-w-2xl mx-auto mt-2"
         >
-          <div className="rounded-xl border bg-card shadow-lg overflow-hidden">
+          {/* Container with sparkle border animation */}
+          <div className="relative rounded-xl overflow-hidden">
+            {/* Animated sparkle border */}
+            <div className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none">
+              {/* Traveling sparkle */}
+              <div 
+                className="absolute w-12 h-12 rounded-full animate-sparkle-travel"
+                style={{
+                  background: 'radial-gradient(circle, hsl(var(--helpconfort-blue)) 0%, transparent 70%)',
+                  filter: 'blur(4px)',
+                  opacity: 0.8,
+                }}
+              />
+              {/* Corner sparkles that appear after travel */}
+              <div className="absolute top-1 left-1 animate-corner-sparkle">
+                <div className="flex gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-helpconfort-blue/80 animate-twinkle" style={{ animationDelay: '0ms' }} />
+                  <span className="w-1 h-1 rounded-full bg-helpconfort-blue/60 animate-twinkle" style={{ animationDelay: '100ms' }} />
+                  <span className="w-1 h-1 rounded-full bg-helpconfort-blue/40 animate-twinkle" style={{ animationDelay: '200ms' }} />
+                </div>
+              </div>
+            </div>
+            
+            {/* Glow border */}
+            <div 
+              className="absolute inset-0 rounded-xl pointer-events-none animate-border-glow"
+              style={{
+                border: '1px solid transparent',
+                background: 'linear-gradient(var(--background), var(--background)) padding-box, linear-gradient(90deg, transparent, hsl(var(--helpconfort-blue) / 0.3), transparent) border-box',
+              }}
+            />
+            
+            <div className="relative rounded-xl border bg-card shadow-lg overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30">
               <div className="flex items-center gap-2">
@@ -238,6 +270,7 @@ export function AiInlineResult({ messages, isLoading, onClose, onContactSupport 
                 </Button>
               </div>
             </div>
+          </div>
           </div>
         </motion.div>
       </AnimatePresence>
