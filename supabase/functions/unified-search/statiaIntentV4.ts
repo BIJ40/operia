@@ -75,8 +75,18 @@ const MONTHS_FR: Record<string, number> = {
 };
 
 // --- 1. Détection sujet + opération ---
-export function detectSubjectAndOperation(q: string): { subject: MetricSubject; operation: MetricOperation } {
+export function detectSubjectAndOperation(q: string): { subject: MetricSubject; operation: MetricOperation; isRanking?: boolean } {
   const l = q.toLowerCase();
+
+  // PRIORITÉ: "meilleur" + "technicien" → CA technicien ranking
+  if ((l.includes('meilleur') || l.includes('top') || l.includes('premier')) && l.includes('technicien')) {
+    return { subject: 'ca', operation: 'amount', isRanking: true };
+  }
+
+  // PRIORITÉ: "meilleur" + "apporteur" → CA apporteur ranking
+  if ((l.includes('meilleur') || l.includes('top') || l.includes('premier')) && l.includes('apporteur')) {
+    return { subject: 'ca', operation: 'amount', isRanking: true };
+  }
 
   if (l.includes('ca') || l.includes("chiffre d affaire") || l.includes("chiffre d'affaires") || l.includes("j'ai fait") || l.includes('jai fait') || l.includes('combien j ai fait')) {
     return { subject: 'ca', operation: 'amount' };
@@ -113,7 +123,8 @@ export function detectSubjectAndOperation(q: string): { subject: MetricSubject; 
     return { subject: 'ca', operation: 'amount' };
   }
 
-  return { subject: 'interventions', operation: 'count' };
+  // DEFAULT: CA global (pas interventions)
+  return { subject: 'ca', operation: 'amount' };
 }
 
 // --- 2. Détection période ---
@@ -157,8 +168,10 @@ function detectEntityFromDict(qNorm: string, dict: string[]): string | undefined
 
 export function detectDimensionAndFilters(
   qNorm: string,
-  dictionaries: EntityDictionaries
+  dictionaries: EntityDictionaries,
+  rawQuery?: string
 ): { dimension: MetricDimension; filters: ParsedFilters } {
+  // Check for entity matches first
   const apporteur = detectEntityFromDict(qNorm, dictionaries.apporteurs);
   if (apporteur) {
     return { dimension: 'apporteur', filters: { apporteur } };
@@ -179,6 +192,18 @@ export function detectDimensionAndFilters(
     return { dimension: 'agence', filters: { agence } };
   }
 
+  // NOUVEAU: Détection dimension par mot-clé (sans entité spécifique)
+  const l = (rawQuery || qNorm).toLowerCase();
+  if (l.includes('technicien') || l.includes('tech')) {
+    return { dimension: 'technicien', filters: {} };
+  }
+  if (l.includes('apporteur') || l.includes('commanditaire')) {
+    return { dimension: 'apporteur', filters: {} };
+  }
+  if (l.includes('univers') || l.includes('métier') || l.includes('metier')) {
+    return { dimension: 'univers', filters: {} };
+  }
+
   return { dimension: 'global', filters: {} };
 }
 
@@ -186,9 +211,9 @@ export function detectDimensionAndFilters(
 export function parseStatiaQuery(query: string, ctx: NlContext): ParsedQuery {
   const normalized = normalize(query);
 
-  const { subject, operation } = detectSubjectAndOperation(normalized);
+  const { subject, operation, isRanking } = detectSubjectAndOperation(query); // Passer query brut, pas normalized
   const period = detectPeriod(normalized, ctx.defaultYear);
-  const { dimension, filters } = detectDimensionAndFilters(normalized, ctx.dictionaries);
+  const { dimension, filters } = detectDimensionAndFilters(normalized, ctx.dictionaries, query);
 
   return { raw: query, normalized, subject, operation, dimension, period, filters };
 }
