@@ -52,7 +52,12 @@ export function SAVDossierList({ dossiers, isLoading = false }: SAVDossierListPr
   const [editCout, setEditCout] = useState<string>("");
   const [editNotes, setEditNotes] = useState<string>("");
 
-  const displayedDossiers = showAll ? dossiers : dossiers.slice(0, 10);
+  // Séparer en deux listes: à traiter vs traités
+  const dossiersATraiter = dossiers.filter((d) => !overridesMap.has(d.projectId));
+  const dossiersTraites = dossiers.filter((d) => overridesMap.has(d.projectId));
+  
+  const displayedATraiter = showAll ? dossiersATraiter : dossiersATraiter.slice(0, 10);
+  const displayedTraites = showAll ? dossiersTraites : dossiersTraites.slice(0, 10);
 
   const handleConfirmSAV = (projectId: number, confirmed: boolean) => {
     upsertOverride({ project_id: projectId, is_confirmed_sav: confirmed });
@@ -144,8 +149,122 @@ export function SAVDossierList({ dossiers, isLoading = false }: SAVDossierListPr
     return <span className="text-muted-foreground">{formatEuros(dossier.caSAVAuto)}</span>;
   };
 
-  // Ne plus filtrer les dossiers infirmés - on les affiche en vert
-  const filteredDossiers = displayedDossiers;
+  const renderTable = (items: SAVDossier[]) => (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Dossier</TableHead>
+            <TableHead>Client</TableHead>
+            <TableHead>Univers</TableHead>
+            <TableHead>Apporteur</TableHead>
+            <TableHead className="text-center">Statut</TableHead>
+            <TableHead className="text-right">Coût SAV</TableHead>
+            <TableHead className="text-center">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {items.map((dossier) => {
+            const override = overridesMap.get(dossier.projectId);
+            const isConfirmed = override?.is_confirmed_sav === true;
+            const isInfirmed = override?.is_confirmed_sav === false;
+            const rowColor = getRowColor(dossier.projectId);
+            
+            return (
+              <TableRow 
+                key={dossier.projectId}
+                className={rowColor}
+              >
+                <TableCell>
+                  <div>
+                    <div className="font-medium">#{dossier.projectRef}</div>
+                    <div className="text-xs text-muted-foreground truncate max-w-[200px]">
+                      {dossier.projectLabel}
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell className="max-w-[150px] truncate">
+                  {dossier.clientName}
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-wrap gap-1">
+                    {dossier.universes.slice(0, 2).map((u, i) => (
+                      <Badge key={i} variant="outline" className="text-xs">
+                        {formatUniverseLabel(u)}
+                      </Badge>
+                    ))}
+                    {dossier.universes.length > 2 && (
+                      <Badge variant="outline" className="text-xs">
+                        +{dossier.universes.length - 2}
+                      </Badge>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <span className="text-sm">{dossier.apporteurNom}</span>
+                </TableCell>
+                <TableCell className="text-center">
+                  {getStatusBadge(dossier.projectId)}
+                </TableCell>
+                <TableCell className="text-right">
+                  {getCoutDisplay(dossier)}
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center justify-center gap-1">
+                    <Button
+                      size="icon"
+                      variant={isConfirmed ? "default" : "outline"}
+                      className={`h-8 w-8 ${isConfirmed ? "bg-red-500 hover:bg-red-600" : "hover:bg-red-100 hover:text-red-600"}`}
+                      onClick={() => handleConfirmSAV(dossier.projectId, true)}
+                      disabled={isUpdating}
+                      title="Confirmer SAV"
+                    >
+                      <AlertTriangle size={14} />
+                    </Button>
+                    
+                    <Button
+                      size="icon"
+                      variant={isInfirmed ? "default" : "outline"}
+                      className={`h-8 w-8 ${isInfirmed ? "bg-green-500 hover:bg-green-600" : "hover:bg-green-100 hover:text-green-600"}`}
+                      onClick={() => handleConfirmSAV(dossier.projectId, false)}
+                      disabled={isUpdating}
+                      title="Infirmer SAV"
+                    >
+                      <X size={14} />
+                    </Button>
+                    
+                    {override && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                        onClick={() => handleResetConfirmation(dossier.projectId)}
+                        disabled={isUpdating}
+                        title="Réinitialiser"
+                      >
+                        <RotateCcw size={14} />
+                      </Button>
+                    )}
+                    
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className="h-8 w-8 hover:bg-amber-100 hover:text-amber-600"
+                      onClick={() => openCoutDialog(dossier)}
+                      disabled={isUpdating}
+                      title="Modifier le coût SAV"
+                    >
+                      <Euro size={14} />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </div>
+  );
 
   if (isLoading) {
     return (
@@ -157,153 +276,72 @@ export function SAVDossierList({ dossiers, isLoading = false }: SAVDossierListPr
 
   return (
     <>
-      <Card className="p-6 border-l-4 border-l-red-400 shadow-lg">
+      {/* Tableau SAV À TRAITER */}
+      <Card className="p-6 border-l-4 border-l-orange-400 shadow-lg">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
-              Dossiers SAV
+            <h2 className="text-xl font-bold bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">
+              SAV à traiter
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              {dossiers.length} dossiers détectés • Confirmez ou infirmez le statut SAV
+              {dossiersATraiter.length} dossiers en attente de traitement
             </p>
           </div>
-          {dossiers.length > 10 && (
+          {dossiersATraiter.length > 10 && !showAll && (
             <Button
               variant="ghost"
-              onClick={() => setShowAll(!showAll)}
+              onClick={() => setShowAll(true)}
               className="flex items-center gap-2"
             >
-              {showAll ? (
-                <>Voir moins <ChevronUp size={16} /></>
-              ) : (
-                <>Voir les {dossiers.length - 10} autres <ChevronDown size={16} /></>
-              )}
+              Voir les {dossiersATraiter.length - 10} autres <ChevronDown size={16} />
             </Button>
           )}
         </div>
 
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Dossier</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Univers</TableHead>
-                <TableHead>Apporteur</TableHead>
-                <TableHead className="text-center">Statut</TableHead>
-                <TableHead className="text-right">Coût SAV</TableHead>
-                <TableHead className="text-center">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-            {filteredDossiers.map((dossier) => {
-                const override = overridesMap.get(dossier.projectId);
-                const isConfirmed = override?.is_confirmed_sav === true;
-                const isInfirmed = override?.is_confirmed_sav === false;
-                const rowColor = getRowColor(dossier.projectId);
-                
-                return (
-                  <TableRow 
-                    key={dossier.projectId}
-                    className={rowColor}
-                  >
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">#{dossier.projectRef}</div>
-                        <div className="text-xs text-muted-foreground truncate max-w-[200px]">
-                          {dossier.projectLabel}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="max-w-[150px] truncate">
-                      {dossier.clientName}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {dossier.universes.slice(0, 2).map((u, i) => (
-                          <Badge key={i} variant="outline" className="text-xs">
-                            {formatUniverseLabel(u)}
-                          </Badge>
-                        ))}
-                        {dossier.universes.length > 2 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{dossier.universes.length - 2}
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm">{dossier.apporteurNom}</span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {getStatusBadge(dossier.projectId)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {getCoutDisplay(dossier)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-center gap-1">
-                        {/* Bouton confirmer SAV */}
-                        <Button
-                          size="icon"
-                          variant={isConfirmed ? "default" : "outline"}
-                          className={`h-8 w-8 ${isConfirmed ? "bg-red-500 hover:bg-red-600" : "hover:bg-red-100 hover:text-red-600"}`}
-                          onClick={() => handleConfirmSAV(dossier.projectId, true)}
-                          disabled={isUpdating}
-                          title="Confirmer SAV"
-                        >
-                          <AlertTriangle size={14} />
-                        </Button>
-                        
-                        {/* Bouton infirmer SAV */}
-                        <Button
-                          size="icon"
-                          variant={isInfirmed ? "default" : "outline"}
-                          className={`h-8 w-8 ${isInfirmed ? "bg-green-500 hover:bg-green-600" : "hover:bg-green-100 hover:text-green-600"}`}
-                          onClick={() => handleConfirmSAV(dossier.projectId, false)}
-                          disabled={isUpdating}
-                          title="Infirmer SAV"
-                        >
-                          <X size={14} />
-                        </Button>
-                        
-                        {/* Bouton reset */}
-                        {override && (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8"
-                            onClick={() => handleResetConfirmation(dossier.projectId)}
-                            disabled={isUpdating}
-                            title="Réinitialiser"
-                          >
-                            <RotateCcw size={14} />
-                          </Button>
-                        )}
-                        
-                        {/* Bouton modifier coût */}
-                        <Button
-                          size="icon"
-                          variant="outline"
-                          className="h-8 w-8 hover:bg-amber-100 hover:text-amber-600"
-                          onClick={() => openCoutDialog(dossier)}
-                          disabled={isUpdating}
-                          title="Modifier le coût SAV"
-                        >
-                          <Euro size={14} />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+        {displayedATraiter.length > 0 ? (
+          renderTable(displayedATraiter)
+        ) : (
+          <div className="text-center py-8 text-muted-foreground">
+            Tous les SAV ont été traités
+          </div>
+        )}
+      </Card>
+
+      {/* Tableau SAV TRAITÉS */}
+      <Card className="p-6 border-l-4 border-l-green-400 shadow-lg mt-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl font-bold bg-gradient-to-r from-green-500 to-emerald-500 bg-clip-text text-transparent">
+              SAV traités
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              {dossiersTraites.length} dossiers traités
+            </p>
+          </div>
+          {dossiersTraites.length > 10 && !showAll && (
+            <Button
+              variant="ghost"
+              onClick={() => setShowAll(true)}
+              className="flex items-center gap-2"
+            >
+              Voir les {dossiersTraites.length - 10} autres <ChevronDown size={16} />
+            </Button>
+          )}
         </div>
 
-        {filteredDossiers.length === 0 && (
+        {displayedTraites.length > 0 ? (
+          renderTable(displayedTraites)
+        ) : (
           <div className="text-center py-8 text-muted-foreground">
-            Aucun dossier SAV à afficher
+            Aucun SAV traité pour le moment
+          </div>
+        )}
+        
+        {showAll && (dossiersATraiter.length > 10 || dossiersTraites.length > 10) && (
+          <div className="mt-4 text-center">
+            <Button variant="ghost" onClick={() => setShowAll(false)} className="flex items-center gap-2 mx-auto">
+              Voir moins <ChevronUp size={16} />
+            </Button>
           </div>
         )}
       </Card>
