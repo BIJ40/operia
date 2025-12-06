@@ -65,9 +65,10 @@ function isInterventionRealisee(intervention: any): boolean {
 }
 
 function isSAVIntervention(intervention: any): boolean {
-  const type2 = (intervention.data?.type2 || intervention.type2 || '').toLowerCase();
-  const type = (intervention.data?.type || intervention.type || '').toLowerCase();
-  return type2.includes('sav') || type.includes('sav');
+  const type2 = (intervention.data?.type2 || intervention.type2 || '').toLowerCase().trim();
+  const type = (intervention.data?.type || intervention.type || '').toLowerCase().trim();
+  // RÈGLE STRICTE: type === "sav" (égalité exacte)
+  return type2 === 'sav' || type === 'sav';
 }
 
 // ============================================================================

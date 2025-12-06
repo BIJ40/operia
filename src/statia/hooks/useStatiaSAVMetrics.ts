@@ -160,11 +160,15 @@ function buildDossiersSAV(
   const savDataByProject = new Map<string, { count: number; techniciens: Set<number> }>();
   
   for (const intervention of interventions) {
-    const type2 = (intervention.data?.type2 || intervention.type2 || "").toLowerCase();
-    const type = (intervention.data?.type || intervention.type || "").toLowerCase();
+    const type2 = (intervention.data?.type2 || intervention.type2 || "").toLowerCase().trim();
+    const type = (intervention.data?.type || intervention.type || "").toLowerCase().trim();
     const pictos = intervention.data?.pictosInterv || [];
 
-    if (type2.includes("sav") || type.includes("sav") || pictos.includes("SAV")) {
+    // RÈGLE STRICTE: type === "sav" OU picto === "sav" (égalité exacte)
+    const hasSAVType = type2 === "sav" || type === "sav";
+    const hasSAVPicto = Array.isArray(pictos) && pictos.some((p: any) => String(p).toLowerCase().trim() === "sav");
+    
+    if (hasSAVType || hasSAVPicto) {
       const pid = String(intervention.projectId || intervention.project_id);
       
       if (!savDataByProject.has(pid)) {
@@ -273,6 +277,7 @@ function isSavProject(project: any): boolean {
   if (project.parentId || project.parent_id) return true;
   if (d.linkedProjectId || d.linkedDossierId || d.dossierId) return true;
 
+  // RÈGLE STRICTE: champs === "sav" (égalité exacte, pas includes)
   const fieldsToCheck = [
     d.origineDossier,
     d.origine,
@@ -283,23 +288,23 @@ function isSavProject(project: any): boolean {
     d.nature,
     project.type,
     project.state,
-    project.label,
-    project.ref,
   ];
 
   for (const field of fieldsToCheck) {
-    if (field && String(field).toLowerCase().includes("sav")) {
+    if (field && String(field).toLowerCase().trim() === "sav") {
       return true;
     }
   }
 
+  // Pictos === "sav" (égalité stricte)
   const pictos = d.pictosInterv || d.pictos || project.pictosInterv || [];
-  if (Array.isArray(pictos) && pictos.some((p: any) => String(p).toLowerCase().includes("sav"))) {
+  if (Array.isArray(pictos) && pictos.some((p: any) => String(p).toLowerCase().trim() === "sav")) {
     return true;
   }
 
+  // Tags === "sav" (égalité stricte)
   const tags = (d.tags || project.tags || []) as any[];
-  if (Array.isArray(tags) && tags.some((t) => String(t).toLowerCase().includes("sav"))) {
+  if (Array.isArray(tags) && tags.some((t) => String(t).toLowerCase().trim() === "sav")) {
     return true;
   }
 
