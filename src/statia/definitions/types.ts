@@ -54,6 +54,15 @@ export interface StatFilters {
   seuilJours?: number;
 }
 
+/**
+ * Structure des overrides SAV (source de vérité)
+ */
+export interface SAVOverrideEntry {
+  is_confirmed_sav: boolean | null;
+  cout_sav_manuel: number | null;
+  techniciens_override: number[] | null;
+}
+
 export interface StatParams {
   dateRange: DateRange;
   agencySlug?: string;
@@ -61,6 +70,8 @@ export interface StatParams {
   groupBy?: Dimension[];
   /** P2-05: Filtres typés (remplace Record<string, any>) */
   filters?: StatFilters;
+  /** Overrides SAV (source de vérité depuis le tableau de gestion) */
+  savOverrides?: Map<number, SAVOverrideEntry>;
 }
 
 export interface LoadedData {

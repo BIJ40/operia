@@ -5,7 +5,7 @@
  * Les overrides sont passés via params.savOverrides par le hook useStatiaSAVMetrics.
  */
 
-import { StatDefinition, LoadedData, StatParams, StatResult } from './types';
+import { StatDefinition, LoadedData, StatParams, StatResult, SAVOverrideEntry } from './types';
 import { extractFactureMeta } from '../rules/rules';
 import { parseISO, isWithinInterval } from 'date-fns';
 
@@ -58,7 +58,7 @@ export function isSavProjectAutoDetect(project: any): boolean {
 export function isProjectConfirmedSAV(
   projectId: number,
   isAutoDetectedSAV: boolean,
-  savOverrides?: Map<number, { is_confirmed_sav: boolean | null }>
+  savOverrides?: Map<number, SAVOverrideEntry>
 ): boolean {
   if (savOverrides) {
     const override = savOverrides.get(projectId);
@@ -133,7 +133,7 @@ export const tauxSavGlobal: StatDefinition = {
   unit: '%',
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const { projects } = data;
-    const savOverrides = (params as any).savOverrides as Map<number, { is_confirmed_sav: boolean | null }> | undefined;
+    const savOverrides = params.savOverrides;
     
     let nbDossiersTotal = 0;
     let nbDossiersSAV = 0;
@@ -171,7 +171,7 @@ export const tauxSavParUnivers: StatDefinition = {
   aggregation: 'ratio',
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const { projects } = data;
-    const savOverrides = (params as any).savOverrides as Map<number, { is_confirmed_sav: boolean | null }> | undefined;
+    const savOverrides = params.savOverrides;
     
     const totalByUnivers: Record<string, number> = {};
     const savByUnivers: Record<string, number> = {};
@@ -218,7 +218,7 @@ export const tauxSavParApporteur: StatDefinition = {
   aggregation: 'ratio',
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const { projects, clients } = data;
-    const savOverrides = (params as any).savOverrides as Map<number, { is_confirmed_sav: boolean | null }> | undefined;
+    const savOverrides = params.savOverrides;
     const apporteursById = mapApporteurs(clients);
 
     const totalByApporteur: Record<string, number> = {};
@@ -264,7 +264,7 @@ export const tauxSavParTypeApporteur: StatDefinition = {
   aggregation: 'ratio',
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const { projects, clients } = data;
-    const savOverrides = (params as any).savOverrides as Map<number, { is_confirmed_sav: boolean | null }> | undefined;
+    const savOverrides = params.savOverrides;
     const apporteursInfoById = mapApporteurInfos(clients);
 
     const totalByType: Record<string, number> = {};
@@ -309,7 +309,7 @@ export const nbSavGlobal: StatDefinition = {
   aggregation: 'count',
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const { projects } = data;
-    const savOverrides = (params as any).savOverrides as Map<number, { is_confirmed_sav: boolean | null }> | undefined;
+    const savOverrides = params.savOverrides;
     
     let nbSav = 0;
     for (const project of projects) {
@@ -361,7 +361,7 @@ export const caImpacteSav: StatDefinition = {
   unit: '€',
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const { factures, projects } = data;
-    const savOverrides = (params as any).savOverrides as Map<number, { is_confirmed_sav: boolean | null }> | undefined;
+    const savOverrides = params.savOverrides;
     
     const projetsSAV = new Set<string>();
     for (const project of projects) {
@@ -400,7 +400,7 @@ export const coutSavEstime: StatDefinition = {
   unit: '€',
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const { factures, projects } = data;
-    const savOverrides = (params as any).savOverrides as Map<number, { is_confirmed_sav: boolean | null; cout_sav_manuel: number | null }> | undefined;
+    const savOverrides = params.savOverrides;
     
     const facturesByProjectId = new Map<string, number>();
     for (const f of factures) {
@@ -444,6 +444,112 @@ export const coutSavEstime: StatDefinition = {
   }
 };
 
+/**
+ * SAV par technicien
+ * Utilise techniciens_override si disponible, sinon auto-détection
+ */
+export const savParTechnicien: StatDefinition = {
+  id: 'sav_par_technicien',
+  label: 'SAV par Technicien',
+  description: 'Nombre de dossiers SAV par technicien (utilise les overrides)',
+  category: 'sav',
+  source: ['projects', 'interventions', 'users'],
+  dimensions: ['technicien'],
+  aggregation: 'count',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { projects, interventions, users } = data;
+    const savOverrides = params.savOverrides;
+    
+    // Index users par ID
+    const usersById = new Map<number, { id: number; name: string }>();
+    for (const u of users) {
+      const name = [u.firstname, u.lastname].filter(Boolean).join(' ') || u.name || `Tech ${u.id}`;
+      usersById.set(Number(u.id), { id: Number(u.id), name });
+    }
+    
+    // Collecter les techniciens SAV auto par projet
+    const techniciensSavAutoByProject = new Map<number, Set<number>>();
+    for (const intervention of interventions) {
+      const type2 = (intervention.data?.type2 || intervention.type2 || '').toLowerCase().trim();
+      const type = (intervention.data?.type || intervention.type || '').toLowerCase().trim();
+      const pictos = intervention.data?.pictosInterv || [];
+      
+      const isSAVInterv = type2 === 'sav' || type === 'sav' || 
+        (Array.isArray(pictos) && pictos.some((p: any) => String(p).toLowerCase().trim() === 'sav'));
+      
+      if (isSAVInterv) {
+        const pid = Number(intervention.projectId || intervention.project_id);
+        if (!techniciensSavAutoByProject.has(pid)) {
+          techniciensSavAutoByProject.set(pid, new Set());
+        }
+        const techSet = techniciensSavAutoByProject.get(pid)!;
+        
+        // Collecter techniciens
+        const userId = intervention.userId || intervention.user_id;
+        if (userId) techSet.add(Number(userId));
+        
+        const visites = intervention.visites || intervention.data?.visites || [];
+        for (const v of visites) {
+          const vUserId = v.userId || v.user_id;
+          if (vUserId) techSet.add(Number(vUserId));
+          const usersIds = v.usersIds || v.users_ids || [];
+          for (const uid of usersIds) {
+            techSet.add(Number(uid));
+          }
+        }
+      }
+    }
+    
+    // Compteur par technicien
+    const savByTechnicien = new Map<number, number>();
+    
+    for (const project of projects) {
+      const date = getProjectDate(project);
+      if (!date) continue;
+      if (params.dateRange && (date < params.dateRange.start || date > params.dateRange.end)) continue;
+      
+      const projectId = Number(project.id);
+      const isAutoSav = isSavProjectAutoDetect(project);
+      if (!isProjectConfirmedSAV(projectId, isAutoSav, savOverrides)) continue;
+      
+      // Déterminer les techniciens: override prioritaire, sinon auto-détection
+      const override = savOverrides?.get(projectId);
+      let technicienIds: number[] = [];
+      
+      if (override?.techniciens_override && override.techniciens_override.length > 0) {
+        technicienIds = override.techniciens_override;
+      } else {
+        const autoTechs = techniciensSavAutoByProject.get(projectId);
+        if (autoTechs) {
+          technicienIds = Array.from(autoTechs);
+        }
+      }
+      
+      // Incrémenter compteur pour chaque technicien
+      for (const techId of technicienIds) {
+        savByTechnicien.set(techId, (savByTechnicien.get(techId) || 0) + 1);
+      }
+    }
+    
+    // Construire le résultat avec noms
+    const result: Record<string, number> = {};
+    const details: Record<string, { id: number; name: string; count: number }> = {};
+    
+    for (const [techId, count] of savByTechnicien.entries()) {
+      const user = usersById.get(techId);
+      const name = user?.name || `Tech ${techId}`;
+      result[name] = count;
+      details[name] = { id: techId, name, count };
+    }
+    
+    return {
+      value: result,
+      metadata: { computedAt: new Date(), source: 'projects', recordCount: savByTechnicien.size },
+      breakdown: { details }
+    };
+  }
+};
+
 export const savDefinitions = {
   taux_sav_global: tauxSavGlobal,
   taux_sav_par_univers: tauxSavParUnivers,
@@ -453,4 +559,5 @@ export const savDefinitions = {
   nb_interventions_sav: nbInterventionsSav,
   ca_impacte_sav: caImpacteSav,
   cout_sav_estime: coutSavEstime,
+  sav_par_technicien: savParTechnicien,
 };

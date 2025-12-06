@@ -3,7 +3,7 @@
  * Wrapper qui impose le contexte agence
  */
 
-import { StatParams, StatResult, DateRange } from '../definitions/types';
+import { StatParams, StatResult, DateRange, SAVOverrideEntry } from '../definitions/types';
 import { getMetric, getMetrics } from './getMetric';
 import { ApogeeDataServices } from '../engine/loaders';
 
@@ -14,6 +14,8 @@ export interface AgencyMetricParams {
   dateRange: DateRange;
   groupBy?: ('univers' | 'apporteur' | 'technicien' | 'mois')[];
   filters?: Record<string, any>;
+  /** Overrides SAV (source de vérité depuis le tableau de gestion) */
+  savOverrides?: Map<number, SAVOverrideEntry>;
 }
 
 /**
