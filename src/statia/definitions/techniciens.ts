@@ -350,12 +350,9 @@ export const caParTechnicienUnivers: StatDefinition = {
       caAvecTemps += meta.montantNetHT;
       
       // Répartir le CA proportionnellement au temps
+      // IMPORTANT: On inclut TOUS les techniciens (actifs ET inactifs) pour le CA total correct
+      // Le filtre "actif/inactif" ne s'applique qu'à l'affichage, pas au calcul
       for (const [techId, techTime] of projectTechTime.entries()) {
-        // Filtrer les techniciens inactifs
-        if (!activeTechIds.has(techId) && !activeTechIds.has(String(techId)) && !activeTechIds.has(Number(techId))) {
-          continue;
-        }
-        
         const proportion = techTime / totalProjectTime;
         const techCA = meta.montantNetHT * proportion;
         
