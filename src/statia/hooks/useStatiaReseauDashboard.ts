@@ -67,12 +67,15 @@ export function useStatiaReseauDashboard(params?: UseStatiaReseauDashboardParams
   const effectiveDateEnd = params?.dateEnd || dateRange?.to || endOfYear(now);
   const effectiveScopeAgences = params?.scopeAgences || selectedAgencies;
   
+  // Mode "Toutes les agences" = tableau vide → on passe undefined à l'engine
+  const isAllAgencies = effectiveScopeAgences.length === 0;
+  
   console.log('[useStatiaReseauDashboard] Params:', {
     selectedAgencies,
     selectedAgenciesLength: selectedAgencies.length,
     effectiveScopeAgences,
     effectiveScopeAgencesLength: effectiveScopeAgences.length,
-    willPassUndefined: effectiveScopeAgences.length === 0,
+    isAllAgencies,
     dateRange,
   });
   
@@ -81,19 +84,27 @@ export function useStatiaReseauDashboard(params?: UseStatiaReseauDashboardParams
       'statia-reseau-dashboard',
       effectiveDateStart.toISOString(),
       effectiveDateEnd.toISOString(),
-      effectiveScopeAgences.join(','),
+      // IMPORTANT: Utiliser 'ALL' comme clé quand toutes les agences sont sélectionnées
+      isAllAgencies ? 'ALL_AGENCIES' : effectiveScopeAgences.join(','),
     ],
     queryFn: async () => {
-      logNetwork.info('[useStatiaReseauDashboard] Chargement des métriques StatIA...');
+      logNetwork.info('[useStatiaReseauDashboard] Chargement des métriques StatIA...', { 
+        isAllAgencies, 
+        scopeCount: effectiveScopeAgences.length 
+      });
       
       try {
         const result = await computeReseauDashboard({
           dateStart: effectiveDateStart,
           dateEnd: effectiveDateEnd,
-          scopeAgences: effectiveScopeAgences.length > 0 ? effectiveScopeAgences : undefined,
+          // undefined = toutes les agences
+          scopeAgences: isAllAgencies ? undefined : effectiveScopeAgences,
         });
         
-        logNetwork.info('[useStatiaReseauDashboard] Métriques chargées avec succès');
+        logNetwork.info('[useStatiaReseauDashboard] Métriques chargées avec succès', {
+          caAnneeEnCours: result.tuilesHautes.caAnneeEnCours,
+          nbAgenciesInData: result.blocCA.partCAParAgence.length,
+        });
         return result;
       } catch (err) {
         logNetwork.error('[useStatiaReseauDashboard] Erreur chargement métriques', err);
