@@ -191,15 +191,16 @@ serve(async (req) => {
       }));
     }
 
-    // Check module access
+    // Check module access - allow if pilotage_agence enabled OR admin roles
     const enabledModules = profile.enabled_modules || {};
-    const hasUnifiedSearch = enabledModules.unified_search?.enabled || 
-                            ['platform_admin', 'superadmin'].includes(profile.global_role);
-
-    if (!hasUnifiedSearch) {
+    const hasPilotage = enabledModules.pilotage_agence?.enabled;
+    const isAdmin = ['platform_admin', 'superadmin', 'franchisor_admin'].includes(profile.global_role);
+    
+    // Allow access for users with pilotage module or admin roles
+    if (!hasPilotage && !isAdmin) {
       return withCors(req, new Response(JSON.stringify({
         type: 'fallback',
-        message: 'Le module Recherche unifiée n\'est pas activé pour votre compte.',
+        message: 'Le module Pilotage n\'est pas activé pour votre compte.',
       }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
