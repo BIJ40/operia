@@ -1,6 +1,12 @@
 /**
  * StatIA AI Search - Entity Resolver
- * Résout les noms de techniciens et apporteurs dans les requêtes
+ * Résolution d'entités métier dans une requête NL :
+ * - techniciens (users)
+ * - apporteurs (clients)
+ * - agences (facultatif)
+ *
+ * Objectif : transformer "yoann", "maxime", "AXA" en IDs Apogée
+ * pour alimenter les filtres StatIA.
  */
 
 import { supabase } from '@/integrations/supabase/client';
@@ -9,33 +15,61 @@ import { supabase } from '@/integrations/supabase/client';
 // TYPES
 // ═══════════════════════════════════════════════════════════════
 
+export interface TechnicianEntity {
+  id: number | string;
+  firstName?: string | null;
+  lastName?: string | null;
+  fullName?: string | null;
+  displayName?: string | null;
+}
+
+export interface ApporteurEntity {
+  id: number | string;
+  name?: string | null;
+  company?: string | null;
+  label?: string | null;
+}
+
+export interface AgencyEntity {
+  id: number | string;
+  name?: string | null;
+  city?: string | null;
+  code?: string | null;
+}
+
 export interface ResolvedEntities {
-  technicienId?: number;
+  technicienId?: number | string;
   technicienName?: string;
-  apporteurId?: number;
+  apporteurId?: number | string;
   apporteurName?: string;
-  agenceId?: string;
+  agenceId?: number | string;
   agenceName?: string;
+
+  // pour gérer les cas ambigus côté UI
+  technicienCandidates?: TechnicianEntity[];
+  apporteurCandidates?: ApporteurEntity[];
+  agenceCandidates?: AgencyEntity[];
+  
+  // Legacy aliases
   ambiguousTechniciens?: TechnicienCandidate[];
   ambiguousApporteurs?: ApporteurCandidate[];
 }
 
-export interface TechnicienCandidate {
+export interface TechnicienCandidate extends TechnicianEntity {
   id: number;
-  firstname: string;
-  name: string;
+  name?: string;
+  firstname?: string;
   fullName: string;
+  matchType: 'exact' | 'firstname' | 'lastname' | 'partial' | 'fuzzy';
   matchScore: number;
-  matchType: 'exact' | 'firstname' | 'lastname' | 'fuzzy';
 }
 
-export interface ApporteurCandidate {
+export interface ApporteurCandidate extends ApporteurEntity {
   id: number;
-  name: string;
-  raisonSociale?: string;
   displayName: string;
-  matchScore: number;
+  raisonSociale?: string;
   matchType: 'exact' | 'partial' | 'fuzzy';
+  matchScore: number;
 }
 
 interface CachedTechnicien {
@@ -56,36 +90,77 @@ interface CachedApporteur {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// CONSTANTES
+// ═══════════════════════════════════════════════════════════════
+
+const MIN_SIMILARITY_STRICT = 0.88;
+const MIN_SIMILARITY_FUZZY = 0.72;
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+// ═══════════════════════════════════════════════════════════════
 // CACHE
 // ═══════════════════════════════════════════════════════════════
 
 let techniciensCache: CachedTechnicien[] | null = null;
 let apporteursCache: CachedApporteur[] | null = null;
 let cacheTimestamp = 0;
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 // ═══════════════════════════════════════════════════════════════
-// NORMALISATION
+// NORMALISATION BAS NIVEAU
 // ═══════════════════════════════════════════════════════════════
 
 /**
  * Normalise un texte : minuscule, sans accents, sans ponctuation
  */
-export function normalizeText(text: string): string {
-  if (!text) return '';
-  return text
+export function normalizeText(input: string | null | undefined): string {
+  if (!input) return '';
+  return input
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Supprime accents
-    .replace(/[^a-z0-9\s]/g, ' ')    // Garde alphanumériques et espaces
-    .replace(/\s+/g, ' ')            // Normalise espaces
+    .replace(/[\u0300-\u036f]/g, '') // accents
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
 /**
- * Extrait les mots d'une query qui ressemblent à des noms propres
- * (mots de 3+ lettres qui ne sont pas des keywords connus)
+ * Similarité simple basée sur le coefficient de Dice (bi-grammes).
+ * Suffisant pour des prénoms / noms / labels courts.
  */
+export function stringSimilarity(a: string, b: string): number {
+  const s1 = normalizeText(a);
+  const s2 = normalizeText(b);
+  if (!s1 || !s2) return 0;
+  if (s1 === s2) return 1;
+
+  const bigrams = (s: string): string[] => {
+    const out: string[] = [];
+    for (let i = 0; i < s.length - 1; i++) {
+      out.push(s.slice(i, i + 2));
+    }
+    return out;
+  };
+
+  const b1 = bigrams(s1);
+  const b2 = bigrams(s2);
+  if (!b1.length || !b2.length) return 0;
+
+  const set = new Set(b1);
+  let common = 0;
+  for (const g of b2) {
+    if (set.has(g)) common++;
+  }
+
+  return (2 * common) / (b1.length + b2.length);
+}
+
+// Alias pour compatibilité
+export const similarityRatio = stringSimilarity;
+
+// ═══════════════════════════════════════════════════════════════
+// EXTRACTION DE NOMS POTENTIELS
+// ═══════════════════════════════════════════════════════════════
+
 const COMMON_WORDS = new Set([
   'quel', 'quelle', 'quels', 'quelles', 'combien', 'que', 'qui', 'quoi',
   'pour', 'par', 'avec', 'dans', 'sur', 'sous', 'entre', 'vers',
@@ -103,14 +178,13 @@ const COMMON_WORDS = new Set([
   'top', 'meilleur', 'meilleurs', 'pire', 'pires', 'classement',
 ]);
 
-export function extractPotentialNames(normalizedQuery: string): string[] {
+function extractPotentialNames(normalizedQuery: string): string[] {
   const words = normalizedQuery.split(' ');
   const candidates: string[] = [];
   
   for (let i = 0; i < words.length; i++) {
     const word = words[i];
     
-    // Skip common words and short words
     if (word.length < 3 || COMMON_WORDS.has(word)) continue;
     
     candidates.push(word);
@@ -128,61 +202,9 @@ export function extractPotentialNames(normalizedQuery: string): string[] {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// FUZZY MATCHING
+// CHARGEMENT DES DONNÉES DEPUIS APOGÉE
 // ═══════════════════════════════════════════════════════════════
 
-/**
- * Calcule la distance de Levenshtein entre deux chaînes
- */
-function levenshteinDistance(a: string, b: string): number {
-  const matrix: number[][] = [];
-  
-  for (let i = 0; i <= b.length; i++) {
-    matrix[i] = [i];
-  }
-  for (let j = 0; j <= a.length; j++) {
-    matrix[0][j] = j;
-  }
-  
-  for (let i = 1; i <= b.length; i++) {
-    for (let j = 1; j <= a.length; j++) {
-      if (b.charAt(i - 1) === a.charAt(j - 1)) {
-        matrix[i][j] = matrix[i - 1][j - 1];
-      } else {
-        matrix[i][j] = Math.min(
-          matrix[i - 1][j - 1] + 1,
-          matrix[i][j - 1] + 1,
-          matrix[i - 1][j] + 1
-        );
-      }
-    }
-  }
-  
-  return matrix[b.length][a.length];
-}
-
-/**
- * Calcule un ratio de similarité (0-1)
- */
-export function similarityRatio(a: string, b: string): number {
-  if (!a || !b) return 0;
-  if (a === b) return 1;
-  
-  const distance = levenshteinDistance(a, b);
-  const maxLen = Math.max(a.length, b.length);
-  
-  return 1 - (distance / maxLen);
-}
-
-const FUZZY_THRESHOLD = 0.72;
-
-// ═══════════════════════════════════════════════════════════════
-// CHARGEMENT DES DONNÉES
-// ═══════════════════════════════════════════════════════════════
-
-/**
- * Charge et met en cache les techniciens depuis Apogée (via users)
- */
 async function loadTechniciens(agencySlug: string): Promise<CachedTechnicien[]> {
   const now = Date.now();
   
@@ -191,7 +213,6 @@ async function loadTechniciens(agencySlug: string): Promise<CachedTechnicien[]> 
   }
   
   try {
-    // Call edge function to get users from Apogée
     const { data, error } = await supabase.functions.invoke('proxy-apogee', {
       body: {
         endpoint: 'apiGetUsers',
@@ -209,7 +230,6 @@ async function loadTechniciens(agencySlug: string): Promise<CachedTechnicien[]> 
     
     techniciensCache = users
       .filter((u: any) => {
-        // Only active technicians
         if (u?.is_on !== true) return false;
         const hasUniverses = Array.isArray(u?.data?.universes) && u.data.universes.length > 0;
         return u?.isTechnicien === true || 
@@ -233,9 +253,6 @@ async function loadTechniciens(agencySlug: string): Promise<CachedTechnicien[]> 
   }
 }
 
-/**
- * Charge et met en cache les apporteurs depuis Apogée (via clients)
- */
 async function loadApporteurs(agencySlug: string): Promise<CachedApporteur[]> {
   const now = Date.now();
   
@@ -278,8 +295,32 @@ async function loadApporteurs(agencySlug: string): Promise<CachedApporteur[]> {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// MATCHING TECHNICIENS
+// RÉSOLUTION TECHNICIEN
 // ═══════════════════════════════════════════════════════════════
+
+function buildTechnicianLabels(t: CachedTechnicien): string[] {
+  const labels: string[] = [];
+  if (t.normalizedFull) labels.push(t.normalizedFull);
+  labels.push(`${t.normalizedFirstname} ${t.normalizedName}`);
+  labels.push(`${t.normalizedName} ${t.normalizedFirstname}`);
+  if (t.normalizedFirstname) labels.push(t.normalizedFirstname);
+  if (t.normalizedName) labels.push(t.normalizedName);
+  return labels.filter(l => l.trim().length > 0);
+}
+
+function determineMatchType(
+  qNorm: string, 
+  tech: CachedTechnicien, 
+  score: number
+): 'exact' | 'firstname' | 'lastname' | 'partial' | 'fuzzy' {
+  if (qNorm === tech.normalizedFull) return 'exact';
+  if (qNorm === `${tech.normalizedFirstname} ${tech.normalizedName}` || 
+      qNorm === `${tech.normalizedName} ${tech.normalizedFirstname}`) return 'exact';
+  if (qNorm === tech.normalizedFirstname) return 'firstname';
+  if (qNorm === tech.normalizedName) return 'lastname';
+  if (score >= MIN_SIMILARITY_STRICT) return 'partial';
+  return 'fuzzy';
+}
 
 function matchTechnicien(
   query: string,
@@ -290,76 +331,51 @@ function matchTechnicien(
   const matches: TechnicienCandidate[] = [];
   
   for (const tech of techniciens) {
-    let bestScore = 0;
-    let bestType: TechnicienCandidate['matchType'] = 'fuzzy';
+    const labels = buildTechnicianLabels(tech);
+    let maxScore = 0;
     
     for (const name of potentialNames) {
-      // Exact match on full name
-      if (name === tech.normalizedFull) {
-        bestScore = 1;
-        bestType = 'exact';
-        break;
-      }
-      
-      // Exact match on firstname
-      if (name === tech.normalizedFirstname && tech.normalizedFirstname.length >= 3) {
-        const score = 0.95;
-        if (score > bestScore) {
-          bestScore = score;
-          bestType = 'firstname';
+      for (const label of labels) {
+        const sim = stringSimilarity(name, label);
+        if (sim > maxScore) maxScore = sim;
+        
+        // Bonus si le nom est inclus dans la query
+        if (label && normalizedQuery.includes(label)) {
+          maxScore = Math.max(maxScore, 1);
         }
-      }
-      
-      // Exact match on lastname
-      if (name === tech.normalizedName && tech.normalizedName.length >= 3) {
-        const score = 0.9;
-        if (score > bestScore) {
-          bestScore = score;
-          bestType = 'lastname';
-        }
-      }
-      
-      // Fuzzy match on full name
-      const fullRatio = similarityRatio(name, tech.normalizedFull);
-      if (fullRatio >= FUZZY_THRESHOLD && fullRatio > bestScore) {
-        bestScore = fullRatio;
-        bestType = 'fuzzy';
-      }
-      
-      // Fuzzy match on firstname
-      const firstRatio = similarityRatio(name, tech.normalizedFirstname);
-      if (firstRatio >= FUZZY_THRESHOLD && firstRatio > bestScore) {
-        bestScore = firstRatio * 0.9; // Slightly lower score for partial match
-        bestType = 'fuzzy';
-      }
-      
-      // Fuzzy match on lastname
-      const lastRatio = similarityRatio(name, tech.normalizedName);
-      if (lastRatio >= FUZZY_THRESHOLD && lastRatio > bestScore) {
-        bestScore = lastRatio * 0.85;
-        bestType = 'fuzzy';
       }
     }
     
-    if (bestScore >= FUZZY_THRESHOLD) {
+    if (maxScore >= MIN_SIMILARITY_FUZZY) {
       matches.push({
         id: tech.id,
         firstname: tech.firstname,
         name: tech.name,
+        firstName: tech.firstname,
+        lastName: tech.name,
         fullName: `${tech.firstname} ${tech.name}`.trim(),
-        matchScore: bestScore,
-        matchType: bestType,
+        displayName: `${tech.firstname} ${tech.name}`.trim(),
+        matchScore: maxScore,
+        matchType: determineMatchType(normalizedQuery, tech, maxScore),
       });
     }
   }
   
   // Sort by score descending
-  return matches.sort((a, b) => b.matchScore - a.matchScore);
+  matches.sort((a, b) => b.matchScore - a.matchScore);
+  
+  return matches;
 }
 
 // ═══════════════════════════════════════════════════════════════
-// MATCHING APPORTEURS
+// RÉSOLUTION APPORTEUR
 // ═══════════════════════════════════════════════════════════════
+
+function determineApporteurMatchType(score: number): 'exact' | 'partial' | 'fuzzy' {
+  if (score >= 1) return 'exact';
+  if (score >= MIN_SIMILARITY_STRICT) return 'partial';
+  return 'fuzzy';
+}
 
 function matchApporteur(
   query: string,
@@ -369,73 +385,65 @@ function matchApporteur(
   const potentialNames = extractPotentialNames(normalizedQuery);
   const matches: ApporteurCandidate[] = [];
   
-  // Also check if common apporteur names appear directly in query
+  // Check if common apporteur names appear directly in query
   const commonApporteurs = ['axa', 'groupama', 'maif', 'matmut', 'macif', 'generali', 'allianz'];
   for (const common of commonApporteurs) {
-    if (normalizedQuery.includes(common)) {
+    if (normalizedQuery.includes(common) && !potentialNames.includes(common)) {
       potentialNames.push(common);
     }
   }
   
   for (const app of apporteurs) {
-    let bestScore = 0;
-    let bestType: ApporteurCandidate['matchType'] = 'fuzzy';
+    let maxScore = 0;
     
     for (const name of potentialNames) {
       // Exact match on nom
       if (name === app.normalizedNom) {
-        bestScore = 1;
-        bestType = 'exact';
+        maxScore = 1;
         break;
       }
       
       // Exact match on raison sociale
       if (app.normalizedRaisonSociale && name === app.normalizedRaisonSociale) {
-        const score = 0.95;
-        if (score > bestScore) {
-          bestScore = score;
-          bestType = 'exact';
-        }
+        maxScore = Math.max(maxScore, 0.95);
       }
       
       // Partial match (name contained in raison sociale or vice versa)
       if (app.normalizedRaisonSociale.includes(name) || app.normalizedNom.includes(name)) {
-        const score = 0.85;
-        if (score > bestScore) {
-          bestScore = score;
-          bestType = 'partial';
-        }
+        maxScore = Math.max(maxScore, 0.85);
       }
       
       // Fuzzy match
-      const nomRatio = similarityRatio(name, app.normalizedNom);
-      if (nomRatio >= FUZZY_THRESHOLD && nomRatio > bestScore) {
-        bestScore = nomRatio;
-        bestType = 'fuzzy';
+      const nomRatio = stringSimilarity(name, app.normalizedNom);
+      if (nomRatio >= MIN_SIMILARITY_FUZZY && nomRatio > maxScore) {
+        maxScore = nomRatio;
       }
       
       if (app.normalizedRaisonSociale) {
-        const rsRatio = similarityRatio(name, app.normalizedRaisonSociale);
-        if (rsRatio >= FUZZY_THRESHOLD && rsRatio > bestScore) {
-          bestScore = rsRatio;
-          bestType = 'fuzzy';
+        const rsRatio = stringSimilarity(name, app.normalizedRaisonSociale);
+        if (rsRatio >= MIN_SIMILARITY_FUZZY && rsRatio > maxScore) {
+          maxScore = rsRatio;
         }
       }
     }
     
-    if (bestScore >= FUZZY_THRESHOLD) {
+    if (maxScore >= MIN_SIMILARITY_FUZZY) {
       matches.push({
         id: app.id,
         name: app.nom,
+        company: app.raisonSociale,
+        label: app.raisonSociale || app.nom,
         raisonSociale: app.raisonSociale,
         displayName: app.raisonSociale || app.nom,
-        matchScore: bestScore,
-        matchType: bestType,
+        matchScore: maxScore,
+        matchType: determineApporteurMatchType(maxScore),
       });
     }
   }
   
-  return matches.sort((a, b) => b.matchScore - a.matchScore);
+  matches.sort((a, b) => b.matchScore - a.matchScore);
+  
+  return matches;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -447,7 +455,7 @@ function matchApporteur(
  */
 export async function resolveEntities(
   query: string,
-  agencySlug: string
+  agencySlug?: string | null
 ): Promise<ResolvedEntities> {
   const result: ResolvedEntities = {};
   
@@ -465,28 +473,32 @@ export async function resolveEntities(
   // Match techniciens
   const techMatches = matchTechnicien(query, techniciens);
   
-  if (techMatches.length === 1 && techMatches[0].matchScore >= 0.85) {
+  if (techMatches.length === 1 && techMatches[0].matchScore >= MIN_SIMILARITY_STRICT) {
     // Single confident match
     result.technicienId = techMatches[0].id;
     result.technicienName = techMatches[0].fullName;
   } else if (techMatches.length > 1) {
     // Multiple matches - return ambiguity
     result.ambiguousTechniciens = techMatches.slice(0, 5);
+    result.technicienCandidates = techMatches.slice(0, 5);
   } else if (techMatches.length === 1) {
     // Single low-confidence match - still ambiguous
     result.ambiguousTechniciens = techMatches;
+    result.technicienCandidates = techMatches;
   }
   
   // Match apporteurs
   const appMatches = matchApporteur(query, apporteurs);
   
-  if (appMatches.length === 1 && appMatches[0].matchScore >= 0.85) {
+  if (appMatches.length === 1 && appMatches[0].matchScore >= MIN_SIMILARITY_STRICT) {
     result.apporteurId = appMatches[0].id;
     result.apporteurName = appMatches[0].displayName;
   } else if (appMatches.length > 1) {
     result.ambiguousApporteurs = appMatches.slice(0, 5);
+    result.apporteurCandidates = appMatches.slice(0, 5);
   } else if (appMatches.length === 1) {
     result.ambiguousApporteurs = appMatches;
+    result.apporteurCandidates = appMatches;
   }
   
   return result;
@@ -502,10 +514,16 @@ export function invalidateEntityCache(): void {
 }
 
 /**
- * Vérifie si la query contient potentiellement un nom propre non résolu
+ * Check if query might contain unresolved names (for UI hints)
  */
 export function hasPotentialUnresolvedName(query: string): boolean {
-  const normalizedQuery = normalizeText(query);
-  const potentialNames = extractPotentialNames(normalizedQuery);
-  return potentialNames.length > 0;
+  const normalized = normalizeText(query);
+  // Check for common French first names or patterns that suggest a name
+  const namePatterns = [
+    /\b(yoann|maxime|thomas|antoine|julien|nicolas|alexandre|pierre|paul|jean|marie|sophie|marine|lucie)\b/i,
+    /\b[A-Z][a-z]+\s+[A-Z]\./i, // "Thomas L."
+    /\b(de|le|la|du)\s+[A-Z]/i, // "de Martin"
+  ];
+  
+  return namePatterns.some(p => p.test(query) || p.test(normalized));
 }

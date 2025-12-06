@@ -71,10 +71,14 @@ export {
   invalidateEntityCache,
   normalizeText,
   similarityRatio,
+  stringSimilarity,
   hasPotentialUnresolvedName,
   type ResolvedEntities,
   type TechnicienCandidate,
   type ApporteurCandidate,
+  type TechnicianEntity,
+  type ApporteurEntity,
+  type AgencyEntity,
 } from './entityResolver';
 
 // Extraction LLM
