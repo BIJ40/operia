@@ -13,6 +13,7 @@ export interface SavOverride {
   agency_id: string;
   is_confirmed_sav: boolean | null;
   cout_sav_manuel: number | null;
+  techniciens_override: number[] | null;
   confirmed_by: string | null;
   confirmed_at: string | null;
   notes: string | null;
@@ -24,6 +25,7 @@ export interface UpsertSavOverrideParams {
   project_id: number;
   is_confirmed_sav?: boolean | null;
   cout_sav_manuel?: number | null;
+  techniciens_override?: number[] | null;
   notes?: string | null;
 }
 
@@ -91,6 +93,9 @@ export function useSavOverrides() {
         cout_sav_manuel: params.cout_sav_manuel !== undefined 
           ? params.cout_sav_manuel 
           : existingOverride?.cout_sav_manuel ?? null,
+        techniciens_override: params.techniciens_override !== undefined
+          ? params.techniciens_override
+          : existingOverride?.techniciens_override ?? null,
         notes: params.notes !== undefined 
           ? params.notes 
           : existingOverride?.notes ?? null,
