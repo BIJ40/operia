@@ -54,7 +54,28 @@ export { validateAndRoute } from './validateAndRoute';
 export { NL_ROUTING_RULES, findMetricFromNLRules, findCandidateMetrics, isOfficialMetric } from './nlRouting';
 
 // Core Module
-export { aiSearchRoute, type AiSearchContext, type AiSearchInput, type AiSearchRoutedRequest, type AiSearchResult, type AiSearchDebugInfo } from './core';
+export { 
+  aiSearchRoute, 
+  aiSearchRouteWithEntities,
+  type AiSearchContext, 
+  type AiSearchInput, 
+  type AiSearchRoutedRequest, 
+  type AiSearchResult, 
+  type AiSearchDebugInfo,
+  type EntityAmbiguousResult,
+} from './core';
+
+// Entity Resolver
+export {
+  resolveEntities,
+  invalidateEntityCache,
+  normalizeText,
+  similarityRatio,
+  hasPotentialUnresolvedName,
+  type ResolvedEntities,
+  type TechnicienCandidate,
+  type ApporteurCandidate,
+} from './entityResolver';
 
 // Extraction LLM
 export { extractIntentWithLLM } from './extractIntentLLM';
