@@ -357,12 +357,16 @@ export function UnifiedHeader() {
         {/* Subtitle bar - below main header */}
         {displaySubtitle && (
           <div 
-            className={`px-4 py-1 border-t border-border/50 ${subtitleBgClass} grid grid-cols-[1fr_auto] items-center gap-4`}
+            className={`px-4 py-1 border-t border-border/50 ${subtitleBgClass} flex items-center justify-center relative`}
           >
-            <p className={`${subtitleTextSizeClass} text-muted-foreground truncate`}>
+            <p className={`${subtitleTextSizeClass} text-muted-foreground text-center`}>
               {displaySubtitle}
             </p>
-            {canAccessMessaging && <MessagingWidget />}
+            {canAccessMessaging && (
+              <div className="absolute right-4">
+                <MessagingWidget />
+              </div>
+            )}
           </div>
         )}
         
