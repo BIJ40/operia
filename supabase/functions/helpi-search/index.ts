@@ -118,7 +118,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch chunks with embeddings
+    // Fetch ALL chunks with embeddings (no limit to ensure complete coverage)
     let dbQuery = supabase
       .from("guide_chunks")
       .select("id, source_id, block_id, block_type, title, block_title, content, chunk_text, embedding")
@@ -128,7 +128,7 @@ serve(async (req) => {
       dbQuery = dbQuery.in("block_type", blockTypes);
     }
 
-    const { data: chunks, error: dbError } = await dbQuery.limit(500);
+    const { data: chunks, error: dbError } = await dbQuery.limit(1000);
 
     if (dbError) {
       console.error("[HELPI-SEARCH] DB error:", dbError);
@@ -140,6 +140,8 @@ serve(async (req) => {
         })
       );
     }
+    
+    console.log(`[HELPI-SEARCH] Loaded ${chunks?.length || 0} chunks, threshold: ${matchThreshold}`);
 
     if (!chunks || chunks.length === 0) {
       return withCors(
@@ -178,7 +180,10 @@ serve(async (req) => {
     scoredResults.sort((a, b) => b.similarity - a.similarity);
     const topResults = scoredResults.slice(0, matchCount);
 
-    console.log(`[HELPI-SEARCH] Found ${scoredResults.length} matches, returning top ${topResults.length}`);
+    console.log(`[HELPI-SEARCH] Found ${scoredResults.length} matches above threshold ${matchThreshold}, returning top ${topResults.length}`);
+    if (topResults.length > 0) {
+      console.log(`[HELPI-SEARCH] Best match: "${topResults[0].title}" (sim: ${topResults[0].similarity.toFixed(3)})`);
+    }
 
     return withCors(
       req,
