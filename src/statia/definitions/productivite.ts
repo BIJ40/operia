@@ -223,27 +223,52 @@ export const nbHeuresProductives: StatDefinition = {
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const { interventions, users } = data;
     
+    // GARDE-FOU: dateRange obligatoire pour éviter de compter tout l'historique
+    if (!params.dateRange?.start || !params.dateRange?.end) {
+      console.error('[nb_heures_productives] ERREUR: dateRange est obligatoire');
+      return {
+        value: 0,
+        metadata: {
+          computedAt: new Date(),
+          source: 'interventions',
+          recordCount: 0,
+        },
+        breakdown: {
+          error: 'dateRange is required',
+        }
+      };
+    }
+    
     const usersMap = new Map(users.map(u => [u.id, u]));
     let totalHeures = 0;
     let interventionsComptees = 0;
+    let interventionsFiltrees = 0;
+    let earliest: Date | null = null;
+    let latest: Date | null = null;
     
     for (const intervention of interventions) {
       const date = intervention.date || intervention.created_at;
-      if (date) {
-        try {
-          const interventionDate = parseISO(date);
-          if (!isWithinInterval(interventionDate, { start: params.dateRange.start, end: params.dateRange.end })) {
-            continue;
-          }
-        } catch {
+      if (!date) {
+        continue;
+      }
+      
+      let interventionDate: Date;
+      try {
+        interventionDate = parseISO(date);
+        // Filtrage strict par dateRange
+        if (!isWithinInterval(interventionDate, { start: params.dateRange.start, end: params.dateRange.end })) {
+          interventionsFiltrees++;
           continue;
         }
+      } catch {
+        continue;
       }
       
       // Utiliser la même logique que calculateTechTimeByProject
       if (!isProductiveIntervention(intervention)) continue;
       
       let tempsCompte = false;
+      let heuresIntervention = 0;
       
       // Priorité 1: biV3.items avec techTimeStart/techTimeEnd
       if (intervention.data?.biV3?.items && Array.isArray(intervention.data.biV3.items)) {
@@ -252,8 +277,8 @@ export const nbHeuresProductives: StatDefinition = {
             const start = new Date(item.techTimeStart).getTime();
             const end = new Date(item.techTimeEnd).getTime();
             const dureeMinutes = (end - start) / (1000 * 60);
-            if (dureeMinutes > 0) {
-              totalHeures += dureeMinutes / 60;
+            if (dureeMinutes > 0 && dureeMinutes < 1440) { // Max 24h par item pour éviter les valeurs aberrantes
+              heuresIntervention += dureeMinutes / 60;
               tempsCompte = true;
             }
           }
@@ -265,17 +290,36 @@ export const nbHeuresProductives: StatDefinition = {
         const visites = intervention.visites || intervention.data?.visites || [];
         for (const visite of visites) {
           const duree = Number(visite.duree) || 0;
-          if (duree > 0 && visite.usersIds?.length > 0) {
-            totalHeures += duree / 60;
+          // Durée en minutes, max 720 (12h) par visite pour éviter les valeurs aberrantes
+          if (duree > 0 && duree < 720 && visite.usersIds?.length > 0) {
+            heuresIntervention += duree / 60;
             tempsCompte = true;
           }
         }
       }
       
       if (tempsCompte) {
+        totalHeures += heuresIntervention;
         interventionsComptees++;
+        
+        // Tracker les dates pour debug
+        if (!earliest || interventionDate < earliest) earliest = interventionDate;
+        if (!latest || interventionDate > latest) latest = interventionDate;
       }
     }
+    
+    // Log de debug
+    console.log('[nb_heures_productives]', {
+      totalHeures: Math.round(totalHeures * 10) / 10,
+      interventionsComptees,
+      interventionsFiltrees,
+      earliest: earliest?.toISOString().split('T')[0],
+      latest: latest?.toISOString().split('T')[0],
+      dateRange: {
+        start: params.dateRange.start.toISOString().split('T')[0],
+        end: params.dateRange.end.toISOString().split('T')[0],
+      },
+    });
     
     return {
       value: Math.round(totalHeures * 10) / 10,
@@ -287,6 +331,9 @@ export const nbHeuresProductives: StatDefinition = {
       breakdown: {
         heuresTotal: Math.round(totalHeures * 10) / 10,
         interventionsProductives: interventionsComptees,
+        interventionsFiltrees,
+        earliestDate: earliest?.toISOString().split('T')[0],
+        latestDate: latest?.toISOString().split('T')[0],
       }
     };
   }
