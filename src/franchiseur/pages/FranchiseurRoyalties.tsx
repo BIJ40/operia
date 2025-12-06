@@ -306,7 +306,7 @@ export default function FranchiseurRoyalties() {
             Simulateur de redevances
           </CardTitle>
           <CardDescription>
-            Testez le calcul des redevances avec le barème en cours de création
+            Testez le calcul des redevances avec le barème configuré ci-dessus
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
