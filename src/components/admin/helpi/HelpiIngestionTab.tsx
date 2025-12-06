@@ -434,7 +434,12 @@ export function HelpiIngestionTab() {
                     >
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <StatusBadge status={doc.status} />
-                        <span className="truncate">{doc.filename}</span>
+                        <div className="min-w-0 flex-1">
+                          <span className="truncate block font-medium">{doc.title || doc.filename}</span>
+                          {doc.title && doc.title !== doc.filename && (
+                            <span className="truncate block text-xs text-muted-foreground">{doc.filename}</span>
+                          )}
+                        </div>
                         {doc.detected_context && (
                           <Badge variant="outline" className="text-xs shrink-0">
                             {doc.detected_context}
