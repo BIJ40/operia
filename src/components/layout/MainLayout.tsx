@@ -6,6 +6,7 @@ import { PublicLanding } from './PublicLanding';
 import { LoginDialog } from '@/components/LoginDialog';
 import { ImageModal } from '@/components/ImageModal';
 import { ChatbotTestProvider } from '@/components/Chatbot';
+import { UnifiedSearchProvider, UnifiedSearchFloatingBar, UnifiedSearchResultOverlay } from '@/components/unified-search';
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useStorageQuota } from '@/hooks/use-storage-quota';
@@ -55,23 +56,30 @@ export function MainLayout({
 
   return (
     <ChatbotTestProvider>
-      <SidebarProvider>
-        <div className={`min-h-screen w-full flex bg-background ${isImpersonating ? 'pt-10' : ''}`}>
-          {showSidebar && <UnifiedSidebar />}
-          
-          <div className="flex-1 flex flex-col min-h-screen min-w-0">
-            {showHeader && <UnifiedHeader />}
+      <UnifiedSearchProvider>
+        <SidebarProvider>
+          <div className={`min-h-screen w-full flex bg-background ${isImpersonating ? 'pt-10' : ''}`}>
+            {showSidebar && <UnifiedSidebar />}
             
-            {/* P2 FIX: id pour skip link accessibilité */}
-            <main id="main-content" className="flex-1 overflow-auto p-6" role="main">
-              {children}
-            </main>
+            <div className="flex-1 flex flex-col min-h-screen min-w-0">
+              {showHeader && <UnifiedHeader />}
+              
+              {/* Barre de recherche unifiée flottante */}
+              <UnifiedSearchFloatingBar />
+              
+              {/* P2 FIX: id pour skip link accessibilité */}
+              <main id="main-content" className="flex-1 overflow-auto p-6" role="main">
+                {children}
+              </main>
+            </div>
           </div>
-        </div>
 
-        <ImageModal />
-        <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
-      </SidebarProvider>
+          {/* Overlay de résultats */}
+          <UnifiedSearchResultOverlay />
+          <ImageModal />
+          <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
+        </SidebarProvider>
+      </UnifiedSearchProvider>
     </ChatbotTestProvider>
   );
 }
