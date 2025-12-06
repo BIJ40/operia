@@ -2407,11 +2407,15 @@ export type Database = {
           block_type: string
           chunk_index: number
           chunk_text: string
+          content: string | null
           context_type: Database["public"]["Enums"]["rag_context_type"]
           created_at: string | null
           embedding: Json
           id: string
           metadata: Json | null
+          source_id: string | null
+          title: string | null
+          tokens: number | null
           updated_at: string | null
         }
         Insert: {
@@ -2421,11 +2425,15 @@ export type Database = {
           block_type: string
           chunk_index: number
           chunk_text: string
+          content?: string | null
           context_type: Database["public"]["Enums"]["rag_context_type"]
           created_at?: string | null
           embedding: Json
           id?: string
           metadata?: Json | null
+          source_id?: string | null
+          title?: string | null
+          tokens?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -2435,11 +2443,15 @@ export type Database = {
           block_type?: string
           chunk_index?: number
           chunk_text?: string
+          content?: string | null
           context_type?: Database["public"]["Enums"]["rag_context_type"]
           created_at?: string | null
           embedding?: Json
           id?: string
           metadata?: Json | null
+          source_id?: string | null
+          title?: string | null
+          tokens?: number | null
           updated_at?: string | null
         }
         Relationships: []
@@ -4502,6 +4514,15 @@ export type Database = {
         }[]
       }
       get_current_collaborator_id: { Args: never; Returns: string }
+      get_helpi_stats: {
+        Args: never
+        Returns: {
+          by_block_type: Json
+          chunks_with_embedding: number
+          last_indexed_at: string
+          total_chunks: number
+        }[]
+      }
       get_unread_rh_notifications_count: { Args: never; Returns: number }
       get_user_agency: { Args: { _user_id: string }; Returns: string }
       get_user_agency_id: { Args: { _user_id: string }; Returns: string }
@@ -4621,6 +4642,17 @@ export type Database = {
       mark_rh_notifications_read: {
         Args: { p_notification_ids: string[] }
         Returns: number
+      }
+      match_knowledge: {
+        Args: { p_allowed_block_types?: string[]; p_match_count?: number }
+        Returns: {
+          block_type: string
+          content: string
+          embedding: Json
+          id: string
+          source_id: string
+          title: string
+        }[]
       }
       request_document: {
         Args: { p_description?: string; p_request_type: string }

@@ -9,9 +9,6 @@ verify_jwt = true
 [functions.chat-guide]
 verify_jwt = true
 
-[functions.generate-embeddings]
-verify_jwt = true
-
 [functions.index-document]
 verify_jwt = true
 
@@ -46,12 +43,6 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.seed-test-users]
-verify_jwt = true
-
-[functions.regenerate-apogee-rag]
-verify_jwt = true
-
-[functions.regenerate-helpconfort-rag]
 verify_jwt = true
 
 [functions.qualify-ticket]
@@ -109,4 +100,10 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.ai-search-extract]
+verify_jwt = true
+
+[functions.helpi-search]
+verify_jwt = true
+
+[functions.helpi-index]
 verify_jwt = true
