@@ -567,11 +567,23 @@ serve(async (req) => {
 
               const projectsById = new Map(projects.map(p => [p.id, p]));
               // Create clients map with both string and number keys for robust lookup
-              const clientsById = new Map<string | number, typeof clients[0]>();
+              // Build apporteur name map exactly like StatIA apporteurs.ts mapApporteurs()
+              const apporteurNames = new Map<string, string>();
               for (const c of clients) {
-                clientsById.set(c.id, c);
-                clientsById.set(String(c.id), c);
-                if (typeof c.id === 'string') clientsById.set(parseInt(c.id), c);
+                const id = String(c.id);
+                const cAny = c as any;
+                // Same priority as StatIA: displayName → raisonSociale → nom → name → label → data.nom → data.name
+                const nom = 
+                  cAny.displayName ||
+                  c.raisonSociale ||
+                  cAny.nom ||
+                  c.name ||
+                  cAny.label ||
+                  cAny.data?.nom ||
+                  cAny.data?.name ||
+                  cAny.data?.raisonSociale ||
+                  `Apporteur ${id}`;
+                apporteurNames.set(id, nom);
               }
 
               // === CA PAR APPORTEUR ===
@@ -593,8 +605,7 @@ serve(async (req) => {
                   
                   if (commanditaireId) {
                     facturesWithApporteur++;
-                    const client = clientsById.get(commanditaireId);
-                    const name = client?.raisonSociale || client?.name || `Apporteur #${commanditaireId}`;
+                    const name = apporteurNames.get(String(commanditaireId)) || `Apporteur #${commanditaireId}`;
                     if (!caByApporteur[commanditaireId]) caByApporteur[commanditaireId] = { name, ca: 0 };
                     caByApporteur[commanditaireId].ca += netMontant;
                   } else {
