@@ -198,7 +198,7 @@ export async function setStatsToCache(
   try {
     await supabase.from('ai_search_cache').upsert([{
       key,
-      value: value as object,
+      value: JSON.parse(JSON.stringify(value)),
       ttl_seconds: ttlSeconds,
     }], { onConflict: 'key' });
   } catch {
