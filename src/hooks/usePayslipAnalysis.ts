@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { PayslipData, PayslipExtractedData } from '@/types/payslipData';
 import { toast } from 'sonner';
 import { Json } from '@/integrations/supabase/types';
+import { logError } from '@/lib/logger';
 
 // Helper pour convertir Json en PayslipExtractedData
 function parseRawData(raw: Json): PayslipExtractedData {
@@ -59,7 +60,7 @@ export function useAnalyzePayslip() {
       }
     },
     onError: (error: Error) => {
-      console.error('Erreur analyse bulletin:', error);
+      logError('[usePayslipAnalysis] Erreur analyse:', error);
       toast.error(`Erreur d'analyse: ${error.message}`);
     },
   });

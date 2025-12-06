@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { toast } from "sonner";
+import { logError } from "@/lib/logger";
 
 export interface SavOverride {
   id: string;
@@ -118,7 +119,7 @@ export function useSavOverrides() {
       toast.success("Modification SAV enregistrée");
     },
     onError: (error) => {
-      console.error("Erreur upsert SAV:", error);
+      logError("[useSavOverrides] Erreur upsert:", error);
       toast.error("Erreur lors de l'enregistrement");
     },
   });
@@ -141,7 +142,7 @@ export function useSavOverrides() {
       toast.success("Override SAV supprimé");
     },
     onError: (error) => {
-      console.error("Erreur suppression SAV:", error);
+      logError("[useSavOverrides] Erreur suppression:", error);
       toast.error("Erreur lors de la suppression");
     },
   });

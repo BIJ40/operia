@@ -6,6 +6,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { logError } from '@/lib/logger';
 
 export interface SensitiveData {
   birth_date: string | null;
@@ -39,7 +40,7 @@ export function useSensitiveData(collaboratorId: string | undefined) {
       });
 
       if (error) {
-        console.error('Error fetching sensitive data:', error);
+        logError('[useSensitiveData] Error fetching:', error);
         throw error;
       }
 

@@ -5,6 +5,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { errorToast, successToast } from '@/lib/toastHelpers';
+import { logError } from '@/lib/logger';
 import type { LeaveStatus } from '@/types/leaveRequest';
 
 interface GenerateDecisionParams {
@@ -37,7 +38,7 @@ export function useGenerateLeaveDecision() {
     },
     onError: (error: Error) => {
       errorToast('Erreur lors de la génération du document');
-      console.error('Generate decision error:', error);
+      logError('[useLeaveDecision] Generate error:', error);
     },
   });
 }
@@ -87,14 +88,14 @@ export function useSendLeaveNotification() {
         });
 
       if (notifError) {
-        console.error('Notification error:', notifError);
+        logError('[useLeaveDecision] Notification error:', notifError);
         // Don't throw, notification failure shouldn't block the flow
       }
 
       return { success: true };
     },
     onError: (error: Error) => {
-      console.error('Send notification error:', error);
+      logError('[useLeaveDecision] Send notification error:', error);
     },
   });
 }

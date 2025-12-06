@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { logError } from "@/lib/logger";
 
 export interface FormationContent {
   id: string;
@@ -92,7 +93,7 @@ export function useGenerateFormationContent() {
       toast.success("Contenu de formation généré");
     },
     onError: (error: Error) => {
-      console.error("Generation error:", error);
+      logError("[useFormationContent] Generation error:", error);
       toast.error("Erreur lors de la génération: " + error.message);
     }
   });
