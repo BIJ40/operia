@@ -27,6 +27,8 @@ const METRICS_TO_VALIDATE = [
   
   // Univers
   { id: 'ca_par_univers', label: 'CA par Univers', category: 'Univers', format: 'object' },
+  { id: 'rentabilite_par_univers', label: 'Rentabilité €/h par Univers', category: 'Univers', format: 'object' },
+  { id: 'mix_ca_global_par_univers', label: 'Mix CA % par Univers', category: 'Univers', format: 'object' },
   
   // Apporteurs
   { id: 'ca_par_apporteur', label: 'CA par Apporteur', category: 'Apporteurs', format: 'object' },

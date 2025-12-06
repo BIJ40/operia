@@ -757,6 +757,219 @@ export const matrixUniversApporteur: StatDefinition = {
   }
 };
 
+/**
+ * Rentabilité par Univers (CA horaire moyen)
+ * 
+ * RÈGLES:
+ * - Source: factures, interventions, projects
+ * - CA par univers (prorata si multi-univers)
+ * - Heures productives par univers (visites validées × nbTechs / 60)
+ * - Rentabilité = CA_U / Heures_U
+ */
+export const rentabiliteParUnivers: StatDefinition = {
+  id: 'rentabilite_par_univers',
+  label: 'CA horaire moyen par Univers',
+  description: 'Rentabilité €/h par univers = CA / heures productives',
+  category: 'univers',
+  source: ['factures', 'interventions', 'projects'],
+  dimensions: ['univers'],
+  aggregation: 'ratio',
+  unit: '€/h',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { factures, interventions, projects } = data;
+    
+    const projectsById = indexProjectsById(projects);
+    const caByUnivers: Record<string, number> = {};
+    const heuresByUnivers: Record<string, number> = {};
+    
+    // Types productifs (exclure RT, SAV, diagnostic)
+    const PRODUCTIVE_TYPES = new Set(['depan', 'tvx', 'depannage', 'travaux', 'work', 'repair', 'recherche_fuite']);
+    
+    // 1. Calculer CA par univers (même logique que ca_par_univers)
+    for (const facture of factures) {
+      const meta = extractFactureMeta(facture);
+      
+      if (!isFactureStateIncluded(facture.state)) continue;
+      if (meta.montantNetHT === 0) continue;
+      
+      if (params.dateRange && meta.date) {
+        if (meta.date < params.dateRange.start || meta.date > params.dateRange.end) continue;
+      }
+      
+      const projectIdRaw = facture.projectId || facture.project_id || facture.data?.projectId;
+      const projectId = projectIdRaw ? String(projectIdRaw) : null;
+      const project = projectId ? (projectsById.get(projectId) || projectsById.get(Number(projectId))) : null;
+      
+      const universes = extractUniversesFromProject(project);
+      const finalUniverses = universes.length > 0 ? universes : ['non_categorise'];
+      
+      const montantParUnivers = meta.montantNetHT / finalUniverses.length;
+      
+      for (const univers of finalUniverses) {
+        caByUnivers[univers] = (caByUnivers[univers] || 0) + montantParUnivers;
+      }
+    }
+    
+    // 2. Calculer heures productives par univers
+    for (const intervention of interventions || []) {
+      // Filtrer par date
+      if (params.dateRange) {
+        const dateStr = intervention.date || intervention.created_at;
+        if (dateStr) {
+          const date = new Date(dateStr);
+          if (isNaN(date.getTime())) continue;
+          if (date < params.dateRange.start || date > params.dateRange.end) continue;
+        }
+      }
+      
+      // États valides
+      const state = intervention.state?.toLowerCase();
+      if (!['validated', 'done', 'finished', 'completed'].includes(state || '')) continue;
+      
+      // Parcourir les visites via biV3.items
+      const biV3Items = intervention.data?.biV3?.items || intervention.biV3?.items || [];
+      
+      for (const visit of biV3Items) {
+        // Visite validée uniquement
+        if (!visit.isValidated) continue;
+        
+        // Type productif uniquement
+        const typeRdv = (visit.typeRdv || '').toLowerCase();
+        if (!PRODUCTIVE_TYPES.has(typeRdv)) continue;
+        
+        // Calcul heures: duree (minutes) × nbTechs / 60
+        const duree = Number(visit.duree) || 0;
+        const nbTechs = Number(visit.nbTechs) || 1;
+        const heuresVisite = (duree * nbTechs) / 60;
+        
+        if (heuresVisite <= 0) continue;
+        
+        // Univers de l'intervention
+        const projectId = intervention.projectId || intervention.project_id;
+        const project = projectId ? (projectsById.get(String(projectId)) || projectsById.get(Number(projectId))) : null;
+        
+        // Priorité: intervention.data.universes, sinon project
+        let universes = intervention.data?.universes || [];
+        if (!universes.length && project) {
+          universes = extractUniversesFromProject(project);
+        }
+        const finalUniverses = universes.length > 0 
+          ? universes.map((u: string) => normalizeUniversSlug(u)).filter((u: string) => !EXCLUDED_UNIVERSES.has(u))
+          : ['non_categorise'];
+        
+        // Répartition équitable des heures
+        const heuresParUnivers = heuresVisite / finalUniverses.length;
+        
+        for (const univers of finalUniverses) {
+          heuresByUnivers[univers] = (heuresByUnivers[univers] || 0) + heuresParUnivers;
+        }
+      }
+    }
+    
+    // 3. Calculer rentabilité par univers
+    const result: Record<string, number> = {};
+    const allUniverses = new Set([...Object.keys(caByUnivers), ...Object.keys(heuresByUnivers)]);
+    
+    for (const univers of allUniverses) {
+      const ca = caByUnivers[univers] || 0;
+      const heures = heuresByUnivers[univers] || 0;
+      result[univers] = heures > 0 ? Math.round((ca / heures) * 100) / 100 : 0;
+    }
+    
+    return {
+      value: result,
+      metadata: {
+        computedAt: new Date(),
+        source: 'factures',
+        recordCount: factures.length,
+      },
+      breakdown: {
+        caByUnivers,
+        heuresByUnivers,
+      }
+    };
+  }
+};
+
+/**
+ * Mix CA global par Univers
+ * 
+ * RÈGLES:
+ * - Source: factures, projects
+ * - CA par univers (prorata si multi-univers)
+ * - Mix = (CA_U / CA_total) × 100
+ */
+export const mixCaGlobalParUnivers: StatDefinition = {
+  id: 'mix_ca_global_par_univers',
+  label: 'Mix CA par Univers',
+  description: 'Répartition du CA global en pourcentage par univers',
+  category: 'univers',
+  source: ['factures', 'projects'],
+  dimensions: ['univers'],
+  aggregation: 'ratio',
+  unit: '%',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { factures, projects } = data;
+    
+    const projectsById = indexProjectsById(projects);
+    const caByUnivers: Record<string, number> = {};
+    let caTotal = 0;
+    
+    for (const facture of factures) {
+      const meta = extractFactureMeta(facture);
+      
+      if (!isFactureStateIncluded(facture.state)) continue;
+      if (meta.montantNetHT === 0) continue;
+      
+      if (params.dateRange && meta.date) {
+        if (meta.date < params.dateRange.start || meta.date > params.dateRange.end) continue;
+      }
+      
+      const projectIdRaw = facture.projectId || facture.project_id || facture.data?.projectId;
+      const projectId = projectIdRaw ? String(projectIdRaw) : null;
+      const project = projectId ? (projectsById.get(projectId) || projectsById.get(Number(projectId))) : null;
+      
+      const universes = extractUniversesFromProject(project);
+      const finalUniverses = universes.length > 0 ? universes : ['non_categorise'];
+      
+      const montantParUnivers = meta.montantNetHT / finalUniverses.length;
+      
+      for (const univers of finalUniverses) {
+        caByUnivers[univers] = (caByUnivers[univers] || 0) + montantParUnivers;
+      }
+      
+      caTotal += meta.montantNetHT;
+    }
+    
+    // Calculer les pourcentages
+    const result: Record<string, number> = {};
+    
+    if (caTotal !== 0) {
+      for (const univers of Object.keys(caByUnivers)) {
+        result[univers] = Math.round((caByUnivers[univers] / caTotal) * 1000) / 10; // 1 décimale
+      }
+    } else {
+      // CA total = 0 → tous les % = 0
+      for (const univers of Object.keys(caByUnivers)) {
+        result[univers] = 0;
+      }
+    }
+    
+    return {
+      value: result,
+      metadata: {
+        computedAt: new Date(),
+        source: 'factures',
+        recordCount: factures.length,
+      },
+      breakdown: {
+        caByUnivers,
+        caTotal: Math.round(caTotal * 100) / 100,
+      }
+    };
+  }
+};
+
 export const universDefinitions = {
   debug_factures_count: debugFacturesCount,
   ca_par_univers: caParUnivers,
@@ -767,4 +980,6 @@ export const universDefinitions = {
   ca_mensuel_par_univers: caMensuelParUnivers,
   taux_transfo_par_univers: tauxTransfoParUnivers,
   matrix_univers_apporteur: matrixUniversApporteur,
+  rentabilite_par_univers: rentabiliteParUnivers,
+  mix_ca_global_par_univers: mixCaGlobalParUnivers,
 };
