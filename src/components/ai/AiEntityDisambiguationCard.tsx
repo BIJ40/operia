@@ -13,7 +13,7 @@ interface AiEntityDisambiguationCardProps {
   type: 'technicien' | 'apporteur';
   candidates: TechnicienCandidate[] | ApporteurCandidate[];
   originalQuery: string;
-  onSelect: (id: number, name: string) => void;
+  onSelect: (id: number | string, name: string) => void;
   onCancel: () => void;
 }
 
