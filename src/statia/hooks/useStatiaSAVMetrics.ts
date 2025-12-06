@@ -8,6 +8,7 @@ import { useSecondaryFilters } from "@/apogee-connect/contexts/SecondaryFiltersC
 import { getMetricForAgency } from "@/statia/api/getMetricForAgency";
 import { getGlobalApogeeDataServices } from "@/statia/adapters/dataServiceAdapter";
 import { useSavOverrides } from "@/hooks/use-sav-overrides";
+import { supabase } from "@/integrations/supabase/client";
 import type { SAVDossier } from "@/apogee-connect/components/sav/SAVDossierList";
 
 interface SAVMetrics {
@@ -28,8 +29,11 @@ export function useStatiaSAVMetrics() {
   
   const agencySlug = currentAgency?.id;
 
+  // Inclure les overrides dans la queryKey pour rafraîchir quand les coûts changent
+  const overridesVersion = overridesMap.size; // Simple version basée sur le nombre d'entrées
+
   return useQuery({
-    queryKey: ["statia-sav-metrics", agencySlug, filters.dateRange],
+    queryKey: ["statia-sav-metrics", agencySlug, filters.dateRange, overridesVersion],
     queryFn: async (): Promise<SAVMetrics> => {
       if (!agencySlug) throw new Error("Agency not available");
 
@@ -41,7 +45,16 @@ export function useStatiaSAVMetrics() {
       // Récupérer les services Apogée
       const services = getGlobalApogeeDataServices();
 
-      // Récupérer les métriques depuis StatIA
+      // Récupérer l'UUID de l'agence pour les overrides
+      const { data: agencyData } = await supabase
+        .from("apogee_agencies")
+        .select("id")
+        .eq("slug", agencySlug)
+        .single();
+      
+      const agencyUuid = agencyData?.id;
+
+      // Récupérer les métriques depuis StatIA + les overrides manuels
       const [
         tauxGlobal,
         nbSav,
@@ -49,7 +62,7 @@ export function useStatiaSAVMetrics() {
         tauxApporteur,
         tauxTypeApporteur,
         caImpacte,
-        coutEstime,
+        savOverridesData,
       ] = await Promise.all([
         getMetricForAgency("taux_sav_global", agencySlug, { dateRange }, services),
         getMetricForAgency("nb_sav_global", agencySlug, { dateRange }, services),
@@ -57,8 +70,19 @@ export function useStatiaSAVMetrics() {
         getMetricForAgency("taux_sav_par_apporteur", agencySlug, { dateRange }, services),
         getMetricForAgency("taux_sav_par_type_apporteur", agencySlug, { dateRange }, services),
         getMetricForAgency("ca_impacte_sav", agencySlug, { dateRange }, services),
-        getMetricForAgency("cout_sav_estime", agencySlug, { dateRange }, services),
+        // Récupérer les coûts manuels depuis la base
+        agencyUuid 
+          ? supabase
+              .from("sav_dossier_overrides")
+              .select("cout_sav_manuel")
+              .eq("agency_id", agencyUuid)
+          : Promise.resolve({ data: [] }),
       ]);
+
+      // Calculer le coût SAV total à partir des enregistrements manuels
+      const coutSavManuel = (savOverridesData.data || []).reduce((sum, row) => {
+        return sum + (row.cout_sav_manuel || 0);
+      }, 0);
 
       // Charger les données brutes pour construire la liste des dossiers
       const [projects, clients, interventions] = await Promise.all([
@@ -78,7 +102,7 @@ export function useStatiaSAVMetrics() {
         tauxSavParApporteur: tauxApporteur.breakdown?.details || {},
         tauxSavParTypeApporteur: tauxTypeApporteur.breakdown?.details || {},
         caSav: typeof caImpacte.value === "number" ? caImpacte.value : 0,
-        coutSavEstime: typeof coutEstime.value === "number" ? coutEstime.value : 0,
+        coutSavEstime: coutSavManuel, // Coût réel depuis les enregistrements manuels
         dossiersSAV,
       };
     },

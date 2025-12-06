@@ -98,6 +98,7 @@ export function useSavOverrides() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sav-overrides", agencyId] });
+      queryClient.invalidateQueries({ queryKey: ["statia-sav-metrics"] });
       toast.success("Modification SAV enregistrée");
     },
     onError: (error) => {
@@ -120,6 +121,7 @@ export function useSavOverrides() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sav-overrides", agencyId] });
+      queryClient.invalidateQueries({ queryKey: ["statia-sav-metrics"] });
       toast.success("Override SAV supprimé");
     },
     onError: (error) => {
