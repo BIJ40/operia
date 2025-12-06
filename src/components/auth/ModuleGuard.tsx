@@ -115,6 +115,7 @@ function ModuleAccessDeniedPage({
     rh: 'RH',
     parc: 'Parc',
     messaging: 'Messagerie interne',
+    unified_search: 'Recherche unifiée',
   };
 
   return (
