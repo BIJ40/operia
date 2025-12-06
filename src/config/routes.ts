@@ -75,6 +75,7 @@ export const ROUTES = {
     statiaBuilder: '/hc-agency/statia-builder',
     // Commercial
     commercial: '/hc-agency/commercial',
+    commercialPptx: '/hc-agency/commercial/support-pptx',
   },
 
   // ============================================

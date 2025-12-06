@@ -1,7 +1,8 @@
-import { Briefcase, TrendingUp, Users, Target, FileText, BarChart3 } from 'lucide-react';
+import { Briefcase, TrendingUp, Users, Target, FileText, BarChart3, Presentation } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { CollapsibleSection } from '@/components/dashboard/CollapsibleSection';
+import { ROUTES } from '@/config/routes';
 import type { LucideIcon } from 'lucide-react';
 
 interface CommercialModule {
@@ -14,6 +15,13 @@ interface CommercialModule {
 }
 
 const commercialModules: CommercialModule[] = [
+  {
+    id: 'support-pptx',
+    title: 'Support Commercial PPTX',
+    description: 'Générer un PowerPoint commercial personnalisé par agence',
+    icon: Presentation,
+    href: ROUTES.pilotage.commercialPptx,
+  },
   {
     id: 'pipeline',
     title: 'Pipeline Commercial',
