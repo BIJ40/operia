@@ -26,6 +26,9 @@ interface StatResult {
   };
   // Indique si c'est un résultat filtré sur une entité spécifique
   isFilteredEntity?: boolean;
+  // Indique si des données ont été trouvées (false = aucune donnée)
+  hasData?: boolean;
+  dataCount?: number;
 }
 
 interface AiStatAnswerCardProps {
@@ -129,13 +132,38 @@ export const AiStatAnswerCard: React.FC<AiStatAnswerCardProps> = ({
       {/* Valeur principale - Affichage générique (sans filtre entité) */}
       {!hasRanking && !isFilteredEntity && (
         <div className="py-4">
-          <p className="text-3xl font-bold text-white">
-            {formatValue(result.value, result.unit)}
-          </p>
-          {hasEvolution && (
-            <p className="text-sm text-slate-400 mt-1">
-              vs {formatValue(result.evolution!.previous, result.unit)} précédemment
-            </p>
+          {/* Cas: aucune donnée trouvée */}
+          {result.hasData === false ? (
+            <div className="space-y-2">
+              <p className="text-lg text-amber-400 font-medium">
+                Aucune facture trouvée sur {period.label}
+              </p>
+              <p className="text-sm text-slate-400">
+                Le CA est considéré comme nul faute de données pour cette période.
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Texte contextuel selon la métrique */}
+              {metricId === 'ca_global_ht' && (
+                <p className="text-sm text-slate-400 mb-2">
+                  Votre CA global HT sur {period.label} est de :
+                </p>
+              )}
+              {metricId === 'ca_moyen_par_jour' && (
+                <p className="text-sm text-slate-400 mb-2">
+                  Votre CA moyen par jour sur {period.label} est de :
+                </p>
+              )}
+              <p className="text-3xl font-bold text-white">
+                {formatValue(result.value, result.unit)}
+              </p>
+              {hasEvolution && (
+                <p className="text-sm text-slate-400 mt-1">
+                  vs {formatValue(result.evolution!.previous, result.unit)} précédemment
+                </p>
+              )}
+            </>
           )}
         </div>
       )}

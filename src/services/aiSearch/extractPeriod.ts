@@ -141,14 +141,32 @@ export function extractPeriod(normalizedQuery: string, now = new Date()): Parsed
   }
   
   // ─────────────────────────────────────────────────────────────
-  // PATTERNS "[mois] [année]" (mois spécifique)
+  // PATTERNS "[mois]" ou "en [mois]" (mois spécifique sans année)
+  // Logique: si le mois demandé est dans le futur → année précédente
   // ─────────────────────────────────────────────────────────────
+  
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
   
   for (const [moisName, moisNum] of Object.entries(MOIS_MAP)) {
     const pattern = new RegExp(`\\b${moisName}(?:\\s+(\\d{4}))?\\b`);
     const match = q.match(pattern);
     if (match) {
-      const year = match[1] ? parseInt(match[1], 10) : now.getFullYear();
+      let year: number;
+      
+      if (match[1]) {
+        // Année explicitement mentionnée
+        year = parseInt(match[1], 10);
+      } else {
+        // Pas d'année mentionnée → logique "dernier mois clos"
+        // Si le mois demandé est dans le futur par rapport au mois actuel → année précédente
+        if (moisNum > currentMonth) {
+          year = currentYear - 1;
+        } else {
+          year = currentYear;
+        }
+      }
+      
       const monthDate = new Date(year, moisNum, 1);
       return createPeriod(startOfMonth(monthDate), endOfMonth(monthDate), `${capitalizeFirst(moisName)} ${year}`);
     }
