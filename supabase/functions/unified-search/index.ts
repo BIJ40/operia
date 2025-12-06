@@ -219,11 +219,11 @@ const SPECIALIZED_METRICS: Array<{ keywords: string[]; rule: RoutingRule }> = [
   { keywords: ['délai facture', 'delai facture', 'temps facturation'],
     rule: { dimension: 'global', intentType: 'delay', metricId: 'delai_moyen_facture', 
             label: 'Délai moyen facture', isRanking: false, minRole: 0 } },
-  // Recouvrement
-  { keywords: ['recouvrement', 'encaissement', 'encaissé'],
+// Recouvrement - priorité au montant (reste à encaisser), taux explicite
+  { keywords: ['taux recouvrement', 'taux de recouvrement', 'pourcentage recouvrement'],
     rule: { dimension: 'global', intentType: 'taux', metricId: 'taux_recouvrement', 
             label: 'Taux de recouvrement', isRanking: false, minRole: 2 } },
-  { keywords: ['reste à encaisser', 'reste encaisser', 'impayé', 'en cours'],
+  { keywords: ['recouvrement', 'reste à encaisser', 'reste encaisser', 'impayé', 'encours', 'du client', 'dû client'],
     rule: { dimension: 'global', intentType: 'valeur', metricId: 'reste_a_encaisser', 
             label: 'Reste à encaisser', isRanking: false, minRole: 2 } },
   // Moyennes
@@ -290,7 +290,8 @@ function extractPeriode(query: string, now = new Date()): ParsedPeriod | undefin
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth();
 
-  if (normalized.includes('cette annee') || normalized.includes('cette année')) {
+  // "cette année" - with or without accent (normalized removes accents)
+  if (normalized.includes('cette annee')) {
     return { start: new Date(currentYear, 0, 1), end: new Date(currentYear, 11, 31), 
              label: `Année ${currentYear}`, isDefault: false };
   }
