@@ -133,6 +133,9 @@ const Changelog = lazy(() => import("./pages/Changelog"));
 const SecurityAuditReport = lazy(() => import("./pages/SecurityAuditReport"));
 const SecurityDocumentation = lazy(() => import("./pages/SecurityDocumentation"));
 
+// Dev pages (Admin only)
+const UnifiedSearchAnimationPlayground = lazy(() => import("./pages/dev/UnifiedSearchAnimationPlayground"));
+
 // Providers
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { EditorProvider } from "./contexts/EditorContext";
@@ -381,6 +384,11 @@ function AppContent() {
           <Route path="/changelog" element={<MainLayout><Changelog /></MainLayout>} />
           <Route path="/security-audit-report" element={<MainLayout><SecurityAuditReport /></MainLayout>} />
           <Route path="/security-documentation" element={<MainLayout><SecurityDocumentation /></MainLayout>} />
+          
+          {/* ============================================ */}
+          {/* DEV PAGES - Admin only (N5/N6) */}
+          {/* ============================================ */}
+          <Route path="/dev/unified-search-animations" element={<RoleGuard minRole="platform_admin"><UnifiedSearchAnimationPlayground /></RoleGuard>} />
           
           {/* 404 */}
           <Route path="*" element={<NotFound />} />
