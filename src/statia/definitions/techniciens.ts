@@ -411,9 +411,10 @@ export const caParTechnicienUnivers: StatDefinition = {
         stats.totalCA += techCA;
         
         // Ne compter les heures qu'une seule fois par projet par technicien
+        // IMPORTANT: techTime est en MINUTES, on convertit en HEURES
         const projectTechKey = `${projectId}-${techId}`;
         if (!projetsHeuresComptees.has(projectTechKey)) {
-          stats.totalHeures += techTime;
+          stats.totalHeures += techTime / 60; // Conversion minutes → heures
           projetsHeuresComptees.add(projectTechKey);
         }
         
@@ -429,9 +430,10 @@ export const caParTechnicienUnivers: StatDefinition = {
           stats.byUnivers[univers].ca += caParUnivers;
           
           // Ne compter les heures qu'une seule fois par projet par technicien par univers
+          // IMPORTANT: heuresParUnivers est en MINUTES, on convertit en HEURES
           const projectTechUniversKey = `${projectId}-${techId}-${univers}`;
           if (!projetsHeuresComptees.has(projectTechUniversKey)) {
-            stats.byUnivers[univers].heures += heuresParUnivers;
+            stats.byUnivers[univers].heures += heuresParUnivers / 60; // Conversion minutes → heures
             projetsHeuresComptees.add(projectTechUniversKey);
           }
           
