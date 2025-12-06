@@ -79,16 +79,8 @@ export default function IndicateursSAV() {
 
   return (
     <div className="space-y-8">
-      {/* En-tête avec titre et sélecteur de période */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-            Les SAV
-          </h1>
-          <p className="text-sm text-muted-foreground mt-2">
-            Analyse complète des interventions SAV (Service Après-Vente)
-          </p>
-        </div>
+      {/* Sélecteur de période */}
+      <div className="flex justify-end">
         <SecondaryPeriodSelector />
       </div>
 
