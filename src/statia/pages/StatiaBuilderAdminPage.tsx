@@ -7,7 +7,9 @@ import React from 'react';
 import { AllMetricsViewer } from '../components/AllMetricsViewer';
 import { LocalErrorBoundary } from '@/components/system/LocalErrorBoundary';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { AlertTriangle, FlaskConical } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 function StatiaErrorFallback({ error }: { error: Error }) {
   return (
@@ -33,7 +35,16 @@ function StatiaErrorFallback({ error }: { error: Error }) {
 export default function StatiaBuilderAdminPage() {
   return (
     <LocalErrorBoundary componentName="StatIA Builder">
-      <div className="container mx-auto py-6 px-4">
+      <div className="container mx-auto py-6 px-4 space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">StatIA-BY-BIJ</h1>
+          <Button asChild variant="outline" size="sm">
+            <Link to="/admin/statia-validator" className="flex items-center gap-2">
+              <FlaskConical className="h-4 w-4" />
+              Validator
+            </Link>
+          </Button>
+        </div>
         <AllMetricsViewer mode="admin" />
       </div>
     </LocalErrorBoundary>
