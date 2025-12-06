@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Save, List, PlusCircle, Target, Layers, Filter, X, Euro, TrendingUp, Percent, Hash, Clock, User, Building2, Calendar, Shield, FolderOpen, Wallet, AlertTriangle, FileCheck, Calculator, Sparkles, ChevronDown, ChevronRight } from 'lucide-react';
 import { AgencySelector } from './AgencySelector';
+import { clearProxyCache } from '@/services/apogeeProxy';
 import { MetricsList } from './MetricsList';
 import { MetricPreview } from './MetricPreview';
 import { SaveMetricDialog } from './SaveMetricDialog';
@@ -90,7 +91,8 @@ export function StatiaBuilderEnhanced({ mode, fixedAgencySlug }: StatiaBuilderEn
     'Techniciens': true,
   });
 
-  const effectiveAgency = mode === 'agency' ? (fixedAgencySlug || userAgencySlug) : selectedAgency;
+  // ADMIN MODE: Toujours utiliser l'agence sélectionnée, jamais le fallback utilisateur
+  const effectiveAgency = mode === 'admin' ? selectedAgency : (fixedAgencySlug || userAgencySlug);
 
   // Récupérer les mesures dynamiquement depuis STAT_DEFINITIONS
   const measuresByCategory = useMemo(() => getMeasuresByCategory(), []);
@@ -181,7 +183,14 @@ export function StatiaBuilderEnhanced({ mode, fixedAgencySlug }: StatiaBuilderEn
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           {mode === 'admin' ? (
-            <AgencySelector value={selectedAgency} onChange={setSelectedAgency} />
+            <AgencySelector 
+              value={selectedAgency} 
+              onChange={(slug) => {
+                // ADMIN: Vider le cache avant de changer d'agence pour éviter les données mixées
+                clearProxyCache();
+                setSelectedAgency(slug);
+              }} 
+            />
           ) : (
             <div className="text-sm text-muted-foreground">
               Agence: <span className="font-medium text-foreground">{effectiveAgency}</span>
