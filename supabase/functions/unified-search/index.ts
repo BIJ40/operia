@@ -298,8 +298,16 @@ async function loadClientsForAgency(proxyUrl: string, authHeader: string, agency
 }
 
 // ═══════════════════════════════════════════════════════════════
-// QUERY TYPE DETECTION
+// QUERY TYPE DETECTION (HYBRID SUPPORT)
 // ═══════════════════════════════════════════════════════════════
+
+type SearchMode = 'stats' | 'doc' | 'hybrid';
+
+const DOC_KEYWORDS = [
+  'comment', 'pourquoi', 'procedure', 'procédure', 'etapes', 'étapes',
+  'tutoriel', 'guide', 'aide', 'explication', 'mode d emploi', "mode d'emploi",
+  'qu est ce', "qu'est-ce", 'definition', 'définition', 'signifie'
+];
 
 function isStatsQuery(extracted: ExtractedIntent): boolean {
   // Une requête est stats si elle a un topic identifié
@@ -309,6 +317,18 @@ function isStatsQuery(extracted: ExtractedIntent): boolean {
   // Ou si elle a un intent spécifique (pas juste 'valeur')
   if (extracted.intent !== 'valeur') return true;
   return false;
+}
+
+function detectSearchMode(tokenized: TokenizedQuery, extracted: ExtractedIntent): SearchMode {
+  const hasDocIntent = DOC_KEYWORDS.some(k => tokenized.normalized.includes(k));
+  const hasStatsIntent = isStatsQuery(extracted);
+  
+  if (hasDocIntent && hasStatsIntent) return 'hybrid';
+  if (hasStatsIntent) return 'stats';
+  if (hasDocIntent) return 'doc';
+  
+  // Default: hybrid pour les cas ambigus
+  return 'hybrid';
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -563,37 +583,96 @@ async function loadApogeeData(proxyUrl: string, authHeader: string, agencySlug: 
 }
 
 // ═══════════════════════════════════════════════════════════════
-// DOCS SEARCH
+// DOCS SEARCH (HELPI INTEGRATION)
 // ═══════════════════════════════════════════════════════════════
 
-async function searchDocsConversational(supabase: any, query: string, userName: string, authHeader: string): Promise<{ answer: string; sources: any[]; isConversational: true }> {
-  let ragContent = '';
-  const sources: any[] = [];
-  
+interface DocSearchResult {
+  id: string;
+  title: string;
+  content: string;
+  similarity: number;
+  blockType: string;
+  sourceId: string;
+  url: string;
+}
+
+async function searchDocsWithHelpi(authHeader: string, query: string, blockTypes?: string[]): Promise<DocSearchResult[]> {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const embeddingsRes = await fetch(`${supabaseUrl}/functions/v1/search-embeddings`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authHeader }, body: JSON.stringify({ query, topK: 5, minSimilarity: 0.7, source: 'apogee' }) });
-    if (embeddingsRes.ok) {
-      const embeddingsData = await embeddingsRes.json();
-      if (embeddingsData.results?.length) {
-        ragContent = embeddingsData.results.map((r: any) => `### ${r.title || 'Document'}\n${r.content}`).join('\n\n---\n\n');
-        for (const r of embeddingsData.results) sources.push({ id: r.id, title: r.title || 'Document', slug: r.slug, similarity: r.similarity, source: r.block_type || 'apogee' });
-      }
+    const res = await fetch(`${supabaseUrl}/functions/v1/helpi-search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+      body: JSON.stringify({ query, matchThreshold: 0.65, matchCount: 8, blockTypes: blockTypes || ['apogee', 'helpconfort', 'document', 'faq'] })
+    });
+    
+    if (!res.ok) {
+      console.error('[unified-search] helpi-search error:', res.status);
+      return [];
     }
-  } catch (e) { console.error('[unified-search] RAG error:', e); }
-  
-  if (!ragContent) {
-    const { data: chunks } = await supabase.from('guide_chunks').select('id, title, content, block_type, slug').textSearch('content', query.split(' ').filter((w: string) => w.length > 2).join(' & ')).limit(5);
-    if (chunks?.length) {
-      ragContent = chunks.map((c: any) => `### ${c.title || 'Document'}\n${c.content}`).join('\n\n---\n\n');
-      for (const c of chunks) sources.push({ id: c.id, title: c.title || 'Document', slug: c.slug, source: c.block_type || 'apogee' });
-    }
+    
+    const json = await res.json();
+    const results: DocSearchResult[] = (json.results || []).map((r: any) => ({
+      id: r.id,
+      title: r.title || 'Document',
+      content: r.content || '',
+      similarity: r.similarity || 0,
+      blockType: r.block_type || 'apogee',
+      sourceId: r.source_id || '',
+      url: buildDocUrl(r.block_type, r.source_id)
+    }));
+    
+    return results;
+  } catch (e) {
+    console.error('[unified-search] helpi-search exception:', e);
+    return [];
   }
+}
+
+function buildDocUrl(blockType: string, sourceId: string): string {
+  if (!sourceId) return '#';
+  switch (blockType) {
+    case 'apogee': return `/academy/apogee/category/${sourceId}`;
+    case 'helpconfort': return `/academy/hc-base/category/${sourceId}`;
+    case 'faq': return `/support/faq`;
+    case 'document': return `/academy/hc-base`;
+    default: return '#';
+  }
+}
+
+async function searchDocsConversational(supabase: any, query: string, userName: string, authHeader: string): Promise<{ answer: string; sources: any[]; docResults: DocSearchResult[]; isConversational: true }> {
+  // Use Helpi for doc search
+  const docResults = await searchDocsWithHelpi(authHeader, query);
+  const sources = docResults.map(r => ({
+    id: r.id,
+    title: r.title,
+    slug: r.sourceId,
+    similarity: r.similarity,
+    source: r.blockType
+  }));
   
+  // Build RAG context from results
+  const ragContent = docResults.length > 0
+    ? docResults.map(r => `### ${r.title}\n${r.content}`).join('\n\n---\n\n')
+    : '';
+  
+  // Call chat-guide for conversational response
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const chatRes = await fetch(`${supabaseUrl}/functions/v1/chat-guide`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authHeader }, body: JSON.stringify({ messages: [{ role: 'user', content: query }], guideContent: ragContent || 'Aucune documentation trouvée.', userId: null, userName: userName || 'Utilisateur', context: 'apogee', univers: null, apporteur: null, roleCible: null }) });
+  const chatRes = await fetch(`${supabaseUrl}/functions/v1/chat-guide`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+    body: JSON.stringify({
+      messages: [{ role: 'user', content: query }],
+      guideContent: ragContent || 'Aucune documentation trouvée.',
+      userId: null,
+      userName: userName || 'Utilisateur',
+      context: 'apogee',
+      univers: null,
+      apporteur: null,
+      roleCible: null
+    })
+  });
   
-  if (!chatRes.ok) return { answer: "Je n'ai pas pu générer une réponse.", sources, isConversational: true };
+  if (!chatRes.ok) return { answer: "Je n'ai pas pu générer une réponse.", sources, docResults, isConversational: true };
   
   let answer = '';
   const reader = chatRes.body?.getReader();
@@ -608,13 +687,17 @@ async function searchDocsConversational(supabase: any, query: string, userName: 
         if (line.startsWith('data: ')) {
           const jsonStr = line.slice(6).trim();
           if (jsonStr === '[DONE]') continue;
-          try { const parsed = JSON.parse(jsonStr); const content = parsed.choices?.[0]?.delta?.content; if (content) answer += content; } catch { }
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) answer += content;
+          } catch { /* ignore parse errors */ }
         }
       }
     }
   }
   
-  return { answer: answer || "Je n'ai pas trouvé d'information précise.", sources, isConversational: true };
+  return { answer: answer || "Je n'ai pas trouvé d'information précise.", sources, docResults, isConversational: true };
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -769,7 +852,21 @@ serve(async (req) => {
     } else if (routed.type === 'doc') {
       const userName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || 'Utilisateur';
       result = await searchDocsConversational(supabase, query, userName, authHeader);
-      const response: AiSearchResult = { type: 'doc', result: { answer: result.answer, sources: result.sources, isConversational: true }, interpretation: buildInterpretation(null, agencySlug, routed.debug), computedAt: now.toISOString(), agencySlug };
+      const docResultsFormatted = result.docResults?.map((d: DocSearchResult) => ({
+        id: d.id,
+        title: d.title,
+        snippet: d.content?.substring(0, 200) + '...',
+        url: d.url,
+        source: d.blockType,
+        similarity: d.similarity
+      })) || [];
+      const response: AiSearchResult = {
+        type: 'doc',
+        result: { answer: result.answer, sources: result.sources, docResults: docResultsFormatted, isConversational: true },
+        interpretation: buildInterpretation(null, agencySlug, routed.debug),
+        computedAt: now.toISOString(),
+        agencySlug
+      };
       return withCors(req, new Response(JSON.stringify(response), { status: 200, headers: { 'Content-Type': 'application/json' } }));
     }
 
