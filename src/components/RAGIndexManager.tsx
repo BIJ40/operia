@@ -8,43 +8,52 @@ import { safeInvoke } from '@/lib/safeQuery';
 import { errorToast, successToast } from '@/lib/toastHelpers';
 import { logError } from '@/lib/logger';
 
-interface GenerateEmbeddingsResponse {
-  blocks_processed: number;
-  chunks_created: number;
+interface HelpiIndexResponse {
+  itemsProcessed: number;
+  chunksCreated: number;
 }
 
 export function RAGIndexManager() {
   const [isIndexing, setIsIndexing] = useState(false);
   const [indexStats, setIndexStats] = useState<{
-    blocks_processed?: number;
-    chunks_created?: number;
+    itemsProcessed?: number;
+    chunksCreated?: number;
   } | null>(null);
 
   const handleIndex = async () => {
     setIsIndexing(true);
     setIndexStats(null);
 
-    const result = await safeInvoke<GenerateEmbeddingsResponse>(
-      supabase.functions.invoke('generate-embeddings', {
-        body: { blockIds: [] },
-      }),
-      'RAG_INDEX_GENERATE'
-    );
+    // Index all sources sequentially
+    const sources = ['apogee', 'helpconfort', 'document', 'faq'] as const;
+    let totalItems = 0;
+    let totalChunks = 0;
 
-    if (!result.success) {
-      logError('rag-index-manager', 'Error generating embeddings', result.error);
-      errorToast(result.error!);
-      setIsIndexing(false);
-      return;
-    }
-
-    if (result.data) {
-      setIndexStats(result.data);
-      successToast(
-        'Indexation terminée',
-        `${result.data.blocks_processed} blocs traités, ${result.data.chunks_created} chunks créés`
+    for (const source of sources) {
+      const result = await safeInvoke<HelpiIndexResponse>(
+        supabase.functions.invoke('helpi-index', {
+          body: { source, mode: 'full' },
+        }),
+        'RAG_INDEX_GENERATE'
       );
+
+      if (!result.success) {
+        logError('rag-index-manager', `Error indexing ${source}`, result.error);
+        // Continue with other sources
+        continue;
+      }
+
+      if (result.data) {
+        totalItems += result.data.itemsProcessed || 0;
+        totalChunks += result.data.chunksCreated || 0;
+      }
     }
+
+    setIndexStats({ itemsProcessed: totalItems, chunksCreated: totalChunks });
+    successToast(
+      'Indexation terminée',
+      `${totalItems} sources traitées, ${totalChunks} chunks créés`
+    );
 
     setIsIndexing(false);
   };
@@ -119,12 +128,12 @@ export function RAGIndexManager() {
             <h4 className="font-semibold text-sm">Dernière indexation:</h4>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-muted-foreground">Blocs traités:</span>
-                <span className="ml-2 font-medium">{indexStats.blocks_processed}</span>
+                <span className="text-muted-foreground">Sources traitées:</span>
+                <span className="ml-2 font-medium">{indexStats.itemsProcessed}</span>
               </div>
               <div>
                 <span className="text-muted-foreground">Chunks créés:</span>
-                <span className="ml-2 font-medium">{indexStats.chunks_created}</span>
+                <span className="ml-2 font-medium">{indexStats.chunksCreated}</span>
               </div>
             </div>
           </div>
