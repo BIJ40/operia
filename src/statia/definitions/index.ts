@@ -16,6 +16,7 @@ import { qualiteDefinitions } from './qualite';
 import { productiviteDefinitions } from './productivite';
 import { complexiteDefinitions } from './complexite';
 import { reseauDefinitions } from './reseau';
+import { advancedDefinitions } from './advanced';
 
 // Export types
 export * from './types';
@@ -59,6 +60,9 @@ export const STAT_DEFINITIONS: StatDefinitionRegistry = {
   
   // V2: Réseau Franchiseur
   ...reseauDefinitions,
+  
+  // V2: Métriques avancées
+  ...advancedDefinitions,
 };
 
 /**
