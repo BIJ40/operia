@@ -270,23 +270,66 @@ function resolveTechnicianFromQuery(query: string, technicians: TechnicianEntity
 function resolveApporteurFromQuery(query: string, apporteurs: ApporteurEntity[]): { best?: ApporteurEntity; candidates: ApporteurEntity[] } {
   const qNorm = normalizeText(query);
   if (!qNorm || !apporteurs.length) return { candidates: [] };
-  const scored: { ap: ApporteurEntity; score: number }[] = [];
+  
+  // Mots de la query >= 3 lettres, en excluant les mots-clés courants (même logique que techniciens)
+  const EXCLUDED_WORDS = new Set(['combien', 'fait', 'avec', 'sur', 'pour', 'quel', 'quelle', 'octobre', 'novembre', 'decembre', 'janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin', 'juillet', 'aout', 'septembre', 'cette', 'annee', 'mois', 'dernier', 'derniere', 'chiffre', 'affaires', 'facture', 'factures', 'apporteur', 'client', 'partenaire']);
+  const queryWords = qNorm.split(' ').filter(w => w.length >= 3 && !EXCLUDED_WORDS.has(w));
+  
+  console.log(`[resolveApporteurFromQuery] Query words: [${queryWords.join(', ')}]`);
+  
+  const scored: { ap: ApporteurEntity; score: number; matchedWord: string }[] = [];
+  
   for (const ap of apporteurs) {
     const labels: string[] = [];
-    if (ap.name) labels.push(ap.name);
-    if (ap.company) labels.push(ap.company);
+    const normName = normalizeText(ap.name || '');
+    const normCompany = normalizeText(ap.company || '');
+    if (normName) labels.push(normName);
+    if (normCompany) labels.push(normCompany);
+    
     let maxScore = 0;
-    for (const label of labels) {
-      const sim = stringSimilarity(qNorm, label);
-      if (sim > maxScore) maxScore = sim;
-      const ln = normalizeText(label);
-      if (ln && qNorm.includes(ln)) maxScore = Math.max(maxScore, 1);
+    let matchedWord = '';
+    
+    // Match par mot individuel de la query
+    for (const word of queryWords) {
+      for (const label of labels) {
+        // Match exact → score parfait
+        if (word === label) { 
+          maxScore = Math.max(maxScore, 1); 
+          matchedWord = word;
+          continue; 
+        }
+        // Match inclusion (le mot de la query est dans le label ou vice versa)
+        if (label.includes(word) && word.length >= 4) {
+          const newScore = 0.95;
+          if (newScore > maxScore) { maxScore = newScore; matchedWord = word; }
+        }
+        if (word.includes(label) && label.length >= 4) {
+          const newScore = 0.9;
+          if (newScore > maxScore) { maxScore = newScore; matchedWord = word; }
+        }
+        // Similarité bigram (moins fiable)
+        const sim = stringSimilarity(word, label);
+        if (sim > maxScore && sim >= 0.8) { 
+          maxScore = sim; 
+          matchedWord = word;
+        }
+      }
     }
-    if (maxScore >= MIN_SIMILARITY_FUZZY) scored.push({ ap, score: maxScore });
+    
+    if (maxScore >= MIN_SIMILARITY_FUZZY) {
+      scored.push({ ap, score: maxScore, matchedWord });
+    }
   }
-  if (!scored.length) return { candidates: [] };
+  
+  if (!scored.length) {
+    console.log(`[resolveApporteurFromQuery] No match found`);
+    return { candidates: [] };
+  }
+  
   scored.sort((a, b) => b.score - a.score);
   const best = scored[0];
+  console.log(`[resolveApporteurFromQuery] Best match: ${best.ap.name || best.ap.company} (score=${best.score.toFixed(2)}, matchedWord=${best.matchedWord})`);
+  
   if (best.score >= MIN_SIMILARITY_STRICT) {
     const strongCandidates = scored.filter(s => s.score >= MIN_SIMILARITY_STRICT);
     if (strongCandidates.length === 1) return { best: best.ap, candidates: [] };
@@ -826,7 +869,7 @@ serve(async (req) => {
     console.log(`[unified-search] Period: ${period.label} (${period.from} → ${period.to}), isDefault=${period.isDefault}`);
 
     // ══════════════════════════════════════════════════════════
-    // STEP 4: ENTITY RESOLUTION
+    // STEP 4: ENTITY RESOLUTION (AVANT le scoring pour ajuster dimension)
     // ══════════════════════════════════════════════════════════
     const proxyUrl = `${supabaseUrl}/functions/v1/proxy-apogee`;
     let resolvedEntities: ResolvedEntities = {};
@@ -837,17 +880,30 @@ serve(async (req) => {
       if (resolvedEntities.technicienId) console.log(`[unified-search] Resolved technician: ${resolvedEntities.technicienName}`);
       if (resolvedEntities.apporteurId) console.log(`[unified-search] Resolved apporteur: ${resolvedEntities.apporteurName}`);
     }
+    
+    // ══════════════════════════════════════════════════════════
+    // STEP 4b: OVERRIDE DIMENSION based on resolved entities
+    // SI un apporteur/technicien est résolu → ajuster la dimension AVANT le scoring
+    // ══════════════════════════════════════════════════════════
+    let extractedWithEntityOverride = { ...extracted };
+    if (resolvedEntities.apporteurId && extracted.dimension === 'global') {
+      extractedWithEntityOverride = { ...extracted, dimension: 'apporteur' as const };
+      console.log(`[unified-search] Dimension override: global → apporteur (entity resolved: ${resolvedEntities.apporteurName})`);
+    } else if (resolvedEntities.technicienId && extracted.dimension === 'global') {
+      extractedWithEntityOverride = { ...extracted, dimension: 'technicien' as const };
+      console.log(`[unified-search] Dimension override: global → technicien (entity resolved: ${resolvedEntities.technicienName})`);
+    }
 
     // ══════════════════════════════════════════════════════════
-    // STEP 5: METRIC SCORING (NL V3)
+    // STEP 5: METRIC SCORING (NL V3 - avec dimension ajustée)
     // ══════════════════════════════════════════════════════════
-    const metricResult = selectBestMetric(extracted, 5);
+    const metricResult = selectBestMetric(extractedWithEntityOverride, 5);
     console.log(`[unified-search] Selected metric: ${metricResult.metric?.id || 'NONE'}`);
 
     // ══════════════════════════════════════════════════════════
-    // STEP 6: CORE ROUTING (NL V3)
+    // STEP 6: CORE ROUTING (NL V3 - avec dimension ajustée)
     // ══════════════════════════════════════════════════════════
-    const routed = aiSearchRouteV3(query, tokenized, extracted, period, context, resolvedEntities, metricResult, now);
+    const routed = aiSearchRouteV3(query, tokenized, extractedWithEntityOverride, period, context, resolvedEntities, metricResult, now);
     console.log(`[unified-search] Routed: type=${routed.type}, metric=${routed.parsed?.metricId || 'none'}`);
 
     // ══════════════════════════════════════════════════════════
