@@ -980,36 +980,157 @@ async function loadApogeeData(
 }
 
 // ═══════════════════════════════════════════════════════════════
-// DOCS SEARCH
+// DOCS SEARCH - Conversational RAG via chat-guide
 // ═══════════════════════════════════════════════════════════════
 
-async function searchDocs(supabase: any, query: string): Promise<{ results: any[] }> {
-  const results: any[] = [];
+async function searchDocsConversational(
+  supabase: any, 
+  query: string, 
+  userName: string,
+  authHeader: string
+): Promise<{ answer: string; sources: any[]; isConversational: true }> {
   
-  const { data: chunks } = await supabase
-    .from('guide_chunks')
-    .select('id, title, content, block_type, slug')
-    .textSearch('content', query.split(' ').join(' & '))
-    .limit(5);
+  // 1. Recherche RAG - embeddings + similarité
+  let ragContent = '';
+  const sources: any[] = [];
+  
+  try {
+    // Appel à search-embeddings pour obtenir les chunks pertinents
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const embeddingsRes = await fetch(`${supabaseUrl}/functions/v1/search-embeddings`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json', 
+        'Authorization': authHeader 
+      },
+      body: JSON.stringify({ 
+        query, 
+        topK: 5, 
+        minSimilarity: 0.7,
+        source: 'apogee' // ou helpconfort selon contexte
+      }),
+    });
+    
+    if (embeddingsRes.ok) {
+      const embeddingsData = await embeddingsRes.json();
+      if (embeddingsData.results && embeddingsData.results.length > 0) {
+        ragContent = embeddingsData.results
+          .map((r: any) => `### ${r.title || 'Document'}\n${r.content}`)
+          .join('\n\n---\n\n');
+          
+        for (const r of embeddingsData.results) {
+          sources.push({
+            id: r.id,
+            title: r.title || 'Document',
+            slug: r.slug,
+            similarity: r.similarity,
+            source: r.block_type || 'apogee'
+          });
+        }
+      }
+    }
+  } catch (e) {
+    console.error('[unified-search] RAG embeddings error:', e);
+  }
+  
+  // 2. Fallback: recherche texte simple si pas de résultats RAG
+  if (!ragContent) {
+    const { data: chunks } = await supabase
+      .from('guide_chunks')
+      .select('id, title, content, block_type, slug')
+      .textSearch('content', query.split(' ').filter(w => w.length > 2).join(' & '))
+      .limit(5);
+    
+    if (chunks && chunks.length > 0) {
+      ragContent = chunks
+        .map((c: any) => `### ${c.title || 'Document'}\n${c.content}`)
+        .join('\n\n---\n\n');
+        
+      for (const c of chunks) {
+        sources.push({
+          id: c.id,
+          title: c.title || 'Document',
+          slug: c.slug,
+          source: c.block_type || 'apogee'
+        });
+      }
+    }
+  }
+  
+  // 3. Appel à chat-guide pour générer la réponse conversationnelle
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const chatRes = await fetch(`${supabaseUrl}/functions/v1/chat-guide`, {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json', 
+      'Authorization': authHeader 
+    },
+    body: JSON.stringify({
+      messages: [{ role: 'user', content: query }],
+      guideContent: ragContent || 'Aucune documentation trouvée pour cette question.',
+      userId: null, // sera extrait du token
+      userName: userName || 'Utilisateur',
+      context: 'apogee',
+      univers: null,
+      apporteur: null,
+      roleCible: null,
+    }),
+  });
+  
+  if (!chatRes.ok) {
+    console.error('[unified-search] chat-guide error:', chatRes.status);
+    return {
+      answer: "Je n'ai pas pu générer une réponse. Veuillez reformuler votre question.",
+      sources,
+      isConversational: true,
+    };
+  }
+  
+  // 4. Lire la réponse streamée et la reconstruire
+  let answer = '';
+  const reader = chatRes.body?.getReader();
+  if (reader) {
+    const decoder = new TextDecoder();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value, { stream: true });
+      
+      // Parser les lignes SSE
+      const lines = chunk.split('\n');
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === '[DONE]') continue;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) answer += content;
+          } catch {
+            // Ignorer les lignes mal formées
+          }
+        }
+      }
+    }
+  }
+  
+  return {
+    answer: answer || "Je n'ai pas trouvé d'information précise sur ce sujet dans la documentation.",
+    sources,
+    isConversational: true,
+  };
+}
+
+// Fallback simple pour les cas où on veut juste des résultats FAQ
+async function searchDocsFallback(supabase: any, query: string): Promise<{ results: any[] }> {
+  const results: any[] = [];
   
   const { data: faqItems } = await supabase
     .from('faq_items')
     .select('id, question, answer, context_type')
-    .textSearch('question', query.split(' ').join(' | '))
+    .textSearch('question', query.split(' ').filter(w => w.length > 2).join(' | '))
     .eq('is_published', true)
     .limit(3);
-  
-  if (chunks) {
-    for (const chunk of chunks) {
-      results.push({
-        id: chunk.id,
-        title: chunk.title || 'Document',
-        snippet: chunk.content?.substring(0, 200) + '...',
-        url: chunk.slug ? `/academy/apogee/category/${chunk.slug}` : '/academy',
-        source: chunk.block_type || 'apogee',
-      });
-    }
-  }
   
   if (faqItems) {
     for (const faq of faqItems) {
@@ -1295,11 +1416,17 @@ serve(async (req) => {
       }));
 
     } else if (routed.type === 'doc') {
-      result = await searchDocs(supabase, query);
+      // Réponse conversationnelle via RAG + chat-guide
+      const userName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || 'Utilisateur';
+      result = await searchDocsConversational(supabase, query, userName, authHeader);
 
       const response: AiSearchResult = {
         type: 'doc',
-        result,
+        result: {
+          answer: result.answer,
+          sources: result.sources,
+          isConversational: true,
+        },
         interpretation: buildInterpretation(null, agencySlug, routed.debug),
         computedAt: now.toISOString(),
         agencySlug,

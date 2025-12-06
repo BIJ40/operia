@@ -217,7 +217,7 @@ export const AiSearchOverlay: React.FC<AiSearchOverlayProps> = ({
 
                   {isDocResult && result.result && (
                     <AiDocAnswerCard
-                      results={(result.result as any).results || []}
+                      result={result.result as any}
                       query={question}
                     />
                   )}
