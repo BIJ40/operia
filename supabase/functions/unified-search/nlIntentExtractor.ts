@@ -47,7 +47,7 @@ const APPORTEUR_KEYWORDS = ['apporteur', 'apporteurs', 'commanditaire', 'prescri
 const UNIVERS_KEYWORDS = ['univers', 'metier', 'plomberie', 'vitrerie', 'serrurerie', 'electricite', 'menuiserie', 'peinture'];
 const AGENCE_KEYWORDS = ['agence', 'agences'];
 
-const CA_KEYWORDS = ['ca', 'chiffre', 'chiffredaffaire', 'chiffredaffaires', 'caht', 'recette', 'recettes', 'facture', 'factures', 'facturation'];
+const CA_KEYWORDS = ['ca', 'chiffre', 'chiffredaffaire', 'chiffredaffaires', 'caht', 'recette', 'recettes', 'facture', 'factures', 'facturation', 'fait', 'ifait', 'genere', 'realise', 'gagne', 'rapporte'];
 const RECOUVREMENT_KEYWORDS = ['recouvrement', 'impayes', 'impaye', 'encours', 'duclient', 'reste', 'encaisser', 'encaissement'];
 const DEVIS_KEYWORDS = ['devis', 'transformation', 'conversion', 'signe', 'accepte'];
 const DOSSIERS_KEYWORDS = ['dossier', 'dossiers', 'projet', 'projets', 'affaire', 'affaires', 'ouvert', 'ouverts', 'cree', 'crees', 'recu', 'recus'];
