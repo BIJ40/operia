@@ -92,6 +92,9 @@ export function AiUnifiedProvider({ children }: AiUnifiedProviderProps) {
       type: 'text',
     };
 
+    // Get current messages before adding the new one
+    const currentMessages = state.messages;
+
     setState(prev => ({
       ...prev,
       isLoading: true,
@@ -100,8 +103,17 @@ export function AiUnifiedProvider({ children }: AiUnifiedProviderProps) {
     }));
 
     try {
+      // Build conversation history for context
+      const conversationHistory = currentMessages.map(m => ({
+        role: m.role,
+        content: m.content,
+      }));
+
       const { data, error } = await supabase.functions.invoke('unified-search', {
-        body: { query },
+        body: { 
+          query,
+          conversationHistory: conversationHistory.length > 0 ? conversationHistory : undefined,
+        },
       });
 
       if (error) {
