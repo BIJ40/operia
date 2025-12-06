@@ -107,3 +107,6 @@ verify_jwt = true
 
 [functions.helpi-index]
 verify_jwt = true
+
+[functions.generate-pptx]
+verify_jwt = true
