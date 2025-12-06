@@ -24,6 +24,8 @@ interface StatResult {
     change: number;
     changePercent: number;
   };
+  // Indique si c'est un résultat filtré sur une entité spécifique
+  isFilteredEntity?: boolean;
 }
 
 interface AiStatAnswerCardProps {
@@ -70,6 +72,10 @@ export const AiStatAnswerCard: React.FC<AiStatAnswerCardProps> = ({
   const hasRanking = result.ranking && result.ranking.length > 0;
   const hasEvolution = result.evolution && result.evolution.changePercent !== 0;
   
+  // Détecte si c'est un résultat filtré sur un technicien/apporteur spécifique
+  // → Si pas de ranking MAIS topItem présent, c'est un résultat filtré sur une entité
+  const isFilteredEntity = !hasRanking && result.topItem !== undefined;
+  
   return (
     <div className="rounded-xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950/40 to-slate-900/60 p-5 space-y-4">
       {/* Header */}
@@ -103,8 +109,25 @@ export const AiStatAnswerCard: React.FC<AiStatAnswerCardProps> = ({
         )}
       </div>
       
-      {/* Valeur principale */}
-      {!hasRanking && (
+      {/* Valeur principale - Affichage pour résultat filtré sur entité (technicien/apporteur) */}
+      {isFilteredEntity && result.topItem && (
+        <div className="py-4">
+          <p className="text-lg text-slate-300 mb-1">
+            Le CA de <span className="font-semibold text-white">{result.topItem.name}</span> sur {period.label} est de :
+          </p>
+          <p className="text-3xl font-bold text-emerald-400">
+            {formatValue(result.topItem.value, result.unit)}
+          </p>
+          {hasEvolution && (
+            <p className="text-sm text-slate-400 mt-1">
+              vs {formatValue(result.evolution!.previous, result.unit)} précédemment
+            </p>
+          )}
+        </div>
+      )}
+      
+      {/* Valeur principale - Affichage générique (sans filtre entité) */}
+      {!hasRanking && !isFilteredEntity && (
         <div className="py-4">
           <p className="text-3xl font-bold text-white">
             {formatValue(result.value, result.unit)}
@@ -148,8 +171,8 @@ export const AiStatAnswerCard: React.FC<AiStatAnswerCardProps> = ({
         </div>
       )}
       
-      {/* Top unique */}
-      {result.topItem && !hasRanking && (
+      {/* Top unique - seulement pour mode global (pas pour mode filtré) */}
+      {result.topItem && !hasRanking && !isFilteredEntity && (
         <div className="flex items-center gap-3 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
           <Award className="w-5 h-5 text-yellow-400" />
           <div className="flex-1">

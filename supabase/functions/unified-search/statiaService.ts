@@ -180,10 +180,13 @@ function computeCaParUnivers(data: ApogeeData, params: StatParams): StatResult {
 
 /**
  * Compute CA par technicien (avec support filtre technicienId)
+ * - Mode filtré (technicienId présent): renvoie une valeur unique sans ranking
+ * - Mode global (pas de filtre): renvoie un ranking complet
  */
 function computeCaParTechnicien(data: ApogeeData, params: StatParams): StatResult {
   const caByTech: Record<string, { name: string; ca: number }> = {};
   const filterTechnicienId = params.filters?.technicienId;
+  const filterTechnicienName = params.filters?.technicienName;
   
   for (const f of data.factures) {
     const isAvoir = (f.typeFacture || '').toLowerCase() === 'avoir';
@@ -213,27 +216,35 @@ function computeCaParTechnicien(data: ApogeeData, params: StatParams): StatResul
     .filter(x => x.value > 0)
     .sort((a, b) => b.value - a.value);
   
-  // Si filtre technicien appliqué, retourner uniquement ce technicien
+  // ════════════════════════════════════════════════════════════
+  // MODE FILTRÉ: un seul technicien demandé → renvoyer valeur unique SANS ranking
+  // ════════════════════════════════════════════════════════════
   if (filterTechnicienId) {
-    const techData = sorted[0];
-    if (techData) {
+    const techData = sorted.find(t => String(t.id) === String(filterTechnicienId));
+    const techName = filterTechnicienName || techData?.name || `Technicien #${filterTechnicienId}`;
+    
+    if (techData && techData.value > 0) {
+      // Technicien trouvé avec CA > 0 → valeur unique
       return {
         value: techData.value,
         topItem: { rank: 1, id: techData.id, name: techData.name, value: techData.value },
-        ranking: [{ rank: 1, ...techData }],
+        ranking: undefined, // PAS de ranking pour mode filtré
         unit: '€',
       };
     }
-    // Technicien non trouvé dans les factures
-    const techName = params.filters?.technicienName || `Technicien #${filterTechnicienId}`;
+    
+    // Technicien non trouvé ou CA = 0 → valeur 0 avec nom
     return {
       value: 0,
       topItem: { rank: 1, id: String(filterTechnicienId), name: String(techName), value: 0 },
-      ranking: [{ rank: 1, id: String(filterTechnicienId), name: String(techName), value: 0 }],
+      ranking: undefined, // PAS de ranking pour mode filtré
       unit: '€',
     };
   }
   
+  // ════════════════════════════════════════════════════════════
+  // MODE GLOBAL: classement complet des techniciens
+  // ════════════════════════════════════════════════════════════
   const topN = params.topN || 10;
   const ranking = sorted.slice(0, topN).map((item, idx) => ({ rank: idx + 1, ...item }));
   const total = sorted.reduce((sum, item) => sum + item.value, 0);
