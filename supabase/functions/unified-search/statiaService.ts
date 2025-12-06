@@ -3,6 +3,9 @@
  * Provides StatIA metric computation within edge function context
  */
 
+// Import du moteur partagé pour CA par technicien (source de vérité unique)
+import { computeCaParTechnicienShared } from '../_shared/statiaEngines/caParTechnicien.ts';
+
 // ============= TYPES =============
 export interface StatParams {
   dateRange: { start: Date; end: Date };
@@ -320,170 +323,14 @@ function computeCaParUnivers(data: ApogeeData, params: StatParams): StatResult {
 }
 
 /**
- * Compute CA par technicien (avec support filtre technicienId)
- * - Mode filtré (technicienId présent): renvoie une valeur unique sans ranking
- * - Mode global (pas de filtre): renvoie un ranking complet
+ * Compute CA par technicien - UTILISE LE MOTEUR PARTAGÉ (source de vérité unique)
  * 
- * Stratégie: 
- * 1. Via f.data.technicians si disponible
- * 2. Sinon via interventions liées au projet de la facture
+ * Cette fonction délègue au moteur partagé caParTechnicienShared qui implémente
+ * la logique métier exacte du frontend (répartition égale entre techniciens productifs)
  */
 function computeCaParTechnicien(data: ApogeeData, params: StatParams): StatResult {
-  console.log(`[computeCaParTechnicien] START - ${data.factures.length} factures, ${data.interventions.length} interventions, ${data.users.length} users`);
-  
-  const caByTech: Record<string, { name: string; ca: number }> = {};
-  const filterTechnicienId = params.filters?.technicienId;
-  const filterTechnicienName = params.filters?.technicienName;
-  
-  // Index users par id pour les noms
-  const usersById = new Map<string, any>();
-  for (const u of data.users) {
-    usersById.set(String(u.id), u);
-  }
-  
-  // ════════════════════════════════════════════════════════════
-  // STRATÉGIE UNIFIÉE:
-  // 1. Récupérer tous les techniciens actifs des interventions/créneaux
-  // 2. Distribuer le CA des factures proportionnellement
-  // ════════════════════════════════════════════════════════════
-  
-  // Collecter tous les techniciens uniques des interventions
-  const allTechnicianIds = new Set<string>();
-  for (const i of data.interventions) {
-    // getInterventionsCreneaux: usersIds directement
-    const usersIds = i.usersIds || i.data?.usersIds || [];
-    for (const uid of usersIds) {
-      if (uid) allTechnicianIds.add(String(uid));
-    }
-    // apiGetInterventions: userId + visites
-    if (i.userId) allTechnicianIds.add(String(i.userId));
-    const visites = i.visites || i.data?.visites || [];
-    for (const v of visites) {
-      const vUserIds = v.usersIds || v.userIds || [];
-      for (const uid of vUserIds) {
-        if (uid) allTechnicianIds.add(String(uid));
-      }
-    }
-  }
-  
-  console.log(`[computeCaParTechnicien] Found ${allTechnicianIds.size} unique technicians from interventions`);
-  
-  // Si aucun technicien trouvé dans les interventions, essayer via les factures
-  if (allTechnicianIds.size === 0) {
-    console.log(`[computeCaParTechnicien] No techs from interventions, trying factures.data.technicians`);
-    for (const f of data.factures) {
-      const techs = f.data?.technicians || [];
-      for (const t of techs) {
-        if (t.id) allTechnicianIds.add(String(t.id));
-      }
-    }
-    console.log(`[computeCaParTechnicien] Found ${allTechnicianIds.size} technicians from factures`);
-  }
-  
-  // ════════════════════════════════════════════════════════════
-  // CALCUL DU CA PAR TECHNICIEN
-  // Priorité: 1) facture.data.technicians 2) répartition égale entre techs actifs
-  // ════════════════════════════════════════════════════════════
-  let facturesWithTechs = 0;
-  let facturesDistributed = 0;
-  let facturesNoTechs = 0;
-  
-  for (const f of data.factures) {
-    const isAvoir = (f.typeFacture || f.type || '').toLowerCase() === 'avoir';
-    const rawMontant = f.data?.totalHT ?? f.totalHT ?? f.montantHT ?? f.montant ?? 0;
-    const montant = typeof rawMontant === 'string' ? parseFloat(rawMontant) || 0 : rawMontant;
-    const netMontant = isAvoir ? -Math.abs(montant) : montant;
-    
-    // Stratégie 1: Techniciens directement sur la facture (prioritaire)
-    let techs: Array<{ id: string | number; firstname?: string; lastname?: string }> = [];
-    const factureTechs = f.data?.technicians || [];
-    if (factureTechs.length > 0) {
-      techs = factureTechs;
-      facturesWithTechs++;
-    }
-    
-    // Stratégie 2: Distribuer proportionnellement entre tous les techniciens actifs
-    if (techs.length === 0 && allTechnicianIds.size > 0) {
-      techs = Array.from(allTechnicianIds).map(id => {
-        const user = usersById.get(id);
-        return {
-          id,
-          firstname: user?.firstname || user?.prenom || '',
-          lastname: user?.lastname || user?.nom || ''
-        };
-      });
-      facturesDistributed++;
-    }
-    
-    if (techs.length === 0) {
-      facturesNoTechs++;
-      continue;
-    }
-    
-    const share = netMontant / techs.length;
-    for (const tech of techs) {
-      const id = String(tech.id);
-      const user = usersById.get(id);
-      const name = user 
-        ? `${user.firstname || user.prenom || ''} ${user.lastname || user.nom || ''}`.trim() 
-        : `${tech.firstname || ''} ${tech.lastname || ''}`.trim() || `Tech #${tech.id}`;
-      
-      // Si un filtre technicienId est appliqué, ne garder que ce technicien
-      if (filterTechnicienId && String(filterTechnicienId) !== id) {
-        continue;
-      }
-      
-      if (!caByTech[id]) caByTech[id] = { name, ca: 0 };
-      caByTech[id].ca += share;
-    }
-  }
-  
-  console.log(`[computeCaParTechnicien] Source stats: ${facturesWithTechs} factures avec techs, ${facturesDistributed} distribués, ${facturesNoTechs} sans techs`);
-  
-  const sorted = Object.entries(caByTech)
-    .map(([id, d]) => ({ id, name: d.name, value: Math.round(d.ca) }))
-    .filter(x => x.value !== 0) // Garder aussi les négatifs (avoirs)
-    .sort((a, b) => b.value - a.value);
-  
-  console.log(`[computeCaParTechnicien] Result: ${sorted.length} techniciens, top 3: ${sorted.slice(0, 3).map(t => `${t.name}=${t.value}€`).join(', ')}`);
-  
-  // ════════════════════════════════════════════════════════════
-  // MODE FILTRÉ: un seul technicien demandé → renvoyer valeur unique SANS ranking
-  // ════════════════════════════════════════════════════════════
-  if (filterTechnicienId) {
-    const techData = sorted.find(t => String(t.id) === String(filterTechnicienId));
-    const techName = filterTechnicienName || techData?.name || `Technicien #${filterTechnicienId}`;
-    
-    if (techData && techData.value > 0) {
-      return {
-        value: techData.value,
-        topItem: { rank: 1, id: techData.id, name: techData.name, value: techData.value },
-        ranking: undefined,
-        unit: '€',
-      };
-    }
-    
-    return {
-      value: 0,
-      topItem: { rank: 1, id: String(filterTechnicienId), name: String(techName), value: 0 },
-      ranking: undefined,
-      unit: '€',
-    };
-  }
-  
-  // ════════════════════════════════════════════════════════════
-  // MODE GLOBAL: classement complet des techniciens
-  // ════════════════════════════════════════════════════════════
-  const topN = params.topN || 10;
-  const ranking = sorted.slice(0, topN).map((item, idx) => ({ rank: idx + 1, ...item }));
-  const total = sorted.reduce((sum, item) => sum + item.value, 0);
-  
-  return {
-    value: total,
-    topItem: ranking[0],
-    ranking,
-    unit: '€',
-  };
+  console.log(`[computeCaParTechnicien] Delegation to shared engine`);
+  return computeCaParTechnicienShared(data, params);
 }
 
 /**
