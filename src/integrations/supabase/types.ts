@@ -351,6 +351,27 @@ export type Database = {
           },
         ]
       }
+      ai_search_cache: {
+        Row: {
+          created_at: string
+          key: string
+          ttl_seconds: number
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          key: string
+          ttl_seconds?: number
+          value: Json
+        }
+        Update: {
+          created_at?: string
+          key?: string
+          ttl_seconds?: number
+          value?: Json
+        }
+        Relationships: []
+      }
       animator_visits: {
         Row: {
           agency_id: string
@@ -4425,6 +4446,7 @@ export type Database = {
         Args: { _from_status: string; _to_status: string; _user_id: string }
         Returns: boolean
       }
+      cleanup_ai_search_cache: { Args: never; Returns: number }
       cleanup_expired_request_locks: { Args: never; Returns: number }
       get_collaborator_sensitive_data: {
         Args: { p_collaborator_id: string }

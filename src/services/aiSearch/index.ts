@@ -53,6 +53,20 @@ export { validateAndRoute } from './validateAndRoute';
 // Extraction LLM
 export { extractIntentWithLLM } from './extractIntentLLM';
 
+// Cache
+export {
+  getIntentFromMemory,
+  setIntentToMemory,
+  getStatsFromCache,
+  setStatsToCache,
+  buildStatsCacheKey,
+  computeStatsTTL,
+  clearIntentCache,
+  clearStatsCache,
+  clearAllCaches,
+  getCacheStats,
+} from './cache';
+
 // Re-export des types principaux pour faciliter l'import
 export type {
   QueryType,
