@@ -137,32 +137,64 @@ function extractTechnicienName(query: string): string | undefined {
   return undefined;
 }
 
-function detectMetricId(query: string, hasTechnicienFilter: boolean): { metricId: string; metricLabel: string } {
+function extractTopN(query: string): number | undefined {
+  // Extract number from queries like "top 3", "3 meilleurs", "les 5 premiers"
+  const match = query.match(/(?:top\s*)?(\d+)\s*(?:meilleur|premier|top)/i) ||
+                query.match(/top\s*(\d+)/i) ||
+                query.match(/(\d+)\s*(?:meilleur|premier)/i);
+  if (match) return parseInt(match[1], 10);
+  
+  // Default to 3 for "meilleurs" without number
+  if (query.toLowerCase().includes('meilleur')) return 3;
+  return undefined;
+}
+
+function detectMetricId(query: string, hasTechnicienFilter: boolean): { metricId: string; metricLabel: string; isRanking: boolean } {
   const normalized = query.toLowerCase();
 
   // If a technician name is detected, route to technician CA
   if (hasTechnicienFilter) {
-    return { metricId: 'ca_technicien_filtre', metricLabel: 'CA du technicien' };
+    return { metricId: 'ca_technicien_filtre', metricLabel: 'CA du technicien', isRanking: false };
+  }
+  
+  // Apporteur detection - MUST be before technicien to avoid false matches
+  if (normalized.includes('apporteur') || normalized.includes('commanditaire') || normalized.includes('prescripteur')) {
+    const isTop = normalized.includes('top') || normalized.includes('meilleur') || normalized.includes('plus');
+    return { 
+      metricId: 'ca_par_apporteur', 
+      metricLabel: isTop ? 'Top apporteurs par CA' : 'CA par apporteur',
+      isRanking: isTop 
+    };
+  }
+  
+  // Univers detection
+  if (normalized.includes('univers') || normalized.includes('metier') || normalized.includes('domaine')) {
+    const isTop = normalized.includes('top') || normalized.includes('meilleur') || normalized.includes('plus');
+    return { 
+      metricId: 'ca_par_univers', 
+      metricLabel: isTop ? 'Top univers par CA' : 'CA par univers',
+      isRanking: isTop 
+    };
   }
   
   if ((normalized.includes('technicien') || normalized.includes('tech')) && 
       (normalized.includes('plus') || normalized.includes('top') || normalized.includes('meilleur'))) {
-    return { metricId: 'ca_par_technicien', metricLabel: 'CA par technicien' };
+    return { metricId: 'ca_par_technicien', metricLabel: 'CA par technicien', isRanking: true };
   }
   if (normalized.includes('moyenne') || normalized.includes('rapporte')) {
-    return { metricId: 'ca_moyen_par_tech', metricLabel: 'CA moyen par technicien' };
+    return { metricId: 'ca_moyen_par_tech', metricLabel: 'CA moyen par technicien', isRanking: false };
   }
   if (normalized.includes('dossier')) {
-    return { metricId: 'nb_dossiers_crees', metricLabel: 'Nombre de dossiers' };
+    return { metricId: 'nb_dossiers_crees', metricLabel: 'Nombre de dossiers', isRanking: false };
   }
   if (normalized.includes('sav')) {
-    return { metricId: 'taux_sav_global', metricLabel: 'Taux de SAV' };
+    return { metricId: 'taux_sav_global', metricLabel: 'Taux de SAV', isRanking: false };
   }
   if (normalized.includes('transformation') || normalized.includes('devis')) {
-    return { metricId: 'taux_transformation_devis', metricLabel: 'Taux de transformation' };
+    return { metricId: 'taux_transformation_devis', metricLabel: 'Taux de transformation', isRanking: false };
   }
   
-  return { metricId: 'ca_global_ht', metricLabel: 'CA global HT' };
+  return { metricId: 'ca_global_ht', metricLabel: 'CA global HT', isRanking: false };
 }
 
 serve(async (req) => {
@@ -203,15 +235,19 @@ serve(async (req) => {
     }
 
     // Get user profile for agency
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('agence, enabled_modules, global_role, full_name')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
+
+    if (profileError) {
+      console.error(`[unified-search] Profile fetch error:`, profileError);
+    }
 
     // Log user info for debugging - unified search is open to ALL authenticated users
     const globalRole = profile?.global_role || 'unknown';
-    console.log(`[unified-search] User: role=${globalRole}, agence=${profile?.agence || 'none'}`);
+    console.log(`[unified-search] User id=${user.id}, role=${globalRole}, agence=${profile?.agence || 'none'}`);
 
     // For stats queries, agency is needed - use empty string for franchiseur roles
     const agencySlug = profile?.agence || '';
@@ -231,21 +267,36 @@ serve(async (req) => {
     // === STATS MODE ===
     if (intent === 'stats') {
       const technicienName = extractTechnicienName(query);
-      const { metricId, metricLabel } = detectMetricId(query, !!technicienName);
+      const { metricId, metricLabel, isRanking } = detectMetricId(query, !!technicienName);
       const univers = extractUnivers(query);
-      const periode = extractPeriode(query);
+      let periode = extractPeriode(query);
+      const topN = extractTopN(query);
 
-      console.log(`[unified-search] Stats: metric=${metricId}, technicien=${technicienName || 'none'}, univers=${univers || 'none'}, periode=${periode ? 'yes' : 'none'}`);
+      // Default to current year for ranking queries without period
+      if (isRanking && !periode) {
+        const now = new Date();
+        periode = { start: new Date(now.getFullYear(), 0, 1), end: new Date(now.getFullYear(), 11, 31) };
+        console.log(`[unified-search] No period specified for ranking, defaulting to current year`);
+      }
+
+      console.log(`[unified-search] Stats: metric=${metricId}, technicien=${technicienName || 'none'}, univers=${univers || 'none'}, periode=${periode ? 'yes' : 'none'}, topN=${topN || 'none'}, isRanking=${isRanking}`);
 
       // Compute real CA from Apogée API
       let computedValue: number = 0;
       let topItem: { id: string | number; name: string; value: number } | undefined;
+      let ranking: Array<{ rank: number; id: string | number; name: string; value: number }> | undefined;
 
       if (agencySlug) {
         try {
+          // For apporteur queries, we need projects to get commanditaireId
+          const needsProjects = metricId === 'ca_par_apporteur';
+          const needsClients = metricId === 'ca_par_apporteur';
+          
           // Call proxy-apogee to get real factures data
           const proxyUrl = `${supabaseUrl}/functions/v1/proxy-apogee`;
-          const proxyResponse = await fetch(proxyUrl, {
+          
+          // Fetch factures
+          const facturesResponse = await fetch(proxyUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -261,8 +312,37 @@ serve(async (req) => {
             }),
           });
 
-          if (proxyResponse.ok) {
-            const proxyData = await proxyResponse.json();
+          let projects: Array<{ id: number; data?: { commanditaireId?: number } }> = [];
+          let clients: Array<{ id: number; name?: string; raisonSociale?: string }> = [];
+
+          // Fetch projects if needed
+          if (needsProjects) {
+            const projectsResponse = await fetch(proxyUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+              body: JSON.stringify({ endpoint: 'apiGetProjects', agencySlug }),
+            });
+            if (projectsResponse.ok) {
+              const pData = await projectsResponse.json();
+              projects = pData.data || [];
+            }
+          }
+
+          // Fetch clients if needed
+          if (needsClients) {
+            const clientsResponse = await fetch(proxyUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+              body: JSON.stringify({ endpoint: 'apiGetClients', agencySlug }),
+            });
+            if (clientsResponse.ok) {
+              const cData = await clientsResponse.json();
+              clients = cData.data || [];
+            }
+          }
+
+          if (facturesResponse.ok) {
+            const proxyData = await facturesResponse.json();
             console.log(`[unified-search] Got ${proxyData.data?.length || 0} factures from proxy`);
 
             if (proxyData.success && proxyData.data) {
@@ -272,6 +352,7 @@ serve(async (req) => {
                 typeFacture?: string;
                 dateReelle?: string;
                 date?: string;
+                projectId?: number;
                 data?: { technicians?: Array<{ id: number; firstname?: string; lastname?: string }> };
               }>;
 
@@ -283,8 +364,51 @@ serve(async (req) => {
                 return d >= periode.start && d <= periode.end;
               });
 
-              // Compute CA based on metric type
-              if (technicienName) {
+              // === CA PAR APPORTEUR ===
+              if (metricId === 'ca_par_apporteur') {
+                const projectsById = new Map(projects.map(p => [p.id, p]));
+                const clientsById = new Map(clients.map(c => [c.id, c]));
+                const caByApporteur: Record<number, { name: string; ca: number }> = {};
+
+                for (const f of filteredFactures) {
+                  const isAvoir = (f.typeFacture || '').toLowerCase() === 'avoir';
+                  const montant = f.totalHT ?? f.montant ?? 0;
+                  const netMontant = isAvoir ? -Math.abs(montant) : montant;
+                  
+                  const project = projectsById.get(f.projectId || 0);
+                  const commanditaireId = project?.data?.commanditaireId;
+                  
+                  if (commanditaireId) {
+                    const client = clientsById.get(commanditaireId);
+                    const apporteurName = client?.raisonSociale || client?.name || `Apporteur #${commanditaireId}`;
+                    
+                    if (!caByApporteur[commanditaireId]) {
+                      caByApporteur[commanditaireId] = { name: apporteurName, ca: 0 };
+                    }
+                    caByApporteur[commanditaireId].ca += netMontant;
+                  } else {
+                    // Direct (no apporteur)
+                    if (!caByApporteur[0]) {
+                      caByApporteur[0] = { name: 'Direct', ca: 0 };
+                    }
+                    caByApporteur[0].ca += netMontant;
+                  }
+                }
+
+                // Sort and build ranking
+                const sorted = Object.entries(caByApporteur)
+                  .map(([id, data]) => ({ id: parseInt(id), name: data.name, value: Math.round(data.ca) }))
+                  .sort((a, b) => b.value - a.value);
+
+                const limitedRanking = topN ? sorted.slice(0, topN) : sorted.slice(0, 10);
+                ranking = limitedRanking.map((item, idx) => ({ rank: idx + 1, ...item }));
+                topItem = ranking[0];
+                computedValue = sorted.reduce((sum, item) => sum + item.value, 0);
+
+                console.log(`[unified-search] Computed ${sorted.length} apporteurs, top=${topItem?.name} (${topItem?.value}€)`);
+              }
+              // === CA PAR TECHNICIEN ===
+              else if (technicienName) {
                 // Filter factures for specific technician
                 let techCA = 0;
                 for (const f of filteredFactures) {
@@ -293,7 +417,6 @@ serve(async (req) => {
                   const montant = f.totalHT ?? f.montant ?? 0;
                   const netMontant = isAvoir ? -Math.abs(montant) : montant;
                   
-                  // Check if this technician worked on this facture
                   const matchingTech = techs.find(t => {
                     const fullName = `${t.firstname || ''} ${t.lastname || ''}`.toLowerCase();
                     return fullName.includes(technicienName.toLowerCase()) || 
@@ -306,8 +429,9 @@ serve(async (req) => {
                 }
                 computedValue = Math.round(techCA);
                 topItem = { id: 1, name: technicienName, value: computedValue };
-              } else {
-                // Global CA
+              } 
+              // === CA GLOBAL ===
+              else {
                 for (const f of filteredFactures) {
                   const isAvoir = (f.typeFacture || '').toLowerCase() === 'avoir';
                   const montant = f.totalHT ?? f.montant ?? 0;
@@ -319,7 +443,7 @@ serve(async (req) => {
               console.log(`[unified-search] Computed CA: ${computedValue}€ from ${filteredFactures.length} factures`);
             }
           } else {
-            console.error(`[unified-search] Proxy error: ${proxyResponse.status}`);
+            console.error(`[unified-search] Proxy error: ${facturesResponse.status}`);
           }
         } catch (apiError) {
           console.error(`[unified-search] API call failed:`, apiError);
@@ -340,6 +464,7 @@ serve(async (req) => {
         result: {
           value: computedValue,
           topItem,
+          ranking,
           unit: metricId.includes('taux') ? '%' : '€',
         },
         agencySlug: agencySlug,
