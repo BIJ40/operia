@@ -91,12 +91,12 @@ export function useFaqData() {
       supabase.from('faq_items').insert({
         question: data.question,
         answer: data.answer,
-        context_type: data.context_type as ContextType,
+        context_type: data.context_type,
         category_id: data.category_id,
         is_published: data.is_published,
         role_cible: data.role_cible,
         display_order: items.length,
-      }),
+      } as never),
       'FAQ_HUB_CREATE'
     );
     

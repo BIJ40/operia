@@ -39,6 +39,8 @@ export const CONTEXT_OPTIONS = [
   { value: 'documents', label: 'Documents', icon: '📄', color: 'violet-500' },
   { value: 'franchise', label: 'Franchise', icon: '💰', color: 'amber-500' },
   { value: 'metier', label: 'Métier', icon: '🔨', color: 'rose-500' },
+  { value: 'marche_batiment', label: 'Marché Bâtiment', icon: '🏗️', color: 'sky-500' },
+  { value: 'groupe_laposte_axeo', label: 'Groupe La Poste / AXEO', icon: '📮', color: 'yellow-500' },
   { value: 'auto', label: 'Auto', icon: '⚙️', color: 'slate-500' },
 ] as const;
 
