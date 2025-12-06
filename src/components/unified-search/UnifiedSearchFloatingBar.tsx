@@ -112,75 +112,96 @@ export function UnifiedSearchFloatingBar() {
     );
   }
 
-  // Barre ouverte: afficher le champ de recherche
+  // Barre ouverte: afficher le champ de recherche avec liseré animé
   return (
     <div className="w-full flex justify-center py-3 animate-in fade-in slide-in-from-top-2 duration-200">
-      <form 
-        onSubmit={handleSubmit}
-        className={cn(
-          "w-full max-w-2xl mx-4 flex items-center gap-2",
-          "bg-background/95 backdrop-blur-sm",
-          "border-2 border-helpconfort-blue/40 rounded-full",
-          "shadow-lg shadow-helpconfort-blue/10",
-          "px-4 py-2"
-        )}
-      >
-        {isLoading ? (
-          <Loader2 className="w-5 h-5 text-helpconfort-blue animate-spin shrink-0" />
-        ) : (
-          <Search className="w-5 h-5 text-helpconfort-blue shrink-0" />
-        )}
+      <div className="relative w-full max-w-2xl mx-4">
+        {/* Liseré brillant animé */}
+        <div className="absolute -inset-[2px] rounded-full overflow-hidden">
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-helpconfort-blue to-transparent"
+            animate={{
+              x: ['-100%', '100%'],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: 'linear',
+            }}
+            style={{ width: '200%' }}
+          />
+        </div>
         
-        <Input
-          ref={inputRef}
-          type="text"
-          value={localQuery}
-          onChange={(e) => setLocalQuery(e.target.value)}
-          placeholder="Pose ta question (stats agence, docs Apogée, HelpConfort...)"
-          disabled={isLoading}
+        {/* Bordure statique */}
+        <div className="absolute -inset-[2px] rounded-full border-2 border-helpconfort-blue/40" />
+        
+        <form 
+          onSubmit={handleSubmit}
           className={cn(
-            "flex-1 border-0 bg-transparent",
-            "focus-visible:ring-0 focus-visible:ring-offset-0",
-            "placeholder:text-muted-foreground/60"
+            "relative flex items-center gap-2",
+            "bg-background/98 backdrop-blur-sm",
+            "rounded-full",
+            "shadow-lg shadow-helpconfort-blue/10",
+            "px-4 py-2"
           )}
-        />
-        
-        <div className="flex items-center gap-1 shrink-0">
-          {localQuery && (
+        >
+          {isLoading ? (
+            <Loader2 className="w-5 h-5 text-helpconfort-blue animate-spin shrink-0" />
+          ) : (
+            <Search className="w-5 h-5 text-helpconfort-blue shrink-0" />
+          )}
+          
+          <Input
+            ref={inputRef}
+            type="text"
+            value={localQuery}
+            onChange={(e) => setLocalQuery(e.target.value)}
+            placeholder="Pose ta question (stats agence, docs Apogée, HelpConfort...)"
+            disabled={isLoading}
+            className={cn(
+              "flex-1 border-0 bg-transparent",
+              "focus-visible:ring-0 focus-visible:ring-offset-0",
+              "placeholder:text-muted-foreground/60"
+            )}
+          />
+          
+          <div className="flex items-center gap-1 shrink-0">
+            {localQuery && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setLocalQuery('')}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            )}
+            
+            <Button
+              type="submit"
+              size="sm"
+              disabled={!localQuery.trim() || isLoading}
+              className="rounded-full px-4 bg-helpconfort-blue hover:bg-helpconfort-blue/90"
+            >
+              {isLoading ? 'Recherche...' : 'Rechercher'}
+            </Button>
+            
             <Button
               type="button"
               variant="ghost"
               size="icon"
               className="h-8 w-8"
-              onClick={() => setLocalQuery('')}
+              onClick={() => {
+                closeSearch();
+                setLocalQuery('');
+              }}
             >
               <X className="w-4 h-4" />
             </Button>
-          )}
-          
-          <Button
-            type="submit"
-            size="sm"
-            disabled={!localQuery.trim() || isLoading}
-            className="rounded-full px-4 bg-helpconfort-blue hover:bg-helpconfort-blue/90"
-          >
-            {isLoading ? 'Recherche...' : 'Rechercher'}
-          </Button>
-          
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => {
-              closeSearch();
-              setLocalQuery('');
-            }}
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
-      </form>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
