@@ -70,19 +70,33 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
   // Hook pour récupérer les données réelles des sélecteurs
   // Le queryKey DOIT inclure agencySlug pour forcer le refetch lors du changement
   const { data: apogeeData, isLoading: isLoadingData, refetch } = useQuery({
-    queryKey: ['apogee-preview-data', agencySlug],
+    queryKey: ['apogee-preview-data', agencySlug, Date.now().toString().slice(0, -4)], // Force refresh every 10s
     queryFn: async () => {
       if (!agencySlug) {
         console.warn('[MetricPreview] No agencySlug provided, skipping data load');
         return null;
       }
-      console.log(`[MetricPreview] Loading data for agency: ${agencySlug}`);
-      // CRITICAL: Toujours passer agencySlug explicitement, JAMAIS de fallback
-      return apogeeProxy.getAllData({ agencySlug, skipCache: true });
+      console.log(`[MetricPreview] ===== LOADING DATA FOR AGENCY: ${agencySlug} =====`);
+      
+      // CRITICAL: Appeler chaque endpoint INDIVIDUELLEMENT avec agencySlug EXPLICITE
+      // pour éviter tout problème de cache ou de fallback
+      const [users, clients, projects, interventions, factures, devis, creneaux] = await Promise.all([
+        apogeeProxy.getUsers({ agencySlug, skipCache: true }),
+        apogeeProxy.getClients({ agencySlug, skipCache: true }),
+        apogeeProxy.getProjects({ agencySlug, skipCache: true }),
+        apogeeProxy.getInterventions({ agencySlug, skipCache: true }),
+        apogeeProxy.getFactures({ agencySlug, skipCache: true }),
+        apogeeProxy.getDevis({ agencySlug, skipCache: true }),
+        apogeeProxy.getInterventionsCreneaux({ agencySlug, skipCache: true }),
+      ]);
+      
+      console.log(`[MetricPreview] Loaded for ${agencySlug}: ${factures?.length || 0} factures, ${projects?.length || 0} projects`);
+      
+      return { users, clients, projects, interventions, factures, devis, creneaux };
     },
     enabled: !!agencySlug,
-    staleTime: 60 * 1000, // 1 minute
-    gcTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 0, // Always stale - force refetch
+    gcTime: 0, // No garbage collection delay
   });
 
   // Extraire les listes réelles depuis les données
