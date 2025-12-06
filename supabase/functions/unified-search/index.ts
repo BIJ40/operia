@@ -566,7 +566,13 @@ serve(async (req) => {
               }
 
               const projectsById = new Map(projects.map(p => [p.id, p]));
-              const clientsById = new Map(clients.map(c => [c.id, c]));
+              // Create clients map with both string and number keys for robust lookup
+              const clientsById = new Map<string | number, typeof clients[0]>();
+              for (const c of clients) {
+                clientsById.set(c.id, c);
+                clientsById.set(String(c.id), c);
+                if (typeof c.id === 'string') clientsById.set(parseInt(c.id), c);
+              }
 
               // === CA PAR APPORTEUR ===
               if (parsedQuery.metricId === 'ca_par_apporteur') {
