@@ -1,4 +1,4 @@
-import { BarChart3, ListTodo, Calendar, Users, Inbox, Briefcase, PieChart, TrendingUp, Building2, FileText, Info, ShoppingCart } from 'lucide-react';
+import { BarChart3, ListTodo, Calendar, Users, Inbox, Briefcase, PieChart, TrendingUp, Building2, FileText, Info, ShoppingCart, Car } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
@@ -123,6 +123,14 @@ const pilotageModules: PilotageModule[] = [
     category: 'rh',
   },
   // AUTRES
+  {
+    id: 'maintenance_preventive',
+    title: 'Maintenance préventive',
+    description: 'Véhicules, matériel et EPI',
+    icon: Car,
+    href: ROUTES.pilotage.maintenance,
+    category: 'autres',
+  },
   {
     id: 'actions',
     title: 'Actions à Mener',
