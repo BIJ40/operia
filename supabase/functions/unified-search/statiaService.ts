@@ -124,13 +124,24 @@ function computeCaGlobalHt(data: ApogeeData, params: StatParams): StatResult {
  * - Mode global (pas de filtre): renvoie un ranking complet
  */
 function computeCaParApporteur(data: ApogeeData, params: StatParams): StatResult {
-  const projectsById = new Map(data.projects.map(p => [p.id, p]));
+  // Index projects par id (string ET number pour compatibilité)
+  const projectsById = new Map<string | number, any>();
+  for (const p of data.projects) {
+    projectsById.set(p.id, p);
+    projectsById.set(String(p.id), p);
+  }
+  
   const apporteurNames = buildApporteurNameMap(data.clients);
   const caByApporteur: Record<string, { name: string; ca: number }> = {};
   
   const filterApporteurId = params.filters?.apporteurId;
   const filterApporteurName = params.filters?.apporteurName;
   
+  // Debug stats
+  let matchedProjects = 0;
+  let unmatchedProjects = 0;
+  
+  console.log(`[computeCaParApporteur] Data: ${data.factures.length} factures, ${data.projects.length} projects`);
   console.log(`[computeCaParApporteur] Filter: apporteurId=${filterApporteurId}, apporteurName=${filterApporteurName}`);
   
   for (const f of data.factures) {
@@ -138,8 +149,17 @@ function computeCaParApporteur(data: ApogeeData, params: StatParams): StatResult
     const montant = f.data?.totalHT ?? f.totalHT ?? f.montant ?? 0;
     const netMontant = isAvoir ? -Math.abs(montant) : montant;
     
-    const project = projectsById.get(f.projectId);
-    const commanditaireId = project?.data?.commanditaireId;
+    // Trouver le projet via projectId ou data.projectId
+    const projectId = f.projectId ?? f.data?.projectId ?? f.project_id;
+    const project = projectId ? (projectsById.get(projectId) || projectsById.get(String(projectId))) : null;
+    
+    if (!project) {
+      unmatchedProjects++;
+      continue;
+    }
+    matchedProjects++;
+    
+    const commanditaireId = project?.data?.commanditaireId ?? project?.commanditaireId;
     
     // Si un filtre apporteurId est appliqué, ne garder que cet apporteur
     if (filterApporteurId && String(commanditaireId) !== String(filterApporteurId)) {
@@ -155,10 +175,14 @@ function computeCaParApporteur(data: ApogeeData, params: StatParams): StatResult
     caByApporteur[key].ca += netMontant;
   }
   
+  console.log(`[computeCaParApporteur] Project matching: ${matchedProjects} matched, ${unmatchedProjects} unmatched`);
+  
   const sorted = Object.entries(caByApporteur)
     .map(([id, d]) => ({ id, name: d.name, value: Math.round(d.ca) }))
     .filter(x => x.value > 0)
     .sort((a, b) => b.value - a.value);
+  
+  console.log(`[computeCaParApporteur] ${Object.keys(caByApporteur).length} apporteurs, top 3: ${sorted.slice(0,3).map(s => `${s.name}=${s.value}€`).join(', ')}`);
   
   // ════════════════════════════════════════════════════════════
   // MODE FILTRÉ: un seul apporteur demandé → renvoyer valeur unique SANS ranking
