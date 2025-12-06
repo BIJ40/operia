@@ -283,6 +283,164 @@ function computeCaMoyenParTech(data: ApogeeData, params: StatParams): StatResult
   return { value: Math.round(moyenne), unit: '€' };
 }
 
+/**
+ * Compute nb dossiers par univers
+ */
+function computeNbDossiersParUnivers(data: ApogeeData, params: StatParams): StatResult {
+  const countByUnivers: Record<string, number> = {};
+  
+  for (const p of data.projects) {
+    const universes = extractProjectUniverses(p);
+    for (const uni of universes) {
+      if (!countByUnivers[uni]) countByUnivers[uni] = 0;
+      countByUnivers[uni]++;
+    }
+  }
+  
+  const sorted = Object.entries(countByUnivers)
+    .map(([name, count]) => ({ id: name, name, value: count }))
+    .sort((a, b) => b.value - a.value);
+  
+  const topN = params.topN || 10;
+  const ranking = sorted.slice(0, topN).map((item, idx) => ({ rank: idx + 1, ...item }));
+  const total = sorted.reduce((sum, item) => sum + item.value, 0);
+  
+  return { value: total, topItem: ranking[0], ranking, unit: 'dossiers' };
+}
+
+/**
+ * Compute nb dossiers par apporteur
+ */
+function computeNbDossiersParApporteur(data: ApogeeData, params: StatParams): StatResult {
+  const apporteurNames = buildApporteurNameMap(data.clients);
+  const countByApporteur: Record<string, { name: string; count: number }> = {};
+  
+  for (const p of data.projects) {
+    const commanditaireId = p.data?.commanditaireId;
+    const key = commanditaireId ? String(commanditaireId) : '0';
+    const name = commanditaireId 
+      ? (apporteurNames.get(String(commanditaireId)) || `Apporteur #${commanditaireId}`)
+      : 'Direct';
+    
+    if (!countByApporteur[key]) countByApporteur[key] = { name, count: 0 };
+    countByApporteur[key].count++;
+  }
+  
+  const sorted = Object.entries(countByApporteur)
+    .map(([id, d]) => ({ id, name: d.name, value: d.count }))
+    .sort((a, b) => b.value - a.value);
+  
+  const topN = params.topN || 10;
+  const ranking = sorted.slice(0, topN).map((item, idx) => ({ rank: idx + 1, ...item }));
+  const total = sorted.reduce((sum, item) => sum + item.value, 0);
+  
+  return { value: total, topItem: ranking[0], ranking, unit: 'dossiers' };
+}
+
+/**
+ * Compute taux de transformation devis → facture
+ */
+function computeTauxTransformationDevis(data: ApogeeData, _params: StatParams): StatResult {
+  const devis = (data as any).devis || [];
+  if (devis.length === 0) return { value: 0, unit: '%' };
+  
+  // Count devis avec facture associée
+  const facturedProjectIds = new Set(data.factures.map(f => f.projectId));
+  let devisTransformes = 0;
+  
+  for (const d of devis) {
+    if (facturedProjectIds.has(d.projectId)) {
+      devisTransformes++;
+    }
+  }
+  
+  const taux = (devisTransformes / devis.length) * 100;
+  return { value: Math.round(taux * 10) / 10, unit: '%' };
+}
+
+/**
+ * Compute délai moyen premier devis (jours)
+ */
+function computeDelaiPremierDevis(data: ApogeeData, _params: StatParams): StatResult {
+  const delays: number[] = [];
+  
+  for (const p of data.projects) {
+    const createdAt = p.created_at || p.date;
+    const history = p.data?.history || p.history || [];
+    
+    // Find first "Devis envoyé" event
+    const devisEvent = history.find((h: any) => 
+      h.kind === 2 && (h.labelKind || '').includes('Devis envoyé')
+    );
+    
+    if (createdAt && devisEvent?.dateModif) {
+      try {
+        const start = new Date(createdAt);
+        // Parse French date format dd/MM/yyyy HH:mm:ss
+        const parts = devisEvent.dateModif.split(' ')[0].split('/');
+        if (parts.length === 3) {
+          const end = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+          const diffDays = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+          if (diffDays > 0 && diffDays <= 60) {
+            delays.push(diffDays);
+          }
+        }
+      } catch (e) { /* ignore */ }
+    }
+  }
+  
+  if (delays.length === 0) return { value: 0, unit: 'jours' };
+  
+  const avg = delays.reduce((a, b) => a + b, 0) / delays.length;
+  return { value: Math.round(avg * 10) / 10, unit: 'jours' };
+}
+
+/**
+ * Compute délai moyen facture (jours depuis création dossier)
+ */
+function computeDelaiMoyenFacture(data: ApogeeData, _params: StatParams): StatResult {
+  const projectsById = new Map(data.projects.map(p => [p.id, p]));
+  const delays: number[] = [];
+  
+  for (const f of data.factures) {
+    const project = projectsById.get(f.projectId);
+    if (!project) continue;
+    
+    const createdAt = project.created_at || project.date;
+    const factureDate = f.dateReelle || f.date || f.created_at;
+    
+    if (createdAt && factureDate) {
+      try {
+        const start = new Date(createdAt);
+        const end = new Date(factureDate);
+        const diffDays = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+        if (diffDays > 0 && diffDays <= 365) {
+          delays.push(diffDays);
+        }
+      } catch (e) { /* ignore */ }
+    }
+  }
+  
+  if (delays.length === 0) return { value: 0, unit: 'jours' };
+  
+  const avg = delays.reduce((a, b) => a + b, 0) / delays.length;
+  return { value: Math.round(avg * 10) / 10, unit: 'jours' };
+}
+
+/**
+ * Compute CA moyen par jour
+ */
+function computeCaMoyenParJour(data: ApogeeData, params: StatParams): StatResult {
+  const caResult = computeCaGlobalHt(data, params);
+  const start = params.dateRange.start;
+  const end = params.dateRange.end;
+  
+  const diffDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+  const moyenne = caResult.value / diffDays;
+  
+  return { value: Math.round(moyenne), unit: '€/jour' };
+}
+
 // ============= METRIC REGISTRY =============
 const METRIC_COMPUTERS: Record<string, (data: ApogeeData, params: StatParams) => StatResult> = {
   'ca_global_ht': computeCaGlobalHt,
@@ -293,22 +451,54 @@ const METRIC_COMPUTERS: Record<string, (data: ApogeeData, params: StatParams) =>
   'panier_moyen': computePanierMoyen,
   'nb_dossiers_crees': computeNbDossiers,
   'ca_moyen_par_tech': computeCaMoyenParTech,
-  // Add aliases
-  'nb_dossiers_par_univers': computeCaParUnivers, // TODO: implement proper dossiers par univers
-  'dossiers_par_apporteur': computeCaParApporteur, // TODO: implement proper dossiers par apporteur
-  'taux_transformation_devis': (data, params) => ({ value: 0, unit: '%' }), // TODO
+  'nb_dossiers_par_univers': computeNbDossiersParUnivers,
+  'dossiers_par_apporteur': computeNbDossiersParApporteur,
+  'taux_transformation_devis': computeTauxTransformationDevis,
+  'delai_premier_devis': computeDelaiPremierDevis,
+  'delai_moyen_facture': computeDelaiMoyenFacture,
+  'ca_moyen_par_jour': computeCaMoyenParJour,
 };
+
+// ============= CACHE =============
+const CACHE = new Map<string, { result: StatResult; timestamp: number }>();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function getCacheKey(metricId: string, params: StatParams): string {
+  return `${metricId}:${params.agencySlug}:${params.dateRange.start.toISOString()}:${params.dateRange.end.toISOString()}:${params.topN || 10}`;
+}
+
+function getFromCache(key: string): StatResult | null {
+  const entry = CACHE.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > CACHE_TTL_MS) {
+    CACHE.delete(key);
+    return null;
+  }
+  return { ...entry.result, fromCache: true };
+}
+
+function setInCache(key: string, result: StatResult): void {
+  CACHE.set(key, { result, timestamp: Date.now() });
+}
 
 // ============= MAIN COMPUTE FUNCTION =============
 
 /**
- * Compute a StatIA metric
+ * Compute a StatIA metric with caching
  */
 export function computeMetric(
   metricId: string,
   data: ApogeeData,
-  params: StatParams
+  params: StatParams,
+  useCache = true
 ): StatResult {
+  const cacheKey = getCacheKey(metricId, params);
+  
+  if (useCache) {
+    const cached = getFromCache(cacheKey);
+    if (cached) return cached;
+  }
+  
   const computer = METRIC_COMPUTERS[metricId];
   
   if (!computer) {
@@ -316,7 +506,13 @@ export function computeMetric(
     return computeCaGlobalHt(data, params);
   }
   
-  return computer(data, params);
+  const result = computer(data, params);
+  
+  if (useCache) {
+    setInCache(cacheKey, result);
+  }
+  
+  return result;
 }
 
 /**
@@ -339,9 +535,12 @@ export function getRequiredSources(metricId: string): string[] {
     'panier_moyen': ['factures'],
     'nb_dossiers_crees': ['projects'],
     'ca_moyen_par_tech': ['factures'],
-    'nb_dossiers_par_univers': ['factures', 'projects'],
-    'dossiers_par_apporteur': ['factures', 'projects', 'clients'],
+    'nb_dossiers_par_univers': ['projects'],
+    'dossiers_par_apporteur': ['projects', 'clients'],
     'taux_transformation_devis': ['devis', 'factures'],
+    'delai_premier_devis': ['projects'],
+    'delai_moyen_facture': ['factures', 'projects'],
+    'ca_moyen_par_jour': ['factures'],
   };
   
   return sourceMap[metricId] || ['factures'];
