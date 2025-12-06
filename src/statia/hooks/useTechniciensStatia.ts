@@ -140,19 +140,36 @@ export function useTechniciensStatia(): TechniciensStatiaData {
       // Transformer ca_par_technicien_univers en format TechnicienStats[]
       const caParTechUnivers = caParTechUniversResult.value as Record<string, any> || {};
       
-      const technicienUniversStats: TechnicienStats[] = Object.entries(caParTechUnivers).map(([techId, data]: [string, any]) => ({
-        technicienId: techId,
-        technicienNom: data.name || `Tech ${techId}`,
-        technicienColor: data.color || '#808080',
-        technicienActif: true,
-        totaux: {
-          caHT: data.ca || 0,
-          heures: data.heures || 0,
-          caParHeure: data.caParHeure || 0,
-          nbDossiers: 0,
-        },
-        universes: data.byUnivers || {},
-      }));
+      // Transformer byUnivers pour inclure caParHeure par univers
+      const technicienUniversStats: TechnicienStats[] = Object.entries(caParTechUnivers).map(([techId, data]: [string, any]) => {
+        // Transformer byUnivers pour ajouter caParHeure et nbDossiers par univers
+        const transformedUniverses: TechnicienStatsByUnivers = {};
+        const byUnivers = data.byUnivers || {};
+        
+        Object.entries(byUnivers).forEach(([univers, uData]: [string, any]) => {
+          const heures = uData.heures || 0;
+          transformedUniverses[univers] = {
+            caHT: uData.ca || 0,
+            heures: heures,
+            caParHeure: heures > 0 ? (uData.ca || 0) / heures : 0,
+            nbDossiers: 0,
+          };
+        });
+        
+        return {
+          technicienId: techId,
+          technicienNom: data.name || `Tech ${techId}`,
+          technicienColor: data.color || '#808080',
+          technicienActif: data.isOn ?? true,
+          totaux: {
+            caHT: data.ca || 0,
+            heures: data.heures || 0,
+            caParHeure: data.caParHeure || 0,
+            nbDossiers: 0,
+          },
+          universes: transformedUniverses,
+        };
+      });
       
       // Extraire la liste des univers avec leurs infos (slug, label, colorHex)
       const universesSet = new Set<string>();

@@ -239,6 +239,19 @@ function calculateTechTimeByProject(
  * CA par Technicien × Univers
  * Conforme à computeTechUniversStatsForAgency de technicienUniversEngine
  */
+/**
+ * Interface étendue pour inclure is_on et couleur
+ */
+interface TechnicianStatsExtended extends TechnicianStats {
+  isOn: boolean;
+  color: string;
+}
+
+/**
+ * CA par Technicien × Univers
+ * Conforme à computeTechUniversStatsForAgency de technicienUniversEngine
+ * Filtre uniquement les techniciens actifs (is_on: true)
+ */
 export const caParTechnicienUnivers: StatDefinition = {
   id: 'ca_par_technicien_univers',
   label: 'CA par Technicien × Univers',
@@ -258,6 +271,17 @@ export const caParTechnicienUnivers: StatDefinition = {
     const projectsById = indexProjectsById(projects);
     const usersById = indexUsersById(users);
     
+    // Créer un set des techniciens actifs (is_on: true)
+    const activeTechIds = new Set<string | number>();
+    for (const user of users) {
+      const isOn = user.is_on ?? user.data?.is_on ?? user.isOn ?? true;
+      if (isOn) {
+        activeTechIds.add(user.id);
+        activeTechIds.add(String(user.id));
+        activeTechIds.add(Number(user.id));
+      }
+    }
+    
     // Calculer le temps par technicien par projet
     const { dureeTechParProjet, dureeTotaleParProjet } = calculateTechTimeByProject(
       interventions, 
@@ -265,13 +289,30 @@ export const caParTechnicienUnivers: StatDefinition = {
     );
     
     // Structure pour accumuler les stats
-    const techStats = new Map<string | number, TechnicianStats>();
+    const techStats = new Map<string | number, TechnicianStatsExtended>();
+    
+    // Helper pour récupérer info user
+    const getUserInfo = (techId: string | number) => {
+      let user = usersById.get(techId);
+      if (!user) user = usersById.get(Number(techId));
+      if (!user) user = usersById.get(String(techId));
+      
+      if (user) {
+        const prenom = (user.firstname || '').trim();
+        const nom = (user.name || user.lastname || '').trim();
+        const fullName = [prenom, nom].filter(Boolean).join(' ') || `Tech ${techId}`;
+        const color = user.data?.bgcolor?.hex || user.bgcolor?.hex || user.data?.color?.hex || user.color?.hex || '#808080';
+        const isOn = user.is_on ?? user.data?.is_on ?? user.isOn ?? true;
+        return { name: fullName, color, isOn };
+      }
+      return { name: `Tech ${techId}`, color: '#808080', isOn: true };
+    };
     
     // Parcourir les factures
     for (const facture of factures) {
       const meta = extractFactureMeta(facture);
       
-      // Vérifier état facture - extraire depuis plusieurs sources comme dans ca.ts
+      // Vérifier état facture
       const factureState = facture.state || facture.status || facture.statut 
         || facture.data?.state || facture.data?.status || facture.paymentStatus || '';
       if (!isFactureStateIncluded(factureState)) continue;
@@ -296,19 +337,26 @@ export const caParTechnicienUnivers: StatDefinition = {
       
       // Répartir le CA proportionnellement au temps
       for (const [techId, techTime] of projectTechTime.entries()) {
+        // Filtrer les techniciens inactifs
+        if (!activeTechIds.has(techId) && !activeTechIds.has(String(techId)) && !activeTechIds.has(Number(techId))) {
+          continue;
+        }
+        
         const proportion = techTime / totalProjectTime;
         const techCA = meta.montantNetHT * proportion;
         
         // Initialiser les stats du technicien si nécessaire
         if (!techStats.has(techId)) {
-          const user = usersById.get(techId);
+          const userInfo = getUserInfo(techId);
           techStats.set(techId, {
             technicianId: techId,
-            technicianName: user ? `${user.firstname || ''} ${user.lastname || ''}`.trim() : `Tech ${techId}`,
+            technicianName: userInfo.name,
             totalCA: 0,
             totalHeures: 0,
             caParHeure: 0,
             byUnivers: {},
+            isOn: userInfo.isOn,
+            color: userInfo.color,
           });
         }
         
@@ -346,6 +394,8 @@ export const caParTechnicienUnivers: StatDefinition = {
         heures: stats.totalHeures,
         caParHeure: stats.caParHeure,
         byUnivers: stats.byUnivers,
+        color: stats.color,
+        isOn: stats.isOn,
       };
       totalCA += stats.totalCA;
     }
