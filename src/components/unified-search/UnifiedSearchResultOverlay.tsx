@@ -1,23 +1,33 @@
 /**
  * Overlay de résultat pour la recherche unifiée
  * Modale plein écran avec carte centrale animée
+ * Mode debug pour N5/N6
  */
 
 import React, { useEffect } from 'react';
-import { X, ExternalLink, BarChart3, FileText, AlertCircle, TrendingUp, Medal, Euro, Hash } from 'lucide-react';
+import { X, ExternalLink, BarChart3, FileText, AlertCircle, TrendingUp, Medal, Euro, Bug, Calendar, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useUnifiedSearch } from './UnifiedSearchContext';
 import { StatSearchResult, DocSearchResult, FallbackSearchResult } from './types';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useAuth } from '@/contexts/AuthContext';
+import { QUICK_PERIOD_CHIPS } from './nlDictionaries';
 
 export function UnifiedSearchResultOverlay() {
-  const { result, query, clearResult } = useUnifiedSearch();
+  const { result, query, clearResult, submitQuery } = useUnifiedSearch();
+  const { user } = useAuth();
+
+  // N5/N6 can see debug info - check via global_role from user metadata
+  const globalRole = (user as any)?.user_metadata?.global_role || 
+                     (user as any)?.app_metadata?.global_role;
+  const isAdmin = globalRole === 'platform_admin' || globalRole === 'superadmin';
 
   // Close on Escape
   useEffect(() => {
@@ -77,7 +87,21 @@ export function UnifiedSearchResultOverlay() {
         {/* Content */}
         <ScrollArea className="max-h-[60vh]">
           <CardContent className="p-6">
-            {result.type === 'stat' && <StatResultContent result={result} />}
+            {result.type === 'stat' && (
+              <StatResultContent 
+                result={result} 
+                query={query}
+                isAdmin={isAdmin}
+                onPeriodChange={(periodLabel) => {
+                  // Relancer la requête avec la nouvelle période
+                  const newQuery = query.replace(
+                    /(ce mois|cette année|12 derniers mois|mois dernier)/gi, 
+                    ''
+                  ).trim() + ' ' + periodLabel;
+                  submitQuery(newQuery);
+                }}
+              />
+            )}
             {result.type === 'doc' && <DocResultContent result={result} />}
             {result.type === 'fallback' && <FallbackResultContent result={result} />}
           </CardContent>
@@ -89,13 +113,19 @@ export function UnifiedSearchResultOverlay() {
 
 // === Sub-components ===
 
-function StatResultContent({ result }: { result: StatSearchResult }) {
+interface StatResultContentProps {
+  result: StatSearchResult;
+  query: string;
+  isAdmin: boolean;
+  onPeriodChange: (periodLabel: string) => void;
+}
+
+function StatResultContent({ result, query, isAdmin, onPeriodChange }: StatResultContentProps) {
   const periodeLabel = result.filters.periode 
-    ? `${format(new Date(result.filters.periode.start), 'MMMM yyyy', { locale: fr })}` +
-      (result.filters.periode.start !== result.filters.periode.end 
-        ? ` - ${format(new Date(result.filters.periode.end), 'MMMM yyyy', { locale: fr })}`
-        : '')
-    : 'Période non spécifiée';
+    ? formatPeriodLabel(result.filters.periode)
+    : null;
+
+  const isDefaultPeriod = (result as any).periodIsDefault === true;
 
   return (
     <div className="space-y-6">
@@ -110,15 +140,47 @@ function StatResultContent({ result }: { result: StatSearchResult }) {
             {result.filters.univers}
           </Badge>
         )}
-        <Badge variant="secondary" className="gap-1">
-          {periodeLabel}
+        
+        {/* Période avec indication si par défaut */}
+        <Badge 
+          variant={isDefaultPeriod ? "outline" : "secondary"} 
+          className={cn("gap-1", isDefaultPeriod && "border-dashed border-amber-500/50 text-amber-600")}
+        >
+          <Calendar className="w-3 h-3" />
+          {periodeLabel || '12 derniers mois'}
+          {isDefaultPeriod && (
+            <span className="text-[10px] ml-1 opacity-70">(par défaut)</span>
+          )}
         </Badge>
+        
         {result.agencyName && (
           <Badge variant="outline" className="gap-1">
             Agence: {result.agencyName}
           </Badge>
         )}
       </div>
+
+      {/* Chips de période rapide (si période par défaut) */}
+      {isDefaultPeriod && (
+        <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800">
+          <RefreshCw className="w-4 h-4 text-amber-600" />
+          <span className="text-sm text-amber-700 dark:text-amber-400">
+            Période déduite par défaut. Changer :
+          </span>
+          <div className="flex gap-1.5">
+            {QUICK_PERIOD_CHIPS.map((chip) => (
+              <Badge
+                key={chip.id}
+                variant="outline"
+                className="cursor-pointer text-xs hover:bg-amber-100 dark:hover:bg-amber-900"
+                onClick={() => onPeriodChange(chip.label.toLowerCase())}
+              >
+                {chip.label}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Main result */}
       {result.result.topItem && (
@@ -136,18 +198,8 @@ function StatResultContent({ result }: { result: StatSearchResult }) {
           </div>
           <div className="flex items-baseline gap-2 mt-4">
             <span className="text-3xl font-bold text-primary">
-              {typeof result.result.topItem.value === 'number' 
-                ? new Intl.NumberFormat('fr-FR', { 
-                    style: result.result.unit === '€' ? 'currency' : 'decimal',
-                    currency: result.result.unit === '€' ? 'EUR' : undefined,
-                    maximumFractionDigits: 0,
-                  }).format(result.result.topItem.value)
-                : result.result.topItem.value
-              }
+              {formatValue(result.result.topItem.value, result.result.unit)}
             </span>
-            {result.result.unit && result.result.unit !== '€' && (
-              <span className="text-lg text-muted-foreground">{result.result.unit}</span>
-            )}
           </div>
         </div>
       )}
@@ -158,18 +210,8 @@ function StatResultContent({ result }: { result: StatSearchResult }) {
           <div className="flex items-baseline gap-2">
             <Euro className="w-6 h-6 text-primary" />
             <span className="text-3xl font-bold text-primary">
-              {typeof result.result.value === 'number'
-                ? new Intl.NumberFormat('fr-FR', {
-                    style: result.result.unit === '€' ? 'currency' : 'decimal',
-                    currency: result.result.unit === '€' ? 'EUR' : undefined,
-                    maximumFractionDigits: result.result.unit === '%' ? 1 : 0,
-                  }).format(result.result.value)
-                : result.result.value
-              }
+              {formatValue(result.result.value, result.result.unit)}
             </span>
-            {result.result.unit && result.result.unit !== '€' && (
-              <span className="text-lg text-muted-foreground">{result.result.unit}</span>
-            )}
           </div>
         </div>
       )}
@@ -201,14 +243,7 @@ function StatResultContent({ result }: { result: StatSearchResult }) {
                     </td>
                     <td className="px-4 py-2 text-sm font-medium">{item.name}</td>
                     <td className="px-4 py-2 text-sm text-right">
-                      {typeof item.value === 'number'
-                        ? new Intl.NumberFormat('fr-FR', {
-                            style: result.result.unit === '€' ? 'currency' : 'decimal',
-                            currency: result.result.unit === '€' ? 'EUR' : undefined,
-                            maximumFractionDigits: 0,
-                          }).format(item.value)
-                        : item.value
-                      }
+                      {formatValue(item.value, result.result.unit)}
                     </td>
                   </tr>
                 ))}
@@ -216,6 +251,29 @@ function StatResultContent({ result }: { result: StatSearchResult }) {
             </table>
           </div>
         </div>
+      )}
+
+      {/* Debug panel for N5/N6 */}
+      {isAdmin && (result as any).debug && (
+        <Collapsible>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+              <Bug className="w-4 h-4" />
+              Debug (N5/N6)
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="mt-2 p-3 bg-muted/50 rounded-lg border text-xs font-mono space-y-1">
+              <div><span className="text-muted-foreground">metricId:</span> {result.metricId}</div>
+              <div><span className="text-muted-foreground">dimension:</span> {(result as any).debug?.detectedDimension || 'N/A'}</div>
+              <div><span className="text-muted-foreground">intent:</span> {(result as any).debug?.detectedIntent || 'N/A'}</div>
+              <div><span className="text-muted-foreground">univers:</span> {(result as any).debug?.detectedUnivers || 'null'}</div>
+              <div><span className="text-muted-foreground">période:</span> {(result as any).debug?.detectedPeriod || 'null'}</div>
+              <div><span className="text-muted-foreground">routing:</span> {(result as any).debug?.routingPath || 'N/A'}</div>
+              <div><span className="text-muted-foreground">confidence:</span> {((result as any).confidence * 100).toFixed(0)}%</div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       )}
 
       {/* Link to StatIA */}
@@ -297,4 +355,43 @@ function FallbackResultContent({ result }: { result: FallbackSearchResult }) {
       </p>
     </div>
   );
+}
+
+// === Helpers ===
+
+function formatPeriodLabel(periode: { start: string; end: string }): string {
+  try {
+    const start = new Date(periode.start);
+    const end = new Date(periode.end);
+    
+    const startMonth = format(start, 'MMMM yyyy', { locale: fr });
+    const endMonth = format(end, 'MMMM yyyy', { locale: fr });
+    
+    if (startMonth === endMonth) {
+      return startMonth;
+    }
+    return `${startMonth} - ${endMonth}`;
+  } catch {
+    return 'Période non spécifiée';
+  }
+}
+
+function formatValue(value: number | string, unit?: string): string {
+  if (typeof value !== 'number') return String(value);
+  
+  if (unit === '€') {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+      maximumFractionDigits: 0,
+    }).format(value);
+  }
+  
+  if (unit === '%') {
+    return `${value.toFixed(1)}%`;
+  }
+  
+  return new Intl.NumberFormat('fr-FR', {
+    maximumFractionDigits: 0,
+  }).format(value);
 }
