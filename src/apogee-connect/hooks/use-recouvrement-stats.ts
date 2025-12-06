@@ -41,35 +41,48 @@ export function useRecouvrementStats(options: {
   const { filters } = useFilters();
   const { isAgencyReady, currentAgency } = useAgency();
 
-  // Utiliser le slug passé en paramètre OU celui de l'utilisateur
+  // CRITICAL: Si un agencySlug est explicitement fourni, l'utiliser prioritairement
+  // Sinon utiliser l'agence courante de l'utilisateur
   const effectiveSlug = options.agencySlug || currentAgency?.slug;
 
   return useQuery<RecouvrementStats>({
-    queryKey: ['recouvrement-stats', effectiveSlug, filters.dateRange, options.includeDetails],
+    // CRITICAL: Inclure agencySlug dans la queryKey pour éviter le partage de cache entre agences
+    queryKey: ['recouvrement-stats', options.agencySlug || 'user-default', effectiveSlug, filters.dateRange, options.includeDetails],
     queryFn: async () => {
       logApogee.debug('useRecouvrementStats - début calcul', {
-        agencySlug: effectiveSlug,
+        agencySlugParam: options.agencySlug,
+        effectiveSlug,
         dateRange: filters.dateRange,
         includeDetails: options.includeDetails
       });
 
       try {
-        // Si un agencySlug est fourni, charger via le proxy pour cette agence spécifique
         let factures;
+        
+        // CRITICAL FIX: Si un agencySlug est EXPLICITEMENT fourni en paramètre,
+        // TOUJOURS charger via le proxy pour cette agence spécifique
+        // C'est le cas quand on affiche les stats d'une agence dans FranchiseurAgencyProfile
         if (options.agencySlug) {
+          logApogee.debug('useRecouvrementStats - Chargement via PROXY pour agence spécifique', { 
+            agencySlug: options.agencySlug 
+          });
           factures = await apogeeProxy.getFactures({ agencySlug: options.agencySlug });
           logApogee.debug('useRecouvrementStats - factures chargées via proxy', {
             agencySlug: options.agencySlug,
             nbFactures: factures?.length || 0
           });
         } else {
-          // Sinon utiliser DataService pour l'agence de l'utilisateur
+          // Pas d'agencySlug fourni = utiliser DataService pour l'agence de l'utilisateur
+          logApogee.debug('useRecouvrementStats - Chargement via DataService pour agence utilisateur');
           const allData = await DataService.loadAllData(true, false);
           factures = allData.factures;
         }
 
         if (!factures || factures.length === 0) {
-          logApogee.warn('useRecouvrementStats - Aucune facture trouvée', { agencySlug: effectiveSlug });
+          logApogee.warn('useRecouvrementStats - Aucune facture trouvée', { 
+            agencySlugParam: options.agencySlug,
+            effectiveSlug 
+          });
           return {
             totalFacturesTTC: 0,
             totalReglementsRecus: 0,
@@ -93,14 +106,23 @@ export function useRecouvrementStats(options: {
           }
         );
 
-        logApogee.debug('useRecouvrementStats - résultat', { agencySlug: effectiveSlug, stats });
+        logApogee.debug('useRecouvrementStats - résultat', { 
+          agencySlugParam: options.agencySlug,
+          effectiveSlug, 
+          stats 
+        });
 
         return stats;
       } catch (error) {
-        logApogee.error('useRecouvrementStats - erreur', { error, agencySlug: effectiveSlug });
+        logApogee.error('useRecouvrementStats - erreur', { 
+          error, 
+          agencySlugParam: options.agencySlug,
+          effectiveSlug 
+        });
         throw error;
       }
     },
+    // CRITICAL: Si agencySlug est fourni, ne pas attendre isAgencyReady
     enabled: (options.agencySlug ? true : isAgencyReady) && (options.enabled !== false),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
