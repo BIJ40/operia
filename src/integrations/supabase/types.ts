@@ -2277,6 +2277,87 @@ export type Database = {
         }
         Relationships: []
       }
+      fleet_vehicles: {
+        Row: {
+          agency_id: string
+          assigned_collaborator_id: string | null
+          brand: string | null
+          created_at: string | null
+          ct_due_at: string | null
+          id: string
+          last_ct_at: string | null
+          last_revision_at: string | null
+          mileage_km: number | null
+          model: string | null
+          name: string
+          next_revision_at: string | null
+          next_tires_change_at: string | null
+          notes: string | null
+          qr_token: string | null
+          registration: string | null
+          status: string
+          updated_at: string | null
+          year: number | null
+        }
+        Insert: {
+          agency_id: string
+          assigned_collaborator_id?: string | null
+          brand?: string | null
+          created_at?: string | null
+          ct_due_at?: string | null
+          id?: string
+          last_ct_at?: string | null
+          last_revision_at?: string | null
+          mileage_km?: number | null
+          model?: string | null
+          name: string
+          next_revision_at?: string | null
+          next_tires_change_at?: string | null
+          notes?: string | null
+          qr_token?: string | null
+          registration?: string | null
+          status?: string
+          updated_at?: string | null
+          year?: number | null
+        }
+        Update: {
+          agency_id?: string
+          assigned_collaborator_id?: string | null
+          brand?: string | null
+          created_at?: string | null
+          ct_due_at?: string | null
+          id?: string
+          last_ct_at?: string | null
+          last_revision_at?: string | null
+          mileage_km?: number | null
+          model?: string | null
+          name?: string
+          next_revision_at?: string | null
+          next_tires_change_at?: string | null
+          notes?: string | null
+          qr_token?: string | null
+          registration?: string | null
+          status?: string
+          updated_at?: string | null
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fleet_vehicles_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fleet_vehicles_assigned_collaborator_id_fkey"
+            columns: ["assigned_collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       formation_content: {
         Row: {
           created_at: string
@@ -2694,6 +2775,258 @@ export type Database = {
             columns: ["validated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          agency_id: string
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string | null
+          id: string
+          maintenance_event_id: string
+          notified_channels: Json
+          severity: string
+          status: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          agency_id: string
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string | null
+          id?: string
+          maintenance_event_id: string
+          notified_channels?: Json
+          severity?: string
+          status?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          agency_id?: string
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string | null
+          id?: string
+          maintenance_event_id?: string
+          notified_channels?: Json
+          severity?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_alerts_acknowledged_by_fkey"
+            columns: ["acknowledged_by"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_alerts_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_alerts_closed_by_fkey"
+            columns: ["closed_by"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_alerts_maintenance_event_id_fkey"
+            columns: ["maintenance_event_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_events: {
+        Row: {
+          agency_id: string
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string | null
+          id: string
+          label: string
+          mileage_km: number | null
+          notes: string | null
+          plan_item_id: string | null
+          scheduled_at: string
+          status: string
+          target_type: string
+          tool_id: string | null
+          updated_at: string | null
+          vehicle_id: string | null
+        }
+        Insert: {
+          agency_id: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string | null
+          id?: string
+          label: string
+          mileage_km?: number | null
+          notes?: string | null
+          plan_item_id?: string | null
+          scheduled_at: string
+          status?: string
+          target_type: string
+          tool_id?: string | null
+          updated_at?: string | null
+          vehicle_id?: string | null
+        }
+        Update: {
+          agency_id?: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string | null
+          id?: string
+          label?: string
+          mileage_km?: number | null
+          notes?: string | null
+          plan_item_id?: string | null
+          scheduled_at?: string
+          status?: string
+          target_type?: string
+          tool_id?: string | null
+          updated_at?: string | null
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_events_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_events_completed_by_fkey"
+            columns: ["completed_by"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_events_plan_item_id_fkey"
+            columns: ["plan_item_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_plan_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_events_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: false
+            referencedRelation: "tools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_events_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "fleet_vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_plan_items: {
+        Row: {
+          created_at: string | null
+          first_due_after_days: number | null
+          frequency_unit: string
+          frequency_value: number
+          id: string
+          is_mandatory: boolean
+          label: string
+          legal_reference: string | null
+          plan_template_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          first_due_after_days?: number | null
+          frequency_unit: string
+          frequency_value: number
+          id?: string
+          is_mandatory?: boolean
+          label: string
+          legal_reference?: string | null
+          plan_template_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          first_due_after_days?: number | null
+          frequency_unit?: string
+          frequency_value?: number
+          id?: string
+          is_mandatory?: boolean
+          label?: string
+          legal_reference?: string | null
+          plan_template_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_plan_items_plan_template_id_fkey"
+            columns: ["plan_template_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_plan_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_plan_templates: {
+        Row: {
+          agency_id: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_default_for_category: boolean
+          name: string
+          target_category: string | null
+          target_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_default_for_category?: boolean
+          name: string
+          target_category?: string | null
+          target_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_default_for_category?: boolean
+          name?: string
+          target_category?: string | null
+          target_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_plan_templates_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
           },
         ]
@@ -4115,6 +4448,70 @@ export type Database = {
             columns: ["ticket_id"]
             isOneToOne: true
             referencedRelation: "apogee_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tools: {
+        Row: {
+          agency_id: string
+          assigned_collaborator_id: string | null
+          category: string
+          created_at: string | null
+          default_plan_template_id: string | null
+          id: string
+          label: string
+          qr_token: string | null
+          serial_number: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          agency_id: string
+          assigned_collaborator_id?: string | null
+          category: string
+          created_at?: string | null
+          default_plan_template_id?: string | null
+          id?: string
+          label: string
+          qr_token?: string | null
+          serial_number?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          agency_id?: string
+          assigned_collaborator_id?: string | null
+          category?: string
+          created_at?: string | null
+          default_plan_template_id?: string | null
+          id?: string
+          label?: string
+          qr_token?: string | null
+          serial_number?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tools_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tools_assigned_collaborator_id_fkey"
+            columns: ["assigned_collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tools_default_plan_template_id_fkey"
+            columns: ["default_plan_template_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_plan_templates"
             referencedColumns: ["id"]
           },
         ]
