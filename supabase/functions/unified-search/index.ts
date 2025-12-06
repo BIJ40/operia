@@ -1,7 +1,7 @@
 /**
  * Edge Function: unified-search
  * Pipeline déterministe NL → Métrique StatIA
- * Avec contrôle d'accès par rôle
+ * V2: Utilise le module nlRouting centralisé
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -9,7 +9,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleCorsPreflightOrReject, withCors, getCorsHeaders } from '../_shared/cors.ts';
 import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
 
-// ============= TYPES =============
+// ============= TYPES (copied from nlRouting for edge function) =============
+type DimensionType = 'technicien' | 'apporteur' | 'univers' | 'agence' | 'site' | 'client_type' | 'global';
+type IntentType = 'top' | 'moyenne' | 'volume' | 'taux' | 'delay' | 'compare' | 'valeur';
+
 interface ParsedPeriod {
   start: Date;
   end: Date;
@@ -17,15 +20,34 @@ interface ParsedPeriod {
   isDefault: boolean;
 }
 
+interface MetricRouting {
+  metricId: string;
+  label: string;
+  isRanking: boolean;
+  minRole: number;
+  defaultTopN?: number;
+}
+
+interface RoutingRule {
+  dimension: DimensionType;
+  intentType: IntentType;
+  metricId: string;
+  label: string;
+  isRanking: boolean;
+  minRole: number;
+  defaultTopN?: number;
+}
+
 interface ParsedStatQuery {
   metricId: string;
   metricLabel: string;
-  dimension: string;
-  intentType: string;
+  dimension: DimensionType;
+  intentType: IntentType;
   univers?: string;
-  period?: ParsedPeriod;
+  period: ParsedPeriod;
   topN?: number;
   technicienName?: string;
+  comparison?: { baseline: 'N-1' | 'previous_period' } | null;
   confidence: number;
   minRole: number;
   isRanking: boolean;
@@ -33,8 +55,9 @@ interface ParsedStatQuery {
     detectedDimension: string;
     detectedIntent: string;
     detectedUnivers: string | null;
-    detectedPeriod: string | null;
+    detectedPeriod: string;
     routingPath: string;
+    normalizedQuery: string;
   };
 }
 
@@ -72,7 +95,7 @@ interface DocSearchResult {
   }>;
 }
 
-// ============= DICTIONNAIRES NL =============
+// ============= DICTIONNAIRES (from nlRouting/dictionaries) =============
 const STATS_KEYWORDS = [
   'combien', 'ca', 'chiffre', "chiffre d'affaires", 
   'dossiers', 'en moyenne', 'moyenne', 'top', 'le plus', 
@@ -81,15 +104,17 @@ const STATS_KEYWORDS = [
   'technicien', 'apporteur', 'univers',
   'sav', 'transformation', 'devis',
   'stat', 'statistique', 'kpi', 'indicateur',
+  'délai', 'delai', 'temps moyen', 'rapporte',
 ];
 
 const UNIVERS_ALIASES: Record<string, string> = {
   'électricité': 'ELECTRICITE', 'electricite': 'ELECTRICITE', 'elec': 'ELECTRICITE',
-  'électrique': 'ELECTRICITE', 'electrique': 'ELECTRICITE',
+  'électrique': 'ELECTRICITE', 'electrique': 'ELECTRICITE', 'électricien': 'ELECTRICITE',
   'plomberie': 'PLOMBERIE', 'plombier': 'PLOMBERIE', 'fuite': 'PLOMBERIE',
+  'recherche de fuite': 'PLOMBERIE',
   'serrurerie': 'SERRURERIE', 'serrurier': 'SERRURERIE', 'serrure': 'SERRURERIE',
-  'vitrerie': 'VITRERIE', 'vitrier': 'VITRERIE', 'vitre': 'VITRERIE',
-  'volet': 'VOLET', 'volets': 'VOLET', 'store': 'VOLET',
+  'vitrerie': 'VITRERIE', 'vitrier': 'VITRERIE', 'vitre': 'VITRERIE', 'vitres': 'VITRERIE',
+  'volet': 'VOLET', 'volets': 'VOLET', 'volet roulant': 'VOLET', 'store': 'VOLET',
   'menuiserie': 'MENUISERIE', 'menuisier': 'MENUISERIE',
   'peinture': 'PEINTURE', 'peintre': 'PEINTURE',
   'carrelage': 'CARRELAGE', 'carreleur': 'CARRELAGE',
@@ -100,10 +125,8 @@ const UNIVERS_ALIASES: Record<string, string> = {
 const MOIS_MAPPING: Record<string, number> = {
   'janvier': 0, 'jan': 0, 'janv': 0,
   'février': 1, 'fevrier': 1, 'fev': 1, 'fév': 1,
-  'mars': 2, 'mar': 2,
-  'avril': 3, 'avr': 3,
-  'mai': 4,
-  'juin': 5, 'jun': 5,
+  'mars': 2, 'mar': 2, 'avril': 3, 'avr': 3,
+  'mai': 4, 'juin': 5, 'jun': 5,
   'juillet': 6, 'juil': 6, 'jul': 6,
   'août': 7, 'aout': 7, 'aou': 7,
   'septembre': 8, 'sept': 8, 'sep': 8,
@@ -112,169 +135,155 @@ const MOIS_MAPPING: Record<string, number> = {
   'décembre': 11, 'decembre': 11, 'dec': 11, 'déc': 11,
 };
 
-const DIMENSION_KEYWORDS: Record<string, string[]> = {
+const DIMENSION_KEYWORDS: Record<DimensionType, string[]> = {
   technicien: ['technicien', 'tech', 'ouvrier', 'intervenant', 'intervenants'],
-  apporteur: ['apporteur', 'apporteurs', 'commanditaire', 'prescripteur', 'prescripteurs'],
+  apporteur: ['apporteur', 'apporteurs', 'commanditaire', 'prescripteur', 'prescripteurs', 
+              'partenaire', 'partenaires', 'assureur', 'assureurs', 'mutuelle', 'mutuelles'],
   univers: ['univers', 'métier', 'metier', 'domaine'],
+  agence: ['agence', 'agences'],
+  site: ['site', 'sites'],
+  client_type: ['client pro', 'professionnel', 'particulier', 'particuliers'],
+  global: [],
 };
 
-const INTENT_KEYWORDS: Record<string, string[]> = {
+const INTENT_KEYWORDS: Record<IntentType, string[]> = {
   top: ['top', 'meilleur', 'meilleurs', 'premier', 'premiers', 'le plus', 'les plus', 'qui a fait'],
-  moyenne: ['en moyenne', 'moyenne', 'moyen', 'rapporte'],
-  volume: ['combien', 'nombre de', 'nb de', 'volume'],
-  taux: ['taux', 'pourcentage', '%'],
-  valeur: ['total', 'global', 'fait'],
+  moyenne: ['en moyenne', 'moyenne', 'moyen', 'rapporte', 'panier moyen'],
+  volume: ['combien', 'nombre de', 'nb de', 'volume', 'quantité'],
+  taux: ['taux', 'pourcentage', '%', 'ratio'],
+  delay: ['délai', 'delai', 'temps moyen', 'en combien de temps', 'durée'],
+  compare: ['par rapport à', 'par rapport a', 'vs', 'comparé à', 'compare a', 'évolution', 'progression'],
+  valeur: ['total', 'global', 'fait', 'montant'],
 };
 
-// Matrice de routing (dimension, intent) → métrique
-interface MetricRouting {
-  metricId: string;
-  label: string;
-  isRanking: boolean;
-  minRole: number;
-  defaultTopN?: number;
-}
-
-const METRIC_ROUTING_MATRIX: Record<string, Record<string, MetricRouting>> = {
-  technicien: {
-    top: { metricId: 'ca_par_technicien', label: 'Top techniciens par CA', isRanking: true, minRole: 2, defaultTopN: 5 },
-    moyenne: { metricId: 'ca_moyen_par_tech', label: 'CA moyen par technicien', isRanking: false, minRole: 2 },
-    valeur: { metricId: 'ca_par_technicien', label: 'CA par technicien', isRanking: true, minRole: 2 },
-    volume: { metricId: 'interventions_par_technicien', label: 'Interventions par technicien', isRanking: true, minRole: 2 },
-  },
-  apporteur: {
-    top: { metricId: 'ca_par_apporteur', label: 'Top apporteurs par CA', isRanking: true, minRole: 2, defaultTopN: 5 },
-    valeur: { metricId: 'ca_par_apporteur', label: 'CA par apporteur', isRanking: true, minRole: 2 },
-    volume: { metricId: 'dossiers_par_apporteur', label: 'Dossiers par apporteur', isRanking: true, minRole: 2 },
-  },
-  univers: {
-    top: { metricId: 'ca_par_univers', label: 'Top univers par CA', isRanking: true, minRole: 0 },
-    valeur: { metricId: 'ca_par_univers', label: 'CA par univers', isRanking: true, minRole: 0 },
-    volume: { metricId: 'nb_dossiers_par_univers', label: 'Dossiers par univers', isRanking: true, minRole: 0 },
-  },
-  global: {
-    top: { metricId: 'ca_global_ht', label: 'CA global HT', isRanking: false, minRole: 0 },
-    valeur: { metricId: 'ca_global_ht', label: 'CA global HT', isRanking: false, minRole: 0 },
-    volume: { metricId: 'nb_dossiers_crees', label: 'Nombre de dossiers', isRanking: false, minRole: 0 },
-    taux: { metricId: 'taux_sav_global', label: 'Taux de SAV', isRanking: false, minRole: 0 },
-    moyenne: { metricId: 'ca_moyen_par_tech', label: 'CA moyen par technicien', isRanking: false, minRole: 2 },
-  },
-};
-
-const SPECIALIZED_METRICS: Array<{ keywords: string[]; metric: MetricRouting }> = [
-  {
-    keywords: ['sav', 'service après vente', 'garantie'],
-    metric: { metricId: 'taux_sav_global', label: 'Taux de SAV', isRanking: false, minRole: 0 },
-  },
-  {
-    keywords: ['transformation', 'taux devis', 'devis transformé'],
-    metric: { metricId: 'taux_transformation_devis', label: 'Taux de transformation devis', isRanking: false, minRole: 0 },
-  },
-  {
-    keywords: ['panier moyen', 'panier'],
-    metric: { metricId: 'panier_moyen', label: 'Panier moyen', isRanking: false, minRole: 0 },
-  },
+const NL_ROUTING_RULES: RoutingRule[] = [
+  // CLASSEMENTS
+  { dimension: 'apporteur', intentType: 'top', metricId: 'ca_par_apporteur', 
+    label: 'Top apporteurs par CA', isRanking: true, minRole: 2, defaultTopN: 5 },
+  { dimension: 'technicien', intentType: 'top', metricId: 'ca_par_technicien', 
+    label: 'Top techniciens par CA', isRanking: true, minRole: 2, defaultTopN: 5 },
+  { dimension: 'univers', intentType: 'top', metricId: 'ca_par_univers', 
+    label: 'Top univers par CA', isRanking: true, minRole: 0, defaultTopN: 5 },
+  // VOLUMES
+  { dimension: 'univers', intentType: 'volume', metricId: 'nb_dossiers_par_univers', 
+    label: 'Dossiers par univers', isRanking: true, minRole: 0 },
+  { dimension: 'apporteur', intentType: 'volume', metricId: 'dossiers_par_apporteur', 
+    label: 'Dossiers par apporteur', isRanking: true, minRole: 2 },
+  { dimension: 'global', intentType: 'volume', metricId: 'nb_dossiers_crees', 
+    label: 'Nombre de dossiers', isRanking: false, minRole: 0 },
+  // MOYENNES
+  { dimension: 'technicien', intentType: 'moyenne', metricId: 'ca_moyen_par_tech', 
+    label: 'CA moyen par technicien', isRanking: false, minRole: 2 },
+  { dimension: 'global', intentType: 'moyenne', metricId: 'panier_moyen', 
+    label: 'Panier moyen global', isRanking: false, minRole: 0 },
+  // TAUX
+  { dimension: 'global', intentType: 'taux', metricId: 'taux_sav_global', 
+    label: 'Taux de SAV', isRanking: false, minRole: 0 },
+  // VALEURS
+  { dimension: 'apporteur', intentType: 'valeur', metricId: 'ca_par_apporteur', 
+    label: 'CA par apporteur', isRanking: true, minRole: 2 },
+  { dimension: 'technicien', intentType: 'valeur', metricId: 'ca_par_technicien', 
+    label: 'CA par technicien', isRanking: true, minRole: 2 },
+  { dimension: 'univers', intentType: 'valeur', metricId: 'ca_par_univers', 
+    label: 'CA par univers', isRanking: true, minRole: 0 },
+  { dimension: 'global', intentType: 'valeur', metricId: 'ca_global_ht', 
+    label: 'CA global HT', isRanking: false, minRole: 0 },
+  { dimension: 'global', intentType: 'top', metricId: 'ca_global_ht', 
+    label: 'CA global HT', isRanking: false, minRole: 0 },
 ];
 
-// ============= ROLE LEVEL MAPPING =============
-const ROLE_LEVELS: Record<string, number> = {
-  'superadmin': 6,
-  'platform_admin': 5,
-  'franchisor_admin': 4,
-  'franchisor_user': 3,
-  'franchisee_admin': 2,
-  'franchisee_user': 1,
-  'base_user': 0,
+const SPECIALIZED_METRICS: Array<{ keywords: string[]; rule: RoutingRule }> = [
+  { keywords: ['sav', 'service après vente', 'garantie'],
+    rule: { dimension: 'global', intentType: 'taux', metricId: 'taux_sav_global', 
+            label: 'Taux de SAV', isRanking: false, minRole: 0 } },
+  { keywords: ['transformation', 'taux devis', 'devis transformé'],
+    rule: { dimension: 'global', intentType: 'taux', metricId: 'taux_transformation_devis', 
+            label: 'Taux de transformation devis', isRanking: false, minRole: 0 } },
+  { keywords: ['panier moyen', 'panier'],
+    rule: { dimension: 'global', intentType: 'moyenne', metricId: 'panier_moyen', 
+            label: 'Panier moyen', isRanking: false, minRole: 0 } },
+];
+
+const TYPO_CORRECTIONS: Record<string, string> = {
+  'cett': 'cette', 'mieuilleur': 'meilleur', 'meilluer': 'meilleur',
+  'anné': 'année', 'techncien': 'technicien', 'aporrteur': 'apporteur',
 };
 
-function getRoleLevel(globalRole: string | null | undefined): number {
-  if (!globalRole) return 0;
-  return ROLE_LEVELS[globalRole] ?? 0;
-}
+const ROLE_LEVELS: Record<string, number> = {
+  'superadmin': 6, 'platform_admin': 5, 'franchisor_admin': 4,
+  'franchisor_user': 3, 'franchisee_admin': 2, 'franchisee_user': 1, 'base_user': 0,
+};
 
 // ============= PARSER FUNCTIONS =============
+function normalizeQuery(query: string): string {
+  let normalized = query.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+  for (const [typo, correction] of Object.entries(TYPO_CORRECTIONS)) {
+    normalized = normalized.replace(new RegExp(typo, 'gi'), correction);
+  }
+  return normalized;
+}
+
 function isStatsQuery(query: string): boolean {
-  const normalized = query.toLowerCase();
+  const normalized = normalizeQuery(query);
   return STATS_KEYWORDS.some(kw => normalized.includes(kw));
 }
 
 function extractUnivers(query: string): string | undefined {
-  const normalized = query.toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-  
-  for (const [alias, univers] of Object.entries(UNIVERS_ALIASES)) {
+  const normalized = normalizeQuery(query);
+  const sortedAliases = Object.entries(UNIVERS_ALIASES).sort((a, b) => b[0].length - a[0].length);
+  for (const [alias, univers] of sortedAliases) {
     const normalizedAlias = alias.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    if (normalized.includes(normalizedAlias)) {
-      return univers;
-    }
+    if (normalized.includes(normalizedAlias)) return univers;
   }
   return undefined;
 }
 
 function getMonthName(monthIndex: number): string {
-  const names = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-  return names[monthIndex] || '';
+  return ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+          'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'][monthIndex] || '';
+}
+
+function getDefaultPeriod(now: Date): ParsedPeriod {
+  const start = new Date(now);
+  start.setMonth(start.getMonth() - 12);
+  start.setDate(1);
+  return { start, end: new Date(now.getFullYear(), now.getMonth() + 1, 0), label: '12 derniers mois', isDefault: true };
 }
 
 function extractPeriode(query: string, now = new Date()): ParsedPeriod | undefined {
-  const normalized = query.toLowerCase();
+  const normalized = normalizeQuery(query);
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth();
 
-  if (normalized.includes('cette année') || normalized.includes('cette annee')) {
+  if (normalized.includes('cette annee') || normalized.includes('cette année')) {
     return { start: new Date(currentYear, 0, 1), end: new Date(currentYear, 11, 31), 
              label: `Année ${currentYear}`, isDefault: false };
   }
-
-  if (normalized.includes('année dernière') || normalized.includes("l'année dernière")) {
+  if (normalized.includes('annee derniere') || normalized.includes("l'annee derniere")) {
     return { start: new Date(currentYear - 1, 0, 1), end: new Date(currentYear - 1, 11, 31),
              label: `Année ${currentYear - 1}`, isDefault: false };
   }
-
+  const exerciceMatch = normalized.match(/exercice\s*(20\d{2})/);
+  if (exerciceMatch) {
+    const year = parseInt(exerciceMatch[1]);
+    return { start: new Date(year, 0, 1), end: new Date(year, 11, 31), label: `Exercice ${year}`, isDefault: false };
+  }
   if (normalized.includes('ce mois')) {
     return { start: new Date(currentYear, currentMonth, 1), end: new Date(currentYear, currentMonth + 1, 0),
              label: `${getMonthName(currentMonth)} ${currentYear}`, isDefault: false };
   }
-
   if (normalized.includes('mois dernier')) {
     const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
     const year = currentMonth === 0 ? currentYear - 1 : currentYear;
     return { start: new Date(year, lastMonth, 1), end: new Date(year, lastMonth + 1, 0),
              label: `${getMonthName(lastMonth)} ${year}`, isDefault: false };
   }
-
   if (normalized.includes('12 derniers mois') || normalized.includes('douze derniers mois')) {
-    const start = new Date(now);
-    start.setMonth(start.getMonth() - 12);
-    start.setDate(1);
-    return { start, end: new Date(currentYear, currentMonth + 1, 0),
-             label: '12 derniers mois', isDefault: false };
+    const start = new Date(now); start.setMonth(start.getMonth() - 12); start.setDate(1);
+    return { start, end: new Date(currentYear, currentMonth + 1, 0), label: '12 derniers mois', isDefault: false };
   }
 
-  // Check for month names
-  for (const [moisName, moisIndex] of Object.entries(MOIS_MAPPING)) {
-    const patterns = [
-      new RegExp(`en ${moisName}\\b`, 'i'),
-      new RegExp(`mois de ${moisName}\\b`, 'i'),
-      new RegExp(`au ${moisName}\\b`, 'i'),
-      new RegExp(`sur ${moisName}\\b`, 'i'),
-      new RegExp(`\\b${moisName}\\s+\\d{4}\\b`, 'i'),
-      new RegExp(`\\b${moisName}\\b`, 'i'),
-    ];
-
-    for (const pattern of patterns) {
-      if (pattern.test(normalized)) {
-        const yearMatch = normalized.match(/20\d{2}/);
-        const year = yearMatch ? parseInt(yearMatch[0]) : currentYear;
-        return { start: new Date(year, moisIndex, 1), end: new Date(year, moisIndex + 1, 0),
-                 label: `${getMonthName(moisIndex)} ${year}`, isDefault: false };
-      }
-    }
-  }
-
-  // Range pattern "juin / juillet"
+  // Range pattern
   const rangeMatch = normalized.match(/(\w+)\s*(?:\/|à|a|-|et)\s*(\w+)/);
   if (rangeMatch) {
     const idx1 = MOIS_MAPPING[rangeMatch[1]];
@@ -287,6 +296,19 @@ function extractPeriode(query: string, now = new Date()): ParsedPeriod | undefin
     }
   }
 
+  // Single month
+  for (const [moisName, moisIndex] of Object.entries(MOIS_MAPPING)) {
+    const patterns = [new RegExp(`en ${moisName}\\b`, 'i'), new RegExp(`au ${moisName}\\b`, 'i'),
+                      new RegExp(`sur ${moisName}\\b`, 'i'), new RegExp(`\\b${moisName}\\s+20\\d{2}\\b`, 'i')];
+    for (const pattern of patterns) {
+      if (pattern.test(normalized)) {
+        const yearMatch = normalized.match(/20\d{2}/);
+        const year = yearMatch ? parseInt(yearMatch[0]) : currentYear;
+        return { start: new Date(year, moisIndex, 1), end: new Date(year, moisIndex + 1, 0),
+                 label: `${getMonthName(moisIndex)} ${year}`, isDefault: false };
+      }
+    }
+  }
   return undefined;
 }
 
@@ -300,78 +322,65 @@ function extractTopN(query: string): number | undefined {
   return undefined;
 }
 
-function extractTechnicienName(query: string): string | undefined {
-  const reserved = new Set(['ca', 'janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 
-    'août', 'septembre', 'octobre', 'novembre', 'décembre', 'electricite', 'plomberie', 
-    'serrurerie', 'vitrerie', 'volet', 'top', 'meilleur', 'technicien', 'tech', 'apporteur', 
-    'univers', 'dossier', 'combien', 'moyenne', 'sav']);
-
-  const words = query.split(/\s+/);
-  for (const word of words) {
-    const cleanWord = word.replace(/[^a-zA-ZÀ-ÿ]/g, '');
-    if (cleanWord.length > 2 && cleanWord[0] === cleanWord[0].toUpperCase() && 
-        !reserved.has(cleanWord.toLowerCase())) {
-      return cleanWord;
-    }
-  }
-  return undefined;
-}
-
-function detectDimension(query: string): string {
-  const normalized = query.toLowerCase();
+function detectDimension(query: string): DimensionType {
+  const normalized = normalizeQuery(query);
   for (const [dimension, keywords] of Object.entries(DIMENSION_KEYWORDS)) {
-    if (keywords.some(kw => normalized.includes(kw))) return dimension;
+    if (keywords.some(kw => normalized.includes(kw))) return dimension as DimensionType;
   }
   if (extractUnivers(query)) return 'univers';
   return 'global';
 }
 
-function detectIntent(query: string): string {
-  const normalized = query.toLowerCase();
+function detectIntent(query: string): IntentType {
+  const normalized = normalizeQuery(query);
   for (const [intent, keywords] of Object.entries(INTENT_KEYWORDS)) {
-    if (keywords.some(kw => normalized.includes(kw))) return intent;
+    if (keywords.some(kw => normalized.includes(kw))) return intent as IntentType;
   }
   return 'valeur';
 }
 
-function routeToMetric(dimension: string, intent: string, query: string): MetricRouting {
-  const normalized = query.toLowerCase();
+function routeToMetric(dimension: DimensionType, intent: IntentType, query: string): MetricRouting {
+  const normalized = normalizeQuery(query);
   for (const special of SPECIALIZED_METRICS) {
-    if (special.keywords.some(kw => normalized.includes(kw))) return special.metric;
+    if (special.keywords.some(kw => normalized.includes(kw))) {
+      return { metricId: special.rule.metricId, label: special.rule.label, 
+               isRanking: special.rule.isRanking, minRole: special.rule.minRole, defaultTopN: special.rule.defaultTopN };
+    }
   }
-
-  const dimensionRoutes = METRIC_ROUTING_MATRIX[dimension];
-  if (dimensionRoutes?.[intent]) return dimensionRoutes[intent];
-  if (dimensionRoutes?.['valeur']) return dimensionRoutes['valeur'];
-
+  const rule = NL_ROUTING_RULES.find(r => r.dimension === dimension && r.intentType === intent);
+  if (rule) return { metricId: rule.metricId, label: rule.label, isRanking: rule.isRanking, 
+                     minRole: rule.minRole, defaultTopN: rule.defaultTopN };
+  const valeurRule = NL_ROUTING_RULES.find(r => r.dimension === dimension && r.intentType === 'valeur');
+  if (valeurRule) return { metricId: valeurRule.metricId, label: valeurRule.label, 
+                           isRanking: valeurRule.isRanking, minRole: valeurRule.minRole };
   return { metricId: 'ca_global_ht', label: 'CA global HT', isRanking: false, minRole: 0 };
 }
 
 function parseStatQuery(query: string, now = new Date()): ParsedStatQuery | null {
   if (!isStatsQuery(query)) return null;
-
+  
+  const normalizedQuery = normalizeQuery(query);
   const dimension = detectDimension(query);
   const intent = detectIntent(query);
   const univers = extractUnivers(query);
-  let period = extractPeriode(query, now);
+  const parsedPeriod = extractPeriode(query, now);
   const topN = extractTopN(query);
-  const technicienName = extractTechnicienName(query);
-
   const routing = routeToMetric(dimension, intent, query);
 
-  // Default period for rankings
-  if (routing.isRanking && !period) {
-    period = {
-      start: new Date(now.getFullYear(), 0, 1),
-      end: new Date(now.getFullYear(), 11, 31),
-      label: `Année ${now.getFullYear()}`,
-      isDefault: true,
-    };
+  // CRITICAL: Always have a period
+  let effectivePeriod: ParsedPeriod;
+  if (parsedPeriod) {
+    effectivePeriod = parsedPeriod;
+  } else if (routing.isRanking) {
+    effectivePeriod = { start: new Date(now.getFullYear(), 0, 1), end: new Date(now.getFullYear(), 11, 31),
+                        label: `Année ${now.getFullYear()}`, isDefault: true };
+  } else {
+    effectivePeriod = getDefaultPeriod(now);
   }
 
   let confidence = 0.5;
   if (univers) confidence += 0.15;
-  if (period && !period.isDefault) confidence += 0.2;
+  if (parsedPeriod && !parsedPeriod.isDefault) confidence += 0.2;
   if (topN) confidence += 0.1;
   if (dimension !== 'global') confidence += 0.05;
 
@@ -381,9 +390,8 @@ function parseStatQuery(query: string, now = new Date()): ParsedStatQuery | null
     dimension,
     intentType: intent,
     univers,
-    period,
+    period: effectivePeriod,
     topN: topN || routing.defaultTopN,
-    technicienName,
     confidence: Math.min(confidence, 1),
     minRole: routing.minRole,
     isRanking: routing.isRanking,
@@ -391,10 +399,37 @@ function parseStatQuery(query: string, now = new Date()): ParsedStatQuery | null
       detectedDimension: dimension,
       detectedIntent: intent,
       detectedUnivers: univers || null,
-      detectedPeriod: period ? period.label : null,
+      detectedPeriod: effectivePeriod.label,
       routingPath: `${dimension}.${intent} → ${routing.metricId}`,
+      normalizedQuery,
     },
   };
+}
+
+function getRoleLevel(globalRole: string | null | undefined): number {
+  if (!globalRole) return 0;
+  return ROLE_LEVELS[globalRole] ?? 0;
+}
+
+// ============= APPORTEUR NAME MAPPING (like StatIA) =============
+function buildApporteurNameMap(clients: Array<{ id: number; name?: string; raisonSociale?: string }>): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const c of clients) {
+    const id = String(c.id);
+    const cAny = c as Record<string, unknown>;
+    const nom = 
+      cAny.displayName as string ||
+      c.raisonSociale ||
+      cAny.nom as string ||
+      c.name ||
+      cAny.label as string ||
+      (cAny.data as Record<string, unknown>)?.nom as string ||
+      (cAny.data as Record<string, unknown>)?.name as string ||
+      (cAny.data as Record<string, unknown>)?.raisonSociale as string ||
+      `Apporteur ${id}`;
+    map.set(id, nom);
+  }
+  return map;
 }
 
 // ============= MAIN HANDLER =============
@@ -429,16 +464,11 @@ serve(async (req) => {
       return rateLimitResponse(rateLimitResult.retryAfter || 60, corsHeaders);
     }
 
-    // Get user profile
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile } = await supabase
       .from('profiles')
       .select('agence, enabled_modules, global_role, first_name, last_name')
       .eq('id', user.id)
       .maybeSingle();
-
-    if (profileError) {
-      console.error(`[unified-search] Profile fetch error:`, profileError);
-    }
 
     const globalRole = profile?.global_role || 'base_user';
     const userRoleLevel = getRoleLevel(globalRole);
@@ -453,13 +483,11 @@ serve(async (req) => {
       }));
     }
 
-    // Use deterministic parser
     const parsedQuery = parseStatQuery(query);
-    
     console.log(`[unified-search] Query: "${query}", Parsed: ${parsedQuery ? 'yes' : 'no (docs mode)'}`);
 
     if (parsedQuery) {
-      console.log(`[unified-search] Stats routing: ${parsedQuery.debug.routingPath}, minRole=${parsedQuery.minRole}, userLevel=${userRoleLevel}`);
+      console.log(`[unified-search] Stats routing: ${parsedQuery.debug.routingPath}, period=${parsedQuery.period.label}, minRole=${parsedQuery.minRole}`);
 
       // === ACCESS CONTROL ===
       if (userRoleLevel < parsedQuery.minRole) {
@@ -471,7 +499,7 @@ serve(async (req) => {
           filters: {},
           result: { value: 0 },
           agencySlug,
-          agencyName: agencySlug ? agencySlug.toUpperCase() : undefined,
+          agencyName: agencySlug?.toUpperCase(),
           computedAt: new Date().toISOString(),
           parsed: parsedQuery,
           accessDenied: true,
@@ -492,21 +520,17 @@ serve(async (req) => {
           const proxyUrl = `${supabaseUrl}/functions/v1/proxy-apogee`;
           const periode = parsedQuery.period;
 
-          // Fetch factures
           const facturesResponse = await fetch(proxyUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
             body: JSON.stringify({
               endpoint: 'apiGetFactures',
               agencySlug,
-              filters: periode ? {
-                dateDebut: periode.start.toISOString().split('T')[0],
-                dateFin: periode.end.toISOString().split('T')[0],
-              } : {},
+              filters: { dateDebut: periode.start.toISOString().split('T')[0],
+                         dateFin: periode.end.toISOString().split('T')[0] },
             }),
           });
 
-          // Fetch additional data based on metric type
           let projects: Array<{ id: number; data?: { commanditaireId?: number; universes?: string[] } }> = [];
           let clients: Array<{ id: number; name?: string; raisonSociale?: string }> = [];
 
@@ -533,101 +557,51 @@ serve(async (req) => {
 
             if (proxyData.success && proxyData.data) {
               const factures = proxyData.data as Array<{
-                id?: number;
-                totalHT?: number; montant?: number; typeFacture?: string;
+                id?: number; totalHT?: number; montant?: number; typeFacture?: string;
                 dateReelle?: string; date?: string; projectId?: number;
-                data?: { 
-                  totalHT?: number;
-                  technicians?: Array<{ id: number; firstname?: string; lastname?: string; bgcolor?: { hex?: string } }>;
-                };
+                data?: { totalHT?: number; technicians?: Array<{ id: number; firstname?: string; lastname?: string }> };
               }>;
 
-              // Filter by period
               const filteredFactures = factures.filter(f => {
                 const factureDate = f.dateReelle || f.date;
-                if (!factureDate || !periode) return true;
+                if (!factureDate) return true;
                 const d = new Date(factureDate);
                 return d >= periode.start && d <= periode.end;
               });
 
-              console.log(`[unified-search] Filtered factures: ${filteredFactures.length} (period: ${periode?.label || 'none'})`);
-              
-              // Debug first few factures
-              if (filteredFactures.length > 0) {
-                const sample = filteredFactures.slice(0, 3).map(f => ({
-                  id: f.id,
-                  projectId: f.projectId,
-                  totalHT: f.totalHT,
-                  dataTotalHT: f.data?.totalHT,
-                  montant: f.montant,
-                  date: f.dateReelle || f.date,
-                }));
-                console.log(`[unified-search] Sample factures:`, JSON.stringify(sample));
-              }
+              console.log(`[unified-search] Filtered factures: ${filteredFactures.length} (period: ${periode.label})`);
 
               const projectsById = new Map(projects.map(p => [p.id, p]));
-              // Create clients map with both string and number keys for robust lookup
-              // Build apporteur name map exactly like StatIA apporteurs.ts mapApporteurs()
-              const apporteurNames = new Map<string, string>();
-              for (const c of clients) {
-                const id = String(c.id);
-                const cAny = c as any;
-                // Same priority as StatIA: displayName → raisonSociale → nom → name → label → data.nom → data.name
-                const nom = 
-                  cAny.displayName ||
-                  c.raisonSociale ||
-                  cAny.nom ||
-                  c.name ||
-                  cAny.label ||
-                  cAny.data?.nom ||
-                  cAny.data?.name ||
-                  cAny.data?.raisonSociale ||
-                  `Apporteur ${id}`;
-                apporteurNames.set(id, nom);
-              }
+              const apporteurNames = buildApporteurNameMap(clients);
 
               // === CA PAR APPORTEUR ===
               if (parsedQuery.metricId === 'ca_par_apporteur') {
                 const caByApporteur: Record<number, { name: string; ca: number }> = {};
-                let facturesWithProject = 0;
-                let facturesWithApporteur = 0;
-                
                 for (const f of filteredFactures) {
                   const isAvoir = (f.typeFacture || '').toLowerCase() === 'avoir';
-                  // Use data.totalHT first (as per rules), fallback to totalHT then montant
                   const montant = f.data?.totalHT ?? f.totalHT ?? f.montant ?? 0;
                   const netMontant = isAvoir ? -Math.abs(montant) : montant;
-                  
                   const project = projectsById.get(f.projectId || 0);
-                  if (project) facturesWithProject++;
-                  
                   const commanditaireId = project?.data?.commanditaireId;
                   
                   if (commanditaireId) {
-                    facturesWithApporteur++;
                     const name = apporteurNames.get(String(commanditaireId)) || `Apporteur #${commanditaireId}`;
                     if (!caByApporteur[commanditaireId]) caByApporteur[commanditaireId] = { name, ca: 0 };
                     caByApporteur[commanditaireId].ca += netMontant;
                   } else {
-                    // Direct - no apporteur
                     if (!caByApporteur[0]) caByApporteur[0] = { name: 'Direct', ca: 0 };
                     caByApporteur[0].ca += netMontant;
                   }
                 }
-
-                console.log(`[unified-search] Apporteur calc: ${facturesWithProject}/${filteredFactures.length} with project, ${facturesWithApporteur} with apporteur`);
-                console.log(`[unified-search] CA by apporteur keys: ${Object.keys(caByApporteur).length}`);
 
                 const sorted = Object.entries(caByApporteur)
                   .map(([id, d]) => ({ id: parseInt(id), name: d.name, value: Math.round(d.ca) }))
                   .filter(x => x.value > 0)
                   .sort((a, b) => b.value - a.value);
 
-                const limitN = parsedQuery.topN || 10;
-                ranking = sorted.slice(0, limitN).map((item, idx) => ({ rank: idx + 1, ...item }));
+                ranking = sorted.slice(0, parsedQuery.topN || 10).map((item, idx) => ({ rank: idx + 1, ...item }));
                 topItem = ranking[0];
                 computedValue = sorted.reduce((sum, item) => sum + item.value, 0);
-                
                 console.log(`[unified-search] Top 3 apporteurs:`, ranking?.slice(0, 3));
               }
               // === CA PAR UNIVERS ===
@@ -637,11 +611,9 @@ serve(async (req) => {
                   const isAvoir = (f.typeFacture || '').toLowerCase() === 'avoir';
                   const montant = f.totalHT ?? f.montant ?? 0;
                   const netMontant = isAvoir ? -Math.abs(montant) : montant;
-                  
                   const project = projectsById.get(f.projectId || 0);
                   const universes = project?.data?.universes || ['Non catégorisé'];
                   const share = netMontant / universes.length;
-                  
                   for (const uni of universes) {
                     if (!caByUnivers[uni]) caByUnivers[uni] = 0;
                     caByUnivers[uni] += share;
@@ -653,8 +625,7 @@ serve(async (req) => {
                   .filter(x => x.value > 0)
                   .sort((a, b) => b.value - a.value);
 
-                const limitN = parsedQuery.topN || 10;
-                ranking = sorted.slice(0, limitN).map((item, idx) => ({ rank: idx + 1, ...item }));
+                ranking = sorted.slice(0, parsedQuery.topN || 10).map((item, idx) => ({ rank: idx + 1, ...item }));
                 topItem = ranking[0];
                 computedValue = sorted.reduce((sum, item) => sum + item.value, 0);
               }
@@ -666,10 +637,8 @@ serve(async (req) => {
                   const montant = f.totalHT ?? f.montant ?? 0;
                   const netMontant = isAvoir ? -Math.abs(montant) : montant;
                   const techs = f.data?.technicians || [];
-                  
                   if (techs.length === 0) continue;
                   const share = netMontant / techs.length;
-                  
                   for (const tech of techs) {
                     const name = `${tech.firstname || ''} ${tech.lastname || ''}`.trim() || `Tech #${tech.id}`;
                     if (!caByTech[tech.id]) caByTech[tech.id] = { name, ca: 0 };
@@ -682,8 +651,7 @@ serve(async (req) => {
                   .filter(x => x.value > 0)
                   .sort((a, b) => b.value - a.value);
 
-                const limitN = parsedQuery.topN || 10;
-                ranking = sorted.slice(0, limitN).map((item, idx) => ({ rank: idx + 1, ...item }));
+                ranking = sorted.slice(0, parsedQuery.topN || 10).map((item, idx) => ({ rank: idx + 1, ...item }));
                 topItem = ranking[0];
                 computedValue = sorted.reduce((sum, item) => sum + item.value, 0);
               }
@@ -715,12 +683,12 @@ serve(async (req) => {
         metricLabel: parsedQuery.metricLabel,
         filters: {
           univers: parsedQuery.univers,
-          periode: parsedQuery.period ? {
+          periode: {
             start: parsedQuery.period.start.toISOString(),
             end: parsedQuery.period.end.toISOString(),
             label: parsedQuery.period.label,
             isDefault: parsedQuery.period.isDefault,
-          } : undefined,
+          },
         },
         result: {
           value: computedValue,
@@ -729,7 +697,7 @@ serve(async (req) => {
           unit: parsedQuery.metricId.includes('taux') ? '%' : '€',
         },
         agencySlug,
-        agencyName: agencySlug ? agencySlug.toUpperCase() : undefined,
+        agencyName: agencySlug?.toUpperCase(),
         computedAt: new Date().toISOString(),
         parsed: parsedQuery,
       };
@@ -757,15 +725,12 @@ serve(async (req) => {
 
     if (chunks) {
       for (const chunk of chunks) {
-        const sourceMap: Record<string, string> = {
-          'apogee': 'apogee', 'helpconfort': 'helpconfort', 'apporteurs': 'apporteurs',
-        };
         docResults.push({
           id: chunk.id,
           title: chunk.title || 'Document',
           snippet: chunk.content?.substring(0, 200) + '...',
           url: chunk.slug ? `/academy/apogee/category/${chunk.slug}` : '/academy',
-          source: sourceMap[chunk.block_type] || 'apogee',
+          source: chunk.block_type || 'apogee',
         });
       }
     }
