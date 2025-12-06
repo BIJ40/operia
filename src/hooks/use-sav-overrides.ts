@@ -77,17 +77,28 @@ export function useSavOverrides() {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error("User not authenticated");
 
+      // Récupérer l'enregistrement existant pour préserver les valeurs non modifiées
+      const existingOverride = overridesMap.get(params.project_id);
+      
+      const upsertData = {
+        project_id: params.project_id,
+        agency_id: agencyId,
+        confirmed_by: user.user.id,
+        confirmed_at: new Date().toISOString(),
+        is_confirmed_sav: params.is_confirmed_sav !== undefined 
+          ? params.is_confirmed_sav 
+          : existingOverride?.is_confirmed_sav ?? null,
+        cout_sav_manuel: params.cout_sav_manuel !== undefined 
+          ? params.cout_sav_manuel 
+          : existingOverride?.cout_sav_manuel ?? null,
+        notes: params.notes !== undefined 
+          ? params.notes 
+          : existingOverride?.notes ?? null,
+      };
+
       const { data, error } = await supabase
         .from("sav_dossier_overrides")
-        .upsert({
-          project_id: params.project_id,
-          agency_id: agencyId,
-          is_confirmed_sav: params.is_confirmed_sav,
-          cout_sav_manuel: params.cout_sav_manuel,
-          notes: params.notes,
-          confirmed_by: user.user.id,
-          confirmed_at: new Date().toISOString(),
-        }, {
+        .upsert(upsertData, {
           onConflict: "project_id,agency_id",
         })
         .select()
