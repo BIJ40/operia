@@ -10,6 +10,7 @@ import { Loader2 } from "lucide-react";
 import { RoleGuard } from "./components/auth/RoleGuard";
 import { ModuleGuard } from "./components/auth/ModuleGuard";
 import { SupportConsoleGuard } from "./components/auth/SupportConsoleGuard";
+import { FaqAdminGuard } from "./components/auth/FaqAdminGuard";
 
 // Critical pages - loaded immediately
 import Landing from "./pages/Landing";
@@ -335,7 +336,7 @@ function AppContent() {
           <Route path="/admin/apogee-guides" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminApogeeGuides /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/chatbot-rag" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminChatbotRag /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/announcements" element={<MainLayout><RoleGuard minRole="franchisor_user"><ModuleGuard moduleKey="admin_plateforme"><AdminAnnouncements /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/admin/faq" element={<MainLayout><RoleGuard minRole="franchisor_user"><ModuleGuard moduleKey="admin_plateforme"><AdminFaq /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/admin/faq" element={<MainLayout><FaqAdminGuard><AdminFaq /></FaqAdminGuard></MainLayout>} />
           {/* Legacy admin/apogee-tickets - Redirect to /projects */}
           <Route path="/admin/apogee-tickets" element={<Navigate to="/projects/kanban" replace />} />
           <Route path="/admin/apogee-tickets/import" element={<Navigate to="/projects/import" replace />} />

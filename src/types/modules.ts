@@ -55,6 +55,7 @@ export const MODULE_OPTIONS = {
     permissions: 'admin_plateforme.permissions',
     backup: 'admin_plateforme.backup',
     logs: 'admin_plateforme.logs',
+    faq_admin: 'admin_plateforme.faq_admin', // Admin FAQ sans accès /admin complet
   },
   apogee_tickets: {
     kanban: 'apogee_tickets.kanban',
@@ -170,6 +171,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'permissions', path: 'admin_plateforme.permissions', label: 'Permissions', description: 'Rôles et droits d\'accès', defaultEnabled: true },
       { key: 'backup', path: 'admin_plateforme.backup', label: 'Sauvegardes', description: 'Import/export de données', defaultEnabled: true },
       { key: 'logs', path: 'admin_plateforme.logs', label: 'Logs', description: 'Journaux d\'activité', defaultEnabled: false },
+      { key: 'faq_admin', path: 'admin_plateforme.faq_admin', label: 'Admin FAQ', description: 'Gestion de la FAQ (sans accès /admin)', defaultEnabled: false },
     ],
   },
   {

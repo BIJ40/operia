@@ -25,6 +25,11 @@ interface SupportModuleOptions {
   admin?: boolean;  // Admin support
 }
 
+// Types pour le module Admin Plateforme
+interface AdminPlatformeModuleOptions {
+  faq_admin?: boolean; // Admin FAQ sans accès /admin complet
+}
+
 interface AuthContextType {
   // État utilisateur
   isAuthenticated: boolean;
@@ -64,6 +69,12 @@ interface AuthContextType {
   isSupportAdmin: boolean;             // Module support.admin activé
   canAccessSupportConsoleUI: boolean;  // Console Support = support.agent OU N5+
   canManageTickets: boolean;           // Alias de canAccessSupportConsoleUI
+  
+  // ============================================================================
+  // MODULE FAQ ADMIN - Accès /admin/faq sans accès /admin complet
+  // ============================================================================
+  hasFaqAdminRole: boolean;            // Module admin_plateforme.faq_admin activé
+  canAccessFaqAdmin: boolean;          // faq_admin OU N5+
   
   // Auth actions
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -120,6 +131,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Console Support = support.agent OU N5+
   const canAccessSupportConsoleUI = hasSupportAgentRole || isAdmin;
   const canManageTickets = canAccessSupportConsoleUI; // Alias pour compatibilité
+
+  // ============================================================================
+  // MODULE FAQ ADMIN - Logique granulaire
+  // ============================================================================
+  const adminModuleConfig = enabledModules?.admin_plateforme;
+  const adminOptions: AdminPlatformeModuleOptions = 
+    (typeof adminModuleConfig === 'object' && adminModuleConfig !== null && 'options' in adminModuleConfig)
+      ? (adminModuleConfig.options as AdminPlatformeModuleOptions)
+      : {};
+  
+  const hasFaqAdminRole = adminOptions.faq_admin === true; // Module admin_plateforme.faq_admin activé
+  const canAccessFaqAdmin = hasFaqAdminRole || isAdmin; // faq_admin OU N5+
 
   // Contexte d'accès V2.0
   const accessContext: AccessControlContext = {
@@ -379,6 +402,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isSupportAdmin,
       canAccessSupportConsoleUI,
       canManageTickets,
+      // FAQ Admin flags
+      hasFaqAdminRole,
+      canAccessFaqAdmin,
       // Auth actions
       login, 
       logout,
