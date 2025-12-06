@@ -5,12 +5,15 @@ import { DataService } from '@/apogee-connect/services/dataService';
 import { calculateRecouvrement, RecouvrementStats } from '@/apogee-connect/utils/recouvrementCalculations';
 import { logApogee } from '@/lib/logger';
 
+import { apogeeProxy } from "@/services/apogeeProxy";
+
 /**
  * Hook pour récupérer les statistiques de recouvrement
  * 
  * Utilise les filtres globaux (période, etc.) et charge les données depuis DataService
  * 
  * @param options - Options de configuration
+ * @param options.agencySlug - Slug de l'agence cible (optionnel, utilise l'agence de l'utilisateur par défaut)
  * @returns Query result avec les stats de recouvrement
  * 
  * @example
@@ -33,24 +36,40 @@ import { logApogee } from '@/lib/logger';
 export function useRecouvrementStats(options: {
   includeDetails?: boolean;
   enabled?: boolean;
+  agencySlug?: string;
 } = {}) {
   const { filters } = useFilters();
-  const { isAgencyReady } = useAgency();
+  const { isAgencyReady, currentAgency } = useAgency();
+
+  // Utiliser le slug passé en paramètre OU celui de l'utilisateur
+  const effectiveSlug = options.agencySlug || currentAgency?.slug;
 
   return useQuery<RecouvrementStats>({
-    queryKey: ['recouvrement-stats', filters.dateRange, options.includeDetails],
+    queryKey: ['recouvrement-stats', effectiveSlug, filters.dateRange, options.includeDetails],
     queryFn: async () => {
       logApogee.debug('useRecouvrementStats - début calcul', {
+        agencySlug: effectiveSlug,
         dateRange: filters.dateRange,
         includeDetails: options.includeDetails
       });
 
       try {
-        // Charger toutes les données depuis l'API Apogée
-        const allData = await DataService.loadAllData(true, false);
+        // Si un agencySlug est fourni, charger via le proxy pour cette agence spécifique
+        let factures;
+        if (options.agencySlug) {
+          factures = await apogeeProxy.getFactures({ agencySlug: options.agencySlug });
+          logApogee.debug('useRecouvrementStats - factures chargées via proxy', {
+            agencySlug: options.agencySlug,
+            nbFactures: factures?.length || 0
+          });
+        } else {
+          // Sinon utiliser DataService pour l'agence de l'utilisateur
+          const allData = await DataService.loadAllData(true, false);
+          factures = allData.factures;
+        }
 
-        if (!allData.factures || allData.factures.length === 0) {
-          logApogee.warn('useRecouvrementStats - Aucune facture trouvée');
+        if (!factures || factures.length === 0) {
+          logApogee.warn('useRecouvrementStats - Aucune facture trouvée', { agencySlug: effectiveSlug });
           return {
             totalFacturesTTC: 0,
             totalReglementsRecus: 0,
@@ -67,22 +86,22 @@ export function useRecouvrementStats(options: {
 
         // Calculer le recouvrement
         const stats = calculateRecouvrement(
-          allData.factures,
+          factures,
           filters,
           {
             includeDetails: options.includeDetails
           }
         );
 
-        logApogee.debug('useRecouvrementStats - résultat', stats);
+        logApogee.debug('useRecouvrementStats - résultat', { agencySlug: effectiveSlug, stats });
 
         return stats;
       } catch (error) {
-        logApogee.error('useRecouvrementStats - erreur', { error });
+        logApogee.error('useRecouvrementStats - erreur', { error, agencySlug: effectiveSlug });
         throw error;
       }
     },
-    enabled: isAgencyReady && (options.enabled !== false),
+    enabled: (options.agencySlug ? true : isAgencyReady) && (options.enabled !== false),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
