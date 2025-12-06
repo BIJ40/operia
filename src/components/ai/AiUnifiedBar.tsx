@@ -94,7 +94,7 @@ export function AiUnifiedBar() {
       className="w-full flex flex-col items-center py-3 relative z-40"
     >
       {/* Main Search Bar - Always visible */}
-      <div className="w-full max-w-2xl px-4">
+      <div className="w-full max-w-5xl px-4">
         <motion.div
           initial={false}
           animate={{
@@ -215,7 +215,7 @@ export function AiUnifiedBar() {
 
       {/* Inline Results - Displayed below the search bar */}
       {(hasResults || isLoading) && (
-        <div className="w-full max-w-2xl px-4 mt-2">
+        <div className="w-full max-w-5xl px-4 mt-2">
           <AiInlineResult
             messages={messages}
             isLoading={isLoading}
