@@ -281,15 +281,15 @@ function StatResultContent({ result, query, isAdmin, onPeriodChange }: StatResul
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="mt-2 p-3 bg-muted/50 rounded-lg border text-xs font-mono space-y-1">
-              <div><span className="text-muted-foreground">metricId:</span> {parsed.metricId}</div>
-              <div><span className="text-muted-foreground">dimension:</span> {parsed.debug.detectedDimension}</div>
-              <div><span className="text-muted-foreground">intent:</span> {parsed.debug.detectedIntent}</div>
-              <div><span className="text-muted-foreground">univers:</span> {parsed.debug.detectedUnivers || 'null'}</div>
-              <div><span className="text-muted-foreground">période:</span> {parsed.debug.detectedPeriod || 'null'}</div>
-              <div><span className="text-muted-foreground">routing:</span> {parsed.debug.routingPath}</div>
-              <div><span className="text-muted-foreground">confidence:</span> {(parsed.confidence * 100).toFixed(0)}%</div>
-              <div><span className="text-muted-foreground">minRole:</span> {parsed.minRole}</div>
-              <div><span className="text-muted-foreground">isRanking:</span> {parsed.isRanking ? 'true' : 'false'}</div>
+              <div><span className="text-muted-foreground">metricId:</span> {parsed?.metricId || 'null'}</div>
+              <div><span className="text-muted-foreground">dimension:</span> {parsed?.debug?.detectedDimension || 'null'}</div>
+              <div><span className="text-muted-foreground">intent:</span> {parsed?.debug?.detectedIntent || 'null'}</div>
+              <div><span className="text-muted-foreground">univers:</span> {parsed?.debug?.detectedUnivers || 'null'}</div>
+              <div><span className="text-muted-foreground">période:</span> {parsed?.debug?.detectedPeriod || 'null'}</div>
+              <div><span className="text-muted-foreground">routing:</span> {parsed?.debug?.routingPath || 'null'}</div>
+              <div><span className="text-muted-foreground">confidence:</span> {parsed?.confidence != null ? (parsed.confidence * 100).toFixed(0) + '%' : 'null'}</div>
+              <div><span className="text-muted-foreground">minRole:</span> {parsed?.minRole || 'null'}</div>
+              <div><span className="text-muted-foreground">isRanking:</span> {parsed?.isRanking ? 'true' : 'false'}</div>
             </div>
           </CollapsibleContent>
         </Collapsible>
