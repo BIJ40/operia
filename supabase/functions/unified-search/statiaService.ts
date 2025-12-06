@@ -163,9 +163,18 @@ function computeCaParApporteur(data: ApogeeData, params: StatParams): StatResult
   
   console.log(`[computeCaParApporteur] Filter: apporteurId=${filterApporteurId}, apporteurName=${filterApporteurName}`);
   
+  // DEBUG: log première facture pour voir la structure
+  if (data.factures.length > 0) {
+    const sample = data.factures[0];
+    console.log(`[computeCaParApporteur] Sample facture structure: totalHT=${sample.totalHT}, data.totalHT=${sample.data?.totalHT}, montantHT=${sample.montantHT}, data keys=${sample.data ? Object.keys(sample.data).slice(0,10).join(',') : 'no data'}`);
+  }
+  
+  let sumCA = 0;
+  
   for (const f of data.factures) {
-    const isAvoir = (f.typeFacture || '').toLowerCase() === 'avoir';
-    const montant = f.data?.totalHT ?? f.totalHT ?? f.montant ?? 0;
+    const isAvoir = (f.typeFacture || f.type || '').toLowerCase() === 'avoir';
+    // Ordre de priorité conforme à extractFactureMeta: data.totalHT > totalHT > montantHT
+    const montant = f.data?.totalHT ?? f.totalHT ?? f.montantHT ?? f.montant ?? 0;
     const netMontant = isAvoir ? -Math.abs(montant) : montant;
     
     // Trouver le projet via projectId ou data.projectId
@@ -204,7 +213,15 @@ function computeCaParApporteur(data: ApogeeData, params: StatParams): StatResult
     
     if (!caByApporteur[key]) caByApporteur[key] = { name, ca: 0 };
     caByApporteur[key].ca += netMontant;
+    sumCA += netMontant;
+    
+    // Log 3 premières factures de l'apporteur filtré
+    if (filterApporteurId && matchedWithFilteredApporteur <= 3) {
+      console.log(`[computeCaParApporteur] Sample filtered facture #${matchedWithFilteredApporteur}: montant=${montant}, netMontant=${netMontant}, isAvoir=${isAvoir}`);
+    }
   }
+  
+  console.log(`[computeCaParApporteur] Total sumCA=${sumCA}`);
   
   console.log(`[computeCaParApporteur] Project matching: ${matchedProjects} matched, ${unmatchedProjects} unmatched`);
   console.log(`[computeCaParApporteur] Apporteur stats: ${matchedWithApporteur} with apporteur, ${matchedWithFilteredApporteur} with filtered apporteur`);
