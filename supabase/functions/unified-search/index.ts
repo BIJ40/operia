@@ -1,15 +1,14 @@
 /**
  * Edge Function: unified-search
  * 
- * ORCHESTRATEUR V3.1 - Pipeline NLP structuré
+ * ORCHESTRATEUR V4 - Pipeline NLP Structuré
  * 
- * Pipeline REFACTORÉ:
- * 1. Tokenisation (nlTokenizer)
+ * Pipeline:
+ * 1. Tokenisation
  * 2. Chargement entités dynamiques (apporteurs/techniciens depuis Apogée)
- * 3. Résolution entités AVANT le scoring (nlEntityResolver)
- * 4. Parsing NL complet (nlQueryParser) → subject/operation/dimension
- * 5. Résolution métrique par clé (subject:operation:dimension)
- * 6. Exécution StatIA
+ * 3. Parsing NL V4 complet (statiaIntentV4) → subject/operation/dimension/filters
+ * 4. Résolution métrique par scoring (subject + operation + dimension)
+ * 5. Exécution StatIA
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -23,6 +22,14 @@ import { extractPeriodFromTokens, type ParsedPeriod } from './nlPeriodExtractor.
 import { selectBestMetric, hasMetricSignature, getMetricSignature, type MetricScore, type MetricSignature } from './nlMetricScorer.ts';
 import { buildEntityDictionary, findEntitiesInQuery, normalizeForMatching, type EntityDictionary, type ResolvedEntityFilters } from './nlEntityResolver.ts';
 import { parseNLQuery, resolveMetricFromParsed, type ParsedNLQuery } from './nlQueryParser.ts';
+import { 
+  parseStatiaQuery, 
+  selectMetricV4, 
+  normalize as normalizeV4,
+  type ParsedQuery as ParsedQueryV4,
+  type EntityDictionaries,
+  type NlContext
+} from './statiaIntentV4.ts';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
@@ -876,94 +883,138 @@ serve(async (req) => {
     const conversationHistory = body.conversationHistory;
 
     // ══════════════════════════════════════════════════════════
-    // STEP 1: TOKENISATION (NL V3.1)
+    // STEP 1: TOKENISATION (NL V4)
     // ══════════════════════════════════════════════════════════
     const tokenized = tokenizeQuery(query);
-    console.log(`[unified-search] Tokens: [${tokenized.tokens.join(', ')}]`);
-    console.log(`[unified-search] Bigrams: [${tokenized.bigrams.join(', ')}]`);
+    console.log(`[unified-search] V4 Tokens: [${tokenized.tokens.join(', ')}]`);
 
     // ══════════════════════════════════════════════════════════
-    // STEP 2: CHARGEMENT ENTITÉS DYNAMIQUES (AVANT toute analyse)
+    // STEP 2: CHARGEMENT ENTITÉS DYNAMIQUES DEPUIS APOGÉE
     // ══════════════════════════════════════════════════════════
     const proxyUrl = `${supabaseUrl}/functions/v1/proxy-apogee`;
     let entityDictionary: EntityDictionary = { apporteurs: [], techniciens: [], univers: [] };
+    let entityDictionariesV4: EntityDictionaries = { apporteurs: [], techniciens: [], univers: [], agences: [] };
+    
     if (agencySlug) {
       const [usersRaw, clientsRaw] = await Promise.all([
         loadUsersForAgency(proxyUrl, authHeader, agencySlug),
         loadClientsForAgency(proxyUrl, authHeader, agencySlug)
       ]);
-      // Construire le dictionnaire normalisé
+      
+      // Pour V4: construire les dictionnaires d'entités avec les noms bruts
+      const apporteurNames: string[] = clientsRaw.map(c => c.name || '').filter(n => n.length >= 3);
+      const technicienNames: string[] = usersRaw.map(u => u.fullName || '').filter(n => n.length >= 3);
+      
+      entityDictionariesV4 = {
+        apporteurs: apporteurNames,
+        techniciens: technicienNames,
+        univers: ['PLOMBERIE', 'VITRERIE', 'SERRURERIE', 'ELECTRICITE', 'MENUISERIE', 'PEINTURE', 'MACONNERIE', 'COUVERTURE', 'CARRELAGE'],
+        agences: [agencySlug]
+      };
+      
+      console.log(`[unified-search] V4 Dictionaries: ${entityDictionariesV4.apporteurs.length} apporteurs, ${entityDictionariesV4.techniciens.length} techniciens`);
+      
+      // Sample pour debug
+      if (entityDictionariesV4.apporteurs.length > 0) {
+        console.log(`[unified-search] Sample apporteurs: ${entityDictionariesV4.apporteurs.slice(0, 5).join(', ')}`);
+      }
+      
+      // Construire aussi l'ancien dictionnaire pour compatibilité
       entityDictionary = buildEntityDictionary(
         clientsRaw.map(c => ({ id: c.id, name: c.name, company: c.company })),
         usersRaw.map(u => ({ id: u.id, firstname: u.firstName, lastname: u.lastName }))
       );
-      console.log(`[unified-search] Entity dictionary: ${entityDictionary.apporteurs.length} apporteurs, ${entityDictionary.techniciens.length} techniciens`);
     }
 
     // ══════════════════════════════════════════════════════════
-    // STEP 3: RÉSOLUTION ENTITÉS AVANT LE SCORING (NOUVEAU!)
+    // STEP 3: PARSING NL V4 COMPLET (subject/operation/dimension/filters)
     // ══════════════════════════════════════════════════════════
-    const normalizedQuery = normalizeForMatching(query);
-    const entityFilters = findEntitiesInQuery(normalizedQuery, entityDictionary);
-    console.log(`[unified-search] Entity resolution: dimension=${entityFilters.dimension}, apporteur=${entityFilters.apporteur?.name || 'none'}, technicien=${entityFilters.technicien?.name || 'none'}`);
+    const nlContextV4: NlContext = {
+      dictionaries: entityDictionariesV4,
+      defaultYear: now.getFullYear()
+    };
+    
+    const parsedV4 = parseStatiaQuery(query, nlContextV4);
+    console.log(`[unified-search] V4 Parsed: subject=${parsedV4.subject}, operation=${parsedV4.operation}, dimension=${parsedV4.dimension}`);
+    console.log(`[unified-search] V4 Filters: apporteur=${parsedV4.filters.apporteur || 'none'}, technicien=${parsedV4.filters.technicien || 'none'}`);
+    console.log(`[unified-search] V4 Period: type=${parsedV4.period.type}, month=${parsedV4.period.month || 'none'}, year=${parsedV4.period.year || 'none'}`);
 
     // ══════════════════════════════════════════════════════════
-    // STEP 4: EXTRACTION PÉRIODE
+    // STEP 4: SÉLECTION MÉTRIQUE V4 (scoring par subject+operation+dimension)
+    // ══════════════════════════════════════════════════════════
+    const selectedMetricV4 = selectMetricV4(parsedV4);
+    console.log(`[unified-search] V4 Selected metric: ${selectedMetricV4?.id || 'NONE'} (${selectedMetricV4?.label || ''}) [engineKey: ${selectedMetricV4?.engineKey || 'none'}]`);
+
+    // ══════════════════════════════════════════════════════════
+    // STEP 5: EXTRACTION PÉRIODE (format legacy pour compatibilité)
     // ══════════════════════════════════════════════════════════
     const period = extractPeriodFromTokens(tokenized, now);
-    console.log(`[unified-search] Period: ${period.label} (${period.from} → ${period.to}), isDefault=${period.isDefault}`);
-
-    // ══════════════════════════════════════════════════════════
-    // STEP 5: PARSING NL COMPLET → subject/operation/dimension
-    // ══════════════════════════════════════════════════════════
-    const parsedNL = parseNLQuery(query, tokenized, period, entityFilters);
-    console.log(`[unified-search] Parsed NL: subject=${parsedNL.subject}, operation=${parsedNL.operation}, dimension=${parsedNL.dimension}`);
-    console.log(`[unified-search] Confidence: ${parsedNL.confidence}, debug: ${JSON.stringify(parsedNL.debug)}`);
-
-    // ══════════════════════════════════════════════════════════
-    // STEP 6: RÉSOLUTION MÉTRIQUE PAR CLÉ (subject:operation:dimension)
-    // ══════════════════════════════════════════════════════════
-    const resolvedMetric = resolveMetricFromParsed(parsedNL);
-    console.log(`[unified-search] Resolved metric: ${resolvedMetric?.id || 'NONE'} (${resolvedMetric?.label || ''})`);
-
-    // ══════════════════════════════════════════════════════════
-    // STEP 6b: FALLBACK VERS ANCIEN SYSTÈME SI PAS DE MÉTRIQUE TROUVÉE
-    // (Compatibilité arrière avec nlMetricScorer)
-    // ══════════════════════════════════════════════════════════
-    const extracted = extractIntentFromTokens(tokenized);
-    let extractedWithEntityOverride = { ...extracted };
-    if (entityFilters.dimension !== 'global') {
-      extractedWithEntityOverride = { ...extracted, dimension: entityFilters.dimension as any };
+    
+    // Override period si V4 a trouvé un mois spécifique
+    if (parsedV4.period.month && parsedV4.period.year) {
+      const startOfMonth = new Date(parsedV4.period.year, parsedV4.period.month - 1, 1);
+      const endOfMonth = new Date(parsedV4.period.year, parsedV4.period.month, 0);
+      period.from = startOfMonth.toISOString().split('T')[0];
+      period.to = endOfMonth.toISOString().split('T')[0];
+      period.label = `${['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'][parsedV4.period.month]} ${parsedV4.period.year}`;
+      period.isDefault = false;
     }
-    const metricResultFallback = selectBestMetric(extractedWithEntityOverride, 5);
+    console.log(`[unified-search] Final period: ${period.label} (${period.from} → ${period.to})`);
 
-    // Choisir la meilleure métrique entre le nouveau système et l'ancien
+    // ══════════════════════════════════════════════════════════
+    // STEP 6: RÉSOLUTION FINALE DE LA MÉTRIQUE + ENTITÉS
+    // ══════════════════════════════════════════════════════════
     let finalMetricId: string | null = null;
     let metricSource = 'none';
-    if (resolvedMetric) {
-      finalMetricId = resolvedMetric.id;
-      metricSource = 'nlQueryParser';
+    let metricScores: MetricScore[] = [];
+    
+    // Fallback entities/extracted pour compatibilité arrière
+    const entityFiltersCompat = findEntitiesInQuery(normalizeForMatching(query), entityDictionary);
+    const extractedCompat = extractIntentFromTokens(tokenized);
+    let extractedWithEntityOverride = { ...extractedCompat };
+    if (entityFiltersCompat.dimension !== 'global') {
+      extractedWithEntityOverride = { ...extractedCompat, dimension: entityFiltersCompat.dimension as any };
+    }
+    const metricResultFallback = selectBestMetric(extractedWithEntityOverride, 5);
+    metricScores = metricResultFallback.scores;
+    
+    // Priorité au V4 s'il a trouvé une métrique
+    if (selectedMetricV4) {
+      finalMetricId = selectedMetricV4.engineKey; // Utiliser l'engineKey pour StatIA
+      metricSource = 'nlv4';
     } else if (metricResultFallback.metric) {
       finalMetricId = metricResultFallback.metric.id;
-      metricSource = 'nlMetricScorer_fallback';
+      metricSource = 'nlv3_fallback';
     }
     console.log(`[unified-search] Final metric: ${finalMetricId || 'NONE'} (source: ${metricSource})`);
-
-    // Convertir entityFilters vers ResolvedEntities pour compatibilité
+    
+    // Résoudre les entités pour les filtres (priorité V4)
     const resolvedEntities: ResolvedEntities = {
-      apporteurId: entityFilters.apporteur?.id,
-      apporteurName: entityFilters.apporteur?.name,
-      technicienId: entityFilters.technicien?.id,
-      technicienName: entityFilters.technicien?.name,
+      apporteurId: entityFiltersCompat.apporteur?.id,
+      apporteurName: parsedV4.filters.apporteur || entityFiltersCompat.apporteur?.name,
+      technicienId: entityFiltersCompat.technicien?.id,
+      technicienName: parsedV4.filters.technicien || entityFiltersCompat.technicien?.name,
     };
+    
+    // Si V4 a trouvé un apporteur mais pas d'ID, chercher l'ID
+    if (parsedV4.filters.apporteur && !resolvedEntities.apporteurId && agencySlug) {
+      const clientsRaw = await loadClientsForAgency(proxyUrl, authHeader, agencySlug);
+      const matchedClient = clientsRaw.find(c => 
+        normalizeV4(c.name || '').includes(normalizeV4(parsedV4.filters.apporteur || '')) ||
+        normalizeV4(parsedV4.filters.apporteur || '').includes(normalizeV4(c.name || ''))
+      );
+      if (matchedClient) {
+        resolvedEntities.apporteurId = matchedClient.id;
+        console.log(`[unified-search] Resolved apporteur: ${parsedV4.filters.apporteur} → ID ${matchedClient.id}`);
+      }
+    }
 
     // ══════════════════════════════════════════════════════════
     // STEP 7: CORE ROUTING (avec nouveau système de métrique)
     // ══════════════════════════════════════════════════════════
-    // Construire un metricResult compatible pour aiSearchRouteV3
     const metricResult = finalMetricId && hasMetricSignature(finalMetricId)
-      ? { metric: getMetricSignature(finalMetricId)!, scores: metricResultFallback.scores }
-      : { metric: null, scores: metricResultFallback.scores };
+      ? { metric: getMetricSignature(finalMetricId)!, scores: metricScores }
+      : { metric: null, scores: metricScores };
 
     const routed = aiSearchRouteV3(query, tokenized, extractedWithEntityOverride, period, context, resolvedEntities, metricResult, now);
     console.log(`[unified-search] Routed: type=${routed.type}, metric=${routed.parsed?.metricId || 'none'}`);
