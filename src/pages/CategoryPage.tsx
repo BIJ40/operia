@@ -66,7 +66,10 @@ export default function CategoryPage({ scope }: CategoryPageProps) {
   const config = CATEGORY_CONFIGS[scope];
 
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks, reloadBlocks, loading } = useEditor();
-  const { isAuthenticated, isAdmin, hasAccessToScope } = useAuth();
+  const { isAuthenticated, hasGlobalRole, hasModuleOption, hasAccessToScope } = useAuth();
+  
+  // V2: Vérification par rôle global + option module
+  const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('help_academy', 'edition');
   
   const getEditUrl = (url: string) => isEditMode ? `${url}?edit=true` : url;
   
@@ -328,7 +331,7 @@ export default function CategoryPage({ scope }: CategoryPageProps) {
               <><ChevronsUpDown className="h-4 w-4" /><span className="hidden sm:inline">Tout ouvrir</span></>
             )}
           </Button>
-          {isEditMode && isAdmin && (
+          {isEditMode && canEdit && (
             <>
               <Button variant="outline" size="sm" onClick={() => handleAddSection()} className="gap-1 sm:gap-2">
                 <Plus className="h-4 w-4" /><span className="hidden sm:inline">Section</span>
@@ -349,7 +352,7 @@ export default function CategoryPage({ scope }: CategoryPageProps) {
               ? "Aucune section dans cette catégorie" 
               : "Utilisez les boutons TIPS / Sections pour afficher le contenu"}
           </p>
-          {isEditMode && isAdmin && sections.length === 0 && (
+          {isEditMode && canEdit && sections.length === 0 && (
             <div className="flex gap-2 justify-center">
               <Button variant="outline" size="sm" onClick={() => handleAddSection()} className="gap-2">
                 <Plus className="h-4 w-4" />Ajouter une section
@@ -375,7 +378,7 @@ export default function CategoryPage({ scope }: CategoryPageProps) {
                   section={section}
                   category={category}
                   isEditMode={isEditMode}
-                  isAdmin={isAdmin}
+                  canEdit={canEdit}
                   availableCategories={availableCategories}
                   editingId={editingId}
                   scope={scope}

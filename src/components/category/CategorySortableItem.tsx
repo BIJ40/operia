@@ -9,7 +9,7 @@ export function CategorySortableItem({
   section,
   category,
   isEditMode,
-  isAdmin,
+  canEdit,
   availableCategories,
   editingId,
   scope,
@@ -44,7 +44,7 @@ export function CategorySortableItem({
           section={section}
           category={category}
           isEditMode={isEditMode}
-          isAdmin={isAdmin}
+          canEdit={canEdit}
           availableCategories={availableCategories}
           dragAttributes={attributes}
           dragListeners={listeners}
@@ -67,7 +67,7 @@ export function CategorySortableItem({
           section={section}
           category={category}
           isEditMode={isEditMode}
-          isAdmin={isAdmin}
+          canEdit={canEdit}
           availableCategories={availableCategories}
           scope={scope}
           dragAttributes={attributes}
@@ -90,7 +90,7 @@ export function CategorySortableItem({
         section={section}
         category={category}
         isEditMode={isEditMode}
-        isAdmin={isAdmin}
+        canEdit={canEdit}
         availableCategories={availableCategories}
         scope={scope}
         dragAttributes={attributes}

@@ -19,11 +19,12 @@ const isSectionNew = (completedAt?: string) => {
   return new Date(completedAt) > sevenDaysAgo;
 };
 
-interface TipsSectionProps {
+export interface TipsSectionProps {
   section: Section;
   category: CategoryBlock;
   isEditMode: boolean;
-  isAdmin: boolean;
+  /** V2: Renamed from isAdmin - indicates if user can edit content */
+  canEdit: boolean;
   availableCategories: Block[];
   scope: CategoryScope;
   dragAttributes: Record<string, any>;
@@ -40,7 +41,7 @@ export function TipsSection({
   section,
   category,
   isEditMode,
-  isAdmin,
+  canEdit,
   availableCategories,
   scope,
   dragAttributes,
@@ -58,7 +59,7 @@ export function TipsSection({
   return (
     <div className="rounded-2xl overflow-hidden border-2 border-l-4 border-primary/40 border-l-helpconfort-orange bg-card shadow-sm hover:border-primary/60 hover:shadow-md transition-all">
       <div className="p-6 bg-gradient-to-r from-helpconfort-orange/20 to-helpconfort-orange/10 text-foreground relative">
-        {isEditMode && isAdmin && (
+        {isEditMode && canEdit && (
           <div className="absolute top-2 right-2 flex gap-2 z-10">
             <Button
               type="button"
@@ -145,7 +146,7 @@ export function TipsSection({
             </Button>
           </div>
         )}
-        {!isEditMode && !isAdmin && isTips && (
+        {!isEditMode && !canEdit && isTips && (
           <div className="absolute top-2 right-2">
             <FavoriteButton
               blockId={section.id}
@@ -160,7 +161,7 @@ export function TipsSection({
           {!section.hideTitle && section.title && section.title.trim() !== '' && section.contentType !== 'tips' ? (
             <>
               <h3 className="text-lg font-semibold text-foreground">{section.title}</h3>
-              {!isEditMode && !isAdmin && (
+              {!isEditMode && !canEdit && (
                 <FavoriteButton
                   blockId={section.id}
                   blockTitle={section.title}

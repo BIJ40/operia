@@ -29,7 +29,10 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
-  const { isAdmin } = useAuth();
+  const { hasGlobalRole, hasModuleOption } = useAuth();
+  
+  // V2: Remplace isAdmin par vérification de rôle + option module
+  const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('help_academy', 'edition');
 
   const CACHE_KEY = 'apporteur_blocks_cache';
   const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -65,7 +68,7 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
   // Sauvegarde automatique DÉSACTIVÉE - sauvegarde immédiate dans chaque fonction
 
   const addBlock = useCallback(async (block: Omit<Block, 'id'>): Promise<string> => {
-    if (!isAdmin) return '';
+    if (!canEdit) return '';
     
     const newId = crypto.randomUUID();
     const maxOrder = blocks.reduce((max, b) => Math.max(max, b.order), -1);
@@ -166,10 +169,10 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
       logError('APPORTEUR_EDITOR', 'Erreur sauvegarde apporteur', { error });
       return '';
     }
-  }, [blocks, isAdmin]);
+  }, [blocks, canEdit]);
 
   const updateBlock = useCallback(async (id: string, updates: Partial<Block>) => {
-    if (!isAdmin) return;
+    if (!canEdit) return;
     
     try {
       // Préparer les données pour Supabase
@@ -206,10 +209,10 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       logError('APPORTEUR_EDITOR', 'Erreur mise à jour apporteur', { error });
     }
-  }, [isAdmin]);
+  }, [canEdit]);
 
   const deleteBlock = useCallback(async (id: string) => {
-    if (!isAdmin) return;
+    if (!canEdit) return;
     
     const blockToDelete = blocks.find(b => b.id === id);
     const contentLength = blockToDelete?.content?.replace(/<[^>]*>/g, '').trim().length || 0;
@@ -259,10 +262,10 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       logError('APPORTEUR_EDITOR', 'Erreur suppression apporteur', { error });
     }
-  }, [isAdmin, blocks]);
+  }, [canEdit, blocks]);
 
   const reorderBlocks = useCallback(async (blocksToReorder: Block[]) => {
-    if (!isAdmin) return;
+    if (!canEdit) return;
     
     // Mettre à jour l'état en fusionnant avec les blocs existants
     setBlocks(prevBlocks => prevBlocks.map(block => {
@@ -283,29 +286,29 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       logError('APPORTEUR_EDITOR', 'Erreur sauvegarde ordre apporteurs', { error });
     }
-  }, [isAdmin]);
+  }, [canEdit]);
 
   const handleExportData = useCallback(async (): Promise<string> => {
     return await exportApporteurData();
   }, []);
 
   const handleImportData = useCallback(async (data: string) => {
-    if (!isAdmin) return;
+    if (!canEdit) return;
     
     await importApporteurData(data);
     const loadedData = await loadApporteurData();
     if (loadedData) {
       setBlocks(loadedData.blocks);
     }
-  }, [isAdmin]);
+  }, [canEdit]);
 
   const resetToDefault = useCallback(() => {
-    if (!isAdmin) return;
+    if (!canEdit) return;
     setBlocks([]);
-  }, [isAdmin]);
+  }, [canEdit]);
 
   const toggleEditMode = useCallback(() => {
-    if (!isAdmin) return;
+    if (!canEdit) return;
     setIsEditMode(prev => {
       const newValue = !prev;
       // Synchroniser avec localStorage
@@ -314,7 +317,7 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
       window.dispatchEvent(new Event('editModeChange'));
       return newValue;
     });
-  }, [isAdmin]);
+  }, [canEdit]);
 
   return (
     <ApporteurEditorContext.Provider value={{

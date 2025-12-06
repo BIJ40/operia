@@ -18,11 +18,12 @@ const isSectionNew = (completedAt?: string) => {
   return new Date(completedAt) > sevenDaysAgo;
 };
 
-interface HiddenTitleSectionProps {
+export interface HiddenTitleSectionProps {
   section: Section;
   category: CategoryBlock;
   isEditMode: boolean;
-  isAdmin: boolean;
+  /** V2: Renamed from isAdmin - indicates if user can edit content */
+  canEdit: boolean;
   availableCategories: Block[];
   dragAttributes: Record<string, any>;
   dragListeners: Record<string, any> | undefined;
@@ -38,7 +39,7 @@ export function HiddenTitleSection({
   section,
   category,
   isEditMode,
-  isAdmin,
+  canEdit,
   availableCategories,
   dragAttributes,
   dragListeners,
@@ -53,7 +54,7 @@ export function HiddenTitleSection({
 
   return (
     <div className="rounded-2xl border-2 border-l-4 border-helpconfort-orange/40 border-l-primary bg-card shadow-sm p-6 hover:border-helpconfort-orange/60 hover:shadow-md transition-all">
-      {isEditMode && isAdmin && (
+      {isEditMode && canEdit && (
         <div className="flex justify-between items-center mb-4">
           <div className="flex gap-2">
             {section.isInProgress && (
