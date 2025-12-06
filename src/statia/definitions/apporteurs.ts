@@ -122,13 +122,9 @@ function isSavProject(project: any): boolean {
   // Vérifier si c'est un dossier enfant/lié (SAV = reprise)
   if (project?.data?.parentProjectId || project?.parentProjectId) return true;
   
-  // Vérifier dans les univers
+  // RÈGLE STRICTE: univers === "sav" (égalité exacte)
   const universes = project?.data?.universes || project?.universes || [];
-  if (universes.some((u: string) => String(u).toLowerCase().includes('sav'))) return true;
-  
-  // Vérifier le label
-  const label = (project?.label || project?.data?.label || '').toLowerCase();
-  if (label.includes('sav') || label.includes('garantie') || label.includes('reprise')) return true;
+  if (universes.some((u: string) => String(u).toLowerCase().trim() === 'sav')) return true;
   
   return false;
 }

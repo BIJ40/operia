@@ -51,7 +51,7 @@ function isSavProject(project: any): boolean {
   // Dossier lié (linked dossier = potentiel SAV)
   if (d.linkedProjectId || d.linkedDossierId || d.dossierId) return true;
 
-  // Origine / type / catégorie / state contenant SAV
+  // Origine / type / catégorie / state === 'SAV' (égalité stricte, pas includes)
   const fieldsToCheck = [
     d.origineDossier,
     d.origine,
@@ -62,25 +62,23 @@ function isSavProject(project: any): boolean {
     d.nature,
     project.type,
     project.state,
-    project.label,
-    project.ref,
   ];
   
   for (const field of fieldsToCheck) {
-    if (field && String(field).toLowerCase().includes('sav')) {
+    if (field && String(field).toLowerCase().trim() === 'sav') {
       return true;
     }
   }
 
-  // Pictos contenant SAV
+  // Pictos === 'SAV' (égalité stricte)
   const pictos = d.pictosInterv || d.pictos || project.pictosInterv || [];
-  if (Array.isArray(pictos) && pictos.some((p: any) => String(p).toLowerCase().includes('sav'))) {
+  if (Array.isArray(pictos) && pictos.some((p: any) => String(p).toLowerCase().trim() === 'sav')) {
     return true;
   }
 
-  // Tags éventuels
+  // Tags === 'SAV' (égalité stricte)
   const tags = (d.tags || project.tags || []) as any[];
-  if (Array.isArray(tags) && tags.some((t) => String(t).toLowerCase().includes('sav'))) {
+  if (Array.isArray(tags) && tags.some((t) => String(t).toLowerCase().trim() === 'sav')) {
     return true;
   }
 
@@ -231,16 +229,17 @@ function mapApporteurInfos(clients: any[]): Map<string, ApporteurInfo> {
 
 /**
  * Détecte si une intervention est de type SAV
+ * RÈGLE STRICTE: type === "SAV" OU picto === "SAV" (égalité exacte)
  */
 function isSAVIntervention(intervention: any): boolean {
-  const type2 = (intervention.data?.type2 || intervention.type2 || '').toLowerCase();
-  const type = (intervention.data?.type || intervention.type || '').toLowerCase();
+  const type2 = (intervention.data?.type2 || intervention.type2 || '').toLowerCase().trim();
+  const type = (intervention.data?.type || intervention.type || '').toLowerCase().trim();
   const pictos = intervention.data?.pictosInterv || [];
   
   return (
-    type2.includes('sav') || 
-    type.includes('sav') || 
-    pictos.includes('SAV')
+    type2 === 'sav' || 
+    type === 'sav' || 
+    (Array.isArray(pictos) && pictos.some((p: any) => String(p).toLowerCase().trim() === 'sav'))
   );
 }
 
