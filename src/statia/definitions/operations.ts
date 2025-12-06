@@ -617,6 +617,238 @@ export const topUniversGenerantSav: StatDefinition = {
   }
 };
 
+// ============= METRIC: Taux Interventions Urgentes =============
+
+export const tauxInterventionsUrgentes: StatDefinition = {
+  id: 'taux_interventions_urgentes',
+  label: 'Taux Interventions Urgentes',
+  description: 'Proportion d\'interventions marquées urgentes',
+  category: 'productivite',
+  source: 'interventions',
+  aggregation: 'ratio',
+  unit: '%',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { interventions } = data;
+    
+    let nbTotal = 0;
+    let nbUrgentes = 0;
+    
+    for (const interv of interventions || []) {
+      const dateStr = interv.date || interv.created_at;
+      const date = parseDate(dateStr);
+      
+      if (params.dateRange && date) {
+        if (date < params.dateRange.start || date > params.dateRange.end) continue;
+      }
+      
+      nbTotal++;
+      
+      const isUrgent = interv.data?.isUrgent || interv.isUrgent || 
+                       (interv.typeUrgence || '').toLowerCase().includes('urgent') ||
+                       (interv.data?.typeUrgence || '').toLowerCase().includes('h24');
+      
+      if (isUrgent) nbUrgentes++;
+    }
+    
+    const taux = nbTotal > 0 ? (nbUrgentes / nbTotal) * 100 : 0;
+    
+    return {
+      value: Math.round(taux * 10) / 10,
+      metadata: { computedAt: new Date(), source: 'interventions', recordCount: nbTotal },
+      breakdown: { nbTotal, nbUrgentes }
+    };
+  }
+};
+
+// ============= METRIC: Nb Dossiers Complexes =============
+
+export const nbDossiersComplexes: StatDefinition = {
+  id: 'nb_dossiers_complexes',
+  label: 'Nb Dossiers Complexes',
+  description: 'Nombre de dossiers répondant aux critères de complexité (≥6 visites, ≥2500€ HT, ≥2 univers)',
+  category: 'dossiers',
+  source: ['projects', 'interventions', 'factures'],
+  aggregation: 'count',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { projects, interventions, factures } = data;
+    
+    // Index visites par projet
+    const visitesParProjet: Record<string, number> = {};
+    for (const interv of interventions || []) {
+      const state = (interv.state || '').toLowerCase();
+      if (state === 'cancelled' || state === 'canceled' || state === 'draft') continue;
+      const projectId = String(interv.projectId || interv.project_id || '');
+      if (projectId) visitesParProjet[projectId] = (visitesParProjet[projectId] || 0) + 1;
+    }
+    
+    // Index CA par projet
+    const caParProjet: Record<string, number> = {};
+    for (const f of factures || []) {
+      if (!isFactureStateIncluded(f.state)) continue;
+      const meta = extractFactureMeta(f);
+      const projectId = String(f.projectId || f.project_id || f.data?.projectId || '');
+      if (projectId) caParProjet[projectId] = (caParProjet[projectId] || 0) + meta.montantNetHT;
+    }
+    
+    let nbComplexes = 0;
+    
+    for (const p of projects || []) {
+      const dateStr = p.date || p.created_at || p.createdAt;
+      const date = parseDate(dateStr);
+      
+      if (params.dateRange && date) {
+        if (date < params.dateRange.start || date > params.dateRange.end) continue;
+      }
+      
+      const projectId = String(p.id);
+      const nbVisites = visitesParProjet[projectId] || 0;
+      const ca = caParProjet[projectId] || 0;
+      const universes = extractUniverses(p);
+      const nbUnivers = universes.filter(u => u !== 'non-classe').length;
+      
+      // Critères de complexité
+      if (nbVisites >= 6 && ca >= 2500 && nbUnivers >= 2) {
+        nbComplexes++;
+      }
+    }
+    
+    return {
+      value: nbComplexes,
+      metadata: { computedAt: new Date(), source: 'projects', recordCount: nbComplexes }
+    };
+  }
+};
+
+// ============= METRIC: Taux Dossiers Complexes =============
+
+export const tauxDossiersComplexes: StatDefinition = {
+  id: 'taux_dossiers_complexes',
+  label: 'Taux Dossiers Complexes',
+  description: 'Pourcentage de dossiers répondant aux critères de complexité',
+  category: 'dossiers',
+  source: ['projects', 'interventions', 'factures'],
+  aggregation: 'ratio',
+  unit: '%',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { projects, interventions, factures } = data;
+    
+    // Index visites par projet
+    const visitesParProjet: Record<string, number> = {};
+    for (const interv of interventions || []) {
+      const state = (interv.state || '').toLowerCase();
+      if (state === 'cancelled' || state === 'canceled' || state === 'draft') continue;
+      const projectId = String(interv.projectId || interv.project_id || '');
+      if (projectId) visitesParProjet[projectId] = (visitesParProjet[projectId] || 0) + 1;
+    }
+    
+    // Index CA par projet
+    const caParProjet: Record<string, number> = {};
+    for (const f of factures || []) {
+      if (!isFactureStateIncluded(f.state)) continue;
+      const meta = extractFactureMeta(f);
+      const projectId = String(f.projectId || f.project_id || f.data?.projectId || '');
+      if (projectId) caParProjet[projectId] = (caParProjet[projectId] || 0) + meta.montantNetHT;
+    }
+    
+    let nbTotal = 0;
+    let nbComplexes = 0;
+    
+    for (const p of projects || []) {
+      const dateStr = p.date || p.created_at || p.createdAt;
+      const date = parseDate(dateStr);
+      
+      if (params.dateRange && date) {
+        if (date < params.dateRange.start || date > params.dateRange.end) continue;
+      }
+      
+      nbTotal++;
+      
+      const projectId = String(p.id);
+      const nbVisites = visitesParProjet[projectId] || 0;
+      const ca = caParProjet[projectId] || 0;
+      const universes = extractUniverses(p);
+      const nbUnivers = universes.filter(u => u !== 'non-classe').length;
+      
+      if (nbVisites >= 6 && ca >= 2500 && nbUnivers >= 2) {
+        nbComplexes++;
+      }
+    }
+    
+    const taux = nbTotal > 0 ? (nbComplexes / nbTotal) * 100 : 0;
+    
+    return {
+      value: Math.round(taux * 10) / 10,
+      metadata: { computedAt: new Date(), source: 'projects', recordCount: nbTotal },
+      breakdown: { nbTotal, nbComplexes }
+    };
+  }
+};
+
+// ============= METRIC: Délai Dossier Premier Devis =============
+
+export const delaiDossierPremierDevis: StatDefinition = {
+  id: 'delai_dossier_premier_devis',
+  label: 'Délai 1er Devis',
+  description: 'Nombre de jours moyen entre création du dossier et premier devis envoyé',
+  category: 'devis',
+  source: ['projects', 'devis'],
+  aggregation: 'avg',
+  unit: 'jours',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { projects, devis } = data;
+    
+    // Index premier devis par projet
+    const premierDevisParProjet = new Map<string, Date>();
+    
+    for (const d of devis || []) {
+      const state = (d.state || d.status || '').toLowerCase();
+      if (state === 'draft' || state === 'cancelled') continue;
+      
+      const projectId = String(d.projectId || d.data?.projectId || '');
+      if (!projectId) continue;
+      
+      const dateStr = d.date || d.dateReelle || d.created_at;
+      const date = parseDate(dateStr);
+      if (!date) continue;
+      
+      const existing = premierDevisParProjet.get(projectId);
+      if (!existing || date < existing) {
+        premierDevisParProjet.set(projectId, date);
+      }
+    }
+    
+    const delais: number[] = [];
+    
+    for (const p of projects || []) {
+      const dateCreationStr = p.date || p.created_at || p.createdAt;
+      const dateCreation = parseDate(dateCreationStr);
+      if (!dateCreation) continue;
+      
+      if (params.dateRange) {
+        if (dateCreation < params.dateRange.start || dateCreation > params.dateRange.end) continue;
+      }
+      
+      const projectId = String(p.id);
+      const premierDevis = premierDevisParProjet.get(projectId);
+      
+      if (premierDevis) {
+        const delaiJours = (premierDevis.getTime() - dateCreation.getTime()) / (1000 * 60 * 60 * 24);
+        if (delaiJours >= 0 && delaiJours <= 60) {
+          delais.push(delaiJours);
+        }
+      }
+    }
+    
+    const moyenne = delais.length > 0 ? delais.reduce((a, b) => a + b, 0) / delais.length : 0;
+    
+    return {
+      value: moyenne > 0 ? Math.round(moyenne * 10) / 10 : null,
+      metadata: { computedAt: new Date(), source: 'projects', recordCount: delais.length },
+      breakdown: { nbProjetsAvecDevis: delais.length }
+    };
+  }
+};
+
 // ============= EXPORT =============
 
 export const operationsDefinitions: Record<string, StatDefinition> = {
@@ -631,4 +863,8 @@ export const operationsDefinitions: Record<string, StatDefinition> = {
   encaissements_par_mois: encaissementsParMois,
   taux_recouvrement_moyen_reseau: tauxRecouvrementMoyenReseau,
   top_univers_generant_sav: topUniversGenerantSav,
+  taux_interventions_urgentes: tauxInterventionsUrgentes,
+  nb_dossiers_complexes: nbDossiersComplexes,
+  taux_dossiers_complexes: tauxDossiersComplexes,
+  delai_dossier_premier_devis: delaiDossierPremierDevis,
 };
