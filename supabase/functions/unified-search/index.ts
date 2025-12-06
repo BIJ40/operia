@@ -54,6 +54,11 @@ interface ParsedStatQuery {
   networkScope: boolean;
   keywordScore?: number;
   categories?: string[];
+  // Entités résolues
+  technicienId?: number | string;
+  technicienName?: string;
+  apporteurId?: number | string;
+  apporteurName?: string;
 }
 
 interface AiSearchRoutedRequest {
@@ -222,6 +227,242 @@ async function extractIntentWithLLM(query: string, supabaseUrl: string, authHead
 // ═══════════════════════════════════════════════════════════════
 
 const NETWORK_KEYWORDS = ['réseau', 'reseau', 'franchiseur', 'toutes les agences', 'multi-agences', 'agences'];
+
+// ═══════════════════════════════════════════════════════════════
+// ENTITY RESOLUTION - Résolution des noms de techniciens/apporteurs
+// ═══════════════════════════════════════════════════════════════
+
+interface TechnicianEntity {
+  id: number | string;
+  firstName?: string | null;
+  lastName?: string | null;
+  fullName?: string | null;
+}
+
+interface ApporteurEntity {
+  id: number | string;
+  name?: string | null;
+  company?: string | null;
+}
+
+interface ResolvedEntities {
+  technicienId?: number | string;
+  technicienName?: string;
+  apporteurId?: number | string;
+  apporteurName?: string;
+  ambiguousTechniciens?: TechnicianEntity[];
+  ambiguousApporteurs?: ApporteurEntity[];
+}
+
+const MIN_SIMILARITY_STRICT = 0.88;
+const MIN_SIMILARITY_FUZZY = 0.72;
+
+function normalizeText(input: string | null | undefined): string {
+  if (!input) return '';
+  return input
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function stringSimilarity(a: string, b: string): number {
+  const s1 = normalizeText(a);
+  const s2 = normalizeText(b);
+  if (!s1 || !s2) return 0;
+  if (s1 === s2) return 1;
+
+  const bigrams = (s: string): string[] => {
+    const out: string[] = [];
+    for (let i = 0; i < s.length - 1; i++) {
+      out.push(s.slice(i, i + 2));
+    }
+    return out;
+  };
+
+  const b1 = bigrams(s1);
+  const b2 = bigrams(s2);
+  if (!b1.length || !b2.length) return 0;
+
+  const set = new Set(b1);
+  let common = 0;
+  for (const g of b2) {
+    if (set.has(g)) common++;
+  }
+
+  return (2 * common) / (b1.length + b2.length);
+}
+
+function resolveTechnicianFromQuery(query: string, technicians: TechnicianEntity[]): { 
+  best?: TechnicianEntity; 
+  candidates: TechnicianEntity[] 
+} {
+  const qNorm = normalizeText(query);
+  if (!qNorm || !technicians.length) return { candidates: [] };
+
+  const scored: { tech: TechnicianEntity; score: number }[] = [];
+
+  for (const tech of technicians) {
+    const labels: string[] = [];
+    if (tech.fullName) labels.push(tech.fullName);
+    if (tech.firstName && tech.lastName) {
+      labels.push(`${tech.firstName} ${tech.lastName}`);
+      labels.push(`${tech.lastName} ${tech.firstName}`);
+    }
+    if (tech.firstName) labels.push(tech.firstName);
+    if (tech.lastName) labels.push(tech.lastName);
+
+    let maxScore = 0;
+    for (const label of labels) {
+      const sim = stringSimilarity(qNorm, label);
+      if (sim > maxScore) maxScore = sim;
+
+      const ln = normalizeText(label);
+      if (ln && qNorm.includes(ln)) {
+        maxScore = Math.max(maxScore, 1);
+      }
+    }
+
+    if (maxScore >= MIN_SIMILARITY_FUZZY) {
+      scored.push({ tech, score: maxScore });
+    }
+  }
+
+  if (!scored.length) return { candidates: [] };
+
+  scored.sort((a, b) => b.score - a.score);
+  const best = scored[0];
+
+  if (best.score >= MIN_SIMILARITY_STRICT) {
+    const strongCandidates = scored.filter(s => s.score >= MIN_SIMILARITY_STRICT);
+    if (strongCandidates.length === 1) {
+      return { best: best.tech, candidates: [] };
+    }
+  }
+
+  return { best: undefined, candidates: scored.slice(0, 5).map(s => s.tech) };
+}
+
+function resolveApporteurFromQuery(query: string, apporteurs: ApporteurEntity[]): { 
+  best?: ApporteurEntity; 
+  candidates: ApporteurEntity[] 
+} {
+  const qNorm = normalizeText(query);
+  if (!qNorm || !apporteurs.length) return { candidates: [] };
+
+  const scored: { ap: ApporteurEntity; score: number }[] = [];
+
+  for (const ap of apporteurs) {
+    const labels: string[] = [];
+    if (ap.name) labels.push(ap.name);
+    if (ap.company) labels.push(ap.company);
+
+    let maxScore = 0;
+    for (const label of labels) {
+      const sim = stringSimilarity(qNorm, label);
+      if (sim > maxScore) maxScore = sim;
+
+      const ln = normalizeText(label);
+      if (ln && qNorm.includes(ln)) {
+        maxScore = Math.max(maxScore, 1);
+      }
+    }
+
+    if (maxScore >= MIN_SIMILARITY_FUZZY) {
+      scored.push({ ap, score: maxScore });
+    }
+  }
+
+  if (!scored.length) return { candidates: [] };
+
+  scored.sort((a, b) => b.score - a.score);
+  const best = scored[0];
+
+  if (best.score >= MIN_SIMILARITY_STRICT) {
+    const strongCandidates = scored.filter(s => s.score >= MIN_SIMILARITY_STRICT);
+    if (strongCandidates.length === 1) {
+      return { best: best.ap, candidates: [] };
+    }
+  }
+
+  return { best: undefined, candidates: scored.slice(0, 5).map(s => s.ap) };
+}
+
+function resolveEntitiesFromQuery(
+  query: string,
+  technicians: TechnicianEntity[],
+  apporteurs: ApporteurEntity[] = []
+): ResolvedEntities {
+  const resolved: ResolvedEntities = {};
+
+  const techRes = resolveTechnicianFromQuery(query, technicians);
+  if (techRes.best) {
+    resolved.technicienId = techRes.best.id;
+    resolved.technicienName = techRes.best.fullName || 
+      [techRes.best.firstName, techRes.best.lastName].filter(Boolean).join(' ') || 
+      String(techRes.best.id);
+  } else if (techRes.candidates.length > 1) {
+    resolved.ambiguousTechniciens = techRes.candidates;
+  }
+
+  const apRes = resolveApporteurFromQuery(query, apporteurs);
+  if (apRes.best) {
+    resolved.apporteurId = apRes.best.id;
+    resolved.apporteurName = apRes.best.name || apRes.best.company || String(apRes.best.id);
+  } else if (apRes.candidates.length > 1) {
+    resolved.ambiguousApporteurs = apRes.candidates;
+  }
+
+  return resolved;
+}
+
+async function loadUsersForAgency(proxyUrl: string, authHeader: string, agencySlug: string): Promise<TechnicianEntity[]> {
+  try {
+    const res = await fetch(proxyUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+      body: JSON.stringify({ endpoint: 'apiGetUsers', agencySlug }),
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return (json.data || []).map((u: any) => ({
+      id: u.id,
+      firstName: u.firstname || u.prenom,
+      lastName: u.lastname || u.nom,
+      fullName: u.name || [u.firstname, u.lastname].filter(Boolean).join(' '),
+    }));
+  } catch (e) {
+    console.error('[unified-search] Users load error:', e);
+    return [];
+  }
+}
+
+async function loadClientsForAgency(proxyUrl: string, authHeader: string, agencySlug: string): Promise<ApporteurEntity[]> {
+  try {
+    const res = await fetch(proxyUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+      body: JSON.stringify({ endpoint: 'apiGetClients', agencySlug }),
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    // Filter to get only "apporteurs" (type commanditaire/prescripteur)
+    return (json.data || []).map((c: any) => ({
+      id: c.id,
+      name: c.name || c.raisonSociale || c.displayName,
+      company: c.company || c.societe,
+    }));
+  } catch (e) {
+    console.error('[unified-search] Clients load error:', e);
+    return [];
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NL ROUTING RULES
+// ═══════════════════════════════════════════════════════════════
 
 const NL_ROUTING_RULES: Array<{
   dimension?: string;
@@ -424,7 +665,8 @@ function aiSearchRoute(
   normalized: string,
   context: AiSearchContext,
   llmIntent: any,
-  now: Date
+  now: Date,
+  resolvedEntities: ResolvedEntities = {}
 ): AiSearchRoutedRequest {
   const corrections: string[] = [];
   
@@ -478,9 +720,21 @@ function aiSearchRoute(
     };
   }
   
-  // 5. Find metric
-  const dimension = llmIntent?.dimension || detectDimensionFromQuery(normalized);
+  // 5. Find metric - AVEC RÉSOLUTION D'ENTITÉS
+  let dimension = llmIntent?.dimension || detectDimensionFromQuery(normalized);
   const intentType = llmIntent?.intentType || detectIntentFromQuery(normalized);
+  
+  // Si un technicien est résolu, forcer la dimension "technicien" et la métrique CA par technicien
+  if (resolvedEntities.technicienId) {
+    dimension = 'technicien';
+    console.log(`[aiSearchRoute] Technician resolved: ${resolvedEntities.technicienName} → forcing dimension=technicien`);
+  }
+  
+  // Si un apporteur est résolu, forcer la dimension "apporteur"
+  if (resolvedEntities.apporteurId) {
+    dimension = 'apporteur';
+    console.log(`[aiSearchRoute] Apporteur resolved: ${resolvedEntities.apporteurName} → forcing dimension=apporteur`);
+  }
   
   let metricId = findMetricFromNLRules(dimension, intentType, normalized);
   
@@ -584,7 +838,7 @@ function aiSearchRoute(
   const limit = extractTopN(query) || (metricInfo?.isRanking ? 5 : null);
   const univers = llmIntent?.filters?.univers ? String(llmIntent.filters.univers).toUpperCase() : undefined;
   
-  // 12. Build parsed stat query
+  // 12. Build parsed stat query - inclure les entités résolues
   const parsed: ParsedStatQuery = {
     metricId,
     period,
@@ -595,6 +849,11 @@ function aiSearchRoute(
     networkScope: scope === 'reseau',
     keywordScore: 0,
     categories: [],
+    // Entités résolues
+    technicienId: resolvedEntities.technicienId,
+    technicienName: resolvedEntities.technicienName,
+    apporteurId: resolvedEntities.apporteurId,
+    apporteurName: resolvedEntities.apporteurName,
   };
   
   return {
@@ -799,15 +1058,43 @@ serve(async (req) => {
     console.log(`[unified-search] Query: "${query}" → normalized: "${normalized}"`);
 
     // ══════════════════════════════════════════════════════════
-    // STEP 1: LLM EXTRACTION
+    // STEP 1: ENTITY RESOLUTION (charger users/clients pour résolution)
+    // ══════════════════════════════════════════════════════════
+    const proxyUrl = `${supabaseUrl}/functions/v1/proxy-apogee`;
+    let resolvedEntities: ResolvedEntities = {};
+    
+    if (agencySlug) {
+      // Load users and clients in parallel for entity resolution
+      const [technicians, apporteurs] = await Promise.all([
+        loadUsersForAgency(proxyUrl, authHeader, agencySlug),
+        loadClientsForAgency(proxyUrl, authHeader, agencySlug),
+      ]);
+      
+      console.log(`[unified-search] Loaded ${technicians.length} technicians, ${apporteurs.length} apporteurs for entity resolution`);
+      
+      resolvedEntities = resolveEntitiesFromQuery(query, technicians, apporteurs);
+      
+      if (resolvedEntities.technicienId) {
+        console.log(`[unified-search] Resolved technician: ${resolvedEntities.technicienName} (id=${resolvedEntities.technicienId})`);
+      }
+      if (resolvedEntities.apporteurId) {
+        console.log(`[unified-search] Resolved apporteur: ${resolvedEntities.apporteurName} (id=${resolvedEntities.apporteurId})`);
+      }
+      if (resolvedEntities.ambiguousTechniciens?.length) {
+        console.log(`[unified-search] Ambiguous technicians: ${resolvedEntities.ambiguousTechniciens.map(t => t.fullName).join(', ')}`);
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // STEP 2: LLM EXTRACTION
     // ══════════════════════════════════════════════════════════
     const llmIntent = await extractIntentWithLLM(query, supabaseUrl, authHeader);
     console.log(`[unified-search] LLM intent: ${llmIntent ? JSON.stringify(llmIntent) : 'null'}`);
 
     // ══════════════════════════════════════════════════════════
-    // STEP 2: CORE IA ROUTING
+    // STEP 3: CORE IA ROUTING (avec entités résolues)
     // ══════════════════════════════════════════════════════════
-    const routed = aiSearchRoute(query, normalized, context, llmIntent, now);
+    const routed = aiSearchRoute(query, normalized, context, llmIntent, now, resolvedEntities);
     console.log(`[unified-search] Routed: type=${routed.type}, metric=${routed.parsed?.metricId || 'none'}`);
 
     // ══════════════════════════════════════════════════════════
@@ -876,38 +1163,53 @@ serve(async (req) => {
     if (routed.type === 'stats' && routed.parsed) {
       const parsed = routed.parsed;
       const scope = parsed.networkScope ? 'reseau' : 'agence';
-      const filters = { univers: parsed.univers, limit: parsed.limit };
+      const filters: Record<string, unknown> = { 
+        univers: parsed.univers, 
+        limit: parsed.limit,
+        technicienId: parsed.technicienId,
+        technicienName: parsed.technicienName,
+        apporteurId: parsed.apporteurId,
+        apporteurName: parsed.apporteurName,
+      };
       const cacheKey = buildCacheKey(parsed.metricId, agencySlug, parsed.period, filters, scope);
       
-      // Check cache
-      const cached = await getCacheEntry(supabase, cacheKey);
+      // Check cache - SKIP cache if entity filter is applied (more specific query)
+      const skipCache = !!(parsed.technicienId || parsed.apporteurId);
+      const cached = skipCache ? null : await getCacheEntry(supabase, cacheKey);
       if (cached) {
         console.log('[unified-search] Cache hit');
         result = cached;
         fromCache = true;
       } else {
-        // Load data
-        const proxyUrl = `${supabaseUrl}/functions/v1/proxy-apogee`;
+        // Load data - utiliser le proxyUrl déjà défini
         const requiredSources = getRequiredSources(parsed.metricId);
         console.log(`[unified-search] Loading: ${requiredSources.join(', ')}`);
         
         const apogeeData = await loadApogeeData(proxyUrl, authHeader, agencySlug, parsed.period, requiredSources);
         console.log(`[unified-search] Data: ${apogeeData.factures.length} factures, ${apogeeData.projects.length} projects`);
 
-        // Compute metric
+        // Compute metric avec filtres d'entités
         const params: StatParams = {
           dateRange: { start: new Date(parsed.period.from), end: new Date(parsed.period.to) },
           agencySlug,
           topN: parsed.limit || undefined,
-          filters: { univers: parsed.univers },
+          filters: { 
+            univers: parsed.univers,
+            technicienId: parsed.technicienId,
+            technicienName: parsed.technicienName,
+            apporteurId: parsed.apporteurId,
+            apporteurName: parsed.apporteurName,
+          },
         };
 
         result = computeMetric(parsed.metricId, apogeeData, params);
-        console.log(`[unified-search] Computed: ${result.value}${result.unit}`);
+        console.log(`[unified-search] Computed: ${result.value}${result.unit} (technicienId=${parsed.technicienId || 'none'})`);
 
-        // Cache
-        const ttl = computeTTL(parsed.period.to);
-        await setCacheEntry(supabase, cacheKey, result, ttl);
+        // Cache (only if no entity filter)
+        if (!skipCache) {
+          const ttl = computeTTL(parsed.period.to);
+          await setCacheEntry(supabase, cacheKey, result, ttl);
+        }
       }
 
       // Build response

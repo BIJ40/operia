@@ -179,10 +179,11 @@ function computeCaParUnivers(data: ApogeeData, params: StatParams): StatResult {
 }
 
 /**
- * Compute CA par technicien
+ * Compute CA par technicien (avec support filtre technicienId)
  */
 function computeCaParTechnicien(data: ApogeeData, params: StatParams): StatResult {
   const caByTech: Record<string, { name: string; ca: number }> = {};
+  const filterTechnicienId = params.filters?.technicienId;
   
   for (const f of data.factures) {
     const isAvoir = (f.typeFacture || '').toLowerCase() === 'avoir';
@@ -197,6 +198,11 @@ function computeCaParTechnicien(data: ApogeeData, params: StatParams): StatResul
       const id = String(tech.id);
       const name = `${tech.firstname || ''} ${tech.lastname || ''}`.trim() || `Tech #${tech.id}`;
       
+      // Si un filtre technicienId est appliqué, ne garder que ce technicien
+      if (filterTechnicienId && String(filterTechnicienId) !== id) {
+        continue;
+      }
+      
       if (!caByTech[id]) caByTech[id] = { name, ca: 0 };
       caByTech[id].ca += share;
     }
@@ -206,6 +212,27 @@ function computeCaParTechnicien(data: ApogeeData, params: StatParams): StatResul
     .map(([id, d]) => ({ id, name: d.name, value: Math.round(d.ca) }))
     .filter(x => x.value > 0)
     .sort((a, b) => b.value - a.value);
+  
+  // Si filtre technicien appliqué, retourner uniquement ce technicien
+  if (filterTechnicienId) {
+    const techData = sorted[0];
+    if (techData) {
+      return {
+        value: techData.value,
+        topItem: { rank: 1, id: techData.id, name: techData.name, value: techData.value },
+        ranking: [{ rank: 1, ...techData }],
+        unit: '€',
+      };
+    }
+    // Technicien non trouvé dans les factures
+    const techName = params.filters?.technicienName || `Technicien #${filterTechnicienId}`;
+    return {
+      value: 0,
+      topItem: { rank: 1, id: String(filterTechnicienId), name: String(techName), value: 0 },
+      ranking: [{ rank: 1, id: String(filterTechnicienId), name: String(techName), value: 0 }],
+      unit: '€',
+    };
+  }
   
   const topN = params.topN || 10;
   const ranking = sorted.slice(0, topN).map((item, idx) => ({ rank: idx + 1, ...item }));
