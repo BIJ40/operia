@@ -5139,6 +5139,7 @@ export type Database = {
         | "auto"
         | "marche_batiment"
         | "groupe_laposte_axeo"
+        | "faq"
       system_role: "visiteur" | "utilisateur" | "support" | "admin"
     }
     CompositeTypes: {
@@ -5298,6 +5299,7 @@ export const Constants = {
         "auto",
         "marche_batiment",
         "groupe_laposte_axeo",
+        "faq",
       ],
       system_role: ["visiteur", "utilisateur", "support", "admin"],
     },
