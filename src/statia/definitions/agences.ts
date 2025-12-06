@@ -531,6 +531,129 @@ export const classementAgencesParDelaiRdv: StatDefinition = {
   }
 };
 
+// ============= METRIC: Croissance CA par Agence vs N-1 =============
+
+export const tauxCroissanceCaAgenceVsN1: StatDefinition = {
+  id: 'taux_croissance_ca_agence_vs_n_1',
+  label: 'Croissance CA par Agence vs N-1',
+  description: 'Variation du CA de chaque agence par rapport à la même période N-1',
+  category: 'ca',
+  source: 'factures',
+  dimensions: ['agence'],
+  aggregation: 'ratio',
+  unit: '%',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { factures } = data;
+    
+    if (!params.dateRange) {
+      return { value: {}, metadata: { computedAt: new Date(), source: 'factures', recordCount: 0 } };
+    }
+    
+    // Période actuelle
+    const startP = params.dateRange.start;
+    const endP = params.dateRange.end;
+    
+    // Période N-1 (même période, année précédente)
+    const startN1 = new Date(startP);
+    startN1.setFullYear(startN1.getFullYear() - 1);
+    const endN1 = new Date(endP);
+    endN1.setFullYear(endN1.getFullYear() - 1);
+    
+    const caByAgenceP: Record<string, number> = {};
+    const caByAgenceN1: Record<string, number> = {};
+    
+    for (const f of factures || []) {
+      const meta = extractFactureMeta(f);
+      if (!isFactureStateIncluded(f.state)) continue;
+      if (!meta.date) continue;
+      
+      const agencyId = getAgencyId(f);
+      
+      // Période actuelle
+      if (meta.date >= startP && meta.date <= endP) {
+        caByAgenceP[agencyId] = (caByAgenceP[agencyId] || 0) + meta.montantNetHT;
+      }
+      
+      // Période N-1
+      if (meta.date >= startN1 && meta.date <= endN1) {
+        caByAgenceN1[agencyId] = (caByAgenceN1[agencyId] || 0) + meta.montantNetHT;
+      }
+    }
+    
+    const result: Record<string, number> = {};
+    const allAgencies = new Set([...Object.keys(caByAgenceP), ...Object.keys(caByAgenceN1)]);
+    
+    for (const agencyId of allAgencies) {
+      const caP = caByAgenceP[agencyId] || 0;
+      const caN1 = caByAgenceN1[agencyId] || 0;
+      
+      if (caN1 !== 0) {
+        result[agencyId] = Math.round(((caP - caN1) / caN1) * 1000) / 10;
+      } else if (caP > 0) {
+        result[agencyId] = 100; // Nouvelle agence = 100% croissance
+      } else {
+        result[agencyId] = 0;
+      }
+    }
+    
+    return {
+      value: result,
+      metadata: { computedAt: new Date(), source: 'factures', recordCount: Object.keys(result).length },
+      breakdown: { caByAgenceP, caByAgenceN1 }
+    };
+  }
+};
+
+// ============= METRIC: Croissance CA Réseau vs N-1 =============
+
+export const tauxCroissanceCaReseauVsN1: StatDefinition = {
+  id: 'taux_croissance_ca_reseau_vs_n_1',
+  label: 'Croissance CA Réseau vs N-1',
+  description: 'Variation du CA réseau par rapport à la même période N-1',
+  category: 'ca',
+  source: 'factures',
+  aggregation: 'ratio',
+  unit: '%',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { factures } = data;
+    
+    if (!params.dateRange) {
+      return { value: 0, metadata: { computedAt: new Date(), source: 'factures', recordCount: 0 } };
+    }
+    
+    const startP = params.dateRange.start;
+    const endP = params.dateRange.end;
+    const startN1 = new Date(startP);
+    startN1.setFullYear(startN1.getFullYear() - 1);
+    const endN1 = new Date(endP);
+    endN1.setFullYear(endN1.getFullYear() - 1);
+    
+    let caP = 0;
+    let caN1 = 0;
+    
+    for (const f of factures || []) {
+      const meta = extractFactureMeta(f);
+      if (!isFactureStateIncluded(f.state)) continue;
+      if (!meta.date) continue;
+      
+      if (meta.date >= startP && meta.date <= endP) {
+        caP += meta.montantNetHT;
+      }
+      if (meta.date >= startN1 && meta.date <= endN1) {
+        caN1 += meta.montantNetHT;
+      }
+    }
+    
+    const taux = caN1 !== 0 ? ((caP - caN1) / caN1) * 100 : (caP > 0 ? 100 : 0);
+    
+    return {
+      value: Math.round(taux * 10) / 10,
+      metadata: { computedAt: new Date(), source: 'factures', recordCount: factures?.length || 0 },
+      breakdown: { caP: Math.round(caP * 100) / 100, caN1: Math.round(caN1 * 100) / 100 }
+    };
+  }
+};
+
 // ============= EXPORT =============
 
 export const agencesDefinitions: Record<string, StatDefinition> = {
@@ -544,4 +667,6 @@ export const agencesDefinitions: Record<string, StatDefinition> = {
   top_zones_postales_par_ca: topZonesPostalesParCa,
   delai_ouverture_dossier: delaiOuvertureDossier,
   classement_agences_par_delai_moyen_rdv: classementAgencesParDelaiRdv,
+  taux_croissance_ca_agence_vs_n_1: tauxCroissanceCaAgenceVsN1,
+  taux_croissance_ca_reseau_vs_n_1: tauxCroissanceCaReseauVsN1,
 };
