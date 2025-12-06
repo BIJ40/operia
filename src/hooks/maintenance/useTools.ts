@@ -11,9 +11,9 @@ import type { Tool, ToolsFilters, ToolFormData } from '@/types/maintenance';
 
 const QUERY_KEY = 'tools';
 
-export function useTools(agencyId?: string, filters?: ToolsFilters) {
-  const { agence } = useAuth();
-  const effectiveAgencyId = agencyId || agence;
+export function useTools(agencyIdParam?: string, filters?: ToolsFilters) {
+  const { agencyId } = useAuth();
+  const effectiveAgencyId = agencyIdParam || agencyId;
 
   return useQuery({
     queryKey: [QUERY_KEY, effectiveAgencyId, filters],
@@ -88,17 +88,17 @@ export function useTool(toolId: string | undefined) {
 
 export function useCreateTool() {
   const queryClient = useQueryClient();
-  const { agence } = useAuth();
+  const { agencyId } = useAuth();
 
   return useMutation({
     mutationFn: async (data: ToolFormData) => {
-      if (!agence) throw new Error('Agence non définie');
+      if (!agencyId) throw new Error('Agence non définie');
 
       const result = await safeMutation<Tool[]>(
         supabase
           .from('tools')
           .insert({
-            agency_id: agence,
+            agency_id: agencyId,
             ...data,
             qr_token: crypto.randomUUID(),
           })
