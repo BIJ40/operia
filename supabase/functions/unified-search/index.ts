@@ -515,6 +515,7 @@ const NL_ROUTING_RULES: Array<{
   dimension?: string;
   intent?: string;
   keywords?: string[];
+  allKeywordsRequired?: boolean; // Si true, TOUS les keywords doivent matcher
   metricId: string;
   priority: number;
 }> = [
@@ -529,17 +530,23 @@ const NL_ROUTING_RULES: Array<{
   { dimension: 'global', intent: 'taux', keywords: ['sav'], metricId: 'taux_sav_global', priority: 10 },
   { dimension: 'global', intent: 'taux', keywords: ['devis', 'transformation'], metricId: 'taux_transformation_devis', priority: 10 },
   { dimension: 'global', intent: 'taux', keywords: ['recouvrement'], metricId: 'taux_recouvrement', priority: 10 },
-  { keywords: ['panier', 'moyen'], metricId: 'panier_moyen', priority: 9 },
-  { keywords: ['dossier', 'apporteur'], metricId: 'dossiers_par_apporteur', priority: 9 },
-  { keywords: ['reste', 'encaisser', 'impaye', 'encours'], metricId: 'reste_a_encaisser', priority: 9 },
-  { keywords: ['delai', 'devis'], metricId: 'delai_premier_devis', priority: 9 },
-  { keywords: ['ca', 'jour'], metricId: 'ca_moyen_par_jour', priority: 8 },
-  { keywords: ['sav', 'univers'], metricId: 'sav_par_univers', priority: 8 },
+  { keywords: ['panier', 'moyen'], allKeywordsRequired: true, metricId: 'panier_moyen', priority: 9 },
+  { keywords: ['dossier', 'apporteur'], allKeywordsRequired: true, metricId: 'dossiers_par_apporteur', priority: 9 },
+  { keywords: ['reste', 'encaisser'], metricId: 'reste_a_encaisser', priority: 9 },
+  { keywords: ['impaye'], metricId: 'reste_a_encaisser', priority: 9 },
+  { keywords: ['encours'], metricId: 'reste_a_encaisser', priority: 9 },
+  { keywords: ['delai', 'devis'], allKeywordsRequired: true, metricId: 'delai_premier_devis', priority: 9 },
+  // IMPORTANT: "ca par jour" ou "ca moyen par jour" - TOUS les mots requis
+  { keywords: ['ca', 'jour'], allKeywordsRequired: true, metricId: 'ca_moyen_par_jour', priority: 8 },
+  { keywords: ['ca', 'moyen', 'jour'], allKeywordsRequired: true, metricId: 'ca_moyen_par_jour', priority: 9 },
+  { keywords: ['sav', 'univers'], allKeywordsRequired: true, metricId: 'sav_par_univers', priority: 8 },
   { keywords: ['dossier'], metricId: 'nb_dossiers_crees', priority: 5 },
+  // CA global/total - priorité basse, fallback
+  { dimension: 'global', intent: 'valeur', metricId: 'ca_global_ht', priority: 4 },
 ];
 
 function findMetricFromNLRules(dimension: string | null, intentType: string | null, normalized: string): string | null {
-  // Direct keyword matching first
+  // Direct keyword matching first (phrases exactes)
   const KEYWORD_DIRECT_MAPPING: Record<string, string> = {
     'top apporteur': 'ca_par_apporteur',
     'meilleur apporteur': 'ca_par_apporteur',
@@ -553,6 +560,10 @@ function findMetricFromNLRules(dimension: string | null, intentType: string | nu
     'ca par univers': 'ca_par_univers',
     'ca par apporteur': 'ca_par_apporteur',
     'ca par technicien': 'ca_par_technicien',
+    'ca moyen par jour': 'ca_moyen_par_jour',
+    'ca par jour': 'ca_moyen_par_jour',
+    'chiffre affaire': 'ca_global_ht',
+    'chiffre d affaire': 'ca_global_ht',
   };
 
   for (const [phrase, metricId] of Object.entries(KEYWORD_DIRECT_MAPPING)) {
@@ -567,7 +578,16 @@ function findMetricFromNLRules(dimension: string | null, intentType: string | nu
     
     if (rule.dimension && dimension !== rule.dimension) matches = false;
     if (rule.intent && intentType !== rule.intent) matches = false;
-    if (rule.keywords && !rule.keywords.some(kw => normalized.includes(kw))) matches = false;
+    
+    if (rule.keywords) {
+      if (rule.allKeywordsRequired) {
+        // TOUS les keywords doivent être présents
+        matches = rule.keywords.every(kw => normalized.includes(kw));
+      } else {
+        // Au moins un keyword doit être présent
+        matches = rule.keywords.some(kw => normalized.includes(kw));
+      }
+    }
     
     if (matches && (rule.dimension || rule.keywords)) {
       return rule.metricId;
