@@ -322,53 +322,66 @@ export function HelpiIngestionTab() {
                 <div
                   key={job.id}
                   className={`
-                    flex items-center justify-between p-3 rounded-lg border cursor-pointer
+                    p-3 rounded-lg border cursor-pointer
                     transition-colors hover:bg-muted/50
                     ${selectedJobId === job.id ? 'border-primary bg-primary/5' : 'border-border'}
                   `}
                   onClick={() => setSelectedJobId(job.id)}
                 >
-                  <div className="flex items-center gap-3">
-                    <StatusBadge status={job.status} />
-                    <div>
-                      <p className="text-sm font-medium">
-                        Job #{job.id.slice(0, 8)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(job.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
-                        {' • '}
-                        {job.processed_documents}/{job.total_documents} documents
-                      </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <StatusBadge status={job.status} />
+                      <div>
+                        <p className="text-sm font-medium">
+                          Job #{job.id.slice(0, 8)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(job.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
+                          {' • '}
+                          {job.processed_documents}/{job.total_documents} documents
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {job.status === 'pending' && (
+                    <div className="flex items-center gap-2">
+                      {job.status === 'pending' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startProcessingMutation.mutate(job.id);
+                          }}
+                          disabled={startProcessingMutation.isPending}
+                        >
+                          <Play className="w-4 h-4" />
+                        </Button>
+                      )}
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          startProcessingMutation.mutate(job.id);
+                          if (confirm('Supprimer ce job et tous ses documents ?')) {
+                            deleteJobMutation.mutate(job.id);
+                          }
                         }}
-                        disabled={startProcessingMutation.isPending}
+                        disabled={deleteJobMutation.isPending}
                       >
-                        <Play className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (confirm('Supprimer ce job et tous ses documents ?')) {
-                          deleteJobMutation.mutate(job.id);
-                        }
-                      }}
-                      disabled={deleteJobMutation.isPending}
-                    >
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
+                    </div>
                   </div>
+                  {/* Document names inline */}
+                  {job.document_names && job.document_names.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {job.document_names.map((name, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs font-normal">
+                          <FileText className="w-3 h-3 mr-1" />
+                          {name}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

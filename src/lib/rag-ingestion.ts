@@ -21,6 +21,7 @@ export interface IngestionJob {
   started_at: string | null;
   completed_at: string | null;
   metadata: Record<string, unknown>;
+  document_names?: string[]; // Added for inline display
 }
 
 export interface IngestionDocument {
@@ -155,16 +156,29 @@ export async function getIngestionJob(jobId: string): Promise<IngestionJob | nul
  * Get all jobs (paginated)
  */
 export async function getIngestionJobs(limit = 20): Promise<IngestionJob[]> {
-  const result = await safeQuery<IngestionJob[]>(
+  // Fetch jobs with their documents in a single query
+  const result = await safeQuery<(IngestionJob & { rag_index_documents: { title: string | null; filename: string; status: string }[] })[]>(
     supabase
       .from('rag_index_jobs')
-      .select('*')
+      .select('*, rag_index_documents(title, filename, status)')
       .order('created_at', { ascending: false })
       .limit(limit),
     'RAG_INGESTION_LIST_JOBS'
   );
 
-  return result.data || [];
+  // Map documents to document_names array with status indication
+  return (result.data || []).map(job => {
+    const docs = job.rag_index_documents || [];
+    return {
+      ...job,
+      document_names: docs.map(d => {
+        const name = d.title || d.filename;
+        // Add status indicator for failed docs
+        return d.status === 'failed' ? `❌ ${name}` : d.status === 'completed' ? `✓ ${name}` : name;
+      }),
+      rag_index_documents: undefined, // Remove raw data
+    };
+  });
 }
 
 /**
