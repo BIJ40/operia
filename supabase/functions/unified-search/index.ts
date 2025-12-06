@@ -529,13 +529,17 @@ serve(async (req) => {
 
           if (facturesResponse.ok) {
             const proxyData = await facturesResponse.json();
-            console.log(`[unified-search] Got ${proxyData.data?.length || 0} factures`);
+            console.log(`[unified-search] Got ${proxyData.data?.length || 0} factures, ${projects.length} projects, ${clients.length} clients`);
 
             if (proxyData.success && proxyData.data) {
               const factures = proxyData.data as Array<{
+                id?: number;
                 totalHT?: number; montant?: number; typeFacture?: string;
                 dateReelle?: string; date?: string; projectId?: number;
-                data?: { technicians?: Array<{ id: number; firstname?: string; lastname?: string; bgcolor?: { hex?: string } }> };
+                data?: { 
+                  totalHT?: number;
+                  technicians?: Array<{ id: number; firstname?: string; lastname?: string; bgcolor?: { hex?: string } }>;
+                };
               }>;
 
               // Filter by period
@@ -546,30 +550,56 @@ serve(async (req) => {
                 return d >= periode.start && d <= periode.end;
               });
 
+              console.log(`[unified-search] Filtered factures: ${filteredFactures.length} (period: ${periode?.label || 'none'})`);
+              
+              // Debug first few factures
+              if (filteredFactures.length > 0) {
+                const sample = filteredFactures.slice(0, 3).map(f => ({
+                  id: f.id,
+                  projectId: f.projectId,
+                  totalHT: f.totalHT,
+                  dataTotalHT: f.data?.totalHT,
+                  montant: f.montant,
+                  date: f.dateReelle || f.date,
+                }));
+                console.log(`[unified-search] Sample factures:`, JSON.stringify(sample));
+              }
+
               const projectsById = new Map(projects.map(p => [p.id, p]));
               const clientsById = new Map(clients.map(c => [c.id, c]));
 
               // === CA PAR APPORTEUR ===
               if (parsedQuery.metricId === 'ca_par_apporteur') {
                 const caByApporteur: Record<number, { name: string; ca: number }> = {};
+                let facturesWithProject = 0;
+                let facturesWithApporteur = 0;
+                
                 for (const f of filteredFactures) {
                   const isAvoir = (f.typeFacture || '').toLowerCase() === 'avoir';
-                  const montant = f.totalHT ?? f.montant ?? 0;
+                  // Use data.totalHT first (as per rules), fallback to totalHT then montant
+                  const montant = f.data?.totalHT ?? f.totalHT ?? f.montant ?? 0;
                   const netMontant = isAvoir ? -Math.abs(montant) : montant;
                   
                   const project = projectsById.get(f.projectId || 0);
+                  if (project) facturesWithProject++;
+                  
                   const commanditaireId = project?.data?.commanditaireId;
                   
                   if (commanditaireId) {
+                    facturesWithApporteur++;
                     const client = clientsById.get(commanditaireId);
                     const name = client?.raisonSociale || client?.name || `Apporteur #${commanditaireId}`;
                     if (!caByApporteur[commanditaireId]) caByApporteur[commanditaireId] = { name, ca: 0 };
                     caByApporteur[commanditaireId].ca += netMontant;
                   } else {
+                    // Direct - no apporteur
                     if (!caByApporteur[0]) caByApporteur[0] = { name: 'Direct', ca: 0 };
                     caByApporteur[0].ca += netMontant;
                   }
                 }
+
+                console.log(`[unified-search] Apporteur calc: ${facturesWithProject}/${filteredFactures.length} with project, ${facturesWithApporteur} with apporteur`);
+                console.log(`[unified-search] CA by apporteur keys: ${Object.keys(caByApporteur).length}`);
 
                 const sorted = Object.entries(caByApporteur)
                   .map(([id, d]) => ({ id: parseInt(id), name: d.name, value: Math.round(d.ca) }))
@@ -580,6 +610,8 @@ serve(async (req) => {
                 ranking = sorted.slice(0, limitN).map((item, idx) => ({ rank: idx + 1, ...item }));
                 topItem = ranking[0];
                 computedValue = sorted.reduce((sum, item) => sum + item.value, 0);
+                
+                console.log(`[unified-search] Top 3 apporteurs:`, ranking?.slice(0, 3));
               }
               // === CA PAR UNIVERS ===
               else if (parsedQuery.metricId === 'ca_par_univers') {
