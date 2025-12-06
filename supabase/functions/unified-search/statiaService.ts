@@ -323,19 +323,113 @@ function computeCaParUnivers(data: ApogeeData, params: StatParams): StatResult {
  * Compute CA par technicien (avec support filtre technicienId)
  * - Mode filtré (technicienId présent): renvoie une valeur unique sans ranking
  * - Mode global (pas de filtre): renvoie un ranking complet
+ * 
+ * Stratégie: 
+ * 1. Via f.data.technicians si disponible
+ * 2. Sinon via interventions liées au projet de la facture
  */
 function computeCaParTechnicien(data: ApogeeData, params: StatParams): StatResult {
+  console.log(`[computeCaParTechnicien] START - ${data.factures.length} factures, ${data.interventions.length} interventions, ${data.users.length} users`);
+  
   const caByTech: Record<string, { name: string; ca: number }> = {};
   const filterTechnicienId = params.filters?.technicienId;
   const filterTechnicienName = params.filters?.technicienName;
   
+  // Index projects par id
+  const projectsById = new Map<string | number, any>();
+  for (const p of data.projects) {
+    projectsById.set(p.id, p);
+    projectsById.set(String(p.id), p);
+  }
+  
+  // Index interventions par projectId
+  const interventionsByProject = new Map<string, any[]>();
+  for (const i of data.interventions) {
+    const pId = String(i.projectId || i.data?.projectId || i.project_id);
+    if (!interventionsByProject.has(pId)) interventionsByProject.set(pId, []);
+    interventionsByProject.get(pId)!.push(i);
+  }
+  
+  // Index users par id pour les noms
+  const usersById = new Map<string, any>();
+  for (const u of data.users) {
+    usersById.set(String(u.id), u);
+  }
+  
+  console.log(`[computeCaParTechnicien] Indexes: ${projectsById.size} projects, ${interventionsByProject.size} projects avec interventions, ${usersById.size} users`);
+  
+  let facturesWithTechs = 0;
+  let facturesFromInterventions = 0;
+  let facturesNoTechs = 0;
+  
   for (const f of data.factures) {
-    const isAvoir = (f.typeFacture || '').toLowerCase() === 'avoir';
-    const montant = f.data?.totalHT ?? f.totalHT ?? f.montant ?? 0;
+    const isAvoir = (f.typeFacture || f.type || '').toLowerCase() === 'avoir';
+    const rawMontant = f.data?.totalHT ?? f.totalHT ?? f.montantHT ?? f.montant ?? 0;
+    const montant = typeof rawMontant === 'string' ? parseFloat(rawMontant) || 0 : rawMontant;
     const netMontant = isAvoir ? -Math.abs(montant) : montant;
     
-    const techs = f.data?.technicians || [];
-    if (techs.length === 0) continue;
+    // Stratégie 1: Techniciens directement sur la facture
+    let techs: Array<{ id: string | number; firstname?: string; lastname?: string }> = f.data?.technicians || [];
+    
+    // Stratégie 2: Si pas de techniciens sur facture, chercher via interventions du projet
+    if (techs.length === 0) {
+      const projectId = String(f.projectId ?? f.data?.projectId ?? f.project_id);
+      const interventions = interventionsByProject.get(projectId) || [];
+      
+      // Collecter les techniciens uniques des interventions productives
+      const techSet = new Set<string>();
+      const techInfos: Array<{ id: string; firstname?: string; lastname?: string }> = [];
+      
+      for (const interv of interventions) {
+        // Vérifier si intervention productive (travaux, dépannage, etc.)
+        const type2 = (interv.type2 || interv.data?.type2 || '').toLowerCase();
+        const isProductive = ['travaux', 'depannage', 'dépannage', 'recherche de fuite'].includes(type2) 
+          || (type2 !== 'rt' && type2 !== 'sav' && type2 !== 'diagnostic' && type2 !== 'th');
+        
+        if (!isProductive) continue;
+        
+        // Technicien principal
+        const userId = interv.userId || interv.user_id;
+        if (userId && !techSet.has(String(userId))) {
+          techSet.add(String(userId));
+          const user = usersById.get(String(userId));
+          techInfos.push({
+            id: String(userId),
+            firstname: user?.firstname || user?.prenom || '',
+            lastname: user?.lastname || user?.nom || ''
+          });
+        }
+        
+        // Techniciens des visites
+        const visites = interv.visites || interv.data?.visites || [];
+        for (const v of visites) {
+          const usersIds = v.usersIds || v.userIds || [];
+          for (const uid of usersIds) {
+            if (!techSet.has(String(uid))) {
+              techSet.add(String(uid));
+              const user = usersById.get(String(uid));
+              techInfos.push({
+                id: String(uid),
+                firstname: user?.firstname || user?.prenom || '',
+                lastname: user?.lastname || user?.nom || ''
+              });
+            }
+          }
+        }
+      }
+      
+      if (techInfos.length > 0) {
+        techs = techInfos;
+        facturesFromInterventions++;
+      }
+    } else {
+      facturesWithTechs++;
+    }
+    
+    if (techs.length === 0) {
+      facturesNoTechs++;
+      continue;
+    }
     
     const share = netMontant / techs.length;
     for (const tech of techs) {
@@ -352,10 +446,14 @@ function computeCaParTechnicien(data: ApogeeData, params: StatParams): StatResul
     }
   }
   
+  console.log(`[computeCaParTechnicien] Source stats: ${facturesWithTechs} factures avec techs directement, ${facturesFromInterventions} via interventions, ${facturesNoTechs} sans techs`);
+  
   const sorted = Object.entries(caByTech)
     .map(([id, d]) => ({ id, name: d.name, value: Math.round(d.ca) }))
     .filter(x => x.value > 0)
     .sort((a, b) => b.value - a.value);
+  
+  console.log(`[computeCaParTechnicien] Result: ${sorted.length} techniciens, top 3: ${sorted.slice(0, 3).map(t => `${t.name}=${t.value}€`).join(', ')}`);
   
   // ════════════════════════════════════════════════════════════
   // MODE FILTRÉ: un seul technicien demandé → renvoyer valeur unique SANS ranking
@@ -864,14 +962,14 @@ export function getRequiredSources(metricId: string): string[] {
     'ca_global_ht': ['factures'],
     'ca_par_apporteur': ['factures', 'projects', 'clients'],
     'ca_par_univers': ['factures', 'projects'],
-    'ca_par_technicien': ['factures'],
-    'top_techniciens_ca': ['factures'],
+    'ca_par_technicien': ['factures', 'projects', 'interventions', 'users'],
+    'top_techniciens_ca': ['factures', 'projects', 'interventions', 'users'],
+    'ca_moyen_par_tech': ['factures', 'projects', 'interventions', 'users'],
     'taux_sav_global': ['projects'],
     'sav_par_univers': ['projects'],
     'sav_par_apporteur': ['projects', 'clients'],
     'panier_moyen': ['factures'],
     'nb_dossiers_crees': ['projects'],
-    'ca_moyen_par_tech': ['factures'],
     'nb_dossiers_par_univers': ['projects'],
     'dossiers_par_apporteur': ['projects', 'clients'],
     'taux_transformation_devis': ['devis', 'factures'],
