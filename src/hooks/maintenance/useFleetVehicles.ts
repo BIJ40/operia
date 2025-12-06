@@ -12,9 +12,9 @@ import { addDays, isBefore, isAfter, parseISO } from 'date-fns';
 
 const QUERY_KEY = 'fleet-vehicles';
 
-export function useFleetVehicles(agencyId?: string, filters?: FleetVehiclesFilters) {
-  const { agence } = useAuth();
-  const effectiveAgencyId = agencyId || agence;
+export function useFleetVehicles(agencyIdParam?: string, filters?: FleetVehiclesFilters) {
+  const { agencyId } = useAuth();
+  const effectiveAgencyId = agencyIdParam || agencyId;
 
   return useQuery({
     queryKey: [QUERY_KEY, effectiveAgencyId, filters],
@@ -101,17 +101,17 @@ export function useFleetVehicle(vehicleId: string | undefined) {
 
 export function useCreateFleetVehicle() {
   const queryClient = useQueryClient();
-  const { agence } = useAuth();
+  const { agencyId } = useAuth();
 
   return useMutation({
     mutationFn: async (data: FleetVehicleFormData) => {
-      if (!agence) throw new Error('Agence non définie');
+      if (!agencyId) throw new Error('Agence non définie');
 
       const result = await safeMutation<FleetVehicle[]>(
         supabase
           .from('fleet_vehicles')
           .insert({
-            agency_id: agence,
+            agency_id: agencyId,
             ...data,
             qr_token: crypto.randomUUID(), // Génère un token QR unique
           })
