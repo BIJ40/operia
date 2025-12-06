@@ -169,9 +169,24 @@ export const SPECIALIZED_METRICS: Array<{ keywords: string[]; rule: RoutingRule 
             label: 'Panier moyen', isRanking: false, minRole: 0 },
   },
   {
-    keywords: ['délai premier devis', 'delai premier devis', 'temps premier devis'],
+    keywords: ['délai premier devis', 'delai premier devis', 'temps premier devis', '1er devis'],
     rule: { dimension: 'global', intentType: 'delay', metricId: 'delai_premier_devis', 
             label: 'Délai 1er devis', isRanking: false, minRole: 0 },
+  },
+  {
+    keywords: ['délai facture', 'delai facture', 'temps facture', 'délai moyen facture'],
+    rule: { dimension: 'global', intentType: 'delay', metricId: 'delai_moyen_facture', 
+            label: 'Délai moyen facture', isRanking: false, minRole: 0 },
+  },
+  {
+    keywords: ['ca par jour', 'ca moyen jour', 'chiffre par jour', 'par jour'],
+    rule: { dimension: 'global', intentType: 'moyenne', metricId: 'ca_moyen_par_jour', 
+            label: 'CA moyen par jour', isRanking: false, minRole: 0 },
+  },
+  {
+    keywords: ['nb dossiers', 'nombre dossiers', 'combien dossiers', 'dossiers créés'],
+    rule: { dimension: 'global', intentType: 'volume', metricId: 'nb_dossiers_crees', 
+            label: 'Nombre de dossiers', isRanking: false, minRole: 0 },
   },
 ];
 
