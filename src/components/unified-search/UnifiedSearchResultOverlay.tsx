@@ -121,11 +121,27 @@ interface StatResultContentProps {
 }
 
 function StatResultContent({ result, query, isAdmin, onPeriodChange }: StatResultContentProps) {
-  const periodeLabel = result.filters.periode 
-    ? formatPeriodLabel(result.filters.periode)
-    : null;
+  const periodeLabel = result.filters.periode?.label || 
+    (result.filters.periode ? formatPeriodLabel(result.filters.periode) : null);
 
-  const isDefaultPeriod = (result as any).periodIsDefault === true;
+  const isDefaultPeriod = result.filters.periode?.isDefault === true;
+  const parsed = result.parsed;
+
+  // Access denied
+  if (result.accessDenied) {
+    return (
+      <div className="text-center py-8">
+        <AlertCircle className="w-12 h-12 mx-auto mb-4 text-destructive opacity-70" />
+        <p className="text-foreground font-medium">Accès restreint</p>
+        <p className="text-sm text-muted-foreground mt-2">
+          {result.accessMessage || 'Vous n\'avez pas accès à cette statistique.'}
+        </p>
+        <p className="text-xs text-muted-foreground/70 mt-4">
+          Seuls les responsables (N2+) peuvent consulter les statistiques par technicien et apporteur.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -254,7 +270,7 @@ function StatResultContent({ result, query, isAdmin, onPeriodChange }: StatResul
       )}
 
       {/* Debug panel for N5/N6 */}
-      {isAdmin && (result as any).debug && (
+      {isAdmin && parsed && (
         <Collapsible>
           <CollapsibleTrigger asChild>
             <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
@@ -264,13 +280,15 @@ function StatResultContent({ result, query, isAdmin, onPeriodChange }: StatResul
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="mt-2 p-3 bg-muted/50 rounded-lg border text-xs font-mono space-y-1">
-              <div><span className="text-muted-foreground">metricId:</span> {result.metricId}</div>
-              <div><span className="text-muted-foreground">dimension:</span> {(result as any).debug?.detectedDimension || 'N/A'}</div>
-              <div><span className="text-muted-foreground">intent:</span> {(result as any).debug?.detectedIntent || 'N/A'}</div>
-              <div><span className="text-muted-foreground">univers:</span> {(result as any).debug?.detectedUnivers || 'null'}</div>
-              <div><span className="text-muted-foreground">période:</span> {(result as any).debug?.detectedPeriod || 'null'}</div>
-              <div><span className="text-muted-foreground">routing:</span> {(result as any).debug?.routingPath || 'N/A'}</div>
-              <div><span className="text-muted-foreground">confidence:</span> {((result as any).confidence * 100).toFixed(0)}%</div>
+              <div><span className="text-muted-foreground">metricId:</span> {parsed.metricId}</div>
+              <div><span className="text-muted-foreground">dimension:</span> {parsed.debug.detectedDimension}</div>
+              <div><span className="text-muted-foreground">intent:</span> {parsed.debug.detectedIntent}</div>
+              <div><span className="text-muted-foreground">univers:</span> {parsed.debug.detectedUnivers || 'null'}</div>
+              <div><span className="text-muted-foreground">période:</span> {parsed.debug.detectedPeriod || 'null'}</div>
+              <div><span className="text-muted-foreground">routing:</span> {parsed.debug.routingPath}</div>
+              <div><span className="text-muted-foreground">confidence:</span> {(parsed.confidence * 100).toFixed(0)}%</div>
+              <div><span className="text-muted-foreground">minRole:</span> {parsed.minRole}</div>
+              <div><span className="text-muted-foreground">isRanking:</span> {parsed.isRanking ? 'true' : 'false'}</div>
             </div>
           </CollapsibleContent>
         </Collapsible>

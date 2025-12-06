@@ -6,7 +6,7 @@ export { UnifiedSearchProvider, useUnifiedSearch } from './UnifiedSearchContext'
 export { UnifiedSearchFloatingBar } from './UnifiedSearchFloatingBar';
 export { UnifiedSearchResultOverlay } from './UnifiedSearchResultOverlay';
 export * from './types';
-export { parseStatQuery, detectStatsIntent, STAT_NL_MAPPING } from './statNlMapping';
+export { parseStatQuery, isStatsQuery, extractUnivers, extractPeriode, extractTopN } from './statNlParser';
 
 // Animations
 export { UNIFIED_SEARCH_ANIMATIONS, DEFAULT_ANIMATION_PRESET } from './unifiedSearchAnimations';

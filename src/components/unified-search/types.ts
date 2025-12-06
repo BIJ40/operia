@@ -4,6 +4,36 @@
 
 export type SearchIntentType = 'stats' | 'docs' | 'fallback';
 
+// Parsed query debug info
+export interface ParsedQueryDebug {
+  detectedDimension: string;
+  detectedIntent: string;
+  detectedUnivers: string | null;
+  detectedPeriod: string | null;
+  routingPath: string;
+}
+
+// Parsed stat query from NL parser
+export interface ParsedStatQueryInfo {
+  metricId: string;
+  metricLabel: string;
+  dimension: string;
+  intentType: string;
+  univers?: string;
+  period?: {
+    start: string;
+    end: string;
+    label: string;
+    isDefault: boolean;
+  };
+  topN?: number;
+  technicienName?: string;
+  confidence: number;
+  minRole: number;
+  isRanking: boolean;
+  debug: ParsedQueryDebug;
+}
+
 // Résultat d'une recherche statistique
 export interface StatSearchResult {
   type: 'stat';
@@ -11,7 +41,12 @@ export interface StatSearchResult {
   metricLabel: string;
   filters: {
     univers?: string;
-    periode?: { start: string; end: string };
+    periode?: { 
+      start: string; 
+      end: string; 
+      label?: string;
+      isDefault?: boolean;
+    };
     technicien?: string;
   };
   result: {
@@ -32,6 +67,11 @@ export interface StatSearchResult {
   agencySlug: string;
   agencyName?: string;
   computedAt: string;
+  // Parsed query info from NL parser
+  parsed?: ParsedStatQueryInfo;
+  // Access control
+  accessDenied?: boolean;
+  accessMessage?: string;
 }
 
 // Résultat d'une recherche documentaire
@@ -54,28 +94,6 @@ export interface FallbackSearchResult {
 }
 
 export type UnifiedSearchResult = StatSearchResult | DocSearchResult | FallbackSearchResult;
-
-// Parsed stat query from NL
-export interface ParsedStatQuery {
-  metricId: string;
-  metricLabel: string;
-  filters: {
-    univers?: string;
-    periode?: { start: Date; end: Date };
-    technicien?: string;
-  };
-  confidence: number; // 0-1
-}
-
-// NL Mapping entry
-export interface StatNLMapping {
-  id: string;
-  label: string;
-  keywords: string[];
-  examples: string[];
-  supportedFilters: ('univers' | 'periode' | 'technicien')[];
-  dimensions?: string[];
-}
 
 // Search state
 export interface UnifiedSearchState {
