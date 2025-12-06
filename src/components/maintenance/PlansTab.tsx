@@ -50,13 +50,16 @@ import { Plus, Trash2, Settings, FileText } from 'lucide-react';
 
 export function PlansTab() {
   const [targetType, setTargetType] = useState<MaintenanceTargetType | 'all'>('all');
-  const [selectedPlan, setSelectedPlan] = useState<MaintenancePlanTemplate | null>(null);
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const { data: plans = [], isLoading } = useMaintenancePlans(
     undefined,
     targetType === 'all' ? undefined : targetType
   );
+
+  // Dérivation du plan sélectionné depuis la liste (synchronisation auto avec React Query)
+  const selectedPlan = plans.find((p) => p.id === selectedPlanId) || null;
 
   const createPlanTemplate = useCreatePlanTemplate();
   const deletePlanTemplate = useDeletePlanTemplate();
@@ -74,8 +77,8 @@ export function PlansTab() {
   const handleDeletePlan = async (planId: string) => {
     try {
       await deletePlanTemplate.mutateAsync(planId);
-      if (selectedPlan?.id === planId) {
-        setSelectedPlan(null);
+      if (selectedPlanId === planId) {
+        setSelectedPlanId(null);
       }
       toast.success('Plan supprimé');
     } catch {
@@ -134,9 +137,9 @@ export function PlansTab() {
                 <button
                   key={plan.id}
                   type="button"
-                  onClick={() => setSelectedPlan(plan)}
+                  onClick={() => setSelectedPlanId(plan.id)}
                   className={`w-full rounded-lg border p-3 text-left text-sm transition-colors hover:bg-muted/60 ${
-                    selectedPlan?.id === plan.id ? 'border-primary bg-muted' : ''
+                    selectedPlanId === plan.id ? 'border-primary bg-muted' : ''
                   }`}
                 >
                   <div className="flex items-center justify-between">
