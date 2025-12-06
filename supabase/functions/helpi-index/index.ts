@@ -2,7 +2,7 @@
  * Helpi Index - Indexation unifiée des contenus
  * Supporte: apogee, helpconfort, document, faq
  */
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { handleCorsPreflightOrReject, withCors, getCorsHeaders } from "../_shared/cors.ts";
 import { checkRateLimit, rateLimitResponse } from "../_shared/rateLimit.ts";
@@ -104,7 +104,7 @@ async function generateEmbeddings(texts: string[]): Promise<number[][]> {
   return allEmbeddings;
 }
 
-Deno.serve(async (req) => {
+serve(async (req) => {
   // CORS handling
   const corsResponse = handleCorsPreflightOrReject(req);
   if (corsResponse) return corsResponse;
