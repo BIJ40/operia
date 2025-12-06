@@ -181,13 +181,17 @@ serve(async (req) => {
       .eq('id', user.id)
       .single();
 
-    // Check module access - allow if pilotage_agence enabled OR admin roles
+    // Check module access - allow if pilotage_agence OR unified_search enabled OR admin roles
     const enabledModules = profile?.enabled_modules || {};
-    const hasPilotage = enabledModules.pilotage_agence?.enabled;
-    const isAdmin = ['platform_admin', 'superadmin', 'franchisor_admin', 'franchisor_user'].includes(profile?.global_role);
+    const hasPilotage = enabledModules.pilotage_agence?.enabled === true;
+    const hasUnifiedSearch = enabledModules.unified_search?.enabled === true;
+    const globalRole = profile?.global_role || '';
+    const isAdmin = ['platform_admin', 'superadmin', 'franchisor_admin', 'franchisor_user', 'franchisee_admin'].includes(globalRole);
     
-    // Allow access for users with pilotage module or admin roles
-    if (!hasPilotage && !isAdmin) {
+    console.log(`[unified-search] Access check: hasPilotage=${hasPilotage}, hasUnifiedSearch=${hasUnifiedSearch}, isAdmin=${isAdmin}, role=${globalRole}`);
+    
+    // Allow access for users with pilotage/unified_search module or admin roles
+    if (!hasPilotage && !hasUnifiedSearch && !isAdmin) {
       return withCors(req, new Response(JSON.stringify({
         type: 'fallback',
         message: 'Le module Pilotage n\'est pas activé pour votre compte.',
