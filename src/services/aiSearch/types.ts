@@ -109,6 +109,12 @@ export interface ValidatedIntent {
   allowedAgencyIds?: string[];
   userRoleLevel: number;
   
+  // Enrichissements V2 (catégories)
+  needsForecast?: boolean;
+  needsAdvancedAnalysis?: boolean;
+  detectedCategories?: string[];
+  keywordScore?: number;
+  
   // Traçabilité
   validation: {
     corrections: ValidationCorrection[];

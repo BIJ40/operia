@@ -1,6 +1,7 @@
 /**
  * StatIA AI Search - Validation & Correction
  * Cœur du moteur déterministe - Aucune invention autorisée
+ * V2: Correction LLM par keywords pondérés + catégories fortes
  */
 
 import type {
@@ -14,10 +15,12 @@ import type {
   UserContext,
   AmbiguousResult,
   MetricCandidate,
+  KeywordMatch,
 } from './types';
 import { getMetricById, isValidMetricId, findMetricForIntent, getAllMetricIds } from './metricsRegistry';
 import { extractPeriod, getDefaultPeriod, getCurrentYearPeriod } from './extractPeriod';
-import { findAllKeywords, extractDimensionFromMatches, extractUniversFromMatches } from './nlKeywords';
+import { findAllKeywords, extractDimensionFromMatches, extractUniversFromMatches, computeStatsScore } from './nlKeywords';
+import { detectQueryType, getStrongStatsCategories, type DetectionResult } from './detectQueryType';
 
 // ═══════════════════════════════════════════════════════════════
 // LISTE BLANCHE DES UNIVERS
@@ -41,6 +44,15 @@ const VALID_UNIVERS = new Set([
 // Univers exclus des calculs StatIA
 const EXCLUDED_UNIVERS = new Set(['CHAUFFAGE', 'CLIMATISATION']);
 
+// Catégories indiquant un besoin de forecast
+const FORECAST_CATEGORIES = new Set(['forecasting', 'prediction', 'modelisation']);
+
+// Catégories indiquant analyse avancée
+const ADVANCED_ANALYSIS_CATEGORIES = new Set(['analytics', 'ai_analysis', 'data_science']);
+
+// Catégories indiquant scope réseau
+const NETWORK_SCOPE_CATEGORIES = new Set(['reseau', 'region', 'agence', 'segmentation']);
+
 // ═══════════════════════════════════════════════════════════════
 // VALIDATION PRINCIPALE
 // ═══════════════════════════════════════════════════════════════
@@ -55,7 +67,7 @@ type ValidationResult = {
 
 /**
  * Valide et corrige un intent draft du LLM
- * JAMAIS exécuté brut - toujours corrigé
+ * V2: S'appuie sur LLM ET keywords pondérés pour corriger/surclasser
  */
 export function validateAndRoute(
   llmDraft: LLMDraftIntent | null,
@@ -66,15 +78,32 @@ export function validateAndRoute(
 ): ValidationResult {
   const corrections: ValidationCorrection[] = [];
   
+  // Analyse keywords une seule fois (réutilisée partout)
+  const keywordMatches = findAllKeywords(normalizedQuery);
+  const totalKeywordScore = keywordMatches.reduce((sum, m) => sum + m.keyword.weight, 0);
+  
+  // Détection enrichie avec catégories
+  const detection = detectQueryType(normalizedQuery, originalQuery);
+  
   // ─────────────────────────────────────────────────────────────
-  // 1. DÉTERMINER LE TYPE DE REQUÊTE
+  // 1. DÉTERMINER LE TYPE DE REQUÊTE (LLM vs Keywords)
   // ─────────────────────────────────────────────────────────────
   
   let queryType: QueryType = llmDraft?.intent || 'unknown';
   
-  // Si LLM n'a pas détecté ou faible confiance → heuristique
-  if (!queryType || queryType === 'unknown' || (llmDraft?.confidence ?? 0) < 0.5) {
-    queryType = detectQueryTypeHeuristic(normalizedQuery);
+  // Score keywords fort → surclasser LLM si nécessaire
+  const keywordsIndicateStats = totalKeywordScore >= 5 || detection.strongCategoriesCount >= 2;
+  
+  if (keywordsIndicateStats && queryType !== 'stats_query') {
+    corrections.push({
+      field: 'type',
+      original: queryType,
+      corrected: 'stats_query',
+      reason: `Keywords indiquent stats (score=${totalKeywordScore.toFixed(1)}, catFortes=${detection.strongCategoriesCount})`,
+    });
+    queryType = 'stats_query';
+  } else if (!queryType || queryType === 'unknown' || (llmDraft?.confidence ?? 0) < 0.5) {
+    queryType = detection.type;
     if (llmDraft?.intent && llmDraft.intent !== queryType) {
       corrections.push({
         field: 'type',
@@ -86,7 +115,40 @@ export function validateAndRoute(
   }
   
   // ─────────────────────────────────────────────────────────────
-  // 2. VALIDER LA MÉTRIQUE
+  // 2. DÉTECTER INTENT TYPE ENRICHI (forecast, analyse avancée)
+  // ─────────────────────────────────────────────────────────────
+  
+  let intentType: IntentType = detection.suggestedIntent || 'valeur';
+  let needsForecast = false;
+  let needsAdvancedAnalysis = detection.needsAdvancedAnalysis;
+  
+  // Vérifier catégories pour forecast
+  for (const cat of detection.detectedCategories) {
+    if (FORECAST_CATEGORIES.has(cat)) {
+      needsForecast = true;
+    }
+    if (ADVANCED_ANALYSIS_CATEGORIES.has(cat)) {
+      needsAdvancedAnalysis = true;
+    }
+  }
+  
+  // LLM peut suggérer un intent
+  if (llmDraft?.intentType && llmDraft.intentType !== intentType) {
+    // Garder LLM si confiance haute, sinon keywords gagnent
+    if ((llmDraft.confidence ?? 0) >= 0.7) {
+      intentType = llmDraft.intentType;
+    } else if (detection.suggestedIntent) {
+      corrections.push({
+        field: 'intentType',
+        original: llmDraft.intentType,
+        corrected: intentType,
+        reason: 'Keywords plus précis que LLM',
+      });
+    }
+  }
+  
+  // ─────────────────────────────────────────────────────────────
+  // 3. VALIDER LA MÉTRIQUE
   // ─────────────────────────────────────────────────────────────
   
   let metricId: string | undefined;
@@ -98,12 +160,10 @@ export function validateAndRoute(
       metricId = llmDraft.metric;
     } else {
       // Trouver la métrique via les keywords
-      const keywordMatches = findAllKeywords(normalizedQuery);
       const keywords = keywordMatches.map(m => m.keyword.word);
-      const dimension = extractDimensionFromMatches(keywordMatches) as DimensionType || 'global';
-      const intent = detectIntentFromQuery(normalizedQuery);
+      const dimension = detection.suggestedDimension || extractDimensionFromMatches(keywordMatches) as DimensionType || 'global';
       
-      const foundMetric = findMetricForIntent(dimension, intent, keywords);
+      const foundMetric = findMetricForIntent(dimension, intentType, keywords);
       
       if (foundMetric) {
         metricId = foundMetric.id;
@@ -117,7 +177,7 @@ export function validateAndRoute(
         }
       } else {
         // Chercher les candidats pour ambiguïté
-        const candidates = findAmbiguousCandidates(normalizedQuery);
+        const candidates = findAmbiguousCandidates(normalizedQuery, keywordMatches);
         if (candidates.length > 1) {
           return {
             success: false,
@@ -142,12 +202,29 @@ export function validateAndRoute(
   }
   
   // ─────────────────────────────────────────────────────────────
-  // 3. VALIDER LA DIMENSION
+  // 4. VALIDER LA DIMENSION (LLM vs Keywords)
   // ─────────────────────────────────────────────────────────────
   
   let dimension: DimensionType = 'global';
   
-  if (llmDraft?.dimension) {
+  // Keywords peuvent surclasser LLM
+  if (detection.suggestedDimension) {
+    dimension = detection.suggestedDimension;
+    
+    if (llmDraft?.dimension && llmDraft.dimension !== dimension) {
+      // LLM haute confiance gagne, sinon keywords
+      if ((llmDraft.confidence ?? 0) >= 0.75 && isValidDimension(llmDraft.dimension)) {
+        dimension = llmDraft.dimension;
+      } else {
+        corrections.push({
+          field: 'dimension',
+          original: llmDraft.dimension,
+          corrected: dimension,
+          reason: 'Keywords plus précis pour la dimension',
+        });
+      }
+    }
+  } else if (llmDraft?.dimension) {
     if (isValidDimension(llmDraft.dimension)) {
       dimension = llmDraft.dimension;
     } else {
@@ -159,8 +236,7 @@ export function validateAndRoute(
       });
     }
   } else {
-    // Détecter via keywords
-    const keywordMatches = findAllKeywords(normalizedQuery);
+    // Détecter via keywords extraction
     const detected = extractDimensionFromMatches(keywordMatches);
     if (detected && isValidDimension(detected)) {
       dimension = detected as DimensionType;
@@ -168,13 +244,34 @@ export function validateAndRoute(
   }
   
   // ─────────────────────────────────────────────────────────────
-  // 4. VALIDER LA PÉRIODE
+  // 5. VALIDER LA PÉRIODE (LLM vs Keywords)
   // ─────────────────────────────────────────────────────────────
   
   let period: ParsedPeriod;
   
-  // Essayer d'abord la période du LLM
-  if (llmDraft?.period?.from && llmDraft?.period?.to) {
+  // Parser depuis la requête d'abord
+  const parsedFromQuery = extractPeriod(normalizedQuery, now);
+  
+  if (parsedFromQuery) {
+    period = parsedFromQuery;
+    
+    // Si LLM propose différent et confiance haute, vérifier
+    if (llmDraft?.period?.from && llmDraft.period.to && (llmDraft.confidence ?? 0) >= 0.8) {
+      // Comparer les périodes - si différentes de plus de 30 jours, logger
+      const llmFrom = new Date(llmDraft.period.from);
+      const queryFrom = new Date(parsedFromQuery.from);
+      const diffDays = Math.abs(llmFrom.getTime() - queryFrom.getTime()) / (1000 * 60 * 60 * 24);
+      
+      if (diffDays > 30) {
+        corrections.push({
+          field: 'period',
+          original: llmDraft.period.label || 'LLM period',
+          corrected: parsedFromQuery.label,
+          reason: 'Période extraite de la requête prioritaire (écart >30j avec LLM)',
+        });
+      }
+    }
+  } else if (llmDraft?.period?.from && llmDraft?.period?.to) {
     period = {
       from: llmDraft.period.from,
       to: llmDraft.period.to,
@@ -182,31 +279,24 @@ export function validateAndRoute(
       isDefault: false,
     };
   } else {
-    // Parser depuis la requête
-    const parsed = extractPeriod(normalizedQuery, now);
-    if (parsed) {
-      period = parsed;
-    } else {
-      // Fallback: année courante pour rankings, 12 mois sinon
-      const metricDef = metricId ? getMetricById(metricId) : null;
-      period = metricDef?.isRanking ? getCurrentYearPeriod(now) : getDefaultPeriod(now);
-      corrections.push({
-        field: 'period',
-        original: null,
-        corrected: period.label,
-        reason: 'Aucune période détectée, fallback appliqué',
-      });
-    }
+    // Fallback: année courante pour rankings, 12 mois sinon
+    const metricDef = metricId ? getMetricById(metricId) : null;
+    period = metricDef?.isRanking ? getCurrentYearPeriod(now) : getDefaultPeriod(now);
+    corrections.push({
+      field: 'period',
+      original: null,
+      corrected: period.label,
+      reason: 'Aucune période détectée, fallback appliqué',
+    });
   }
   
   // ─────────────────────────────────────────────────────────────
-  // 5. VALIDER LES FILTRES
+  // 6. VALIDER LES FILTRES
   // ─────────────────────────────────────────────────────────────
   
   const filters: Record<string, unknown> = {};
   
-  // Univers
-  const keywordMatches = findAllKeywords(normalizedQuery);
+  // Univers depuis keywords
   const detectedUnivers = extractUniversFromMatches(keywordMatches);
   
   for (const uni of detectedUnivers) {
@@ -248,7 +338,7 @@ export function validateAndRoute(
   }
   
   // ─────────────────────────────────────────────────────────────
-  // 6. VALIDER LE LIMIT (TOP N)
+  // 7. VALIDER LE LIMIT (TOP N)
   // ─────────────────────────────────────────────────────────────
   
   let limit: number | undefined;
@@ -271,13 +361,13 @@ export function validateAndRoute(
   }
   
   // ─────────────────────────────────────────────────────────────
-  // 7. APPLIQUER LES PERMISSIONS
+  // 8. APPLIQUER LES PERMISSIONS
   // ─────────────────────────────────────────────────────────────
   
   let agencyScope: 'single' | 'network' = 'single';
   let allowedAgencyIds: string[] | undefined;
   
-  // N0/N1 → pas de stats
+  // N0/N1 → pas de stats, fallback doc/pedago
   if (user.roleLevel < 2 && queryType === 'stats_query') {
     queryType = 'documentary_query';
     corrections.push({
@@ -288,15 +378,29 @@ export function validateAndRoute(
     });
   }
   
-  // N2 → agence unique
+  // N2 → agence unique obligatoire
   if (user.roleLevel === 2) {
     agencyScope = 'single';
+    // Forcer l'agence de l'utilisateur
+    if (detection.isNetworkScope) {
+      corrections.push({
+        field: 'agencyScope',
+        original: 'network',
+        corrected: 'single',
+        reason: 'N2 limité à son agence uniquement',
+      });
+    }
   }
   
-  // N3+ → réseau si autorisé
+  // N3+ → réseau si autorisé, sinon limité aux agences assignées
   if (user.roleLevel >= 3) {
-    agencyScope = user.allowedAgencyIds?.length ? 'network' : 'single';
-    allowedAgencyIds = user.allowedAgencyIds;
+    if (user.allowedAgencyIds?.length) {
+      agencyScope = 'network';
+      allowedAgencyIds = user.allowedAgencyIds;
+    } else {
+      // N3+ sans agences assignées = toutes les agences
+      agencyScope = 'network';
+    }
   }
   
   // Vérifier minRole de la métrique
@@ -316,27 +420,32 @@ export function validateAndRoute(
   }
   
   // ─────────────────────────────────────────────────────────────
-  // 8. CONSTRUIRE L'INTENT FINAL
+  // 9. CONSTRUIRE L'INTENT FINAL
   // ─────────────────────────────────────────────────────────────
-  
-  const intent = detectIntentFromQuery(normalizedQuery);
   
   const validatedIntent: ValidatedIntent = {
     type: queryType,
     metricId,
     metricLabel,
     dimension,
-    intentType: intent,
+    intentType,
     limit,
     period,
     filters: Object.keys(filters).length > 0 ? filters : undefined,
     agencyScope,
     allowedAgencyIds,
     userRoleLevel: user.roleLevel,
+    
+    // Enrichissements V2
+    needsForecast,
+    needsAdvancedAnalysis,
+    detectedCategories: Array.from(detection.detectedCategories),
+    keywordScore: totalKeywordScore,
+    
     validation: {
       corrections,
       llmConfidence: llmDraft?.confidence ?? 0,
-      finalConfidence: computeFinalConfidence(llmDraft, corrections),
+      finalConfidence: computeFinalConfidence(llmDraft, corrections, totalKeywordScore),
       source: llmDraft ? (corrections.length > 0 ? 'hybrid' : 'llm') : 'heuristic',
     },
   };
@@ -348,62 +457,36 @@ export function validateAndRoute(
 // HELPERS
 // ═══════════════════════════════════════════════════════════════
 
-function detectQueryTypeHeuristic(normalizedQuery: string): QueryType {
-  const q = normalizedQuery.toLowerCase();
-  
-  // Stats patterns
-  if (/combien|quel(?:le)?s?\s+(?:est|sont)|montant|total|top|classement|meilleur|moyenne|taux|pourcentage|evolution|ca\s|chiffre|recouvrement|encours|impaye|sav\b|dossiers?\s+(?:recus?|crees?)|factures?\s+(?:emises?|payees?)|interventions?|delai|par\s+(?:technicien|apporteur|univers)/.test(q)) {
-    return 'stats_query';
-  }
-  
-  // Action patterns
-  if (/(?:ouvrir?|afficher?|voir|montrer?|aller)\s+(?:mon|ma|mes|le|la|les)|mes\s+(?:devis|dossiers|factures)|planning|agenda|dashboard/.test(q)) {
-    return 'action_query';
-  }
-  
-  // Doc patterns
-  if (/comment\s+(?:faire|creer|modifier)|pourquoi|qu'?est[- ]ce\s+que|aide\s+(?:sur|pour)|guide|tutoriel|procedure|etapes?\s+pour|expliqu/.test(q)) {
-    return 'documentary_query';
-  }
-  
-  // Pedagogic patterns
-  if (/c'?est\s+quoi|definition\s+(?:de|du)|qu'?est[- ]ce\s+qu'?(?:un|une)|signification|a\s+quoi\s+sert/.test(q)) {
-    return 'pedagogic_query';
-  }
-  
-  return 'unknown';
-}
-
-function detectIntentFromQuery(normalizedQuery: string): IntentType {
-  const q = normalizedQuery.toLowerCase();
-  
-  if (/top|meilleur|premier|classement|ranking/.test(q)) return 'top';
-  if (/moyenne|moyen|avg/.test(q)) return 'moyenne';
-  if (/combien|nombre|volume|total/.test(q)) return 'volume';
-  if (/taux|pourcentage|ratio|%/.test(q)) return 'taux';
-  if (/delai|temps|duree/.test(q)) return 'delay';
-  if (/compar|versus|vs|n-1/.test(q)) return 'compare';
-  
-  return 'valeur';
-}
-
 function isValidDimension(dim: string): dim is DimensionType {
   return ['global', 'technicien', 'apporteur', 'univers', 'agence', 'site', 'client_type'].includes(dim);
 }
 
-function computeFinalConfidence(llmDraft: LLMDraftIntent | null, corrections: ValidationCorrection[]): number {
-  if (!llmDraft) return 0.7; // Heuristique seule
+function computeFinalConfidence(
+  llmDraft: LLMDraftIntent | null, 
+  corrections: ValidationCorrection[], 
+  keywordScore: number
+): number {
+  if (!llmDraft) {
+    // Heuristique seule - confiance basée sur score keywords
+    return Math.min(0.9, 0.5 + keywordScore * 0.05);
+  }
   
   let confidence = llmDraft.confidence;
   
   // Réduire la confiance pour chaque correction appliquée
-  confidence -= corrections.length * 0.1;
+  confidence -= corrections.length * 0.08;
+  
+  // Bonus si keywords confirment (score élevé = plus de confiance)
+  if (keywordScore >= 10) {
+    confidence += 0.15;
+  } else if (keywordScore >= 5) {
+    confidence += 0.1;
+  }
   
   return Math.max(0.3, Math.min(1, confidence));
 }
 
-function findAmbiguousCandidates(normalizedQuery: string): MetricCandidate[] {
-  const keywordMatches = findAllKeywords(normalizedQuery);
+function findAmbiguousCandidates(normalizedQuery: string, keywordMatches: KeywordMatch[]): MetricCandidate[] {
   const keywords = keywordMatches.map(m => m.keyword.word);
   
   const candidates: MetricCandidate[] = [];
@@ -420,6 +503,13 @@ function findAmbiguousCandidates(normalizedQuery: string): MetricCandidate[] {
       if (metric.keywords.includes(kw)) {
         score += 0.2;
         matchedKeywords.push(kw);
+      }
+    }
+    
+    // Bonus si keyword weight élevé
+    for (const match of keywordMatches) {
+      if (metric.keywords.includes(match.keyword.word)) {
+        score += match.keyword.weight * 0.1;
       }
     }
     
