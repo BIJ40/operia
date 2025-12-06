@@ -6,32 +6,44 @@
 import { motion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 import { UnifiedSearchAnimationPreset } from './unifiedSearchAnimations';
-import { GlowDecorator, OrbitDecorator, WaveDotsDecorator, NeonRingDecorator } from './AnimationDecorators';
+import { GlowDecorator, OrbitDecorator, WaveDotsDecorator, NeonRingDecorator, PulseRingsDecorator } from './AnimationDecorators';
 import { cn } from '@/lib/utils';
 
 interface AnimationPreviewButtonProps {
   preset: UnifiedSearchAnimationPreset;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
 }
 
 export function AnimationPreviewButton({ preset, size = 'md' }: AnimationPreviewButtonProps) {
-  const sizeClasses = size === 'sm' 
-    ? 'w-10 h-10' 
-    : 'w-14 h-14';
+  const sizeClasses = {
+    sm: 'w-12 h-12',
+    md: 'w-16 h-16',
+    lg: 'w-20 h-20',
+  };
   
-  const iconSize = size === 'sm' ? 'w-4 h-4' : 'w-6 h-6';
+  const iconSizes = {
+    sm: 'w-5 h-5',
+    md: 'w-7 h-7',
+    lg: 'w-9 h-9',
+  };
 
   return (
-    <div className="relative flex items-center justify-center">
-      {/* Décorateurs */}
+    <div className="relative flex items-center justify-center p-8">
+      {/* Décorateurs - ordre important pour le z-index */}
       {preset.decorators?.showGlow && (
-        <GlowDecorator glowColor={preset.decorators.glowColor} />
+        <GlowDecorator 
+          glowColor={preset.decorators.glowColor} 
+          intensity={preset.decorators.glowIntensity || 'medium'}
+        />
       )}
-      {preset.decorators?.showOrbit && (
-        <OrbitDecorator glowColor={preset.decorators.glowColor} />
+      {preset.decorators?.showPulseRings && (
+        <PulseRingsDecorator glowColor={preset.decorators.glowColor} />
       )}
       {preset.decorators?.showNeonRing && (
         <NeonRingDecorator glowColor={preset.decorators.glowColor} />
+      )}
+      {preset.decorators?.showOrbit && (
+        <OrbitDecorator glowColor={preset.decorators.glowColor} />
       )}
       {preset.decorators?.showWaveDots && (
         <WaveDotsDecorator glowColor={preset.decorators.glowColor} />
@@ -40,10 +52,11 @@ export function AnimationPreviewButton({ preset, size = 'md' }: AnimationPreview
       {/* Bouton animé */}
       <motion.div
         className={cn(
-          sizeClasses,
+          sizeClasses[size],
           "relative z-10 flex items-center justify-center rounded-full",
-          "bg-gradient-to-br from-primary/20 to-primary/30",
-          "border border-primary/30",
+          "bg-gradient-to-br from-helpconfort-blue/30 to-helpconfort-blue/50",
+          "border-2 border-helpconfort-blue/50",
+          "shadow-lg shadow-helpconfort-blue/30",
           "cursor-pointer"
         )}
         initial={preset.buttonMotion.initial as any}
@@ -52,7 +65,7 @@ export function AnimationPreviewButton({ preset, size = 'md' }: AnimationPreview
         whileHover={preset.buttonMotion.whileHover as any}
         whileTap={preset.buttonMotion.whileTap as any}
       >
-        <Sparkles className={cn(iconSize, "text-primary")} />
+        <Sparkles className={cn(iconSizes[size], "text-helpconfort-blue drop-shadow-lg")} />
       </motion.div>
     </div>
   );

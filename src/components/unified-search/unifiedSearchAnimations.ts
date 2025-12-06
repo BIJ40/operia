@@ -31,7 +31,9 @@ export type UnifiedSearchAnimationPreset = {
     showWaveDots?: boolean;
     showOrbit?: boolean;
     showNeonRing?: boolean;
+    showPulseRings?: boolean;
     glowColor?: string;
+    glowIntensity?: 'low' | 'medium' | 'high';
   };
 };
 
@@ -39,96 +41,108 @@ export const UNIFIED_SEARCH_ANIMATIONS: UnifiedSearchAnimationPreset[] = [
   {
     id: 'breathing',
     label: 'Breathing',
-    description: 'Léger effet de respiration (scale) + glow discret. Élégant et professionnel.',
+    description: 'Effet de respiration prononcé avec glow pulsant visible.',
     buttonMotion: {
       initial: { scale: 1, opacity: 1 },
-      animate: { scale: [1, 1.05, 1] },
+      animate: { scale: [1, 1.12, 1] },
       transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
-      whileHover: { scale: 1.08 },
-      whileTap: { scale: 0.95 }
+      whileHover: { scale: 1.18 },
+      whileTap: { scale: 0.9 }
     },
     decorators: {
       showGlow: true,
-      glowColor: 'hsl(var(--helpconfort-blue))'
+      showPulseRings: true,
+      glowColor: 'hsl(var(--helpconfort-blue))',
+      glowIntensity: 'high'
     }
   },
   {
     id: 'glow_orbit',
     label: 'Glow + Orbit',
-    description: 'Bouton stable avec auréole et petit point lumineux qui orbite autour.',
+    description: 'Auréole intense et point lumineux qui orbite visiblement.',
     buttonMotion: {
       initial: { scale: 1 },
-      animate: { scale: 1 },
-      transition: { duration: 0.3 },
-      whileHover: { scale: 1.05, boxShadow: '0 0 20px hsl(var(--helpconfort-blue) / 0.5)' },
-      whileTap: { scale: 0.95 }
+      animate: { scale: [1, 1.05, 1] },
+      transition: { duration: 1.5, repeat: Infinity, ease: 'easeInOut' },
+      whileHover: { scale: 1.12, boxShadow: '0 0 30px hsl(var(--helpconfort-blue) / 0.7)' },
+      whileTap: { scale: 0.92 }
     },
     decorators: {
       showGlow: true,
       showOrbit: true,
-      glowColor: 'hsl(var(--helpconfort-blue))'
+      glowColor: 'hsl(var(--helpconfort-blue))',
+      glowIntensity: 'high'
     }
   },
   {
     id: 'wave_pulse',
     label: 'IA Wave',
-    description: 'Pulsations rapides façon IA en réflexion, avec 3 points animés.',
+    description: 'Pulsations énergiques avec points animés bien visibles.',
     buttonMotion: {
       initial: { scale: 1 },
-      animate: { scale: [1, 1.03, 1] },
-      transition: { duration: 1.2, repeat: Infinity, ease: 'easeInOut' },
-      whileHover: { scale: 1.07 },
-      whileTap: { scale: 0.95 }
+      animate: { scale: [1, 1.08, 1] },
+      transition: { duration: 0.8, repeat: Infinity, ease: 'easeInOut' },
+      whileHover: { scale: 1.15 },
+      whileTap: { scale: 0.9 }
     },
     decorators: {
       showWaveDots: true,
       showGlow: true,
-      glowColor: 'hsl(var(--helpconfort-orange))'
+      showPulseRings: true,
+      glowColor: 'hsl(var(--helpconfort-orange))',
+      glowIntensity: 'high'
     }
   },
   {
     id: 'neon_pulse',
     label: 'Neon Pulse',
-    description: 'Anneau néon pulsant autour du bouton. Effet futuriste.',
+    description: 'Anneaux néon très visibles qui se propagent.',
     buttonMotion: {
       initial: { scale: 1 },
-      animate: { scale: [1, 1.02, 1] },
-      transition: { duration: 1.5, repeat: Infinity, ease: 'easeInOut' },
-      whileHover: { scale: 1.06 },
-      whileTap: { scale: 0.94 }
+      animate: { scale: [1, 1.06, 1] },
+      transition: { duration: 1.2, repeat: Infinity, ease: 'easeInOut' },
+      whileHover: { scale: 1.12 },
+      whileTap: { scale: 0.9 }
     },
     decorators: {
       showNeonRing: true,
       showGlow: true,
-      glowColor: 'hsl(var(--primary))'
+      glowColor: 'hsl(var(--primary))',
+      glowIntensity: 'high'
     }
   },
   {
     id: 'float_bounce',
     label: 'Float Bounce',
-    description: 'Le bouton flotte légèrement de haut en bas. Effet d\'apesanteur.',
+    description: 'Flottement vertical prononcé avec ombre dynamique.',
     buttonMotion: {
       initial: { y: 0 },
-      animate: { y: [0, -6, 0] },
-      transition: { duration: 2.5, repeat: Infinity, ease: 'easeInOut' },
-      whileHover: { scale: 1.05, y: -8 },
-      whileTap: { scale: 0.95, y: 0 }
+      animate: { y: [0, -12, 0] },
+      transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
+      whileHover: { scale: 1.1, y: -16 },
+      whileTap: { scale: 0.92, y: 0 }
     },
     decorators: {
       showGlow: true,
-      glowColor: 'hsl(var(--helpconfort-blue))'
+      showPulseRings: true,
+      glowColor: 'hsl(var(--helpconfort-blue))',
+      glowIntensity: 'medium'
     }
   },
   {
     id: 'minimal',
     label: 'Minimal',
-    description: 'Aucune animation permanente, juste hover/tap. Sobre et discret.',
+    description: 'Animation subtile au survol uniquement.',
     buttonMotion: {
       initial: { scale: 1 },
       animate: { scale: 1 },
       transition: { duration: 0.2 },
-      whileHover: { scale: 1.03 },
-      whileTap: { scale: 0.97 }
+      whileHover: { scale: 1.08, boxShadow: '0 0 20px hsl(var(--primary) / 0.4)' },
+      whileTap: { scale: 0.95 }
+    },
+    decorators: {
+      showGlow: true,
+      glowIntensity: 'low'
     }
   }
 ];

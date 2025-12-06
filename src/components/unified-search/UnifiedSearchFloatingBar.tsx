@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useUnifiedSearch } from './UnifiedSearchContext';
 import { useUnifiedSearchAnimation } from './useUnifiedSearchAnimation';
-import { GlowDecorator, OrbitDecorator, WaveDotsDecorator, NeonRingDecorator } from './AnimationDecorators';
+import { GlowDecorator, OrbitDecorator, WaveDotsDecorator, NeonRingDecorator, PulseRingsDecorator } from './AnimationDecorators';
 import { cn } from '@/lib/utils';
 
 export function UnifiedSearchFloatingBar() {
@@ -59,17 +59,23 @@ export function UnifiedSearchFloatingBar() {
   // Barre fermée: afficher bouton d'activation avec animation
   if (!isOpen) {
     return (
-      <div className="w-full flex justify-center py-2">
-        <div className="relative">
-          {/* Décorateurs d'animation */}
+      <div className="w-full flex justify-center py-3">
+        <div className="relative flex items-center justify-center" style={{ padding: '24px' }}>
+          {/* Décorateurs d'animation - ordre z-index */}
           {animation.decorators?.showGlow && (
-            <GlowDecorator glowColor={animation.decorators.glowColor} />
+            <GlowDecorator 
+              glowColor={animation.decorators.glowColor} 
+              intensity={animation.decorators.glowIntensity || 'medium'}
+            />
           )}
-          {animation.decorators?.showOrbit && (
-            <OrbitDecorator glowColor={animation.decorators.glowColor} />
+          {animation.decorators?.showPulseRings && (
+            <PulseRingsDecorator glowColor={animation.decorators.glowColor} />
           )}
           {animation.decorators?.showNeonRing && (
             <NeonRingDecorator glowColor={animation.decorators.glowColor} />
+          )}
+          {animation.decorators?.showOrbit && (
+            <OrbitDecorator glowColor={animation.decorators.glowColor} />
           )}
           {animation.decorators?.showWaveDots && (
             <WaveDotsDecorator glowColor={animation.decorators.glowColor} />
@@ -79,11 +85,12 @@ export function UnifiedSearchFloatingBar() {
           <motion.button
             onClick={openSearch}
             className={cn(
-              "relative z-10 flex items-center gap-2 px-4 h-9 rounded-full",
-              "bg-gradient-to-r from-primary/5 to-primary/10",
-              "border border-primary/20",
-              "hover:border-primary/40",
-              "hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/20",
+              "relative z-10 flex items-center gap-2 px-5 h-11 rounded-full",
+              "bg-gradient-to-r from-helpconfort-blue/20 to-helpconfort-blue/30",
+              "border-2 border-helpconfort-blue/40",
+              "hover:border-helpconfort-blue/60",
+              "hover:bg-gradient-to-r hover:from-helpconfort-blue/30 hover:to-helpconfort-blue/40",
+              "shadow-lg shadow-helpconfort-blue/20",
               "transition-colors duration-200"
             )}
             initial={animation.buttonMotion.initial as any}
@@ -92,11 +99,11 @@ export function UnifiedSearchFloatingBar() {
             whileHover={animation.buttonMotion.whileHover as any}
             whileTap={animation.buttonMotion.whileTap as any}
           >
-            <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-sm text-muted-foreground">
+            <Sparkles className="w-5 h-5 text-helpconfort-blue drop-shadow" />
+            <span className="text-sm font-medium text-foreground">
               Recherche intelligente...
             </span>
-            <kbd className="hidden sm:inline-flex ml-2 px-1.5 py-0.5 text-[10px] font-mono bg-muted rounded">
+            <kbd className="hidden sm:inline-flex ml-2 px-1.5 py-0.5 text-[10px] font-mono bg-muted/80 rounded border border-border/50">
               ⌘K
             </kbd>
           </motion.button>
@@ -107,21 +114,21 @@ export function UnifiedSearchFloatingBar() {
 
   // Barre ouverte: afficher le champ de recherche
   return (
-    <div className="w-full flex justify-center py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+    <div className="w-full flex justify-center py-3 animate-in fade-in slide-in-from-top-2 duration-200">
       <form 
         onSubmit={handleSubmit}
         className={cn(
           "w-full max-w-2xl mx-4 flex items-center gap-2",
           "bg-background/95 backdrop-blur-sm",
-          "border border-primary/30 rounded-full",
-          "shadow-lg shadow-primary/5",
+          "border-2 border-helpconfort-blue/40 rounded-full",
+          "shadow-lg shadow-helpconfort-blue/10",
           "px-4 py-2"
         )}
       >
         {isLoading ? (
-          <Loader2 className="w-5 h-5 text-primary animate-spin shrink-0" />
+          <Loader2 className="w-5 h-5 text-helpconfort-blue animate-spin shrink-0" />
         ) : (
-          <Search className="w-5 h-5 text-primary shrink-0" />
+          <Search className="w-5 h-5 text-helpconfort-blue shrink-0" />
         )}
         
         <Input
@@ -155,7 +162,7 @@ export function UnifiedSearchFloatingBar() {
             type="submit"
             size="sm"
             disabled={!localQuery.trim() || isLoading}
-            className="rounded-full px-4"
+            className="rounded-full px-4 bg-helpconfort-blue hover:bg-helpconfort-blue/90"
           >
             {isLoading ? 'Recherche...' : 'Rechercher'}
           </Button>
