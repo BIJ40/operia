@@ -62,7 +62,7 @@ export function useMaintenanceAlerts(agencyId?: string, filters?: MaintenanceAle
 
       return alerts;
     },
-    enabled: true,
+    enabled: !!effectiveAgencyId,
   });
 }
 
@@ -91,7 +91,7 @@ export function useOpenMaintenanceAlertsCount(agencyId?: string) {
 
       return count || 0;
     },
-    enabled: true,
+    enabled: !!effectiveAgencyId,
   });
 }
 

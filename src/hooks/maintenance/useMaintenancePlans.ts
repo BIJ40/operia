@@ -49,7 +49,7 @@ export function useMaintenancePlans(agencyId?: string, targetType?: MaintenanceT
 
       return result.data || [];
     },
-    enabled: true,
+    enabled: !!effectiveAgencyId,
   });
 }
 

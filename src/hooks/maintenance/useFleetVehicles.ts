@@ -68,7 +68,7 @@ export function useFleetVehicles(agencyId?: string, filters?: FleetVehiclesFilte
 
       return vehicles;
     },
-    enabled: true,
+    enabled: !!effectiveAgencyId,
   });
 }
 

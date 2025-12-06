@@ -70,7 +70,7 @@ export function useMaintenanceEvents(agencyId?: string, filters?: MaintenanceEve
 
       return result.data || [];
     },
-    enabled: true,
+    enabled: !!effectiveAgencyId,
   });
 }
 
