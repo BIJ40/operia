@@ -316,7 +316,9 @@ function DocResultContent({ result }: { result: DocSearchResult }) {
     faq: { label: 'FAQ', color: 'bg-purple-500/10 text-purple-700 border-purple-500/20' },
   };
 
-  if (result.results.length === 0) {
+  const results = result?.results ?? [];
+
+  if (results.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
         <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -327,7 +329,7 @@ function DocResultContent({ result }: { result: DocSearchResult }) {
 
   return (
     <div className="space-y-4">
-      {result.results.map((doc) => {
+      {results.map((doc) => {
         const sourceInfo = sourceLabels[doc.source] || { label: doc.source, color: 'bg-muted' };
         
         return (
