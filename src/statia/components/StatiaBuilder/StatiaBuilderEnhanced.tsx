@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Save, List, PlusCircle, Target, Layers, Filter, X, Euro, TrendingUp, Percent, Hash, Clock, User, Building2, Calendar, Shield, FolderOpen, Wallet, AlertTriangle, FileCheck, Calculator, Sparkles, ChevronDown, ChevronRight } from 'lucide-react';
+import { Save, List, PlusCircle, Target, Layers, Filter, X, Euro, TrendingUp, Percent, Hash, Clock, User, Building2, Calendar, Shield, FolderOpen, Wallet, AlertTriangle, FileCheck, Calculator, Sparkles, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import { AgencySelector } from './AgencySelector';
 import { clearProxyCache } from '@/services/apogeeProxy';
 import { MetricsList } from './MetricsList';
@@ -83,8 +83,13 @@ const CATEGORY_ORDER = [
 export function StatiaBuilderEnhanced({ mode, fixedAgencySlug }: StatiaBuilderEnhancedProps) {
   const { userAgencySlug } = useStatiaBuilderContext();
   const [state, setState] = useState<BuilderState>({ measure: null, dimensions: [], filters: {} });
-  // IMPORTANT: Ne jamais utiliser de fallback hardcodé comme 'dax' - cela cause des problèmes d'isolation
-  const [selectedAgency, setSelectedAgency] = useState<string>(fixedAgencySlug || userAgencySlug || '');
+  
+  // CRITICAL FIX: En mode admin, attendre que userAgencySlug soit défini avant d'initialiser
+  // Ne JAMAIS commencer avec une string vide qui ferait des appels sans agence
+  const [selectedAgency, setSelectedAgency] = useState<string | null>(
+    fixedAgencySlug || userAgencySlug || null
+  );
+  
   const [activeTab, setActiveTab] = usePersistedTab('builder', 'statia-tab');
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
@@ -94,14 +99,13 @@ export function StatiaBuilderEnhanced({ mode, fixedAgencySlug }: StatiaBuilderEn
 
   // CRITICAL: Initialiser selectedAgency dès que userAgencySlug est disponible
   useEffect(() => {
-    if (!selectedAgency && userAgencySlug) {
-      console.log(`[StatiaBuilder] Initializing selectedAgency from user profile: ${userAgencySlug}`);
+    if (selectedAgency === null && userAgencySlug) {
+      console.log(`[StatiaBuilder] INIT: Setting selectedAgency = ${userAgencySlug}`);
       setSelectedAgency(userAgencySlug);
     }
   }, [userAgencySlug, selectedAgency]);
 
   // En mode ADMIN, l'agence sélectionnée est TOUJOURS utilisée pour les appels API
-  // En mode agency, on utilise fixedAgencySlug ou l'agence de l'utilisateur
   const effectiveAgency = mode === 'admin' ? selectedAgency : (fixedAgencySlug || userAgencySlug);
 
   // Récupérer les mesures dynamiquement depuis STAT_DEFINITIONS
@@ -188,10 +192,11 @@ export function StatiaBuilderEnhanced({ mode, fixedAgencySlug }: StatiaBuilderEn
   };
 
   // Ne pas rendre le composant tant qu'une agence n'est pas sélectionnée
-  if (!selectedAgency && mode === 'admin') {
+  if (selectedAgency === null) {
     return (
-      <div className="flex items-center justify-center h-64 text-muted-foreground">
-        <span>Chargement de la configuration...</span>
+      <div className="flex items-center justify-center h-64 text-muted-foreground gap-2">
+        <Loader2 className="h-5 w-5 animate-spin" />
+        <span>Chargement de la configuration agence...</span>
       </div>
     );
   }
@@ -203,7 +208,7 @@ export function StatiaBuilderEnhanced({ mode, fixedAgencySlug }: StatiaBuilderEn
         <div className="flex items-center gap-4">
           {mode === 'admin' ? (
             <AgencySelector 
-              value={selectedAgency} 
+              value={selectedAgency as string}
               onChange={(slug) => {
                 console.log(`[StatiaBuilder] ADMIN: Changing agency from ${selectedAgency} to ${slug}`);
                 // ADMIN: Vider TOUT le cache avant de changer d'agence
@@ -508,7 +513,7 @@ export function StatiaBuilderEnhanced({ mode, fixedAgencySlug }: StatiaBuilderEn
             <MetricPreview
               key={`preview-${selectedAgency}`}
               definition={state.measure ? buildDefinitionJson() : null}
-              agencySlug={selectedAgency}
+              agencySlug={selectedAgency as string}
               measureLabel={measureConfig?.label}
             />
           </div>
@@ -522,7 +527,7 @@ export function StatiaBuilderEnhanced({ mode, fixedAgencySlug }: StatiaBuilderEn
             <CardContent>
               <MetricsList
                 mode={mode}
-                agencySlug={mode === 'admin' ? selectedAgency : effectiveAgency}
+                agencySlug={mode === 'admin' ? (selectedAgency as string) : (effectiveAgency || undefined)}
                 onEdit={(m) => {
                   if (mode === 'agency' && m.scope === 'global') return;
                   setState({
@@ -544,7 +549,7 @@ export function StatiaBuilderEnhanced({ mode, fixedAgencySlug }: StatiaBuilderEn
         definitionJson={buildDefinitionJson()}
         onSuccess={() => setActiveTab('saved')}
         mode={mode}
-        agencySlug={mode === 'admin' ? selectedAgency : effectiveAgency}
+        agencySlug={mode === 'admin' ? (selectedAgency as string) : (effectiveAgency || undefined)}
       />
     </div>
   );
