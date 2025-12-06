@@ -15,17 +15,37 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
-    version: 'V0.6.9',
+    version: 'V0.7.0',
     date: '2025-12-06',
-    title: 'StatIA - Migration complète page Apporteurs',
+    title: 'StatIA - Migration complète pages Statistiques Agence',
     changes: [
       // ═══════════════════════════════════════════════════════════════
-      // STATIA - MÉTRIQUES APPORTEURS
+      // STATIA - NOUVELLES MÉTRIQUES UNIVERS
       // ═══════════════════════════════════════════════════════════════
-      { type: 'feature', description: 'StatIA: Métrique ca_par_type_apporteur - ventilation CA HT par catégorie (Assureurs, Bailleurs, Syndics, etc.)' },
-      { type: 'feature', description: 'StatIA: Métrique dossiers_par_type_apporteur - nombre dossiers facturés par type' },
+      { type: 'feature', description: 'StatIA: Métrique interventions_par_univers - nombre d\'interventions par univers métier' },
+      { type: 'feature', description: 'StatIA: Métrique taux_sav_par_univers - taux SAV (dossiers avec SAV / total) par univers' },
+      { type: 'feature', description: 'StatIA: Métrique ca_mensuel_par_univers - évolution mensuelle CA empilé par univers' },
+      { type: 'feature', description: 'StatIA: Métrique taux_transfo_par_univers - ratio CA facturé/devisé par univers' },
+      { type: 'feature', description: 'StatIA: Métrique matrix_univers_apporteur - matrice croisée univers × type apporteur' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // HOOK & PAGE UNIVERS
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'Hook useUniversStatia centralisé: 8 métriques en appels parallèles' },
+      { type: 'improvement', description: 'Page Indicateurs Univers: toutes tuiles, graphiques et matrice alimentés par StatIA' },
+      { type: 'improvement', description: 'Suppression calculs legacy universCalculations/universExtendedCalculations' },
+      { type: 'improvement', description: 'UniversKpiCard: CA, dossiers, panier, interventions, taux SAV depuis StatIA' },
+      { type: 'improvement', description: 'UniversStackedChart: CA mensuel empilé depuis StatIA' },
+      { type: 'improvement', description: 'UniversTransfoChart: taux transformation depuis StatIA' },
+      { type: 'improvement', description: 'UniversApporteurMatrix: matrice croisée depuis StatIA' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // STATIA - MÉTRIQUES APPORTEURS (V0.6.9)
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'StatIA: Métrique ca_par_type_apporteur - ventilation CA HT par catégorie' },
+      { type: 'feature', description: 'StatIA: Métrique dossiers_par_type_apporteur - nombre dossiers par type' },
       { type: 'feature', description: 'StatIA: Métrique panier_moyen_par_type_apporteur - CA/dossier par catégorie' },
-      { type: 'feature', description: 'StatIA: Métrique taux_transfo_par_type_apporteur - taux transformation devis→factures par type' },
+      { type: 'feature', description: 'StatIA: Métrique taux_transfo_par_type_apporteur - taux transformation par type' },
       { type: 'feature', description: 'StatIA: Métrique taux_sav_par_type_apporteur - taux SAV par type d\'apporteur' },
       { type: 'feature', description: 'StatIA: Métrique ca_mensuel_segmente - répartition mensuelle CA Apporteurs vs Particuliers' },
       { type: 'feature', description: 'StatIA: Métrique encours_par_apporteur - montant restant à encaisser par apporteur' },
@@ -33,18 +53,9 @@ export const CHANGELOG: ChangelogEntry[] = [
       // ═══════════════════════════════════════════════════════════════
       // HOOK & PAGE APPORTEURS
       // ═══════════════════════════════════════════════════════════════
-      { type: 'improvement', description: 'Hook useApporteursStatia enrichi: 12 métriques en appels parallèles' },
-      { type: 'improvement', description: 'Type TypeApporteurStats avec CA, dossiers, panier, transfo, SAV par type' },
-      { type: 'improvement', description: 'Type SegmentationMensuelle pour graphique Apporteurs vs Particuliers' },
+      { type: 'improvement', description: 'Hook useApporteursStatia: 12 métriques en appels parallèles' },
       { type: 'improvement', description: 'Page Indicateurs Apporteurs: KPIs, Top/Flop widgets alimentés par StatIA' },
-      { type: 'improvement', description: 'Widgets TypesApporteurs et SegmentationChart prêts pour migration StatIA' },
-      
-      // ═══════════════════════════════════════════════════════════════
-      // NORMALISATION & RÈGLES MÉTIER
-      // ═══════════════════════════════════════════════════════════════
-      { type: 'improvement', description: 'Normalisation types apporteurs: Assureurs, Bailleurs, Syndics, Maintenance, Gestionnaires, Professionnels, Clients Directs' },
-      { type: 'improvement', description: 'Helper getApporteurTypeForProject avec fallback "Clients Directs"' },
-      { type: 'improvement', description: 'Helper isSavProject pour détection SAV (flag, parentProjectId, label, univers)' },
+      { type: 'improvement', description: 'Normalisation types apporteurs uniforme' },
     ]
   },
   {
