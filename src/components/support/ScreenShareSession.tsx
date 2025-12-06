@@ -360,7 +360,7 @@ export function ScreenShareSession({ ticketId, isAgent = false, onClose }: Scree
 
         <div 
           ref={containerRef}
-          className="flex-1 relative bg-black flex items-center justify-center"
+          className="flex-1 relative bg-muted/20 flex items-center justify-center"
         >
           {isSharing ? (
             <>
@@ -371,7 +371,7 @@ export function ScreenShareSession({ ticketId, isAgent = false, onClose }: Scree
                 muted
                 className="max-w-full max-h-full object-contain"
               />
-              {/* Remote cursor overlay (agent's pointer) */}
+              {/* Remote cursor overlay (agent's pointer) - only show when sharing */}
               {remoteCursor && (
                 <div
                   className="absolute pointer-events-none z-10 transition-all duration-75"
@@ -391,9 +391,12 @@ export function ScreenShareSession({ ticketId, isAgent = false, onClose }: Scree
               )}
             </>
           ) : (
-            <div className="text-center text-muted-foreground">
-              <Monitor className="h-16 w-16 mx-auto mb-4 opacity-30" />
-              <p>Cliquez sur "Démarrer le partage" pour commencer</p>
+            <div className="text-center p-8">
+              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-helpconfort-blue/10 flex items-center justify-center">
+                <Monitor className="h-10 w-10 text-helpconfort-blue" />
+              </div>
+              <p className="text-lg font-medium mb-2">Prêt pour le diagnostic</p>
+              <p className="text-muted-foreground">Cliquez sur "Démarrer le partage" pour permettre à l'agent de voir votre écran</p>
             </div>
           )}
         </div>
