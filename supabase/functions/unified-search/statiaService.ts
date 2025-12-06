@@ -174,7 +174,9 @@ function computeCaParApporteur(data: ApogeeData, params: StatParams): StatResult
   for (const f of data.factures) {
     const isAvoir = (f.typeFacture || f.type || '').toLowerCase() === 'avoir';
     // Ordre de priorité conforme à extractFactureMeta: data.totalHT > totalHT > montantHT
-    const montant = f.data?.totalHT ?? f.totalHT ?? f.montantHT ?? f.montant ?? 0;
+    // IMPORTANT: parseFloat car les valeurs viennent en string de l'API
+    const rawMontant = f.data?.totalHT ?? f.totalHT ?? f.montantHT ?? f.montant ?? 0;
+    const montant = typeof rawMontant === 'string' ? parseFloat(rawMontant) || 0 : rawMontant;
     const netMontant = isAvoir ? -Math.abs(montant) : montant;
     
     // Trouver le projet via projectId ou data.projectId
