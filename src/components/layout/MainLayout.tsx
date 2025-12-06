@@ -6,7 +6,7 @@ import { PublicLanding } from './PublicLanding';
 import { LoginDialog } from '@/components/LoginDialog';
 import { ImageModal } from '@/components/ImageModal';
 import { ChatbotTestProvider } from '@/components/Chatbot';
-import { UnifiedSearchProvider, UnifiedSearchFloatingBar, UnifiedSearchResultOverlay } from '@/components/unified-search';
+import { AiUnifiedProvider, AiUnifiedBar } from '@/components/ai';
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useStorageQuota } from '@/hooks/use-storage-quota';
@@ -56,7 +56,7 @@ export function MainLayout({
 
   return (
     <ChatbotTestProvider>
-      <UnifiedSearchProvider>
+      <AiUnifiedProvider>
         <SidebarProvider>
           <div className={`min-h-screen w-full flex bg-background ${isImpersonating ? 'pt-10' : ''}`}>
             {showSidebar && <UnifiedSidebar />}
@@ -64,8 +64,8 @@ export function MainLayout({
             <div className="flex-1 flex flex-col min-h-screen min-w-0">
               {showHeader && <UnifiedHeader />}
               
-              {/* Barre de recherche unifiée flottante */}
-              <UnifiedSearchFloatingBar />
+              {/* Barre IA unifiée 2026 - toujours visible */}
+              <AiUnifiedBar />
               
               {/* P2 FIX: id pour skip link accessibilité */}
               <main id="main-content" className="flex-1 overflow-auto p-6" role="main">
@@ -74,12 +74,10 @@ export function MainLayout({
             </div>
           </div>
 
-          {/* Overlay de résultats */}
-          <UnifiedSearchResultOverlay />
           <ImageModal />
           <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
         </SidebarProvider>
-      </UnifiedSearchProvider>
+      </AiUnifiedProvider>
     </ChatbotTestProvider>
   );
 }
