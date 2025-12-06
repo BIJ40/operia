@@ -290,8 +290,20 @@ export function extractFactureMeta(facture: any): FactureMeta {
   
   let date: Date | null = null;
   if (dateStr) {
+    // Essayer d'abord le format ISO
     const d = new Date(dateStr);
-    if (!isNaN(d.getTime())) date = d;
+    if (!isNaN(d.getTime())) {
+      date = d;
+    } else {
+      // CRITICAL FIX: Parser le format français DD/MM/YYYY ou DD/MM/YYYY HH:mm:ss
+      const dateOnlyStr = String(dateStr).split(' ')[0]; // Prendre juste la partie date
+      const parts = dateOnlyStr.split('/');
+      if (parts.length === 3) {
+        const [day, month, year] = parts;
+        const frDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        if (!isNaN(frDate.getTime())) date = frDate;
+      }
+    }
   }
   
   // Type facture unifié avec ordre de priorité cohérent
