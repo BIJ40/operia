@@ -124,7 +124,7 @@ export function VehicleFormDialog({ open, onOpenChange, vehicle }: VehicleFormDi
               <Label htmlFor="name">Nom *</Label>
               <Input
                 id="name"
-                placeholder="Ex: Kangoo 1"
+                placeholder="Ex: Custom 1"
                 {...form.register('name')}
               />
               {form.formState.errors.name && (
