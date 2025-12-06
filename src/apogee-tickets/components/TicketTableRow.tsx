@@ -62,10 +62,10 @@ export function TicketTableRow({
   columnWidths,
   shouldBlink = false,
 }: TicketTableRowProps) {
-  const { canManage, ticketRole, isAdmin } = roleInfo;
+  const { canManage, ticketRole, isPlatformAdmin } = roleInfo;
   
   // Permissions spécifiques
-  const canEditStatus = allowedTransitions.length > 0 || isAdmin;
+  const canEditStatus = allowedTransitions.length > 0 || isPlatformAdmin;
   const canEditModule = canManage;
   const canEditPriority = canManage;
   const canEditOwnerSide = canManage || ticketRole === 'developer';

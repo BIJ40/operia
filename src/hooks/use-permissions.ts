@@ -18,15 +18,17 @@ import { useMemo } from 'react';
  */
 export function usePermissions() {
   const auth = useAuth();
-  const { isAdmin, isSupport, isFranchiseur, hasSupportAgentRole, isSupportAdmin, canManageTickets } = auth;
+  const { isSupport, isFranchiseur, hasSupportAgentRole, isSupportAdmin, canManageTickets, hasGlobalRole } = auth;
+  
+  const isPlatformAdmin = hasGlobalRole('platform_admin');
 
   const canManageSupport = useMemo(() => {
     return hasSupportAgentRole || isSupportAdmin;
   }, [hasSupportAgentRole, isSupportAdmin]);
 
   const canEditContent = useMemo(() => {
-    return isAdmin || auth.hasGlobalRole('franchisee_admin');
-  }, [isAdmin, auth]);
+    return isPlatformAdmin || hasGlobalRole('franchisee_admin');
+  }, [isPlatformAdmin, hasGlobalRole]);
 
   return {
     // V2 - Source de vérité
@@ -42,7 +44,7 @@ export function usePermissions() {
     
     // Helpers
     canEditContent,
-    isAdmin,
+    isPlatformAdmin,
     isSupport,
     isFranchiseur,
   };
