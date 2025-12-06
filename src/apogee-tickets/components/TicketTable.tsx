@@ -222,7 +222,7 @@ export function TicketTable({
         break;
       case '2':
         e.preventDefault();
-        if (allowedTransitions.length > 0 || roleInfo.isAdmin) {
+        if (allowedTransitions.length > 0 || roleInfo.isPlatformAdmin) {
           const selectRef = statusSelectRefs.current.get(selectedRowId);
           selectRef?.click();
         }

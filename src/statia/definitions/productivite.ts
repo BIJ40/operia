@@ -308,18 +308,7 @@ export const nbHeuresProductives: StatDefinition = {
       }
     }
     
-    // Log de debug
-    console.log('[nb_heures_productives]', {
-      totalHeures: Math.round(totalHeures * 10) / 10,
-      interventionsComptees,
-      interventionsFiltrees,
-      earliest: earliest?.toISOString().split('T')[0],
-      latest: latest?.toISOString().split('T')[0],
-      dateRange: {
-        start: params.dateRange.start.toISOString().split('T')[0],
-        end: params.dateRange.end.toISOString().split('T')[0],
-      },
-    });
+    // Debug supprimé pour production
     
     return {
       value: Math.round(totalHeures * 10) / 10,

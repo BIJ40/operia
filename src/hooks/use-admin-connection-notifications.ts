@@ -11,11 +11,13 @@ interface ConnectionLog {
 }
 
 export const useAdminConnectionNotifications = () => {
-  const { isAdmin } = useAuth();
+  const { hasGlobalRole } = useAuth();
   const { toast } = useToast();
+  
+  const isPlatformAdmin = hasGlobalRole('platform_admin');
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!isPlatformAdmin) return;
 
     logConnection.info('Admin: écoute des notifications de connexion');
 
@@ -64,5 +66,5 @@ export const useAdminConnectionNotifications = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [isAdmin, toast]);
+  }, [isPlatformAdmin, toast]);
 };

@@ -181,7 +181,7 @@ export default function PilotageIndex() {
   const { enabledModules, globalRole } = useAuth();
   const { count: pendingRequestsCount } = usePendingDocumentRequestsCount();
 
-  const isAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';
+  const isPlatformAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';
 
   const getModuleTitle = (module: PilotageModule): string => {
     const pageKey = ROUTE_TO_PAGE_KEY[module.href];
@@ -195,7 +195,7 @@ export default function PilotageIndex() {
   const visibleModules = useMemo(() => {
     return pilotageModules.filter(module => {
       // Les admins voient tout
-      if (isAdmin) return true;
+      if (isPlatformAdmin) return true;
       
       // Vérifier si le module nécessite des options spécifiques
       if (module.requiresModuleOptions) {
@@ -208,7 +208,7 @@ export default function PilotageIndex() {
       
       return true;
     });
-  }, [isAdmin, enabledModules]);
+  }, [isPlatformAdmin, enabledModules]);
 
   // Grouper par catégorie
   const modulesByCategory = useMemo(() => {
@@ -254,7 +254,7 @@ export default function PilotageIndex() {
               module={module}
               title={getModuleTitle(module)}
               badge={getBadge(module)}
-              isAdmin={isAdmin}
+              isAdmin={isPlatformAdmin}
             />
           ))}
         </CollapsibleSection>
@@ -277,7 +277,7 @@ export default function PilotageIndex() {
                 module={module}
                 title={getModuleTitle(module)}
                 badge={getBadge(module)}
-                isAdmin={isAdmin}
+                isAdmin={isPlatformAdmin}
               />
             )
           ))}
@@ -299,7 +299,7 @@ export default function PilotageIndex() {
                   module={module}
                   title={getModuleTitle(module)}
                   badge={getBadge(module)}
-                  isAdmin={isAdmin}
+                  isAdmin={isPlatformAdmin}
                   isClickable={false}
                 />
               </div>
@@ -309,7 +309,7 @@ export default function PilotageIndex() {
                 module={module}
                 title={getModuleTitle(module)}
                 badge={getBadge(module)}
-                isAdmin={isAdmin}
+                isAdmin={isPlatformAdmin}
               />
             )
           ))}

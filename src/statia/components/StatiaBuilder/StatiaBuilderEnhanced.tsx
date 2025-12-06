@@ -100,7 +100,6 @@ export function StatiaBuilderEnhanced({ mode, fixedAgencySlug }: StatiaBuilderEn
   // CRITICAL: Initialiser selectedAgency dès que userAgencySlug est disponible
   useEffect(() => {
     if (selectedAgency === null && userAgencySlug) {
-      console.log(`[StatiaBuilder] INIT: Setting selectedAgency = ${userAgencySlug}`);
       setSelectedAgency(userAgencySlug);
     }
   }, [userAgencySlug, selectedAgency]);
@@ -210,7 +209,6 @@ export function StatiaBuilderEnhanced({ mode, fixedAgencySlug }: StatiaBuilderEn
             <AgencySelector 
               value={selectedAgency as string}
               onChange={(slug) => {
-                console.log(`[StatiaBuilder] ADMIN: Changing agency from ${selectedAgency} to ${slug}`);
                 // ADMIN: Vider TOUT le cache avant de changer d'agence
                 clearProxyCache();
                 setSelectedAgency(slug);

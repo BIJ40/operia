@@ -94,7 +94,7 @@ export default function ApogeeTicketsListPage() {
 
 function ApogeeTicketsListContent({ roleInfo }: { roleInfo: NonNullable<ReturnType<typeof useMyTicketRole>['data']> }) {
   const navigate = useNavigate();
-  const { canViewKanban, canImport, canManage, ticketRole, isAdmin } = roleInfo;
+  const { canViewKanban, canImport, canManage, ticketRole, isPlatformAdmin } = roleInfo;
 
   // Utiliser les filtres persistés (localStorage + URL pour le ticket sélectionné)
   const { 
@@ -134,7 +134,7 @@ function ApogeeTicketsListContent({ roleInfo }: { roleInfo: NonNullable<ReturnTy
   const allowedTransitionsMap = useMemo(() => {
     const map: Record<string, string[]> = {};
     statuses.forEach(status => {
-      if (isAdmin) {
+      if (isPlatformAdmin) {
         // Admin peut tout faire
         map[status.id] = statuses.filter(s => s.id !== status.id).map(s => s.id);
       } else if (ticketRole) {
@@ -147,7 +147,7 @@ function ApogeeTicketsListContent({ roleInfo }: { roleInfo: NonNullable<ReturnTy
       }
     });
     return map;
-  }, [allTransitions, statuses, ticketRole, isAdmin]);
+  }, [allTransitions, statuses, ticketRole, isPlatformAdmin]);
 
   const handleTicketClick = (ticket: ApogeeTicket) => {
     setSelectedTicketId(ticket.id);

@@ -9,7 +9,7 @@ export type TicketRole = 'developer' | 'tester' | 'franchiseur';
 // Type unifié pour le rôle ticketing utilisateur
 export interface TicketRoleInfo {
   canUseTicketing: boolean;
-  isAdmin: boolean;
+  isPlatformAdmin: boolean;
   isSupport: boolean;
   ticketRole: TicketRole | null;
   scope: 'none' | 'agency' | 'network';
@@ -23,7 +23,7 @@ export interface TicketRoleInfo {
 // Objet par défaut pour les cas d'erreur ou non-authentifié
 const DEFAULT_TICKET_ROLE_INFO: TicketRoleInfo = {
   canUseTicketing: false,
-  isAdmin: false,
+  isPlatformAdmin: false,
   isSupport: false,
   ticketRole: null,
   scope: 'none',
@@ -138,7 +138,7 @@ export function useMyTicketRole() {
         if (isN5Plus) {
           return {
             canUseTicketing: true,
-            isAdmin: true,
+            isPlatformAdmin: true,
             isSupport: true,
             ticketRole,
             scope: 'network',
@@ -151,7 +151,7 @@ export function useMyTicketRole() {
         // Cas 4: Module activé, utilisateur standard - appliquer les options
         return {
           canUseTicketing: true,
-          isAdmin: false,
+          isPlatformAdmin: false,
           isSupport: ticketRole === 'franchiseur',
           ticketRole,
           scope: 'agency',

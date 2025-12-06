@@ -5,10 +5,12 @@ import { useAuth } from "@/contexts/AuthContext";
 
 function FranchiseurLayoutContent() {
   const { franchiseurRole, isLoading } = useFranchiseur();
-  const { isAdmin } = useAuth();
+  const { hasGlobalRole } = useAuth();
+  
+  const isPlatformAdmin = hasGlobalRole('platform_admin');
 
   // Redirect if no franchiseur role and not admin
-  if (!isLoading && !franchiseurRole && !isAdmin) {
+  if (!isLoading && !franchiseurRole && !isPlatformAdmin) {
     return <Navigate to="/" replace />;
   }
 
@@ -26,7 +28,9 @@ function FranchiseurLayoutContent() {
 }
 
 export default function FranchiseurLayout() {
-  const { user, isFranchiseur, isAdmin, isAuthLoading } = useAuth();
+  const { user, isFranchiseur, hasGlobalRole, isAuthLoading } = useAuth();
+  
+  const isPlatformAdmin = hasGlobalRole('platform_admin');
 
   if (isAuthLoading) {
     return (
@@ -36,7 +40,7 @@ export default function FranchiseurLayout() {
     );
   }
 
-  if (!user || (!isFranchiseur && !isAdmin)) {
+  if (!user || (!isFranchiseur && !isPlatformAdmin)) {
     return <Navigate to="/" replace />;
   }
 

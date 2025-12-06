@@ -73,10 +73,8 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
     queryKey: ['apogee-preview-data', agencySlug, Date.now().toString().slice(0, -4)], // Force refresh every 10s
     queryFn: async () => {
       if (!agencySlug) {
-        console.warn('[MetricPreview] No agencySlug provided, skipping data load');
         return null;
       }
-      console.log(`[MetricPreview] ===== LOADING DATA FOR AGENCY: ${agencySlug} =====`);
       
       // CRITICAL: Appeler chaque endpoint INDIVIDUELLEMENT avec agencySlug EXPLICITE
       // pour éviter tout problème de cache ou de fallback
@@ -89,8 +87,6 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
         apogeeProxy.getDevis({ agencySlug, skipCache: true }),
         apogeeProxy.getInterventionsCreneaux({ agencySlug, skipCache: true }),
       ]);
-      
-      console.log(`[MetricPreview] Loaded for ${agencySlug}: ${factures?.length || 0} factures, ${projects?.length || 0} projects`);
       
       return { users, clients, projects, interventions, factures, devis, creneaux };
     },

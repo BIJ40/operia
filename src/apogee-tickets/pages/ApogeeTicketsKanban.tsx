@@ -94,7 +94,7 @@ export default function ApogeeTicketsKanbanPage() {
 
 // Composant interne avec le contenu du Kanban
 function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) {
-  const { isAdmin, isSupport, ticketRole, canManage, canImport, canViewKanban } = roleInfo;
+  const { isPlatformAdmin, isSupport, ticketRole, canManage, canImport, canViewKanban } = roleInfo;
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: recentTickets = [] } = useMyRecentlyModifiedTickets(5);
@@ -422,7 +422,7 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          {isAdmin && (
+          {isPlatformAdmin && (
             <>
               <Link to={ROUTES.projects.permissions}>
                 <Button variant="outline" size="sm">

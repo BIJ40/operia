@@ -122,7 +122,6 @@ export function useTechPlanning(): UseTechPlanningResult {
         .eq('user_id', user.id)
         .single();
       
-      console.log('[TechPlanning] Collaborator data:', data);
       return data;
     },
     enabled: !!user?.id,
@@ -143,7 +142,6 @@ export function useTechPlanning(): UseTechPlanningResult {
       
       // Si les champs sont remplis dans profiles, les utiliser
       if (profilesData?.first_name && profilesData?.last_name) {
-        console.log('[TechPlanning] Profile from DB:', profilesData);
         return profilesData;
       }
       
@@ -153,7 +151,6 @@ export function useTechPlanning(): UseTechPlanningResult {
         first_name: userMeta?.first_name || profilesData?.first_name || '',
         last_name: userMeta?.last_name || profilesData?.last_name || '',
       };
-      console.log('[TechPlanning] Profile from user_metadata:', fallbackData);
       return fallbackData;
     },
     enabled: !!user?.id && !collaboratorData?.apogee_user_id,
@@ -186,19 +183,11 @@ export function useTechPlanning(): UseTechPlanningResult {
   const apogeeUserId = useMemo(() => {
     // 1. Utiliser le lien direct si disponible
     if (collaboratorData?.apogee_user_id) {
-      console.log('[TechPlanning] Using direct apogee_user_id from collaborators:', collaboratorData.apogee_user_id);
       return collaboratorData.apogee_user_id;
     }
     
     // 2. Fallback: matcher par nom
     if (!profileData?.first_name || !profileData?.last_name || !apiData?.users) {
-      console.log('[TechPlanning] Missing data for matching:', {
-        hasCollaborator: !!collaboratorData,
-        apogeeUserIdFromCollab: collaboratorData?.apogee_user_id,
-        firstName: profileData?.first_name,
-        lastName: profileData?.last_name,
-        usersCount: apiData?.users?.length || 0
-      });
       return null;
     }
     
@@ -207,17 +196,6 @@ export function useTechPlanning(): UseTechPlanningResult {
       profileData.first_name,
       profileData.last_name
     );
-    
-    console.log('[TechPlanning] Apogée user matching by name:', {
-      searchFirstName: profileData.first_name,
-      searchLastName: profileData.last_name,
-      foundApogeeUserId: foundId,
-      availableUsers: apiData.users.slice(0, 5).map((u: any) => ({
-        id: u.id,
-        firstname: u.firstname,
-        name: u.name
-      }))
-    });
     
     return foundId;
   }, [collaboratorData, profileData, apiData?.users]);
