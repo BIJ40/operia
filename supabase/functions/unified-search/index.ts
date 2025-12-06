@@ -343,7 +343,7 @@ serve(async (req) => {
           unit: metricId.includes('taux') ? '%' : '€',
         },
         agencySlug: agencySlug,
-        agencyName: agencySlug ? agencySlug.toUpperCase() : 'RÉSEAU',
+        agencyName: agencySlug && agencySlug.length > 0 ? agencySlug.toUpperCase() : undefined,
         computedAt: new Date().toISOString(),
       };
 
