@@ -14,6 +14,113 @@ export type Database = {
   }
   public: {
     Tables: {
+      agency_commercial_profile: {
+        Row: {
+          agence_nom_long: string | null
+          agency_id: string
+          baseline: string | null
+          created_at: string | null
+          date_creation: string | null
+          description_equipe: string | null
+          email_contact: string | null
+          id: string
+          logo_agence_url: string | null
+          nb_assistantes: number | null
+          nb_techniciens: number | null
+          phone_contact: string | null
+          photo_equipe_url: string | null
+          photo_lien_suivi_url: string | null
+          photo_realisation1_apres_url: string | null
+          photo_realisation1_avant_url: string | null
+          photo_realisation2_apres_url: string | null
+          photo_realisation2_avant_url: string | null
+          photo_realisation3_apres_url: string | null
+          photo_realisation3_avant_url: string | null
+          photo_temoignage1_url: string | null
+          photo_temoignage2_url: string | null
+          rang_agence: string | null
+          texte_comment_ca_se_passe: string | null
+          texte_nos_competences: string | null
+          texte_nos_engagements: string | null
+          texte_nos_valeurs: string | null
+          texte_qui_sommes_nous: string | null
+          updated_at: string | null
+          zones_intervention: string | null
+        }
+        Insert: {
+          agence_nom_long?: string | null
+          agency_id: string
+          baseline?: string | null
+          created_at?: string | null
+          date_creation?: string | null
+          description_equipe?: string | null
+          email_contact?: string | null
+          id?: string
+          logo_agence_url?: string | null
+          nb_assistantes?: number | null
+          nb_techniciens?: number | null
+          phone_contact?: string | null
+          photo_equipe_url?: string | null
+          photo_lien_suivi_url?: string | null
+          photo_realisation1_apres_url?: string | null
+          photo_realisation1_avant_url?: string | null
+          photo_realisation2_apres_url?: string | null
+          photo_realisation2_avant_url?: string | null
+          photo_realisation3_apres_url?: string | null
+          photo_realisation3_avant_url?: string | null
+          photo_temoignage1_url?: string | null
+          photo_temoignage2_url?: string | null
+          rang_agence?: string | null
+          texte_comment_ca_se_passe?: string | null
+          texte_nos_competences?: string | null
+          texte_nos_engagements?: string | null
+          texte_nos_valeurs?: string | null
+          texte_qui_sommes_nous?: string | null
+          updated_at?: string | null
+          zones_intervention?: string | null
+        }
+        Update: {
+          agence_nom_long?: string | null
+          agency_id?: string
+          baseline?: string | null
+          created_at?: string | null
+          date_creation?: string | null
+          description_equipe?: string | null
+          email_contact?: string | null
+          id?: string
+          logo_agence_url?: string | null
+          nb_assistantes?: number | null
+          nb_techniciens?: number | null
+          phone_contact?: string | null
+          photo_equipe_url?: string | null
+          photo_lien_suivi_url?: string | null
+          photo_realisation1_apres_url?: string | null
+          photo_realisation1_avant_url?: string | null
+          photo_realisation2_apres_url?: string | null
+          photo_realisation2_avant_url?: string | null
+          photo_realisation3_apres_url?: string | null
+          photo_realisation3_avant_url?: string | null
+          photo_temoignage1_url?: string | null
+          photo_temoignage2_url?: string | null
+          rang_agence?: string | null
+          texte_comment_ca_se_passe?: string | null
+          texte_nos_competences?: string | null
+          texte_nos_engagements?: string | null
+          texte_nos_valeurs?: string | null
+          texte_qui_sommes_nous?: string | null
+          updated_at?: string | null
+          zones_intervention?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_commercial_profile_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agency_rh_roles: {
         Row: {
           agency_id: string
