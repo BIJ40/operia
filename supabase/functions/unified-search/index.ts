@@ -395,8 +395,20 @@ function aiSearchRouteV3(
   const corrections: string[] = [];
   const routingSource = 'nlv3';
   
-  // 1. Determine query type
-  let queryType: 'stats' | 'doc' = isStatsQuery(extracted) ? 'stats' : 'doc';
+  // 1. Determine query type - PRIORITIZE DOC for "comment/pourquoi/procedure" questions
+  const hasDocIntent = DOC_KEYWORDS.some(k => tokenized.normalized.includes(k));
+  const hasStatsIntent = isStatsQuery(extracted);
+  
+  // If query has explicit doc keywords like "comment", force doc mode
+  let queryType: 'stats' | 'doc';
+  if (hasDocIntent) {
+    queryType = 'doc';
+    if (hasStatsIntent) {
+      corrections.push('type:stats→doc (doc_keyword_priority)');
+    }
+  } else {
+    queryType = hasStatsIntent ? 'stats' : 'doc';
+  }
   
   // 2. Permissions: N0/N1 cannot access stats
   if (queryType === 'stats' && context.roleLevel < 2) {
