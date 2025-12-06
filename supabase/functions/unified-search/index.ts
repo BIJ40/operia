@@ -376,40 +376,59 @@ async function loadUsersForAgency(proxyUrl: string, authHeader: string, agencySl
 
 async function loadClientsForAgency(proxyUrl: string, authHeader: string, agencySlug: string): Promise<ApporteurEntity[]> {
   try {
-    const res = await fetch(proxyUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authHeader }, body: JSON.stringify({ endpoint: 'apiGetClients', agencySlug }) });
+    // ═══════════════════════════════════════════════════════════════
+    // STRATÉGIE: Identifier les vrais apporteurs via commanditaireId des projets
+    // L'API apiGetClients n'a pas de champ "type", donc on doit croiser avec les projets
+    // ═══════════════════════════════════════════════════════════════
+    
+    // 1. Charger les projets pour extraire les commanditaireId uniques
+    const projectsRes = await fetch(proxyUrl, { 
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json', 'Authorization': authHeader }, 
+      body: JSON.stringify({ endpoint: 'apiGetProjects', agencySlug }) 
+    });
+    
+    const commanditaireIds = new Set<number>();
+    if (projectsRes.ok) {
+      const projectsJson = await projectsRes.json();
+      const projects = projectsJson.data || [];
+      for (const p of projects) {
+        const cmdId = p.data?.commanditaireId;
+        if (cmdId && typeof cmdId === 'number' && cmdId > 0) {
+          commanditaireIds.add(cmdId);
+        }
+      }
+    }
+    
+    console.log(`[loadClientsForAgency] Found ${commanditaireIds.size} unique commanditaireIds from projects`);
+    
+    // 2. Charger tous les clients
+    const res = await fetch(proxyUrl, { 
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json', 'Authorization': authHeader }, 
+      body: JSON.stringify({ endpoint: 'apiGetClients', agencySlug }) 
+    });
     if (!res.ok) return [];
     const json = await res.json();
     const rawClients = json.data || [];
     
-    // ═══════════════════════════════════════════════════════════════
-    // FILTRAGE CRITIQUE: Ne garder QUE les apporteurs (commanditaires)
-    // Un apporteur est identifié par type = "commanditaire" (pas "particulier")
-    // ═══════════════════════════════════════════════════════════════
-    const apporteursOnly = rawClients.filter((c: any) => {
-      const clientType = (c.type || '').toLowerCase().trim();
-      // Exclure les particuliers, ne garder que les commanditaires/apporteurs
-      return clientType === 'commanditaire' || clientType === 'apporteur';
-    });
+    // 3. Filtrer: ne garder que les clients qui sont des commanditaires (apporteurs)
+    const apporteursOnly = rawClients.filter((c: any) => commanditaireIds.has(c.id));
     
-    console.log(`[loadClientsForAgency] Total clients: ${rawClients.length}, Apporteurs filtrés: ${apporteursOnly.length}`);
+    console.log(`[loadClientsForAgency] Total clients: ${rawClients.length}, Apporteurs (commanditaires): ${apporteursOnly.length}`);
     
     // Log sample pour debug
     if (apporteursOnly.length > 0) {
-      const sample = apporteursOnly.slice(0, 5);
+      const sample = apporteursOnly.slice(0, 10);
       console.log(`[loadClientsForAgency] Sample apporteurs:`, sample.map((c: any) => ({ 
         id: c.id, 
-        type: c.type,
-        name: c.name || c.raisonSociale || c.displayName,
+        nom: c.nom,
       })));
-    } else {
-      // Si aucun apporteur trouvé avec le filtre strict, log les types disponibles
-      const types = new Set(rawClients.map((c: any) => c.type || 'null').slice(0, 50));
-      console.log(`[loadClientsForAgency] No apporteurs found. Client types in data:`, [...types]);
     }
     
     // Mapping pour les apporteurs
     return apporteursOnly.map((c: any) => {
-      const name = c.name || c.raisonSociale || c.displayName || c.societe || c.company || c.nom || c.label || '';
+      const name = c.nom || c.name || c.raisonSociale || c.displayName || c.societe || c.company || c.label || '';
       return { id: c.id, name, company: c.company || c.societe || '' };
     });
   } catch (e) { 
