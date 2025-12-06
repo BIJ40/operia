@@ -49,7 +49,6 @@ import { ROUTES } from '@/config/routes';
 import { logError } from '@/lib/logger';
 import { cn } from '@/lib/utils';
 import { MessagingWidget } from '@/components/messaging';
-import { ChatbotWidget } from '@/components/chatbot/ChatbotWidget';
 import { RHNotificationBadge } from '@/components/rh/RHNotificationBadge';
 
 // Mapping des noms d'icônes vers les composants
@@ -358,24 +357,19 @@ export function UnifiedHeader() {
         {/* Subtitle bar - below main header */}
         {displaySubtitle && (
           <div 
-            className={`px-4 py-1 border-t border-border/50 ${subtitleBgClass} grid grid-cols-[auto_1fr_auto] items-center gap-4`}
+            className={`px-4 py-1 border-t border-border/50 ${subtitleBgClass} grid grid-cols-[1fr_auto] items-center gap-4`}
           >
-            <ChatbotWidget />
-            <p className={`${subtitleTextSizeClass} text-muted-foreground truncate text-center`}>
+            <p className={`${subtitleTextSizeClass} text-muted-foreground truncate`}>
               {displaySubtitle}
             </p>
             {canAccessMessaging && <MessagingWidget />}
-            {!canAccessMessaging && <div />}
           </div>
         )}
         
         {/* Show widgets even if no subtitle */}
-        {!displaySubtitle && (
-          <div className="px-4 py-1 border-t border-border/50 bg-background grid grid-cols-[auto_1fr_auto] items-center gap-4">
-            <ChatbotWidget />
-            <div /> {/* Empty center */}
-            {canAccessMessaging && <MessagingWidget />}
-            {!canAccessMessaging && <div />}
+        {!displaySubtitle && canAccessMessaging && (
+          <div className="px-4 py-1 border-t border-border/50 bg-background flex justify-end">
+            <MessagingWidget />
           </div>
         )}
       </header>

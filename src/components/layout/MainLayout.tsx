@@ -5,7 +5,6 @@ import { UnifiedHeader } from './UnifiedHeader';
 import { PublicLanding } from './PublicLanding';
 import { LoginDialog } from '@/components/LoginDialog';
 import { ImageModal } from '@/components/ImageModal';
-import { ChatbotTestProvider } from '@/components/Chatbot';
 import { AiUnifiedProvider, AiUnifiedBar } from '@/components/ai';
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
@@ -55,29 +54,27 @@ export function MainLayout({
   }
 
   return (
-    <ChatbotTestProvider>
-      <AiUnifiedProvider>
-        <SidebarProvider>
-          <div className={`min-h-screen w-full flex bg-background ${isImpersonating ? 'pt-10' : ''}`}>
-            {showSidebar && <UnifiedSidebar />}
+    <AiUnifiedProvider>
+      <SidebarProvider>
+        <div className={`min-h-screen w-full flex bg-background ${isImpersonating ? 'pt-10' : ''}`}>
+          {showSidebar && <UnifiedSidebar />}
+          
+          <div className="flex-1 flex flex-col min-h-screen min-w-0">
+            {showHeader && <UnifiedHeader />}
             
-            <div className="flex-1 flex flex-col min-h-screen min-w-0">
-              {showHeader && <UnifiedHeader />}
-              
-              {/* Barre IA unifiée 2026 - toujours visible */}
-              <AiUnifiedBar />
-              
-              {/* P2 FIX: id pour skip link accessibilité */}
-              <main id="main-content" className="flex-1 overflow-auto p-6" role="main">
-                {children}
-              </main>
-            </div>
+            {/* Barre IA unifiée 2026 - toujours visible */}
+            <AiUnifiedBar />
+            
+            {/* P2 FIX: id pour skip link accessibilité */}
+            <main id="main-content" className="flex-1 overflow-auto p-6" role="main">
+              {children}
+            </main>
           </div>
+        </div>
 
-          <ImageModal />
-          <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
-        </SidebarProvider>
-      </AiUnifiedProvider>
-    </ChatbotTestProvider>
+        <ImageModal />
+        <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
+      </SidebarProvider>
+    </AiUnifiedProvider>
   );
 }
