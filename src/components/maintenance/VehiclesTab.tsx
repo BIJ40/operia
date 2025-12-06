@@ -24,8 +24,9 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, AlertTriangle, Clock } from 'lucide-react';
+import { Plus, AlertTriangle, Clock, QrCode } from 'lucide-react';
 import { VehicleFormDialog } from './VehicleFormDialog';
+import { QrCodeModal } from './QrCodeModal';
 
 export function VehiclesTab() {
   const [filters, setFilters] = useState<FleetVehiclesFilters>({
@@ -37,6 +38,7 @@ export function VehiclesTab() {
   });
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<FleetVehicle | undefined>(undefined);
+  const [qrVehicle, setQrVehicle] = useState<FleetVehicle | null>(null);
 
   const { data: vehicles = [], isLoading } = useFleetVehicles(undefined, filters);
 
@@ -145,17 +147,19 @@ export function VehiclesTab() {
                   <th className="px-4 py-2 text-left font-medium">Prochaine révision</th>
                   <th className="px-4 py-2 text-left font-medium">Statut</th>
                   <th className="px-4 py-2 text-left font-medium">Affecté à</th>
+                  <th className="px-4 py-2 text-left font-medium w-12">QR</th>
                 </tr>
               </thead>
               <tbody>
                 {vehicles.map((vehicle) => (
                   <VehicleRow 
-                    key={vehicle.id} 
+                    key={vehicle.id}
                     vehicle={vehicle} 
                     onEdit={(v) => {
                       setEditingVehicle(v);
                       setIsFormOpen(true);
                     }}
+                    onShowQr={(v) => setQrVehicle(v)}
                   />
                 ))}
               </tbody>
@@ -169,6 +173,16 @@ export function VehiclesTab() {
         onOpenChange={setIsFormOpen}
         vehicle={editingVehicle}
       />
+
+      {qrVehicle && qrVehicle.qr_token && (
+        <QrCodeModal
+          open={!!qrVehicle}
+          onOpenChange={(open) => !open && setQrVehicle(null)}
+          assetType="vehicle"
+          assetName={qrVehicle.name}
+          qrToken={qrVehicle.qr_token}
+        />
+      )}
     </Card>
   );
 }
@@ -193,9 +207,10 @@ function VehiclesSkeleton() {
 interface VehicleRowProps {
   vehicle: FleetVehicle;
   onEdit: (vehicle: FleetVehicle) => void;
+  onShowQr: (vehicle: FleetVehicle) => void;
 }
 
-function VehicleRow({ vehicle, onEdit }: VehicleRowProps) {
+function VehicleRow({ vehicle, onEdit, onShowQr }: VehicleRowProps) {
   const ctLabel = vehicle.ct_due_at
     ? new Date(vehicle.ct_due_at).toLocaleDateString('fr-FR')
     : '—';
@@ -238,6 +253,20 @@ function VehicleRow({ vehicle, onEdit }: VehicleRowProps) {
         {vehicle.collaborator
           ? `${vehicle.collaborator.first_name} ${vehicle.collaborator.last_name}`
           : <span className="text-muted-foreground">Non affecté</span>}
+      </td>
+      <td className="px-4 py-2 align-middle">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={(e) => {
+            e.stopPropagation();
+            onShowQr(vehicle);
+          }}
+          title="Afficher le QR Code"
+        >
+          <QrCode className="h-4 w-4" />
+        </Button>
       </td>
     </tr>
   );
