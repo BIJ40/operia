@@ -2,7 +2,7 @@
  * Composant liste des dossiers SAV avec gestion du coût et confirmation
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Check, X, AlertTriangle, Euro, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,8 +24,14 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { useSavOverrides, SavOverride } from "@/hooks/use-sav-overrides";
+import { useSavOverrides } from "@/hooks/use-sav-overrides";
 import { formatEuros, formatUniverseLabel } from "@/apogee-connect/utils/formatters";
+import { TechnicienMultiSelect } from "./TechnicienMultiSelect";
+
+export interface SAVTechnicien {
+  id: number;
+  name: string;
+}
 
 export interface SAVDossier {
   projectId: number;
@@ -36,8 +42,9 @@ export interface SAVDossier {
   apporteurNom: string;
   apporteurType: string;
   nbInterventionsSAV: number;
-  caSAVAuto: number; // CA calculé automatiquement
+  caSAVAuto: number;
   dateSAV: string;
+  techniciensAuto: SAVTechnicien[]; // Techniciens détectés automatiquement
 }
 
 interface SAVDossierListProps {
@@ -58,6 +65,23 @@ export function SAVDossierList({ dossiers, isLoading = false }: SAVDossierListPr
   
   const displayedATraiter = showAll ? dossiersATraiter : dossiersATraiter.slice(0, 10);
   const displayedTraites = showAll ? dossiersTraites : dossiersTraites.slice(0, 10);
+
+  // Construire la liste unique de tous les techniciens depuis tous les dossiers
+  const allTechniciens = useMemo(() => {
+    const techMap = new Map<number, SAVTechnicien>();
+    for (const d of dossiers) {
+      for (const t of d.techniciensAuto) {
+        if (!techMap.has(t.id)) {
+          techMap.set(t.id, t);
+        }
+      }
+    }
+    return Array.from(techMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [dossiers]);
+
+  const handleTechniciensChange = (projectId: number, techIds: number[] | null) => {
+    upsertOverride({ project_id: projectId, techniciens_override: techIds });
+  };
 
   const handleConfirmSAV = (projectId: number, confirmed: boolean) => {
     upsertOverride({ project_id: projectId, is_confirmed_sav: confirmed });
@@ -156,8 +180,8 @@ export function SAVDossierList({ dossiers, isLoading = false }: SAVDossierListPr
           <TableRow>
             <TableHead>Dossier</TableHead>
             <TableHead>Client</TableHead>
+            <TableHead>Technicien(s)</TableHead>
             <TableHead>Univers</TableHead>
-            <TableHead>Apporteur</TableHead>
             <TableHead className="text-center">Statut</TableHead>
             <TableHead className="text-right">Coût SAV</TableHead>
             <TableHead className="text-center">Actions</TableHead>
@@ -183,8 +207,17 @@ export function SAVDossierList({ dossiers, isLoading = false }: SAVDossierListPr
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="max-w-[150px] truncate">
+                <TableCell className="max-w-[120px] truncate">
                   {dossier.clientName}
+                </TableCell>
+                <TableCell>
+                  <TechnicienMultiSelect
+                    techniciensAuto={dossier.techniciensAuto}
+                    techniciensOverride={override?.techniciens_override ?? null}
+                    allTechniciens={allTechniciens}
+                    onSave={(ids) => handleTechniciensChange(dossier.projectId, ids)}
+                    disabled={isUpdating}
+                  />
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
@@ -199,9 +232,6 @@ export function SAVDossierList({ dossiers, isLoading = false }: SAVDossierListPr
                       </Badge>
                     )}
                   </div>
-                </TableCell>
-                <TableCell>
-                  <span className="text-sm">{dossier.apporteurNom}</span>
                 </TableCell>
                 <TableCell className="text-center">
                   {getStatusBadge(dossier.projectId)}

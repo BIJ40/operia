@@ -101,12 +101,13 @@ export function useStatiaSAVMetrics() {
       ).length || (typeof nbSav.value === "number" ? nbSav.value : 0);
 
       // Charger les données brutes pour construire la liste des dossiers
-      const [projects, clients, interventions] = await Promise.all([
+      const [projects, clients, interventions, users] = await Promise.all([
         services.getProjects(agencySlug, dateRange),
         services.getClients(agencySlug),
         services.getInterventions(agencySlug, dateRange),
+        services.getUsers(agencySlug),
       ]);
-      const data = { projects: projects || [], clients: clients || [], interventions: interventions || [] };
+      const data = { projects: projects || [], clients: clients || [], interventions: interventions || [], users: users || [] };
 
       // Construire la liste des dossiers SAV avec détails
       const dossiersSAV = buildDossiersSAV(data, overridesMap);
@@ -140,7 +141,7 @@ function buildDossiersSAV(
   data: any,
   overridesMap: Map<number, any>
 ): SAVDossier[] {
-  const { projects = [], clients = [], interventions = [] } = data;
+  const { projects = [], clients = [], interventions = [], users = [] } = data;
 
   // Index clients par ID pour lookup rapide
   const clientsById = new Map<string, any>();
@@ -148,8 +149,16 @@ function buildDossiersSAV(
     clientsById.set(String(c.id), c);
   }
 
-  // Compter interventions SAV par projet
-  const savInterventionsByProject = new Map<string, number>();
+  // Index users par ID pour lookup rapide
+  const usersById = new Map<number, { id: number; name: string }>();
+  for (const u of users) {
+    const name = [u.firstname, u.lastname].filter(Boolean).join(" ") || u.name || `Tech ${u.id}`;
+    usersById.set(Number(u.id), { id: Number(u.id), name });
+  }
+
+  // Collecter interventions SAV par projet avec techniciens
+  const savDataByProject = new Map<string, { count: number; techniciens: Set<number> }>();
+  
   for (const intervention of interventions) {
     const type2 = (intervention.data?.type2 || intervention.type2 || "").toLowerCase();
     const type = (intervention.data?.type || intervention.type || "").toLowerCase();
@@ -157,7 +166,28 @@ function buildDossiersSAV(
 
     if (type2.includes("sav") || type.includes("sav") || pictos.includes("SAV")) {
       const pid = String(intervention.projectId || intervention.project_id);
-      savInterventionsByProject.set(pid, (savInterventionsByProject.get(pid) || 0) + 1);
+      
+      if (!savDataByProject.has(pid)) {
+        savDataByProject.set(pid, { count: 0, techniciens: new Set() });
+      }
+      const entry = savDataByProject.get(pid)!;
+      entry.count++;
+      
+      // Extraire les techniciens de l'intervention
+      const userId = intervention.userId || intervention.user_id;
+      if (userId) entry.techniciens.add(Number(userId));
+      
+      // Techniciens des visites
+      const visites = intervention.visites || intervention.data?.visites || [];
+      for (const visite of visites) {
+        const visitUserId = visite.userId || visite.user_id;
+        if (visitUserId) entry.techniciens.add(Number(visitUserId));
+        
+        const usersIds = visite.usersIds || visite.users_ids || [];
+        for (const uid of usersIds) {
+          entry.techniciens.add(Number(uid));
+        }
+      }
     }
   }
 
@@ -168,9 +198,6 @@ function buildDossiersSAV(
     if (!isSavProject(project)) continue;
 
     const projectId = project.id;
-    const override = overridesMap.get(projectId);
-
-    // Si explicitement infirmé, ne pas inclure dans les stats (mais toujours dans la liste pour affichage)
     const d = project.data || {};
 
     // Extraction données
@@ -196,10 +223,21 @@ function buildDossiersSAV(
       project.created_at ||
       "";
 
-    const nbInterventionsSAV = savInterventionsByProject.get(String(projectId)) || 0;
+    const savData = savDataByProject.get(String(projectId));
+    const nbInterventionsSAV = savData?.count || 0;
+    
+    // Construire la liste des techniciens auto-détectés
+    const techniciensAuto: Array<{ id: number; name: string }> = [];
+    if (savData) {
+      for (const techId of savData.techniciens) {
+        const user = usersById.get(techId);
+        if (user) {
+          techniciensAuto.push(user);
+        }
+      }
+    }
 
-    // CA SAV auto-estimé (35% du CA parent comme estimation par défaut)
-    const caSAVAuto = 0; // Sera calculé ailleurs
+    const caSAVAuto = 0;
 
     result.push({
       projectId,
@@ -212,6 +250,7 @@ function buildDossiersSAV(
       nbInterventionsSAV,
       caSAVAuto,
       dateSAV: typeof dateSAV === "string" ? dateSAV.split("T")[0] : "",
+      techniciensAuto,
     });
   }
 

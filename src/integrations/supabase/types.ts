@@ -3352,6 +3352,7 @@ export type Database = {
           is_confirmed_sav: boolean | null
           notes: string | null
           project_id: number
+          techniciens_override: number[] | null
           updated_at: string
         }
         Insert: {
@@ -3364,6 +3365,7 @@ export type Database = {
           is_confirmed_sav?: boolean | null
           notes?: string | null
           project_id: number
+          techniciens_override?: number[] | null
           updated_at?: string
         }
         Update: {
@@ -3376,6 +3378,7 @@ export type Database = {
           is_confirmed_sav?: boolean | null
           notes?: string | null
           project_id?: number
+          techniciens_override?: number[] | null
           updated_at?: string
         }
         Relationships: [
