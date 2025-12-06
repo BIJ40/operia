@@ -83,10 +83,13 @@ export function UnifiedSearchProvider({ children }: UnifiedSearchProviderProps) 
         return;
       }
 
+      // Transform edge function response to frontend format
+      const transformedResult = transformEdgeResponse(data);
+
       setState(prev => ({ 
         ...prev, 
         isLoading: false, 
-        result: data as UnifiedSearchResult,
+        result: transformedResult,
         isOpen: false, // Fermer la barre d'input
       }));
 
@@ -100,6 +103,105 @@ export function UnifiedSearchProvider({ children }: UnifiedSearchProviderProps) 
       toast.error('Erreur inattendue');
     }
   }, []);
+
+  // Transform edge function response to match frontend types
+  function transformEdgeResponse(data: any): UnifiedSearchResult | null {
+    if (!data) return null;
+
+    // Handle error responses
+    if (data.type === 'error' || data.type === 'access_denied') {
+      return {
+        type: 'fallback',
+        message: data.error?.message || 'Erreur lors de la recherche.',
+      };
+    }
+
+    // Handle ambiguous responses
+    if (data.type === 'ambiguous') {
+      return {
+        type: 'fallback',
+        message: data.result?.message || 'Requête ambiguë. Veuillez préciser votre question.',
+      };
+    }
+
+    // Handle stat responses
+    if (data.type === 'stat') {
+      const edgeResult = data.result || {};
+      const interpretation = data.interpretation || {};
+      
+      return {
+        type: 'stat',
+        metricId: edgeResult.metricId || interpretation.metricId || '',
+        metricLabel: edgeResult.label || interpretation.metricLabel || '',
+        filters: {
+          univers: edgeResult.filters?.univers,
+          periode: edgeResult.period ? {
+            start: edgeResult.period.from,
+            end: edgeResult.period.to,
+            label: edgeResult.period.label,
+            isDefault: edgeResult.period.isDefault ?? interpretation.period?.isDefault ?? false,
+          } : undefined,
+          technicien: edgeResult.filters?.technicien,
+        },
+        result: {
+          value: edgeResult.value ?? 0,
+          topItem: edgeResult.topItem,
+          ranking: edgeResult.ranking,
+          unit: edgeResult.unit,
+        },
+        agencySlug: data.agencySlug || '',
+        agencyName: data.agencyName,
+        computedAt: data.computedAt || new Date().toISOString(),
+        parsed: {
+          metricId: interpretation.metricId || edgeResult.metricId,
+          metricLabel: interpretation.metricLabel || edgeResult.label,
+          dimension: interpretation.dimension || 'global',
+          intentType: interpretation.intentType || 'valeur',
+          univers: interpretation.filters?.univers,
+          period: interpretation.period ? {
+            start: interpretation.period.from,
+            end: interpretation.period.to,
+            label: interpretation.period.label,
+            isDefault: interpretation.period.isDefault ?? edgeResult.period?.isDefault ?? false,
+          } : undefined,
+          confidence: interpretation.confidence ?? 0.5,
+          minRole: 2,
+          isRanking: !!edgeResult.ranking,
+          debug: {
+            detectedDimension: interpretation.dimension || 'global',
+            detectedIntent: interpretation.intentType || 'valeur',
+            detectedUnivers: interpretation.filters?.univers || null,
+            detectedPeriod: interpretation.period?.label || null,
+            routingPath: interpretation.corrections?.join(' → ') || 'direct',
+          },
+        },
+        accessDenied: false,
+      };
+    }
+
+    // Handle doc responses
+    if (data.type === 'doc') {
+      const docResults = data.result?.results || data.result || [];
+      return {
+        type: 'doc',
+        results: Array.isArray(docResults) ? docResults : [],
+      };
+    }
+
+    // Handle action responses
+    if (data.type === 'action') {
+      return {
+        type: 'fallback',
+        message: 'Action détectée. Redirection en cours...',
+      };
+    }
+
+    // Fallback
+    return {
+      type: 'fallback',
+      message: 'Aucun résultat trouvé.',
+    };
+  }
 
   const value: UnifiedSearchContextValue = {
     ...state,
