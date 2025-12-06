@@ -1,14 +1,14 @@
 /**
  * Edge Function: unified-search
  * 
- * ORCHESTRATEUR V3 - Refonte NL Routing
+ * ORCHESTRATEUR V3.1 - Pipeline NLP structuré
  * 
- * Pipeline:
+ * Pipeline REFACTORÉ:
  * 1. Tokenisation (nlTokenizer)
- * 2. Extraction intent/dimension/features (nlIntentExtractor)
- * 3. Extraction période (nlPeriodExtractor)
- * 4. Scoring métriques (nlMetricScorer)
- * 5. Résolution entités
+ * 2. Chargement entités dynamiques (apporteurs/techniciens depuis Apogée)
+ * 3. Résolution entités AVANT le scoring (nlEntityResolver)
+ * 4. Parsing NL complet (nlQueryParser) → subject/operation/dimension
+ * 5. Résolution métrique par clé (subject:operation:dimension)
  * 6. Exécution StatIA
  */
 
@@ -21,6 +21,8 @@ import { tokenizeQuery, type TokenizedQuery } from './nlTokenizer.ts';
 import { extractIntentFromTokens, type ExtractedIntent } from './nlIntentExtractor.ts';
 import { extractPeriodFromTokens, type ParsedPeriod } from './nlPeriodExtractor.ts';
 import { selectBestMetric, hasMetricSignature, getMetricSignature, type MetricScore, type MetricSignature } from './nlMetricScorer.ts';
+import { buildEntityDictionary, findEntitiesInQuery, normalizeForMatching, type EntityDictionary, type ResolvedEntityFilters } from './nlEntityResolver.ts';
+import { parseNLQuery, resolveMetricFromParsed, type ParsedNLQuery } from './nlQueryParser.ts';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
@@ -849,60 +851,95 @@ serve(async (req) => {
     const conversationHistory = body.conversationHistory;
 
     // ══════════════════════════════════════════════════════════
-    // STEP 1: TOKENISATION (NL V3)
+    // STEP 1: TOKENISATION (NL V3.1)
     // ══════════════════════════════════════════════════════════
     const tokenized = tokenizeQuery(query);
     console.log(`[unified-search] Tokens: [${tokenized.tokens.join(', ')}]`);
     console.log(`[unified-search] Bigrams: [${tokenized.bigrams.join(', ')}]`);
 
     // ══════════════════════════════════════════════════════════
-    // STEP 2: EXTRACTION INTENT/DIMENSION/FEATURES (NL V3)
+    // STEP 2: CHARGEMENT ENTITÉS DYNAMIQUES (AVANT toute analyse)
     // ══════════════════════════════════════════════════════════
-    const extracted = extractIntentFromTokens(tokenized);
-    console.log(`[unified-search] Extracted: intent=${extracted.intent}, dimension=${extracted.dimension}, topic=${extracted.topic}`);
-    console.log(`[unified-search] Features: moyenne=${extracted.features.mentionsMoyenne}, classement=${extracted.features.mentionsClassement}, taux=${extracted.features.mentionsTaux}`);
+    const proxyUrl = `${supabaseUrl}/functions/v1/proxy-apogee`;
+    let entityDictionary: EntityDictionary = { apporteurs: [], techniciens: [], univers: [] };
+    if (agencySlug) {
+      const [usersRaw, clientsRaw] = await Promise.all([
+        loadUsersForAgency(proxyUrl, authHeader, agencySlug),
+        loadClientsForAgency(proxyUrl, authHeader, agencySlug)
+      ]);
+      // Construire le dictionnaire normalisé
+      entityDictionary = buildEntityDictionary(
+        clientsRaw.map(c => ({ id: c.id, name: c.name, company: c.company })),
+        usersRaw.map(u => ({ id: u.id, firstname: u.firstName, lastname: u.lastName }))
+      );
+      console.log(`[unified-search] Entity dictionary: ${entityDictionary.apporteurs.length} apporteurs, ${entityDictionary.techniciens.length} techniciens`);
+    }
 
     // ══════════════════════════════════════════════════════════
-    // STEP 3: EXTRACTION PÉRIODE (NL V3)
+    // STEP 3: RÉSOLUTION ENTITÉS AVANT LE SCORING (NOUVEAU!)
+    // ══════════════════════════════════════════════════════════
+    const normalizedQuery = normalizeForMatching(query);
+    const entityFilters = findEntitiesInQuery(normalizedQuery, entityDictionary);
+    console.log(`[unified-search] Entity resolution: dimension=${entityFilters.dimension}, apporteur=${entityFilters.apporteur?.name || 'none'}, technicien=${entityFilters.technicien?.name || 'none'}`);
+
+    // ══════════════════════════════════════════════════════════
+    // STEP 4: EXTRACTION PÉRIODE
     // ══════════════════════════════════════════════════════════
     const period = extractPeriodFromTokens(tokenized, now);
     console.log(`[unified-search] Period: ${period.label} (${period.from} → ${period.to}), isDefault=${period.isDefault}`);
 
     // ══════════════════════════════════════════════════════════
-    // STEP 4: ENTITY RESOLUTION (AVANT le scoring pour ajuster dimension)
+    // STEP 5: PARSING NL COMPLET → subject/operation/dimension
     // ══════════════════════════════════════════════════════════
-    const proxyUrl = `${supabaseUrl}/functions/v1/proxy-apogee`;
-    let resolvedEntities: ResolvedEntities = {};
-    if (agencySlug) {
-      const [technicians, apporteurs] = await Promise.all([loadUsersForAgency(proxyUrl, authHeader, agencySlug), loadClientsForAgency(proxyUrl, authHeader, agencySlug)]);
-      console.log(`[unified-search] Loaded ${technicians.length} technicians, ${apporteurs.length} apporteurs`);
-      resolvedEntities = resolveEntitiesFromQuery(query, technicians, apporteurs);
-      if (resolvedEntities.technicienId) console.log(`[unified-search] Resolved technician: ${resolvedEntities.technicienName}`);
-      if (resolvedEntities.apporteurId) console.log(`[unified-search] Resolved apporteur: ${resolvedEntities.apporteurName}`);
-    }
-    
+    const parsedNL = parseNLQuery(query, tokenized, period, entityFilters);
+    console.log(`[unified-search] Parsed NL: subject=${parsedNL.subject}, operation=${parsedNL.operation}, dimension=${parsedNL.dimension}`);
+    console.log(`[unified-search] Confidence: ${parsedNL.confidence}, debug: ${JSON.stringify(parsedNL.debug)}`);
+
     // ══════════════════════════════════════════════════════════
-    // STEP 4b: OVERRIDE DIMENSION based on resolved entities
-    // SI un apporteur/technicien est résolu → ajuster la dimension AVANT le scoring
+    // STEP 6: RÉSOLUTION MÉTRIQUE PAR CLÉ (subject:operation:dimension)
     // ══════════════════════════════════════════════════════════
+    const resolvedMetric = resolveMetricFromParsed(parsedNL);
+    console.log(`[unified-search] Resolved metric: ${resolvedMetric?.id || 'NONE'} (${resolvedMetric?.label || ''})`);
+
+    // ══════════════════════════════════════════════════════════
+    // STEP 6b: FALLBACK VERS ANCIEN SYSTÈME SI PAS DE MÉTRIQUE TROUVÉE
+    // (Compatibilité arrière avec nlMetricScorer)
+    // ══════════════════════════════════════════════════════════
+    const extracted = extractIntentFromTokens(tokenized);
     let extractedWithEntityOverride = { ...extracted };
-    if (resolvedEntities.apporteurId && extracted.dimension === 'global') {
-      extractedWithEntityOverride = { ...extracted, dimension: 'apporteur' as const };
-      console.log(`[unified-search] Dimension override: global → apporteur (entity resolved: ${resolvedEntities.apporteurName})`);
-    } else if (resolvedEntities.technicienId && extracted.dimension === 'global') {
-      extractedWithEntityOverride = { ...extracted, dimension: 'technicien' as const };
-      console.log(`[unified-search] Dimension override: global → technicien (entity resolved: ${resolvedEntities.technicienName})`);
+    if (entityFilters.dimension !== 'global') {
+      extractedWithEntityOverride = { ...extracted, dimension: entityFilters.dimension as any };
     }
+    const metricResultFallback = selectBestMetric(extractedWithEntityOverride, 5);
+
+    // Choisir la meilleure métrique entre le nouveau système et l'ancien
+    let finalMetricId: string | null = null;
+    let metricSource = 'none';
+    if (resolvedMetric) {
+      finalMetricId = resolvedMetric.id;
+      metricSource = 'nlQueryParser';
+    } else if (metricResultFallback.metric) {
+      finalMetricId = metricResultFallback.metric.id;
+      metricSource = 'nlMetricScorer_fallback';
+    }
+    console.log(`[unified-search] Final metric: ${finalMetricId || 'NONE'} (source: ${metricSource})`);
+
+    // Convertir entityFilters vers ResolvedEntities pour compatibilité
+    const resolvedEntities: ResolvedEntities = {
+      apporteurId: entityFilters.apporteur?.id,
+      apporteurName: entityFilters.apporteur?.name,
+      technicienId: entityFilters.technicien?.id,
+      technicienName: entityFilters.technicien?.name,
+    };
 
     // ══════════════════════════════════════════════════════════
-    // STEP 5: METRIC SCORING (NL V3 - avec dimension ajustée)
+    // STEP 7: CORE ROUTING (avec nouveau système de métrique)
     // ══════════════════════════════════════════════════════════
-    const metricResult = selectBestMetric(extractedWithEntityOverride, 5);
-    console.log(`[unified-search] Selected metric: ${metricResult.metric?.id || 'NONE'}`);
+    // Construire un metricResult compatible pour aiSearchRouteV3
+    const metricResult = finalMetricId && hasMetricSignature(finalMetricId)
+      ? { metric: getMetricSignature(finalMetricId)!, scores: metricResultFallback.scores }
+      : { metric: null, scores: metricResultFallback.scores };
 
-    // ══════════════════════════════════════════════════════════
-    // STEP 6: CORE ROUTING (NL V3 - avec dimension ajustée)
-    // ══════════════════════════════════════════════════════════
     const routed = aiSearchRouteV3(query, tokenized, extractedWithEntityOverride, period, context, resolvedEntities, metricResult, now);
     console.log(`[unified-search] Routed: type=${routed.type}, metric=${routed.parsed?.metricId || 'none'}`);
 
