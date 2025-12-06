@@ -441,13 +441,164 @@ function computeCaMoyenParJour(data: ApogeeData, params: StatParams): StatResult
   return { value: Math.round(moyenne), unit: '€/jour' };
 }
 
+/**
+ * Compute top techniciens par CA
+ */
+function computeTopTechniciensCA(data: ApogeeData, params: StatParams): StatResult {
+  return computeCaParTechnicien(data, params);
+}
+
+/**
+ * Compute SAV par univers
+ */
+function computeSavParUnivers(data: ApogeeData, params: StatParams): StatResult {
+  const countByUnivers: Record<string, { total: number; sav: number }> = {};
+  
+  for (const p of data.projects) {
+    const universes = extractProjectUniverses(p);
+    const type2 = (p.data?.type2 || '').toLowerCase();
+    const pictos = (p.data?.pictosInterv || []).map((pic: string) => pic.toLowerCase());
+    const isSav = type2 === 'sav' || pictos.some((pic: string) => pic === 'sav');
+    
+    for (const uni of universes) {
+      if (!countByUnivers[uni]) countByUnivers[uni] = { total: 0, sav: 0 };
+      countByUnivers[uni].total++;
+      if (isSav) countByUnivers[uni].sav++;
+    }
+  }
+  
+  const sorted = Object.entries(countByUnivers)
+    .map(([name, d]) => ({
+      id: name,
+      name,
+      value: d.total > 0 ? Math.round((d.sav / d.total) * 10000) / 100 : 0,
+    }))
+    .filter(x => x.value > 0)
+    .sort((a, b) => b.value - a.value);
+  
+  const topN = params.topN || 10;
+  const ranking = sorted.slice(0, topN).map((item, idx) => ({ rank: idx + 1, ...item }));
+  
+  return { value: 0, topItem: ranking[0], ranking, unit: '%' };
+}
+
+/**
+ * Compute SAV par apporteur
+ */
+function computeSavParApporteur(data: ApogeeData, params: StatParams): StatResult {
+  const apporteurNames = buildApporteurNameMap(data.clients);
+  const countByApporteur: Record<string, { name: string; total: number; sav: number }> = {};
+  
+  for (const p of data.projects) {
+    const commanditaireId = p.data?.commanditaireId;
+    const key = commanditaireId ? String(commanditaireId) : '0';
+    const name = commanditaireId 
+      ? (apporteurNames.get(String(commanditaireId)) || `Apporteur #${commanditaireId}`)
+      : 'Direct';
+    
+    const type2 = (p.data?.type2 || '').toLowerCase();
+    const pictos = (p.data?.pictosInterv || []).map((pic: string) => pic.toLowerCase());
+    const isSav = type2 === 'sav' || pictos.some((pic: string) => pic === 'sav');
+    
+    if (!countByApporteur[key]) countByApporteur[key] = { name, total: 0, sav: 0 };
+    countByApporteur[key].total++;
+    if (isSav) countByApporteur[key].sav++;
+  }
+  
+  const sorted = Object.entries(countByApporteur)
+    .map(([id, d]) => ({
+      id,
+      name: d.name,
+      value: d.total > 0 ? Math.round((d.sav / d.total) * 10000) / 100 : 0,
+    }))
+    .filter(x => x.value > 0)
+    .sort((a, b) => b.value - a.value);
+  
+  const topN = params.topN || 10;
+  const ranking = sorted.slice(0, topN).map((item, idx) => ({ rank: idx + 1, ...item }));
+  
+  return { value: 0, topItem: ranking[0], ranking, unit: '%' };
+}
+
+/**
+ * Compute taux de recouvrement
+ */
+function computeTauxRecouvrement(data: ApogeeData, _params: StatParams): StatResult {
+  let totalFacture = 0;
+  let totalEncaisse = 0;
+  
+  for (const f of data.factures) {
+    const isAvoir = (f.typeFacture || '').toLowerCase() === 'avoir';
+    if (isAvoir) continue;
+    
+    const montant = f.data?.totalTTC ?? f.totalTTC ?? 0;
+    const reste = f.data?.calcReglementsReste ?? f.restePaidTTC ?? 0;
+    
+    totalFacture += montant;
+    totalEncaisse += (montant - reste);
+  }
+  
+  const taux = totalFacture > 0 ? (totalEncaisse / totalFacture) * 100 : 0;
+  return { value: Math.round(taux * 10) / 10, unit: '%' };
+}
+
+/**
+ * Compute reste à encaisser
+ */
+function computeResteAEncaisser(data: ApogeeData, _params: StatParams): StatResult {
+  let totalReste = 0;
+  
+  for (const f of data.factures) {
+    const isAvoir = (f.typeFacture || '').toLowerCase() === 'avoir';
+    if (isAvoir) continue;
+    
+    const reste = f.data?.calcReglementsReste ?? f.restePaidTTC ?? 0;
+    totalReste += reste;
+  }
+  
+  return { value: Math.round(totalReste), unit: '€' };
+}
+
+/**
+ * Compute CA mensuel (groupé par mois)
+ */
+function computeCaMensuel(data: ApogeeData, _params: StatParams): StatResult {
+  const caByMonth: Record<string, number> = {};
+  
+  for (const f of data.factures) {
+    const isAvoir = (f.typeFacture || '').toLowerCase() === 'avoir';
+    const montant = f.data?.totalHT ?? f.totalHT ?? f.montant ?? 0;
+    const netMontant = isAvoir ? -Math.abs(montant) : montant;
+    
+    const factureDate = f.dateReelle || f.date;
+    if (!factureDate) continue;
+    
+    const d = new Date(factureDate);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    
+    if (!caByMonth[key]) caByMonth[key] = 0;
+    caByMonth[key] += netMontant;
+  }
+  
+  const sorted = Object.entries(caByMonth)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([id, ca], idx) => ({ rank: idx + 1, id, name: id, value: Math.round(ca) }));
+  
+  const total = sorted.reduce((sum, item) => sum + item.value, 0);
+  
+  return { value: total, ranking: sorted, unit: '€' };
+}
+
 // ============= METRIC REGISTRY =============
 const METRIC_COMPUTERS: Record<string, (data: ApogeeData, params: StatParams) => StatResult> = {
   'ca_global_ht': computeCaGlobalHt,
   'ca_par_apporteur': computeCaParApporteur,
   'ca_par_univers': computeCaParUnivers,
   'ca_par_technicien': computeCaParTechnicien,
+  'top_techniciens_ca': computeTopTechniciensCA,
   'taux_sav_global': computeTauxSav,
+  'sav_par_univers': computeSavParUnivers,
+  'sav_par_apporteur': computeSavParApporteur,
   'panier_moyen': computePanierMoyen,
   'nb_dossiers_crees': computeNbDossiers,
   'ca_moyen_par_tech': computeCaMoyenParTech,
@@ -457,6 +608,9 @@ const METRIC_COMPUTERS: Record<string, (data: ApogeeData, params: StatParams) =>
   'delai_premier_devis': computeDelaiPremierDevis,
   'delai_moyen_facture': computeDelaiMoyenFacture,
   'ca_moyen_par_jour': computeCaMoyenParJour,
+  'taux_recouvrement': computeTauxRecouvrement,
+  'reste_a_encaisser': computeResteAEncaisser,
+  'ca_mensuel': computeCaMensuel,
 };
 
 // ============= CACHE =============
@@ -531,7 +685,10 @@ export function getRequiredSources(metricId: string): string[] {
     'ca_par_apporteur': ['factures', 'projects', 'clients'],
     'ca_par_univers': ['factures', 'projects'],
     'ca_par_technicien': ['factures'],
+    'top_techniciens_ca': ['factures'],
     'taux_sav_global': ['projects'],
+    'sav_par_univers': ['projects'],
+    'sav_par_apporteur': ['projects', 'clients'],
     'panier_moyen': ['factures'],
     'nb_dossiers_crees': ['projects'],
     'ca_moyen_par_tech': ['factures'],
@@ -541,6 +698,9 @@ export function getRequiredSources(metricId: string): string[] {
     'delai_premier_devis': ['projects'],
     'delai_moyen_facture': ['factures', 'projects'],
     'ca_moyen_par_jour': ['factures'],
+    'taux_recouvrement': ['factures'],
+    'reste_a_encaisser': ['factures'],
+    'ca_mensuel': ['factures'],
   };
   
   return sourceMap[metricId] || ['factures'];
