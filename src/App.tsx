@@ -105,6 +105,7 @@ const AdminAnnouncements = lazy(() => import("./pages/admin/AdminAnnouncements")
 const AdminFaq = lazy(() => import("./pages/admin/AdminFaq"));
 const FormationGenerator = lazy(() => import("./pages/admin/FormationGenerator"));
 const StatiaBuilderAdminPage = lazy(() => import("./statia/pages/StatiaBuilderAdminPage"));
+const StatiaValidatorPage = lazy(() => import("./statia/pages/StatiaValidatorPage"));
 const StatiaBuilderAgencyPage = lazy(() => import("./statia/pages/StatiaBuilderAgencyPage"));
 
 // Lazy loaded pages - Gestion de Projet (ex Apogée Tickets)
@@ -353,6 +354,7 @@ function AppContent() {
           <Route path="/admin/apogee-tickets/permissions" element={<Navigate to="/projects/permissions" replace />} />
           <Route path="/admin/system-health" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminSystemHealth /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/statia-by-bij" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><StatiaBuilderAdminPage /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/admin/statia-validator" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><StatiaValidatorPage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/statia-builder" element={<Navigate to="/admin/statia-by-bij" replace />} />
           <Route path="/admin/formation-generator" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><FormationGenerator /></ModuleGuard></RoleGuard></MainLayout>} />
           
