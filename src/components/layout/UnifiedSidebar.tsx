@@ -295,6 +295,7 @@ export function UnifiedSidebar() {
         { title: 'Utilisateurs', url: ROUTES.admin.users, icon: Users, description: 'Gérer les comptes utilisateurs' },
         { title: 'Agences', url: ROUTES.admin.agencies, icon: Building2 },
         { title: 'Annonces', url: ROUTES.admin.announcements, icon: MessageCircle, description: 'Annonces prioritaires' },
+        { title: 'FAQ', url: ROUTES.admin.faq, icon: HelpCircle, description: 'Gérer les questions fréquentes' },
         { title: 'Chatbot RAG', url: ROUTES.admin.chatbotRag, icon: Sparkles, description: 'Configuration IA' },
         { title: 'Sauvegardes', url: ROUTES.admin.backup, icon: Database },
         { title: 'Activité', url: ROUTES.admin.userActivity, icon: Activity },
