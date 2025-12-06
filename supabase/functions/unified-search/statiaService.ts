@@ -342,12 +342,22 @@ function computeCaParTechnicien(data: ApogeeData, params: StatParams): StatResul
     projectsById.set(String(p.id), p);
   }
   
-  // Index interventions par projectId
+  // Index interventions par projectId (API Apogée utilise plusieurs formats possibles)
   const interventionsByProject = new Map<string, any[]>();
+  let firstIntervSample: any = null;
   for (const i of data.interventions) {
-    const pId = String(i.projectId || i.data?.projectId || i.project_id);
-    if (!interventionsByProject.has(pId)) interventionsByProject.set(pId, []);
-    interventionsByProject.get(pId)!.push(i);
+    if (!firstIntervSample) firstIntervSample = i;
+    // API Apogée: dossier_id, dossierId, projectId, project_id selon l'endpoint
+    const pId = String(i.dossier_id || i.dossierId || i.projectId || i.data?.projectId || i.project_id || i.data?.dossier_id || '');
+    if (pId && pId !== 'undefined' && pId !== 'null') {
+      if (!interventionsByProject.has(pId)) interventionsByProject.set(pId, []);
+      interventionsByProject.get(pId)!.push(i);
+    }
+  }
+  
+  // Debug: log sample intervention structure
+  if (firstIntervSample && interventionsByProject.size === 0) {
+    console.log(`[computeCaParTechnicien] WARN: No interventions linked! Sample keys: ${Object.keys(firstIntervSample).slice(0, 15).join(', ')}`);
   }
   
   // Index users par id pour les noms
