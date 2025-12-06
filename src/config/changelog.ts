@@ -15,6 +15,37 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.7.4",
+    title: "Module Maintenance Préventive – Véhicules, Matériel, Alertes & QR",
+    date: "2025-12-06",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // MODULE MAINTENANCE PRÉVENTIVE
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Nouvelle page /maintenance : onglets Véhicules, Matériel & EPI, Alertes, Plans préventifs' },
+      { type: 'feature', description: 'Gestion flotte véhicules : création, édition, suivi CT/révision/kilométrage' },
+      { type: 'feature', description: 'Gestion matériel & EPI : création, édition, catégories (outillage, EPI, mesure, échelles)' },
+      { type: 'feature', description: 'Plans de maintenance préventive avec items récurrents et fréquences personnalisables' },
+      { type: 'feature', description: 'Événements de maintenance planifiés liés aux véhicules ou outils' },
+      { type: 'feature', description: 'Alertes automatiques avec niveaux de sévérité (info, warning, critical)' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // QR CODE PUBLIC
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Edge function qr-asset : lookup véhicule/outil par qr_token sans authentification' },
+      { type: 'feature', description: 'Page publique /qr/:token : affichage condensé actif + prochains contrôles + dernier réalisé' },
+      { type: 'feature', description: 'Modal QR Code avec génération PNG et impression étiquette' },
+      { type: 'feature', description: 'Bouton QR sur chaque ligne véhicule et matériel' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // INFRASTRUCTURE
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Tables Supabase : fleet_vehicles, tools, maintenance_plan_templates, maintenance_plan_items, maintenance_events, maintenance_alerts' },
+      { type: 'security', description: 'RLS policies sur toutes les tables maintenance avec isolation par agence' },
+      { type: 'improvement', description: 'Hooks React Query : useFleetVehicles, useTools, useMaintenanceEvents, useMaintenanceAlerts, usePlans' },
+    ],
+  },
+  {
     version: "V0.7.3",
     title: "Pipeline IA Hybride – Refonte complète unified-search",
     date: "2025-12-06",
