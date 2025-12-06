@@ -237,8 +237,95 @@ serve(async (req) => {
 
       console.log(`[unified-search] Stats: metric=${metricId}, technicien=${technicienName || 'none'}, univers=${univers || 'none'}, periode=${periode ? 'yes' : 'none'}`);
 
-      // For now, return mock data - in production, call StatIA engine
-      // TODO: Integrate with real StatIA computation via proxy-apogee
+      // Compute real CA from Apogée API
+      let computedValue: number = 0;
+      let topItem: { id: string | number; name: string; value: number } | undefined;
+
+      if (agencySlug) {
+        try {
+          // Call proxy-apogee to get real factures data
+          const proxyUrl = `${supabaseUrl}/functions/v1/proxy-apogee`;
+          const proxyResponse = await fetch(proxyUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': authHeader,
+            },
+            body: JSON.stringify({
+              endpoint: 'apiGetFactures',
+              agencySlug: agencySlug,
+              filters: periode ? {
+                dateDebut: periode.start.toISOString().split('T')[0],
+                dateFin: periode.end.toISOString().split('T')[0],
+              } : {},
+            }),
+          });
+
+          if (proxyResponse.ok) {
+            const proxyData = await proxyResponse.json();
+            console.log(`[unified-search] Got ${proxyData.data?.length || 0} factures from proxy`);
+
+            if (proxyData.success && proxyData.data) {
+              const factures = proxyData.data as Array<{
+                totalHT?: number;
+                montant?: number;
+                typeFacture?: string;
+                dateReelle?: string;
+                date?: string;
+                data?: { technicians?: Array<{ id: number; firstname?: string; lastname?: string }> };
+              }>;
+
+              // Filter by period if specified
+              const filteredFactures = factures.filter(f => {
+                const factureDate = f.dateReelle || f.date;
+                if (!factureDate || !periode) return true;
+                const d = new Date(factureDate);
+                return d >= periode.start && d <= periode.end;
+              });
+
+              // Compute CA based on metric type
+              if (technicienName) {
+                // Filter factures for specific technician
+                let techCA = 0;
+                for (const f of filteredFactures) {
+                  const techs = f.data?.technicians || [];
+                  const isAvoir = (f.typeFacture || '').toLowerCase() === 'avoir';
+                  const montant = f.totalHT ?? f.montant ?? 0;
+                  const netMontant = isAvoir ? -Math.abs(montant) : montant;
+                  
+                  // Check if this technician worked on this facture
+                  const matchingTech = techs.find(t => {
+                    const fullName = `${t.firstname || ''} ${t.lastname || ''}`.toLowerCase();
+                    return fullName.includes(technicienName.toLowerCase()) || 
+                           (t.lastname || '').toLowerCase() === technicienName.toLowerCase();
+                  });
+                  
+                  if (matchingTech && techs.length > 0) {
+                    techCA += netMontant / techs.length;
+                  }
+                }
+                computedValue = Math.round(techCA);
+                topItem = { id: 1, name: technicienName, value: computedValue };
+              } else {
+                // Global CA
+                for (const f of filteredFactures) {
+                  const isAvoir = (f.typeFacture || '').toLowerCase() === 'avoir';
+                  const montant = f.totalHT ?? f.montant ?? 0;
+                  computedValue += isAvoir ? -Math.abs(montant) : montant;
+                }
+                computedValue = Math.round(computedValue);
+              }
+
+              console.log(`[unified-search] Computed CA: ${computedValue}€ from ${filteredFactures.length} factures`);
+            }
+          } else {
+            console.error(`[unified-search] Proxy error: ${proxyResponse.status}`);
+          }
+        } catch (apiError) {
+          console.error(`[unified-search] API call failed:`, apiError);
+        }
+      }
+
       const result: StatSearchResult = {
         type: 'stat',
         metricId,
@@ -251,19 +338,8 @@ serve(async (req) => {
           } : undefined,
         },
         result: {
-          value: technicienName ? 12450 : Math.floor(Math.random() * 50000) + 10000,
-          topItem: (metricId.includes('technicien') || technicienName) ? {
-            id: 1,
-            name: technicienName || 'Jean Dupont',
-            value: technicienName ? 12450 : Math.floor(Math.random() * 30000) + 15000,
-          } : undefined,
-          ranking: metricId === 'ca_par_technicien' ? [
-            { rank: 1, id: 1, name: 'Jean Dupont', value: 28450 },
-            { rank: 2, id: 2, name: 'Marie Martin', value: 24200 },
-            { rank: 3, id: 3, name: 'Pierre Bernard', value: 21800 },
-            { rank: 4, id: 4, name: 'Sophie Petit', value: 18500 },
-            { rank: 5, id: 5, name: 'Lucas Dubois', value: 15200 },
-          ] : undefined,
+          value: computedValue,
+          topItem,
           unit: metricId.includes('taux') ? '%' : '€',
         },
         agencySlug: agencySlug,
