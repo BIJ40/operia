@@ -344,11 +344,29 @@ export function isInterventionRealisee(intervention: any): boolean {
 
 /**
  * Vérifie si une intervention est de type SAV
+ * RÈGLE STRICTE: type de rdv === "SAV" OU picto SAV présent
+ * Ne matche PAS les mots contenant "sav" (savoir, savons, etc.)
  */
 export function isSAVIntervention(intervention: any): boolean {
-  const type2 = (intervention.data?.type2 || intervention.type2 || '').toLowerCase();
-  const type = (intervention.data?.type || intervention.type || '').toLowerCase();
-  return type2.includes('sav') || type.includes('sav');
+  // Règle 1: Type d'intervention strictement égal à "SAV"
+  const type2 = (intervention.data?.type2 || intervention.type2 || '').toLowerCase().trim();
+  const type = (intervention.data?.type || intervention.type || '').toLowerCase().trim();
+  
+  if (type2 === 'sav' || type === 'sav') {
+    return true;
+  }
+  
+  // Règle 2: Picto SAV présent dans les pictos de l'intervention
+  const pictos = intervention.data?.pictosInterv || intervention.pictosInterv || [];
+  if (Array.isArray(pictos)) {
+    const hasSAVPicto = pictos.some((picto: any) => {
+      const pictoLabel = (typeof picto === 'string' ? picto : picto?.label || picto?.name || '').toLowerCase().trim();
+      return pictoLabel === 'sav';
+    });
+    if (hasSAVPicto) return true;
+  }
+  
+  return false;
 }
 
 /** Labels des mois en français (constante centralisée P2-04) */
