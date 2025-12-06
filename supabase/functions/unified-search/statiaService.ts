@@ -119,12 +119,19 @@ function computeCaGlobalHt(data: ApogeeData, params: StatParams): StatResult {
 }
 
 /**
- * Compute CA par apporteur
+ * Compute CA par apporteur (avec support filtre apporteurId)
+ * - Mode filtré (apporteurId présent): renvoie une valeur unique pour cet apporteur SANS ranking
+ * - Mode global (pas de filtre): renvoie un ranking complet
  */
 function computeCaParApporteur(data: ApogeeData, params: StatParams): StatResult {
   const projectsById = new Map(data.projects.map(p => [p.id, p]));
   const apporteurNames = buildApporteurNameMap(data.clients);
   const caByApporteur: Record<string, { name: string; ca: number }> = {};
+  
+  const filterApporteurId = params.filters?.apporteurId;
+  const filterApporteurName = params.filters?.apporteurName;
+  
+  console.log(`[computeCaParApporteur] Filter: apporteurId=${filterApporteurId}, apporteurName=${filterApporteurName}`);
   
   for (const f of data.factures) {
     const isAvoir = (f.typeFacture || '').toLowerCase() === 'avoir';
@@ -133,6 +140,11 @@ function computeCaParApporteur(data: ApogeeData, params: StatParams): StatResult
     
     const project = projectsById.get(f.projectId);
     const commanditaireId = project?.data?.commanditaireId;
+    
+    // Si un filtre apporteurId est appliqué, ne garder que cet apporteur
+    if (filterApporteurId && String(commanditaireId) !== String(filterApporteurId)) {
+      continue;
+    }
     
     const key = commanditaireId ? String(commanditaireId) : '0';
     const name = commanditaireId 
@@ -148,9 +160,42 @@ function computeCaParApporteur(data: ApogeeData, params: StatParams): StatResult
     .filter(x => x.value > 0)
     .sort((a, b) => b.value - a.value);
   
+  // ════════════════════════════════════════════════════════════
+  // MODE FILTRÉ: un seul apporteur demandé → renvoyer valeur unique SANS ranking
+  // ════════════════════════════════════════════════════════════
+  if (filterApporteurId) {
+    const apporteurData = sorted.find(a => String(a.id) === String(filterApporteurId));
+    const apporteurDisplayName = filterApporteurName || apporteurData?.name || `Apporteur #${filterApporteurId}`;
+    
+    if (apporteurData && apporteurData.value > 0) {
+      // Apporteur trouvé avec CA > 0 → valeur unique
+      console.log(`[computeCaParApporteur] Found: ${apporteurDisplayName} = ${apporteurData.value}€`);
+      return {
+        value: apporteurData.value,
+        topItem: { rank: 1, id: apporteurData.id, name: apporteurData.name, value: apporteurData.value },
+        ranking: undefined, // PAS de ranking pour mode filtré
+        unit: '€',
+      };
+    }
+    
+    // Apporteur non trouvé ou CA = 0 → valeur 0 avec nom
+    console.log(`[computeCaParApporteur] Not found or zero: ${apporteurDisplayName}`);
+    return {
+      value: 0,
+      topItem: { rank: 1, id: String(filterApporteurId), name: String(apporteurDisplayName), value: 0 },
+      ranking: undefined, // PAS de ranking pour mode filtré
+      unit: '€',
+    };
+  }
+  
+  // ════════════════════════════════════════════════════════════
+  // MODE GLOBAL: classement complet des apporteurs
+  // ════════════════════════════════════════════════════════════
   const topN = params.topN || 10;
   const ranking = sorted.slice(0, topN).map((item, idx) => ({ rank: idx + 1, ...item }));
   const total = sorted.reduce((sum, item) => sum + item.value, 0);
+  
+  console.log(`[computeCaParApporteur] Ranking mode: ${ranking.length} apporteurs, total=${total}€`);
   
   return {
     value: total,
