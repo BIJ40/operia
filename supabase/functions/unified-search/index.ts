@@ -181,20 +181,10 @@ serve(async (req) => {
       .eq('id', user.id)
       .single();
 
-    if (!profile?.agence) {
-      return withCors(req, new Response(JSON.stringify({
-        type: 'fallback',
-        message: 'Aucune agence associée à votre compte.',
-      }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }));
-    }
-
     // Check module access - allow if pilotage_agence enabled OR admin roles
-    const enabledModules = profile.enabled_modules || {};
+    const enabledModules = profile?.enabled_modules || {};
     const hasPilotage = enabledModules.pilotage_agence?.enabled;
-    const isAdmin = ['platform_admin', 'superadmin', 'franchisor_admin'].includes(profile.global_role);
+    const isAdmin = ['platform_admin', 'superadmin', 'franchisor_admin', 'franchisor_user'].includes(profile?.global_role);
     
     // Allow access for users with pilotage module or admin roles
     if (!hasPilotage && !isAdmin) {
@@ -207,6 +197,9 @@ serve(async (req) => {
       }));
     }
 
+    // For stats queries, agency is needed - use empty string for franchiseur roles
+    const agencySlug = profile?.agence || '';
+
     // Parse request
     const { query } = await req.json();
     if (!query || typeof query !== 'string') {
@@ -217,7 +210,7 @@ serve(async (req) => {
     }
 
     const intent = detectIntent(query);
-    console.log(`[unified-search] Query: "${query}", Intent: ${intent}, Agency: ${profile.agence}`);
+    console.log(`[unified-search] Query: "${query}", Intent: ${intent}, Agency: "${agencySlug}", Role: ${profile?.global_role}`);
 
     // === STATS MODE ===
     if (intent === 'stats') {
@@ -253,8 +246,8 @@ serve(async (req) => {
           ] : undefined,
           unit: metricId.includes('taux') ? '%' : '€',
         },
-        agencySlug: profile.agence,
-        agencyName: profile.agence.toUpperCase(),
+        agencySlug: agencySlug,
+        agencyName: agencySlug ? agencySlug.toUpperCase() : 'RÉSEAU',
         computedAt: new Date().toISOString(),
       };
 
