@@ -508,3 +508,102 @@ button[data-image-modal] {
   border-width: 2px;
   border-color: hsl(0 84% 60%);
 }
+
+/* ============================================
+   AI RESULT SPARKLE ANIMATION
+   ============================================ */
+
+/* Sparkle traveling around the border - slow 4s journey */
+@keyframes sparkle-travel {
+  0% {
+    top: -6px;
+    left: -6px;
+    opacity: 0;
+  }
+  5% {
+    opacity: 0.9;
+  }
+  /* Top edge: left to right */
+  25% {
+    top: -6px;
+    left: calc(100% - 6px);
+    opacity: 0.9;
+  }
+  /* Right edge: top to bottom */
+  50% {
+    top: calc(100% - 6px);
+    left: calc(100% - 6px);
+    opacity: 0.9;
+  }
+  /* Bottom edge: right to left */
+  75% {
+    top: calc(100% - 6px);
+    left: -6px;
+    opacity: 0.9;
+  }
+  /* Left edge: bottom to top (back to start) */
+  95% {
+    top: -6px;
+    left: -6px;
+    opacity: 0.9;
+  }
+  100% {
+    top: -6px;
+    left: -6px;
+    opacity: 0;
+  }
+}
+
+.animate-sparkle-travel {
+  animation: sparkle-travel 4s ease-in-out infinite;
+}
+
+/* Corner sparkles that appear after the main sparkle completes a loop */
+@keyframes corner-sparkle {
+  0%, 90% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  92% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+.animate-corner-sparkle {
+  animation: corner-sparkle 4s ease-in-out infinite;
+}
+
+/* Individual twinkle effect for corner sparkles */
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+.animate-twinkle {
+  animation: twinkle 0.6s ease-in-out infinite;
+}
+
+/* Subtle border glow pulse */
+@keyframes border-glow {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.animate-border-glow {
+  animation: border-glow 4s ease-in-out infinite;
+}
