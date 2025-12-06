@@ -10,6 +10,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+interface RecouvrementTileProps {
+  /** Slug de l'agence cible (optionnel, utilise l'agence de l'utilisateur par défaut) */
+  agencySlug?: string;
+}
+
 /**
  * Tuile KPI Recouvrement
  * 
@@ -21,9 +26,10 @@ import {
  * - Recouvrement = 0 : tout est recouvré (situation idéale)
  * - Recouvrement < 0 : trop-perçu (régularisation nécessaire)
  */
-export function RecouvrementTile() {
+export function RecouvrementTile({ agencySlug }: RecouvrementTileProps = {}) {
   const { data, isLoading, error } = useRecouvrementStats({
-    includeDetails: true
+    includeDetails: true,
+    agencySlug
   });
 
   if (error) {

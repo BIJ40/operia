@@ -125,8 +125,8 @@ export function AgencyStatsTab({ agencySlug }: AgencyStatsTabProps) {
             </CardContent>
           </Card>
 
-          {/* Recouvrement - Composant réutilisable */}
-          <RecouvrementTile />
+          {/* Recouvrement - Composant réutilisable avec agencySlug */}
+          <RecouvrementTile agencySlug={agencySlug} />
         </div>
       )}
     </div>
