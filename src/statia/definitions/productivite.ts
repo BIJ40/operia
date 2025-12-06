@@ -5,7 +5,6 @@
 
 import { StatDefinition, LoadedData, StatParams, StatResult } from './types';
 import { parseISO, isWithinInterval } from 'date-fns';
-import { extractFactureMeta } from '../rules/rules';
 import { 
   computeTechUniversStatsForAgency, 
   isActiveTechnician 
@@ -154,12 +153,69 @@ export const productiviteParUnivers: StatDefinition = {
 };
 
 /**
+ * Vérifie si une intervention est de type RT (Relevé Technique) - NON PRODUCTIF
+ */
+function isRTIntervention(intervention: any): boolean {
+  const type2 = (intervention.type2 || intervention.data?.type2 || '').toLowerCase();
+  const type = (intervention.type || intervention.data?.type || '').toLowerCase();
+  
+  if (type2.includes('relevé') || type2.includes('releve') || type2.includes('technique')) return true;
+  if (type2 === 'rt') return true;
+  if (type.includes('rt')) return true;
+  if (intervention.data?.biRt && !intervention.data?.biDepan && !intervention.data?.biTvx && !intervention.data?.biV3) return true;
+  if (intervention.data?.isRT) return true;
+  
+  return false;
+}
+
+/**
+ * Vérifie si une intervention est de type SAV - NON PRODUCTIF
+ */
+function isSAVIntervention(intervention: any): boolean {
+  const type2 = (intervention.type2 || intervention.data?.type2 || '').toLowerCase();
+  const type = (intervention.type || intervention.data?.type || '').toLowerCase();
+  return type2.includes('sav') || type.includes('sav');
+}
+
+/**
+ * Vérifie si une intervention est de type diagnostic - NON PRODUCTIF
+ */
+function isDiagnosticIntervention(intervention: any): boolean {
+  const type2 = (intervention.type2 || intervention.data?.type2 || '').toLowerCase();
+  const type = (intervention.type || intervention.data?.type || '').toLowerCase();
+  return type2.includes('diagnostic') || type.includes('diagnostic');
+}
+
+/**
+ * Vérifie si une intervention est productive
+ */
+function isProductiveIntervention(intervention: any): boolean {
+  if (isRTIntervention(intervention)) return false;
+  if (isSAVIntervention(intervention)) return false;
+  if (isDiagnosticIntervention(intervention)) return false;
+  
+  const type2 = (intervention.type2 || intervention.data?.type2 || '').toLowerCase();
+  
+  // Cas "RDV à définir" : inclure seulement si travaux réalisés
+  if (type2.includes('définir') || type2.includes('a définir') || type2.includes('à définir')) {
+    const hasDepanWork = intervention.data?.biDepan?.isWorkDone || intervention.data?.biDepan?.tvxEffectues;
+    const hasTvxWork = intervention.data?.biTvx?.isWorkDone || intervention.data?.biTvx?.tvxEffectues;
+    const hasV3Work = intervention.data?.biV3?.items?.length > 0;
+    return hasDepanWork || hasTvxWork || hasV3Work;
+  }
+  
+  // Par défaut : inclure (dépannages, travaux, etc.)
+  return true;
+}
+
+/**
  * Nb heures productives
+ * Logique alignée sur calculateTechTimeByProject de techniciens.ts
  */
 export const nbHeuresProductives: StatDefinition = {
   id: 'nb_heures_productives',
   label: 'Heures productives',
-  description: 'Nombre total d\'heures productives (hors RT/SAV)',
+  description: 'Nombre total d\'heures productives (hors RT/SAV/diagnostic)',
   category: 'productivite',
   source: ['interventions', 'users'],
   aggregation: 'sum',
@@ -169,6 +225,7 @@ export const nbHeuresProductives: StatDefinition = {
     
     const usersMap = new Map(users.map(u => [u.id, u]));
     let totalHeures = 0;
+    let interventionsComptees = 0;
     
     for (const intervention of interventions) {
       const date = intervention.date || intervention.created_at;
@@ -183,40 +240,40 @@ export const nbHeuresProductives: StatDefinition = {
         }
       }
       
-      // Exclure RT et SAV
-      const isRT = 
-        intervention.data?.biRt?.isValidated === true ||
-        intervention.data?.type2 === 'RT' ||
-        (intervention.type2 || '').toUpperCase() === 'RT';
+      // Utiliser la même logique que calculateTechTimeByProject
+      if (!isProductiveIntervention(intervention)) continue;
       
-      const type2Lower = (intervention.data?.type2 || intervention.type2 || '').toLowerCase();
-      const typeRaw = (intervention.data?.type || intervention.type || '').toLowerCase();
-      const isSAV = type2Lower.includes('sav') || typeRaw.includes('sav');
+      let tempsCompte = false;
       
-      if (isRT || isSAV) continue;
-      
-      // Types productifs uniquement
-      const isProductive = intervention.data?.biDepan || intervention.data?.biTvx;
-      if (!isProductive) continue;
-      
-      // Comptabiliser les heures des visites validées
-      const visites = intervention.data?.visites || [];
-      for (const visite of visites) {
-        if (visite.state !== 'validated') continue;
-        
-        const duree = Number(visite.duree) || 0;
-        if (duree <= 0) continue;
-        
-        // Vérifier qu'il y a au moins un technicien actif
-        const usersIds = visite.usersIds || [];
-        const hasTech = usersIds.some((userId: number) => {
-          const user = usersMap.get(userId);
-          return isActiveTechnician(user);
-        });
-        
-        if (hasTech) {
-          totalHeures += duree / 60; // Convertir minutes en heures
+      // Priorité 1: biV3.items avec techTimeStart/techTimeEnd
+      if (intervention.data?.biV3?.items && Array.isArray(intervention.data.biV3.items)) {
+        for (const item of intervention.data.biV3.items) {
+          if (item.techTimeStart && item.techTimeEnd && item.usersIds?.length > 0) {
+            const start = new Date(item.techTimeStart).getTime();
+            const end = new Date(item.techTimeEnd).getTime();
+            const dureeMinutes = (end - start) / (1000 * 60);
+            if (dureeMinutes > 0) {
+              totalHeures += dureeMinutes / 60;
+              tempsCompte = true;
+            }
+          }
         }
+      }
+      
+      // Priorité 2: data.visites avec duree
+      if (!tempsCompte) {
+        const visites = intervention.visites || intervention.data?.visites || [];
+        for (const visite of visites) {
+          const duree = Number(visite.duree) || 0;
+          if (duree > 0 && visite.usersIds?.length > 0) {
+            totalHeures += duree / 60;
+            tempsCompte = true;
+          }
+        }
+      }
+      
+      if (tempsCompte) {
+        interventionsComptees++;
       }
     }
     
@@ -225,7 +282,11 @@ export const nbHeuresProductives: StatDefinition = {
       metadata: {
         computedAt: new Date(),
         source: 'interventions',
-        recordCount: interventions.length,
+        recordCount: interventionsComptees,
+      },
+      breakdown: {
+        heuresTotal: Math.round(totalHeures * 10) / 10,
+        interventionsProductives: interventionsComptees,
       }
     };
   }
@@ -328,8 +389,7 @@ export const tauxUtilisationTechniciens: StatDefinition = {
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const { interventions, users } = data;
     
-    // Calculer les heures productives
-    const usersMap = new Map(users.map(u => [u.id, u]));
+    // Calculer les heures productives avec la même logique que nbHeuresProductives
     let totalHeuresProductives = 0;
     
     for (const intervention of interventions) {
@@ -345,21 +405,33 @@ export const tauxUtilisationTechniciens: StatDefinition = {
         }
       }
       
-      const isRT = intervention.data?.biRt?.isValidated === true || (intervention.type2 || '').toUpperCase() === 'RT';
-      const type2Lower = (intervention.data?.type2 || intervention.type2 || '').toLowerCase();
-      const isSAV = type2Lower.includes('sav');
+      if (!isProductiveIntervention(intervention)) continue;
       
-      if (isRT || isSAV) continue;
+      let tempsCompte = false;
       
-      const isProductive = intervention.data?.biDepan || intervention.data?.biTvx;
-      if (!isProductive) continue;
+      // Priorité 1: biV3.items avec techTimeStart/techTimeEnd
+      if (intervention.data?.biV3?.items && Array.isArray(intervention.data.biV3.items)) {
+        for (const item of intervention.data.biV3.items) {
+          if (item.techTimeStart && item.techTimeEnd && item.usersIds?.length > 0) {
+            const start = new Date(item.techTimeStart).getTime();
+            const end = new Date(item.techTimeEnd).getTime();
+            const dureeMinutes = (end - start) / (1000 * 60);
+            if (dureeMinutes > 0) {
+              totalHeuresProductives += dureeMinutes / 60;
+              tempsCompte = true;
+            }
+          }
+        }
+      }
       
-      const visites = intervention.data?.visites || [];
-      for (const visite of visites) {
-        if (visite.state !== 'validated') continue;
-        const duree = Number(visite.duree) || 0;
-        if (duree > 0) {
-          totalHeuresProductives += duree / 60;
+      // Priorité 2: data.visites avec duree
+      if (!tempsCompte) {
+        const visites = intervention.visites || intervention.data?.visites || [];
+        for (const visite of visites) {
+          const duree = Number(visite.duree) || 0;
+          if (duree > 0 && visite.usersIds?.length > 0) {
+            totalHeuresProductives += duree / 60;
+          }
         }
       }
     }
