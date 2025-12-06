@@ -254,11 +254,11 @@ const SortableCategory = ({
 
 export default function ApogeeGuide() {
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, loading } = useEditor();
-  const { isAdmin, isAuthenticated } = useAuth();
+  const { hasGlobalRole, isAuthenticated, hasModuleOption } = useAuth();
   
-  // Route protégée par RoleGuard dans App.tsx - plus besoin de vérifications manuelles
-  const canEdit = isAdmin;
-  const canDelete = isAdmin;
+  // P0: Utiliser V2 - hasModuleOption au lieu de isAdmin
+  const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('help_academy', 'edition');
+  const canDelete = hasGlobalRole('platform_admin');
   const { toast } = useToast();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -450,7 +450,7 @@ export default function ApogeeGuide() {
           </div>
         )}
 
-        {isEditMode && isAdmin ? (
+        {isEditMode && canEdit ? (
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -585,7 +585,7 @@ export default function ApogeeGuide() {
           </div>
         )}
 
-        {isEditMode && isAdmin && (
+        {isEditMode && canEdit && (
           <div className="flex justify-center mt-8">
             <Button onClick={handleAddCategory} size="lg" className="gap-2">
               <Plus className="w-5 h-5" />

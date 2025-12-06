@@ -15,6 +15,43 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.7.6",
+    title: "Audit Sécurité & Permissions V2 - Corrections P0/P1",
+    date: "2025-12-06",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // P0 – SÉCURITÉ & PERMISSIONS
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'security', description: 'Routes /security-audit-report et /security-documentation protégées N5+' },
+      { type: 'security', description: 'Routes /projects/* protégées avec RoleGuard minRole="franchisee_user"' },
+      { type: 'security', description: 'Routes /admin/* uniformément protégées platform_admin (N5)' },
+      { type: 'security', description: 'Page dev UnifiedSearchAnimationPlayground protégée N5+' },
+      { type: 'security', description: 'Hook useHasGlobalRole: suppression bypass legacy isAdmin' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // P1 – MIGRATION V2 PERMISSIONS
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'ChatbotNotifications: isAdmin → hasGlobalRole("platform_admin")' },
+      { type: 'improvement', description: 'ApogeeGuide: isAdmin → hasModuleOption("help_academy", "edition")' },
+      { type: 'improvement', description: 'CategoryActionsAMener: isAdmin → hasModuleOption V2' },
+      { type: 'improvement', description: 'AdminHelpConfortBackup: isAdmin → hasGlobalRole V2' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // P1 – ROUTES & NAVIGATION
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'fix', description: 'Routes erreurs /401, /403, /500 explicitement déclarées dans App.tsx' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // DOC SÉCURITÉ
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'audit', description: 'SecurityAuditReport V2.0: mise à jour complète post-audit' },
+      { type: 'audit', description: 'Score sécurité: 98/100 (toutes violations critiques corrigées)' },
+    ],
+    auditLinks: [
+      { label: 'Rapport d\'Audit Sécurité V2', path: '/security-audit-report' },
+    ]
+  },
+  {
     version: "V0.7.5",
     title: "Audit Qualité & Migration console.error → logError",
     date: "2025-12-06",

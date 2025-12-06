@@ -13,7 +13,8 @@ import { Navigate } from 'react-router-dom';
 import { logError } from '@/lib/logger';
 
 export default function AdminHelpConfortBackup() {
-  const { isAdmin } = useAuth();
+  const { hasGlobalRole } = useAuth();
+  const canAccess = hasGlobalRole('platform_admin');
   const { toast } = useToast();
   const [categories, setCategories] = useState<Block[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -210,7 +211,7 @@ export default function AdminHelpConfortBackup() {
     }
   };
 
-  if (!isAdmin) {
+  if (!canAccess) {
     return <Navigate to="/" replace />;
   }
 

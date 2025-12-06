@@ -136,7 +136,9 @@ export default function CategoryActionsAMener() {
   const { slug } = useParams();
   const location = useLocation();
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks } = useEditor();
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated, hasGlobalRole, hasModuleOption } = useAuth();
+  // P0: Utiliser V2 pour permissions d'édition
+  const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('help_academy', 'edition');
   const { toast } = useToast();
   
   if (!isAuthenticated) {
@@ -346,7 +348,7 @@ export default function CategoryActionsAMener() {
           </div>
         )}
 
-        {isEditMode && isAdmin && (
+        {isEditMode && canEdit && (
           <div className="flex justify-center mt-8">
             <Button onClick={handleAddSection} className="gap-2">
               <Plus className="w-4 h-4" />
