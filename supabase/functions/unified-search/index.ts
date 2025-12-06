@@ -516,10 +516,28 @@ const NL_ROUTING_RULES: Array<{
   intent?: string;
   keywords?: string[];
   allKeywordsRequired?: boolean; // Si true, TOUS les keywords doivent matcher
+  excludeKeywords?: string[]; // Si présent, la règle ne match PAS si un de ces mots est présent
   metricId: string;
   priority: number;
 }> = [
-  // Règles explicites prioritaires
+  // ════════════════════════════════════════════════════════════
+  // PRIORITÉ MAXIMALE: CA moyen par jour UNIQUEMENT si "moyen" ou "jour" présent
+  // ════════════════════════════════════════════════════════════
+  { keywords: ['moyen', 'jour'], allKeywordsRequired: true, metricId: 'ca_moyen_par_jour', priority: 15 },
+  { keywords: ['moyenne', 'jour'], allKeywordsRequired: true, metricId: 'ca_moyen_par_jour', priority: 15 },
+  { keywords: ['ca', 'moyen'], allKeywordsRequired: true, metricId: 'ca_moyen_par_jour', priority: 14 },
+  { keywords: ['ca', 'moyenne'], allKeywordsRequired: true, metricId: 'ca_moyen_par_jour', priority: 14 },
+  { keywords: ['ca', 'jour'], allKeywordsRequired: true, metricId: 'ca_moyen_par_jour', priority: 14 },
+  
+  // ════════════════════════════════════════════════════════════
+  // PRIORITÉ HAUTE: CA global HT pour les requêtes "CA + période" SANS moyen/jour
+  // ════════════════════════════════════════════════════════════
+  { keywords: ['ca'], excludeKeywords: ['moyen', 'moyenne', 'jour', 'technicien', 'apporteur', 'univers'], metricId: 'ca_global_ht', priority: 12 },
+  { keywords: ['chiffre'], excludeKeywords: ['moyen', 'moyenne', 'jour'], metricId: 'ca_global_ht', priority: 12 },
+  
+  // ════════════════════════════════════════════════════════════
+  // Règles explicites par dimension
+  // ════════════════════════════════════════════════════════════
   { dimension: 'apporteur', intent: 'top', metricId: 'ca_par_apporteur', priority: 10 },
   { dimension: 'apporteur', intent: 'valeur', metricId: 'ca_par_apporteur', priority: 10 },
   { dimension: 'technicien', intent: 'top', metricId: 'top_techniciens_ca', priority: 10 },
@@ -530,47 +548,51 @@ const NL_ROUTING_RULES: Array<{
   { dimension: 'global', intent: 'taux', keywords: ['sav'], metricId: 'taux_sav_global', priority: 10 },
   { dimension: 'global', intent: 'taux', keywords: ['devis', 'transformation'], metricId: 'taux_transformation_devis', priority: 10 },
   { dimension: 'global', intent: 'taux', keywords: ['recouvrement'], metricId: 'taux_recouvrement', priority: 10 },
+  
+  // ════════════════════════════════════════════════════════════
+  // Métriques spécifiques avec keywords
+  // ════════════════════════════════════════════════════════════
   { keywords: ['panier', 'moyen'], allKeywordsRequired: true, metricId: 'panier_moyen', priority: 9 },
   { keywords: ['dossier', 'apporteur'], allKeywordsRequired: true, metricId: 'dossiers_par_apporteur', priority: 9 },
   { keywords: ['reste', 'encaisser'], metricId: 'reste_a_encaisser', priority: 9 },
   { keywords: ['impaye'], metricId: 'reste_a_encaisser', priority: 9 },
   { keywords: ['encours'], metricId: 'reste_a_encaisser', priority: 9 },
   { keywords: ['delai', 'devis'], allKeywordsRequired: true, metricId: 'delai_premier_devis', priority: 9 },
-  // IMPORTANT: "ca par jour" ou "ca moyen par jour" - TOUS les mots requis
-  { keywords: ['ca', 'jour'], allKeywordsRequired: true, metricId: 'ca_moyen_par_jour', priority: 8 },
-  { keywords: ['ca', 'moyen', 'jour'], allKeywordsRequired: true, metricId: 'ca_moyen_par_jour', priority: 9 },
   { keywords: ['sav', 'univers'], allKeywordsRequired: true, metricId: 'sav_par_univers', priority: 8 },
   { keywords: ['dossier'], metricId: 'nb_dossiers_crees', priority: 5 },
-  // CA global/total - priorité basse, fallback
-  { dimension: 'global', intent: 'valeur', metricId: 'ca_global_ht', priority: 4 },
 ];
 
 function findMetricFromNLRules(dimension: string | null, intentType: string | null, normalized: string): string | null {
-  // Direct keyword matching first (phrases exactes)
-  const KEYWORD_DIRECT_MAPPING: Record<string, string> = {
-    'top apporteur': 'ca_par_apporteur',
-    'meilleur apporteur': 'ca_par_apporteur',
-    'top technicien': 'top_techniciens_ca',
-    'meilleur technicien': 'top_techniciens_ca',
-    'panier moyen': 'panier_moyen',
-    'reste a encaisser': 'reste_a_encaisser',
-    'taux sav': 'taux_sav_global',
-    'taux recouvrement': 'taux_recouvrement',
-    'delai premier devis': 'delai_premier_devis',
-    'ca par univers': 'ca_par_univers',
-    'ca par apporteur': 'ca_par_apporteur',
-    'ca par technicien': 'ca_par_technicien',
-    'ca moyen par jour': 'ca_moyen_par_jour',
-    'ca par jour': 'ca_moyen_par_jour',
-    'chiffre affaire': 'ca_global_ht',
-    'chiffre d affaire': 'ca_global_ht',
-  };
+  // Direct keyword matching first (phrases exactes) - ORDRE IMPORTANT!
+  const KEYWORD_DIRECT_MAPPING: Array<{ phrase: string; metricId: string }> = [
+    // CA moyen/jour en premier (plus spécifique)
+    { phrase: 'ca moyen par jour', metricId: 'ca_moyen_par_jour' },
+    { phrase: 'ca par jour', metricId: 'ca_moyen_par_jour' },
+    { phrase: 'moyenne par jour', metricId: 'ca_moyen_par_jour' },
+    { phrase: 'moyen par jour', metricId: 'ca_moyen_par_jour' },
+    // Autres métriques spécifiques
+    { phrase: 'top apporteur', metricId: 'ca_par_apporteur' },
+    { phrase: 'meilleur apporteur', metricId: 'ca_par_apporteur' },
+    { phrase: 'top technicien', metricId: 'top_techniciens_ca' },
+    { phrase: 'meilleur technicien', metricId: 'top_techniciens_ca' },
+    { phrase: 'panier moyen', metricId: 'panier_moyen' },
+    { phrase: 'reste a encaisser', metricId: 'reste_a_encaisser' },
+    { phrase: 'taux sav', metricId: 'taux_sav_global' },
+    { phrase: 'taux recouvrement', metricId: 'taux_recouvrement' },
+    { phrase: 'delai premier devis', metricId: 'delai_premier_devis' },
+    { phrase: 'ca par univers', metricId: 'ca_par_univers' },
+    { phrase: 'ca par apporteur', metricId: 'ca_par_apporteur' },
+    { phrase: 'ca par technicien', metricId: 'ca_par_technicien' },
+    // CA global en dernier (plus générique)
+    { phrase: 'chiffre affaire', metricId: 'ca_global_ht' },
+    { phrase: 'chiffre d affaire', metricId: 'ca_global_ht' },
+  ];
 
-  for (const [phrase, metricId] of Object.entries(KEYWORD_DIRECT_MAPPING)) {
+  for (const { phrase, metricId } of KEYWORD_DIRECT_MAPPING) {
     if (normalized.includes(phrase)) return metricId;
   }
 
-  // NL rules matching
+  // NL rules matching avec support excludeKeywords
   const sortedRules = [...NL_ROUTING_RULES].sort((a, b) => b.priority - a.priority);
   
   for (const rule of sortedRules) {
@@ -579,7 +601,13 @@ function findMetricFromNLRules(dimension: string | null, intentType: string | nu
     if (rule.dimension && dimension !== rule.dimension) matches = false;
     if (rule.intent && intentType !== rule.intent) matches = false;
     
-    if (rule.keywords) {
+    // Vérifier les excludeKeywords - si un mot exclu est présent, la règle ne match pas
+    if (matches && rule.excludeKeywords) {
+      const hasExcluded = rule.excludeKeywords.some(kw => normalized.includes(kw));
+      if (hasExcluded) matches = false;
+    }
+    
+    if (matches && rule.keywords) {
       if (rule.allKeywordsRequired) {
         // TOUS les keywords doivent être présents
         matches = rule.keywords.every(kw => normalized.includes(kw));
@@ -680,11 +708,26 @@ function extractPeriodFromQuery(normalized: string, now: Date): ParsedPeriod {
     };
   }
 
-  // Month name detection
+  // Month name detection avec gestion intelligente de l'année
+  // "en avril" sans année = dernier avril clos (si on est après avril → cette année, sinon → année précédente)
   for (const [moisName, moisIndex] of Object.entries(MOIS_MAP)) {
     if (normalized.includes(moisName)) {
       const yearMatch = normalized.match(/20\d{2}/);
-      const year = yearMatch ? parseInt(yearMatch[0]) : currentYear;
+      let year: number;
+      
+      if (yearMatch) {
+        // Année explicitement mentionnée
+        year = parseInt(yearMatch[0]);
+      } else {
+        // Pas d'année mentionnée → logique "dernier mois clos"
+        // Si le mois demandé est dans le futur par rapport au mois actuel → année précédente
+        if (moisIndex > currentMonth) {
+          year = currentYear - 1;
+        } else {
+          year = currentYear;
+        }
+      }
+      
       const lastDay = new Date(year, moisIndex + 1, 0).getDate();
       return {
         from: `${year}-${String(moisIndex + 1).padStart(2, '0')}-01`,

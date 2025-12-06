@@ -25,6 +25,8 @@ export interface StatResult {
   ranking?: RankingItem[];
   unit: string;
   fromCache?: boolean;
+  hasData?: boolean; // true si des données existent, false si aucune donnée
+  dataCount?: number; // nombre de lignes/factures trouvées
 }
 
 // ============= APPORTEUR NAME MAPPING =============
@@ -86,15 +88,34 @@ interface ApogeeData {
 
 /**
  * Compute CA global HT
+ * Renvoie hasData=false si aucune facture trouvée
  */
 function computeCaGlobalHt(data: ApogeeData, params: StatParams): StatResult {
+  const facturesCount = data.factures.length;
+  
+  // Aucune facture → hasData = false
+  if (facturesCount === 0) {
+    return { 
+      value: 0, 
+      unit: '€', 
+      hasData: false, 
+      dataCount: 0 
+    };
+  }
+  
   let total = 0;
   for (const f of data.factures) {
     const isAvoir = (f.typeFacture || '').toLowerCase() === 'avoir';
     const montant = f.data?.totalHT ?? f.totalHT ?? f.montant ?? 0;
     total += isAvoir ? -Math.abs(montant) : montant;
   }
-  return { value: Math.round(total), unit: '€' };
+  
+  return { 
+    value: Math.round(total), 
+    unit: '€', 
+    hasData: true, 
+    dataCount: facturesCount 
+  };
 }
 
 /**
