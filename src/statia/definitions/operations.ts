@@ -534,7 +534,7 @@ export const tauxRecouvrementMoyenReseau: StatDefinition = {
   id: 'taux_recouvrement_moyen_reseau',
   label: 'Taux Recouvrement Moyen Réseau',
   description: 'Taux de recouvrement moyen sur l\'ensemble des agences',
-  category: 'recouvrement',
+  category: 'reseau',
   source: 'factures',
   aggregation: 'ratio',
   unit: '%',
