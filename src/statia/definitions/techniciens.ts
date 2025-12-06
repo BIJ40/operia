@@ -316,6 +316,9 @@ export const caParTechnicienUnivers: StatDefinition = {
     let caSansTemps = 0;
     let caAvecTemps = 0;
     
+    // Tracker les projets déjà comptés pour les heures (éviter double comptage)
+    const projetsHeuresComptees = new Set<string>();
+    
     // Parcourir les factures
     for (const facture of factures) {
       const meta = extractFactureMeta(facture);
@@ -406,7 +409,13 @@ export const caParTechnicienUnivers: StatDefinition = {
         
         const stats = techStats.get(techId)!;
         stats.totalCA += techCA;
-        stats.totalHeures += techTime;
+        
+        // Ne compter les heures qu'une seule fois par projet par technicien
+        const projectTechKey = `${projectId}-${techId}`;
+        if (!projetsHeuresComptees.has(projectTechKey)) {
+          stats.totalHeures += techTime;
+          projetsHeuresComptees.add(projectTechKey);
+        }
         
         // Répartir par univers
         const caParUnivers = techCA / normalizedUniverses.length;
@@ -418,7 +427,14 @@ export const caParTechnicienUnivers: StatDefinition = {
             stats.dossiersByUnivers[univers] = new Set();
           }
           stats.byUnivers[univers].ca += caParUnivers;
-          stats.byUnivers[univers].heures += heuresParUnivers;
+          
+          // Ne compter les heures qu'une seule fois par projet par technicien par univers
+          const projectTechUniversKey = `${projectId}-${techId}-${univers}`;
+          if (!projetsHeuresComptees.has(projectTechUniversKey)) {
+            stats.byUnivers[univers].heures += heuresParUnivers;
+            projetsHeuresComptees.add(projectTechUniversKey);
+          }
+          
           // Ajouter le dossier au set pour compter les dossiers uniques
           stats.dossiersByUnivers[univers].add(projectId);
         }
