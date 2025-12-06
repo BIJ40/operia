@@ -59,7 +59,7 @@ export default function QrAssetPage() {
         const json = (await res.json()) as QrAssetResponse;
         setData(json);
       } catch (e) {
-        console.error('[QrAssetPage] Fetch error:', e);
+        // Pas de logError car page publique sans auth - log simple pour debug
         setData({ success: false, error: 'NETWORK_ERROR' });
       } finally {
         setLoading(false);

@@ -15,6 +15,30 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.7.5",
+    title: "Audit Qualité & Migration console.error → logError",
+    date: "2025-12-06",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // AUDIT P1 – OBSERVABILITÉ & SENTRY
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'audit', description: 'Migration console.error → logError dans 8 hooks critiques RH' },
+      { type: 'audit', description: 'useSensitiveData.ts: erreurs remontées vers Sentry' },
+      { type: 'audit', description: 'use-sav-overrides.ts: erreurs upsert/delete avec tags' },
+      { type: 'audit', description: 'useCollaboratorDocuments.ts: analyse bulletin async loguée' },
+      { type: 'audit', description: 'useFormationContent.ts: génération contenu formation' },
+      { type: 'audit', description: 'useLeaveDecision.ts: décisions congés avec logging complet' },
+      { type: 'audit', description: 'usePayslipAnalysis.ts: analyse bulletins de paie' },
+      { type: 'audit', description: 'useRHExport.ts: exports CSV/ZIP avec catégorisation' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // P2 – QUALITÉ CODE
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'QrAssetPage: suppression console.error sur page publique' },
+      { type: 'improvement', description: 'Imports logError/logDebug centralisés depuis lib/logger' },
+    ],
+  },
+  {
     version: "V0.7.4",
     title: "Module Maintenance Préventive – Véhicules, Matériel, Alertes & QR",
     date: "2025-12-06",

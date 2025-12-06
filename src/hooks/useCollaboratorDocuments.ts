@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLogRHAction } from '@/hooks/rh/useRHAuditLog';
 import { validateFile } from '@/utils/fileValidation';
 import { handleRHError, showRHSuccess, showRHInfo } from '@/utils/rhErrorHandler';
+import { logError, logDebug } from '@/lib/logger';
 
 const BUCKET_NAME = 'rh-documents';
 
@@ -63,13 +64,13 @@ async function triggerPayslipAnalysis(
       body: { documentId, filePath, collaboratorId, agencyId },
     }).then(({ data, error }) => {
       if (error) {
-        console.error('Erreur analyse bulletin (async):', error);
+        logError('[triggerPayslipAnalysis] Erreur analyse bulletin (async):', error);
       } else if (data?.success) {
-        console.log('Bulletin analysé avec succès:', documentId);
+        logDebug('[triggerPayslipAnalysis] Bulletin analysé:', documentId);
       }
     });
   } catch (err) {
-    console.error('Erreur déclenchement analyse:', err);
+    logError('[triggerPayslipAnalysis] Erreur déclenchement:', err);
   }
 }
 
