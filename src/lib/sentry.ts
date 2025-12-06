@@ -23,6 +23,17 @@ export function initSentry() {
     dsn: SENTRY_DSN,
     environment: getEnvironment(),
     
+    // CRITICAL: Disable all default integrations that show intrusive popups
+    // This prevents the "An internal error occurred" popup with "Get help / Dismiss" buttons
+    integrations: (integrations) => 
+      integrations.filter((integration) => {
+        // Remove feedback integrations that cause intrusive popups
+        const name = integration.name.toLowerCase();
+        return !name.includes('feedback') && 
+               !name.includes('crashreport') &&
+               !name.includes('reportdialog');
+      }),
+    
     // Filter out noisy errors
     beforeSend(event, hint) {
       const error = hint.originalException;
