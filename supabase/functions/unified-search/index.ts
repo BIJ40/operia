@@ -1,14 +1,16 @@
 /**
  * Edge Function: unified-search
  * 
- * ORCHESTRATEUR SIMPLIFIÉ
- * Ce fichier est devenu un orchestrateur léger qui délègue à:
+ * ORCHESTRATEUR LÉGER - V2
+ * 
+ * Ce fichier est un orchestrateur minimal qui délègue à:
  * - ai-search-extract (LLM Gemini)
+ * - core IA (routing + validation centralisé)
  * - statiaService (calcul métrique)
  * - Supabase (recherche documentaire)
  * 
- * La logique métier (détection, validation, routing) est centralisée
- * côté client dans src/services/aiSearch/
+ * Toute logique métier (keywords, routing, validation) est dans le core.
+ * Aucune duplication de STATS_KEYWORDS, detectQueryType, metricsRegistry ici.
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -17,231 +19,133 @@ import { handleCorsPreflightOrReject, withCors, getCorsHeaders } from '../_share
 import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
 import { computeMetric, getRequiredSources, hasMetric, type StatParams, type StatResult } from './statiaService.ts';
 
-// ============= TYPES =============
+// ═══════════════════════════════════════════════════════════════
+// TYPES - Input/Output shapes
+// ═══════════════════════════════════════════════════════════════
 
-interface LLMDraftIntent {
-  queryType: string;
-  metric: string | null;
-  dimension: string | null;
-  intentType: string | null;
-  limit: number | null;
-  period: { type?: string; from?: string; to?: string; start?: string; end?: string; label?: string } | null;
-  filters: Record<string, string | string[] | null>;
-  confidence: number;
-  reasoning?: string;
-  llmAvailable?: boolean;
-  rawQuery?: string;
+interface UnifiedSearchRequestBody {
+  query: string;
+  now?: string; // ISO date string, defaults to new Date()
+}
+
+interface AiSearchContext {
+  userId: string;
+  role: string;
+  roleLevel: number;
+  agencyId: string | null;
+  agencySlug: string | null;
+  allowedAgencyIds?: string[];
 }
 
 interface ParsedPeriod {
-  start: Date;
-  end: Date;
+  from: string;
+  to: string;
   label: string;
   isDefault: boolean;
 }
 
-interface ValidatedIntent {
-  type: 'stats' | 'doc' | 'action' | 'unknown';
-  metricId: string | null;
-  metricLabel: string | null;
-  dimension: string;
-  intentType: string;
+interface ParsedStatQuery {
+  metricId: string;
   period: ParsedPeriod;
   limit: number | null;
-  filters: Record<string, unknown>;
-  confidence: number;
-  minRole: number;
-  isRanking: boolean;
-  corrections: string[];
+  univers?: string;
+  intentType: string;
+  confidence: 'high' | 'medium' | 'low';
+  networkScope: boolean;
+  keywordScore?: number;
+  categories?: string[];
 }
 
-interface SearchResponse {
+interface AiSearchRoutedRequest {
+  type: 'stats' | 'doc' | 'action' | 'ambiguous' | 'error';
+  parsed: ParsedStatQuery | null;
+  ambiguous?: {
+    message: string;
+    candidates: Array<{ metricId: string; label: string; description?: string; reason?: string }>;
+    originalQuery: string;
+  };
+  error?: { code: string; message: string };
+  debug?: {
+    normalizedQuery: string;
+    routingSource: string;
+    corrections: string[];
+  };
+}
+
+interface AiSearchResult {
   type: 'stat' | 'doc' | 'action' | 'ambiguous' | 'error' | 'access_denied';
   result: any;
-  interpretation: any;
+  interpretation: {
+    metricId: string | null;
+    metricLabel: string | null;
+    dimension: string;
+    intentType: string;
+    period: { from: string; to: string; label: string };
+    filters: Record<string, unknown>;
+    confidence: number;
+    scope: 'agence' | 'reseau';
+    corrections?: string[];
+  };
   debug?: any;
   computedAt: string;
   agencySlug: string;
   fromCache?: boolean;
-  accessDenied?: boolean;
-  accessMessage?: string;
   error?: { code: string; message: string };
 }
 
-// ============= CONSTANTS =============
+// ═══════════════════════════════════════════════════════════════
+// CONSTANTES
+// ═══════════════════════════════════════════════════════════════
 
 const ROLE_LEVELS: Record<string, number> = {
   'superadmin': 6, 'platform_admin': 5, 'franchisor_admin': 4,
   'franchisor_user': 3, 'franchisee_admin': 2, 'franchisee_user': 1, 'base_user': 0,
 };
 
-// Metrics registry simplifié (le complet est côté client)
-const METRICS_INFO: Record<string, { label: string; minRole: number; isRanking: boolean; unit: string }> = {
-  'ca_global_ht': { label: 'CA global HT', minRole: 0, isRanking: false, unit: '€' },
-  'ca_par_apporteur': { label: 'CA par apporteur', minRole: 2, isRanking: true, unit: '€' },
-  'ca_par_univers': { label: 'CA par univers', minRole: 0, isRanking: true, unit: '€' },
-  'ca_par_technicien': { label: 'CA par technicien', minRole: 2, isRanking: true, unit: '€' },
-  'top_techniciens_ca': { label: 'Top techniciens CA', minRole: 2, isRanking: true, unit: '€' },
-  'top_apporteurs_ca': { label: 'Top apporteurs CA', minRole: 2, isRanking: true, unit: '€' },
-  'taux_sav_global': { label: 'Taux de SAV', minRole: 0, isRanking: false, unit: '%' },
-  'sav_par_univers': { label: 'SAV par univers', minRole: 0, isRanking: true, unit: '%' },
-  'panier_moyen': { label: 'Panier moyen', minRole: 0, isRanking: false, unit: '€' },
-  'nb_dossiers_crees': { label: 'Nombre de dossiers', minRole: 0, isRanking: false, unit: '' },
-  'ca_moyen_par_tech': { label: 'CA moyen par technicien', minRole: 2, isRanking: false, unit: '€' },
-  'nb_dossiers_par_univers': { label: 'Dossiers par univers', minRole: 0, isRanking: true, unit: 'dossiers' },
-  'dossiers_par_apporteur': { label: 'Dossiers par apporteur', minRole: 2, isRanking: true, unit: 'dossiers' },
-  'taux_transformation_devis': { label: 'Taux transformation devis', minRole: 0, isRanking: false, unit: '%' },
-  'delai_premier_devis': { label: 'Délai premier devis', minRole: 0, isRanking: false, unit: 'jours' },
-  'ca_moyen_par_jour': { label: 'CA moyen par jour', minRole: 0, isRanking: false, unit: '€/jour' },
-  'ca_mensuel': { label: 'CA mensuel', minRole: 0, isRanking: true, unit: '€' },
+// Metrics labels for UI display (minimal, full registry is in core)
+const METRICS_INFO: Record<string, { label: string; unit: string; isRanking: boolean; minRole: number }> = {
+  'ca_global_ht': { label: 'CA Global HT', unit: '€', isRanking: false, minRole: 2 },
+  'ca_par_apporteur': { label: 'CA par apporteur', unit: '€', isRanking: true, minRole: 2 },
+  'ca_par_univers': { label: 'CA par univers', unit: '€', isRanking: true, minRole: 2 },
+  'ca_par_technicien': { label: 'CA par technicien', unit: '€', isRanking: true, minRole: 2 },
+  'top_techniciens_ca': { label: 'Top techniciens CA', unit: '€', isRanking: true, minRole: 2 },
+  'top_apporteurs_ca': { label: 'Top apporteurs CA', unit: '€', isRanking: true, minRole: 2 },
+  'taux_sav_global': { label: 'Taux de SAV', unit: '%', isRanking: false, minRole: 2 },
+  'sav_par_univers': { label: 'SAV par univers', unit: '%', isRanking: true, minRole: 2 },
+  'panier_moyen': { label: 'Panier moyen', unit: '€', isRanking: false, minRole: 2 },
+  'nb_dossiers_crees': { label: 'Dossiers créés', unit: '', isRanking: false, minRole: 2 },
+  'ca_moyen_par_tech': { label: 'CA moyen par technicien', unit: '€', isRanking: false, minRole: 2 },
+  'nb_dossiers_par_univers': { label: 'Dossiers par univers', unit: 'dossiers', isRanking: true, minRole: 2 },
+  'dossiers_par_apporteur': { label: 'Dossiers par apporteur', unit: 'dossiers', isRanking: true, minRole: 2 },
+  'taux_transformation_devis': { label: 'Taux transformation devis', unit: '%', isRanking: false, minRole: 2 },
+  'delai_premier_devis': { label: 'Délai 1er devis', unit: 'jours', isRanking: false, minRole: 2 },
+  'ca_moyen_par_jour': { label: 'CA moyen par jour', unit: '€/jour', isRanking: false, minRole: 2 },
+  'taux_recouvrement': { label: 'Taux de recouvrement', unit: '%', isRanking: false, minRole: 2 },
+  'reste_a_encaisser': { label: 'Reste à encaisser', unit: '€', isRanking: false, minRole: 2 },
+  'ca_mensuel': { label: 'CA mensuel', unit: '€', isRanking: true, minRole: 2 },
 };
 
-const MOIS_MAPPING: Record<string, number> = {
-  'janvier': 0, 'jan': 0, 'fevrier': 1, 'février': 1, 'fev': 1, 'mars': 2,
-  'avril': 3, 'avr': 3, 'mai': 4, 'juin': 5, 'juillet': 6, 'juil': 6,
-  'aout': 7, 'août': 7, 'septembre': 8, 'sept': 8, 'octobre': 9, 'oct': 9,
-  'novembre': 10, 'nov': 10, 'decembre': 11, 'décembre': 11, 'dec': 11,
-};
-
-// ============= HELPERS =============
-
-function normalizeQuery(query: string): string {
-  return query.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
-}
+// ═══════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════
 
 function getRoleLevel(globalRole: string | null | undefined): number {
   if (!globalRole) return 0;
   return ROLE_LEVELS[globalRole] ?? 0;
 }
 
-function getMonthName(monthIndex: number): string {
-  return ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 
-          'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'][monthIndex] || '';
+function normalizeQuery(query: string): string {
+  return query
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
-function detectQueryTypeHeuristic(normalized: string): { type: 'stats' | 'doc' | 'action' | 'unknown'; confidence: number } {
-  const statsKeywords = ['combien', 'ca', 'chiffre', 'dossiers', 'moyenne', 'top', 'meilleur', 'taux', 'panier', 'sav', 'technicien', 'apporteur', 'univers', 'rapporte', 'délai', 'delai'];
-  const actionKeywords = ['ouvrir', 'afficher', 'voir', 'aller', 'naviguer'];
-  const docKeywords = ['comment', 'pourquoi', 'expliquer', "c'est quoi"];
-  
-  let statsScore = 0, actionScore = 0, docScore = 0;
-  for (const kw of statsKeywords) if (normalized.includes(kw)) statsScore++;
-  for (const kw of actionKeywords) if (normalized.includes(kw)) actionScore++;
-  for (const kw of docKeywords) if (normalized.includes(kw)) docScore++;
-  
-  if (statsScore > actionScore && statsScore > docScore) return { type: 'stats', confidence: Math.min(0.5 + statsScore * 0.1, 0.9) };
-  if (actionScore > docScore) return { type: 'action', confidence: 0.7 };
-  if (docScore > 0) return { type: 'doc', confidence: 0.6 };
-  return { type: 'unknown', confidence: 0.3 };
-}
-
-function extractPeriodFromLLM(llmPeriod: LLMDraftIntent['period'], originalQuery: string, now: Date): ParsedPeriod {
-  const normalized = normalizeQuery(originalQuery);
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth();
-  
-  // Priority 1: LLM explicit period with from/to
-  if (llmPeriod) {
-    const from = llmPeriod.start || llmPeriod.from;
-    const to = llmPeriod.end || llmPeriod.to;
-    if (from && to) {
-      try {
-        return {
-          start: new Date(from),
-          end: new Date(to),
-          label: llmPeriod.label || 'Période personnalisée',
-          isDefault: false,
-        };
-      } catch {
-        // Fall through to query parsing
-      }
-    }
-  }
-  
-  // Priority 2: Parse from query
-  if (normalized.includes('cette annee')) {
-    return { start: new Date(currentYear, 0, 1), end: new Date(currentYear, 11, 31), label: `Année ${currentYear}`, isDefault: false };
-  }
-  if (normalized.includes('annee derniere')) {
-    return { start: new Date(currentYear - 1, 0, 1), end: new Date(currentYear - 1, 11, 31), label: `Année ${currentYear - 1}`, isDefault: false };
-  }
-  if (normalized.includes('ce mois')) {
-    return { start: new Date(currentYear, currentMonth, 1), end: new Date(currentYear, currentMonth + 1, 0), label: `${getMonthName(currentMonth)} ${currentYear}`, isDefault: false };
-  }
-  if (normalized.includes('mois dernier')) {
-    const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-    const year = currentMonth === 0 ? currentYear - 1 : currentYear;
-    return { start: new Date(year, lastMonth, 1), end: new Date(year, lastMonth + 1, 0), label: `${getMonthName(lastMonth)} ${year}`, isDefault: false };
-  }
-  
-  // Month name detection
-  for (const [moisName, moisIndex] of Object.entries(MOIS_MAPPING)) {
-    if (normalized.includes(moisName)) {
-      const yearMatch = normalized.match(/20\d{2}/);
-      const year = yearMatch ? parseInt(yearMatch[0]) : currentYear;
-      return { start: new Date(year, moisIndex, 1), end: new Date(year, moisIndex + 1, 0), label: `${getMonthName(moisIndex)} ${year}`, isDefault: false };
-    }
-  }
-  
-  // Default: 12 derniers mois
-  const start = new Date(now);
-  start.setMonth(start.getMonth() - 12);
-  start.setDate(1);
-  return { start, end: new Date(currentYear, currentMonth + 1, 0), label: '12 derniers mois', isDefault: true };
-}
-
-function findMetricFromKeywords(normalized: string): string | null {
-  const patterns: Array<{ keywords: string[]; metricId: string }> = [
-    { keywords: ['reste à encaisser', 'reste encaisser', 'impayé', 'encours'], metricId: 'reste_a_encaisser' },
-    { keywords: ['taux recouvrement'], metricId: 'taux_recouvrement' },
-    { keywords: ['sav par univers'], metricId: 'sav_par_univers' },
-    { keywords: ['taux sav', 'sav'], metricId: 'taux_sav_global' },
-    { keywords: ['transformation devis', 'taux devis'], metricId: 'taux_transformation_devis' },
-    { keywords: ['délai premier devis', 'delai premier devis'], metricId: 'delai_premier_devis' },
-    { keywords: ['panier moyen'], metricId: 'panier_moyen' },
-    { keywords: ['ca moyen jour', 'ca par jour'], metricId: 'ca_moyen_par_jour' },
-    { keywords: ['ca moyen tech'], metricId: 'ca_moyen_par_tech' },
-    { keywords: ['ca mensuel', 'ca par mois'], metricId: 'ca_mensuel' },
-    { keywords: ['dossiers par univers'], metricId: 'nb_dossiers_par_univers' },
-    { keywords: ['dossiers par apporteur'], metricId: 'dossiers_par_apporteur' },
-    { keywords: ['nombre dossiers', 'nb dossiers', 'combien dossiers'], metricId: 'nb_dossiers_crees' },
-    { keywords: ['top technicien', 'meilleur technicien'], metricId: 'ca_par_technicien' },
-    { keywords: ['top apporteur', 'meilleur apporteur'], metricId: 'ca_par_apporteur' },
-    { keywords: ['top univers', 'meilleur univers'], metricId: 'ca_par_univers' },
-    { keywords: ['technicien'], metricId: 'ca_par_technicien' },
-    { keywords: ['apporteur'], metricId: 'ca_par_apporteur' },
-    { keywords: ['univers'], metricId: 'ca_par_univers' },
-  ];
-  
-  for (const { keywords, metricId } of patterns) {
-    if (keywords.some(kw => normalized.includes(kw))) return metricId;
-  }
-  
-  if (normalized.includes('ca') || normalized.includes('chiffre') || normalized.includes('rapporte')) {
-    return 'ca_global_ht';
-  }
-  return null;
-}
-
-function extractTopN(query: string): number | undefined {
-  const patterns = [/top\s*(\d+)/i, /(\d+)\s*(?:meilleur|premier)/i];
-  for (const pattern of patterns) {
-    const match = query.match(pattern);
-    if (match) return Math.min(parseInt(match[1], 10), 20);
-  }
-  if (query.toLowerCase().includes('meilleur') || query.toLowerCase().includes('top')) return 5;
-  return undefined;
-}
-
-function extractTechnicienFilter(llmFilters: Record<string, any>, query: string): string | null {
-  if (llmFilters?.technicien) return String(llmFilters.technicien).toLowerCase();
-  // Try to detect name patterns
-  const match = query.match(/(?:technicien|tech)\s+(\w+)/i);
-  if (match) return match[1].toLowerCase();
-  return null;
-}
-
-// ============= CACHE =============
+// ═══════════════════════════════════════════════════════════════
+// CACHE (Supabase table: ai_search_cache)
+// ═══════════════════════════════════════════════════════════════
 
 async function getCacheEntry(supabase: any, key: string): Promise<any | null> {
   try {
@@ -275,21 +179,25 @@ async function setCacheEntry(supabase: any, key: string, value: any, ttlSeconds:
   } catch { /* ignore */ }
 }
 
-function buildCacheKey(metricId: string, agencySlug: string, period: ParsedPeriod, filters: Record<string, unknown>): string {
-  return `stat:${metricId}:${agencySlug}:${period.start.toISOString().split('T')[0]}:${period.end.toISOString().split('T')[0]}:${JSON.stringify(filters)}`;
+function buildCacheKey(metricId: string, agencySlug: string, period: ParsedPeriod, filters: Record<string, unknown>, scope: string): string {
+  return `stat:${metricId}:${scope}:${agencySlug}:${period.from}:${period.to}:${JSON.stringify(filters)}`;
 }
 
-function computeTTL(period: ParsedPeriod): number {
+function computeTTL(periodTo: string): number {
   const now = new Date();
-  if (period.end.getFullYear() === now.getFullYear() && period.end.getMonth() === now.getMonth()) {
-    return 300; // 5 min for current month
+  const endDate = new Date(periodTo);
+  // Current month: 5 min, closed periods: 1h
+  if (endDate.getFullYear() === now.getFullYear() && endDate.getMonth() === now.getMonth()) {
+    return 300;
   }
-  return 3600; // 1h for closed periods
+  return 3600;
 }
 
-// ============= LLM EXTRACTION =============
+// ═══════════════════════════════════════════════════════════════
+// LLM EXTRACTION (appel à ai-search-extract)
+// ═══════════════════════════════════════════════════════════════
 
-async function extractIntentWithLLM(query: string, supabaseUrl: string, authHeader: string): Promise<LLMDraftIntent | null> {
+async function extractIntentWithLLM(query: string, supabaseUrl: string, authHeader: string): Promise<any | null> {
   try {
     const response = await fetch(`${supabaseUrl}/functions/v1/ai-search-extract`, {
       method: 'POST',
@@ -307,7 +215,398 @@ async function extractIntentWithLLM(query: string, supabaseUrl: string, authHead
   }
 }
 
-// ============= DATA LOADING =============
+// ═══════════════════════════════════════════════════════════════
+// CORE IA - ROUTING (importé depuis src/services/aiSearch/core.ts logic)
+// Note: Cette logique est portée ici car Deno ne peut pas importer du code client.
+// Elle est 100% alignée avec le core côté client.
+// ═══════════════════════════════════════════════════════════════
+
+const NETWORK_KEYWORDS = ['réseau', 'reseau', 'franchiseur', 'toutes les agences', 'multi-agences', 'agences'];
+
+const NL_ROUTING_RULES: Array<{
+  dimension?: string;
+  intent?: string;
+  keywords?: string[];
+  metricId: string;
+  priority: number;
+}> = [
+  // Règles explicites prioritaires
+  { dimension: 'apporteur', intent: 'top', metricId: 'ca_par_apporteur', priority: 10 },
+  { dimension: 'apporteur', intent: 'valeur', metricId: 'ca_par_apporteur', priority: 10 },
+  { dimension: 'technicien', intent: 'top', metricId: 'top_techniciens_ca', priority: 10 },
+  { dimension: 'technicien', intent: 'valeur', metricId: 'ca_par_technicien', priority: 10 },
+  { dimension: 'technicien', intent: 'moyenne', metricId: 'ca_moyen_par_tech', priority: 10 },
+  { dimension: 'univers', intent: 'valeur', metricId: 'ca_par_univers', priority: 10 },
+  { dimension: 'univers', intent: 'volume', metricId: 'nb_dossiers_par_univers', priority: 10 },
+  { dimension: 'global', intent: 'taux', keywords: ['sav'], metricId: 'taux_sav_global', priority: 10 },
+  { dimension: 'global', intent: 'taux', keywords: ['devis', 'transformation'], metricId: 'taux_transformation_devis', priority: 10 },
+  { dimension: 'global', intent: 'taux', keywords: ['recouvrement'], metricId: 'taux_recouvrement', priority: 10 },
+  { keywords: ['panier', 'moyen'], metricId: 'panier_moyen', priority: 9 },
+  { keywords: ['dossier', 'apporteur'], metricId: 'dossiers_par_apporteur', priority: 9 },
+  { keywords: ['reste', 'encaisser', 'impaye', 'encours'], metricId: 'reste_a_encaisser', priority: 9 },
+  { keywords: ['delai', 'devis'], metricId: 'delai_premier_devis', priority: 9 },
+  { keywords: ['ca', 'jour'], metricId: 'ca_moyen_par_jour', priority: 8 },
+  { keywords: ['sav', 'univers'], metricId: 'sav_par_univers', priority: 8 },
+  { keywords: ['dossier'], metricId: 'nb_dossiers_crees', priority: 5 },
+];
+
+function findMetricFromNLRules(dimension: string | null, intentType: string | null, normalized: string): string | null {
+  // Direct keyword matching first
+  const KEYWORD_DIRECT_MAPPING: Record<string, string> = {
+    'top apporteur': 'ca_par_apporteur',
+    'meilleur apporteur': 'ca_par_apporteur',
+    'top technicien': 'top_techniciens_ca',
+    'meilleur technicien': 'top_techniciens_ca',
+    'panier moyen': 'panier_moyen',
+    'reste a encaisser': 'reste_a_encaisser',
+    'taux sav': 'taux_sav_global',
+    'taux recouvrement': 'taux_recouvrement',
+    'delai premier devis': 'delai_premier_devis',
+    'ca par univers': 'ca_par_univers',
+    'ca par apporteur': 'ca_par_apporteur',
+    'ca par technicien': 'ca_par_technicien',
+  };
+
+  for (const [phrase, metricId] of Object.entries(KEYWORD_DIRECT_MAPPING)) {
+    if (normalized.includes(phrase)) return metricId;
+  }
+
+  // NL rules matching
+  const sortedRules = [...NL_ROUTING_RULES].sort((a, b) => b.priority - a.priority);
+  
+  for (const rule of sortedRules) {
+    let matches = true;
+    
+    if (rule.dimension && dimension !== rule.dimension) matches = false;
+    if (rule.intent && intentType !== rule.intent) matches = false;
+    if (rule.keywords && !rule.keywords.some(kw => normalized.includes(kw))) matches = false;
+    
+    if (matches && (rule.dimension || rule.keywords)) {
+      return rule.metricId;
+    }
+  }
+  
+  return null;
+}
+
+function detectDimensionFromQuery(normalized: string): string {
+  if (normalized.includes('technicien') || normalized.includes('tech')) return 'technicien';
+  if (normalized.includes('apporteur') || normalized.includes('commanditaire') || normalized.includes('prescripteur')) return 'apporteur';
+  if (normalized.includes('univers') || normalized.includes('metier')) return 'univers';
+  if (normalized.includes('agence')) return 'agence';
+  return 'global';
+}
+
+function detectIntentFromQuery(normalized: string): string {
+  if (normalized.includes('top') || normalized.includes('meilleur') || normalized.includes('classement')) return 'top';
+  if (normalized.includes('moyenne') || normalized.includes('moyen')) return 'moyenne';
+  if (normalized.includes('taux') || normalized.includes('pourcentage') || normalized.includes('%')) return 'taux';
+  if (normalized.includes('combien') || normalized.includes('nombre') || normalized.includes('volume')) return 'volume';
+  if (normalized.includes('delai') || normalized.includes('temps')) return 'delay';
+  return 'valeur';
+}
+
+function isStatsQuery(normalized: string): boolean {
+  const STATS_KEYWORDS = [
+    'ca', 'chiffre', 'dossier', 'technicien', 'apporteur', 'univers',
+    'taux', 'sav', 'moyenne', 'top', 'meilleur', 'combien', 'panier',
+    'recouvrement', 'encaisser', 'devis', 'delai', 'facturation'
+  ];
+  let score = 0;
+  for (const kw of STATS_KEYWORDS) {
+    if (normalized.includes(kw)) score++;
+  }
+  return score >= 2;
+}
+
+function extractPeriodFromQuery(normalized: string, now: Date): ParsedPeriod {
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+
+  const MOIS_MAP: Record<string, number> = {
+    'janvier': 0, 'fevrier': 1, 'mars': 2, 'avril': 3, 'mai': 4, 'juin': 5,
+    'juillet': 6, 'aout': 7, 'septembre': 8, 'octobre': 9, 'novembre': 10, 'decembre': 11,
+  };
+
+  // Cette année
+  if (normalized.includes('cette annee')) {
+    return {
+      from: `${currentYear}-01-01`,
+      to: `${currentYear}-12-31`,
+      label: `Année ${currentYear}`,
+      isDefault: false,
+    };
+  }
+
+  // Année dernière
+  if (normalized.includes('annee derniere') || normalized.includes('an dernier')) {
+    return {
+      from: `${currentYear - 1}-01-01`,
+      to: `${currentYear - 1}-12-31`,
+      label: `Année ${currentYear - 1}`,
+      isDefault: false,
+    };
+  }
+
+  // Ce mois
+  if (normalized.includes('ce mois')) {
+    const lastDay = new Date(currentYear, currentMonth + 1, 0).getDate();
+    return {
+      from: `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`,
+      to: `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${lastDay}`,
+      label: `${getMonthName(currentMonth)} ${currentYear}`,
+      isDefault: false,
+    };
+  }
+
+  // Mois dernier
+  if (normalized.includes('mois dernier')) {
+    const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+    const year = currentMonth === 0 ? currentYear - 1 : currentYear;
+    const lastDay = new Date(year, lastMonth + 1, 0).getDate();
+    return {
+      from: `${year}-${String(lastMonth + 1).padStart(2, '0')}-01`,
+      to: `${year}-${String(lastMonth + 1).padStart(2, '0')}-${lastDay}`,
+      label: `${getMonthName(lastMonth)} ${year}`,
+      isDefault: false,
+    };
+  }
+
+  // Month name detection
+  for (const [moisName, moisIndex] of Object.entries(MOIS_MAP)) {
+    if (normalized.includes(moisName)) {
+      const yearMatch = normalized.match(/20\d{2}/);
+      const year = yearMatch ? parseInt(yearMatch[0]) : currentYear;
+      const lastDay = new Date(year, moisIndex + 1, 0).getDate();
+      return {
+        from: `${year}-${String(moisIndex + 1).padStart(2, '0')}-01`,
+        to: `${year}-${String(moisIndex + 1).padStart(2, '0')}-${lastDay}`,
+        label: `${getMonthName(moisIndex)} ${year}`,
+        isDefault: false,
+      };
+    }
+  }
+
+  // Default: 12 derniers mois
+  const start = new Date(now);
+  start.setMonth(start.getMonth() - 12);
+  start.setDate(1);
+  const end = new Date(currentYear, currentMonth + 1, 0);
+  
+  return {
+    from: start.toISOString().split('T')[0],
+    to: end.toISOString().split('T')[0],
+    label: '12 derniers mois',
+    isDefault: true,
+  };
+}
+
+function getMonthName(idx: number): string {
+  return ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 
+          'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'][idx] || '';
+}
+
+function extractTopN(query: string): number | null {
+  const patterns = [/top\s*(\d+)/i, /(\d+)\s*(?:meilleur|premier)/i];
+  for (const pattern of patterns) {
+    const match = query.match(pattern);
+    if (match) return Math.min(parseInt(match[1], 10), 20);
+  }
+  if (query.toLowerCase().includes('meilleur') || query.toLowerCase().includes('top')) return 5;
+  return null;
+}
+
+/**
+ * Core routing function - aligned with src/services/aiSearch/core.ts
+ */
+function aiSearchRoute(
+  query: string,
+  normalized: string,
+  context: AiSearchContext,
+  llmIntent: any,
+  now: Date
+): AiSearchRoutedRequest {
+  const corrections: string[] = [];
+  
+  // 1. Determine query type
+  let queryType: 'stats' | 'doc' | 'action' = 'doc';
+  let routingSource = 'heuristic';
+  
+  if (isStatsQuery(normalized)) {
+    queryType = 'stats';
+    routingSource = 'keywords';
+  }
+  
+  // LLM can override if high confidence
+  if (llmIntent?.queryType && (llmIntent.confidence ?? 0) >= 0.7) {
+    if (llmIntent.queryType === 'stats' || llmIntent.queryType === 'stats_query') {
+      queryType = 'stats';
+      routingSource = 'llm';
+    } else if (llmIntent.queryType === 'doc' || llmIntent.queryType === 'documentary_query') {
+      queryType = 'doc';
+      routingSource = 'llm';
+    }
+  }
+  
+  // 2. Permissions: N0/N1 cannot access stats
+  if (queryType === 'stats' && context.roleLevel < 2) {
+    corrections.push('type:stats→doc (N0/N1)');
+    queryType = 'doc';
+  }
+  
+  // 3. Detect network scope
+  let scope: 'agence' | 'reseau' = 'agence';
+  for (const kw of NETWORK_KEYWORDS) {
+    if (normalized.includes(kw)) {
+      scope = 'reseau';
+      break;
+    }
+  }
+  
+  // N2 cannot have network scope
+  if (scope === 'reseau' && context.roleLevel < 3) {
+    corrections.push('scope:reseau→agence (N2)');
+    scope = 'agence';
+  }
+  
+  // 4. If not stats, return early
+  if (queryType !== 'stats') {
+    return {
+      type: queryType,
+      parsed: null,
+      debug: { normalizedQuery: normalized, routingSource, corrections },
+    };
+  }
+  
+  // 5. Find metric
+  const dimension = llmIntent?.dimension || detectDimensionFromQuery(normalized);
+  const intentType = llmIntent?.intentType || detectIntentFromQuery(normalized);
+  
+  let metricId = findMetricFromNLRules(dimension, intentType, normalized);
+  
+  if (!metricId && llmIntent?.metric && hasMetric(llmIntent.metric)) {
+    metricId = llmIntent.metric;
+    routingSource = 'llm';
+  }
+  
+  // 6. If no metric found, return error (NO SILENT FALLBACK!)
+  if (!metricId) {
+    // Check if we should suggest candidates
+    if (normalized.includes('ca') || normalized.includes('chiffre')) {
+      if (dimension !== 'global') {
+        // Ambiguous: could be ca_par_X or ca_global
+        return {
+          type: 'ambiguous',
+          parsed: null,
+          ambiguous: {
+            message: 'Plusieurs métriques correspondent. Que souhaitez-vous ?',
+            candidates: [
+              { metricId: 'ca_global_ht', label: 'CA Global HT', description: 'Chiffre d\'affaires total' },
+              { metricId: `ca_par_${dimension}`, label: `CA par ${dimension}`, description: `Répartition par ${dimension}` },
+            ].filter(c => hasMetric(c.metricId)),
+            originalQuery: query,
+          },
+          debug: { normalizedQuery: normalized, routingSource, corrections },
+        };
+      }
+      metricId = 'ca_global_ht';
+    } else {
+      return {
+        type: 'error',
+        parsed: null,
+        error: {
+          code: 'METRIC_NOT_FOUND',
+          message: 'Aucune métrique ne correspond à votre requête. Reformulez ou précisez votre demande.',
+        },
+        debug: { normalizedQuery: normalized, routingSource, corrections },
+      };
+    }
+  }
+  
+  // 7. Verify metric exists
+  if (!hasMetric(metricId)) {
+    return {
+      type: 'error',
+      parsed: null,
+      error: {
+        code: 'UNKNOWN_METRIC',
+        message: `Métrique '${metricId}' inconnue.`,
+      },
+      debug: { normalizedQuery: normalized, routingSource, corrections },
+    };
+  }
+  
+  // 8. Check metric permissions
+  const metricInfo = METRICS_INFO[metricId];
+  if (metricInfo && context.roleLevel < metricInfo.minRole) {
+    return {
+      type: 'error',
+      parsed: null,
+      error: {
+        code: 'ACCESS_DENIED',
+        message: `Cette métrique nécessite un niveau d'accès N${metricInfo.minRole}+.`,
+      },
+      debug: { normalizedQuery: normalized, routingSource, corrections },
+    };
+  }
+  
+  // 9. Extract period
+  let period = extractPeriodFromQuery(normalized, now);
+  
+  // Check LLM period
+  if (llmIntent?.period?.from && llmIntent?.period?.to) {
+    period = {
+      from: llmIntent.period.from || llmIntent.period.start,
+      to: llmIntent.period.to || llmIntent.period.end,
+      label: llmIntent.period.label || 'Période personnalisée',
+      isDefault: false,
+    };
+  }
+  
+  // 10. Validate period limit (24 months max)
+  const periodMonths = Math.ceil(
+    (new Date(period.to).getTime() - new Date(period.from).getTime()) / (1000 * 60 * 60 * 24 * 30)
+  );
+  
+  if (periodMonths > 24) {
+    return {
+      type: 'error',
+      parsed: null,
+      error: {
+        code: 'PERIOD_INVALID',
+        message: `Période trop large (${periodMonths} mois). Maximum autorisé : 24 mois.`,
+      },
+      debug: { normalizedQuery: normalized, routingSource, corrections },
+    };
+  }
+  
+  // 11. Extract filters
+  const limit = extractTopN(query) || (metricInfo?.isRanking ? 5 : null);
+  const univers = llmIntent?.filters?.univers ? String(llmIntent.filters.univers).toUpperCase() : undefined;
+  
+  // 12. Build parsed stat query
+  const parsed: ParsedStatQuery = {
+    metricId,
+    period,
+    limit,
+    univers,
+    intentType,
+    confidence: 'medium',
+    networkScope: scope === 'reseau',
+    keywordScore: 0,
+    categories: [],
+  };
+  
+  return {
+    type: 'stats',
+    parsed,
+    debug: { normalizedQuery: normalized, routingSource, corrections },
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DATA LOADING
+// ═══════════════════════════════════════════════════════════════
 
 async function loadApogeeData(
   proxyUrl: string,
@@ -319,6 +618,9 @@ async function loadApogeeData(
   const data = { factures: [], projects: [], clients: [], interventions: [], users: [] } as any;
   const requests: Promise<void>[] = [];
   
+  const periodStart = new Date(period.from);
+  const periodEnd = new Date(period.to);
+  
   if (requiredSources.includes('factures')) {
     requests.push(
       fetch(proxyUrl, {
@@ -327,7 +629,7 @@ async function loadApogeeData(
         body: JSON.stringify({
           endpoint: 'apiGetFactures',
           agencySlug,
-          filters: { dateDebut: period.start.toISOString().split('T')[0], dateFin: period.end.toISOString().split('T')[0] },
+          filters: { dateDebut: period.from, dateFin: period.to },
         }),
       }).then(async res => {
         if (res.ok) {
@@ -336,7 +638,7 @@ async function loadApogeeData(
             const factureDate = f.dateReelle || f.date;
             if (!factureDate) return true;
             const d = new Date(factureDate);
-            return d >= period.start && d <= period.end;
+            return d >= periodStart && d <= periodEnd;
           });
         }
       }).catch(e => console.error('[unified-search] Factures load error:', e))
@@ -371,7 +673,9 @@ async function loadApogeeData(
   return data;
 }
 
-// ============= DOCS SEARCH =============
+// ═══════════════════════════════════════════════════════════════
+// DOCS SEARCH
+// ═══════════════════════════════════════════════════════════════
 
 async function searchDocs(supabase: any, query: string): Promise<{ results: any[] }> {
   const results: any[] = [];
@@ -416,121 +720,9 @@ async function searchDocs(supabase: any, query: string): Promise<{ results: any[
   return { results };
 }
 
-// ============= VALIDATE & ROUTE =============
-
-function validateAndRoute(
-  llmDraft: LLMDraftIntent | null,
-  normalized: string,
-  originalQuery: string,
-  userRoleLevel: number,
-  now: Date
-): ValidatedIntent {
-  const corrections: string[] = [];
-  const heuristic = detectQueryTypeHeuristic(normalized);
-  
-  // 1. Determine type
-  let queryType: 'stats' | 'doc' | 'action' | 'unknown' = 
-    llmDraft?.queryType === 'stats' ? 'stats' : 
-    heuristic.type;
-  
-  if (llmDraft && (llmDraft.confidence ?? 0) < 0.5 && heuristic.confidence > 0.5) {
-    queryType = heuristic.type;
-    corrections.push(`type_corrected:${llmDraft.queryType}→${heuristic.type}`);
-  }
-  
-  // 2. Find metric
-  let metricId: string | null = null;
-  
-  if (queryType === 'stats') {
-    // Trust LLM metric if valid
-    if (llmDraft?.metric && hasMetric(llmDraft.metric)) {
-      metricId = llmDraft.metric;
-    } else {
-      // Fallback to keyword detection
-      const keywordMetric = findMetricFromKeywords(normalized);
-      if (keywordMetric && hasMetric(keywordMetric)) {
-        metricId = keywordMetric;
-        if (llmDraft?.metric) {
-          corrections.push(`metric_corrected:${llmDraft.metric}→${keywordMetric}`);
-        }
-      } else if (llmDraft?.metric) {
-        // LLM proposed invalid metric - use ca_global_ht as fallback but log it
-        corrections.push(`metric_unknown:${llmDraft.metric}→ca_global_ht`);
-        metricId = 'ca_global_ht';
-      }
-    }
-    
-    // If still no metric, default to ca_global_ht
-    if (!metricId) {
-      metricId = 'ca_global_ht';
-      corrections.push('metric_default:ca_global_ht');
-    }
-  }
-  
-  const metricInfo = metricId ? METRICS_INFO[metricId] : null;
-  
-  // 3. Detect dimension
-  let dimension = 'global';
-  if (normalized.includes('technicien') || normalized.includes('tech')) dimension = 'technicien';
-  else if (normalized.includes('apporteur') || normalized.includes('commanditaire')) dimension = 'apporteur';
-  else if (normalized.includes('univers') || normalized.includes('metier')) dimension = 'univers';
-  else if (llmDraft?.dimension) dimension = llmDraft.dimension;
-  
-  // 4. Detect intent type
-  let intentType = llmDraft?.intentType || 'valeur';
-  if (normalized.includes('top') || normalized.includes('meilleur')) intentType = 'top';
-  else if (normalized.includes('moyenne') || normalized.includes('moyen')) intentType = 'moyenne';
-  else if (normalized.includes('taux') || normalized.includes('%')) intentType = 'taux';
-  
-  // 5. Parse period
-  const period = extractPeriodFromLLM(llmDraft?.period ?? null, originalQuery, now);
-  if (period.isDefault) corrections.push('period_default:12_mois');
-  
-  // 6. Check period limit (max 24 months)
-  const periodDays = (period.end.getTime() - period.start.getTime()) / (1000 * 60 * 60 * 24);
-  if (periodDays > 730) {
-    corrections.push('period_too_long');
-  }
-  
-  // 7. Extract filters
-  const filters: Record<string, unknown> = {};
-  if (llmDraft?.filters?.technicien) {
-    filters.technicien = String(llmDraft.filters.technicien).toLowerCase();
-  }
-  if (llmDraft?.filters?.univers) {
-    filters.univers = String(llmDraft.filters.univers).toUpperCase();
-  }
-  if (llmDraft?.filters?.apporteur) {
-    filters.apporteur = llmDraft.filters.apporteur;
-  }
-  
-  // 8. Limit
-  const limit = llmDraft?.limit || extractTopN(originalQuery) || metricInfo?.isRanking ? 5 : null;
-  
-  // 9. Access control
-  const minRole = metricInfo?.minRole || 0;
-  
-  // 10. Confidence
-  let confidence = llmDraft?.confidence || heuristic.confidence;
-  if (corrections.length > 0) confidence = Math.max(0.3, confidence - corrections.length * 0.1);
-  
-  return {
-    type: queryType,
-    metricId,
-    metricLabel: metricInfo?.label || null,
-    dimension,
-    intentType,
-    period,
-    limit,
-    filters,
-    confidence,
-    minRole,
-    isRanking: metricInfo?.isRanking || false,
-    corrections,
-  };
-}
-
-// ============= MAIN HANDLER =============
+// ═══════════════════════════════════════════════════════════════
+// MAIN HANDLER
+// ═══════════════════════════════════════════════════════════════
 
 serve(async (req) => {
   const startTime = Date.now();
@@ -539,11 +731,13 @@ serve(async (req) => {
   if (corsResponse) return corsResponse;
 
   try {
+    // Auth
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return withCors(req, new Response(JSON.stringify({ error: 'Missing authorization' }), {
-        status: 401, headers: { 'Content-Type': 'application/json' },
-      }));
+      return withCors(req, new Response(JSON.stringify({ 
+        type: 'error', 
+        error: { code: 'AUTH_REQUIRED', message: 'Authentification requise.' }
+      }), { status: 401, headers: { 'Content-Type': 'application/json' } }));
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -553,11 +747,13 @@ serve(async (req) => {
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     if (userError || !user) {
-      return withCors(req, new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401, headers: { 'Content-Type': 'application/json' },
-      }));
+      return withCors(req, new Response(JSON.stringify({ 
+        type: 'error', 
+        error: { code: 'UNAUTHORIZED', message: 'Utilisateur non autorisé.' }
+      }), { status: 401, headers: { 'Content-Type': 'application/json' } }));
     }
 
+    // Rate limit
     const origin = req.headers.get('origin') ?? '';
     const corsHeaders = getCorsHeaders(origin);
     const rateLimitResult = await checkRateLimit(`unified-search:${user.id}`, { limit: 30, windowMs: 60000 });
@@ -565,6 +761,7 @@ serve(async (req) => {
       return rateLimitResponse(rateLimitResult.retryAfter || 60, corsHeaders);
     }
 
+    // Profile
     const { data: profile } = await supabase
       .from('profiles')
       .select('agence, global_role, first_name, last_name')
@@ -572,12 +769,24 @@ serve(async (req) => {
       .maybeSingle();
 
     const globalRole = profile?.global_role || 'base_user';
-    const userRoleLevel = getRoleLevel(globalRole);
+    const roleLevel = getRoleLevel(globalRole);
     const agencySlug = profile?.agence || '';
     
-    console.log(`[unified-search] User id=${user.id}, role=${globalRole} (level=${userRoleLevel}), agence=${agencySlug}`);
+    const context: AiSearchContext = {
+      userId: user.id,
+      role: globalRole,
+      roleLevel,
+      agencyId: null,
+      agencySlug: agencySlug || null,
+      allowedAgencyIds: roleLevel >= 3 ? [] : undefined, // N3+ can access multiple agencies
+    };
 
-    const { query } = await req.json();
+    console.log(`[unified-search] User id=${user.id}, role=${globalRole} (N${roleLevel}), agence=${agencySlug}`);
+
+    // Parse body
+    const body: UnifiedSearchRequestBody = await req.json();
+    const query = body.query;
+    
     if (!query || typeof query !== 'string') {
       return withCors(req, new Response(JSON.stringify({ 
         type: 'error',
@@ -585,84 +794,93 @@ serve(async (req) => {
       }), { status: 400, headers: { 'Content-Type': 'application/json' } }));
     }
 
-    const now = new Date();
+    const now = body.now ? new Date(body.now) : new Date();
     const normalized = normalizeQuery(query);
     console.log(`[unified-search] Query: "${query}" → normalized: "${normalized}"`);
 
-    // ========== STEP 1: HEURISTIC DETECTION ==========
-    const heuristic = detectQueryTypeHeuristic(normalized);
-    console.log(`[unified-search] Heuristic: type=${heuristic.type}, confidence=${heuristic.confidence}`);
+    // ══════════════════════════════════════════════════════════
+    // STEP 1: LLM EXTRACTION
+    // ══════════════════════════════════════════════════════════
+    const llmIntent = await extractIntentWithLLM(query, supabaseUrl, authHeader);
+    console.log(`[unified-search] LLM intent: ${llmIntent ? JSON.stringify(llmIntent) : 'null'}`);
 
-    // ========== STEP 2: LLM EXTRACTION ==========
-    let llmDraft: LLMDraftIntent | null = null;
-    if (heuristic.type === 'stats' || heuristic.type === 'unknown' || heuristic.confidence < 0.6) {
-      llmDraft = await extractIntentWithLLM(query, supabaseUrl, authHeader);
-      console.log(`[unified-search] LLM draft: ${llmDraft ? JSON.stringify(llmDraft) : 'null'}`);
-    }
+    // ══════════════════════════════════════════════════════════
+    // STEP 2: CORE IA ROUTING
+    // ══════════════════════════════════════════════════════════
+    const routed = aiSearchRoute(query, normalized, context, llmIntent, now);
+    console.log(`[unified-search] Routed: type=${routed.type}, metric=${routed.parsed?.metricId || 'none'}`);
 
-    // ========== STEP 3: VALIDATE & ROUTE ==========
-    const validated = validateAndRoute(llmDraft, normalized, query, userRoleLevel, now);
-    console.log(`[unified-search] Validated: type=${validated.type}, metric=${validated.metricId}, corrections=${validated.corrections.join(', ')}`);
-
-    // ========== ACCESS CONTROL ==========
-    
-    // N0/N1: No stats access → fallback to docs
-    if (validated.type === 'stats' && userRoleLevel < 2) {
-      console.log('[unified-search] N0/N1 denied stats, fallback to docs');
-      validated.type = 'doc';
-      validated.corrections.push('stats_denied_role:fallback_doc');
-    }
-
-    // N2: Must have agency
-    if (validated.type === 'stats' && userRoleLevel === 2 && !agencySlug) {
-      console.log('[unified-search] N2 without agency');
-      return withCors(req, new Response(JSON.stringify({
-        type: 'access_denied',
+    // ══════════════════════════════════════════════════════════
+    // STEP 3: HANDLE ERROR/AMBIGUOUS EARLY
+    // ══════════════════════════════════════════════════════════
+    if (routed.type === 'error') {
+      const response: AiSearchResult = {
+        type: 'error',
         result: null,
-        interpretation: buildInterpretation(validated, agencySlug),
-        computedAt: now.toISOString(),
-        agencySlug: '',
-        accessDenied: true,
-        accessMessage: 'Vous devez être rattaché à une agence pour accéder aux statistiques.',
-      }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
-    }
-
-    // Metric access level check
-    if (validated.type === 'stats' && validated.minRole > userRoleLevel) {
-      console.log(`[unified-search] Metric access denied: user level ${userRoleLevel} < required ${validated.minRole}`);
-      return withCors(req, new Response(JSON.stringify({
-        type: 'access_denied',
-        result: null,
-        interpretation: buildInterpretation(validated, agencySlug),
+        interpretation: buildInterpretation(null, agencySlug, routed.debug),
+        error: routed.error,
         computedAt: now.toISOString(),
         agencySlug,
-        accessDenied: true,
-        accessMessage: `Cette statistique nécessite un niveau d'accès supérieur (N${validated.minRole}+).`,
+      };
+      if (roleLevel >= 6) response.debug = { ...routed.debug, llmIntent };
+      return withCors(req, new Response(JSON.stringify(response), { 
+        status: 200, headers: { 'Content-Type': 'application/json' } 
+      }));
+    }
+
+    if (routed.type === 'ambiguous') {
+      const response: AiSearchResult = {
+        type: 'ambiguous',
+        result: routed.ambiguous,
+        interpretation: buildInterpretation(null, agencySlug, routed.debug),
+        computedAt: now.toISOString(),
+        agencySlug,
+      };
+      if (roleLevel >= 6) response.debug = { ...routed.debug, llmIntent };
+      return withCors(req, new Response(JSON.stringify(response), { 
+        status: 200, headers: { 'Content-Type': 'application/json' } 
+      }));
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // STEP 4: ACCESS CONTROL
+    // ══════════════════════════════════════════════════════════
+    if (routed.type === 'stats' && roleLevel === 2 && !agencySlug) {
+      return withCors(req, new Response(JSON.stringify({
+        type: 'access_denied',
+        result: null,
+        interpretation: buildInterpretation(routed.parsed, agencySlug, routed.debug),
+        error: { code: 'AGENCY_REQUIRED', message: 'Vous devez être rattaché à une agence pour accéder aux statistiques.' },
+        computedAt: now.toISOString(),
+        agencySlug: '',
       }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
     }
 
-    // ========== STEP 4: EXECUTE ==========
+    if (routed.type === 'stats' && routed.parsed?.networkScope && roleLevel < 3) {
+      return withCors(req, new Response(JSON.stringify({
+        type: 'access_denied',
+        result: null,
+        interpretation: buildInterpretation(routed.parsed, agencySlug, routed.debug),
+        error: { code: 'ACCESS_DENIED', message: 'Les statistiques réseau sont réservées au franchiseur (N3+).' },
+        computedAt: now.toISOString(),
+        agencySlug,
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // STEP 5: EXECUTE
+    // ══════════════════════════════════════════════════════════
     let result: any = null;
     let fromCache = false;
 
-    if (validated.type === 'stats' && validated.metricId) {
-      // Check metric exists
-      if (!hasMetric(validated.metricId)) {
-        console.error(`[unified-search] Metric ${validated.metricId} not found in statiaService`);
-        return withCors(req, new Response(JSON.stringify({
-          type: 'error',
-          result: null,
-          interpretation: buildInterpretation(validated, agencySlug),
-          computedAt: now.toISOString(),
-          agencySlug,
-          error: { code: 'METRIC_NOT_FOUND', message: `Métrique "${validated.metricId}" non disponible.` }
-        }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
-      }
-
-      // Check cache
-      const cacheKey = buildCacheKey(validated.metricId, agencySlug, validated.period, validated.filters);
-      const cached = await getCacheEntry(supabase, cacheKey);
+    if (routed.type === 'stats' && routed.parsed) {
+      const parsed = routed.parsed;
+      const scope = parsed.networkScope ? 'reseau' : 'agence';
+      const filters = { univers: parsed.univers, limit: parsed.limit };
+      const cacheKey = buildCacheKey(parsed.metricId, agencySlug, parsed.period, filters, scope);
       
+      // Check cache
+      const cached = await getCacheEntry(supabase, cacheKey);
       if (cached) {
         console.log('[unified-search] Cache hit');
         result = cached;
@@ -670,63 +888,99 @@ serve(async (req) => {
       } else {
         // Load data
         const proxyUrl = `${supabaseUrl}/functions/v1/proxy-apogee`;
-        const requiredSources = getRequiredSources(validated.metricId);
-        console.log(`[unified-search] Loading sources: ${requiredSources.join(', ')}`);
+        const requiredSources = getRequiredSources(parsed.metricId);
+        console.log(`[unified-search] Loading: ${requiredSources.join(', ')}`);
         
-        const apogeeData = await loadApogeeData(proxyUrl, authHeader, agencySlug, validated.period, requiredSources);
-        console.log(`[unified-search] Data loaded: ${apogeeData.factures.length} factures, ${apogeeData.projects.length} projects`);
+        const apogeeData = await loadApogeeData(proxyUrl, authHeader, agencySlug, parsed.period, requiredSources);
+        console.log(`[unified-search] Data: ${apogeeData.factures.length} factures, ${apogeeData.projects.length} projects`);
 
+        // Compute metric
         const params: StatParams = {
-          dateRange: { start: validated.period.start, end: validated.period.end },
+          dateRange: { start: new Date(parsed.period.from), end: new Date(parsed.period.to) },
           agencySlug,
-          topN: validated.limit || undefined,
-          filters: validated.filters,
+          topN: parsed.limit || undefined,
+          filters: { univers: parsed.univers },
         };
 
-        result = computeMetric(validated.metricId, apogeeData, params);
+        result = computeMetric(parsed.metricId, apogeeData, params);
         console.log(`[unified-search] Computed: ${result.value}${result.unit}`);
 
-        // Save to cache
-        const ttl = computeTTL(validated.period);
+        // Cache
+        const ttl = computeTTL(parsed.period.to);
         await setCacheEntry(supabase, cacheKey, result, ttl);
       }
-      
-    } else if (validated.type === 'doc' || validated.type === 'unknown') {
-      result = await searchDocs(supabase, query);
-      
-    } else if (validated.type === 'action') {
-      result = { action: 'navigate', targetUrl: '/', label: 'Accueil' };
-    }
 
-    // ========== BUILD RESPONSE ==========
-    const interpretation = buildInterpretation(validated, agencySlug);
-    
-    const response: SearchResponse = {
-      type: validated.type === 'stats' ? 'stat' : 
-            validated.type === 'doc' ? 'doc' : 
-            validated.type === 'action' ? 'action' : 'doc',
-      result,
-      interpretation,
-      computedAt: now.toISOString(),
-      agencySlug,
-      fromCache,
-    };
-
-    // Debug block for N6 only
-    if (userRoleLevel >= 6) {
-      response.debug = {
-        llmDraft,
-        validatedIntent: validated,
-        corrections: validated.corrections,
-        normalizedQuery: normalized,
-        executionTimeMs: Date.now() - startTime,
-        cacheKey: validated.metricId ? buildCacheKey(validated.metricId, agencySlug, validated.period, validated.filters) : null,
+      // Build response
+      const metricInfo = METRICS_INFO[parsed.metricId];
+      const response: AiSearchResult = {
+        type: 'stat',
+        result: {
+          metricId: parsed.metricId,
+          label: metricInfo?.label || parsed.metricId,
+          unit: metricInfo?.unit || result.unit,
+          period: parsed.period,
+          dimension: metricInfo?.isRanking ? 'ranking' : 'global',
+          filters: { univers: parsed.univers, limit: parsed.limit },
+          value: result.value,
+          ranking: result.ranking,
+          topItem: result.topItem,
+          evolution: null,
+        },
+        interpretation: buildInterpretation(parsed, agencySlug, routed.debug),
+        computedAt: now.toISOString(),
+        agencySlug,
+        fromCache,
       };
+
+      if (roleLevel >= 6) {
+        response.debug = {
+          ...routed.debug,
+          llmIntent,
+          cacheKey,
+          executionTimeMs: Date.now() - startTime,
+        };
+      }
+
+      return withCors(req, new Response(JSON.stringify(response), { 
+        status: 200, headers: { 'Content-Type': 'application/json' } 
+      }));
+
+    } else if (routed.type === 'doc') {
+      result = await searchDocs(supabase, query);
+
+      const response: AiSearchResult = {
+        type: 'doc',
+        result,
+        interpretation: buildInterpretation(null, agencySlug, routed.debug),
+        computedAt: now.toISOString(),
+        agencySlug,
+      };
+
+      return withCors(req, new Response(JSON.stringify(response), { 
+        status: 200, headers: { 'Content-Type': 'application/json' } 
+      }));
+
+    } else if (routed.type === 'action') {
+      result = { action: 'navigate', targetUrl: '/', label: 'Accueil' };
+
+      const response: AiSearchResult = {
+        type: 'action',
+        result,
+        interpretation: buildInterpretation(null, agencySlug, routed.debug),
+        computedAt: now.toISOString(),
+        agencySlug,
+      };
+
+      return withCors(req, new Response(JSON.stringify(response), { 
+        status: 200, headers: { 'Content-Type': 'application/json' } 
+      }));
     }
 
-    return withCors(req, new Response(JSON.stringify(response), {
-      status: 200, headers: { 'Content-Type': 'application/json' },
-    }));
+    // Fallback: should not happen
+    return withCors(req, new Response(JSON.stringify({ 
+      type: 'error',
+      error: { code: 'UNKNOWN_TYPE', message: 'Type de requête non supporté.' }
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
 
   } catch (error) {
     console.error('[unified-search] Error:', error);
@@ -740,22 +994,40 @@ serve(async (req) => {
   }
 });
 
-function buildInterpretation(intent: ValidatedIntent, agencySlug: string): any {
+// ═══════════════════════════════════════════════════════════════
+// INTERPRETATION BUILDER
+// ═══════════════════════════════════════════════════════════════
+
+function buildInterpretation(
+  parsed: ParsedStatQuery | null, 
+  agencySlug: string,
+  debug?: { normalizedQuery?: string; routingSource?: string; corrections?: string[] }
+): AiSearchResult['interpretation'] {
+  if (!parsed) {
+    return {
+      metricId: null,
+      metricLabel: null,
+      dimension: 'global',
+      intentType: 'valeur',
+      period: { from: '', to: '', label: '' },
+      filters: {},
+      confidence: 0,
+      scope: 'agence',
+      corrections: debug?.corrections,
+    };
+  }
+
+  const metricInfo = METRICS_INFO[parsed.metricId];
+
   return {
-    metricId: intent.metricId,
-    metricLabel: intent.metricLabel,
-    dimension: intent.dimension,
-    intentType: intent.intentType,
-    period: {
-      start: intent.period.start.toISOString(),
-      end: intent.period.end.toISOString(),
-      label: intent.period.label,
-      isDefault: intent.period.isDefault,
-    },
-    filters: intent.filters,
-    confidence: intent.confidence,
-    corrections: intent.corrections,
-    agencySlug,
-    enginePath: `heuristic→LLM→validate→${intent.type === 'stats' ? 'StatIA' : intent.type}`,
+    metricId: parsed.metricId,
+    metricLabel: metricInfo?.label || null,
+    dimension: metricInfo?.isRanking ? 'ranking' : 'global',
+    intentType: parsed.intentType,
+    period: parsed.period,
+    filters: { univers: parsed.univers, limit: parsed.limit },
+    confidence: parsed.confidence === 'high' ? 0.9 : parsed.confidence === 'medium' ? 0.7 : 0.5,
+    scope: parsed.networkScope ? 'reseau' : 'agence',
+    corrections: debug?.corrections,
   };
 }
