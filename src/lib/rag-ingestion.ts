@@ -27,6 +27,7 @@ export interface IngestionDocument {
   id: string;
   job_id: string;
   filename: string;
+  title: string | null;
   file_path: string | null;
   file_size: number | null;
   status: 'pending' | 'processing' | 'completed' | 'failed';
@@ -118,6 +119,7 @@ export async function createIngestionJob(
       supabase.from('rag_index_documents').insert({
         job_id: jobId,
         filename: file.name,
+        title: uploadedFile.title || null,
         file_path: uploadError ? null : filePath,
         file_size: file.size,
         status: 'pending',

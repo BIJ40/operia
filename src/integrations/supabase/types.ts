@@ -3496,6 +3496,7 @@ export type Database = {
           processed_at: string | null
           role_cible: string | null
           status: string
+          title: string | null
           univers_code: string | null
           updated_at: string
         }
@@ -3514,6 +3515,7 @@ export type Database = {
           processed_at?: string | null
           role_cible?: string | null
           status?: string
+          title?: string | null
           univers_code?: string | null
           updated_at?: string
         }
@@ -3532,6 +3534,7 @@ export type Database = {
           processed_at?: string | null
           role_cible?: string | null
           status?: string
+          title?: string | null
           univers_code?: string | null
           updated_at?: string
         }
