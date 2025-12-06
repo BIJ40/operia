@@ -30,6 +30,12 @@ import {
   type EntityDictionaries,
   type NlContext
 } from './statiaIntentV4.ts';
+// ═══════════════════════════════════════════════════════════════
+// NEW: Simple Templates + Source Validation + Post-Processing
+// ═══════════════════════════════════════════════════════════════
+import { matchSimpleTemplate, getTemplateRequiredSources, type TemplateMatchResult } from './simpleTemplates.ts';
+import { getEnforcedSources, validateSources, logSourcesDebug, buildUserFriendlyError } from './sourceValidator.ts';
+import { applyPostProcessing, inferPostProcessingType, getEntityTypeForMetric, type PostProcessedResult } from './statiaPostProcessing.ts';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
@@ -998,11 +1004,21 @@ serve(async (req) => {
     console.log(`[unified-search] Final period: ${period.label} (${period.from} → ${period.to})`);
 
     // ══════════════════════════════════════════════════════════
+    // STEP 5.5: TEMPLATES LÉGERS (bypass NL si match fort)
+    // ══════════════════════════════════════════════════════════
+    const templateMatch = matchSimpleTemplate(query);
+    if (templateMatch) {
+      console.log(`[unified-search] TEMPLATE MATCH: ${templateMatch.template.id} via pattern "${templateMatch.matchedPattern}" (confidence: ${templateMatch.confidence})`);
+    }
+
+    // ══════════════════════════════════════════════════════════
     // STEP 6: RÉSOLUTION FINALE DE LA MÉTRIQUE + ENTITÉS
     // ══════════════════════════════════════════════════════════
     let finalMetricId: string | null = null;
     let metricSource = 'none';
     let metricScores: MetricScore[] = [];
+    let templatePostProcessing: string | null = null;
+    let templateEntityType: string | null = null;
     
     // Fallback entities/extracted pour compatibilité arrière
     const entityFiltersCompat = findEntitiesInQuery(normalizeForMatching(query), entityDictionary);
@@ -1014,10 +1030,28 @@ serve(async (req) => {
     const metricResultFallback = selectBestMetric(extractedWithEntityOverride, 5);
     metricScores = metricResultFallback.scores;
     
-    // Priorité au V4 s'il a trouvé une métrique
-    if (selectedMetricV4) {
+    // ════════════════════════════════════════════════════════════
+    // PRIORITÉ DE RÉSOLUTION:
+    // 1. Template match (si confiance high)
+    // 2. NL V4 (si métrique trouvée)
+    // 3. NL V3 fallback
+    // ════════════════════════════════════════════════════════════
+    if (templateMatch && templateMatch.confidence === 'high') {
+      finalMetricId = templateMatch.template.metricId;
+      metricSource = 'template';
+      templatePostProcessing = templateMatch.template.postProcessing;
+      templateEntityType = templateMatch.template.entityType || null;
+      console.log(`[unified-search] Using TEMPLATE: ${finalMetricId} (postProcessing: ${templatePostProcessing})`);
+    } else if (selectedMetricV4) {
       finalMetricId = selectedMetricV4.engineKey; // Utiliser l'engineKey pour StatIA
       metricSource = 'nlv4';
+    } else if (templateMatch) {
+      // Template match avec confiance medium = utiliser comme fallback
+      finalMetricId = templateMatch.template.metricId;
+      metricSource = 'template_fallback';
+      templatePostProcessing = templateMatch.template.postProcessing;
+      templateEntityType = templateMatch.template.entityType || null;
+      console.log(`[unified-search] Using TEMPLATE FALLBACK: ${finalMetricId}`);
     } else if (metricResultFallback.metric) {
       finalMetricId = metricResultFallback.metric.id;
       metricSource = 'nlv3_fallback';
@@ -1096,20 +1130,79 @@ serve(async (req) => {
       const cached = skipCache ? null : await getCacheEntry(supabase, cacheKey);
       if (cached) { console.log('[unified-search] Cache hit'); result = cached; fromCache = true; }
       else {
-        const requiredSources = getRequiredSources(parsed.metricId);
+        // ════════════════════════════════════════════════════════════
+        // FIX SIMPLIFIÉ: Forcer les sources complètes pour métriques sensibles
+        // ════════════════════════════════════════════════════════════
+        let requiredSources = getRequiredSources(parsed.metricId);
+        requiredSources = getEnforcedSources(parsed.metricId, requiredSources);
+        
         console.log(`[unified-search] Loading: ${requiredSources.join(', ')}`);
         const apogeeData = await loadApogeeData(proxyUrl, authHeader, agencySlug, parsed.period, requiredSources);
+        
+        // ════════════════════════════════════════════════════════════
+        // FIX SIMPLIFIÉ: Log de debug systématique
+        // ════════════════════════════════════════════════════════════
+        logSourcesDebug(parsed.metricId, apogeeData);
         console.log(`[unified-search] Data: ${apogeeData.factures.length} factures, ${apogeeData.projects.length} projects`);
+        
+        // ════════════════════════════════════════════════════════════
+        // FIX SIMPLIFIÉ: Validation dure des sources avant calcul
+        // ════════════════════════════════════════════════════════════
+        const validationResult = validateSources(parsed.metricId, requiredSources, apogeeData);
+        if (!validationResult.isValid) {
+          console.error(`[unified-search] VALIDATION FAILED: ${validationResult.errorMessage}`);
+          const userError = buildUserFriendlyError(validationResult);
+          const errorResponse: AiSearchResult = {
+            type: 'error',
+            result: null,
+            interpretation: buildInterpretation(parsed, agencySlug, routed.debug),
+            error: { code: 'STATIA_DATA_MISSING', message: userError },
+            computedAt: now.toISOString(),
+            agencySlug
+          };
+          return withCors(req, new Response(JSON.stringify(errorResponse), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+        }
+        
         const params: StatParams = { dateRange: { start: new Date(parsed.period.from), end: new Date(parsed.period.to) }, agencySlug, topN: parsed.limit || undefined, filters: { univers: parsed.univers, technicienId: parsed.technicienId, technicienName: parsed.technicienName, apporteurId: parsed.apporteurId, apporteurName: parsed.apporteurName } };
         result = computeMetric(parsed.metricId, apogeeData, params);
         console.log(`[unified-search] Computed: ${result.value}${result.unit}`);
+        
+        // ════════════════════════════════════════════════════════════
+        // FIX SIMPLIFIÉ: Post-processing automatique
+        // ════════════════════════════════════════════════════════════
+        const isTopQuery = parsed.intentType === 'top' || parsed.intentType === 'classement' || parsed.intentType === 'meilleur';
+        const postProcessType = inferPostProcessingType(parsed.metricId, isTopQuery);
+        const entityType = getEntityTypeForMetric(parsed.metricId);
+        const postProcessed = applyPostProcessing(result, postProcessType, entityType);
+        
+        // Enrichir result avec les infos post-processées
+        if (postProcessed.displayText) {
+          (result as any).displayText = postProcessed.displayText;
+          (result as any).postProcessType = postProcessType;
+        }
+        
         if (!skipCache) { const ttl = computeTTL(parsed.period.to); await setCacheEntry(supabase, cacheKey, result, ttl); }
       }
 
       const metricInfo = METRICS_INFO[parsed.metricId];
       const response: AiSearchResult = {
         type: 'stat',
-        result: { metricId: parsed.metricId, label: metricInfo?.label || parsed.metricId, unit: metricInfo?.unit || result.unit, period: parsed.period, dimension: metricInfo?.isRanking ? 'ranking' : 'global', filters: { univers: parsed.univers, limit: parsed.limit }, value: result.value, ranking: result.ranking, topItem: result.topItem, evolution: null, hasData: result.hasData, dataCount: result.dataCount },
+        result: { 
+          metricId: parsed.metricId, 
+          label: metricInfo?.label || parsed.metricId, 
+          unit: metricInfo?.unit || result.unit, 
+          period: parsed.period, 
+          dimension: metricInfo?.isRanking ? 'ranking' : 'global', 
+          filters: { univers: parsed.univers, limit: parsed.limit }, 
+          value: result.value, 
+          ranking: result.ranking, 
+          topItem: result.topItem, 
+          evolution: null, 
+          hasData: result.hasData, 
+          dataCount: result.dataCount,
+          displayText: (result as any).displayText,
+          postProcessType: (result as any).postProcessType
+        },
         interpretation: buildInterpretation(parsed, agencySlug, routed.debug),
         computedAt: now.toISOString(),
         agencySlug,
