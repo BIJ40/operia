@@ -58,21 +58,31 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
 
   const availableMonths = useMemo(() => getAvailableMonths(), []);
   
-  // Charger les données réelles pour les sélecteurs
-  // CRITICAL: Toujours utiliser agencySlug passé en prop, pas le fallback user.agence
+  // CRITICAL: Toujours utiliser agencySlug passé en prop EXPLICITEMENT
   // pour éviter les problèmes d'isolation des données (ex: admin sélectionne LE MANS mais voit DAX)
-  const effectiveSlug = agencySlug;
+  // Reset les résultats quand l'agence change
+  useEffect(() => {
+    setPreviewResult(null);
+    setPreviewBreakdown(null);
+    setError(null);
+  }, [agencySlug]);
   
   // Hook pour récupérer les données réelles des sélecteurs
-  const { data: apogeeData, isLoading: isLoadingData } = useQuery({
-    queryKey: ['apogee-preview-data', effectiveSlug],
+  // Le queryKey DOIT inclure agencySlug pour forcer le refetch lors du changement
+  const { data: apogeeData, isLoading: isLoadingData, refetch } = useQuery({
+    queryKey: ['apogee-preview-data', agencySlug],
     queryFn: async () => {
-      if (!effectiveSlug) return null;
-      // Toujours passer l'agencySlug explicitement, jamais de fallback
-      return apogeeProxy.getAllData({ agencySlug: effectiveSlug });
+      if (!agencySlug) {
+        console.warn('[MetricPreview] No agencySlug provided, skipping data load');
+        return null;
+      }
+      console.log(`[MetricPreview] Loading data for agency: ${agencySlug}`);
+      // CRITICAL: Toujours passer agencySlug explicitement, JAMAIS de fallback
+      return apogeeProxy.getAllData({ agencySlug, skipCache: true });
     },
-    enabled: !!effectiveSlug,
-    staleTime: 2 * 60 * 1000, // 2 minutes - réduire pour éviter les données stales entre agences
+    enabled: !!agencySlug,
+    staleTime: 60 * 1000, // 1 minute
+    gcTime: 2 * 60 * 1000, // 2 minutes
   });
 
   // Extraire les listes réelles depuis les données
@@ -226,7 +236,7 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
         effectiveMetricId,
         {
           dateRange,
-          agencySlug: effectiveSlug,
+          agencySlug: agencySlug,
           filters,
         },
         createServices()
@@ -369,7 +379,7 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
               </Badge>
             )}
             <Badge variant="outline" className="text-xs">
-              {effectiveSlug}
+              {agencySlug}
             </Badge>
           </div>
         </CardTitle>
@@ -514,7 +524,7 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
             value={previewResult}
             breakdown={previewBreakdown || undefined}
             dateRange={previewDateRange}
-            agencySlug={effectiveSlug}
+            agencySlug={agencySlug}
             dimensions={{
               mois: hasDimension('mois') && selectedMonth ? availableMonths.find(m => m.value === selectedMonth)?.label : undefined,
               technicien: hasDimension('technicien') && selectedTechnician ? { 
