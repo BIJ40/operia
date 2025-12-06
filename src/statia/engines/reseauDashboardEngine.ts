@@ -527,24 +527,29 @@ function computeBlocSav(
   // Taux moyen par agence
   const agencyRates: number[] = [];
   for (const agency of agencyData) {
-    if (!agency.data?.projects?.length) continue;
+    const agencyProjects = agency.data?.projects;
+    const agencyInterventions = agency.data?.interventions;
+    
+    if (!Array.isArray(agencyProjects) || agencyProjects.length === 0) continue;
     
     const agencySAV = new Set<any>();
-    for (const intervention of agency.data.interventions || []) {
-      if (isSAVIntervention(intervention)) {
-        const projectId = intervention.projectId || intervention.project_id;
-        if (projectId) agencySAV.add(projectId);
+    if (Array.isArray(agencyInterventions)) {
+      for (const intervention of agencyInterventions) {
+        if (isSAVIntervention(intervention)) {
+          const projectId = intervention.projectId || intervention.project_id;
+          if (projectId) agencySAV.add(projectId);
+        }
       }
     }
     
-    const agencyProjects = agency.data.projects.filter((p: any) => {
+    const filteredProjects = agencyProjects.filter((p: any) => {
       const d = parseDate(p.date || p.created_at || p.createdAt);
       return d && d >= params.dateStart && d <= params.dateEnd;
     });
     
-    if (agencyProjects.length > 0) {
-      const agencySAVCount = agencyProjects.filter((p: any) => agencySAV.has(p.id)).length;
-      agencyRates.push((agencySAVCount / agencyProjects.length) * 100);
+    if (filteredProjects.length > 0) {
+      const agencySAVCount = filteredProjects.filter((p: any) => agencySAV.has(p.id)).length;
+      agencyRates.push((agencySAVCount / filteredProjects.length) * 100);
     }
   }
   
@@ -609,10 +614,11 @@ function computeBlocCA(
   let totalCA = 0;
   
   for (const agency of agencyData) {
-    if (!agency.data?.factures) continue;
+    const agencyFactures = agency.data?.factures;
+    if (!Array.isArray(agencyFactures)) continue;
     
     let agencyCA = 0;
-    for (const facture of agency.data.factures) {
+    for (const facture of agencyFactures) {
       const meta = extractFactureMeta(facture);
       const factureState = facture.state || facture.status || facture.data?.state || '';
       if (!isFactureStateIncluded(factureState)) continue;
