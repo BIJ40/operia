@@ -3,7 +3,7 @@ import {
   MessageSquare, Network, Users, Database, Settings, LucideIcon,
   PieChart, Coins, LifeBuoy, Headphones, GraduationCap, Kanban, Activity,
   HelpCircle, Calendar, UserCog, Briefcase, Inbox, Building2, GitCompare,
-  MessagesSquare, Wrench, Brain
+  MessagesSquare, Wrench, Brain, Car
 } from 'lucide-react';
 import { ROUTES } from './routes';
 import { ModuleKey } from '@/types/modules';
@@ -80,6 +80,17 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     description: 'Suivi des actions et tâches en cours',
     icon: ListTodo,
     route: ROUTES.pilotage.actions,
+    scopeSlug: SCOPE_SLUGS.ACTIONS_A_MENER,
+    color: 'accent',
+    group: 'pilotage',
+    requiresModule: 'pilotage_agence',
+  },
+  {
+    id: 'MAINTENANCE_PREVENTIVE',
+    title: 'Maintenance préventive',
+    description: 'Véhicules, matériel et EPI',
+    icon: Car,
+    route: ROUTES.pilotage.maintenance,
     scopeSlug: SCOPE_SLUGS.ACTIONS_A_MENER,
     color: 'accent',
     group: 'pilotage',

@@ -73,6 +73,8 @@ export const ROUTES = {
     dashboardRh: '/hc-agency/dashboard-rh',
     // StatIA Builder (N2+)
     statiaBuilder: '/hc-agency/statia-builder',
+    // Maintenance préventive
+    maintenance: '/hc-agency/maintenance',
     // Commercial
     commercial: '/hc-agency/commercial',
     commercialPptx: '/hc-agency/commercial/support-pptx',
