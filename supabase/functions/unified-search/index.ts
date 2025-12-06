@@ -372,8 +372,33 @@ async function loadClientsForAgency(proxyUrl: string, authHeader: string, agency
     const res = await fetch(proxyUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authHeader }, body: JSON.stringify({ endpoint: 'apiGetClients', agencySlug }) });
     if (!res.ok) return [];
     const json = await res.json();
-    return (json.data || []).map((c: any) => ({ id: c.id, name: c.name || c.raisonSociale || c.displayName, company: c.company || c.societe }));
-  } catch { return []; }
+    const rawClients = json.data || [];
+    
+    // Log sample pour debug des propriétés disponibles
+    if (rawClients.length > 0) {
+      const sample = rawClients.slice(0, 3);
+      console.log(`[loadClientsForAgency] Sample client keys:`, Object.keys(sample[0] || {}));
+      console.log(`[loadClientsForAgency] Sample clients:`, sample.map((c: any) => ({ 
+        id: c.id, 
+        name: c.name, 
+        raisonSociale: c.raisonSociale, 
+        displayName: c.displayName,
+        societe: c.societe,
+        company: c.company,
+        nom: c.nom,
+        label: c.label
+      })));
+    }
+    
+    // Mapping étendu pour capturer toutes les variations possibles du nom
+    return rawClients.map((c: any) => {
+      const name = c.name || c.raisonSociale || c.displayName || c.societe || c.company || c.nom || c.label || '';
+      return { id: c.id, name, company: c.company || c.societe || '' };
+    });
+  } catch (e) { 
+    console.error(`[loadClientsForAgency] Error:`, e);
+    return []; 
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
