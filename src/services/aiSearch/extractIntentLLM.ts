@@ -1,76 +1,10 @@
 /**
  * StatIA AI Search - Extraction Intent via LLM
- * Appel Lovable AI pour compréhension NL
+ * Appel edge function ai-search-extract pour compréhension NL
  */
 
-import type { LLMDraftIntent } from './types';
+import type { LLMDraftIntent, QueryType, DimensionType, IntentType } from './types';
 import { supabase } from '@/integrations/supabase/client';
-
-// ═══════════════════════════════════════════════════════════════
-// PROMPT SYSTÈME
-// ═══════════════════════════════════════════════════════════════
-
-const SYSTEM_PROMPT = `Tu es un analyseur de requêtes métier pour une application de gestion d'entreprise (Help Confort - réseau de franchises BTP).
-
-Ton rôle est d'extraire les informations structurées d'une requête utilisateur en français.
-
-CONTEXTE MÉTIER:
-- CA = Chiffre d'Affaires
-- SAV = Service Après-Vente
-- Technicien = intervenant terrain
-- Apporteur = commanditaire/prescripteur (assurance, bailleur, etc.)
-- Univers = métier (plomberie, électricité, vitrerie, serrurerie, peinture, etc.)
-- Dossier = projet/sinistre
-- Recouvrement = encours clients, impayés
-
-MÉTRIQUES VALIDES:
-- ca_global_ht, ca_par_technicien, ca_par_univers, ca_par_apporteur
-- ca_moyen_par_jour, ca_moyen_par_tech, top_techniciens_ca
-- reste_a_encaisser, taux_recouvrement
-- taux_sav_global, nb_sav, sav_par_technicien
-- taux_transformation_devis, nb_devis
-- nb_dossiers_crees, nb_dossiers_par_apporteur
-- nb_interventions
-- delai_premier_devis, delai_facturation
-
-DIMENSIONS VALIDES:
-- global, technicien, apporteur, univers, agence
-
-INTENTS VALIDES:
-- valeur (montant brut), top (classement), moyenne, volume (comptage), taux (pourcentage), delay (délai), compare (N-1)
-
-UNIVERS VALIDES:
-- PLOMBERIE, ELECTRICITE, VITRERIE, SERRURERIE, PEINTURE, PLAQUISTE, MENUISERIE, COUVERTURE, RECHERCHE FUITE
-
-RÈGLES:
-1. Ne jamais inventer de métrique - utilise uniquement celles listées
-2. Si tu n'es pas sûr, mets null et confidence < 0.5
-3. Les périodes doivent être au format ISO (YYYY-MM-DD)
-4. Retourne UNIQUEMENT du JSON valide, rien d'autre`;
-
-const USER_PROMPT_TEMPLATE = `Analyse cette requête utilisateur et retourne un JSON structuré:
-
-REQUÊTE: "{query}"
-
-Retourne UNIQUEMENT ce JSON (pas de texte avant/après):
-{
-  "intent": "stats" | "doc" | "action" | null,
-  "metric": "<id_métrique>" | null,
-  "dimension": "<dimension>" | null,
-  "intentType": "<intent_type>" | null,
-  "limit": <number> | null,
-  "period": {
-    "from": "YYYY-MM-DD" | null,
-    "to": "YYYY-MM-DD" | null,
-    "label": "<label>" | null
-  } | null,
-  "filters": {
-    "univers": "<UNIVERS>" | null,
-    "technicien": "<nom>" | null,
-    "apporteur": "<nom>" | null
-  },
-  "confidence": <0.0-1.0>
-}`;
 
 // ═══════════════════════════════════════════════════════════════
 // EXTRACTION LLM
@@ -84,18 +18,14 @@ interface ExtractResult {
 }
 
 /**
- * Extrait un intent structuré via Lovable AI (Gemini)
+ * Extrait un intent structuré via Lovable AI (edge function)
  */
 export async function extractIntentWithLLM(query: string): Promise<ExtractResult> {
   const startTime = Date.now();
   
   try {
     const { data, error } = await supabase.functions.invoke('ai-search-extract', {
-      body: {
-        query,
-        systemPrompt: SYSTEM_PROMPT,
-        userPrompt: USER_PROMPT_TEMPLATE.replace('{query}', query),
-      },
+      body: { query },
     });
     
     const latencyMs = Date.now() - startTime;
@@ -110,11 +40,11 @@ export async function extractIntentWithLLM(query: string): Promise<ExtractResult
       };
     }
     
-    // Parser la réponse JSON
-    const draft = parseLLMResponse(data?.content || data);
+    // Parser la réponse
+    const draft = parseLLMResponse(data);
     
     return {
-      success: draft !== null,
+      success: draft !== null && draft.confidence > 0,
       draft,
       latencyMs,
     };
@@ -131,86 +61,68 @@ export async function extractIntentWithLLM(query: string): Promise<ExtractResult
 }
 
 /**
- * Parse la réponse LLM en LLMDraftIntent
+ * Parse la réponse de l'edge function en LLMDraftIntent
  */
 function parseLLMResponse(response: unknown): LLMDraftIntent | null {
-  try {
-    let content: string;
-    
-    if (typeof response === 'string') {
-      content = response;
-    } else if (typeof response === 'object' && response !== null) {
-      // Si déjà un objet, vérifier la structure
-      if ('intent' in response || 'metric' in response) {
-        return validateDraftStructure(response);
-      }
-      content = JSON.stringify(response);
-    } else {
-      return null;
-    }
-    
-    // Extraire le JSON de la réponse (le LLM peut ajouter du texte)
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      console.warn('[parseLLMResponse] No JSON found in response');
-      return null;
-    }
-    
-    const parsed = JSON.parse(jsonMatch[0]);
-    return validateDraftStructure(parsed);
-  } catch (err) {
-    console.error('[parseLLMResponse] Parse error:', err);
+  if (!response || typeof response !== 'object') {
     return null;
   }
-}
-
-/**
- * Valide la structure du draft
- */
-function validateDraftStructure(obj: unknown): LLMDraftIntent | null {
-  if (typeof obj !== 'object' || obj === null) return null;
   
-  const draft = obj as Record<string, unknown>;
+  const data = response as Record<string, unknown>;
   
-  // Mapper vers notre type avec valeurs par défaut
-  const result: LLMDraftIntent = {
-    intent: mapQueryType(draft.intent),
-    metric: typeof draft.metric === 'string' ? draft.metric : null,
-    dimension: mapDimension(draft.dimension),
-    intentType: mapIntentType(draft.intentType),
-    limit: typeof draft.limit === 'number' ? draft.limit : null,
-    period: mapPeriod(draft.period),
-    filters: typeof draft.filters === 'object' && draft.filters !== null 
-      ? draft.filters as Record<string, unknown>
+  // Si llmAvailable est false, le LLM n'est pas disponible
+  if (data.llmAvailable === false) {
+    console.warn('[parseLLMResponse] LLM not available');
+    return {
+      intent: null,
+      metric: null,
+      dimension: null,
+      intentType: null,
+      limit: null,
+      period: null,
+      filters: {},
+      confidence: 0,
+    };
+  }
+  
+  return {
+    intent: mapQueryType(data.queryType),
+    metric: typeof data.metric === 'string' ? data.metric : null,
+    dimension: mapDimension(data.dimension),
+    intentType: mapIntentType(data.intentType),
+    limit: typeof data.limit === 'number' ? data.limit : null,
+    period: mapPeriod(data.period),
+    filters: typeof data.filters === 'object' && data.filters !== null 
+      ? data.filters as Record<string, unknown>
       : {},
-    confidence: typeof draft.confidence === 'number' 
-      ? Math.max(0, Math.min(1, draft.confidence))
+    confidence: typeof data.confidence === 'number' 
+      ? Math.max(0, Math.min(1, data.confidence))
       : 0.5,
+    rawResponse: typeof data.reasoning === 'string' ? data.reasoning : undefined,
   };
-  
-  return result;
 }
 
-function mapQueryType(value: unknown): LLMDraftIntent['intent'] {
-  if (value === 'stats' || value === 'stats_query') return 'stats_query';
-  if (value === 'doc' || value === 'documentary_query') return 'documentary_query';
-  if (value === 'action' || value === 'action_query') return 'action_query';
-  if (value === 'pedagogic' || value === 'pedagogic_query') return 'pedagogic_query';
+function mapQueryType(value: unknown): QueryType | null {
+  if (value === 'stats') return 'stats_query';
+  if (value === 'doc') return 'documentary_query';
+  if (value === 'action') return 'action_query';
+  if (value === 'pedagogic') return 'pedagogic_query';
+  if (value === 'unknown') return 'unknown';
   return null;
 }
 
-function mapDimension(value: unknown): LLMDraftIntent['dimension'] {
-  const validDims = ['global', 'technicien', 'apporteur', 'univers', 'agence', 'site', 'client_type'];
-  if (typeof value === 'string' && validDims.includes(value)) {
-    return value as LLMDraftIntent['dimension'];
+function mapDimension(value: unknown): DimensionType | null {
+  const validDims: DimensionType[] = ['global', 'technicien', 'apporteur', 'univers', 'agence', 'site', 'client_type'];
+  if (typeof value === 'string' && validDims.includes(value as DimensionType)) {
+    return value as DimensionType;
   }
   return null;
 }
 
-function mapIntentType(value: unknown): LLMDraftIntent['intentType'] {
-  const validIntents = ['top', 'moyenne', 'volume', 'taux', 'delay', 'compare', 'valeur'];
-  if (typeof value === 'string' && validIntents.includes(value)) {
-    return value as LLMDraftIntent['intentType'];
+function mapIntentType(value: unknown): IntentType | null {
+  const validIntents: IntentType[] = ['top', 'moyenne', 'volume', 'taux', 'delay', 'compare', 'valeur'];
+  if (typeof value === 'string' && validIntents.includes(value as IntentType)) {
+    return value as IntentType;
   }
   return null;
 }
@@ -220,8 +132,10 @@ function mapPeriod(value: unknown): LLMDraftIntent['period'] {
   
   const period = value as Record<string, unknown>;
   return {
-    from: typeof period.from === 'string' ? period.from : null,
-    to: typeof period.to === 'string' ? period.to : null,
+    from: typeof period.start === 'string' ? period.start : 
+          typeof period.from === 'string' ? period.from : null,
+    to: typeof period.end === 'string' ? period.end : 
+        typeof period.to === 'string' ? period.to : null,
     label: typeof period.label === 'string' ? period.label : null,
   };
 }

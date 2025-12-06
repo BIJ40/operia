@@ -42,3 +42,22 @@ export { validateAndRoute } from './validateAndRoute';
 
 // Extraction LLM
 export { extractIntentWithLLM } from './extractIntentLLM';
+
+// Re-export des types principaux pour faciliter l'import
+export type {
+  QueryType,
+  DimensionType,
+  IntentType,
+  ParsedPeriod,
+  LLMDraftIntent,
+  ValidatedIntent,
+  ValidationCorrection,
+  AmbiguousResult,
+  MetricCandidate,
+  StatsResult,
+  DocResult,
+  ActionResult,
+  SearchResult,
+  UserContext,
+  IntentDebugInfo,
+} from './types';
