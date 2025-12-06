@@ -1126,9 +1126,8 @@ serve(async (req) => {
       const filters: Record<string, unknown> = { univers: parsed.univers, limit: parsed.limit, technicienId: parsed.technicienId, technicienName: parsed.technicienName, apporteurId: parsed.apporteurId, apporteurName: parsed.apporteurName };
       const cacheKey = buildCacheKey(parsed.metricId, agencySlug, parsed.period, filters, scope);
       
-      // TEMPORAIRE: désactiver le cache pour debug
-      const skipCache = true; // DEBUG: forcer recalcul
-      console.log('[unified-search] DEBUG BUILD: STATIA_FIX_V3_TECH_UNIFIED');
+      // Cache activé sauf requêtes avec filtres spécifiques
+      const skipCache = !!(parsed.technicienId || parsed.apporteurId);
       const cached = skipCache ? null : await getCacheEntry(supabase, cacheKey);
       if (cached) { console.log('[unified-search] Cache hit'); result = cached; fromCache = true; }
       else {
