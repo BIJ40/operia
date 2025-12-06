@@ -1,23 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Settings, FileText, HelpCircle } from "lucide-react";
 import { CommercialProfileForm } from "../components/CommercialProfileForm";
 import { CommercialGenerateTab } from "../components/CommercialGenerateTab";
 import { CommercialDocumentation } from "../components/CommercialDocumentation";
-import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useHasGlobalRole } from "@/hooks/useHasGlobalRole";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function CommercialSupportPptx() {
-  const { currentAgency } = useAgency();
+  const { agencyId } = useAuth();
   const isFranchiseur = useHasGlobalRole('franchisor_user');
-  const [selectedAgencyId, setSelectedAgencyId] = useState<string | null>(
-    currentAgency?.id || null
-  );
+  const [selectedAgencyId, setSelectedAgencyId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("config");
+
+  // Set default agency when agencyId is available
+  useEffect(() => {
+    if (agencyId && !selectedAgencyId) {
+      setSelectedAgencyId(agencyId);
+    }
+  }, [agencyId, selectedAgencyId]);
 
   const { data: agencies } = useQuery({
     queryKey: ['agencies-list'],
@@ -79,13 +84,13 @@ export default function CommercialSupportPptx() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <CommercialProfileForm agencyId={selectedAgencyId || currentAgency?.id || null} />
+              <CommercialProfileForm agencyId={selectedAgencyId} />
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="generate" className="mt-6">
-          <CommercialGenerateTab agencyId={selectedAgencyId || currentAgency?.id || null} />
+          <CommercialGenerateTab agencyId={selectedAgencyId} />
         </TabsContent>
 
         <TabsContent value="help" className="mt-6">
