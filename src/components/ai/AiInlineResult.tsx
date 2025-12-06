@@ -94,36 +94,36 @@ export function AiInlineResult({ messages, isLoading, onClose, onContactSupport 
           className="w-full max-w-2xl mx-auto mt-2"
         >
           {/* Container with sparkle border animation */}
-          <div className="relative rounded-xl overflow-hidden">
-            {/* Animated sparkle border */}
-            <div className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none">
-              {/* Traveling sparkle */}
+          <div className="relative rounded-xl">
+            {/* Animated sparkle border - z-10 to be above card */}
+            <div className="absolute inset-0 rounded-xl overflow-visible pointer-events-none z-10">
+              {/* Traveling sparkle - bigger and more visible */}
               <div 
-                className="absolute w-12 h-12 rounded-full animate-sparkle-travel"
+                className="absolute w-16 h-16 rounded-full animate-sparkle-travel"
                 style={{
-                  background: 'radial-gradient(circle, hsl(var(--helpconfort-blue)) 0%, transparent 70%)',
-                  filter: 'blur(4px)',
-                  opacity: 0.8,
+                  background: 'radial-gradient(circle, hsl(200 100% 43%) 0%, hsl(200 100% 43% / 0.5) 40%, transparent 70%)',
+                  filter: 'blur(6px)',
+                  boxShadow: '0 0 20px 8px hsl(200 100% 43% / 0.6)',
                 }}
               />
               {/* Corner sparkles that appear after travel */}
-              <div className="absolute top-1 left-1 animate-corner-sparkle">
-                <div className="flex gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-helpconfort-blue/80 animate-twinkle" style={{ animationDelay: '0ms' }} />
-                  <span className="w-1 h-1 rounded-full bg-helpconfort-blue/60 animate-twinkle" style={{ animationDelay: '100ms' }} />
-                  <span className="w-1 h-1 rounded-full bg-helpconfort-blue/40 animate-twinkle" style={{ animationDelay: '200ms' }} />
+              <div className="absolute top-2 left-2 animate-corner-sparkle">
+                <div className="flex gap-1.5">
+                  <span 
+                    className="w-2 h-2 rounded-full animate-twinkle" 
+                    style={{ background: 'hsl(200 100% 43%)', animationDelay: '0ms', boxShadow: '0 0 6px 2px hsl(200 100% 43% / 0.8)' }} 
+                  />
+                  <span 
+                    className="w-1.5 h-1.5 rounded-full animate-twinkle" 
+                    style={{ background: 'hsl(200 100% 50%)', animationDelay: '100ms', boxShadow: '0 0 4px 1px hsl(200 100% 50% / 0.6)' }} 
+                  />
+                  <span 
+                    className="w-1.5 h-1.5 rounded-full animate-twinkle" 
+                    style={{ background: 'hsl(200 100% 60%)', animationDelay: '200ms', boxShadow: '0 0 4px 1px hsl(200 100% 60% / 0.5)' }} 
+                  />
                 </div>
               </div>
             </div>
-            
-            {/* Glow border */}
-            <div 
-              className="absolute inset-0 rounded-xl pointer-events-none animate-border-glow"
-              style={{
-                border: '1px solid transparent',
-                background: 'linear-gradient(var(--background), var(--background)) padding-box, linear-gradient(90deg, transparent, hsl(var(--helpconfort-blue) / 0.3), transparent) border-box',
-              }}
-            />
             
             <div className="relative rounded-xl border bg-card shadow-lg overflow-hidden">
             {/* Header */}
