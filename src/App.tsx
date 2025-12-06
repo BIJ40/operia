@@ -389,8 +389,8 @@ function AppContent() {
           <Route path="/profile" element={<MainLayout><RoleGuard><Profile /></RoleGuard></MainLayout>} />
           <Route path="/favorites" element={<MainLayout><RoleGuard><Favorites /></RoleGuard></MainLayout>} />
           <Route path="/changelog" element={<MainLayout><Changelog /></MainLayout>} />
-          <Route path="/security-audit-report" element={<MainLayout><SecurityAuditReport /></MainLayout>} />
-          <Route path="/security-documentation" element={<MainLayout><SecurityDocumentation /></MainLayout>} />
+          <Route path="/security-audit-report" element={<MainLayout><RoleGuard minRole="platform_admin"><SecurityAuditReport /></RoleGuard></MainLayout>} />
+          <Route path="/security-documentation" element={<MainLayout><RoleGuard minRole="platform_admin"><SecurityDocumentation /></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* DEV PAGES - Admin only (N5/N6) */}
@@ -401,6 +401,11 @@ function AppContent() {
           {/* PUBLIC PAGES - Pas d'auth requise */}
           {/* ============================================ */}
           <Route path="/qr/:token" element={<QrAssetPage />} />
+          
+          {/* Error Pages */}
+          <Route path="/401" element={<Error401 />} />
+          <Route path="/403" element={<Error403 />} />
+          <Route path="/500" element={<Error500 />} />
           
           {/* 404 */}
           <Route path="*" element={<NotFound />} />

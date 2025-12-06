@@ -9,10 +9,13 @@ import { logError } from '@/lib/logger';
 export function ChatbotNotifications() {
   const [pendingCount, setPendingCount] = useState(0);
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { hasGlobalRole } = useAuth();
+  
+  // P0: Remplacer isAdmin par hasGlobalRole (V2)
+  const canViewNotifications = hasGlobalRole('platform_admin');
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!canViewNotifications) return;
 
     loadPendingCount();
 
@@ -35,7 +38,7 @@ export function ChatbotNotifications() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [isAdmin]);
+  }, [canViewNotifications]);
 
   const loadPendingCount = async () => {
     try {
@@ -51,7 +54,7 @@ export function ChatbotNotifications() {
     }
   };
 
-  if (!isAdmin || pendingCount === 0) return null;
+  if (!canViewNotifications || pendingCount === 0) return null;
 
   return (
     <Button

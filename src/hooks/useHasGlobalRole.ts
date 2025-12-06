@@ -1,6 +1,8 @@
 /**
  * Hook V2.0 - Vérifie si l'utilisateur a le rôle global minimum requis
- * Remplace isAdmin/isFranchiseur par une vérification basée sur les niveaux V2
+ * 
+ * P0: Ce hook utilise UNIQUEMENT le système V2 (globalRole).
+ * Les références legacy (isAdmin) sont supprimées pour éviter les bypasses.
  */
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,15 +14,12 @@ import { GlobalRole, GLOBAL_ROLES, hasMinimumRole } from '@/types/globalRoles';
  * @returns true si l'utilisateur a le niveau requis ou supérieur
  */
 export function useHasGlobalRole(minRole?: GlobalRole): boolean {
-  const { globalRole, suggestedGlobalRole, isAdmin } = useAuth();
+  const { globalRole, suggestedGlobalRole } = useAuth();
   
   // Si pas de rôle requis, juste vérifier l'authentification
   if (!minRole) return true;
   
-  // Legacy admin bypass (pour transition)
-  if (isAdmin) return true;
-  
-  // Utiliser le rôle réel ou suggéré
+  // V2: Utiliser le rôle réel ou suggéré, plus de bypass legacy
   const effectiveRole = globalRole ?? suggestedGlobalRole;
   
   return hasMinimumRole(effectiveRole, minRole);
@@ -32,11 +31,9 @@ export function useHasGlobalRole(minRole?: GlobalRole): boolean {
  * @returns true si l'utilisateur a le niveau requis
  */
 export function useHasMinLevel(minLevel: number): boolean {
-  const { globalRole, suggestedGlobalRole, isAdmin } = useAuth();
+  const { globalRole, suggestedGlobalRole } = useAuth();
   
-  // Legacy admin bypass
-  if (isAdmin) return true;
-  
+  // V2: Plus de bypass legacy
   const effectiveRole = globalRole ?? suggestedGlobalRole;
   const userLevel = effectiveRole ? GLOBAL_ROLES[effectiveRole] : 0;
   
@@ -47,11 +44,9 @@ export function useHasMinLevel(minLevel: number): boolean {
  * Retourne le niveau effectif de l'utilisateur
  */
 export function useGlobalRoleLevel(): number {
-  const { globalRole, suggestedGlobalRole, isAdmin } = useAuth();
+  const { globalRole, suggestedGlobalRole } = useAuth();
   
-  // Legacy admin = niveau max
-  if (isAdmin) return GLOBAL_ROLES.superadmin;
-  
+  // V2: Calculer le niveau à partir du globalRole uniquement
   const effectiveRole = globalRole ?? suggestedGlobalRole;
   return effectiveRole ? GLOBAL_ROLES[effectiveRole] : 0;
 }
