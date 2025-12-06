@@ -101,3 +101,6 @@ verify_jwt = true
 
 [functions.sensitive-data]
 verify_jwt = true
+
+[functions.faq-search]
+verify_jwt = true
