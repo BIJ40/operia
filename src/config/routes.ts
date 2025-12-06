@@ -151,6 +151,7 @@ export const ROUTES = {
     chatbotRag: '/admin/chatbot-rag',
     systemHealth: '/admin/system-health',
     announcements: '/admin/announcements',
+    faq: '/admin/faq',
     statia: '/admin/statia-by-bij',
     // Legacy redirects (kept for backward compatibility)
     apogeeTickets: '/admin/apogee-tickets',
