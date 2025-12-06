@@ -201,14 +201,14 @@ export const SPECIALIZED_METRICS: Array<{ keywords: string[]; rule: RoutingRule 
     rule: { dimension: 'global', intentType: 'delay', metricId: 'delai_moyen_facture', 
             label: 'Délai moyen facture', isRanking: false, minRole: 0 },
   },
-  // Recouvrement
+// Recouvrement - priorité au montant, taux explicite
   {
-    keywords: ['recouvrement', 'encaissement', 'encaissé', 'taux encaissement'],
+    keywords: ['taux recouvrement', 'taux de recouvrement', 'pourcentage recouvrement', 'taux encaissement'],
     rule: { dimension: 'global', intentType: 'taux', metricId: 'taux_recouvrement', 
             label: 'Taux de recouvrement', isRanking: false, minRole: 2 },
   },
   {
-    keywords: ['reste à encaisser', 'reste encaisser', 'impayé', 'impayés', 'en cours encaissement'],
+    keywords: ['recouvrement', 'reste à encaisser', 'reste encaisser', 'impayé', 'impayés', 'encours', 'du client', 'dû client'],
     rule: { dimension: 'global', intentType: 'valeur', metricId: 'reste_a_encaisser', 
             label: 'Reste à encaisser', isRanking: false, minRole: 2 },
   },
