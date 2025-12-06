@@ -207,7 +207,8 @@ export const apogeeProxy = {
    * Récupère toutes les données en parallèle
    */
   getAllData: async (options?: ApogeeProxyOptions) => {
-    const [users, clients, projects, interventions, factures, devis] = await Promise.all([
+    // Use Promise.allSettled to prevent one failure from breaking all
+    const results = await Promise.allSettled([
       apogeeProxy.getUsers(options),
       apogeeProxy.getClients(options),
       apogeeProxy.getProjects(options),
@@ -216,7 +217,17 @@ export const apogeeProxy = {
       apogeeProxy.getDevis(options),
     ]);
 
-    return { users, clients, projects, interventions, factures, devis };
+    const extractValue = (result: PromiseSettledResult<any[]>): any[] => 
+      result.status === 'fulfilled' ? result.value : [];
+
+    return {
+      users: extractValue(results[0]),
+      clients: extractValue(results[1]),
+      projects: extractValue(results[2]),
+      interventions: extractValue(results[3]),
+      factures: extractValue(results[4]),
+      devis: extractValue(results[5]),
+    };
   },
 };
 
