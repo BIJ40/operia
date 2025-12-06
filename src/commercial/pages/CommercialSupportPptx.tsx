@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export default function CommercialSupportPptx() {
   const { currentAgency } = useAgency();
-  const isFranchiseur = useHasGlobalRole(3);
+  const isFranchiseur = useHasGlobalRole('franchisor_user');
   const [selectedAgencyId, setSelectedAgencyId] = useState<string | null>(
     currentAgency?.id || null
   );
