@@ -106,6 +106,10 @@ const STATS_KEYWORDS = [
   'sav', 'transformation', 'devis',
   'stat', 'statistique', 'kpi', 'indicateur',
   'délai', 'delai', 'temps moyen', 'rapporte',
+  // Recouvrement - mots clés spécifiques
+  'recouvrement', 'recouv', 'encours', 'encaissé', 'encaisse',
+  'impayé', 'impayés', 'impaye', 'impayes', 'reste à encaisser',
+  'dû client', 'du client', 'créance', 'creance', 'créances', 'creances',
 ];
 
 const UNIVERS_ALIASES: Record<string, string> = {
