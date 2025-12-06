@@ -30,7 +30,25 @@ export interface UpsertSavOverrideParams {
 export function useSavOverrides() {
   const { currentAgency } = useAgency();
   const queryClient = useQueryClient();
-  const agencyId = currentAgency?.id;
+  const agencySlug = currentAgency?.slug;
+  
+  // Récupérer l'UUID de l'agence depuis apogee_agencies
+  const { data: agencyData } = useQuery({
+    queryKey: ["agency-uuid", agencySlug],
+    queryFn: async () => {
+      if (!agencySlug) return null;
+      const { data, error } = await supabase
+        .from("apogee_agencies")
+        .select("id")
+        .eq("slug", agencySlug)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!agencySlug,
+  });
+  
+  const agencyId = agencyData?.id;
 
   const { data: overrides = [], isLoading, error } = useQuery({
     queryKey: ["sav-overrides", agencyId],
