@@ -152,7 +152,7 @@ export function useTechniciensStatia(): TechniciensStatiaData {
             caHT: uData.ca || 0,
             heures: heures,
             caParHeure: heures > 0 ? (uData.ca || 0) / heures : 0,
-            nbDossiers: 0,
+            nbDossiers: uData.nbDossiers || 0,
           };
         });
         
@@ -165,7 +165,7 @@ export function useTechniciensStatia(): TechniciensStatiaData {
             caHT: data.ca || 0,
             heures: data.heures || 0,
             caParHeure: data.caParHeure || 0,
-            nbDossiers: 0,
+            nbDossiers: data.nbDossiers || 0,
           },
           universes: transformedUniverses,
         };

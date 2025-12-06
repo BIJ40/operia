@@ -26,7 +26,9 @@ interface TechnicianStats {
   totalCA: number;
   totalHeures: number;
   caParHeure: number;
-  byUnivers: Record<string, { ca: number; heures: number }>;
+  nbDossiers: number;
+  dossiersByUnivers: Record<string, Set<string>>; // Pour compter les dossiers uniques par univers
+  byUnivers: Record<string, { ca: number; heures: number; nbDossiers: number }>;
 }
 
 /**
@@ -354,6 +356,8 @@ export const caParTechnicienUnivers: StatDefinition = {
             totalCA: 0,
             totalHeures: 0,
             caParHeure: 0,
+            nbDossiers: 0,
+            dossiersByUnivers: {},
             byUnivers: {},
             isOn: userInfo.isOn,
             color: userInfo.color,
@@ -370,17 +374,28 @@ export const caParTechnicienUnivers: StatDefinition = {
         
         for (const univers of normalizedUniverses) {
           if (!stats.byUnivers[univers]) {
-            stats.byUnivers[univers] = { ca: 0, heures: 0 };
+            stats.byUnivers[univers] = { ca: 0, heures: 0, nbDossiers: 0 };
+            stats.dossiersByUnivers[univers] = new Set();
           }
           stats.byUnivers[univers].ca += caParUnivers;
           stats.byUnivers[univers].heures += heuresParUnivers;
+          // Ajouter le dossier au set pour compter les dossiers uniques
+          stats.dossiersByUnivers[univers].add(projectId);
         }
       }
     }
     
-    // Calculer CA/heure pour chaque technicien
+    // Calculer CA/heure et nbDossiers pour chaque technicien
     for (const stats of techStats.values()) {
       stats.caParHeure = stats.totalHeures > 0 ? stats.totalCA / stats.totalHeures : 0;
+      // Compter les dossiers uniques totaux et par univers
+      const allDossiers = new Set<string>();
+      for (const univers of Object.keys(stats.byUnivers)) {
+        const dossierSet = stats.dossiersByUnivers[univers] || new Set();
+        stats.byUnivers[univers].nbDossiers = dossierSet.size;
+        dossierSet.forEach(d => allDossiers.add(d));
+      }
+      stats.nbDossiers = allDossiers.size;
     }
     
     // Formater le résultat
@@ -393,6 +408,7 @@ export const caParTechnicienUnivers: StatDefinition = {
         ca: stats.totalCA,
         heures: stats.totalHeures,
         caParHeure: stats.caParHeure,
+        nbDossiers: stats.nbDossiers,
         byUnivers: stats.byUnivers,
         color: stats.color,
         isOn: stats.isOn,
