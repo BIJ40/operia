@@ -15,14 +15,15 @@ import { AiAmbiguousAnswerCard } from './AiAmbiguousAnswerCard';
 import { cn } from '@/lib/utils';
 
 export interface AiSearchResult {
-  type: 'stat' | 'doc' | 'action' | 'ambiguous' | 'fallback' | 'access_denied' | 'stats_query' | 'documentary_query' | 'action_query' | 'unknown';
+  type: 'stat' | 'doc' | 'action' | 'ambiguous' | 'fallback' | 'access_denied' | 'stats_query' | 'documentary_query' | 'action_query' | 'error' | 'unknown';
   interpretation?: Record<string, unknown>;
   result?: unknown;
-  error?: string;
+  error?: string | { code: string; message: string };
   debug?: Record<string, unknown>;
   accessDenied?: boolean;
   accessMessage?: string;
   agencySlug?: string;
+  fromCache?: boolean;
 }
 
 interface AiSearchOverlayProps {
@@ -47,6 +48,7 @@ const TYPE_ICONS = {
   ambiguous: AlertCircle,
   fallback: AlertCircle,
   access_denied: AlertCircle,
+  error: AlertCircle,
   unknown: AlertCircle,
 };
 
@@ -60,6 +62,7 @@ const TYPE_LABELS = {
   ambiguous: 'Précision requise',
   fallback: 'Résultat partiel',
   access_denied: 'Accès refusé',
+  error: 'Erreur',
   unknown: 'Type inconnu',
 };
 
@@ -73,6 +76,7 @@ const TYPE_COLORS = {
   ambiguous: 'text-amber-400',
   fallback: 'text-slate-400',
   access_denied: 'text-red-400',
+  error: 'text-red-400',
   unknown: 'text-slate-400',
 };
 
@@ -103,7 +107,7 @@ export const AiSearchOverlay: React.FC<AiSearchOverlayProps> = ({
   const isStatResult = result?.type === 'stat' || result?.type === 'stats_query';
   const isDocResult = result?.type === 'doc' || result?.type === 'documentary_query';
   const isAmbiguous = result?.type === 'ambiguous';
-  const isError = result?.type === 'access_denied' || result?.accessDenied;
+  const isError = result?.type === 'access_denied' || result?.type === 'error' || result?.accessDenied;
 
   return (
     <AnimatePresence>
@@ -194,8 +198,8 @@ export const AiSearchOverlay: React.FC<AiSearchOverlayProps> = ({
                   {/* Cartes spécialisées */}
                   {isError && (
                     <AiErrorAnswerCard
-                      code="ACCESS_DENIED"
-                      message={result.accessMessage || result.error || 'Accès refusé'}
+                      code={typeof result.error === 'object' ? result.error.code : (result.type === 'access_denied' ? 'ACCESS_DENIED' : 'INTERNAL_ERROR')}
+                      message={typeof result.error === 'object' ? result.error.message : (result.accessMessage || String(result.error || 'Erreur interne'))}
                     />
                   )}
 

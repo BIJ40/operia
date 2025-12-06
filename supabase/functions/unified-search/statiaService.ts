@@ -596,6 +596,7 @@ const METRIC_COMPUTERS: Record<string, (data: ApogeeData, params: StatParams) =>
   'ca_par_univers': computeCaParUnivers,
   'ca_par_technicien': computeCaParTechnicien,
   'top_techniciens_ca': computeTopTechniciensCA,
+  'top_apporteurs_ca': computeCaParApporteur, // Alias pour top apporteurs
   'taux_sav_global': computeTauxSav,
   'sav_par_univers': computeSavParUnivers,
   'sav_par_apporteur': computeSavParApporteur,
