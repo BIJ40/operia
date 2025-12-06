@@ -513,49 +513,49 @@ button[data-image-modal] {
    AI RESULT SPARKLE ANIMATION
    ============================================ */
 
-/* Sparkle traveling around the border - slow 4s journey */
+/* Sparkle traveling around the border - slow 8s journey */
 @keyframes sparkle-travel {
   0% {
-    top: -6px;
-    left: -6px;
+    top: -4px;
+    left: -4px;
     opacity: 0;
   }
   5% {
-    opacity: 0.9;
+    opacity: 0.8;
   }
   /* Top edge: left to right */
   25% {
-    top: -6px;
-    left: calc(100% - 6px);
-    opacity: 0.9;
+    top: -4px;
+    left: calc(100% - 4px);
+    opacity: 0.8;
   }
   /* Right edge: top to bottom */
   50% {
-    top: calc(100% - 6px);
-    left: calc(100% - 6px);
-    opacity: 0.9;
+    top: calc(100% - 4px);
+    left: calc(100% - 4px);
+    opacity: 0.8;
   }
   /* Bottom edge: right to left */
   75% {
-    top: calc(100% - 6px);
-    left: -6px;
-    opacity: 0.9;
+    top: calc(100% - 4px);
+    left: -4px;
+    opacity: 0.8;
   }
   /* Left edge: bottom to top (back to start) */
   95% {
-    top: -6px;
-    left: -6px;
-    opacity: 0.9;
+    top: -4px;
+    left: -4px;
+    opacity: 0.8;
   }
   100% {
-    top: -6px;
-    left: -6px;
+    top: -4px;
+    left: -4px;
     opacity: 0;
   }
 }
 
 .animate-sparkle-travel {
-  animation: sparkle-travel 4s ease-in-out infinite;
+  animation: sparkle-travel 8s ease-in-out infinite;
 }
 
 /* Corner sparkles that appear after the main sparkle completes a loop */
@@ -575,7 +575,7 @@ button[data-image-modal] {
 }
 
 .animate-corner-sparkle {
-  animation: corner-sparkle 4s ease-in-out infinite;
+  animation: corner-sparkle 8s ease-in-out infinite;
 }
 
 /* Individual twinkle effect for corner sparkles */
@@ -591,19 +591,5 @@ button[data-image-modal] {
 }
 
 .animate-twinkle {
-  animation: twinkle 0.6s ease-in-out infinite;
-}
-
-/* Subtle border glow pulse */
-@keyframes border-glow {
-  0%, 100% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 0.6;
-  }
-}
-
-.animate-border-glow {
-  animation: border-glow 4s ease-in-out infinite;
+  animation: twinkle 1s ease-in-out infinite;
 }
