@@ -1,19 +1,25 @@
 /**
  * AI Inline Result - Displays results directly under the search bar
  * No modal, no overlay - fluid inline experience
+ * Mode conversationnel avec historique visible
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ExternalLink, FileText, Sparkles, MessageCircle, HelpCircle } from 'lucide-react';
+import { X, ExternalLink, FileText, Sparkles, MessageCircle, HelpCircle, ChevronDown, ChevronUp, User, Bot, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AiMessage, StatResultData, DocResultData, ChartData } from './types';
 import { AiStatChartCard } from './AiStatChartCard';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AiInlineResultProps {
   messages: AiMessage[];
@@ -23,100 +29,264 @@ interface AiInlineResultProps {
 }
 
 export function AiInlineResult({ messages, isLoading, onClose, onContactSupport }: AiInlineResultProps) {
+  const [showHistory, setShowHistory] = useState(false);
+  const [showSupportDialog, setShowSupportDialog] = useState(false);
+  const [supportMessage, setSupportMessage] = useState('');
+  const [isSendingTicket, setIsSendingTicket] = useState(false);
+  const navigate = useNavigate();
+  const { user, agence, agencyId } = useAuth();
+  
   const lastAssistantMessage = messages.filter(m => m.role === 'assistant').slice(-1)[0];
+  const conversationHistory = messages.slice(0, -1); // All messages except last
   
   if (!lastAssistantMessage && !isLoading) return null;
 
+  const handleContactSupport = () => {
+    // Pre-fill with conversation context
+    const context = messages
+      .map(m => `${m.role === 'user' ? 'Moi' : 'IA'}: ${m.content}`)
+      .join('\n');
+    setSupportMessage(`Je n'ai pas trouvé de réponse satisfaisante à ma question.\n\nContexte de la conversation:\n${context}`);
+    setShowSupportDialog(true);
+  };
+
+  const handleSubmitTicket = async () => {
+    if (!supportMessage.trim() || !user?.id) return;
+    
+    setIsSendingTicket(true);
+    try {
+      const { error } = await supabase.from('support_tickets').insert({
+        subject: 'Question depuis l\'IA Assistant',
+        type: 'question',
+        status: 'new',
+        heat_priority: 4,
+        user_id: user.id,
+        agency_slug: agence,
+        chatbot_conversation: { context: supportMessage },
+      });
+
+      if (error) throw error;
+
+      toast.success('Votre demande a été envoyée au support');
+      setShowSupportDialog(false);
+      setSupportMessage('');
+    } catch (error) {
+      console.error('Error creating ticket:', error);
+      toast.error('Erreur lors de l\'envoi de la demande');
+    } finally {
+      setIsSendingTicket(false);
+    }
+  };
+
+  const goToSupportChat = () => {
+    navigate('/support');
+    onClose();
+  };
+
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0, y: -10, height: 0 }}
-        animate={{ opacity: 1, y: 0, height: 'auto' }}
-        exit={{ opacity: 0, y: -10, height: 0 }}
-        transition={{ duration: 0.2, ease: 'easeOut' }}
-        className="w-full max-w-2xl mx-auto mt-2"
-      >
-        <div className="rounded-xl border bg-card shadow-lg overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium">Réponse IA</span>
+    <>
+      <AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0, y: -10, height: 0 }}
+          animate={{ opacity: 1, y: 0, height: 'auto' }}
+          exit={{ opacity: 0, y: -10, height: 0 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+          className="w-full max-w-2xl mx-auto mt-2"
+        >
+          <div className="rounded-xl border bg-card shadow-lg overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium">Réponse IA</span>
+                {conversationHistory.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs text-muted-foreground"
+                    onClick={() => setShowHistory(!showHistory)}
+                  >
+                    {showHistory ? <ChevronUp className="w-3 h-3 mr-1" /> : <ChevronDown className="w-3 h-3 mr-1" />}
+                    Historique ({Math.floor(conversationHistory.length / 2)})
+                  </Button>
+                )}
+              </div>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
+                <X className="w-4 h-4" />
+              </Button>
             </div>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
 
-          {/* Content */}
-          <ScrollArea className="max-h-96">
-            <div className="p-4 space-y-4">
-              {/* Loading state */}
-              {isLoading && (
-                <div className="flex items-center gap-3 text-muted-foreground">
-                  <div className="flex gap-1">
-                    <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                  </div>
-                  <span className="text-sm">Je réfléchis...</span>
-                </div>
-              )}
-
-              {/* Message content */}
-              {lastAssistantMessage && (
-                <div className="space-y-4">
-                  {/* Text content with markdown */}
-                  <div className="prose prose-sm dark:prose-invert max-w-none">
-                    <ReactMarkdown>{lastAssistantMessage.content}</ReactMarkdown>
-                  </div>
-
-                  {/* Stat with Chart */}
-                  {(lastAssistantMessage.type === 'stat' || lastAssistantMessage.type === 'chart') && 
-                   lastAssistantMessage.data && (
-                    <StatResultView 
-                      data={lastAssistantMessage.data as StatResultData} 
-                      showChart={lastAssistantMessage.type === 'chart'}
-                    />
-                  )}
-
-                  {/* Doc results */}
-                  {lastAssistantMessage.type === 'doc' && lastAssistantMessage.data && (
-                    <DocResultView data={lastAssistantMessage.data as DocResultData} />
-                  )}
-
-                  {/* Error state */}
-                  {lastAssistantMessage.type === 'error' && (
-                    <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
-                      <p className="text-sm text-destructive">{lastAssistantMessage.content}</p>
+            {/* Conversation History */}
+            <AnimatePresence>
+              {showHistory && conversationHistory.length > 0 && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="border-b bg-muted/10"
+                >
+                  <ScrollArea className="max-h-48">
+                    <div className="p-3 space-y-2">
+                      {conversationHistory.map((msg, idx) => (
+                        <div
+                          key={idx}
+                          className={cn(
+                            "flex gap-2 text-sm",
+                            msg.role === 'user' ? 'justify-end' : 'justify-start'
+                          )}
+                        >
+                          {msg.role === 'assistant' && (
+                            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                              <Bot className="w-3.5 h-3.5 text-primary" />
+                            </div>
+                          )}
+                          <div
+                            className={cn(
+                              "max-w-[80%] px-3 py-2 rounded-lg",
+                              msg.role === 'user'
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-muted/50'
+                            )}
+                          >
+                            <p className="text-sm line-clamp-3">{msg.content}</p>
+                          </div>
+                          {msg.role === 'user' && (
+                            <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center shrink-0">
+                              <User className="w-3.5 h-3.5 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  )}
-                </div>
+                  </ScrollArea>
+                </motion.div>
               )}
-            </div>
-          </ScrollArea>
+            </AnimatePresence>
 
-          {/* Footer actions */}
-          <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/20">
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/hc-agency/indicateurs">
-                  <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
-                  Pilotage
-                </Link>
-              </Button>
+            {/* Content */}
+            <ScrollArea className="max-h-96">
+              <div className="p-4 space-y-4">
+                {/* Loading state */}
+                {isLoading && (
+                  <div className="flex items-center gap-3 text-muted-foreground">
+                    <div className="flex gap-1">
+                      <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                    <span className="text-sm">Je réfléchis...</span>
+                  </div>
+                )}
+
+                {/* Message content */}
+                {lastAssistantMessage && (
+                  <div className="space-y-4">
+                    {/* Text content with markdown */}
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                      <ReactMarkdown>{lastAssistantMessage.content}</ReactMarkdown>
+                    </div>
+
+                    {/* Stat with Chart */}
+                    {(lastAssistantMessage.type === 'stat' || lastAssistantMessage.type === 'chart') && 
+                     lastAssistantMessage.data && (
+                      <StatResultView 
+                        data={lastAssistantMessage.data as StatResultData} 
+                        showChart={lastAssistantMessage.type === 'chart'}
+                      />
+                    )}
+
+                    {/* Doc results */}
+                    {lastAssistantMessage.type === 'doc' && lastAssistantMessage.data && (
+                      <DocResultView data={lastAssistantMessage.data as DocResultData} />
+                    )}
+
+                    {/* Error state */}
+                    {lastAssistantMessage.type === 'error' && (
+                      <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+                        <p className="text-sm text-destructive">{lastAssistantMessage.content}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+
+            {/* Footer actions */}
+            <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/20">
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/hc-agency/indicateurs">
+                    <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
+                    Pilotage
+                  </Link>
+                </Button>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={goToSupportChat}>
+                  <MessageCircle className="w-3.5 h-3.5 mr-1.5" />
+                  Chat support
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleContactSupport}
+                  className="text-helpconfort-orange border-helpconfort-orange/30 hover:bg-helpconfort-orange/10"
+                >
+                  <HelpCircle className="w-3.5 h-3.5 mr-1.5" />
+                  Créer un ticket
+                </Button>
+              </div>
             </div>
-            
-            {onContactSupport && (
-              <Button variant="ghost" size="sm" onClick={onContactSupport}>
-                <HelpCircle className="w-3.5 h-3.5 mr-1.5" />
-                Contacter le support
-              </Button>
-            )}
           </div>
-        </div>
-      </motion.div>
-    </AnimatePresence>
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Support Ticket Dialog */}
+      <Dialog open={showSupportDialog} onOpenChange={setShowSupportDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <HelpCircle className="w-5 h-5 text-helpconfort-orange" />
+              Contacter le support
+            </DialogTitle>
+            <DialogDescription>
+              Décrivez votre question ou problème et notre équipe vous répondra rapidement.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <Textarea
+              value={supportMessage}
+              onChange={(e) => setSupportMessage(e.target.value)}
+              placeholder="Décrivez votre question..."
+              rows={6}
+              className="resize-none"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSupportDialog(false)}>
+              Annuler
+            </Button>
+            <Button 
+              onClick={handleSubmitTicket}
+              disabled={!supportMessage.trim() || isSendingTicket}
+              className="bg-helpconfort-orange hover:bg-helpconfort-orange/90"
+            >
+              {isSendingTicket ? (
+                <>Envoi...</>
+              ) : (
+                <>
+                  <Send className="w-4 h-4 mr-2" />
+                  Envoyer
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

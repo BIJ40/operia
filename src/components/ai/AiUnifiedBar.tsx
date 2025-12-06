@@ -223,10 +223,6 @@ export function AiUnifiedBar() {
               closeResult();
               clearMessages();
             }}
-            onContactSupport={() => {
-              // TODO: Integrate with support system
-              console.log('Contact support');
-            }}
           />
         </div>
       )}
