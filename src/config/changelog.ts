@@ -15,6 +15,19 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.7.1",
+    title: "Migration StatIA – Page Techniciens",
+    date: "2025-12-06",
+    changes: [
+      { type: 'feature', description: 'Création du hook useTechniciensStatia centralisant les appels métriques' },
+      { type: 'feature', description: 'Connexion de la page IndicateursTechniciens aux métriques StatIA' },
+      { type: 'feature', description: 'Affichage de 4 KPIs globaux : Nb Techniciens, CA Total, Heures productives, CA/Heure' },
+      { type: 'feature', description: 'Widget Top 5 Techniciens avec couleurs personnalisées' },
+      { type: 'feature', description: 'Heatmap technicien × univers alimentée par ca_par_technicien_univers' },
+      { type: 'improvement', description: 'Métriques utilisées : ca_par_technicien_univers, ca_par_technicien, top_techniciens_ca, ca_moyen_par_heure_tous_techniciens, nb_heures_productives, nb_interventions_par_technicien' },
+    ],
+  },
+  {
     version: 'V0.7.0',
     date: '2025-12-06',
     title: 'StatIA - Migration complète pages Statistiques Agence',
