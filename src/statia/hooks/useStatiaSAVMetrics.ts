@@ -70,19 +70,35 @@ export function useStatiaSAVMetrics() {
         getMetricForAgency("taux_sav_par_apporteur", agencySlug, { dateRange }, services),
         getMetricForAgency("taux_sav_par_type_apporteur", agencySlug, { dateRange }, services),
         getMetricForAgency("ca_impacte_sav", agencySlug, { dateRange }, services),
-        // Récupérer les coûts manuels depuis la base
+        // Récupérer les overrides manuels depuis la base (coûts ET statuts)
         agencyUuid 
           ? supabase
               .from("sav_dossier_overrides")
-              .select("cout_sav_manuel")
+              .select("project_id, cout_sav_manuel, is_confirmed_sav")
               .eq("agency_id", agencyUuid)
           : Promise.resolve({ data: [] }),
       ]);
 
-      // Calculer le coût SAV total à partir des enregistrements manuels
+      // Construire une map des overrides pour les statistiques
+      const overridesForStats = new Map<number, { cout: number | null; isConfirmed: boolean | null }>();
+      for (const row of savOverridesData.data || []) {
+        overridesForStats.set(row.project_id, {
+          cout: row.cout_sav_manuel,
+          isConfirmed: row.is_confirmed_sav,
+        });
+      }
+
+      // Calculer le coût SAV total (exclure les SAV négatifs = is_confirmed_sav === false)
       const coutSavManuel = (savOverridesData.data || []).reduce((sum, row) => {
+        // Exclure les dossiers infirmés (SAV négatif)
+        if (row.is_confirmed_sav === false) return sum;
         return sum + (row.cout_sav_manuel || 0);
       }, 0);
+
+      // Compter les dossiers SAV valides (exclure les négatifs)
+      const nbSavReel = (savOverridesData.data || []).filter(
+        row => row.is_confirmed_sav !== false
+      ).length || (typeof nbSav.value === "number" ? nbSav.value : 0);
 
       // Charger les données brutes pour construire la liste des dossiers
       const [projects, clients, interventions] = await Promise.all([
@@ -94,15 +110,21 @@ export function useStatiaSAVMetrics() {
 
       // Construire la liste des dossiers SAV avec détails
       const dossiersSAV = buildDossiersSAV(data, overridesMap);
+      
+      // Nombre de SAV affichés dans les stats (excluant les négatifs)
+      const nbSavPourStats = dossiersSAV.filter(d => {
+        const override = overridesMap.get(d.projectId);
+        return override?.is_confirmed_sav !== false;
+      }).length;
 
       return {
         tauxSavGlobal: typeof tauxGlobal.value === "number" ? tauxGlobal.value : 0,
-        nbSavGlobal: typeof nbSav.value === "number" ? nbSav.value : 0,
+        nbSavGlobal: nbSavPourStats, // Utiliser le compte excluant les SAV négatifs
         tauxSavParUnivers: tauxUnivers.breakdown?.details || {},
         tauxSavParApporteur: tauxApporteur.breakdown?.details || {},
         tauxSavParTypeApporteur: tauxTypeApporteur.breakdown?.details || {},
         caSav: typeof caImpacte.value === "number" ? caImpacte.value : 0,
-        coutSavEstime: coutSavManuel, // Coût réel depuis les enregistrements manuels
+        coutSavEstime: coutSavManuel, // Coût réel depuis les enregistrements manuels (hors SAV négatifs)
         dossiersSAV,
       };
     },

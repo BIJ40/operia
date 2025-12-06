@@ -73,12 +73,48 @@ export function SAVDossierList({ dossiers, isLoading = false }: SAVDossierListPr
     if (editingId === null) return;
     
     const coutValue = editCout ? parseFloat(editCout) : null;
+    // Si un coût est renseigné, valider automatiquement le SAV
+    const isConfirmedSav = coutValue !== null ? true : undefined;
+    
     upsertOverride({
       project_id: editingId,
       cout_sav_manuel: coutValue,
       notes: editNotes || null,
+      ...(isConfirmedSav !== undefined && { is_confirmed_sav: isConfirmedSav }),
     });
     setEditingId(null);
+  };
+
+  /**
+   * Détermine la couleur de la ligne selon les règles:
+   * - SAV négatif (is_sav = false) → VERT
+   * - SAV validé + coût estimé → ROUGE  
+   * - Que coût estimé → auto SAV validé → ROUGE
+   * - SAV validé seul → ORANGE
+   * - Auto-détecté → pas de couleur
+   */
+  const getRowColor = (projectId: number): string => {
+    const override = overridesMap.get(projectId);
+    
+    // SAV négatif = vert
+    if (override?.is_confirmed_sav === false) {
+      return "bg-green-50 border-l-4 border-l-green-500";
+    }
+    
+    const hasCout = override?.cout_sav_manuel !== null && override?.cout_sav_manuel !== undefined;
+    const isConfirmed = override?.is_confirmed_sav === true;
+    
+    // Coût estimé (avec ou sans SAV confirmé) = rouge
+    if (hasCout) {
+      return "bg-red-50 border-l-4 border-l-red-500";
+    }
+    
+    // SAV validé seul = orange
+    if (isConfirmed) {
+      return "bg-orange-50 border-l-4 border-l-orange-500";
+    }
+    
+    return "";
   };
 
   const getStatusBadge = (projectId: number) => {
@@ -108,12 +144,8 @@ export function SAVDossierList({ dossiers, isLoading = false }: SAVDossierListPr
     return <span className="text-muted-foreground">{formatEuros(dossier.caSAVAuto)}</span>;
   };
 
-  // Filtrer les dossiers infirmés si besoin
-  const filteredDossiers = displayedDossiers.filter(d => {
-    const override = overridesMap.get(d.projectId);
-    // Ne pas afficher les dossiers infirmés
-    return override?.is_confirmed_sav !== false;
-  });
+  // Ne plus filtrer les dossiers infirmés - on les affiche en vert
+  const filteredDossiers = displayedDossiers;
 
   if (isLoading) {
     return (
@@ -164,15 +196,16 @@ export function SAVDossierList({ dossiers, isLoading = false }: SAVDossierListPr
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredDossiers.map((dossier) => {
+            {filteredDossiers.map((dossier) => {
                 const override = overridesMap.get(dossier.projectId);
                 const isConfirmed = override?.is_confirmed_sav === true;
                 const isInfirmed = override?.is_confirmed_sav === false;
+                const rowColor = getRowColor(dossier.projectId);
                 
                 return (
                   <TableRow 
                     key={dossier.projectId}
-                    className={isInfirmed ? "opacity-50" : ""}
+                    className={rowColor}
                   >
                     <TableCell>
                       <div>
