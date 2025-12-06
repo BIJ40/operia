@@ -1,11 +1,10 @@
 /**
- * StatIA - Moteur partagé CA par Technicien (EDGE FUNCTION)
+ * StatIA - Moteur CORE CA par Technicien
  * 
- * ⚠️ MIROIR SYNCHRONISÉ DE src/statia/engines/caParTechnicienCore.ts ⚠️
+ * ⚠️ SOURCE DE VÉRITÉ UNIQUE ⚠️
  * 
- * Ce fichier est une COPIE EXACTE du moteur frontend.
- * Toute modification doit être faite dans caParTechnicienCore.ts d'abord,
- * puis synchronisée ici manuellement.
+ * Ce fichier contient la logique métier canonique pour le calcul du CA par technicien.
+ * Il est utilisé par le frontend StatIA (Pilotage) et synchronisé avec l'edge function unified-search.
  * 
  * RÈGLE MÉTIER:
  * - Pour chaque facture de la période, récupérer le projectId
@@ -14,49 +13,24 @@
  * - Avoirs intégrés en négatif
  * - Exclure RT, SAV, diagnostics, visites annulées
  * 
- * DERNIÈRE SYNCHRONISATION: ${new Date().toISOString().split('T')[0]}
- * SOURCE: src/statia/engines/caParTechnicienCore.ts
+ * SI VOUS MODIFIEZ CE FICHIER:
+ * → Vous DEVEZ synchroniser supabase/functions/_shared/statiaEngines/caParTechnicien.ts
+ * 
+ * @author StatIA Team
+ * @version 1.0.0
  */
 
-// ============= TYPES =============
-export interface StatParams {
-  dateRange: { start: Date; end: Date };
-  agencySlug: string;
-  topN?: number;
-  filters?: Record<string, unknown>;
-}
+import { isFactureStateIncluded } from '../engine/normalizers';
+import { extractFactureMeta } from '../rules/rules';
+import type { LoadedData, StatParams, StatResult } from '../definitions/types';
 
-export interface RankingItem {
-  rank: number;
-  id: string | number;
-  name: string;
-  value: number;
-  color?: string;
-}
-
-export interface StatResult {
-  value: number;
-  topItem?: RankingItem;
-  ranking?: RankingItem[];
-  unit: string;
-  hasData?: boolean;
-  dataCount?: number;
-}
-
-interface ApogeeData {
-  factures: any[];
-  projects: any[];
-  clients: any[];
-  interventions: any[];
-  users: any[];
-}
-
-// ============= HELPERS IDENTIQUES AU FRONTEND =============
+// ============= HELPERS MÉTIER =============
 
 /**
  * Vérifie si une intervention est de type RT (Relevé Technique) - NON PRODUCTIF
+ * Logique alignée sur DataService.calculateCAByTechnician
  */
-function isRTIntervention(intervention: any): boolean {
+export function isRTIntervention(intervention: any): boolean {
   const type2 = (intervention.type2 || intervention.data?.type2 || '').toLowerCase();
   const type = (intervention.type || intervention.data?.type || '').toLowerCase();
   
@@ -75,9 +49,9 @@ function isRTIntervention(intervention: any): boolean {
 }
 
 /**
- * Vérifie si une intervention est de type SAV - NON PRODUCTIF
+ * Vérifie si une intervention est de type SAV - NON PRODUCTIF pour les stats technicien
  */
-function isSAVIntervention(intervention: any): boolean {
+export function isSAVIntervention(intervention: any): boolean {
   const type2 = (intervention.type2 || intervention.data?.type2 || '').toLowerCase();
   const type = (intervention.type || intervention.data?.type || '').toLowerCase();
   
@@ -87,7 +61,7 @@ function isSAVIntervention(intervention: any): boolean {
 /**
  * Vérifie si une intervention est de type diagnostic - NON PRODUCTIF
  */
-function isDiagnosticIntervention(intervention: any): boolean {
+export function isDiagnosticIntervention(intervention: any): boolean {
   const type2 = (intervention.type2 || intervention.data?.type2 || '').toLowerCase();
   const type = (intervention.type || intervention.data?.type || '').toLowerCase();
   
@@ -96,8 +70,9 @@ function isDiagnosticIntervention(intervention: any): boolean {
 
 /**
  * Vérifie si une intervention "A DÉFINIR" a du travail productif réalisé
+ * Logique alignée sur DataService.calculateCAByTechnician
  */
-function hasProductiveWorkDone(intervention: any): boolean {
+export function hasProductiveWorkDone(intervention: any): boolean {
   const hasDepanWork = intervention.data?.biDepan?.isWorkDone || intervention.data?.biDepan?.tvxEffectues;
   const hasTvxWork = intervention.data?.biTvx?.isWorkDone || intervention.data?.biTvx?.tvxEffectues;
   const hasV3Work = intervention.data?.biV3?.items?.length > 0;
@@ -106,8 +81,9 @@ function hasProductiveWorkDone(intervention: any): boolean {
 
 /**
  * Vérifie si une intervention est productive pour le calcul CA technicien
+ * Logique alignée sur DataService.calculateCAByTechnician (FONCTIONNEL)
  */
-function isProductiveIntervention(intervention: any): boolean {
+export function isProductiveIntervention(intervention: any): boolean {
   // Exclure les RT, SAV, diagnostics
   if (isRTIntervention(intervention)) return false;
   if (isSAVIntervention(intervention)) return false;
@@ -126,9 +102,10 @@ function isProductiveIntervention(intervention: any): boolean {
 
 /**
  * Récupère les techniciens productifs d'une intervention
- * Collecte de toutes les sources possibles
+ * Logique alignée sur DataService.calculateCAByTechnician (lignes 396-414)
+ * Collecte de toutes les sources possibles sans filtrage strict
  */
-function getProductiveTechnicians(intervention: any): Set<string | number> {
+export function getProductiveTechnicians(intervention: any): Set<string | number> {
   const techIds = new Set<string | number>();
   
   // 1. Collecter depuis userId principal
@@ -143,7 +120,7 @@ function getProductiveTechnicians(intervention: any): Set<string | number> {
     });
   }
   
-  // 3. Collecter depuis data.visites (toutes les visites)
+  // 3. Collecter depuis data.visites (toutes les visites, pas de filtrage strict)
   const visites = intervention.visites || intervention.data?.visites || [];
   for (const visite of visites) {
     const userIds = visite.usersIds || visite.userIds || [];
@@ -166,65 +143,55 @@ function getProductiveTechnicians(intervention: any): Set<string | number> {
   return techIds;
 }
 
-/**
- * Vérifie si l'état de la facture est inclus dans le CA
- */
-function isFactureStateIncluded(state: string): boolean {
-  const normalizedState = (state || '').toLowerCase().trim();
-  
-  // États toujours inclus
-  const includedStates = [
-    'sent', 'paid', 'partial', 'partially_paid', 'overdue',
-    'envoyé', 'payé', 'partiellement_payé', 'en_retard', 'impayé',
-    'facturé', 'facture', 'invoice_sent'
-  ];
-  
-  if (includedStates.includes(normalizedState)) return true;
-  
-  // États exclus explicitement
-  const excludedStates = ['cancelled', 'annulé', 'annule', 'draft', 'brouillon'];
-  if (excludedStates.includes(normalizedState)) return false;
-  
-  // Par défaut, inclure si non vide
-  return normalizedState.length > 0;
-}
-
-/**
- * Extrait les métadonnées d'une facture (date, montant net HT)
- */
-function extractFactureMeta(facture: any): { date: Date | null; montantNetHT: number } {
-  // Date: priorité dateReelle > date
-  const rawDate = facture.dateReelle || facture.date || facture.data?.dateReelle || facture.data?.date;
-  const date = rawDate ? new Date(rawDate) : null;
-  
-  // Montant HT
-  const rawMontant = facture.data?.totalHT ?? facture.totalHT ?? facture.montantHT ?? facture.montant ?? 0;
-  const montant = typeof rawMontant === 'string' ? parseFloat(rawMontant) || 0 : rawMontant;
-  
-  // Avoir = négatif
-  const typeFacture = (facture.typeFacture || facture.type || facture.data?.type || '').toLowerCase();
-  const isAvoir = typeFacture === 'avoir';
-  const montantNetHT = isAvoir ? -Math.abs(montant) : montant;
-  
-  return { date, montantNetHT };
-}
-
 // ============= MOTEUR PRINCIPAL =============
 
+export interface CaParTechnicienParams {
+  dateRange: { start: Date; end: Date };
+  topN?: number;
+  filters?: {
+    technicienId?: string | number;
+    technicienName?: string;
+  };
+}
+
+export interface CaParTechnicienResult {
+  value: number;
+  topItem?: {
+    rank: number;
+    id: string | number;
+    name: string;
+    value: number;
+    color?: string;
+  };
+  ranking?: Array<{
+    rank: number;
+    id: string | number;
+    name: string;
+    value: number;
+    color?: string;
+  }>;
+  unit: string;
+  hasData?: boolean;
+  dataCount?: number;
+}
+
 /**
- * Compute CA par technicien - LOGIQUE EXACTE DU FRONTEND
+ * Compute CA par technicien - LOGIQUE MÉTIER CANONIQUE
  * 
- * @param data Données Apogée chargées
+ * @param data Données chargées (factures, projects, interventions, users)
  * @param params Paramètres (dateRange, topN, filters)
  * @returns StatResult avec ranking des techniciens
  */
-export function computeCaParTechnicienShared(data: ApogeeData, params: StatParams): StatResult {
+export function computeCaParTechnicienCore(
+  data: { factures: any[]; projects: any[]; interventions: any[]; users: any[] },
+  params: CaParTechnicienParams
+): CaParTechnicienResult {
   const factures = data.factures || [];
   const projects = data.projects || [];
   const interventions = data.interventions || [];
   const users = data.users || [];
   
-  console.log(`[EDGE StatIA ca_par_technicien] Données: ${factures.length} factures, ${projects.length} projets, ${interventions.length} interventions, ${users.length} users`);
+  console.log(`[STATIA CORE ca_par_technicien] Données: ${factures.length} factures, ${projects.length} projets, ${interventions.length} interventions, ${users.length} users`);
   
   // Index projects par id
   const projectsById = new Map<string | number, any>();
@@ -342,7 +309,7 @@ export function computeCaParTechnicienShared(data: ApogeeData, params: StatParam
     facturesTraitees++;
   }
   
-  console.log(`[EDGE StatIA ca_par_technicien] Résultat: ${facturesTraitees} factures traitées, ${techCA.size} techniciens, ${dossiersIgnores} dossiers ignorés, CA total ${Math.round(totalCADistribue)}€`);
+  console.log(`[STATIA CORE ca_par_technicien] Résultat: ${facturesTraitees} factures traitées, ${techCA.size} techniciens, ${dossiersIgnores} dossiers ignorés, CA total ${Math.round(totalCADistribue)}€`);
   
   // Construire le ranking
   const sorted = Array.from(techCA.entries())
@@ -353,7 +320,7 @@ export function computeCaParTechnicienShared(data: ApogeeData, params: StatParam
     .filter(x => x.value !== 0)
     .sort((a, b) => b.value - a.value);
   
-  console.log(`[EDGE StatIA ca_par_technicien] Top 3: ${sorted.slice(0, 3).map(t => `${t.name}=${t.value}€`).join(', ')}`);
+  console.log(`[STATIA CORE ca_par_technicien] Top 3: ${sorted.slice(0, 3).map(t => `${t.name}=${t.value}€`).join(', ')}`);
   
   // MODE FILTRÉ: un seul technicien demandé
   if (filterTechnicienId) {

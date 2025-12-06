@@ -7,6 +7,14 @@
  * - apiGetProjects (via loaders.ts)
  * - apiGetInterventions (via loaders.ts)
  * - apiGetUsers (via loaders.ts)
+ * 
+ * NOTE: La logique métier principale est définie dans:
+ * - src/statia/engines/caParTechnicienCore.ts (SOURCE DE VÉRITÉ)
+ * - supabase/functions/_shared/statiaEngines/caParTechnicien.ts (MIROIR EDGE)
+ * 
+ * Les helpers locaux (isRTIntervention, etc.) sont dupliqués pour compatibilité
+ * avec les autres métriques du fichier. Pour le moteur principal ca_par_technicien,
+ * considérer l'import depuis caParTechnicienCore.ts.
  */
 
 import { StatDefinition, LoadedData, StatParams, StatResult } from './types';
