@@ -130,14 +130,14 @@ export default function IndicateursSAV() {
                   <TrendingUp className="w-6 h-6 text-orange-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Coût SAV Estimé</p>
+                  <p className="text-sm font-medium text-muted-foreground">Coût moyen / dossier</p>
                   <p className="text-2xl font-bold text-orange-600">
-                    {formatEuros(coutSavEstime)}
+                    {nbSavGlobal > 0 ? formatEuros(coutSavEstime / nbSavGlobal) : "–"}
                   </p>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground mt-3">
-                20% du CA des dossiers parents
+                Total: {formatEuros(coutSavEstime)} sur {nbSavGlobal} dossiers
               </p>
             </div>
 
