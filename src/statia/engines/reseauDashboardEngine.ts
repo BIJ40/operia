@@ -136,11 +136,13 @@ export async function computeReseauDashboard(params: ReseauDashboardParams): Pro
   
   logNetwork.debug(`[StatIA] Chargement de ${filteredAgencies.length} agences...`);
   
-  // 3. Charger les données de chaque agence séquentiellement
-  const agencyData: AgencyData[] = [];
-  const failedAgencies: string[] = [];
+  // 3. Charger les données de chaque agence EN PARALLÈLE
+  debugLog('Chargement PARALLÈLE des agences...', {
+    count: filteredAgencies.length,
+    agencies: filteredAgencies.map(a => a.slug)
+  });
   
-  for (const agency of filteredAgencies) {
+  const loadPromises = filteredAgencies.map(async (agency) => {
     try {
       debugLog(`Chargement agence: ${agency.slug}...`);
       const data = await NetworkDataService.loadAgencyData(agency.slug);
@@ -151,22 +153,28 @@ export async function computeReseauDashboard(params: ReseauDashboardParams): Pro
           projects: data.projects?.length || 0,
           interventions: data.interventions?.length || 0,
         });
-        agencyData.push({
+        return {
           agencyId: agency.slug,
           agencyLabel: agency.label,
           data,
-        });
+          success: true,
+        };
       } else {
         debugLog(`⚠️ ${agency.slug} retourne null`);
-        failedAgencies.push(agency.slug);
+        return { agencyId: agency.slug, agencyLabel: agency.label, data: null, success: false };
       }
     } catch (err) {
       logNetwork.warn(`[StatIA] Erreur chargement ${agency.slug}`, err);
-      failedAgencies.push(agency.slug);
+      return { agencyId: agency.slug, agencyLabel: agency.label, data: null, success: false };
     }
-  }
+  });
   
-  debugLog('Résumé chargement:', {
+  const results = await Promise.all(loadPromises);
+  
+  const agencyData: AgencyData[] = results.filter(r => r.success && r.data) as AgencyData[];
+  const failedAgencies = results.filter(r => !r.success).map(r => r.agencyId);
+  
+  debugLog('Résumé chargement PARALLÈLE:', {
     total: filteredAgencies.length,
     success: agencyData.length,
     failed: failedAgencies.length,
