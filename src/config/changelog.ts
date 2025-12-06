@@ -15,6 +15,51 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.7.3",
+    title: "Pipeline IA Hybride – Refonte complète unified-search",
+    date: "2025-12-06",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // PIPELINE IA HYBRIDE 5 ÉTAPES
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Étape 1: detectQueryType() → classification heuristique stats/doc/action/unknown' },
+      { type: 'feature', description: 'Étape 2: extractIntentLLM() → appel edge function ai-search-extract (Gemini 2.5 Flash)' },
+      { type: 'feature', description: 'Étape 3: validateAndRoute() → validation déterministe (metricsRegistry, permissions, corrections)' },
+      { type: 'feature', description: 'Étape 4: Exécution StatIA pour stats, RAG pour docs, routing pour actions' },
+      { type: 'feature', description: 'Étape 5: Réponse structurée avec bloc interpretation + debug (N6 only)' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // SÉCURITÉ & PERMISSIONS
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'security', description: 'N0/N1: accès stats bloqué → fallback doc automatique' },
+      { type: 'security', description: 'N2: stats limitées à agence rattachée uniquement' },
+      { type: 'security', description: 'N3+: scope réseau avec allowedAgencyIds' },
+      { type: 'security', description: 'LLM JAMAIS exécuté brut → toujours corrigé par validateAndRoute()' },
+      { type: 'security', description: 'Métriques inventées par LLM rejetées → routing via keywords' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // ARCHITECTURE aiSearch
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Nouveau module src/services/aiSearch/ avec 8 fichiers' },
+      { type: 'feature', description: 'types.ts: interfaces LLMDraftIntent, ValidatedIntent, SearchResult' },
+      { type: 'feature', description: 'nlNormalize.ts: normalisation query (accents, typos, minuscules)' },
+      { type: 'feature', description: 'nlKeywords.ts: STATS_KEYWORDS avec catégories et poids' },
+      { type: 'feature', description: 'detectQueryType.ts: classification heuristique multi-signal' },
+      { type: 'feature', description: 'extractPeriod.ts: parser période NL (mois, année, exercice, ce mois, etc.)' },
+      { type: 'feature', description: 'metricsRegistry.ts: registre officiel 20+ métriques avec minRole et dimensions' },
+      { type: 'feature', description: 'validateAndRoute.ts: moteur déterministe de validation + correction' },
+      { type: 'feature', description: 'extractIntentLLM.ts: wrapper appel edge function ai-search-extract' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // EDGE FUNCTIONS
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'ai-search-extract: extraction intent via Gemini 2.5 Flash avec JSON strict' },
+      { type: 'improvement', description: 'unified-search refactoré pour pipeline 5 étapes complète' },
+      { type: 'improvement', description: 'Bloc interpretation dans chaque réponse (metricId, période, filtres, engine)' },
+      { type: 'improvement', description: 'Bloc debug (N6 only) avec llmDraft, corrections, timing' },
+    ],
+  },
+  {
     version: "V0.7.2",
     title: "StatIA NL Routing – Amélioration compréhension langage naturel",
     date: "2025-12-06",
