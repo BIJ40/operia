@@ -49,7 +49,10 @@ const responseCache = new Map<string, { data: unknown; timestamp: number }>();
 const CACHE_TTL_MS = 60 * 1000; // 60 seconds
 
 function getCacheKey(endpoint: string, options: ApogeeProxyOptions): string {
-  return `${endpoint}:${options.agencySlug || 'default'}:${JSON.stringify(options.filters || {})}`;
+  // CRITICAL: Always include agencySlug in cache key - no 'default' fallback
+  // This prevents admin from seeing cached data from wrong agency
+  const slug = options.agencySlug || '_no_agency_';
+  return `${endpoint}:${slug}:${JSON.stringify(options.filters || {})}`;
 }
 
 function getCachedResponse<T>(key: string): T | null {
@@ -66,6 +69,26 @@ function getCachedResponse<T>(key: string): T | null {
 
 function setCachedResponse(key: string, data: unknown): void {
   responseCache.set(key, { data, timestamp: Date.now() });
+}
+
+/**
+ * Vide le cache pour une agence spécifique ou tout le cache
+ * Utile lors d'un changement d'agence par un admin
+ */
+export function clearProxyCache(agencySlug?: string): void {
+  if (agencySlug) {
+    // Clear only cache entries for this agency
+    for (const key of responseCache.keys()) {
+      if (key.includes(`:${agencySlug}:`)) {
+        responseCache.delete(key);
+      }
+    }
+    logApogee.debug(`[PROXY] Cache cleared for agency: ${agencySlug}`);
+  } else {
+    // Clear all cache
+    responseCache.clear();
+    logApogee.debug(`[PROXY] Full cache cleared`);
+  }
 }
 
 /**
