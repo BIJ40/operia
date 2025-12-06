@@ -121,10 +121,11 @@ interface StatResultContentProps {
 }
 
 function StatResultContent({ result, query, isAdmin, onPeriodChange }: StatResultContentProps) {
-  const periodeLabel = result.filters.periode?.label || 
-    (result.filters.periode ? formatPeriodLabel(result.filters.periode) : null);
+  const periode = result.filters?.periode;
+  const periodeLabel = periode?.label || 
+    (periode?.start && periode?.end ? formatPeriodLabel(periode) : null);
 
-  const isDefaultPeriod = result.filters.periode?.isDefault === true;
+  const isDefaultPeriod = periode?.isDefault === true;
   const parsed = result.parsed;
 
   // Access denied
