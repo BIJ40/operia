@@ -83,6 +83,8 @@ export function AiInlineResult({ messages, isLoading, onClose, onContactSupport 
     onClose();
   };
 
+  const hasHistory = conversationHistory.length > 0;
+
   return (
     <>
       <AnimatePresence>
@@ -91,7 +93,7 @@ export function AiInlineResult({ messages, isLoading, onClose, onContactSupport 
           animate={{ opacity: 1, y: 0, height: 'auto' }}
           exit={{ opacity: 0, y: -10, height: 0 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="w-full max-w-2xl mx-auto mt-2"
+          className="w-full mx-auto mt-2"
         >
           {/* Container with sparkle border animation */}
           <div className="relative rounded-xl">
@@ -122,151 +124,151 @@ export function AiInlineResult({ messages, isLoading, onClose, onContactSupport 
             </div>
             
             <div className="relative rounded-xl border bg-card shadow-lg overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium">Réponse IA</span>
-                {conversationHistory.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 px-2 text-xs text-muted-foreground"
-                    onClick={() => setShowHistory(!showHistory)}
-                  >
-                    {showHistory ? <ChevronUp className="w-3 h-3 mr-1" /> : <ChevronDown className="w-3 h-3 mr-1" />}
-                    Historique ({Math.floor(conversationHistory.length / 2)})
-                  </Button>
-                )}
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium">Réponse IA</span>
+                  {hasHistory && (
+                    <Badge variant="outline" className="text-xs">
+                      {Math.ceil(conversationHistory.length / 2)} échanges
+                    </Badge>
+                  )}
+                </div>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
+                  <X className="w-4 h-4" />
+                </Button>
               </div>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
 
-            {/* Conversation History */}
-            <AnimatePresence>
-              {showHistory && conversationHistory.length > 0 && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="border-b bg-muted/10"
-                >
-                  <ScrollArea className="max-h-48">
-                    <div className="p-3 space-y-2">
-                      {conversationHistory.map((msg, idx) => (
-                        <div
-                          key={idx}
-                          className={cn(
-                            "flex gap-2 text-sm",
-                            msg.role === 'user' ? 'justify-end' : 'justify-start'
-                          )}
-                        >
-                          {msg.role === 'assistant' && (
-                            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                              <Bot className="w-3.5 h-3.5 text-primary" />
-                            </div>
-                          )}
+              {/* Two-column layout: History left, Response right */}
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-0 md:divide-x">
+                {/* Left column: Conversation History (always visible on desktop) */}
+                <div className={cn(
+                  "md:col-span-2 bg-muted/5",
+                  !hasHistory && "hidden md:flex md:items-center md:justify-center"
+                )}>
+                  {hasHistory ? (
+                    <ScrollArea className="h-56 md:h-64">
+                      <div className="p-3 space-y-2">
+                        {conversationHistory.map((msg, idx) => (
                           <div
+                            key={idx}
                             className={cn(
-                              "max-w-[80%] px-3 py-2 rounded-lg",
-                              msg.role === 'user'
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-muted/50'
+                              "flex gap-2 text-sm",
+                              msg.role === 'user' ? 'justify-end' : 'justify-start'
                             )}
                           >
-                            <p className="text-sm line-clamp-3">{msg.content}</p>
+                            {msg.role === 'assistant' && (
+                              <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                <Bot className="w-3 h-3 text-primary" />
+                              </div>
+                            )}
+                            <div
+                              className={cn(
+                                "max-w-[85%] px-2.5 py-1.5 rounded-lg text-xs",
+                                msg.role === 'user'
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-muted/50'
+                              )}
+                            >
+                              <p className="line-clamp-4">{msg.content}</p>
+                            </div>
+                            {msg.role === 'user' && (
+                              <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center shrink-0">
+                                <User className="w-3 h-3 text-muted-foreground" />
+                              </div>
+                            )}
                           </div>
-                          {msg.role === 'user' && (
-                            <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center shrink-0">
-                              <User className="w-3.5 h-3.5 text-muted-foreground" />
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  ) : (
+                    <div className="p-4 text-center text-muted-foreground text-xs hidden md:block">
+                      <MessageCircle className="w-6 h-6 mx-auto mb-2 opacity-40" />
+                      <p>Historique vide</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Right column: Current response + chart */}
+                <div className="md:col-span-3">
+                  <ScrollArea className="h-56 md:h-64">
+                    <div className="p-4 space-y-3 overflow-x-hidden">
+                      {/* Loading state */}
+                      {isLoading && (
+                        <div className="flex items-center gap-3 text-muted-foreground">
+                          <div className="flex gap-1">
+                            <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                            <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                            <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                          </div>
+                          <span className="text-sm">Je réfléchis...</span>
+                        </div>
+                      )}
+
+                      {/* Message content */}
+                      {lastAssistantMessage && (
+                        <div className="space-y-3">
+                          {/* Text content with markdown */}
+                          <div className="prose prose-sm dark:prose-invert max-w-none overflow-x-hidden break-words [&_p]:break-words [&_li]:break-words">
+                            <ReactMarkdown>{lastAssistantMessage.content}</ReactMarkdown>
+                          </div>
+
+                          {/* Stat with Chart */}
+                          {(lastAssistantMessage.type === 'stat' || lastAssistantMessage.type === 'chart') && 
+                           lastAssistantMessage.data && (
+                            <StatResultView 
+                              data={lastAssistantMessage.data as StatResultData} 
+                              showChart={lastAssistantMessage.type === 'chart'}
+                            />
+                          )}
+
+                          {/* Doc results */}
+                          {lastAssistantMessage.type === 'doc' && lastAssistantMessage.data && (
+                            <DocResultView data={lastAssistantMessage.data as DocResultData} />
+                          )}
+
+                          {/* Error state */}
+                          {lastAssistantMessage.type === 'error' && (
+                            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                              <p className="text-sm text-destructive">{lastAssistantMessage.content}</p>
                             </div>
                           )}
                         </div>
-                      ))}
+                      )}
                     </div>
                   </ScrollArea>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Content */}
-            <ScrollArea className="max-h-96">
-              <div className="p-4 space-y-4 overflow-x-hidden">
-                {/* Loading state */}
-                {isLoading && (
-                  <div className="flex items-center gap-3 text-muted-foreground">
-                    <div className="flex gap-1">
-                      <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                    </div>
-                    <span className="text-sm">Je réfléchis...</span>
-                  </div>
-                )}
-
-                {/* Message content */}
-                {lastAssistantMessage && (
-                  <div className="space-y-4">
-                    {/* Text content with markdown */}
-                    <div className="prose prose-sm dark:prose-invert max-w-none overflow-x-hidden break-words [&_p]:break-words [&_li]:break-words">
-                      <ReactMarkdown>{lastAssistantMessage.content}</ReactMarkdown>
-                    </div>
-
-                    {/* Stat with Chart */}
-                    {(lastAssistantMessage.type === 'stat' || lastAssistantMessage.type === 'chart') && 
-                     lastAssistantMessage.data && (
-                      <StatResultView 
-                        data={lastAssistantMessage.data as StatResultData} 
-                        showChart={lastAssistantMessage.type === 'chart'}
-                      />
-                    )}
-
-                    {/* Doc results */}
-                    {lastAssistantMessage.type === 'doc' && lastAssistantMessage.data && (
-                      <DocResultView data={lastAssistantMessage.data as DocResultData} />
-                    )}
-
-                    {/* Error state */}
-                    {lastAssistantMessage.type === 'error' && (
-                      <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
-                        <p className="text-sm text-destructive">{lastAssistantMessage.content}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
+                </div>
               </div>
-            </ScrollArea>
 
-            {/* Footer actions */}
-            <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/20">
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/hc-agency/indicateurs">
-                    <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
-                    Pilotage
-                  </Link>
-                </Button>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={goToSupportChat}>
-                  <MessageCircle className="w-3.5 h-3.5 mr-1.5" />
-                  Chat support
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleContactSupport}
-                  className="text-helpconfort-orange border-helpconfort-orange/30 hover:bg-helpconfort-orange/10"
-                >
-                  <HelpCircle className="w-3.5 h-3.5 mr-1.5" />
-                  Créer un ticket
-                </Button>
+              {/* Footer actions */}
+              <div className="flex items-center justify-between px-4 py-2 border-t bg-muted/20">
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/hc-agency/indicateurs">
+                      <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
+                      Pilotage
+                    </Link>
+                  </Button>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" onClick={goToSupportChat}>
+                    <MessageCircle className="w-3.5 h-3.5 mr-1.5" />
+                    Chat support
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleContactSupport}
+                    className="text-helpconfort-orange border-helpconfort-orange/30 hover:bg-helpconfort-orange/10"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5 mr-1.5" />
+                    Créer un ticket
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
           </div>
         </motion.div>
       </AnimatePresence>
