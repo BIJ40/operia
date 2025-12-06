@@ -3,13 +3,16 @@
  * Affiche toutes les métriques disponibles avec leurs valeurs
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { AllMetricsViewer } from '../components/AllMetricsViewer';
+import { MetricValidatorHub } from '../components/MetricValidatorHub';
 import { LocalErrorBoundary } from '@/components/system/LocalErrorBoundary';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, FlaskConical } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AlertTriangle, FlaskConical, LayoutGrid, CheckSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 
 function StatiaErrorFallback({ error }: { error: Error }) {
   return (
@@ -33,6 +36,13 @@ function StatiaErrorFallback({ error }: { error: Error }) {
 }
 
 export default function StatiaBuilderAdminPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentTab = searchParams.get('tab') || 'viewer';
+
+  const handleTabChange = (value: string) => {
+    setSearchParams({ tab: value });
+  };
+
   return (
     <LocalErrorBoundary componentName="StatIA Builder">
       <div className="container mx-auto py-6 px-4 space-y-6">
@@ -41,11 +51,31 @@ export default function StatiaBuilderAdminPage() {
           <Button asChild variant="outline" size="sm">
             <Link to="/admin/statia-validator" className="flex items-center gap-2">
               <FlaskConical className="h-4 w-4" />
-              Validator
+              Validator NLP
             </Link>
           </Button>
         </div>
-        <AllMetricsViewer mode="admin" />
+
+        <Tabs value={currentTab} onValueChange={handleTabChange}>
+          <TabsList>
+            <TabsTrigger value="viewer" className="flex items-center gap-2">
+              <LayoutGrid className="h-4 w-4" />
+              Vue Métriques
+            </TabsTrigger>
+            <TabsTrigger value="validator" className="flex items-center gap-2">
+              <CheckSquare className="h-4 w-4" />
+              Validator Hub
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="viewer" className="mt-6">
+            <AllMetricsViewer mode="admin" />
+          </TabsContent>
+
+          <TabsContent value="validator" className="mt-6">
+            <MetricValidatorHub mode="admin" />
+          </TabsContent>
+        </Tabs>
       </div>
     </LocalErrorBoundary>
   );
