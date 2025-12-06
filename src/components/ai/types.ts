@@ -36,6 +36,7 @@ export interface DocResultData {
     source: string;
     similarity?: number;
   }>;
+  answer?: string;
 }
 
 export interface ChartData {

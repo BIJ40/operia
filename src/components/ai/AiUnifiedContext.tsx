@@ -247,14 +247,20 @@ function transformToMessage(query: string, data: any): AiMessage {
 
   // Handle doc responses
   if (data.type === 'doc') {
-    const docResults = data.result?.results || data.result || [];
+    // unified-search returns: { answer, sources, docResults, isConversational }
+    const docResults = data.result?.docResults || data.result?.results || data.result?.sources || [];
+    const answer = data.result?.answer || '';
     const docData: DocResultData = {
       results: Array.isArray(docResults) ? docResults : [],
+      answer,
     };
 
-    const content = docData.results.length > 0
-      ? `J'ai trouvé ${docData.results.length} document(s) pertinent(s) pour votre recherche.`
-      : 'Aucun document trouvé.';
+    // Use the AI-generated answer if available, fallback to summary
+    const content = answer 
+      ? answer 
+      : docData.results.length > 0
+        ? `J'ai trouvé ${docData.results.length} document(s) pertinent(s) pour votre recherche.`
+        : 'Aucun document trouvé.';
 
     return {
       id: crypto.randomUUID(),
