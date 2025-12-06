@@ -482,15 +482,7 @@ export const caParTechnicienUnivers: StatDefinition = {
       totalCA += stats.totalCA;
     }
     
-    // Log de diagnostic
-    console.log('[ca_par_technicien_univers] Diagnostic CA:', {
-      facturesTraitees,
-      facturesSansTemps,
-      caSansTemps: Math.round(caSansTemps),
-      caAvecTemps: Math.round(caAvecTemps),
-      caTotal: Math.round(totalCA),
-      ecart: Math.round(caSansTemps + caAvecTemps - totalCA),
-    });
+    // Diagnostic available in metadata.breakdown
     
     return {
       value: result,
@@ -542,7 +534,7 @@ export const caParTechnicien: StatDefinition = {
     const interventions = data.interventions || [];
     const users = data.users || [];
     
-    console.log(`[StatIA ca_par_technicien] Données reçues: ${factures.length} factures, ${projects.length} projets, ${interventions.length} interventions, ${users.length} users`);
+    
     
     const projectsById = indexProjectsById(projects);
     const usersById = indexUsersById(users);
@@ -651,7 +643,7 @@ export const caParTechnicien: StatDefinition = {
       facturesTraitees++;
     }
     
-    console.log(`[StatIA ca_par_technicien] Résultat: ${facturesTraitees} factures traitées, ${techCA.size} techniciens, ${dossiersIgnores} dossiers ignorés, CA total ${totalCADistribue}€`);
+    
     
     // Formater le résultat avec nom et couleur du technicien
     const result: Record<string, { name: string; ca: number; color: string }> = {};
@@ -820,7 +812,7 @@ export const caParTechnicienTemps: StatDefinition = {
     const interventions = data.interventions || [];
     const users = data.users || [];
     
-    console.log(`[StatIA ca_par_technicien_temps] Données reçues: ${factures.length} factures, ${projects.length} projets, ${interventions.length} interventions, ${users.length} users`);
+    
     
     const projectsById = indexProjectsById(projects);
     const usersById = indexUsersById(users);
@@ -908,7 +900,7 @@ export const caParTechnicienTemps: StatDefinition = {
       facturesTraitees++;
     }
     
-    console.log(`[StatIA ca_par_technicien_temps] Résultat: ${facturesTraitees} factures traitées, ${techStats.size} techniciens, ${dossiersIgnores} dossiers ignorés, CA total ${totalCADistribue}€`);
+    
     
     // Formater le résultat avec nom, couleur, temps du technicien
     const result: Record<string, { name: string; ca: number; color: string; temps: number; caParHeure: number }> = {};

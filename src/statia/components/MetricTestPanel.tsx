@@ -27,6 +27,7 @@ import type { MetricDefinitionJSON, MetricExecutionParams, MetricExecutionResult
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { logError } from '@/lib/logger';
 
 // ============================================
 // TYPES
@@ -283,7 +284,7 @@ export function MetricTestPanel({ metrics, selectedMetricId, onSelectMetric }: M
         await executeViaEdge();
       }
     } catch (err) {
-      console.error('Erreur d\'exécution:', err);
+      logError('METRIC_TEST', 'Erreur d\'exécution', { error: err });
     }
   };
 
@@ -358,7 +359,7 @@ export function MetricTestPanel({ metrics, selectedMetricId, onSelectMetric }: M
 
       toast.success('Comparaison terminée');
     } catch (err) {
-      console.error('Erreur de comparaison:', err);
+      logError('METRIC_TEST', 'Erreur de comparaison', { error: err });
       toast.error('Erreur lors de la comparaison');
     } finally {
       setComparisonLoading(false);

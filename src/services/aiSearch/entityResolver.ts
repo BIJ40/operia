@@ -10,6 +10,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import { logError, logWarn } from '@/lib/logger';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
@@ -248,7 +249,7 @@ async function loadTechniciens(agencySlug: string): Promise<CachedTechnicien[]> 
     cacheTimestamp = now;
     return techniciensCache;
   } catch (err) {
-    console.error('[EntityResolver] Error loading techniciens:', err);
+    logError('ENTITY_RESOLVER', 'Error loading techniciens', { error: err });
     return techniciensCache || [];
   }
 }
@@ -270,7 +271,7 @@ async function loadApporteurs(agencySlug: string): Promise<CachedApporteur[]> {
     });
     
     if (error) {
-      console.error('[EntityResolver] Error loading apporteurs:', error);
+      logError('ENTITY_RESOLVER', 'Error loading apporteurs', { error });
       return apporteursCache || [];
     }
     
@@ -289,7 +290,7 @@ async function loadApporteurs(agencySlug: string): Promise<CachedApporteur[]> {
     cacheTimestamp = now;
     return apporteursCache;
   } catch (err) {
-    console.error('[EntityResolver] Error loading apporteurs:', err);
+    logError('ENTITY_RESOLVER', 'Error loading apporteurs', { error: err });
     return apporteursCache || [];
   }
 }
@@ -460,7 +461,7 @@ export async function resolveEntities(
   const result: ResolvedEntities = {};
   
   if (!agencySlug) {
-    console.warn('[EntityResolver] No agencySlug provided');
+    logWarn('ENTITY_RESOLVER', 'No agencySlug provided');
     return result;
   }
   
