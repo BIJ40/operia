@@ -76,7 +76,19 @@ export function useStatiaSAVMetrics() {
             coutsByProject: new Map(),
           } as SAVOverridesData;
 
-      // Récupérer les métriques depuis StatIA (qui utilisent aussi les overrides)
+      // Construire la map des overrides pour les métriques StatIA
+      const savOverridesMap = new Map<number, { is_confirmed_sav: boolean | null; cout_sav_manuel: number | null; techniciens_override: number[] | null }>();
+      for (const o of overridesData.overrides) {
+        savOverridesMap.set(o.project_id, {
+          is_confirmed_sav: o.is_confirmed_sav,
+          cout_sav_manuel: o.cout_sav_manuel,
+          techniciens_override: o.techniciens_override,
+        });
+      }
+
+      // Récupérer les métriques depuis StatIA (qui utilisent les overrides)
+      const metricsParams = { dateRange, savOverrides: savOverridesMap };
+      
       const [
         tauxGlobal,
         nbSav,
@@ -86,13 +98,13 @@ export function useStatiaSAVMetrics() {
         caImpacte,
         coutSav,
       ] = await Promise.all([
-        getMetricForAgency("taux_sav_global", agencySlug, { dateRange }, services),
-        getMetricForAgency("nb_sav_global", agencySlug, { dateRange }, services),
-        getMetricForAgency("taux_sav_par_univers", agencySlug, { dateRange }, services),
-        getMetricForAgency("taux_sav_par_apporteur", agencySlug, { dateRange }, services),
-        getMetricForAgency("taux_sav_par_type_apporteur", agencySlug, { dateRange }, services),
-        getMetricForAgency("ca_impacte_sav", agencySlug, { dateRange }, services),
-        getMetricForAgency("cout_sav_estime", agencySlug, { dateRange }, services),
+        getMetricForAgency("taux_sav_global", agencySlug, metricsParams, services),
+        getMetricForAgency("nb_sav_global", agencySlug, metricsParams, services),
+        getMetricForAgency("taux_sav_par_univers", agencySlug, metricsParams, services),
+        getMetricForAgency("taux_sav_par_apporteur", agencySlug, metricsParams, services),
+        getMetricForAgency("taux_sav_par_type_apporteur", agencySlug, metricsParams, services),
+        getMetricForAgency("ca_impacte_sav", agencySlug, metricsParams, services),
+        getMetricForAgency("cout_sav_estime", agencySlug, metricsParams, services),
       ]);
 
       // Charger les données brutes pour construire la liste des dossiers
