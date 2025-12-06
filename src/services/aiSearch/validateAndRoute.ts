@@ -1,7 +1,7 @@
 /**
  * StatIA AI Search - Validation & Correction
  * Cœur du moteur déterministe - Aucune invention autorisée
- * V2: Correction LLM par keywords pondérés + catégories fortes
+ * V3: Correction LLM par keywords pondérés + catégories fortes + ParsedStatQuery enrichi
  */
 
 import type {
@@ -16,11 +16,13 @@ import type {
   AmbiguousResult,
   MetricCandidate,
   KeywordMatch,
+  ParsedStatQuery,
+  IntentConfidence,
 } from './types';
 import { getMetricById, isValidMetricId, findMetricForIntent, getAllMetricIds } from './metricsRegistry';
 import { extractPeriod, getDefaultPeriod, getCurrentYearPeriod } from './extractPeriod';
 import { findAllKeywords, extractDimensionFromMatches, extractUniversFromMatches, computeStatsScore } from './nlKeywords';
-import { detectQueryType, getStrongStatsCategories, type DetectionResult } from './detectQueryType';
+import { isStatsQuery, detectQueryType, getStrongStatsCategories, type DetectionResult, type StatsQueryResult } from './detectQueryType';
 
 // ═══════════════════════════════════════════════════════════════
 // LISTE BLANCHE DES UNIVERS
@@ -37,21 +39,70 @@ const VALID_UNIVERS = new Set([
   'COUVERTURE',
   'RECHERCHE FUITE',
   'MULTI-TRAVAUX',
-  'CHAUFFAGE',      // Note: exclu de StatIA selon règles métier
-  'CLIMATISATION',  // Note: exclu de StatIA selon règles métier
 ]);
 
-// Univers exclus des calculs StatIA
+// Univers exclus des calculs StatIA (règle métier)
 const EXCLUDED_UNIVERS = new Set(['CHAUFFAGE', 'CLIMATISATION']);
 
 // Catégories indiquant un besoin de forecast
-const FORECAST_CATEGORIES = new Set(['forecasting', 'prediction', 'modelisation']);
+const FORECAST_CATEGORIES = new Set(['forecasting', 'prediction', 'modelisation', 'projection']);
 
 // Catégories indiquant analyse avancée
-const ADVANCED_ANALYSIS_CATEGORIES = new Set(['analytics', 'ai_analysis', 'data_science']);
+const ADVANCED_ANALYSIS_CATEGORIES = new Set(['analytics', 'ai_analysis', 'data_science', 'optimisation']);
 
 // Catégories indiquant scope réseau
-const NETWORK_SCOPE_CATEGORIES = new Set(['reseau', 'region', 'agence', 'segmentation']);
+const NETWORK_SCOPE_CATEGORIES = new Set(['reseau', 'region', 'agence', 'segmentation', 'multi-agence']);
+
+// Catégories fortes pour stats (finance, recouvrement, ratios, etc.)
+const STRONG_STATS_CATEGORIES = new Set([
+  'finance', 'recouvrement', 'ratios', 'volumes', 'univers', 
+  'forecasting', 'analytics', 'prediction', 'pilotage', 'delais', 'tendances'
+]);
+
+// ═══════════════════════════════════════════════════════════════
+// MAPPING DIMENSION DEPUIS KEYWORDS
+// ═══════════════════════════════════════════════════════════════
+
+const KEYWORD_TO_DIMENSION: Record<string, DimensionType> = {
+  technicien: 'technicien',
+  tech: 'technicien',
+  techniciens: 'technicien',
+  apporteur: 'apporteur',
+  apporteurs: 'apporteur',
+  commanditaire: 'apporteur',
+  prescripteur: 'apporteur',
+  univers: 'univers',
+  metier: 'univers',
+  domaine: 'univers',
+  agence: 'agence',
+  agences: 'agence',
+  client: 'client_type',
+  clients: 'client_type',
+  clientele: 'client_type',
+};
+
+// Mapping keywords → métrique suggérée
+const KEYWORD_TO_METRIC: Record<string, string> = {
+  'ca apporteur': 'ca_par_apporteur',
+  'ca technicien': 'ca_par_technicien',
+  'ca univers': 'ca_par_univers',
+  'top apporteur': 'top_apporteurs_ca',
+  'top technicien': 'top_techniciens_ca',
+  'meilleur apporteur': 'top_apporteurs_ca',
+  'meilleur technicien': 'top_techniciens_ca',
+  'taux recouvrement': 'taux_recouvrement_global',
+  'recouvrement': 'taux_recouvrement_global',
+  'impaye': 'encours_impayes',
+  'impayes': 'encours_impayes',
+  'encours': 'encours_impayes',
+  'dossiers': 'nb_dossiers_crees',
+  'nb dossiers': 'nb_dossiers_crees',
+  'sav': 'taux_sav_global',
+  'taux sav': 'taux_sav_global',
+  'delai devis': 'delai_premier_devis_reel',
+  'delai intervention': 'delai_premiere_intervention',
+  'panier moyen': 'panier_moyen_facture',
+};
 
 // ═══════════════════════════════════════════════════════════════
 // VALIDATION PRINCIPALE
@@ -67,7 +118,7 @@ type ValidationResult = {
 
 /**
  * Valide et corrige un intent draft du LLM
- * V2: S'appuie sur LLM ET keywords pondérés pour corriger/surclasser
+ * V3: Combine LLM + keywords pondérés + catégories pour enrichir ParsedStatQuery
  */
 export function validateAndRoute(
   llmDraft: LLMDraftIntent | null,
@@ -78,12 +129,17 @@ export function validateAndRoute(
 ): ValidationResult {
   const corrections: ValidationCorrection[] = [];
   
-  // Analyse keywords une seule fois (réutilisée partout)
-  const keywordMatches = findAllKeywords(normalizedQuery);
-  const totalKeywordScore = keywordMatches.reduce((sum, m) => sum + m.keyword.weight, 0);
+  // ─────────────────────────────────────────────────────────────
+  // 0. ANALYSE KEYWORDS ET CATÉGORIES (une seule fois)
+  // ─────────────────────────────────────────────────────────────
   
-  // Détection enrichie avec catégories
+  const keywordMatches = findAllKeywords(normalizedQuery);
+  const statsQueryResult = isStatsQuery(normalizedQuery, originalQuery);
   const detection = detectQueryType(normalizedQuery, originalQuery);
+  
+  const totalKeywordScore = statsQueryResult.rawScore;
+  const strongCategories = statsQueryResult.strongCategories;
+  const allCategories = statsQueryResult.detectedCategories;
   
   // ─────────────────────────────────────────────────────────────
   // 1. DÉTERMINER LE TYPE DE REQUÊTE (LLM vs Keywords)
@@ -91,15 +147,13 @@ export function validateAndRoute(
   
   let queryType: QueryType = llmDraft?.intent || 'unknown';
   
-  // Score keywords fort → surclasser LLM si nécessaire
-  const keywordsIndicateStats = totalKeywordScore >= 5 || detection.strongCategoriesCount >= 2;
-  
-  if (keywordsIndicateStats && queryType !== 'stats_query') {
+  // Keywords forts surclassent LLM
+  if (statsQueryResult.isStats && queryType !== 'stats_query') {
     corrections.push({
       field: 'type',
       original: queryType,
       corrected: 'stats_query',
-      reason: `Keywords indiquent stats (score=${totalKeywordScore.toFixed(1)}, catFortes=${detection.strongCategoriesCount})`,
+      reason: `Keywords indiquent stats (score=${totalKeywordScore.toFixed(1)}, catFortes=${strongCategories.length}: ${strongCategories.join(', ')})`,
     });
     queryType = 'stats_query';
   } else if (!queryType || queryType === 'unknown' || (llmDraft?.confidence ?? 0) < 0.5) {
@@ -115,26 +169,29 @@ export function validateAndRoute(
   }
   
   // ─────────────────────────────────────────────────────────────
-  // 2. DÉTECTER INTENT TYPE ENRICHI (forecast, analyse avancée)
+  // 2. DÉTECTER INTENT TYPE, FORECAST, ANALYTICS, NETWORK
   // ─────────────────────────────────────────────────────────────
   
   let intentType: IntentType = detection.suggestedIntent || 'valeur';
   let needsForecast = false;
   let needsAdvancedAnalysis = detection.needsAdvancedAnalysis;
+  let networkScope = detection.isNetworkScope;
   
-  // Vérifier catégories pour forecast
-  for (const cat of detection.detectedCategories) {
+  // Analyser les catégories pour enrichissement
+  for (const cat of allCategories) {
     if (FORECAST_CATEGORIES.has(cat)) {
       needsForecast = true;
     }
     if (ADVANCED_ANALYSIS_CATEGORIES.has(cat)) {
       needsAdvancedAnalysis = true;
     }
+    if (NETWORK_SCOPE_CATEGORIES.has(cat)) {
+      networkScope = true;
+    }
   }
   
-  // LLM peut suggérer un intent
+  // LLM peut suggérer un intent si confiance haute
   if (llmDraft?.intentType && llmDraft.intentType !== intentType) {
-    // Garder LLM si confiance haute, sinon keywords gagnent
     if ((llmDraft.confidence ?? 0) >= 0.7) {
       intentType = llmDraft.intentType;
     } else if (detection.suggestedIntent) {
@@ -142,54 +199,69 @@ export function validateAndRoute(
         field: 'intentType',
         original: llmDraft.intentType,
         corrected: intentType,
-        reason: 'Keywords plus précis que LLM',
+        reason: 'Keywords plus précis que LLM pour intent',
       });
     }
   }
   
   // ─────────────────────────────────────────────────────────────
-  // 3. VALIDER LA MÉTRIQUE
+  // 3. VALIDER LA MÉTRIQUE (combinaison LLM + keywords)
   // ─────────────────────────────────────────────────────────────
   
   let metricId: string | undefined;
   let metricLabel: string | undefined;
   
   if (queryType === 'stats_query') {
-    // Vérifier que la métrique du LLM est valide
+    // D'abord vérifier si LLM propose une métrique valide
     if (llmDraft?.metric && isValidMetricId(llmDraft.metric)) {
       metricId = llmDraft.metric;
     } else {
-      // Trouver la métrique via les keywords
-      const keywords = keywordMatches.map(m => m.keyword.word);
-      const dimension = detection.suggestedDimension || extractDimensionFromMatches(keywordMatches) as DimensionType || 'global';
+      // Chercher via keywords directement
+      const inferredMetric = inferMetricFromKeywords(keywordMatches, normalizedQuery);
       
-      const foundMetric = findMetricForIntent(dimension, intentType, keywords);
-      
-      if (foundMetric) {
-        metricId = foundMetric.id;
+      if (inferredMetric && isValidMetricId(inferredMetric)) {
+        metricId = inferredMetric;
         if (llmDraft?.metric) {
           corrections.push({
             field: 'metricId',
             original: llmDraft.metric,
             corrected: metricId,
-            reason: `Métrique '${llmDraft.metric}' invalide, corrigée en '${metricId}'`,
+            reason: `Métrique '${llmDraft.metric}' invalide, corrigée via keywords en '${metricId}'`,
           });
         }
       } else {
-        // Chercher les candidats pour ambiguïté
-        const candidates = findAmbiguousCandidates(normalizedQuery, keywordMatches);
-        if (candidates.length > 1) {
-          return {
-            success: false,
-            ambiguous: {
-              type: 'ambiguous',
-              candidates,
-              message: 'Plusieurs métriques correspondent à votre requête. Précisez votre demande.',
-              originalQuery,
-            },
-          };
-        } else if (candidates.length === 1) {
-          metricId = candidates[0].metricId;
+        // Utiliser findMetricForIntent
+        const keywords = keywordMatches.map(m => m.keyword.word);
+        const dimension = detection.suggestedDimension || extractDimensionFromMatches(keywordMatches) as DimensionType || 'global';
+        
+        const foundMetric = findMetricForIntent(dimension, intentType, keywords);
+        
+        if (foundMetric) {
+          metricId = foundMetric.id;
+          if (llmDraft?.metric) {
+            corrections.push({
+              field: 'metricId',
+              original: llmDraft.metric,
+              corrected: metricId,
+              reason: `Métrique '${llmDraft.metric}' invalide, résolue en '${metricId}'`,
+            });
+          }
+        } else {
+          // Chercher les candidats pour ambiguïté
+          const candidates = findAmbiguousCandidates(normalizedQuery, keywordMatches);
+          if (candidates.length > 1) {
+            return {
+              success: false,
+              ambiguous: {
+                type: 'ambiguous',
+                candidates,
+                message: 'Plusieurs métriques correspondent à votre requête. Précisez votre demande.',
+                originalQuery,
+              },
+            };
+          } else if (candidates.length === 1) {
+            metricId = candidates[0].metricId;
+          }
         }
       }
     }
@@ -207,57 +279,43 @@ export function validateAndRoute(
   
   let dimension: DimensionType = 'global';
   
-  // Keywords peuvent surclasser LLM
+  // Inférer dimension depuis keywords
+  const keywordDimension = inferDimensionFromKeywords(keywordMatches);
+  
   if (detection.suggestedDimension) {
     dimension = detection.suggestedDimension;
-    
-    if (llmDraft?.dimension && llmDraft.dimension !== dimension) {
-      // LLM haute confiance gagne, sinon keywords
-      if ((llmDraft.confidence ?? 0) >= 0.75 && isValidDimension(llmDraft.dimension)) {
-        dimension = llmDraft.dimension;
-      } else {
-        corrections.push({
-          field: 'dimension',
-          original: llmDraft.dimension,
-          corrected: dimension,
-          reason: 'Keywords plus précis pour la dimension',
-        });
-      }
-    }
-  } else if (llmDraft?.dimension) {
-    if (isValidDimension(llmDraft.dimension)) {
+  } else if (keywordDimension) {
+    dimension = keywordDimension;
+  }
+  
+  // LLM haute confiance peut surclasser
+  if (llmDraft?.dimension && llmDraft.dimension !== dimension) {
+    if ((llmDraft.confidence ?? 0) >= 0.75 && isValidDimension(llmDraft.dimension)) {
       dimension = llmDraft.dimension;
-    } else {
+    } else if (dimension !== 'global') {
       corrections.push({
         field: 'dimension',
         original: llmDraft.dimension,
-        corrected: 'global',
-        reason: `Dimension '${llmDraft.dimension}' invalide`,
+        corrected: dimension,
+        reason: 'Keywords plus précis pour la dimension',
       });
-    }
-  } else {
-    // Détecter via keywords extraction
-    const detected = extractDimensionFromMatches(keywordMatches);
-    if (detected && isValidDimension(detected)) {
-      dimension = detected as DimensionType;
     }
   }
   
   // ─────────────────────────────────────────────────────────────
-  // 5. VALIDER LA PÉRIODE (LLM vs Keywords)
+  // 5. VALIDER LA PÉRIODE (Keywords > LLM si explicite)
   // ─────────────────────────────────────────────────────────────
   
   let period: ParsedPeriod;
   
-  // Parser depuis la requête d'abord
+  // Parser depuis la requête d'abord (prioritaire)
   const parsedFromQuery = extractPeriod(normalizedQuery, now);
   
   if (parsedFromQuery) {
     period = parsedFromQuery;
     
-    // Si LLM propose différent et confiance haute, vérifier
+    // Si LLM propose différent et confiance haute, comparer
     if (llmDraft?.period?.from && llmDraft.period.to && (llmDraft.confidence ?? 0) >= 0.8) {
-      // Comparer les périodes - si différentes de plus de 30 jours, logger
       const llmFrom = new Date(llmDraft.period.from);
       const queryFrom = new Date(parsedFromQuery.from);
       const diffDays = Math.abs(llmFrom.getTime() - queryFrom.getTime()) / (1000 * 60 * 60 * 24);
@@ -300,9 +358,10 @@ export function validateAndRoute(
   const detectedUnivers = extractUniversFromMatches(keywordMatches);
   
   for (const uni of detectedUnivers) {
-    if (VALID_UNIVERS.has(uni) && !EXCLUDED_UNIVERS.has(uni)) {
-      filters.univers = uni;
-      break; // Premier univers valide
+    const uniUpper = uni.toUpperCase();
+    if (VALID_UNIVERS.has(uniUpper) && !EXCLUDED_UNIVERS.has(uniUpper)) {
+      filters.univers = uniUpper;
+      break;
     }
   }
   
@@ -310,7 +369,7 @@ export function validateAndRoute(
   if (llmDraft?.filters) {
     for (const [key, value] of Object.entries(llmDraft.filters)) {
       // Liste blanche des clés de filtres autorisées
-      if (['univers', 'technicien', 'apporteur', 'client'].includes(key)) {
+      if (['univers', 'technicien', 'apporteur', 'client', 'agence'].includes(key)) {
         if (key === 'univers') {
           const uni = String(value).toUpperCase();
           if (VALID_UNIVERS.has(uni) && !EXCLUDED_UNIVERS.has(uni)) {
@@ -320,7 +379,7 @@ export function validateAndRoute(
               field: `filters.${key}`,
               original: value,
               corrected: null,
-              reason: `Univers '${value}' invalide ou exclu`,
+              reason: `Univers '${value}' invalide ou exclu (règle métier)`,
             });
           }
         } else {
@@ -381,7 +440,8 @@ export function validateAndRoute(
   // N2 → agence unique obligatoire
   if (user.roleLevel === 2) {
     agencyScope = 'single';
-    // Forcer l'agence de l'utilisateur
+    networkScope = false;
+    
     if (detection.isNetworkScope) {
       corrections.push({
         field: 'agencyScope',
@@ -412,7 +472,7 @@ export function validateAndRoute(
         ambiguous: {
           type: 'ambiguous',
           candidates: [],
-          message: 'Vous n\'avez pas accès à cette métrique.',
+          message: `Vous n'avez pas accès à cette métrique (rôle minimum: N${metricDef.minRole}).`,
           originalQuery,
         },
       };
@@ -420,7 +480,33 @@ export function validateAndRoute(
   }
   
   // ─────────────────────────────────────────────────────────────
-  // 9. CONSTRUIRE L'INTENT FINAL
+  // 9. CONSTRUIRE LE PARSED STAT QUERY
+  // ─────────────────────────────────────────────────────────────
+  
+  const confidence: IntentConfidence = 
+    (llmDraft?.confidence ?? 0) >= 0.7 ? 'high' :
+    (llmDraft?.confidence ?? 0) >= 0.4 ? 'medium' : 'low';
+  
+  const parsedQuery: ParsedStatQuery = {
+    metricId,
+    univers: filters.univers as string | undefined,
+    apporteur: filters.apporteur as string | undefined,
+    technicien: filters.technicien as string | undefined,
+    agence: user.agencySlug || undefined,
+    intentType,
+    limit,
+    period,
+    isForecast: needsForecast,
+    advancedAnalytics: needsAdvancedAnalysis,
+    networkScope,
+    confidence,
+    keywordScore: totalKeywordScore,
+    categories: allCategories,
+    rawLLM: llmDraft,
+  };
+  
+  // ─────────────────────────────────────────────────────────────
+  // 10. CONSTRUIRE L'INTENT FINAL
   // ─────────────────────────────────────────────────────────────
   
   const validatedIntent: ValidatedIntent = {
@@ -436,11 +522,17 @@ export function validateAndRoute(
     allowedAgencyIds,
     userRoleLevel: user.roleLevel,
     
-    // Enrichissements V2
+    // Enrichissements V3
     needsForecast,
     needsAdvancedAnalysis,
-    detectedCategories: Array.from(detection.detectedCategories),
+    detectedCategories: allCategories,
     keywordScore: totalKeywordScore,
+    networkScope,
+    advancedAnalytics: needsAdvancedAnalysis,
+    isForecast: needsForecast,
+    
+    // Parsed query pour exécution
+    parsedQuery,
     
     validation: {
       corrections,
@@ -486,14 +578,97 @@ function computeFinalConfidence(
   return Math.max(0.3, Math.min(1, confidence));
 }
 
+/**
+ * Infère la dimension depuis les keywords matchés
+ */
+function inferDimensionFromKeywords(matches: KeywordMatch[]): DimensionType | null {
+  for (const match of matches) {
+    const word = match.keyword.word.toLowerCase();
+    
+    // Chercher dans le mapping explicite
+    for (const [keyword, dim] of Object.entries(KEYWORD_TO_DIMENSION)) {
+      if (word.includes(keyword) || keyword.includes(word)) {
+        return dim;
+      }
+    }
+    
+    // Catégorie dimension directe
+    if (match.keyword.category === 'dimension') {
+      if (word.includes('tech')) return 'technicien';
+      if (word.includes('apport') || word.includes('commandit') || word.includes('prescr')) return 'apporteur';
+      if (word.includes('univers') || word.includes('metier') || word.includes('domaine')) return 'univers';
+      if (word.includes('agence')) return 'agence';
+      if (word.includes('client')) return 'client_type';
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * Infère une métrique depuis les keywords matchés + patterns dans la query
+ */
+function inferMetricFromKeywords(matches: KeywordMatch[], query: string): string | null {
+  const q = query.toLowerCase();
+  
+  // Chercher des combinaisons explicites
+  for (const [pattern, metric] of Object.entries(KEYWORD_TO_METRIC)) {
+    if (q.includes(pattern)) {
+      return metric;
+    }
+  }
+  
+  // Chercher des patterns composés depuis les keywords
+  const words = matches.map(m => m.keyword.word.toLowerCase());
+  
+  // CA + dimension
+  if (words.some(w => w.includes('ca') || w.includes('chiffre') || w.includes('revenue'))) {
+    if (words.some(w => w.includes('tech'))) return 'ca_par_technicien';
+    if (words.some(w => w.includes('apport') || w.includes('commandit'))) return 'ca_par_apporteur';
+    if (words.some(w => w.includes('univers'))) return 'ca_par_univers';
+    // CA global par défaut
+    return 'ca_global_ht';
+  }
+  
+  // Recouvrement
+  if (words.some(w => w.includes('recouvr') || w.includes('impaye') || w.includes('encours'))) {
+    return 'taux_recouvrement_global';
+  }
+  
+  // Dossiers
+  if (words.some(w => w.includes('dossier'))) {
+    if (words.some(w => w.includes('univers'))) return 'nb_dossiers_par_univers';
+    return 'nb_dossiers_crees';
+  }
+  
+  // SAV
+  if (words.some(w => w.includes('sav'))) {
+    return 'taux_sav_global';
+  }
+  
+  // Délais
+  if (words.some(w => w.includes('delai'))) {
+    if (words.some(w => w.includes('devis'))) return 'delai_premier_devis_reel';
+    if (words.some(w => w.includes('interv'))) return 'delai_premiere_intervention';
+  }
+  
+  // Top / classement
+  if (words.some(w => w.includes('top') || w.includes('meilleur') || w.includes('class'))) {
+    if (words.some(w => w.includes('tech'))) return 'top_techniciens_ca';
+    if (words.some(w => w.includes('apport'))) return 'top_apporteurs_ca';
+  }
+  
+  return null;
+}
+
 function findAmbiguousCandidates(normalizedQuery: string, keywordMatches: KeywordMatch[]): MetricCandidate[] {
   const keywords = keywordMatches.map(m => m.keyword.word);
   
   const candidates: MetricCandidate[] = [];
   const allMetrics = getAllMetricIds();
   
-  for (const metricId of allMetrics) {
-    const metric = getMetricById(metricId);
+  for (const metricIdCandidate of allMetrics) {
+    const metric = getMetricById(metricIdCandidate);
     if (!metric) continue;
     
     let score = 0;
@@ -525,3 +700,9 @@ function findAmbiguousCandidates(normalizedQuery: string, keywordMatches: Keywor
   
   return candidates.sort((a, b) => b.score - a.score).slice(0, 5);
 }
+
+// ═══════════════════════════════════════════════════════════════
+// EXPORTS ADDITIONNELS
+// ═══════════════════════════════════════════════════════════════
+
+export { getStrongStatsCategories };

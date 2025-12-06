@@ -91,6 +91,32 @@ export interface LLMDraftIntent {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// PARSED STAT QUERY (ENRICHI V2)
+// ═══════════════════════════════════════════════════════════════
+
+export type IntentConfidence = 'high' | 'medium' | 'low';
+
+export interface ParsedStatQuery {
+  metricId?: string;
+  univers?: string | null;
+  apporteur?: string | null;
+  technicien?: string | null;
+  agence?: string | null;
+  intentType?: IntentType | null;
+  limit?: number | null;
+  period?: ParsedPeriod;
+  
+  // Enrichissements V2
+  isForecast?: boolean;
+  advancedAnalytics?: boolean;
+  networkScope?: boolean;
+  confidence: IntentConfidence;
+  keywordScore?: number;
+  categories?: string[];
+  rawLLM?: LLMDraftIntent | null;
+}
+
+// ═══════════════════════════════════════════════════════════════
 // INTENT FINAL VALIDÉ (POST-CORRECTION)
 // ═══════════════════════════════════════════════════════════════
 
@@ -114,6 +140,12 @@ export interface ValidatedIntent {
   needsAdvancedAnalysis?: boolean;
   detectedCategories?: string[];
   keywordScore?: number;
+  networkScope?: boolean;
+  advancedAnalytics?: boolean;
+  isForecast?: boolean;
+  
+  // Parsed stat query (pour exécution)
+  parsedQuery?: ParsedStatQuery;
   
   // Traçabilité
   validation: {

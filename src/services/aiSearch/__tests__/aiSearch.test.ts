@@ -9,10 +9,13 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { isStatsQuery, detectQueryType } from '../detectQueryType';
+import { isStatsQuery, detectQueryType, type StatsQueryResult } from '../detectQueryType';
 import { validateAndRoute } from '../validateAndRoute';
 import { normalizeQuery } from '../nlNormalize';
 import type { UserContext, LLMDraftIntent } from '../types';
+
+// Helper pour extraire le booléen depuis StatsQueryResult
+const isStats = (normalized: string, original: string): boolean => isStatsQuery(normalized, original).isStats;
 
 // ═══════════════════════════════════════════════════════════════
 // HELPERS
@@ -49,7 +52,7 @@ describe('Question purement stats', () => {
     const query = 'Quel est le CA de ce mois';
     const normalized = normalizeQuery(query);
     
-    expect(isStatsQuery(normalized, query)).toBe(true);
+    expect(isStats(normalized, query)).toBe(true);
     
     const detection = detectQueryType(normalized, query);
     expect(detection.type).toBe('stats_query');
@@ -60,7 +63,7 @@ describe('Question purement stats', () => {
     const query = 'Top 5 techniciens par chiffre d\'affaires';
     const normalized = normalizeQuery(query);
     
-    expect(isStatsQuery(normalized, query)).toBe(true);
+    expect(isStats(normalized, query)).toBe(true);
     
     const detection = detectQueryType(normalized, query);
     expect(detection.type).toBe('stats_query');
@@ -72,7 +75,7 @@ describe('Question purement stats', () => {
     const query = 'Taux de recouvrement cette année';
     const normalized = normalizeQuery(query);
     
-    expect(isStatsQuery(normalized, query)).toBe(true);
+    expect(isStats(normalized, query)).toBe(true);
     
     const detection = detectQueryType(normalized, query);
     expect(detection.type).toBe('stats_query');
@@ -83,7 +86,7 @@ describe('Question purement stats', () => {
     const query = 'Combien de dossiers créés en janvier';
     const normalized = normalizeQuery(query);
     
-    expect(isStatsQuery(normalized, query)).toBe(true);
+    expect(isStats(normalized, query)).toBe(true);
     
     const detection = detectQueryType(normalized, query);
     expect(detection.type).toBe('stats_query');
@@ -109,7 +112,7 @@ describe('Question purement doc', () => {
     const query = 'Comment créer un devis dans Apogée';
     const normalized = normalizeQuery(query);
     
-    expect(isStatsQuery(normalized, query)).toBe(false);
+    expect(isStats(normalized, query)).toBe(false);
     
     const detection = detectQueryType(normalized, query);
     expect(detection.type).toBe('documentary_query');
@@ -119,7 +122,7 @@ describe('Question purement doc', () => {
     const query = 'Pourquoi mon intervention est bloquée';
     const normalized = normalizeQuery(query);
     
-    expect(isStatsQuery(normalized, query)).toBe(false);
+    expect(isStats(normalized, query)).toBe(false);
     
     const detection = detectQueryType(normalized, query);
     expect(['documentary_query', 'pedagogic_query']).toContain(detection.type);
@@ -129,7 +132,7 @@ describe('Question purement doc', () => {
     const query = 'Aide sur la facturation';
     const normalized = normalizeQuery(query);
     
-    expect(isStatsQuery(normalized, query)).toBe(false);
+    expect(isStats(normalized, query)).toBe(false);
     
     const detection = detectQueryType(normalized, query);
     expect(detection.type).toBe('documentary_query');
@@ -154,7 +157,7 @@ describe('Question mixte → stats', () => {
     const normalized = normalizeQuery(query);
     
     // "Comment" = doc, mais "CA" + "évolué" + "cette année" = stats fort
-    expect(isStatsQuery(normalized, query)).toBe(true);
+    expect(isStats(normalized, query)).toBe(true);
     
     const detection = detectQueryType(normalized, query);
     expect(detection.type).toBe('stats_query');
@@ -164,7 +167,7 @@ describe('Question mixte → stats', () => {
     const query = 'Quelle est la moyenne de facturation par technicien';
     const normalized = normalizeQuery(query);
     
-    expect(isStatsQuery(normalized, query)).toBe(true);
+    expect(isStats(normalized, query)).toBe(true);
     
     const detection = detectQueryType(normalized, query);
     expect(detection.type).toBe('stats_query');

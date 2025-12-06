@@ -17,10 +17,20 @@ export {
   getDominantCategory,
   extractUniversFromMatches,
   extractDimensionFromMatches,
+  getKeywordsByCategory,
+  getKeywordStats,
 } from './nlKeywords';
 
 // Détection type requête
-export { detectQueryType, isStatsQuery, isActionQuery } from './detectQueryType';
+export { 
+  detectQueryType, 
+  isStatsQuery, 
+  isStatsQuerySimple,
+  isActionQuery,
+  getStrongStatsCategories,
+  type StatsQueryResult,
+  type DetectionResult,
+} from './detectQueryType';
 
 // Extraction période
 export { extractPeriod, getDefaultPeriod, getCurrentYearPeriod } from './extractPeriod';
@@ -49,6 +59,8 @@ export type {
   DimensionType,
   IntentType,
   ParsedPeriod,
+  ParsedStatQuery,
+  IntentConfidence,
   LLMDraftIntent,
   ValidatedIntent,
   ValidationCorrection,

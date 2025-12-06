@@ -273,30 +273,94 @@ export function detectQueryType(normalizedQuery: string, originalQuery: string):
   };
 }
 
+// ═══════════════════════════════════════════════════════════════
+// RÉSULTAT ENRICHI DE isStatsQuery
+// ═══════════════════════════════════════════════════════════════
+
+export interface StatsQueryResult {
+  isStats: boolean;
+  score: number;
+  strongCategories: string[];
+  detectedCategories: string[];
+  rawScore: number;
+  normalizedScore: number;
+  reasoning: string;
+}
+
 /**
  * isStatsQuery renforcé V2
- * Utilise score ≥ 5 OU 2+ catégories fortes
+ * Retourne un objet détaillé avec score, catégories fortes, et reasoning
+ * Stats = true si:
+ *   - score total (somme weights) >= 5
+ *   - OU au moins 2 catégories "fortes" présentes
  */
-export function isStatsQuery(normalizedQuery: string, originalQuery: string = normalizedQuery): boolean {
+export function isStatsQuery(normalizedQuery: string, originalQuery: string = normalizedQuery): StatsQueryResult {
   const keywordMatches = findAllKeywords(normalizedQuery);
-  const totalScore = keywordMatches.reduce((sum, m) => sum + m.keyword.weight, 0);
   
-  // Compter catégories fortes présentes
-  const strongCategories = new Set<string>();
+  // Calcul du score brut (somme des weights)
+  const rawScore = keywordMatches.reduce((sum, m) => sum + m.keyword.weight, 0);
+  
+  // Score normalisé via computeStatsScore (0-1)
+  const normalizedScore = computeStatsScore(keywordMatches);
+  
+  // Tracker toutes les catégories détectées
+  const detectedCategories = new Set<string>();
+  const strongCategoriesSet = new Set<string>();
+  
   for (const match of keywordMatches) {
-    if (STRONG_STATS_CATEGORIES.has(match.keyword.category)) {
-      strongCategories.add(match.keyword.category);
+    const cat = match.keyword.category;
+    detectedCategories.add(cat);
+    
+    // Identifier catégories fortes
+    if (STRONG_STATS_CATEGORIES.has(cat)) {
+      strongCategoriesSet.add(cat);
     }
   }
   
-  // Stats si score ≥ 5 OU au moins 2 catégories fortes
-  if (totalScore >= 5 || strongCategories.size >= 2) {
-    return true;
+  const strongCategories = Array.from(strongCategoriesSet);
+  const allCategories = Array.from(detectedCategories);
+  
+  // Règles de décision
+  const scoreThresholdMet = rawScore >= 5;
+  const strongCategoriesMet = strongCategories.length >= 2;
+  
+  // Fallback sur patterns regex si score faible
+  let fallbackStats = false;
+  if (!scoreThresholdMet && !strongCategoriesMet) {
+    const detection = detectQueryType(normalizedQuery, originalQuery);
+    fallbackStats = detection.type === 'stats_query' && detection.confidence >= 0.3;
   }
   
-  // Fallback sur détection classique
-  const result = detectQueryType(normalizedQuery, originalQuery);
-  return result.type === 'stats_query' && result.confidence >= 0.3;
+  const isStats = scoreThresholdMet || strongCategoriesMet || fallbackStats;
+  
+  // Construction du reasoning
+  let reasoning: string;
+  if (scoreThresholdMet) {
+    reasoning = `Score keywords ≥5 (${rawScore.toFixed(1)}) → stats`;
+  } else if (strongCategoriesMet) {
+    reasoning = `2+ catégories fortes (${strongCategories.join(', ')}) → stats`;
+  } else if (fallbackStats) {
+    reasoning = 'Patterns regex confirment stats (fallback)';
+  } else {
+    reasoning = `Score insuffisant (${rawScore.toFixed(1)}), catégories fortes insuffisantes (${strongCategories.length})`;
+  }
+  
+  return {
+    isStats,
+    score: rawScore,
+    strongCategories,
+    detectedCategories: allCategories,
+    rawScore,
+    normalizedScore,
+    reasoning,
+  };
+}
+
+/**
+ * Helper simple pour compatibilité (retourne boolean)
+ */
+export function isStatsQuerySimple(normalizedQuery: string, originalQuery: string = normalizedQuery): boolean {
+  return isStatsQuery(normalizedQuery, originalQuery).isStats;
 }
 
 /**
