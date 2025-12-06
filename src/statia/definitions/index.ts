@@ -19,6 +19,11 @@ import { reseauDefinitions } from './reseau';
 import { advancedDefinitions } from './advanced';
 import { advancedDefinitions2 } from './advanced2';
 import { franchiseurDefinitions } from './franchiseur';
+// V2.1: Nouvelles métriques métier
+import { clientsDefinitions } from './clients';
+import { agencesDefinitions } from './agences';
+import { operationsDefinitions } from './operations';
+import { devisAdvancedDefinitions } from './devisAdvanced';
 
 // Export types
 export * from './types';
@@ -71,6 +76,18 @@ export const STAT_DEFINITIONS: StatDefinitionRegistry = {
   
   // V2: Métriques Franchiseur
   ...franchiseurDefinitions,
+  
+  // V2.1: Clients (CLV, churn, inactivité)
+  ...clientsDefinitions,
+  
+  // V2.1: Agences / Réseau
+  ...agencesDefinitions,
+  
+  // V2.1: Opérations (délais, interventions)
+  ...operationsDefinitions,
+  
+  // V2.1: Devis avancés
+  ...devisAdvancedDefinitions,
 };
 
 /**
