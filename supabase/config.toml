@@ -110,3 +110,6 @@ verify_jwt = true
 
 [functions.generate-pptx]
 verify_jwt = true
+
+[functions.maintenance-alerts-scan]
+verify_jwt = false

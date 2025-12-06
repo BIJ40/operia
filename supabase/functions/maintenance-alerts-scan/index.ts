@@ -1,0 +1,172 @@
+/**
+ * Edge Function: maintenance-alerts-scan
+ * CRON job quotidien pour scanner les événements de maintenance
+ * et générer des alertes automatiques (overdue, upcoming)
+ */
+
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+interface MaintenanceEvent {
+  id: string;
+  agency_id: string;
+  target_type: 'vehicle' | 'tool';
+  vehicle_id: string | null;
+  tool_id: string | null;
+  label: string;
+  scheduled_at: string;
+  status: 'scheduled' | 'overdue' | 'completed' | 'cancelled';
+}
+
+interface MaintenanceAlert {
+  id: string;
+  maintenance_event_id: string;
+  status: 'open' | 'acknowledged' | 'closed';
+}
+
+Deno.serve(async (req) => {
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+  console.log('[maintenance-alerts-scan] Starting scan...');
+
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const in7Days = new Date(today);
+    in7Days.setDate(today.getDate() + 7);
+
+    const in30Days = new Date(today);
+    in30Days.setDate(today.getDate() + 30);
+
+    // 1. Récupérer tous les événements scheduled ou overdue
+    const { data: events, error: eventsError } = await supabase
+      .from('maintenance_events')
+      .select('*')
+      .in('status', ['scheduled', 'overdue']);
+
+    if (eventsError) {
+      console.error('[maintenance-alerts-scan] Error fetching events:', eventsError);
+      return new Response(
+        JSON.stringify({ success: false, error: eventsError.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!events || events.length === 0) {
+      console.log('[maintenance-alerts-scan] No events to process');
+      return new Response(
+        JSON.stringify({ success: true, message: 'No events to process', stats: { processed: 0 } }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`[maintenance-alerts-scan] Found ${events.length} events to check`);
+
+    let overdueCount = 0;
+    let alertsCreated = 0;
+    let updatedToOverdue = 0;
+
+    for (const ev of events as MaintenanceEvent[]) {
+      if (!ev.scheduled_at) continue;
+
+      const scheduled = new Date(ev.scheduled_at);
+      scheduled.setHours(0, 0, 0, 0);
+
+      const isOverdue = scheduled < today;
+      const isUpcoming7 = scheduled >= today && scheduled <= in7Days;
+      const isUpcoming30 = scheduled > in7Days && scheduled <= in30Days;
+
+      // 2. Si l'événement est en retard, mettre à jour son statut
+      if (isOverdue && ev.status !== 'overdue') {
+        const { error: updateError } = await supabase
+          .from('maintenance_events')
+          .update({ status: 'overdue' })
+          .eq('id', ev.id);
+
+        if (updateError) {
+          console.error(`[maintenance-alerts-scan] Error updating event ${ev.id} to overdue:`, updateError);
+        } else {
+          updatedToOverdue++;
+        }
+      }
+
+      // 3. Vérifier si une alerte open existe déjà
+      const { data: existingAlerts } = await supabase
+        .from('maintenance_alerts')
+        .select('id')
+        .eq('maintenance_event_id', ev.id)
+        .eq('status', 'open')
+        .limit(1);
+
+      if (existingAlerts && existingAlerts.length > 0) {
+        // Alerte déjà existante, skip
+        continue;
+      }
+
+      // 4. Créer une alerte si nécessaire
+      let severity: 'info' | 'warning' | 'critical' | null = null;
+
+      if (isOverdue) {
+        overdueCount++;
+        // Calculer le retard en jours
+        const daysOverdue = Math.floor((today.getTime() - scheduled.getTime()) / (1000 * 60 * 60 * 24));
+        severity = daysOverdue > 30 ? 'critical' : 'warning';
+      } else if (isUpcoming7) {
+        severity = 'warning';
+      } else if (isUpcoming30) {
+        severity = 'info';
+      }
+
+      if (severity) {
+        const { error: insertError } = await supabase
+          .from('maintenance_alerts')
+          .insert({
+            agency_id: ev.agency_id,
+            maintenance_event_id: ev.id,
+            severity,
+            status: 'open',
+            notified_channels: {},
+          });
+
+        if (insertError) {
+          console.error(`[maintenance-alerts-scan] Error creating alert for event ${ev.id}:`, insertError);
+        } else {
+          alertsCreated++;
+          console.log(`[maintenance-alerts-scan] Created ${severity} alert for event ${ev.id}`);
+        }
+      }
+    }
+
+    const stats = {
+      processed: events.length,
+      updatedToOverdue,
+      overdueCount,
+      alertsCreated,
+    };
+
+    console.log('[maintenance-alerts-scan] Scan completed:', stats);
+
+    return new Response(
+      JSON.stringify({ success: true, stats }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  } catch (error) {
+    console.error('[maintenance-alerts-scan] Unexpected error:', error);
+    return new Response(
+      JSON.stringify({ success: false, error: String(error) }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+});
