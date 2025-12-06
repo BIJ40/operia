@@ -18,6 +18,7 @@ export const MODULES = {
   rh: 'rh',     // Module RH séparé
   parc: 'parc', // Module Parc séparé
   messaging: 'messaging', // Chat interne
+  unified_search: 'unified_search', // Barre de recherche unifiée (Stats + Docs)
 } as const;
 
 export type ModuleKey = keyof typeof MODULES;
@@ -75,6 +76,10 @@ export const MODULE_OPTIONS = {
   messaging: {
     dm: 'messaging.dm',       // Messages directs
     groups: 'messaging.groups', // Groupes de discussion
+  },
+  unified_search: {
+    stats: 'unified_search.stats',  // Recherche statistiques
+    docs: 'unified_search.docs',    // Recherche documentaire
   },
 } as const;
 
@@ -225,6 +230,18 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'groups', path: 'messaging.groups', label: 'Groupes', description: 'Créer et gérer des groupes de discussion', defaultEnabled: true },
     ],
   },
+  {
+    key: 'unified_search',
+    label: 'Recherche unifiée',
+    description: 'Barre de recherche intelligente (stats + docs)',
+    icon: 'Sparkles',
+    defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
+    minRole: 'franchisee_user',
+    options: [
+      { key: 'stats', path: 'unified_search.stats', label: 'Recherche Stats', description: 'Poser des questions sur les statistiques agence', defaultEnabled: true },
+      { key: 'docs', path: 'unified_search.docs', label: 'Recherche Docs', description: 'Rechercher dans la documentation (Apogée, HelpConfort)', defaultEnabled: true },
+    ],
+  },
 ];
 
 // Structure de stockage des modules activés (JSONB dans profiles)
@@ -238,6 +255,7 @@ export interface EnabledModules {
   rh?: boolean | ModuleOptionsState;
   parc?: boolean | ModuleOptionsState;
   messaging?: boolean | ModuleOptionsState;
+  unified_search?: boolean | ModuleOptionsState;
 }
 
 export interface ModuleOptionsState {
