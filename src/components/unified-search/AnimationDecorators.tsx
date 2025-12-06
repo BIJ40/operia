@@ -120,58 +120,40 @@ export function WaveDotsDecorator({ glowColor = 'hsl(var(--helpconfort-orange))'
 }
 
 /**
- * Anneau néon pulsant - Version amplifiée
+ * Anneau néon pulsant - Version subtile
  */
 export function NeonRingDecorator({ glowColor = 'hsl(var(--primary))' }: DecoratorProps) {
   return (
     <>
-      {/* Ring 1 */}
+      {/* Ring unique, subtil */}
       <motion.div
-        className="absolute inset-[-4px] rounded-full pointer-events-none"
+        className="absolute inset-[-2px] rounded-full pointer-events-none"
         style={{
-          border: `3px solid ${glowColor}`,
-          boxShadow: `0 0 15px ${glowColor}, inset 0 0 15px ${glowColor}`,
+          border: `1px solid ${glowColor}`,
+          boxShadow: `0 0 6px ${glowColor}`,
         }}
         animate={{
-          scale: [1, 1.8, 1.8],
-          opacity: [0.8, 0, 0],
+          scale: [1, 1.4, 1.4],
+          opacity: [0.5, 0, 0],
         }}
         transition={{
-          duration: 1.5,
+          duration: 2.5,
           repeat: Infinity,
           ease: 'easeOut',
-        }}
-      />
-      {/* Ring 2 (décalé) */}
-      <motion.div
-        className="absolute inset-[-4px] rounded-full pointer-events-none"
-        style={{
-          border: `3px solid ${glowColor}`,
-          boxShadow: `0 0 15px ${glowColor}, inset 0 0 15px ${glowColor}`,
-        }}
-        animate={{
-          scale: [1, 1.8, 1.8],
-          opacity: [0.8, 0, 0],
-        }}
-        transition={{
-          duration: 1.5,
-          repeat: Infinity,
-          ease: 'easeOut',
-          delay: 0.75,
         }}
       />
       {/* Static inner glow */}
       <motion.div
-        className="absolute inset-[-2px] rounded-full pointer-events-none"
+        className="absolute inset-[-1px] rounded-full pointer-events-none"
         style={{
-          border: `2px solid ${glowColor}`,
-          opacity: 0.6,
+          border: `1px solid ${glowColor}`,
+          opacity: 0.3,
         }}
         animate={{
-          opacity: [0.4, 0.8, 0.4],
+          opacity: [0.2, 0.4, 0.2],
         }}
         transition={{
-          duration: 1,
+          duration: 2,
           repeat: Infinity,
           ease: 'easeInOut',
         }}
