@@ -167,9 +167,11 @@ serve(async (req) => {
     }
 
     // Rate limit
-    const rateLimitResult = checkRateLimit('unified-search', user.id, 30);
+    const origin = req.headers.get('origin') ?? '';
+    const corsHeaders = getCorsHeaders(origin);
+    const rateLimitResult = await checkRateLimit(`unified-search:${user.id}`, { limit: 30, windowMs: 60000 });
     if (!rateLimitResult.allowed) {
-      return rateLimitResponse(req, rateLimitResult.retryAfter);
+      return rateLimitResponse(rateLimitResult.retryAfter || 60, corsHeaders);
     }
 
     // Get user profile for agency
