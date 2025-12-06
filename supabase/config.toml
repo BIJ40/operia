@@ -104,3 +104,6 @@ verify_jwt = true
 
 [functions.faq-search]
 verify_jwt = true
+
+[functions.unified-search]
+verify_jwt = true
