@@ -191,7 +191,7 @@ export async function computeReseauDashboard(params: ReseauDashboardParams): Pro
   
   logNetwork.info(`[StatIA] ${agencyData.length} agences chargées`);
   
-  // 4. Agréger toutes les données
+  // 4. Agréger toutes les données - avec vérification Array.isArray
   const allFactures: any[] = [];
   const allProjects: any[] = [];
   const allInterventions: any[] = [];
@@ -200,13 +200,27 @@ export async function computeReseauDashboard(params: ReseauDashboardParams): Pro
   
   for (const agency of agencyData) {
     if (agency.data) {
-      allFactures.push(...(agency.data.factures || []));
-      allProjects.push(...(agency.data.projects || []));
-      allInterventions.push(...(agency.data.interventions || []));
-      allDevis.push(...(agency.data.devis || []));
-      allClients.push(...(agency.data.clients || []));
+      const factures = agency.data.factures;
+      const projects = agency.data.projects;
+      const interventions = agency.data.interventions;
+      const devis = agency.data.devis;
+      const clients = agency.data.clients;
+      
+      if (Array.isArray(factures)) allFactures.push(...factures);
+      if (Array.isArray(projects)) allProjects.push(...projects);
+      if (Array.isArray(interventions)) allInterventions.push(...interventions);
+      if (Array.isArray(devis)) allDevis.push(...devis);
+      if (Array.isArray(clients)) allClients.push(...clients);
     }
   }
+  
+  debugLog('Données agrégées:', {
+    factures: allFactures.length,
+    projects: allProjects.length,
+    interventions: allInterventions.length,
+    devis: allDevis.length,
+    clients: allClients.length,
+  });
   
   // 5. Calculer les métriques
   const tuilesHautes = computeTuilesHautes(allFactures, allProjects, allInterventions, allDevis, params, yearStart, yearEnd);
