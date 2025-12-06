@@ -171,7 +171,14 @@ export async function computeReseauDashboard(params: ReseauDashboardParams): Pro
   
   const results = await Promise.all(loadPromises);
   
-  const agencyData: AgencyData[] = results.filter(r => r.success && r.data) as AgencyData[];
+  // Filtrer et mapper correctement vers AgencyData[]
+  const agencyData: AgencyData[] = results
+    .filter(r => r.success && r.data)
+    .map(r => ({
+      agencyId: r.agencyId,
+      agencyLabel: r.agencyLabel,
+      data: r.data!,
+    }));
   const failedAgencies = results.filter(r => !r.success).map(r => r.agencyId);
   
   debugLog('Résumé chargement PARALLÈLE:', {
