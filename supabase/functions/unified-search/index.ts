@@ -194,15 +194,45 @@ const NL_ROUTING_RULES: RoutingRule[] = [
 ];
 
 const SPECIALIZED_METRICS: Array<{ keywords: string[]; rule: RoutingRule }> = [
-  { keywords: ['sav', 'service après vente', 'garantie'],
+  // SAV
+  { keywords: ['sav', 'service après vente', 'garantie', 'retour chantier'],
     rule: { dimension: 'global', intentType: 'taux', metricId: 'taux_sav_global', 
             label: 'Taux de SAV', isRanking: false, minRole: 0 } },
-  { keywords: ['transformation', 'taux devis', 'devis transformé'],
+  { keywords: ['sav par univers', 'sav univers'],
+    rule: { dimension: 'univers', intentType: 'taux', metricId: 'sav_par_univers', 
+            label: 'SAV par univers', isRanking: true, minRole: 0 } },
+  { keywords: ['sav par apporteur', 'sav apporteur'],
+    rule: { dimension: 'apporteur', intentType: 'taux', metricId: 'sav_par_apporteur', 
+            label: 'SAV par apporteur', isRanking: true, minRole: 2 } },
+  // Devis
+  { keywords: ['transformation', 'taux devis', 'devis transformé', 'devis facture'],
     rule: { dimension: 'global', intentType: 'taux', metricId: 'taux_transformation_devis', 
             label: 'Taux de transformation devis', isRanking: false, minRole: 0 } },
+  // Délais
+  { keywords: ['délai premier devis', 'delai premier devis', 'temps devis'],
+    rule: { dimension: 'global', intentType: 'delay', metricId: 'delai_premier_devis', 
+            label: 'Délai premier devis', isRanking: false, minRole: 0 } },
+  { keywords: ['délai facture', 'delai facture', 'temps facturation'],
+    rule: { dimension: 'global', intentType: 'delay', metricId: 'delai_moyen_facture', 
+            label: 'Délai moyen facture', isRanking: false, minRole: 0 } },
+  // Recouvrement
+  { keywords: ['recouvrement', 'encaissement', 'encaissé'],
+    rule: { dimension: 'global', intentType: 'taux', metricId: 'taux_recouvrement', 
+            label: 'Taux de recouvrement', isRanking: false, minRole: 2 } },
+  { keywords: ['reste à encaisser', 'reste encaisser', 'impayé', 'en cours'],
+    rule: { dimension: 'global', intentType: 'valeur', metricId: 'reste_a_encaisser', 
+            label: 'Reste à encaisser', isRanking: false, minRole: 2 } },
+  // Moyennes
   { keywords: ['panier moyen', 'panier'],
     rule: { dimension: 'global', intentType: 'moyenne', metricId: 'panier_moyen', 
             label: 'Panier moyen', isRanking: false, minRole: 0 } },
+  { keywords: ['ca par jour', 'ca moyen jour', 'moyenne jour'],
+    rule: { dimension: 'global', intentType: 'moyenne', metricId: 'ca_moyen_par_jour', 
+            label: 'CA moyen par jour', isRanking: false, minRole: 0 } },
+  // CA mensuel
+  { keywords: ['ca mensuel', 'ca par mois', 'evolution ca'],
+    rule: { dimension: 'global', intentType: 'valeur', metricId: 'ca_mensuel', 
+            label: 'CA mensuel', isRanking: true, minRole: 0 } },
 ];
 
 const TYPO_CORRECTIONS: Record<string, string> = {
