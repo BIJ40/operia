@@ -344,6 +344,37 @@ export const caParTechnicienUnivers: StatDefinition = {
       if (!projectTechTime || totalProjectTime === 0) {
         facturesSansTemps++;
         caSansTemps += meta.montantNetHT;
+        
+        // Attribuer à "Agence / Non attribué" au lieu de skip
+        const agenceKey = 'agence';
+        if (!techStats.has(agenceKey)) {
+          techStats.set(agenceKey, {
+            technicianId: agenceKey,
+            technicianName: 'Agence / Non attribué',
+            totalCA: 0,
+            totalHeures: 0,
+            caParHeure: 0,
+            nbDossiers: 0,
+            dossiersByUnivers: {},
+            byUnivers: {},
+            isOn: true,
+            color: '#9ca3af', // Gris pour distinguer
+          });
+        }
+        
+        const agenceStats = techStats.get(agenceKey)!;
+        agenceStats.totalCA += meta.montantNetHT;
+        
+        // Répartir par univers pour l'agence aussi
+        for (const univers of normalizedUniverses) {
+          if (!agenceStats.byUnivers[univers]) {
+            agenceStats.byUnivers[univers] = { ca: 0, heures: 0, nbDossiers: 0 };
+            agenceStats.dossiersByUnivers[univers] = new Set();
+          }
+          agenceStats.byUnivers[univers].ca += meta.montantNetHT / normalizedUniverses.length;
+          agenceStats.dossiersByUnivers[univers].add(projectId);
+        }
+        
         continue;
       }
       
