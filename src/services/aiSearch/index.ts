@@ -50,6 +50,12 @@ export type { MetricDefinition, MetricCategory, MetricUnit } from './metricsRegi
 // Validation & Routing
 export { validateAndRoute } from './validateAndRoute';
 
+// NL Routing Rules
+export { NL_ROUTING_RULES, findMetricFromNLRules, findCandidateMetrics, isOfficialMetric } from './nlRouting';
+
+// Core Module
+export { aiSearchRoute, type AiSearchContext, type AiSearchInput, type AiSearchRoutedRequest, type AiSearchResult, type AiSearchDebugInfo } from './core';
+
 // Extraction LLM
 export { extractIntentWithLLM } from './extractIntentLLM';
 
