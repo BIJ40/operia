@@ -614,7 +614,7 @@ async function searchDocsWithHelpi(authHeader: string, query: string, blockTypes
     const res = await fetch(`${supabaseUrl}/functions/v1/helpi-search`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
-      body: JSON.stringify({ query, matchThreshold: 0.65, matchCount: 8, blockTypes: blockTypes || ['apogee', 'helpconfort', 'document', 'faq'] })
+      body: JSON.stringify({ query, matchThreshold: 0.35, matchCount: 8, blockTypes: blockTypes || ['apogee', 'helpconfort', 'document', 'faq'] })
     });
     
     if (!res.ok) {
