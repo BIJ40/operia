@@ -1984,10 +1984,9 @@ export const advancedDefinitions2: Record<string, StatDefinition> = {
   delai_moyen_resolution_sav: delaiMoyenResolutionSav,
   taux_sav_par_type_client: tauxSavParTypeClient,
 
-  // F. Univers / Mix Produit
-  mix_ca_global_par_univers: mixCaGlobalParUnivers,
+  // F. Univers / Mix Produit (définitions principales dans univers.ts)
+  // Note: mix_ca_global_par_univers et rentabilite_par_univers sont définis dans univers.ts
   croissance_par_univers_vs_n_1: croissanceParUniversVsN1,
-  rentabilite_par_univers: rentabiliteParUnivers,
   cycle_moyen_dossier_par_univers: cycleMoyenDossierParUnivers,
 
   // G. Réseau / Multi-agences
