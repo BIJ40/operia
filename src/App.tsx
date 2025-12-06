@@ -65,6 +65,7 @@ const RHDashboardPage = lazy(() => import("./pages/RHDashboardPage"));
 const CommercialPage = lazy(() => import("./pages/CommercialPage"));
 const CommercialSupportPptx = lazy(() => import("./commercial/pages/CommercialSupportPptx"));
 const MaintenancePreventivePage = lazy(() => import("./pages/MaintenancePreventivePage"));
+const QrAssetPage = lazy(() => import("./pages/QrAssetPage"));
 
 // Lazy loaded pages - Support
 const SupportIndex = lazy(() => import("./pages/SupportIndex"));
@@ -395,6 +396,11 @@ function AppContent() {
           {/* DEV PAGES - Admin only (N5/N6) */}
           {/* ============================================ */}
           <Route path="/dev/unified-search-animations" element={<RoleGuard minRole="platform_admin"><UnifiedSearchAnimationPlayground /></RoleGuard>} />
+          
+          {/* ============================================ */}
+          {/* PUBLIC PAGES - Pas d'auth requise */}
+          {/* ============================================ */}
+          <Route path="/qr/:token" element={<QrAssetPage />} />
           
           {/* 404 */}
           <Route path="*" element={<NotFound />} />
