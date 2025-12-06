@@ -1,15 +1,16 @@
 /**
  * Edge Function: unified-search
  * Pipeline déterministe NL → Métrique StatIA
- * V2: Utilise le module nlRouting centralisé
+ * V3: Utilise statiaService centralisé pour les calculs
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleCorsPreflightOrReject, withCors, getCorsHeaders } from '../_shared/cors.ts';
 import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
+import { computeMetric, getRequiredSources, StatParams, StatResult } from './statiaService.ts';
 
-// ============= TYPES (copied from nlRouting for edge function) =============
+// ============= TYPES =============
 type DimensionType = 'technicien' | 'apporteur' | 'univers' | 'agence' | 'site' | 'client_type' | 'global';
 type IntentType = 'top' | 'moyenne' | 'volume' | 'taux' | 'delay' | 'compare' | 'valeur';
 
@@ -95,7 +96,7 @@ interface DocSearchResult {
   }>;
 }
 
-// ============= DICTIONNAIRES (from nlRouting/dictionaries) =============
+// ============= DICTIONNAIRES NL ROUTING =============
 const STATS_KEYWORDS = [
   'combien', 'ca', 'chiffre', "chiffre d'affaires", 
   'dossiers', 'en moyenne', 'moyenne', 'top', 'le plus', 
@@ -411,25 +412,70 @@ function getRoleLevel(globalRole: string | null | undefined): number {
   return ROLE_LEVELS[globalRole] ?? 0;
 }
 
-// ============= APPORTEUR NAME MAPPING (like StatIA) =============
-function buildApporteurNameMap(clients: Array<{ id: number; name?: string; raisonSociale?: string }>): Map<string, string> {
-  const map = new Map<string, string>();
-  for (const c of clients) {
-    const id = String(c.id);
-    const cAny = c as Record<string, unknown>;
-    const nom = 
-      cAny.displayName as string ||
-      c.raisonSociale ||
-      cAny.nom as string ||
-      c.name ||
-      cAny.label as string ||
-      (cAny.data as Record<string, unknown>)?.nom as string ||
-      (cAny.data as Record<string, unknown>)?.name as string ||
-      (cAny.data as Record<string, unknown>)?.raisonSociale as string ||
-      `Apporteur ${id}`;
-    map.set(id, nom);
+// ============= DATA LOADING =============
+async function loadApogeeData(
+  proxyUrl: string,
+  authHeader: string,
+  agencySlug: string,
+  period: ParsedPeriod,
+  requiredSources: string[]
+): Promise<{ factures: any[]; projects: any[]; clients: any[]; interventions: any[]; users: any[] }> {
+  const data = { factures: [], projects: [], clients: [], interventions: [], users: [] } as any;
+  
+  const requests: Promise<void>[] = [];
+  
+  if (requiredSources.includes('factures')) {
+    requests.push(
+      fetch(proxyUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+        body: JSON.stringify({
+          endpoint: 'apiGetFactures',
+          agencySlug,
+          filters: { dateDebut: period.start.toISOString().split('T')[0],
+                     dateFin: period.end.toISOString().split('T')[0] },
+        }),
+      }).then(async res => {
+        if (res.ok) {
+          const json = await res.json();
+          data.factures = (json.data || []).filter((f: any) => {
+            const factureDate = f.dateReelle || f.date;
+            if (!factureDate) return true;
+            const d = new Date(factureDate);
+            return d >= period.start && d <= period.end;
+          });
+        }
+      })
+    );
   }
-  return map;
+  
+  if (requiredSources.includes('projects')) {
+    requests.push(
+      fetch(proxyUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+        body: JSON.stringify({ endpoint: 'apiGetProjects', agencySlug }),
+      }).then(async res => {
+        if (res.ok) data.projects = (await res.json()).data || [];
+      })
+    );
+  }
+  
+  if (requiredSources.includes('clients')) {
+    requests.push(
+      fetch(proxyUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+        body: JSON.stringify({ endpoint: 'apiGetClients', agencySlug }),
+      }).then(async res => {
+        if (res.ok) data.clients = (await res.json()).data || [];
+      })
+    );
+  }
+  
+  await Promise.all(requests);
+  
+  return data;
 }
 
 // ============= MAIN HANDLER =============
@@ -510,165 +556,31 @@ serve(async (req) => {
         }));
       }
 
-      // === COMPUTE STATS ===
-      let computedValue: number = 0;
-      let topItem: { id: string | number; name: string; value: number } | undefined;
-      let ranking: Array<{ rank: number; id: string | number; name: string; value: number }> | undefined;
+      // === COMPUTE STATS via StatIA Service ===
+      let statResult: StatResult = { value: 0, unit: '€' };
 
       if (agencySlug) {
         try {
           const proxyUrl = `${supabaseUrl}/functions/v1/proxy-apogee`;
-          const periode = parsedQuery.period;
+          const requiredSources = getRequiredSources(parsedQuery.metricId);
+          
+          console.log(`[unified-search] Loading sources: ${requiredSources.join(', ')}`);
+          
+          const apogeeData = await loadApogeeData(proxyUrl, authHeader, agencySlug, parsedQuery.period, requiredSources);
+          
+          console.log(`[unified-search] Data loaded: ${apogeeData.factures.length} factures, ${apogeeData.projects.length} projects, ${apogeeData.clients.length} clients`);
 
-          const facturesResponse = await fetch(proxyUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
-            body: JSON.stringify({
-              endpoint: 'apiGetFactures',
-              agencySlug,
-              filters: { dateDebut: periode.start.toISOString().split('T')[0],
-                         dateFin: periode.end.toISOString().split('T')[0] },
-            }),
-          });
+          const params: StatParams = {
+            dateRange: { start: parsedQuery.period.start, end: parsedQuery.period.end },
+            agencySlug,
+            topN: parsedQuery.topN,
+          };
 
-          let projects: Array<{ id: number; data?: { commanditaireId?: number; universes?: string[] } }> = [];
-          let clients: Array<{ id: number; name?: string; raisonSociale?: string }> = [];
-
-          if (parsedQuery.metricId.includes('apporteur') || parsedQuery.metricId.includes('univers')) {
-            const [projectsRes, clientsRes] = await Promise.all([
-              fetch(proxyUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
-                body: JSON.stringify({ endpoint: 'apiGetProjects', agencySlug }),
-              }),
-              fetch(proxyUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
-                body: JSON.stringify({ endpoint: 'apiGetClients', agencySlug }),
-              }),
-            ]);
-            if (projectsRes.ok) projects = (await projectsRes.json()).data || [];
-            if (clientsRes.ok) clients = (await clientsRes.json()).data || [];
-          }
-
-          if (facturesResponse.ok) {
-            const proxyData = await facturesResponse.json();
-            console.log(`[unified-search] Got ${proxyData.data?.length || 0} factures, ${projects.length} projects, ${clients.length} clients`);
-
-            if (proxyData.success && proxyData.data) {
-              const factures = proxyData.data as Array<{
-                id?: number; totalHT?: number; montant?: number; typeFacture?: string;
-                dateReelle?: string; date?: string; projectId?: number;
-                data?: { totalHT?: number; technicians?: Array<{ id: number; firstname?: string; lastname?: string }> };
-              }>;
-
-              const filteredFactures = factures.filter(f => {
-                const factureDate = f.dateReelle || f.date;
-                if (!factureDate) return true;
-                const d = new Date(factureDate);
-                return d >= periode.start && d <= periode.end;
-              });
-
-              console.log(`[unified-search] Filtered factures: ${filteredFactures.length} (period: ${periode.label})`);
-
-              const projectsById = new Map(projects.map(p => [p.id, p]));
-              const apporteurNames = buildApporteurNameMap(clients);
-
-              // === CA PAR APPORTEUR ===
-              if (parsedQuery.metricId === 'ca_par_apporteur') {
-                const caByApporteur: Record<number, { name: string; ca: number }> = {};
-                for (const f of filteredFactures) {
-                  const isAvoir = (f.typeFacture || '').toLowerCase() === 'avoir';
-                  const montant = f.data?.totalHT ?? f.totalHT ?? f.montant ?? 0;
-                  const netMontant = isAvoir ? -Math.abs(montant) : montant;
-                  const project = projectsById.get(f.projectId || 0);
-                  const commanditaireId = project?.data?.commanditaireId;
-                  
-                  if (commanditaireId) {
-                    const name = apporteurNames.get(String(commanditaireId)) || `Apporteur #${commanditaireId}`;
-                    if (!caByApporteur[commanditaireId]) caByApporteur[commanditaireId] = { name, ca: 0 };
-                    caByApporteur[commanditaireId].ca += netMontant;
-                  } else {
-                    if (!caByApporteur[0]) caByApporteur[0] = { name: 'Direct', ca: 0 };
-                    caByApporteur[0].ca += netMontant;
-                  }
-                }
-
-                const sorted = Object.entries(caByApporteur)
-                  .map(([id, d]) => ({ id: parseInt(id), name: d.name, value: Math.round(d.ca) }))
-                  .filter(x => x.value > 0)
-                  .sort((a, b) => b.value - a.value);
-
-                ranking = sorted.slice(0, parsedQuery.topN || 10).map((item, idx) => ({ rank: idx + 1, ...item }));
-                topItem = ranking[0];
-                computedValue = sorted.reduce((sum, item) => sum + item.value, 0);
-                console.log(`[unified-search] Top 3 apporteurs:`, ranking?.slice(0, 3));
-              }
-              // === CA PAR UNIVERS ===
-              else if (parsedQuery.metricId === 'ca_par_univers') {
-                const caByUnivers: Record<string, number> = {};
-                for (const f of filteredFactures) {
-                  const isAvoir = (f.typeFacture || '').toLowerCase() === 'avoir';
-                  const montant = f.totalHT ?? f.montant ?? 0;
-                  const netMontant = isAvoir ? -Math.abs(montant) : montant;
-                  const project = projectsById.get(f.projectId || 0);
-                  const universes = project?.data?.universes || ['Non catégorisé'];
-                  const share = netMontant / universes.length;
-                  for (const uni of universes) {
-                    if (!caByUnivers[uni]) caByUnivers[uni] = 0;
-                    caByUnivers[uni] += share;
-                  }
-                }
-
-                const sorted = Object.entries(caByUnivers)
-                  .map(([name, ca]) => ({ id: name, name, value: Math.round(ca) }))
-                  .filter(x => x.value > 0)
-                  .sort((a, b) => b.value - a.value);
-
-                ranking = sorted.slice(0, parsedQuery.topN || 10).map((item, idx) => ({ rank: idx + 1, ...item }));
-                topItem = ranking[0];
-                computedValue = sorted.reduce((sum, item) => sum + item.value, 0);
-              }
-              // === CA PAR TECHNICIEN ===
-              else if (parsedQuery.metricId === 'ca_par_technicien') {
-                const caByTech: Record<number, { name: string; ca: number }> = {};
-                for (const f of filteredFactures) {
-                  const isAvoir = (f.typeFacture || '').toLowerCase() === 'avoir';
-                  const montant = f.totalHT ?? f.montant ?? 0;
-                  const netMontant = isAvoir ? -Math.abs(montant) : montant;
-                  const techs = f.data?.technicians || [];
-                  if (techs.length === 0) continue;
-                  const share = netMontant / techs.length;
-                  for (const tech of techs) {
-                    const name = `${tech.firstname || ''} ${tech.lastname || ''}`.trim() || `Tech #${tech.id}`;
-                    if (!caByTech[tech.id]) caByTech[tech.id] = { name, ca: 0 };
-                    caByTech[tech.id].ca += share;
-                  }
-                }
-
-                const sorted = Object.entries(caByTech)
-                  .map(([id, d]) => ({ id: parseInt(id), name: d.name, value: Math.round(d.ca) }))
-                  .filter(x => x.value > 0)
-                  .sort((a, b) => b.value - a.value);
-
-                ranking = sorted.slice(0, parsedQuery.topN || 10).map((item, idx) => ({ rank: idx + 1, ...item }));
-                topItem = ranking[0];
-                computedValue = sorted.reduce((sum, item) => sum + item.value, 0);
-              }
-              // === CA GLOBAL ===
-              else {
-                for (const f of filteredFactures) {
-                  const isAvoir = (f.typeFacture || '').toLowerCase() === 'avoir';
-                  const montant = f.totalHT ?? f.montant ?? 0;
-                  computedValue += isAvoir ? -Math.abs(montant) : montant;
-                }
-                computedValue = Math.round(computedValue);
-              }
-
-              console.log(`[unified-search] Computed: ${computedValue}€ (metric=${parsedQuery.metricId})`);
-            }
-          } else {
-            console.error(`[unified-search] Proxy error: ${facturesResponse.status}`);
+          statResult = computeMetric(parsedQuery.metricId, apogeeData, params);
+          
+          console.log(`[unified-search] Computed: ${statResult.value}${statResult.unit} (metric=${parsedQuery.metricId})`);
+          if (statResult.ranking) {
+            console.log(`[unified-search] Top 3:`, statResult.ranking.slice(0, 3).map(r => `${r.name}: ${r.value}€`));
           }
         } catch (apiError) {
           console.error(`[unified-search] API call failed:`, apiError);
@@ -691,10 +603,10 @@ serve(async (req) => {
           },
         },
         result: {
-          value: computedValue,
-          topItem,
-          ranking,
-          unit: parsedQuery.metricId.includes('taux') ? '%' : '€',
+          value: statResult.value,
+          topItem: statResult.topItem,
+          ranking: statResult.ranking,
+          unit: statResult.unit,
         },
         agencySlug,
         agencyName: agencySlug?.toUpperCase(),
