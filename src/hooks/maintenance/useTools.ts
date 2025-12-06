@@ -54,7 +54,7 @@ export function useTools(agencyId?: string, filters?: ToolsFilters) {
 
       return result.data || [];
     },
-    enabled: true,
+    enabled: !!effectiveAgencyId,
   });
 }
 
