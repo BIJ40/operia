@@ -729,8 +729,15 @@ async function loadApogeeData(proxyUrl: string, authHeader: string, agencySlug: 
   if (requiredSources.includes('clients')) {
     requests.push(fetch(proxyUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authHeader }, body: JSON.stringify({ endpoint: 'apiGetClients', agencySlug }) }).then(async res => { if (res.ok) data.clients = (await res.json()).data || []; }).catch(e => console.error('[unified-search] Clients error:', e)));
   }
+  if (requiredSources.includes('interventions')) {
+    requests.push(fetch(proxyUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authHeader }, body: JSON.stringify({ endpoint: 'getInterventionsCreneaux', agencySlug }) }).then(async res => { if (res.ok) data.interventions = (await res.json()).data || []; console.log(`[loadApogeeData] Loaded ${data.interventions.length} interventions`); }).catch(e => console.error('[unified-search] Interventions error:', e)));
+  }
+  if (requiredSources.includes('users')) {
+    requests.push(fetch(proxyUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': authHeader }, body: JSON.stringify({ endpoint: 'apiGetUsers', agencySlug }) }).then(async res => { if (res.ok) data.users = (await res.json()).data || []; console.log(`[loadApogeeData] Loaded ${data.users.length} users`); }).catch(e => console.error('[unified-search] Users error:', e)));
+  }
   
   await Promise.all(requests);
+  console.log(`[loadApogeeData] Final data: ${data.factures.length} factures, ${data.projects.length} projects, ${data.interventions.length} interventions, ${data.users.length} users`);
   return data;
 }
 
