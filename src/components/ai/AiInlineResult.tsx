@@ -165,7 +165,7 @@ export function AiInlineResult({ messages, isLoading, onClose, onContactSupport 
 
             {/* Content */}
             <ScrollArea className="max-h-96">
-              <div className="p-4 space-y-4">
+              <div className="p-4 space-y-4 overflow-x-hidden">
                 {/* Loading state */}
                 {isLoading && (
                   <div className="flex items-center gap-3 text-muted-foreground">
@@ -182,7 +182,7 @@ export function AiInlineResult({ messages, isLoading, onClose, onContactSupport 
                 {lastAssistantMessage && (
                   <div className="space-y-4">
                     {/* Text content with markdown */}
-                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                    <div className="prose prose-sm dark:prose-invert max-w-none overflow-x-hidden break-words [&_p]:break-words [&_li]:break-words">
                       <ReactMarkdown>{lastAssistantMessage.content}</ReactMarkdown>
                     </div>
 

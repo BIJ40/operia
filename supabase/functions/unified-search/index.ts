@@ -29,6 +29,7 @@ import { selectBestMetric, hasMetricSignature, getMetricSignature, type MetricSc
 interface UnifiedSearchRequestBody {
   query: string;
   now?: string;
+  conversationHistory?: Array<{ role: string; content: string }>;
 }
 
 interface AiSearchContext {
@@ -651,7 +652,13 @@ function buildDocUrl(blockType: string, sourceId: string): string {
   }
 }
 
-async function searchDocsConversational(supabase: any, query: string, userName: string, authHeader: string): Promise<{ answer: string; sources: any[]; docResults: DocSearchResult[]; isConversational: true }> {
+async function searchDocsConversational(
+  supabase: any, 
+  query: string, 
+  userName: string, 
+  authHeader: string,
+  conversationHistory?: Array<{ role: string; content: string }>
+): Promise<{ answer: string; sources: any[]; docResults: DocSearchResult[]; isConversational: true }> {
   // Use Helpi for doc search
   const docResults = await searchDocsWithHelpi(authHeader, query);
   const sources = docResults.map(r => ({
@@ -667,13 +674,24 @@ async function searchDocsConversational(supabase: any, query: string, userName: 
     ? docResults.map(r => `### ${r.title}\n${r.content}`).join('\n\n---\n\n')
     : '';
   
+  // Build messages array with conversation history
+  const messages: Array<{ role: string; content: string }> = [];
+  if (conversationHistory && conversationHistory.length > 0) {
+    // Add previous messages for context
+    for (const msg of conversationHistory) {
+      messages.push({ role: msg.role, content: msg.content });
+    }
+  }
+  // Add the current query
+  messages.push({ role: 'user', content: query });
+  
   // Call chat-guide for conversational response
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const chatRes = await fetch(`${supabaseUrl}/functions/v1/chat-guide`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
     body: JSON.stringify({
-      messages: [{ role: 'user', content: query }],
+      messages,
       guideContent: ragContent || 'Aucune documentation trouvée.',
       userId: null,
       userName: userName || 'Utilisateur',
@@ -752,6 +770,7 @@ serve(async (req) => {
     if (!query || typeof query !== 'string') return withCors(req, new Response(JSON.stringify({ type: 'error', error: { code: 'QUERY_REQUIRED', message: 'Une question est requise.' } }), { status: 400, headers: { 'Content-Type': 'application/json' } }));
 
     const now = body.now ? new Date(body.now) : new Date();
+    const conversationHistory = body.conversationHistory;
 
     // ══════════════════════════════════════════════════════════
     // STEP 1: TOKENISATION (NL V3)
@@ -863,7 +882,7 @@ serve(async (req) => {
 
     } else if (routed.type === 'doc') {
       const userName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || 'Utilisateur';
-      result = await searchDocsConversational(supabase, query, userName, authHeader);
+      result = await searchDocsConversational(supabase, query, userName, authHeader, conversationHistory);
       const docResultsFormatted = result.docResults?.map((d: DocSearchResult) => ({
         id: d.id,
         title: d.title,
