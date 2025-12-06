@@ -1,7 +1,7 @@
 /**
  * Barre de recherche flottante unifiée
  * Position: sous le header, au niveau de la page
- * Intègre le système d'animations configurable
+ * Intègre le système d'animations configurable + Quick Chips
  */
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -12,11 +12,13 @@ import { Input } from '@/components/ui/input';
 import { useUnifiedSearch } from './UnifiedSearchContext';
 import { useUnifiedSearchAnimation } from './useUnifiedSearchAnimation';
 import { GlowDecorator, OrbitDecorator, WaveDotsDecorator, NeonRingDecorator, PulseRingsDecorator } from './AnimationDecorators';
+import { QuickChips, ExampleQueries } from './QuickChips';
 import { cn } from '@/lib/utils';
 
 export function UnifiedSearchFloatingBar() {
   const { isOpen, isLoading, openSearch, closeSearch, submitQuery } = useUnifiedSearch();
   const [localQuery, setLocalQuery] = useState('');
+  const [showExamples, setShowExamples] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
   const animation = useUnifiedSearchAnimation();
 
@@ -26,6 +28,11 @@ export function UnifiedSearchFloatingBar() {
       inputRef.current.focus();
     }
   }, [isOpen]);
+
+  // Hide examples when user starts typing
+  useEffect(() => {
+    setShowExamples(localQuery.trim().length === 0);
+  }, [localQuery]);
 
   // Keyboard shortcut (Ctrl+K / Cmd+K)
   useEffect(() => {
@@ -54,6 +61,19 @@ export function UnifiedSearchFloatingBar() {
     if (!localQuery.trim() || isLoading) return;
     await submitQuery(localQuery);
     setLocalQuery('');
+  };
+
+  const handleChipClick = (text: string) => {
+    const newQuery = localQuery.trim() 
+      ? `${localQuery.trim()} ${text}`
+      : text;
+    setLocalQuery(newQuery);
+    inputRef.current?.focus();
+  };
+
+  const handleExampleClick = (query: string) => {
+    setLocalQuery(query);
+    inputRef.current?.focus();
   };
 
   // Barre fermée: afficher bouton d'activation avec animation
@@ -112,9 +132,9 @@ export function UnifiedSearchFloatingBar() {
     );
   }
 
-  // Barre ouverte: afficher le champ de recherche avec liseré animé
+  // Barre ouverte: afficher le champ de recherche avec liseré animé + chips
   return (
-    <div className="w-full flex justify-center py-3 animate-in fade-in slide-in-from-top-2 duration-200">
+    <div className="w-full flex flex-col items-center py-3 animate-in fade-in slide-in-from-top-2 duration-200">
       <div className="relative w-full max-w-2xl mx-4">
         {/* Liseré brillant animé */}
         <div className="absolute -inset-[1px] rounded-full overflow-hidden opacity-60">
@@ -201,6 +221,22 @@ export function UnifiedSearchFloatingBar() {
             </Button>
           </div>
         </form>
+      </div>
+
+      {/* Quick Chips sous la barre */}
+      <div className="w-full max-w-2xl mx-4 mt-2">
+        <QuickChips 
+          currentQuery={localQuery} 
+          onChipClick={handleChipClick}
+        />
+        
+        {/* Exemples de questions */}
+        {showExamples && (
+          <ExampleQueries 
+            onExampleClick={handleExampleClick}
+            className="mt-2 px-2"
+          />
+        )}
       </div>
     </div>
   );
