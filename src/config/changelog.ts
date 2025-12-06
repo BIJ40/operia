@@ -15,6 +15,49 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.7.2",
+    title: "StatIA NL Routing – Amélioration compréhension langage naturel",
+    date: "2025-12-06",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // STATIA NL ROUTING - DÉTECTION & PARSING
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Ajout keywords recouvrement (encours, impayé, dû client, reste encaisser) dans STATS_KEYWORDS' },
+      { type: 'feature', description: 'Routing "recouvrement" → métrique reste_a_encaisser (montant) par défaut, taux explicite' },
+      { type: 'feature', description: 'Parsing période "au [jour] [mois]" - ex: "au 30 octobre" = 1er janvier → 30 oct' },
+      { type: 'feature', description: 'Parsing période "jusqu\'au [jour] [mois]" - même logique avec préfixe jusqu\'au' },
+      { type: 'improvement', description: 'extractPeriode utilise désormais la query normalisée pour meilleure détection' },
+      { type: 'improvement', description: 'Fallback période 12 derniers mois si non détectée (jamais vide)' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // SYNCHRONISATION FRONTEND / EDGE FUNCTION
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'Synchronisation dictionaries.ts (frontend) et unified-search (edge function)' },
+      { type: 'improvement', description: 'SPECIALIZED_METRICS: règles taux recouvrement vs montant recouvrement séparées' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // ARCHITECTURE NL → STATIA (SPEC IMPLANTÉE ~80%)
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'audit', description: 'isStatsQuery: détection requêtes stats via STATS_KEYWORDS étendu' },
+      { type: 'audit', description: 'parseStatQuery: extraction dimension, intent, univers, période, topN, technicien' },
+      { type: 'audit', description: 'detectDimension: apporteur, technicien, univers, agence, site, client_type' },
+      { type: 'audit', description: 'detectIntent: top, moyenne, volume, taux, delay, compare, valeur' },
+      { type: 'audit', description: 'NL_ROUTING_RULES + SPECIALIZED_METRICS: ~30 règles métier implémentées' },
+      { type: 'audit', description: 'TYPO_CORRECTIONS: correcteur orthographique basique intégré' },
+      { type: 'audit', description: 'Permissions: minRole vérifié, accessDenied géré, scope agence respecté' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // À IMPLÉMENTER (SPEC RESTANTE ~20%)
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'audit', description: 'TODO: stat_ambiguous - gestion cas multi-métriques possibles' },
+      { type: 'audit', description: 'TODO: stat_cache - cache applicatif (metricId, agencyId, period, filters)' },
+      { type: 'audit', description: 'TODO: Pré-agrégations SQL (factures_aggr_day, factures_aggr_month)' },
+      { type: 'audit', description: 'TODO: stats_queries_history - stockage questions validées' },
+      { type: 'audit', description: 'TODO: Scope réseau N3+ complet (allowedAgencyIds)' },
+      { type: 'audit', description: 'PROPOSITION: Parsing LLM pour compréhension générale (évite ajouts manuels)' },
+    ],
+  },
+  {
     version: "V0.7.1",
     title: "Migration StatIA – Page Techniciens",
     date: "2025-12-06",
