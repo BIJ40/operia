@@ -117,14 +117,14 @@ export function UnifiedSearchFloatingBar() {
     <div className="w-full flex justify-center py-3 animate-in fade-in slide-in-from-top-2 duration-200">
       <div className="relative w-full max-w-2xl mx-4">
         {/* Liseré brillant animé */}
-        <div className="absolute -inset-[2px] rounded-full overflow-hidden">
+        <div className="absolute -inset-[1px] rounded-full overflow-hidden opacity-60">
           <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-helpconfort-blue to-transparent"
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-helpconfort-blue/50 to-transparent"
             animate={{
               x: ['-100%', '100%'],
             }}
             transition={{
-              duration: 2,
+              duration: 3,
               repeat: Infinity,
               ease: 'linear',
             }}
@@ -133,7 +133,7 @@ export function UnifiedSearchFloatingBar() {
         </div>
         
         {/* Bordure statique */}
-        <div className="absolute -inset-[2px] rounded-full border-2 border-helpconfort-blue/40" />
+        <div className="absolute -inset-[1px] rounded-full border border-helpconfort-blue/20" />
         
         <form 
           onSubmit={handleSubmit}
