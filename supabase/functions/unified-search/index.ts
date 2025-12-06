@@ -197,8 +197,13 @@ function stringSimilarity(a: string, b: string): number {
 function resolveTechnicianFromQuery(query: string, technicians: TechnicianEntity[]): { best?: TechnicianEntity; candidates: TechnicianEntity[] } {
   const qNorm = normalizeText(query);
   if (!qNorm || !technicians.length) return { candidates: [] };
-  const queryWords = qNorm.split(' ').filter(w => w.length >= 3);
-  const scored: { tech: TechnicianEntity; score: number }[] = [];
+  // Mots de la query >= 3 lettres, en excluant les mots-clés courants
+  const EXCLUDED_WORDS = new Set(['combien', 'fait', 'avec', 'sur', 'pour', 'quel', 'quelle', 'octobre', 'novembre', 'decembre', 'janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin', 'juillet', 'aout', 'septembre', 'cette', 'annee', 'mois', 'dernier', 'derniere', 'chiffre', 'affaires', 'facture', 'factures']);
+  const queryWords = qNorm.split(' ').filter(w => w.length >= 3 && !EXCLUDED_WORDS.has(w));
+  
+  console.log(`[resolveTechnicianFromQuery] Query words: [${queryWords.join(', ')}]`);
+  
+  const scored: { tech: TechnicianEntity; score: number; matchedWord: string }[] = [];
   for (const tech of technicians) {
     const labels: string[] = [];
     const normFirstName = normalizeText(tech.firstName || '');
@@ -208,25 +213,53 @@ function resolveTechnicianFromQuery(query: string, technicians: TechnicianEntity
     if (normFirstName && normLastName) { labels.push(`${normFirstName} ${normLastName}`); labels.push(`${normLastName} ${normFirstName}`); }
     if (normFirstName) labels.push(normFirstName);
     if (normLastName) labels.push(normLastName);
+    
     let maxScore = 0;
+    let matchedWord = '';
+    
+    // Match par mot individuel de la query
     for (const word of queryWords) {
       for (const label of labels) {
-        if (word === label) { maxScore = Math.max(maxScore, 1); continue; }
+        // Match exact → score parfait
+        if (word === label) { 
+          maxScore = Math.max(maxScore, 1); 
+          matchedWord = word;
+          continue; 
+        }
+        // Match inclusion (le mot de la query est dans le label ou vice versa)
+        if (label.includes(word) && word.length >= 4) {
+          const newScore = 0.95;
+          if (newScore > maxScore) { maxScore = newScore; matchedWord = word; }
+        }
+        if (word.includes(label) && label.length >= 4) {
+          const newScore = 0.9;
+          if (newScore > maxScore) { maxScore = newScore; matchedWord = word; }
+        }
+        // Similarité bigram (moins fiable)
         const sim = stringSimilarity(word, label);
-        if (sim > maxScore) maxScore = sim;
-        if (label.includes(word) || word.includes(label)) maxScore = Math.max(maxScore, 0.95);
+        if (sim > maxScore && sim >= 0.8) { 
+          maxScore = sim; 
+          matchedWord = word;
+        }
       }
     }
-    for (const label of labels) {
-      const sim = stringSimilarity(qNorm, label);
-      if (sim > maxScore) maxScore = sim;
-      if (qNorm.includes(label)) maxScore = Math.max(maxScore, 1);
+    
+    // SUPPRIMÉ: plus de match sur la query entière (causait les faux positifs)
+    
+    if (maxScore >= MIN_SIMILARITY_FUZZY) {
+      scored.push({ tech, score: maxScore, matchedWord });
     }
-    if (maxScore >= MIN_SIMILARITY_FUZZY) scored.push({ tech, score: maxScore });
   }
-  if (!scored.length) return { candidates: [] };
+  
+  if (!scored.length) {
+    console.log(`[resolveTechnicianFromQuery] No match found`);
+    return { candidates: [] };
+  }
+  
   scored.sort((a, b) => b.score - a.score);
   const best = scored[0];
+  console.log(`[resolveTechnicianFromQuery] Best match: ${best.tech.fullName} (score=${best.score.toFixed(2)}, matchedWord=${best.matchedWord})`);
+  
   if (best.score >= MIN_SIMILARITY_STRICT) {
     const strongCandidates = scored.filter(s => s.score >= MIN_SIMILARITY_STRICT);
     if (strongCandidates.length === 1) return { best: best.tech, candidates: [] };
