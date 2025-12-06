@@ -5,6 +5,7 @@
 
 import type { LLMDraftIntent, QueryType, DimensionType, IntentType } from './types';
 import { supabase } from '@/integrations/supabase/client';
+import { logWarn } from '@/lib/logger';
 
 // ═══════════════════════════════════════════════════════════════
 // EXTRACTION LLM
@@ -72,7 +73,7 @@ function parseLLMResponse(response: unknown): LLMDraftIntent | null {
   
   // Si llmAvailable est false, le LLM n'est pas disponible
   if (data.llmAvailable === false) {
-    console.warn('[parseLLMResponse] LLM not available');
+    logWarn('AI_SEARCH', 'LLM not available');
     return {
       intent: null,
       metric: null,

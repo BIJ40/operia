@@ -11,7 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLogRHAction } from '@/hooks/rh/useRHAuditLog';
 import { validateFile } from '@/utils/fileValidation';
 import { handleRHError, showRHSuccess, showRHInfo } from '@/utils/rhErrorHandler';
-import { logError, logDebug } from '@/lib/logger';
+import { logError, logDebug, logWarn } from '@/lib/logger';
 
 const BUCKET_NAME = 'rh-documents';
 
@@ -41,8 +41,8 @@ async function createSignedDownloadUrl(
     supabase.rpc('log_document_access', {
       p_document_id: documentId,
       p_access_type: accessType,
-    }).then(({ error: logError }) => {
-      if (logError) console.warn('Failed to log document access:', logError);
+    }).then(({ error: logErr }) => {
+      if (logErr) logWarn('RH_DOCUMENTS', 'Failed to log document access', { error: logErr });
     });
   }
 
@@ -213,7 +213,7 @@ export function useCollaboratorDocuments(collaboratorId: string | undefined) {
         .remove([doc.file_path]);
 
       if (storageError) {
-        console.warn('Storage delete error:', storageError);
+        logWarn('RH_DOCUMENTS', 'Storage delete error', { error: storageError });
       }
 
       // 2) Delete from database
