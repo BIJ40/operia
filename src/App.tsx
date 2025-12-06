@@ -64,6 +64,7 @@ const DemandesRHPage = lazy(() => import("./pages/DemandesRHPage"));
 const RHDashboardPage = lazy(() => import("./pages/RHDashboardPage"));
 const CommercialPage = lazy(() => import("./pages/CommercialPage"));
 const CommercialSupportPptx = lazy(() => import("./commercial/pages/CommercialSupportPptx"));
+const MaintenancePreventivePage = lazy(() => import("./pages/MaintenancePreventivePage"));
 
 // Lazy loaded pages - Support
 const SupportIndex = lazy(() => import("./pages/SupportIndex"));
@@ -267,6 +268,9 @@ function AppContent() {
           {/* Commercial - Outils commerciaux agence */}
           <Route path="/hc-agency/commercial" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><CommercialPage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/hc-agency/commercial/support-pptx" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><CommercialSupportPptx /></ModuleGuard></RoleGuard></MainLayout>} />
+          
+          {/* Maintenance Préventive (Module Parc) */}
+          <Route path="/hc-agency/maintenance" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><MaintenancePreventivePage /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* SUPPORT V2 - Unified Support System */}
