@@ -17,7 +17,7 @@ export default function Landing() {
 
   // V2: Capacités basées sur ROLE_MATRIX
   const caps = getRoleCapabilities(globalRole);
-  const isAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';
+  const isPlatformAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';
 
   // V2: Filtrer les tuiles basé sur ROLE_MATRIX + canAccessSupportConsole de AuthContext
   const visibleTiles = useMemo(() => {
@@ -115,7 +115,7 @@ export default function Landing() {
               defaultOpen={false}
             >
               {tilesByGroup.help_academy.map(tile => (
-                <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
+                <DashboardTileCard key={tile.id} tile={tile} isPlatformAdmin={isPlatformAdmin} />
               ))}
             </CollapsibleSection>
           )}
@@ -134,7 +134,7 @@ export default function Landing() {
                 <DashboardTileCard 
                   key={tile.id} 
                   tile={tile} 
-                  isAdmin={isAdmin}
+                  isPlatformAdmin={isPlatformAdmin}
                   dynamicBadge={tile.id === 'CONSOLE_SUPPORT' && newTicketsCount > 0 ? newTicketsCount : undefined}
                 />
               ))}
@@ -152,7 +152,7 @@ export default function Landing() {
               defaultOpen={false}
             >
               {tilesByGroup.projects.map(tile => (
-                <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
+                <DashboardTileCard key={tile.id} tile={tile} isPlatformAdmin={isPlatformAdmin} />
               ))}
             </CollapsibleSection>
           )}
@@ -168,7 +168,7 @@ export default function Landing() {
               defaultOpen={false}
             >
               {tilesByGroup.admin.map(tile => (
-                <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
+                <DashboardTileCard key={tile.id} tile={tile} isPlatformAdmin={isPlatformAdmin} />
               ))}
             </CollapsibleSection>
           )}
@@ -187,7 +187,7 @@ export default function Landing() {
               defaultOpen={false}
             >
               {tilesByGroup.pilotage.map(tile => (
-                <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
+                <DashboardTileCard key={tile.id} tile={tile} isPlatformAdmin={isPlatformAdmin} />
               ))}
             </CollapsibleSection>
           )}
@@ -203,7 +203,7 @@ export default function Landing() {
               defaultOpen={false}
             >
               {tilesByGroup.rh.map(tile => (
-                <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
+                <DashboardTileCard key={tile.id} tile={tile} isPlatformAdmin={isPlatformAdmin} />
               ))}
             </CollapsibleSection>
           )}
@@ -219,7 +219,7 @@ export default function Landing() {
               defaultOpen={false}
             >
               {tilesByGroup.franchiseur.map(tile => (
-                <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
+                <DashboardTileCard key={tile.id} tile={tile} isPlatformAdmin={isPlatformAdmin} />
               ))}
             </CollapsibleSection>
           )}
@@ -229,7 +229,7 @@ export default function Landing() {
   );
 }
 
-const DashboardTileCard = memo(function DashboardTileCard({ tile, dynamicBadge, isAdmin }: { tile: DashboardTile; dynamicBadge?: number; isAdmin?: boolean }) {
+const DashboardTileCard = memo(function DashboardTileCard({ tile, dynamicBadge, isPlatformAdmin }: { tile: DashboardTile; dynamicBadge?: number; isPlatformAdmin?: boolean }) {
   const Icon = tile.icon;
   const badgeContent = dynamicBadge ?? tile.badge;
   // P1 FIX: Les tuiles disabled ne sont JAMAIS cliquables, même pour les admins

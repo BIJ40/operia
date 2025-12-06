@@ -35,11 +35,14 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { isAdmin, user } = useAuth();
+  const { hasGlobalRole, hasModuleOption, user } = useAuth();
   const location = useLocation();
   
+  // V2: Remplace isAdmin par vérification de rôle + option module
+  const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('help_academy', 'edition');
+  
   // Derive isEditMode from URL parameter
-  const isEditMode = new URLSearchParams(location.search).get('edit') === 'true' && isAdmin;
+  const isEditMode = new URLSearchParams(location.search).get('edit') === 'true' && canEdit;
 
   // Cache avec TTL de 5 minutes
   const CACHE_KEY = 'apogee_blocks_cache';
@@ -173,8 +176,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   // La sauvegarde se fait maintenant uniquement via handleSave dans les pages
 
   const addBlock = useCallback(async (block: Omit<Block, 'id'>): Promise<string> => {
-    if (!isAdmin) {
-      toast({ title: 'Accès refusé', description: 'Seuls les administrateurs peuvent ajouter du contenu', variant: 'destructive' });
+    if (!canEdit) {
+      toast({ title: 'Accès refusé', description: 'Vous n\'avez pas les permissions nécessaires', variant: 'destructive' });
       return '';
     }
     const newBlock: Block = {
@@ -215,11 +218,11 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       toast({ title: 'Erreur', description: 'Impossible de sauvegarder la catégorie', variant: 'destructive' });
       return '';
     }
-  }, [blocks.length, toast, isAdmin]);
+  }, [blocks.length, toast, canEdit]);
 
   const updateBlock = useCallback(async (id: string, updates: Partial<Block>, options?: { allowContentDeletion?: boolean }) => {
-    if (!isAdmin) {
-      toast({ title: 'Accès refusé', description: 'Seuls les administrateurs peuvent modifier le contenu', variant: 'destructive' });
+    if (!canEdit) {
+      toast({ title: 'Accès refusé', description: 'Vous n\'avez pas les permissions nécessaires', variant: 'destructive' });
       return;
     }
     
@@ -287,11 +290,11 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       logEditor.error('Erreur mise à jour:', error);
       toast({ title: 'Erreur', description: 'Impossible de sauvegarder les modifications', variant: 'destructive' });
     }
-  }, [isAdmin, toast, blocks]);
+  }, [canEdit, toast, blocks]);
 
   const deleteBlock = useCallback(async (id: string) => {
-    if (!isAdmin) {
-      toast({ title: 'Accès refusé', description: 'Seuls les administrateurs peuvent supprimer du contenu', variant: 'destructive' });
+    if (!canEdit) {
+      toast({ title: 'Accès refusé', description: 'Vous n\'avez pas les permissions nécessaires', variant: 'destructive' });
       return;
     }
     
@@ -330,11 +333,11 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       logEditor.error('Erreur suppression:', error);
       toast({ title: 'Erreur', description: 'Impossible de supprimer le bloc', variant: 'destructive' });
     }
-  }, [toast, isAdmin, blocks]);
+  }, [toast, canEdit, blocks]);
 
   const reorderBlocks = useCallback(async (blocksToReorder: Block[]) => {
-    if (!isAdmin) {
-      toast({ title: 'Accès refusé', description: 'Seuls les administrateurs peuvent réorganiser le contenu', variant: 'destructive' });
+    if (!canEdit) {
+      toast({ title: 'Accès refusé', description: 'Vous n\'avez pas les permissions nécessaires', variant: 'destructive' });
       return;
     }
     
@@ -358,7 +361,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       logEditor.error('Erreur sauvegarde ordre:', error);
       toast({ title: 'Erreur', description: 'Impossible de sauvegarder l\'ordre', variant: 'destructive' });
     }
-  }, [isAdmin, toast]);
+  }, [canEdit, toast]);
 
   const exportDataFn = useCallback(async (): Promise<string> => {
     const appData: AppData = {
@@ -391,10 +394,10 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   // toggleEditMode is now handled by URL parameter via UnifiedHeader
   // This is kept for backwards compatibility but does nothing
   const toggleEditMode = useCallback(() => {
-    if (!isAdmin) {
-      toast({ title: 'Accès refusé', description: 'Seuls les administrateurs peuvent activer le mode édition', variant: 'destructive' });
+    if (!canEdit) {
+      toast({ title: 'Accès refusé', description: 'Vous n\'avez pas les permissions nécessaires', variant: 'destructive' });
     }
-  }, [isAdmin, toast]);
+  }, [canEdit, toast]);
   
   // setIsEditMode is now a no-op since edit mode is controlled via URL
   const setIsEditMode = useCallback(() => {}, []);

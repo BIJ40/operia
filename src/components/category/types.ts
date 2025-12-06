@@ -27,7 +27,8 @@ export interface SortableAccordionItemProps {
   section: Section;
   category: CategoryBlock;
   isEditMode: boolean;
-  isAdmin: boolean;
+  /** V2: Renamed from isAdmin - indicates if user can edit content */
+  canEdit: boolean;
   availableCategories: Block[];
   editingId: string | null;
   scope: CategoryScope;

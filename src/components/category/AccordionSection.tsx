@@ -31,11 +31,12 @@ const isSectionNew = (completedAt?: string) => {
   return new Date(completedAt) > sevenDaysAgo;
 };
 
-interface AccordionSectionProps {
+export interface AccordionSectionProps {
   section: Section;
   category: CategoryBlock;
   isEditMode: boolean;
-  isAdmin: boolean;
+  /** V2: Renamed from isAdmin - indicates if user can edit content */
+  canEdit: boolean;
   availableCategories: Block[];
   scope: CategoryScope;
   dragAttributes: Record<string, any>;
@@ -52,7 +53,7 @@ export function AccordionSection({
   section,
   category,
   isEditMode,
-  isAdmin,
+  canEdit,
   availableCategories,
   scope,
   dragAttributes,
@@ -131,7 +132,7 @@ export function AccordionSection({
                 M.A.J
               </span>
             )}
-            {!isEditMode && !isAdmin && !isEmptySection && (
+            {!isEditMode && !canEdit && !isEmptySection && (
               <div onClick={(e) => e.stopPropagation()}>
                 <FavoriteButton
                   blockId={section.id}
@@ -143,7 +144,7 @@ export function AccordionSection({
               </div>
             )}
           </div>
-            {isEditMode && isAdmin && (
+            {isEditMode && canEdit && (
             <div 
               className="flex gap-2"
               onMouseDown={(e) => {

@@ -43,18 +43,21 @@ const getHelpConfortRoleLabel = (role: string) => {
 };
 
 export default function AdminEscalationHistory() {
-  const { isAdmin } = useAuth();
+  const { hasGlobalRole } = useAuth();
   const navigate = useNavigate();
   const [escalations, setEscalations] = useState<EscalationRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // V2: Vérification par rôle global (N5+)
+  const canAccess = hasGlobalRole('platform_admin');
 
   useEffect(() => {
-    if (!isAdmin) {
+    if (!canAccess) {
       navigate('/');
       return;
     }
     loadEscalations();
-  }, [isAdmin, navigate]);
+  }, [canAccess, navigate]);
 
   const loadEscalations = async () => {
     setIsLoading(true);

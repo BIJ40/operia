@@ -22,17 +22,20 @@ import {
 import { Brain } from "lucide-react";
 
 export default function AdminHelpi() {
-  const { isAdmin } = useAuth();
+  const { hasGlobalRole } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = usePersistedTab("helpi-admin-tab", "dashboard");
+  
+  // V2: Vérification par rôle global
+  const canAccess = hasGlobalRole('platform_admin');
 
   useEffect(() => {
-    if (!isAdmin) {
+    if (!canAccess) {
       navigate("/");
     }
-  }, [isAdmin, navigate]);
+  }, [canAccess, navigate]);
 
-  if (!isAdmin) return null;
+  if (!canAccess) return null;
 
   return (
     <div className="container mx-auto p-6 space-y-6">
