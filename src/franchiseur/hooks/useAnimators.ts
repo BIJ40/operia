@@ -13,14 +13,24 @@ export interface Animator {
 
 /**
  * Dérive le rôle franchiseur depuis global_role
- * N3 = Animateur, N4 = Directeur réseau
- * N5/N6 ne sont PAS du personnel franchiseur (admins plateforme)
+ * N3 (franchisor_user) = animateur
+ * N4 (franchisor_admin) = directeur
+ * N5/N6 (platform_admin, superadmin) = dg (admins plateforme ont accès DG)
  */
-function deriveFranchiseurRole(globalRole: GlobalRole | null): string {
-  if (!globalRole) return 'Animateur';
-  const level = GLOBAL_ROLES[globalRole] ?? 0;
-  if (level >= 4) return 'Directeur réseau';
-  return 'Animateur';
+function deriveFranchiseurRole(globalRole: GlobalRole | null): 'animateur' | 'directeur' | 'dg' {
+  if (!globalRole) return 'animateur';
+  
+  // N3 = Animateur réseau
+  if (globalRole === 'franchisor_user') return 'animateur';
+  
+  // N4 = Directeur réseau
+  if (globalRole === 'franchisor_admin') return 'directeur';
+  
+  // N5/N6 = DG / Admin plateforme
+  if (globalRole === 'platform_admin' || globalRole === 'superadmin') return 'dg';
+  
+  // Fallback pour legacy role_agence = 'tete_de_reseau' sans global_role
+  return 'animateur';
 }
 
 export function useAnimators() {
