@@ -2,7 +2,7 @@ import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import {
   GraduationCap, FileText, FolderOpen, BarChart3, ListTodo, Tv,
   Headset, Network, Building2, PieChart, GitCompare, Briefcase,
-  Coins, Settings, Users, Database, Activity, ChevronRight, Home, Calendar, LifeBuoy, MessageCircle, Kanban, FolderKanban, HelpCircle, Sparkles, Wrench
+  Coins, Settings, Users, Database, Activity, ChevronRight, Home, Calendar, LifeBuoy, MessageCircle, Kanban, FolderKanban, HelpCircle, Sparkles, Wrench, Brain
 } from 'lucide-react';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import {
@@ -296,6 +296,7 @@ export function UnifiedSidebar() {
         { title: 'Agences', url: ROUTES.admin.agencies, icon: Building2 },
         { title: 'Annonces', url: ROUTES.admin.announcements, icon: MessageCircle, description: 'Annonces prioritaires' },
         { title: 'FAQ', url: ROUTES.admin.faq, icon: HelpCircle, description: 'Gérer les questions fréquentes' },
+        { title: 'Helpi', url: ROUTES.admin.helpi, icon: Brain, description: 'Moteur de connaissances IA' },
         { title: 'Chatbot RAG', url: ROUTES.admin.chatbotRag, icon: Sparkles, description: 'Configuration IA' },
         { title: 'Sauvegardes', url: ROUTES.admin.backup, icon: Database },
         { title: 'Activité', url: ROUTES.admin.userActivity, icon: Activity },

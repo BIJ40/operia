@@ -3,7 +3,7 @@ import {
   MessageSquare, Network, Users, Database, Settings, LucideIcon,
   PieChart, Coins, LifeBuoy, Headphones, GraduationCap, Kanban, Activity,
   HelpCircle, Calendar, UserCog, Briefcase, Inbox, Building2, GitCompare,
-  MessagesSquare, Wrench
+  MessagesSquare, Wrench, Brain
 } from 'lucide-react';
 import { ROUTES } from './routes';
 import { ModuleKey } from '@/types/modules';
@@ -348,6 +348,17 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     description: 'Monitoring et état des services',
     icon: Activity,
     route: ROUTES.admin.systemHealth,
+    scopeSlug: SCOPE_SLUGS.ADMIN_SETTINGS,
+    color: 'primary',
+    group: 'admin',
+    requiresAdmin: true,
+  },
+  {
+    id: 'ADMIN_HELPI',
+    title: 'Helpi',
+    description: 'Moteur de connaissances IA unifié',
+    icon: Brain,
+    route: ROUTES.admin.helpi,
     scopeSlug: SCOPE_SLUGS.ADMIN_SETTINGS,
     color: 'primary',
     group: 'admin',
