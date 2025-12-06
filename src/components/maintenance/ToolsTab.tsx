@@ -24,7 +24,8 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus } from 'lucide-react';
+import { Plus, QrCode } from 'lucide-react';
+import { QrCodeModal } from './QrCodeModal';
 
 export function ToolsTab() {
   const [filters, setFilters] = useState<ToolsFilters>({
@@ -33,6 +34,7 @@ export function ToolsTab() {
     collaboratorId: undefined,
     search: '',
   });
+  const [qrTool, setQrTool] = useState<Tool | null>(null);
 
   const { data: tools = [], isLoading } = useTools(undefined, filters);
 
@@ -127,17 +129,28 @@ export function ToolsTab() {
                   <th className="px-4 py-2 text-left font-medium">Statut</th>
                   <th className="px-4 py-2 text-left font-medium">Affecté à</th>
                   <th className="px-4 py-2 text-left font-medium">Plan préventif</th>
+                  <th className="px-4 py-2 text-left font-medium w-12">QR</th>
                 </tr>
               </thead>
               <tbody>
                 {tools.map((tool) => (
-                  <ToolRow key={tool.id} tool={tool} />
+                  <ToolRow key={tool.id} tool={tool} onShowQr={(t) => setQrTool(t)} />
                 ))}
               </tbody>
             </table>
           </div>
         )}
       </CardContent>
+
+      {qrTool && qrTool.qr_token && (
+        <QrCodeModal
+          open={!!qrTool}
+          onOpenChange={(open) => !open && setQrTool(null)}
+          assetType="tool"
+          assetName={qrTool.label}
+          qrToken={qrTool.qr_token}
+        />
+      )}
     </Card>
   );
 }
@@ -159,9 +172,10 @@ function ToolsSkeleton() {
 
 interface ToolRowProps {
   tool: Tool;
+  onShowQr: (tool: Tool) => void;
 }
 
-function ToolRow({ tool }: ToolRowProps) {
+function ToolRow({ tool, onShowQr }: ToolRowProps) {
   const statusConfig = TOOL_STATUSES.find((s) => s.value === tool.status);
   const categoryConfig = TOOL_CATEGORIES.find((c) => c.value === tool.category);
   const statusVariant = tool.status === 'in_service' ? 'default' : 'secondary';
@@ -196,6 +210,20 @@ function ToolRow({ tool }: ToolRowProps) {
           : <span className="text-muted-foreground">Non affecté</span>}
       </td>
       <td className="px-4 py-2 align-middle text-sm">{planLabel}</td>
+      <td className="px-4 py-2 align-middle">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={(e) => {
+            e.stopPropagation();
+            onShowQr(tool);
+          }}
+          title="Afficher le QR Code"
+        >
+          <QrCode className="h-4 w-4" />
+        </Button>
+      </td>
     </tr>
   );
 }
