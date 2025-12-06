@@ -173,6 +173,13 @@ export const ROUTES = {
   messages: '/messages',
 
   // ============================================
+  // DEV (Admin only)
+  // ============================================
+  dev: {
+    unifiedSearchAnimations: '/dev/unified-search-animations',
+  },
+
+  // ============================================
   // USER
   // ============================================
   profile: '/profile',

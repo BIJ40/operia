@@ -1,19 +1,24 @@
 /**
  * Barre de recherche flottante unifiée
  * Position: sous le header, au niveau de la page
+ * Intègre le système d'animations configurable
  */
 
 import React, { useState, useRef, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Search, Sparkles, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useUnifiedSearch } from './UnifiedSearchContext';
+import { useUnifiedSearchAnimation } from './useUnifiedSearchAnimation';
+import { GlowDecorator, OrbitDecorator, WaveDotsDecorator, NeonRingDecorator } from './AnimationDecorators';
 import { cn } from '@/lib/utils';
 
 export function UnifiedSearchFloatingBar() {
   const { isOpen, isLoading, openSearch, closeSearch, submitQuery } = useUnifiedSearch();
   const [localQuery, setLocalQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const animation = useUnifiedSearchAnimation();
 
   // Focus input when opened
   useEffect(() => {
@@ -51,30 +56,51 @@ export function UnifiedSearchFloatingBar() {
     setLocalQuery('');
   };
 
-  // Barre fermée: afficher bouton d'activation
+  // Barre fermée: afficher bouton d'activation avec animation
   if (!isOpen) {
     return (
       <div className="w-full flex justify-center py-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={openSearch}
-          className={cn(
-            "gap-2 px-4 h-9 rounded-full",
-            "bg-gradient-to-r from-primary/5 to-primary/10",
-            "border-primary/20 hover:border-primary/40",
-            "hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/20",
-            "transition-all duration-200"
+        <div className="relative">
+          {/* Décorateurs d'animation */}
+          {animation.decorators?.showGlow && (
+            <GlowDecorator glowColor={animation.decorators.glowColor} />
           )}
-        >
-          <Sparkles className="w-4 h-4 text-primary" />
-          <span className="text-sm text-muted-foreground">
-            Recherche intelligente...
-          </span>
-          <kbd className="hidden sm:inline-flex ml-2 px-1.5 py-0.5 text-[10px] font-mono bg-muted rounded">
-            ⌘K
-          </kbd>
-        </Button>
+          {animation.decorators?.showOrbit && (
+            <OrbitDecorator glowColor={animation.decorators.glowColor} />
+          )}
+          {animation.decorators?.showNeonRing && (
+            <NeonRingDecorator glowColor={animation.decorators.glowColor} />
+          )}
+          {animation.decorators?.showWaveDots && (
+            <WaveDotsDecorator glowColor={animation.decorators.glowColor} />
+          )}
+          
+          {/* Bouton principal avec animation Framer Motion */}
+          <motion.button
+            onClick={openSearch}
+            className={cn(
+              "relative z-10 flex items-center gap-2 px-4 h-9 rounded-full",
+              "bg-gradient-to-r from-primary/5 to-primary/10",
+              "border border-primary/20",
+              "hover:border-primary/40",
+              "hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/20",
+              "transition-colors duration-200"
+            )}
+            initial={animation.buttonMotion.initial as any}
+            animate={animation.buttonMotion.animate as any}
+            transition={animation.buttonMotion.transition as any}
+            whileHover={animation.buttonMotion.whileHover as any}
+            whileTap={animation.buttonMotion.whileTap as any}
+          >
+            <Sparkles className="w-4 h-4 text-primary" />
+            <span className="text-sm text-muted-foreground">
+              Recherche intelligente...
+            </span>
+            <kbd className="hidden sm:inline-flex ml-2 px-1.5 py-0.5 text-[10px] font-mono bg-muted rounded">
+              ⌘K
+            </kbd>
+          </motion.button>
+        </div>
       </div>
     );
   }
