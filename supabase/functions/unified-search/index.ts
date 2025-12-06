@@ -1126,8 +1126,12 @@ serve(async (req) => {
       const filters: Record<string, unknown> = { univers: parsed.univers, limit: parsed.limit, technicienId: parsed.technicienId, technicienName: parsed.technicienName, apporteurId: parsed.apporteurId, apporteurName: parsed.apporteurName };
       const cacheKey = buildCacheKey(parsed.metricId, agencySlug, parsed.period, filters, scope);
       
-      // Cache activé sauf requêtes avec filtres spécifiques
-      const skipCache = !!(parsed.technicienId || parsed.apporteurId);
+      // ════════════════════════════════════════════════════════════
+      // CACHE: Désactivé pour métriques sensibles + requêtes filtrées
+      // ════════════════════════════════════════════════════════════
+      const forceNoCacheMetrics = new Set(['ca_par_technicien', 'top_techniciens_ca']);
+      const skipCache = forceNoCacheMetrics.has(parsed.metricId) || !!(parsed.technicienId || parsed.apporteurId);
+      console.log(`[unified-search] Cache: metric=${parsed.metricId}, skipCache=${skipCache}`);
       const cached = skipCache ? null : await getCacheEntry(supabase, cacheKey);
       if (cached) { console.log('[unified-search] Cache hit'); result = cached; fromCache = true; }
       else {
