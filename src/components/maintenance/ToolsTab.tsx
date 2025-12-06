@@ -26,6 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, QrCode } from 'lucide-react';
 import { QrCodeModal } from './QrCodeModal';
+import { ToolFormDialog } from './ToolFormDialog';
 
 export function ToolsTab() {
   const [filters, setFilters] = useState<ToolsFilters>({
@@ -35,6 +36,8 @@ export function ToolsTab() {
     search: '',
   });
   const [qrTool, setQrTool] = useState<Tool | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingTool, setEditingTool] = useState<Tool | undefined>(undefined);
 
   const { data: tools = [], isLoading } = useTools(undefined, filters);
 
@@ -106,7 +109,16 @@ export function ToolsTab() {
             </SelectContent>
           </Select>
 
-          <Button type="button" size="sm" variant="outline" className="gap-1">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="gap-1"
+            onClick={() => {
+              setEditingTool(undefined);
+              setIsFormOpen(true);
+            }}
+          >
             <Plus className="h-3.5 w-3.5" />
             Matériel
           </Button>
@@ -134,13 +146,27 @@ export function ToolsTab() {
               </thead>
               <tbody>
                 {tools.map((tool) => (
-                  <ToolRow key={tool.id} tool={tool} onShowQr={(t) => setQrTool(t)} />
+                  <ToolRow
+                    key={tool.id}
+                    tool={tool}
+                    onEdit={(t) => {
+                      setEditingTool(t);
+                      setIsFormOpen(true);
+                    }}
+                    onShowQr={(t) => setQrTool(t)}
+                  />
                 ))}
               </tbody>
             </table>
           </div>
         )}
       </CardContent>
+
+      <ToolFormDialog
+        open={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        tool={editingTool}
+      />
 
       {qrTool && qrTool.qr_token && (
         <QrCodeModal
@@ -172,10 +198,11 @@ function ToolsSkeleton() {
 
 interface ToolRowProps {
   tool: Tool;
+  onEdit: (tool: Tool) => void;
   onShowQr: (tool: Tool) => void;
 }
 
-function ToolRow({ tool, onShowQr }: ToolRowProps) {
+function ToolRow({ tool, onEdit, onShowQr }: ToolRowProps) {
   const statusConfig = TOOL_STATUSES.find((s) => s.value === tool.status);
   const categoryConfig = TOOL_CATEGORIES.find((c) => c.value === tool.category);
   const statusVariant = tool.status === 'in_service' ? 'default' : 'secondary';
@@ -185,7 +212,10 @@ function ToolRow({ tool, onShowQr }: ToolRowProps) {
   );
 
   return (
-    <tr className="border-b hover:bg-muted/40 cursor-pointer">
+    <tr
+      className="border-b hover:bg-muted/40 cursor-pointer"
+      onClick={() => onEdit(tool)}
+    >
       <td className="py-2 pr-4 align-middle">
         <div className="flex flex-col">
           <span className="font-medium">{tool.label}</span>
@@ -205,9 +235,11 @@ function ToolRow({ tool, onShowQr }: ToolRowProps) {
         </Badge>
       </td>
       <td className="px-4 py-2 align-middle text-sm">
-        {tool.collaborator
-          ? `${tool.collaborator.first_name} ${tool.collaborator.last_name}`
-          : <span className="text-muted-foreground">Non affecté</span>}
+        {tool.collaborator ? (
+          `${tool.collaborator.first_name} ${tool.collaborator.last_name}`
+        ) : (
+          <span className="text-muted-foreground">Non affecté</span>
+        )}
       </td>
       <td className="px-4 py-2 align-middle text-sm">{planLabel}</td>
       <td className="px-4 py-2 align-middle">
