@@ -95,31 +95,27 @@ export function AiInlineResult({ messages, isLoading, onClose, onContactSupport 
         >
           {/* Container with sparkle border animation */}
           <div className="relative rounded-xl">
-            {/* Animated sparkle border - z-10 to be above card */}
+            {/* Animated sparkle border */}
             <div className="absolute inset-0 rounded-xl overflow-visible pointer-events-none z-10">
-              {/* Traveling sparkle - bigger and more visible */}
+              {/* Traveling sparkle - subtle */}
               <div 
-                className="absolute w-16 h-16 rounded-full animate-sparkle-travel"
+                className="absolute w-4 h-4 rounded-full animate-sparkle-travel"
                 style={{
-                  background: 'radial-gradient(circle, hsl(200 100% 43%) 0%, hsl(200 100% 43% / 0.5) 40%, transparent 70%)',
-                  filter: 'blur(6px)',
-                  boxShadow: '0 0 20px 8px hsl(200 100% 43% / 0.6)',
+                  background: 'radial-gradient(circle, hsl(200 100% 50%) 0%, transparent 70%)',
+                  filter: 'blur(2px)',
+                  boxShadow: '0 0 8px 2px hsl(200 100% 50% / 0.5)',
                 }}
               />
-              {/* Corner sparkles that appear after travel */}
-              <div className="absolute top-2 left-2 animate-corner-sparkle">
-                <div className="flex gap-1.5">
+              {/* Corner sparkles */}
+              <div className="absolute top-1 left-1 animate-corner-sparkle">
+                <div className="flex gap-1">
                   <span 
-                    className="w-2 h-2 rounded-full animate-twinkle" 
-                    style={{ background: 'hsl(200 100% 43%)', animationDelay: '0ms', boxShadow: '0 0 6px 2px hsl(200 100% 43% / 0.8)' }} 
+                    className="w-1 h-1 rounded-full animate-twinkle" 
+                    style={{ background: 'hsl(200 100% 50%)', animationDelay: '0ms', boxShadow: '0 0 3px 1px hsl(200 100% 50% / 0.6)' }} 
                   />
                   <span 
-                    className="w-1.5 h-1.5 rounded-full animate-twinkle" 
-                    style={{ background: 'hsl(200 100% 50%)', animationDelay: '100ms', boxShadow: '0 0 4px 1px hsl(200 100% 50% / 0.6)' }} 
-                  />
-                  <span 
-                    className="w-1.5 h-1.5 rounded-full animate-twinkle" 
-                    style={{ background: 'hsl(200 100% 60%)', animationDelay: '200ms', boxShadow: '0 0 4px 1px hsl(200 100% 60% / 0.5)' }} 
+                    className="w-0.5 h-0.5 rounded-full animate-twinkle" 
+                    style={{ background: 'hsl(200 100% 60%)', animationDelay: '100ms' }} 
                   />
                 </div>
               </div>
