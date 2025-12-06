@@ -302,25 +302,53 @@ function resolveTechnicianFromQuery(query: string, technicians: TechnicianEntity
   const qNorm = normalizeText(query);
   if (!qNorm || !technicians.length) return { candidates: [] };
 
+  // Extract individual words from query to match against names
+  const queryWords = qNorm.split(' ').filter(w => w.length >= 3);
+  
   const scored: { tech: TechnicianEntity; score: number }[] = [];
 
   for (const tech of technicians) {
     const labels: string[] = [];
-    if (tech.fullName) labels.push(tech.fullName);
-    if (tech.firstName && tech.lastName) {
-      labels.push(`${tech.firstName} ${tech.lastName}`);
-      labels.push(`${tech.lastName} ${tech.firstName}`);
+    const normFirstName = normalizeText(tech.firstName || '');
+    const normLastName = normalizeText(tech.lastName || '');
+    const normFullName = normalizeText(tech.fullName || '');
+    
+    if (normFullName) labels.push(normFullName);
+    if (normFirstName && normLastName) {
+      labels.push(`${normFirstName} ${normLastName}`);
+      labels.push(`${normLastName} ${normFirstName}`);
     }
-    if (tech.firstName) labels.push(tech.firstName);
-    if (tech.lastName) labels.push(tech.lastName);
+    if (normFirstName) labels.push(normFirstName);
+    if (normLastName) labels.push(normLastName);
 
     let maxScore = 0;
+    
+    // Check each query word against each label
+    for (const word of queryWords) {
+      for (const label of labels) {
+        // Exact match on single word (e.g., "yoann" matches firstName "yoann")
+        if (word === label) {
+          maxScore = Math.max(maxScore, 1);
+          continue;
+        }
+        
+        // Similarity match
+        const sim = stringSimilarity(word, label);
+        if (sim > maxScore) maxScore = sim;
+        
+        // Check if query word is contained in label or vice versa
+        if (label.includes(word) || word.includes(label)) {
+          maxScore = Math.max(maxScore, 0.95);
+        }
+      }
+    }
+    
+    // Also check full query against full name
     for (const label of labels) {
       const sim = stringSimilarity(qNorm, label);
       if (sim > maxScore) maxScore = sim;
-
-      const ln = normalizeText(label);
-      if (ln && qNorm.includes(ln)) {
+      
+      if (qNorm.includes(label)) {
         maxScore = Math.max(maxScore, 1);
       }
     }
@@ -335,11 +363,15 @@ function resolveTechnicianFromQuery(query: string, technicians: TechnicianEntity
   scored.sort((a, b) => b.score - a.score);
   const best = scored[0];
 
+  console.log(`[resolveTechnician] Best match: "${best.tech.fullName}" with score ${best.score.toFixed(2)}`);
+
   if (best.score >= MIN_SIMILARITY_STRICT) {
     const strongCandidates = scored.filter(s => s.score >= MIN_SIMILARITY_STRICT);
     if (strongCandidates.length === 1) {
       return { best: best.tech, candidates: [] };
     }
+    // Multiple strong candidates
+    console.log(`[resolveTechnician] Multiple strong candidates (${strongCandidates.length}): ${strongCandidates.map(c => c.tech.fullName).join(', ')}`);
   }
 
   return { best: undefined, candidates: scored.slice(0, 5).map(s => s.tech) };
@@ -427,12 +459,27 @@ async function loadUsersForAgency(proxyUrl: string, authHeader: string, agencySl
     });
     if (!res.ok) return [];
     const json = await res.json();
-    return (json.data || []).map((u: any) => ({
-      id: u.id,
-      firstName: u.firstname || u.prenom,
-      lastName: u.lastname || u.nom,
-      fullName: u.name || [u.firstname, u.lastname].filter(Boolean).join(' '),
-    }));
+    
+    const users = (json.data || []).map((u: any) => {
+      // Apogée API: firstname = prénom, name = nom de famille (lastname)
+      const firstName = (u.firstname || u.prenom || '').trim();
+      const lastName = (u.name || u.lastname || u.nom || '').trim();
+      const fullName = [firstName, lastName].filter(Boolean).join(' ');
+      
+      return {
+        id: u.id,
+        firstName,
+        lastName,
+        fullName,
+      };
+    });
+    
+    // Debug: log a sample
+    if (users.length > 0) {
+      console.log(`[unified-search] Sample user: id=${users[0].id}, firstName="${users[0].firstName}", lastName="${users[0].lastName}", fullName="${users[0].fullName}"`);
+    }
+    
+    return users;
   } catch (e) {
     console.error('[unified-search] Users load error:', e);
     return [];
