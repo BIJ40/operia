@@ -169,7 +169,7 @@ serve(async (req) => {
     }
 
     // Fetch source data based on type
-    let sourceData: Array<{ id: string; title: string; content: string }> = [];
+    let sourceData: Array<{ id: string; title: string; content: string; slug: string }> = [];
 
     if (source === "apogee" || source === "helpconfort") {
       // Fetch from blocks table
@@ -202,6 +202,7 @@ serve(async (req) => {
         id: b.id,
         title: b.title,
         content: stripHtml(b.content || ""),
+        slug: b.slug || b.id,
       }));
     } else if (source === "faq") {
       // Fetch from faq_items table (if exists)
@@ -215,6 +216,7 @@ serve(async (req) => {
           id: f.id,
           title: f.question,
           content: stripHtml(f.answer || ""),
+          slug: `faq-${f.id}`,
         }));
       }
     } else if (source === "document") {
@@ -229,6 +231,7 @@ serve(async (req) => {
           id: d.id,
           title: d.title || "Document",
           content: stripHtml(d.content || ""),
+          slug: `doc-${d.id}`,
         }));
       }
     }
@@ -260,6 +263,7 @@ serve(async (req) => {
       title: string;
       content: string;
       chunk_index: number;
+      slug: string;
     }> = [];
 
     for (const item of sourceData) {
@@ -272,6 +276,7 @@ serve(async (req) => {
           title: item.title,
           content: chunk,
           chunk_index: index,
+          slug: item.slug,
         });
       });
     }
@@ -305,6 +310,8 @@ serve(async (req) => {
     const rowsToInsert = allChunks.map((chunk, idx) => ({
       source_id: chunk.source_id,
       block_type: source,
+      block_slug: chunk.slug,
+      context_type: source, // Required field
       title: chunk.title,
       content: chunk.content,
       chunk_text: chunk.content, // For backward compatibility
