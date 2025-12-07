@@ -5,8 +5,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Pencil, Check, RefreshCw } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
+import { Plus, Pencil, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface DashboardHeaderProps {
@@ -16,11 +15,6 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ isEditMode, onToggleEditMode }: DashboardHeaderProps) {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
-
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['user-widgets'] });
-  };
 
   const greeting = getGreeting();
   const firstName = user?.user_metadata?.first_name || 'vous';
@@ -37,10 +31,6 @@ export function DashboardHeader({ isEditMode, onToggleEditMode }: DashboardHeade
       </div>
 
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={handleRefresh}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Actualiser
-        </Button>
         <Button 
           variant={isEditMode ? "default" : "outline"} 
           size="sm" 
@@ -61,12 +51,14 @@ export function DashboardHeader({ isEditMode, onToggleEditMode }: DashboardHeade
             </>
           )}
         </Button>
-        <Button size="sm" asChild>
-          <Link to="/widgets">
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter
-          </Link>
-        </Button>
+        {isEditMode && (
+          <Button size="sm" asChild>
+            <Link to="/widgets">
+              <Plus className="h-4 w-4 mr-2" />
+              Ajouter
+            </Link>
+          </Button>
+        )}
       </div>
     </div>
   );
