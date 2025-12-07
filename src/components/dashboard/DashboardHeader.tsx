@@ -17,18 +17,13 @@ export function DashboardHeader({ isEditMode, onToggleEditMode }: DashboardHeade
   const { user } = useAuth();
 
   const greeting = getGreeting();
-  const firstName = user?.user_metadata?.first_name || 'vous';
+  const firstName = user?.user_metadata?.first_name;
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-      <div>
-        <h1 className="text-2xl font-bold">
-          {greeting}, {firstName} 👋
-        </h1>
-        <p className="text-muted-foreground">
-          Votre hub opérationnel personnalisé
-        </p>
-      </div>
+      <h1 className="text-2xl font-bold">
+        {greeting}{firstName ? `, ${firstName}` : ''} 👋
+      </h1>
 
       <div className="flex items-center gap-2">
         <Button 
