@@ -240,7 +240,8 @@ export function MainHeader() {
                       onMouseEnter={() => handleMenuEnter('support')}
                       onMouseLeave={handleMenuLeave}
                     >
-                      <button
+                      <Link
+                        to="/support"
                         className={cn(
                           "flex items-center justify-center p-1 rounded-md transition-all hover:scale-105 relative",
                           location.pathname.startsWith('/support')
@@ -259,7 +260,7 @@ export function MainHeader() {
                             {newTicketsCount}
                           </span>
                         )}
-                      </button>
+                      </Link>
 
                       {activeMenu === 'support' && (
                         <MegaMenu 
