@@ -20,6 +20,7 @@ import {
   FolderOpen,
   Clock,
   LayoutGrid,
+  Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WidgetContent } from './WidgetContent';
@@ -53,6 +54,7 @@ interface DashboardWidgetProps {
   isResizing?: boolean;
   previewDimensions?: PreviewDimensions;
   onResizeStart?: (widgetId: string, corner: string, e: React.MouseEvent) => void;
+  onDelete?: (widgetId: string) => void;
 }
 
 export function DashboardWidget({ 
@@ -61,7 +63,8 @@ export function DashboardWidget({
   isDragging, 
   isResizing,
   previewDimensions,
-  onResizeStart 
+  onResizeStart,
+  onDelete
 }: DashboardWidgetProps) {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -115,12 +118,26 @@ export function DashboardWidget({
         isResizing && 'ring-2 ring-helpconfort-blue/50 shadow-xl'
       )}
     >
-      {/* Titre minimaliste */}
-      <div className="absolute top-2 left-3 right-3 flex items-center gap-2 pointer-events-none z-10">
-        <Icon className="h-4 w-4 text-helpconfort-blue shrink-0" />
-        <span className="text-xs font-medium text-muted-foreground truncate">
+      {/* Header avec titre et bouton supprimer */}
+      <div className="absolute top-2 left-3 right-3 flex items-center gap-2 z-10">
+        <Icon className="h-4 w-4 text-helpconfort-blue shrink-0 pointer-events-none" />
+        <span className="text-xs font-medium text-muted-foreground truncate pointer-events-none flex-1">
           {widget.template?.name}
         </span>
+        
+        {/* Bouton supprimer - visible au hover en mode édition */}
+        {isEditMode && isHovered && !isDragging && !isResizing && onDelete && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(widget.id);
+            }}
+            className="p-1 rounded-md bg-destructive/10 hover:bg-destructive/20 text-destructive transition-colors"
+            title="Supprimer le widget"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
 
       {/* Contenu du widget */}
