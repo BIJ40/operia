@@ -77,15 +77,16 @@ export function DashboardWidget({
   };
 
   // Positionnement absolu dans la grille CSS
-  // IMPORTANT: Ne pas appliquer la transformation dnd-kit pendant le resize
+  // IMPORTANT: Ne pas appliquer la transformation dnd-kit pendant le drag OU resize
+  // L'original reste en place, seul le DragOverlay se déplace
   const style: React.CSSProperties = {
     gridColumnStart: dims.position_x + 1,
     gridColumnEnd: dims.position_x + 1 + dims.width,
     gridRowStart: dims.position_y + 1,
     gridRowEnd: dims.position_y + 1 + dims.height,
-    transform: isResizing ? undefined : CSS.Translate.toString(transform),
+    transform: (isDragging || isResizing) ? undefined : CSS.Translate.toString(transform),
     zIndex: isDragging ? 50 : isResizing ? 40 : 1,
-    transition: isResizing ? 'none' : undefined, // No transition during resize for fluidity
+    transition: (isDragging || isResizing) ? 'none' : undefined,
   };
 
   const Icon = ICONS[widget.template?.icon || 'LayoutGrid'] || LayoutGrid;
@@ -102,7 +103,7 @@ export function DashboardWidget({
         'relative overflow-hidden cursor-grab active:cursor-grabbing select-none',
         'bg-card/95 backdrop-blur-sm border-border/50',
         'hover:shadow-lg hover:border-primary/30',
-        isDragging && 'opacity-0 pointer-events-none', // Invisible pendant le drag, seul l'overlay est visible
+        isDragging && 'opacity-50 ring-2 ring-primary/30 ring-dashed', // Semi-transparent, reste en place
         isResizing && 'ring-2 ring-primary/50 shadow-xl'
       )}
     >
