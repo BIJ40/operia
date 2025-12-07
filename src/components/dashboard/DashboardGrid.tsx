@@ -51,7 +51,6 @@ export function DashboardGrid({ isEditMode }: DashboardGridProps) {
   const batchUpdate = useBatchUpdateWidgets();
   const removeWidget = useRemoveWidget();
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [isOverTrash, setIsOverTrash] = useState(false);
   const [resizing, setResizing] = useState<ResizeState | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -67,7 +66,6 @@ export function DashboardGrid({ isEditMode }: DashboardGridProps) {
     if (!isEditMode) return; // Block drag if not in edit mode
     if (resizing) return; // Don't start drag while resizing
     setActiveId(event.active.id as string);
-    setIsOverTrash(false);
   }, [resizing, isEditMode]);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
@@ -77,16 +75,6 @@ export function DashboardGrid({ isEditMode }: DashboardGridProps) {
     setActiveId(null);
     
     if (!widgets || !widgetId) return;
-
-    const pointerY = (event.activatorEvent as MouseEvent)?.clientY;
-    const windowHeight = window.innerHeight;
-    const overTrash = pointerY && pointerY > windowHeight - 100;
-
-    if (overTrash) {
-      removeWidget.mutate(widgetId);
-      setIsOverTrash(false);
-      return;
-    }
 
     const { delta } = event;
     const widget = widgets.find(w => w.id === widgetId);
@@ -110,28 +98,8 @@ export function DashboardGrid({ isEditMode }: DashboardGridProps) {
         height: widget.height,
       }]);
     }
+  }, [widgets, batchUpdate, activeId, isEditMode]);
 
-    setIsOverTrash(false);
-  }, [widgets, batchUpdate, removeWidget, activeId, isEditMode]);
-
-  // Track mouse position during drag for trash zone (bottom center of grid)
-  useEffect(() => {
-    if (!activeId || !isEditMode) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      // Trash zone: bottom of the viewport, centered, 300px wide
-      const trashWidth = 300;
-      const centerX = window.innerWidth / 2;
-      const isInTrashZone = 
-        e.clientX > centerX - trashWidth / 2 && 
-        e.clientX < centerX + trashWidth / 2 &&
-        e.clientY > window.innerHeight - 100;
-      setIsOverTrash(isInTrashZone);
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [activeId, isEditMode]);
 
   // Handle resize start
   const handleResizeStart = useCallback((widgetId: string, corner: string, e: React.MouseEvent) => {
@@ -337,27 +305,6 @@ export function DashboardGrid({ isEditMode }: DashboardGridProps) {
       </div>
 
       {/* Zone corbeille - barre en bas au centre pendant le drag */}
-      {activeId && isEditMode && (
-        <div 
-          className={cn(
-            'fixed bottom-6 left-1/2 -translate-x-1/2 h-14 px-8 flex items-center justify-center gap-3 rounded-full transition-all duration-200 z-50 shadow-xl',
-            isOverTrash 
-              ? 'bg-destructive text-destructive-foreground scale-110' 
-              : 'bg-card/95 backdrop-blur-md text-muted-foreground border-2 border-dashed border-destructive/50'
-          )}
-        >
-          <Trash2 className={cn(
-            'transition-transform duration-200',
-            isOverTrash ? 'h-6 w-6 animate-pulse' : 'h-5 w-5'
-          )} />
-          <span className={cn(
-            'font-medium transition-all duration-200',
-            isOverTrash ? 'text-base' : 'text-sm'
-          )}>
-            {isOverTrash ? 'Relâcher pour supprimer' : 'Déposer ici pour retirer'}
-          </span>
-        </div>
-      )}
 
       <DragOverlay dropAnimation={null}>
         {activeWidget && isEditMode && gridRef.current && (() => {
