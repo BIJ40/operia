@@ -14,10 +14,9 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({ isEditMode, onToggleEditMode }: DashboardHeaderProps) {
-  const { user } = useAuth();
+  const { firstName } = useAuth();
 
   const greeting = getGreeting();
-  const firstName = user?.user_metadata?.first_name;
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
