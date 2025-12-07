@@ -1,5 +1,6 @@
 /**
  * Widget CA par Univers - Affiche la répartition du CA par univers
+ * Version autonome sans dépendance FiltersProvider
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -28,8 +29,11 @@ export function CAParUniversWidget() {
   const services = getGlobalApogeeDataServices();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['widget-ca-univers', agencySlug],
-    queryFn: () => getMetricForAgency('ca_par_univers', agencySlug, { dateRange }, services),
+    queryKey: ['widget-ca-univers', agencySlug, dateRange.start.toISOString()],
+    queryFn: async () => {
+      if (!agencySlug) return null;
+      return getMetricForAgency('ca_par_univers', agencySlug, { dateRange }, services);
+    },
     enabled: !!agencySlug,
     staleTime: 5 * 60 * 1000,
   });
@@ -44,21 +48,32 @@ export function CAParUniversWidget() {
     );
   }
 
-  // Convertir les données en tableau
+  // Parser les données selon la structure retournée par StatIA
   const universData: UniversData[] = [];
-  if (data && typeof data === 'object' && !Array.isArray(data)) {
-    const dataObj = data as unknown as Record<string, { name?: string; ca?: number; color?: string } | number>;
-    Object.entries(dataObj).forEach(([key, value]) => {
-      if (typeof value === 'object' && value !== null) {
-        universData.push({
-          name: value.name || key,
-          ca: value.ca || 0,
-          color: value.color,
-        });
-      } else if (typeof value === 'number') {
-        universData.push({ name: key, ca: value });
-      }
-    });
+  
+  if (data) {
+    // Format attendu: { value: Record<string, { name, ca, color }> } ou directement Record<...>
+    const dataObj = data.value ?? data;
+    
+    if (dataObj && typeof dataObj === 'object' && !Array.isArray(dataObj)) {
+      Object.entries(dataObj as Record<string, unknown>).forEach(([key, val]) => {
+        // Ignorer les clés de métadonnées
+        if (key === 'value' || key === 'metadata' || key === 'breakdown') return;
+        
+        if (typeof val === 'object' && val !== null) {
+          const item = val as { name?: string; ca?: number; color?: string };
+          if (item.ca !== undefined) {
+            universData.push({
+              name: item.name || key,
+              ca: item.ca,
+              color: item.color,
+            });
+          }
+        } else if (typeof val === 'number') {
+          universData.push({ name: key, ca: val });
+        }
+      });
+    }
   }
 
   // Trier par CA décroissant
