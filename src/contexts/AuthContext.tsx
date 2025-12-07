@@ -43,6 +43,7 @@ interface AuthContextType {
   roleAgence: string | null;
   mustChangePassword: boolean;
   isActive: boolean;
+  isSalariedManager: boolean; // Dirigeant salarié (N2 avec coffre RH)
   
   // ============================================================================
   // SYSTÈME V2.0 - Source de vérité unique
@@ -98,6 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roleAgence, setRoleAgence] = useState<string | null>(null);
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [isActive, setIsActive] = useState(true);
+  const [isSalariedManager, setIsSalariedManager] = useState(false);
   
   // ============================================================================
   // SYSTÈME V2.0 - États principaux
@@ -177,7 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       const queryPromise = supabase
         .from('profiles')
-        .select('agence, agency_id, role_agence, must_change_password, global_role, enabled_modules, is_active')
+        .select('agence, agency_id, role_agence, must_change_password, global_role, enabled_modules, is_active, is_salaried_manager')
         .eq('id', userId)
         .single();
       
@@ -192,6 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAgencyId(profile?.agency_id || null);
       setRoleAgence(profile?.role_agence || null);
       setMustChangePassword(profile?.must_change_password || false);
+      setIsSalariedManager(profile?.is_salaried_manager || false);
       
       // Vérifier si le compte est actif
       const accountActive = profile?.is_active !== false; // true par défaut
@@ -314,6 +317,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setRoleAgence(null);
           setMustChangePassword(false);
           setIsActive(true);
+          setIsSalariedManager(false);
           setGlobalRole(null);
           setEnabledModules(null);
           setIsAuthLoading(false);
@@ -363,6 +367,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRoleAgence(null);
       setMustChangePassword(false);
       setIsActive(true);
+      setIsSalariedManager(false);
       setGlobalRole(null);
       setEnabledModules(null);
       setUser(null);
@@ -387,6 +392,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       roleAgence,
       mustChangePassword,
       isActive,
+      isSalariedManager,
       globalRole,
       enabledModules,
       accessContext,
