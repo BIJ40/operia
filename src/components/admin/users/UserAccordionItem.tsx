@@ -1,5 +1,16 @@
-import { memo, useMemo } from 'react';
+import { memo } from 'react';
 import { GlobalRole, GLOBAL_ROLES, GLOBAL_ROLE_LABELS, GLOBAL_ROLE_COLORS, getAllRolesSorted } from '@/types/globalRoles';
+import { MODULE_DEFINITIONS, EnabledModules, ModuleKey, canAccessModule } from '@/types/modules';
+import { UserProfile } from '@/hooks/use-user-management';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Save, MoreHorizontal, Pencil, UserX, UserCheck, Trash2, AlertCircle, Eye, ChevronDown, Shield, Zap } from 'lucide-react';
 
 // Mapping rôle global → options RH autorisées (hard constraint)
 const RH_OPTIONS_BY_ROLE: Record<GlobalRole, string[]> = {
@@ -17,19 +28,6 @@ function isRhOptionAllowedForRole(userRole: GlobalRole | null, optionKey: string
   if (!userRole) return false;
   return RH_OPTIONS_BY_ROLE[userRole]?.includes(optionKey) ?? false;
 }
-import { MODULE_DEFINITIONS, EnabledModules, ModuleKey, ModuleOptionsState, canAccessModule } from '@/types/modules';
-import { UserProfile } from '@/hooks/use-user-management';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Save, MoreHorizontal, Pencil, UserX, UserCheck, Trash2, AlertCircle, Eye, ChevronDown, Info, Shield, Zap } from 'lucide-react';
 
 const ROLE_AGENCE_LABELS: Record<string, string> = {
   'dirigeant': 'Dirigeant(e)',
@@ -38,97 +36,6 @@ const ROLE_AGENCE_LABELS: Record<string, string> = {
   'tete_de_reseau': 'Tête de réseau',
   'externe': 'Externe',
 };
-
-// Composant carte permission détaillée
-interface PermissionCardProps {
-  label: string;
-  description: string;
-  features: string[];
-  targetUsers: string;
-  isEnabled: boolean;
-  isAllowed: boolean;
-  canEdit: boolean;
-  color: string;
-  roleRequired?: string;
-  onToggle: () => void;
-}
-
-function PermissionCard({
-  label,
-  description,
-  features,
-  targetUsers,
-  isEnabled,
-  isAllowed,
-  canEdit,
-  color,
-  roleRequired,
-  onToggle,
-}: PermissionCardProps) {
-  const isDisabled = !canEdit || !isAllowed;
-  
-  const handleToggle = (e: React.MouseEvent | React.KeyboardEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!isDisabled) {
-      onToggle();
-    }
-  };
-  
-  return (
-    <div
-      role="button"
-      tabIndex={isDisabled ? -1 : 0}
-      onClick={handleToggle}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          handleToggle(e);
-        }
-      }}
-      className={`rounded-lg border-2 p-4 transition-all select-none ${
-        isDisabled ? 'opacity-50 cursor-not-allowed bg-muted/30' : 'cursor-pointer hover:shadow-md active:scale-[0.98]'
-      } ${
-        isEnabled 
-          ? 'border-primary bg-primary/5 shadow-sm' 
-          : 'border-muted hover:border-primary/40'
-      }`}
-    >
-      <div className="flex gap-3">
-        <div className="pt-0.5">
-          <Checkbox
-            checked={isEnabled}
-            disabled={isDisabled}
-            onCheckedChange={() => {
-              if (!isDisabled) onToggle();
-            }}
-            className="w-5 h-5"
-          />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <h4 className={`font-semibold text-sm ${color}`}>{label}</h4>
-            {roleRequired && !isAllowed && (
-              <Badge variant="outline" className="text-xs">{roleRequired}</Badge>
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground mb-2">{description}</p>
-          <ul className="text-xs space-y-0.5 mb-2">
-            {features.map((f, i) => (
-              <li key={i} className={`flex items-start gap-1 ${
-                f.startsWith('⛔') ? 'text-destructive' : 
-                f.startsWith('✅') ? 'text-primary' : 'text-muted-foreground'
-              }`}>
-                {!f.startsWith('⛔') && !f.startsWith('✅') && <span className="text-primary">•</span>}
-                <span>{f}</span>
-              </li>
-            ))}
-          </ul>
-          <p className="text-xs text-muted-foreground italic">→ {targetUsers}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 interface UserAccordionItemProps {
   user: UserProfile;
@@ -349,7 +256,7 @@ export const UserAccordionItem = memo(function UserAccordionItem({
             </Select>
           </div>
 
-          {/* Modules Section - Nouvelle interface détaillée */}
+          {/* Modules Section - Interface unifiée */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 font-medium">
@@ -357,175 +264,63 @@ export const UserAccordionItem = memo(function UserAccordionItem({
                 Permissions & Accès
               </div>
               <span className="text-xs text-muted-foreground">
-                Cliquez sur une carte pour activer/désactiver
+                Cliquez sur un module pour l'activer/désactiver
               </span>
             </div>
 
-            {/* RH & Parc - Permissions détaillées */}
+            {/* Tous les modules avec le même style */}
             <div className="space-y-3">
-              <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-helpconfort-blue" />
-                Ressources Humaines & Parc
-              </h4>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                {/* Coffre RH Personnel */}
-                <PermissionCard
-                  label="Mon Coffre RH Personnel"
-                  description="Accès à ses propres documents RH"
-                  features={[
-                    'Consulter ses bulletins de paie',
-                    'Voir ses contrats et avenants', 
-                    'Faire des demandes de documents',
-                  ]}
-                  targetUsers="Tous les collaborateurs"
-                  isEnabled={isModuleEnabled('rh') && (getModuleOptions('rh')['coffre'] ?? false)}
-                  isAllowed={isRhOptionAllowedForRole(effectiveRole, 'coffre')}
-                  canEdit={canEdit}
-                  color="text-helpconfort-blue"
-                  onToggle={() => {
-                    if (!isModuleEnabled('rh')) onModuleToggle('rh', true);
-                    onModuleOptionToggle('rh', 'coffre', !(getModuleOptions('rh')['coffre'] ?? false));
-                  }}
-                />
+              {MODULE_DEFINITIONS.map(moduleDef => {
+                const isEnabled = isModuleEnabled(moduleDef.key);
+                const canUserAccessModule = canAccessModule(effectiveRole, moduleDef.key);
+                const isModuleDisabled = !canEdit || !canUserAccessModule;
+                const moduleOptions = getModuleOptions(moduleDef.key);
+                const hasOptions = moduleDef.options && moduleDef.options.length > 0;
 
-                {/* Gestionnaire RH */}
-                <PermissionCard
-                  label="Gestionnaire RH"
-                  description="Gestion des documents équipe SANS accès paie"
-                  features={[
-                    'Voir les fiches collaborateurs',
-                    'Uploader des documents',
-                    '⛔ PAS d\'accès aux salaires',
-                  ]}
-                  targetUsers="Assistante RH, Manager"
-                  isEnabled={isModuleEnabled('rh') && (getModuleOptions('rh')['rh_viewer'] ?? false)}
-                  isAllowed={isRhOptionAllowedForRole(effectiveRole, 'rh_viewer')}
-                  canEdit={canEdit}
-                  color="text-amber-500"
-                  roleRequired="N2+"
-                  onToggle={() => {
-                    if (!isModuleEnabled('rh')) onModuleToggle('rh', true);
-                    onModuleOptionToggle('rh', 'rh_viewer', !(getModuleOptions('rh')['rh_viewer'] ?? false));
-                  }}
-                />
+                // Pour RH, on vérifie aussi les contraintes de rôle par option
+                const isRhModule = moduleDef.key === 'rh';
 
-                {/* Admin RH Complet */}
-                <PermissionCard
-                  label="Administrateur RH Complet"
-                  description="Contrôle TOTAL sur la paie et les RH"
-                  features={[
-                    '✅ Tout ce que fait le Gestionnaire',
-                    'Accès bulletins de paie',
-                    'Modification des salaires',
-                  ]}
-                  targetUsers="Dirigeant, Responsable Paie"
-                  isEnabled={isModuleEnabled('rh') && (getModuleOptions('rh')['rh_admin'] ?? false)}
-                  isAllowed={isRhOptionAllowedForRole(effectiveRole, 'rh_admin')}
-                  canEdit={canEdit}
-                  color="text-destructive"
-                  roleRequired="N2+"
-                  onToggle={() => {
-                    if (!isModuleEnabled('rh')) onModuleToggle('rh', true);
-                    onModuleOptionToggle('rh', 'rh_admin', !(getModuleOptions('rh')['rh_admin'] ?? false));
-                  }}
-                />
+                const handleModuleClick = (e: React.MouseEvent) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!isModuleDisabled) {
+                    onModuleToggle(moduleDef.key, !isEnabled);
+                  }
+                };
 
-                {/* Parc Véhicules */}
-                <PermissionCard
-                  label="Gestion Véhicules"
-                  description="Suivi du parc automobile"
-                  features={[
-                    'Liste des véhicules',
-                    'Contrôles techniques',
-                    'Affectation techniciens',
-                  ]}
-                  targetUsers="Dirigeant, Logistique"
-                  isEnabled={isModuleEnabled('parc') && (getModuleOptions('parc')['vehicules'] ?? false)}
-                  isAllowed={canAccessModule(effectiveRole, 'parc')}
-                  canEdit={canEdit}
-                  color="text-helpconfort-orange"
-                  onToggle={() => {
-                    if (!isModuleEnabled('parc')) onModuleToggle('parc', true);
-                    onModuleOptionToggle('parc', 'vehicules', !(getModuleOptions('parc')['vehicules'] ?? false));
-                  }}
-                />
-
-                {/* Parc Équipements */}
-                <PermissionCard
-                  label="Gestion Équipements & EPI"
-                  description="Matériel et équipements de protection"
-                  features={[
-                    'Inventaire matériel',
-                    'Suivi des EPI',
-                    'Alertes expiration',
-                  ]}
-                  targetUsers="Dirigeant, Sécurité"
-                  isEnabled={isModuleEnabled('parc') && (getModuleOptions('parc')['equipements'] ?? false)}
-                  isAllowed={canAccessModule(effectiveRole, 'parc')}
-                  canEdit={canEdit}
-                  color="text-helpconfort-orange"
-                  onToggle={() => {
-                    if (!isModuleEnabled('parc')) onModuleToggle('parc', true);
-                    onModuleOptionToggle('parc', 'equipements', !(getModuleOptions('parc')['equipements'] ?? false));
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Autres Modules - Avec options visibles quand activé */}
-            <div className="space-y-3">
-              <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-primary" />
-                Autres Modules
-              </h4>
-              <div className="space-y-3">
-                {MODULE_DEFINITIONS
-                  .filter(m => !['rh', 'parc'].includes(m.key))
-                  .map(moduleDef => {
-                    const isEnabled = isModuleEnabled(moduleDef.key);
-                    const canUserAccessModule = canAccessModule(effectiveRole, moduleDef.key);
-                    const isModuleDisabled = !canEdit || !canUserAccessModule;
-                    const moduleOptions = getModuleOptions(moduleDef.key);
-                    const hasOptions = moduleDef.options && moduleDef.options.length > 0;
-
-                    const handleModuleClick = (e: React.MouseEvent) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      if (!isModuleDisabled) {
-                        onModuleToggle(moduleDef.key, !isEnabled);
-                      }
-                    };
-
-                    return (
-                      <div 
-                        key={moduleDef.key} 
-                        className={`rounded-lg border transition-all ${
-                          isEnabled 
-                            ? 'bg-primary/5 border-primary/30 shadow-sm' 
-                            : 'bg-muted/30 border-muted'
-                        }`}
-                      >
-                        {/* Module header - cliquable */}
+                return (
+                  <Collapsible 
+                    key={moduleDef.key}
+                    defaultOpen={isEnabled}
+                  >
+                    <div 
+                      className={`rounded-lg border transition-all ${
+                        isEnabled 
+                          ? 'bg-primary/5 border-primary/30 shadow-sm' 
+                          : 'bg-muted/30 border-muted'
+                      }`}
+                    >
+                      {/* Module header */}
+                      <div className="flex items-center">
+                        {/* Zone cliquable pour activer/désactiver */}
                         <div 
                           role="button"
                           tabIndex={isModuleDisabled ? -1 : 0}
                           onClick={handleModuleClick}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
                               handleModuleClick(e as any);
                             }
                           }}
-                          className={`p-3 flex items-center gap-3 ${
+                          className={`flex-1 p-3 flex items-center gap-3 ${
                             isModuleDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-muted/50'
-                          } ${hasOptions && isEnabled ? 'border-b border-border/50' : ''}`}
+                          }`}
                         >
                           <Checkbox
                             checked={isEnabled}
                             disabled={isModuleDisabled}
-                            onCheckedChange={(checked) => {
-                              if (!isModuleDisabled) onModuleToggle(moduleDef.key, !!checked);
-                            }}
-                            className="w-5 h-5"
+                            className="w-5 h-5 pointer-events-none"
                           />
                           <div className="flex-1 min-w-0">
                             <span className={`text-sm font-medium ${!canUserAccessModule ? 'text-muted-foreground' : ''}`}>
@@ -540,21 +335,45 @@ export const UserAccordionItem = memo(function UserAccordionItem({
                               N{GLOBAL_ROLES[moduleDef.minRole]}+
                             </Badge>
                           )}
-                          {hasOptions && isEnabled && (
-                            <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                          )}
                         </div>
+                        
+                        {/* Bouton pour replier/déplier les options */}
+                        {hasOptions && (
+                          <CollapsibleTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-full px-3 rounded-none border-l border-border/30"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <ChevronDown className="w-4 h-4 text-muted-foreground transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
+                            </Button>
+                          </CollapsibleTrigger>
+                        )}
+                      </div>
 
-                        {/* Options du module - affichées seulement si module activé */}
-                        {isEnabled && hasOptions && (
-                          <div className="p-3 space-y-2 bg-background/50">
+                      {/* Options du module */}
+                      {hasOptions && (
+                        <CollapsibleContent>
+                          <div className="p-3 space-y-2 bg-background/50 border-t border-border/30">
                             <p className="text-xs text-muted-foreground font-medium mb-2">Options du module :</p>
                             {moduleDef.options!.map(option => {
                               const optionEnabled = moduleOptions[option.key] ?? option.defaultEnabled;
+                              
+                              // Pour RH, vérifier si l'option est autorisée pour ce rôle
+                              const isOptionAllowed = isRhModule 
+                                ? isRhOptionAllowedForRole(effectiveRole, option.key)
+                                : true;
+                              const isOptionDisabled = !canEdit || !isOptionAllowed;
+                              
                               const handleOptionClick = (e: React.MouseEvent) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                if (canEdit) {
+                                if (!isOptionDisabled) {
+                                  // Si le module n'est pas activé, l'activer d'abord
+                                  if (!isEnabled) {
+                                    onModuleToggle(moduleDef.key, true);
+                                  }
                                   onModuleOptionToggle(moduleDef.key, option.key, !optionEnabled);
                                 }
                               };
@@ -563,24 +382,24 @@ export const UserAccordionItem = memo(function UserAccordionItem({
                                 <div 
                                   key={option.key}
                                   role="button"
-                                  tabIndex={canEdit ? 0 : -1}
+                                  tabIndex={isOptionDisabled ? -1 : 0}
                                   onClick={handleOptionClick}
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter' || e.key === ' ') {
+                                      e.preventDefault();
                                       handleOptionClick(e as any);
                                     }
                                   }}
                                   className={`flex items-center gap-2 p-2 rounded border ${
-                                    canEdit ? 'cursor-pointer hover:bg-muted/50' : 'opacity-50 cursor-not-allowed'
-                                  } ${optionEnabled ? 'bg-primary/10 border-primary/30' : 'border-muted'}`}
+                                    isOptionDisabled 
+                                      ? 'opacity-50 cursor-not-allowed' 
+                                      : 'cursor-pointer hover:bg-muted/50 active:scale-[0.99]'
+                                  } ${optionEnabled && isEnabled ? 'bg-primary/10 border-primary/30' : 'border-muted'}`}
                                 >
                                   <Checkbox
-                                    checked={optionEnabled}
-                                    disabled={!canEdit}
-                                    onCheckedChange={(checked) => {
-                                      if (canEdit) onModuleOptionToggle(moduleDef.key, option.key, !!checked);
-                                    }}
-                                    className="w-4 h-4"
+                                    checked={optionEnabled && isEnabled}
+                                    disabled={isOptionDisabled}
+                                    className="w-4 h-4 pointer-events-none"
                                   />
                                   <div className="flex-1">
                                     <span className="text-sm">{option.label}</span>
@@ -588,16 +407,19 @@ export const UserAccordionItem = memo(function UserAccordionItem({
                                       <p className="text-xs text-muted-foreground">{option.description}</p>
                                     )}
                                   </div>
+                                  {!isOptionAllowed && isRhModule && (
+                                    <Badge variant="outline" className="text-xs shrink-0">N2+</Badge>
+                                  )}
                                 </div>
                               );
                             })}
                           </div>
-                        )}
-                      </div>
-                    );
-                  })
-                }
-              </div>
+                        </CollapsibleContent>
+                      )}
+                    </div>
+                  </Collapsible>
+                );
+              })}
             </div>
           </div>
 
