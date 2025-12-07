@@ -99,14 +99,14 @@ export function LiveCloseSessionDialog({
       const subject = messages.find(m => !m.is_from_support)?.content?.substring(0, 100) 
         || 'Conversation live support';
 
-      // Préparer les données du ticket
+      // Préparer les données du ticket - status/type conformes aux check constraints
       const ticketData = {
         user_id: userId,
         subject: subject,
-        status: 'open',
+        status: 'new',
         heat_priority: 6,
         source: 'chat',
-        type: 'live_chat',
+        type: 'chat_human',
         agency_slug: agencySlug || null,
         chatbot_conversation: chatHistory,
         support_level: 1,
