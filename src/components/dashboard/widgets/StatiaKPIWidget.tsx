@@ -65,24 +65,18 @@ export function StatiaKPIWidget({ metricId }: StatiaKPIWidgetProps) {
     end: endOfMonth(subMonths(now, 1)),
   };
 
+  const services = getGlobalApogeeDataServices();
+
   const { data: currentData, isLoading: loadingCurrent } = useQuery({
     queryKey: ['widget-kpi', metricId, agencySlug, 'current', format(currentMonth.start, 'yyyy-MM')],
-    queryFn: async () => {
-      const services = await getGlobalApogeeDataServices();
-      if (!services) return null;
-      return getMetricForAgency(metricId, agencySlug, { dateRange: currentMonth }, services);
-    },
+    queryFn: () => getMetricForAgency(metricId, agencySlug, { dateRange: currentMonth }, services),
     enabled: !!agencySlug,
     staleTime: 5 * 60 * 1000,
   });
 
   const { data: previousData, isLoading: loadingPrevious } = useQuery({
     queryKey: ['widget-kpi', metricId, agencySlug, 'previous', format(lastMonth.start, 'yyyy-MM')],
-    queryFn: async () => {
-      const services = await getGlobalApogeeDataServices();
-      if (!services) return null;
-      return getMetricForAgency(metricId, agencySlug, { dateRange: lastMonth }, services);
-    },
+    queryFn: () => getMetricForAgency(metricId, agencySlug, { dateRange: lastMonth }, services),
     enabled: !!agencySlug,
     staleTime: 5 * 60 * 1000,
   });

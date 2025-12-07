@@ -42,15 +42,13 @@ export function MesDevisFacturesWidget() {
     end: endOfMonth(now),
   };
 
+  const services = getGlobalApogeeDataServices();
+
   const { data: stats, isLoading } = useQuery({
     queryKey: ['widget-devis-factures', agencySlug],
     queryFn: async () => {
       if (!agencySlug) return null;
 
-      const services = await getGlobalApogeeDataServices();
-      if (!services) return null;
-
-      // Récupérer le nombre de devis et factures via StatIA
       const [nbDevis, nbFactures, tauxTransfo] = await Promise.all([
         getMetricForAgency('nb_devis', agencySlug, { dateRange }, services),
         getMetricForAgency('nb_factures', agencySlug, { dateRange }, services),
