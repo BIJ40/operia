@@ -101,15 +101,18 @@ export function DashboardWidget({
       onMouseLeave={() => setIsHovered(false)}
       className={cn(
         'relative overflow-hidden cursor-grab active:cursor-grabbing select-none',
-        'bg-card/95 backdrop-blur-sm border-border/50',
-        'hover:shadow-lg hover:border-primary/30',
-        isDragging && 'opacity-50 ring-2 ring-primary/30 ring-dashed', // Semi-transparent, reste en place
-        isResizing && 'ring-2 ring-primary/50 shadow-xl'
+        'border-l-4 border-l-helpconfort-blue',
+        'bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-background to-background',
+        'border border-helpconfort-blue/15 shadow-sm',
+        'transition-all duration-300',
+        'hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5',
+        isDragging && 'opacity-50 ring-2 ring-helpconfort-blue/30 ring-dashed',
+        isResizing && 'ring-2 ring-helpconfort-blue/50 shadow-xl'
       )}
     >
       {/* Titre minimaliste */}
       <div className="absolute top-2 left-3 right-3 flex items-center gap-2 pointer-events-none z-10">
-        <Icon className="h-4 w-4 text-primary/70 shrink-0" />
+        <Icon className="h-4 w-4 text-helpconfort-blue shrink-0" />
         <span className="text-xs font-medium text-muted-foreground truncate">
           {widget.template?.name}
         </span>
