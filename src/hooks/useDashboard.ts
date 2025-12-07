@@ -221,22 +221,33 @@ export function useBatchUpdateWidgets() {
 
   return useMutation({
     mutationFn: async (updates: { id: string; position_x: number; position_y: number; width: number; height: number }[]) => {
-      const promises = updates.map(u => 
-        supabase
-          .from('user_widgets')
-          .update({ 
-            position_x: u.position_x, 
-            position_y: u.position_y,
-            width: u.width,
-            height: u.height,
-          })
-          .eq('id', u.id)
+      const results = await Promise.all(
+        updates.map(u => 
+          supabase
+            .from('user_widgets')
+            .update({ 
+              position_x: u.position_x, 
+              position_y: u.position_y,
+              width: u.width,
+              height: u.height,
+            })
+            .eq('id', u.id)
+        )
       );
 
-      await Promise.all(promises);
+      // Check for errors
+      const errors = results.filter(r => r.error);
+      if (errors.length > 0) {
+        throw new Error(errors[0].error?.message || 'Erreur lors de la mise à jour');
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-widgets'] });
+    },
+    onError: (error: Error) => {
+      toast.error('Erreur lors de la sauvegarde', {
+        description: error.message,
+      });
     },
   });
 }
