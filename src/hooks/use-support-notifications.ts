@@ -14,6 +14,9 @@ export function useSupportNotifications() {
   // V2.5: Séparation chat humain (rouge) vs tickets (jaune)
   const [chatHumanCount, setChatHumanCount] = useState(0);
   const [ticketRequestCount, setTicketRequestCount] = useState(0);
+  
+  // V3: Sessions de chat live en attente d'agent
+  const [liveChatCount, setLiveChatCount] = useState(0);
 
   // Fonction pour jouer un son de notification
   const playNotificationSound = () => {
@@ -100,6 +103,19 @@ export function useSupportNotifications() {
       }
     };
 
+    // V3: Charger les sessions de chat live en attente d'agent
+    const loadLiveSessions = async () => {
+      const { count, error } = await supabase
+        .from('live_support_sessions')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active')
+        .is('agent_id', null);
+
+      if (!error) {
+        setLiveChatCount(count ?? 0);
+      }
+    };
+
     // Charger le nombre de messages non lus
     const loadUnreadMessages = async () => {
       const { count, error } = await supabase
@@ -115,6 +131,7 @@ export function useSupportNotifications() {
 
     loadTickets();
     loadUnreadMessages();
+    loadLiveSessions();
 
     // Écouter les changements de tickets en temps réel
     const ticketsChannel = supabase
@@ -231,10 +248,45 @@ export function useSupportNotifications() {
       )
       .subscribe();
 
+    // V3: Écouter les nouvelles sessions de chat live
+    const liveSessionsChannel = supabase
+      .channel('live-support-sessions-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'live_support_sessions',
+        },
+        async (payload) => {
+          loadLiveSessions();
+          playNotificationSound();
+          
+          const session = payload.new as { user_name?: string; agency_slug?: string };
+          toast.error('🔴 Chat en direct demandé', {
+            description: `${session.user_name || 'Un utilisateur'}${session.agency_slug ? ` (${session.agency_slug})` : ''} demande une assistance immédiate`,
+            duration: 10000,
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'live_support_sessions',
+        },
+        () => {
+          loadLiveSessions();
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(ticketsChannel);
       supabase.removeChannel(messagesChannel);
       supabase.removeChannel(attachmentsChannel);
+      supabase.removeChannel(liveSessionsChannel);
     };
   }, [isSupport, isAdmin, user]);
 
@@ -248,5 +300,8 @@ export function useSupportNotifications() {
     ticketRequestCount,
     hasChatHumanRequests: chatHumanCount > 0,
     hasTicketRequests: ticketRequestCount > 0,
+    // V3: Sessions de chat live
+    liveChatCount,
+    hasLiveChatRequests: liveChatCount > 0,
   };
 }
