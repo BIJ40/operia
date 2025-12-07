@@ -206,7 +206,7 @@ function MetricRow({ definition, result, isLoading, isValidated, onValidate, onU
   
   return (
     <div className={cn(
-      "grid grid-cols-14 gap-2 p-3 rounded-lg border transition-colors items-center",
+      "grid grid-cols-12 gap-2 p-3 rounded-lg border transition-colors items-center",
       isValidated && "ring-1 ring-green-500/50 bg-green-50/30 dark:bg-green-950/10",
       status === 'ok' && !isValidated && "bg-background hover:bg-muted/50",
       status === 'zero' && "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800",
@@ -244,43 +244,14 @@ function MetricRow({ definition, result, isLoading, isValidated, onValidate, onU
       </div>
       
       {/* Sources */}
-      <div className="col-span-2 text-xs text-muted-foreground">
+      <div className="col-span-1 text-xs text-muted-foreground truncate">
         {Array.isArray(definition.source) 
           ? definition.source.join(', ') 
           : definition.source}
       </div>
       
-      {/* Widget preview */}
-      <div className="col-span-2">
-        <MetricWidgetColumn 
-          definition={definition} 
-          value={result?.value} 
-          isLoading={isLoading} 
-        />
-      </div>
-      
-      {/* Breakdown preview */}
-      <div className="col-span-1 text-xs">
-        {typeof result?.value === 'object' && result?.value !== null ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Badge variant="outline" className="cursor-help text-[10px]">
-                {Object.keys(result.value).length}
-              </Badge>
-            </TooltipTrigger>
-            <TooltipContent side="left" className="max-w-xs">
-              <pre className="text-xs whitespace-pre-wrap max-h-40 overflow-auto">
-                {JSON.stringify(result.value, null, 2)}
-              </pre>
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <span className="text-muted-foreground">–</span>
-        )}
-      </div>
-      
       {/* Actions */}
-      <div className="col-span-3 flex items-center gap-1 justify-end">
+      <div className="col-span-2 flex items-center gap-1">
         {isValidated ? (
           <Button variant="ghost" size="sm" onClick={onUnvalidate} className="h-7 px-2">
             <XCircle className="h-3 w-3 mr-1 text-red-500" />
@@ -296,7 +267,7 @@ function MetricRow({ definition, result, isLoading, isValidated, onValidate, onU
         {(status === 'zero' || status === 'error') && (
           <Button variant="ghost" size="sm" onClick={onOpenDiagnostic} className="h-7 px-2 text-amber-600">
             <Wrench className="h-3 w-3 mr-1" />
-            Corriger
+            Fix
           </Button>
         )}
         
@@ -319,6 +290,15 @@ function MetricRow({ definition, result, isLoading, isValidated, onValidate, onU
           </TooltipTrigger>
           <TooltipContent>Copier le chemin du fichier source</TooltipContent>
         </Tooltip>
+      </div>
+      
+      {/* Widget - dernière colonne */}
+      <div className="col-span-3">
+        <MetricWidgetColumn 
+          definition={definition} 
+          value={result?.value} 
+          isLoading={isLoading} 
+        />
       </div>
     </div>
   );
@@ -712,14 +692,13 @@ export function MetricValidatorHub({ mode, fixedAgencySlug }: MetricValidatorHub
                 {isExpanded && (
                   <CardContent className="pt-0">
                     {/* En-tête de colonne */}
-                    <div className="grid grid-cols-14 gap-2 text-xs text-muted-foreground font-medium mb-2 px-3">
+                    <div className="grid grid-cols-12 gap-2 text-xs text-muted-foreground font-medium mb-2 px-3">
                       <div className="col-span-1">Status</div>
                       <div className="col-span-3">ID / Label</div>
                       <div className="col-span-2">Valeur</div>
-                      <div className="col-span-2">Sources</div>
-                      <div className="col-span-2">Widget</div>
-                      <div className="col-span-1">Data</div>
-                      <div className="col-span-3 text-right">Actions</div>
+                      <div className="col-span-1">Sources</div>
+                      <div className="col-span-2">Actions</div>
+                      <div className="col-span-3 text-right">Widget</div>
                     </div>
                     
                     <div className="space-y-1">
