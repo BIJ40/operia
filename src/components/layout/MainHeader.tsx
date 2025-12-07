@@ -118,19 +118,19 @@ export function MainHeader() {
 
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         {/* Ligne 1 : Logo + Navigation + Actions */}
-        <div className="container flex h-16 items-center px-4">
+        <div className="container flex h-20 items-center px-4">
           {/* Logo avec badge version - lien vers changelog */}
           <Link 
             to={ROUTES.changelog} 
-            className="group flex items-center mr-6 shrink-0 relative"
+            className="group flex flex-col items-center mr-6 shrink-0"
             title="Voir l'historique des versions"
           >
             <img 
               src={logoHelpconfortServices} 
               alt="HelpConfort Services" 
-              className="h-14 w-auto transition-transform duration-200 group-hover:scale-105"
+              className="h-12 w-auto transition-transform duration-200 group-hover:scale-105"
             />
-            <span className="absolute -bottom-0.5 -right-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors duration-200">
+            <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors duration-200 -mt-0.5">
               v{APP_VERSION}
             </span>
           </Link>
