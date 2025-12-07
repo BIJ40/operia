@@ -158,6 +158,23 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
         if (newSession) {
           setSessionId(newSession.id);
 
+          // Ajouter le message automatique de bienvenue
+          const welcomeMessage = `Bonjour ${userName} ! Votre demande a bien été reçue. Un agent du support va vous répondre dans les plus brefs délais. Merci de patienter.`;
+          
+          const { error: welcomeError } = await supabase
+            .from('live_support_messages')
+            .insert({
+              session_id: newSession.id,
+              sender_id: 'system',
+              sender_name: 'Support HelpConfort',
+              content: welcomeMessage,
+              is_from_support: true,
+            });
+
+          if (welcomeError) {
+            logError('live-support', 'Welcome message error', welcomeError);
+          }
+
           // Notifier les agents support via edge function (SMS + Email)
           try {
             const appUrl = window.location.origin;
