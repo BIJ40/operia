@@ -6,7 +6,6 @@ import { useState, useCallback } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { UserWidget, WidgetTemplate } from '@/types/dashboard';
-import { useUpdateWidget } from '@/hooks/useDashboard';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
   TrendingUp,
@@ -47,17 +46,20 @@ interface DashboardWidgetProps {
 }
 
 export function DashboardWidget({ widget, isDragging, onResizeStart }: DashboardWidgetProps) {
-  const updateWidget = useUpdateWidget();
   const [isHovered, setIsHovered] = useState(false);
 
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: widget.id,
   });
 
-  const style = {
-    gridColumn: `span ${widget.width}`,
-    gridRow: `span ${widget.height}`,
+  // Positionnement absolu dans la grille CSS
+  const style: React.CSSProperties = {
+    gridColumnStart: widget.position_x + 1,
+    gridColumnEnd: widget.position_x + 1 + widget.width,
+    gridRowStart: widget.position_y + 1,
+    gridRowEnd: widget.position_y + 1 + widget.height,
     transform: CSS.Translate.toString(transform),
+    zIndex: isDragging ? 50 : 1,
   };
 
   const Icon = ICONS[widget.template?.icon || 'LayoutGrid'] || LayoutGrid;
@@ -77,10 +79,10 @@ export function DashboardWidget({ widget, isDragging, onResizeStart }: Dashboard
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={cn(
-        'relative transition-all duration-200 overflow-hidden cursor-grab active:cursor-grabbing select-none',
+        'relative transition-shadow duration-200 overflow-hidden cursor-grab active:cursor-grabbing select-none',
         'bg-card/95 backdrop-blur-sm border-border/50',
         'hover:shadow-lg hover:border-primary/30',
-        isDragging && 'opacity-60 scale-[1.02] shadow-2xl z-50 ring-2 ring-primary/50'
+        isDragging && 'opacity-60 shadow-2xl ring-2 ring-primary/50'
       )}
     >
       {/* Titre minimaliste */}
@@ -101,53 +103,35 @@ export function DashboardWidget({ widget, isDragging, onResizeStart }: Dashboard
         <>
           {/* Coin bas-droite (principal) */}
           <div
-            className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-20 group"
+            className="absolute bottom-0 right-0 w-5 h-5 cursor-se-resize z-20 group"
             onMouseDown={(e) => handleResizeMouseDown('se', e)}
           >
-            <div className="absolute bottom-1 right-1 w-2 h-2 rounded-sm bg-primary/60 group-hover:bg-primary transition-colors" />
+            <div className="absolute bottom-1 right-1 w-2.5 h-2.5 rounded-sm bg-primary/70 group-hover:bg-primary transition-colors" />
           </div>
 
           {/* Coin bas-gauche */}
           <div
-            className="absolute bottom-0 left-0 w-4 h-4 cursor-sw-resize z-20 group"
+            className="absolute bottom-0 left-0 w-5 h-5 cursor-sw-resize z-20 group"
             onMouseDown={(e) => handleResizeMouseDown('sw', e)}
           >
-            <div className="absolute bottom-1 left-1 w-2 h-2 rounded-sm bg-primary/60 group-hover:bg-primary transition-colors" />
+            <div className="absolute bottom-1 left-1 w-2.5 h-2.5 rounded-sm bg-primary/70 group-hover:bg-primary transition-colors" />
           </div>
 
           {/* Coin haut-droite */}
           <div
-            className="absolute top-0 right-0 w-4 h-4 cursor-ne-resize z-20 group"
+            className="absolute top-0 right-0 w-5 h-5 cursor-ne-resize z-20 group"
             onMouseDown={(e) => handleResizeMouseDown('ne', e)}
           >
-            <div className="absolute top-1 right-1 w-2 h-2 rounded-sm bg-primary/60 group-hover:bg-primary transition-colors" />
+            <div className="absolute top-1 right-1 w-2.5 h-2.5 rounded-sm bg-primary/70 group-hover:bg-primary transition-colors" />
           </div>
 
           {/* Coin haut-gauche */}
           <div
-            className="absolute top-0 left-0 w-4 h-4 cursor-nw-resize z-20 group"
+            className="absolute top-0 left-0 w-5 h-5 cursor-nw-resize z-20 group"
             onMouseDown={(e) => handleResizeMouseDown('nw', e)}
           >
-            <div className="absolute top-1 left-1 w-2 h-2 rounded-sm bg-primary/60 group-hover:bg-primary transition-colors" />
+            <div className="absolute top-1 left-1 w-2.5 h-2.5 rounded-sm bg-primary/70 group-hover:bg-primary transition-colors" />
           </div>
-
-          {/* Bords pour resize */}
-          <div
-            className="absolute bottom-0 left-4 right-4 h-2 cursor-s-resize z-20"
-            onMouseDown={(e) => handleResizeMouseDown('s', e)}
-          />
-          <div
-            className="absolute top-0 left-4 right-4 h-2 cursor-n-resize z-20"
-            onMouseDown={(e) => handleResizeMouseDown('n', e)}
-          />
-          <div
-            className="absolute left-0 top-4 bottom-4 w-2 cursor-w-resize z-20"
-            onMouseDown={(e) => handleResizeMouseDown('w', e)}
-          />
-          <div
-            className="absolute right-0 top-4 bottom-4 w-2 cursor-e-resize z-20"
-            onMouseDown={(e) => handleResizeMouseDown('e', e)}
-          />
         </>
       )}
     </Card>
