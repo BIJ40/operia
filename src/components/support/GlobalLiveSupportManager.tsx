@@ -22,12 +22,11 @@ export function GlobalLiveSupportManager() {
   return (
     <>
       {/* Dialog de chat - accessible de partout */}
-      <Dialog open={showChatDialog} onOpenChange={(open) => !open && closeChatDialog()}>
+      <Dialog open={showChatDialog} onOpenChange={closeChatDialog} modal={true}>
         <DialogContent 
           className="sm:max-w-xl h-[70vh] p-0 flex flex-col"
           onPointerDownOutside={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
-          onEscapeKeyDown={(e) => e.preventDefault()}
         >
           <DialogHeader className="px-4 py-3 border-b flex-shrink-0">
             <DialogTitle className="flex items-center gap-2">
@@ -39,7 +38,7 @@ export function GlobalLiveSupportManager() {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <LiveSupportChat />
           </div>
         </DialogContent>
