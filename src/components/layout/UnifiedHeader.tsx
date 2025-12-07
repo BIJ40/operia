@@ -50,6 +50,7 @@ import { logError } from '@/lib/logger';
 import { cn } from '@/lib/utils';
 import { MessagingWidget } from '@/components/messaging';
 import { RHNotificationBadge } from '@/components/rh/RHNotificationBadge';
+import { AiUnifiedBar } from '@/components/ai';
 
 // Mapping des noms d'icônes vers les composants
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -354,7 +355,12 @@ export function UnifiedHeader() {
           </div>
         </div>
         
-        {/* Subtitle bar - below main header */}
+        {/* Barre de recherche IA unifiée - sous le menu principal */}
+        <div className="border-t border-border/50 bg-background/50">
+          <AiUnifiedBar />
+        </div>
+        
+        {/* Subtitle bar - below AI search */}
         {displaySubtitle && (
           <div 
             className={`px-4 py-1 border-t border-border/50 ${subtitleBgClass} flex items-center justify-center relative`}

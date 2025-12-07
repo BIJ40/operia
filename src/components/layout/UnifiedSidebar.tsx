@@ -381,7 +381,7 @@ export function UnifiedSidebar() {
           <img 
             src={logoHelpconfortServices} 
             alt="HelpConfort Services" 
-            className={`object-contain transition-all ${collapsed ? 'h-10 w-10 mx-auto my-1' : 'w-full'}`}
+            className={`object-contain transition-all ${collapsed ? 'h-16 w-16 mx-auto my-2' : 'w-full py-2'}`}
           />
         </Link>
       </SidebarHeader>

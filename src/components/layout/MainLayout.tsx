@@ -3,7 +3,7 @@ import { MainHeader } from './MainHeader';
 import { PublicLanding } from './PublicLanding';
 import { LoginDialog } from '@/components/LoginDialog';
 import { ImageModal } from '@/components/ImageModal';
-import { AiUnifiedProvider, AiUnifiedBar } from '@/components/ai';
+import { AiUnifiedProvider } from '@/components/ai';
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useStorageQuota } from '@/hooks/use-storage-quota';
@@ -53,9 +53,6 @@ export function MainLayout({
     <AiUnifiedProvider>
       <div className={`min-h-screen w-full flex flex-col bg-background ${isImpersonating ? 'pt-10' : ''}`}>
         {showHeader && <MainHeader />}
-        
-        {/* Barre IA unifiée 2026 - toujours visible */}
-        <AiUnifiedBar />
         
         {/* Contenu principal */}
         <main id="main-content" className="flex-1 overflow-auto" role="main">
