@@ -313,23 +313,6 @@ export function MainHeader() {
           </div>
         </div>
 
-        {/* Ligne 2 : Recherche IA */}
-        <div className="container px-4 pb-2 hidden lg:block">
-          <div className="flex items-center gap-2 max-w-xl">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Rechercher avec l'IA... (ex: CA du mois, dossiers en retard)"
-                className="pl-9 h-9 bg-muted/50 border-muted focus:bg-background"
-              />
-            </div>
-            <Button variant="secondary" size="sm" className="shrink-0">
-              <Brain className="w-4 h-4 mr-1.5" />
-              Helpi
-            </Button>
-          </div>
-        </div>
 
         {/* Navigation mobile */}
         {mobileMenuOpen && (
