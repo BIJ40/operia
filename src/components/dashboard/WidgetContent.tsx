@@ -17,6 +17,7 @@ import { MesDevisFacturesWidget } from './widgets/MesDevisFacturesWidget';
 import { RecentTicketsWidget } from './widgets/RecentTicketsWidget';
 import { MaintenanceAlertsWidget } from './widgets/MaintenanceAlertsWidget';
 import { CAParUniversWidget } from './widgets/CAParUniversWidget';
+import { IndicateursGlobauxWidget } from './widgets/IndicateursGlobauxWidget';
 
 interface WidgetContentProps {
   widget: UserWidget & { template: WidgetTemplate };
@@ -50,6 +51,7 @@ const WIDGET_COMPONENTS: Record<string, React.FC> = {
   'StatIA.mes_stats_technicien': MesStatsWidget,
   'StatIA.mes_devis_factures': MesDevisFacturesWidget,
   'StatIA.ca_par_univers': CAParUniversWidget,
+  'StatIA.indicateurs_globaux': IndicateursGlobauxWidget,
 };
 
 export function WidgetContent({ widget }: WidgetContentProps) {

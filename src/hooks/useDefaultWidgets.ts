@@ -15,15 +15,10 @@ interface DefaultWidgetConfig {
   col: number;
 }
 
-// N2+ avec pilotage_agence: KPIs agence (ligne 1), collaborateurs/demandes (ligne 2), guides/support/faq (ligne 3)
+// N2+ avec pilotage_agence: Widget indicateurs globaux (tous les KPIs + graphique), puis collaborateurs/demandes, guides/support/faq
 const PILOTAGE_AGENCE_WIDGETS: DefaultWidgetConfig[] = [
-  // Ligne 1: 6 KPIs
-  { templateModuleSource: 'StatIA.ca_global_ht', row: 0, col: 0 },
-  { templateModuleSource: 'StatIA.ca_moyen_par_jour', row: 0, col: 2 },
-  { templateModuleSource: 'StatIA.nb_dossiers_crees', row: 0, col: 4 },
-  { templateModuleSource: 'StatIA.taux_sav_global', row: 0, col: 6 },
-  { templateModuleSource: 'StatIA.ca_moyen_par_tech', row: 0, col: 8 },
-  { templateModuleSource: 'StatIA.ca_par_technicien', row: 0, col: 10 },
+  // Ligne 1: Widget Indicateurs Globaux (tous les KPIs + graphique Evolution CA)
+  { templateModuleSource: 'StatIA.indicateurs_globaux', row: 0, col: 0 },
   // Ligne 2: Équipe + Demandes
   { templateModuleSource: 'RH.collaborators', row: 1, col: 0 },
   { templateModuleSource: 'RH.mes_demandes', row: 1, col: 6 },
