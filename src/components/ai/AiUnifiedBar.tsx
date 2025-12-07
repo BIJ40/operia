@@ -1,6 +1,7 @@
 /**
  * AI Unified Bar - Single floating search bar for all AI interactions
  * Always visible, fixed position, results shown inline below
+ * Includes live support indicator for active sessions
  */
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -8,8 +9,12 @@ import { motion } from 'framer-motion';
 import { Search, Sparkles, X, Loader2, MessageCircle, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAiUnified } from './AiUnifiedContext';
 import { AiInlineResult } from './AiInlineResult';
+import { LiveSupportIndicator } from '@/components/support/LiveSupportIndicator';
+import { LiveSupportChat } from '@/components/support/LiveSupportChat';
+import { useLiveSupportSession } from '@/hooks/useLiveSupportSession';
 import { cn } from '@/lib/utils';
 
 const QUICK_EXAMPLES = [
@@ -32,6 +37,8 @@ export function AiUnifiedBar() {
     clearMessages,
   } = useAiUnified();
   
+  const { hasActiveSession } = useLiveSupportSession();
+  const [showLiveChat, setShowLiveChat] = useState(false);
   const [localQuery, setLocalQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -91,150 +98,182 @@ export function AiUnifiedBar() {
   const hasResults = messages.length > 0;
 
   return (
-    <div 
-      ref={containerRef}
-      className="w-full flex flex-col items-center py-3 relative"
-    >
-      {/* Main Search Bar - Always visible */}
-      <div className="w-full max-w-5xl px-4 relative">
-        <motion.div
-          initial={false}
-          animate={{
-            boxShadow: isFocused || hasResults
-              ? '0 8px 30px -5px rgba(0, 113, 188, 0.25), 0 0 0 1px rgba(0, 113, 188, 0.1)'
-              : '0 2px 10px -2px rgba(0, 0, 0, 0.1)'
-          }}
-          className="relative rounded-full overflow-hidden"
-        >
-          {/* Animated glow border when focused */}
-          {(isFocused || hasResults) && (
+    <>
+      <div 
+        ref={containerRef}
+        className="w-full flex flex-col items-center py-3 relative"
+      >
+        {/* Main Search Bar + Live Support Indicator */}
+        <div className="w-full max-w-5xl px-4 relative">
+          <div className="flex items-center gap-3">
+            {/* Live Support Indicator - Visible when session active */}
+            {hasActiveSession && (
+              <LiveSupportIndicator 
+                onClick={() => setShowLiveChat(true)}
+                onClose={() => setShowLiveChat(false)}
+              />
+            )}
+
+            {/* Search Bar */}
             <motion.div
-              className="absolute inset-0 rounded-full pointer-events-none"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              initial={false}
+              animate={{
+                boxShadow: isFocused || hasResults
+                  ? '0 8px 30px -5px rgba(0, 113, 188, 0.25), 0 0 0 1px rgba(0, 113, 188, 0.1)'
+                  : '0 2px 10px -2px rgba(0, 0, 0, 0.1)'
+              }}
+              className="relative rounded-full overflow-hidden flex-1"
             >
-              <div className="absolute -inset-[1px] rounded-full overflow-hidden">
+              {/* Animated glow border when focused */}
+              {(isFocused || hasResults) && (
                 <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-helpconfort-blue/40 to-transparent"
-                  animate={{ x: ['-100%', '100%'] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-                  style={{ width: '200%' }}
+                  className="absolute inset-0 rounded-full pointer-events-none"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  <div className="absolute -inset-[1px] rounded-full overflow-hidden">
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-helpconfort-blue/40 to-transparent"
+                      animate={{ x: ['-100%', '100%'] }}
+                      transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+                      style={{ width: '200%' }}
+                    />
+                  </div>
+                </motion.div>
+              )}
+
+              <form 
+                onSubmit={handleSubmit}
+                className={cn(
+                  "relative flex items-center gap-2",
+                  "bg-background/98 backdrop-blur-sm",
+                  "rounded-full",
+                  "px-4 py-2.5",
+                  "border border-border/50"
+                )}
+              >
+                {isLoading ? (
+                  <Loader2 className="w-5 h-5 text-helpconfort-blue animate-spin shrink-0" />
+                ) : (
+                  <Sparkles className="w-5 h-5 text-helpconfort-blue shrink-0" />
+                )}
+                
+                <Input
+                  ref={inputRef}
+                  type="text"
+                  value={localQuery}
+                  onChange={(e) => setLocalQuery(e.target.value)}
+                  onFocus={() => {
+                    setIsFocused(true);
+                    expand();
+                  }}
+                  onBlur={() => setIsFocused(false)}
+                  placeholder="Posez votre question..."
+                  disabled={isLoading}
+                  className={cn(
+                    "flex-1 border-0 bg-transparent h-8",
+                    "focus-visible:ring-0 focus-visible:ring-offset-0",
+                    "placeholder:text-muted-foreground/60 text-sm"
+                  )}
+                />
+                
+                <div className="flex items-center gap-1 shrink-0">
+                  {localQuery && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => setLocalQuery('')}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </Button>
+                  )}
+                  
+                  <kbd className="hidden sm:inline-flex px-1.5 py-0.5 text-[10px] font-mono bg-muted/80 rounded border border-border/50 text-muted-foreground">
+                    ⌘K
+                  </kbd>
+                  
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={!localQuery.trim() || isLoading}
+                    className="rounded-full px-3 h-7 text-xs bg-helpconfort-blue hover:bg-helpconfort-blue/90"
+                  >
+                    {isLoading ? 'Recherche...' : 'Envoyer'}
+                  </Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+
+          {/* Quick examples - show when focused and no query */}
+          {isFocused && !localQuery && !hasResults && (
+            <motion.div
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -5 }}
+              className="flex flex-wrap gap-2 justify-center mt-3"
+            >
+              {QUICK_EXAMPLES.map((example, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => handleExampleClick(example)}
+                  className={cn(
+                    "px-3 py-1.5 text-xs rounded-full",
+                    "bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground",
+                    "border border-border/50 hover:border-border",
+                    "transition-colors"
+                  )}
+                >
+                  {example}
+                </button>
+              ))}
+            </motion.div>
+          )}
+
+          {/* Floating Results - Absolute positioned dropdown */}
+          {(hasResults || isLoading) && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute top-full left-0 right-0 mt-2 z-50"
+            >
+              <div className="bg-background border border-border rounded-xl shadow-2xl max-h-[70vh] overflow-auto">
+                <AiInlineResult
+                  messages={messages}
+                  isLoading={isLoading}
+                  onClose={() => {
+                    closeResult();
+                    clearMessages();
+                  }}
+                  onOpenLiveChat={() => setShowLiveChat(true)}
                 />
               </div>
             </motion.div>
           )}
-
-          <form 
-            onSubmit={handleSubmit}
-            className={cn(
-              "relative flex items-center gap-2",
-              "bg-background/98 backdrop-blur-sm",
-              "rounded-full",
-              "px-4 py-2.5",
-              "border border-border/50"
-            )}
-          >
-            {isLoading ? (
-              <Loader2 className="w-5 h-5 text-helpconfort-blue animate-spin shrink-0" />
-            ) : (
-              <Sparkles className="w-5 h-5 text-helpconfort-blue shrink-0" />
-            )}
-            
-            <Input
-              ref={inputRef}
-              type="text"
-              value={localQuery}
-              onChange={(e) => setLocalQuery(e.target.value)}
-              onFocus={() => {
-                setIsFocused(true);
-                expand();
-              }}
-              onBlur={() => setIsFocused(false)}
-              placeholder="Posez votre question..."
-              disabled={isLoading}
-              className={cn(
-                "flex-1 border-0 bg-transparent h-8",
-                "focus-visible:ring-0 focus-visible:ring-offset-0",
-                "placeholder:text-muted-foreground/60 text-sm"
-              )}
-            />
-            
-            <div className="flex items-center gap-1 shrink-0">
-              {localQuery && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => setLocalQuery('')}
-                >
-                  <X className="w-3.5 h-3.5" />
-                </Button>
-              )}
-              
-              <kbd className="hidden sm:inline-flex px-1.5 py-0.5 text-[10px] font-mono bg-muted/80 rounded border border-border/50 text-muted-foreground">
-                ⌘K
-              </kbd>
-              
-              <Button
-                type="submit"
-                size="sm"
-                disabled={!localQuery.trim() || isLoading}
-                className="rounded-full px-3 h-7 text-xs bg-helpconfort-blue hover:bg-helpconfort-blue/90"
-              >
-                {isLoading ? 'Recherche...' : 'Envoyer'}
-              </Button>
-            </div>
-          </form>
-        </motion.div>
-
-        {/* Quick examples - show when focused and no query */}
-        {isFocused && !localQuery && !hasResults && (
-          <motion.div
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -5 }}
-            className="flex flex-wrap gap-2 justify-center mt-3"
-          >
-            {QUICK_EXAMPLES.map((example, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => handleExampleClick(example)}
-                className={cn(
-                  "px-3 py-1.5 text-xs rounded-full",
-                  "bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground",
-                  "border border-border/50 hover:border-border",
-                  "transition-colors"
-                )}
-              >
-                {example}
-              </button>
-            ))}
-          </motion.div>
-        )}
-
-        {/* Floating Results - Absolute positioned dropdown */}
-        {(hasResults || isLoading) && (
-          <motion.div 
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="absolute top-full left-0 right-0 mt-2 z-50"
-          >
-            <div className="bg-background border border-border rounded-xl shadow-2xl max-h-[70vh] overflow-auto">
-              <AiInlineResult
-                messages={messages}
-                isLoading={isLoading}
-                onClose={() => {
-                  closeResult();
-                  clearMessages();
-                }}
-              />
-            </div>
-          </motion.div>
-        )}
+        </div>
       </div>
-    </div>
+
+      {/* Live Support Chat Dialog - Accessible directly */}
+      <Dialog open={showLiveChat} onOpenChange={setShowLiveChat}>
+        <DialogContent className="sm:max-w-xl h-[70vh] p-0 flex flex-col">
+          <DialogHeader className="px-4 py-3 border-b flex-shrink-0">
+            <DialogTitle className="flex items-center gap-2">
+              <MessageCircle className="w-5 h-5 text-green-500" />
+              Support en direct
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-hidden">
+            <LiveSupportChat
+              onClose={() => setShowLiveChat(false)}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
