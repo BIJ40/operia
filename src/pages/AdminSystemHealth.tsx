@@ -98,11 +98,15 @@ export default function AdminSystemHealth() {
         setSmsTestResult({ success: false, message: error.message });
         toast.error(`Erreur: ${error.message}`);
       } else if (data?.success) {
-        setSmsTestResult({ success: true, message: data.message, details: data });
-        toast.success(data.message);
+        const successMessage = data.mode === 'simulation' 
+          ? 'API AllMySMS connectée avec succès (simulation)' 
+          : `SMS envoyé avec succès à ${data.sentTo || 'numéro configuré'}`;
+        setSmsTestResult({ success: true, message: successMessage, details: data });
+        toast.success(successMessage);
       } else {
-        setSmsTestResult({ success: false, message: data?.message || 'Erreur inconnue', details: data });
-        toast.error(data?.message || 'Erreur inconnue');
+        const errorMessage = data?.error || 'Erreur inconnue';
+        setSmsTestResult({ success: false, message: errorMessage, details: data });
+        toast.error(errorMessage);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erreur inattendue';
