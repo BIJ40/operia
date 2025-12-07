@@ -1,8 +1,8 @@
 /**
- * DashboardGrid - Grille avec positionnement absolu, drag, resize, et zone corbeille
+ * DashboardGrid - Grille avec positionnement absolu, drag, resize fluide, et zone corbeille
  */
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { 
   DndContext, 
   DragEndEvent, 
@@ -24,37 +24,46 @@ const GRID_COLS = 12;
 const CELL_SIZE = 80;
 const GAP = 12;
 
+interface ResizeState {
+  widgetId: string;
+  corner: string;
+  startX: number;
+  startY: number;
+  originalWidget: {
+    width: number;
+    height: number;
+    position_x: number;
+    position_y: number;
+  };
+  // Live preview values (visual only)
+  previewWidth: number;
+  previewHeight: number;
+  previewX: number;
+  previewY: number;
+}
+
 export function DashboardGrid() {
   const { data: widgets, isLoading } = useUserWidgets();
   const batchUpdate = useBatchUpdateWidgets();
   const removeWidget = useRemoveWidget();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isOverTrash, setIsOverTrash] = useState(false);
-  
-  // Resize state
-  const [resizing, setResizing] = useState<{
-    widgetId: string;
-    corner: string;
-    startX: number;
-    startY: number;
-    startWidth: number;
-    startHeight: number;
-    startPosX: number;
-    startPosY: number;
-  } | null>(null);
+  const [resizing, setResizing] = useState<ResizeState | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 10,
       },
     })
   );
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
+    if (resizing) return; // Don't start drag while resizing
     setActiveId(event.active.id as string);
     setIsOverTrash(false);
-  }, []);
+  }, [resizing]);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const widgetId = activeId;
@@ -62,7 +71,6 @@ export function DashboardGrid() {
     
     if (!widgets || !widgetId) return;
 
-    // Vérifier si au-dessus de la corbeille via position Y du pointer
     const pointerY = (event.activatorEvent as MouseEvent)?.clientY;
     const windowHeight = window.innerHeight;
     const overTrash = pointerY && pointerY > windowHeight - 100;
@@ -77,7 +85,6 @@ export function DashboardGrid() {
     const widget = widgets.find(w => w.id === widgetId);
     if (!widget) return;
 
-    // Calculate new position based on cell size
     const cellWidth = CELL_SIZE + GAP;
     const cellHeight = CELL_SIZE + GAP;
     
@@ -113,30 +120,37 @@ export function DashboardGrid() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [activeId]);
 
-  // Handle resize
+  // Handle resize start
   const handleResizeStart = useCallback((widgetId: string, corner: string, e: React.MouseEvent) => {
     const widget = widgets?.find(w => w.id === widgetId);
     if (!widget) return;
+
+    e.preventDefault();
+    e.stopPropagation();
 
     setResizing({
       widgetId,
       corner,
       startX: e.clientX,
       startY: e.clientY,
-      startWidth: widget.width,
-      startHeight: widget.height,
-      startPosX: widget.position_x,
-      startPosY: widget.position_y,
+      originalWidget: {
+        width: widget.width,
+        height: widget.height,
+        position_x: widget.position_x,
+        position_y: widget.position_y,
+      },
+      previewWidth: widget.width,
+      previewHeight: widget.height,
+      previewX: widget.position_x,
+      previewY: widget.position_y,
     });
   }, [widgets]);
 
+  // Handle resize move - only update local preview state
   useEffect(() => {
     if (!resizing) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      const widget = widgets?.find(w => w.id === resizing.widgetId);
-      if (!widget) return;
-
       const deltaX = e.clientX - resizing.startX;
       const deltaY = e.clientY - resizing.startY;
       
@@ -146,45 +160,59 @@ export function DashboardGrid() {
       const deltaCols = Math.round(deltaX / cellWidth);
       const deltaRows = Math.round(deltaY / cellHeight);
 
-      let newWidth = resizing.startWidth;
-      let newHeight = resizing.startHeight;
-      let newPosX = resizing.startPosX;
-      let newPosY = resizing.startPosY;
+      let newWidth = resizing.originalWidget.width;
+      let newHeight = resizing.originalWidget.height;
+      let newPosX = resizing.originalWidget.position_x;
+      let newPosY = resizing.originalWidget.position_y;
 
       // Handle different corners
       if (resizing.corner.includes('e')) {
-        newWidth = Math.max(1, Math.min(GRID_COLS - resizing.startPosX, resizing.startWidth + deltaCols));
+        newWidth = Math.max(1, Math.min(GRID_COLS - resizing.originalWidget.position_x, resizing.originalWidget.width + deltaCols));
       }
       if (resizing.corner.includes('w')) {
-        const maxShrink = resizing.startWidth - 1;
-        const actualDelta = Math.max(-resizing.startPosX, Math.min(maxShrink, deltaCols));
-        newPosX = resizing.startPosX + actualDelta;
-        newWidth = resizing.startWidth - actualDelta;
+        const maxShrink = resizing.originalWidget.width - 1;
+        const actualDelta = Math.max(-resizing.originalWidget.position_x, Math.min(maxShrink, deltaCols));
+        newPosX = resizing.originalWidget.position_x + actualDelta;
+        newWidth = resizing.originalWidget.width - actualDelta;
       }
       if (resizing.corner.includes('s')) {
-        newHeight = Math.max(1, resizing.startHeight + deltaRows);
+        newHeight = Math.max(1, resizing.originalWidget.height + deltaRows);
       }
       if (resizing.corner.includes('n')) {
-        const maxShrink = resizing.startHeight - 1;
-        const actualDelta = Math.max(-resizing.startPosY, Math.min(maxShrink, deltaRows));
-        newPosY = resizing.startPosY + actualDelta;
-        newHeight = resizing.startHeight - actualDelta;
+        const maxShrink = resizing.originalWidget.height - 1;
+        const actualDelta = Math.max(-resizing.originalWidget.position_y, Math.min(maxShrink, deltaRows));
+        newPosY = resizing.originalWidget.position_y + actualDelta;
+        newHeight = resizing.originalWidget.height - actualDelta;
       }
 
-      // Only update if something changed
-      if (newWidth !== widget.width || newHeight !== widget.height || 
-          newPosX !== widget.position_x || newPosY !== widget.position_y) {
-        batchUpdate.mutate([{
-          id: widget.id,
-          position_x: newPosX,
-          position_y: newPosY,
-          width: newWidth,
-          height: newHeight,
-        }]);
-      }
+      // Update preview state only (no database call)
+      setResizing(prev => prev ? {
+        ...prev,
+        previewWidth: newWidth,
+        previewHeight: newHeight,
+        previewX: newPosX,
+        previewY: newPosY,
+      } : null);
     };
 
     const handleMouseUp = () => {
+      // Save to database only on mouse up
+      if (resizing) {
+        const { previewWidth, previewHeight, previewX, previewY, originalWidget, widgetId } = resizing;
+        
+        if (previewWidth !== originalWidget.width || 
+            previewHeight !== originalWidget.height ||
+            previewX !== originalWidget.position_x ||
+            previewY !== originalWidget.position_y) {
+          batchUpdate.mutate([{
+            id: widgetId,
+            position_x: previewX,
+            position_y: previewY,
+            width: previewWidth,
+            height: previewHeight,
+          }]);
+        }
+      }
       setResizing(null);
     };
 
@@ -195,18 +223,45 @@ export function DashboardGrid() {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [resizing, widgets, batchUpdate]);
+  }, [resizing, batchUpdate]);
 
   const activeWidget = useMemo(() => {
     if (!activeId || !widgets) return null;
     return widgets.find(w => w.id === activeId);
   }, [activeId, widgets]);
 
+  // Get widget dimensions - use preview if resizing, otherwise use actual
+  const getWidgetDimensions = useCallback((widget: UserWidget & { template: WidgetTemplate }) => {
+    if (resizing && resizing.widgetId === widget.id) {
+      return {
+        width: resizing.previewWidth,
+        height: resizing.previewHeight,
+        position_x: resizing.previewX,
+        position_y: resizing.previewY,
+      };
+    }
+    return {
+      width: widget.width,
+      height: widget.height,
+      position_x: widget.position_x,
+      position_y: widget.position_y,
+    };
+  }, [resizing]);
+
   // Calculate grid height based on widgets
   const maxRow = useMemo(() => {
     if (!widgets || widgets.length === 0) return 6;
-    return Math.max(6, ...widgets.map(w => w.position_y + w.height));
-  }, [widgets]);
+    
+    // Consider preview dimensions if resizing
+    let maxHeight = 6;
+    for (const w of widgets) {
+      const dims = resizing && resizing.widgetId === w.id
+        ? { y: resizing.previewY, h: resizing.previewHeight }
+        : { y: w.position_y, h: w.height };
+      maxHeight = Math.max(maxHeight, dims.y + dims.h);
+    }
+    return maxHeight;
+  }, [widgets, resizing]);
 
   if (isLoading) {
     return (
@@ -229,6 +284,7 @@ export function DashboardGrid() {
       onDragEnd={handleDragEnd}
     >
       <div 
+        ref={gridRef}
         className="relative w-full p-4"
         style={{
           display: 'grid',
@@ -237,14 +293,19 @@ export function DashboardGrid() {
           gap: `${GAP}px`,
         }}
       >
-        {widgets.map((widget) => (
-          <DashboardWidget
-            key={widget.id}
-            widget={widget}
-            isDragging={activeId === widget.id}
-            onResizeStart={handleResizeStart}
-          />
-        ))}
+        {widgets.map((widget) => {
+          const dims = getWidgetDimensions(widget);
+          return (
+            <DashboardWidget
+              key={widget.id}
+              widget={widget}
+              isDragging={activeId === widget.id}
+              isResizing={resizing?.widgetId === widget.id}
+              previewDimensions={resizing?.widgetId === widget.id ? dims : undefined}
+              onResizeStart={handleResizeStart}
+            />
+          );
+        })}
       </div>
 
       {/* Zone corbeille - visible uniquement pendant le drag */}
