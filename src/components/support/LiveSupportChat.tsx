@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Send, Loader2, User, Headphones, AlertCircle, CheckCheck, X } from 'lucide-react';
+import { Send, Loader2, User, Headphones, AlertCircle, CheckCheck, Ticket, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { logError } from '@/lib/logger';
 import { cn } from '@/lib/utils';
@@ -40,6 +40,7 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
   const [isConnected, setIsConnected] = useState(false);
   const [agentConnected, setAgentConnected] = useState(false);
   const [waitingForAgent, setWaitingForAgent] = useState(true);
+  const [sessionClosed, setSessionClosed] = useState<'closed' | 'converted' | null>(null);
 
   const userName = firstName || lastName || user?.email?.split('@')[0] || 'Utilisateur';
 
@@ -97,9 +98,11 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
             setAgentConnected(true);
             setWaitingForAgent(false);
           }
+          // Gérer les différents status de fermeture
           if (session.status === 'closed') {
-            toast.info('La conversation a été fermée');
-            onClose?.();
+            setSessionClosed('closed');
+          } else if (session.status === 'converted') {
+            setSessionClosed('converted');
           }
         }
       )
@@ -352,38 +355,78 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
         </div>
       </ScrollArea>
 
-      {/* Zone de saisie */}
-      <div className="p-3 border-t">
-        <div className="flex gap-2">
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Écrivez votre message..."
-            disabled={isLoading}
-            className="flex-1"
-          />
-          <Button 
-            onClick={handleSend} 
-            disabled={!input.trim() || isLoading}
-            size="icon"
-            className="bg-helpconfort-blue hover:bg-helpconfort-blue/90"
-          >
-            {isLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+      {/* Zone de saisie ou message de fermeture */}
+      {sessionClosed ? (
+        <div className="p-4 border-t bg-muted/50">
+          <div className="flex flex-col items-center gap-3 py-4">
+            {sessionClosed === 'converted' ? (
+              <>
+                <div className="w-12 h-12 rounded-full bg-helpconfort-blue/10 flex items-center justify-center">
+                  <Ticket className="w-6 h-6 text-helpconfort-blue" />
+                </div>
+                <div className="text-center">
+                  <p className="font-medium text-foreground">Conversation convertie en ticket</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Votre demande a été enregistrée. Vous recevrez une notification lors de sa résolution.
+                  </p>
+                </div>
+              </>
             ) : (
-              <Send className="w-4 h-4" />
+              <>
+                <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center">
+                  <CheckCircle className="w-6 h-6 text-green-500" />
+                </div>
+                <div className="text-center">
+                  <p className="font-medium text-foreground">Conversation terminée</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Cette session de chat a été clôturée.
+                  </p>
+                </div>
+              </>
             )}
-          </Button>
-        </div>
-        
-        {!isConnected && (
-          <div className="flex items-center gap-1 mt-2 text-xs text-amber-600">
-            <AlertCircle className="w-3 h-3" />
-            Connexion en cours...
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onClose}
+              className="mt-2"
+            >
+              Fermer
+            </Button>
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="p-3 border-t">
+          <div className="flex gap-2">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Écrivez votre message..."
+              disabled={isLoading}
+              className="flex-1"
+            />
+            <Button 
+              onClick={handleSend} 
+              disabled={!input.trim() || isLoading}
+              size="icon"
+              className="bg-helpconfort-blue hover:bg-helpconfort-blue/90"
+            >
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+            </Button>
+          </div>
+          
+          {!isConnected && (
+            <div className="flex items-center gap-1 mt-2 text-xs text-amber-600">
+              <AlertCircle className="w-3 h-3" />
+              Connexion en cours...
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

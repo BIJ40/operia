@@ -87,7 +87,7 @@ export function LiveCloseSessionDialog({
     
     setIsTransforming(true);
     try {
-      // Formater l'historique du chat pour le ticket
+      // Formater l'historique du chat pour le ticket (format JSON valide)
       const chatHistory = messages.map(m => ({
         role: m.is_from_support ? 'support' : 'user',
         content: m.content,
@@ -99,24 +99,29 @@ export function LiveCloseSessionDialog({
       const subject = messages.find(m => !m.is_from_support)?.content?.substring(0, 100) 
         || 'Conversation live support';
 
+      // Préparer les données du ticket sans le champ type qui peut causer des erreurs
+      const ticketData = {
+        user_id: userId,
+        subject: subject,
+        status: 'open',
+        heat_priority: 6,
+        source: 'live_chat',
+        agency_slug: agencySlug || null,
+        chatbot_conversation: JSON.parse(JSON.stringify(chatHistory)), // Assurer un JSON valide
+        support_level: 1,
+        assigned_to: user.id,
+      };
+
       const { data: ticket, error: ticketError } = await supabase
         .from('support_tickets')
-        .insert({
-          user_id: userId,
-          subject: subject,
-          status: 'open',
-          heat_priority: 6,
-          source: 'live_chat',
-          type: 'chat_human',
-          agency_slug: agencySlug || null,
-          chatbot_conversation: chatHistory,
-          support_level: 1,
-          assigned_to: user.id,
-        })
+        .insert(ticketData)
         .select('id')
         .single();
 
-      if (ticketError) throw ticketError;
+      if (ticketError) {
+        console.error('[LiveCloseSessionDialog] Ticket creation error:', ticketError);
+        throw ticketError;
+      }
 
       // Ajouter un message système dans le ticket
       await supabase
@@ -129,8 +134,8 @@ export function LiveCloseSessionDialog({
           is_internal_note: true,
         });
 
-      // Fermer la session live
-      await supabase
+      // Fermer la session live avec statut "converted"
+      const { error: updateError } = await supabase
         .from('live_support_sessions')
         .update({ 
           status: 'converted',
@@ -139,11 +144,16 @@ export function LiveCloseSessionDialog({
         })
         .eq('id', sessionId);
 
+      if (updateError) {
+        console.error('[LiveCloseSessionDialog] Session update error:', updateError);
+      }
+
       toast.success('Session convertie en ticket');
       onOpenChange(false);
       onClosed();
     } catch (error) {
       logError(error, 'LIVE_SESSION_TO_TICKET');
+      console.error('[LiveCloseSessionDialog] Full error:', error);
       toast.error('Erreur lors de la conversion');
     } finally {
       setIsTransforming(false);
