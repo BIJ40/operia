@@ -64,11 +64,7 @@ export function DashboardWidget({ widget, isDragging, onResizeStart }: Dashboard
 
   const Icon = ICONS[widget.template?.icon || 'LayoutGrid'] || LayoutGrid;
 
-  const handleResizeMouseDown = useCallback((corner: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    onResizeStart?.(widget.id, corner, e);
-  }, [widget.id, onResizeStart]);
+  // Resize is now handled directly in onPointerDown to prevent dnd-kit from capturing the event
 
   return (
     <Card
@@ -103,34 +99,54 @@ export function DashboardWidget({ widget, isDragging, onResizeStart }: Dashboard
         <>
           {/* Coin bas-droite (principal) */}
           <div
-            className="absolute bottom-0 right-0 w-5 h-5 cursor-se-resize z-20 group"
-            onMouseDown={(e) => handleResizeMouseDown('se', e)}
+            className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize z-30 group"
+            data-no-dnd="true"
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onResizeStart?.(widget.id, 'se', e as unknown as React.MouseEvent);
+            }}
           >
-            <div className="absolute bottom-1 right-1 w-2.5 h-2.5 rounded-sm bg-primary/70 group-hover:bg-primary transition-colors" />
+            <div className="absolute bottom-1 right-1 w-3 h-3 rounded-sm bg-primary/80 group-hover:bg-primary transition-colors shadow-sm" />
           </div>
 
           {/* Coin bas-gauche */}
           <div
-            className="absolute bottom-0 left-0 w-5 h-5 cursor-sw-resize z-20 group"
-            onMouseDown={(e) => handleResizeMouseDown('sw', e)}
+            className="absolute bottom-0 left-0 w-6 h-6 cursor-sw-resize z-30 group"
+            data-no-dnd="true"
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onResizeStart?.(widget.id, 'sw', e as unknown as React.MouseEvent);
+            }}
           >
-            <div className="absolute bottom-1 left-1 w-2.5 h-2.5 rounded-sm bg-primary/70 group-hover:bg-primary transition-colors" />
+            <div className="absolute bottom-1 left-1 w-3 h-3 rounded-sm bg-primary/80 group-hover:bg-primary transition-colors shadow-sm" />
           </div>
 
           {/* Coin haut-droite */}
           <div
-            className="absolute top-0 right-0 w-5 h-5 cursor-ne-resize z-20 group"
-            onMouseDown={(e) => handleResizeMouseDown('ne', e)}
+            className="absolute top-0 right-0 w-6 h-6 cursor-ne-resize z-30 group"
+            data-no-dnd="true"
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onResizeStart?.(widget.id, 'ne', e as unknown as React.MouseEvent);
+            }}
           >
-            <div className="absolute top-1 right-1 w-2.5 h-2.5 rounded-sm bg-primary/70 group-hover:bg-primary transition-colors" />
+            <div className="absolute top-1 right-1 w-3 h-3 rounded-sm bg-primary/80 group-hover:bg-primary transition-colors shadow-sm" />
           </div>
 
           {/* Coin haut-gauche */}
           <div
-            className="absolute top-0 left-0 w-5 h-5 cursor-nw-resize z-20 group"
-            onMouseDown={(e) => handleResizeMouseDown('nw', e)}
+            className="absolute top-0 left-0 w-6 h-6 cursor-nw-resize z-30 group"
+            data-no-dnd="true"
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onResizeStart?.(widget.id, 'nw', e as unknown as React.MouseEvent);
+            }}
           >
-            <div className="absolute top-1 left-1 w-2.5 h-2.5 rounded-sm bg-primary/70 group-hover:bg-primary transition-colors" />
+            <div className="absolute top-1 left-1 w-3 h-3 rounded-sm bg-primary/80 group-hover:bg-primary transition-colors shadow-sm" />
           </div>
         </>
       )}
