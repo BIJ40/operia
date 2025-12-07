@@ -41,9 +41,10 @@ export function AiUnifiedBar() {
   
   const [localQuery, setLocalQuery] = useState('');
   const [isBarOpen, setIsBarOpen] = useState(false);
+  const [isInteractingWithResults, setIsInteractingWithResults] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const blurTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Open the bar (show results zone)
   const openBar = useCallback(() => {
@@ -55,23 +56,34 @@ export function AiUnifiedBar() {
     expand();
   }, [expand]);
 
-  // Close the bar with a small delay to allow click events to fire
+  // Close the bar - only if not interacting with results
   const closeBar = useCallback(() => {
+    // Use a longer delay to allow clicks to register
     blurTimeoutRef.current = setTimeout(() => {
-      setIsBarOpen(false);
-      if (messages.length > 0 || isLoading) {
-        closeResult();
-        clearMessages();
+      if (!isInteractingWithResults) {
+        setIsBarOpen(false);
+        if (messages.length > 0 || isLoading) {
+          closeResult();
+          clearMessages();
+        }
       }
-    }, 200);
-  }, [messages.length, isLoading, closeResult, clearMessages]);
+    }, 300);
+  }, [messages.length, isLoading, closeResult, clearMessages, isInteractingWithResults]);
 
-  // Cancel close (called when clicking inside)
-  const cancelClose = useCallback(() => {
+  // Cancel close and mark as interacting
+  const handleResultsMouseDown = useCallback(() => {
     if (blurTimeoutRef.current) {
       clearTimeout(blurTimeoutRef.current);
       blurTimeoutRef.current = null;
     }
+    setIsInteractingWithResults(true);
+  }, []);
+
+  // Reset interaction state
+  const handleResultsMouseUp = useCallback(() => {
+    setIsInteractingWithResults(false);
+    // Refocus input to maintain keyboard usability
+    inputRef.current?.focus();
   }, []);
 
   // Global keyboard shortcut (Ctrl+K / Cmd+K)
@@ -108,18 +120,18 @@ export function AiUnifiedBar() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!localQuery.trim() || isLoading) return;
-    cancelClose();
+    handleResultsMouseDown(); // Keep results open during submit
     await submitQuery(localQuery);
     setLocalQuery('');
   };
 
   const handleExampleClick = (example: string) => {
-    cancelClose();
+    handleResultsMouseDown(); // Keep results open
     setLocalQuery(example);
     inputRef.current?.focus();
   };
 
-  const handleLiveSupportClick = async (e: React.MouseEvent) => {
+  const handleLiveSupportClick = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     console.log('[AiUnifiedBar] Live support button clicked, hasActiveSession:', hasActiveSession);
@@ -127,10 +139,9 @@ export function AiUnifiedBar() {
     if (hasActiveSession) {
       openChat();
     } else {
-      // Start a new session if none exists
       await startNewSession();
     }
-  };
+  }, [hasActiveSession, openChat, startNewSession]);
 
   const hasResults = messages.length > 0;
   const showResultsZone = isBarOpen || hasResults || isLoading;
@@ -139,7 +150,6 @@ export function AiUnifiedBar() {
     <div 
       ref={containerRef}
       className="w-full flex flex-col items-center py-3 relative"
-      onMouseDown={cancelClose}
     >
       {/* Main Search Bar + Live Support Button */}
       <div className="w-full max-w-5xl px-4 relative flex items-center gap-3">
@@ -289,7 +299,8 @@ export function AiUnifiedBar() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               className="absolute top-full left-0 right-0 mt-2 z-50 px-4"
-              onMouseDown={cancelClose}
+              onMouseDown={handleResultsMouseDown}
+              onMouseUp={handleResultsMouseUp}
             >
               <div className="bg-background border border-border rounded-xl shadow-2xl max-h-[70vh] overflow-auto">
                 <AiInlineResult
@@ -316,7 +327,8 @@ export function AiUnifiedBar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -5 }}
             className="flex flex-wrap gap-2 justify-center mt-3 px-4"
-            onMouseDown={cancelClose}
+            onMouseDown={handleResultsMouseDown}
+            onMouseUp={handleResultsMouseUp}
           >
             {QUICK_EXAMPLES.map((example, idx) => (
               <button
