@@ -42,15 +42,13 @@ export function MesStatsWidget() {
     end: endOfMonth(now),
   };
 
+  const services = getGlobalApogeeDataServices();
+
   const { data: stats, isLoading } = useQuery({
     queryKey: ['widget-mes-stats', agencySlug, user?.id],
     queryFn: async () => {
       if (!agencySlug || !user?.id) return null;
 
-      const services = await getGlobalApogeeDataServices();
-      if (!services) return null;
-
-      // Récupérer les stats CA par technicien
       const [caParTech, nbInterventions] = await Promise.all([
         getMetricForAgency('ca_par_technicien', agencySlug, { dateRange }, services),
         getMetricForAgency('nb_interventions', agencySlug, { dateRange }, services),
