@@ -77,6 +77,42 @@ export function useUserDashboardSettings() {
   });
 }
 
+// Find next available position in grid (after all existing widgets)
+function findNextPosition(widgets: { position_x: number; position_y: number; width: number; height: number }[], newWidth: number): { x: number; y: number } {
+  const GRID_COLS = 12;
+  
+  if (widgets.length === 0) {
+    return { x: 0, y: 0 };
+  }
+
+  // Find the maximum row used by existing widgets
+  let maxRow = 0;
+  for (const w of widgets) {
+    maxRow = Math.max(maxRow, w.position_y + w.height);
+  }
+
+  // Try to fit in existing rows first (find gaps)
+  for (let row = 0; row <= maxRow; row++) {
+    for (let col = 0; col <= GRID_COLS - newWidth; col++) {
+      // Check if this position is free
+      const isFree = !widgets.some(w => {
+        const wRight = w.position_x + w.width;
+        const wBottom = w.position_y + w.height;
+        const newRight = col + newWidth;
+        // Check overlap - we only check 1 row height for now
+        return !(col >= wRight || newRight <= w.position_x || row >= wBottom || row + 1 <= w.position_y);
+      });
+      
+      if (isFree) {
+        return { x: col, y: row };
+      }
+    }
+  }
+
+  // No gap found, place at the bottom
+  return { x: 0, y: maxRow };
+}
+
 // Add widget to dashboard
 export function useAddWidget() {
   const { user } = useAuth();
@@ -91,15 +127,31 @@ export function useAddWidget() {
         .eq('id', templateId)
         .single();
 
+      const newWidth = template?.default_width ?? 4;
+      const newHeight = template?.default_height ?? 4;
+
+      // Get existing widgets to find next position
+      let finalPosition = position;
+      if (!finalPosition) {
+        const { data: existingWidgets } = await supabase
+          .from('user_widgets')
+          .select('position_x, position_y, width, height')
+          .eq('user_id', user!.id)
+          .eq('is_visible', true);
+        
+        const widgets = existingWidgets || [];
+        finalPosition = findNextPosition(widgets, newWidth);
+      }
+
       const { data, error } = await supabase
         .from('user_widgets')
         .upsert({
           template_id: templateId,
           user_id: user!.id,
-          position_x: position?.x ?? 0,
-          position_y: position?.y ?? 0,
-          width: template?.default_width ?? 4,
-          height: template?.default_height ?? 4,
+          position_x: finalPosition.x,
+          position_y: finalPosition.y,
+          width: newWidth,
+          height: newHeight,
           state: 'normal',
           is_visible: true,
         }, {
