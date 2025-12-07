@@ -31,7 +31,6 @@ import { getRoleCapabilities } from '@/config/roleMatrix';
 import logoHelpconfortServices from '@/assets/help-confort-services-logo.png';
 import { RHNotificationBadge } from '@/components/rh/RHNotificationBadge';
 import { isModuleEnabled, ModuleKey } from '@/types/modules';
-import { AiUnifiedBar } from '@/components/ai/AiUnifiedBar';
 
 // Icônes custom pour le header
 import iconAccueil from '@/assets/icons/icon-accueil.png';
@@ -349,11 +348,6 @@ export function MainHeader() {
                     {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                   </Button>
                 </div>
-              </div>
-
-              {/* Ligne 2 : Barre de recherche */}
-              <div className="border-t border-border/30 h-12 flex items-center">
-                <AiUnifiedBar />
               </div>
             </div>
           </div>
