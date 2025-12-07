@@ -67,12 +67,25 @@ function PermissionCard({
 }: PermissionCardProps) {
   const isDisabled = !canEdit || !isAllowed;
   
+  const handleToggle = (e: React.MouseEvent | React.KeyboardEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDisabled) {
+      onToggle();
+    }
+  };
+  
   return (
-    <button
-      type="button"
-      disabled={isDisabled}
-      onClick={onToggle}
-      className={`relative z-10 rounded-lg border-2 p-4 transition-all select-none text-left w-full ${
+    <div
+      role="button"
+      tabIndex={isDisabled ? -1 : 0}
+      onClick={handleToggle}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          handleToggle(e);
+        }
+      }}
+      className={`rounded-lg border-2 p-4 transition-all select-none ${
         isDisabled ? 'opacity-50 cursor-not-allowed bg-muted/30' : 'cursor-pointer hover:shadow-md active:scale-[0.98]'
       } ${
         isEnabled 
@@ -81,10 +94,13 @@ function PermissionCard({
       }`}
     >
       <div className="flex gap-3">
-        <div className="pt-0.5 pointer-events-none">
+        <div className="pt-0.5">
           <Checkbox
             checked={isEnabled}
             disabled={isDisabled}
+            onCheckedChange={() => {
+              if (!isDisabled) onToggle();
+            }}
             className="w-5 h-5"
           />
         </div>
@@ -110,7 +126,7 @@ function PermissionCard({
           <p className="text-xs text-muted-foreground italic">→ {targetUsers}</p>
         </div>
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -456,40 +472,59 @@ export const UserAccordionItem = memo(function UserAccordionItem({
               </div>
             </div>
 
-            {/* Autres Modules - Simples toggles */}
+            {/* Autres Modules - Avec options visibles quand activé */}
             <div className="space-y-3">
               <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-primary" />
                 Autres Modules
               </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="space-y-3">
                 {MODULE_DEFINITIONS
                   .filter(m => !['rh', 'parc'].includes(m.key))
                   .map(moduleDef => {
                     const isEnabled = isModuleEnabled(moduleDef.key);
                     const canUserAccessModule = canAccessModule(effectiveRole, moduleDef.key);
                     const isModuleDisabled = !canEdit || !canUserAccessModule;
+                    const moduleOptions = getModuleOptions(moduleDef.key);
+                    const hasOptions = moduleDef.options && moduleDef.options.length > 0;
+
+                    const handleModuleClick = (e: React.MouseEvent) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (!isModuleDisabled) {
+                        onModuleToggle(moduleDef.key, !isEnabled);
+                      }
+                    };
 
                     return (
                       <div 
                         key={moduleDef.key} 
-                        className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                          isModuleDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'
-                        } ${
+                        className={`rounded-lg border transition-all ${
                           isEnabled 
                             ? 'bg-primary/5 border-primary/30 shadow-sm' 
-                            : 'bg-muted/30 border-muted hover:border-primary/30'
+                            : 'bg-muted/30 border-muted'
                         }`}
-                        onClick={() => {
-                          if (!isModuleDisabled) onModuleToggle(moduleDef.key, !isEnabled);
-                        }}
                       >
-                        <div className="flex items-center gap-3">
+                        {/* Module header - cliquable */}
+                        <div 
+                          role="button"
+                          tabIndex={isModuleDisabled ? -1 : 0}
+                          onClick={handleModuleClick}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              handleModuleClick(e as any);
+                            }
+                          }}
+                          className={`p-3 flex items-center gap-3 ${
+                            isModuleDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-muted/50'
+                          } ${hasOptions && isEnabled ? 'border-b border-border/50' : ''}`}
+                        >
                           <Checkbox
                             checked={isEnabled}
                             disabled={isModuleDisabled}
-                            onCheckedChange={(checked) => onModuleToggle(moduleDef.key, !!checked)}
-                            onClick={(e) => e.stopPropagation()}
+                            onCheckedChange={(checked) => {
+                              if (!isModuleDisabled) onModuleToggle(moduleDef.key, !!checked);
+                            }}
                             className="w-5 h-5"
                           />
                           <div className="flex-1 min-w-0">
@@ -505,7 +540,59 @@ export const UserAccordionItem = memo(function UserAccordionItem({
                               N{GLOBAL_ROLES[moduleDef.minRole]}+
                             </Badge>
                           )}
+                          {hasOptions && isEnabled && (
+                            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                          )}
                         </div>
+
+                        {/* Options du module - affichées seulement si module activé */}
+                        {isEnabled && hasOptions && (
+                          <div className="p-3 space-y-2 bg-background/50">
+                            <p className="text-xs text-muted-foreground font-medium mb-2">Options du module :</p>
+                            {moduleDef.options!.map(option => {
+                              const optionEnabled = moduleOptions[option.key] ?? option.defaultEnabled;
+                              const handleOptionClick = (e: React.MouseEvent) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (canEdit) {
+                                  onModuleOptionToggle(moduleDef.key, option.key, !optionEnabled);
+                                }
+                              };
+                              
+                              return (
+                                <div 
+                                  key={option.key}
+                                  role="button"
+                                  tabIndex={canEdit ? 0 : -1}
+                                  onClick={handleOptionClick}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                      handleOptionClick(e as any);
+                                    }
+                                  }}
+                                  className={`flex items-center gap-2 p-2 rounded border ${
+                                    canEdit ? 'cursor-pointer hover:bg-muted/50' : 'opacity-50 cursor-not-allowed'
+                                  } ${optionEnabled ? 'bg-primary/10 border-primary/30' : 'border-muted'}`}
+                                >
+                                  <Checkbox
+                                    checked={optionEnabled}
+                                    disabled={!canEdit}
+                                    onCheckedChange={(checked) => {
+                                      if (canEdit) onModuleOptionToggle(moduleDef.key, option.key, !!checked);
+                                    }}
+                                    className="w-4 h-4"
+                                  />
+                                  <div className="flex-1">
+                                    <span className="text-sm">{option.label}</span>
+                                    {option.description && (
+                                      <p className="text-xs text-muted-foreground">{option.description}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     );
                   })
