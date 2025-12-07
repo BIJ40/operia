@@ -100,62 +100,57 @@ serve(async (req) => {
     // V2: Get support users based on global_role and enabled_modules
     // platform_admin (N5) and superadmin (N6) always receive notifications
     // Users with enabled_modules.support.enabled = true also receive notifications
-    const { data: profiles, error: profilesError } = await supabase
-      .from('profiles')
-      .select('id, email, email_notifications_enabled, global_role, enabled_modules')
-      .eq('is_active', true);
-
-    if (profilesError) {
-      console.error('Error fetching profiles:', profilesError);
-      throw profilesError;
-    }
-
-    // Filter users who should receive support notifications:
-    // 1. Must be a support agent (support.agent flag) OR admin (N5/N6)
-    // 2. For admins: receive by default unless explicitly opted out (email_notifications_enabled === false)
-    // 3. For agents: must have email_notifications_enabled = true (explicit opt-in)
-    const supportAgents = profiles?.filter(p => {
-      const isAdmin = p.global_role === 'platform_admin' || p.global_role === 'superadmin';
-      const isSupportAgent = p.enabled_modules?.support?.agent === true;
-      
-      if (!isAdmin && !isSupportAgent) return false;
-      
-      // P1 FIX: Admins receive notifications by default (unless explicitly disabled)
-      // Agents must explicitly enable notifications
-      if (isAdmin) {
-        // Admins: exclude only if explicitly set to false
-        return p.email_notifications_enabled !== false;
-      } else {
-        // Agents: require explicit opt-in
-        return p.email_notifications_enabled === true;
-      }
-    }) || [];
-
-    if (supportAgents.length === 0) {
-      console.log('No support agents with notifications enabled found');
-      return withCors(req, new Response(
-        JSON.stringify({ message: 'No support agents to notify' }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      ));
-    }
-
-    console.log(`Found ${supportAgents.length} support agents with notifications enabled`);
-
-    const usersWithNotificationsEnabled = supportAgents;
+    let supportEmails: string[] = [];
     
-    const supportEmails = usersWithNotificationsEnabled
-      .map(p => p.email)
-      .filter(email => email) as string[];
+    // Only fetch profiles if email notifications are enabled
+    if (notificationSettings.email_enabled) {
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, email, email_notifications_enabled, global_role, enabled_modules')
+        .eq('is_active', true);
 
-    if (supportEmails.length === 0) {
-      console.log('No support emails found with notifications enabled');
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        // Don't throw - continue with SMS only
+      } else {
+        // Filter users who should receive support notifications:
+        // 1. Must be a support agent (support.agent flag) OR admin (N5/N6)
+        // 2. For admins: receive by default unless explicitly opted out (email_notifications_enabled === false)
+        // 3. For agents: must have email_notifications_enabled = true (explicit opt-in)
+        const supportAgents = profiles?.filter(p => {
+          const isAdmin = p.global_role === 'platform_admin' || p.global_role === 'superadmin';
+          const isSupportAgent = p.enabled_modules?.support?.agent === true;
+          
+          if (!isAdmin && !isSupportAgent) return false;
+          
+          // P1 FIX: Admins receive notifications by default (unless explicitly disabled)
+          // Agents must explicitly enable notifications
+          if (isAdmin) {
+            return p.email_notifications_enabled !== false;
+          } else {
+            return p.email_notifications_enabled === true;
+          }
+        }) || [];
+
+        console.log(`Found ${supportAgents.length} support agents for email notifications`);
+        supportEmails = supportAgents.map(p => p.email).filter(email => email) as string[];
+      }
+    }
+
+    // IMPORTANT: SMS uses ALLMYSMS_SUPPORT_PHONES env variable, NOT database agents
+    // So we should NOT early-exit if no email agents are found - SMS can still work
+    const hasSmsConfig = notificationSettings.sms_enabled && ALLMYSMS_LOGIN && ALLMYSMS_API_KEY && ALLMYSMS_SUPPORT_PHONES;
+    const hasEmailRecipients = notificationSettings.email_enabled && supportEmails.length > 0;
+
+    if (!hasSmsConfig && !hasEmailRecipients) {
+      console.log('No notification channels available: no emails and SMS not configured');
       return withCors(req, new Response(
-        JSON.stringify({ message: 'No support emails with notifications enabled' }),
+        JSON.stringify({ message: 'No notification channels available' }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       ));
     }
 
-    console.log(`Sending notification to ${supportEmails.length} support users (with notifications enabled)`);
+    console.log(`Notification channels: Email=${hasEmailRecipients ? supportEmails.length : 0}, SMS=${hasSmsConfig ? 'configured' : 'not configured'}`);
 
     // Déterminer le badge de source
     const sourceBadges = {
@@ -318,8 +313,8 @@ serve(async (req) => {
     let emailData = null;
     let emailError: Error | null = null;
     
-    // Send emails only if email notifications are enabled
-    if (notificationSettings.email_enabled) {
+    // Send emails only if email notifications are enabled AND we have recipients
+    if (hasEmailRecipients) {
       try {
         const { data, error } = await resend.emails.send({
           from: 'HelpConfort Services <support@helpconfort.services>',
@@ -341,7 +336,7 @@ serve(async (req) => {
         emailError = err instanceof Error ? err : new Error('Unknown email error');
       }
     } else {
-      console.log('[NOTIFY-SUPPORT-TICKET] Email notifications disabled, skipping');
+      console.log('[NOTIFY-SUPPORT-TICKET] Email skipped: disabled or no recipients');
     }
 
     // Envoyer les SMS aux supports via AllMySMS
