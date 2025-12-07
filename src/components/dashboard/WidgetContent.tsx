@@ -14,12 +14,15 @@ import { SupportWidget } from './widgets/SupportWidget';
 import { FaqWidget } from './widgets/FaqWidget';
 import { MesStatsWidget } from './widgets/MesStatsWidget';
 import { MesDevisFacturesWidget } from './widgets/MesDevisFacturesWidget';
+import { RecentTicketsWidget } from './widgets/RecentTicketsWidget';
+import { MaintenanceAlertsWidget } from './widgets/MaintenanceAlertsWidget';
+import { CAParUniversWidget } from './widgets/CAParUniversWidget';
 
 interface WidgetContentProps {
   widget: UserWidget & { template: WidgetTemplate };
 }
 
-// Mapping module_source → metricId pour StatIA
+// Mapping module_source → metricId pour StatIA KPI simples
 const STATIA_METRIC_MAP: Record<string, string> = {
   'StatIA.ca_global_ht': 'ca_global_ht',
   'StatIA.taux_sav_global': 'taux_sav_global',
@@ -30,7 +33,6 @@ const STATIA_METRIC_MAP: Record<string, string> = {
   'StatIA.panier_moyen': 'panier_moyen',
   'StatIA.delai_premier_devis': 'delai_premier_devis',
   'StatIA.ca_par_technicien': 'top_techniciens_ca',
-  'StatIA.ca_par_univers': 'ca_par_univers',
 };
 
 // Mapping module_source → composant spécialisé
@@ -43,8 +45,11 @@ const WIDGET_COMPONENTS: Record<string, React.FC> = {
   'HelpAcademy.guides': GuidesWidget,
   'Support.widget': SupportWidget,
   'Support.faq': FaqWidget,
+  'Support.recent_tickets': RecentTicketsWidget,
+  'Maintenance.echeances': MaintenanceAlertsWidget,
   'StatIA.mes_stats_technicien': MesStatsWidget,
   'StatIA.mes_devis_factures': MesDevisFacturesWidget,
+  'StatIA.ca_par_univers': CAParUniversWidget,
 };
 
 export function WidgetContent({ widget }: WidgetContentProps) {
