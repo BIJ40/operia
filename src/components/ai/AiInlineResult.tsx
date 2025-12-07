@@ -27,9 +27,10 @@ interface AiInlineResultProps {
   isLoading: boolean;
   onClose: () => void;
   onContactSupport?: () => void;
+  onOpenLiveChat?: () => void;
 }
 
-export function AiInlineResult({ messages, isLoading, onClose, onContactSupport }: AiInlineResultProps) {
+export function AiInlineResult({ messages, isLoading, onClose, onContactSupport, onOpenLiveChat }: AiInlineResultProps) {
   const [showHistory, setShowHistory] = useState(false);
   const [showSupportDialog, setShowSupportDialog] = useState(false);
   const [showSupportChat, setShowSupportChat] = useState(false);
@@ -81,8 +82,12 @@ export function AiInlineResult({ messages, isLoading, onClose, onContactSupport 
   };
 
   const goToSupportChat = () => {
-    // Open inline chat instead of navigating
-    setShowSupportChat(true);
+    // Use the parent's handler if available, otherwise use internal dialog
+    if (onOpenLiveChat) {
+      onOpenLiveChat();
+    } else {
+      setShowSupportChat(true);
+    }
   };
 
   const hasHistory = conversationHistory.length > 0;
