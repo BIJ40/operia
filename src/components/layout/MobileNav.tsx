@@ -88,11 +88,19 @@ export function MobileNav({ sections, supportSection, onClose }: MobileNavProps)
       const { module, option } = link.requiresOption;
       const moduleConfig = enabledModules?.[module];
       
-      if (!moduleConfig?.enabled) {
+      // Vérifier si le module est activé (gère les deux formats: boolean et objet)
+      const isModuleActive = typeof moduleConfig === 'boolean' 
+        ? moduleConfig 
+        : moduleConfig?.enabled;
+      
+      if (!isModuleActive) {
         return false;
       }
       
-      const optionEnabled = moduleConfig.options?.[option] === true;
+      // Vérifier si l'option est activée
+      const optionEnabled = typeof moduleConfig === 'object' 
+        ? moduleConfig.options?.[option] === true 
+        : true; // Si module = boolean true, toutes options considérées actives
       
       // Exception: si c'est une option "coffre" pour la section salarié,
       // un N2 avec is_salaried_manager peut y accéder

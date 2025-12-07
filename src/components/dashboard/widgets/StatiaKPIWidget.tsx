@@ -25,6 +25,8 @@ const METRIC_CONFIG: Record<string, { label: string; format: 'currency' | 'perce
   'nb_interventions': { label: 'Interventions', format: 'number' },
   'panier_moyen': { label: 'Panier moyen', format: 'currency' },
   'delai_premier_devis': { label: 'Délai 1er devis', format: 'days' },
+  'top_techniciens_ca': { label: 'Top technicien', format: 'currency' },
+  'ca_par_univers': { label: 'CA par univers', format: 'currency' },
 };
 
 function formatValue(value: number | null | undefined, formatType: 'currency' | 'percent' | 'number' | 'days'): string {

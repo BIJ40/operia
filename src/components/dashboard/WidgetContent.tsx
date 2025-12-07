@@ -29,6 +29,8 @@ const STATIA_METRIC_MAP: Record<string, string> = {
   'StatIA.nb_interventions': 'nb_interventions',
   'StatIA.panier_moyen': 'panier_moyen',
   'StatIA.delai_premier_devis': 'delai_premier_devis',
+  'StatIA.ca_par_technicien': 'top_techniciens_ca',
+  'StatIA.ca_par_univers': 'ca_par_univers',
 };
 
 // Mapping module_source → composant spécialisé

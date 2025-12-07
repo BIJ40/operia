@@ -70,11 +70,19 @@ export function MegaMenu({ section, onClose }: MegaMenuProps) {
       const { module, option } = link.requiresOption;
       const moduleConfig = enabledModules?.[module];
       
-      if (!moduleConfig?.enabled) {
+      // Vérifier si le module est activé (gère les deux formats: boolean et objet)
+      const isModuleActive = typeof moduleConfig === 'boolean' 
+        ? moduleConfig 
+        : moduleConfig?.enabled;
+      
+      if (!isModuleActive) {
         return false;
       }
       
-      const optionEnabled = moduleConfig.options?.[option] === true;
+      // Vérifier si l'option est activée
+      const optionEnabled = typeof moduleConfig === 'object' 
+        ? moduleConfig.options?.[option] === true 
+        : true; // Si module = boolean true, toutes options considérées actives
       
       // Exception: si c'est une option "coffre" pour la section salarié,
       // un N2 avec is_salaried_manager peut y accéder
@@ -108,7 +116,12 @@ export function MegaMenu({ section, onClose }: MegaMenuProps) {
   const hasMultipleSections = salarieLinks.length > 0 && dirigeantLinks.length > 0;
 
   return (
-    <div className="absolute top-full left-0 pt-1 z-50">
+    <div 
+      className="absolute top-full left-0 z-50"
+      style={{ paddingTop: 0 }}
+    >
+      {/* Invisible bridge to prevent gap between trigger and menu */}
+      <div className="h-2 w-full" />
       <div 
         className="w-80 bg-popover border rounded-lg shadow-lg p-4 animate-in fade-in slide-in-from-top-2 duration-200"
       >
