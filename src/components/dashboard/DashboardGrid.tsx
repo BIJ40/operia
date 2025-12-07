@@ -330,6 +330,7 @@ export function DashboardGrid({ isEditMode }: DashboardGridProps) {
               isResizing={resizing?.widgetId === widget.id}
               previewDimensions={resizing?.widgetId === widget.id ? dims : undefined}
               onResizeStart={handleResizeStart}
+              onDelete={(id) => removeWidget.mutate(id)}
             />
           );
         })}
