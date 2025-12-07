@@ -99,15 +99,16 @@ export function LiveCloseSessionDialog({
       const subject = messages.find(m => !m.is_from_support)?.content?.substring(0, 100) 
         || 'Conversation live support';
 
-      // Préparer les données du ticket sans le champ type qui peut causer des erreurs
+      // Préparer les données du ticket
       const ticketData = {
         user_id: userId,
         subject: subject,
         status: 'open',
         heat_priority: 6,
-        source: 'live_chat',
+        source: 'chat',
+        type: 'live_chat',
         agency_slug: agencySlug || null,
-        chatbot_conversation: JSON.parse(JSON.stringify(chatHistory)), // Assurer un JSON valide
+        chatbot_conversation: chatHistory,
         support_level: 1,
         assigned_to: user.id,
       };
