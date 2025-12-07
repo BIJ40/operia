@@ -12,17 +12,10 @@
 
 export const ROUTES = {
   // ============================================
-  // HOME
+  // HOME / DASHBOARD (page d'accueil = dashboard)
   // ============================================
   home: '/',
-
-  // ============================================
-  // DASHBOARD
-  // ============================================
-  dashboard: {
-    index: '/dashboard',
-    widgets: '/dashboard/widgets',
-  },
+  widgets: '/widgets',
 
   // ============================================
   // HELP ACADEMY
