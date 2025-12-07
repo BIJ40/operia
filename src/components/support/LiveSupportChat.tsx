@@ -256,7 +256,7 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
 
   return (
     <div className={cn("flex flex-col h-full", className)}>
-      {/* Header avec statut */}
+      {/* Header avec statut - PAS de bouton X ici car le Dialog a déjà le sien */}
       <div className="flex items-center justify-between p-3 border-b bg-muted/30">
         <div className="flex items-center gap-2">
           <Headphones className="w-5 h-5 text-helpconfort-blue" />
@@ -278,15 +278,6 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
               Connexion...
             </Badge>
           )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleEndChat}
-            className="h-7 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
-            title="Terminer la conversation"
-          >
-            <X className="w-4 h-4" />
-          </Button>
         </div>
       </div>
 
