@@ -15,7 +15,7 @@ import { calculateMonthlyCA } from '@/apogee-connect/utils/monthlyCalculations';
 import { startOfMonth, endOfMonth } from 'date-fns';
 import { LoadedData, StatParams } from '@/statia/definitions/types';
 
-// Configuration des KPIs à afficher (mêmes que IndicateursAccueil)
+// Configuration des KPIs à afficher
 const KPI_CONFIG: Array<{ 
   id: string; 
   statId: string;
@@ -108,13 +108,12 @@ export function IndicateursGlobauxWidget() {
     end: endOfMonth(now),
   };
 
-  // Fetch tous les KPIs en utilisant EXACTEMENT la même logique que IndicateursAccueil
+  // Fetch tous les KPIs
   const { data: kpiData, isLoading } = useQuery({
-    queryKey: ['widget-indicateurs-globaux-v2', agencySlug, dateRange.start.toISOString()],
+    queryKey: ['widget-indicateurs-globaux-v3', agencySlug, dateRange.start.toISOString()],
     queryFn: async () => {
       if (!agencySlug) return null;
 
-      // Charger les données via DataService (comme IndicateursAccueil)
       const apiData = await DataService.loadAllData(true);
       
       const loadedData: LoadedData = {
@@ -131,7 +130,6 @@ export function IndicateursGlobauxWidget() {
         agencySlug,
       };
 
-      // Calculer tous les KPIs via computeStat (comme useStatiaIndicateurs)
       const services = {
         getFactures: async () => loadedData.factures,
         getDevis: async () => loadedData.devis,
@@ -159,21 +157,27 @@ export function IndicateursGlobauxWidget() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch CA mensuel pour le graphique (même logique que IndicateursAccueil)
+  // Fetch CA mensuel pour le graphique
   const { data: monthlyData } = useQuery({
-    queryKey: ['widget-ca-mensuel-v2', agencySlug, selectedYear],
+    queryKey: ['widget-ca-mensuel-v3', agencySlug, selectedYear],
     queryFn: async () => {
       if (!agencySlug) return null;
       
       try {
         const apiData = await DataService.loadAllData(true);
-        return calculateMonthlyCA(
+        const rawData = calculateMonthlyCA(
           apiData.factures || [],
           apiData.clients || [],
           apiData.projects || [],
           selectedYear,
           agencySlug
         );
+        
+        // calculateMonthlyCA retourne { mois, ca, nbFactures } - on map vers { month, ca }
+        return rawData.map((item: any) => ({
+          month: item.mois || item.month,
+          ca: item.ca,
+        }));
       } catch (error) {
         console.error('[Widget] Erreur calcul CA mensuel:', error);
         return null;
