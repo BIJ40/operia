@@ -3,14 +3,14 @@
  * Chat en temps réel avec un agent support humain
  * Utilise Supabase Realtime pour la messagerie instantanée
  */
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Send, Loader2, User, Headphones, AlertCircle, CheckCheck, Ticket, CheckCircle } from 'lucide-react';
+import { Send, Loader2, User, Headphones, AlertCircle, CheckCheck, Ticket, CheckCircle, Paperclip, Image as ImageIcon, FileText, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { logError } from '@/lib/logger';
 import { cn } from '@/lib/utils';
@@ -22,6 +22,8 @@ interface LiveMessage {
   sender_name: string;
   is_from_support: boolean;
   created_at: string;
+  attachment_url?: string;
+  attachment_type?: string;
 }
 
 interface LiveSupportChatProps {
@@ -32,15 +34,19 @@ interface LiveSupportChatProps {
 export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
   const { user, firstName, lastName, agence } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [messages, setMessages] = useState<LiveMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionNotified, setSessionNotified] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [agentConnected, setAgentConnected] = useState(false);
   const [waitingForAgent, setWaitingForAgent] = useState(true);
   const [sessionClosed, setSessionClosed] = useState<'closed' | 'converted' | null>(null);
+  const [pendingAttachment, setPendingAttachment] = useState<{ url: string; type: string } | null>(null);
 
   const userName = firstName || lastName || user?.email?.split('@')[0] || 'Utilisateur';
 
@@ -122,13 +128,14 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
       // Vérifier s'il existe une session active
       const { data: existingSession } = await supabase
         .from('live_support_sessions')
-        .select('id, agent_id')
+        .select('id, agent_id, notified_at')
         .eq('user_id', user.id)
         .eq('status', 'active')
         .maybeSingle();
 
       if (existingSession) {
         setSessionId(existingSession.id);
+        setSessionNotified(!!(existingSession as any).notified_at);
         if (existingSession.agent_id) {
           setAgentConnected(true);
           setWaitingForAgent(false);
@@ -137,7 +144,7 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
         // Charger les messages existants
         const { data: existingMessages } = await supabase
           .from('live_support_messages')
-          .select('id, content, sender_id, sender_name, is_from_support, created_at')
+          .select('id, content, sender_id, sender_name, is_from_support, created_at, attachment_url, attachment_type')
           .eq('session_id', existingSession.id)
           .order('created_at', { ascending: true });
         
@@ -145,7 +152,7 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
           setMessages(existingMessages as LiveMessage[]);
         }
       } else {
-        // Créer une nouvelle session
+        // Créer une nouvelle session SANS notifier (on notifie au 1er message)
         const { data: newSession, error } = await supabase
           .from('live_support_sessions')
           .insert({
@@ -160,9 +167,10 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
         if (error) throw error;
         if (newSession) {
           setSessionId(newSession.id);
+          setSessionNotified(false);
 
-          // Ajouter le message automatique de bienvenue
-          const welcomeMessage = `Bonjour ${userName} ! Votre demande a bien été reçue. Un agent du support va vous répondre dans les plus brefs délais. Merci de patienter.`;
+          // Message automatique de bienvenue
+          const welcomeMessage = `Bonjour ${userName} ! Décrivez votre problème ci-dessous. Un agent du support vous répondra dans les plus brefs délais.`;
           
           const { error: welcomeError } = await supabase
             .from('live_support_messages')
@@ -177,26 +185,6 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
           if (welcomeError) {
             logError('live-support', 'Welcome message error', welcomeError);
           }
-
-          // Notifier les agents support via edge function (SMS + Email)
-          try {
-            const appUrl = window.location.origin;
-            await supabase.functions.invoke('notify-support-ticket', {
-              body: {
-                ticketId: newSession.id,
-                userName,
-                lastQuestion: 'Demande de chat en direct',
-                appUrl,
-                source: 'live_chat',
-                agencySlug: agence,
-                service: 'live_support',
-              },
-            });
-          } catch (notifyError) {
-            logError('live-support', 'Notify error (non-blocking)', notifyError);
-          }
-
-          toast.info('Un agent va vous répondre bientôt');
         }
       }
     } catch (error) {
@@ -204,6 +192,37 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
       toast.error('Erreur de connexion au support');
     }
   };
+
+  // Notifier les agents support (appelé au 1er message user seulement)
+  const notifySupportAgents = useCallback(async () => {
+    if (!sessionId || sessionNotified) return;
+    
+    try {
+      const appUrl = window.location.origin;
+      await supabase.functions.invoke('notify-support-ticket', {
+        body: {
+          ticketId: sessionId,
+          userName,
+          lastQuestion: 'Nouvelle demande de chat en direct',
+          appUrl,
+          source: 'live_chat',
+          agencySlug: agence,
+          service: 'live_support',
+        },
+      });
+      
+      // Marquer comme notifié
+      await supabase
+        .from('live_support_sessions')
+        .update({ notified_at: new Date().toISOString() } as any)
+        .eq('id', sessionId);
+      
+      setSessionNotified(true);
+      toast.info('Un agent va vous répondre bientôt');
+    } catch (notifyError) {
+      logError('live-support', 'Notify error (non-blocking)', notifyError);
+    }
+  }, [sessionId, sessionNotified, userName, agence]);
 
   const handleEndChat = async () => {
     if (!sessionId) return;
@@ -222,12 +241,64 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
     }
   };
 
+  // Upload fichier
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !sessionId) return;
+
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      toast.error('Fichier trop volumineux (max 10 MB)');
+      return;
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Type de fichier non supporté (images et PDF uniquement)');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const fileName = `${sessionId}/${Date.now()}.${ext}`;
+      
+      const { data, error } = await supabase.storage
+        .from('support-attachments')
+        .upload(fileName, file, { upsert: false });
+
+      if (error) throw error;
+
+      const { data: publicUrl } = supabase.storage
+        .from('support-attachments')
+        .getPublicUrl(data.path);
+
+      setPendingAttachment({
+        url: publicUrl.publicUrl,
+        type: file.type.startsWith('image/') ? 'image' : 'pdf',
+      });
+      
+      toast.success('Fichier prêt à envoyer');
+    } catch (error) {
+      logError('live-support', 'Upload error', error);
+      toast.error('Erreur lors de l\'upload');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   const handleSend = async () => {
-    if (!input.trim() || !sessionId || isLoading) return;
+    if ((!input.trim() && !pendingAttachment) || !sessionId || isLoading) return;
 
     const content = input.trim();
+    const attachment = pendingAttachment;
     setInput('');
+    setPendingAttachment(null);
     setIsLoading(true);
+
+    // Vérifier si c'est le premier message user (exclure messages système/support)
+    const isFirstUserMessage = messages.filter(m => !m.is_from_support && m.sender_id !== 'system').length === 0;
 
     try {
       const { error } = await supabase
@@ -236,15 +307,23 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
           session_id: sessionId,
           sender_id: user?.id || '',
           sender_name: userName,
-          content,
+          content: content || (attachment ? 'Pièce jointe' : ''),
           is_from_support: false,
-        });
+          attachment_url: attachment?.url || null,
+          attachment_type: attachment?.type || null,
+        } as any);
 
       if (error) throw error;
+
+      // Notifier le support au premier message user
+      if (isFirstUserMessage) {
+        await notifySupportAgents();
+      }
     } catch (error) {
       logError('live-support', 'Send message error', error);
       toast.error('Erreur lors de l\'envoi');
-      setInput(content); // Restaurer le message
+      setInput(content);
+      setPendingAttachment(attachment);
     } finally {
       setIsLoading(false);
     }
@@ -259,7 +338,7 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
 
   return (
     <div className={cn("flex flex-col h-full", className)}>
-      {/* Header avec statut - PAS de bouton X ici car le Dialog a déjà le sien */}
+      {/* Header avec statut */}
       <div className="flex items-center justify-between p-3 border-b bg-muted/30">
         <div className="flex items-center gap-2">
           <Headphones className="w-5 h-5 text-helpconfort-blue" />
@@ -335,7 +414,33 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
                       : "bg-helpconfort-blue text-white"
                   )}
                 >
-                  {msg.content}
+                  {msg.attachment_url && (
+                    <div className="mb-2">
+                      {msg.attachment_type === 'image' ? (
+                        <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer">
+                          <img 
+                            src={msg.attachment_url} 
+                            alt="Pièce jointe" 
+                            className="max-w-[200px] max-h-[150px] rounded-md object-cover cursor-pointer hover:opacity-80"
+                          />
+                        </a>
+                      ) : (
+                        <a 
+                          href={msg.attachment_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className={cn(
+                            "flex items-center gap-2 px-2 py-1 rounded",
+                            msg.is_from_support ? "bg-background/50 text-foreground" : "bg-white/20 text-white"
+                          )}
+                        >
+                          <FileText className="w-4 h-4" />
+                          <span className="text-xs underline">Voir le PDF</span>
+                        </a>
+                      )}
+                    </div>
+                  )}
+                  {msg.content && msg.content !== 'Pièce jointe' && msg.content}
                 </div>
                 <span className="text-[10px] text-muted-foreground ml-1">
                   {new Date(msg.created_at).toLocaleTimeString('fr-FR', { 
@@ -395,8 +500,56 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
           </div>
         </div>
       ) : (
-        <div className="p-3 border-t">
+        <div className="p-3 border-t space-y-2">
+          {/* Aperçu pièce jointe en attente */}
+          {pendingAttachment && (
+            <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
+              {pendingAttachment.type === 'image' ? (
+                <ImageIcon className="w-4 h-4 text-helpconfort-blue" />
+              ) : (
+                <FileText className="w-4 h-4 text-helpconfort-blue" />
+              )}
+              <span className="text-xs text-muted-foreground flex-1 truncate">
+                Fichier prêt à envoyer
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => setPendingAttachment(null)}
+              >
+                <X className="w-3 h-3" />
+              </Button>
+            </div>
+          )}
+
           <div className="flex gap-2">
+            {/* Input fichier caché */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,.pdf"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            
+            {/* Bouton pièce jointe */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading || isUploading}
+              className="shrink-0"
+            >
+              {isUploading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Paperclip className="w-4 h-4" />
+              )}
+            </Button>
+
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -407,7 +560,7 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
             />
             <Button 
               onClick={handleSend} 
-              disabled={!input.trim() || isLoading}
+              disabled={(!input.trim() && !pendingAttachment) || isLoading}
               size="icon"
               className="bg-helpconfort-blue hover:bg-helpconfort-blue/90"
             >
