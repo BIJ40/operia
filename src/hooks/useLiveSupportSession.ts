@@ -20,6 +20,7 @@ export function useLiveSupportSession() {
   const [activeSession, setActiveSession] = useState<LiveSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showChatDialog, setShowChatDialog] = useState(false);
+  const [hasNewMessage, setHasNewMessage] = useState(false);
 
   // Charger la session active au démarrage
   useEffect(() => {
@@ -52,7 +53,7 @@ export function useLiveSupportSession() {
     loadActiveSession();
 
     // Écouter les changements de session en temps réel
-    const channel = supabase
+    const sessionChannel = supabase
       .channel('live-session-status')
       .on(
         'postgres_changes',
@@ -70,6 +71,10 @@ export function useLiveSupportSession() {
               setShowChatDialog(false);
             } else {
               setActiveSession(session);
+              // Si un agent vient de prendre en charge, rouvrir automatiquement
+              if (session.agent_id && !activeSession?.agent_id) {
+                setShowChatDialog(true);
+              }
             }
           }
         }
@@ -77,13 +82,44 @@ export function useLiveSupportSession() {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(sessionChannel);
     };
   }, [user?.id]);
+
+  // Écouter les nouveaux messages pour rouvrir le dialog automatiquement
+  useEffect(() => {
+    if (!activeSession?.id) return;
+
+    const messageChannel = supabase
+      .channel(`live-messages-${activeSession.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'live_support_messages',
+          filter: `session_id=eq.${activeSession.id}`,
+        },
+        (payload) => {
+          const newMessage = payload.new as { sender_type: string };
+          // Si message d'agent et dialog fermé, rouvrir automatiquement
+          if (newMessage.sender_type === 'agent' && !showChatDialog) {
+            setShowChatDialog(true);
+            setHasNewMessage(true);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(messageChannel);
+    };
+  }, [activeSession?.id, showChatDialog]);
 
   // Ouvrir le dialog de chat
   const openChat = useCallback(() => {
     setShowChatDialog(true);
+    setHasNewMessage(false);
   }, []);
 
   // Fermer le dialog de chat (sans fermer la session)
@@ -115,6 +151,7 @@ export function useLiveSupportSession() {
     isConnected: activeSession?.status === 'active' && !!activeSession?.agent_id,
     isLoading,
     showChatDialog,
+    hasNewMessage,
     openChat,
     closeChatDialog,
     closeSession,
