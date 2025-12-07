@@ -20,6 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { SupportChatCore, ChatMessage } from '@/components/support/SupportChatCore';
 
 interface AiInlineResultProps {
   messages: AiMessage[];
@@ -31,6 +32,7 @@ interface AiInlineResultProps {
 export function AiInlineResult({ messages, isLoading, onClose, onContactSupport }: AiInlineResultProps) {
   const [showHistory, setShowHistory] = useState(false);
   const [showSupportDialog, setShowSupportDialog] = useState(false);
+  const [showSupportChat, setShowSupportChat] = useState(false);
   const [supportMessage, setSupportMessage] = useState('');
   const [isSendingTicket, setIsSendingTicket] = useState(false);
   const navigate = useNavigate();
@@ -79,8 +81,8 @@ export function AiInlineResult({ messages, isLoading, onClose, onContactSupport 
   };
 
   const goToSupportChat = () => {
-    navigate('/support');
-    onClose();
+    // Open inline chat instead of navigating
+    setShowSupportChat(true);
   };
 
   const hasHistory = conversationHistory.length > 0;
@@ -315,6 +317,29 @@ export function AiInlineResult({ messages, isLoading, onClose, onContactSupport 
               )}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Live Support Chat Dialog */}
+      <Dialog open={showSupportChat} onOpenChange={setShowSupportChat}>
+        <DialogContent className="sm:max-w-xl h-[70vh] p-0 flex flex-col">
+          <DialogHeader className="px-4 py-3 border-b flex-shrink-0">
+            <DialogTitle className="flex items-center gap-2">
+              <MessageCircle className="w-5 h-5 text-primary" />
+              Chat Support
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-hidden">
+            <SupportChatCore
+              compact
+              showFAQSuggestions
+              onTicketCreated={(ticketId) => {
+                setShowSupportChat(false);
+                toast.success('Ticket créé avec succès');
+              }}
+            />
+          </div>
         </DialogContent>
       </Dialog>
     </>
