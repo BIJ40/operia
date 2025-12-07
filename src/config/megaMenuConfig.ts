@@ -139,7 +139,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
     title: 'Academy',
     description: 'Formation et documentation',
     icon: 'GraduationCap',
-    href: ROUTES.academy.apogee,
+    href: ROUTES.academy.index,
     moduleKey: 'help_academy',
     accessKey: 'canAccessHelpAcademy',
     links: [
@@ -158,7 +158,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
     title: 'Gestion de Projet',
     description: 'Suivi et gestion de projet',
     icon: 'Kanban',
-    href: ROUTES.projects.kanban,
+    href: ROUTES.projects.index,
     moduleKey: 'apogee_tickets',
     links: [
       { label: 'Kanban', href: ROUTES.projects.kanban, icon: 'Kanban', description: 'Vue tableau' },
@@ -177,7 +177,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
     title: 'Franchiseur',
     description: 'Gestion du réseau',
     icon: 'Network',
-    href: ROUTES.reseau.dashboard,
+    href: ROUTES.reseau.index,
     accessKey: 'canAccessFranchiseur',
     links: [
       { label: 'Dashboard Réseau', href: ROUTES.reseau.dashboard, icon: 'Network', description: 'Vue d\'ensemble', minRole: 'franchisor_user' },
@@ -199,7 +199,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
     title: 'Administration',
     description: 'Paramètres système',
     icon: 'Settings',
-    href: ROUTES.admin.users,
+    href: ROUTES.admin.index,
     accessKey: 'canAccessAdmin',
     links: [
       { label: 'Utilisateurs', href: ROUTES.admin.users, icon: 'Users', description: 'Comptes utilisateurs', minRole: 'platform_admin' },
@@ -222,7 +222,7 @@ export const SUPPORT_MENU: MegaMenuSection = {
   title: 'Support',
   description: 'Aide et assistance',
   icon: 'Headset',
-  href: ROUTES.support.helpcenter,
+  href: ROUTES.support.index,
   accessKey: 'canAccessSupport',
   links: [
     { label: 'Centre d\'aide', href: ROUTES.support.helpcenter, icon: 'HelpCircle', description: 'FAQ et chat' },
