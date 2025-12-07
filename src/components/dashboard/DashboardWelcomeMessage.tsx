@@ -29,8 +29,7 @@ export function DashboardWelcomeMessage() {
         <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
         <div className="flex-1">
           <p className="text-sm text-foreground">
-            <strong>Survolez un widget</strong> pour personnaliser l'affichage de votre page d'accueil.
-            Modifiez, déplacez, supprimez vos widgets favoris.
+            <strong>Organisez votre Dashboard:</strong> cliquez sur modifier et ajoutez/organisez vos widgets disponibles
           </p>
         </div>
         <Button
@@ -40,7 +39,7 @@ export function DashboardWelcomeMessage() {
           className="text-xs text-muted-foreground hover:text-foreground shrink-0"
         >
           <X className="w-4 h-4 mr-1" />
-          Ne plus voir ce message
+          Ne plus afficher
         </Button>
       </div>
     </div>
