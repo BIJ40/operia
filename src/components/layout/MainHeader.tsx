@@ -187,7 +187,7 @@ export function MainHeader() {
                     <img 
                       src={iconAccueil} 
                       alt="Accueil" 
-                      className="h-12 w-auto"
+                      className="h-16 w-auto"
                     />
                   </Link>
 
@@ -218,7 +218,7 @@ export function MainHeader() {
                           <img 
                             src={customIcon} 
                             alt={section.title} 
-                            className="h-12 w-auto"
+                            className="h-16 w-auto"
                           />
                         </button>
 
@@ -252,7 +252,7 @@ export function MainHeader() {
                         <img 
                           src={iconSupport} 
                           alt="Support" 
-                          className="h-12 w-auto"
+                          className="h-16 w-auto"
                         />
                         {hasNewTickets && (
                           <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
