@@ -4,9 +4,9 @@
  */
 
 import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
-  LogOut, User, Settings, Headset, Loader2, Search, Bell,
+  LogOut, User, Settings, Headset, Loader2,
   Menu, X, ChevronDown, Home, Circle,
   Building2, Briefcase, Kanban, Brain, GraduationCap, Network,
   LucideIcon
@@ -30,7 +30,6 @@ import { MEGA_MENU_CONFIG, SUPPORT_MENU } from '@/config/megaMenuConfig';
 import { getRoleCapabilities } from '@/config/roleMatrix';
 import logoHelpconfortServices from '@/assets/help-confort-services-logo.png';
 import { RHNotificationBadge } from '@/components/rh/RHNotificationBadge';
-import { MessagingWidget } from '@/components/messaging';
 import { isModuleEnabled, ModuleKey } from '@/types/modules';
 
 // Map d'icônes pour les sections
@@ -66,10 +65,8 @@ export function MainHeader() {
   
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
-  const [searchOpen, setSearchOpen] = useState(false);
 
   const caps = getRoleCapabilities(globalRole);
-  const canAccessMessaging = isAdmin || isModuleEnabled(enabledModules, 'messaging');
 
   // Filtrer les sections de menu selon les permissions
   const filteredMenus = MEGA_MENU_CONFIG.filter(section => {
@@ -228,16 +225,8 @@ export function MainHeader() {
 
           {/* Actions droite */}
           <div className="flex items-center gap-1 ml-auto">
-            {/* Notifications */}
-            <Button variant="ghost" size="icon" className="relative h-8 w-8">
-              <Bell className="w-4 h-4" />
-            </Button>
-
-            {/* RH Notifications */}
+            {/* RH Notifications - seule cloche */}
             <RHNotificationBadge />
-
-            {/* Messaging */}
-            {canAccessMessaging && <MessagingWidget />}
 
             {/* Console support pour agents */}
             {canAccessSupportConsoleUI && (
