@@ -2779,6 +2779,83 @@ export type Database = {
           },
         ]
       }
+      live_support_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_from_support: boolean
+          sender_id: string
+          sender_name: string
+          session_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_from_support?: boolean
+          sender_id: string
+          sender_name: string
+          session_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_from_support?: boolean
+          sender_id?: string
+          sender_name?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_support_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "live_support_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_support_sessions: {
+        Row: {
+          agency_slug: string | null
+          agent_id: string | null
+          agent_name: string | null
+          closed_at: string | null
+          created_at: string
+          id: string
+          status: string
+          updated_at: string
+          user_id: string
+          user_name: string
+        }
+        Insert: {
+          agency_slug?: string | null
+          agent_id?: string | null
+          agent_name?: string | null
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          user_name: string
+        }
+        Update: {
+          agency_slug?: string | null
+          agent_id?: string | null
+          agent_name?: string | null
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          user_name?: string
+        }
+        Relationships: []
+      }
       maintenance_alerts: {
         Row: {
           acknowledged_at: string | null
