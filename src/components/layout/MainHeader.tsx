@@ -188,6 +188,7 @@ export function MainHeader() {
                       src={iconAccueil} 
                       alt="Accueil" 
                       className="h-[5.5rem] w-auto mt-2"
+                      data-no-modal
                     />
                   </Link>
 
@@ -220,6 +221,7 @@ export function MainHeader() {
                             src={customIcon} 
                             alt={section.title} 
                             className="h-[5.5rem] w-auto mt-2"
+                            data-no-modal
                           />
                         </Link>
 
@@ -255,6 +257,7 @@ export function MainHeader() {
                           src={iconSupport} 
                           alt="Support" 
                           className="h-[5.5rem] w-auto mt-2"
+                          data-no-modal
                         />
                         {hasNewTickets && (
                           <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
