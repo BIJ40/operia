@@ -3,7 +3,7 @@
  * Always visible, fixed position, results shown inline below
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, X, Loader2, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -35,12 +35,44 @@ export function AiUnifiedBar() {
     isConnected, 
     isWaiting,
     hasNewMessage,
-    openChat 
+    openChat,
+    startNewSession, 
   } = useLiveSupportSession();
+  
   const [localQuery, setLocalQuery] = useState('');
-  const [isFocused, setIsFocused] = useState(false);
+  const [isBarOpen, setIsBarOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const blurTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Open the bar (show results zone)
+  const openBar = useCallback(() => {
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current);
+      blurTimeoutRef.current = null;
+    }
+    setIsBarOpen(true);
+    expand();
+  }, [expand]);
+
+  // Close the bar with a small delay to allow click events to fire
+  const closeBar = useCallback(() => {
+    blurTimeoutRef.current = setTimeout(() => {
+      setIsBarOpen(false);
+      if (messages.length > 0 || isLoading) {
+        closeResult();
+        clearMessages();
+      }
+    }, 200);
+  }, [messages.length, isLoading, closeResult, clearMessages]);
+
+  // Cancel close (called when clicking inside)
+  const cancelClose = useCallback(() => {
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current);
+      blurTimeoutRef.current = null;
+    }
+  }, []);
 
   // Global keyboard shortcut (Ctrl+K / Cmd+K)
   useEffect(() => {
@@ -48,57 +80,66 @@ export function AiUnifiedBar() {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         inputRef.current?.focus();
-        expand();
+        openBar();
       }
       if (e.key === 'Escape') {
-        if (isFocused) {
-          inputRef.current?.blur();
-          setIsFocused(false);
-        }
+        inputRef.current?.blur();
+        setIsBarOpen(false);
         if (messages.length > 0) {
-          closeResult();
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [expand, closeResult, isFocused, messages.length]);
-
-  // Click outside to collapse and close results
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setIsFocused(false);
-        if (messages.length > 0 || isLoading) {
           closeResult();
           clearMessages();
         }
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [messages.length, isLoading, closeResult, clearMessages]);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [openBar, closeResult, clearMessages, messages.length]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (blurTimeoutRef.current) {
+        clearTimeout(blurTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!localQuery.trim() || isLoading) return;
+    cancelClose();
     await submitQuery(localQuery);
     setLocalQuery('');
   };
 
   const handleExampleClick = (example: string) => {
+    cancelClose();
     setLocalQuery(example);
     inputRef.current?.focus();
   };
 
+  const handleLiveSupportClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('[AiUnifiedBar] Live support button clicked, hasActiveSession:', hasActiveSession);
+    
+    if (hasActiveSession) {
+      openChat();
+    } else {
+      // Start a new session if none exists
+      await startNewSession();
+    }
+  };
+
   const hasResults = messages.length > 0;
+  const showResultsZone = isBarOpen || hasResults || isLoading;
 
   return (
     <div 
       ref={containerRef}
       className="w-full flex flex-col items-center py-3 relative"
+      onMouseDown={cancelClose}
     >
       {/* Main Search Bar + Live Support Button */}
       <div className="w-full max-w-5xl px-4 relative flex items-center gap-3">
@@ -106,14 +147,14 @@ export function AiUnifiedBar() {
         <motion.div
           initial={false}
           animate={{
-            boxShadow: isFocused || hasResults
+            boxShadow: showResultsZone
               ? '0 8px 30px -5px rgba(0, 113, 188, 0.25), 0 0 0 1px rgba(0, 113, 188, 0.1)'
               : '0 2px 10px -2px rgba(0, 0, 0, 0.1)'
           }}
           className="relative rounded-full overflow-hidden flex-1"
         >
           {/* Animated glow border when focused */}
-          {(isFocused || hasResults) && (
+          {showResultsZone && (
             <motion.div
               className="absolute inset-0 rounded-full pointer-events-none"
               initial={{ opacity: 0 }}
@@ -151,11 +192,8 @@ export function AiUnifiedBar() {
               type="text"
               value={localQuery}
               onChange={(e) => setLocalQuery(e.target.value)}
-              onFocus={() => {
-                setIsFocused(true);
-                expand();
-              }}
-              onBlur={() => setIsFocused(false)}
+              onFocus={openBar}
+              onBlur={closeBar}
               placeholder="Posez votre question..."
               disabled={isLoading}
               className={cn(
@@ -204,12 +242,7 @@ export function AiUnifiedBar() {
             >
               <Button
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log('[AiUnifiedBar] Live support button clicked');
-                  openChat();
-                }}
+                onClick={handleLiveSupportClick}
                 size="sm"
                 className={cn(
                   "relative gap-2 rounded-full px-4 shadow-lg transition-all shrink-0",
@@ -248,54 +281,64 @@ export function AiUnifiedBar() {
           )}
         </AnimatePresence>
 
-        {/* Floating Results - Show when focused OR has results/loading */}
-        {(isFocused || hasResults || isLoading) && (
-          <motion.div 
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="absolute top-full left-0 right-0 mt-2 z-50 px-4"
-          >
-            <div className="bg-background border border-border rounded-xl shadow-2xl max-h-[70vh] overflow-auto">
-              <AiInlineResult
-                messages={messages}
-                isLoading={isLoading}
-                onClose={() => {
-                  closeResult();
-                  clearMessages();
-                }}
-                onOpenLiveChat={openChat}
-              />
-            </div>
-          </motion.div>
-        )}
+        {/* Floating Results - Show when bar is open or has results/loading */}
+        <AnimatePresence>
+          {showResultsZone && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute top-full left-0 right-0 mt-2 z-50 px-4"
+              onMouseDown={cancelClose}
+            >
+              <div className="bg-background border border-border rounded-xl shadow-2xl max-h-[70vh] overflow-auto">
+                <AiInlineResult
+                  messages={messages}
+                  isLoading={isLoading}
+                  onClose={() => {
+                    setIsBarOpen(false);
+                    closeResult();
+                    clearMessages();
+                  }}
+                  onOpenLiveChat={hasActiveSession ? openChat : startNewSession}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* Quick examples - show when focused and no query/results */}
-      {isFocused && !localQuery && !hasResults && !isLoading && (
-        <motion.div
-          initial={{ opacity: 0, y: -5 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -5 }}
-          className="flex flex-wrap gap-2 justify-center mt-3 px-4"
-        >
-          {QUICK_EXAMPLES.map((example, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => handleExampleClick(example)}
-              className={cn(
-                "px-3 py-1.5 text-xs rounded-full",
-                "bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground",
-                "border border-border/50 hover:border-border",
-                "transition-colors"
-              )}
-            >
-              {example}
-            </button>
-          ))}
-        </motion.div>
-      )}
+      {/* Quick examples - show when bar is open and no query/results */}
+      <AnimatePresence>
+        {isBarOpen && !localQuery && !hasResults && !isLoading && (
+          <motion.div
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            className="flex flex-wrap gap-2 justify-center mt-3 px-4"
+            onMouseDown={cancelClose}
+          >
+            {QUICK_EXAMPLES.map((example, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  handleExampleClick(example);
+                }}
+                className={cn(
+                  "px-3 py-1.5 text-xs rounded-full",
+                  "bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground",
+                  "border border-border/50 hover:border-border",
+                  "transition-colors"
+                )}
+              >
+                {example}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
