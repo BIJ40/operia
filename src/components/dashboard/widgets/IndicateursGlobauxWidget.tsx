@@ -1,5 +1,5 @@
 /**
- * Widget Indicateurs Globaux - Version autonome sans dépendance FiltersProvider
+ * Widget Indicateurs Globaux - Version utilisant la même logique que IndicateursAccueil
  * Affiche les KPIs clés + graphique Evolution du CA
  */
 
@@ -9,18 +9,76 @@ import { Card } from '@/components/ui/card';
 import { formatEuros } from '@/apogee-connect/utils/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { getMetricForAgency } from '@/statia/api/getMetricForAgency';
-import { getGlobalApogeeDataServices } from '@/statia/adapters/dataServiceAdapter';
-import { startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
+import { DataService } from '@/apogee-connect/services/dataService';
+import { computeStat } from '@/statia/engine/computeStat';
+import { calculateMonthlyCA } from '@/apogee-connect/utils/monthlyCalculations';
+import { startOfMonth, endOfMonth } from 'date-fns';
+import { LoadedData, StatParams } from '@/statia/definitions/types';
 
-// Configuration des KPIs à afficher
-const KPI_CONFIG: Array<{ id: string; label: string; format: 'currency' | 'percent' | 'number' | 'days'; color: string; icon: string }> = [
-  { id: 'ca_global_ht', label: 'CA période', format: 'currency', color: 'from-orange-500 to-orange-600', icon: '€' },
-  { id: 'taux_sav_global', label: 'Taux SAV', format: 'percent', color: 'from-red-500 to-red-600', icon: 'SAV' },
-  { id: 'taux_transformation_devis_nombre', label: 'Taux transfo', format: 'percent', color: 'from-cyan-500 to-cyan-600', icon: '📈' },
-  { id: 'panier_moyen', label: 'Panier moyen', format: 'currency', color: 'from-pink-500 to-pink-600', icon: '🛒' },
-  { id: 'nb_dossiers_crees', label: 'Dossiers', format: 'number', color: 'from-blue-500 to-blue-600', icon: '📁' },
-  { id: 'nombre_devis', label: 'Devis émis', format: 'number', color: 'from-purple-500 to-purple-600', icon: '📄' },
+// Configuration des KPIs à afficher (mêmes que IndicateursAccueil)
+const KPI_CONFIG: Array<{ 
+  id: string; 
+  statId: string;
+  label: string; 
+  format: 'currency' | 'percent' | 'number' | 'days'; 
+  color: string; 
+  icon: string;
+  getValue: (result: any) => number | null;
+}> = [
+  { 
+    id: 'ca', 
+    statId: 'ca_global_ht',
+    label: 'CA période', 
+    format: 'currency', 
+    color: 'from-orange-500 to-orange-600', 
+    icon: '€',
+    getValue: (r) => r?.value ?? null
+  },
+  { 
+    id: 'sav', 
+    statId: 'taux_sav_global',
+    label: 'Taux SAV', 
+    format: 'percent', 
+    color: 'from-red-500 to-red-600', 
+    icon: 'SAV',
+    getValue: (r) => r?.value ?? null
+  },
+  { 
+    id: 'transfo', 
+    statId: 'taux_transformation_devis_nombre',
+    label: 'Taux transfo', 
+    format: 'percent', 
+    color: 'from-cyan-500 to-cyan-600', 
+    icon: '📈',
+    getValue: (r) => r?.value ?? null
+  },
+  { 
+    id: 'panier', 
+    statId: 'panier_moyen',
+    label: 'Panier moyen', 
+    format: 'currency', 
+    color: 'from-pink-500 to-pink-600', 
+    icon: '🛒',
+    getValue: (r) => r?.value ?? null
+  },
+  { 
+    id: 'dossiers', 
+    statId: 'nb_dossiers_crees',
+    label: 'Dossiers', 
+    format: 'number', 
+    color: 'from-blue-500 to-blue-600', 
+    icon: '📁',
+    getValue: (r) => r?.value ?? null
+  },
+  { 
+    id: 'devis', 
+    statId: 'nombre_devis',
+    label: 'Devis émis', 
+    format: 'number', 
+    color: 'from-purple-500 to-purple-600', 
+    icon: '📄',
+    getValue: (r) => r?.value ?? null
+  },
 ];
 
 function formatValue(value: number | null | undefined, format: string): string {
@@ -45,63 +103,79 @@ export function IndicateursGlobauxWidget() {
   const selectedYear = new Date().getFullYear();
 
   const now = new Date();
-  const monthDateRange = {
+  const dateRange = {
     start: startOfMonth(now),
     end: endOfMonth(now),
   };
-  
-  const yearDateRange = {
-    start: startOfYear(now),
-    end: endOfYear(now),
-  };
 
-  const services = getGlobalApogeeDataServices();
-
-  // Fetch tous les KPIs en parallèle
+  // Fetch tous les KPIs en utilisant EXACTEMENT la même logique que IndicateursAccueil
   const { data: kpiData, isLoading } = useQuery({
-    queryKey: ['widget-indicateurs-globaux', agencySlug, monthDateRange.start.toISOString()],
+    queryKey: ['widget-indicateurs-globaux-v2', agencySlug, dateRange.start.toISOString()],
     queryFn: async () => {
       if (!agencySlug) return null;
 
-      const results = await Promise.all(
-        KPI_CONFIG.map(async (kpi) => {
-          try {
-            const result = await getMetricForAgency(kpi.id, agencySlug, { dateRange: monthDateRange }, services);
-            return { id: kpi.id, value: result?.value ?? null };
-          } catch {
-            return { id: kpi.id, value: null };
-          }
-        })
-      );
+      // Charger les données via DataService (comme IndicateursAccueil)
+      const apiData = await DataService.loadAllData(true);
+      
+      const loadedData: LoadedData = {
+        factures: apiData.factures || [],
+        devis: apiData.devis || [],
+        interventions: apiData.interventions || [],
+        projects: apiData.projects || [],
+        users: apiData.users || [],
+        clients: apiData.clients || [],
+      };
 
-      return Object.fromEntries(results.map(r => [r.id, r.value]));
+      const params: StatParams = {
+        dateRange,
+        agencySlug,
+      };
+
+      // Calculer tous les KPIs via computeStat (comme useStatiaIndicateurs)
+      const services = {
+        getFactures: async () => loadedData.factures,
+        getDevis: async () => loadedData.devis,
+        getInterventions: async () => loadedData.interventions,
+        getProjects: async () => loadedData.projects,
+        getUsers: async () => loadedData.users,
+        getClients: async () => loadedData.clients,
+      };
+
+      const results: Record<string, any> = {};
+      
+      for (const kpi of KPI_CONFIG) {
+        try {
+          const result = await computeStat(kpi.statId, params, services, { useCache: false });
+          results[kpi.id] = kpi.getValue(result);
+        } catch (error) {
+          console.error(`[Widget] Erreur calcul ${kpi.statId}:`, error);
+          results[kpi.id] = null;
+        }
+      }
+
+      return results;
     },
     enabled: !!agencySlug,
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch CA mensuel pour le graphique
+  // Fetch CA mensuel pour le graphique (même logique que IndicateursAccueil)
   const { data: monthlyData } = useQuery({
-    queryKey: ['widget-ca-mensuel', agencySlug, selectedYear],
+    queryKey: ['widget-ca-mensuel-v2', agencySlug, selectedYear],
     queryFn: async () => {
       if (!agencySlug) return null;
       
       try {
-        const result = await getMetricForAgency('ca_mensuel', agencySlug, { dateRange: yearDateRange }, services);
-        if (result && Array.isArray(result.value)) {
-          return result.value;
-        }
-        // Si le résultat est un objet avec les mois
-        if (result && typeof result === 'object') {
-          const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
-          const resultObj = result as unknown as Record<string, unknown>;
-          return months.map((month, index) => ({
-            month,
-            ca: Number(resultObj[String(index + 1)]) || 0,
-          }));
-        }
-        return null;
-      } catch {
+        const apiData = await DataService.loadAllData(true);
+        return calculateMonthlyCA(
+          apiData.factures || [],
+          apiData.clients || [],
+          apiData.projects || [],
+          selectedYear,
+          agencySlug
+        );
+      } catch (error) {
+        console.error('[Widget] Erreur calcul CA mensuel:', error);
         return null;
       }
     },
