@@ -338,17 +338,24 @@ export function DashboardGrid() {
       )}
 
       <DragOverlay dropAnimation={null}>
-        {activeWidget && (
-          <div 
-            className="opacity-90 pointer-events-none"
-            style={{
-              width: activeWidget.width * CELL_SIZE + (activeWidget.width - 1) * GAP,
-              height: activeWidget.height * CELL_SIZE + (activeWidget.height - 1) * GAP,
-            }}
-          >
-            <DashboardWidget widget={activeWidget} isDragging />
-          </div>
-        )}
+        {activeWidget && gridRef.current && (() => {
+          // Calculer la taille réelle d'une cellule basée sur la largeur de la grille
+          const gridWidth = gridRef.current.clientWidth - 32; // padding 16px de chaque côté
+          const totalGaps = (GRID_COLS - 1) * GAP;
+          const cellWidth = (gridWidth - totalGaps) / GRID_COLS;
+          
+          return (
+            <div 
+              className="opacity-80 pointer-events-none shadow-2xl"
+              style={{
+                width: activeWidget.width * cellWidth + (activeWidget.width - 1) * GAP,
+                height: activeWidget.height * CELL_SIZE + (activeWidget.height - 1) * GAP,
+              }}
+            >
+              <DashboardWidget widget={activeWidget} isDragging />
+            </div>
+          );
+        })()}
       </DragOverlay>
     </DndContext>
   );
