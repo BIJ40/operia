@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
-  LogOut, User, Settings, Headset, Loader2, Menu, Pencil, FileEdit, ArrowLeft,
+  LogOut, User, Settings, Headset, Loader2, Pencil, FileEdit,
   BarChart3, CheckSquare, Tv, CalendarDays, Users, Gauge,
   BookOpen, Handshake, FolderOpen, GraduationCap, FolderKanban, Kanban,
   MessageSquare, LifeBuoy, HelpCircle,
@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { useSidebar } from '@/components/ui/sidebar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,6 +50,8 @@ import { RHNotificationBadge } from '@/components/rh/RHNotificationBadge';
 import { AiUnifiedBar } from '@/components/ai';
 import { LiveSupportIndicator } from '@/components/support/LiveSupportIndicator';
 import { GlobalLiveSupportManager } from '@/components/support/GlobalLiveSupportManager';
+import { IconNavBar } from './IconNavBar';
+import logoHelpconfortServices from '@/assets/help-confort-services-logo.png';
 
 // Mapping des noms d'icônes vers les composants
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -87,7 +88,6 @@ export function UnifiedHeader() {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAdmin, canAccessSupportConsoleUI, isLoggingOut, logout, globalRole } = useAuth();
-  const { toggleSidebar } = useSidebar();
   const { hasNewTickets, newTicketsCount, hasChatHumanRequests, hasTicketRequests, hasLiveChatRequests, liveChatCount } = useSupportNotifications();
 
   // Déterminer la classe de clignotement du header pour SU
@@ -210,40 +210,20 @@ export function UnifiedHeader() {
         role="banner"
       >
         <div className="h-14 sm:h-16 md:h-20 px-3 sm:px-4 flex items-center gap-2 sm:gap-3">
-          {/* Left: Sidebar toggle + Back button */}
-          <div className="flex items-center gap-2 shrink-0">
-            {/* P2 FIX: Touch target amélioré pour mobile (min 44x44px) */}
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={toggleSidebar}
-              aria-label="Basculer le menu latéral"
-              aria-expanded="false"
-              className="min-w-[44px] min-h-[44px] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              <Menu className="w-5 h-5" />
-            </Button>
-            
-            {showBackButton && (
-              <Link to={parentRoute!} aria-label={`Retour à ${parentLabel}`}>
-                <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground hover:text-foreground min-h-[44px] focus-visible:ring-2 focus-visible:ring-ring">
-                  <ArrowLeft className="w-4 h-4" aria-hidden="true" />
-                  <span className="hidden sm:inline">{parentLabel}</span>
-                </Button>
-              </Link>
-            )}
+          {/* Left: Logo aligné avec les icônes */}
+          <div className="flex items-center shrink-0">
+            <Link to="/" className="block">
+              <img 
+                src={logoHelpconfortServices} 
+                alt="HelpConfort Services" 
+                className="h-10 sm:h-12 md:h-14 object-contain"
+              />
+            </Link>
           </div>
 
-          {/* Center: Title with icon */}
-          <div className="flex-1 flex items-center justify-center min-w-0">
-            <div className="flex items-center gap-2">
-              {PageIcon && (
-                <PageIcon className={`${iconSizeClass} shrink-0 text-primary`} />
-              )}
-              <h1 className={`${titleSizeClass} font-semibold text-foreground truncate`}>
-                {formatHelpTitle(displayTitle)}
-              </h1>
-            </div>
+          {/* Center: Icon Navigation Bar */}
+          <div className="flex-1 flex items-center justify-center">
+            <IconNavBar />
           </div>
 
           {/* Right side actions */}
