@@ -60,7 +60,7 @@ export function AiInlineResult({ messages, isLoading, onClose, onContactSupport,
     try {
       const { error } = await supabase.from('support_tickets').insert({
         subject: 'Question depuis l\'IA Assistant',
-        type: 'question',
+        type: 'chat_ai',
         status: 'new',
         heat_priority: 4,
         user_id: user.id,
