@@ -107,16 +107,18 @@ export function DashboardGrid() {
     setIsOverTrash(false);
   }, [widgets, batchUpdate, removeWidget, activeId]);
 
-  // Track mouse position during drag for trash zone (top-right corner)
+  // Track mouse position during drag for trash zone (bottom center of grid)
   useEffect(() => {
     if (!activeId) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      // Trash zone in top-right: right 6 = ~24px from right, top 80px (top-20), width ~180px, height 64px
+      // Trash zone: bottom of the viewport, centered, 300px wide
+      const trashWidth = 300;
+      const centerX = window.innerWidth / 2;
       const isInTrashZone = 
-        e.clientX > window.innerWidth - 200 && 
-        e.clientY > 60 && 
-        e.clientY < 150;
+        e.clientX > centerX - trashWidth / 2 && 
+        e.clientX < centerX + trashWidth / 2 &&
+        e.clientY > window.innerHeight - 100;
       setIsOverTrash(isInTrashZone);
     };
 
@@ -312,25 +314,25 @@ export function DashboardGrid() {
         })}
       </div>
 
-      {/* Zone corbeille - fixe en haut à droite pendant le drag */}
+      {/* Zone corbeille - barre en bas au centre pendant le drag */}
       {activeId && (
         <div 
           className={cn(
-            'fixed top-20 right-6 h-16 px-6 flex items-center justify-center gap-3 rounded-xl transition-all duration-200 z-50 shadow-lg',
+            'fixed bottom-6 left-1/2 -translate-x-1/2 h-14 px-8 flex items-center justify-center gap-3 rounded-full transition-all duration-200 z-50 shadow-xl',
             isOverTrash 
               ? 'bg-destructive text-destructive-foreground scale-110' 
-              : 'bg-muted/95 backdrop-blur-sm text-muted-foreground border border-border'
+              : 'bg-card/95 backdrop-blur-md text-muted-foreground border-2 border-dashed border-destructive/50'
           )}
         >
           <Trash2 className={cn(
             'transition-transform duration-200',
-            isOverTrash ? 'h-6 w-6' : 'h-5 w-5'
+            isOverTrash ? 'h-6 w-6 animate-pulse' : 'h-5 w-5'
           )} />
           <span className={cn(
             'font-medium transition-all duration-200',
             isOverTrash ? 'text-base' : 'text-sm'
           )}>
-            {isOverTrash ? 'Relâcher pour retirer' : 'Corbeille'}
+            {isOverTrash ? 'Relâcher pour supprimer' : 'Déposer ici pour retirer'}
           </span>
         </div>
       )}
