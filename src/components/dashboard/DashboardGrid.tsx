@@ -1,18 +1,16 @@
 /**
- * DashboardGrid - Grille avec drag libre, resize, et zone corbeille
+ * DashboardGrid - Grille avec positionnement absolu, drag, resize, et zone corbeille
  */
 
-import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { 
   DndContext, 
   DragEndEvent, 
   DragStartEvent,
   DragOverlay,
-  DragMoveEvent,
   PointerSensor,
   useSensor,
   useSensors,
-  rectIntersection,
 } from '@dnd-kit/core';
 import { UserWidget, WidgetTemplate } from '@/types/dashboard';
 import { useUserWidgets, useBatchUpdateWidgets, useRemoveWidget } from '@/hooks/useDashboard';
@@ -24,7 +22,7 @@ import { cn } from '@/lib/utils';
 
 const GRID_COLS = 12;
 const CELL_SIZE = 80;
-const GAP = 16;
+const GAP = 12;
 
 export function DashboardGrid() {
   const { data: widgets, isLoading } = useUserWidgets();
@@ -32,7 +30,6 @@ export function DashboardGrid() {
   const removeWidget = useRemoveWidget();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isOverTrash, setIsOverTrash] = useState(false);
-  const gridRef = useRef<HTMLDivElement>(null);
   
   // Resize state
   const [resizing, setResizing] = useState<{
@@ -59,24 +56,18 @@ export function DashboardGrid() {
     setIsOverTrash(false);
   }, []);
 
-  const handleDragMove = useCallback((event: DragMoveEvent) => {
-    // Detect if over trash zone (bottom of screen)
-    const { activatorEvent } = event;
-    if (activatorEvent && 'clientY' in activatorEvent) {
-      const clientY = (activatorEvent as MouseEvent).clientY;
-      const windowHeight = window.innerHeight;
-      setIsOverTrash(clientY > windowHeight - 100);
-    }
-  }, []);
-
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const widgetId = activeId;
     setActiveId(null);
     
     if (!widgets || !widgetId) return;
 
-    // Si au-dessus de la corbeille, supprimer
-    if (isOverTrash) {
+    // Vérifier si au-dessus de la corbeille via position Y du pointer
+    const pointerY = (event.activatorEvent as MouseEvent)?.clientY;
+    const windowHeight = window.innerHeight;
+    const overTrash = pointerY && pointerY > windowHeight - 100;
+
+    if (overTrash) {
       removeWidget.mutate(widgetId);
       setIsOverTrash(false);
       return;
@@ -86,12 +77,12 @@ export function DashboardGrid() {
     const widget = widgets.find(w => w.id === widgetId);
     if (!widget) return;
 
-    // Calculate new position
-    const deltaColsRaw = delta.x / (CELL_SIZE + GAP);
-    const deltaRowsRaw = delta.y / (CELL_SIZE + GAP);
+    // Calculate new position based on cell size
+    const cellWidth = CELL_SIZE + GAP;
+    const cellHeight = CELL_SIZE + GAP;
     
-    const deltaCols = Math.round(deltaColsRaw);
-    const deltaRows = Math.round(deltaRowsRaw);
+    const deltaCols = Math.round(delta.x / cellWidth);
+    const deltaRows = Math.round(delta.y / cellHeight);
 
     const newX = Math.max(0, Math.min(GRID_COLS - widget.width, widget.position_x + deltaCols));
     const newY = Math.max(0, widget.position_y + deltaRows);
@@ -107,7 +98,20 @@ export function DashboardGrid() {
     }
 
     setIsOverTrash(false);
-  }, [widgets, batchUpdate, removeWidget, activeId, isOverTrash]);
+  }, [widgets, batchUpdate, removeWidget, activeId]);
+
+  // Track mouse position during drag for trash zone
+  useEffect(() => {
+    if (!activeId) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const windowHeight = window.innerHeight;
+      setIsOverTrash(e.clientY > windowHeight - 100);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [activeId]);
 
   // Handle resize
   const handleResizeStart = useCallback((widgetId: string, corner: string, e: React.MouseEvent) => {
@@ -136,33 +140,38 @@ export function DashboardGrid() {
       const deltaX = e.clientX - resizing.startX;
       const deltaY = e.clientY - resizing.startY;
       
-      const deltaCols = Math.round(deltaX / (CELL_SIZE + GAP));
-      const deltaRows = Math.round(deltaY / (CELL_SIZE + GAP));
+      const cellWidth = CELL_SIZE + GAP;
+      const cellHeight = CELL_SIZE + GAP;
+      
+      const deltaCols = Math.round(deltaX / cellWidth);
+      const deltaRows = Math.round(deltaY / cellHeight);
 
       let newWidth = resizing.startWidth;
       let newHeight = resizing.startHeight;
       let newPosX = resizing.startPosX;
       let newPosY = resizing.startPosY;
 
-      // Handle different corners/edges
+      // Handle different corners
       if (resizing.corner.includes('e')) {
         newWidth = Math.max(1, Math.min(GRID_COLS - resizing.startPosX, resizing.startWidth + deltaCols));
       }
       if (resizing.corner.includes('w')) {
-        const widthChange = Math.min(deltaCols, resizing.startWidth - 1);
-        newWidth = Math.max(1, resizing.startWidth - widthChange);
-        newPosX = Math.max(0, resizing.startPosX + widthChange);
+        const maxShrink = resizing.startWidth - 1;
+        const actualDelta = Math.max(-resizing.startPosX, Math.min(maxShrink, deltaCols));
+        newPosX = resizing.startPosX + actualDelta;
+        newWidth = resizing.startWidth - actualDelta;
       }
       if (resizing.corner.includes('s')) {
         newHeight = Math.max(1, resizing.startHeight + deltaRows);
       }
       if (resizing.corner.includes('n')) {
-        const heightChange = Math.min(deltaRows, resizing.startHeight - 1);
-        newHeight = Math.max(1, resizing.startHeight - heightChange);
-        newPosY = Math.max(0, resizing.startPosY + heightChange);
+        const maxShrink = resizing.startHeight - 1;
+        const actualDelta = Math.max(-resizing.startPosY, Math.min(maxShrink, deltaRows));
+        newPosY = resizing.startPosY + actualDelta;
+        newHeight = resizing.startHeight - actualDelta;
       }
 
-      // Update widget
+      // Only update if something changed
       if (newWidth !== widget.width || newHeight !== widget.height || 
           newPosX !== widget.position_x || newPosY !== widget.position_y) {
         batchUpdate.mutate([{
@@ -193,6 +202,12 @@ export function DashboardGrid() {
     return widgets.find(w => w.id === activeId);
   }, [activeId, widgets]);
 
+  // Calculate grid height based on widgets
+  const maxRow = useMemo(() => {
+    if (!widgets || widgets.length === 0) return 6;
+    return Math.max(6, ...widgets.map(w => w.position_y + w.height));
+  }, [widgets]);
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-3 gap-4 p-4">
@@ -210,19 +225,16 @@ export function DashboardGrid() {
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={rectIntersection}
       onDragStart={handleDragStart}
-      onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
     >
       <div 
-        ref={gridRef}
-        className="relative w-full min-h-[600px] p-4"
+        className="relative w-full p-4"
         style={{
           display: 'grid',
           gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`,
+          gridTemplateRows: `repeat(${maxRow}, ${CELL_SIZE}px)`,
           gap: `${GAP}px`,
-          gridAutoRows: `${CELL_SIZE}px`,
         }}
       >
         {widgets.map((widget) => (
