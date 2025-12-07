@@ -352,67 +352,82 @@ export const UserAccordionItem = memo(function UserAccordionItem({
                         )}
                       </div>
 
-                      {/* Options du module */}
+                      {/* Options du module - 2 colonnes avec couleurs par niveau */}
                       {hasOptions && (
                         <CollapsibleContent>
-                          <div className="p-3 space-y-2 bg-background/50 border-t border-border/30">
-                            <p className="text-xs text-muted-foreground font-medium mb-2">Options du module :</p>
-                            {moduleDef.options!.map(option => {
-                              const optionEnabled = moduleOptions[option.key] ?? option.defaultEnabled;
-                              
-                              // Pour RH, vérifier si l'option est autorisée pour ce rôle
-                              const isOptionAllowed = isRhModule 
-                                ? isRhOptionAllowedForRole(effectiveRole, option.key)
-                                : true;
-                              const isOptionDisabled = !canEdit || !isOptionAllowed;
-                              
-                              const handleOptionClick = (e: React.MouseEvent) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                if (!isOptionDisabled) {
-                                  // Si le module n'est pas activé, l'activer d'abord
-                                  if (!isEnabled) {
-                                    onModuleToggle(moduleDef.key, true);
+                          <div className="p-3 bg-background/50 border-t border-border/30">
+                            <div className="grid grid-cols-2 gap-2">
+                              {moduleDef.options!.map(option => {
+                                const optionEnabled = moduleOptions[option.key] ?? option.defaultEnabled;
+                                
+                                // Pour RH, vérifier si l'option est autorisée pour ce rôle
+                                const isOptionAllowed = isRhModule 
+                                  ? isRhOptionAllowedForRole(effectiveRole, option.key)
+                                  : true;
+                                const isOptionDisabled = !canEdit || !isOptionAllowed;
+                                
+                                // Couleurs par type d'option (niveau d'accès)
+                                const getOptionColors = () => {
+                                  if (!optionEnabled || !isEnabled) {
+                                    return 'bg-muted/50 border-muted text-muted-foreground';
                                   }
-                                  onModuleOptionToggle(moduleDef.key, option.key, !optionEnabled);
-                                }
-                              };
-                              
-                              return (
-                                <div 
-                                  key={option.key}
-                                  role="button"
-                                  tabIndex={isOptionDisabled ? -1 : 0}
-                                  onClick={handleOptionClick}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter' || e.key === ' ') {
-                                      e.preventDefault();
-                                      handleOptionClick(e as any);
+                                  // Différentes couleurs selon le niveau d'accès de l'option
+                                  if (option.key === 'coffre' || option.key === 'kanban') {
+                                    return 'bg-emerald-50 border-emerald-300 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-700 dark:text-emerald-300';
+                                  }
+                                  if (option.key === 'rh_viewer' || option.key === 'manage' || option.key === 'agent') {
+                                    return 'bg-blue-50 border-blue-300 text-blue-800 dark:bg-blue-950/30 dark:border-blue-700 dark:text-blue-300';
+                                  }
+                                  if (option.key === 'rh_admin' || option.key === 'import' || option.key === 'admin') {
+                                    return 'bg-violet-50 border-violet-300 text-violet-800 dark:bg-violet-950/30 dark:border-violet-700 dark:text-violet-300';
+                                  }
+                                  return 'bg-primary/10 border-primary/30';
+                                };
+                                
+                                const handleOptionClick = (e: React.MouseEvent) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  if (!isOptionDisabled) {
+                                    if (!isEnabled) {
+                                      onModuleToggle(moduleDef.key, true);
                                     }
-                                  }}
-                                  className={`flex items-center gap-2 p-2 rounded border ${
-                                    isOptionDisabled 
-                                      ? 'opacity-50 cursor-not-allowed' 
-                                      : 'cursor-pointer hover:bg-muted/50 active:scale-[0.99]'
-                                  } ${optionEnabled && isEnabled ? 'bg-primary/10 border-primary/30' : 'border-muted'}`}
-                                >
-                                  <Checkbox
-                                    checked={optionEnabled && isEnabled}
-                                    disabled={isOptionDisabled}
-                                    className="w-4 h-4 pointer-events-none"
-                                  />
-                                  <div className="flex-1">
-                                    <span className="text-sm">{option.label}</span>
-                                    {option.description && (
-                                      <p className="text-xs text-muted-foreground">{option.description}</p>
+                                    onModuleOptionToggle(moduleDef.key, option.key, !optionEnabled);
+                                  }
+                                };
+                                
+                                return (
+                                  <div 
+                                    key={option.key}
+                                    role="button"
+                                    tabIndex={isOptionDisabled ? -1 : 0}
+                                    onClick={handleOptionClick}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        handleOptionClick(e as any);
+                                      }
+                                    }}
+                                    className={`flex items-center gap-2 p-2 rounded-md border transition-all ${
+                                      isOptionDisabled 
+                                        ? 'opacity-50 cursor-not-allowed' 
+                                        : 'cursor-pointer hover:shadow-sm active:scale-[0.98]'
+                                    } ${getOptionColors()}`}
+                                  >
+                                    <Checkbox
+                                      checked={optionEnabled && isEnabled}
+                                      disabled={isOptionDisabled}
+                                      className="w-4 h-4 pointer-events-none shrink-0"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                      <span className="text-xs font-medium block truncate">{option.label}</span>
+                                    </div>
+                                    {!isOptionAllowed && isRhModule && (
+                                      <Badge variant="outline" className="text-[10px] shrink-0 h-4 px-1">N2+</Badge>
                                     )}
                                   </div>
-                                  {!isOptionAllowed && isRhModule && (
-                                    <Badge variant="outline" className="text-xs shrink-0">N2+</Badge>
-                                  )}
-                                </div>
-                              );
-                            })}
+                                );
+                              })}
+                            </div>
                           </div>
                         </CollapsibleContent>
                       )}
