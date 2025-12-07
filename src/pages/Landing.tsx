@@ -79,10 +79,15 @@ export default function Landing() {
       projects: [],
       franchiseur: [],
       admin: [],
+      communication: [],
+      technicien: [],
     };
     
     visibleTiles.forEach(tile => {
-      groups[tile.group].push(tile);
+      // Sécurité : vérifier que le groupe existe avant de push
+      if (groups[tile.group]) {
+        groups[tile.group].push(tile);
+      }
     });
     
     return groups;
