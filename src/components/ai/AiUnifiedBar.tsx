@@ -4,8 +4,8 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Sparkles, X, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles, X, Loader2, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAiUnified } from './AiUnifiedContext';
@@ -30,7 +30,13 @@ export function AiUnifiedBar() {
     clearMessages,
   } = useAiUnified();
   
-  const { openChat } = useLiveSupportSession();
+  const { 
+    hasActiveSession, 
+    isConnected, 
+    isWaiting,
+    hasNewMessage,
+    openChat 
+  } = useLiveSupportSession();
   const [localQuery, setLocalQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -94,8 +100,9 @@ export function AiUnifiedBar() {
       ref={containerRef}
       className="w-full flex flex-col items-center py-3 relative"
     >
-      {/* Main Search Bar */}
-      <div className="w-full max-w-5xl px-4 relative">
+      {/* Main Search Bar + Live Support Button */}
+      <div className="w-full max-w-5xl px-4 relative flex items-center gap-3">
+        {/* Search Bar */}
         <motion.div
           initial={false}
           animate={{
@@ -103,7 +110,7 @@ export function AiUnifiedBar() {
               ? '0 8px 30px -5px rgba(0, 113, 188, 0.25), 0 0 0 1px rgba(0, 113, 188, 0.1)'
               : '0 2px 10px -2px rgba(0, 0, 0, 0.1)'
           }}
-          className="relative rounded-full overflow-hidden"
+          className="relative rounded-full overflow-hidden flex-1"
         >
           {/* Animated glow border when focused */}
           {(isFocused || hasResults) && (
@@ -187,31 +194,53 @@ export function AiUnifiedBar() {
           </form>
         </motion.div>
 
-        {/* Quick examples - show when focused and no query */}
-        {isFocused && !localQuery && !hasResults && (
-          <motion.div
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -5 }}
-            className="flex flex-wrap gap-2 justify-center mt-3"
-          >
-            {QUICK_EXAMPLES.map((example, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => handleExampleClick(example)}
+        {/* Live Support Button - Visible when session active */}
+        <AnimatePresence>
+          {hasActiveSession && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, x: 20 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              exit={{ opacity: 0, scale: 0.8, x: 20 }}
+            >
+              <Button
+                onClick={openChat}
+                size="sm"
                 className={cn(
-                  "px-3 py-1.5 text-xs rounded-full",
-                  "bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground",
-                  "border border-border/50 hover:border-border",
-                  "transition-colors"
+                  "relative gap-2 rounded-full px-4 shadow-lg transition-all shrink-0",
+                  isConnected 
+                    ? "bg-green-500 hover:bg-green-600 text-white" 
+                    : "bg-amber-500 hover:bg-amber-600 text-white animate-pulse"
                 )}
               >
-                {example}
-              </button>
-            ))}
-          </motion.div>
-        )}
+                {/* Pulse indicator */}
+                <span className="relative flex h-2 w-2">
+                  <span className={cn(
+                    "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75",
+                    isConnected ? "bg-green-300" : "bg-amber-300"
+                  )} />
+                  <span className={cn(
+                    "relative inline-flex rounded-full h-2 w-2",
+                    isConnected ? "bg-green-200" : "bg-amber-200"
+                  )} />
+                </span>
+                
+                <MessageCircle className={cn("w-4 h-4", hasNewMessage && "animate-bounce")} />
+                
+                <span className="text-xs font-medium hidden sm:inline">
+                  {isConnected ? 'Support en direct' : 'En attente...'}
+                </span>
+
+                {/* New message indicator */}
+                {hasNewMessage && (
+                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
+                  </span>
+                )}
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Floating Results - Absolute positioned dropdown */}
         {(hasResults || isLoading) && (
@@ -219,7 +248,7 @@ export function AiUnifiedBar() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="absolute top-full left-0 right-0 mt-2 z-50"
+            className="absolute top-full left-0 right-0 mt-2 z-50 px-4"
           >
             <div className="bg-background border border-border rounded-xl shadow-2xl max-h-[70vh] overflow-auto">
               <AiInlineResult
@@ -235,6 +264,32 @@ export function AiUnifiedBar() {
           </motion.div>
         )}
       </div>
+
+      {/* Quick examples - show when focused and no query */}
+      {isFocused && !localQuery && !hasResults && (
+        <motion.div
+          initial={{ opacity: 0, y: -5 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -5 }}
+          className="flex flex-wrap gap-2 justify-center mt-3 px-4"
+        >
+          {QUICK_EXAMPLES.map((example, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => handleExampleClick(example)}
+              className={cn(
+                "px-3 py-1.5 text-xs rounded-full",
+                "bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground",
+                "border border-border/50 hover:border-border",
+                "transition-colors"
+              )}
+            >
+              {example}
+            </button>
+          ))}
+        </motion.div>
+      )}
     </div>
   );
 }
