@@ -2781,6 +2781,8 @@ export type Database = {
       }
       live_support_messages: {
         Row: {
+          attachment_type: string | null
+          attachment_url: string | null
           content: string
           created_at: string
           id: string
@@ -2790,6 +2792,8 @@ export type Database = {
           session_id: string
         }
         Insert: {
+          attachment_type?: string | null
+          attachment_url?: string | null
           content: string
           created_at?: string
           id?: string
@@ -2799,6 +2803,8 @@ export type Database = {
           session_id: string
         }
         Update: {
+          attachment_type?: string | null
+          attachment_url?: string | null
           content?: string
           created_at?: string
           id?: string
@@ -2825,6 +2831,7 @@ export type Database = {
           closed_at: string | null
           created_at: string
           id: string
+          notified_at: string | null
           status: string
           updated_at: string
           user_id: string
@@ -2837,6 +2844,7 @@ export type Database = {
           closed_at?: string | null
           created_at?: string
           id?: string
+          notified_at?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -2849,6 +2857,7 @@ export type Database = {
           closed_at?: string | null
           created_at?: string
           id?: string
+          notified_at?: string | null
           status?: string
           updated_at?: string
           user_id?: string
