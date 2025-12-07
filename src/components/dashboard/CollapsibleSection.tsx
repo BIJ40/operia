@@ -84,22 +84,27 @@ export const CollapsibleSection = memo(function CollapsibleSection({
           "transition-all duration-300"
         )}
       >
-        {/* Left: Icon (navigates if href) + Title */}
+        {/* Left: Icon + Title (navigates if href) */}
         <div className="flex items-center gap-4">
           {href ? (
             <Link 
               to={href} 
               onClick={(e) => e.stopPropagation()}
-              className="focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl"
+              className="flex items-center gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl hover:opacity-80 transition-opacity"
             >
               {IconBox}
+              <h2 className="text-xl font-bold text-foreground tracking-tight hover:text-helpconfort-blue transition-colors">
+                {title}
+              </h2>
             </Link>
           ) : (
-            IconBox
+            <>
+              {IconBox}
+              <h2 className="text-xl font-bold text-foreground tracking-tight">
+                {title}
+              </h2>
+            </>
           )}
-          <h2 className="text-xl font-bold text-foreground tracking-tight">
-            {title}
-          </h2>
         </div>
 
         {/* Right: Combo barre + chevron */}
