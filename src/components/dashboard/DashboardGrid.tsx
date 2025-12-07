@@ -42,7 +42,11 @@ interface ResizeState {
   previewY: number;
 }
 
-export function DashboardGrid() {
+interface DashboardGridProps {
+  isEditMode: boolean;
+}
+
+export function DashboardGrid({ isEditMode }: DashboardGridProps) {
   const { data: widgets, isLoading } = useUserWidgets();
   const batchUpdate = useBatchUpdateWidgets();
   const removeWidget = useRemoveWidget();
@@ -60,12 +64,15 @@ export function DashboardGrid() {
   );
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
+    if (!isEditMode) return; // Block drag if not in edit mode
     if (resizing) return; // Don't start drag while resizing
     setActiveId(event.active.id as string);
     setIsOverTrash(false);
-  }, [resizing]);
+  }, [resizing, isEditMode]);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
+    if (!isEditMode) return; // Block drag if not in edit mode
+    
     const widgetId = activeId;
     setActiveId(null);
     
@@ -105,11 +112,11 @@ export function DashboardGrid() {
     }
 
     setIsOverTrash(false);
-  }, [widgets, batchUpdate, removeWidget, activeId]);
+  }, [widgets, batchUpdate, removeWidget, activeId, isEditMode]);
 
   // Track mouse position during drag for trash zone (bottom center of grid)
   useEffect(() => {
-    if (!activeId) return;
+    if (!activeId || !isEditMode) return;
 
     const handleMouseMove = (e: MouseEvent) => {
       // Trash zone: bottom of the viewport, centered, 300px wide
@@ -124,10 +131,12 @@ export function DashboardGrid() {
 
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [activeId]);
+  }, [activeId, isEditMode]);
 
   // Handle resize start
   const handleResizeStart = useCallback((widgetId: string, corner: string, e: React.MouseEvent) => {
+    if (!isEditMode) return; // Block resize if not in edit mode
+    
     const widget = widgets?.find(w => w.id === widgetId);
     if (!widget) return;
 
@@ -150,11 +159,11 @@ export function DashboardGrid() {
       previewX: widget.position_x,
       previewY: widget.position_y,
     });
-  }, [widgets]);
+  }, [widgets, isEditMode]);
 
   // Handle resize move - only update local preview state
   useEffect(() => {
-    if (!resizing) return;
+    if (!resizing || !isEditMode) return;
 
     const handleMouseMove = (e: MouseEvent) => {
       const deltaX = e.clientX - resizing.startX;
@@ -229,7 +238,7 @@ export function DashboardGrid() {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [resizing, batchUpdate]);
+  }, [resizing, batchUpdate, isEditMode]);
 
   const activeWidget = useMemo(() => {
     if (!activeId || !widgets) return null;
@@ -289,9 +298,20 @@ export function DashboardGrid() {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
+      {/* Indicateur mode édition */}
+      {isEditMode && (
+        <div className="mb-4 p-3 rounded-lg bg-helpconfort-blue/10 border border-helpconfort-blue/30 text-sm text-helpconfort-blue flex items-center gap-2">
+          <span className="inline-block w-2 h-2 rounded-full bg-helpconfort-blue animate-pulse" />
+          Mode édition actif — Déplacez et redimensionnez vos widgets
+        </div>
+      )}
+
       <div 
         ref={gridRef}
-        className="relative w-full p-4"
+        className={cn(
+          "relative w-full p-4 rounded-xl transition-all duration-300",
+          isEditMode && "bg-muted/30 ring-2 ring-helpconfort-blue/20 ring-dashed"
+        )}
         style={{
           display: 'grid',
           gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`,
@@ -305,6 +325,7 @@ export function DashboardGrid() {
             <DashboardWidget
               key={widget.id}
               widget={widget}
+              isEditMode={isEditMode}
               isDragging={activeId === widget.id}
               isResizing={resizing?.widgetId === widget.id}
               previewDimensions={resizing?.widgetId === widget.id ? dims : undefined}
@@ -315,7 +336,7 @@ export function DashboardGrid() {
       </div>
 
       {/* Zone corbeille - barre en bas au centre pendant le drag */}
-      {activeId && (
+      {activeId && isEditMode && (
         <div 
           className={cn(
             'fixed bottom-6 left-1/2 -translate-x-1/2 h-14 px-8 flex items-center justify-center gap-3 rounded-full transition-all duration-200 z-50 shadow-xl',
@@ -338,7 +359,7 @@ export function DashboardGrid() {
       )}
 
       <DragOverlay dropAnimation={null}>
-        {activeWidget && gridRef.current && (() => {
+        {activeWidget && isEditMode && gridRef.current && (() => {
           // Calculer la taille réelle d'une cellule basée sur la largeur de la grille
           const gridWidth = gridRef.current.clientWidth - 32; // padding 16px de chaque côté
           const totalGaps = (GRID_COLS - 1) * GAP;
@@ -352,7 +373,7 @@ export function DashboardGrid() {
                 height: activeWidget.height * CELL_SIZE + (activeWidget.height - 1) * GAP,
               }}
             >
-              <DashboardWidget widget={activeWidget} isDragging />
+              <DashboardWidget widget={activeWidget} isEditMode={isEditMode} isDragging />
             </div>
           );
         })()}
