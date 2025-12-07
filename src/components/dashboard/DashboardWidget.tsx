@@ -48,6 +48,7 @@ interface PreviewDimensions {
 
 interface DashboardWidgetProps {
   widget: UserWidget & { template: WidgetTemplate };
+  isEditMode?: boolean;
   isDragging?: boolean;
   isResizing?: boolean;
   previewDimensions?: PreviewDimensions;
@@ -56,6 +57,7 @@ interface DashboardWidgetProps {
 
 export function DashboardWidget({ 
   widget, 
+  isEditMode = false,
   isDragging, 
   isResizing,
   previewDimensions,
@@ -65,7 +67,7 @@ export function DashboardWidget({
 
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: widget.id,
-    disabled: isResizing, // Disable drag while resizing
+    disabled: !isEditMode || isResizing, // Disable drag if not in edit mode or while resizing
   });
 
   // Use preview dimensions if resizing, otherwise use widget dimensions
@@ -91,21 +93,24 @@ export function DashboardWidget({
 
   const Icon = ICONS[widget.template?.icon || 'LayoutGrid'] || LayoutGrid;
 
+  // Only show resize handles if in edit mode
+  const showResizeHandles = isEditMode && (isHovered || isResizing) && !isDragging;
+
   return (
     <Card
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
+      {...(isEditMode ? { ...attributes, ...listeners } : {})}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={cn(
-        'relative overflow-hidden cursor-grab active:cursor-grabbing select-none',
+        'relative overflow-hidden select-none',
         'border-l-4 border-l-helpconfort-blue',
         'bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-background to-background',
         'border border-helpconfort-blue/15 shadow-sm',
         'transition-all duration-300',
         'hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5',
+        isEditMode && 'cursor-grab active:cursor-grabbing',
         isDragging && 'opacity-50 ring-2 ring-helpconfort-blue/30 ring-dashed',
         isResizing && 'ring-2 ring-helpconfort-blue/50 shadow-xl'
       )}
@@ -123,8 +128,8 @@ export function DashboardWidget({
         <WidgetContent widget={widget} />
       </CardContent>
 
-      {/* Poignées de resize aux 4 coins - visibles au hover */}
-      {(isHovered || isResizing) && !isDragging && (
+      {/* Poignées de resize aux 4 coins - visibles au hover EN MODE EDITION uniquement */}
+      {showResizeHandles && (
         <>
           {/* Coin bas-droite (principal) */}
           <div
