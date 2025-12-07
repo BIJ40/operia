@@ -102,7 +102,7 @@ export function DashboardWidget({
         'relative overflow-hidden cursor-grab active:cursor-grabbing select-none',
         'bg-card/95 backdrop-blur-sm border-border/50',
         'hover:shadow-lg hover:border-primary/30',
-        isDragging && 'opacity-60 shadow-2xl ring-2 ring-primary/50',
+        isDragging && 'opacity-0 pointer-events-none', // Invisible pendant le drag, seul l'overlay est visible
         isResizing && 'ring-2 ring-primary/50 shadow-xl'
       )}
     >
