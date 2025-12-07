@@ -153,7 +153,7 @@ export function SAVDossierList({ dossiers, isLoading = false }: SAVDossierListPr
       return <Badge className="bg-red-500 hover:bg-red-600">SAV Confirmé</Badge>;
     }
     if (override?.is_confirmed_sav === false) {
-      return <Badge variant="outline" className="border-green-500 text-green-600">Infirmé</Badge>;
+      return <Badge className="bg-green-500 hover:bg-green-600 text-white">Négatif</Badge>;
     }
     return <Badge variant="secondary">Auto-détecté</Badge>;
   };

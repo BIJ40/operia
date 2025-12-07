@@ -210,10 +210,24 @@ function buildDossiersSAV(
     // Détection SAV automatique
     const isAutoSav = isSavProjectAutoDetect(project);
     
-    // Vérifier via overrides (source de vérité)
-    // On inclut tous les projets auto-détectés + ceux confirmés manuellement
-    // Mais on exclut ceux infirmés
-    if (!isProjectConfirmedSAV(projectId, isAutoSav, overridesData)) {
+    // Vérifier s'il y a un override pour ce projet
+    const hasOverride = overridesData.overridesMap.has(projectId);
+    const override = overridesData.overridesMap.get(projectId);
+    
+    // RÈGLE: On inclut dans la liste si:
+    // 1. Projet auto-détecté SAV ET pas d'override infirmant
+    // 2. OU projet avec override (qu'il soit confirmé OU infirmé - pour affichage dans "Traités")
+    const isConfirmedSav = isProjectConfirmedSAV(projectId, isAutoSav, overridesData);
+    const isInfirmedSav = hasOverride && override?.is_confirmed_sav === false;
+    
+    // Ne pas inclure si: pas auto-détecté ET pas d'override
+    if (!isAutoSav && !hasOverride) {
+      continue;
+    }
+    
+    // Ne pas inclure si: auto-détecté mais infirmé (sauf si on veut le montrer dans "Traités")
+    // On les inclut maintenant pour qu'ils apparaissent dans "SAV traités" avec statut "Négatif"
+    if (!isConfirmedSav && !isInfirmedSav) {
       continue;
     }
 
