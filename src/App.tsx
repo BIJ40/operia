@@ -17,6 +17,10 @@ import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 import Error401 from "./pages/Error401";
 import Error403 from "./pages/Error403";
+
+// Dashboard
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const DashboardWidgets = lazy(() => import("./pages/DashboardWidgets"));
 import Error500 from "./pages/Error500";
 
 // Lazy loaded pages - Section Index Pages
@@ -186,6 +190,10 @@ function AppContent() {
         <Routes>
           {/* Dashboard / Home - Accessible à tous les utilisateurs connectés */}
           <Route path="/" element={<MainLayout><Landing /></MainLayout>} />
+          
+          {/* Dashboard personnalisable */}
+          <Route path="/dashboard" element={<MainLayout><RoleGuard minRole="franchisee_user"><Dashboard /></RoleGuard></MainLayout>} />
+          <Route path="/dashboard/widgets" element={<MainLayout><RoleGuard minRole="franchisee_user"><DashboardWidgets /></RoleGuard></MainLayout>} />
           
           {/* Messages - Discussion interne */}
           <Route path="/messages" element={<MainLayout><RoleGuard minRole="franchisee_user"><Messages /></RoleGuard></MainLayout>} />
