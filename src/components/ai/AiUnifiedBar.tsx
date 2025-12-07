@@ -248,8 +248,8 @@ export function AiUnifiedBar() {
           )}
         </AnimatePresence>
 
-        {/* Floating Results - Absolute positioned dropdown */}
-        {(hasResults || isLoading) && (
+        {/* Floating Results - Show when focused OR has results/loading */}
+        {(isFocused || hasResults || isLoading) && (
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -271,8 +271,8 @@ export function AiUnifiedBar() {
         )}
       </div>
 
-      {/* Quick examples - show when focused and no query */}
-      {isFocused && !localQuery && !hasResults && (
+      {/* Quick examples - show when focused and no query/results */}
+      {isFocused && !localQuery && !hasResults && !isLoading && (
         <motion.div
           initial={{ opacity: 0, y: -5 }}
           animate={{ opacity: 1, y: 0 }}
