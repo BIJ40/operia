@@ -339,7 +339,7 @@ export function AiInlineResult({ messages, isLoading, onClose, onContactSupport,
           </DialogHeader>
           
           <div className="flex-1 overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <LiveSupportChat />
+            <LiveSupportChat onClose={() => setShowSupportChat(false)} />
           </div>
         </DialogContent>
       </Dialog>
