@@ -60,19 +60,21 @@ export function AiUnifiedBar() {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [expand, closeResult, isFocused, messages.length]);
 
-  // Click outside to collapse (only if no results)
+  // Click outside to collapse and close results
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        if (messages.length === 0 && !isLoading) {
-          setIsFocused(false);
+        setIsFocused(false);
+        if (messages.length > 0 || isLoading) {
+          closeResult();
+          clearMessages();
         }
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [messages.length, isLoading]);
+  }, [messages.length, isLoading, closeResult, clearMessages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
