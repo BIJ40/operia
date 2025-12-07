@@ -107,13 +107,17 @@ export function DashboardGrid() {
     setIsOverTrash(false);
   }, [widgets, batchUpdate, removeWidget, activeId]);
 
-  // Track mouse position during drag for trash zone
+  // Track mouse position during drag for trash zone (top-right corner)
   useEffect(() => {
     if (!activeId) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      const windowHeight = window.innerHeight;
-      setIsOverTrash(e.clientY > windowHeight - 100);
+      // Trash zone in top-right: right 6 = ~24px from right, top 80px (top-20), width ~180px, height 64px
+      const isInTrashZone = 
+        e.clientX > window.innerWidth - 200 && 
+        e.clientY > 60 && 
+        e.clientY < 150;
+      setIsOverTrash(isInTrashZone);
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -308,25 +312,25 @@ export function DashboardGrid() {
         })}
       </div>
 
-      {/* Zone corbeille - visible uniquement pendant le drag */}
+      {/* Zone corbeille - fixe en haut à droite pendant le drag */}
       {activeId && (
         <div 
           className={cn(
-            'fixed bottom-0 left-0 right-0 h-24 flex items-center justify-center gap-3 transition-all duration-200 z-50',
+            'fixed top-20 right-6 h-16 px-6 flex items-center justify-center gap-3 rounded-xl transition-all duration-200 z-50 shadow-lg',
             isOverTrash 
-              ? 'bg-destructive/90 text-destructive-foreground' 
-              : 'bg-muted/80 backdrop-blur-sm text-muted-foreground'
+              ? 'bg-destructive text-destructive-foreground scale-110' 
+              : 'bg-muted/95 backdrop-blur-sm text-muted-foreground border border-border'
           )}
         >
           <Trash2 className={cn(
             'transition-transform duration-200',
-            isOverTrash ? 'h-8 w-8 scale-110' : 'h-6 w-6'
+            isOverTrash ? 'h-6 w-6' : 'h-5 w-5'
           )} />
           <span className={cn(
             'font-medium transition-all duration-200',
-            isOverTrash ? 'text-lg' : 'text-sm'
+            isOverTrash ? 'text-base' : 'text-sm'
           )}>
-            {isOverTrash ? 'Relâcher pour retirer' : 'Glisser ici pour retirer'}
+            {isOverTrash ? 'Relâcher pour retirer' : 'Corbeille'}
           </span>
         </div>
       )}
