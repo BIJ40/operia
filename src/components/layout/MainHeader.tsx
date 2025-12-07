@@ -23,6 +23,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useSupportNotifications } from '@/hooks/use-support-notifications';
 import { ROUTES } from '@/config/routes';
+import { APP_VERSION } from '@/config/version';
 import { cn } from '@/lib/utils';
 import { MegaMenu } from './MegaMenu';
 import { MobileNav } from './MobileNav';
@@ -117,14 +118,21 @@ export function MainHeader() {
 
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         {/* Ligne 1 : Logo + Navigation + Actions */}
-        <div className="container flex h-12 items-center px-4">
-          {/* Logo */}
-          <Link to="/" className="flex items-center mr-6 shrink-0">
+        <div className="container flex h-16 items-center px-4">
+          {/* Logo avec badge version - lien vers changelog */}
+          <Link 
+            to={ROUTES.changelog} 
+            className="group flex items-center mr-6 shrink-0 relative"
+            title="Voir l'historique des versions"
+          >
             <img 
               src={logoHelpconfortServices} 
               alt="HelpConfort Services" 
-              className="h-8 w-auto"
+              className="h-14 w-auto transition-transform duration-200 group-hover:scale-105"
             />
+            <span className="absolute -bottom-0.5 -right-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors duration-200">
+              v{APP_VERSION}
+            </span>
           </Link>
 
           {/* Navigation principale - Desktop */}
