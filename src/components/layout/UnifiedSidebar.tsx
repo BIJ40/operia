@@ -387,7 +387,7 @@ export function UnifiedSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="pt-1 space-y-0">
-        {/* Home link */}
+        {/* Home & Dashboard links */}
         <SidebarGroup className="py-1">
           <SidebarGroupContent>
             <SidebarMenu>
@@ -399,7 +399,14 @@ export function UnifiedSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild className={isActive('/dashboard') ? 'bg-helpconfort-blue/8 text-helpconfort-blue border-l-2 border-helpconfort-blue' : ''}>
+                  <Link to="/dashboard" className="group/item flex items-center gap-2 py-1.5">
+                    <BarChart3 className="w-4 h-4 transition-transform duration-300 group-hover/item:animate-bounce-subtle" />
+                    {!collapsed && <span className="text-sm">Mon Dashboard</span>}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
