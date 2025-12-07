@@ -7,6 +7,13 @@ import { UserWidget, WidgetTemplate } from '@/types/dashboard';
 import { StatiaKPIWidget } from './widgets/StatiaKPIWidget';
 import { CollaboratorsListWidget } from './widgets/CollaboratorsListWidget';
 import { HelpAcademyWidget } from './widgets/HelpAcademyWidget';
+import { MonCoffreWidget } from './widgets/MonCoffreWidget';
+import { MesDemandesRHWidget } from './widgets/MesDemandesRHWidget';
+import { GuidesWidget } from './widgets/GuidesWidget';
+import { SupportWidget } from './widgets/SupportWidget';
+import { FaqWidget } from './widgets/FaqWidget';
+import { MesStatsWidget } from './widgets/MesStatsWidget';
+import { MesDevisFacturesWidget } from './widgets/MesDevisFacturesWidget';
 
 interface WidgetContentProps {
   widget: UserWidget & { template: WidgetTemplate };
@@ -24,16 +31,27 @@ const STATIA_METRIC_MAP: Record<string, string> = {
   'StatIA.delai_premier_devis': 'delai_premier_devis',
 };
 
+// Mapping module_source → composant spécialisé
+const WIDGET_COMPONENTS: Record<string, React.FC> = {
+  'RH.collaborateurs': CollaboratorsListWidget,
+  'RH.collaborators': CollaboratorsListWidget,
+  'RH.mon_coffre': MonCoffreWidget,
+  'RH.mes_demandes': MesDemandesRHWidget,
+  'HelpAcademy.accueil': HelpAcademyWidget,
+  'HelpAcademy.guides': GuidesWidget,
+  'Support.widget': SupportWidget,
+  'Support.faq': FaqWidget,
+  'StatIA.mes_stats_technicien': MesStatsWidget,
+  'StatIA.mes_devis_factures': MesDevisFacturesWidget,
+};
+
 export function WidgetContent({ widget }: WidgetContentProps) {
   const { type, module_source } = widget.template;
 
-  // Widgets spéciaux
-  if (module_source === 'RH.collaborateurs') {
-    return <CollaboratorsListWidget />;
-  }
-  
-  if (module_source === 'HelpAcademy.accueil') {
-    return <HelpAcademyWidget />;
+  // Widgets spéciaux avec composant dédié
+  const SpecialComponent = WIDGET_COMPONENTS[module_source];
+  if (SpecialComponent) {
+    return <SpecialComponent />;
   }
 
   // Widgets KPI StatIA
