@@ -67,34 +67,25 @@ function PermissionCard({
 }: PermissionCardProps) {
   const isDisabled = !canEdit || !isAllowed;
   
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!isDisabled) {
-      onToggle();
-    }
-  };
-  
   return (
-    <div
-      role="button"
-      tabIndex={isDisabled ? -1 : 0}
-      className={`relative rounded-lg border-2 p-4 transition-all select-none ${
+    <button
+      type="button"
+      disabled={isDisabled}
+      onClick={onToggle}
+      className={`relative z-10 rounded-lg border-2 p-4 transition-all select-none text-left w-full ${
         isDisabled ? 'opacity-50 cursor-not-allowed bg-muted/30' : 'cursor-pointer hover:shadow-md active:scale-[0.98]'
       } ${
         isEnabled 
           ? 'border-primary bg-primary/5 shadow-sm' 
           : 'border-muted hover:border-primary/40'
       }`}
-      onClick={handleClick}
-      onKeyDown={(e) => e.key === 'Enter' && handleClick(e as any)}
     >
       <div className="flex gap-3">
-        <div className="pt-0.5">
+        <div className="pt-0.5 pointer-events-none">
           <Checkbox
             checked={isEnabled}
             disabled={isDisabled}
-            className="w-5 h-5 pointer-events-none"
+            className="w-5 h-5"
           />
         </div>
         <div className="flex-1 min-w-0">
@@ -119,7 +110,7 @@ function PermissionCard({
           <p className="text-xs text-muted-foreground italic">→ {targetUsers}</p>
         </div>
       </div>
-    </div>
+    </button>
   );
 }
 
