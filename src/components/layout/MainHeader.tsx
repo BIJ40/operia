@@ -119,9 +119,10 @@ export function MainHeader() {
       )}
 
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center px-4">
+        {/* Ligne 1 : Logo + Navigation + Actions */}
+        <div className="container flex h-12 items-center px-4">
           {/* Logo */}
-          <Link to="/" className="flex items-center mr-6">
+          <Link to="/" className="flex items-center mr-6 shrink-0">
             <img 
               src={logoHelpconfortServices} 
               alt="HelpConfort Services" 
@@ -130,12 +131,12 @@ export function MainHeader() {
           </Link>
 
           {/* Navigation principale - Desktop */}
-          <nav className="hidden lg:flex items-center flex-1">
+          <nav className="hidden lg:flex items-center flex-1 gap-0.5">
             {/* Accueil */}
             <Link
               to="/"
               className={cn(
-                "flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                "flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
                 location.pathname === '/' 
                   ? "bg-primary/10 text-primary" 
                   : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -162,7 +163,7 @@ export function MainHeader() {
                 >
                   <button
                     className={cn(
-                      "flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                      "flex items-center gap-1 px-2.5 py-1.5 text-sm font-medium rounded-md transition-colors",
                       isCurrentSection
                         ? "bg-primary/10 text-primary"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -196,7 +197,7 @@ export function MainHeader() {
               >
                 <button
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-colors relative",
+                    "flex items-center gap-1 px-2.5 py-1.5 text-sm font-medium rounded-md transition-colors relative",
                     location.pathname.startsWith('/support')
                       ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -226,31 +227,9 @@ export function MainHeader() {
           </nav>
 
           {/* Actions droite */}
-          <div className="flex items-center gap-2 ml-auto">
-            {/* Recherche */}
-            <div className="hidden md:flex items-center">
-              {searchOpen ? (
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="search"
-                    placeholder="Rechercher..."
-                    className="w-48 h-8"
-                    autoFocus
-                    onBlur={() => setSearchOpen(false)}
-                  />
-                  <Button variant="ghost" size="icon" onClick={() => setSearchOpen(false)}>
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              ) : (
-                <Button variant="ghost" size="icon" onClick={() => setSearchOpen(true)}>
-                  <Search className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
-
+          <div className="flex items-center gap-1 ml-auto">
             {/* Notifications */}
-            <Button variant="ghost" size="icon" className="relative">
+            <Button variant="ghost" size="icon" className="relative h-8 w-8">
               <Bell className="w-4 h-4" />
             </Button>
 
@@ -266,7 +245,7 @@ export function MainHeader() {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className={cn("relative", hasNewTickets && "text-destructive")}
+                  className={cn("relative h-8 w-8", hasNewTickets && "text-destructive")}
                 >
                   <Headset className="w-4 h-4" />
                   {hasNewTickets && (
@@ -281,7 +260,7 @@ export function MainHeader() {
             {/* Menu utilisateur */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full">
+                <Button variant="ghost" size="icon" className="rounded-full h-8 w-8">
                   <User className="w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -326,10 +305,28 @@ export function MainHeader() {
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden"
+              className="lg:hidden h-8 w-8"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </Button>
+          </div>
+        </div>
+
+        {/* Ligne 2 : Recherche IA */}
+        <div className="container px-4 pb-2 hidden lg:block">
+          <div className="flex items-center gap-2 max-w-xl">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Rechercher avec l'IA... (ex: CA du mois, dossiers en retard)"
+                className="pl-9 h-9 bg-muted/50 border-muted focus:bg-background"
+              />
+            </div>
+            <Button variant="secondary" size="sm" className="shrink-0">
+              <Brain className="w-4 h-4 mr-1.5" />
+              Helpi
             </Button>
           </div>
         </div>
