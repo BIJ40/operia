@@ -366,22 +366,28 @@ export const UserAccordionItem = memo(function UserAccordionItem({
                                   : true;
                                 const isOptionDisabled = !canEdit || !isOptionAllowed;
                                 
-                                // Couleurs par type d'option (niveau d'accès)
+                                // Couleurs par niveau d'accès
+                                // 🟢 Vert = accès basique (consultation personnelle)
+                                // 🔵 Bleu = accès intermédiaire (gestion équipe)
+                                // 🟣 Violet = accès admin (administration complète)
                                 const getOptionColors = () => {
+                                  const baseOptions = ['coffre', 'user', 'kanban', 'apogee', 'apporteurs', 'helpconfort', 'base_documentaire', 'dm', 'docs', 'stats'];
+                                  const intermediateOptions = ['rh_viewer', 'manage', 'agent', 'indicateurs', 'actions_a_mener', 'diffusion', 'dashboard', 'agences', 'comparatifs', 'groups', 'exports', 'vehicules', 'epi', 'equipements'];
+                                  const adminOptions = ['rh_admin', 'import', 'admin', 'redevances', 'edition', 'users', 'agencies', 'permissions', 'backup', 'logs', 'faq_admin'];
+                                  
                                   if (!optionEnabled || !isEnabled) {
-                                    return 'bg-muted/50 border-muted text-muted-foreground';
+                                    return 'bg-muted/50 border-muted/50 text-muted-foreground';
                                   }
-                                  // Différentes couleurs selon le niveau d'accès de l'option
-                                  if (option.key === 'coffre' || option.key === 'kanban') {
-                                    return 'bg-emerald-50 border-emerald-300 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-700 dark:text-emerald-300';
+                                  if (adminOptions.includes(option.key)) {
+                                    return 'bg-violet-50 border-violet-400 text-violet-900 dark:bg-violet-950/40 dark:border-violet-600 dark:text-violet-100';
                                   }
-                                  if (option.key === 'rh_viewer' || option.key === 'manage' || option.key === 'agent') {
-                                    return 'bg-blue-50 border-blue-300 text-blue-800 dark:bg-blue-950/30 dark:border-blue-700 dark:text-blue-300';
+                                  if (intermediateOptions.includes(option.key)) {
+                                    return 'bg-blue-50 border-blue-400 text-blue-900 dark:bg-blue-950/40 dark:border-blue-600 dark:text-blue-100';
                                   }
-                                  if (option.key === 'rh_admin' || option.key === 'import' || option.key === 'admin') {
-                                    return 'bg-violet-50 border-violet-300 text-violet-800 dark:bg-violet-950/30 dark:border-violet-700 dark:text-violet-300';
+                                  if (baseOptions.includes(option.key)) {
+                                    return 'bg-emerald-50 border-emerald-400 text-emerald-900 dark:bg-emerald-950/40 dark:border-emerald-600 dark:text-emerald-100';
                                   }
-                                  return 'bg-primary/10 border-primary/30';
+                                  return 'bg-primary/10 border-primary/40';
                                 };
                                 
                                 const handleOptionClick = (e: React.MouseEvent) => {
@@ -407,22 +413,23 @@ export const UserAccordionItem = memo(function UserAccordionItem({
                                         handleOptionClick(e as any);
                                       }
                                     }}
-                                    className={`flex items-center gap-2 p-2 rounded-md border transition-all ${
+                                    className={`flex items-start gap-2 p-3 rounded-lg border-2 transition-all ${
                                       isOptionDisabled 
                                         ? 'opacity-50 cursor-not-allowed' 
-                                        : 'cursor-pointer hover:shadow-sm active:scale-[0.98]'
+                                        : 'cursor-pointer hover:shadow-md active:scale-[0.98]'
                                     } ${getOptionColors()}`}
                                   >
                                     <Checkbox
                                       checked={optionEnabled && isEnabled}
                                       disabled={isOptionDisabled}
-                                      className="w-4 h-4 pointer-events-none shrink-0"
+                                      className="w-4 h-4 pointer-events-none shrink-0 mt-0.5"
                                     />
                                     <div className="flex-1 min-w-0">
-                                      <span className="text-xs font-medium block truncate">{option.label}</span>
+                                      <span className="text-sm font-medium block">{option.label}</span>
+                                      <span className="text-xs opacity-75 block mt-0.5 leading-tight">{option.description}</span>
                                     </div>
                                     {!isOptionAllowed && isRhModule && (
-                                      <Badge variant="outline" className="text-[10px] shrink-0 h-4 px-1">N2+</Badge>
+                                      <Badge variant="outline" className="text-[10px] shrink-0 h-5 px-1.5 mt-0.5">N2+</Badge>
                                     )}
                                   </div>
                                 );
