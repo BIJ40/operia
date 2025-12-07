@@ -59,10 +59,10 @@ export function MegaMenu({ section, onClose }: MegaMenuProps) {
   const SectionIcon = getIcon(section.icon);
 
   return (
-    <div 
-      className="absolute top-full left-0 mt-1 w-80 bg-popover border rounded-lg shadow-lg p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
-      onMouseLeave={onClose}
-    >
+    <div className="absolute top-full left-0 pt-1 z-50">
+      <div 
+        className="w-80 bg-popover border rounded-lg shadow-lg p-4 animate-in fade-in slide-in-from-top-2 duration-200"
+      >
       {/* En-tête du méga-menu */}
       <div className="flex items-center gap-3 pb-3 mb-3 border-b">
         <div className="p-2 rounded-lg bg-primary/10">
@@ -148,6 +148,7 @@ export function MegaMenu({ section, onClose }: MegaMenuProps) {
             </Link>
           );
         })}
+      </div>
       </div>
     </div>
   );
