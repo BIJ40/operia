@@ -4755,6 +4755,39 @@ export type Database = {
           },
         ]
       }
+      user_dashboard_settings: {
+        Row: {
+          auto_arrange: boolean | null
+          created_at: string | null
+          grid_cols: number | null
+          grid_rows: number | null
+          id: string
+          theme_variant: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auto_arrange?: boolean | null
+          created_at?: string | null
+          grid_cols?: number | null
+          grid_rows?: number | null
+          id?: string
+          theme_variant?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auto_arrange?: boolean | null
+          created_at?: string | null
+          grid_cols?: number | null
+          grid_rows?: number | null
+          id?: string
+          theme_variant?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_history: {
         Row: {
           block_id: string
@@ -4866,6 +4899,116 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           widget_key?: string
+        }
+        Relationships: []
+      }
+      user_widgets: {
+        Row: {
+          created_at: string | null
+          height: number
+          id: string
+          is_visible: boolean | null
+          position_x: number
+          position_y: number
+          state: string
+          template_id: string
+          updated_at: string | null
+          user_id: string
+          user_params: Json | null
+          width: number
+        }
+        Insert: {
+          created_at?: string | null
+          height?: number
+          id?: string
+          is_visible?: boolean | null
+          position_x?: number
+          position_y?: number
+          state?: string
+          template_id: string
+          updated_at?: string | null
+          user_id: string
+          user_params?: Json | null
+          width?: number
+        }
+        Update: {
+          created_at?: string | null
+          height?: number
+          id?: string
+          is_visible?: boolean | null
+          position_x?: number
+          position_y?: number
+          state?: string
+          template_id?: string
+          updated_at?: string | null
+          user_id?: string
+          user_params?: Json | null
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_widgets_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "widget_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      widget_templates: {
+        Row: {
+          created_at: string | null
+          default_height: number | null
+          default_params: Json | null
+          default_width: number | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_system: boolean | null
+          min_global_role: number | null
+          min_height: number | null
+          min_width: number | null
+          module_source: string
+          name: string
+          required_modules: Json | null
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          default_height?: number | null
+          default_params?: Json | null
+          default_width?: number | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_system?: boolean | null
+          min_global_role?: number | null
+          min_height?: number | null
+          min_width?: number | null
+          module_source: string
+          name: string
+          required_modules?: Json | null
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          default_height?: number | null
+          default_params?: Json | null
+          default_width?: number | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_system?: boolean | null
+          min_global_role?: number | null
+          min_height?: number | null
+          min_width?: number | null
+          module_source?: string
+          name?: string
+          required_modules?: Json | null
+          type?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
