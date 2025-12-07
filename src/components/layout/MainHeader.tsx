@@ -20,7 +20,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
 import { useSupportNotifications } from '@/hooks/use-support-notifications';
 import { ROUTES } from '@/config/routes';
 import { APP_VERSION } from '@/config/version';
@@ -32,6 +31,7 @@ import { getRoleCapabilities } from '@/config/roleMatrix';
 import logoHelpconfortServices from '@/assets/help-confort-services-logo.png';
 import { RHNotificationBadge } from '@/components/rh/RHNotificationBadge';
 import { isModuleEnabled, ModuleKey } from '@/types/modules';
+import { AiUnifiedBar } from '@/components/ai/AiUnifiedBar';
 
 // Map d'icônes pour les sections
 const SECTION_ICONS: Record<string, LucideIcon> = {
@@ -118,7 +118,7 @@ export function MainHeader() {
 
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         {/* Ligne 1 : Logo + Navigation + Actions */}
-        <div className="container flex h-28 items-center px-4">
+        <div className="container flex h-20 items-center px-4">
           {/* Logo avec badge version - lien vers changelog */}
           <Link 
             to={ROUTES.changelog} 
@@ -128,7 +128,7 @@ export function MainHeader() {
             <img 
               src={logoHelpconfortServices} 
               alt="HelpConfort Services" 
-              className="h-24 w-auto transition-transform duration-200 group-hover:scale-105"
+              className="h-14 w-auto transition-transform duration-200 group-hover:scale-105"
             />
             <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors duration-200 -mt-1">
               v{APP_VERSION}
@@ -310,6 +310,10 @@ export function MainHeader() {
           </div>
         </div>
 
+        {/* Ligne 2 : Barre de recherche intelligente */}
+        <div className="border-t border-border/30 bg-background/50">
+          <AiUnifiedBar />
+        </div>
 
         {/* Navigation mobile */}
         {mobileMenuOpen && (
