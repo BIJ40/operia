@@ -3,7 +3,7 @@
  * Remplace le sidebar pour une navigation centralisée
  */
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LogOut, User, Settings, Headset, Loader2,
@@ -85,12 +85,23 @@ export function MainHeader() {
   // Vérifier l'accès au support
   const showSupport = caps.canAccessSupport;
 
+  // Timer pour fermer le menu avec un délai (permet de passer de la catégorie au menu)
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const handleMenuEnter = (menuId: string) => {
+    // Annuler le timer de fermeture si on entre dans un menu
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
     setActiveMenu(menuId);
   };
 
   const handleMenuLeave = () => {
-    setActiveMenu(null);
+    // Délai avant de fermer le menu pour permettre le passage entre trigger et menu
+    closeTimer.current = setTimeout(() => {
+      setActiveMenu(null);
+    }, 150);
   };
 
   return (
