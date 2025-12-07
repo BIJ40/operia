@@ -15,6 +15,47 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.7.7",
+    title: "Audit complet Support Live Chat",
+    date: "2025-12-07",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // CORRECTION CONVERSION CHAT → TICKET
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'fix', description: 'Type ticket correctement défini à "ticket" (non "chat_human") après conversion' },
+      { type: 'fix', description: 'Liaison converted_ticket_id dans live_support_sessions' },
+      { type: 'fix', description: 'Statut session mis à "converted" après conversion réussie' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // ABONNEMENT REALTIME CÔTÉ CLIENT
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'fix', description: 'useLiveSupportSession écoute status="converted" en plus de "closed"' },
+      { type: 'fix', description: 'Fermeture automatique du chat côté client après conversion' },
+      { type: 'fix', description: 'Reset de l\'état local (sessionId, messages) après fermeture' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // BOUTON FERMER FONCTIONNEL
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'fix', description: 'Prop onClose propagée depuis GlobalLiveSupportManager' },
+      { type: 'fix', description: 'Prop onClose propagée depuis AiInlineResult' },
+      { type: 'fix', description: 'Reset état local avant appel onClose' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // UI CONSOLE SUPPORT - ICÔNES SEULES
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'Onglets Live/Actifs/Archives → icônes uniquement avec tooltips' },
+      { type: 'improvement', description: 'Onglets En cours/Archives sessions → icônes uniquement avec tooltips' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // WORKFLOW UNIFIÉ SU ↔ CLIENT
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'audit', description: 'Agent ferme avec "Convertir en ticket" → ticket créé type="ticket"' },
+      { type: 'audit', description: 'Client voit notification "Session convertie en ticket"' },
+      { type: 'audit', description: 'Chat se ferme automatiquement côté client' },
+      { type: 'audit', description: 'Ticket visible dans onglet "Actifs" de la console support' },
+    ],
+  },
+  {
     version: "V0.7.6",
     title: "Audit Sécurité & Permissions V2 - Corrections P0/P1",
     date: "2025-12-06",
