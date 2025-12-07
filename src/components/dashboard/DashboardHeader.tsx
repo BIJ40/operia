@@ -36,13 +36,13 @@ export function DashboardHeader() {
           Actualiser
         </Button>
         <Button variant="outline" size="sm" asChild>
-          <Link to="/dashboard/widgets">
+          <Link to="/widgets">
             <Settings className="h-4 w-4 mr-2" />
             Gérer
           </Link>
         </Button>
         <Button size="sm" asChild>
-          <Link to="/dashboard/widgets">
+          <Link to="/widgets">
             <Plus className="h-4 w-4 mr-2" />
             Ajouter
           </Link>

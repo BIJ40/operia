@@ -12,7 +12,7 @@ export default function DashboardWidgets() {
     <div className="container mx-auto py-6 px-4">
       <div className="flex items-center gap-4 mb-6">
         <Button variant="ghost" size="icon" asChild>
-          <Link to="/dashboard">
+          <Link to="/">
             <ArrowLeft className="h-5 w-5" />
           </Link>
         </Button>

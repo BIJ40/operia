@@ -298,9 +298,9 @@ export function MainHeader() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to={ROUTES.dashboard.index} className="flex items-center gap-2 cursor-pointer">
+                  <Link to="/widgets" className="flex items-center gap-2 cursor-pointer">
                     <Settings className="w-4 h-4" />
-                    Mon Dashboard
+                    Gérer mes widgets
                   </Link>
                 </DropdownMenuItem>
                 {isAdmin && (

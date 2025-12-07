@@ -13,7 +13,6 @@ import { SupportConsoleGuard } from "./components/auth/SupportConsoleGuard";
 import { FaqAdminGuard } from "./components/auth/FaqAdminGuard";
 
 // Critical pages - loaded immediately
-import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 import Error401 from "./pages/Error401";
 import Error403 from "./pages/Error403";
@@ -188,12 +187,9 @@ function AppContent() {
       
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          {/* Dashboard / Home - Accessible à tous les utilisateurs connectés */}
-          <Route path="/" element={<MainLayout><Landing /></MainLayout>} />
-          
-          {/* Dashboard personnalisable */}
-          <Route path="/dashboard" element={<MainLayout><RoleGuard minRole="franchisee_user"><Dashboard /></RoleGuard></MainLayout>} />
-          <Route path="/dashboard/widgets" element={<MainLayout><RoleGuard minRole="franchisee_user"><DashboardWidgets /></RoleGuard></MainLayout>} />
+          {/* Dashboard / Home - Le dashboard personnalisable est la page d'accueil */}
+          <Route path="/" element={<MainLayout><RoleGuard minRole="franchisee_user"><Dashboard /></RoleGuard></MainLayout>} />
+          <Route path="/widgets" element={<MainLayout><RoleGuard minRole="franchisee_user"><DashboardWidgets /></RoleGuard></MainLayout>} />
           
           {/* Messages - Discussion interne */}
           <Route path="/messages" element={<MainLayout><RoleGuard minRole="franchisee_user"><Messages /></RoleGuard></MainLayout>} />

@@ -21,13 +21,13 @@ export function DashboardEmptyState() {
 
       <div className="flex flex-col sm:flex-row gap-3">
         <Button asChild size="lg">
-          <Link to="/dashboard/widgets">
+          <Link to="/widgets">
             <Plus className="h-5 w-5 mr-2" />
             Ajouter des widgets
           </Link>
         </Button>
         <Button variant="outline" size="lg" asChild>
-          <Link to="/dashboard/widgets">
+          <Link to="/widgets">
             <Sparkles className="h-5 w-5 mr-2" />
             Découvrir les widgets
           </Link>
