@@ -118,9 +118,12 @@ export function useLiveSupportSession() {
 
   // Ouvrir le dialog de chat
   const openChat = useCallback(() => {
-    setShowChatDialog(true);
-    setHasNewMessage(false);
-  }, []);
+    console.log('[LiveSupport] openChat called, hasActiveSession:', !!activeSession);
+    if (activeSession) {
+      setShowChatDialog(true);
+      setHasNewMessage(false);
+    }
+  }, [activeSession]);
 
   // Fermer le dialog de chat (sans fermer la session)
   const closeChatDialog = useCallback(() => {

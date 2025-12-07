@@ -327,12 +327,16 @@ export function AiInlineResult({ messages, isLoading, onClose, onContactSupport,
           className="sm:max-w-xl h-[70vh] p-0 flex flex-col"
           onPointerDownOutside={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
         >
           <DialogHeader className="px-4 py-3 border-b flex-shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <MessageCircle className="w-5 h-5 text-primary" />
               Chat Support en direct
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              Conversation en direct avec le support HelpConfort
+            </DialogDescription>
           </DialogHeader>
           
           <div className="flex-1 overflow-hidden">

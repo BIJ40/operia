@@ -37,6 +37,14 @@ export default function Landing() {
         return canAccessTile(globalRole, tile.id, { agence, canAccessSupportConsoleUI });
       }
       
+      // *** FIX N1: TOUJOURS vérifier l'accès au groupe d'abord (sauf admins) ***
+      // Les tiles "pilotage" et "rh" ne doivent pas apparaître pour N1 même si un module est activé
+      if (!isAdminUser) {
+        const groupAccess = canAccessTileGroup(globalRole, tile.group as TileGroup, { agence });
+        if (!groupAccess && tile.group === 'pilotage') return false;
+        // Le groupe RH est contrôlé par les modules, pas par le rôle
+      }
+      
       // 1. Vérifier si la tuile nécessite un module spécifique
       if (tile.requiresModule) {
         if (isAdminUser) {
