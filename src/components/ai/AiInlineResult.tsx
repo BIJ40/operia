@@ -20,7 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { SupportChatCore, ChatMessage } from '@/components/support/SupportChatCore';
+import { LiveSupportChat } from '@/components/support/LiveSupportChat';
 
 interface AiInlineResultProps {
   messages: AiMessage[];
@@ -326,18 +326,13 @@ export function AiInlineResult({ messages, isLoading, onClose, onContactSupport 
           <DialogHeader className="px-4 py-3 border-b flex-shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <MessageCircle className="w-5 h-5 text-primary" />
-              Chat Support
+              Chat Support en direct
             </DialogTitle>
           </DialogHeader>
           
           <div className="flex-1 overflow-hidden">
-            <SupportChatCore
-              compact
-              showFAQSuggestions
-              onTicketCreated={(ticketId) => {
-                setShowSupportChat(false);
-                toast.success('Ticket créé avec succès');
-              }}
+            <LiveSupportChat
+              onClose={() => setShowSupportChat(false)}
             />
           </div>
         </DialogContent>
