@@ -4113,6 +4113,45 @@ export type Database = {
           },
         ]
       }
+      statia_widgets: {
+        Row: {
+          config: Json | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_published: boolean | null
+          metric_id: string
+          title: string
+          updated_at: string | null
+          widget_type: string
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean | null
+          metric_id: string
+          title: string
+          updated_at?: string | null
+          widget_type?: string
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean | null
+          metric_id?: string
+          title?: string
+          updated_at?: string | null
+          widget_type?: string
+        }
+        Relationships: []
+      }
       storage_quota_alerts: {
         Row: {
           cache_keys: Json | null
