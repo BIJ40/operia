@@ -82,12 +82,8 @@ export function AiInlineResult({ messages, isLoading, onClose, onContactSupport,
   };
 
   const goToSupportChat = () => {
-    // Use the parent's handler if available, otherwise use internal dialog
-    if (onOpenLiveChat) {
-      onOpenLiveChat();
-    } else {
-      setShowSupportChat(true);
-    }
+    // Always use internal dialog which properly initializes the session
+    setShowSupportChat(true);
   };
 
   const hasHistory = conversationHistory.length > 0;
