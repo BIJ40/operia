@@ -1,7 +1,5 @@
 import { ReactNode, useState } from 'react';
-import { SidebarProvider } from '@/components/ui/sidebar';
-import { UnifiedSidebar } from './UnifiedSidebar';
-import { UnifiedHeader } from './UnifiedHeader';
+import { MainHeader } from './MainHeader';
 import { PublicLanding } from './PublicLanding';
 import { LoginDialog } from '@/components/LoginDialog';
 import { ImageModal } from '@/components/ImageModal';
@@ -15,14 +13,12 @@ import { useConnectionLogger } from '@/hooks/use-connection-logger';
 interface MainLayoutProps {
   children: ReactNode;
   requireAuth?: boolean;
-  showSidebar?: boolean;
   showHeader?: boolean;
 }
 
 export function MainLayout({ 
   children, 
   requireAuth = true,
-  showSidebar = true,
   showHeader = true 
 }: MainLayoutProps) {
   const { isAuthenticated, isAuthLoading } = useAuth();
@@ -55,26 +51,20 @@ export function MainLayout({
 
   return (
     <AiUnifiedProvider>
-      <SidebarProvider>
-        <div className={`min-h-screen w-full flex bg-background ${isImpersonating ? 'pt-10' : ''}`}>
-          {showSidebar && <UnifiedSidebar />}
-          
-          <div className="flex-1 flex flex-col min-h-screen min-w-0">
-            {showHeader && <UnifiedHeader />}
-            
-            {/* Barre IA unifiée 2026 - toujours visible */}
-            <AiUnifiedBar />
-            
-            {/* P2 FIX: id pour skip link accessibilité */}
-            <main id="main-content" className="flex-1 overflow-auto p-6" role="main">
-              {children}
-            </main>
-          </div>
-        </div>
+      <div className={`min-h-screen w-full flex flex-col bg-background ${isImpersonating ? 'pt-10' : ''}`}>
+        {showHeader && <MainHeader />}
+        
+        {/* Barre IA unifiée 2026 - toujours visible */}
+        <AiUnifiedBar />
+        
+        {/* Contenu principal */}
+        <main id="main-content" className="flex-1 overflow-auto" role="main">
+          {children}
+        </main>
+      </div>
 
-        <ImageModal />
-        <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
-      </SidebarProvider>
+      <ImageModal />
+      <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
     </AiUnifiedProvider>
   );
 }
