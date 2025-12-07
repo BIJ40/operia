@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Send, Loader2, User, Headphones, AlertCircle, CheckCheck } from 'lucide-react';
+import { Send, Loader2, User, Headphones, AlertCircle, CheckCheck, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { logError } from '@/lib/logger';
 import { cn } from '@/lib/utils';
@@ -185,6 +185,23 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
     }
   };
 
+  const handleEndChat = async () => {
+    if (!sessionId) return;
+
+    try {
+      await supabase
+        .from('live_support_sessions')
+        .update({ status: 'closed' })
+        .eq('id', sessionId);
+
+      toast.success('Conversation terminée');
+      onClose?.();
+    } catch (error) {
+      logError('live-support', 'End chat error', error);
+      toast.error('Erreur lors de la fermeture');
+    }
+  };
+
   const handleSend = async () => {
     if (!input.trim() || !sessionId || isLoading) return;
 
@@ -232,7 +249,7 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
           {waitingForAgent ? (
             <Badge variant="secondary" className="text-xs animate-pulse">
               <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-              En attente d'un agent...
+              En attente...
             </Badge>
           ) : agentConnected ? (
             <Badge variant="default" className="text-xs bg-green-500">
@@ -244,6 +261,15 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
               Connexion...
             </Badge>
           )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleEndChat}
+            className="h-7 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+            title="Terminer la conversation"
+          >
+            <X className="w-4 h-4" />
+          </Button>
         </div>
       </div>
 
