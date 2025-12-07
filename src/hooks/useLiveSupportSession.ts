@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface LiveSession {
   id: string;
@@ -16,7 +17,7 @@ interface LiveSession {
 }
 
 export function useLiveSupportSession() {
-  const { user } = useAuth();
+  const { user, firstName, lastName, agence } = useAuth();
   const [activeSession, setActiveSession] = useState<LiveSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showChatDialog, setShowChatDialog] = useState(false);
@@ -125,6 +126,54 @@ export function useLiveSupportSession() {
     }
   }, [activeSession]);
 
+  // Démarrer une nouvelle session de support
+  const startNewSession = useCallback(async () => {
+    if (!user?.id) {
+      toast.error('Vous devez être connecté pour démarrer une session de support');
+      return;
+    }
+
+    try {
+      console.log('[LiveSupport] Starting new session for user:', user.id);
+      
+      // Créer une nouvelle session
+      const { data: newSession, error } = await supabase
+        .from('live_support_sessions')
+        .insert({
+          user_id: user.id,
+          status: 'active',
+          user_name: firstName 
+            ? `${firstName} ${lastName || ''}`.trim() 
+            : user.email?.split('@')[0] || 'Utilisateur',
+        })
+        .select('id, status, agent_id, created_at')
+        .single();
+
+      if (error) throw error;
+
+      console.log('[LiveSupport] New session created:', newSession);
+      setActiveSession(newSession);
+      setShowChatDialog(true);
+      
+      // Notifier le support qu'une nouvelle session est en attente
+      try {
+        await supabase.functions.invoke('notify-live-support', {
+          body: { 
+            sessionId: newSession.id,
+            userName: firstName || user.email?.split('@')[0] || 'Utilisateur',
+          }
+        });
+      } catch (notifyError) {
+        console.warn('Could not notify support agents:', notifyError);
+      }
+
+      toast.success('Session de support démarrée');
+    } catch (err) {
+      console.error('Error starting live session:', err);
+      toast.error('Impossible de démarrer la session de support');
+    }
+  }, [user?.id, user?.email, firstName, lastName]);
+
   // Fermer le dialog de chat (sans fermer la session)
   const closeChatDialog = useCallback(() => {
     setShowChatDialog(false);
@@ -156,6 +205,7 @@ export function useLiveSupportSession() {
     showChatDialog,
     hasNewMessage,
     openChat,
+    startNewSession,
     closeChatDialog,
     closeSession,
   };
