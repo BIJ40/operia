@@ -77,12 +77,13 @@ export function DashboardWidget({
   };
 
   // Positionnement absolu dans la grille CSS
+  // IMPORTANT: Ne pas appliquer la transformation dnd-kit pendant le resize
   const style: React.CSSProperties = {
     gridColumnStart: dims.position_x + 1,
     gridColumnEnd: dims.position_x + 1 + dims.width,
     gridRowStart: dims.position_y + 1,
     gridRowEnd: dims.position_y + 1 + dims.height,
-    transform: CSS.Translate.toString(transform),
+    transform: isResizing ? undefined : CSS.Translate.toString(transform),
     zIndex: isDragging ? 50 : isResizing ? 40 : 1,
     transition: isResizing ? 'none' : undefined, // No transition during resize for fluidity
   };
