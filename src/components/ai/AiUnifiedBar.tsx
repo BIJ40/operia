@@ -91,10 +91,10 @@ export function AiUnifiedBar() {
   return (
     <div 
       ref={containerRef}
-      className="w-full flex flex-col items-center py-3 relative z-40"
+      className="w-full flex flex-col items-center py-3 relative"
     >
       {/* Main Search Bar - Always visible */}
-      <div className="w-full max-w-5xl px-4">
+      <div className="w-full max-w-5xl px-4 relative">
         <motion.div
           initial={false}
           animate={{
@@ -211,21 +211,28 @@ export function AiUnifiedBar() {
             ))}
           </motion.div>
         )}
-      </div>
 
-      {/* Inline Results - Displayed below the search bar */}
-      {(hasResults || isLoading) && (
-        <div className="w-full max-w-5xl px-4 mt-2">
-          <AiInlineResult
-            messages={messages}
-            isLoading={isLoading}
-            onClose={() => {
-              closeResult();
-              clearMessages();
-            }}
-          />
-        </div>
-      )}
+        {/* Floating Results - Absolute positioned dropdown */}
+        {(hasResults || isLoading) && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="absolute top-full left-0 right-0 mt-2 z-50"
+          >
+            <div className="bg-background border border-border rounded-xl shadow-2xl max-h-[70vh] overflow-auto">
+              <AiInlineResult
+                messages={messages}
+                isLoading={isLoading}
+                onClose={() => {
+                  closeResult();
+                  clearMessages();
+                }}
+              />
+            </div>
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 }
