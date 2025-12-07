@@ -105,14 +105,14 @@ export function LiveCloseSessionDialog({
           user_id: userId,
           subject: subject,
           status: 'open',
-          heat_priority: 6, // Normal
+          heat_priority: 6,
           source: 'live_chat',
-          type: 'ticket',
-          agency_slug: agencySlug,
+          type: 'chat_human',
+          agency_slug: agencySlug || null,
           chatbot_conversation: chatHistory,
           support_level: 1,
-          assigned_to: user.id, // Assigner à l'agent qui ferme
-        } as any)
+          assigned_to: user.id,
+        })
         .select('id')
         .single();
 
