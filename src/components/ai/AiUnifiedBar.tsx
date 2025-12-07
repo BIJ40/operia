@@ -144,7 +144,8 @@ export function AiUnifiedBar() {
   }, [hasActiveSession, openChat, startNewSession]);
 
   const hasResults = messages.length > 0;
-  const showResultsZone = isBarOpen || hasResults || isLoading;
+  // Show results zone when: focused, has query text, has results, or is loading
+  const showResultsZone = isBarOpen || !!localQuery.trim() || hasResults || isLoading;
 
   return (
     <div 
