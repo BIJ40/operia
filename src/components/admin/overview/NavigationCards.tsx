@@ -19,7 +19,8 @@ import {
   History,
   Archive,
   Bell,
-  FlaskConical
+  FlaskConical,
+  Sparkles
 } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { cn } from '@/lib/utils';
@@ -162,6 +163,12 @@ export function NavigationCards() {
           icon: FlaskConical, 
           title: 'STATiA-BY-BIJ', 
           description: 'Moteur centralisé de métriques' 
+        },
+        { 
+          to: ROUTES.admin.formationGenerator, 
+          icon: Sparkles, 
+          title: 'Générateur Formation IA', 
+          description: 'Résumés pédagogiques Apogée' 
         },
       ],
     },

@@ -156,6 +156,7 @@ export const ROUTES = {
     announcements: '/admin/announcements',
     faq: '/admin/faq',
     statia: '/admin/statia-by-bij',
+    formationGenerator: '/admin/formation-generator',
     // Legacy redirects (kept for backward compatibility)
     apogeeTickets: '/admin/apogee-tickets',
     apogeeTicketsImport: '/admin/apogee-tickets/import',
