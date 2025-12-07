@@ -38,6 +38,8 @@ interface AuthContextType {
   isLoggingOut: boolean;
   
   // Profil utilisateur
+  firstName: string | null;
+  lastName: string | null;
   agence: string | null;
   agencyId: string | null; // UUID de l'agence
   roleAgence: string | null;
@@ -94,6 +96,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   // Profil utilisateur
+  const [firstName, setFirstName] = useState<string | null>(null);
+  const [lastName, setLastName] = useState<string | null>(null);
   const [agence, setAgence] = useState<string | null>(null);
   const [agencyId, setAgencyId] = useState<string | null>(null);
   const [roleAgence, setRoleAgence] = useState<string | null>(null);
@@ -179,7 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       const queryPromise = supabase
         .from('profiles')
-        .select('agence, agency_id, role_agence, must_change_password, global_role, enabled_modules, is_active, is_salaried_manager')
+        .select('first_name, last_name, agence, agency_id, role_agence, must_change_password, global_role, enabled_modules, is_active, is_salaried_manager')
         .eq('id', userId)
         .single();
       
@@ -190,6 +194,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
       
+      setFirstName(profile?.first_name || null);
+      setLastName(profile?.last_name || null);
       setAgence(profile?.agence || null);
       setAgencyId(profile?.agency_id || null);
       setRoleAgence(profile?.role_agence || null);
@@ -312,6 +318,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }, 0);
         } else {
           // Reset state on logout
+          setFirstName(null);
+          setLastName(null);
           setAgence(null);
           setAgencyId(null);
           setRoleAgence(null);
@@ -362,6 +370,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearSentryUser();
       
       // Reset V2 state
+      setFirstName(null);
+      setLastName(null);
       setAgence(null);
       setAgencyId(null);
       setRoleAgence(null);
@@ -387,6 +397,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthLoading,
       user,
       isLoggingOut,
+      firstName,
+      lastName,
       agence,
       agencyId,
       roleAgence,
