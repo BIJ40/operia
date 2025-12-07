@@ -125,18 +125,36 @@ export function MegaMenu({ section, onClose }: MegaMenuProps) {
       <div 
         className="w-80 bg-popover border rounded-lg shadow-lg p-4 animate-in fade-in slide-in-from-top-2 duration-200"
       >
-        {/* En-tête du méga-menu */}
-        <div className="flex items-center gap-3 pb-3 mb-3 border-b">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <SectionIcon className="w-5 h-5 text-primary" />
+        {/* En-tête du méga-menu - cliquable si href défini */}
+        {section.href ? (
+          <Link 
+            to={section.href} 
+            onClick={onClose}
+            className="flex items-center gap-3 pb-3 mb-3 border-b hover:bg-muted/50 -mx-4 -mt-4 p-4 rounded-t-lg transition-colors"
+          >
+            <div className="p-2 rounded-lg bg-primary/10">
+              <SectionIcon className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground">{section.title}</h3>
+              {section.description && (
+                <p className="text-xs text-muted-foreground">{section.description}</p>
+              )}
+            </div>
+          </Link>
+        ) : (
+          <div className="flex items-center gap-3 pb-3 mb-3 border-b">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <SectionIcon className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground">{section.title}</h3>
+              {section.description && (
+                <p className="text-xs text-muted-foreground">{section.description}</p>
+              )}
+            </div>
           </div>
-          <div>
-            <h3 className="font-semibold text-foreground">{section.title}</h3>
-            {section.description && (
-              <p className="text-xs text-muted-foreground">{section.description}</p>
-            )}
-          </div>
-        </div>
+        )}
 
         {/* Liens regroupés par section (pour RH) */}
         {hasMultipleSections ? (
