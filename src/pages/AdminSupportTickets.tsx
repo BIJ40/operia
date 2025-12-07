@@ -13,7 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { TicketCategoryBadge } from '@/components/tickets/TicketCategoryBadge';
 import { ServiceBadge } from '@/components/tickets/ServiceBadge';
 import { HeatPriorityBadge } from '@/components/support/HeatPriorityBadge';
-import { Loader2, Send, Download, AlertCircle, Clock, CheckCircle2, User, LayoutGrid, List, TicketPlus, MessageSquare, XCircle, Trash2, Monitor } from 'lucide-react';
+import { Loader2, Send, Download, AlertCircle, Clock, CheckCircle2, User, LayoutGrid, List, TicketPlus, MessageSquare, XCircle, Trash2, Monitor, Headphones } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Separator } from '@/components/ui/separator';
@@ -27,6 +27,8 @@ import { KanbanView } from '@/components/admin/support/KanbanView';
 import { SupportLevelBadge } from '@/components/SupportLevelBadge';
 import { ROUTES } from '@/config/routes';
 import { ScreenShareSession } from '@/components/support/ScreenShareSession';
+import { LiveSessionsList } from '@/components/admin/support/LiveSessionsList';
+import { useSupportNotifications } from '@/hooks/use-support-notifications';
 
 export default function AdminSupportTickets() {
   const { canManageTickets, user, globalRole } = useAuth();
@@ -57,6 +59,9 @@ export default function AdminSupportTickets() {
   } = useAdminTickets();
 
   const canDelete = globalRole === 'platform_admin' || globalRole === 'superadmin';
+  
+  // Hook pour les notifications et compteur de chat live
+  const { liveChatCount } = useSupportNotifications();
 
   const [newMessage, setNewMessage] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
@@ -363,21 +368,37 @@ export default function AdminSupportTickets() {
             {/* Tickets List */}
             <Card className="md:col-span-2">
               <CardHeader className="pb-2">
-              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'actifs' | 'archives')} className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-2">
+              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'actifs' | 'archives' | 'live')} className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 mb-2">
+                    <TabsTrigger value="live" className="gap-2 relative">
+                      <Headphones className="w-4 h-4" />
+                      <span className="hidden sm:inline">Live</span>
+                      {liveChatCount > 0 && (
+                        <Badge variant="destructive" className="ml-1 animate-pulse">
+                          {liveChatCount}
+                        </Badge>
+                      )}
+                    </TabsTrigger>
                     <TabsTrigger value="actifs" className="gap-2">
-                      🔥 Actifs
+                      🔥 <span className="hidden sm:inline">Actifs</span>
                       <Badge variant="secondary" className="ml-1">
                         {tickets.filter(t => !['resolved', 'closed'].includes(t.status)).length}
                       </Badge>
                     </TabsTrigger>
                     <TabsTrigger value="archives" className="gap-2">
-                      📁 Archives
+                      📁 <span className="hidden sm:inline">Archives</span>
                       <Badge variant="outline" className="ml-1">
                         {tickets.filter(t => ['resolved', 'closed'].includes(t.status)).length}
                       </Badge>
                     </TabsTrigger>
                   </TabsList>
+
+                  {/* Onglet Chat Live */}
+                  <TabsContent value="live" className="mt-2">
+                    <ScrollArea className="h-[550px]">
+                      <LiveSessionsList />
+                    </ScrollArea>
+                  </TabsContent>
 
                   <TabsContent value="actifs" className="mt-2">
                     <ScrollArea className="h-[550px]">
