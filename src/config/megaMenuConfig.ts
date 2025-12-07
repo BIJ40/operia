@@ -30,6 +30,7 @@ export interface MegaMenuSection {
   title: string;
   description?: string;
   icon: string;
+  href?: string; // Lien direct vers la section principale
   links: MegaMenuLink[];
   accessKey?: 'canAccessHelpAcademy' | 'canAccessPilotageAgence' | 'canAccessSupport' | 'canAccessFranchiseur' | 'canAccessAdmin';
   moduleKey?: string;
@@ -45,6 +46,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
     title: 'Mon Agence',
     description: 'Pilotage et statistiques agence',
     icon: 'Building2',
+    href: ROUTES.pilotage.index,
     moduleKey: 'pilotage_agence',
     accessKey: 'canAccessPilotageAgence',
     links: [
@@ -68,6 +70,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
     title: 'RH',
     description: 'Ressources humaines',
     icon: 'Briefcase',
+    href: ROUTES.pilotage.monCoffreRh,
     moduleKey: 'rh',
     links: [
       // === Vue Salarié (N1 ou N2 avec is_salaried_manager) ===
@@ -136,6 +139,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
     title: 'Academy',
     description: 'Formation et documentation',
     icon: 'GraduationCap',
+    href: ROUTES.academy.apogee,
     moduleKey: 'help_academy',
     accessKey: 'canAccessHelpAcademy',
     links: [
@@ -154,6 +158,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
     title: 'Gestion de Projet',
     description: 'Suivi et gestion de projet',
     icon: 'Kanban',
+    href: ROUTES.projects.kanban,
     moduleKey: 'apogee_tickets',
     links: [
       { label: 'Kanban', href: ROUTES.projects.kanban, icon: 'Kanban', description: 'Vue tableau' },
@@ -172,6 +177,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
     title: 'Franchiseur',
     description: 'Gestion du réseau',
     icon: 'Network',
+    href: ROUTES.reseau.dashboard,
     accessKey: 'canAccessFranchiseur',
     links: [
       { label: 'Dashboard Réseau', href: ROUTES.reseau.dashboard, icon: 'Network', description: 'Vue d\'ensemble', minRole: 'franchisor_user' },
@@ -193,6 +199,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
     title: 'Administration',
     description: 'Paramètres système',
     icon: 'Settings',
+    href: ROUTES.admin.users,
     accessKey: 'canAccessAdmin',
     links: [
       { label: 'Utilisateurs', href: ROUTES.admin.users, icon: 'Users', description: 'Comptes utilisateurs', minRole: 'platform_admin' },
@@ -215,6 +222,7 @@ export const SUPPORT_MENU: MegaMenuSection = {
   title: 'Support',
   description: 'Aide et assistance',
   icon: 'Headset',
+  href: ROUTES.support.helpcenter,
   accessKey: 'canAccessSupport',
   links: [
     { label: 'Centre d\'aide', href: ROUTES.support.helpcenter, icon: 'HelpCircle', description: 'FAQ et chat' },
