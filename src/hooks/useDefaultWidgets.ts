@@ -16,14 +16,14 @@ interface DefaultWidgetConfig {
 }
 
 // Widgets par défaut pour N2+ avec pilotage_agence
+// Layout basé sur l'image: Indicateurs globaux (gauche), Mon équipe (droite), Tickets (gauche bas), CA univers (droite bas)
 const DEFAULT_WIDGETS: DefaultWidgetConfig[] = [
-  // Ligne 1: Indicateurs globaux (pleine largeur)
+  // Ligne 1: Indicateurs globaux (gauche, large) + Mon équipe (droite)
   { templateModuleSource: 'StatIA.indicateurs_globaux', row: 0, col: 0 },
-  // Ligne 2: CA par univers + Derniers tickets
-  { templateModuleSource: 'StatIA.ca_par_univers', row: 1, col: 0 },
-  { templateModuleSource: 'Support.recent_tickets', row: 1, col: 6 },
-  // Ligne 3: Mon équipe
-  { templateModuleSource: 'RH.collaborators', row: 2, col: 0 },
+  { templateModuleSource: 'RH.collaborators', row: 0, col: 8 },
+  // Ligne 2: Derniers tickets (gauche) + CA par univers (droite)
+  { templateModuleSource: 'Support.recent_tickets', row: 1, col: 0 },
+  { templateModuleSource: 'StatIA.ca_par_univers', row: 1, col: 6 },
 ];
 
 export function useDefaultWidgets() {
