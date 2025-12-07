@@ -158,7 +158,24 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
         if (newSession) {
           setSessionId(newSession.id);
 
-          // Notifier les agents support via toast (edge function optionnelle)
+          // Notifier les agents support via edge function (SMS + Email)
+          try {
+            const appUrl = window.location.origin;
+            await supabase.functions.invoke('notify-support-ticket', {
+              body: {
+                ticketId: newSession.id,
+                userName,
+                lastQuestion: 'Demande de chat en direct',
+                appUrl,
+                source: 'live_chat',
+                agencySlug: agence,
+                service: 'live_support',
+              },
+            });
+          } catch (notifyError) {
+            logError('live-support', 'Notify error (non-blocking)', notifyError);
+          }
+
           toast.info('Un agent va vous répondre bientôt');
         }
       }

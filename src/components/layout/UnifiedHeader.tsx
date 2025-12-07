@@ -86,11 +86,13 @@ export function UnifiedHeader() {
   const navigate = useNavigate();
   const { isAdmin, canAccessSupportConsoleUI, isLoggingOut, logout, globalRole } = useAuth();
   const { toggleSidebar } = useSidebar();
-  const { hasNewTickets, newTicketsCount, hasChatHumanRequests, hasTicketRequests } = useSupportNotifications();
+  const { hasNewTickets, newTicketsCount, hasChatHumanRequests, hasTicketRequests, hasLiveChatRequests, liveChatCount } = useSupportNotifications();
 
   // Déterminer la classe de clignotement du header pour SU
+  // V3: Chat live en priorité (rouge vif), puis chat_human (rouge), puis tickets (jaune)
   const getHeaderBlinkClass = () => {
     if (!canAccessSupportConsoleUI) return '';
+    if (hasLiveChatRequests) return 'animate-pulse-red';
     if (hasChatHumanRequests) return 'animate-pulse-red';
     if (hasTicketRequests) return 'animate-pulse-yellow';
     return '';
@@ -285,6 +287,25 @@ export function UnifiedHeader() {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
+            )}
+
+            {/* Live Chat urgent badge for support staff */}
+            {canAccessSupportConsoleUI && hasLiveChatRequests && (
+              <Link to={ROUTES.support.console}>
+                <Button 
+                  variant="destructive" 
+                  size="sm" 
+                  className="relative animate-pulse gap-1"
+                  aria-label={`${liveChatCount} chat(s) en direct en attente`}
+                >
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                  </span>
+                  <span className="hidden sm:inline text-xs">Chat live ({liveChatCount})</span>
+                  <span className="sm:hidden text-xs">{liveChatCount}</span>
+                </Button>
+              </Link>
             )}
 
             {/* Support button for support staff */}
