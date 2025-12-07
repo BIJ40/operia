@@ -113,16 +113,14 @@ export function LiveSessionsList() {
     <>
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'active' | 'archive')} className="w-full">
         <TabsList className="mb-4">
-          <TabsTrigger value="active" className="flex items-center gap-2">
+          <TabsTrigger value="active" className="flex items-center gap-1 px-3" title="En cours">
             <Headphones className="w-4 h-4" />
-            En cours
             {sessions.length > 0 && (
-              <Badge variant="secondary" className="ml-1">{sessions.length}</Badge>
+              <Badge variant="secondary" className="h-5 px-1.5 text-xs">{sessions.length}</Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="archive" className="flex items-center gap-2">
+          <TabsTrigger value="archive" className="flex items-center gap-1 px-3" title="Archives">
             <Archive className="w-4 h-4" />
-            Archives
           </TabsTrigger>
         </TabsList>
 
