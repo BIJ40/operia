@@ -33,6 +33,28 @@ import { RHNotificationBadge } from '@/components/rh/RHNotificationBadge';
 import { isModuleEnabled, ModuleKey } from '@/types/modules';
 import { AiUnifiedBar } from '@/components/ai/AiUnifiedBar';
 
+// Icônes custom pour le header
+import iconAccueil from '@/assets/icons/icon-accueil.png';
+import iconMonAgence from '@/assets/icons/icon-mon-agence.png';
+import iconRh from '@/assets/icons/icon-rh.png';
+import iconAcademy from '@/assets/icons/icon-academy.png';
+import iconGestionProjet from '@/assets/icons/icon-gestion-projet.png';
+import iconSupport from '@/assets/icons/icon-support.png';
+import iconFranchiseur from '@/assets/icons/icon-franchiseur.png';
+import iconAdministration from '@/assets/icons/icon-administration.png';
+
+// Map des icônes custom par section id
+const SECTION_CUSTOM_ICONS: Record<string, string> = {
+  'accueil': iconAccueil,
+  'mon-agence': iconMonAgence,
+  'rh': iconRh,
+  'help-academy': iconAcademy,
+  'apogee-tickets': iconGestionProjet,
+  'support': iconSupport,
+  'franchiseur': iconFranchiseur,
+  'admin': iconAdministration,
+};
+
 // Map d'icônes pour les sections
 const SECTION_ICONS: Record<string, LucideIcon> = {
   'Building2': Building2,
@@ -152,23 +174,27 @@ export function MainHeader() {
               <div className="flex items-center h-14">
                 {/* Navigation principale - Desktop */}
                 <nav className="hidden lg:flex items-center flex-1 gap-0.5">
-                  {/* Accueil */}
+                  {/* Accueil - Icône seule */}
                   <Link
                     to="/"
                     className={cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+                      "flex items-center justify-center p-1 rounded-md transition-all hover:scale-105",
                       location.pathname === '/' 
-                        ? "bg-primary/10 text-primary" 
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                        ? "ring-2 ring-primary/30" 
+                        : "opacity-80 hover:opacity-100"
                     )}
+                    title="Accueil"
                   >
-                    <Home className="w-4 h-4" />
-                    Accueil
+                    <img 
+                      src={iconAccueil} 
+                      alt="Accueil" 
+                      className="h-12 w-auto"
+                    />
                   </Link>
 
-                  {/* Menus avec méga-menus */}
+                  {/* Menus avec méga-menus - Icônes seules */}
                   {filteredMenus.map((section) => {
-                    const Icon = getIcon(section.icon);
+                    const customIcon = SECTION_CUSTOM_ICONS[section.id];
                     const isActive = activeMenu === section.id;
                     const isCurrentSection = section.links.some(link => 
                       location.pathname === link.href || location.pathname.startsWith(link.href + '/')
@@ -183,18 +209,18 @@ export function MainHeader() {
                       >
                         <button
                           className={cn(
-                            "flex items-center gap-1 px-2.5 py-1.5 text-sm font-medium rounded-md transition-colors",
+                            "flex items-center justify-center p-1 rounded-md transition-all hover:scale-105",
                             isCurrentSection
-                              ? "bg-primary/10 text-primary"
-                              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                              ? "ring-2 ring-primary/30"
+                              : "opacity-80 hover:opacity-100"
                           )}
+                          title={section.title}
                         >
-                          <Icon className="w-4 h-4" />
-                          {section.title}
-                          <ChevronDown className={cn(
-                            "w-3 h-3 transition-transform",
-                            isActive && "rotate-180"
-                          )} />
+                          <img 
+                            src={customIcon} 
+                            alt={section.title} 
+                            className="h-12 w-auto"
+                          />
                         </button>
 
                         {/* Méga-menu */}
@@ -208,7 +234,7 @@ export function MainHeader() {
                     );
                   })}
 
-                  {/* Support */}
+                  {/* Support - Icône seule */}
                   {showSupport && (
                     <div
                       className="relative"
@@ -217,23 +243,23 @@ export function MainHeader() {
                     >
                       <button
                         className={cn(
-                          "flex items-center gap-1 px-2.5 py-1.5 text-sm font-medium rounded-md transition-colors relative",
+                          "flex items-center justify-center p-1 rounded-md transition-all hover:scale-105 relative",
                           location.pathname.startsWith('/support')
-                            ? "bg-primary/10 text-primary"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                            ? "ring-2 ring-primary/30"
+                            : "opacity-80 hover:opacity-100"
                         )}
+                        title="Support"
                       >
-                        <Headset className="w-4 h-4" />
-                        Support
+                        <img 
+                          src={iconSupport} 
+                          alt="Support" 
+                          className="h-12 w-auto"
+                        />
                         {hasNewTickets && (
-                          <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                          <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                             {newTicketsCount}
                           </span>
                         )}
-                        <ChevronDown className={cn(
-                          "w-3 h-3 transition-transform",
-                          activeMenu === 'support' && "rotate-180"
-                        )} />
                       </button>
 
                       {activeMenu === 'support' && (
