@@ -40,12 +40,7 @@ export function GlobalLiveSupportManager() {
           </DialogHeader>
           
           <div className="flex-1 overflow-hidden">
-            <LiveSupportChat
-              onClose={() => {
-                closeSession();
-                closeChatDialog();
-              }}
-            />
+            <LiveSupportChat />
           </div>
         </DialogContent>
       </Dialog>

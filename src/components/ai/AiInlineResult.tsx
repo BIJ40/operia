@@ -321,28 +321,41 @@ export function AiInlineResult({ messages, isLoading, onClose, onContactSupport,
         </DialogContent>
       </Dialog>
 
-      {/* Live Support Chat Dialog - prevent closing on input focus */}
-      <Dialog open={showSupportChat} onOpenChange={setShowSupportChat}>
+      {/* Live Support Chat Dialog - prevent closing on any interaction except explicit close */}
+      <Dialog open={showSupportChat} onOpenChange={(open) => {
+        // Ne jamais fermer automatiquement - uniquement via le bouton X du Dialog
+        if (!open) return;
+        setShowSupportChat(open);
+      }}>
         <DialogContent 
           className="sm:max-w-xl h-[70vh] p-0 flex flex-col"
           onPointerDownOutside={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
+          onCloseAutoFocus={(e) => e.preventDefault()}
         >
           <DialogHeader className="px-4 py-3 border-b flex-shrink-0">
-            <DialogTitle className="flex items-center gap-2">
-              <MessageCircle className="w-5 h-5 text-primary" />
-              Chat Support en direct
-            </DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex items-center gap-2">
+                <MessageCircle className="w-5 h-5 text-primary" />
+                Chat Support en direct
+              </DialogTitle>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7"
+                onClick={() => setShowSupportChat(false)}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
             <DialogDescription className="sr-only">
               Conversation en direct avec le support HelpConfort
             </DialogDescription>
           </DialogHeader>
           
           <div className="flex-1 overflow-hidden">
-            <LiveSupportChat
-              onClose={() => setShowSupportChat(false)}
-            />
+            <LiveSupportChat />
           </div>
         </DialogContent>
       </Dialog>
