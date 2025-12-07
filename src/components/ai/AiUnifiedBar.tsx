@@ -203,7 +203,13 @@ export function AiUnifiedBar() {
               exit={{ opacity: 0, scale: 0.8, x: 20 }}
             >
               <Button
-                onClick={openChat}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('[AiUnifiedBar] Live support button clicked');
+                  openChat();
+                }}
                 size="sm"
                 className={cn(
                   "relative gap-2 rounded-full px-4 shadow-lg transition-all shrink-0",
