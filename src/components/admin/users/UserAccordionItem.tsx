@@ -39,6 +39,81 @@ const ROLE_AGENCE_LABELS: Record<string, string> = {
   'externe': 'Externe',
 };
 
+// Composant carte permission détaillée
+interface PermissionCardProps {
+  label: string;
+  description: string;
+  features: string[];
+  targetUsers: string;
+  isEnabled: boolean;
+  isAllowed: boolean;
+  canEdit: boolean;
+  color: string;
+  roleRequired?: string;
+  onToggle: () => void;
+}
+
+function PermissionCard({
+  label,
+  description,
+  features,
+  targetUsers,
+  isEnabled,
+  isAllowed,
+  canEdit,
+  color,
+  roleRequired,
+  onToggle,
+}: PermissionCardProps) {
+  const isDisabled = !canEdit || !isAllowed;
+  
+  return (
+    <div
+      className={`relative rounded-lg border-2 p-4 transition-all ${
+        isDisabled ? 'opacity-50 cursor-not-allowed bg-muted/30' : 'cursor-pointer hover:shadow-md'
+      } ${
+        isEnabled 
+          ? 'border-primary bg-primary/5 shadow-sm' 
+          : 'border-muted hover:border-primary/40'
+      }`}
+      onClick={() => !isDisabled && onToggle()}
+    >
+      <div className="flex gap-3">
+        <div className="pt-0.5">
+          <Checkbox
+            checked={isEnabled}
+            disabled={isDisabled}
+            onCheckedChange={() => !isDisabled && onToggle()}
+            onClick={(e) => e.stopPropagation()}
+            className="w-5 h-5"
+          />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <h4 className={`font-semibold text-sm ${color}`}>{label}</h4>
+            {roleRequired && !isAllowed && (
+              <Badge variant="outline" className="text-xs">{roleRequired}</Badge>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground mb-2">{description}</p>
+          <ul className="text-xs space-y-0.5 mb-2">
+            {features.map((f, i) => (
+              <li key={i} className={`flex items-start gap-1 ${
+                f.startsWith('⛔') ? 'text-destructive' : 
+                f.startsWith('✅') ? 'text-primary' : 'text-muted-foreground'
+              }`}>
+                {!f.startsWith('⛔') && !f.startsWith('✅') && <span className="text-primary">•</span>}
+                <span>{f}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs text-muted-foreground italic">→ {targetUsers}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface UserAccordionItemProps {
   user: UserProfile;
   effectiveRole: GlobalRole | null;
@@ -258,83 +333,184 @@ export const UserAccordionItem = memo(function UserAccordionItem({
             </Select>
           </div>
 
-          {/* Modules Section */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 font-medium">
-              <Zap className="w-4 h-4 text-primary" />
-              Modules activés
+          {/* Modules Section - Nouvelle interface détaillée */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 font-medium">
+                <Zap className="w-4 h-4 text-primary" />
+                Permissions & Accès
+              </div>
+              <span className="text-xs text-muted-foreground">
+                Cliquez sur une carte pour activer/désactiver
+              </span>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {MODULE_DEFINITIONS.map(moduleDef => {
-                const isEnabled = isModuleEnabled(moduleDef.key);
-                const options = getModuleOptions(moduleDef.key);
-                const canUserAccessModule = canAccessModule(effectiveRole, moduleDef.key);
-                const isModuleDisabled = !canEdit || !canUserAccessModule;
 
-                return (
-                  <div key={moduleDef.key} className={`p-3 rounded-lg border ${isEnabled ? 'bg-primary/5 border-primary/20' : canUserAccessModule ? 'bg-muted/30 border-muted' : 'bg-muted/50 border-destructive/30'}`}>
-                    <div className="flex items-center gap-3">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div>
-                            <Switch
-                              checked={isEnabled}
-                              onCheckedChange={(checked) => onModuleToggle(moduleDef.key, checked)}
-                              disabled={isModuleDisabled}
-                            />
+            {/* RH & Parc - Permissions détaillées */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-helpconfort-blue" />
+                Ressources Humaines & Parc
+              </h4>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                {/* Coffre RH Personnel */}
+                <PermissionCard
+                  label="Mon Coffre RH Personnel"
+                  description="Accès à ses propres documents RH"
+                  features={[
+                    'Consulter ses bulletins de paie',
+                    'Voir ses contrats et avenants', 
+                    'Faire des demandes de documents',
+                  ]}
+                  targetUsers="Tous les collaborateurs"
+                  isEnabled={isModuleEnabled('rh') && (getModuleOptions('rh')['coffre'] ?? false)}
+                  isAllowed={isRhOptionAllowedForRole(effectiveRole, 'coffre')}
+                  canEdit={canEdit}
+                  color="text-helpconfort-blue"
+                  onToggle={() => {
+                    if (!isModuleEnabled('rh')) onModuleToggle('rh', true);
+                    onModuleOptionToggle('rh', 'coffre', !(getModuleOptions('rh')['coffre'] ?? false));
+                  }}
+                />
+
+                {/* Gestionnaire RH */}
+                <PermissionCard
+                  label="Gestionnaire RH"
+                  description="Gestion des documents équipe SANS accès paie"
+                  features={[
+                    'Voir les fiches collaborateurs',
+                    'Uploader des documents',
+                    '⛔ PAS d\'accès aux salaires',
+                  ]}
+                  targetUsers="Assistante RH, Manager"
+                  isEnabled={isModuleEnabled('rh') && (getModuleOptions('rh')['rh_viewer'] ?? false)}
+                  isAllowed={isRhOptionAllowedForRole(effectiveRole, 'rh_viewer')}
+                  canEdit={canEdit}
+                  color="text-amber-500"
+                  roleRequired="N2+"
+                  onToggle={() => {
+                    if (!isModuleEnabled('rh')) onModuleToggle('rh', true);
+                    onModuleOptionToggle('rh', 'rh_viewer', !(getModuleOptions('rh')['rh_viewer'] ?? false));
+                  }}
+                />
+
+                {/* Admin RH Complet */}
+                <PermissionCard
+                  label="Administrateur RH Complet"
+                  description="Contrôle TOTAL sur la paie et les RH"
+                  features={[
+                    '✅ Tout ce que fait le Gestionnaire',
+                    'Accès bulletins de paie',
+                    'Modification des salaires',
+                  ]}
+                  targetUsers="Dirigeant, Responsable Paie"
+                  isEnabled={isModuleEnabled('rh') && (getModuleOptions('rh')['rh_admin'] ?? false)}
+                  isAllowed={isRhOptionAllowedForRole(effectiveRole, 'rh_admin')}
+                  canEdit={canEdit}
+                  color="text-destructive"
+                  roleRequired="N2+"
+                  onToggle={() => {
+                    if (!isModuleEnabled('rh')) onModuleToggle('rh', true);
+                    onModuleOptionToggle('rh', 'rh_admin', !(getModuleOptions('rh')['rh_admin'] ?? false));
+                  }}
+                />
+
+                {/* Parc Véhicules */}
+                <PermissionCard
+                  label="Gestion Véhicules"
+                  description="Suivi du parc automobile"
+                  features={[
+                    'Liste des véhicules',
+                    'Contrôles techniques',
+                    'Affectation techniciens',
+                  ]}
+                  targetUsers="Dirigeant, Logistique"
+                  isEnabled={isModuleEnabled('parc') && (getModuleOptions('parc')['vehicules'] ?? false)}
+                  isAllowed={canAccessModule(effectiveRole, 'parc')}
+                  canEdit={canEdit}
+                  color="text-helpconfort-orange"
+                  onToggle={() => {
+                    if (!isModuleEnabled('parc')) onModuleToggle('parc', true);
+                    onModuleOptionToggle('parc', 'vehicules', !(getModuleOptions('parc')['vehicules'] ?? false));
+                  }}
+                />
+
+                {/* Parc Équipements */}
+                <PermissionCard
+                  label="Gestion Équipements & EPI"
+                  description="Matériel et équipements de protection"
+                  features={[
+                    'Inventaire matériel',
+                    'Suivi des EPI',
+                    'Alertes expiration',
+                  ]}
+                  targetUsers="Dirigeant, Sécurité"
+                  isEnabled={isModuleEnabled('parc') && (getModuleOptions('parc')['equipements'] ?? false)}
+                  isAllowed={canAccessModule(effectiveRole, 'parc')}
+                  canEdit={canEdit}
+                  color="text-helpconfort-orange"
+                  onToggle={() => {
+                    if (!isModuleEnabled('parc')) onModuleToggle('parc', true);
+                    onModuleOptionToggle('parc', 'equipements', !(getModuleOptions('parc')['equipements'] ?? false));
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Autres Modules - Simples toggles */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-primary" />
+                Autres Modules
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {MODULE_DEFINITIONS
+                  .filter(m => !['rh', 'parc'].includes(m.key))
+                  .map(moduleDef => {
+                    const isEnabled = isModuleEnabled(moduleDef.key);
+                    const canUserAccessModule = canAccessModule(effectiveRole, moduleDef.key);
+                    const isModuleDisabled = !canEdit || !canUserAccessModule;
+
+                    return (
+                      <div 
+                        key={moduleDef.key} 
+                        className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                          isModuleDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'
+                        } ${
+                          isEnabled 
+                            ? 'bg-primary/5 border-primary/30 shadow-sm' 
+                            : 'bg-muted/30 border-muted hover:border-primary/30'
+                        }`}
+                        onClick={() => {
+                          if (!isModuleDisabled) onModuleToggle(moduleDef.key, !isEnabled);
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Checkbox
+                            checked={isEnabled}
+                            disabled={isModuleDisabled}
+                            onCheckedChange={(checked) => onModuleToggle(moduleDef.key, !!checked)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-5 h-5"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <span className={`text-sm font-medium ${!canUserAccessModule ? 'text-muted-foreground' : ''}`}>
+                              {moduleDef.label}
+                            </span>
+                            {moduleDef.description && (
+                              <p className="text-xs text-muted-foreground truncate">{moduleDef.description}</p>
+                            )}
                           </div>
-                        </TooltipTrigger>
-                        {!canUserAccessModule && (
-                          <TooltipContent>
-                            Ce module nécessite le rôle {GLOBAL_ROLE_LABELS[moduleDef.minRole]} (N{GLOBAL_ROLES[moduleDef.minRole]}) minimum
-                          </TooltipContent>
-                        )}
-                      </Tooltip>
-                      <span className={`text-sm font-medium ${!canUserAccessModule ? 'text-muted-foreground' : ''}`}>{moduleDef.label}</span>
-                      {moduleDef.options.length > 0 && (
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-6 px-2">
-                              <Info className="w-3 h-3" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-64 bg-background z-50">
-                            <p className="text-sm text-muted-foreground mb-2">{moduleDef.description || 'Options du module'}</p>
-                            <div className="space-y-2">
-                              {moduleDef.options.map(opt => {
-                                // Pour le module RH, vérifier les contraintes de rôle
-                                const isRhModule = moduleDef.key === 'rh';
-                                const isOptionAllowedForRole = isRhModule 
-                                  ? isRhOptionAllowedForRole(effectiveRole, opt.key)
-                                  : true;
-                                const isOptionDisabled = !isEnabled || !canEdit || !isOptionAllowedForRole;
-                                const isOptionChecked = isOptionAllowedForRole && (options[opt.key] ?? opt.defaultEnabled);
-                                
-                                return (
-                                  <div 
-                                    key={opt.key} 
-                                    className={`flex items-center gap-2 ${!isOptionAllowedForRole ? 'opacity-50' : ''}`}
-                                  >
-                                    <Checkbox
-                                      checked={isOptionChecked}
-                                      onCheckedChange={(checked) => onModuleOptionToggle(moduleDef.key, opt.key, !!checked)}
-                                      disabled={isOptionDisabled}
-                                    />
-                                    <span className="text-sm">{opt.label}</span>
-                                    {isRhModule && !isOptionAllowedForRole && (
-                                      <span className="text-xs text-destructive">(N2+ requis)</span>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+                          {!canUserAccessModule && (
+                            <Badge variant="outline" className="text-xs shrink-0">
+                              N{GLOBAL_ROLES[moduleDef.minRole]}+
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                }
+              </div>
             </div>
           </div>
 
