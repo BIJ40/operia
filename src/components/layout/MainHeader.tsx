@@ -206,7 +206,8 @@ export function MainHeader() {
                         onMouseEnter={() => handleMenuEnter(section.id)}
                         onMouseLeave={handleMenuLeave}
                       >
-                        <button
+                        <Link
+                          to={section.href || section.links[0]?.href || '/'}
                           className={cn(
                             "flex items-center justify-center p-1 rounded-md transition-all hover:scale-105",
                             isCurrentSection
@@ -220,7 +221,7 @@ export function MainHeader() {
                             alt={section.title} 
                             className="h-[5.5rem] w-auto mt-2"
                           />
-                        </button>
+                        </Link>
 
                         {/* Méga-menu */}
                         {isActive && (
