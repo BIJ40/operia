@@ -35,7 +35,6 @@ import { Label } from '@/components/ui/label';
 import { useSupportNotifications } from '@/hooks/use-support-notifications';
 import { usePageMetadata, useUpsertPageMetadata } from '@/hooks/use-page-metadata';
 import { GLOBAL_ROLES, GlobalRole } from '@/types/globalRoles';
-import { isModuleEnabled } from '@/types/modules';
 import {
   Tooltip,
   TooltipContent,
@@ -48,7 +47,6 @@ import { getPageConfigByPath, getPageDefaultByKey } from '@/config/pageDefaults'
 import { ROUTES } from '@/config/routes';
 import { logError } from '@/lib/logger';
 import { cn } from '@/lib/utils';
-import { MessagingWidget } from '@/components/messaging';
 import { RHNotificationBadge } from '@/components/rh/RHNotificationBadge';
 import { AiUnifiedBar } from '@/components/ai';
 
@@ -86,12 +84,9 @@ function formatHelpTitle(title: string): React.ReactNode {
 export function UnifiedHeader() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAdmin, canAccessSupportConsoleUI, isLoggingOut, logout, globalRole, enabledModules } = useAuth();
+  const { isAdmin, canAccessSupportConsoleUI, isLoggingOut, logout, globalRole } = useAuth();
   const { toggleSidebar } = useSidebar();
-  const { hasNewTickets, newTicketsCount, hasChatHumanRequests, hasTicketRequests, chatHumanCount, ticketRequestCount } = useSupportNotifications();
-
-  // P0-01: Check if messaging module is enabled (or admin N5+)
-  const canAccessMessaging = isAdmin || isModuleEnabled(enabledModules, 'messaging');
+  const { hasNewTickets, newTicketsCount, hasChatHumanRequests, hasTicketRequests } = useSupportNotifications();
 
   // Déterminer la classe de clignotement du header pour SU
   const getHeaderBlinkClass = () => {
@@ -311,7 +306,7 @@ export function UnifiedHeader() {
               </Link>
             )}
 
-            {/* RH Notifications */}
+            {/* RH Notifications - seule cloche */}
             <RHNotificationBadge />
 
             {/* User menu */}
@@ -363,23 +358,11 @@ export function UnifiedHeader() {
         {/* Subtitle bar - below AI search */}
         {displaySubtitle && (
           <div 
-            className={`px-4 py-1 border-t border-border/50 ${subtitleBgClass} flex items-center justify-center relative`}
+            className={`px-4 py-1 border-t border-border/50 ${subtitleBgClass} flex items-center justify-center`}
           >
             <p className={`${subtitleTextSizeClass} text-muted-foreground text-center`}>
               {displaySubtitle}
             </p>
-            {canAccessMessaging && (
-              <div className="absolute right-4">
-                <MessagingWidget />
-              </div>
-            )}
-          </div>
-        )}
-        
-        {/* Show widgets even if no subtitle */}
-        {!displaySubtitle && canAccessMessaging && (
-          <div className="px-4 py-1 border-t border-border/50 bg-background flex justify-end">
-            <MessagingWidget />
           </div>
         )}
       </header>
