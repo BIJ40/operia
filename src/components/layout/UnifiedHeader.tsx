@@ -49,6 +49,8 @@ import { logError } from '@/lib/logger';
 import { cn } from '@/lib/utils';
 import { RHNotificationBadge } from '@/components/rh/RHNotificationBadge';
 import { AiUnifiedBar } from '@/components/ai';
+import { LiveSupportIndicator } from '@/components/support/LiveSupportIndicator';
+import { GlobalLiveSupportManager } from '@/components/support/GlobalLiveSupportManager';
 
 // Mapping des noms d'icônes vers les composants
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -246,6 +248,9 @@ export function UnifiedHeader() {
 
           {/* Right side actions */}
           <div className="flex items-center gap-2 shrink-0">
+            {/* Live Support Indicator for users - Always visible if session active */}
+            <LiveSupportIndicator />
+
             {/* Metadata edit button for N5/N6 */}
             {canEdit && (
               <TooltipProvider>
@@ -445,6 +450,9 @@ export function UnifiedHeader() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Global Live Support Manager - Dialog accessible de partout */}
+      <GlobalLiveSupportManager />
     </>
   );
 }

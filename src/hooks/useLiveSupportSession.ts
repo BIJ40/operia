@@ -19,6 +19,7 @@ export function useLiveSupportSession() {
   const { user } = useAuth();
   const [activeSession, setActiveSession] = useState<LiveSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showChatDialog, setShowChatDialog] = useState(false);
 
   // Charger la session active au démarrage
   useEffect(() => {
@@ -29,11 +30,12 @@ export function useLiveSupportSession() {
 
     const loadActiveSession = async () => {
       try {
+        // Chercher les sessions "active" (pas encore closed)
         const { data, error } = await supabase
           .from('live_support_sessions')
           .select('id, status, agent_id, created_at')
           .eq('user_id', user.id)
-          .in('status', ['waiting', 'active'])
+          .eq('status', 'active')
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle();
@@ -65,6 +67,7 @@ export function useLiveSupportSession() {
             const session = payload.new as LiveSession;
             if (session.status === 'closed') {
               setActiveSession(null);
+              setShowChatDialog(false);
             } else {
               setActiveSession(session);
             }
@@ -78,31 +81,17 @@ export function useLiveSupportSession() {
     };
   }, [user?.id]);
 
-  // Créer une nouvelle session
-  const startSession = useCallback(async (userName: string) => {
-    if (!user?.id) return null;
+  // Ouvrir le dialog de chat
+  const openChat = useCallback(() => {
+    setShowChatDialog(true);
+  }, []);
 
-    try {
-      const { data, error } = await supabase
-        .from('live_support_sessions')
-        .insert({
-          user_id: user.id,
-          user_name: userName,
-          status: 'waiting',
-        })
-        .select()
-        .single();
+  // Fermer le dialog de chat (sans fermer la session)
+  const closeChatDialog = useCallback(() => {
+    setShowChatDialog(false);
+  }, []);
 
-      if (error) throw error;
-      setActiveSession(data);
-      return data;
-    } catch (err) {
-      console.error('Error starting session:', err);
-      return null;
-    }
-  }, [user?.id]);
-
-  // Fermer la session
+  // Fermer la session complètement
   const closeSession = useCallback(async () => {
     if (!activeSession?.id) return;
 
@@ -113,6 +102,7 @@ export function useLiveSupportSession() {
         .eq('id', activeSession.id);
 
       setActiveSession(null);
+      setShowChatDialog(false);
     } catch (err) {
       console.error('Error closing session:', err);
     }
@@ -121,10 +111,12 @@ export function useLiveSupportSession() {
   return {
     activeSession,
     hasActiveSession: !!activeSession,
-    isWaiting: activeSession?.status === 'waiting',
-    isConnected: activeSession?.status === 'active',
+    isWaiting: activeSession?.status === 'active' && !activeSession?.agent_id,
+    isConnected: activeSession?.status === 'active' && !!activeSession?.agent_id,
     isLoading,
-    startSession,
+    showChatDialog,
+    openChat,
+    closeChatDialog,
     closeSession,
   };
 }
