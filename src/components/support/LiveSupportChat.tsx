@@ -492,7 +492,13 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={onClose}
+              onClick={() => {
+                // Réinitialiser l'état local puis appeler onClose
+                setSessionId(null);
+                setMessages([]);
+                setSessionClosed(null);
+                onClose?.();
+              }}
               className="mt-2"
             >
               Fermer

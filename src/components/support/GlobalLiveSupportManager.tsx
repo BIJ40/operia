@@ -39,7 +39,7 @@ export function GlobalLiveSupportManager() {
           </DialogHeader>
           
           <div className="flex-1 overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <LiveSupportChat />
+            <LiveSupportChat onClose={closeChatDialog} />
           </div>
         </DialogContent>
       </Dialog>
