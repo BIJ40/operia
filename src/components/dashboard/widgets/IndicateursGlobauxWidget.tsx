@@ -14,6 +14,8 @@ import { computeStat } from '@/statia/engine/computeStat';
 import { calculateMonthlyCA } from '@/apogee-connect/utils/monthlyCalculations';
 import { startOfMonth, endOfMonth } from 'date-fns';
 import { LoadedData, StatParams } from '@/statia/definitions/types';
+import { supabase } from '@/integrations/supabase/client';
+import { loadSAVOverridesByAgencyUuid } from '@/statia/services/savOverridesService';
 
 // Configuration des KPIs à afficher
 const KPI_CONFIG: Array<{ 
@@ -110,7 +112,7 @@ export function IndicateursGlobauxWidget() {
 
   // Fetch tous les KPIs
   const { data: kpiData, isLoading } = useQuery({
-    queryKey: ['widget-indicateurs-globaux-v3', agencySlug, dateRange.start.toISOString()],
+    queryKey: ['widget-indicateurs-globaux-v4', agencySlug, dateRange.start.toISOString()],
     queryFn: async () => {
       if (!agencySlug) return null;
 
@@ -125,9 +127,35 @@ export function IndicateursGlobauxWidget() {
         clients: apiData.clients || [],
       };
 
+      // Charger les overrides SAV pour le calcul correct du taux SAV
+      let savOverridesMap: Map<number, { is_confirmed_sav: boolean | null; cout_sav_manuel: number | null; techniciens_override: number[] | null }> | undefined;
+      
+      try {
+        const { data: agencyData } = await supabase
+          .from("apogee_agencies")
+          .select("id")
+          .eq("slug", agencySlug)
+          .single();
+        
+        if (agencyData?.id) {
+          const overridesData = await loadSAVOverridesByAgencyUuid(agencyData.id);
+          savOverridesMap = new Map();
+          for (const o of overridesData.overrides) {
+            savOverridesMap.set(o.project_id, {
+              is_confirmed_sav: o.is_confirmed_sav,
+              cout_sav_manuel: o.cout_sav_manuel,
+              techniciens_override: o.techniciens_override,
+            });
+          }
+        }
+      } catch (error) {
+        console.warn('[Widget] Impossible de charger les overrides SAV:', error);
+      }
+
       const params: StatParams = {
         dateRange,
         agencySlug,
+        savOverrides: savOverridesMap,
       };
 
       const services = {
