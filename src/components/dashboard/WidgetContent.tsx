@@ -26,16 +26,27 @@ const WIDGET_COMPONENTS: Record<string, React.FC> = {
 };
 
 export function WidgetContent({ widget }: WidgetContentProps) {
-  const { module_source, icon, name, default_params } = widget.template;
+  // Handle case where template might be an array (from Supabase join)
+  const template = Array.isArray(widget.template) ? widget.template[0] : widget.template;
+  
+  if (!template) {
+    return (
+      <div className="flex items-center justify-center h-full min-h-[60px] text-muted-foreground text-sm">
+        Template non trouvé
+      </div>
+    );
+  }
+  
+  const { module_source, icon, name, default_params } = template;
 
   // Gestion des widgets de type Shortcut
-  if (module_source.startsWith('Shortcut.')) {
+  if (module_source?.startsWith('Shortcut.')) {
     const params = default_params as { route?: string } | undefined;
     const route = params?.route || '/';
     return <ShortcutWidget route={route} icon={icon} name={name} />;
   }
 
-  const WidgetComponent = WIDGET_COMPONENTS[module_source];
+  const WidgetComponent = module_source ? WIDGET_COMPONENTS[module_source] : null;
   if (WidgetComponent) {
     return <WidgetComponent />;
   }
