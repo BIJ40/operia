@@ -27,9 +27,8 @@ export type ModuleKey = keyof typeof MODULES;
 export const MODULE_OPTIONS = {
   help_academy: {
     apogee: 'help_academy.apogee',
-    apporteurs: 'help_academy.apporteurs',
     helpconfort: 'help_academy.helpconfort',
-    base_documentaire: 'help_academy.base_documentaire',
+    apporteurs: 'help_academy.apporteurs',
     edition: 'help_academy.edition',
   },
   pilotage_agence: {
@@ -114,10 +113,9 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
     minRole: 'base_user',
     options: [
-      { key: 'apogee', path: 'help_academy.apogee', label: 'Guide Apogée', description: 'Accès au guide Apogée', defaultEnabled: true },
-      { key: 'apporteurs', path: 'help_academy.apporteurs', label: 'Guide Apporteurs', description: 'Accès au guide Apporteurs', defaultEnabled: true },
-      { key: 'helpconfort', path: 'help_academy.helpconfort', label: 'Guide HelpConfort', description: 'Accès au guide HelpConfort', defaultEnabled: false },
-      { key: 'base_documentaire', path: 'help_academy.base_documentaire', label: 'Base documentaire', description: 'Accès aux documents téléchargeables', defaultEnabled: true },
+      { key: 'apogee', path: 'help_academy.apogee', label: 'Apogée', description: 'Guide du logiciel Apogée', defaultEnabled: true },
+      { key: 'helpconfort', path: 'help_academy.helpconfort', label: 'HelpConfort', description: 'Guide des procédures HelpConfort', defaultEnabled: false },
+      { key: 'apporteurs', path: 'help_academy.apporteurs', label: 'Apporteurs', description: 'Guide des prescripteurs', defaultEnabled: true },
       { key: 'edition', path: 'help_academy.edition', label: 'Mode édition', description: 'Modifier le contenu des guides', defaultEnabled: false },
     ],
   },

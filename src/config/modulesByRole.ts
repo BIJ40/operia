@@ -18,7 +18,7 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
   base_user: {
     help_academy: {
       enabled: true,
-      options: { apogee: true, apporteurs: false, helpconfort: false, base_documentaire: true, edition: false }
+      options: { apogee: true, helpconfort: false, apporteurs: false, edition: false }
     },
     support: {
       enabled: true,
@@ -30,7 +30,7 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
   franchisee_user: {
     help_academy: {
       enabled: true,
-      options: { apogee: true, apporteurs: true, helpconfort: false, base_documentaire: true, edition: false }
+      options: { apogee: true, helpconfort: false, apporteurs: true, edition: false }
     },
     support: {
       enabled: true,
@@ -46,7 +46,7 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
   franchisee_admin: {
     help_academy: {
       enabled: true,
-      options: { apogee: true, apporteurs: true, helpconfort: true, base_documentaire: true, edition: false }
+      options: { apogee: true, helpconfort: true, apporteurs: true, edition: false }
     },
     pilotage_agence: {
       enabled: true,
@@ -66,7 +66,7 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
   franchisor_user: {
     help_academy: {
       enabled: true,
-      options: { apogee: true, apporteurs: true, helpconfort: true, base_documentaire: true, edition: false }
+      options: { apogee: true, helpconfort: true, apporteurs: true, edition: false }
     },
     pilotage_agence: {
       enabled: true,
@@ -86,7 +86,7 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
   franchisor_admin: {
     help_academy: {
       enabled: true,
-      options: { apogee: true, apporteurs: true, helpconfort: true, base_documentaire: true, edition: true }
+      options: { apogee: true, helpconfort: true, apporteurs: true, edition: true }
     },
     pilotage_agence: {
       enabled: true,
@@ -106,7 +106,7 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
   platform_admin: {
     help_academy: {
       enabled: true,
-      options: { apogee: true, apporteurs: true, helpconfort: true, base_documentaire: true, edition: true }
+      options: { apogee: true, helpconfort: true, apporteurs: true, edition: true }
     },
     pilotage_agence: {
       enabled: true,
@@ -130,7 +130,7 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
   superadmin: {
     help_academy: {
       enabled: true,
-      options: { apogee: true, apporteurs: true, helpconfort: true, base_documentaire: true, edition: true }
+      options: { apogee: true, helpconfort: true, apporteurs: true, edition: true }
     },
     pilotage_agence: {
       enabled: true,
