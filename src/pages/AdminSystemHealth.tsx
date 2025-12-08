@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Activity, 
   AlertTriangle, 
@@ -17,11 +18,14 @@ import {
   Loader2,
   Bell,
   Mail,
-  Smartphone
+  Smartphone,
+  FileText
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { logError } from "@/lib/logger";
+import { SystemMetricsDashboard } from "@/components/admin/system";
+import { DocsExportButton } from "@/components/admin/docs";
 
 interface HealthCheck {
   name: string;
@@ -255,6 +259,7 @@ export default function AdminSystemHealth() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <DocsExportButton />
           {getStatusBadge(overallStatus)}
           <Badge variant="outline" className="text-xs">
             {environment}
@@ -262,283 +267,283 @@ export default function AdminSystemHealth() {
         </div>
       </div>
 
-      {/* Health Check Tiles */}
-      <div className="grid gap-4 md:grid-cols-3">
-        {healthChecks.map((check) => (
-          <div 
-            key={check.name}
-            className="group rounded-xl p-5 bg-gradient-to-r from-helpconfort-blue/10 via-helpconfort-blue/5 to-transparent border border-helpconfort-blue/20 border-l-4 border-l-helpconfort-blue shadow-sm transition-all duration-300 hover:from-helpconfort-blue/15 hover:via-helpconfort-blue/8 hover:border-helpconfort-blue/30 hover:shadow-lg"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-foreground">{check.name}</h3>
-              <div className={`${getStatusColor(check.status)}`}>
-                {check.status === "checking" ? (
-                  <Activity className="h-5 w-5 animate-pulse" />
-                ) : check.status === "healthy" ? (
-                  <CheckCircle2 className="h-5 w-5" />
-                ) : (
-                  <AlertTriangle className="h-5 w-5" />
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center bg-white/50 group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
-                <span className="text-helpconfort-blue">{check.icon}</span>
-              </div>
-              <p className="text-sm text-muted-foreground">{check.message}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Tabs for different views */}
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsTrigger value="overview" className="gap-2">
+            <Server className="h-4 w-4" />
+            Vue d'ensemble
+          </TabsTrigger>
+          <TabsTrigger value="metrics" className="gap-2">
+            <Activity className="h-4 w-4" />
+            Métriques temps réel
+          </TabsTrigger>
+          <TabsTrigger value="tools" className="gap-2">
+            <Zap className="h-4 w-4" />
+            Outils
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Refresh Button */}
-      <div className="flex justify-end">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={runHealthChecks}
-          disabled={isRefreshing}
-          className="border-helpconfort-blue/30 hover:bg-helpconfort-blue/10"
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-          Actualiser
-        </Button>
-      </div>
-
-      {/* Info Cards */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="group rounded-xl p-5 bg-gradient-to-r from-helpconfort-blue/10 via-helpconfort-blue/5 to-transparent border border-helpconfort-blue/20 border-l-4 border-l-helpconfort-blue shadow-sm transition-all duration-300 hover:from-helpconfort-blue/15 hover:via-helpconfort-blue/8 hover:border-helpconfort-blue/30 hover:shadow-lg">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-11 h-11 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center bg-white/50 group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
-              <Shield className="w-5 h-5 text-helpconfort-blue" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground">Monitoring des erreurs</h3>
-              <p className="text-sm text-muted-foreground">Configuration Sentry</p>
-            </div>
-          </div>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">Frontend (React)</h4>
-              <p className="text-sm text-muted-foreground">
-                Toutes les erreurs JavaScript non gérées sont automatiquement 
-                capturées avec le contexte utilisateur (ID, email, rôle, agence).
-              </p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">Backend (Edge Functions)</h4>
-              <p className="text-sm text-muted-foreground">
-                Les erreurs dans les fonctions critiques sont reportées avec 
-                le contexte de la requête.
-              </p>
-            </div>
-            <div className="pt-3 border-t border-border/50">
-              <a
-                href="https://sentry.io"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm text-helpconfort-blue hover:underline font-medium"
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="space-y-6">
+          {/* Health Check Tiles */}
+          <div className="grid gap-4 md:grid-cols-3">
+            {healthChecks.map((check) => (
+              <div 
+                key={check.name}
+                className="group rounded-xl p-5 bg-gradient-to-r from-helpconfort-blue/10 via-helpconfort-blue/5 to-transparent border border-helpconfort-blue/20 border-l-4 border-l-helpconfort-blue shadow-sm transition-all duration-300 hover:from-helpconfort-blue/15 hover:via-helpconfort-blue/8 hover:border-helpconfort-blue/30 hover:shadow-lg"
               >
-                Ouvrir le dashboard Sentry
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-            </div>
-          </div>
-        </div>
-
-        <div className="group rounded-xl p-5 bg-gradient-to-r from-helpconfort-blue/10 via-helpconfort-blue/5 to-transparent border border-helpconfort-blue/20 border-l-4 border-l-helpconfort-blue shadow-sm transition-all duration-300 hover:from-helpconfort-blue/15 hover:via-helpconfort-blue/8 hover:border-helpconfort-blue/30 hover:shadow-lg">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-11 h-11 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center bg-white/50 group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
-              <Zap className="w-5 h-5 text-helpconfort-blue" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground">En cas d'incident</h3>
-              <p className="text-sm text-muted-foreground">Procédure de gestion</p>
-            </div>
-          </div>
-          <div className="space-y-3">
-            {[
-              "Consulter Sentry pour identifier l'erreur",
-              "Analyser le contexte (utilisateur, agence, action)",
-              "Reproduire le problème en environnement de dev",
-              "Corriger, déployer et vérifier dans Sentry"
-            ].map((step, index) => (
-              <div key={index} className="flex gap-3 items-start">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-helpconfort-blue text-white flex items-center justify-center text-xs font-bold">
-                  {index + 1}
-                </span>
-                <p className="text-sm text-muted-foreground pt-0.5">{step}</p>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-foreground">{check.name}</h3>
+                  <div className={`${getStatusColor(check.status)}`}>
+                    {check.status === "checking" ? (
+                      <Activity className="h-5 w-5 animate-pulse" />
+                    ) : check.status === "healthy" ? (
+                      <CheckCircle2 className="h-5 w-5" />
+                    ) : (
+                      <AlertTriangle className="h-5 w-5" />
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center bg-white/50 group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
+                    <span className="text-helpconfort-blue">{check.icon}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{check.message}</p>
+                </div>
               </div>
             ))}
           </div>
-        </div>
-      </div>
 
-      {/* System Info */}
-      <div className="group rounded-xl p-5 bg-gradient-to-r from-helpconfort-blue/10 via-helpconfort-blue/5 to-transparent border border-helpconfort-blue/20 border-l-4 border-l-helpconfort-blue shadow-sm transition-all duration-300 hover:from-helpconfort-blue/15 hover:via-helpconfort-blue/8 hover:border-helpconfort-blue/30 hover:shadow-lg">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="w-11 h-11 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center bg-white/50 group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
-            <Database className="w-5 h-5 text-helpconfort-blue" />
-          </div>
-          <h3 className="font-semibold text-foreground">Informations système</h3>
-        </div>
-        <div className="grid gap-6 md:grid-cols-3">
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Environnement</p>
-            <p className="font-semibold text-foreground">{environment}</p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Projet ID</p>
-            <p className="font-mono text-xs text-foreground truncate">
-              {import.meta.env.VITE_SUPABASE_PROJECT_ID || "N/A"}
-            </p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Sentry</p>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
-              <span className="font-medium text-green-600">Configuré</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* SMS Test */}
-      <div className="group rounded-xl p-5 bg-gradient-to-r from-helpconfort-blue/10 via-helpconfort-blue/5 to-transparent border border-helpconfort-blue/20 border-l-4 border-l-helpconfort-blue shadow-sm transition-all duration-300 hover:from-helpconfort-blue/15 hover:via-helpconfort-blue/8 hover:border-helpconfort-blue/30 hover:shadow-lg">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="w-11 h-11 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center bg-white/50 group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
-            <MessageSquare className="w-5 h-5 text-helpconfort-blue" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-foreground">Test SMS AllMySMS</h3>
-            <p className="text-sm text-muted-foreground">Vérifier la connectivité API SMS</p>
-          </div>
-        </div>
-        
-        <div className="space-y-4">
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => testSmsApi(true)}
-              disabled={isSmsTestLoading}
+          {/* Refresh Button */}
+          <div className="flex justify-end">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={runHealthChecks}
+              disabled={isRefreshing}
               className="border-helpconfort-blue/30 hover:bg-helpconfort-blue/10"
             >
-              {isSmsTestLoading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Activity className="h-4 w-4 mr-2" />
-              )}
-              Test connectivité (simulation)
-            </Button>
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => testSmsApi(false)}
-              disabled={isSmsTestLoading}
-              className="bg-helpconfort-blue hover:bg-helpconfort-blue/90"
-            >
-              {isSmsTestLoading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4 mr-2" />
-              )}
-              Envoyer SMS réel
+              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Actualiser
             </Button>
           </div>
 
-          {smsTestResult && (
-            <div className={`p-4 rounded-lg ${smsTestResult.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-              <div className="flex items-start gap-3">
-                {smsTestResult.success ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
-                ) : (
-                  <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
-                )}
-                <div className="flex-1">
-                  <p className={`font-medium ${smsTestResult.success ? 'text-green-800' : 'text-red-800'}`}>
-                    {smsTestResult.success ? 'Succès' : 'Échec'}
+          {/* Info Cards */}
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="group rounded-xl p-5 bg-gradient-to-r from-helpconfort-blue/10 via-helpconfort-blue/5 to-transparent border border-helpconfort-blue/20 border-l-4 border-l-helpconfort-blue shadow-sm transition-all duration-300 hover:from-helpconfort-blue/15 hover:via-helpconfort-blue/8 hover:border-helpconfort-blue/30 hover:shadow-lg">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-11 h-11 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center bg-white/50 group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
+                  <Shield className="w-5 h-5 text-helpconfort-blue" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">Monitoring des erreurs</h3>
+                  <p className="text-sm text-muted-foreground">Configuration Sentry</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm">Frontend (React)</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Toutes les erreurs JavaScript non gérées sont automatiquement 
+                    capturées avec le contexte utilisateur (ID, email, rôle, agence).
                   </p>
-                  <p className={`text-sm ${smsTestResult.success ? 'text-green-700' : 'text-red-700'}`}>
-                    {smsTestResult.message}
+                </div>
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm">Backend (Edge Functions)</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Les erreurs dans les fonctions critiques sont reportées avec 
+                    le contexte de la requête.
                   </p>
-                  {smsTestResult.details && (
-                    <details className="mt-2">
-                      <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
-                        Détails techniques
-                      </summary>
-                      <pre className="mt-2 p-2 bg-background/50 rounded text-xs overflow-auto max-h-40">
-                        {JSON.stringify(smsTestResult.details, null, 2)}
-                      </pre>
-                    </details>
-                  )}
+                </div>
+                <div className="pt-3 border-t border-border/50">
+                  <a
+                    href="https://sentry.io"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm text-helpconfort-blue hover:underline font-medium"
+                  >
+                    Ouvrir le dashboard Sentry
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
                 </div>
               </div>
             </div>
-          )}
-          
-          <p className="text-xs text-muted-foreground">
-            Le test de simulation vérifie la connectivité API sans envoyer de SMS. 
-            Le test réel envoie un SMS au numéro configuré (ALLMYSMS_TEST_PHONE).
-          </p>
-        </div>
-      </div>
 
-      {/* Notification Settings */}
-      <div className="group rounded-xl p-5 bg-gradient-to-r from-orange-500/10 via-orange-500/5 to-transparent border border-orange-500/20 border-l-4 border-l-orange-500 shadow-sm transition-all duration-300 hover:from-orange-500/15 hover:via-orange-500/8 hover:border-orange-500/30 hover:shadow-lg">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="w-11 h-11 rounded-full border-2 border-orange-500/30 flex items-center justify-center bg-white/50 group-hover:border-orange-500 group-hover:bg-white transition-all">
-            <Bell className="w-5 h-5 text-orange-500" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-foreground">Notifications Support</h3>
-            <p className="text-sm text-muted-foreground">Activer/désactiver les canaux de notification</p>
-          </div>
-        </div>
-        
-        {notificationSettings ? (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-background/50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <Smartphone className="h-5 w-5 text-muted-foreground" />
+            <div className="group rounded-xl p-5 bg-gradient-to-r from-helpconfort-blue/10 via-helpconfort-blue/5 to-transparent border border-helpconfort-blue/20 border-l-4 border-l-helpconfort-blue shadow-sm transition-all duration-300 hover:from-helpconfort-blue/15 hover:via-helpconfort-blue/8 hover:border-helpconfort-blue/30 hover:shadow-lg">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-11 h-11 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center bg-white/50 group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
+                  <Zap className="w-5 h-5 text-helpconfort-blue" />
+                </div>
                 <div>
-                  <p className="font-medium">Notifications SMS</p>
-                  <p className="text-xs text-muted-foreground">Envoi de SMS aux agents support</p>
+                  <h3 className="font-semibold text-foreground">En cas d'incident</h3>
+                  <p className="text-sm text-muted-foreground">Procédure de gestion</p>
                 </div>
               </div>
-              <Switch
-                checked={notificationSettings.sms_enabled}
-                onCheckedChange={(checked) => updateNotificationSetting('sms', checked)}
-                disabled={isNotificationLoading}
-              />
+              <div className="space-y-3">
+                {[
+                  "Consulter Sentry pour identifier l'erreur",
+                  "Analyser le contexte (utilisateur, agence, action)",
+                  "Reproduire le problème en environnement de dev",
+                  "Corriger, déployer et vérifier dans Sentry"
+                ].map((step, index) => (
+                  <div key={index} className="flex gap-3 items-start">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-helpconfort-blue text-white flex items-center justify-center text-xs font-bold">
+                      {index + 1}
+                    </span>
+                    <p className="text-sm text-muted-foreground pt-0.5">{step}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* System Info */}
+          <div className="group rounded-xl p-5 bg-gradient-to-r from-helpconfort-blue/10 via-helpconfort-blue/5 to-transparent border border-helpconfort-blue/20 border-l-4 border-l-helpconfort-blue shadow-sm transition-all duration-300 hover:from-helpconfort-blue/15 hover:via-helpconfort-blue/8 hover:border-helpconfort-blue/30 hover:shadow-lg">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-11 h-11 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center bg-white/50 group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
+                <Database className="w-5 h-5 text-helpconfort-blue" />
+              </div>
+              <h3 className="font-semibold text-foreground">Informations système</h3>
+            </div>
+            <div className="grid gap-6 md:grid-cols-3">
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Environnement</p>
+                <p className="font-semibold text-foreground">{environment}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Projet ID</p>
+                <p className="font-mono text-xs text-foreground truncate">
+                  {import.meta.env.VITE_SUPABASE_PROJECT_ID || "N/A"}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Sentry</p>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <span className="font-medium text-green-600">Configuré</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Metrics Tab - Real-time Dashboard */}
+        <TabsContent value="metrics" className="space-y-6">
+          <SystemMetricsDashboard />
+        </TabsContent>
+
+        {/* Tools Tab */}
+        <TabsContent value="tools" className="space-y-6">
+          {/* SMS Test */}
+          <div className="group rounded-xl p-5 bg-gradient-to-r from-helpconfort-blue/10 via-helpconfort-blue/5 to-transparent border border-helpconfort-blue/20 border-l-4 border-l-helpconfort-blue shadow-sm transition-all duration-300 hover:from-helpconfort-blue/15 hover:via-helpconfort-blue/8 hover:border-helpconfort-blue/30 hover:shadow-lg">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-11 h-11 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center bg-white/50 group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
+                <MessageSquare className="w-5 h-5 text-helpconfort-blue" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground">Test SMS AllMySMS</h3>
+                <p className="text-sm text-muted-foreground">Vérifier la connectivité API SMS</p>
+              </div>
             </div>
             
-            <div className="flex items-center justify-between p-3 bg-background/50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <Mail className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">Notifications Email</p>
-                  <p className="text-xs text-muted-foreground">Envoi d'emails aux agents support</p>
-                </div>
+            <div className="space-y-4">
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => testSmsApi(true)}
+                  disabled={isSmsTestLoading}
+                  className="border-helpconfort-blue/30 hover:bg-helpconfort-blue/10"
+                >
+                  {isSmsTestLoading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Activity className="h-4 w-4 mr-2" />
+                  )}
+                  Test connectivité (simulation)
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => testSmsApi(false)}
+                  disabled={isSmsTestLoading}
+                  className="bg-helpconfort-blue hover:bg-helpconfort-blue/90"
+                >
+                  {isSmsTestLoading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4 mr-2" />
+                  )}
+                  Envoyer SMS réel
+                </Button>
               </div>
-              <Switch
-                checked={notificationSettings.email_enabled}
-                onCheckedChange={(checked) => updateNotificationSetting('email', checked)}
-                disabled={isNotificationLoading}
-              />
+              
+              {smsTestResult && (
+                <div className={`p-3 rounded-lg ${smsTestResult.success ? 'bg-green-500/10 text-green-700' : 'bg-red-500/10 text-red-700'}`}>
+                  <p className="text-sm font-medium">{smsTestResult.message}</p>
+                </div>
+              )}
             </div>
+          </div>
 
-            <p className="text-xs text-muted-foreground">
-              ⚠️ Désactiver ces options empêchera l'envoi de notifications lors de la création de tickets support.
-            </p>
+          {/* Notification Settings */}
+          <div className="group rounded-xl p-5 bg-gradient-to-r from-helpconfort-blue/10 via-helpconfort-blue/5 to-transparent border border-helpconfort-blue/20 border-l-4 border-l-helpconfort-blue shadow-sm transition-all duration-300 hover:from-helpconfort-blue/15 hover:via-helpconfort-blue/8 hover:border-helpconfort-blue/30 hover:shadow-lg">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-11 h-11 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center bg-white/50 group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
+                <Bell className="w-5 h-5 text-helpconfort-blue" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground">Paramètres de notifications</h3>
+                <p className="text-sm text-muted-foreground">Activer/désactiver les canaux de notification</p>
+              </div>
+            </div>
+            
+            {notificationSettings ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-background/50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Smartphone className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">Notifications SMS</p>
+                      <p className="text-xs text-muted-foreground">Envoi de SMS aux agents support</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={notificationSettings.sms_enabled}
+                    onCheckedChange={(checked) => updateNotificationSetting('sms', checked)}
+                    disabled={isNotificationLoading}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between p-3 bg-background/50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Mail className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">Notifications Email</p>
+                      <p className="text-xs text-muted-foreground">Envoi d'emails aux agents support</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={notificationSettings.email_enabled}
+                    onCheckedChange={(checked) => updateNotificationSetting('email', checked)}
+                    disabled={isNotificationLoading}
+                  />
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  ⚠️ Désactiver ces options empêchera l'envoi de notifications lors de la création de tickets support.
+                </p>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm">Chargement des paramètres...</span>
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span className="text-sm">Chargement des paramètres...</span>
-          </div>
-        )}
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
