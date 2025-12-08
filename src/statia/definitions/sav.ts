@@ -28,24 +28,42 @@ function getProjectDate(project: any): Date | null {
 
 /**
  * Détection SAV automatique
+ * Accepte optionnellement la liste des interventions pour détecter via RDV SAV
  */
-export function isSavProjectAutoDetect(project: any): boolean {
+export function isSavProjectAutoDetect(project: any, interventions?: any[]): boolean {
   const d = project.data || {};
+  const projectId = String(project.id);
 
+  // 1. NOUVEAU: Vérifier si le projet a des interventions SAV
+  if (interventions && interventions.length > 0) {
+    const hasSAVIntervention = interventions.some(interv => {
+      const intervProjectId = String(interv.projectId || interv.project_id);
+      if (intervProjectId !== projectId) return false;
+      return isSAVIntervention(interv);
+    });
+    if (hasSAVIntervention) return true;
+  }
+
+  // 2. Flags explicites
   if (d.isSav === true || d.is_sav === true || d.isSAV === true) return true;
   if (project.isSav === true || project.is_sav === true) return true;
+
+  // 3. Dossier lié/enfant
   if (project.parentProjectId || project.parent_project_id || d.parentId || d.parent_id) return true;
   if (project.parentId || project.parent_id) return true;
   if (d.linkedProjectId || d.linkedDossierId || d.dossierId) return true;
 
+  // 4. Champs CONTENANT "sav" (harmonisé)
   const fieldsToCheck = [d.origineDossier, d.origine, d.typeDossier, d.categorie, d.type, d.sinistre, d.nature, project.type, project.state];
   for (const field of fieldsToCheck) {
-    if (field && String(field).toLowerCase().trim() === 'sav') return true;
+    if (field && String(field).toLowerCase().trim().includes('sav')) return true;
   }
 
+  // 5. Pictos === "sav" (égalité stricte pour pictos)
   const pictos = d.pictosInterv || d.pictos || project.pictosInterv || [];
   if (Array.isArray(pictos) && pictos.some((p: any) => String(p).toLowerCase().trim() === 'sav')) return true;
 
+  // 6. Tags === "sav" (égalité stricte pour tags)
   const tags = (d.tags || project.tags || []) as any[];
   if (Array.isArray(tags) && tags.some((t) => String(t).toLowerCase().trim() === 'sav')) return true;
 
@@ -116,7 +134,8 @@ function isSAVIntervention(intervention: any): boolean {
   const type2 = (intervention.data?.type2 || intervention.type2 || '').toLowerCase().trim();
   const type = (intervention.data?.type || intervention.type || '').toLowerCase().trim();
   const pictos = intervention.data?.pictosInterv || [];
-  return type2 === 'sav' || type === 'sav' || (Array.isArray(pictos) && pictos.some((p: any) => String(p).toLowerCase().trim() === 'sav'));
+  // RÈGLE HARMONISÉE: type/type2 CONTIENT "sav" OU picto === "sav"
+  return type2.includes('sav') || type.includes('sav') || (Array.isArray(pictos) && pictos.some((p: any) => String(p).toLowerCase().trim() === 'sav'));
 }
 
 // ============================================================================
