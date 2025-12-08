@@ -15,6 +15,28 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.7.8",
+    title: "Live Support & FAQ Integration",
+    date: "2025-12-08",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // LIVE SUPPORT AMÉLIORATIONS
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'fix', description: 'Context partagé LiveSupportContext pour synchronisation Indicator ↔ ChatDialog' },
+      { type: 'fix', description: 'Bouton "En attente..." fonctionnel - réouvre le chat correctement' },
+      { type: 'fix', description: 'Notifications temps réel : écoute DELETE en plus de INSERT/UPDATE' },
+      { type: 'fix', description: 'Badge "Live" = sessions en attente uniquement (pas toutes les sessions)' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // TICKETS → FAQ
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Edge function reformulate-ticket-faq : reformulation IA question/réponse' },
+      { type: 'feature', description: 'Dialog TicketToFaqDialog : ajout direct ticket résolu → FAQ' },
+      { type: 'feature', description: 'Sélection catégorie et contexte FAQ lors de l\'ajout' },
+      { type: 'feature', description: 'Publication immédiate ou brouillon disponible' },
+    ],
+  },
+  {
     version: "V0.7.7",
     title: "Audit complet Support Live Chat",
     date: "2025-12-07",
