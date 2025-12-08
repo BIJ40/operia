@@ -194,15 +194,20 @@ export default function RHIndex() {
         const group = RH_GROUPS[sectionKey];
         const GroupIcon = group.icon;
         
+        // Only show section titles if user can see both sections (admin view)
+        const showSectionTitle = modulesBySection.salarie.length > 0 && modulesBySection.dirigeant.length > 0;
+        
         return (
           <div key={sectionKey} className="space-y-4">
-            <div className="flex items-center gap-2">
-              <GroupIcon className={`h-5 w-5 ${group.colorClass}`} />
-              <h2 className="text-lg font-semibold text-foreground">{group.title}</h2>
-              {sectionKey === 'dirigeant' && pendingCount !== undefined && pendingCount > 0 && (
-                <Badge variant="destructive" className="text-xs">{pendingCount}</Badge>
-              )}
-            </div>
+            {showSectionTitle && (
+              <div className="flex items-center gap-2">
+                <GroupIcon className={`h-5 w-5 ${group.colorClass}`} />
+                <h2 className="text-lg font-semibold text-foreground">{group.title}</h2>
+                {sectionKey === 'dirigeant' && pendingCount !== undefined && pendingCount > 0 && (
+                  <Badge variant="destructive" className="text-xs">{pendingCount}</Badge>
+                )}
+              </div>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {sectionModules.map(module => (
                 <RHTileCard 
