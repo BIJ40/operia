@@ -169,13 +169,13 @@ serve(async (req) => {
     }
 
     // Fetch source data based on type
-    let sourceData: Array<{ id: string; title: string; content: string; slug: string }> = [];
+    let sourceData: Array<{ id: string; title: string; content: string; slug: string; categorySlug: string }> = [];
 
     if (source === "apogee" || source === "helpconfort") {
-      // Fetch from blocks table
+      // Fetch sections with parent_id
       let blocksQuery = supabase
         .from("blocks")
-        .select("id, title, content, slug")
+        .select("id, title, content, slug, parent_id")
         .eq("type", "section")
         .not("content", "is", null);
 
@@ -198,12 +198,27 @@ serve(async (req) => {
         );
       }
 
-      sourceData = (blocks || []).map((b) => ({
-        id: b.id,
-        title: b.title,
-        content: stripHtml(b.content || ""),
-        slug: b.slug || b.id,
-      }));
+      // Fetch all categories to create a lookup map for parent slugs
+      const { data: categories } = await supabase
+        .from("blocks")
+        .select("id, slug")
+        .eq("type", "category");
+      
+      const categoryMap = new Map<string, string>();
+      for (const cat of categories || []) {
+        categoryMap.set(cat.id, cat.slug);
+      }
+
+      sourceData = (blocks || []).map((b) => {
+        const parentSlug = b.parent_id ? categoryMap.get(b.parent_id) : null;
+        return {
+          id: b.id,
+          title: b.title,
+          content: stripHtml(b.content || ""),
+          slug: b.slug || b.id,
+          categorySlug: parentSlug || b.slug || b.id, // Use parent category slug for URL
+        };
+      });
     } else if (source === "faq") {
       // Fetch from faq_items table (if exists)
       const { data: faqs, error: faqError } = await supabase
@@ -217,6 +232,7 @@ serve(async (req) => {
           title: f.question,
           content: stripHtml(f.answer || ""),
           slug: `faq-${f.id}`,
+          categorySlug: 'faq', // FAQ items link to /support/faq
         }));
       }
     } else if (source === "document") {
@@ -232,6 +248,7 @@ serve(async (req) => {
           title: d.title || "Document",
           content: stripHtml(d.content || ""),
           slug: `doc-${d.id}`,
+          categorySlug: 'documents', // Documents link to base path
         }));
       }
     }
@@ -264,6 +281,7 @@ serve(async (req) => {
       content: string;
       chunk_index: number;
       slug: string;
+      categorySlug: string;
     }> = [];
 
     for (const item of sourceData) {
@@ -277,6 +295,7 @@ serve(async (req) => {
           content: chunk,
           chunk_index: index,
           slug: item.slug,
+          categorySlug: item.categorySlug,
         });
       });
     }
@@ -306,11 +325,11 @@ serve(async (req) => {
     const texts = allChunks.map((c) => `${c.title}\n\n${c.content}`);
     const embeddings = await generateEmbeddings(texts);
 
-    // Insert chunks with embeddings
+    // Insert chunks with embeddings - use categorySlug for block_slug (used for URLs)
     const rowsToInsert = allChunks.map((chunk, idx) => ({
       source_id: chunk.source_id,
       block_type: source,
-      block_slug: chunk.slug,
+      block_slug: chunk.categorySlug, // Use category slug for URL building
       context_type: source, // Required field
       title: chunk.title,
       content: chunk.content,

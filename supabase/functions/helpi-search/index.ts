@@ -18,6 +18,7 @@ interface HelpiSearchRequest {
 interface ChunkResult {
   id: string;
   source_id: string | null;
+  block_slug: string | null;
   block_type: string;
   title: string | null;
   content: string;
@@ -121,7 +122,7 @@ serve(async (req) => {
     // Fetch ALL chunks with embeddings (no limit to ensure complete coverage)
     let dbQuery = supabase
       .from("guide_chunks")
-      .select("id, source_id, block_id, block_type, title, block_title, content, chunk_text, embedding")
+      .select("id, source_id, block_id, block_slug, block_type, title, block_title, content, chunk_text, embedding")
       .not("embedding", "is", null);
 
     if (blockTypes && blockTypes.length > 0) {
@@ -168,6 +169,7 @@ serve(async (req) => {
         scoredResults.push({
           id: chunk.id,
           source_id: chunk.source_id || chunk.block_id || null,
+          block_slug: chunk.block_slug || null,
           block_type: chunk.block_type,
           title: chunk.title || chunk.block_title || null,
           content: chunk.content || chunk.chunk_text || "",
