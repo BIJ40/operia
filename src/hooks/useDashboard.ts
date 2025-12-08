@@ -2,20 +2,34 @@
  * Hooks pour le Dashboard personnalisable
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useQueries } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { WidgetTemplate, UserWidget, UserDashboardSettings } from '@/types/dashboard';
 import { Json } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
+import { ModuleKey, MODULES } from '@/types/modules';
 
-// Fetch all available widget templates
+export interface WidgetEligibility {
+  template: WidgetTemplate;
+  isEligible: boolean;
+  reason?: 'role' | 'module' | 'agency';
+  missingModule?: string;
+}
+
+// Helper to check if a string is a valid ModuleKey
+const isValidModuleKey = (key: string): key is ModuleKey => {
+  return key in MODULES;
+};
+
+// Fetch all widget templates with eligibility info
 export function useWidgetTemplates() {
-  const { user, globalRole } = useAuth();
+  const { user, globalRole, hasModule, agence } = useAuth();
   const roleLevel = globalRole ? getRoleLevel(globalRole) : 0;
+  const hasAgency = !!agence;
 
   return useQuery({
-    queryKey: ['widget-templates'],
+    queryKey: ['widget-templates', roleLevel, hasAgency],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('widget_templates')
@@ -25,11 +39,69 @@ export function useWidgetTemplates() {
 
       if (error) throw error;
       
-      // Filter by role level
+      // Return only templates that meet role requirement
       return (data as WidgetTemplate[]).filter(t => t.min_global_role <= roleLevel);
     },
     enabled: !!user,
   });
+}
+
+// Fetch all templates with detailed eligibility (for widget library)
+export function useWidgetTemplatesWithEligibility() {
+  const { user, globalRole, hasModule, agence } = useAuth();
+  const roleLevel = globalRole ? getRoleLevel(globalRole) : 0;
+  const hasAgency = !!agence;
+
+  return useQuery({
+    queryKey: ['widget-templates-eligibility', roleLevel, hasAgency],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('widget_templates')
+        .select('*')
+        .order('type', { ascending: true })
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      
+      const templates = data as WidgetTemplate[];
+      const eligibilityList: WidgetEligibility[] = templates.map(t => {
+        // Check role level
+        if (t.min_global_role > roleLevel) {
+          return { 
+            template: t, 
+            isEligible: false, 
+            reason: 'role' as const 
+          };
+        }
+
+        // Check required modules
+        const requiredModules = t.required_modules || [];
+        for (const mod of requiredModules) {
+          // Only check valid module keys
+          if (isValidModuleKey(mod) && !hasModule(mod)) {
+            return { 
+              template: t, 
+              isEligible: false, 
+              reason: 'module' as const,
+              missingModule: mod
+            };
+          }
+        }
+
+        return { template: t, isEligible: true };
+      });
+
+      return eligibilityList;
+    },
+    enabled: !!user,
+  });
+}
+
+// Get only eligible templates (for adding widgets)
+export function useEligibleWidgetTemplates() {
+  const { data: eligibilityList } = useWidgetTemplatesWithEligibility();
+  
+  return eligibilityList?.filter(e => e.isEligible).map(e => e.template) ?? [];
 }
 
 // Fetch user's widgets with templates
