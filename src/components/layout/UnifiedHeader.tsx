@@ -212,13 +212,11 @@ export function UnifiedHeader() {
         <div className="h-14 sm:h-16 md:h-20 px-3 sm:px-4 flex items-center gap-2 sm:gap-3">
           {/* Left: Logo aligné avec les icônes */}
           <div className="flex items-center shrink-0">
-            <Link to="/" className="block">
-              <img 
-                src={logoHelpconfortServices} 
-                alt="HelpConfort Services" 
-                className="h-10 sm:h-12 md:h-14 object-contain"
-              />
-            </Link>
+            <img 
+              src={logoHelpconfortServices} 
+              alt="HelpConfort Services" 
+              className="h-10 sm:h-12 md:h-14 object-contain"
+            />
           </div>
 
           {/* Center: Icon Navigation Bar */}
