@@ -26,8 +26,10 @@ interface RHModule {
   badge?: number;
   section: 'salarie' | 'dirigeant';
   requiresOption?: string[];
+  enabled?: boolean; // Set to false to temporarily hide a module
 }
 
+// Set enabled: false to temporarily hide a module
 const RH_MODULES: RHModule[] = [
   // Vue Salarié
   {
@@ -38,6 +40,7 @@ const RH_MODULES: RHModule[] = [
     href: ROUTES.pilotage.monCoffreRh,
     section: 'salarie',
     requiresOption: ['coffre'],
+    enabled: true,
   },
   {
     id: 'faire-demande',
@@ -47,6 +50,7 @@ const RH_MODULES: RHModule[] = [
     href: ROUTES.pilotage.faireUneDemande,
     section: 'salarie',
     requiresOption: ['coffre'],
+    enabled: false, // Temporairement désactivé
   },
   // Vue Dirigeant
   {
@@ -57,6 +61,7 @@ const RH_MODULES: RHModule[] = [
     href: ROUTES.pilotage.equipe,
     section: 'dirigeant',
     requiresOption: ['rh_viewer', 'rh_admin'],
+    enabled: true,
   },
   {
     id: 'demandes-rh',
@@ -66,6 +71,7 @@ const RH_MODULES: RHModule[] = [
     href: ROUTES.pilotage.demandesRh,
     section: 'dirigeant',
     requiresOption: ['rh_viewer', 'rh_admin'],
+    enabled: false, // Temporairement désactivé
   },
   {
     id: 'dashboard-rh',
@@ -75,6 +81,7 @@ const RH_MODULES: RHModule[] = [
     href: ROUTES.pilotage.dashboardRh,
     section: 'dirigeant',
     requiresOption: ['rh_admin'],
+    enabled: true,
   },
   {
     id: 'gestion-conges',
@@ -84,6 +91,7 @@ const RH_MODULES: RHModule[] = [
     href: ROUTES.pilotage.gestionConges,
     section: 'dirigeant',
     requiresOption: ['rh_viewer', 'rh_admin'],
+    enabled: true,
   },
 ];
 
@@ -156,8 +164,10 @@ export default function RHIndex() {
     return options.some(opt => isModuleOptionEnabled(enabledModules, 'rh', opt));
   };
   
-  // Filter modules based on user permissions
-  const visibleModules = RH_MODULES.filter(module => hasRHOption(module.requiresOption));
+  // Filter modules based on user permissions and enabled status
+  const visibleModules = RH_MODULES.filter(module => 
+    module.enabled !== false && hasRHOption(module.requiresOption)
+  );
   
   // Group by section
   const modulesBySection = {
