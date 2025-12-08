@@ -218,7 +218,7 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
         .eq('id', sessionId);
       
       setSessionNotified(true);
-      toast.info('Un agent va vous répondre bientôt');
+      toast.info('Le support a été notifié de votre demande');
     } catch (notifyError) {
       logError('live-support', 'Notify error (non-blocking)', notifyError);
     }
@@ -353,7 +353,7 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
           ) : agentConnected ? (
             <Badge variant="default" className="text-xs bg-green-500">
               <CheckCheck className="w-3 h-3 mr-1" />
-              Agent connecté
+              Support connecté
             </Badge>
           ) : (
             <Badge variant="outline" className="text-xs">
@@ -373,15 +373,15 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
               {waitingForAgent ? (
                 <>
                   <p className="text-sm text-muted-foreground">
-                    Un agent va vous répondre dans quelques instants...
+                    Le support a été notifié de votre demande
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Vous pouvez commencer à écrire votre message
+                    Vous pouvez commencer à décrire votre problème
                   </p>
                 </>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  Décrivez votre problème, un agent est prêt à vous aider
+                  Décrivez votre problème, le support est prêt à vous aider
                 </p>
               )}
             </div>
@@ -577,13 +577,6 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
               )}
             </Button>
           </div>
-          
-          {!isConnected && (
-            <div className="flex items-center gap-1 mt-2 text-xs text-amber-600">
-              <AlertCircle className="w-3 h-3" />
-              Connexion en cours...
-            </div>
-          )}
         </div>
       )}
     </div>
