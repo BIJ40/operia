@@ -155,6 +155,7 @@ export const ROUTES = {
     systemHealth: '/admin/system-health',
     announcements: '/admin/announcements',
     faq: '/admin/faq',
+    featureFlags: '/admin/feature-flags',
     statia: '/admin/statia-by-bij',
     formationGenerator: '/admin/formation-generator',
     widgets: '/admin/widgets',
