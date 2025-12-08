@@ -23,6 +23,8 @@ export interface MegaMenuLink {
   };
   /** Section (pour regroupement dans le menu RH) */
   section?: 'salarie' | 'dirigeant';
+  /** Groupe (pour regroupement dans le menu Admin) */
+  group?: 'users' | 'content' | 'ai' | 'system' | 'support' | 'monitoring';
 }
 
 export interface MegaMenuSection {
@@ -213,25 +215,32 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
     href: ROUTES.admin.index,
     accessKey: 'canAccessAdmin',
     links: [
-      { label: 'Utilisateurs', href: ROUTES.admin.users, icon: 'Users', description: 'Comptes utilisateurs', minRole: 'platform_admin' },
-      { label: 'Agences', href: ROUTES.admin.agencies, icon: 'Building2', description: 'Configuration agences', minRole: 'platform_admin' },
-      { label: 'Annonces', href: ROUTES.admin.announcements, icon: 'MessageCircle', description: 'Communications', minRole: 'platform_admin' },
-      { label: 'FAQ', href: ROUTES.admin.faq, icon: 'HelpCircle', description: 'Questions fréquentes', minRole: 'platform_admin' },
-      { label: 'Helpi', href: ROUTES.admin.helpi, icon: 'Brain', description: 'Moteur IA', minRole: 'platform_admin' },
-      { label: 'StatIA-BY-BIJ', href: ROUTES.admin.statia, icon: 'BarChart', description: 'Moteur métriques', minRole: 'platform_admin' },
-      { label: 'Générateur Formation', href: ROUTES.admin.formationGenerator, icon: 'Sparkles', description: 'Résumés IA', minRole: 'platform_admin' },
-      { label: 'Guides Apogée', href: ROUTES.admin.apogeeGuides, icon: 'BookOpen', description: 'Gestion guides', minRole: 'platform_admin' },
-      { label: 'Documents', href: ROUTES.admin.documents, icon: 'FolderOpen', description: 'Gestion documents', minRole: 'platform_admin' },
-      { label: 'Métadonnées Pages', href: ROUTES.admin.pageMetadata, icon: 'FileCode', description: 'SEO pages', minRole: 'platform_admin' },
-      { label: 'Quotas Stockage', href: ROUTES.admin.storageQuota, icon: 'HardDrive', description: 'Espace disque', minRole: 'platform_admin' },
-      { label: 'Sauvegardes', href: ROUTES.admin.backup, icon: 'Database', description: 'Backup données', minRole: 'platform_admin' },
-      { label: 'Cache Backup', href: ROUTES.admin.cacheBackup, icon: 'Archive', description: 'Cache système', minRole: 'platform_admin' },
-      { label: 'Backup HelpConfort', href: ROUTES.admin.helpconfortBackup, icon: 'Archive', description: 'Backup HC', minRole: 'platform_admin' },
-      { label: 'Support Tickets', href: ROUTES.admin.supportTickets, icon: 'Ticket', description: 'Admin tickets', minRole: 'platform_admin' },
-      { label: 'Stats Support', href: ROUTES.admin.supportStats, icon: 'TrendingUp', description: 'Métriques support', minRole: 'platform_admin' },
-      { label: 'Historique Escalade', href: ROUTES.admin.escalationHistory, icon: 'History', description: 'Escalations', minRole: 'platform_admin' },
-      { label: 'Activité', href: ROUTES.admin.userActivity, icon: 'Activity', description: 'Logs utilisateurs', minRole: 'superadmin' },
-      { label: 'System Health', href: ROUTES.admin.systemHealth, icon: 'HeartPulse', description: 'Monitoring Sentry', minRole: 'superadmin' },
+      // Groupe: Utilisateurs & Agences
+      { label: 'Utilisateurs', href: ROUTES.admin.users, icon: 'Users', description: 'Comptes utilisateurs', minRole: 'platform_admin', group: 'users' },
+      { label: 'Agences', href: ROUTES.admin.agencies, icon: 'Building2', description: 'Configuration agences', minRole: 'platform_admin', group: 'users' },
+      { label: 'Gestion Widgets', href: ROUTES.admin.widgets, icon: 'LayoutGrid', description: 'Permissions widgets', minRole: 'platform_admin', group: 'users' },
+      // Groupe: Contenu
+      { label: 'Annonces', href: ROUTES.admin.announcements, icon: 'MessageCircle', description: 'Communications', minRole: 'platform_admin', group: 'content' },
+      { label: 'FAQ', href: ROUTES.admin.faq, icon: 'HelpCircle', description: 'Questions fréquentes', minRole: 'platform_admin', group: 'content' },
+      { label: 'Guides Apogée', href: ROUTES.admin.apogeeGuides, icon: 'BookOpen', description: 'Gestion guides', minRole: 'platform_admin', group: 'content' },
+      { label: 'Documents', href: ROUTES.admin.documents, icon: 'FolderOpen', description: 'Gestion documents', minRole: 'platform_admin', group: 'content' },
+      // Groupe: IA & Métriques
+      { label: 'Helpi', href: ROUTES.admin.helpi, icon: 'Brain', description: 'Moteur IA', minRole: 'platform_admin', group: 'ai' },
+      { label: 'StatIA-BY-BIJ', href: ROUTES.admin.statia, icon: 'BarChart', description: 'Moteur métriques', minRole: 'platform_admin', group: 'ai' },
+      { label: 'Générateur Formation', href: ROUTES.admin.formationGenerator, icon: 'Sparkles', description: 'Résumés IA', minRole: 'platform_admin', group: 'ai' },
+      // Groupe: Système
+      { label: 'Métadonnées Pages', href: ROUTES.admin.pageMetadata, icon: 'FileCode', description: 'SEO pages', minRole: 'platform_admin', group: 'system' },
+      { label: 'Quotas Stockage', href: ROUTES.admin.storageQuota, icon: 'HardDrive', description: 'Espace disque', minRole: 'platform_admin', group: 'system' },
+      { label: 'Sauvegardes', href: ROUTES.admin.backup, icon: 'Database', description: 'Backup données', minRole: 'platform_admin', group: 'system' },
+      { label: 'Cache Backup', href: ROUTES.admin.cacheBackup, icon: 'Archive', description: 'Cache système', minRole: 'platform_admin', group: 'system' },
+      { label: 'Backup HelpConfort', href: ROUTES.admin.helpconfortBackup, icon: 'Archive', description: 'Backup HC', minRole: 'platform_admin', group: 'system' },
+      // Groupe: Support
+      { label: 'Support Tickets', href: ROUTES.admin.supportTickets, icon: 'Ticket', description: 'Admin tickets', minRole: 'platform_admin', group: 'support' },
+      { label: 'Stats Support', href: ROUTES.admin.supportStats, icon: 'TrendingUp', description: 'Métriques support', minRole: 'platform_admin', group: 'support' },
+      { label: 'Historique Escalade', href: ROUTES.admin.escalationHistory, icon: 'History', description: 'Escalations', minRole: 'platform_admin', group: 'support' },
+      // Groupe: Monitoring
+      { label: 'Activité', href: ROUTES.admin.userActivity, icon: 'Activity', description: 'Logs utilisateurs', minRole: 'superadmin', group: 'monitoring' },
+      { label: 'System Health', href: ROUTES.admin.systemHealth, icon: 'HeartPulse', description: 'Monitoring Sentry', minRole: 'superadmin', group: 'monitoring' },
     ],
   },
 ];

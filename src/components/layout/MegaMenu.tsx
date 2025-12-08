@@ -10,7 +10,7 @@
 
 import { Link, useLocation } from 'react-router-dom';
 import {
-  Circle, LayoutDashboard, Users, BarChart3, Handshake, PieChart, 
+  Circle, LayoutDashboard, LayoutGrid, Users, BarChart3, Handshake, PieChart, 
   Wrench, ListTodo, Tv, FolderOpen, FileText, Kanban, Sparkles,
   GitCompare, BookOpen, Network, Building2, Coins, HelpCircle,
   MessageCircle, Database, Activity, LifeBuoy, Headset, Brain, Settings,
@@ -30,7 +30,7 @@ interface MegaMenuProps {
 
 // Map d'icônes
 const ICON_MAP: Record<string, LucideIcon> = {
-  LayoutDashboard, Users, BarChart3, Handshake, PieChart, Wrench,
+  LayoutDashboard, LayoutGrid, Users, BarChart3, Handshake, PieChart, Wrench,
   ListTodo, Tv, FolderOpen, FileText, Kanban, Sparkles, GitCompare,
   BookOpen, Network, Building2, Coins, HelpCircle, MessageCircle,
   Database, Activity, LifeBuoy, Headset, Brain, Settings,
@@ -111,9 +111,35 @@ export function MegaMenu({ section, onClose }: MegaMenuProps) {
   // Séparer les liens par section pour le menu RH
   const salarieLinks = filteredLinks.filter(l => l.section === 'salarie');
   const dirigeantLinks = filteredLinks.filter(l => l.section === 'dirigeant');
-  const otherLinks = filteredLinks.filter(l => !l.section);
+  
+  // Séparer les liens par groupe pour le menu Admin
+  const ADMIN_GROUPS = {
+    users: { label: 'Utilisateurs & Agences', order: 1 },
+    content: { label: 'Contenu', order: 2 },
+    ai: { label: 'IA & Métriques', order: 3 },
+    system: { label: 'Système', order: 4 },
+    support: { label: 'Support', order: 5 },
+    monitoring: { label: 'Monitoring', order: 6 },
+  };
+  
+  const groupedAdminLinks = filteredLinks.filter(l => l.group);
+  const otherLinks = filteredLinks.filter(l => !l.section && !l.group);
 
-  const hasMultipleSections = salarieLinks.length > 0 && dirigeantLinks.length > 0;
+  const hasRHSections = salarieLinks.length > 0 && dirigeantLinks.length > 0;
+  const hasAdminGroups = groupedAdminLinks.length > 0;
+  
+  // Organiser les liens admin par groupe
+  const adminLinksByGroup = hasAdminGroups ? 
+    Object.entries(ADMIN_GROUPS)
+      .map(([key, config]) => ({
+        key,
+        label: config.label,
+        order: config.order,
+        links: groupedAdminLinks.filter(l => l.group === key)
+      }))
+      .filter(g => g.links.length > 0)
+      .sort((a, b) => a.order - b.order)
+    : [];
 
   return (
     <div 
@@ -123,7 +149,10 @@ export function MegaMenu({ section, onClose }: MegaMenuProps) {
       {/* Invisible bridge to prevent gap between trigger and menu */}
       <div className="h-2 w-full" />
       <div 
-        className="w-80 bg-popover border rounded-lg shadow-lg p-4 animate-in fade-in slide-in-from-top-2 duration-200"
+        className={cn(
+          "bg-popover border rounded-lg shadow-lg p-4 animate-in fade-in slide-in-from-top-2 duration-200",
+          hasAdminGroups ? "w-[340px]" : "w-80"
+        )}
       >
         {/* En-tête du méga-menu - cliquable si href défini */}
         {section.href ? (
@@ -156,38 +185,53 @@ export function MegaMenu({ section, onClose }: MegaMenuProps) {
           </div>
         )}
 
-        {/* Liens regroupés par section (pour RH) */}
-        {hasMultipleSections ? (
-          <div className="space-y-4">
-            {/* Section Salarié */}
-            {salarieLinks.length > 0 && (
-              <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                  Mon espace
-                </p>
-                <div className="space-y-1">
-                  {salarieLinks.map(renderLink)}
+        {/* Conteneur scrollable avec max-height */}
+        <div className="max-h-[60vh] overflow-y-auto -mx-2 px-2">
+          {/* Liens regroupés par section (pour RH) */}
+          {hasRHSections ? (
+            <div className="space-y-4">
+              {salarieLinks.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                    Mon espace
+                  </p>
+                  <div className="space-y-1">
+                    {salarieLinks.map(renderLink)}
+                  </div>
                 </div>
-              </div>
-            )}
-            {/* Section Dirigeant */}
-            {dirigeantLinks.length > 0 && (
-              <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                  Gestion RH
-                </p>
-                <div className="space-y-1">
-                  {dirigeantLinks.map(renderLink)}
+              )}
+              {dirigeantLinks.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                    Gestion RH
+                  </p>
+                  <div className="space-y-1">
+                    {dirigeantLinks.map(renderLink)}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          /* Liste simple (autres menus) */
-          <div className="space-y-1">
-            {[...salarieLinks, ...dirigeantLinks, ...otherLinks].map(renderLink)}
-          </div>
-        )}
+              )}
+            </div>
+          ) : hasAdminGroups ? (
+            /* Liens regroupés par groupe (pour Admin) */
+            <div className="space-y-3">
+              {adminLinksByGroup.map(({ key, label, links }) => (
+                <div key={key}>
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 px-2">
+                    {label}
+                  </p>
+                  <div className="space-y-0.5">
+                    {links.map(renderLink)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            /* Liste simple (autres menus) */
+            <div className="space-y-1">
+              {[...salarieLinks, ...dirigeantLinks, ...otherLinks].map(renderLink)}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
