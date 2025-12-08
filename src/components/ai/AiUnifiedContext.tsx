@@ -1,21 +1,11 @@
 /**
- * AI Unified Search 2026 - Context Provider
- * Single source of truth for all AI interactions
+ * AI Unified Search 2026 - Context Provider (Documentation only)
  */
 
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { 
-  AiUnifiedState, 
-  AiMessage, 
-  AiMode, 
-  StatResultData, 
-  DocResultData,
-  shouldGenerateChart,
-  determineChartType,
-  ChartData 
-} from './types';
+import { AiUnifiedState, AiMessage, AiMode, DocResultData } from './types';
 
 interface AiUnifiedContextValue extends AiUnifiedState {
   expand: () => void;
@@ -71,8 +61,6 @@ export function AiUnifiedProvider({ children }: AiUnifiedProviderProps) {
   }, []);
 
   const closeResult = useCallback(() => {
-    // In chat mode, keep messages but collapse
-    // In search mode, clear the last result
     setState(prev => {
       if (prev.mode === 'chat') {
         return { ...prev, isExpanded: false };
@@ -92,7 +80,6 @@ export function AiUnifiedProvider({ children }: AiUnifiedProviderProps) {
       type: 'text',
     };
 
-    // Get current messages before adding the new one
     const currentMessages = state.messages;
 
     setState(prev => ({
@@ -103,7 +90,6 @@ export function AiUnifiedProvider({ children }: AiUnifiedProviderProps) {
     }));
 
     try {
-      // Build conversation history for context
       const conversationHistory = currentMessages.map(m => ({
         role: m.role,
         content: m.content,
@@ -134,8 +120,7 @@ export function AiUnifiedProvider({ children }: AiUnifiedProviderProps) {
         return;
       }
 
-      // Transform response to assistant message
-      const assistantMessage = transformToMessage(query, data);
+      const assistantMessage = transformToMessage(data);
       
       setState(prev => ({
         ...prev,
@@ -153,7 +138,7 @@ export function AiUnifiedProvider({ children }: AiUnifiedProviderProps) {
         error: 'Erreur inattendue',
       }));
     }
-  }, []);
+  }, [state.messages]);
 
   const value: AiUnifiedContextValue = {
     ...state,
@@ -173,8 +158,8 @@ export function AiUnifiedProvider({ children }: AiUnifiedProviderProps) {
   );
 }
 
-// Transform edge function response to AiMessage
-function transformToMessage(query: string, data: any): AiMessage {
+// Transform edge function response to AiMessage (Documentation only)
+function transformToMessage(data: any): AiMessage {
   if (!data) {
     return {
       id: crypto.randomUUID(),
@@ -196,70 +181,8 @@ function transformToMessage(query: string, data: any): AiMessage {
     };
   }
 
-  // Handle ambiguous responses
-  if (data.type === 'ambiguous') {
-    return {
-      id: crypto.randomUUID(),
-      role: 'assistant',
-      content: data.result?.message || 'Pouvez-vous préciser votre question ?',
-      timestamp: new Date(),
-      type: 'text',
-    };
-  }
-
-  // Handle stat responses
-  if (data.type === 'stat') {
-    const result = data.result || {};
-    const interpretation = data.interpretation || {};
-    
-    const statData: StatResultData = {
-      metricId: result.metricId || interpretation.metricId || '',
-      metricLabel: result.label || interpretation.metricLabel || 'Statistique',
-      value: result.value ?? 0,
-      unit: result.unit,
-      period: {
-        from: result.period?.from || interpretation.period?.from || '',
-        to: result.period?.to || interpretation.period?.to || '',
-        label: result.period?.label || interpretation.period?.label || '',
-        isDefault: result.period?.isDefault ?? interpretation.period?.isDefault ?? false,
-      },
-      filters: result.filters || interpretation.filters || {},
-      ranking: result.ranking,
-      topItem: result.topItem,
-      evolution: result.evolution,
-      agencyName: data.agencyName,
-    };
-
-    // Generate conversational response
-    const conversationalText = generateConversationalResponse(statData);
-    
-    // Determine if chart should be auto-generated
-    const needsChart = shouldGenerateChart(query, statData);
-    let chartData: ChartData | null = null;
-    
-    if (needsChart) {
-      chartData = {
-        type: determineChartType(statData),
-        title: statData.metricLabel,
-        data: statData.ranking?.map(r => ({ name: r.name, value: r.value })) || 
-              statData.evolution?.map(e => ({ name: e.label || e.date, value: e.value })) || [],
-        unit: statData.unit,
-      };
-    }
-
-    return {
-      id: crypto.randomUUID(),
-      role: 'assistant',
-      content: conversationalText,
-      timestamp: new Date(),
-      type: needsChart ? 'chart' : 'stat',
-      data: needsChart ? { ...statData, chart: chartData } : statData,
-    };
-  }
-
   // Handle doc responses
   if (data.type === 'doc') {
-    // unified-search returns: { answer, sources, docResults, isConversational }
     const docResults = data.result?.docResults || data.result?.results || data.result?.sources || [];
     const answer = data.result?.answer || '';
     const docData: DocResultData = {
@@ -267,7 +190,6 @@ function transformToMessage(query: string, data: any): AiMessage {
       answer,
     };
 
-    // Use the AI-generated answer if available, fallback to summary
     const content = answer 
       ? answer 
       : docData.results.length > 0
@@ -299,50 +221,8 @@ function transformToMessage(query: string, data: any): AiMessage {
   return {
     id: crypto.randomUUID(),
     role: 'assistant',
-    content: 'Je n\'ai pas compris votre demande. Essayez de reformuler.',
+    content: data.result?.answer || 'Je n\'ai pas compris votre demande. Essayez de reformuler.',
     timestamp: new Date(),
     type: 'text',
   };
-}
-
-// Generate natural language response for stats
-function generateConversationalResponse(data: StatResultData): string {
-  const { metricLabel, value, unit, period, topItem, ranking, agencyName } = data;
-  
-  const formattedValue = formatStatValue(value, unit);
-  const periodText = period.label || 'la période sélectionnée';
-  const agencyText = agencyName ? ` pour ${agencyName}` : '';
-  
-  // Top item response
-  if (topItem) {
-    return `Le meilleur résultat${agencyText} sur ${periodText} est **${topItem.name}** avec ${formatStatValue(topItem.value, unit)}.`;
-  }
-  
-  // Ranking response
-  if (ranking && ranking.length > 0) {
-    const top3 = ranking.slice(0, 3);
-    const rankingText = top3.map((r, i) => `${i + 1}. ${r.name} (${formatStatValue(r.value, unit)})`).join(', ');
-    return `Voici le classement ${metricLabel.toLowerCase()}${agencyText} sur ${periodText} :\n${rankingText}${ranking.length > 3 ? ` et ${ranking.length - 3} autres...` : ''}`;
-  }
-  
-  // Simple value response
-  return `Votre ${metricLabel.toLowerCase()}${agencyText} sur ${periodText} est de **${formattedValue}**.`;
-}
-
-function formatStatValue(value: number | string, unit?: string): string {
-  if (typeof value === 'string') return value;
-  
-  if (unit === '€' || unit === 'EUR') {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-      maximumFractionDigits: 0,
-    }).format(value);
-  }
-  
-  if (unit === '%') {
-    return `${value.toFixed(1)}%`;
-  }
-  
-  return new Intl.NumberFormat('fr-FR').format(value);
 }
