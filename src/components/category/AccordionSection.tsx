@@ -95,7 +95,9 @@ export function AccordionSection({
                   </TooltipTrigger>
                   <TooltipContent 
                     side="right" 
-                    className="max-w-[400px] bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200 z-[100] p-3"
+                    sideOffset={12}
+                    align="start"
+                    className="max-w-[400px] bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200 z-[9999] p-3 shadow-lg"
                   >
                     <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-line">{section.summary}</p>
                   </TooltipContent>
