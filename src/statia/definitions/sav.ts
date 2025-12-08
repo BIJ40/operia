@@ -147,11 +147,11 @@ export const tauxSavGlobal: StatDefinition = {
   label: 'Taux SAV Global',
   description: 'Taux de SAV = nb dossiers SAV confirmés / nb dossiers total',
   category: 'sav',
-  source: ['projects'],
+  source: ['projects', 'interventions'], // AJOUT: interventions pour détection via RDV SAV
   aggregation: 'ratio',
   unit: '%',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { projects } = data;
+    const { projects, interventions } = data;
     const savOverrides = params.savOverrides;
     
     let nbDossiersTotal = 0;
@@ -163,7 +163,8 @@ export const tauxSavGlobal: StatDefinition = {
       if (params.dateRange && (date < params.dateRange.start || date > params.dateRange.end)) continue;
       
       nbDossiersTotal++;
-      const isAutoSav = isSavProjectAutoDetect(project);
+      // CORRECTION: passer interventions pour détection via RDV SAV
+      const isAutoSav = isSavProjectAutoDetect(project, interventions);
       if (isProjectConfirmedSAV(Number(project.id), isAutoSav, savOverrides)) {
         nbDossiersSAV++;
       }
@@ -184,12 +185,12 @@ export const tauxSavParUnivers: StatDefinition = {
   label: 'Taux SAV par Univers',
   description: 'Proportion de dossiers SAV par univers',
   category: 'sav',
-  source: ['projects'],
+  source: ['projects', 'interventions'], // AJOUT: interventions pour détection via RDV SAV
   unit: '%',
   dimensions: ['univers'],
   aggregation: 'ratio',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { projects } = data;
+    const { projects, interventions } = data;
     const savOverrides = params.savOverrides;
     
     const totalByUnivers: Record<string, number> = {};
@@ -202,7 +203,8 @@ export const tauxSavParUnivers: StatDefinition = {
 
       const universes = extractUniversesFromProject(project);
       const finalUniverses = universes.length > 0 ? universes : ['non-classe'];
-      const isAutoSav = isSavProjectAutoDetect(project);
+      // CORRECTION: passer interventions pour détection via RDV SAV
+      const isAutoSav = isSavProjectAutoDetect(project, interventions);
       const isSav = isProjectConfirmedSAV(Number(project.id), isAutoSav, savOverrides);
 
       for (const u of finalUniverses) {
@@ -231,12 +233,12 @@ export const tauxSavParApporteur: StatDefinition = {
   label: 'Taux de SAV par Apporteur',
   description: 'Proportion de dossiers SAV par apporteur',
   category: 'sav',
-  source: ['projects', 'clients'],
+  source: ['projects', 'clients', 'interventions'], // AJOUT: interventions pour détection via RDV SAV
   unit: '%',
   dimensions: ['apporteur'],
   aggregation: 'ratio',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { projects, clients } = data;
+    const { projects, clients, interventions } = data;
     const savOverrides = params.savOverrides;
     const apporteursById = mapApporteurs(clients);
 
@@ -250,7 +252,8 @@ export const tauxSavParApporteur: StatDefinition = {
 
       const apporteurIdRaw = project.data?.commanditaireId || project.commanditaireId;
       const keyNom = apporteurIdRaw ? (apporteursById.get(String(apporteurIdRaw)) || `Apporteur ${apporteurIdRaw}`) : 'Clients Directs';
-      const isAutoSav = isSavProjectAutoDetect(project);
+      // CORRECTION: passer interventions pour détection via RDV SAV
+      const isAutoSav = isSavProjectAutoDetect(project, interventions);
       const isSav = isProjectConfirmedSAV(Number(project.id), isAutoSav, savOverrides);
 
       totalByApporteur[keyNom] = (totalByApporteur[keyNom] || 0) + 1;
@@ -277,12 +280,12 @@ export const tauxSavParTypeApporteur: StatDefinition = {
   label: "Taux de SAV par type d'apporteur",
   description: "Proportion de dossiers SAV par type d'apporteur",
   category: 'sav',
-  source: ['projects', 'clients'],
+  source: ['projects', 'clients', 'interventions'], // AJOUT: interventions pour détection via RDV SAV
   unit: '%',
   dimensions: ['type_apporteur'],
   aggregation: 'ratio',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { projects, clients } = data;
+    const { projects, clients, interventions } = data;
     const savOverrides = params.savOverrides;
     const apporteursInfoById = mapApporteurInfos(clients);
 
@@ -296,7 +299,8 @@ export const tauxSavParTypeApporteur: StatDefinition = {
 
       const cmdIdRaw = project.data?.commanditaireId || project.commanditaireId;
       const typeApporteur = cmdIdRaw ? (apporteursInfoById.get(String(cmdIdRaw))?.type || 'Clients Directs') : 'Clients Directs';
-      const isAutoSav = isSavProjectAutoDetect(project);
+      // CORRECTION: passer interventions pour détection via RDV SAV
+      const isAutoSav = isSavProjectAutoDetect(project, interventions);
       const isSav = isProjectConfirmedSAV(Number(project.id), isAutoSav, savOverrides);
 
       totalByType[typeApporteur] = (totalByType[typeApporteur] || 0) + 1;
@@ -323,11 +327,11 @@ export const nbSavGlobal: StatDefinition = {
   label: 'Nombre de SAV',
   description: 'Nombre de dossiers SAV confirmés sur la période',
   category: 'sav',
-  source: ['projects'],
+  source: ['projects', 'interventions'], // AJOUT: interventions pour détection via RDV SAV
   unit: '',
   aggregation: 'count',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { projects } = data;
+    const { projects, interventions } = data;
     const savOverrides = params.savOverrides;
     
     let nbSav = 0;
@@ -336,7 +340,8 @@ export const nbSavGlobal: StatDefinition = {
       if (!date) continue;
       if (params.dateRange && (date < params.dateRange.start || date > params.dateRange.end)) continue;
       
-      const isAutoSav = isSavProjectAutoDetect(project);
+      // CORRECTION: passer interventions pour détection via RDV SAV
+      const isAutoSav = isSavProjectAutoDetect(project, interventions);
       if (isProjectConfirmedSAV(Number(project.id), isAutoSav, savOverrides)) nbSav++;
     }
     
@@ -375,16 +380,17 @@ export const caImpacteSav: StatDefinition = {
   label: 'CA impacté par SAV',
   description: "CA des dossiers SAV confirmés",
   category: 'sav',
-  source: ['factures', 'projects'],
+  source: ['factures', 'projects', 'interventions'], // AJOUT: interventions pour détection via RDV SAV
   aggregation: 'sum',
   unit: '€',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { factures, projects } = data;
+    const { factures, projects, interventions } = data;
     const savOverrides = params.savOverrides;
     
     const projetsSAV = new Set<string>();
     for (const project of projects) {
-      const isAutoSav = isSavProjectAutoDetect(project);
+      // CORRECTION: passer interventions pour détection via RDV SAV
+      const isAutoSav = isSavProjectAutoDetect(project, interventions);
       if (isProjectConfirmedSAV(Number(project.id), isAutoSav, savOverrides)) {
         projetsSAV.add(String(project.id));
       }
@@ -414,11 +420,11 @@ export const coutSavEstime: StatDefinition = {
   label: 'Coût SAV total',
   description: 'Coût SAV = somme des coûts manuels + estimation 20% pour les autres',
   category: 'sav',
-  source: ['factures', 'projects'],
+  source: ['factures', 'projects', 'interventions'], // AJOUT: interventions pour détection via RDV SAV
   aggregation: 'sum',
   unit: '€',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { factures, projects } = data;
+    const { factures, projects, interventions } = data;
     const savOverrides = params.savOverrides;
     
     const facturesByProjectId = new Map<string, number>();
@@ -439,7 +445,8 @@ export const coutSavEstime: StatDefinition = {
       if (params.dateRange && (date < params.dateRange.start || date > params.dateRange.end)) continue;
       
       const projectId = Number(project.id);
-      const isAutoSav = isSavProjectAutoDetect(project);
+      // CORRECTION: passer interventions pour détection via RDV SAV
+      const isAutoSav = isSavProjectAutoDetect(project, interventions);
       if (!isProjectConfirmedSAV(projectId, isAutoSav, savOverrides)) continue;
       
       nbDossiersSAV++;
@@ -489,14 +496,8 @@ export const savParTechnicien: StatDefinition = {
     // Collecter les techniciens SAV auto par projet
     const techniciensSavAutoByProject = new Map<number, Set<number>>();
     for (const intervention of interventions) {
-      const type2 = (intervention.data?.type2 || intervention.type2 || '').toLowerCase().trim();
-      const type = (intervention.data?.type || intervention.type || '').toLowerCase().trim();
-      const pictos = intervention.data?.pictosInterv || [];
-      
-      const isSAVInterv = type2 === 'sav' || type === 'sav' || 
-        (Array.isArray(pictos) && pictos.some((p: any) => String(p).toLowerCase().trim() === 'sav'));
-      
-      if (isSAVInterv) {
+      // RÈGLE HARMONISÉE: .includes('sav') au lieu de === 'sav'
+      if (isSAVIntervention(intervention)) {
         const pid = Number(intervention.projectId || intervention.project_id);
         if (!techniciensSavAutoByProject.has(pid)) {
           techniciensSavAutoByProject.set(pid, new Set());
@@ -528,7 +529,8 @@ export const savParTechnicien: StatDefinition = {
       if (params.dateRange && (date < params.dateRange.start || date > params.dateRange.end)) continue;
       
       const projectId = Number(project.id);
-      const isAutoSav = isSavProjectAutoDetect(project);
+      // CORRECTION: passer interventions pour détection via RDV SAV
+      const isAutoSav = isSavProjectAutoDetect(project, interventions);
       if (!isProjectConfirmedSAV(projectId, isAutoSav, savOverrides)) continue;
       
       // Déterminer les techniciens: override prioritaire, sinon auto-détection
@@ -575,11 +577,11 @@ export const tauxSavYTD: StatDefinition = {
   label: 'Taux SAV (Year-to-Date)',
   description: 'Taux de SAV depuis le début de l\'année en cours',
   category: 'sav',
-  source: ['projects'],
+  source: ['projects', 'interventions'], // AJOUT: interventions pour détection via RDV SAV
   aggregation: 'ratio',
   unit: '%',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { projects } = data;
+    const { projects, interventions } = data;
     const savOverrides = params.savOverrides;
     
     // Date range YTD : 1er janvier de l'année en cours → aujourd'hui
@@ -596,7 +598,8 @@ export const tauxSavYTD: StatDefinition = {
       if (date < yearStart || date > yearEnd) continue;
       
       nbDossiersTotal++;
-      const isAutoSav = isSavProjectAutoDetect(project);
+      // CORRECTION: passer interventions pour détection via RDV SAV
+      const isAutoSav = isSavProjectAutoDetect(project, interventions);
       if (isProjectConfirmedSAV(Number(project.id), isAutoSav, savOverrides)) {
         nbDossiersSAV++;
       }
