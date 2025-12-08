@@ -201,14 +201,14 @@ export default function Favorites() {
 
   const getColorClasses = (colorPreset: string) => {
     const colorMap: Record<string, string> = {
-      white: 'bg-white',
-      blue: 'bg-helpconfort-blue-light',
-      orange: 'bg-helpconfort-orange',
-      green: 'bg-helpconfort-green',
-      yellow: 'bg-helpconfort-yellow',
-      red: 'bg-helpconfort-red',
+      white: 'bg-gradient-to-r from-muted to-muted/80',
+      blue: 'bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark',
+      orange: 'bg-gradient-to-r from-helpconfort-orange to-helpconfort-orange-light',
+      green: 'bg-gradient-to-r from-emerald-500 to-emerald-600',
+      yellow: 'bg-gradient-to-r from-amber-400 to-amber-500',
+      red: 'bg-gradient-to-r from-red-500 to-red-600',
     };
-    return colorMap[colorPreset] || 'bg-white';
+    return colorMap[colorPreset] || 'bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark';
   };
 
   return (
