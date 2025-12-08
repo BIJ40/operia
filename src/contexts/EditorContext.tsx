@@ -41,8 +41,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   // V2: Remplace isAdmin par vérification de rôle + option module
   const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('help_academy', 'edition');
   
-  // Derive isEditMode from URL parameter
-  const isEditMode = new URLSearchParams(location.search).get('edit') === 'true' && canEdit;
+  // Admins avec canEdit ont automatiquement le mode édition actif
+  const isEditMode = canEdit;
 
   // Cache avec TTL de 5 minutes
   const CACHE_KEY = 'apogee_blocks_cache';
