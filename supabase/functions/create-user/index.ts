@@ -272,15 +272,21 @@ serve(async (req) => {
           </html>
         `
 
-        await resend.emails.send({
+        console.log('[create-user] Envoi email à:', email)
+        const emailResult = await resend.emails.send({
           from: 'HelpConfort Services <noreply@helpconfort.services>',
           to: [email],
           subject: '🎉 Bienvenue sur HelpConfort Services',
           html: emailHtml,
         })
-        console.log('[create-user] Email envoyé')
+        
+        if (emailResult.error) {
+          console.error('[create-user] Resend error:', JSON.stringify(emailResult.error))
+        } else {
+          console.log('[create-user] Email envoyé avec succès, id:', emailResult.data?.id)
+        }
       } catch (emailError) {
-        console.error('[create-user] Erreur email:', emailError)
+        console.error('[create-user] Exception email:', emailError instanceof Error ? emailError.message : String(emailError))
       }
     }
 
