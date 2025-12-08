@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   Plus, 
   Check, 
@@ -27,8 +26,6 @@ import {
   FolderOpen,
   Clock,
   LayoutGrid,
-  Lock,
-  ShieldAlert,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -188,52 +185,50 @@ export function WidgetLibrary() {
       </div>
 
       {/* Widget Grid */}
-      <TooltipProvider>
-        {selectedType === 'all' ? (
-          <div className="space-y-8">
-            {(Object.keys(groupedEligibility) as WidgetType[]).map(type => {
-              const widgets = groupedEligibility[type];
-              if (widgets.length === 0) return null;
-              
-              return (
-                <section key={type}>
-                  <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <Badge variant="outline" className={TYPE_COLORS[type]}>
-                      {TYPE_LABELS[type]}
-                    </Badge>
-                    <span className="text-muted-foreground text-sm font-normal">
-                      ({widgets.length})
-                    </span>
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {widgets.map(eligibility => (
-                      <WidgetCard
-                        key={eligibility.template.id}
-                        eligibility={eligibility}
-                        isActive={activeWidgetIds.has(eligibility.template.id)}
-                        onToggle={() => handleToggleWidget(eligibility)}
-                        isLoading={addWidget.isPending || removeWidget.isPending}
-                      />
-                    ))}
-                  </div>
-                </section>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredEligibility.map(eligibility => (
-              <WidgetCard
-                key={eligibility.template.id}
-                eligibility={eligibility}
-                isActive={activeWidgetIds.has(eligibility.template.id)}
-                onToggle={() => handleToggleWidget(eligibility)}
-                isLoading={addWidget.isPending || removeWidget.isPending}
-              />
-            ))}
-          </div>
-        )}
-      </TooltipProvider>
+      {selectedType === 'all' ? (
+        <div className="space-y-8">
+          {(Object.keys(groupedEligibility) as WidgetType[]).map(type => {
+            const widgets = groupedEligibility[type];
+            if (widgets.length === 0) return null;
+            
+            return (
+              <section key={type}>
+                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Badge variant="outline" className={TYPE_COLORS[type]}>
+                    {TYPE_LABELS[type]}
+                  </Badge>
+                  <span className="text-muted-foreground text-sm font-normal">
+                    ({widgets.length})
+                  </span>
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {widgets.map(eligibility => (
+                    <WidgetCard
+                      key={eligibility.template.id}
+                      eligibility={eligibility}
+                      isActive={activeWidgetIds.has(eligibility.template.id)}
+                      onToggle={() => handleToggleWidget(eligibility)}
+                      isLoading={addWidget.isPending || removeWidget.isPending}
+                    />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredEligibility.map(eligibility => (
+            <WidgetCard
+              key={eligibility.template.id}
+              eligibility={eligibility}
+              isActive={activeWidgetIds.has(eligibility.template.id)}
+              onToggle={() => handleToggleWidget(eligibility)}
+              isLoading={addWidget.isPending || removeWidget.isPending}
+            />
+          ))}
+        </div>
+      )}
 
       {filteredEligibility.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
@@ -252,60 +247,28 @@ interface WidgetCardProps {
 }
 
 function WidgetCard({ eligibility, isActive, onToggle, isLoading }: WidgetCardProps) {
-  const { template, isEligible, reason, missingModule } = eligibility;
+  const { template } = eligibility;
   const Icon = ICONS[template.icon] || LayoutGrid;
-
-  const getLockReason = () => {
-    if (reason === 'module') {
-      return `Module requis : ${MODULE_LABELS[missingModule || ''] || missingModule}`;
-    }
-    if (reason === 'role') {
-      return `Niveau requis : ${ROLE_LABELS[template.min_global_role] || `N${template.min_global_role}`}`;
-    }
-    return 'Non disponible';
-  };
 
   return (
     <Card className={cn(
-      'transition-all duration-200',
-      isEligible && 'hover:shadow-md',
-      isActive && 'ring-2 ring-primary/50 bg-primary/5',
-      !isEligible && 'opacity-60 bg-muted/30'
+      'transition-all duration-200 hover:shadow-md',
+      isActive && 'ring-2 ring-primary/50 bg-primary/5'
     )}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-3">
             <div className={cn(
-              'w-10 h-10 rounded-lg flex items-center justify-center relative',
-              isEligible ? TYPE_COLORS[template.type] : 'bg-muted text-muted-foreground'
+              'w-10 h-10 rounded-lg flex items-center justify-center',
+              TYPE_COLORS[template.type]
             )}>
               <Icon className="h-5 w-5" />
-              {!isEligible && (
-                <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 flex items-center justify-center">
-                  <Lock className="h-2.5 w-2.5 text-white" />
-                </div>
-              )}
             </div>
             <div>
               <CardTitle className="text-base">{template.name}</CardTitle>
-              <div className="flex items-center gap-1.5 mt-1">
-                <Badge variant="outline" className="text-xs">
-                  {TYPE_LABELS[template.type]}
-                </Badge>
-                {!isEligible && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                        <Lock className="h-2.5 w-2.5 mr-1" />
-                        Verrouillé
-                      </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{getLockReason()}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-              </div>
+              <Badge variant="outline" className="text-xs mt-1">
+                {TYPE_LABELS[template.type]}
+              </Badge>
             </div>
           </div>
         </div>
@@ -319,58 +282,32 @@ function WidgetCard({ eligibility, isActive, onToggle, isLoading }: WidgetCardPr
         {template.required_modules && template.required_modules.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-1">
             {template.required_modules.map(mod => (
-              <Badge 
-                key={mod} 
-                variant="outline" 
-                className={cn(
-                  "text-xs",
-                  !isEligible && missingModule === mod && "border-amber-400 text-amber-600"
-                )}
-              >
+              <Badge key={mod} variant="outline" className="text-xs">
                 {MODULE_LABELS[mod] || mod}
               </Badge>
             ))}
           </div>
         )}
         
-        {isEligible ? (
-          <Button
-            variant={isActive ? 'outline' : 'default'}
-            size="sm"
-            className="w-full"
-            onClick={onToggle}
-            disabled={isLoading}
-          >
-            {isActive ? (
-              <>
-                <Check className="h-4 w-4 mr-2" />
-                Actif
-              </>
-            ) : (
-              <>
-                <Plus className="h-4 w-4 mr-2" />
-                Ajouter
-              </>
-            )}
-          </Button>
-        ) : (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="secondary"
-                size="sm"
-                className="w-full cursor-not-allowed"
-                disabled
-              >
-                <ShieldAlert className="h-4 w-4 mr-2" />
-                Non disponible
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{getLockReason()}</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
+        <Button
+          variant={isActive ? 'outline' : 'default'}
+          size="sm"
+          className="w-full"
+          onClick={onToggle}
+          disabled={isLoading}
+        >
+          {isActive ? (
+            <>
+              <Check className="h-4 w-4 mr-2" />
+              Actif
+            </>
+          ) : (
+            <>
+              <Plus className="h-4 w-4 mr-2" />
+              Ajouter
+            </>
+          )}
+        </Button>
       </CardContent>
     </Card>
   );
