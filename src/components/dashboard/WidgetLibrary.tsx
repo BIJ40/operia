@@ -1,5 +1,6 @@
 /**
- * WidgetLibrary - Bibliothèque de widgets disponibles avec gestion des droits
+ * WidgetLibrary - Bibliothèque de widgets disponibles (éligibles uniquement)
+ * Les widgets non éligibles ne sont JAMAIS affichés
  */
 
 import { useState, useMemo } from 'react';
@@ -9,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Plus, 
   Check, 
@@ -28,7 +29,6 @@ import {
   LayoutGrid,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/contexts/AuthContext';
 
 const ICONS: Record<string, React.ElementType> = {
   TrendingUp,
@@ -72,22 +72,11 @@ const MODULE_LABELS: Record<string, string> = {
   reseau_franchiseur: 'Réseau Franchiseur',
 };
 
-const ROLE_LABELS: Record<number, string> = {
-  0: 'Utilisateur',
-  1: 'Utilisateur Agence',
-  2: 'Admin Agence',
-  3: 'Animateur Réseau',
-  4: 'Directeur Réseau',
-  5: 'Admin Plateforme',
-  6: 'Super Admin',
-};
-
 export function WidgetLibrary() {
   const { data: eligibilityList, isLoading: templatesLoading } = useWidgetTemplatesWithEligibility();
   const { data: userWidgets } = useUserWidgets();
   const addWidget = useAddWidget();
   const removeWidget = useRemoveWidget();
-  const { globalRole } = useAuth();
 
   const [search, setSearch] = useState('');
   const [selectedType, setSelectedType] = useState<WidgetType | 'all'>('all');
@@ -97,13 +86,15 @@ export function WidgetLibrary() {
     [userWidgets]
   );
 
-  // Only show eligible widgets - locked widgets are never displayed
-  const filteredEligibility = useMemo(() => {
+  // ONLY eligible widgets - locked widgets are NEVER shown
+  const eligibleWidgets = useMemo(() => {
     if (!eligibilityList) return [];
-    
-    return eligibilityList.filter(e => {
-      if (!e.isEligible) return false; // Never show locked widgets
-      
+    return eligibilityList.filter(e => e.isEligible);
+  }, [eligibilityList]);
+
+  // Filter by search and type
+  const filteredWidgets = useMemo(() => {
+    return eligibleWidgets.filter(e => {
       const t = e.template;
       const matchesSearch = search === '' || 
         t.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -111,14 +102,9 @@ export function WidgetLibrary() {
       const matchesType = selectedType === 'all' || t.type === selectedType;
       return matchesSearch && matchesType;
     });
-  }, [eligibilityList, search, selectedType]);
+  }, [eligibleWidgets, search, selectedType]);
 
-  const eligibleCount = useMemo(() => 
-    eligibilityList?.filter(e => e.isEligible).length ?? 0,
-    [eligibilityList]
-  );
-
-  const groupedEligibility = useMemo(() => {
+  const groupedWidgets = useMemo(() => {
     const groups: Record<WidgetType, WidgetEligibility[]> = {
       kpi: [],
       chart: [],
@@ -128,16 +114,14 @@ export function WidgetLibrary() {
       custom: [],
     };
     
-    filteredEligibility.forEach(e => {
+    filteredWidgets.forEach(e => {
       groups[e.template.type].push(e);
     });
     
     return groups;
-  }, [filteredEligibility]);
+  }, [filteredWidgets]);
 
   const handleToggleWidget = (eligibility: WidgetEligibility) => {
-    if (!eligibility.isEligible) return;
-    
     const userWidget = userWidgets?.find(w => w.template_id === eligibility.template.id);
     
     if (userWidget) {
@@ -153,11 +137,11 @@ export function WidgetLibrary() {
 
   return (
     <div className="space-y-6">
-      {/* Stats Banner */}
+      {/* Stats Banner - only shows available widgets */}
       <div className="flex flex-wrap gap-4 p-4 rounded-lg bg-muted/50 border">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-emerald-500" />
-          <span className="text-sm font-medium">{eligibleCount} widget(s) disponible(s)</span>
+          <span className="text-sm font-medium">{eligibleWidgets.length} widget(s) disponible(s)</span>
         </div>
       </div>
 
@@ -187,8 +171,8 @@ export function WidgetLibrary() {
       {/* Widget Grid */}
       {selectedType === 'all' ? (
         <div className="space-y-8">
-          {(Object.keys(groupedEligibility) as WidgetType[]).map(type => {
-            const widgets = groupedEligibility[type];
+          {(Object.keys(groupedWidgets) as WidgetType[]).map(type => {
+            const widgets = groupedWidgets[type];
             if (widgets.length === 0) return null;
             
             return (
@@ -205,7 +189,7 @@ export function WidgetLibrary() {
                   {widgets.map(eligibility => (
                     <WidgetCard
                       key={eligibility.template.id}
-                      eligibility={eligibility}
+                      template={eligibility.template}
                       isActive={activeWidgetIds.has(eligibility.template.id)}
                       onToggle={() => handleToggleWidget(eligibility)}
                       isLoading={addWidget.isPending || removeWidget.isPending}
@@ -218,10 +202,10 @@ export function WidgetLibrary() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredEligibility.map(eligibility => (
+          {filteredWidgets.map(eligibility => (
             <WidgetCard
               key={eligibility.template.id}
-              eligibility={eligibility}
+              template={eligibility.template}
               isActive={activeWidgetIds.has(eligibility.template.id)}
               onToggle={() => handleToggleWidget(eligibility)}
               isLoading={addWidget.isPending || removeWidget.isPending}
@@ -230,9 +214,9 @@ export function WidgetLibrary() {
         </div>
       )}
 
-      {filteredEligibility.length === 0 && (
+      {filteredWidgets.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
-          Aucun widget trouvé
+          Aucun widget disponible
         </div>
       )}
     </div>
@@ -240,14 +224,13 @@ export function WidgetLibrary() {
 }
 
 interface WidgetCardProps {
-  eligibility: WidgetEligibility;
+  template: WidgetTemplate;
   isActive: boolean;
   onToggle: () => void;
   isLoading: boolean;
 }
 
-function WidgetCard({ eligibility, isActive, onToggle, isLoading }: WidgetCardProps) {
-  const { template } = eligibility;
+function WidgetCard({ template, isActive, onToggle, isLoading }: WidgetCardProps) {
   const Icon = ICONS[template.icon] || LayoutGrid;
 
   return (
