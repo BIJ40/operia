@@ -273,8 +273,8 @@ function AppContent() {
           {/* Dashboard RH - Statistiques RH (Dirigeant/RH avec option rh_admin) */}
           <Route path="/hc-agency/dashboard-rh" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOption="rh_admin"><RHDashboardPage /></ModuleGuard></RoleGuard></MainLayout>} />
           
-          {/* StatIA Builder - Construction de métriques personnalisées (N2+) */}
-          <Route path="/hc-agency/statia-builder" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><StatiaBuilderAgencyPage /></ModuleGuard></RoleGuard></MainLayout>} />
+          {/* StatIA Builder - Construction de métriques personnalisées (Admin N5+ uniquement) */}
+          <Route path="/hc-agency/statia-builder" element={<MainLayout><RoleGuard minRole="platform_admin"><StatiaBuilderAgencyPage /></RoleGuard></MainLayout>} />
           
           {/* Commercial - Outils commerciaux agence */}
           <Route path="/hc-agency/commercial" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><CommercialPage /></ModuleGuard></RoleGuard></MainLayout>} />
