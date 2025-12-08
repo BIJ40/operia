@@ -550,8 +550,52 @@ export const savParTechnicien: StatDefinition = {
   }
 };
 
+// Taux SAV Year-to-Date (depuis le 1er janvier de l'année en cours)
+export const tauxSavYTD: StatDefinition = {
+  id: 'taux_sav_ytd',
+  label: 'Taux SAV (Year-to-Date)',
+  description: 'Taux de SAV depuis le début de l\'année en cours',
+  category: 'sav',
+  source: ['projects'],
+  aggregation: 'ratio',
+  unit: '%',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { projects } = data;
+    const savOverrides = params.savOverrides;
+    
+    // Date range YTD : 1er janvier de l'année en cours → aujourd'hui
+    const now = new Date();
+    const yearStart = new Date(now.getFullYear(), 0, 1);
+    const yearEnd = now;
+    
+    let nbDossiersTotal = 0;
+    let nbDossiersSAV = 0;
+    
+    for (const project of projects) {
+      const date = getProjectDate(project);
+      if (!date) continue;
+      if (date < yearStart || date > yearEnd) continue;
+      
+      nbDossiersTotal++;
+      const isAutoSav = isSavProjectAutoDetect(project);
+      if (isProjectConfirmedSAV(Number(project.id), isAutoSav, savOverrides)) {
+        nbDossiersSAV++;
+      }
+    }
+    
+    const taux = nbDossiersTotal > 0 ? (nbDossiersSAV / nbDossiersTotal) * 100 : 0;
+    
+    return {
+      value: Math.round(taux * 10) / 10,
+      metadata: { computedAt: new Date(), source: 'projects', recordCount: projects.length },
+      breakdown: { nbDossiersTotal, nbDossiersSAV, taux: Math.round(taux * 10) / 10 }
+    };
+  }
+};
+
 export const savDefinitions = {
   taux_sav_global: tauxSavGlobal,
+  taux_sav_ytd: tauxSavYTD,
   taux_sav_par_univers: tauxSavParUnivers,
   taux_sav_par_apporteur: tauxSavParApporteur,
   taux_sav_par_type_apporteur: tauxSavParTypeApporteur,

@@ -1,13 +1,10 @@
-import { BarChart3, ListTodo, Calendar, Users, Inbox, Briefcase, PieChart, TrendingUp, Building2, FileText, Info, ShoppingCart, Car } from 'lucide-react';
+import { BarChart3, ListTodo, PieChart, TrendingUp, Building2, Info, ShoppingCart, Car, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { useMenuLabels } from '@/hooks/use-page-metadata';
 import { AgencyInfoTile } from '@/components/pilotage/AgencyInfoTile';
-import { GEDCollaboratorDropdown } from '@/components/pilotage/GEDCollaboratorDropdown';
-import { usePendingDocumentRequestsCount } from '@/hooks/useDocumentRequests';
 import { useAuth } from '@/contexts/AuthContext';
-import { isModuleOptionEnabled, ModuleKey } from '@/types/modules';
 import { CollapsibleSection } from '@/components/dashboard/CollapsibleSection';
 import { memo, useMemo } from 'react';
 import type { LucideIcon } from 'lucide-react';
@@ -17,10 +14,6 @@ const ROUTE_TO_PAGE_KEY: Record<string, string> = {
   [ROUTES.pilotage.indicateurs]: 'pilotage_indicateurs',
   [ROUTES.pilotage.actions]: 'pilotage_actions',
   [ROUTES.pilotage.diffusion]: 'pilotage_diffusion',
-  [ROUTES.pilotage.rhTech]: 'pilotage_rh_tech',
-  [ROUTES.pilotage.equipe]: 'pilotage_equipe',
-  [ROUTES.pilotage.monCoffreRh]: 'pilotage_mon_coffre_rh',
-  [ROUTES.pilotage.demandesRh]: 'pilotage_demandes_rh',
 };
 
 interface PilotageModule {
@@ -30,8 +23,7 @@ interface PilotageModule {
   icon: LucideIcon;
   href: string;
   badge?: string | number;
-  requiresModuleOptions?: { module: ModuleKey; options: string[] };
-  category: 'statistiques' | 'rh' | 'autres';
+  category: 'statistiques' | 'autres';
 }
 
 const pilotageModules: PilotageModule[] = [
@@ -67,60 +59,6 @@ const pilotageModules: PilotageModule[] = [
     icon: Users,
     href: `${ROUTES.pilotage.statsHub}/techniciens`,
     category: 'statistiques',
-  },
-  // RESSOURCES HUMAINES
-  {
-    id: 'rh_tech',
-    title: 'Validation plannings',
-    description: 'Planning hebdomadaire techniciens',
-    icon: Calendar,
-    href: ROUTES.pilotage.rhTech,
-    badge: 'Bientôt',
-    category: 'rh',
-  },
-  {
-    id: 'mon_equipe',
-    title: 'Mon équipe',
-    description: 'Collaborateurs, documents RH et bulletins de salaire',
-    icon: Users,
-    href: ROUTES.pilotage.equipe,
-    category: 'rh',
-  },
-  {
-    id: 'mon_coffre_rh',
-    title: 'Mon Coffre RH',
-    description: 'Mes documents RH et demandes',
-    icon: Briefcase,
-    href: ROUTES.pilotage.monCoffreRh,
-    requiresModuleOptions: { module: 'rh', options: ['coffre', 'rh_viewer', 'rh_admin'] },
-    category: 'rh',
-  },
-  {
-    id: 'demandes_rh',
-    title: 'Demandes RH',
-    description: 'Traitement des demandes de documents',
-    icon: Inbox,
-    href: ROUTES.pilotage.demandesRh,
-    requiresModuleOptions: { module: 'rh', options: ['rh_viewer', 'rh_admin'] },
-    category: 'rh',
-  },
-  {
-    id: 'dashboard_rh',
-    title: 'Dashboard RH',
-    description: 'Statistiques et indicateurs RH',
-    icon: BarChart3,
-    href: ROUTES.pilotage.dashboardRh,
-    requiresModuleOptions: { module: 'rh', options: ['rh_admin'] },
-    category: 'rh',
-  },
-  {
-    id: 'ged',
-    title: 'G.E.D',
-    description: 'Dépôt et gestion des documents collaborateurs',
-    icon: FileText,
-    href: ROUTES.pilotage.equipe,
-    requiresModuleOptions: { module: 'rh', options: ['rh_viewer', 'rh_admin'] },
-    category: 'rh',
   },
   // AUTRES
   {
@@ -164,11 +102,6 @@ const PILOTAGE_GROUPS = {
     icon: BarChart3,
     colorClass: 'text-helpconfort-blue',
   },
-  rh: {
-    title: 'Ressources Humaines',
-    icon: Users,
-    colorClass: 'text-helpconfort-orange',
-  },
   autres: {
     title: 'Autres',
     icon: Building2,
@@ -178,8 +111,7 @@ const PILOTAGE_GROUPS = {
 
 export default function PilotageIndex() {
   const menuLabels = useMenuLabels();
-  const { enabledModules, globalRole } = useAuth();
-  const { count: pendingRequestsCount } = usePendingDocumentRequestsCount();
+  const { globalRole } = useAuth();
 
   const isPlatformAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';
 
@@ -191,47 +123,19 @@ export default function PilotageIndex() {
     return module.title;
   };
 
-  // Filtrer les modules selon les permissions
-  const visibleModules = useMemo(() => {
-    return pilotageModules.filter(module => {
-      // Les admins voient tout
-      if (isPlatformAdmin) return true;
-      
-      // Vérifier si le module nécessite des options spécifiques
-      if (module.requiresModuleOptions) {
-        const { module: moduleKey, options } = module.requiresModuleOptions;
-        const hasAnyOption = options.some(opt => 
-          isModuleOptionEnabled(enabledModules, moduleKey, opt)
-        );
-        return hasAnyOption;
-      }
-      
-      return true;
-    });
-  }, [isPlatformAdmin, enabledModules]);
-
   // Grouper par catégorie
   const modulesByCategory = useMemo(() => {
     const groups: Record<string, PilotageModule[]> = {
       statistiques: [],
-      rh: [],
       autres: [],
     };
     
-    visibleModules.forEach(module => {
+    pilotageModules.forEach(module => {
       groups[module.category].push(module);
     });
     
     return groups;
-  }, [visibleModules]);
-
-  // Badge dynamique pour Demandes RH
-  const getBadge = (module: PilotageModule): string | number | undefined => {
-    if (module.id === 'demandes_rh' && pendingRequestsCount > 0) {
-      return pendingRequestsCount;
-    }
-    return module.badge;
-  };
+  }, []);
 
   const scrollToAgencyInfo = () => {
     document.getElementById('agency-info-section')?.scrollIntoView({ behavior: 'smooth' });
@@ -253,33 +157,9 @@ export default function PilotageIndex() {
               key={module.id}
               module={module}
               title={getModuleTitle(module)}
-              badge={getBadge(module)}
+              badge={module.badge}
               isAdmin={isPlatformAdmin}
             />
-          ))}
-        </CollapsibleSection>
-      )}
-
-      {/* Ressources Humaines */}
-      {modulesByCategory.rh.length > 0 && (
-        <CollapsibleSection
-          id="pilotage_rh"
-          title={PILOTAGE_GROUPS.rh.title}
-          icon={PILOTAGE_GROUPS.rh.icon}
-          colorClass={PILOTAGE_GROUPS.rh.colorClass}
-        >
-          {modulesByCategory.rh.map(module => (
-            module.id === 'ged' ? (
-              <GEDCollaboratorDropdown key={module.id} />
-            ) : (
-              <PilotageTileCard
-                key={module.id}
-                module={module}
-                title={getModuleTitle(module)}
-                badge={getBadge(module)}
-                isAdmin={isPlatformAdmin}
-              />
-            )
           ))}
         </CollapsibleSection>
       )}
@@ -298,7 +178,7 @@ export default function PilotageIndex() {
                 <PilotageTileCard
                   module={module}
                   title={getModuleTitle(module)}
-                  badge={getBadge(module)}
+                  badge={module.badge}
                   isAdmin={isPlatformAdmin}
                   isClickable={false}
                 />
@@ -308,7 +188,7 @@ export default function PilotageIndex() {
                 key={module.id}
                 module={module}
                 title={getModuleTitle(module)}
-                badge={getBadge(module)}
+                badge={module.badge}
                 isAdmin={isPlatformAdmin}
               />
             )

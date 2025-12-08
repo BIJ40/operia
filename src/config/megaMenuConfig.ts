@@ -76,7 +76,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
     title: 'RH',
     description: 'Ressources humaines',
     icon: 'Briefcase',
-    href: ROUTES.pilotage.monCoffreRh,
+    href: '/rh',
     moduleKey: 'rh',
     links: [
       // === Vue Salarié (N1 ou N2 avec is_salaried_manager) ===

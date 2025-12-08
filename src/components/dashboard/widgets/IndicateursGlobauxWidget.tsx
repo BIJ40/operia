@@ -36,10 +36,10 @@ const KPI_CONFIG: Array<{
     icon: '€',
     getValue: (r) => r?.value ?? null
   },
-  { 
+{ 
     id: 'sav', 
-    statId: 'taux_sav_global',
-    label: 'Taux SAV', 
+    statId: 'taux_sav_ytd',
+    label: 'Taux SAV (YTD)', 
     format: 'percent', 
     color: 'from-red-500 to-red-600', 
     icon: 'SAV',
