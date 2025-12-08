@@ -1,6 +1,6 @@
 /**
  * Hook pour gérer les widgets par défaut selon le rôle et les modules activés
- * Widgets actifs: Derniers tickets, Mon équipe, Indicateurs globaux, CA par univers
+ * Widgets actifs: Favoris (tous), Derniers tickets, Mon équipe, Indicateurs globaux, CA par univers
  */
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,15 +13,18 @@ interface DefaultWidgetConfig {
   templateModuleSource: string;
   row: number;
   col: number;
+  forAll?: boolean; // Widget disponible pour tous les utilisateurs
 }
 
+// Widget Favoris par défaut pour TOUS les utilisateurs
+const UNIVERSAL_WIDGETS: DefaultWidgetConfig[] = [
+  { templateModuleSource: 'Core.favoris', row: 0, col: 0, forAll: true },
+];
+
 // Widgets par défaut pour N2+ avec pilotage_agence
-// Layout basé sur l'image: Indicateurs globaux (gauche), Mon équipe (droite), Tickets (gauche bas), CA univers (droite bas)
-const DEFAULT_WIDGETS: DefaultWidgetConfig[] = [
-  // Ligne 1: Indicateurs globaux (gauche, large) + Mon équipe (droite)
-  { templateModuleSource: 'StatIA.indicateurs_globaux', row: 0, col: 0 },
+const PILOTAGE_WIDGETS: DefaultWidgetConfig[] = [
+  { templateModuleSource: 'StatIA.indicateurs_globaux', row: 0, col: 4 },
   { templateModuleSource: 'RH.collaborators', row: 0, col: 8 },
-  // Ligne 2: Derniers tickets (gauche) + CA par univers (droite)
   { templateModuleSource: 'Support.recent_tickets', row: 1, col: 0 },
   { templateModuleSource: 'StatIA.ca_par_univers', row: 1, col: 6 },
 ];
@@ -47,11 +50,16 @@ export function useDefaultWidgets() {
       const userLevel = globalRole ? GLOBAL_ROLES[globalRole] : 0;
       const hasPilotageAgence = hasModule('pilotage_agence');
       
-      // Seuls N2+ avec pilotage_agence ont les widgets par défaut
-      if (userLevel < 2 || !hasPilotageAgence) return;
+      // Construire la liste des widgets à ajouter
+      let widgetsToAdd = [...UNIVERSAL_WIDGETS];
+      
+      // Ajouter les widgets pilotage pour N2+ avec le module
+      if (userLevel >= 2 && hasPilotageAgence) {
+        widgetsToAdd = [...widgetsToAdd, ...PILOTAGE_WIDGETS];
+      }
       
       // Récupérer les templates
-      const moduleSources = DEFAULT_WIDGETS.map(w => w.templateModuleSource);
+      const moduleSources = widgetsToAdd.map(w => w.templateModuleSource);
       const { data: templates } = await supabase
         .from('widget_templates')
         .select('id, module_source, default_width, default_height')
@@ -60,7 +68,7 @@ export function useDefaultWidgets() {
       if (!templates || templates.length === 0) return;
       
       // Créer les widgets
-      for (const config of DEFAULT_WIDGETS) {
+      for (const config of widgetsToAdd) {
         const template = templates.find(t => t.module_source === config.templateModuleSource);
         if (!template) continue;
         

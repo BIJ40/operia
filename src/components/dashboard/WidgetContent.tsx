@@ -1,6 +1,6 @@
 /**
  * WidgetContent - Contenu dynamique des widgets selon leur type
- * Widgets actifs: Derniers tickets, Mon équipe, Indicateurs globaux, CA par univers, Raccourcis
+ * Widgets actifs: Favoris, Derniers tickets, Mon équipe, Indicateurs globaux, CA par univers, Raccourcis
  */
 
 import { UserWidget, WidgetTemplate } from '@/types/dashboard';
@@ -9,6 +9,7 @@ import { RecentTicketsWidget } from './widgets/RecentTicketsWidget';
 import { CAParUniversWidget } from './widgets/CAParUniversWidget';
 import { IndicateursGlobauxWidget } from './widgets/IndicateursGlobauxWidget';
 import { ShortcutWidget } from './widgets/ShortcutWidget';
+import { FavorisWidget } from './widgets/FavorisWidget';
 
 interface WidgetContentProps {
   widget: UserWidget & { template: WidgetTemplate };
@@ -16,6 +17,7 @@ interface WidgetContentProps {
 
 // Mapping module_source → composant spécialisé
 const WIDGET_COMPONENTS: Record<string, React.FC> = {
+  'Core.favoris': FavorisWidget,
   'RH.collaborateurs': CollaboratorsListWidget,
   'RH.collaborators': CollaboratorsListWidget,
   'Support.recent_tickets': RecentTicketsWidget,
