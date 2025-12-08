@@ -65,6 +65,7 @@ const FaireUneDemande = lazy(() => import("./pages/FaireUneDemande"));
 const GestionConges = lazy(() => import("./pages/GestionConges"));
 const DemandesRHPage = lazy(() => import("./pages/DemandesRHPage"));
 const RHDashboardPage = lazy(() => import("./pages/RHDashboardPage"));
+const RHIndex = lazy(() => import("./pages/RHIndex"));
 const CommercialPage = lazy(() => import("./pages/CommercialPage"));
 const CommercialSupportPptx = lazy(() => import("./commercial/pages/CommercialSupportPptx"));
 const MaintenancePreventivePage = lazy(() => import("./pages/MaintenancePreventivePage"));
@@ -255,6 +256,9 @@ function AppContent() {
           {/* Coffre-fort RH - Vue salarié (nécessite module rh avec option coffre) */}
           <Route path="/pilotage/mon-coffre-rh" element={<MainLayout><RoleGuard><ModuleGuard moduleKey="rh" requiredOption="coffre"><MonCoffreRH /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/mon-coffre-rh" element={<Navigate to="/pilotage/mon-coffre-rh" replace />} />
+          
+          {/* Page Index RH */}
+          <Route path="/rh" element={<MainLayout><RoleGuard><ModuleGuard moduleKey="rh"><RHIndex /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* Faire une demande RH - Vue salarié (nécessite module rh avec option coffre) */}
           <Route path="/faire-une-demande" element={<MainLayout><RoleGuard><ModuleGuard moduleKey="rh" requiredOption="coffre"><FaireUneDemande /></ModuleGuard></RoleGuard></MainLayout>} />
