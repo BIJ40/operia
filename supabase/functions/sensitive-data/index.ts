@@ -1,10 +1,13 @@
+/**
+ * SENSITIVE-DATA - Edge Function pour données RGPD sensibles
+ * 
+ * P0: CORS hardened, contrôles d'accès stricts
+ */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { handleCorsPreflightOrReject, withCors, getCorsHeaders, isOriginAllowed } from '../_shared/cors.ts';
+import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
+import { captureEdgeException } from '../_shared/sentry.ts';
 
 // AES-256-GCM encryption using Web Crypto API
 async function getEncryptionKey(): Promise<CryptoKey> {
@@ -72,10 +75,12 @@ async function decrypt(ciphertext: string): Promise<string> {
 }
 
 serve(async (req) => {
-  // Handle CORS
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // P0: CORS hardened
+  const corsResult = handleCorsPreflightOrReject(req);
+  if (corsResult) return corsResult;
+
+  const origin = req.headers.get('origin') ?? '';
+  const corsHeaders = isOriginAllowed(origin) ? getCorsHeaders(origin) : {};
 
   try {
     const supabaseClient = createClient(
@@ -86,10 +91,10 @@ serve(async (req) => {
     // Verify user authentication
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: 'Missing authorization header' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      ));
     }
 
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(
@@ -97,10 +102,18 @@ serve(async (req) => {
     );
 
     if (authError || !user) {
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      ));
+    }
+
+    // P0: Rate limiting (10 req/min pour données sensibles)
+    const rateLimitKey = `sensitive-data:${user.id}`;
+    const rateCheck = await checkRateLimit(rateLimitKey, { limit: 10, windowMs: 60 * 1000 });
+    if (!rateCheck.allowed) {
+      console.log(`[SENSITIVE-DATA] Rate limit exceeded for user ${user.id}`);
+      return rateLimitResponse(rateCheck.retryAfter!, corsHeaders);
     }
 
     const { action, collaboratorId, data } = await req.json();
@@ -113,10 +126,10 @@ serve(async (req) => {
       .single();
 
     if (!profile) {
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: 'Profile not found' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      ));
     }
 
     // Check access permissions
@@ -127,10 +140,10 @@ serve(async (req) => {
       .single();
 
     if (!collaborator) {
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: 'Collaborator not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+        { status: 404, headers: { 'Content-Type': 'application/json' } }
+      ));
     }
 
     // Access check: user is the collaborator, or is admin/RH of same agency
@@ -143,10 +156,11 @@ serve(async (req) => {
     const hasAccess = isSelf || isAdmin || (isSameAgency && (isRHAdmin || isDirigeant));
 
     if (!hasAccess) {
-      return new Response(
+      console.log(`[SENSITIVE-DATA] Access denied for user ${user.id} to collaborator ${collaboratorId}`);
+      return withCors(req, new Response(
         JSON.stringify({ error: 'Access denied to sensitive data' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      ));
     }
 
     if (action === 'read') {
@@ -160,18 +174,18 @@ serve(async (req) => {
       if (error) throw error;
 
       if (!sensitiveData) {
-        return new Response(
+        return withCors(req, new Response(
           JSON.stringify({
             birth_date: null,
             social_security_number: null,
             emergency_contact: null,
             emergency_phone: null,
           }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+          { headers: { 'Content-Type': 'application/json' } }
+        ));
       }
 
-      // Log access
+      // Log access for audit
       await supabaseClient
         .from('collaborator_sensitive_data')
         .update({
@@ -179,6 +193,8 @@ serve(async (req) => {
           last_accessed_at: new Date().toISOString(),
         })
         .eq('collaborator_id', collaboratorId);
+
+      console.log(`[SENSITIVE-DATA] Read access for collaborator ${collaboratorId} by user ${user.id}`);
 
       // Decrypt all fields
       const decrypted = {
@@ -188,10 +204,10 @@ serve(async (req) => {
         emergency_phone: await decrypt(sensitiveData.emergency_phone_encrypted || ''),
       };
 
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify(decrypted),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+        { headers: { 'Content-Type': 'application/json' } }
+      ));
 
     } else if (action === 'write') {
       // Encrypt and write sensitive data
@@ -210,24 +226,27 @@ serve(async (req) => {
 
       if (error) throw error;
 
-      return new Response(
+      console.log(`[SENSITIVE-DATA] Write access for collaborator ${collaboratorId} by user ${user.id}`);
+
+      return withCors(req, new Response(
         JSON.stringify({ success: true }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+        { headers: { 'Content-Type': 'application/json' } }
+      ));
 
     } else {
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: 'Invalid action' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      ));
     }
 
   } catch (error) {
-    console.error('Error in sensitive-data function:', error);
+    console.error('[SENSITIVE-DATA] Error:', error);
+    captureEdgeException(error, { function: 'sensitive-data' });
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(
+    return withCors(req, new Response(
       JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    ));
   }
 });
