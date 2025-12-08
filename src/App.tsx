@@ -149,6 +149,7 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { EditorProvider } from "./contexts/EditorContext";
 import { ApporteurEditorProvider } from "./contexts/ApporteurEditorContext";
 import { ImpersonationProvider } from "./contexts/ImpersonationContext";
+import { LiveSupportProvider } from "./contexts/LiveSupportContext";
 import { ChangePasswordDialog } from "./components/ChangePasswordDialog";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { GlobalErrorBoundary } from "./components/system/GlobalErrorBoundary";
@@ -450,15 +451,17 @@ function App() {
         >
           <AuthProvider>
             <ImpersonationProvider>
-              <EditorProvider>
-              <ApporteurEditorProvider>
-                  <GlobalErrorBoundary>
-                    <AppContent />
-                  </GlobalErrorBoundary>
-                  <Toaster />
-                  <Sonner />
-                </ApporteurEditorProvider>
-              </EditorProvider>
+              <LiveSupportProvider>
+                <EditorProvider>
+                <ApporteurEditorProvider>
+                    <GlobalErrorBoundary>
+                      <AppContent />
+                    </GlobalErrorBoundary>
+                    <Toaster />
+                    <Sonner />
+                  </ApporteurEditorProvider>
+                </EditorProvider>
+              </LiveSupportProvider>
             </ImpersonationProvider>
           </AuthProvider>
         </BrowserRouter>
