@@ -131,20 +131,16 @@ export function MainHeader() {
         <div className="container px-4">
           <div className="flex">
             {/* Logo sur 2 lignes */}
-            <Link 
-              to={ROUTES.changelog} 
-              className="group flex flex-col items-center justify-center mr-6 shrink-0 py-2"
-              title="Voir l'historique des versions"
-            >
+            <div className="flex flex-col items-center justify-center mr-6 shrink-0 py-2">
               <img 
                 src={logoHelpconfortServices} 
                 alt="HelpConfort Services" 
-                className="h-16 w-auto transition-transform duration-200 group-hover:scale-105"
+                className="h-16 w-auto"
               />
-              <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors duration-200 -mt-1">
+              <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground -mt-1">
                 v{APP_VERSION}
               </span>
-            </Link>
+            </div>
 
             {/* Colonne droite : Menu + Recherche */}
             <div className="flex-1 flex flex-col">
