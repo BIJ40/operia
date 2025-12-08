@@ -20,7 +20,8 @@ import {
   Archive,
   Bell,
   FlaskConical,
-  Sparkles
+  Sparkles,
+  LayoutGrid
 } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { cn } from '@/lib/utils';
@@ -199,6 +200,12 @@ export function NavigationCards() {
           icon: Bell, 
           title: 'Annonces Prioritaires', 
           description: 'Diffuser des informations' 
+        },
+        { 
+          to: ROUTES.admin.widgets, 
+          icon: LayoutGrid, 
+          title: 'Gestion Widgets', 
+          description: 'Permissions des widgets dashboard' 
         },
         { 
           to: ROUTES.admin.systemHealth, 
