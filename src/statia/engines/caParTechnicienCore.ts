@@ -50,10 +50,11 @@ export function isRTIntervention(intervention: any): boolean {
 
 /**
  * Vérifie si une intervention est de type SAV - NON PRODUCTIF pour les stats technicien
+ * RÈGLE HARMONISÉE: type/type2 CONTIENT "sav" (déjà correct)
  */
 export function isSAVIntervention(intervention: any): boolean {
-  const type2 = (intervention.type2 || intervention.data?.type2 || '').toLowerCase();
-  const type = (intervention.type || intervention.data?.type || '').toLowerCase();
+  const type2 = (intervention.type2 || intervention.data?.type2 || '').toLowerCase().trim();
+  const type = (intervention.type || intervention.data?.type || '').toLowerCase().trim();
   
   return type2.includes('sav') || type.includes('sav');
 }

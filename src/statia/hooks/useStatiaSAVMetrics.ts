@@ -171,8 +171,8 @@ function buildDossiersSAV(
     const type = (intervention.data?.type || intervention.type || "").toLowerCase().trim();
     const pictos = intervention.data?.pictosInterv || [];
 
-    // RÈGLE STRICTE: type === "sav" OU picto === "sav" (égalité exacte)
-    const hasSAVType = type2 === "sav" || type === "sav";
+    // RÈGLE HARMONISÉE: type/type2 CONTIENT "sav" OU picto === "sav"
+    const hasSAVType = type2.includes("sav") || type.includes("sav");
     const hasSAVPicto = Array.isArray(pictos) && pictos.some((p: any) => String(p).toLowerCase().trim() === "sav");
     
     if (hasSAVType || hasSAVPicto) {
@@ -207,8 +207,8 @@ function buildDossiersSAV(
   for (const project of projects) {
     const projectId = Number(project.id);
     
-    // Détection SAV automatique
-    const isAutoSav = isSavProjectAutoDetect(project);
+    // Détection SAV automatique (passe les interventions pour détection via RDV)
+    const isAutoSav = isSavProjectAutoDetect(project, interventions);
     
     // Vérifier s'il y a un override pour ce projet
     const hasOverride = overridesData.overridesMap.has(projectId);
@@ -295,18 +295,41 @@ function buildDossiersSAV(
 
 /**
  * Détection SAV automatique (avant application des overrides)
+ * Accepte optionnellement la liste des interventions pour détecter via RDV SAV
  */
-function isSavProjectAutoDetect(project: any): boolean {
+function isSavProjectAutoDetect(project: any, interventions?: any[]): boolean {
   const d = project.data || {};
+  const projectId = String(project.id);
 
+  // 1. NOUVEAU: Vérifier si le projet a des interventions SAV
+  if (interventions && interventions.length > 0) {
+    const hasSAVIntervention = interventions.some(interv => {
+      const intervProjectId = String(interv.projectId || interv.project_id);
+      if (intervProjectId !== projectId) return false;
+      
+      const type2 = (interv.data?.type2 || interv.type2 || '').toLowerCase().trim();
+      const type = (interv.data?.type || interv.type || '').toLowerCase().trim();
+      const pictos = interv.data?.pictosInterv || [];
+      
+      // RÈGLE HARMONISÉE: type/type2 CONTIENT "sav" OU picto === "sav"
+      const hasSAVType = type2.includes('sav') || type.includes('sav');
+      const hasSAVPicto = Array.isArray(pictos) && pictos.some((p: any) => String(p).toLowerCase().trim() === 'sav');
+      
+      return hasSAVType || hasSAVPicto;
+    });
+    if (hasSAVIntervention) return true;
+  }
+
+  // 2. Flags explicites
   if (d.isSav === true || d.is_sav === true || d.isSAV === true) return true;
   if (project.isSav === true || project.is_sav === true) return true;
 
+  // 3. Dossier lié/enfant
   if (project.parentProjectId || project.parent_project_id || d.parentId || d.parent_id) return true;
   if (project.parentId || project.parent_id) return true;
   if (d.linkedProjectId || d.linkedDossierId || d.dossierId) return true;
 
-  // RÈGLE STRICTE: champs === "sav" (égalité exacte)
+  // 4. Champs CONTENANT "sav" (harmonisé)
   const fieldsToCheck = [
     d.origineDossier,
     d.origine,
@@ -320,18 +343,18 @@ function isSavProjectAutoDetect(project: any): boolean {
   ];
 
   for (const field of fieldsToCheck) {
-    if (field && String(field).toLowerCase().trim() === "sav") {
+    if (field && String(field).toLowerCase().trim().includes("sav")) {
       return true;
     }
   }
 
-  // Pictos === "sav" (égalité stricte)
+  // 5. Pictos === "sav" (égalité stricte pour pictos)
   const pictos = d.pictosInterv || d.pictos || project.pictosInterv || [];
   if (Array.isArray(pictos) && pictos.some((p: any) => String(p).toLowerCase().trim() === "sav")) {
     return true;
   }
 
-  // Tags === "sav" (égalité stricte)
+  // 6. Tags === "sav" (égalité stricte pour tags)
   const tags = (d.tags || project.tags || []) as any[];
   if (Array.isArray(tags) && tags.some((t) => String(t).toLowerCase().trim() === "sav")) {
     return true;
