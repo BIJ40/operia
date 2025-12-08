@@ -5,7 +5,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { MessageCircle } from 'lucide-react';
-import { useLiveSupportSession } from '@/hooks/useLiveSupportSession';
+import { useLiveSupportContext } from '@/contexts/LiveSupportContext';
 import { LiveSupportChat } from './LiveSupportChat';
 
 export function GlobalLiveSupportManager() {
@@ -13,8 +13,7 @@ export function GlobalLiveSupportManager() {
     hasActiveSession, 
     showChatDialog, 
     closeChatDialog,
-    closeSession,
-  } = useLiveSupportSession();
+  } = useLiveSupportContext();
 
   // Ne rien afficher si pas de session active
   if (!hasActiveSession) return null;
