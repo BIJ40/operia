@@ -80,6 +80,8 @@ serve(async (req) => {
     
     const roleAgence = validateOptionalString(bodyRaw.role_agence || bodyRaw.roleAgence, 'roleAgence', 100) || null
     const sendEmail = validateOptionalBoolean(bodyRaw.sendEmail) !== false
+    
+    console.log(`[create-user] Params: email=${email}, sendEmail=${sendEmail}, bodyRaw.sendEmail=${bodyRaw.sendEmail}`)
 
     // Déterminer l'agence cible (UUID ou slug)
     let targetAgency = agence
