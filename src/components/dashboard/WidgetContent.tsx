@@ -1,6 +1,6 @@
 /**
  * WidgetContent - Contenu dynamique des widgets selon leur type
- * Widgets actifs: Derniers tickets, Mon équipe, Indicateurs globaux, CA par univers
+ * Widgets actifs: Derniers tickets, Mon équipe, Indicateurs globaux, CA par univers, Raccourcis
  */
 
 import { UserWidget, WidgetTemplate } from '@/types/dashboard';
@@ -8,12 +8,13 @@ import { CollaboratorsListWidget } from './widgets/CollaboratorsListWidget';
 import { RecentTicketsWidget } from './widgets/RecentTicketsWidget';
 import { CAParUniversWidget } from './widgets/CAParUniversWidget';
 import { IndicateursGlobauxWidget } from './widgets/IndicateursGlobauxWidget';
+import { ShortcutWidget } from './widgets/ShortcutWidget';
 
 interface WidgetContentProps {
   widget: UserWidget & { template: WidgetTemplate };
 }
 
-// Mapping module_source → composant spécialisé (4 widgets actifs)
+// Mapping module_source → composant spécialisé
 const WIDGET_COMPONENTS: Record<string, React.FC> = {
   'RH.collaborateurs': CollaboratorsListWidget,
   'RH.collaborators': CollaboratorsListWidget,
@@ -23,7 +24,14 @@ const WIDGET_COMPONENTS: Record<string, React.FC> = {
 };
 
 export function WidgetContent({ widget }: WidgetContentProps) {
-  const { module_source } = widget.template;
+  const { module_source, icon, name, default_params } = widget.template;
+
+  // Gestion des widgets de type Shortcut
+  if (module_source.startsWith('Shortcut.')) {
+    const params = default_params as { route?: string } | undefined;
+    const route = params?.route || '/';
+    return <ShortcutWidget route={route} icon={icon} name={name} />;
+  }
 
   const WidgetComponent = WIDGET_COMPONENTS[module_source];
   if (WidgetComponent) {
