@@ -1,5 +1,5 @@
 /**
- * AI Unified Bar - Single floating search bar for all AI interactions
+ * AI Unified Bar - Single floating search bar for documentation
  * Always visible, fixed position, results shown inline below
  */
 
@@ -14,10 +14,10 @@ import { useLiveSupportSession } from '@/hooks/useLiveSupportSession';
 import { cn } from '@/lib/utils';
 
 const QUICK_EXAMPLES = [
-  "Quel est mon CA ce mois ?",
-  "Top techniciens",
-  "Taux SAV par univers",
   "Comment créer un devis ?",
+  "Comment gérer les factures ?",
+  "Accès aide academy",
+  "Comment contacter le support ?",
 ];
 
 export function AiUnifiedBar() {
@@ -46,7 +46,6 @@ export function AiUnifiedBar() {
   const containerRef = useRef<HTMLDivElement>(null);
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Open the bar (show results zone)
   const openBar = useCallback(() => {
     if (blurTimeoutRef.current) {
       clearTimeout(blurTimeoutRef.current);
@@ -56,9 +55,7 @@ export function AiUnifiedBar() {
     expand();
   }, [expand]);
 
-  // Close the bar - only if not interacting with results
   const closeBar = useCallback(() => {
-    // Use a longer delay to allow clicks to register
     blurTimeoutRef.current = setTimeout(() => {
       if (!isInteractingWithResults) {
         setIsBarOpen(false);
@@ -70,7 +67,6 @@ export function AiUnifiedBar() {
     }, 300);
   }, [messages.length, isLoading, closeResult, clearMessages, isInteractingWithResults]);
 
-  // Cancel close and mark as interacting
   const handleResultsMouseDown = useCallback(() => {
     if (blurTimeoutRef.current) {
       clearTimeout(blurTimeoutRef.current);
@@ -79,14 +75,11 @@ export function AiUnifiedBar() {
     setIsInteractingWithResults(true);
   }, []);
 
-  // Reset interaction state
   const handleResultsMouseUp = useCallback(() => {
     setIsInteractingWithResults(false);
-    // Refocus input to maintain keyboard usability
     inputRef.current?.focus();
   }, []);
 
-  // Global keyboard shortcut (Ctrl+K / Cmd+K)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -108,7 +101,6 @@ export function AiUnifiedBar() {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [openBar, closeResult, clearMessages, messages.length]);
 
-  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (blurTimeoutRef.current) {
@@ -120,13 +112,13 @@ export function AiUnifiedBar() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!localQuery.trim() || isLoading) return;
-    handleResultsMouseDown(); // Keep results open during submit
+    handleResultsMouseDown();
     await submitQuery(localQuery);
     setLocalQuery('');
   };
 
   const handleExampleClick = (example: string) => {
-    handleResultsMouseDown(); // Keep results open
+    handleResultsMouseDown();
     setLocalQuery(example);
     inputRef.current?.focus();
   };
@@ -134,7 +126,6 @@ export function AiUnifiedBar() {
   const handleLiveSupportClick = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('[AiUnifiedBar] Live support button clicked, hasActiveSession:', hasActiveSession);
     
     if (hasActiveSession) {
       openChat();
@@ -144,7 +135,6 @@ export function AiUnifiedBar() {
   }, [hasActiveSession, openChat, startNewSession]);
 
   const hasResults = messages.length > 0;
-  // Show results zone when: focused OR has query text OR has results OR is loading
   const showResultsZone = isBarOpen || localQuery.length > 0 || hasResults || isLoading;
 
   return (
@@ -152,9 +142,7 @@ export function AiUnifiedBar() {
       ref={containerRef}
       className="w-full flex flex-col items-center py-3 relative"
     >
-      {/* Main Search Bar + Live Support Button */}
       <div className="w-full max-w-5xl px-4 relative flex items-center gap-3">
-        {/* Search Bar */}
         <motion.div
           initial={false}
           animate={{
@@ -164,7 +152,6 @@ export function AiUnifiedBar() {
           }}
           className="relative rounded-full overflow-hidden flex-1"
         >
-          {/* Animated glow border when focused */}
           {showResultsZone && (
             <motion.div
               className="absolute inset-0 rounded-full pointer-events-none"
@@ -243,7 +230,6 @@ export function AiUnifiedBar() {
           </form>
         </motion.div>
 
-        {/* Live Support Button - Visible when session active */}
         <AnimatePresence>
           {hasActiveSession && (
             <motion.div
@@ -262,7 +248,6 @@ export function AiUnifiedBar() {
                     : "bg-amber-500 hover:bg-amber-600 text-white animate-pulse"
                 )}
               >
-                {/* Pulse indicator */}
                 <span className="relative flex h-2 w-2">
                   <span className={cn(
                     "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75",
@@ -280,7 +265,6 @@ export function AiUnifiedBar() {
                   {isConnected ? 'Support en direct' : 'En attente...'}
                 </span>
 
-                {/* New message indicator */}
                 {hasNewMessage && (
                   <span className="absolute -top-1 -right-1 flex h-3 w-3">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
@@ -292,7 +276,6 @@ export function AiUnifiedBar() {
           )}
         </AnimatePresence>
 
-        {/* Floating Results - Show when bar is open or has results/loading */}
         <AnimatePresence>
           {showResultsZone && (
             <motion.div 
@@ -320,7 +303,6 @@ export function AiUnifiedBar() {
         </AnimatePresence>
       </div>
 
-      {/* Quick examples - show when bar is open and no query/results */}
       <AnimatePresence>
         {isBarOpen && !localQuery && !hasResults && !isLoading && (
           <motion.div
