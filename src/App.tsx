@@ -111,6 +111,7 @@ const AdminAnnouncements = lazy(() => import("./pages/admin/AdminAnnouncements")
 const AdminFaq = lazy(() => import("./pages/admin/AdminFaq"));
 const FormationGenerator = lazy(() => import("./pages/admin/FormationGenerator"));
 const AdminWidgets = lazy(() => import("./pages/admin/AdminWidgets"));
+const AdminFeatureFlags = lazy(() => import("./pages/admin/AdminFeatureFlags"));
 const StatiaBuilderAdminPage = lazy(() => import("./statia/pages/StatiaBuilderAdminPage"));
 const StatiaValidatorPage = lazy(() => import("./statia/pages/StatiaValidatorPage"));
 const StatiaBuilderAgencyPage = lazy(() => import("./statia/pages/StatiaBuilderAgencyPage"));
@@ -372,6 +373,7 @@ function AppContent() {
           <Route path="/admin/statia-builder" element={<Navigate to="/admin/statia-by-bij" replace />} />
           <Route path="/admin/formation-generator" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><FormationGenerator /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/widgets" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminWidgets /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/admin/feature-flags" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminFeatureFlags /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* GESTION DE PROJET (ex Apogée Tickets) */}
