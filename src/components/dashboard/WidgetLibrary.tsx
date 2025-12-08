@@ -94,7 +94,7 @@ export function WidgetLibrary() {
 
   const [search, setSearch] = useState('');
   const [selectedType, setSelectedType] = useState<WidgetType | 'all'>('all');
-  const [showLocked, setShowLocked] = useState(true);
+  const [showLocked, setShowLocked] = useState(false);
 
   const activeWidgetIds = useMemo(() => 
     new Set(userWidgets?.map(w => w.template_id) ?? []),
