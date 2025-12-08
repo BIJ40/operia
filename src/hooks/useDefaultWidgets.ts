@@ -16,12 +16,12 @@ interface DefaultWidgetConfig {
   forAll?: boolean; // Widget disponible pour tous les utilisateurs
 }
 
-// Widget Favoris par défaut pour TOUS les utilisateurs
+// Widget Favoris par défaut pour TOUS les utilisateurs (ajouté même si l'utilisateur a déjà des widgets)
 const UNIVERSAL_WIDGETS: DefaultWidgetConfig[] = [
   { templateModuleSource: 'Core.favoris', row: 0, col: 0, forAll: true },
 ];
 
-// Widgets par défaut pour N2+ avec pilotage_agence
+// Widgets par défaut pour N2+ avec pilotage_agence (seulement pour nouveaux utilisateurs)
 const PILOTAGE_WIDGETS: DefaultWidgetConfig[] = [
   { templateModuleSource: 'StatIA.indicateurs_globaux', row: 0, col: 4 },
   { templateModuleSource: 'RH.collaborators', row: 0, col: 8 },
@@ -38,25 +38,29 @@ export function useDefaultWidgets() {
   useEffect(() => {
     if (!user || isLoading || hasInitialized.current) return;
     
-    // Si l'utilisateur a déjà des widgets, ne pas ajouter les defaults
-    if (userWidgets && userWidgets.length > 0) {
-      hasInitialized.current = true;
-      return;
-    }
-
     const initializeDefaultWidgets = async () => {
       hasInitialized.current = true;
       
       const userLevel = globalRole ? GLOBAL_ROLES[globalRole] : 0;
       const hasPilotageAgence = hasModule('pilotage_agence');
+      const existingModuleSources = new Set(
+        userWidgets?.map(w => w.template?.module_source).filter(Boolean) || []
+      );
       
-      // Construire la liste des widgets à ajouter
-      let widgetsToAdd = [...UNIVERSAL_WIDGETS];
+      // Toujours ajouter les widgets universels s'ils n'existent pas déjà
+      const universalToAdd = UNIVERSAL_WIDGETS.filter(
+        w => !existingModuleSources.has(w.templateModuleSource)
+      );
       
-      // Ajouter les widgets pilotage pour N2+ avec le module
-      if (userLevel >= 2 && hasPilotageAgence) {
-        widgetsToAdd = [...widgetsToAdd, ...PILOTAGE_WIDGETS];
+      // Pour les nouveaux utilisateurs (pas de widgets), ajouter aussi les widgets pilotage
+      let pilotageToAdd: DefaultWidgetConfig[] = [];
+      if ((!userWidgets || userWidgets.length === 0) && userLevel >= 2 && hasPilotageAgence) {
+        pilotageToAdd = PILOTAGE_WIDGETS;
       }
+      
+      const widgetsToAdd = [...universalToAdd, ...pilotageToAdd];
+      
+      if (widgetsToAdd.length === 0) return;
       
       // Récupérer les templates
       const moduleSources = widgetsToAdd.map(w => w.templateModuleSource);
