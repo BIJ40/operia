@@ -94,34 +94,30 @@ export function WidgetLibrary() {
 
   const [search, setSearch] = useState('');
   const [selectedType, setSelectedType] = useState<WidgetType | 'all'>('all');
-  const [showLocked, setShowLocked] = useState(false);
 
   const activeWidgetIds = useMemo(() => 
     new Set(userWidgets?.map(w => w.template_id) ?? []),
     [userWidgets]
   );
 
+  // Only show eligible widgets - locked widgets are never displayed
   const filteredEligibility = useMemo(() => {
     if (!eligibilityList) return [];
     
     return eligibilityList.filter(e => {
+      if (!e.isEligible) return false; // Never show locked widgets
+      
       const t = e.template;
       const matchesSearch = search === '' || 
         t.name.toLowerCase().includes(search.toLowerCase()) ||
         t.description?.toLowerCase().includes(search.toLowerCase());
       const matchesType = selectedType === 'all' || t.type === selectedType;
-      const matchesLockFilter = showLocked || e.isEligible;
-      return matchesSearch && matchesType && matchesLockFilter;
+      return matchesSearch && matchesType;
     });
-  }, [eligibilityList, search, selectedType, showLocked]);
+  }, [eligibilityList, search, selectedType]);
 
   const eligibleCount = useMemo(() => 
     eligibilityList?.filter(e => e.isEligible).length ?? 0,
-    [eligibilityList]
-  );
-
-  const lockedCount = useMemo(() => 
-    eligibilityList?.filter(e => !e.isEligible).length ?? 0,
     [eligibilityList]
   );
 
@@ -166,20 +162,6 @@ export function WidgetLibrary() {
           <div className="w-3 h-3 rounded-full bg-emerald-500" />
           <span className="text-sm font-medium">{eligibleCount} widget(s) disponible(s)</span>
         </div>
-        {lockedCount > 0 && (
-          <div className="flex items-center gap-2">
-            <Lock className="w-3 h-3 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">{lockedCount} widget(s) verrouillé(s)</span>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-6 text-xs"
-              onClick={() => setShowLocked(!showLocked)}
-            >
-              {showLocked ? 'Masquer' : 'Afficher'}
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* Search & Filters */}
