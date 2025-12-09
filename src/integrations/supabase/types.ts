@@ -2876,6 +2876,8 @@ export type Database = {
           agent_id: string | null
           agent_name: string | null
           closed_at: string | null
+          closed_by: string | null
+          closed_reason: string | null
           created_at: string
           id: string
           notified_at: string | null
@@ -2889,6 +2891,8 @@ export type Database = {
           agent_id?: string | null
           agent_name?: string | null
           closed_at?: string | null
+          closed_by?: string | null
+          closed_reason?: string | null
           created_at?: string
           id?: string
           notified_at?: string | null
@@ -2902,6 +2906,8 @@ export type Database = {
           agent_id?: string | null
           agent_name?: string | null
           closed_at?: string | null
+          closed_by?: string | null
+          closed_reason?: string | null
           created_at?: string
           id?: string
           notified_at?: string | null
