@@ -27,12 +27,14 @@ const ApporteurEditorContext = createContext<ApporteurEditorContextType | null>(
 
 export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
   const [blocks, setBlocks] = useState<Block[]>([]);
-  const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const { hasGlobalRole, hasModuleOption } = useAuth();
   
   // V2: Remplace isAdmin par vérification de rôle + option module
   const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('help_academy', 'edition');
+  
+  // Aligner avec EditorContext: isEditMode = canEdit automatiquement
+  const isEditMode = canEdit;
 
   const CACHE_KEY = 'apporteur_blocks_cache';
   const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -307,17 +309,11 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
     setBlocks([]);
   }, [canEdit]);
 
+  // toggleEditMode est maintenu pour compatibilité mais ne fait rien
+  // car isEditMode = canEdit automatiquement
   const toggleEditMode = useCallback(() => {
-    if (!canEdit) return;
-    setIsEditMode(prev => {
-      const newValue = !prev;
-      // Synchroniser avec localStorage
-      localStorage.setItem('editMode', String(newValue));
-      // Émettre un événement personnalisé
-      window.dispatchEvent(new Event('editModeChange'));
-      return newValue;
-    });
-  }, [canEdit]);
+    // No-op: isEditMode est maintenant dérivé de canEdit
+  }, []);
 
   return (
     <ApporteurEditorContext.Provider value={{
