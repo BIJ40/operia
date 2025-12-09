@@ -6,8 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAllRoyaltyModels, useSaveRoyaltyConfig, useDeleteRoyaltyModel } from '../hooks/useRoyaltyConfig';
 import { DEFAULT_TIERS, formatCurrency, formatPercentage, calculateRoyalties } from '../utils/royaltyCalculator';
-import { Calculator, Plus, Trash2, Save, RotateCcw, Layers, X } from 'lucide-react';
+import { Calculator, Plus, Trash2, Save, RotateCcw, Layers, X, Receipt } from 'lucide-react';
 import { toast } from 'sonner';
+import { FranchiseurPageHeader } from '../components/layout/FranchiseurPageHeader';
+import { FranchiseurPageContainer } from '../components/layout/FranchiseurPageContainer';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface TierForm {
   from_amount: number;
@@ -20,13 +23,10 @@ export default function FranchiseurRoyalties() {
   const saveConfig = useSaveRoyaltyConfig();
   const deleteModel = useDeleteRoyaltyModel();
 
-  // State for new model creation
   const [newModelName, setNewModelName] = useState('');
   const [tiers, setTiers] = useState<TierForm[]>(
     DEFAULT_TIERS.map(t => ({ ...t }))
   );
-
-  // State for simulator
   const [caInput, setCaInput] = useState('');
   const [simulationResult, setSimulationResult] = useState<ReturnType<typeof calculateRoyalties> | null>(null);
 
@@ -64,7 +64,6 @@ export default function FranchiseurRoyalties() {
       return;
     }
 
-    // Validate tiers
     for (let i = 0; i < tiers.length; i++) {
       const tier = tiers[i];
       if (tier.percentage <= 0 || tier.percentage > 100) {
@@ -78,7 +77,6 @@ export default function FranchiseurRoyalties() {
     }
 
     try {
-      // Use a nil UUID for template models (not tied to a specific agency)
       const templateAgencyId = '00000000-0000-0000-0000-000000000000';
       await saveConfig.mutateAsync({
         agencyId: templateAgencyId,
@@ -92,7 +90,7 @@ export default function FranchiseurRoyalties() {
       });
       toast.success(`Modèle "${newModelName}" créé avec succès`);
       setNewModelName('');
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors de la création du modèle');
     }
   };
@@ -109,16 +107,27 @@ export default function FranchiseurRoyalties() {
 
   if (modelsLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
+      <FranchiseurPageContainer>
+        <div className="space-y-4">
+          <Skeleton className="h-9 w-64" />
+          <Skeleton className="h-5 w-80" />
+        </div>
+        <Skeleton className="h-64 w-full rounded-2xl" />
+        <Skeleton className="h-96 w-full rounded-2xl" />
+      </FranchiseurPageContainer>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <FranchiseurPageContainer>
+      <FranchiseurPageHeader
+        title="Gestion des Redevances"
+        subtitle="Configurez les barèmes et simulez les calculs de redevances"
+        icon={<Receipt className="h-6 w-6 text-helpconfort-blue" />}
+      />
+
       {/* Existing Models */}
-      <Card className="border-l-4 border-l-helpconfort-blue">
+      <Card className="rounded-2xl border-l-4 border-l-helpconfort-blue">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Layers className="h-5 w-5" />
@@ -134,9 +143,9 @@ export default function FranchiseurRoyalties() {
               Aucun barème créé. Utilisez le formulaire ci-dessous pour en créer un.
             </p>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {allModels.map((model) => (
-                <Card key={model.model_name} className="bg-muted/30 relative group">
+                <Card key={model.model_name} className="bg-muted/30 relative group rounded-xl">
                   {model.model_name !== 'Dégressif 2025' && (
                     <Button
                       variant="ghost"
@@ -153,10 +162,10 @@ export default function FranchiseurRoyalties() {
                     </Button>
                   )}
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base font-medium">
+                    <CardTitle className="text-base font-medium flex items-center gap-2">
                       {model.model_name}
                       {model.model_name === 'Dégressif 2025' && (
-                        <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
+                        <span className="text-xs bg-helpconfort-blue/10 text-helpconfort-blue px-2 py-0.5 rounded">
                           Défaut
                         </span>
                       )}
@@ -192,7 +201,7 @@ export default function FranchiseurRoyalties() {
       </Card>
 
       {/* Create New Model */}
-      <Card className="border-l-4 border-l-emerald-500">
+      <Card className="rounded-2xl border-l-4 border-l-emerald-500">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Plus className="h-5 w-5" />
@@ -216,64 +225,66 @@ export default function FranchiseurRoyalties() {
 
           <div className="space-y-2">
             <Label>Tranches de CA</Label>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>De (€)</TableHead>
-                  <TableHead>À (€)</TableHead>
-                  <TableHead>Pourcentage (%)</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tiers.map((tier, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        value={tier.from_amount}
-                        onChange={(e) => updateTier(index, 'from_amount', Number(e.target.value))}
-                        min={0}
-                        className="w-32"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        value={tier.to_amount ?? ''}
-                        onChange={(e) => updateTier(index, 'to_amount', e.target.value ? Number(e.target.value) : null)}
-                        placeholder="∞"
-                        min={tier.from_amount + 1}
-                        className="w-32"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        value={tier.percentage}
-                        onChange={(e) => updateTier(index, 'percentage', Number(e.target.value))}
-                        min={0}
-                        max={100}
-                        step={0.1}
-                        className="w-24"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      {tiers.length > 1 && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeTier(index)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>De (€)</TableHead>
+                    <TableHead>À (€)</TableHead>
+                    <TableHead>Pourcentage (%)</TableHead>
+                    <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {tiers.map((tier, index) => (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          value={tier.from_amount}
+                          onChange={(e) => updateTier(index, 'from_amount', Number(e.target.value))}
+                          min={0}
+                          className="w-28"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          value={tier.to_amount ?? ''}
+                          onChange={(e) => updateTier(index, 'to_amount', e.target.value ? Number(e.target.value) : null)}
+                          placeholder="∞"
+                          min={tier.from_amount + 1}
+                          className="w-28"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          value={tier.percentage}
+                          onChange={(e) => updateTier(index, 'percentage', Number(e.target.value))}
+                          min={0}
+                          max={100}
+                          step={0.1}
+                          className="w-24"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {tiers.length > 1 && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeTier(index)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
 
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={addTier}>
@@ -282,7 +293,7 @@ export default function FranchiseurRoyalties() {
               </Button>
               <Button variant="ghost" size="sm" onClick={resetToDefault}>
                 <RotateCcw className="h-4 w-4 mr-1" />
-                Réinitialiser au standard
+                Réinitialiser
               </Button>
             </div>
           </div>
@@ -299,7 +310,7 @@ export default function FranchiseurRoyalties() {
       </Card>
 
       {/* Simulator */}
-      <Card className="border-l-4 border-l-amber-500">
+      <Card className="rounded-2xl border-l-4 border-l-amber-500">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calculator className="h-5 w-5" />
@@ -310,7 +321,7 @@ export default function FranchiseurRoyalties() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex gap-4 items-end max-w-md">
+          <div className="flex flex-col sm:flex-row gap-4 items-end max-w-md">
             <div className="flex-1">
               <Label htmlFor="caSimulation">CA annuel (€)</Label>
               <Input
@@ -328,7 +339,7 @@ export default function FranchiseurRoyalties() {
           </div>
 
           {simulationResult && (
-            <div className="mt-4 p-4 bg-muted/50 rounded-lg space-y-4">
+            <div className="mt-4 p-4 bg-muted/50 rounded-xl space-y-4">
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <p className="text-sm text-muted-foreground">CA Total</p>
@@ -336,7 +347,7 @@ export default function FranchiseurRoyalties() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Redevance</p>
-                  <p className="text-lg font-semibold text-primary">{formatCurrency(simulationResult.totalRoyalty)}</p>
+                  <p className="text-lg font-semibold text-helpconfort-blue">{formatCurrency(simulationResult.totalRoyalty)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Taux effectif</p>
@@ -376,6 +387,6 @@ export default function FranchiseurRoyalties() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </FranchiseurPageContainer>
   );
 }
