@@ -24,14 +24,14 @@ interface PilotageModule {
   icon: LucideIcon;
   href: string;
   badge?: string | number;
-  category: 'statistiques' | 'autres';
+  category: 'statistiques' | 'autre' | 'autres';
 }
 
 const pilotageModules: PilotageModule[] = [
   // STATISTIQUES
   {
-    id: 'stats_accueil',
-    title: 'Vue d\'ensemble',
+    id: 'stats_general',
+    title: 'Général',
     description: 'KPI généraux de votre agence',
     icon: BarChart3,
     href: ROUTES.pilotage.indicateurs,
@@ -39,7 +39,7 @@ const pilotageModules: PilotageModule[] = [
   },
   {
     id: 'stats_apporteurs',
-    title: 'CA par Apporteurs',
+    title: 'Apporteurs',
     description: 'Analyse du CA par source d\'affaires',
     icon: TrendingUp,
     href: ROUTES.pilotage.indicateursApporteurs,
@@ -47,7 +47,7 @@ const pilotageModules: PilotageModule[] = [
   },
   {
     id: 'stats_univers',
-    title: 'CA par Univers',
+    title: 'Univers',
     description: 'Répartition du CA par métier',
     icon: PieChart,
     href: ROUTES.pilotage.indicateursUnivers,
@@ -55,13 +55,21 @@ const pilotageModules: PilotageModule[] = [
   },
   {
     id: 'stats_techniciens',
-    title: 'Performances Techniciens',
+    title: 'Techniciens',
     description: 'CA et activité par technicien',
     icon: Users,
     href: ROUTES.pilotage.indicateursTechniciens,
     category: 'statistiques',
   },
-  // AUTRES
+  // AUTRE
+  {
+    id: 'gestion_sav',
+    title: 'Gestion des SAV',
+    description: 'Suivi et gestion des SAV',
+    icon: ListTodo,
+    href: ROUTES.pilotage.indicateursSav,
+    category: 'autre',
+  },
   {
     id: 'maintenance_preventive',
     title: 'Maintenance préventive',
@@ -94,6 +102,11 @@ const PILOTAGE_GROUPS = {
     title: 'Statistiques',
     icon: BarChart3,
     colorClass: 'text-helpconfort-blue',
+  },
+  autre: {
+    title: 'Autre',
+    icon: ListTodo,
+    colorClass: 'text-helpconfort-orange',
   },
   autres: {
     title: 'Autres',
@@ -136,11 +149,14 @@ export default function PilotageIndex() {
   const modulesByCategory = useMemo(() => {
     const groups: Record<string, PilotageModule[]> = {
       statistiques: [],
+      autre: [],
       autres: [],
     };
     
     pilotageModules.forEach(module => {
-      groups[module.category].push(module);
+      if (groups[module.category]) {
+        groups[module.category].push(module);
+      }
     });
     
     return groups;
@@ -158,6 +174,26 @@ export default function PilotageIndex() {
           defaultOpen={true}
         >
           {modulesByCategory.statistiques.map(module => (
+            <PilotageTileCard
+              key={module.id}
+              module={module}
+              title={getModuleTitle(module)}
+              badge={module.badge}
+              isAdmin={isPlatformAdmin}
+            />
+          ))}
+        </CollapsibleSection>
+      )}
+
+      {/* Autre */}
+      {modulesByCategory.autre.length > 0 && (
+        <CollapsibleSection
+          id="pilotage_autre"
+          title={PILOTAGE_GROUPS.autre.title}
+          icon={PILOTAGE_GROUPS.autre.icon}
+          colorClass={PILOTAGE_GROUPS.autre.colorClass}
+        >
+          {modulesByCategory.autre.map(module => (
             <PilotageTileCard
               key={module.id}
               module={module}

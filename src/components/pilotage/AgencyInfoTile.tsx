@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Building2, MapPin, Calendar, Users, Save, Loader2, Stamp } from "lucide-react";
+import { Building2, MapPin, Calendar, Users, Save, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -331,19 +331,6 @@ export function AgencyInfoTile({ hideHeader = false }: AgencyInfoTileProps) {
             )}
           </div>
 
-          {/* Tampon de l'agence */}
-          <div className="space-y-3">
-            <Label className="flex items-center gap-2">
-              <Stamp className="h-4 w-4 text-helpconfort-blue" />
-              Tampon / Cachet de l'agence
-            </Label>
-            <p className="text-xs text-muted-foreground">
-              Ce tampon sera utilisé pour les documents RH générés automatiquement
-            </p>
-            {agencyId && (
-              <AgencyStampUpload agencyId={agencyId} disabled={false} />
-            )}
-          </div>
         </div>
       </CardContent>
     </Card>
