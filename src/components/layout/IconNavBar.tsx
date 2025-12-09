@@ -171,6 +171,10 @@ export function IconNavBar() {
   const { globalRole, agence, hasModule } = useAuth();
   const caps = getRoleCapabilities(globalRole);
   const [openPopover, setOpenPopover] = useState<string | null>(null);
+  
+  // Déterminer le niveau du rôle pour affichage conditionnel
+  const roleLevel = globalRole ? (globalRole === 'franchisor_user' ? 3 : globalRole === 'franchisor_admin' ? 4 : 0) : 0;
+  const isFranchiseurOnly = roleLevel === 3 || roleLevel === 4;
 
   const filteredSections = navSections.filter(section => {
     // Module check
@@ -199,6 +203,32 @@ export function IconNavBar() {
       {filteredSections.map((section) => {
         const hasDropdown = section.items.length > 0;
         const active = isActive(section.indexUrl);
+        
+        // Pour N3/N4 franchiseur: afficher les items du menu Franchiseur directement (sans popover)
+        if (isFranchiseurOnly && section.id === 'franchiseur' && hasDropdown) {
+          return (
+            <div key={section.id} className="flex items-center gap-1">
+              {section.items.map((item) => {
+                const Icon = item.icon;
+                const itemActive = location.pathname === item.url;
+                return (
+                  <Link
+                    key={item.url}
+                    to={item.url}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all hover:bg-muted/50",
+                      itemActive && "bg-primary/10 text-primary"
+                    )}
+                    title={item.title}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span className="hidden md:inline">{item.title}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          );
+        }
 
         if (!hasDropdown) {
           // Simple link (Accueil)
