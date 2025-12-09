@@ -54,6 +54,7 @@ const IndicateursSAV = lazy(() => import("./apogee-connect/pages/IndicateursSAV"
 const PlanningHebdo = lazy(() => import("./apogee-connect/pages/PlanningHebdo"));
 const TechInterventionsPage = lazy(() => import("./modules/interventions_rt/pages/TechInterventionsPage"));
 const RtRunnerPage = lazy(() => import("./modules/interventions_rt/pages/RtRunnerPage"));
+const TechnicienIndex = lazy(() => import("./modules/technicien/pages/TechnicienIndex"));
 const EquipePage = lazy(() => import("./pages/EquipePage"));
 const Messages = lazy(() => import("./pages/Messages"));
 
@@ -248,6 +249,12 @@ function AppContent() {
           {/* Module RT Technicien (isolé) */}
           <Route path="/hc-agency/tech-interventions" element={<RoleGuard minRole="franchisee_user"><TechInterventionsPage /></RoleGuard>} />
           <Route path="/hc-agency/tech-interventions/rt/:interventionId" element={<RoleGuard minRole="franchisee_user"><RtRunnerPage /></RoleGuard>} />
+          
+          {/* ============================================ */}
+          {/* MODULE TECHNICIEN - Hub + Sous-pages */}
+          {/* ============================================ */}
+          <Route path="/technicien" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><TechnicienIndex /></ModuleGuard></RoleGuard></MainLayout>} />
+          {/* Futures routes BI et PV seront ajoutées ici */}
           
           {/* Équipe (legacy - redirects to collaborateurs) */}
           <Route path="/hc-agency/equipe" element={<Navigate to="/hc-agency/collaborateurs" replace />} />

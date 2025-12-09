@@ -179,6 +179,17 @@ export const ROUTES = {
   messages: '/messages',
 
   // ============================================
+  // TECHNICIEN
+  // ============================================
+  technicien: {
+    index: '/technicien',
+    bonIntervention: '/technicien/bon-intervention',
+    bonInterventionDetail: (interventionId: string) => `/technicien/bon-intervention/${interventionId}`,
+    pvApporteur: '/technicien/pv-apporteur',
+    pvApporteurDetail: (dossierId: string) => `/technicien/pv-apporteur/${dossierId}`,
+  },
+
+  // ============================================
   // DEV (Admin only)
   // ============================================
   dev: {
