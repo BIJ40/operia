@@ -9,6 +9,8 @@ import { Loader2, FolderOpen } from 'lucide-react';
 import { useMyDocuments } from '@/hooks/useCollaboratorDocuments';
 import { useQueryClient } from '@tanstack/react-query';
 import { HRDocumentViewer } from '@/components/collaborators/documents';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { ROUTES } from '@/config/routes';
 
 export default function MonCoffreRH() {
   const queryClient = useQueryClient();
@@ -34,7 +36,13 @@ export default function MonCoffreRH() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <PageHeader
+        title="Mon Coffre RH"
+        subtitle="Consultez vos documents RH personnels"
+        backTo={ROUTES.rh.index}
+        backLabel="Espace RH"
+      />
       {/* Bloc Coffre-fort documents - Finder RH */}
       <Card className="border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-helpconfort-blue/5 via-background to-background">
         <CardContent className="pt-6">
