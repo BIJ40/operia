@@ -248,10 +248,6 @@ export function MainHeader() {
 
                 {/* Actions droite */}
                 <div className="flex items-center gap-1 ml-auto">
-                  {/* Barre de recherche IA */}
-                  <div className="hidden lg:flex items-center mr-2">
-                    <UnifiedSearchFloatingBar />
-                  </div>
                   {/* RH Notifications - seule cloche */}
                   <RHNotificationBadge />
 
@@ -327,6 +323,11 @@ export function MainHeader() {
                     {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                   </Button>
                 </div>
+              </div>
+
+              {/* Ligne 2 : Barre de recherche IA */}
+              <div className="hidden lg:flex items-center pb-2">
+                <UnifiedSearchFloatingBar />
               </div>
             </div>
           </div>
