@@ -53,12 +53,21 @@ export function usePersonalKpis() {
       const isTechnicien = roleAgence.includes('technic') || roleAgence.includes('tech');
       const isAssistante = roleAgence.includes('assist') || roleAgence.includes('secr') || roleAgence.includes('admin');
 
+      console.log('[usePersonalKpis] Profile:', { apogeeUserId, roleAgence, isTechnicien, isAssistante });
+
       const now = new Date();
       const monthStart = startOfMonth(now);
       const monthEnd = endOfMonth(now);
 
       // Charger les données via DataService (même source que StatIA)
       const apiData = await DataService.loadAllData(true);
+      
+      console.log('[usePersonalKpis] Data loaded:', {
+        factures: apiData.factures?.length || 0,
+        interventions: apiData.interventions?.length || 0,
+        projects: apiData.projects?.length || 0,
+        users: apiData.users?.length || 0,
+      });
 
       if (isTechnicien) {
         return {
