@@ -1,4 +1,4 @@
-import { Kanban, ListChecks, Settings, Star, AlertTriangle } from 'lucide-react';
+import { Kanban, Settings, Star, AlertTriangle } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { IndexTile, type IndexTileProps } from '@/components/ui/index-tile';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,12 +25,6 @@ const PROJECT_MODULES: ProjectModule[] = [
     description: 'Tickets nécessitant des informations',
     icon: AlertTriangle,
     href: ROUTES.projects.incomplete,
-  },
-  {
-    title: 'Classifier',
-    description: 'Classifier et qualifier les tickets',
-    icon: ListChecks,
-    href: ROUTES.projects.classify,
   },
   {
     title: 'Review',
