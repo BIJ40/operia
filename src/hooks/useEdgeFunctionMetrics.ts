@@ -31,7 +31,7 @@ const EDGE_FUNCTION_NAMES: Record<string, string> = {
   "notify-escalation": "Notify Escalation",
   "send-support-email": "Send Support Email",
   "test-sms": "Test SMS",
-  "auto-classify-modules": "Auto Classify Modules",
+  
   "analyze-payslip": "Analyze Payslip",
   "faq-search": "FAQ Search",
   "export-my-data": "Export My Data",

@@ -131,7 +131,7 @@ export const ROUTES = {
     review: '/projects/review',
     permissions: '/projects/permissions',
     duplicates: '/projects/doublons',
-    autoClassify: '/projects/auto-classify',
+    
   },
 
   // ============================================
