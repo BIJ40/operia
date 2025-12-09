@@ -21,7 +21,7 @@
 | Help Academy | ✅* | ✅* | ✅* | ✅* | ✅* | ✅ | ✅ |
 | Pilotage Agence | ✅* | ✅* | ✅* | ❌ | ❌ | ✅ | ✅ |
 | Support (créer tickets) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Console Support | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Console Support | ✅† | ✅† | ✅† | ✅† | ✅† | ✅ | ✅ |
 | Gestion de Projet | ✅* | ✅* | ✅* | ✅* | ✅* | ✅ | ✅ |
 | Espace Franchiseur | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
 | Administration | ❌ | ❌ | ❌ | ⚠️ | ⚠️ | ✅ | ✅ |
@@ -29,6 +29,7 @@
 **Légende:**
 - ✅ = Accès autorisé
 - ✅* = Accès conditionnel (module doit être activé)
+- ✅† = Accès si `support.options.agent = true` (Agent Support Externe)
 - ⚠️ = Accès partiel (voir détail)
 - ❌ = Accès refusé
 
@@ -50,10 +51,20 @@
 
 ### Module `support`
 
-| Option | Description | Rôle Min |
-|--------|-------------|----------|
-| `enabled` | Peut créer des tickets support | N0 |
-| `options.agent` | Accès console support (SA1/SA2/SA3) | N5 |
+| Option | Description | Rôle Min | Notes |
+|--------|-------------|----------|-------|
+| `enabled` | Peut créer des tickets support | N0 | Automatique pour tous |
+| `options.agent` | Accès console support (SA1/SA2/SA3) | **N0**† | Sur attribution manuelle |
+
+**†Note importante** : L'option `agent` peut être attribuée à **tout rôle** (y compris N0) pour créer un "Agent Support Externe". 
+Ce pattern permet à des intervenants externes (développeurs, consultants) d'accéder à la console support sans avoir de rôle métier dans la franchise.
+
+**Logique d'accès console** :
+```typescript
+canAccessSupportConsoleUI = (agent === true) || (globalRole >= N5)
+```
+
+Voir [support-levels.md](./support-levels.md#cas-dusage--agent-support-externe) pour plus de détails.
 
 ### Module `apogee_tickets`
 
