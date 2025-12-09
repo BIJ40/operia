@@ -174,6 +174,9 @@ export function IconNavBar() {
   
   // Déterminer si c'est un utilisateur N3/N4 (franchiseur uniquement)
   const isFranchiseurOnly = globalRole === 'franchisor_user' || globalRole === 'franchisor_admin';
+  
+  // Debug log pour vérifier
+  console.log('[IconNavBar] globalRole:', globalRole, 'isFranchiseurOnly:', isFranchiseurOnly);
 
   const filteredSections = navSections.filter(section => {
     // Pour N3/N4: on ne garde que Accueil, Franchiseur et Support
