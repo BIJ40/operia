@@ -111,25 +111,45 @@ export default function SupportIndex() {
 
       {/* 3 Column Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {/* Column 1: Ouvrir un ticket */}
+        {/* Column 1: Chat IA avec contextes */}
         <Card className="lg:col-span-1 border-l-4 border-l-helpconfort-blue">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <PlusCircle className="w-5 h-5 text-primary" />
-              Ouvrir un Ticket
+              <MessageSquare className="w-5 h-5 text-helpconfort-blue" />
+              Chat IA
             </CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Posez vos questions, l'IA vous répond instantanément
+            </p>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Créez une nouvelle demande de support pour obtenir de l'aide personnalisée de notre équipe.
+              Sélectionnez un domaine pour poser votre question :
             </p>
-            <Button 
-              onClick={() => setShowCreateDialog(true)}
-              className="w-full"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Créer un ticket
-            </Button>
+            
+            {/* Contextes sur 2 colonnes */}
+            <div className="grid grid-cols-2 gap-2">
+              {allowedContexts.map((ctx) => {
+                const labels: Record<string, string> = {
+                  apogee: 'Apogée',
+                  helpconfort: 'HelpConfort',
+                  apporteurs: 'Apporteurs',
+                };
+                return (
+                  <Button
+                    key={ctx}
+                    variant="outline"
+                    size="sm"
+                    className="justify-start text-xs h-auto py-2"
+                    onClick={() => {
+                      // TODO: ouvrir le chat avec ce contexte
+                    }}
+                  >
+                    {labels[ctx] || ctx}
+                  </Button>
+                );
+              })}
+            </div>
             
             <div className="pt-4 border-t">
               <p className="text-xs text-muted-foreground mb-2">
@@ -138,11 +158,11 @@ export default function SupportIndex() {
               <ul className="text-xs text-muted-foreground space-y-1">
                 <li className="flex items-center gap-2">
                   <Clock className="w-3 h-3 text-primary" />
-                  Réponse sous 24h ouvrées
+                  Réponse instantanée 24/7
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="w-3 h-3 text-primary" />
-                  Suivi personnalisé
+                  Basé sur la documentation officielle
                 </li>
               </ul>
             </div>
