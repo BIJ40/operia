@@ -946,24 +946,28 @@ export const caMensuelSegmente: StatDefinition = {
 
 /**
  * Dû Global TTC Apporteurs
- * Montant TTC restant à encaisser sur les factures AVEC apporteur uniquement
- * Règle: exclure factures sans apporteur, calculer reste = TTC - paiements
+ * RÈGLE MÉTIER CORRECTE: Encours Total - Encours Clients Directs
+ * Source de vérité: data.calcReglementsReste (déjà calculé par l'API Apogée)
  */
 export const apporteursDuGlobalTtc: StatDefinition = {
   id: 'apporteurs_du_global_ttc',
   label: 'Dû Global TTC Apporteurs',
-  description: 'Montant TTC restant à encaisser sur les factures avec apporteur',
+  description: 'Encours TTC des factures apporteurs = Encours Total - Encours Clients Directs',
   category: 'apporteur',
-  source: ['factures', 'projects', 'clients'],
+  source: ['factures', 'projects'],
   aggregation: 'sum',
   unit: '€',
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const { factures, projects } = data;
     
     const projectsById = indexProjectsById(projects);
-    let totalDu = 0;
-    let recordCount = 0;
-    const details: Array<{ ref: string; projectRef: string; restantTTC: number }> = [];
+    
+    // Accumulateurs
+    let encoursTotal = 0;      // Toutes les factures
+    let encoursDirect = 0;     // Factures clients directs (sans apporteur)
+    let countTotal = 0;
+    let countDirect = 0;
+    let countApporteur = 0;
     
     for (const facture of factures) {
       const meta = extractFactureMeta(facture);
@@ -975,53 +979,47 @@ export const apporteursDuGlobalTtc: StatDefinition = {
       const date = meta.date ? new Date(meta.date) : null;
       if (!date || date < params.dateRange.start || date > params.dateRange.end) continue;
       
-      // Vérifier que la facture a un apporteur (via le projet)
+      // SOURCE DE VÉRITÉ: data.calcReglementsReste (API Apogée)
+      const reste = facture.data?.calcReglementsReste ?? facture.calcReglementsReste ?? 0;
+      
+      // Ne compter que les factures avec un reste > 0
+      if (reste <= 0) continue;
+      
+      // Accumuler l'encours total
+      encoursTotal += reste;
+      countTotal++;
+      
+      // Déterminer si client direct (sans apporteur)
       const projectId = facture.projectId || facture.project_id;
       const project = projectId ? projectsById.get(projectId) : null;
       const apporteurId = project?.data?.commanditaireId || project?.commanditaireId;
       
-      // EXCLUSION: factures sans apporteur
-      if (!apporteurId) continue;
-      
-      // Calculer le montant TTC de la facture
-      const totalTTC = facture.totalTTC || facture.data?.totalTTC || 
-        (meta.montantBrutHT * 1.2); // fallback TVA 20%
-      
-      // Calculer le montant déjà payé TTC
-      const payments = facture.payments || facture.data?.payments || [];
-      const paidTTC = Array.isArray(payments) 
-        ? payments.reduce((sum: number, p: any) => sum + (p.amount || p.montant || 0), 0)
-        : 0;
-      
-      // Calculer le reste à payer
-      const restantDu = Math.max(totalTTC - paidTTC, 0);
-      
-      // Ne compter que les factures avec un reste > 0
-      if (restantDu > 0) {
-        totalDu += restantDu;
-        recordCount++;
-        
-        if (details.length < 20) { // garder les 20 premiers pour debug
-          details.push({
-            ref: facture.reference || facture.ref || `F-${facture.id}`,
-            projectRef: project?.ref || projectId || 'N/A',
-            restantTTC: restantDu,
-          });
-        }
+      // Si PAS d'apporteur = client direct
+      if (!apporteurId) {
+        encoursDirect += reste;
+        countDirect++;
+      } else {
+        countApporteur++;
       }
     }
     
+    // Dû Apporteurs = Encours Total - Encours Clients Directs
+    const duApporteurs = Math.max(encoursTotal - encoursDirect, 0);
+    
     return {
-      value: totalDu,
+      value: duApporteurs,
       metadata: {
         computedAt: new Date(),
         source: 'factures',
-        recordCount,
+        recordCount: countApporteur,
       },
       breakdown: {
-        totalDuTTC: totalDu,
-        nbFacturesAvecReste: recordCount,
-        details,
+        encoursTotal,
+        encoursDirect,
+        duApporteurs,
+        nbFacturesTotal: countTotal,
+        nbFacturesDirectes: countDirect,
+        nbFacturesApporteurs: countApporteur,
       }
     };
   }
