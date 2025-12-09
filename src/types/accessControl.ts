@@ -6,7 +6,7 @@
  */
 
 import { GlobalRole, GLOBAL_ROLES, hasMinimumRole } from './globalRoles';
-import { ModuleKey, EnabledModules, isModuleEnabled, isModuleOptionEnabled, canAccessModule } from './modules';
+import { ModuleKey, EnabledModules, isModuleEnabled, isModuleOptionEnabled, canAccessModule, MODULE_DEFINITIONS } from './modules';
 
 export interface AccessControlContext {
   globalRole: GlobalRole | null;
@@ -23,6 +23,8 @@ export function hasGlobalRole(ctx: AccessControlContext, requiredRole: GlobalRol
 /**
  * Vérifie si l'utilisateur a accès à un module
  * RÈGLE ABSOLUE: superadmin et platform_admin ont TOUS les modules, toujours
+ * RÈGLE: Si un module est dans defaultForRoles pour le rôle de l'utilisateur,
+ *        il est considéré comme accessible même sans activation explicite
  */
 export function hasModule(ctx: AccessControlContext, moduleKey: ModuleKey): boolean {
   // RÈGLE ABSOLUE: N5+ (platform_admin, superadmin) ont accès à TOUS les modules
@@ -34,8 +36,21 @@ export function hasModule(ctx: AccessControlContext, moduleKey: ModuleKey): bool
   // 1. Vérifier que le rôle permet l'accès au module
   if (!canAccessModule(ctx.globalRole, moduleKey)) return false;
   
-  // 2. Vérifier que le module est explicitement activé
-  return isModuleEnabled(ctx.enabledModules, moduleKey);
+  // 2. Vérifier si le module est explicitement activé
+  if (isModuleEnabled(ctx.enabledModules, moduleKey)) {
+    return true;
+  }
+  
+  // 3. NOUVEAU: Si le module est dans defaultForRoles pour ce rôle, 
+  //    considérer comme accessible (support des utilisateurs sans enabled_modules complet)
+  if (ctx.globalRole) {
+    const moduleDef = MODULE_DEFINITIONS.find(m => m.key === moduleKey);
+    if (moduleDef?.defaultForRoles.includes(ctx.globalRole)) {
+      return true;
+    }
+  }
+  
+  return false;
 }
 
 /**
