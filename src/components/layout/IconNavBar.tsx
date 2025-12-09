@@ -112,8 +112,8 @@ const navSections: NavSection[] = [
     icon: iconSupport,
     indexUrl: ROUTES.support.index,
     items: [
-      { title: "Centre d'aide", url: ROUTES.support.helpcenter, icon: HelpCircle },
-      { title: 'Ouvrir un ticket', url: ROUTES.support.userTickets, icon: LifeBuoy },
+      { title: 'Support', url: ROUTES.support.index, icon: HelpCircle },
+      { title: 'Mes demandes', url: ROUTES.support.userTickets, icon: LifeBuoy },
       { title: 'Console Support', url: ROUTES.support.console, icon: Headset },
     ],
     accessKey: 'canAccessSupport',

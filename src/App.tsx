@@ -71,7 +71,6 @@ const QrAssetPage = lazy(() => import("./pages/QrAssetPage"));
 
 // Lazy loaded pages - Support
 const SupportIndex = lazy(() => import("./pages/SupportIndex"));
-const SupportUser = lazy(() => import("./pages/SupportUser"));
 const UserTickets = lazy(() => import("./pages/UserTickets"));
 const Faq = lazy(() => import("./pages/Faq"));
 
@@ -283,10 +282,8 @@ function AppContent() {
           {/* ============================================ */}
           {/* SUPPORT V2 - Unified Support System */}
           {/* ============================================ */}
-          {/* Support HUB - Accessible à tous les utilisateurs authentifiés */}
+          {/* Support HUB - Accessible à tous les utilisateurs authentifiés (avec Chat IA intégré) */}
           <Route path="/support" element={<MainLayout><RoleGuard><SupportIndex /></RoleGuard></MainLayout>} />
-          {/* Help Center - 3 columns (FAQ | Chat | Demands) */}
-          <Route path="/support/helpcenter" element={<MainLayout><RoleGuard><SupportUser /></RoleGuard></MainLayout>} />
           {/* User Tickets - Full ticket management */}
           <Route path="/support/mes-demandes" element={<MainLayout><RoleGuard><UserTickets /></RoleGuard></MainLayout>} />
           {/* Legacy route - redirect */}

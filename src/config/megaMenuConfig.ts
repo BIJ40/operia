@@ -256,7 +256,7 @@ export const SUPPORT_MENU: MegaMenuSection = {
   href: ROUTES.support.index,
   accessKey: 'canAccessSupport',
   links: [
-    { label: 'Centre d\'aide', href: ROUTES.support.helpcenter, icon: 'HelpCircle', description: 'FAQ et chat' },
+    { label: 'Support', href: ROUTES.support.index, icon: 'HelpCircle', description: 'Chat IA et assistance' },
     { label: 'Mes demandes', href: ROUTES.support.userTickets, icon: 'LifeBuoy', description: 'Suivi tickets' },
     { label: 'Console Support', href: ROUTES.support.console, icon: 'Headset', description: 'Traitement demandes', requiresSupportConsoleUI: true, minRole: 'franchisor_user' },
   ],

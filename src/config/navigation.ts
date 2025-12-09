@@ -193,18 +193,18 @@ export const NAV_GROUPS: NavGroup[] = [
     labelKey: 'support',
     items: [
       { 
-        title: 'Centre d\'aide', 
-        url: ROUTES.support.helpcenter, 
+        title: 'Support', 
+        url: ROUTES.support.index, 
         icon: HelpCircle, 
         scope: 'mes_demandes', 
-        description: 'Chat IA, FAQ et accès rapide'
+        description: 'Chat IA et assistance'
       },
       { 
-        title: 'Ouvrir un ticket', 
+        title: 'Mes demandes', 
         url: ROUTES.support.userTickets, 
         icon: LifeBuoy, 
         scope: 'mes_demandes', 
-        description: 'Créer une nouvelle demande de support' 
+        description: 'Gérer vos tickets de support' 
       },
       { 
         title: 'Console Support', 
@@ -415,7 +415,6 @@ export const PAGE_TITLES: Record<string, string> = {
   
   // Support (V2 routes)
   [ROUTES.support.index]: 'Support',
-  [ROUTES.support.helpcenter]: 'Centre d\'aide',
   [ROUTES.support.userTickets]: 'Mes demandes',
   [ROUTES.support.console]: 'Console support',
   

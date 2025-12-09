@@ -252,8 +252,8 @@ export function UnifiedSidebar() {
       indexUrl: ROUTES.support.index,
       icon: Headset,
       items: [
-        { title: 'Centre d\'aide', url: ROUTES.support.helpcenter, icon: HelpCircle, description: 'FAQ, chat et assistance en ligne' },
-        { title: 'Ouvrir un ticket', url: ROUTES.support.userTickets, icon: LifeBuoy, description: 'Créer une nouvelle demande de support' },
+        { title: 'Support', url: ROUTES.support.index, icon: HelpCircle, description: 'Chat IA et assistance en ligne' },
+        { title: 'Mes demandes', url: ROUTES.support.userTickets, icon: LifeBuoy, description: 'Gérer vos tickets de support' },
         { title: 'Console Support', url: ROUTES.support.console, icon: Headset, description: 'Traiter les demandes de support', requiresSupportConsoleUI: true },
       ],
       accessKey: 'canAccessSupport',
