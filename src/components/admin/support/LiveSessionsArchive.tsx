@@ -63,7 +63,7 @@ export function LiveSessionsArchive() {
           .from('live_support_sessions')
           .select('*')
           .in('status', ['closed', 'converted'])
-          .order('closed_at', { ascending: false })
+          .order('created_at', { ascending: false })
           .limit(50);
 
         if (error) throw error;
