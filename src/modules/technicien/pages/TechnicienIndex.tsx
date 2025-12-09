@@ -59,8 +59,7 @@ const tiles: TechnicienTile[] = [
     description: 'Générer et faire signer un PV pour apporteur d\'affaires',
     icon: FileCheck,
     href: ROUTES.technicien.pvApporteur,
-    status: 'coming_soon',
-    badge: 'Bientôt',
+    status: 'available',
     color: 'text-orange-500',
   },
 ];
