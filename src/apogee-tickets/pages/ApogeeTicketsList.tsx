@@ -45,6 +45,7 @@ import { CreateTicketDialog } from '../components/CreateTicketDialog';
 import { exportToCSV, exportToExcel, exportToPDF } from '../utils/exportKanban';
 import type { ApogeeTicket, TicketFilters as Filters } from '../types';
 import { ROUTES } from '@/config/routes';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 export default function ApogeeTicketsListPage() {
   const { data: myTicketRole, isLoading: isLoadingRole, error: roleError } = useMyTicketRole();
@@ -172,7 +173,13 @@ function ApogeeTicketsListContent({ roleInfo }: { roleInfo: NonNullable<ReturnTy
   };
 
   return (
-    <div className="space-y-4">
+    <div className="container mx-auto py-8 px-4 space-y-6">
+      <PageHeader 
+        title="Gestion de Projet - Liste"
+        backTo={ROUTES.projects.index}
+        backLabel="Gestion de Projet"
+      />
+      
       {/* Header avec toggle Kanban/Liste */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-wrap">

@@ -3,6 +3,7 @@ import { ROUTES } from '@/config/routes';
 import { IndexTile, type IndexTileProps } from '@/components/ui/index-tile';
 import { useAuth } from '@/contexts/AuthContext';
 import { ExcelImportTile } from '@/apogee-tickets/components/ExcelImportTile';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 interface ProjectModule {
   title: string;
@@ -49,12 +50,12 @@ export default function ProjectsIndex() {
 
   return (
     <div className="container mx-auto py-8 px-4 space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Gestion de Projet</h1>
-        <p className="text-muted-foreground mt-2">
-          Gérez le backlog, les tickets et le suivi de développement
-        </p>
-      </div>
+      <PageHeader 
+        title="Gestion de Projet"
+        subtitle="Gérez le backlog, les tickets et le suivi de développement"
+        backTo={ROUTES.home}
+        backLabel="Accueil"
+      />
 
       {/* Main modules */}
       <section>
