@@ -199,7 +199,12 @@ export function LiveSupportProvider({ children }: { children: ReactNode }) {
     try {
       await supabase
         .from('live_support_sessions')
-        .update({ status: 'closed' })
+        .update({ 
+          status: 'closed',
+          closed_at: new Date().toISOString(),
+          closed_by: 'user',
+          closed_reason: 'Fermé par l\'utilisateur',
+        } as any)
         .eq('id', activeSession.id);
 
       setActiveSession(null);
