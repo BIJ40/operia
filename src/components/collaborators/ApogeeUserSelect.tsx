@@ -99,14 +99,14 @@ export function ApogeeUserSelect({ value, onChange, collaboratorName }: ApogeeUs
   return (
     <div className="space-y-1">
       <Select
-        value={value?.toString() || ''}
-        onValueChange={(v) => onChange(v ? parseInt(v, 10) : undefined)}
+        value={value?.toString() || 'none'}
+        onValueChange={(v) => onChange(v === 'none' ? undefined : parseInt(v, 10))}
       >
         <SelectTrigger>
           <SelectValue placeholder="Sélectionner un technicien Apogée" />
         </SelectTrigger>
         <SelectContent className="bg-background z-50 max-h-60">
-          <SelectItem value="">Aucun</SelectItem>
+          <SelectItem value="none">Aucun</SelectItem>
           {technicians.map((tech) => (
             <SelectItem key={tech.id} value={tech.id.toString()}>
               {tech.label} (ID: {tech.id})
