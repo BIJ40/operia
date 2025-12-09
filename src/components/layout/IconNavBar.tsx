@@ -188,11 +188,10 @@ export function IconNavBar() {
   const isActive = (url: string, sectionId: string) => {
     if (url === '/') return location.pathname === '/';
     
-    // Pour éviter le double surlignage, vérifier le contexte exact
     const path = location.pathname;
     
-    // Routes RH (toutes les routes RH incluant collaborateurs, congés, dashboard RH)
-    const rhRoutes = [
+    // Routes exclusives RH (ne doivent JAMAIS surligner Mon Agence)
+    const rhExclusiveRoutes = [
       '/mon-coffre-rh',
       '/hc-agency/demandes-rh',
       '/hc-agency/collaborateurs',
@@ -201,20 +200,22 @@ export function IconNavBar() {
       '/hc-agency/demande-conge',
     ];
     
-    const isRhRoute = rhRoutes.some(r => path === r || path.startsWith(r + '/'));
+    const isRhRoute = rhExclusiveRoutes.some(r => path === r || path.startsWith(r + '/'));
     
-    // RH section: toutes les routes RH
+    // Section RH: uniquement les routes RH
     if (sectionId === 'rh') {
       return isRhRoute;
     }
     
-    // Mon Agence: exclure les routes RH
+    // Section Mon Agence: exclure strictement les routes RH
     if (sectionId === 'agence') {
-      if (isRhRoute) {
-        return false;
-      }
+      if (isRhRoute) return false;
+      // Vérifier que la route correspond vraiment à Mon Agence
+      const agenceRoutes = ['/hc-agency', '/indicateurs', '/pilotage'];
+      return agenceRoutes.some(r => path.startsWith(r));
     }
     
+    // Autres sections: match standard par préfixe
     return path.startsWith(url);
   };
 
