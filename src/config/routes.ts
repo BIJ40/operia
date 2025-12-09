@@ -58,8 +58,6 @@ export const ROUTES = {
     diffusion: '/hc-agency/statistiques/diffusion',
     // RH Tech
     rhTech: '/hc-agency/rh-tech',
-    // StatIA Builder (N2+)
-    statiaBuilder: '/hc-agency/statia-builder',
     // Maintenance préventive
     maintenance: '/hc-agency/maintenance',
     // Commercial

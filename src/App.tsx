@@ -110,7 +110,6 @@ const AdminWidgets = lazy(() => import("./pages/admin/AdminWidgets"));
 const AdminFeatureFlags = lazy(() => import("./pages/admin/AdminFeatureFlags"));
 const StatiaBuilderAdminPage = lazy(() => import("./statia/pages/StatiaBuilderAdminPage"));
 const StatiaValidatorPage = lazy(() => import("./statia/pages/StatiaValidatorPage"));
-const StatiaBuilderAgencyPage = lazy(() => import("./statia/pages/StatiaBuilderAgencyPage"));
 
 // Lazy loaded pages - Gestion de Projet (ex Apogée Tickets)
 const ProjectsIndex = lazy(() => import("./pages/ProjectsIndex"));
@@ -257,8 +256,8 @@ function AppContent() {
           <Route path="/hc-agency/gestion-conges" element={<Navigate to="/rh/conges" replace />} />
           <Route path="/hc-agency/dashboard-rh" element={<Navigate to="/rh/dashboard" replace />} />
           
-          {/* StatIA Builder - Construction de métriques personnalisées (Admin N5+ uniquement) */}
-          <Route path="/hc-agency/statia-builder" element={<MainLayout><RoleGuard minRole="platform_admin"><StatiaBuilderAgencyPage /></RoleGuard></MainLayout>} />
+          {/* Redirect legacy StatIA Builder route to admin */}
+          <Route path="/hc-agency/statia-builder" element={<Navigate to="/admin/statia-by-bij" replace />} />
           
           {/* Commercial - Outils commerciaux agence */}
           <Route path="/hc-agency/commercial" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><CommercialPage /></ModuleGuard></RoleGuard></MainLayout>} />
