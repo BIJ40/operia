@@ -71,7 +71,6 @@ const QrAssetPage = lazy(() => import("./pages/QrAssetPage"));
 
 // Lazy loaded pages - Support
 const SupportIndex = lazy(() => import("./pages/SupportIndex"));
-const UserTickets = lazy(() => import("./pages/UserTickets"));
 const Faq = lazy(() => import("./pages/Faq"));
 
 // Lazy loaded pages - Franchiseur (Réseau)
@@ -282,12 +281,11 @@ function AppContent() {
           {/* ============================================ */}
           {/* SUPPORT V2 - Unified Support System */}
           {/* ============================================ */}
-          {/* Support HUB - Accessible à tous les utilisateurs authentifiés (avec Chat IA intégré) */}
+          {/* Support HUB - Accessible à tous les utilisateurs authentifiés (avec Chat IA + Tickets intégrés) */}
           <Route path="/support" element={<MainLayout><RoleGuard><SupportIndex /></RoleGuard></MainLayout>} />
-          {/* User Tickets - Full ticket management */}
-          <Route path="/support/mes-demandes" element={<MainLayout><RoleGuard><UserTickets /></RoleGuard></MainLayout>} />
-          {/* Legacy route - redirect */}
-          <Route path="/mes-demandes" element={<Navigate to="/support/mes-demandes" replace />} />
+          {/* Legacy routes - redirect */}
+          <Route path="/support/mes-demandes" element={<Navigate to="/support" replace />} />
+          <Route path="/mes-demandes" element={<Navigate to="/support" replace />} />
           {/* FAQ - accessible à tous, pas de ModuleGuard */}
           <Route path="/support/faq" element={<MainLayout><Faq /></MainLayout>} />
           {/* SU Console - Support agents (N5+ strictement) - FIX F-PERM-3 */}
