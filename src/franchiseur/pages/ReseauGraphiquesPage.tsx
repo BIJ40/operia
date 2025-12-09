@@ -3,6 +3,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import { BarChart2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,6 +11,8 @@ import { useStatiaReseauDashboard } from '@/statia/hooks/useStatiaReseauDashboar
 import { useStatiaComparatifAgences } from '@/statia/hooks/useStatiaComparatifAgences';
 import { useNetworkFilters } from '@/franchiseur/contexts/NetworkFiltersContext';
 import { useFranchiseur } from '@/franchiseur/contexts/FranchiseurContext';
+import { FranchiseurPageHeader } from '../components/layout/FranchiseurPageHeader';
+import { FranchiseurPageContainer } from '../components/layout/FranchiseurPageContainer';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
@@ -18,39 +21,20 @@ import {
   PolarAngleAxis, PolarRadiusAxis, Radar, ScatterChart, Scatter, ZAxis
 } from 'recharts';
 
-// Types
 type GraphTheme = 'all' | 'ca' | 'qualite' | 'apporteurs' | 'delais' | 'productivite';
 
-// Colors
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B6B'];
 const HELPCONFORT_BLUE = '#0088FE';
 const HELPCONFORT_ORANGE = '#FF8042';
 
-// Formatters
 const formatCurrency = (value: number | null | undefined): string => {
   if (value === null || value === undefined) return '–';
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
 };
 
-const formatPercent = (value: number | null | undefined): string => {
-  if (value === null || value === undefined) return '–';
-  return `${value.toFixed(1)} %`;
-};
-
-const formatDays = (value: number | null | undefined): string => {
-  if (value === null || value === undefined) return '–';
-  return `${value} j`;
-};
-
-const formatNumber = (value: number | null | undefined): string => {
-  if (value === null || value === undefined) return '–';
-  return value.toLocaleString('fr-FR');
-};
-
-// Loading skeleton for chart cards
 function ChartSkeleton() {
   return (
-    <Card className="h-[400px]">
+    <Card className="h-[400px] rounded-2xl">
       <CardHeader>
         <Skeleton className="h-6 w-48" />
         <Skeleton className="h-4 w-64 mt-2" />
@@ -62,7 +46,6 @@ function ChartSkeleton() {
   );
 }
 
-// Section header
 function SectionHeader({ title, icon }: { title: string; icon: string }) {
   return (
     <div className="flex items-center gap-3 mb-6 mt-8 first:mt-0">
@@ -72,7 +55,6 @@ function SectionHeader({ title, icon }: { title: string; icon: string }) {
   );
 }
 
-// Period label component
 function PeriodLabel({ from, to }: { from: Date; to: Date }) {
   return (
     <span className="text-xs text-muted-foreground">
@@ -243,40 +225,40 @@ export default function ReseauGraphiquesPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Graphiques Réseau</h1>
-          <Skeleton className="h-10 w-40" />
+      <FranchiseurPageContainer>
+        <div className="space-y-4">
+          <Skeleton className="h-9 w-64" />
+          <Skeleton className="h-5 w-80" />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {[...Array(6)].map((_, i) => <ChartSkeleton key={i} />)}
         </div>
-      </div>
+      </FranchiseurPageContainer>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header & Filters */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Graphiques Réseau</h1>
-          <PeriodLabel from={dateStart} to={dateEnd} />
-        </div>
-        <Select value={theme} onValueChange={(v) => setTheme(v as GraphTheme)}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Filtrer par thème" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous les graphiques</SelectItem>
-            <SelectItem value="ca">CA & Volume</SelectItem>
-            <SelectItem value="qualite">Qualité & SAV</SelectItem>
-            <SelectItem value="apporteurs">Apporteurs</SelectItem>
-            <SelectItem value="delais">Délais</SelectItem>
-            <SelectItem value="productivite">Productivité</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+    <FranchiseurPageContainer maxWidth="full">
+      <FranchiseurPageHeader
+        title="Graphiques Réseau"
+        subtitle={<PeriodLabel from={dateStart} to={dateEnd} />}
+        icon={<BarChart2 className="h-6 w-6 text-helpconfort-blue" />}
+        actions={
+          <Select value={theme} onValueChange={(v) => setTheme(v as GraphTheme)}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filtrer par thème" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les graphiques</SelectItem>
+              <SelectItem value="ca">CA & Volume</SelectItem>
+              <SelectItem value="qualite">Qualité & SAV</SelectItem>
+              <SelectItem value="apporteurs">Apporteurs</SelectItem>
+              <SelectItem value="delais">Délais</SelectItem>
+              <SelectItem value="productivite">Productivité</SelectItem>
+            </SelectContent>
+          </Select>
+        }
+      />
 
       {/* ================================================================ */}
       {/* BLOC CA & VOLUME */}

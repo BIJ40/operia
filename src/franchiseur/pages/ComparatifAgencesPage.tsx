@@ -3,7 +3,7 @@
  */
 
 import { useState, useMemo } from 'react';
-import { Settings2, Download, Pin, PinOff } from 'lucide-react';
+import { Settings2, Download, Pin, PinOff, TableProperties } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -17,6 +17,8 @@ import { useFranchiseur } from '@/franchiseur/contexts/FranchiseurContext';
 import { NetworkPeriodSelector } from '@/franchiseur/components/filters/NetworkPeriodSelector';
 import { AgencySelector } from '@/franchiseur/components/filters/AgencySelector';
 import { useStatiaComparatifAgences } from '@/statia/hooks/useStatiaComparatifAgences';
+import { FranchiseurPageHeader } from '../components/layout/FranchiseurPageHeader';
+import { FranchiseurPageContainer } from '../components/layout/FranchiseurPageContainer';
 import {
   COMPARATIF_INDICATORS,
   INDICATOR_GROUPS,
@@ -26,10 +28,6 @@ import {
   IndicatorFormat,
 } from '@/franchiseur/config/comparatifIndicators';
 import type { ComparatifAgenceRow } from '@/statia/engines/comparatifAgencesEngine';
-
-// ============================================================================
-// FORMATTERS
-// ============================================================================
 
 function formatComparatifValue(value: number | null | undefined, format: IndicatorFormat): string {
   if (value === null || value === undefined) return '–';
@@ -48,10 +46,6 @@ function formatComparatifValue(value: number | null | undefined, format: Indicat
   }
 }
 
-// ============================================================================
-// INDICATOR SELECTOR
-// ============================================================================
-
 interface IndicatorSelectorProps {
   selected: ComparatifIndicatorId[];
   onChange: (ids: ComparatifIndicatorId[]) => void;
@@ -66,14 +60,6 @@ function IndicatorSelector({ selected, onChange }: IndicatorSelectorProps) {
     }
   };
 
-  const handleSelectAll = () => {
-    onChange(COMPARATIF_INDICATORS.map(i => i.id));
-  };
-
-  const handleReset = () => {
-    onChange(getDefaultVisibleIndicators());
-  };
-
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -86,10 +72,10 @@ function IndicatorSelector({ selected, onChange }: IndicatorSelectorProps) {
         <div className="p-3 border-b border-border">
           <p className="font-medium text-sm">Indicateurs à afficher</p>
           <div className="flex gap-2 mt-2">
-            <Button variant="ghost" size="sm" onClick={handleSelectAll}>
+            <Button variant="ghost" size="sm" onClick={() => onChange(COMPARATIF_INDICATORS.map(i => i.id))}>
               Tout
             </Button>
-            <Button variant="ghost" size="sm" onClick={handleReset}>
+            <Button variant="ghost" size="sm" onClick={() => onChange(getDefaultVisibleIndicators())}>
               Par défaut
             </Button>
           </div>
@@ -124,10 +110,6 @@ function IndicatorSelector({ selected, onChange }: IndicatorSelectorProps) {
   );
 }
 
-// ============================================================================
-// MAIN PAGE
-// ============================================================================
-
 export default function ComparatifAgencesPage() {
   const { dateRange } = useNetworkFilters();
   const { selectedAgencies } = useFranchiseur();
@@ -143,7 +125,6 @@ export default function ComparatifAgencesPage() {
     scopeAgencies: selectedAgencies.length > 0 ? selectedAgencies : undefined,
   });
 
-  // Sort: pinned first, then alphabetically
   const sortedAgences = useMemo(() => {
     if (!data?.agences) return [];
     return [...data.agences].sort((a, b) => {
@@ -196,44 +177,41 @@ export default function ComparatifAgencesPage() {
 
   if (error) {
     return (
-      <div className="p-6">
-        <Card className="border-destructive">
+      <FranchiseurPageContainer>
+        <Card className="rounded-2xl border-destructive">
           <CardContent className="p-6">
             <p className="text-destructive">Erreur lors du chargement des données</p>
           </CardContent>
         </Card>
-      </div>
+      </FranchiseurPageContainer>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header & Filters */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Comparatif Agences</h1>
-          <p className="text-sm text-muted-foreground">
-            Comparez les KPI de vos agences sur la période sélectionnée
-          </p>
-        </div>
-        
-        <div className="flex flex-wrap items-center gap-3">
-          <NetworkPeriodSelector />
-          <AgencySelector />
-          <IndicatorSelector
-            selected={visibleIndicators}
-            onChange={setVisibleIndicators}
-          />
-          <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-2">
-            <Download className="h-4 w-4" />
-            Export CSV
-          </Button>
-        </div>
-      </div>
+    <FranchiseurPageContainer maxWidth="full">
+      <FranchiseurPageHeader
+        title="Comparatif Agences"
+        subtitle="Comparez les KPI de vos agences sur la période sélectionnée"
+        icon={<TableProperties className="h-6 w-6 text-helpconfort-blue" />}
+        actions={
+          <div className="flex flex-wrap items-center gap-3">
+            <NetworkPeriodSelector />
+            <AgencySelector />
+            <IndicatorSelector
+              selected={visibleIndicators}
+              onChange={setVisibleIndicators}
+            />
+            <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-2">
+              <Download className="h-4 w-4" />
+              Export CSV
+            </Button>
+          </div>
+        }
+      />
 
       {/* Table */}
-      <Card>
-        <CardHeader className="pb-3">
+      <Card className="rounded-2xl">
+        <CardHeader className="pb-3 border-b">
           <CardTitle className="text-lg">
             {isLoading ? 'Chargement...' : `${sortedAgences.length} agences`}
           </CardTitle>
@@ -242,10 +220,10 @@ export default function ComparatifAgencesPage() {
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead className="sticky left-0 bg-card z-10 min-w-[200px]">Agence</TableHead>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="sticky left-0 bg-muted/50 z-10 min-w-[200px] font-semibold">Agence</TableHead>
                   {visibleIndicatorConfigs.map(ind => (
-                    <TableHead key={ind.id} className="text-right whitespace-nowrap">
+                    <TableHead key={ind.id} className="text-right whitespace-nowrap font-semibold">
                       {ind.label}
                     </TableHead>
                   ))}
@@ -276,6 +254,7 @@ export default function ComparatifAgencesPage() {
                     <TableRow
                       key={row.agency_id}
                       className={cn(
+                        "hover:bg-muted/50",
                         pinnedAgencies.has(row.agency_id) && "bg-helpconfort-blue/5"
                       )}
                     >
@@ -310,6 +289,6 @@ export default function ComparatifAgencesPage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </FranchiseurPageContainer>
   );
 }

@@ -1,4 +1,4 @@
-import { TrendingUp, FileText, Wrench, AlertCircle, Euro, Clock, Zap, Timer, Calendar, Network } from "lucide-react";
+import { TrendingUp, FileText, Wrench, AlertCircle, Euro, Clock, Zap, Timer, Calendar, Network, LayoutDashboard } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,6 +13,8 @@ import { NetworkSAVChart } from "../components/widgets/NetworkSAVChart";
 import { useStatiaReseauDashboard } from "@/statia/hooks/useStatiaReseauDashboard";
 import { useFranchiseur } from "../contexts/FranchiseurContext";
 import { useNetworkFilters } from "../contexts/NetworkFiltersContext";
+import { FranchiseurPageHeader } from "../components/layout/FranchiseurPageHeader";
+import { FranchiseurPageContainer } from "../components/layout/FranchiseurPageContainer";
 
 function SkeletonKpiTile() {
   return (
@@ -46,14 +48,13 @@ export default function FranchiseurHome() {
   const { permissions } = useFranchiseur();
   const { dateRange } = useNetworkFilters();
   
-  // Nouveau hook StatIA unifié
   const { data, isLoading } = useStatiaReseauDashboard();
 
   if (isLoading || !data) {
     return (
-      <div className="space-y-6">
-        <div>
-          <Skeleton className="h-9 w-64 mb-2" />
+      <FranchiseurPageContainer>
+        <div className="space-y-4">
+          <Skeleton className="h-9 w-64" />
           <Skeleton className="h-5 w-80" />
         </div>
         <div className="flex flex-col sm:flex-row gap-4">
@@ -70,18 +71,16 @@ export default function FranchiseurHome() {
           <SkeletonChart />
           <SkeletonChart />
         </div>
-      </div>
+      </FranchiseurPageContainer>
     );
   }
 
-  // Extraction des données StatIA
   const { tuilesHautes, blocSav, blocCA, blocApporteurs } = data;
 
-  // Conversion pour les widgets existants
   const monthlyCAEvolution = blocCA.serieCAMensuel.map(item => ({
     month: item.month,
     ca: item.ca,
-    nbFactures: 0, // Non utilisé dans le graphique
+    nbFactures: 0,
   }));
 
   const caByAgency = blocCA.partCAParAgence.map(item => ({
@@ -95,14 +94,21 @@ export default function FranchiseurHome() {
   }));
 
   return (
-    <div className="container mx-auto py-8 px-4 space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4 items-start">
-        <AgencySelector />
-        <NetworkPeriodSelector />
-      </div>
+    <FranchiseurPageContainer>
+      <FranchiseurPageHeader
+        title="Tableau de bord Réseau"
+        subtitle="Vue d'ensemble des performances du réseau HelpConfort"
+        icon={<LayoutDashboard className="h-6 w-6 text-helpconfort-blue" />}
+        actions={
+          <div className="flex flex-col sm:flex-row gap-3">
+            <AgencySelector />
+            <NetworkPeriodSelector />
+          </div>
+        }
+      />
 
-      {/* Ligne 1: KPIs temporels (liés au sélecteur de période) */}
-      <div className="grid gap-4 md:grid-cols-4">
+      {/* Ligne 1: KPIs temporels */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <NetworkKpiTile
           title="CA Année en cours"
           value={tuilesHautes.caAnneeEnCours}
@@ -135,7 +141,7 @@ export default function FranchiseurHome() {
         />
       </div>
 
-      {/* Ligne 2: 6 KPIs intemporels (NON liés au sélecteur de période) */}
+      {/* Ligne 2: 6 KPIs intemporels */}
       <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
         {permissions.canViewRoyalties && (
           <NetworkKpiTile
@@ -184,49 +190,46 @@ export default function FranchiseurHome() {
         />
       </div>
 
-      {/* Ligne 3: SAV (intemporel) */}
-      <div className="grid gap-4 md:grid-cols-1">
-        <div className="group relative rounded-xl border border-helpconfort-blue/15 p-4
-          bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white dark:via-background dark:to-background
-          shadow-sm transition-all duration-300 border-l-4 border-l-helpconfort-blue
-          hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5">
-          <div className="flex items-center gap-2 mb-3">
-            <AlertCircle className="h-4 w-4 text-helpconfort-blue" />
-            <span className="text-sm font-medium text-muted-foreground">Taux SAV</span>
+      {/* SAV Card */}
+      <Card className="rounded-2xl border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-helpconfort-blue/5 to-transparent">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <AlertCircle className="h-5 w-5 text-helpconfort-blue" />
+            <span className="font-semibold text-foreground">Taux SAV</span>
           </div>
-          <div className="space-y-3">
+          <div className="grid gap-6 md:grid-cols-2">
             <div>
-              <p className="text-xs text-muted-foreground">Global Réseau</p>
-              <p className="text-2xl font-bold text-foreground">
+              <p className="text-sm text-muted-foreground">Global Réseau</p>
+              <p className="text-3xl font-bold text-foreground">
                 {blocSav.tauxSavGlobalReseau.toFixed(1)}%
               </p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {blocSav.nbSavGlobal} SAV / {blocSav.nbDossiersBaseSav} dossiers
               </p>
             </div>
-            <Separator />
             <div>
-              <p className="text-xs text-muted-foreground">Moyenne Agences</p>
-              <p className="text-lg font-semibold text-helpconfort-blue">
+              <p className="text-sm text-muted-foreground">Moyenne Agences</p>
+              <p className="text-2xl font-semibold text-helpconfort-blue">
                 {blocSav.tauxSavMoyenAgences.toFixed(1)}%
               </p>
             </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      {/* Graphiques */}
+      <div className="grid gap-6 lg:grid-cols-2">
         <NetworkMonthlyCAChart data={monthlyCAEvolution} />
         <NetworkCAPieChart data={caByAgency} />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         <NetworkSAVChart data={monthlySAVEvolution} />
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-6 sm:grid-cols-2">
           <TopAgenciesWidget agencies={blocCA.top5AgencesCA} />
           <TopApporteurWidget apporteurs={blocApporteurs.top3ApporteursCA} />
         </div>
       </div>
-    </div>
+    </FranchiseurPageContainer>
   );
 }

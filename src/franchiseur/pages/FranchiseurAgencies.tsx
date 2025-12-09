@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Building2, Plus, Search, Users, Calendar, Phone, Mail, MapPin } from "lucide-react";
+import { Building2, Plus, Search, Calendar, Phone, Mail, MapPin, Users } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,9 @@ import { useAgencies } from "../hooks/useAgencies";
 import { AgencyProfileDialog } from "../components/AgencyProfileDialog";
 import { useFranchiseur } from "../contexts/FranchiseurContext";
 import { ROUTES } from "@/config/routes";
-
-// Note: Cette page est protégée par RoleGuard minRole="franchisor_user" dans App.tsx
+import { FranchiseurPageHeader } from "../components/layout/FranchiseurPageHeader";
+import { FranchiseurPageContainer } from "../components/layout/FranchiseurPageContainer";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function FranchiseurAgencies() {
   const navigate = useNavigate();
@@ -21,7 +22,6 @@ export default function FranchiseurAgencies() {
   const { data: agencies, isLoading } = useAgencies();
   const { franchiseurRole } = useFranchiseur();
   
-  // Permissions basées sur le rôle franchiseur
   const canManageAgencies = franchiseurRole === 'directeur' || franchiseurRole === 'dg';
 
   const filteredAgencies = agencies?.filter(agency => {
@@ -38,33 +38,40 @@ export default function FranchiseurAgencies() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-muted rounded w-1/4"></div>
-          <div className="h-32 bg-muted rounded"></div>
+      <FranchiseurPageContainer>
+        <div className="space-y-4">
+          <Skeleton className="h-9 w-64" />
+          <Skeleton className="h-5 w-96" />
         </div>
-      </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map(i => (
+            <Skeleton key={i} className="h-48 rounded-2xl" />
+          ))}
+        </div>
+      </FranchiseurPageContainer>
     );
   }
 
   return (
-    <div className="container mx-auto py-8 px-4 space-y-6">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          {filteredAgencies?.length || 0} agence{(filteredAgencies?.length || 0) > 1 ? 's' : ''} dans le réseau
-        </p>
-        
-        {canManageAgencies && (
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nouvelle Agence
-          </Button>
-        )}
-      </div>
+    <FranchiseurPageContainer>
+      <FranchiseurPageHeader
+        title="Agences du Réseau"
+        subtitle={`${filteredAgencies?.length || 0} agence${(filteredAgencies?.length || 0) > 1 ? 's' : ''} dans le réseau`}
+        icon={<Building2 className="h-6 w-6 text-helpconfort-blue" />}
+        actions={
+          canManageAgencies && (
+            <Button onClick={() => setIsCreateDialogOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Nouvelle Agence
+            </Button>
+          )
+        }
+      />
 
-      <Card className="rounded-xl border border-helpconfort-blue/20 bg-gradient-to-br from-white to-helpconfort-blue/5 shadow-sm hover:to-helpconfort-blue/15 hover:shadow-lg transition-all">
-        <CardHeader>
-          <div className="flex items-center justify-between gap-4">
+      {/* Barre de recherche et filtres */}
+      <Card className="rounded-2xl border-helpconfort-blue/20">
+        <CardContent className="p-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -78,96 +85,98 @@ export default function FranchiseurAgencies() {
             <Button
               variant={showInactive ? "default" : "outline"}
               onClick={() => setShowInactive(!showInactive)}
+              className="shrink-0"
             >
               {showInactive ? "Toutes" : "Actives uniquement"}
             </Button>
           </div>
-        </CardHeader>
-
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredAgencies?.map((agency) => (
-              <Card
-                key={agency.id}
-                className="cursor-pointer hover:shadow-lg transition-all hover:scale-[1.02] rounded-2xl border-l-4 border-l-primary"
-                onClick={() => navigate(ROUTES.reseau.agenceProfile(agency.id))}
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="h-5 w-5 text-primary" />
-                      <CardTitle className="text-lg">{agency.label}</CardTitle>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      {!agency.is_active && (
-                        <Badge variant="secondary" className="text-xs">Inactive</Badge>
-                      )}
-                      {agency.animateurs && agency.animateurs.length > 0 ? (
-                        <Badge variant="default" className="bg-green-600 hover:bg-green-700 text-xs">
-                          {agency.animateurs.length} Animateur{agency.animateurs.length > 1 ? 's' : ''}
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="text-xs">
-                          Sans animateur
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  <CardDescription className="font-mono text-xs">
-                    {agency.slug}
-                  </CardDescription>
-                </CardHeader>
-
-                <CardContent className="space-y-2">
-                  {agency.ville && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4" />
-                      <span>{agency.ville} {agency.code_postal && `(${agency.code_postal})`}</span>
-                    </div>
-                  )}
-                  
-                  {agency.date_ouverture && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      <span>Ouverte le {new Date(agency.date_ouverture).toLocaleDateString('fr-FR')}</span>
-                    </div>
-                  )}
-                  
-                  {agency.contact_email && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Mail className="h-4 w-4" />
-                      <span className="truncate">{agency.contact_email}</span>
-                    </div>
-                  )}
-                  
-                  {agency.contact_phone && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Phone className="h-4 w-4" />
-                      <span>{agency.contact_phone}</span>
-                    </div>
-                  )}
-                  
-                  {agency.animateurs && agency.animateurs.length > 0 && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Users className="h-4 w-4 text-primary" />
-                      <span className="font-medium truncate">
-                        {agency.animateurs.map(a => `${a.first_name} ${a.last_name}`).join(', ')}
-                      </span>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {filteredAgencies?.length === 0 && (
-            <div className="text-center py-12 text-muted-foreground">
-              <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Aucune agence trouvée</p>
-            </div>
-          )}
         </CardContent>
       </Card>
+
+      {/* Grille des agences */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {filteredAgencies?.map((agency) => (
+          <Card
+            key={agency.id}
+            className="cursor-pointer rounded-2xl border-l-4 border-l-helpconfort-blue hover:shadow-lg transition-all hover:scale-[1.02] group"
+            onClick={() => navigate(ROUTES.reseau.agenceProfile(agency.id))}
+          >
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Building2 className="h-5 w-5 text-helpconfort-blue shrink-0" />
+                  <CardTitle className="text-lg truncate">{agency.label}</CardTitle>
+                </div>
+                <div className="flex flex-col gap-1 shrink-0">
+                  {!agency.is_active && (
+                    <Badge variant="secondary" className="text-xs">Inactive</Badge>
+                  )}
+                  {agency.animateurs && agency.animateurs.length > 0 ? (
+                    <Badge variant="default" className="bg-green-600 hover:bg-green-700 text-xs">
+                      {agency.animateurs.length} Animateur{agency.animateurs.length > 1 ? 's' : ''}
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="text-xs">
+                      Sans animateur
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <CardDescription className="font-mono text-xs">
+                {agency.slug}
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="space-y-2">
+              {agency.ville && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <MapPin className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{agency.ville} {agency.code_postal && `(${agency.code_postal})`}</span>
+                </div>
+              )}
+              
+              {agency.date_ouverture && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Calendar className="h-4 w-4 shrink-0" />
+                  <span>Ouverte le {new Date(agency.date_ouverture).toLocaleDateString('fr-FR')}</span>
+                </div>
+              )}
+              
+              {agency.contact_email && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Mail className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{agency.contact_email}</span>
+                </div>
+              )}
+              
+              {agency.contact_phone && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Phone className="h-4 w-4 shrink-0" />
+                  <span>{agency.contact_phone}</span>
+                </div>
+              )}
+              
+              {agency.animateurs && agency.animateurs.length > 0 && (
+                <div className="flex items-center gap-2 text-sm pt-2 border-t">
+                  <Users className="h-4 w-4 text-helpconfort-blue shrink-0" />
+                  <span className="font-medium truncate">
+                    {agency.animateurs.map(a => `${a.first_name} ${a.last_name}`).join(', ')}
+                  </span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {filteredAgencies?.length === 0 && (
+        <Card className="rounded-2xl">
+          <CardContent className="py-12 text-center">
+            <Building2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+            <p className="text-muted-foreground">Aucune agence trouvée</p>
+          </CardContent>
+        </Card>
+      )}
 
       {isCreateDialogOpen && (
         <AgencyProfileDialog
@@ -177,6 +186,6 @@ export default function FranchiseurAgencies() {
           canManage={canManageAgencies}
         />
       )}
-    </div>
+    </FranchiseurPageContainer>
   );
 }
