@@ -1,6 +1,6 @@
 /**
  * WidgetContent - Contenu dynamique des widgets selon leur type
- * Widgets actifs: Favoris, Derniers tickets, Mon équipe, Indicateurs globaux, CA par univers, Top 3 Techniciens, Raccourcis, KPIs Technicien, KPIs Assistante
+ * Widgets actifs: Favoris, Derniers tickets, Mon équipe, Indicateurs globaux, CA par univers, Top 3 Techniciens, Raccourcis, KPIs Technicien, KPIs Assistante, Coffre RH
  */
 
 import { UserWidget, WidgetTemplate } from '@/types/dashboard';
@@ -13,6 +13,7 @@ import { ShortcutWidget } from './widgets/ShortcutWidget';
 import { FavorisWidget } from './widgets/FavorisWidget';
 import { TechnicienKpisWidget } from './widgets/TechnicienKpisWidget';
 import { AssistanteKpisWidget } from './widgets/AssistanteKpisWidget';
+import { CoffreRHWidget } from './widgets/CoffreRHWidget';
 
 interface WidgetContentProps {
   widget: UserWidget & { template: WidgetTemplate };
@@ -29,6 +30,7 @@ const WIDGET_COMPONENTS: Record<string, React.FC> = {
   'StatIA.top3_techniciens': Top3TechniciensWidget,
   'Personal.technicien_kpis': TechnicienKpisWidget,
   'Personal.assistante_kpis': AssistanteKpisWidget,
+  'Shortcut.coffre_rh': CoffreRHWidget,
 };
 
 export function WidgetContent({ widget }: WidgetContentProps) {
@@ -45,7 +47,12 @@ export function WidgetContent({ widget }: WidgetContentProps) {
   
   const { module_source, icon, name, default_params } = template;
 
-  // Gestion des widgets de type Shortcut
+  // Widget coffre RH avec icône spéciale
+  if (module_source === 'Shortcut.coffre_rh') {
+    return <CoffreRHWidget />;
+  }
+
+  // Gestion des autres widgets de type Shortcut
   if (module_source?.startsWith('Shortcut.')) {
     const params = default_params as { route?: string } | undefined;
     const route = params?.route || '/';
