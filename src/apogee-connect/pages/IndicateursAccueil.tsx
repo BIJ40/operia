@@ -89,7 +89,7 @@ export default function IndicateursAccueil() {
           <div className="space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
               <h2 className="text-base sm:text-lg font-semibold text-foreground whitespace-nowrap">Indicateurs Temporels</h2>
-              <div className="relative z-50">
+              <div className="relative z-10">
                 <div className="scale-90 sm:scale-100 origin-left sm:origin-right">
                   <PeriodSelector />
                 </div>
