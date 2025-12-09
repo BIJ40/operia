@@ -55,6 +55,12 @@ const PlanningHebdo = lazy(() => import("./apogee-connect/pages/PlanningHebdo"))
 const TechInterventionsPage = lazy(() => import("./modules/interventions_rt/pages/TechInterventionsPage"));
 const RtRunnerPage = lazy(() => import("./modules/interventions_rt/pages/RtRunnerPage"));
 const TechnicienIndex = lazy(() => import("./modules/technicien/pages/TechnicienIndex"));
+
+// Lazy loaded pages - Bon d'Intervention
+const BonInterventionList = lazy(() => import("./modules/bon_intervention/pages/BonInterventionList"));
+const BonInterventionForm = lazy(() => import("./modules/bon_intervention/pages/BonInterventionForm"));
+const BonInterventionSignature = lazy(() => import("./modules/bon_intervention/pages/BonInterventionSignature"));
+const BonInterventionRecap = lazy(() => import("./modules/bon_intervention/pages/BonInterventionRecap"));
 const EquipePage = lazy(() => import("./pages/EquipePage"));
 const Messages = lazy(() => import("./pages/Messages"));
 
@@ -254,7 +260,12 @@ function AppContent() {
           {/* MODULE TECHNICIEN - Hub + Sous-pages */}
           {/* ============================================ */}
           <Route path="/technicien" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><TechnicienIndex /></ModuleGuard></RoleGuard></MainLayout>} />
-          {/* Futures routes BI et PV seront ajoutées ici */}
+          
+          {/* Bon d'Intervention - Module Technicien */}
+          <Route path="/technicien/bon-intervention" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><BonInterventionList /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/technicien/bon-intervention/:interventionId" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><BonInterventionForm /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/technicien/bon-intervention/:interventionId/signature" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><BonInterventionSignature /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/technicien/bon-intervention/:interventionId/recap" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><BonInterventionRecap /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* Équipe (legacy - redirects to collaborateurs) */}
           <Route path="/hc-agency/equipe" element={<Navigate to="/hc-agency/collaborateurs" replace />} />
