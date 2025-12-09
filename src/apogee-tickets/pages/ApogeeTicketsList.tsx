@@ -204,47 +204,6 @@ function ApogeeTicketsListContent({ roleInfo }: { roleInfo: NonNullable<ReturnTy
             </Button>
           )}
 
-          {canImport && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Upload className="h-4 w-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Importer</span>
-                  <ChevronDown className="h-4 w-4 sm:ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="bg-background border shadow-lg z-50">
-                <DropdownMenuItem onClick={() => navigate(ROUTES.projects.importPriorities)}>
-                  <Flame className="h-4 w-4 mr-2 text-red-600" />
-                  Priorités A / B
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(ROUTES.projects.importBugs)}>
-                  <Bug className="h-4 w-4 mr-2 text-orange-600" />
-                  Import BUGS
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(ROUTES.projects.importV1)}>
-                  <FileSpreadsheet className="h-4 w-4 mr-2 text-blue-600" />
-                  Import V1
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(ROUTES.projects.importEvaluated)}>
-                  <ListChecks className="h-4 w-4 mr-2 text-green-600" />
-                  Liste évaluée
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(ROUTES.projects.importTraite)}>
-                  <FileCheck className="h-4 w-4 mr-2 text-purple-600" />
-                  Import TRAITE
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(ROUTES.projects.importDysfonctionnements)}>
-                  <AlertTriangle className="h-4 w-4 mr-2 text-amber-600" />
-                  Import Dysfonctionnements
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(ROUTES.projects.import)}>
-                  <Files className="h-4 w-4 mr-2" />
-                  Import général
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
 
           {/* Export */}
           <DropdownMenu>
