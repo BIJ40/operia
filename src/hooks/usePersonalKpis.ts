@@ -34,20 +34,29 @@ export function usePersonalKpis() {
     queryFn: async () => {
       if (!user?.id || !agence) return null;
 
-      // Récupérer le profil avec apogee_user_id
+      // Récupérer le profil ET le collaborator associé (apogee_user_id est dans collaborators)
       const { supabase } = await import('@/integrations/supabase/client');
       const { data: profile } = await supabase
         .from('profiles')
-        .select('apogee_user_id, global_role, role_agence')
+        .select('global_role, role_agence')
         .eq('id', user.id)
         .single();
 
-      if (!profile?.apogee_user_id) {
+      // Récupérer apogee_user_id depuis collaborators (c'est là qu'il est stocké)
+      const { data: collaborator } = await supabase
+        .from('collaborators')
+        .select('apogee_user_id, type')
+        .eq('user_id', user.id)
+        .single();
+
+      const apogeeUserId = collaborator?.apogee_user_id;
+      
+      if (!apogeeUserId) {
+        console.log('[usePersonalKpis] Pas d\'apogee_user_id trouvé dans collaborators');
         return { type: 'not_linked' as const };
       }
 
-      const apogeeUserId = profile.apogee_user_id;
-      const roleAgence = (profile.role_agence || '').toLowerCase();
+      const roleAgence = (profile?.role_agence || collaborator?.type || '').toLowerCase();
       
       // Déterminer le type d'utilisateur
       const isTechnicien = roleAgence.includes('technic') || roleAgence.includes('tech');
