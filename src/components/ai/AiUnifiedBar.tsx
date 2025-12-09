@@ -140,7 +140,7 @@ export function AiUnifiedBar() {
   return (
     <div 
       ref={containerRef}
-      className="w-full flex flex-col items-center py-3 relative"
+      className="w-full flex flex-col items-center py-3 relative overflow-hidden"
     >
       <div className="w-full max-w-5xl px-4 relative flex items-center gap-3">
         <motion.div
