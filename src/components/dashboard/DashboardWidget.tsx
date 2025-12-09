@@ -156,8 +156,13 @@ export function DashboardWidget({
         )}
       </div>
 
-      {/* Contenu du widget */}
-      <CardContent className="p-3 pt-8 h-full">
+      {/* Contenu du widget - pas de padding pour les widgets Shortcut */}
+      <CardContent className={cn(
+        "h-full",
+        widget.template?.module_source?.startsWith('Shortcut.') 
+          ? "p-0 pt-6" 
+          : "p-3 pt-8"
+      )}>
         <WidgetContent widget={widget} />
       </CardContent>
 
