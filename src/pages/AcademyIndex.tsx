@@ -95,7 +95,7 @@ export default function AcademyIndex() {
         {/* Mes Favoris Tile */}
         {isAuthenticated && (
           <Link 
-            to={ROUTES.favorites}
+            to={ROUTES.academy.favorites}
             className="group h-full rounded-xl p-5
               bg-gradient-to-r from-helpconfort-blue-light/20 via-helpconfort-blue-light/10 to-transparent dark:from-helpconfort-blue-dark/30 dark:via-helpconfort-blue-dark/10
               border border-helpconfort-blue-light/40 dark:border-helpconfort-blue-dark/40 border-l-4 border-l-helpconfort-blue

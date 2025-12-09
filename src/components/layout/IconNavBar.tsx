@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/popover';
 import {
   BarChart3, ListTodo, Tv, Users, Calendar,
-  GraduationCap, FileText, FolderOpen,
+  GraduationCap, FileText, FolderOpen, Heart,
   Headset, HelpCircle, LifeBuoy,
   Network, Building2, PieChart, GitCompare, Coins,
   Settings, Database, Activity, MessageCircle, Kanban, Sparkles, Brain, ToggleLeft,
@@ -63,6 +63,7 @@ const navSections: NavSection[] = [
       { title: 'Guide Apogée', url: ROUTES.academy.apogee, icon: GraduationCap },
       { title: 'Guide Apporteurs', url: ROUTES.academy.apporteurs, icon: FileText },
       { title: 'Base Documentaire', url: ROUTES.academy.documents, icon: FolderOpen },
+      { title: 'Mes Favoris', url: ROUTES.academy.favorites, icon: Heart },
     ],
     accessKey: 'canAccessHelpAcademy',
     requiresModule: 'help_academy',

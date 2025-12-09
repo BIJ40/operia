@@ -22,6 +22,7 @@ export const ROUTES = {
   // ============================================
   academy: {
     index: '/academy',
+    favorites: '/academy/favoris',
     // Guide Apogée
     apogee: '/academy/apogee',
     apogeeCategory: (slug: string) => `/academy/apogee/category/${slug}`,
