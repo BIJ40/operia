@@ -9,6 +9,7 @@ import { MainLayout } from "./components/layout";
 import { Loader2 } from "lucide-react";
 import { RoleGuard } from "./components/auth/RoleGuard";
 import { ModuleGuard } from "./components/auth/ModuleGuard";
+import { AgencyProvider } from "./apogee-connect/contexts/AgencyContext";
 import { SupportConsoleGuard } from "./components/auth/SupportConsoleGuard";
 import { FaqAdminGuard } from "./components/auth/FaqAdminGuard";
 
@@ -261,11 +262,11 @@ function AppContent() {
           {/* ============================================ */}
           <Route path="/technicien" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><TechnicienIndex /></ModuleGuard></RoleGuard></MainLayout>} />
           
-          {/* Bon d'Intervention - Module Technicien */}
-          <Route path="/technicien/bon-intervention" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><BonInterventionList /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/technicien/bon-intervention/:interventionId" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><BonInterventionForm /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/technicien/bon-intervention/:interventionId/signature" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><BonInterventionSignature /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/technicien/bon-intervention/:interventionId/recap" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><BonInterventionRecap /></ModuleGuard></RoleGuard></MainLayout>} />
+          {/* Bon d'Intervention - Module Technicien (nécessite AgencyProvider pour useWeeklyTechPlanning) */}
+          <Route path="/technicien/bon-intervention" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><AgencyProvider><BonInterventionList /></AgencyProvider></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/technicien/bon-intervention/:interventionId" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><AgencyProvider><BonInterventionForm /></AgencyProvider></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/technicien/bon-intervention/:interventionId/signature" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><AgencyProvider><BonInterventionSignature /></AgencyProvider></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/technicien/bon-intervention/:interventionId/recap" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><AgencyProvider><BonInterventionRecap /></AgencyProvider></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* Équipe (legacy - redirects to collaborateurs) */}
           <Route path="/hc-agency/equipe" element={<Navigate to="/hc-agency/collaborateurs" replace />} />
