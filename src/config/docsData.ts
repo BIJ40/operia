@@ -80,7 +80,7 @@ export const MODULES_DOCS: ModuleDoc[] = [
     permissions: 'N0+ avec module activé',
     icon: 'FolderKanban',
     tables: ['apogee_tickets', 'apogee_ticket_comments', 'apogee_ticket_history'],
-    edgeFunctions: ['auto-classify-modules'],
+    edgeFunctions: [],
   },
   {
     id: 'reseau_franchiseur',
@@ -134,7 +134,7 @@ export const EDGE_FUNCTIONS_DOCS: EdgeFunctionDoc[] = [
   { name: 'unified-search', category: 'IA', description: 'Recherche unifiée StatIA + documentation', rateLimit: '20/min', authentication: true, dependencies: ['OPENAI_API_KEY'] },
   { name: 'helpi-search', category: 'IA', description: 'Recherche Helpi avec scoring pertinence', rateLimit: '30/min', authentication: true, dependencies: ['OPENAI_API_KEY'] },
   { name: 'helpi-index', category: 'IA', description: 'Indexation batch des contenus RAG', rateLimit: '5/10min', authentication: true, dependencies: ['OPENAI_API_KEY'] },
-  { name: 'auto-classify-modules', category: 'IA', description: 'Classification automatique tickets Apogée', rateLimit: '10/min', authentication: true, dependencies: ['OPENAI_API_KEY'] },
+  
   { name: 'generate-formation-summary', category: 'IA', description: 'Génération résumés pédagogiques', rateLimit: '5/min', authentication: true, dependencies: ['OPENAI_API_KEY'] },
   { name: 'analyze-payslip', category: 'IA', description: 'Extraction données bulletins de paie', rateLimit: '10/min', authentication: true, dependencies: ['OPENAI_API_KEY'] },
   { name: 'faq-search', category: 'IA', description: 'Recherche sémantique FAQ', rateLimit: '30/min', authentication: true, dependencies: ['OPENAI_API_KEY'] },

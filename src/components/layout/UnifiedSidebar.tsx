@@ -265,7 +265,7 @@ export function UnifiedSidebar() {
         { title: 'Kanban', url: ROUTES.projects.kanban, icon: Kanban, description: 'Tableau de bord projet' },
         { title: 'Liste', url: ROUTES.projects.list, icon: ListTodo, description: 'Vue liste des tickets' },
         { title: 'IA-IA (Doublons)', url: ROUTES.projects.duplicates, icon: GitCompare, description: 'Détection des doublons' },
-        { title: 'Auto-Classeur', url: ROUTES.projects.autoClassify, icon: Sparkles, description: 'Classification IA modules' },
+        
         { title: 'Tickets incomplets', url: ROUTES.projects.incomplete, icon: FileText, description: 'Tickets à compléter' },
       ],
     },

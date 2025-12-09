@@ -174,7 +174,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
       { label: 'Classification', href: ROUTES.projects.classify, icon: 'Tags', description: 'Classifier tickets', minRole: 'franchisor_user' },
       { label: 'Revue', href: ROUTES.projects.review, icon: 'CheckCircle', description: 'Revoir tickets', minRole: 'franchisor_user' },
       { label: 'Permissions', href: ROUTES.projects.permissions, icon: 'Shield', description: 'Gérer droits', minRole: 'franchisor_admin' },
-      { label: 'Auto-Classeur', href: ROUTES.projects.autoClassify, icon: 'Sparkles', description: 'Classification IA', minRole: 'franchisor_user' },
+      
       { label: 'Doublons IA', href: ROUTES.projects.duplicates, icon: 'GitCompare', description: 'Détection doublons', minRole: 'franchisor_user' },
     ],
   },

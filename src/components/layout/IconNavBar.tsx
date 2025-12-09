@@ -115,7 +115,7 @@ const navSections: NavSection[] = [
       { title: 'Kanban', url: ROUTES.projects.kanban, icon: Kanban },
       { title: 'Liste', url: ROUTES.projects.list, icon: ListTodo },
       { title: 'IA-IA (Doublons)', url: ROUTES.projects.duplicates, icon: GitCompare },
-      { title: 'Auto-Classeur', url: ROUTES.projects.autoClassify, icon: Sparkles },
+      
       { title: 'Tickets incomplets', url: ROUTES.projects.incomplete, icon: FileText },
     ],
     requiresModule: 'apogee_tickets',
