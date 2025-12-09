@@ -116,6 +116,12 @@ function calculateTechnicienKpisStatia(
   const isProductiveType = (type: string) => 
     PRODUCTIVE_TYPES.some(t => (type || '').toLowerCase().includes(t));
 
+  // === 0. Trouver le technicien dans la liste des users ===
+  const myUser = (users || []).find((u: any) => u.id === apogeeUserId);
+  const myTechName = myUser ? `${myUser.firstname || ''} ${myUser.name || ''}`.trim().toUpperCase() : null;
+  
+  console.log('[usePersonalKpis] Technicien trouvé:', { apogeeUserId, myUser: myUser?.name, myTechName });
+
   // === 1. CA du mois (utilise le moteur StatIA) ===
   const statiaParams: CaParTechnicienParams = {
     dateRange: { start: monthStart, end: monthEnd },
@@ -125,68 +131,70 @@ function calculateTechnicienKpisStatia(
     statiaParams
   );
   
-  // Extraire le CA du technicien spécifique depuis le ranking
+  // Extraire le CA par NOM (le ranking utilise les noms, pas les IDs)
   const techRanking = caResult.ranking || [];
-  const myTechData = techRanking.find((t: any) => t.id === apogeeUserId);
+  const myTechData = techRanking.find((t: any) => {
+    const rankName = (t.label || t.name || '').toUpperCase();
+    return rankName === myTechName || rankName.includes(myTechName || 'IMPOSSIBLE');
+  });
   const caMonth = myTechData?.value || 0;
   
   console.log('[usePersonalKpis] Technician CA extraction:', { 
     apogeeUserId, 
+    myTechName,
     myTechData,
     caMonth,
-    totalRanking: techRanking.length 
+    allRankingNames: techRanking.map((t: any) => t.label || t.name).slice(0, 5)
   });
 
-  // Convertir l'ID en string et number pour comparaison flexible
+  // Convertir l'ID pour comparaison flexible
   const apogeeUserIdStr = String(apogeeUserId);
   const apogeeUserIdNum = Number(apogeeUserId);
 
-  // Debug: examiner la structure des interventions
+  // Debug: examiner la structure des interventions (champs réels de l'API Apogée)
   const sampleInter = (interventions || [])[0];
-  console.log('[usePersonalKpis] Sample intervention structure:', {
+  console.log('[usePersonalKpis] Sample intervention:', {
     apogeeUserId,
-    sampleUserId: sampleInter?.userId,
-    sampleVisites: sampleInter?.visites?.slice(0, 1),
-    sampleType: sampleInter?.type,
-    sampleDate: sampleInter?.dateReelle || sampleInter?.date,
+    // L'API Apogée utilise usersIds (tableau) pas userId
+    usersIds: sampleInter?.usersIds,
+    dataVisites: sampleInter?.data?.visites?.length,
+    type: sampleInter?.type,
+    type2: sampleInter?.type2,
   });
 
-  // Chercher toutes les interventions où ce technicien apparaît (sans filtre de date)
-  const allTechInterventionsNoDate = (interventions || []).filter((inter: any) => {
-    const interUserId = inter.userId;
-    const isAssigned = interUserId === apogeeUserId || 
-                       interUserId === apogeeUserIdStr || 
-                       Number(interUserId) === apogeeUserIdNum;
+  // Helper pour vérifier si technicien est dans l'intervention
+  const isTechInIntervention = (inter: any): boolean => {
+    // 1. Vérifier usersIds (tableau des techniciens assignés)
+    const usersIds = inter.usersIds || [];
+    const isInUsersIds = usersIds.some((uid: any) => 
+      uid === apogeeUserId || uid === apogeeUserIdStr || Number(uid) === apogeeUserIdNum
+    );
+    if (isInUsersIds) return true;
     
-    const hasVisiteParticipation = (inter.visites || []).some((v: any) => 
+    // 2. Vérifier data.visites
+    const visites = inter.data?.visites || [];
+    const isInVisites = visites.some((v: any) => 
       (v.usersIds || []).some((uid: any) => 
         uid === apogeeUserId || uid === apogeeUserIdStr || Number(uid) === apogeeUserIdNum
       )
     );
+    if (isInVisites) return true;
     
-    return isAssigned || hasVisiteParticipation;
-  });
+    // 3. Fallback: userId simple (certaines APIs)
+    const userId = inter.userId || inter.user_id;
+    if (userId === apogeeUserId || userId === apogeeUserIdStr || Number(userId) === apogeeUserIdNum) {
+      return true;
+    }
+    
+    return false;
+  };
 
-  console.log('[usePersonalKpis] Tech interventions (sans filtre date):', allTechInterventionsNoDate.length);
-
-  // === 2. Interventions ce mois (assignées OU visites avec participation) ===
+  // === 2. Interventions ce mois ===
   const techInterventions = (interventions || []).filter((inter: any) => {
-    // Vérifier assignation directe OU participation à une visite (comparaison flexible)
-    const interUserId = inter.userId;
-    const isAssigned = interUserId === apogeeUserId || 
-                       interUserId === apogeeUserIdStr || 
-                       Number(interUserId) === apogeeUserIdNum;
-    
-    const hasVisiteParticipation = (inter.visites || []).some((v: any) => 
-      (v.usersIds || []).some((uid: any) => 
-        uid === apogeeUserId || uid === apogeeUserIdStr || Number(uid) === apogeeUserIdNum
-      )
-    );
-    
-    if (!isAssigned && !hasVisiteParticipation) return false;
+    if (!isTechInIntervention(inter)) return false;
 
     // Vérifier la date
-    const dateStr = inter.dateReelle || inter.date;
+    const dateStr = inter.dateReelle || inter.date || inter.dateIntervention;
     if (!dateStr) return false;
     
     try {
@@ -195,6 +203,14 @@ function calculateTechnicienKpisStatia(
     } catch {
       return false;
     }
+  });
+
+  // Debug: compter sans filtre date
+  const allTechInterventions = (interventions || []).filter(isTechInIntervention);
+  console.log('[usePersonalKpis] Interventions:', { 
+    total: (interventions || []).length,
+    sansFiltreDdate: allTechInterventions.length,
+    avecDate: techInterventions.length
   });
 
   console.log('[usePersonalKpis] Interventions (avec date):', { 
@@ -236,7 +252,8 @@ function calculateTechnicienKpisStatia(
   let heuresTotales = 0;
   
   for (const inter of techInterventions) {
-    const visites = inter.visites || [];
+    // Visites sont dans data.visites selon l'interface Intervention
+    const visites = inter.data?.visites || inter.visites || [];
     const type = (inter.type || inter.type2 || '').toLowerCase();
     const isProductive = isProductiveType(type);
     
@@ -269,12 +286,12 @@ function calculateTechnicienKpisStatia(
       }
     }
     
-    // Si pas de visites mais technicien assigné directement
+    // Si pas de visites mais technicien assigné directement via usersIds
     if (visites.length === 0) {
-      const interUserId = inter.userId;
-      const isDirectAssign = interUserId === apogeeUserId || 
-                             interUserId === apogeeUserIdStr || 
-                             Number(interUserId) === apogeeUserIdNum;
+      const usersIds = inter.usersIds || [];
+      const isDirectAssign = usersIds.some((uid: any) => 
+        uid === apogeeUserId || uid === apogeeUserIdStr || Number(uid) === apogeeUserIdNum
+      );
       if (isDirectAssign) {
         const duree = inter.duree || inter.tempsPrevu || 2;
         heuresTotales += duree;
