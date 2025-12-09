@@ -23,6 +23,8 @@ import {
   Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { WidgetContent } from './WidgetContent';
 
 const ICONS: Record<string, React.ElementType> = {
@@ -96,6 +98,20 @@ export function DashboardWidget({
 
   const Icon = ICONS[widget.template?.icon || 'LayoutGrid'] || LayoutGrid;
 
+  // Titre dynamique - pour "Indicateurs Globaux", afficher le mois en cours
+  const getWidgetTitle = () => {
+    const baseName = widget.template?.name || '';
+    const moduleSource = widget.template?.module_source;
+    
+    if (moduleSource === 'StatIA.indicateurs_globaux') {
+      const currentMonth = format(new Date(), 'MMMM', { locale: fr });
+      const capitalizedMonth = currentMonth.charAt(0).toUpperCase() + currentMonth.slice(1);
+      return `Indicateurs (${capitalizedMonth})`;
+    }
+    
+    return baseName;
+  };
+
   // Only show resize handles if in edit mode
   const showResizeHandles = isEditMode && (isHovered || isResizing) && !isDragging;
 
@@ -122,7 +138,7 @@ export function DashboardWidget({
       <div className="absolute top-2 left-3 right-3 flex items-center gap-2 z-10">
         <Icon className="h-4 w-4 text-helpconfort-blue shrink-0 pointer-events-none" />
         <span className="text-xs font-medium text-muted-foreground truncate pointer-events-none flex-1">
-          {widget.template?.name}
+          {getWidgetTitle()}
         </span>
         
         {/* Bouton supprimer - visible au hover en mode édition */}
