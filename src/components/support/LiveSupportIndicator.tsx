@@ -29,9 +29,13 @@ export function LiveSupportIndicator({ className }: LiveSupportIndicatorProps) {
     closeSession();
   };
 
-  const handleOpenChat = () => {
-    console.log('[LiveSupportIndicator] Opening chat');
-    openChat();
+  const handleOpenChat = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('[LiveSupportIndicator] Opening chat, hasActiveSession:', hasActiveSession);
+    if (hasActiveSession) {
+      openChat();
+    }
   };
 
   return (

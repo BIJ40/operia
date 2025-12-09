@@ -23,7 +23,7 @@ export function GlobalLiveSupportManager() {
       {/* Dialog de chat - accessible de partout */}
       <Dialog open={showChatDialog} onOpenChange={closeChatDialog} modal={true}>
         <DialogContent 
-          className="sm:max-w-xl h-[70vh] p-0 flex flex-col"
+          className="sm:max-w-xl h-[70vh] p-0 flex flex-col [&>button]:hidden"
           onPointerDownOutside={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
         >
