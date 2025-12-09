@@ -765,13 +765,14 @@ interface DocSearchResult {
   url: string;
 }
 
-async function searchDocsWithHelpi(authHeader: string, query: string, blockTypes?: string[]): Promise<DocSearchResult[]> {
+async function searchDocsWithHelpi(authHeader: string, query: string, allowedBlockTypes: string[]): Promise<DocSearchResult[]> {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    console.log(`[unified-search] helpi-search with blockTypes: [${allowedBlockTypes.join(', ')}]`);
     const res = await fetch(`${supabaseUrl}/functions/v1/helpi-search`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
-      body: JSON.stringify({ query, matchThreshold: 0.35, matchCount: 8, blockTypes: blockTypes || ['apogee', 'helpconfort', 'document', 'faq'] })
+      body: JSON.stringify({ query, matchThreshold: 0.35, matchCount: 8, blockTypes: allowedBlockTypes })
     });
     
     if (!res.ok) {
@@ -814,10 +815,11 @@ async function searchDocsConversational(
   query: string, 
   userName: string, 
   authHeader: string,
+  allowedBlockTypes: string[],
   conversationHistory?: Array<{ role: string; content: string }>
 ): Promise<{ answer: string; sources: any[]; docResults: DocSearchResult[]; isConversational: true }> {
-  // Use Helpi for doc search
-  const docResults = await searchDocsWithHelpi(authHeader, query);
+  // Use Helpi for doc search with permission-filtered block types
+  const docResults = await searchDocsWithHelpi(authHeader, query, allowedBlockTypes);
   const sources = docResults.map(r => ({
     id: r.id,
     title: r.title,
@@ -902,9 +904,17 @@ serve(async (req) => {
     const rateLimitResult = await checkRateLimit(`unified-search:${user.id}`, { limit: 30, windowMs: 60000 });
     if (!rateLimitResult.allowed) return rateLimitResponse(rateLimitResult.retryAfter || 60, corsHeaders);
 
-    const { data: profile } = await supabase.from('profiles').select('agence, global_role, first_name, last_name').eq('id', user.id).maybeSingle();
+    const { data: profile } = await supabase.from('profiles').select('agence, global_role, first_name, last_name, enabled_modules').eq('id', user.id).maybeSingle();
     const globalRole = profile?.global_role || 'base_user';
     const roleLevel = getRoleLevel(globalRole);
+    
+    // Déterminer les types de blocs autorisés pour la recherche documentaire
+    const enabledModules = profile?.enabled_modules || {};
+    const hasHelpAcademy = roleLevel >= 5 || enabledModules?.help_academy?.enabled === true;
+    const allowedBlockTypes = hasHelpAcademy 
+      ? ['apogee', 'helpconfort', 'document', 'faq'] 
+      : ['faq']; // Sans accès à l'Academy, seulement FAQ publique
+    console.log(`[unified-search] Doc permissions: hasHelpAcademy=${hasHelpAcademy}, allowedBlockTypes=[${allowedBlockTypes.join(', ')}]`);
     const agencySlug = profile?.agence || '';
     
     const context: AiSearchContext = { userId: user.id, role: globalRole, roleLevel, agencyId: null, agencySlug: agencySlug || null, allowedAgencyIds: roleLevel >= 3 ? [] : undefined };
@@ -1211,7 +1221,7 @@ serve(async (req) => {
 
     } else if (routed.type === 'doc') {
       const userName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || 'Utilisateur';
-      result = await searchDocsConversational(supabase, query, userName, authHeader, conversationHistory);
+      result = await searchDocsConversational(supabase, query, userName, authHeader, allowedBlockTypes, conversationHistory);
       const docResultsFormatted = result.docResults?.map((d: DocSearchResult) => ({
         id: d.id,
         title: d.title,
