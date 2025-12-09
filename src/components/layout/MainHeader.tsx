@@ -246,6 +246,11 @@ export function MainHeader() {
                   )}
                 </nav>
 
+                {/* Barre de recherche IA */}
+                <div className="hidden lg:flex items-center ml-4">
+                  <UnifiedSearchFloatingBar />
+                </div>
+
                 {/* Actions droite */}
                 <div className="flex items-center gap-1 ml-auto">
                   {/* RH Notifications - seule cloche */}
@@ -326,11 +331,6 @@ export function MainHeader() {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Barre de recherche IA unifiée - sous le menu principal */}
-        <div className="border-t border-border/50 bg-background/50">
-          <UnifiedSearchFloatingBar />
         </div>
 
         {/* Navigation mobile */}
