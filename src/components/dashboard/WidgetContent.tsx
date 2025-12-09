@@ -1,6 +1,6 @@
 /**
  * WidgetContent - Contenu dynamique des widgets selon leur type
- * Widgets actifs: Favoris, Derniers tickets, Mon équipe, Indicateurs globaux, CA par univers, Top 3 Techniciens, Raccourcis
+ * Widgets actifs: Favoris, Derniers tickets, Mon équipe, Indicateurs globaux, CA par univers, Top 3 Techniciens, Raccourcis, KPIs Technicien, KPIs Assistante
  */
 
 import { UserWidget, WidgetTemplate } from '@/types/dashboard';
@@ -11,6 +11,8 @@ import { IndicateursGlobauxWidget } from './widgets/IndicateursGlobauxWidget';
 import { Top3TechniciensWidget } from './widgets/Top3TechniciensWidget';
 import { ShortcutWidget } from './widgets/ShortcutWidget';
 import { FavorisWidget } from './widgets/FavorisWidget';
+import { TechnicienKpisWidget } from './widgets/TechnicienKpisWidget';
+import { AssistanteKpisWidget } from './widgets/AssistanteKpisWidget';
 
 interface WidgetContentProps {
   widget: UserWidget & { template: WidgetTemplate };
@@ -25,6 +27,8 @@ const WIDGET_COMPONENTS: Record<string, React.FC> = {
   'StatIA.ca_par_univers': CAParUniversWidget,
   'StatIA.indicateurs_globaux': IndicateursGlobauxWidget,
   'StatIA.top3_techniciens': Top3TechniciensWidget,
+  'Personal.technicien_kpis': TechnicienKpisWidget,
+  'Personal.assistante_kpis': AssistanteKpisWidget,
 };
 
 export function WidgetContent({ widget }: WidgetContentProps) {
