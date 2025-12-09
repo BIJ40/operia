@@ -134,27 +134,27 @@ export function DashboardWidget({
         isResizing && 'ring-2 ring-helpconfort-blue/50 shadow-xl'
       )}
     >
-      {/* Header avec titre et bouton supprimer */}
-      <div className="absolute top-2 left-3 right-3 flex items-center gap-2 z-10">
+      {/* Header avec titre */}
+      <div className="absolute top-2 left-3 right-10 flex items-center gap-2 z-10">
         <Icon className="h-4 w-4 text-helpconfort-blue shrink-0 pointer-events-none" />
         <span className="text-xs font-medium text-muted-foreground truncate pointer-events-none flex-1">
           {getWidgetTitle()}
         </span>
-        
-        {/* Bouton supprimer - visible au hover en mode édition */}
-        {isEditMode && isHovered && !isDragging && !isResizing && onDelete && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(widget.id);
-            }}
-            className="p-1 rounded-md bg-destructive/10 hover:bg-destructive/20 text-destructive transition-colors"
-            title="Supprimer le widget"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
-        )}
       </div>
+      
+      {/* Bouton supprimer - positionné au centre du bord droit pour éviter les coins de resize */}
+      {isEditMode && isHovered && !isDragging && !isResizing && onDelete && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(widget.id);
+          }}
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md bg-destructive/10 hover:bg-destructive/20 text-destructive transition-colors z-20"
+          title="Supprimer le widget"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      )}
 
       {/* Contenu du widget - pas de padding pour les widgets Shortcut */}
       <CardContent className={cn(
