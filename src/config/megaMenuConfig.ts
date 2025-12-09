@@ -59,7 +59,6 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
       { label: 'Indicateurs SAV', href: ROUTES.pilotage.indicateursSav, icon: 'LifeBuoy', description: 'Service après-vente', minRole: 'franchisee_admin' },
       { label: 'Actions à Mener', href: ROUTES.pilotage.actions, icon: 'ListTodo', description: 'Tâches opérationnelles', minRole: 'franchisee_admin' },
       { label: 'Diffusion', href: ROUTES.pilotage.diffusion, icon: 'Tv', description: 'Mode TV agence', minRole: 'franchisee_admin' },
-      { label: 'StatIA Builder', href: ROUTES.pilotage.statiaBuilder, icon: 'Sparkles', description: 'Créer des métriques', minRole: 'franchisee_admin' },
       { label: 'Maintenance', href: ROUTES.pilotage.maintenance, icon: 'Wrench', description: 'Maintenance préventive', minRole: 'franchisee_admin' },
       { label: 'Commercial', href: ROUTES.pilotage.commercial, icon: 'Briefcase', description: 'Outils commerciaux', minRole: 'franchisee_admin' },
     ],
