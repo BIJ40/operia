@@ -1,8 +1,5 @@
 // Module exports
 
-// Pages
-export { TechInterventionsPage } from './pages/TechInterventionsPage';
-export { RtRunnerPage } from './pages/RtRunnerPage';
 
 // Components
 export { TechPlanningList } from './components/TechPlanningList';
