@@ -345,24 +345,7 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
               <p>{incompleteCount} ticket{incompleteCount > 1 ? 's' : ''} à compléter</p>
             </TooltipContent>
           </Tooltip>
-          {/* Bouton classification "À spécifier" */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link to={ROUTES.projects.classify}>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className={toClassifyCount > 0 ? "text-amber-600 border-amber-300 hover:bg-amber-50" : ""}
-                >
-                  <FolderOpen className="h-4 w-4 mr-1" />
-                  {toClassifyCount}
-                </Button>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{toClassifyCount} ticket{toClassifyCount > 1 ? 's' : ''} à classifier</p>
-            </TooltipContent>
-          </Tooltip>
+          {/* Menu IA regroupé */}
           {/* Menu IA regroupé */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -404,19 +387,6 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
                   <span>IA-IA</span>
                   <span className="text-xs text-muted-foreground ml-1">
                     (Doublons)
-                  </span>
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                onClick={() => navigate(ROUTES.projects.autoClassify)}
-                className="cursor-pointer"
-              >
-                <FolderOpen className="h-4 w-4 mr-2 text-amber-600" />
-                <div className="flex-1">
-                  <span>Auto-Classeur</span>
-                  <span className="text-xs text-muted-foreground ml-1">
-                    (Modules)
                   </span>
                 </div>
               </DropdownMenuItem>

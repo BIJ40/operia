@@ -8,8 +8,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-
-const DEFAULT_TAGS = ['BUG', 'EVO', 'NTH'];
+import { useTicketTags } from "../hooks/useTicketTags";
 
 interface TagSelectorProps {
   selectedTags: string[];
@@ -20,10 +19,13 @@ interface TagSelectorProps {
 export function TagSelector({ selectedTags, onTagsChange, disabled }: TagSelectorProps) {
   const [newTag, setNewTag] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+  const { tags, ensureTagExists, getTagColor } = useTicketTags();
 
-  const handleAddTag = (tag: string) => {
+  const handleAddTag = async (tag: string) => {
     const upperTag = tag.toUpperCase().trim();
     if (upperTag && !selectedTags.includes(upperTag)) {
+      // Ensure tag exists in database
+      await ensureTagExists(upperTag);
       onTagsChange([...selectedTags, upperTag]);
     }
     setNewTag('');
@@ -33,24 +35,11 @@ export function TagSelector({ selectedTags, onTagsChange, disabled }: TagSelecto
     onTagsChange(selectedTags.filter(t => t !== tag));
   };
 
-  const handleToggleTag = (tag: string) => {
+  const handleToggleTag = async (tag: string) => {
     if (selectedTags.includes(tag)) {
       handleRemoveTag(tag);
     } else {
-      handleAddTag(tag);
-    }
-  };
-
-  const getTagColor = (tag: string) => {
-    switch (tag) {
-      case 'BUG':
-        return 'bg-red-100 text-red-800 hover:bg-red-200';
-      case 'EVO':
-        return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
-      case 'NTH':
-        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
-      default:
-        return 'bg-purple-100 text-purple-800 hover:bg-purple-200';
+      await handleAddTag(tag);
     }
   };
 
@@ -84,16 +73,16 @@ export function TagSelector({ selectedTags, onTagsChange, disabled }: TagSelecto
             </PopoverTrigger>
             <PopoverContent className="w-64 bg-background z-50" align="start">
               <div className="space-y-3">
-                <div className="text-sm font-medium">Tags prédéfinis</div>
-                <div className="flex flex-wrap gap-2">
-                  {DEFAULT_TAGS.map(tag => (
+                <div className="text-sm font-medium">Tags disponibles</div>
+                <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                  {tags.map(tag => (
                     <Badge
-                      key={tag}
-                      variant={selectedTags.includes(tag) ? "default" : "outline"}
-                      className={`cursor-pointer ${selectedTags.includes(tag) ? getTagColor(tag) : ''}`}
-                      onClick={() => handleToggleTag(tag)}
+                      key={tag.id}
+                      variant={selectedTags.includes(tag.id) ? "default" : "outline"}
+                      className={`cursor-pointer ${selectedTags.includes(tag.id) ? getTagColor(tag.id) : ''}`}
+                      onClick={() => handleToggleTag(tag.id)}
                     >
-                      {tag}
+                      {tag.label}
                     </Badge>
                   ))}
                 </div>

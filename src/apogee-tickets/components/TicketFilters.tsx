@@ -13,21 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Search, X, Snowflake, Flame, Tag, Filter, MessageSquare } from 'lucide-react';
 import type { ApogeeModule, ApogeePriority, ApogeeOwnerSide, TicketFilters as Filters, ReportedBy, MissingFieldFilter } from '../types';
 import { cn } from '@/lib/utils';
-
-interface TicketFiltersProps {
-  filters: Filters;
-  onFiltersChange: (filters: Filters) => void;
-  modules: ApogeeModule[];
-  priorities: ApogeePriority[];
-  // New props for PEC and blinking
-  ownerSides?: ApogeeOwnerSide[];
-  selectedPEC?: Set<string>;
-  onTogglePEC?: (pecId: string) => void;
-  onClearPEC?: () => void;
-  blinkingTicketsCount?: number;
-  filterBlinkingOnly?: boolean;
-  onToggleBlinkingFilter?: () => void;
-}
+import { useTicketTags } from '../hooks/useTicketTags';
 
 // Couleurs pour le gradient du slider (bleu glacé -> rouge feu)
 const getHeatColor = (priority: number): string => {
@@ -57,8 +43,20 @@ const ORIGINE_OPTIONS: { value: ReportedBy; label: string }[] = [
   { value: 'JEROME', label: 'Jérôme' },
 ];
 
-// Tags par défaut
-const DEFAULT_TAGS = ['BUG', 'EVO', 'NTH'];
+interface TicketFiltersProps {
+  filters: Filters;
+  onFiltersChange: (filters: Filters) => void;
+  modules: ApogeeModule[];
+  priorities: ApogeePriority[];
+  // New props for PEC and blinking
+  ownerSides?: ApogeeOwnerSide[];
+  selectedPEC?: Set<string>;
+  onTogglePEC?: (pecId: string) => void;
+  onClearPEC?: () => void;
+  blinkingTicketsCount?: number;
+  filterBlinkingOnly?: boolean;
+  onToggleBlinkingFilter?: () => void;
+}
 
 export function TicketFilters({ 
   filters, 
@@ -73,6 +71,8 @@ export function TicketFilters({
   filterBlinkingOnly = false,
   onToggleBlinkingFilter,
 }: TicketFiltersProps) {
+  const { tags, getTagColor } = useTicketTags();
+
   const updateFilter = (key: keyof Filters, value: any) => {
     onFiltersChange({ ...filters, [key]: value || undefined });
   };
@@ -210,23 +210,23 @@ export function TicketFilters({
           <PopoverContent className="w-56 bg-background z-50" align="start">
             <div className="space-y-2">
               <div className="text-sm font-medium">Filtrer par tag</div>
-              <div className="space-y-1">
-                {DEFAULT_TAGS.map((tag) => (
+              <div className="space-y-1 max-h-48 overflow-y-auto">
+                {tags.map((tag) => (
                   <label
-                    key={tag}
+                    key={tag.id}
                     className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded px-2 py-1"
                   >
                     <Checkbox
-                      checked={filters.tags?.includes(tag) || false}
+                      checked={filters.tags?.includes(tag.id) || false}
                       onCheckedChange={(checked) => {
                         const currentTags = filters.tags || [];
                         const newTags = checked
-                          ? [...currentTags, tag]
-                          : currentTags.filter((t) => t !== tag);
+                          ? [...currentTags, tag.id]
+                          : currentTags.filter((t) => t !== tag.id);
                         updateFilter('tags', newTags.length > 0 ? newTags : undefined);
                       }}
                     />
-                    <span className="text-sm">{tag}</span>
+                    <span className="text-sm">{tag.label}</span>
                   </label>
                 ))}
               </div>

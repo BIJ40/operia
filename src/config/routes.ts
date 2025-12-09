@@ -118,6 +118,7 @@ export const ROUTES = {
     index: '/projects',
     kanban: '/projects/kanban',
     list: '/projects/list',
+    history: '/projects/historique',
     import: '/projects/import',
     importPriorities: '/projects/import-priorities',
     importEvaluated: '/projects/import-evaluated',
