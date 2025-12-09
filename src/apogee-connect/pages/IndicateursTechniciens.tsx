@@ -70,7 +70,7 @@ export default function IndicateursTechniciens() {
     new Intl.NumberFormat('fr-FR', { maximumFractionDigits: decimals }).format(value);
 
   return (
-    <div className="space-y-8">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
       <PageHeader
         title="Techniciens par univers"
         subtitle="Analyse croisée du CA, des heures et de la performance par technicien et domaine"

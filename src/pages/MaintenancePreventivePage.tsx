@@ -12,8 +12,9 @@ import { ToolsTab } from '@/components/maintenance/ToolsTab';
 import { AlertsTab } from '@/components/maintenance/AlertsTab';
 import { PlansTab } from '@/components/maintenance/PlansTab';
 import { useOpenMaintenanceAlertsCount } from '@/hooks/maintenance/useMaintenanceAlerts';
-import { Wrench, Car, HardHat, Bell, Settings, ArrowLeft } from 'lucide-react';
+import { Wrench, Car, HardHat, Bell, Settings } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 type TabId = 'vehicles' | 'tools' | 'alerts' | 'plans';
 
@@ -35,40 +36,21 @@ export default function MaintenancePreventivePage() {
   const { data: alertsCount = 0 } = useOpenMaintenanceAlertsCount();
 
   return (
-    <div className="flex flex-col gap-6 p-4 lg:p-6">
-      {/* Lien retour */}
-      <Link
-        to={ROUTES.pilotage.index}
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Mon Agence
-      </Link>
-
-      {/* Header avec gradient */}
-      <header className="rounded-xl border border-border/50 bg-gradient-to-br from-helpconfort-blue/5 via-background to-background p-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-helpconfort-blue/20 to-helpconfort-blue/5 shadow-sm">
-              <Wrench className="h-7 w-7 text-helpconfort-blue" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight">
-                Maintenance préventive
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Suivi des véhicules, matériel, EPI et contrôles réglementaires
-              </p>
-            </div>
-          </div>
-          {alertsCount > 0 && (
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <PageHeader
+        title="Maintenance préventive"
+        subtitle="Suivi des véhicules, matériel, EPI et contrôles réglementaires"
+        backTo={ROUTES.pilotage.index}
+        backLabel="Mon Agence"
+        rightElement={
+          alertsCount > 0 ? (
             <Badge variant="destructive" className="gap-1.5 px-3 py-1.5 text-sm">
               <Bell className="h-4 w-4" />
               {alertsCount} alerte{alertsCount > 1 ? 's' : ''} en cours
             </Badge>
-          )}
-        </div>
-      </header>
+          ) : undefined
+        }
+      />
 
       {/* Onglets */}
       <div className="border-b border-border">

@@ -10,6 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Loader2, Calendar, Check, X, Clock, AlertCircle, Eye, User, MessageSquare, FileText, Upload
 } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { ROUTES } from '@/config/routes';
 import { useAgencyLeaveRequests, useUpdateLeaveRequest } from '@/hooks/useLeaveRequests';
 import { useProcessLeaveRequest } from '@/hooks/useLeaveDecision';
 import { 
@@ -257,21 +259,13 @@ export default function GestionConges() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <Card className="border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-helpconfort-blue/5 via-background to-background">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Calendar className="h-5 w-5 text-helpconfort-blue" />
-            Gestion des congés
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Validez ou refusez les demandes de congés de vos collaborateurs.
-          </p>
-        </CardContent>
-      </Card>
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <PageHeader
+        title="Gestion des congés"
+        subtitle="Validez ou refusez les demandes de congés de vos collaborateurs"
+        backTo={ROUTES.pilotage.index}
+        backLabel="Mon Agence"
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
