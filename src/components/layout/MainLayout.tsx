@@ -71,21 +71,9 @@ export function MainLayout({
           
           {/* Zone principale */}
           <div className="flex-1 flex flex-col min-w-0">
-            {/* Header simplifié avec Command Palette */}
+            {/* Header simplifié */}
             {showHeader && (
-              <header className="h-14 border-b bg-background/95 backdrop-blur-sm flex items-center justify-between px-4 sticky top-0 z-40">
-                <div className="flex items-center gap-4">
-                  {/* Bouton Command Palette */}
-                  <CommandPaletteButton />
-                </div>
-                
-                {/* Barre de recherche AI (sauf sur Hub) */}
-                {!isOnHub && isAuthenticated && (
-                  <div className="flex-1 max-w-xl mx-4">
-                    <UnifiedSearchFloatingBar />
-                  </div>
-                )}
-                
+              <header className="h-14 border-b bg-background/95 backdrop-blur-sm flex items-center justify-end px-4 sticky top-0 z-40">
                 <div className="flex items-center gap-2">
                   {/* Placeholder pour actions header (notifications, profil, etc.) */}
                 </div>
