@@ -8,8 +8,8 @@ export default function RHDashboardPage() {
       <PageHeader
         title="Dashboard RH"
         subtitle="Tableau de bord des ressources humaines"
-        backTo={ROUTES.pilotage.index}
-        backLabel="Mon Agence"
+        backTo={ROUTES.rh.index}
+        backLabel="Espace RH"
       />
       <RHDashboard />
     </div>
