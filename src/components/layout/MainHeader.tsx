@@ -137,9 +137,12 @@ export function MainHeader() {
                 alt="HelpConfort Services" 
                 className="h-16 w-auto"
               />
-              <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground -mt-1">
+              <Link 
+                to="/changelog" 
+                className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground -mt-1 hover:bg-primary/10 hover:text-primary transition-colors"
+              >
                 v{APP_VERSION}
-              </span>
+              </Link>
             </div>
 
             {/* Colonne droite : Menu + Recherche */}
