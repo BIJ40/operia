@@ -185,9 +185,29 @@ export function IconNavBar() {
     return caps[section.accessKey];
   });
 
-  const isActive = (url: string) => {
+  const isActive = (url: string, sectionId: string) => {
     if (url === '/') return location.pathname === '/';
-    return location.pathname.startsWith(url);
+    
+    // Pour éviter le double surlignage, vérifier le contexte exact
+    const path = location.pathname;
+    
+    // RH section: seulement les routes /mon-coffre-rh et /hc-agency/demandes-rh
+    if (sectionId === 'rh') {
+      return path === '/mon-coffre-rh' || 
+             path.startsWith('/mon-coffre-rh/') ||
+             path === '/hc-agency/demandes-rh' ||
+             path.startsWith('/hc-agency/demandes-rh/');
+    }
+    
+    // Mon Agence: exclure les routes RH
+    if (sectionId === 'agence') {
+      if (path === '/mon-coffre-rh' || path.startsWith('/mon-coffre-rh/') ||
+          path === '/hc-agency/demandes-rh' || path.startsWith('/hc-agency/demandes-rh/')) {
+        return false;
+      }
+    }
+    
+    return path.startsWith(url);
   };
 
   const handleNavClick = (sectionId: string) => {
@@ -198,7 +218,7 @@ export function IconNavBar() {
     <nav className="flex items-center gap-1 px-2">
       {filteredSections.map((section) => {
         const hasDropdown = section.items.length > 0;
-        const active = isActive(section.indexUrl);
+        const active = isActive(section.indexUrl, section.id);
 
         if (!hasDropdown) {
           // Simple link (Accueil)
