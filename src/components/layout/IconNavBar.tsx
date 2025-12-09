@@ -191,18 +191,26 @@ export function IconNavBar() {
     // Pour éviter le double surlignage, vérifier le contexte exact
     const path = location.pathname;
     
-    // RH section: seulement les routes /mon-coffre-rh et /hc-agency/demandes-rh
+    // Routes RH (toutes les routes RH incluant collaborateurs, congés, dashboard RH)
+    const rhRoutes = [
+      '/mon-coffre-rh',
+      '/hc-agency/demandes-rh',
+      '/hc-agency/collaborateurs',
+      '/hc-agency/dashboard-rh',
+      '/hc-agency/gestion-conges',
+      '/hc-agency/demande-conge',
+    ];
+    
+    const isRhRoute = rhRoutes.some(r => path === r || path.startsWith(r + '/'));
+    
+    // RH section: toutes les routes RH
     if (sectionId === 'rh') {
-      return path === '/mon-coffre-rh' || 
-             path.startsWith('/mon-coffre-rh/') ||
-             path === '/hc-agency/demandes-rh' ||
-             path.startsWith('/hc-agency/demandes-rh/');
+      return isRhRoute;
     }
     
     // Mon Agence: exclure les routes RH
     if (sectionId === 'agence') {
-      if (path === '/mon-coffre-rh' || path.startsWith('/mon-coffre-rh/') ||
-          path === '/hc-agency/demandes-rh' || path.startsWith('/hc-agency/demandes-rh/')) {
+      if (isRhRoute) {
         return false;
       }
     }
