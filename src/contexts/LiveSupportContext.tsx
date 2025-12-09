@@ -28,6 +28,7 @@ interface LiveSupportContextType {
   startNewSession: () => Promise<void>;
   closeChatDialog: () => void;
   closeSession: () => Promise<void>;
+  clearSession: () => void;
 }
 
 const LiveSupportContext = createContext<LiveSupportContextType | null>(null);
@@ -214,6 +215,12 @@ export function LiveSupportProvider({ children }: { children: ReactNode }) {
     }
   }, [activeSession?.id]);
 
+  // Clear local session state (après fermeture via dialog)
+  const clearSession = useCallback(() => {
+    setActiveSession(null);
+    setShowChatDialog(false);
+  }, []);
+
   const value: LiveSupportContextType = {
     activeSession,
     hasActiveSession: !!activeSession,
@@ -226,6 +233,7 @@ export function LiveSupportProvider({ children }: { children: ReactNode }) {
     startNewSession,
     closeChatDialog,
     closeSession,
+    clearSession,
   };
 
   return (
