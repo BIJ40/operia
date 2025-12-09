@@ -6,9 +6,11 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { 
   ArrowUpRight, ArrowDownRight, Minus, TrendingUp, FileText, Wrench, AlertCircle,
-  Calendar, BarChart3
+  Calendar, BarChart3, GitCompare
 } from 'lucide-react';
 import { usePeriodComparisonStatia } from '../hooks/usePeriodComparisonStatia';
+import { FranchiseurPageHeader } from '../components/layout/FranchiseurPageHeader';
+import { FranchiseurPageContainer } from '../components/layout/FranchiseurPageContainer';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   LineChart, Line, Legend
@@ -211,18 +213,26 @@ export default function FranchiseurComparison() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-9 w-64" />
+      <FranchiseurPageContainer>
+        <div className="space-y-4">
+          <Skeleton className="h-9 w-64" />
+          <Skeleton className="h-5 w-80" />
+        </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-48 rounded-2xl" />)}
         </div>
         <Skeleton className="h-[400px] rounded-2xl" />
-      </div>
+      </FranchiseurPageContainer>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <FranchiseurPageContainer>
+      <FranchiseurPageHeader
+        title="Comparaison Périodes"
+        subtitle="Comparez les performances entre deux périodes"
+        icon={<GitCompare className="h-6 w-6 text-helpconfort-blue" />}
+      />
       {/* Period selectors */}
       <Card className="rounded-2xl">
         <CardContent className="pt-6">
@@ -445,6 +455,6 @@ export default function FranchiseurComparison() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </FranchiseurPageContainer>
   );
 }

@@ -13,6 +13,8 @@ import { Accordion } from '@/components/ui/accordion';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Users, UserPlus } from 'lucide-react';
 import { UserListSkeleton } from '@/components/admin/users/UserListSkeleton';
+import { FranchiseurPageHeader } from '@/franchiseur/components/layout/FranchiseurPageHeader';
+import { FranchiseurPageContainer } from '@/franchiseur/components/layout/FranchiseurPageContainer';
 
 import {
   CreateUserDialog,
@@ -146,33 +148,36 @@ export default function TDRUsersPage() {
   }
 
   if (usersLoading) {
-    return <UserListSkeleton />;
+    return (
+      <FranchiseurPageContainer>
+        <UserListSkeleton />
+      </FranchiseurPageContainer>
+    );
   }
 
   return (
-    <TooltipProvider>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-primary/10 rounded-lg">
-            <Users className="w-8 h-8 text-primary" />
-          </div>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold">Gestion Utilisateurs Réseau</h1>
-            <p className="text-muted-foreground">
-              Gestion des utilisateurs et permissions du réseau
-            </p>
-          </div>
-          <Badge variant="outline" className="text-lg px-4 py-2">
-            {filteredUsers.length} utilisateur{filteredUsers.length > 1 ? 's' : ''}
-          </Badge>
-          {canCreateUsers && (
-            <Button onClick={() => setShowCreateDialog(true)}>
-              <UserPlus className="w-4 h-4 mr-2" />
-              Nouvel utilisateur
-            </Button>
-          )}
-        </div>
+    <FranchiseurPageContainer>
+      <TooltipProvider>
+        <div className="space-y-6">
+          {/* Header */}
+          <FranchiseurPageHeader
+            title="Gestion Utilisateurs Réseau"
+            subtitle="Gestion des utilisateurs et permissions du réseau"
+            icon={<Users className="h-6 w-6 text-helpconfort-blue" />}
+            actions={
+              <div className="flex items-center gap-3">
+                <Badge variant="outline" className="text-lg px-4 py-2">
+                  {filteredUsers.length} utilisateur{filteredUsers.length > 1 ? 's' : ''}
+                </Badge>
+                {canCreateUsers && (
+                  <Button onClick={() => setShowCreateDialog(true)}>
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Nouvel utilisateur
+                  </Button>
+                )}
+              </div>
+            }
+          />
 
         {/* Filters */}
         <UserFilters
@@ -332,7 +337,8 @@ export default function TDRUsersPage() {
           isPending={hardDeleteMutation.isPending}
           user={deleteDialog.user}
         />
-      </div>
-    </TooltipProvider>
+        </div>
+      </TooltipProvider>
+    </FranchiseurPageContainer>
   );
 }
