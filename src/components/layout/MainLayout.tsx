@@ -4,7 +4,6 @@ import { PublicLanding } from './PublicLanding';
 import { LoginDialog } from '@/components/LoginDialog';
 import { ImageModal } from '@/components/ImageModal';
 import { AiUnifiedProvider } from '@/components/ai';
-import { UnifiedSearchFloatingBar } from '@/components/unified-search';
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useStorageQuota } from '@/hooks/use-storage-quota';
@@ -57,14 +56,6 @@ export function MainLayout({
         
         {/* Contenu principal */}
         <main id="main-content" className="flex-1 overflow-auto" role="main">
-          {/* Barre de recherche AI - en haut du contenu */}
-          {showHeader && isAuthenticated && (
-            <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border/30">
-              <div className="container mx-auto px-4 py-2">
-                <UnifiedSearchFloatingBar />
-              </div>
-            </div>
-          )}
           {children}
         </main>
       </div>
