@@ -213,13 +213,13 @@ export function IconNavBar() {
         const hasDropdown = section.items.length > 0;
         const active = isActive(section.indexUrl);
         
-        // Pour N3/N4 franchiseur: afficher les items du menu Franchiseur directement (sans popover)
+        // Pour N3/N4 franchiseur: afficher les items du menu Franchiseur directement dans le header
         if (isFranchiseurOnly && section.id === 'franchiseur' && hasDropdown) {
           return (
             <div key={section.id} className="flex items-center gap-1">
               {section.items.map((item) => {
                 const Icon = item.icon;
-                const itemActive = location.pathname === item.url;
+                const itemActive = location.pathname.startsWith(item.url);
                 return (
                   <Link
                     key={item.url}
@@ -228,10 +228,9 @@ export function IconNavBar() {
                       "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all hover:bg-muted/50",
                       itemActive && "bg-primary/10 text-primary"
                     )}
-                    title={item.title}
                   >
                     <Icon className="h-4 w-4 shrink-0" />
-                    <span className="hidden md:inline">{item.title}</span>
+                    <span className="hidden lg:inline">{item.title}</span>
                   </Link>
                 );
               })}
