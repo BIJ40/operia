@@ -6,14 +6,13 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, History, Loader2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { History, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useTicketHistory } from '../hooks/useTicketPermissions';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { ROUTES } from '@/config/routes';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 export default function ApogeeTicketsHistoryPage() {
   const { data: history, isLoading } = useTicketHistory('');
@@ -47,19 +46,13 @@ export default function ApogeeTicketsHistoryPage() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-4 mb-6">
-        <Link to={ROUTES.projects.kanban}>
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Kanban
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold">Historique</h1>
-          <p className="text-muted-foreground">Traçabilité complète des actions sur les tickets</p>
-        </div>
-      </div>
+    <div className="container mx-auto py-8 px-4 space-y-6">
+      <PageHeader 
+        title="Historique"
+        subtitle="Traçabilité complète des actions sur les tickets"
+        backTo={ROUTES.projects.kanban}
+        backLabel="Kanban"
+      />
 
       <Card>
         <CardHeader>

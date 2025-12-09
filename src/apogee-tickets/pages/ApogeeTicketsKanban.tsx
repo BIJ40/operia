@@ -36,6 +36,7 @@ import { ROUTES } from '@/config/routes';
 import { useMyRecentlyModifiedTickets } from '../hooks/useMyRecentlyModifiedTickets';
 import { useMyTicketViews } from '../hooks/useTicketViews';
 import { useAuth } from '@/contexts/AuthContext';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 export default function ApogeeTicketsKanbanPage() {
   const { data: myTicketRole, isLoading: isLoadingRole, error: roleError } = useMyTicketRole();
@@ -217,7 +218,13 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
   };
 
   return (
-    <div className="space-y-4">
+    <div className="container mx-auto py-8 px-4 space-y-6">
+      <PageHeader 
+        title="Gestion de Projet - Kanban"
+        backTo={ROUTES.projects.index}
+        backLabel="Gestion de Projet"
+      />
+      
       {/* Header actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-2 flex-wrap">
