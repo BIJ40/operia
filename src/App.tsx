@@ -411,7 +411,7 @@ function AppContent() {
           {/* ============================================ */}
           <Route path="/profile" element={<MainLayout><RoleGuard><Profile /></RoleGuard></MainLayout>} />
           <Route path="/favorites" element={<MainLayout><RoleGuard><Favorites /></RoleGuard></MainLayout>} />
-          <Route path="/changelog" element={<MainLayout><Changelog /></MainLayout>} />
+          <Route path="/changelog" element={<MainLayout requireAuth={false}><Changelog /></MainLayout>} />
           <Route path="/security-audit-report" element={<MainLayout><RoleGuard minRole="platform_admin"><SecurityAuditReport /></RoleGuard></MainLayout>} />
           <Route path="/security-documentation" element={<MainLayout><RoleGuard minRole="platform_admin"><SecurityDocumentation /></RoleGuard></MainLayout>} />
           
