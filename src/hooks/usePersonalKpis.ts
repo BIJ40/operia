@@ -277,8 +277,8 @@ function calculateTechnicienKpisStatia(
             }
           }
         } else {
-          // Fallback sur durée déclarée
-          duree = visite.duree || visite.tempsPrevu || 2;
+          // Fallback sur durée déclarée (en minutes dans l'API)
+          duree = (visite.duree || visite.tempsPrevu || 0) / 60;
         }
         
         heuresTotales += duree;
@@ -293,7 +293,7 @@ function calculateTechnicienKpisStatia(
         uid === apogeeUserId || uid === apogeeUserIdStr || Number(uid) === apogeeUserIdNum
       );
       if (isDirectAssign) {
-        const duree = inter.duree || inter.tempsPrevu || 2;
+        const duree = (inter.duree || inter.tempsPrevu || 0) / 60; // Minutes → heures
         heuresTotales += duree;
         if (isProductive) heuresProductives += duree;
       }
