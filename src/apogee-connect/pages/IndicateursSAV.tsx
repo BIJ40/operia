@@ -6,7 +6,7 @@ import { useStatiaSAVMetrics } from "@/statia/hooks/useStatiaSAVMetrics";
 import { SAVDossierList } from "@/apogee-connect/components/sav/SAVDossierList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
-import { AlertTriangle, TrendingUp, Users, Layers, CalendarDays, ChevronDown, ChevronUp } from "lucide-react";
+import { AlertTriangle, TrendingUp, Users, Layers, ChevronDown, ChevronUp } from "lucide-react";
 import { formatEuros, formatUniverseLabel, formatApporteurType } from "@/apogee-connect/utils/formatters";
 import {
   Table,
@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { ROUTES } from "@/config/routes";
 
 export default function IndicateursSAV() {
   const { isAgencyReady } = useAgency();
@@ -79,10 +81,13 @@ export default function IndicateursSAV() {
 
   return (
     <div className="space-y-8">
-      {/* Sélecteur de période */}
-      <div className="flex justify-end">
-        <SecondaryPeriodSelector />
-      </div>
+      <PageHeader
+        title="Gestion des SAV"
+        subtitle="Suivi et analyse des dossiers de service après-vente"
+        backTo={ROUTES.pilotage.index}
+        backLabel="Mon Agence"
+        rightElement={<SecondaryPeriodSelector />}
+      />
 
       {isLoading ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

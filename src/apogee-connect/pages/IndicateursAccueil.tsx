@@ -12,8 +12,9 @@ import { MonthlyCAChart } from "@/apogee-connect/components/widgets/MonthlyCACha
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import { logWarn, logError } from "@/lib/logger";
-// StatIA V1 - Migration Phase 3
 import { useStatiaIndicateurs } from "@/statia/hooks/useStatiaIndicateurs";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { ROUTES } from "@/config/routes";
 
 export default function IndicateursAccueil() {
   const { filters } = useFilters();
@@ -82,6 +83,13 @@ export default function IndicateursAccueil() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      <PageHeader
+        title="Indicateurs généraux"
+        subtitle="Vue d'ensemble des KPI de votre agence"
+        backTo={ROUTES.pilotage.index}
+        backLabel="Mon Agence"
+      />
+      
       {/* Layout 2 colonnes : Temporels à gauche, Globaux à droite */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* COLONNE GAUCHE - KPI Temporels */}
