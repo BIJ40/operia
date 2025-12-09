@@ -6,6 +6,7 @@ import { Link, Navigate } from 'react-router-dom';
 import { ROUTES } from '@/config/routes';
 import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ColorPreset } from '@/types/block';
@@ -430,19 +431,12 @@ export default function HelpConfort() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
       <div className="container max-w-6xl mx-auto px-4 py-8">
-        <Link to={ROUTES.home} className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6">
-          <Icons.ArrowLeft className="w-4 h-4" />
-          <span>Retour accueil</span>
-        </Link>
-        
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Base de connaissance HelpConfort
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Documentation et ressources sur HelpConfort
-          </p>
-        </div>
+        <PageHeader
+          title="Base de connaissance HelpConfort"
+          subtitle="Documentation et ressources sur HelpConfort"
+          backTo={ROUTES.academy.index}
+          backLabel="Help! Academy"
+        />
 
         {!isEditMode && helpconfortCategories.length > 0 && (
           <div className="mb-6 max-w-md mx-auto">
