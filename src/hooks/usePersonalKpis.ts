@@ -93,29 +93,31 @@ function calculateTechnicienKpisStatia(
   const { factures, interventions, projects, users } = apiData;
   const interval = { start: monthStart, end: monthEnd };
 
-  // Utiliser le moteur StatIA pour le CA (SOURCE DE VÉRITÉ)
+  // Types productifs (dépannage, travaux - pas RT/SAV/diagnostic)
+  const PRODUCTIVE_TYPES = ['depannage', 'travaux', 'work', 'repair', 'recherche de fuite'];
+  const isProductiveType = (type: string) => 
+    PRODUCTIVE_TYPES.some(t => (type || '').toLowerCase().includes(t));
+
+  // === 1. CA du mois (utilise le moteur StatIA) ===
   const statiaParams: CaParTechnicienParams = {
     dateRange: { start: monthStart, end: monthEnd },
-    filters: {
-      technicienId: apogeeUserId,
-    },
+    filters: { technicienId: apogeeUserId },
   };
-  
   const caResult = computeCaParTechnicienCore(
     { factures, projects, interventions, users },
     statiaParams
   );
   const caMonth = caResult.value || 0;
 
-  // Interventions du technicien ce mois (logique simple)
+  // === 2. Interventions ce mois (assignées OU visites avec participation) ===
   const techInterventions = (interventions || []).filter((inter: any) => {
-    // Vérifier si le technicien est assigné
-    const isAssigned = inter.userId === apogeeUserId || 
-      (inter.visites || []).some((v: any) => 
-        (v.usersIds || []).includes(apogeeUserId)
-      );
+    // Vérifier assignation directe OU participation à une visite
+    const isAssigned = inter.userId === apogeeUserId;
+    const hasVisiteParticipation = (inter.visites || []).some((v: any) => 
+      (v.usersIds || []).includes(apogeeUserId)
+    );
     
-    if (!isAssigned) return false;
+    if (!isAssigned && !hasVisiteParticipation) return false;
 
     // Vérifier la date
     const dateStr = inter.dateReelle || inter.date;
@@ -129,39 +131,76 @@ function calculateTechnicienKpisStatia(
     }
   });
 
-  // Dossiers traités (projets avec interventions)
-  const projectIds = new Set(techInterventions.map((i: any) => i.projectId));
-  const dossiersTraites = projectIds.size;
+  // === 3. Dossiers traités = projets FACTURÉS où technicien a intervenu ===
+  const techProjectIds = new Set(techInterventions.map((i: any) => i.projectId));
+  
+  // Filtrer les factures du mois
+  const monthFactures = (factures || []).filter((f: any) => {
+    const dateStr = f.dateReelle || f.date;
+    if (!dateStr) return false;
+    try {
+      const fDate = typeof dateStr === 'string' ? parseISO(dateStr) : new Date(dateStr);
+      return isWithinInterval(fDate, interval);
+    } catch {
+      return false;
+    }
+  });
+  
+  // Projets avec factures où technicien a intervenu
+  const facturedProjectIds = new Set(monthFactures.map((f: any) => f.projectId));
+  const dossiersTraites = [...techProjectIds].filter(pid => facturedProjectIds.has(pid)).length;
 
-  // Heures travaillées (estimation basée sur les créneaux)
-  let heuresTravaillees = 0;
+  // === 4. Heures travaillées (via créneaux ou durée des visites) ===
+  let heuresProductives = 0;
+  let heuresTotales = 0;
+  
   for (const inter of techInterventions) {
     const visites = inter.visites || [];
+    const type = (inter.type || inter.type2 || '').toLowerCase();
+    const isProductive = isProductiveType(type);
+    
     for (const visite of visites) {
       if ((visite.usersIds || []).includes(apogeeUserId)) {
-        const duree = visite.duree || visite.tempsPrevu || 2;
-        heuresTravaillees += duree;
+        // Durée depuis créneaux ou estimation
+        let duree = 0;
+        
+        if (visite.creneaux && Array.isArray(visite.creneaux)) {
+          // Calculer depuis les créneaux (format: [{debut: "08:00", fin: "12:00"}])
+          for (const creneau of visite.creneaux) {
+            if (creneau.debut && creneau.fin) {
+              const [dh, dm] = creneau.debut.split(':').map(Number);
+              const [fh, fm] = creneau.fin.split(':').map(Number);
+              duree += (fh * 60 + fm - dh * 60 - dm) / 60;
+            }
+          }
+        } else {
+          // Fallback sur durée déclarée
+          duree = visite.duree || visite.tempsPrevu || 2;
+        }
+        
+        heuresTotales += duree;
+        if (isProductive) heuresProductives += duree;
       }
     }
+    
+    // Si pas de visites mais technicien assigné directement
     if (visites.length === 0 && inter.userId === apogeeUserId) {
-      heuresTravaillees += 2;
+      const duree = inter.duree || inter.tempsPrevu || 2;
+      heuresTotales += duree;
+      if (isProductive) heuresProductives += duree;
     }
   }
 
-  // Taux de productivité (interventions terminées/validées)
-  const interventionsValidees = techInterventions.filter((i: any) => 
-    ['validated', 'done', 'finished', 'completed'].includes((i.state || '').toLowerCase())
-  ).length;
-  
-  const tauxProductivite = techInterventions.length > 0 
-    ? (interventionsValidees / techInterventions.length) * 100 
+  // === 5. Taux de productivité = heures productives / heures totales ===
+  const tauxProductivite = heuresTotales > 0 
+    ? (heuresProductives / heuresTotales) * 100 
     : 0;
 
   return {
     caMonth: Math.round(caMonth * 100) / 100,
     dossiersTraites,
     interventionsRealisees: techInterventions.length,
-    heuresTravaillees: Math.round(heuresTravaillees * 10) / 10,
+    heuresTravaillees: Math.round(heuresTotales * 10) / 10,
     tauxProductivite: Math.round(tauxProductivite * 10) / 10,
   };
 }
