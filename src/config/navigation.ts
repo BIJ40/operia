@@ -219,25 +219,11 @@ export const NAV_GROUPS: NavGroup[] = [
         description: 'Vue liste des tickets' 
       },
       { 
-        title: 'Doublons IA', 
-        url: ROUTES.projects.duplicates, 
-        icon: FileText, 
-        scope: 'apogee_tickets', 
-        description: 'Détection des doublons' 
-      },
-      { 
         title: 'Tickets incomplets', 
         url: ROUTES.projects.incomplete, 
         icon: ListTodo, 
         scope: 'apogee_tickets', 
         description: 'Tickets à compléter' 
-      },
-      { 
-        title: 'Classifier', 
-        url: ROUTES.projects.classify, 
-        icon: ListTodo, 
-        scope: 'apogee_tickets', 
-        description: 'Classification des tickets' 
       },
       { 
         title: 'Review', 
@@ -252,20 +238,6 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: Users, 
         scope: 'apogee_tickets', 
         description: 'Gestion des droits' 
-      },
-      { 
-        title: 'Import', 
-        url: ROUTES.projects.import, 
-        icon: Database, 
-        scope: 'apogee_tickets', 
-        description: 'Import de tickets',
-        children: [
-          { title: 'Import Standard', url: ROUTES.projects.import, icon: Database, scope: 'apogee_tickets' },
-          { title: 'Import Priorités', url: ROUTES.projects.importPriorities, icon: Database, scope: 'apogee_tickets' },
-          { title: 'Import Évalué', url: ROUTES.projects.importEvaluated, icon: Database, scope: 'apogee_tickets' },
-          { title: 'Import Bugs', url: ROUTES.projects.importBugs, icon: Database, scope: 'apogee_tickets' },
-          { title: 'Import V1', url: ROUTES.projects.importV1, icon: Database, scope: 'apogee_tickets' },
-        ]
       },
     ],
   },
@@ -419,13 +391,7 @@ export const PAGE_TITLES: Record<string, string> = {
   // Gestion de Projet (V2 routes)
   [ROUTES.projects.index]: 'Gestion de Projet',
   [ROUTES.projects.kanban]: 'Kanban Projet',
-  [ROUTES.projects.import]: 'Import Tickets',
-  [ROUTES.projects.importPriorities]: 'Import Priorités',
-  [ROUTES.projects.importEvaluated]: 'Import Évalué',
-  [ROUTES.projects.importBugs]: 'Import Bugs',
-  [ROUTES.projects.importV1]: 'Import V1',
   [ROUTES.projects.incomplete]: 'Tickets Incomplets',
-  [ROUTES.projects.classify]: 'Classifier Tickets',
   [ROUTES.projects.review]: 'Review Tickets',
   [ROUTES.projects.permissions]: 'Permissions Tickets',
   

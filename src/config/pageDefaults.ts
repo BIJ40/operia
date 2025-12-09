@@ -68,9 +68,7 @@ export const PAGE_DEFAULTS: PageDefaultConfig[] = [
   { pageKey: 'projects_index', defaultTitle: 'Gestion de Projet', defaultSubtitle: 'Gérez le backlog et le suivi de développement', route: ROUTES.projects.index },
   { pageKey: 'projects_kanban', defaultTitle: 'Kanban Projet', defaultSubtitle: 'Vue Kanban des tickets projet', route: ROUTES.projects.kanban },
   { pageKey: 'projects_incomplete', defaultTitle: 'Tickets Incomplets', defaultSubtitle: 'Tickets nécessitant des informations', route: ROUTES.projects.incomplete },
-  { pageKey: 'projects_classify', defaultTitle: 'Classifier', defaultSubtitle: 'Classifier et qualifier les tickets', route: ROUTES.projects.classify },
   { pageKey: 'projects_review', defaultTitle: 'Review', defaultSubtitle: 'Revue des tickets qualifiés', route: ROUTES.projects.review },
-  { pageKey: 'projects_import', defaultTitle: 'Import', defaultSubtitle: 'Importer des tickets depuis Excel', route: ROUTES.projects.import },
   { pageKey: 'projects_permissions', defaultTitle: 'Permissions', defaultSubtitle: 'Gérer les rôles et permissions projet', route: ROUTES.projects.permissions },
   
   // User
