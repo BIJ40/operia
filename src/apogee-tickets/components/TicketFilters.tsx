@@ -335,23 +335,22 @@ export function TicketFilters({
         )}
       </div>
 
-      {/* Ligne 2: Filtre priorité avec double curseur et pastilles */}
-      <div className="space-y-2">
+      {/* Ligne 2: Filtre priorité compact */}
+      <div className="space-y-1">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-muted-foreground">Priorité</span>
+          <span className="text-xs font-medium text-muted-foreground">Priorité</span>
           {hasPriorityFilter && (
-            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={clearPriorityFilter}>
-              <X className="h-3 w-3 mr-1" />
-              Réinitialiser
+            <Button variant="ghost" size="sm" className="h-5 px-1.5 text-xs" onClick={clearPriorityFilter}>
+              <X className="h-3 w-3" />
             </Button>
           )}
         </div>
         
-        {/* Double slider */}
-        <div className="flex items-center gap-4">
-          <Snowflake className="h-4 w-4 shrink-0" style={{ color: getHeatColor(0) }} />
+        {/* Double slider compact */}
+        <div className="flex items-center gap-2 max-w-[280px]">
+          <Snowflake className="h-3 w-3 shrink-0" style={{ color: getHeatColor(0) }} />
           
-          <div className="flex-1 px-2">
+          <div className="flex-1 px-1">
             <Slider
               min={0}
               max={12}
@@ -366,15 +365,15 @@ export function TicketFilters({
           
           <Flame 
             className={cn(
-              "h-4 w-4 shrink-0 transition-all",
+              "h-3 w-3 shrink-0 transition-all",
               (heatMax >= 10 || exactPriority !== undefined && exactPriority >= 10) && 'animate-pulse'
             )} 
             style={{ color: getHeatColor(12) }} 
           />
         </div>
 
-        {/* Pastilles de priorité (0-12) */}
-        <div className="flex items-center justify-between px-6 pt-1">
+        {/* Pastilles de priorité compactes (0-12) */}
+        <div className="flex items-center justify-between max-w-[280px] px-4">
           {Array.from({ length: 13 }, (_, i) => {
             const isSelected = exactPriority === i;
             const isInRange = exactPriority === undefined && i >= heatMin && i <= heatMax;
@@ -384,9 +383,9 @@ export function TicketFilters({
                 key={i}
                 onClick={() => handleDotClick(i)}
                 className={cn(
-                  "w-5 h-5 rounded-full transition-all duration-200 border-2",
+                  "w-3.5 h-3.5 rounded-full transition-all duration-200 border",
                   "hover:scale-125 hover:shadow-lg cursor-pointer",
-                  isSelected && "ring-2 ring-offset-2 ring-foreground scale-125",
+                  isSelected && "ring-1 ring-offset-1 ring-foreground scale-110",
                   !isSelected && !isInRange && "opacity-30"
                 )}
                 style={{
