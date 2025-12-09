@@ -226,8 +226,6 @@ export function UnifiedHeader() {
 
           {/* Right side actions */}
           <div className="flex items-center gap-2 shrink-0">
-            {/* Live Support Indicator for users - Always visible if session active */}
-            <LiveSupportIndicator />
 
             {/* Metadata edit button for N5/N6 */}
             {canEdit && (
