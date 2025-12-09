@@ -30,6 +30,7 @@ import {
   type EntityDictionaries,
   type NlContext
 } from './statiaIntentV4.ts';
+import { generateChatResponse, type ChatMessage, type ChatContext } from './chatService.ts';
 // ═══════════════════════════════════════════════════════════════
 // NEW: Simple Templates + Source Validation + Post-Processing
 // ═══════════════════════════════════════════════════════════════
@@ -828,62 +829,50 @@ async function searchDocsConversational(
   // Build RAG context from results
   const ragContent = docResults.length > 0
     ? docResults.map(r => `### ${r.title}\n${r.content}`).join('\n\n---\n\n')
-    : '';
+    : 'Aucune documentation trouvée.';
   
   // Build messages array with conversation history
-  const messages: Array<{ role: string; content: string }> = [];
+  const messages: ChatMessage[] = [];
   if (conversationHistory && conversationHistory.length > 0) {
-    // Add previous messages for context
     for (const msg of conversationHistory) {
-      messages.push({ role: msg.role, content: msg.content });
+      if (msg.role === 'user' || msg.role === 'assistant') {
+        messages.push({ role: msg.role, content: msg.content });
+      }
     }
   }
   // Add the current query
   messages.push({ role: 'user', content: query });
   
-  // Call chat-guide for conversational response
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const chatRes = await fetch(`${supabaseUrl}/functions/v1/chat-guide`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
-    body: JSON.stringify({
-      messages,
-      guideContent: ragContent || 'Aucune documentation trouvée.',
-      userId: null,
-      userName: userName || 'Utilisateur',
-      context: 'apogee',
-      univers: null,
-      apporteur: null,
-      roleCible: null
-    })
+  // Call integrated chat service (Lovable AI) directly instead of chat-guide
+  console.log('[unified-search] Calling integrated chatService with Lovable AI');
+  const chatResponse = await generateChatResponse({
+    messages,
+    ragContent,
+    userName,
+    context: 'apogee' as ChatContext
   });
   
-  if (!chatRes.ok) return { answer: "Je n'ai pas pu générer une réponse.", sources, docResults, isConversational: true };
-  
-  let answer = '';
-  const reader = chatRes.body?.getReader();
-  if (reader) {
-    const decoder = new TextDecoder();
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split('\n');
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === '[DONE]') continue;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) answer += content;
-          } catch { /* ignore parse errors */ }
-        }
-      }
-    }
+  // Log to chatbot_queries for analytics
+  try {
+    const userQuestion = query;
+    await supabase.from('chatbot_queries').insert({
+      question: userQuestion,
+      answer: chatResponse.answer,
+      is_incomplete: chatResponse.isIncomplete,
+      context_found: ragContent.substring(0, 5000),
+      status: chatResponse.isIncomplete ? 'pending' : 'resolved',
+      chat_context: 'apogee'
+    });
+  } catch (logError) {
+    console.error('[unified-search] Failed to log query:', logError);
   }
   
-  return { answer: answer || "Je n'ai pas trouvé d'information précise.", sources, docResults, isConversational: true };
+  return { 
+    answer: chatResponse.answer || "Je n'ai pas trouvé d'information précise.", 
+    sources, 
+    docResults, 
+    isConversational: true 
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════
