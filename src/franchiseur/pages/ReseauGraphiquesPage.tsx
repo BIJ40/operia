@@ -32,6 +32,16 @@ const formatCurrency = (value: number | null | undefined): string => {
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
 };
 
+const formatPercent = (value: number | null | undefined): string => {
+  if (value === null || value === undefined) return '–';
+  return `${value.toFixed(1)} %`;
+};
+
+const formatDays = (value: number | null | undefined): string => {
+  if (value === null || value === undefined) return '–';
+  return `${value.toFixed(1)} j`;
+};
+
 function ChartSkeleton() {
   return (
     <Card className="h-[400px] rounded-2xl">
@@ -700,6 +710,6 @@ export default function ReseauGraphiquesPage() {
           </div>
         </>
       )}
-    </div>
+    </FranchiseurPageContainer>
   );
 }

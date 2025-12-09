@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 
 interface FranchiseurPageHeaderProps {
   title: string;
-  subtitle?: string;
+  subtitle?: ReactNode;
   backLink?: string;
   backLabel?: string;
   icon?: ReactNode;
