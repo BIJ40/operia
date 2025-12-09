@@ -39,7 +39,6 @@ const Documents = lazy(() => import("./pages/Documents"));
 const FormationApogee = lazy(() => import("./pages/FormationApogee"));
 
 // Lazy loaded pages - Pilotage Agence
-const PilotageStatsHub = lazy(() => import("./pages/PilotageStatsHub"));
 const ActionsAMener = lazy(() => import("./pages/ActionsAMener"));
 const CategoryActionsAMener = lazy(() => import("./pages/CategoryActionsAMener"));
 const DiffusionDashboard = lazy(() => import("./pages/DiffusionDashboard"));
@@ -218,9 +217,6 @@ function AppContent() {
           {/* PILOTAGE AGENCE - Section Index + Sous-pages */}
           {/* ============================================ */}
           <Route path="/hc-agency" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><PilotageIndex /></ModuleGuard></RoleGuard></MainLayout>} />
-          
-          {/* Hub Statistiques */}
-          <Route path="/hc-agency/statistiques" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><PilotageStatsHub /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* Indicateurs détaillés */}
           <Route path="/hc-agency/indicateurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><IndicateursLayout /></ModuleGuard></RoleGuard></MainLayout>}>
