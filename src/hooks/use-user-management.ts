@@ -31,6 +31,7 @@ export interface UserProfile {
   deactivated_at: string | null;
   deactivated_by: string | null;
   must_change_password: boolean | null;
+  apogee_user_id: number | null;
 }
 
 const PAGE_SIZE = 20;
@@ -190,7 +191,8 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
           created_at,
           deactivated_at,
           deactivated_by,
-          must_change_password
+          must_change_password,
+          apogee_user_id
         `);
       
       // Filtre agences
@@ -430,6 +432,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
         role_agence?: string; 
         support_level?: number; 
         global_role?: GlobalRole;
+        apogee_user_id?: number | null;
       } 
     }) => {
       // 🛡️ RÈGLE AUTOMATIQUE: Dirigeant → N2 (franchisee_admin)
@@ -449,6 +452,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
         agence: data.agence,
         role_agence: data.role_agence,
         global_role: effectiveGlobalRole,
+        apogee_user_id: data.apogee_user_id,
       };
       
       // 🛡️ V2: Écrire support_level directement dans profiles.support_level (colonne)
