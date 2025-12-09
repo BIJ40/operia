@@ -81,7 +81,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
       // === Vue Salarié (N1 ou N2 avec is_salaried_manager) ===
       { 
         label: 'Mon Coffre RH', 
-        href: ROUTES.pilotage.monCoffreRh, 
+        href: ROUTES.rh.coffre, 
         icon: 'FolderOpen', 
         description: 'Mes documents personnels',
         section: 'salarie',
@@ -89,7 +89,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
       },
       { 
         label: 'Demande de congé', 
-        href: ROUTES.pilotage.faireUneDemande, 
+        href: ROUTES.rh.demande, 
         icon: 'CalendarDays', 
         description: 'Poser une demande',
         section: 'salarie',
@@ -98,7 +98,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
       // === Vue Dirigeant (N2+) ===
       { 
         label: 'Mon équipe', 
-        href: ROUTES.pilotage.collaborateurs, 
+        href: ROUTES.rh.equipe, 
         icon: 'Users', 
         description: 'Collaborateurs et RH',
         section: 'dirigeant',
@@ -107,7 +107,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
       },
       { 
         label: 'Demandes RH', 
-        href: ROUTES.pilotage.demandesRh, 
+        href: ROUTES.rh.demandes, 
         icon: 'FileText', 
         description: 'Traiter les demandes',
         section: 'dirigeant',
@@ -116,7 +116,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
       },
       { 
         label: 'Dashboard RH', 
-        href: ROUTES.pilotage.dashboardRh, 
+        href: ROUTES.rh.dashboard, 
         icon: 'BarChart3', 
         description: 'Statistiques RH',
         section: 'dirigeant',
@@ -125,7 +125,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
       },
       { 
         label: 'Gestion congés', 
-        href: ROUTES.pilotage.gestionConges, 
+        href: ROUTES.rh.conges, 
         icon: 'Calendar', 
         description: 'Validation des congés',
         section: 'dirigeant',

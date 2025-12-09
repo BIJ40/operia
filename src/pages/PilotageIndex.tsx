@@ -11,7 +11,6 @@ import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const ROUTE_TO_PAGE_KEY: Record<string, string> = {
-  [ROUTES.pilotage.statsHub]: 'pilotage_statistiques',
   [ROUTES.pilotage.indicateurs]: 'pilotage_indicateurs',
   [ROUTES.pilotage.actions]: 'pilotage_actions',
   [ROUTES.pilotage.diffusion]: 'pilotage_diffusion',

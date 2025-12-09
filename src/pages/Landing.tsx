@@ -212,7 +212,7 @@ export default function Landing() {
               title={DASHBOARD_GROUPS.rh.title}
               icon={DASHBOARD_GROUPS.rh.icon}
               colorClass={DASHBOARD_GROUPS.rh.colorClass}
-              href={ROUTES.pilotage.monCoffreRh}
+              href={ROUTES.rh.index}
               defaultOpen={false}
             >
               {tilesByGroup.rh.map(tile => (
