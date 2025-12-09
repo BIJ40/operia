@@ -161,12 +161,14 @@ export default function SupportIndex() {
             </p>
           </CardHeader>
           <CardContent className="flex-1 p-0">
-            <SupportChatCore
-              initialContext={allowedContexts[0] || 'apogee'}
-              onTicketCreated={handleTicketCreated}
-              showFAQSuggestions={false}
-              className="h-[400px]"
-            />
+            <ScrollArea className="h-[450px]">
+              <SupportChatCore
+                initialContext={allowedContexts[0] || 'apogee'}
+                onTicketCreated={handleTicketCreated}
+                showFAQSuggestions={false}
+                className="h-full"
+              />
+            </ScrollArea>
           </CardContent>
         </Card>
 
