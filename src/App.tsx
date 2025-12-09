@@ -117,15 +117,7 @@ const ProjectsIndex = lazy(() => import("./pages/ProjectsIndex"));
 const ApogeeTicketsKanban = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsKanban"));
 const ApogeeTicketsHistory = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsHistory"));
 const ApogeeTicketsList = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsList"));
-const ApogeeTicketsImport = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImport"));
-const ApogeeTicketsImportPriorities = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImportPriorities"));
-const ApogeeTicketsImportEvaluated = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImportEvaluated"));
-const ApogeeTicketsImportTraite = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImportTraite"));
-const ApogeeTicketsImportBugs = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImportBugs"));
-const ApogeeTicketsImportV1 = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImportV1"));
-const ApogeeTicketsImportDysfonctionnements = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImportDysfonctionnements"));
 const ApogeeTicketsIncomplete = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsIncomplete"));
-const ApogeeTicketsClassify = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsClassify"));
 const ApogeeTicketsReview = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsReview"));
 const ApogeeTicketsAdmin = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsAdmin"));
 const ApogeeTicketsDuplicates = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsDuplicates"));
@@ -349,13 +341,7 @@ function AppContent() {
           <Route path="/admin/faq" element={<MainLayout><FaqAdminGuard><AdminFaq /></FaqAdminGuard></MainLayout>} />
           {/* Legacy admin/apogee-tickets - Redirect to /projects */}
           <Route path="/admin/apogee-tickets" element={<Navigate to="/projects/kanban" replace />} />
-          <Route path="/admin/apogee-tickets/import" element={<Navigate to="/projects/import" replace />} />
-          <Route path="/admin/apogee-tickets/import-priorities" element={<Navigate to="/projects/import-priorities" replace />} />
-          <Route path="/admin/apogee-tickets/import-evaluated" element={<Navigate to="/projects/import-evaluated" replace />} />
-          <Route path="/admin/apogee-tickets/import-bugs" element={<Navigate to="/projects/import-bugs" replace />} />
-          <Route path="/admin/apogee-tickets/import-v1" element={<Navigate to="/projects/import-v1" replace />} />
           <Route path="/admin/apogee-tickets/incomplets" element={<Navigate to="/projects/incomplets" replace />} />
-          <Route path="/admin/apogee-tickets/classifier" element={<Navigate to="/projects/classifier" replace />} />
           <Route path="/admin/apogee-tickets/review" element={<Navigate to="/projects/review" replace />} />
           <Route path="/admin/apogee-tickets/permissions" element={<Navigate to="/projects/permissions" replace />} />
           <Route path="/admin/system-health" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminSystemHealth /></ModuleGuard></RoleGuard></MainLayout>} />
@@ -373,15 +359,7 @@ function AppContent() {
           <Route path="/projects/kanban" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsKanban /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/projects/historique" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsHistory /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/projects/list" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsList /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/projects/import" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImport /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/projects/import-priorities" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportPriorities /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/projects/import-evaluated" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportEvaluated /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/projects/import-traite" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportTraite /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/projects/import-bugs" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportBugs /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/projects/import-v1" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportV1 /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/projects/import-dysfonctionnements" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportDysfonctionnements /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/projects/incomplets" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsIncomplete /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/projects/classifier" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsClassify /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/projects/review" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsReview /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/projects/permissions" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsAdmin /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/projects/doublons" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsDuplicates /></ModuleGuard></RoleGuard></MainLayout>} />
