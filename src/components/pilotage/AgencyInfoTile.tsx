@@ -11,8 +11,12 @@ import { toast } from "sonner";
 import { logError } from "@/lib/logger";
 import { useQueryClient } from "@tanstack/react-query";
 import { AgencyStampUpload } from "@/franchiseur/components/AgencyStampUpload";
+import { cn } from "@/lib/utils";
+interface AgencyInfoTileProps {
+  hideHeader?: boolean;
+}
 
-export function AgencyInfoTile() {
+export function AgencyInfoTile({ hideHeader = false }: AgencyInfoTileProps) {
   const { agencyId } = useAuth();
   const { data: agency, isLoading } = useAgency(agencyId);
   const queryClient = useQueryClient();
@@ -93,54 +97,99 @@ export function AgencyInfoTile() {
 
   return (
     <Card className="rounded-2xl border-l-4 border-l-helpconfort-blue shadow-md hover:shadow-lg transition-shadow">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-helpconfort-blue" />
-            Informations de l'agence
-          </CardTitle>
-          <CardDescription>
-            Gérez les informations de votre agence
-          </CardDescription>
-        </div>
-        {!isEditing ? (
-          <Button 
-            onClick={() => setIsEditing(true)}
-            size="sm"
-            className="rounded-xl bg-gradient-to-r from-primary to-helpconfort-blue-dark"
-          >
-            Modifier
-          </Button>
-        ) : (
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={() => setIsEditing(false)}
+      {!hideHeader && (
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-helpconfort-blue" />
+              Informations de l'agence
+            </CardTitle>
+            <CardDescription>
+              Gérez les informations de votre agence
+            </CardDescription>
+          </div>
+          {!isEditing ? (
+            <Button 
+              onClick={() => setIsEditing(true)}
               size="sm"
-              variant="outline"
-              disabled={isSaving}
-            >
-              Annuler
-            </Button>
-            <Button
-              onClick={handleSave}
-              size="sm"
-              disabled={isSaving}
               className="rounded-xl bg-gradient-to-r from-primary to-helpconfort-blue-dark"
             >
-              {isSaving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-1" />
-                  Enregistrer
-                </>
-              )}
+              Modifier
             </Button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => setIsEditing(false)}
+                size="sm"
+                variant="outline"
+                disabled={isSaving}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleSave}
+                size="sm"
+                disabled={isSaving}
+                className="rounded-xl bg-gradient-to-r from-primary to-helpconfort-blue-dark"
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-1" />
+                    Enregistrer
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+        </CardHeader>
+      )}
+
+      <CardContent className={cn("space-y-6", hideHeader && "pt-4")}>
+        {/* Actions en mode hideHeader */}
+        {hideHeader && (
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-muted-foreground">
+              Gérez les informations de votre agence
+            </p>
+            {!isEditing ? (
+              <Button 
+                onClick={() => setIsEditing(true)}
+                size="sm"
+                className="rounded-xl bg-gradient-to-r from-primary to-helpconfort-blue-dark"
+              >
+                Modifier
+              </Button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => setIsEditing(false)}
+                  size="sm"
+                  variant="outline"
+                  disabled={isSaving}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  size="sm"
+                  disabled={isSaving}
+                  className="rounded-xl bg-gradient-to-r from-primary to-helpconfort-blue-dark"
+                >
+                  {isSaving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-1" />
+                      Enregistrer
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
         )}
-      </CardHeader>
-
-      <CardContent className="space-y-6">
         {/* Informations fixes */}
         <div className="space-y-3">
           <div>

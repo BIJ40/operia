@@ -1,4 +1,4 @@
-import { BarChart3, ListTodo, PieChart, TrendingUp, Building2, Info, ShoppingCart, Car, Users } from 'lucide-react';
+import { BarChart3, ListTodo, PieChart, TrendingUp, Building2, ShoppingCart, Car, Users, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
@@ -6,8 +6,9 @@ import { useMenuLabels } from '@/hooks/use-page-metadata';
 import { AgencyInfoTile } from '@/components/pilotage/AgencyInfoTile';
 import { useAuth } from '@/contexts/AuthContext';
 import { CollapsibleSection } from '@/components/dashboard/CollapsibleSection';
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useState, useEffect } from 'react';
 import type { LucideIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const ROUTE_TO_PAGE_KEY: Record<string, string> = {
   [ROUTES.pilotage.statsHub]: 'pilotage_statistiques',
@@ -29,11 +30,11 @@ interface PilotageModule {
 const pilotageModules: PilotageModule[] = [
   // STATISTIQUES
   {
-    id: 'stats_hub',
-    title: 'Hub Statistiques',
-    description: 'Tableau de bord et KPI de votre agence',
+    id: 'stats_accueil',
+    title: 'Vue d\'ensemble',
+    description: 'KPI généraux de votre agence',
     icon: BarChart3,
-    href: ROUTES.pilotage.statsHub,
+    href: ROUTES.pilotage.indicateurs,
     category: 'statistiques',
   },
   {
@@ -41,7 +42,7 @@ const pilotageModules: PilotageModule[] = [
     title: 'CA par Apporteurs',
     description: 'Analyse du CA par source d\'affaires',
     icon: TrendingUp,
-    href: `${ROUTES.pilotage.statsHub}/apporteurs`,
+    href: ROUTES.pilotage.indicateursApporteurs,
     category: 'statistiques',
   },
   {
@@ -49,7 +50,7 @@ const pilotageModules: PilotageModule[] = [
     title: 'CA par Univers',
     description: 'Répartition du CA par métier',
     icon: PieChart,
-    href: `${ROUTES.pilotage.statsHub}/univers`,
+    href: ROUTES.pilotage.indicateursUnivers,
     category: 'statistiques',
   },
   {
@@ -57,7 +58,7 @@ const pilotageModules: PilotageModule[] = [
     title: 'Performances Techniciens',
     description: 'CA et activité par technicien',
     icon: Users,
-    href: `${ROUTES.pilotage.statsHub}/techniciens`,
+    href: ROUTES.pilotage.indicateursTechniciens,
     category: 'statistiques',
   },
   // AUTRES
@@ -75,14 +76,6 @@ const pilotageModules: PilotageModule[] = [
     description: 'Suivi des actions et tâches en cours',
     icon: ListTodo,
     href: ROUTES.pilotage.actions,
-    category: 'autres',
-  },
-  {
-    id: 'infos_agence',
-    title: 'Infos Agence',
-    description: 'Informations et paramètres de l\'agence',
-    icon: Info,
-    href: '#infos-agence',
     category: 'autres',
   },
   {
@@ -109,9 +102,25 @@ const PILOTAGE_GROUPS = {
   },
 } as const;
 
+// Custom hook for agency info collapse state
+const AGENCY_INFO_STORAGE_KEY = 'pilotage-agency-info-open';
+
 export default function PilotageIndex() {
   const menuLabels = useMenuLabels();
   const { globalRole } = useAuth();
+  
+  const [isAgencyInfoOpen, setIsAgencyInfoOpen] = useState(() => {
+    try {
+      const stored = localStorage.getItem(AGENCY_INFO_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : false;
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem(AGENCY_INFO_STORAGE_KEY, JSON.stringify(isAgencyInfoOpen));
+  }, [isAgencyInfoOpen]);
 
   const isPlatformAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';
 
@@ -137,20 +146,16 @@ export default function PilotageIndex() {
     return groups;
   }, []);
 
-  const scrollToAgencyInfo = () => {
-    document.getElementById('agency-info-section')?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   return (
     <div className="container mx-auto py-8 px-4 space-y-6">
-      {/* Statistiques */}
+      {/* Statistiques - déplié par défaut, pas de lien sur le titre */}
       {modulesByCategory.statistiques.length > 0 && (
         <CollapsibleSection
           id="pilotage_statistiques"
           title={PILOTAGE_GROUPS.statistiques.title}
           icon={PILOTAGE_GROUPS.statistiques.icon}
           colorClass={PILOTAGE_GROUPS.statistiques.colorClass}
-          href={ROUTES.pilotage.statsHub}
+          defaultOpen={true}
         >
           {modulesByCategory.statistiques.map(module => (
             <PilotageTileCard
@@ -173,33 +178,84 @@ export default function PilotageIndex() {
           colorClass={PILOTAGE_GROUPS.autres.colorClass}
         >
           {modulesByCategory.autres.map(module => (
-            module.id === 'infos_agence' ? (
-              <div key={module.id} onClick={scrollToAgencyInfo} className="cursor-pointer">
-                <PilotageTileCard
-                  module={module}
-                  title={getModuleTitle(module)}
-                  badge={module.badge}
-                  isAdmin={isPlatformAdmin}
-                  isClickable={false}
-                />
-              </div>
-            ) : (
-              <PilotageTileCard
-                key={module.id}
-                module={module}
-                title={getModuleTitle(module)}
-                badge={module.badge}
-                isAdmin={isPlatformAdmin}
-              />
-            )
+            <PilotageTileCard
+              key={module.id}
+              module={module}
+              title={getModuleTitle(module)}
+              badge={module.badge}
+              isAdmin={isPlatformAdmin}
+            />
           ))}
         </CollapsibleSection>
       )}
 
-      {/* Tuile Informations Agence */}
-      <div id="agency-info-section">
-        <AgencyInfoTile />
-      </div>
+      {/* Informations de l'agence - section collapsible */}
+      <section className="group/section">
+        <div
+          onClick={() => setIsAgencyInfoOpen(!isAgencyInfoOpen)}
+          className={cn(
+            "w-full flex items-center justify-between cursor-pointer",
+            "min-h-[72px] py-4 px-5 -mx-1 rounded-2xl",
+            "border border-transparent",
+            "bg-gradient-to-r from-muted/50 via-background to-muted/30",
+            "hover:border-border hover:from-muted/80 hover:via-background hover:to-muted/50",
+            "hover:shadow-md",
+            "transition-all duration-300"
+          )}
+        >
+          <div className="flex items-center gap-4">
+            <div className={cn(
+              "w-14 h-14 rounded-xl flex items-center justify-center",
+              "bg-gradient-to-br from-helpconfort-blue/15 to-helpconfort-blue/5",
+              "border border-helpconfort-blue/20",
+              "transition-all duration-300"
+            )}>
+              <Building2 className="w-7 h-7 text-helpconfort-blue" />
+            </div>
+            <h2 className="text-xl font-bold text-foreground tracking-tight">
+              Informations de l'agence
+            </h2>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className={cn(
+              "hidden sm:block w-16 h-1 rounded-full",
+              "bg-gradient-to-r from-helpconfort-blue/40 to-helpconfort-blue/10",
+              "group-hover/section:from-helpconfort-blue/60 group-hover/section:to-helpconfort-blue/20",
+              "transition-all duration-300"
+            )} />
+            <div className={cn(
+              "w-10 h-10 rounded-xl flex items-center justify-center",
+              "bg-muted/80 border border-border/50",
+              "transition-all duration-300"
+            )}>
+              <ChevronDown 
+                className={cn(
+                  "w-5 h-5 text-muted-foreground",
+                  "transition-all duration-300",
+                  isAgencyInfoOpen && "rotate-180"
+                )} 
+              />
+            </div>
+          </div>
+        </div>
+        
+        <div
+          className={cn(
+            "grid transition-all duration-300 ease-out",
+            isAgencyInfoOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+          )}
+        >
+          <div className="overflow-hidden">
+            <div className={cn(
+              "pt-5 pb-2",
+              "transition-transform duration-300 ease-out",
+              isAgencyInfoOpen ? "translate-y-0" : "-translate-y-2"
+            )}>
+              <AgencyInfoTile hideHeader />
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
