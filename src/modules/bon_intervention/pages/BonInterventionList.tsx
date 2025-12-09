@@ -35,7 +35,7 @@ export default function BonInterventionList() {
     if (!weeklyData) return [];
 
     const interventions: Array<{
-      intervention: any;
+      intervention: { id: number; projectId?: number | null; type?: string | null };
       date: Date;
       technicien: string;
       client: string;
@@ -44,29 +44,44 @@ export default function BonInterventionList() {
       projectId: number;
     }> = [];
 
-    weeklyData.forEach((day) => {
-      day.creneaux?.forEach((creneau: any) => {
-        const intervention = creneau.intervention;
-        if (!intervention) return;
+    // weeklyData is WeeklyTechPlanning[] - iterate over each tech's planning
+    weeklyData.forEach((techPlanning) => {
+      // Each tech has days[] with slots[]
+      techPlanning.days.forEach((day) => {
+        day.slots.forEach((slot) => {
+          // Skip RT/releve/rdv tech types
+          const type = (slot.type || '').toLowerCase();
+          if (type.includes('rt') || type.includes('releve') || type.includes('rdv tech')) {
+            return;
+          }
 
-        const type = (intervention.type2 || intervention.type || '').toLowerCase();
-        if (type.includes('rt') || type.includes('releve') || type.includes('rdv tech')) {
-          return;
-        }
+          // Skip if no interventionId
+          if (!slot.interventionId) return;
 
-        interventions.push({
-          intervention,
-          date: new Date(day.date),
-          technicien: creneau.technicien?.name || 'Non assigné',
-          client: intervention.client?.name || intervention.data?.clientName || 'Client inconnu',
-          adresse: intervention.client?.address || intervention.data?.address || '',
-          projectRef: intervention.project?.ref || `#${intervention.projectId}`,
-          projectId: intervention.projectId,
+          interventions.push({
+            intervention: { 
+              id: slot.interventionId, 
+              projectId: slot.projectId,
+              type: slot.type 
+            },
+            date: new Date(day.date),
+            technicien: techPlanning.techName || 'Non assigné',
+            client: slot.clientName || 'Client inconnu',
+            adresse: '', // Not available in slot
+            projectRef: slot.projectRef || `#${slot.projectId}`,
+            projectId: slot.projectId || 0,
+          });
         });
       });
     });
 
-    return interventions;
+    // Deduplicate by intervention ID (same intervention may appear for multiple techs)
+    const seen = new Set<number>();
+    return interventions.filter((item) => {
+      if (seen.has(item.intervention.id)) return false;
+      seen.add(item.intervention.id);
+      return true;
+    });
   }, [weeklyData]);
 
   const filteredInterventions = useMemo(() => {

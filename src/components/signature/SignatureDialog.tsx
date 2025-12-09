@@ -4,7 +4,7 @@
  * Optimisé pour les écrans tactiles avec mode paysage recommandé.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { SignaturePad } from './SignaturePad';
+import { SignaturePad, SignaturePadRef } from './SignaturePad';
 import { X, RotateCcw, Check, Smartphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -43,14 +43,16 @@ export function SignatureDialog({
   signatoryName,
   legalText = 'En signant, je confirme avoir pris connaissance du document et j\'en accepte les termes.',
 }: SignatureDialogProps) {
-  const [signatureData, setSignatureData] = useState<string | null>(null);
+  const signaturePadRef = useRef<SignaturePadRef>(null);
+  const [hasSignature, setHasSignature] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
 
-  const handleSignatureChange = useCallback((dataUrl: string | null) => {
-    setSignatureData(dataUrl);
+  const handleSignatureChange = useCallback((isEmpty: boolean) => {
+    setHasSignature(!isEmpty);
   }, []);
 
   const handleConfirm = useCallback(() => {
+    const signatureData = signaturePadRef.current?.getSignatureData();
     if (!signatureData) return;
     
     setIsConfirming(true);
@@ -60,10 +62,11 @@ export function SignatureDialog({
       setIsConfirming(false);
       onOpenChange(false);
     }, 300);
-  }, [signatureData, onSignatureConfirm, onOpenChange]);
+  }, [onSignatureConfirm, onOpenChange]);
 
   const handleCancel = useCallback(() => {
-    setSignatureData(null);
+    signaturePadRef.current?.clear();
+    setHasSignature(false);
     onOpenChange(false);
   }, [onOpenChange]);
 
@@ -94,6 +97,7 @@ export function SignatureDialog({
         {/* Signature Pad */}
         <div className="flex-1 min-h-[200px]">
           <SignaturePad
+            ref={signaturePadRef}
             height={250}
             onChange={handleSignatureChange}
             showControls={true}
@@ -129,7 +133,7 @@ export function SignatureDialog({
           <Button
             type="button"
             onClick={handleConfirm}
-            disabled={!signatureData || isConfirming}
+            disabled={!hasSignature || isConfirming}
           >
             {isConfirming ? (
               <RotateCcw className="h-4 w-4 mr-2 animate-spin" />
