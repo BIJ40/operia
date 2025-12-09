@@ -306,7 +306,11 @@ const SortableCategory = ({
 
 export default function ApporteurGuide() {
   const { blocks, isEditMode, addBlock, updateBlock, deleteBlock, reorderBlocks } = useApporteurEditor();
-  const { isAdmin, isAuthenticated, hasAccessToScope } = useAuth();
+  const { isAuthenticated, hasAccessToScope, hasGlobalRole, hasModuleOption } = useAuth();
+  
+  // P0: Utiliser V2 - hasModuleOption au lieu de isAdmin
+  const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('help_academy', 'edition');
+  const canDelete = hasGlobalRole('platform_admin');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editIcon, setEditIcon] = useState('BookOpen');
@@ -513,7 +517,7 @@ export default function ApporteurGuide() {
               className="pl-10 bg-card border-2"
             />
           </div>
-          {isAdmin && isEditMode && (
+          {canEdit && isEditMode && (
             <Button
               onClick={handleAddCategory}
               size="sm"
