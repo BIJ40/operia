@@ -18,14 +18,14 @@ const TECH_KPIS = [
   },
   { 
     key: 'dossiersTraites', 
-    label: 'Dossiers traités', 
+    label: 'Dossiers terminés', 
     icon: FolderCheck,
     format: 'number',
     color: 'from-blue-500 to-blue-600'
   },
   { 
     key: 'interventionsRealisees', 
-    label: 'Interventions', 
+    label: 'Rendez-Vous', 
     icon: Wrench,
     format: 'number',
     color: 'from-orange-500 to-orange-600'
