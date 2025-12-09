@@ -119,7 +119,7 @@ const SortableCategory = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 overflow-visible ${getColorClass(category.colorPreset, isEmpty)}`}
+      className={`group relative border-2 border-l-4 rounded-lg px-3 py-1.5 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center justify-center gap-2 overflow-visible min-h-[2.5rem] ${getColorClass(category.colorPreset, isEmpty)}`}
     >
       {/* Badge Vide */}
       {isEmpty && !isEditMode && (
@@ -538,7 +538,7 @@ export default function ApporteurGuide() {
             items={filteredCategories.map(c => c.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {filteredCategories.map(category => {
                 const { isEmpty } = getCategoryStatus(category.id, category);
                 return (
