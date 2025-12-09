@@ -27,7 +27,7 @@ import iconGestionProjet from '@/assets/menu-icons/gestion-projet.png';
 import iconFranchiseur from '@/assets/menu-icons/franchiseur.png';
 import iconAdministration from '@/assets/menu-icons/administration.png';
 import iconRh from '@/assets/menu-icons/rh.png';
-import iconTechnicien from '@/assets/menu-icons/technicien.png';
+
 
 interface NavItem {
   title: string;
@@ -93,18 +93,6 @@ const navSections: NavSection[] = [
       { title: 'Demandes RH', url: ROUTES.rh.demandes, icon: FileText },
     ],
     requiresModule: 'rh',
-  },
-  {
-    id: 'technicien',
-    label: 'Technicien',
-    icon: iconTechnicien,
-    indexUrl: ROUTES.technicien.index,
-    items: [
-      { title: 'Relevé Technique', url: ROUTES.pilotage.techInterventions, icon: ClipboardList },
-      { title: 'Bon d\'Intervention', url: ROUTES.technicien.bonIntervention, icon: FileText },
-      { title: 'PV Apporteur', url: ROUTES.technicien.pvApporteur, icon: FolderOpen },
-    ],
-    requiresModule: 'pilotage_agence',
   },
   {
     id: 'support',
@@ -191,16 +179,8 @@ export function IconNavBar() {
     
     if (sectionId === 'home') return path === '/';
     
-    // Routes exclusives RH
-    const rhExclusiveRoutes = [
-      '/mon-coffre-rh',
-      '/hc-agency/demandes-rh',
-      '/hc-agency/collaborateurs',
-      '/hc-agency/dashboard-rh',
-      '/hc-agency/gestion-conges',
-      '/hc-agency/demande-conge',
-    ];
-    const isRhRoute = rhExclusiveRoutes.some(r => path === r || path.startsWith(r + '/'));
+    // Routes exclusives RH (toutes sous /rh/)
+    const isRhRoute = path.startsWith('/rh');
     
     if (sectionId === 'rh') return isRhRoute;
     
