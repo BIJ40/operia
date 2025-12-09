@@ -21,6 +21,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,7 @@ import {
 import { Loader2 } from 'lucide-react';
 import { Collaborator, CollaboratorFormData, COLLABORATOR_TYPES } from '@/types/collaborator';
 import { useSensitiveData } from '@/hooks/useSensitiveData';
+import { ApogeeUserSelect } from './ApogeeUserSelect';
 
 const formSchema = z.object({
   first_name: z.string().min(1, 'Prénom requis'),
@@ -405,6 +407,28 @@ export function CollaboratorForm({
                 )}
               />
             </div>
+
+            {/* Liaison Apogée */}
+            <FormField
+              control={form.control}
+              name="apogee_user_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Liaison Apogée</FormLabel>
+                  <FormDescription>
+                    Lier ce collaborateur à son compte technicien Apogée pour les statistiques
+                  </FormDescription>
+                  <FormControl>
+                    <ApogeeUserSelect
+                      value={field.value}
+                      onChange={field.onChange}
+                      collaboratorName={`${form.watch('first_name')} ${form.watch('last_name')}`}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* Notes */}
             <FormField
