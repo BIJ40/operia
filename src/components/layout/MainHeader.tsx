@@ -31,6 +31,7 @@ import { getRoleCapabilities } from '@/config/roleMatrix';
 import logoHelpconfortServices from '@/assets/help-confort-services-logo.png';
 import { RHNotificationBadge } from '@/components/rh/RHNotificationBadge';
 import { isModuleEnabled, ModuleKey } from '@/types/modules';
+import { UnifiedSearchFloatingBar } from '@/components/unified-search';
 
 
 // Map d'icônes pour les sections
@@ -325,6 +326,11 @@ export function MainHeader() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Barre de recherche IA unifiée - sous le menu principal */}
+        <div className="border-t border-border/50 bg-background/50">
+          <UnifiedSearchFloatingBar />
         </div>
 
         {/* Navigation mobile */}
