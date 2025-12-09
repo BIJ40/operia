@@ -94,6 +94,7 @@ const TDRUsersPage = lazy(() => import("./pages/TDRUsersPage"));
 // Lazy loaded pages - Admin
 const AdminIndex = lazy(() => import("./pages/AdminIndex"));
 const AdminSupportTickets = lazy(() => import("./pages/AdminSupportTickets"));
+const SupportSettings = lazy(() => import("./pages/admin/SupportSettings"));
 const AdminSupportStats = lazy(() => import("./pages/AdminSupportStats"));
 const AdminEscalationHistory = lazy(() => import("./pages/AdminEscalationHistory"));
 const AdminBackup = lazy(() => import("./pages/AdminBackup"));
@@ -299,6 +300,8 @@ function AppContent() {
           <Route path="/support/faq" element={<MainLayout><Faq /></MainLayout>} />
           {/* SU Console - Support agents (N5+ strictement) - FIX F-PERM-3 */}
           <Route path="/support/console" element={<MainLayout><SupportConsoleGuard><AdminSupportTickets /></SupportConsoleGuard></MainLayout>} />
+          {/* Support Settings - Admin only */}
+          <Route path="/admin/support/settings" element={<MainLayout><SupportConsoleGuard><SupportSettings /></SupportConsoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* RÉSEAU FRANCHISEUR - Section Index + Sous-pages */}
