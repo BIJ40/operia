@@ -39,6 +39,8 @@ interface LiveSession {
   status: string;
   agent_id: string | null;
   created_at: string;
+  closed_by?: string | null;
+  closed_reason?: string | null;
 }
 
 export function AgentUnifiedChat() {
@@ -83,12 +85,27 @@ export function AgentUnifiedChat() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'live_support_sessions' },
-        () => loadSessions()
+        (payload) => {
+          // Si session fermée par user, notifier l'agent et recharger
+          if (payload.eventType === 'UPDATE') {
+            const session = payload.new as LiveSession;
+            if ((session.status === 'closed' || session.status === 'converted') && session.closed_by === 'user') {
+              toast.info(`Session fermée par ${session.user_name || 'l\'utilisateur'}`, {
+                description: session.closed_reason || 'L\'utilisateur a mis fin à la conversation',
+              });
+              // Si c'était la session sélectionnée, la désélectionner
+              if (selectedSession?.id === session.id) {
+                setSelectedSession(null);
+              }
+            }
+          }
+          loadSessions();
+        }
       )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [selectedSession?.id]);
 
   // Charger les messages quand session sélectionnée
   useEffect(() => {
@@ -205,7 +222,9 @@ export function AgentUnifiedChat() {
           status: 'closed',
           closed_at: new Date().toISOString(),
           agent_name: agentName,
-        })
+          closed_by: 'agent',
+          closed_reason: 'Problème résolu par le support',
+        } as any)
         .eq('id', selectedSession.id);
 
       if (error) throw error;
@@ -271,7 +290,9 @@ export function AgentUnifiedChat() {
           status: 'converted',
           closed_at: new Date().toISOString(),
           agent_name: agentName,
-        })
+          closed_by: 'agent',
+          closed_reason: 'Converti en ticket support pour suivi',
+        } as any)
         .eq('id', selectedSession.id);
 
       toast.success('Session convertie en ticket');
