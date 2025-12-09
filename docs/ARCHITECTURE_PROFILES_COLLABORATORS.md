@@ -1,187 +1,141 @@
-# Architecture Profiles / Collaborators
+# Architecture Identités & Collaborateurs - HelpConfort Services
 
-## État des lieux (AS-IS) - Audit décembre 2024
+## ADR (Architecture Decision Record)
 
-### 1. Schéma actuel
-
-```
-┌─────────────────┐     ┌───────────────────────────────────────────────────────┐
-│   auth.users    │────▶│                    profiles                           │
-│  (Supabase)     │     │  - id (PK, FK → auth.users)                          │
-│                 │     │  - first_name, last_name, email, phone ◀── MASTER    │
-│                 │     │  - agency_id (FK → apogee_agencies)                   │
-│                 │     │  - apogee_user_id                                     │
-│                 │     │  - global_role, enabled_modules                       │
-└─────────────────┘     └───────────────────────────────────────────────────────┘
-                                            │
-                                            │ user_id (optionnel)
-                                            ▼
-                        ┌───────────────────────────────────────────────────────┐
-                        │                 collaborators                         │
-                        │  - id (PK)                                            │
-                        │  - user_id (FK → profiles, UNIQUE nullable)           │
-                        │  - first_name, last_name, email, phone ◀── DUPLIQUÉS │
-                        │  - agency_id ◀── DUPLIQUÉ                             │
-                        │  - apogee_user_id ◀── DUPLIQUÉ                        │
-                        │  - type, role, hiring_date, leaving_date              │
-                        │  - address, postal_code, city, notes                  │
-                        └───────────────────────────────────────────────────────┘
-                                            │
-                                            │ collaborator_id
-                                            ▼
-                        ┌───────────────────────────────────────────────────────┐
-                        │          collaborator_sensitive_data                  │
-                        │  - social_security_number_encrypted                   │
-                        │  - birth_date_encrypted                               │
-                        │  - emergency_contact_encrypted                        │
-                        │  - emergency_phone_encrypted                          │
-                        └───────────────────────────────────────────────────────┘
-```
-
-### 2. Colonnes dupliquées identifiées
-
-| Colonne | `profiles` | `collaborators` | Règle actuelle |
-|---------|------------|-----------------|----------------|
-| `first_name` | ✅ MASTER | ⚠️ Copie | Sync via trigger |
-| `last_name` | ✅ MASTER | ⚠️ Copie | Sync via trigger |
-| `email` | ✅ MASTER | ⚠️ Copie | Sync via trigger |
-| `phone` | ✅ MASTER | ⚠️ Copie | Sync via trigger |
-| `agency_id` | ✅ MASTER | ⚠️ Copie | Sync via trigger |
-| `apogee_user_id` | ✅ MASTER | ⚠️ Copie | Sync via trigger |
-
-### 3. Triggers de synchronisation actuels
-
-```sql
--- profiles → collaborators
-sync_collaborator_on_profile_update()
--- Si first_name, last_name, email, phone, apogee_user_id changent sur profiles,
--- réplique vers collaborators WHERE user_id = profiles.id
-
--- collaborators → profiles
-sync_profile_on_collaborator_update()
--- Si first_name, last_name, email, phone changent sur collaborators,
--- réplique vers profiles WHERE id = collaborators.user_id
-
--- Création automatique
-auto_create_collaborator()
--- Quand un profile avec agency_id est créé/mis à jour,
--- crée automatiquement un collaborator lié
-```
+| Champ | Valeur |
+|-------|--------|
+| **Statut** | Accepté |
+| **Version** | 1.1 |
+| **Date** | 2024-12-09 |
+| **Portée** | Gestion des identités et collaborateurs |
+| **Auteur** | Équipe HelpConfort |
 
 ---
 
-## Audit des usages dans le code
+## 1. Contexte et problématique
 
-### Frontend (src/)
+### 1.1 Situation actuelle (AS-IS)
 
-#### Fichiers lisant `collaborators.first_name/last_name/email`
-
-| Fichier | Usage | Impact migration |
-|---------|-------|------------------|
-| `CollaboratorCard.tsx` | Affichage nom + initiales | 🟡 Moyen |
-| `CollaboratorProfile.tsx` | Fiche détaillée collaborateur | 🟡 Moyen |
-| `CollaboratorForm.tsx` | Formulaire création/édition | 🟠 Élevé |
-| `CollaboratorList.tsx` | Liste + recherche | 🟡 Moyen |
-| `GEDCollaboratorDropdown.tsx` | Dropdown sélection | 🟢 Faible |
-| `CollaboratorsListWidget.tsx` | Widget dashboard | 🟢 Faible |
-| `DemandesRHPage.tsx` | Liste demandes RH | 🟢 Faible |
-| `GestionConges.tsx` | Page congés | 🟢 Faible |
-| `RHAuditLogTable.tsx` | Journal d'audit RH | 🟢 Faible |
-| `ToolFormDialog.tsx` | Formulaire outils | 🟢 Faible |
-| `VehicleFormDialog.tsx` | Formulaire véhicules | 🟢 Faible |
-
-#### Hooks concernés
-
-| Hook | Usage colonnes dupliquées | Criticité |
-|------|---------------------------|-----------|
-| `useCollaborators.ts` | CRUD complet, SELECT * | 🔴 Critique |
-| `useLeaveDecision.ts` | `first_name, last_name` pour notif | 🟡 Moyen |
-| `useLeaveRequests.ts` | `agency_id` via collaborators | 🟡 Moyen |
-| `usePersonalKpis.ts` | `apogee_user_id` | 🟡 Moyen |
-| `useTechPlanning.ts` | `first_name, last_name, apogee_user_id` | 🟠 Élevé |
-| `useRHAuditLog.ts` | Join sur collaborators | 🟢 Faible |
-| `useFleetVehicles.ts` | Join collaborator name | 🟢 Faible |
-| `useTools.ts` | Join collaborator name | 🟢 Faible |
-
-### Edge Functions (supabase/functions/)
-
-| Function | Usage | Impact |
-|----------|-------|--------|
-| `generate-hr-document` | `collaborators.first_name/last_name` | 🟠 Élevé |
-| `generate-leave-decision` | Join collaborators(first_name, last_name) | 🟡 Moyen |
-| `export-my-data` | Export identité depuis both tables | 🟡 Moyen |
-| `export-rh-documents` | `collaborators.first_name/last_name` | 🟡 Moyen |
-| `reset-user-password` | `profiles.first_name/last_name` only | 🟢 OK |
-| `unified-search` | `profiles.first_name/last_name` only | 🟢 OK |
-
-### État de la base de données
+Le système actuel présente une **duplication de données identitaires** entre les tables `profiles` et `collaborators` :
 
 ```
-Total collaborators : 11
-Avec user_id lié    : 10 (91%)
-Sans user_id        : 1  (9%)
-
-Incohérences identité (profiles ≠ collaborators) : 0 ✅
+┌─────────────────┐     ┌─────────────────────────────────────────────────────┐
+│   auth.users    │────▶│                    profiles                         │
+│  (Supabase)     │     │  - id (PK = auth.users.id)                          │
+│                 │     │  - first_name, last_name, email, phone              │
+│                 │     │  - agency_id, apogee_user_id                        │
+│                 │     │  - global_role, enabled_modules                     │
+└─────────────────┘     └─────────────────────────────────────────────────────┘
+                                              │
+                                              ▼ (user_id FK, NULLABLE)
+                        ┌─────────────────────────────────────────────────────┐
+                        │                  collaborators                      │
+                        │  - id (PK)                                          │
+                        │  - user_id (FK → profiles, NULLABLE, UNIQUE)        │
+                        │  - first_name, last_name, email, phone ⚠️ DUPLIQUÉS │
+                        │  - agency_id, apogee_user_id ⚠️ DUPLIQUÉS           │
+                        │  - type, role, hiring_date, leaving_date            │
+                        │  - address, postal_code, city, notes                │
+                        └─────────────────────────────────────────────────────┘
+                                              │
+                                              ▼ (collaborator_id FK)
+                        ┌─────────────────────────────────────────────────────┐
+                        │           collaborator_sensitive_data               │
+                        │  - birth_date_encrypted                             │
+                        │  - social_security_number_encrypted                 │
+                        │  - emergency_contact_encrypted                      │
+                        └─────────────────────────────────────────────────────┘
 ```
+
+### 1.2 Problèmes identifiés
+
+| Problème | Impact | Priorité |
+|----------|--------|----------|
+| Duplication first_name, last_name, email, phone | Risque de désynchronisation, maintenance double | P0 |
+| Duplication agency_id | RLS complexe, source d'erreurs | P0 |
+| Duplication apogee_user_id | Incohérence potentielle avec Apogée | P1 |
+| Triggers de sync bidirectionnels | Complexité, risque de boucle | P1 |
+| collaborators.user_id nullable | Collaborateurs orphelins possibles | P2 |
+
+### 1.3 Audit des usages actuels
+
+**Fichiers impactés (14 fichiers front + 3 edge functions) :**
+
+| Catégorie | Fichiers | Colonnes utilisées |
+|-----------|----------|-------------------|
+| Hooks RH | `useCollaborators.ts`, `useCollaborator.ts` | first_name, last_name, email, phone, agency_id |
+| UI Collaborateurs | `CollaboratorForm.tsx`, `CollaboratorList.tsx`, `CollaboratorDetailsCard.tsx` | first_name, last_name, email, phone |
+| StatIA | `useTechPlanning.ts`, `useTechniciensStatia.ts` | first_name, last_name (jointures) |
+| Widgets | `CollaboratorsListWidget.tsx` | first_name, last_name, role, type |
+| Edge Functions | `generate-hr-document`, `generate-leave-decision`, `export-rh-documents` | first_name, last_name, email |
 
 ---
 
-## Architecture cible (TO-BE)
+## 2. Architecture cible (TO-BE)
 
-### 1. Principe fondamental
-
-> **1 donnée = 1 table propriétaire, les autres ne font que LIRE**
-
-| Information | Table propriétaire | Qui édite |
-|-------------|-------------------|-----------|
-| Identité (nom, prénom) | `profiles` | User + Admin |
-| Email de contact | `profiles` | User + Admin |
-| Téléphone | `profiles` | User + Admin |
-| Agence principale | `profiles.agency_id` | Admin |
-| Apogee User ID | `profiles.apogee_user_id` | Admin |
-| Global Role | `profiles.global_role` | Admin |
-| Modules | `profiles.enabled_modules` | Admin |
-| Données RH (type, role, dates) | `collaborators` | N2/RH |
-| Données sensibles | `collaborator_sensitive_data` | RH Admin |
-
-### 2. Schéma cible
+### 2.1 Nouveau schéma
 
 ```
-┌─────────────────┐     ┌───────────────────────────────────────────────────────┐
-│   auth.users    │────▶│                    profiles                           │
-│  (Supabase)     │     │  - id (PK, FK → auth.users) ◀── OPTIONNEL            │
-│                 │     │  - first_name, last_name, email, phone                │
-│                 │     │  - agency_id, apogee_user_id                          │
-│                 │     │  - global_role, enabled_modules                       │
-└─────────────────┘     └───────────────────────────────────────────────────────┘
-                                            │
-                                            │ user_id (1:1)
-                                            ▼
-                        ┌───────────────────────────────────────────────────────┐
-                        │                 collaborators                         │
-                        │  - id (PK)                                            │
-                        │  - user_id (FK → profiles, NOT NULL, UNIQUE)          │
-                        │  - type, role, hiring_date, leaving_date              │
-                        │  - address, postal_code, city, notes                  │
-                        │  ✅ Plus de colonnes dupliquées                       │
-                        └───────────────────────────────────────────────────────┘
+┌─────────────────┐     ┌─────────────────────────────────────────────────────┐
+│   auth.users    │     │                    profiles                         │
+│  (Supabase)     │     │  - id (PK, UUID autonome)                           │
+│  - id (PK)      │◀────│  - auth_user_id (FK → auth.users.id, NULLABLE)      │
+│  - email        │     │  - first_name, last_name, email, phone              │
+│                 │     │  - agency_id, apogee_user_id                        │
+│                 │     │  - global_role, enabled_modules                     │
+└─────────────────┘     └─────────────────────────────────────────────────────┘
+                                              │
+                                              ▼ (user_id FK, NOT NULL, UNIQUE)
+                        ┌─────────────────────────────────────────────────────┐
+                        │                  collaborators                      │
+                        │  - id (PK)                                          │
+                        │  - user_id (FK → profiles.id, NOT NULL, UNIQUE)     │
+                        │  - type, role                                       │
+                        │  - hiring_date, leaving_date                        │
+                        │  - address, postal_code, city, country              │
+                        │  - notes                                            │
+                        │  ⚠️ PLUS de first_name, last_name, email, etc.      │
+                        └─────────────────────────────────────────────────────┘
+                                              │
+                                              ▼ (collaborator_id FK)
+                        ┌─────────────────────────────────────────────────────┐
+                        │           collaborator_sensitive_data               │
+                        │  - birth_date_encrypted                             │
+                        │  - social_security_number_encrypted                 │
+                        │  - emergency_contact_encrypted                      │
+                        └─────────────────────────────────────────────────────┘
 ```
 
-### 3. Vue de compatibilité (Phase transitoire)
+### 2.2 Points clés du nouveau schéma
+
+| Élément | Règle |
+|---------|-------|
+| `profiles.id` | PK autonome (UUID), **pas** de FK vers auth.users |
+| `profiles.auth_user_id` | FK nullable vers `auth.users.id` - seul lien login ↔ profil |
+| `collaborators.user_id` | FK **NOT NULL + UNIQUE** vers `profiles.id` |
+| Identité | Exclusivement dans `profiles` (first_name, last_name, email, phone) |
+| Rattachement agence | Exclusivement `profiles.agency_id` |
+| Données RH | Exclusivement dans `collaborators` (type, role, dates, adresse) |
+
+---
+
+## 3. Vue de compatibilité : `collaborators_full`
+
+### 3.1 Définition
 
 ```sql
 CREATE OR REPLACE VIEW collaborators_full AS
 SELECT
   c.id,
   c.user_id,
-  -- Identité tirée de profiles (source de vérité)
+  -- Identité depuis profiles (source unique)
   p.first_name,
   p.last_name,
   p.email,
   p.phone,
   p.agency_id,
   p.apogee_user_id,
-  -- Données RH pures
+  -- Données RH depuis collaborators
   c.type,
   c.role,
   c.hiring_date,
@@ -193,96 +147,191 @@ SELECT
   c.created_at,
   c.updated_at
 FROM collaborators c
-LEFT JOIN profiles p ON p.id = c.user_id;
+INNER JOIN profiles p ON p.id = c.user_id;
 ```
 
----
+### 3.2 Contrat d'utilisation
 
-## Plan de migration
+| Aspect | Décision |
+|--------|----------|
+| **Rôle** | Vue pérenne, contractuelle, API interne stable |
+| **Durée de vie** | Permanente (pas temporaire) |
+| **Usage front** | 90% des écrans RH passent par cette vue |
+| **Exceptions** | Statistiques lourdes, agrégats StatIA (jointures explicites) |
 
-### Phase 0 - Sécurisation (P0) ✅ FAIT
-
-- [x] Triggers de synchronisation bidirectionnelle en place
-- [x] Vérification cohérence : 0 incohérences détectées
-- [x] Auto-création collaborator sur nouveau profile avec agency_id
-
-### Phase 1 - Vue de compatibilité (P1)
-
-1. Créer la vue `collaborators_full`
-2. Migrer progressivement les requêtes frontend vers la vue
-3. Marquer les colonnes dupliquées comme `@deprecated`
-
-### Phase 2 - Migration frontend (P1)
-
-| Priorité | Fichier | Action |
-|----------|---------|--------|
-| 🔴 | `useCollaborators.ts` | Utiliser `collaborators_full` |
-| 🟠 | `useTechPlanning.ts` | JOIN profiles pour identité |
-| 🟠 | `CollaboratorForm.tsx` | Séparer update profiles vs update collaborators |
-| 🟡 | Tous composants affichage | Utiliser `collaborators_full` |
-
-### Phase 3 - Migration Edge Functions (P1)
-
-| Function | Migration |
-|----------|-----------|
-| `generate-hr-document` | JOIN profiles pour identité |
-| `generate-leave-decision` | JOIN profiles |
-| `export-rh-documents` | JOIN profiles |
-
-### Phase 4 - Nettoyage schéma (P2)
-
-1. Supprimer triggers de synchronisation
-2. Supprimer colonnes dupliquées :
-   ```sql
-   ALTER TABLE collaborators
-     DROP COLUMN first_name,
-     DROP COLUMN last_name,
-     DROP COLUMN email,
-     DROP COLUMN phone,
-     DROP COLUMN apogee_user_id,
-     DROP COLUMN agency_id;
-   ```
-3. Mettre à jour RLS policies
+**Règle d'or :**
+> Le front ne doit **jamais** interroger directement `profiles` + `collaborators` en brut pour les écrans RH, mais passer par `collaborators_full` sauf cas très spécifiques.
 
 ---
 
-## Décisions architecturales
+## 4. Décisions architecturales
 
-### Q: Que faire des collaborateurs sans `user_id` ?
+### 4.1 Source unique d'identité
 
-**Décision** : Créer un `profiles` "fantôme" (sans lien auth.users) pour tout collaborateur.
+> **L'identité métier (nom, prénom, email, téléphone, rattachement agence, apogee_user_id) est exclusivement portée par `profiles`.**
 
-- Même si le collaborateur ne se connecte jamais, il a un `profiles.id`
-- Le `profiles` peut ne pas avoir de lien vers `auth.users`
-- Assure le modèle 1:1 `profiles ↔ collaborators`
+`collaborators` ne contient que des données RH (type, role, dates, adresse).
 
-### Q: Qui est "owner" de l'identité ?
+### 4.2 Lien login ↔ profil
 
-**Décision** : `profiles` est TOUJOURS la source de vérité pour l'identité.
+> **`profiles.auth_user_id` est le SEUL lien vers `auth.users`.**
 
-- `collaborators` ne contient QUE des données RH
-- Tout affichage d'identité passe par `profiles` ou `collaborators_full`
+- Profil avec compte : `profiles.auth_user_id = auth.users.id`
+- Profil sans compte (collaborateur fantôme, intérim) : `auth_user_id IS NULL`
 
-### Q: Comment gérer les écrans d'édition ?
+### 4.3 Relation profiles ↔ collaborators (1:1 strict)
 
-| Écran | Table éditée | Champs |
-|-------|--------------|--------|
-| Mon Profil (self) | `profiles` | first_name, last_name, phone, avatar |
-| Fiche Collaborateur (N2) | `collaborators` + readonly `profiles` | type, role, dates, adresse |
-| Admin Users | `profiles` + `collaborators` | Tout (vue consolidée) |
+> **Tout `collaborators` doit avoir un `user_id` non nul.**
+
+```sql
+-- Contraintes à appliquer
+ALTER TABLE collaborators
+  ALTER COLUMN user_id SET NOT NULL;
+
+ALTER TABLE collaborators
+  ADD CONSTRAINT collaborators_user_id_unique UNIQUE (user_id);
+
+ALTER TABLE collaborators
+  ADD CONSTRAINT collaborators_user_id_fkey
+    FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE RESTRICT;
+```
+
+**Important :** `ON DELETE RESTRICT` (pas CASCADE) pour éviter d'effacer des fiches RH par erreur en supprimant un profil.
+
+### 4.4 Profils "fantômes" (sans compte auth)
+
+Pour les collaborateurs externes, intérimaires, ou anciens salariés :
+1. Créer un `profiles` avec `auth_user_id = NULL`
+2. Créer le `collaborators` lié à ce profil
+3. Le collaborateur n'a pas d'accès login mais existe dans le système
+
+### 4.5 Règles RLS cibles
+
+> **Toutes les décisions d'autorisation par agence se basent sur `profiles.agency_id`.**
+
+```sql
+-- Exemple de policy collaborators (simplifié)
+CREATE POLICY "collaborators_by_agency" ON collaborators
+FOR SELECT USING (
+  EXISTS (
+    SELECT 1
+    FROM profiles p_me
+    JOIN profiles p_coll ON p_coll.id = collaborators.user_id
+    WHERE p_me.auth_user_id = auth.uid()
+      AND p_me.agency_id = p_coll.agency_id
+  )
+);
+```
+
+**Règles :**
+- RLS ne regarde plus `collaborators.agency_id` (colonne supprimée)
+- Tout filtre d'agence passe par `profiles.agency_id`
+- Jointure systématique via `collaborators.user_id → profiles.id`
 
 ---
 
-## Métriques de suivi
+## 5. Plan de migration (Checklist P0/P1/P2)
 
-| Métrique | Valeur actuelle | Cible |
-|----------|-----------------|-------|
-| Colonnes dupliquées | 6 | 0 |
-| Fichiers utilisant doublons | 14 | 0 |
-| Edge functions à migrer | 3 | 0 |
-| Incohérences profiles/collaborators | 0 | 0 |
-| Collaborateurs sans user_id | 1 | 0 |
+### P0 – Infrastructures minimales (CRITIQUE)
+
+- [ ] **Migration profiles.auth_user_id**
+  - Ajouter colonne `auth_user_id UUID NULLABLE` dans profiles
+  - Migrer : `UPDATE profiles SET auth_user_id = id WHERE id IN (SELECT id FROM auth.users)`
+  - Créer index : `CREATE INDEX idx_profiles_auth_user_id ON profiles(auth_user_id)`
+
+- [ ] **Contraintes collaborators.user_id**
+  - Backfill des user_id manquants (créer profiles fantômes si nécessaire)
+  - `ALTER TABLE collaborators ALTER COLUMN user_id SET NOT NULL`
+  - `ALTER TABLE collaborators ADD CONSTRAINT collaborators_user_id_unique UNIQUE (user_id)`
+
+- [ ] **Vue collaborators_full**
+  - Créer la vue SQL (voir section 3.1)
+  - Tester les requêtes existantes
+
+### P1 – Refactoring front / edge functions
+
+- [ ] **useCollaborators.ts**
+  - Migrer vers `from('collaborators_full')` ou jointure explicite
+  - Supprimer références aux colonnes dupliquées
+
+- [ ] **CollaboratorForm.tsx**
+  - Séparer mutations : `profiles` (identité) + `collaborators` (RH)
+  - Mettre à jour le formulaire pour refléter la séparation
+
+- [ ] **useTechPlanning.ts / useTechniciensStatia.ts**
+  - Identité via `profiles` ou `collaborators_full`
+  - Jointures explicites pour StatIA
+
+- [ ] **Edge functions HR**
+  - `generate-hr-document` : join profiles pour identité
+  - `generate-leave-decision` : join profiles pour identité
+  - `export-rh-documents` : join profiles pour identité
+
+- [ ] **Widgets / UI**
+  - `CollaboratorsListWidget.tsx` → `collaborators_full`
+  - `CollaboratorDetailsCard.tsx` → séparer identité/RH
+
+### P2 – Nettoyage / durcissement
+
+- [ ] **Suppression triggers de sync**
+  - `sync_collaborator_on_profile_update`
+  - `sync_profile_on_collaborator_update`
+  - `auto_create_collaborator`
+
+- [ ] **Drop colonnes dupliquées**
+  ```sql
+  ALTER TABLE collaborators
+    DROP COLUMN first_name,
+    DROP COLUMN last_name,
+    DROP COLUMN email,
+    DROP COLUMN phone,
+    DROP COLUMN apogee_user_id,
+    DROP COLUMN agency_id;
+  ```
+
+- [ ] **Mise à jour RLS**
+  - Supprimer références à `collaborators.agency_id`
+  - Simplifier policies avec jointure profiles
+
+- [ ] **Vérification finale**
+  - 0 références aux anciennes colonnes dans le code
+  - 0 collaborators sans user_id
+  - Tests de régression sur tous les écrans RH
 
 ---
 
-*Document généré le 2024-12-09 - Architecture V1.0*
+## 6. Conséquences
+
+### Positives
+
+| Bénéfice | Description |
+|----------|-------------|
+| Source unique d'identité | `profiles` = seule vérité pour nom/prénom/email/phone |
+| Simplification RLS | Toutes les policies basées sur `profiles.agency_id` |
+| Alignement StatIA | Jointures cohérentes techniciens ↔ profiles |
+| Compatibilité RH & Parc | Vue `collaborators_full` stable pour tous les modules |
+| Profils fantômes | Support des collaborateurs sans compte auth |
+
+### Négatives
+
+| Contrainte | Mitigation |
+|------------|------------|
+| Migration front + edge à réaliser | Vue de compatibilité pour transition progressive |
+| Passe QA sur tous les écrans RH | Checklist exhaustive, tests automatisés |
+| Backfill des user_id manquants | Script de création profiles fantômes |
+
+---
+
+## 7. Métriques de suivi
+
+| Métrique | Cible | Actuel |
+|----------|-------|--------|
+| Collaborateurs avec user_id | 100% | 91% (10/11) |
+| Fichiers migrés (front) | 14/14 | 0/14 |
+| Edge functions migrées | 3/3 | 0/3 |
+| Colonnes dupliquées supprimées | 6/6 | 0/6 |
+| Triggers de sync supprimés | 3/3 | 0/3 |
+
+---
+
+*Document mis à jour le 2024-12-09 - Architecture V1.1*
