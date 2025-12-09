@@ -52,7 +52,6 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
     moduleKey: 'pilotage_agence',
     accessKey: 'canAccessPilotageAgence',
     links: [
-      { label: 'Vue d\'ensemble', href: ROUTES.pilotage.index, icon: 'LayoutDashboard', description: 'Dashboard agence', minRole: 'franchisee_admin' },
       { label: 'Hub Statistiques', href: ROUTES.pilotage.statsHub, icon: 'BarChart2', description: 'Centre statistiques', minRole: 'franchisee_admin' },
       { label: 'Indicateurs Apporteurs', href: ROUTES.pilotage.indicateursApporteurs, icon: 'Handshake', description: 'CA par apporteur', minRole: 'franchisee_admin' },
       { label: 'Indicateurs Univers', href: ROUTES.pilotage.indicateursUnivers, icon: 'PieChart', description: 'CA par univers', minRole: 'franchisee_admin' },
