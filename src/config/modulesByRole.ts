@@ -40,6 +40,10 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
       enabled: true,
       options: { coffre: true, rh_viewer: false, rh_admin: false }
     },
+    technicien: {
+      enabled: true,
+      options: { bon_intervention: true, pv_reception: true, planning: true }
+    },
   },
   
   // N2 - Admin franchisé (dirigeant agence)
@@ -59,6 +63,10 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
     rh: {
       enabled: true,
       options: { coffre: false, rh_viewer: true, rh_admin: true }
+    },
+    technicien: {
+      enabled: true,
+      options: { bon_intervention: true, pv_reception: true, planning: true }
     },
   },
   
@@ -80,6 +88,10 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
       enabled: true,
       options: { user: true, agent: true, admin: false }
     },
+    technicien: {
+      enabled: true,
+      options: { bon_intervention: true, pv_reception: true, planning: true }
+    },
   },
   
   // N4 - Admin franchiseur (directeur réseau)
@@ -99,6 +111,10 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
     support: {
       enabled: true,
       options: { user: true, agent: true, admin: true }
+    },
+    technicien: {
+      enabled: true,
+      options: { bon_intervention: true, pv_reception: true, planning: true }
     },
   },
   
@@ -124,6 +140,10 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
       enabled: true,
       options: { users: true, agencies: true, permissions: true, backup: true, logs: false }
     },
+    technicien: {
+      enabled: true,
+      options: { bon_intervention: true, pv_reception: true, planning: true }
+    },
   },
   
   // N6 - Superadmin
@@ -147,6 +167,10 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
     admin_plateforme: {
       enabled: true,
       options: { users: true, agencies: true, permissions: true, backup: true, logs: true }
+    },
+    technicien: {
+      enabled: true,
+      options: { bon_intervention: true, pv_reception: true, planning: true }
     },
   },
 };

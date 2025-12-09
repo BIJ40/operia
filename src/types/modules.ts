@@ -19,6 +19,7 @@ export const MODULES = {
   parc: 'parc', // Module Parc séparé
   messaging: 'messaging', // Chat interne
   unified_search: 'unified_search', // Barre de recherche unifiée (Stats + Docs)
+  technicien: 'technicien', // Module Technicien (Bon d'intervention, PV réception)
 } as const;
 
 export type ModuleKey = keyof typeof MODULES;
@@ -79,6 +80,11 @@ export const MODULE_OPTIONS = {
   unified_search: {
     stats: 'unified_search.stats',  // Recherche statistiques
     docs: 'unified_search.docs',    // Recherche documentaire
+  },
+  technicien: {
+    bon_intervention: 'technicien.bon_intervention', // Remplir bons d'intervention
+    pv_reception: 'technicien.pv_reception',         // PV de réception
+    planning: 'technicien.planning',                 // Voir son planning
   },
 } as const;
 
@@ -240,6 +246,19 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'docs', path: 'unified_search.docs', label: 'Recherche Docs', description: 'Rechercher dans la documentation (Apogée, HelpConfort)', defaultEnabled: true },
     ],
   },
+  {
+    key: 'technicien',
+    label: 'Technicien',
+    description: 'Outils terrain : bon d\'intervention, PV réception, planning',
+    icon: 'Wrench',
+    defaultForRoles: ['franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
+    minRole: 'franchisee_user',
+    options: [
+      { key: 'bon_intervention', path: 'technicien.bon_intervention', label: 'Bon d\'intervention', description: 'Remplir les bons d\'intervention sur le terrain', defaultEnabled: true },
+      { key: 'pv_reception', path: 'technicien.pv_reception', label: 'PV de réception', description: 'Créer des PV de réception travaux', defaultEnabled: true },
+      { key: 'planning', path: 'technicien.planning', label: 'Planning', description: 'Consulter son planning d\'interventions', defaultEnabled: true },
+    ],
+  },
 ];
 
 // Structure de stockage des modules activés (JSONB dans profiles)
@@ -254,6 +273,7 @@ export interface EnabledModules {
   parc?: boolean | ModuleOptionsState;
   messaging?: boolean | ModuleOptionsState;
   unified_search?: boolean | ModuleOptionsState;
+  technicien?: boolean | ModuleOptionsState;
 }
 
 export interface ModuleOptionsState {
