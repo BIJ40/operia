@@ -345,9 +345,9 @@ export function SupportChatCore({
 
         onTicketCreated?.(result.data.id);
         
-        // Naviguer vers les tickets si pas de callback
+        // Naviguer vers le support si pas de callback
         if (!onTicketCreated) {
-          navigate(ROUTES.support.userTickets);
+          navigate(ROUTES.support.index);
         }
       } else {
         errorToast('Erreur lors de la création du ticket');
