@@ -59,8 +59,6 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
       { label: 'Indicateurs SAV', href: ROUTES.pilotage.indicateursSav, icon: 'LifeBuoy', description: 'Service après-vente', minRole: 'franchisee_admin' },
       { label: 'Actions à Mener', href: ROUTES.pilotage.actions, icon: 'ListTodo', description: 'Tâches opérationnelles', minRole: 'franchisee_admin' },
       { label: 'Diffusion', href: ROUTES.pilotage.diffusion, icon: 'Tv', description: 'Mode TV agence', minRole: 'franchisee_admin' },
-      { label: 'Maintenance', href: ROUTES.pilotage.maintenance, icon: 'Wrench', description: 'Maintenance préventive', minRole: 'franchisee_admin' },
-      { label: 'Commercial', href: ROUTES.pilotage.commercial, icon: 'Briefcase', description: 'Outils commerciaux', minRole: 'franchisee_admin' },
     ],
   },
 
@@ -225,6 +223,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
       { label: 'StatIA-BY-BIJ', href: ROUTES.admin.statia, icon: 'BarChart', description: 'Moteur métriques', minRole: 'platform_admin', group: 'ai' },
       { label: 'Générateur Formation', href: ROUTES.admin.formationGenerator, icon: 'Sparkles', description: 'Résumés IA', minRole: 'platform_admin', group: 'ai' },
       // Groupe: Système
+      { label: 'Gestion Modules', href: ROUTES.admin.modules, icon: 'LayoutGrid', description: 'Activer/désactiver modules', minRole: 'platform_admin', group: 'system' },
       { label: 'Métadonnées Pages', href: ROUTES.admin.pageMetadata, icon: 'FileCode', description: 'SEO pages', minRole: 'platform_admin', group: 'system' },
       { label: 'Quotas Stockage', href: ROUTES.admin.storageQuota, icon: 'HardDrive', description: 'Espace disque', minRole: 'platform_admin', group: 'system' },
       { label: 'Sauvegardes', href: ROUTES.admin.backup, icon: 'Database', description: 'Backup données', minRole: 'platform_admin', group: 'system' },
