@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Heart, Trash2, ExternalLink, Lightbulb, ChevronDown, ArrowLeft } from 'lucide-react';
+import { Heart, Trash2, ExternalLink, Lightbulb, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { createSanitizedHtml } from '@/lib/sanitize';
 import { ROUTES } from '@/config/routes';
 import { logError } from '@/lib/logger';
+import { PageHeader } from '@/components/layout/PageHeader';
 import {
   Accordion,
   AccordionContent,
@@ -183,9 +184,9 @@ export default function Favorites() {
   };
 
   const handleNavigateToSection = (favorite: Favorite) => {
-    let basePath = '/apogee';
-    if (favorite.scope === 'apporteurs-nationaux') basePath = '/apporteurs';
-    else if (favorite.scope === 'helpconfort') basePath = '/helpconfort';
+    let basePath: string = ROUTES.academy.apogee;
+    if (favorite.scope === 'apporteurs-nationaux') basePath = ROUTES.academy.apporteurs;
+    else if (favorite.scope === 'helpconfort') basePath = ROUTES.academy.documents;
     navigate(`${basePath}/category/${favorite.category_slug}#${favorite.block_id}`);
   };
 
@@ -213,20 +214,12 @@ export default function Favorites() {
 
   return (
     <div className="container max-w-4xl mx-auto p-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Heart className="w-8 h-8 text-red-500 fill-red-500" />
-          Mes Favoris
-        </h1>
-        <Button 
-          variant="outline" 
-          onClick={() => navigate(ROUTES.academy.index)}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Retour à l'Academy
-        </Button>
-      </div>
+      <PageHeader
+        title="Mes Favoris"
+        subtitle="Vos sections favorites pour un accès rapide"
+        backTo={ROUTES.academy.index}
+        backLabel="Help! Academy"
+      />
 
       {loading ? (
         <div className="text-center py-12">

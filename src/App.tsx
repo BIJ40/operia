@@ -389,7 +389,8 @@ function AppContent() {
           {/* USER PAGES - Accessible à tous les connectés */}
           {/* ============================================ */}
           <Route path="/profile" element={<MainLayout><RoleGuard><Profile /></RoleGuard></MainLayout>} />
-          <Route path="/favorites" element={<MainLayout><RoleGuard><Favorites /></RoleGuard></MainLayout>} />
+          <Route path="/favorites" element={<Navigate to="/academy/favoris" replace />} />
+          <Route path="/academy/favoris" element={<MainLayout><RoleGuard><ModuleGuard moduleKey="help_academy"><Favorites /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/changelog" element={<MainLayout><Changelog /></MainLayout>} />
           <Route path="/security-audit-report" element={<MainLayout><RoleGuard minRole="platform_admin"><SecurityAuditReport /></RoleGuard></MainLayout>} />
           <Route path="/security-documentation" element={<MainLayout><RoleGuard minRole="platform_admin"><SecurityDocumentation /></RoleGuard></MainLayout>} />

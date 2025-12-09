@@ -1,6 +1,6 @@
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import {
-  GraduationCap, FileText, FolderOpen, BarChart3, ListTodo, Tv,
+  GraduationCap, FileText, FolderOpen, BarChart3, ListTodo, Tv, Heart,
   Headset, Network, Building2, PieChart, GitCompare, Briefcase,
   Coins, Settings, Users, Database, Activity, ChevronRight, Home, Calendar, LifeBuoy, MessageCircle, Kanban, FolderKanban, HelpCircle, Sparkles, Wrench, Brain
 } from 'lucide-react';
@@ -195,6 +195,7 @@ export function UnifiedSidebar() {
         { title: 'Guide Apogée', url: ROUTES.academy.apogee, icon: GraduationCap, description: 'Guide complet pour maîtriser le logiciel Apogée' },
         { title: 'Guide Apporteurs', url: ROUTES.academy.apporteurs, icon: FileText, description: 'Ressources pour les apporteurs d\'affaires', badge: 'Bientôt', isDisabled: true },
         { title: 'Base Documentaire', url: ROUTES.academy.documents, icon: FolderOpen, description: 'Documents et ressources HelpConfort' },
+        { title: 'Mes Favoris', url: ROUTES.academy.favorites, icon: Heart, description: 'Vos sections favorites' },
       ],
       accessKey: 'canAccessHelpAcademy',
     },

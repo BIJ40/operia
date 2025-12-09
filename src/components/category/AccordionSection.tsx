@@ -134,7 +134,7 @@ export function AccordionSection({
                 M.A.J
               </span>
             )}
-            {!isEditMode && !canEdit && !isEmptySection && (
+            {!isEditMode && !isEmptySection && (
               <div onClick={(e) => e.stopPropagation()}>
                 <FavoriteButton
                   blockId={section.id}

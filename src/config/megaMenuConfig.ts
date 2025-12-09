@@ -151,6 +151,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
       { label: 'Guide Apogée', href: ROUTES.academy.apogee, icon: 'BookOpen', description: 'Maîtriser le logiciel' },
       { label: 'Guide Apporteurs', href: ROUTES.academy.apporteurs, icon: 'FileText', description: 'Ressources partenaires', minRole: 'franchisee_user' },
       { label: 'Base Documentaire', href: ROUTES.academy.documents, icon: 'FolderOpen', description: 'Documents HelpConfort' },
+      { label: 'Mes Favoris', href: ROUTES.academy.favorites, icon: 'Heart', description: 'Vos sections favorites' },
     ],
   },
 
