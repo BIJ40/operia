@@ -128,7 +128,6 @@ export function useApporteursStatia() {
         caParApporteurResult,
         dossiersParApporteurResult,
         tauxTransfoResult,
-        montantRestantResult,
         panierMoyenResult,
         encoursParApporteurResult,
         // Par Type
@@ -139,11 +138,14 @@ export function useApporteursStatia() {
         tauxSavParTypeResult,
         // Segmentation mensuelle
         caSegmenteResult,
+        // V2: Nouvelles métriques apporteurs
+        duGlobalApporteursResult,
+        delaiPaiementResult,
+        delaiDossierFactureResult,
       ] = await Promise.all([
         getMetricForAgency('ca_par_apporteur', agencySlug, { dateRange }, services),
         getMetricForAgency('dossiers_par_apporteur', agencySlug, { dateRange }, services),
         getMetricForAgency('taux_transformation_apporteur', agencySlug, { dateRange }, services),
-        getMetricForAgency('montant_restant', agencySlug, { dateRange }, services),
         getMetricForAgency('panier_moyen_par_type_apporteur', agencySlug, { dateRange }, services),
         getMetricForAgency('encours_par_apporteur', agencySlug, { dateRange }, services),
         // Par Type d'apporteur
@@ -154,6 +156,10 @@ export function useApporteursStatia() {
         getMetricForAgency('taux_sav_par_type_apporteur', agencySlug, { dateRange }, services),
         // Segmentation
         getMetricForAgency('ca_mensuel_segmente', agencySlug, { dateRange }, services),
+        // V2: Nouvelles métriques apporteurs (Dû TTC, Délai paiement, Délai dossier→facture)
+        getMetricForAgency('apporteurs_du_global_ttc', agencySlug, { dateRange }, services),
+        getMetricForAgency('apporteurs_delai_paiement_moyen', agencySlug, { dateRange }, services),
+        getMetricForAgency('apporteurs_delai_dossier_facture', agencySlug, { dateRange }, services),
       ]);
       
       // Extraire les données par apporteur
@@ -224,14 +230,17 @@ export function useApporteursStatia() {
         .map(([name, encours]) => ({ name, encours }));
       
       return {
-        duGlobal: Number(montantRestantResult.value) || 0,
+        // V2: Dû Global TTC apporteurs (exclut factures sans apporteur, reste dû TTC)
+        duGlobal: Number(duGlobalApporteursResult.value) || 0,
         dossiersConfiesTotal,
         tauxTransformationMoyen: Math.round(tauxTransformationMoyen * 10) / 10,
         panierMoyenHT: Math.round(panierMoyenHT * 100) / 100,
-        delaiMoyenFacturation: 0, // TODO: métrique dédiée
+        // V2: Délai dossier→facture apporteurs
+        delaiMoyenFacturation: Number(delaiDossierFactureResult.value) || 0,
         apporteursActifs,
         caMoyenParApporteur: Math.round(caMoyenParApporteur * 100) / 100,
-        delaiMoyenPaiement: 0, // TODO: métrique dédiée
+        // V2: Délai paiement moyen apporteurs (factures payées uniquement)
+        delaiMoyenPaiement: Number(delaiPaiementResult.value) || 0,
         tauxFidelite: 0, // TODO: métrique dédiée
         croissanceCA: 0, // TODO: métrique dédiée N-1
         hasDataN1: false,

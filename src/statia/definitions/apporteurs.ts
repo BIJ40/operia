@@ -942,6 +942,279 @@ export const caMensuelSegmente: StatDefinition = {
   }
 };
 
+// ==================== NOUVELLES MÉTRIQUES APPORTEURS V2 ====================
+
+/**
+ * Dû Global TTC Apporteurs
+ * Montant TTC restant à encaisser sur les factures AVEC apporteur uniquement
+ * Règle: exclure factures sans apporteur, calculer reste = TTC - paiements
+ */
+export const apporteursDuGlobalTtc: StatDefinition = {
+  id: 'apporteurs_du_global_ttc',
+  label: 'Dû Global TTC Apporteurs',
+  description: 'Montant TTC restant à encaisser sur les factures avec apporteur',
+  category: 'apporteur',
+  source: ['factures', 'projects', 'clients'],
+  aggregation: 'sum',
+  unit: '€',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { factures, projects } = data;
+    
+    const projectsById = indexProjectsById(projects);
+    let totalDu = 0;
+    let recordCount = 0;
+    const details: Array<{ ref: string; projectRef: string; restantTTC: number }> = [];
+    
+    for (const facture of factures) {
+      const meta = extractFactureMeta(facture);
+      
+      // Exclure les avoirs
+      if (meta.isAvoir) continue;
+      
+      // Filtrer par date
+      const date = meta.date ? new Date(meta.date) : null;
+      if (!date || date < params.dateRange.start || date > params.dateRange.end) continue;
+      
+      // Vérifier que la facture a un apporteur (via le projet)
+      const projectId = facture.projectId || facture.project_id;
+      const project = projectId ? projectsById.get(projectId) : null;
+      const apporteurId = project?.data?.commanditaireId || project?.commanditaireId;
+      
+      // EXCLUSION: factures sans apporteur
+      if (!apporteurId) continue;
+      
+      // Calculer le montant TTC de la facture
+      const totalTTC = facture.totalTTC || facture.data?.totalTTC || 
+        (meta.montantBrutHT * 1.2); // fallback TVA 20%
+      
+      // Calculer le montant déjà payé TTC
+      const payments = facture.payments || facture.data?.payments || [];
+      const paidTTC = Array.isArray(payments) 
+        ? payments.reduce((sum: number, p: any) => sum + (p.amount || p.montant || 0), 0)
+        : 0;
+      
+      // Calculer le reste à payer
+      const restantDu = Math.max(totalTTC - paidTTC, 0);
+      
+      // Ne compter que les factures avec un reste > 0
+      if (restantDu > 0) {
+        totalDu += restantDu;
+        recordCount++;
+        
+        if (details.length < 20) { // garder les 20 premiers pour debug
+          details.push({
+            ref: facture.reference || facture.ref || `F-${facture.id}`,
+            projectRef: project?.ref || projectId || 'N/A',
+            restantTTC: restantDu,
+          });
+        }
+      }
+    }
+    
+    return {
+      value: totalDu,
+      metadata: {
+        computedAt: new Date(),
+        source: 'factures',
+        recordCount,
+      },
+      breakdown: {
+        totalDuTTC: totalDu,
+        nbFacturesAvecReste: recordCount,
+        details,
+      }
+    };
+  }
+};
+
+/**
+ * Délai Paiement Moyen Apporteurs
+ * Délai moyen entre date facture et date du dernier règlement (factures payées uniquement)
+ */
+export const apporteursDelaiPaiementMoyen: StatDefinition = {
+  id: 'apporteurs_delai_paiement_moyen',
+  label: 'Délai Paiement Moyen',
+  description: 'Délai moyen en jours entre facturation et dernier règlement (factures payées avec apporteur)',
+  category: 'apporteur',
+  source: ['factures', 'projects'],
+  aggregation: 'avg',
+  unit: 'j',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { factures, projects } = data;
+    
+    const projectsById = indexProjectsById(projects);
+    const delais: number[] = [];
+    
+    for (const facture of factures) {
+      const meta = extractFactureMeta(facture);
+      
+      // Exclure les avoirs
+      if (meta.isAvoir) continue;
+      
+      // Filtrer par date
+      const dateFacture = meta.date ? new Date(meta.date) : null;
+      if (!dateFacture || dateFacture < params.dateRange.start || dateFacture > params.dateRange.end) continue;
+      
+      // Vérifier que la facture a un apporteur
+      const projectId = facture.projectId || facture.project_id;
+      const project = projectId ? projectsById.get(projectId) : null;
+      const apporteurId = project?.data?.commanditaireId || project?.commanditaireId;
+      
+      // EXCLUSION: factures sans apporteur
+      if (!apporteurId) continue;
+      
+      // Calculer TTC et payé
+      const totalTTC = facture.totalTTC || facture.data?.totalTTC || (meta.montantBrutHT * 1.2);
+      const payments = facture.payments || facture.data?.payments || [];
+      
+      if (!Array.isArray(payments) || payments.length === 0) continue;
+      
+      const paidTTC = payments.reduce((sum: number, p: any) => sum + (p.amount || p.montant || 0), 0);
+      const restantDu = Math.max(totalTTC - paidTTC, 0);
+      
+      // Ne garder que les factures ENTIÈREMENT payées (reste = 0)
+      if (restantDu > 0) continue;
+      
+      // Trouver la date du DERNIER règlement
+      let dateDernierReglement: Date | null = null;
+      for (const p of payments) {
+        const pDate = p.date || p.dateReglement || p.created_at;
+        if (pDate) {
+          try {
+            const parsed = new Date(pDate);
+            if (!dateDernierReglement || parsed > dateDernierReglement) {
+              dateDernierReglement = parsed;
+            }
+          } catch { continue; }
+        }
+      }
+      
+      if (!dateDernierReglement) continue;
+      
+      // Calculer le délai en jours
+      const diffMs = dateDernierReglement.getTime() - dateFacture.getTime();
+      const delaiJours = Math.round(diffMs / (1000 * 60 * 60 * 24));
+      
+      if (delaiJours >= 0) {
+        delais.push(delaiJours);
+      }
+    }
+    
+    const moyenneDelai = delais.length > 0 
+      ? delais.reduce((s, d) => s + d, 0) / delais.length 
+      : 0;
+    
+    return {
+      value: Math.round(moyenneDelai * 10) / 10,
+      metadata: {
+        computedAt: new Date(),
+        source: 'factures',
+        recordCount: delais.length,
+      },
+      breakdown: {
+        nbFacturesPayees: delais.length,
+        delaiMin: delais.length > 0 ? Math.min(...delais) : 0,
+        delaiMax: delais.length > 0 ? Math.max(...delais) : 0,
+        delaiMedian: delais.length > 0 ? delais.sort((a, b) => a - b)[Math.floor(delais.length / 2)] : 0,
+      }
+    };
+  }
+};
+
+/**
+ * Délai Moyen Dossier → Facture Apporteurs
+ * Délai moyen entre création du dossier et sa première facture (apporteurs uniquement)
+ */
+export const apporteursDelaiDossierFacture: StatDefinition = {
+  id: 'apporteurs_delai_dossier_facture',
+  label: 'Délai Dossier → Facture',
+  description: 'Délai moyen entre création dossier et première facture (apporteurs uniquement)',
+  category: 'apporteur',
+  source: ['factures', 'projects'],
+  aggregation: 'avg',
+  unit: 'j',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { factures, projects } = data;
+    
+    // Indexer les projets AVEC apporteur et leur date de création
+    const projectsWithApporteur = new Map<string, { dateCreation: Date; ref: string }>();
+    
+    for (const project of projects) {
+      const apporteurId = project.data?.commanditaireId || project.commanditaireId;
+      if (!apporteurId) continue; // EXCLUSION: dossiers sans apporteur
+      
+      const dateCreationStr = project.created_at || project.date;
+      if (!dateCreationStr) continue;
+      
+      try {
+        const dateCreation = new Date(dateCreationStr);
+        
+        // Filtre période sur date création dossier
+        if (dateCreation < params.dateRange.start || dateCreation > params.dateRange.end) continue;
+        
+        projectsWithApporteur.set(String(project.id), {
+          dateCreation,
+          ref: project.ref || `P-${project.id}`,
+        });
+      } catch { continue; }
+    }
+    
+    // Pour chaque projet, trouver la date de sa PREMIÈRE facture
+    const factureDatesByProject = new Map<string, Date>();
+    
+    for (const facture of factures) {
+      const meta = extractFactureMeta(facture);
+      if (meta.isAvoir) continue;
+      
+      const projectId = String(facture.projectId || facture.project_id || '');
+      if (!projectId || !projectsWithApporteur.has(projectId)) continue;
+      
+      const dateFacture = meta.date ? new Date(meta.date) : null;
+      if (!dateFacture) continue;
+      
+      const currentMin = factureDatesByProject.get(projectId);
+      if (!currentMin || dateFacture < currentMin) {
+        factureDatesByProject.set(projectId, dateFacture);
+      }
+    }
+    
+    // Calculer les délais
+    const delais: number[] = [];
+    
+    projectsWithApporteur.forEach((projectInfo, projectId) => {
+      const datePremiereFacture = factureDatesByProject.get(projectId);
+      if (!datePremiereFacture) return; // pas de facture pour ce dossier
+      
+      const diffMs = datePremiereFacture.getTime() - projectInfo.dateCreation.getTime();
+      const delaiJours = Math.round(diffMs / (1000 * 60 * 60 * 24));
+      
+      if (delaiJours >= 0) {
+        delais.push(delaiJours);
+      }
+    });
+    
+    const moyenneDelai = delais.length > 0 
+      ? delais.reduce((s, d) => s + d, 0) / delais.length 
+      : 0;
+    
+    return {
+      value: Math.round(moyenneDelai * 10) / 10,
+      metadata: {
+        computedAt: new Date(),
+        source: 'projects',
+        recordCount: delais.length,
+      },
+      breakdown: {
+        nbDossiersAvecFacture: delais.length,
+        nbDossiersSansFacture: projectsWithApporteur.size - delais.length,
+        delaiMin: delais.length > 0 ? Math.min(...delais) : 0,
+        delaiMax: delais.length > 0 ? Math.max(...delais) : 0,
+        delaiMedian: delais.length > 0 ? delais.sort((a, b) => a - b)[Math.floor(delais.length / 2)] : 0,
+      }
+    };
+  }
+};
+
 // ==================== EXPORTS ====================
 
 export const apporteursDefinitions = {
@@ -959,4 +1232,8 @@ export const apporteursDefinitions = {
   taux_sav_par_type_apporteur: tauxSavParTypeApporteur,
   // Segmentation temporelle
   ca_mensuel_segmente: caMensuelSegmente,
+  // V2: Nouvelles métriques apporteurs
+  apporteurs_du_global_ttc: apporteursDuGlobalTtc,
+  apporteurs_delai_paiement_moyen: apporteursDelaiPaiementMoyen,
+  apporteurs_delai_dossier_facture: apporteursDelaiDossierFacture,
 };
