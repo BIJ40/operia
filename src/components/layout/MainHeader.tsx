@@ -136,7 +136,7 @@ export function MainHeader() {
               <img 
                 src={logoHelpconfortServices} 
                 alt="HelpConfort Services" 
-                className="h-16 w-auto"
+                className="h-20 w-auto"
               />
               <Link 
                 to="/changelog" 
@@ -246,13 +246,12 @@ export function MainHeader() {
                   )}
                 </nav>
 
-                {/* Barre de recherche IA */}
-                <div className="hidden lg:flex items-center ml-4">
-                  <UnifiedSearchFloatingBar />
-                </div>
-
                 {/* Actions droite */}
                 <div className="flex items-center gap-1 ml-auto">
+                  {/* Barre de recherche IA */}
+                  <div className="hidden lg:flex items-center mr-2">
+                    <UnifiedSearchFloatingBar />
+                  </div>
                   {/* RH Notifications - seule cloche */}
                   <RHNotificationBadge />
 
