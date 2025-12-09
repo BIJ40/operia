@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Mail, KeyRound, AlertCircle, UserX, RefreshCw } from 'lucide-react';
 import { generateSecurePassword } from '@/lib/passwordUtils';
+import { ApogeeUserSelect } from '@/components/collaborators/ApogeeUserSelect';
 
 const ROLE_AGENCE_LABELS: Record<string, string> = {
   'dirigeant': 'Dirigeant(e)',
@@ -37,6 +38,7 @@ export type UpdateUserPayload = {
   role_agence?: string;
   global_role?: GlobalRole;
   support_level?: number;
+  apogee_user_id?: number | null;
 };
 
 interface Agency {
@@ -57,6 +59,7 @@ export interface UserProfile {
   role_agence: string | null;
   is_active: boolean | null;
   must_change_password: boolean | null;
+  apogee_user_id?: number | null;
 }
 
 export interface UserEditFormProps {
@@ -95,6 +98,7 @@ export function UserEditForm({
     roleAgence: '',
     supportLevel: 1,
     globalRole: 'base_user' as GlobalRole,
+    apogeeUserId: undefined as number | undefined,
   });
   const [newPassword, setNewPassword] = useState('');
   const [sendEmail, setSendEmail] = useState(true);
@@ -114,6 +118,7 @@ export function UserEditForm({
         roleAgence: user.role_agence || '',
         supportLevel,
         globalRole: user.global_role || 'base_user',
+        apogeeUserId: user.apogee_user_id ?? undefined,
       });
     }
   }, [user]);
@@ -147,6 +152,7 @@ export function UserEditForm({
       role_agence: formData.roleAgence,
       global_role: formData.globalRole as GlobalRole,
       support_level: isSupportAgentEnabled() ? formData.supportLevel : undefined,
+      apogee_user_id: formData.apogeeUserId ?? null,
     });
   };
 
@@ -255,6 +261,17 @@ export function UserEditForm({
         )}
         {errors.roleAgence && <p className="text-xs text-destructive">{errors.roleAgence}</p>}
       </div>
+
+      {/* Liaison Apogée - visible uniquement si l'utilisateur a une agence */}
+      {formData.agence && (
+        <ApogeeUserSelect
+          value={formData.apogeeUserId}
+          onChange={(id) => setFormData(prev => ({ ...prev, apogeeUserId: id }))}
+          agencySlug={formData.agence}
+          label="Liaison Apogée"
+          collaboratorName={`${formData.firstName} ${formData.lastName}`}
+        />
+      )}
 
       <div className="space-y-2">
         <Label>Rôle global (plafond)</Label>

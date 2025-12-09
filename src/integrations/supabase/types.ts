@@ -3549,6 +3549,7 @@ export type Database = {
         Row: {
           agence: string | null
           agency_id: string | null
+          apogee_user_id: number | null
           avatar_url: string | null
           created_at: string
           deactivated_at: string | null
@@ -3571,6 +3572,7 @@ export type Database = {
         Insert: {
           agence?: string | null
           agency_id?: string | null
+          apogee_user_id?: number | null
           avatar_url?: string | null
           created_at?: string
           deactivated_at?: string | null
@@ -3593,6 +3595,7 @@ export type Database = {
         Update: {
           agence?: string | null
           agency_id?: string | null
+          apogee_user_id?: number | null
           avatar_url?: string | null
           created_at?: string
           deactivated_at?: string | null

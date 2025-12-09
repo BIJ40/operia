@@ -26,11 +26,14 @@ interface ApogeeUserSelectProps {
   value: number | undefined;
   onChange: (value: number | undefined) => void;
   collaboratorName?: string;
+  label?: string;
+  /** Si fourni, utilise ce slug d'agence au lieu de celui de l'utilisateur connecté */
+  agencySlug?: string;
 }
 
-export function ApogeeUserSelect({ value, onChange, collaboratorName }: ApogeeUserSelectProps) {
+export function ApogeeUserSelect({ value, onChange, collaboratorName, label, agencySlug: agencySlugProp }: ApogeeUserSelectProps) {
   const { user, agence } = useAuth();
-  const agencySlug = agence;
+  const agencySlug = agencySlugProp || agence;
 
   // Charger les utilisateurs Apogée via proxy
   const { data: apogeeUsers, isLoading, error } = useQuery({
@@ -98,6 +101,7 @@ export function ApogeeUserSelect({ value, onChange, collaboratorName }: ApogeeUs
 
   return (
     <div className="space-y-1">
+      {label && <label className="text-sm font-medium">{label}</label>}
       <Select
         value={value?.toString() || 'none'}
         onValueChange={(v) => onChange(v === 'none' ? undefined : parseInt(v, 10))}
