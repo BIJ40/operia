@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { logError, logDebug } from '@/lib/logger';
 
 /**
  * Mapping global_role → FranchiseurRole:
@@ -48,13 +49,19 @@ function deriveFranchiseurRole(globalRole: string | null): FranchiseurRole {
 }
 
 export function FranchiseurProvider({ children }: { children: ReactNode }) {
-  const { user, isFranchiseur, isAdmin, globalRole } = useAuth();
+  const { user, isFranchiseur, isAdmin, globalRole, isAuthLoading } = useAuth();
   const [franchiseurRole, setFranchiseurRole] = useState<FranchiseurRole>(null);
   const [assignedAgencies, setAssignedAgencies] = useState<string[]>([]);
   const [selectedAgencies, setSelectedAgencies] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // CRITICAL: Wait for AuthContext to finish loading before making decisions
+    if (isAuthLoading) {
+      logDebug('FRANCHISEUR_CONTEXT', 'Waiting for AuthContext to finish loading...');
+      return;
+    }
+
     if (!user) {
       setIsLoading(false);
       return;
@@ -63,8 +70,16 @@ export function FranchiseurProvider({ children }: { children: ReactNode }) {
     const loadFranchiseurData = async () => {
       setIsLoading(true);
       
+      logDebug('FRANCHISEUR_CONTEXT', 'Loading franchiseur data', {
+        userId: user.id,
+        globalRole,
+        isFranchiseur,
+        isAdmin
+      });
+      
       // Admins have full access as DG by default
       if (isAdmin && !isFranchiseur) {
+        logDebug('FRANCHISEUR_CONTEXT', 'Admin user, setting DG role');
         setFranchiseurRole('dg');
         setAssignedAgencies([]);
         setSelectedAgencies([]);
@@ -74,20 +89,26 @@ export function FranchiseurProvider({ children }: { children: ReactNode }) {
       
       // Check if user has franchiseur app role
       if (!isFranchiseur) {
+        logDebug('FRANCHISEUR_CONTEXT', 'User is not franchiseur, no role assigned');
         setIsLoading(false);
         return;
       }
       
       // Derive role from global_role (V2)
       const derivedRole = deriveFranchiseurRole(globalRole);
+      logDebug('FRANCHISEUR_CONTEXT', 'Derived franchiseur role', { derivedRole, globalRole });
       setFranchiseurRole(derivedRole || 'dg'); // Default to dg if has module access but unknown role
 
       // Load assigned agencies for animateurs (N3)
       if (derivedRole === 'animateur') {
-        const { data: assignments } = await supabase
+        const { data: assignments, error } = await supabase
           .from('franchiseur_agency_assignments')
           .select('agency_id')
           .eq('user_id', user.id);
+
+        if (error) {
+          logError('FRANCHISEUR_CONTEXT', 'Error loading agency assignments', error);
+        }
 
         if (assignments) {
           const agencyIds = assignments.map(a => a.agency_id);
@@ -104,7 +125,7 @@ export function FranchiseurProvider({ children }: { children: ReactNode }) {
     };
 
     loadFranchiseurData();
-  }, [user, isFranchiseur, isAdmin, globalRole]);
+  }, [user, isFranchiseur, isAdmin, globalRole, isAuthLoading]);
 
   const permissions: FranchiseurPermissions = {
     canViewRoyalties: franchiseurRole === 'directeur' || franchiseurRole === 'dg',
