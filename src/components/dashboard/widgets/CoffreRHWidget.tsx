@@ -11,15 +11,16 @@ export function CoffreRHWidget() {
   return (
     <Button
       variant="ghost"
-      className="w-full h-full flex items-center justify-center p-2 hover:bg-helpconfort-blue/5 transition-colors group"
+      className="w-full h-full flex items-center justify-center p-0 hover:bg-helpconfort-blue/5 transition-colors group"
       onClick={() => navigate('/mon-coffre-rh')}
     >
-      {/* Cadran de coffre-fort */}
-      <div className="relative w-20 h-20">
+      {/* Cadran de coffre-fort - remplit tout l'espace */}
+      <div className="w-full h-full flex items-center justify-center p-1">
         <svg 
           viewBox="0 0 100 100" 
           className="w-full h-full"
           fill="none"
+          preserveAspectRatio="xMidYMid meet"
         >
           {/* Fond du cadran */}
           <circle 
