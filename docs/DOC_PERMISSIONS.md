@@ -156,9 +156,22 @@ const authState = {
 - Avant d'activer une option, vérifier que `userRole >= option.minRole`
 
 ### 3. Console Support
-- Accès **strictement** contrôlé par `ROLE_MATRIX.canAccessSupportConsole`
-- **Pas de bypass** via `enabled_modules.support.options.agent`
-- L'option `agent` détermine le niveau SA (SA1/SA2/SA3) mais pas l'accès
+
+L'accès à la console support (`/support/console`) est contrôlé par :
+
+```typescript
+canAccessSupportConsoleUI = hasSupportAgentRole || isAdmin
+```
+
+**Règles d'accès :**
+- ✅ **N5+ (Admin/Superadmin)** : Accès automatique (même sans `agent=true`)
+- ✅ **Agent support (`agent=true`)** : Accès accordé **quel que soit le rôle global** (y compris N0)
+- ❌ **Autres utilisateurs** : Pas d'accès
+
+**Cas particulier : Agent Externe**
+Un utilisateur N0 (base_user) avec `support.options.agent=true` peut accéder à la console support.
+Ce pattern sert aux intervenants externes (développeurs, consultants) sans rôle métier dans la franchise.
+Voir [support-levels.md](./support-levels.md#cas-dusage--agent-support-externe)
 
 ### 4. Scope Agences
 - N2 : Voit uniquement sa propre agence
