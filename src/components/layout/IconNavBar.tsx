@@ -171,21 +171,8 @@ export function IconNavBar() {
   const { globalRole, agence, hasModule } = useAuth();
   const caps = getRoleCapabilities(globalRole);
   const [openPopover, setOpenPopover] = useState<string | null>(null);
-  
-  // Déterminer si c'est un utilisateur N3/N4 (franchiseur uniquement)
-  const isFranchiseurOnly = globalRole === 'franchisor_user' || globalRole === 'franchisor_admin';
 
   const filteredSections = navSections.filter(section => {
-    // Pour N3/N4: on ne garde que Accueil, Franchiseur et Support
-    if (isFranchiseurOnly) {
-      if (section.id === 'home' || section.id === 'franchiseur' || section.id === 'support') {
-        // Vérifier les accès pour ces sections
-        if (section.accessKey && !caps[section.accessKey]) return false;
-        return true;
-      }
-      return false; // Cacher les autres sections
-    }
-    
     // Module check
     if (section.requiresModule && !hasModule(section.requiresModule as any)) {
       return false;
@@ -212,31 +199,6 @@ export function IconNavBar() {
       {filteredSections.map((section) => {
         const hasDropdown = section.items.length > 0;
         const active = isActive(section.indexUrl);
-        
-        // Pour N3/N4 franchiseur: afficher les items du menu Franchiseur directement dans le header
-        if (isFranchiseurOnly && section.id === 'franchiseur' && hasDropdown) {
-          return (
-            <div key={section.id} className="flex items-center gap-1">
-              {section.items.map((item) => {
-                const Icon = item.icon;
-                const itemActive = location.pathname.startsWith(item.url);
-                return (
-                  <Link
-                    key={item.url}
-                    to={item.url}
-                    className={cn(
-                      "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all hover:bg-muted/50",
-                      itemActive && "bg-primary/10 text-primary"
-                    )}
-                  >
-                    <Icon className="h-5 w-5 shrink-0" />
-                    <span>{item.title}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          );
-        }
 
         if (!hasDropdown) {
           // Simple link (Accueil)

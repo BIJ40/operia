@@ -68,16 +68,9 @@ export function MainHeader() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
   const caps = getRoleCapabilities(globalRole);
-  
-  // Déterminer si c'est un utilisateur N3/N4 (franchiseur uniquement)
-  const isFranchiseurOnly = globalRole === 'franchisor_user' || globalRole === 'franchisor_admin';
 
   // Filtrer les sections de menu selon les permissions
   const filteredMenus = MEGA_MENU_CONFIG.filter(section => {
-    // Pour N3/N4: exclure la section franchiseur (on l'affiche directement)
-    if (isFranchiseurOnly && section.id === 'franchiseur') {
-      return false;
-    }
     // Vérifier le module requis
     if (section.moduleKey && !hasModule(section.moduleKey as ModuleKey)) {
       return false;
@@ -88,11 +81,6 @@ export function MainHeader() {
     }
     return true;
   });
-  
-  // Récupérer la section Franchiseur pour l'affichage direct N3/N4
-  const franchiseurSection = isFranchiseurOnly 
-    ? MEGA_MENU_CONFIG.find(s => s.id === 'franchiseur') 
-    : null;
 
   // Vérifier l'accès au support
   const showSupport = caps.canAccessSupport;
@@ -176,23 +164,6 @@ export function MainHeader() {
                     <Home className="w-4 h-4" />
                     <span>Accueil</span>
                   </Link>
-
-                  {/* Pour N3/N4: Afficher les items Franchiseur directement */}
-                  {isFranchiseurOnly && franchiseurSection && franchiseurSection.links.map((link) => (
-                    <Link
-                      key={link.href}
-                      to={link.href}
-                      className={cn(
-                        "flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                        location.pathname === link.href || location.pathname.startsWith(link.href + '/')
-                          ? "bg-primary/10 text-primary"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                      )}
-                    >
-                      <Network className="w-4 h-4" />
-                      <span>{link.label}</span>
-                    </Link>
-                  ))}
 
                   {/* Menus avec méga-menus */}
                   {filteredMenus.map((section) => {
