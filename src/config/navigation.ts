@@ -200,13 +200,6 @@ export const NAV_GROUPS: NavGroup[] = [
         description: 'Chat IA et assistance'
       },
       { 
-        title: 'Mes demandes', 
-        url: ROUTES.support.userTickets, 
-        icon: LifeBuoy, 
-        scope: 'mes_demandes', 
-        description: 'Gérer vos tickets de support' 
-      },
-      { 
         title: 'Console Support', 
         url: ROUTES.support.console, 
         icon: Headset, 
