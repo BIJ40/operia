@@ -8,21 +8,43 @@ import { isModuleEnabled, isModuleOptionEnabled, ModuleKey } from '@/types/modul
 import { useSupportNotifications } from '@/hooks/use-support-notifications';
 import { CollapsibleSection } from '@/components/dashboard/CollapsibleSection';
 import { ROUTES } from '@/config/routes';
+import { useGlobalFeatureFlags, isFeatureFlagEnabled } from '@/hooks/useGlobalFeatureFlags';
 
 export default function Landing() {
   const { agence, globalRole, canAccessSupportConsoleUI, enabledModules } = useAuth();
   
   // Utiliser le même hook que le header pour synchroniser les compteurs
   const { newTicketsCount } = useSupportNotifications();
+  
+  // Feature flags globaux - modules désactivés par l'admin
+  const { data: globalFlags } = useGlobalFeatureFlags();
 
   // V2: Capacités basées sur ROLE_MATRIX
   const caps = getRoleCapabilities(globalRole);
   const isPlatformAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';
 
-  // V2: Filtrer les tuiles basé sur ROLE_MATRIX + canAccessSupportConsole de AuthContext
+  // V2: Filtrer les tuiles basé sur ROLE_MATRIX + canAccessSupportConsole de AuthContext + Feature Flags globaux
   const visibleTiles = useMemo(() => {
     return DASHBOARD_TILES.filter(tile => {
       const isAdminUser = globalRole === 'superadmin' || globalRole === 'platform_admin';
+      
+      // ✅ Vérifier les feature flags globaux directs (featureFlagKey) - sauf admins
+      if (tile.featureFlagKey && !isAdminUser) {
+        const flagEnabled = globalFlags?.get(tile.featureFlagKey);
+        if (flagEnabled === false) return false;
+      }
+      
+      // ✅ Vérifier les feature flags par module (sauf pour admins qui peuvent tout voir)
+      if (tile.requiresModule && !isAdminUser) {
+        const featureFlagEnabled = isFeatureFlagEnabled(globalFlags, tile.requiresModule);
+        if (!featureFlagEnabled) return false;
+        
+        // Vérifier aussi les options si spécifiées
+        if (tile.requiresModuleOption) {
+          const optionFlagEnabled = isFeatureFlagEnabled(globalFlags, tile.requiresModule, tile.requiresModuleOption);
+          if (!optionFlagEnabled) return false;
+        }
+      }
       
       // F-NAV-4: Vérifier requiresFranchisor (N3+)
       if (tile.requiresFranchisor && !caps.canAccessFranchiseur && !isAdminUser) {
@@ -75,7 +97,7 @@ export default function Landing() {
       
       return canAccessTile(globalRole, tile.id, { agence, canAccessSupportConsoleUI });
     });
-  }, [globalRole, agence, canAccessSupportConsoleUI, enabledModules, caps]);
+  }, [globalRole, agence, canAccessSupportConsoleUI, enabledModules, caps, globalFlags]);
 
   // Grouper les tuiles visibles par catégorie
   const tilesByGroup = useMemo(() => {

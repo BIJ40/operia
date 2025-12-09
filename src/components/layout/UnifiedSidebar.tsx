@@ -24,6 +24,8 @@ import { ROUTES } from '@/config/routes';
 import { useMenuLabels } from '@/hooks/use-page-metadata';
 import logoHelpconfortServices from '@/assets/help-confort-services-logo.png';
 import { useState, useEffect, ReactNode } from 'react';
+import { useGlobalFeatureFlags, isFeatureFlagEnabled } from '@/hooks/useGlobalFeatureFlags';
+import { ModuleKey } from '@/types/modules';
 
 import { getCurrentVersion } from '@/config/changelog';
 
@@ -79,6 +81,7 @@ interface NavItem {
   minRole?: GlobalRole;
   requiresSupportConsoleUI?: boolean;
   isDisabled?: boolean; // Lien désactivé (tuile "Bientôt")
+  featureFlagKey?: string; // Clé du feature flag global à vérifier (ex: 'pilotage.actions-mener')
 }
 
 interface NavGroup {
@@ -97,6 +100,9 @@ export function UnifiedSidebar() {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const menuLabels = useMenuLabels();
+  
+  // Feature flags globaux
+  const { data: globalFlags } = useGlobalFeatureFlags();
   
   
   // Helper pour obtenir le label d'un item (menu_label personnalisé ou titre par défaut)
@@ -217,10 +223,10 @@ export function UnifiedSidebar() {
             { title: 'Indicateurs SAV', url: ROUTES.pilotage.indicateursSav, icon: LifeBuoy, description: 'Statistiques SAV' },
           ]
         },
-        { title: 'Actions à Mener', url: ROUTES.pilotage.actions, icon: ListTodo, description: 'Suivi des actions et tâches en cours' },
+        { title: 'Actions à Mener', url: ROUTES.pilotage.actions, icon: ListTodo, description: 'Suivi des actions et tâches en cours', featureFlagKey: 'pilotage.actions-mener' },
         { title: 'Commercial', url: ROUTES.pilotage.commercial, icon: Briefcase, description: 'Outils et suivi commercial' },
-        { title: 'Diffusion', url: ROUTES.pilotage.diffusion, icon: Tv, description: 'Mode affichage TV agence', badge: 'En cours' },
-        { title: 'Validation plannings', url: ROUTES.pilotage.rhTech, icon: Calendar, description: 'Validation des plannings hebdomadaires', badge: 'Bientôt', isDisabled: true },
+        { title: 'Diffusion', url: ROUTES.pilotage.diffusion, icon: Tv, description: 'Mode affichage TV agence', badge: 'En cours', featureFlagKey: 'pilotage.diffusion' },
+        { title: 'Validation plannings', url: ROUTES.pilotage.rhTech, icon: Calendar, description: 'Validation des plannings hebdomadaires', badge: 'Bientôt', isDisabled: true, featureFlagKey: 'rh.validation-plannings' },
       ],
       accessKey: 'canAccessPilotageAgence',
     },
@@ -333,6 +339,12 @@ export function UnifiedSidebar() {
 
   const getFilteredItems = (items: NavItem[]): NavItem[] => {
     return items.filter(item => {
+      // ✅ Vérifier les feature flags globaux (sauf pour admins)
+      if (item.featureFlagKey && !isAdmin) {
+        const flagEnabled = globalFlags?.get(item.featureFlagKey);
+        if (flagEnabled === false) return false;
+      }
+      
       if (item.requiresSupportConsoleUI && !canAccessSupportConsoleUI) return false;
       if (!item.minRole) return true;
       const userLevel = globalRole ? GLOBAL_ROLES[globalRole] : 0;
