@@ -1,4 +1,4 @@
-import { BarChart3, ListTodo, PieChart, TrendingUp, Building2, ShoppingCart, Car, Users, ChevronDown } from 'lucide-react';
+import { BarChart3, ListTodo, PieChart, TrendingUp, Building2, Users, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
@@ -24,7 +24,7 @@ interface PilotageModule {
   icon: LucideIcon;
   href: string;
   badge?: string | number;
-  category: 'statistiques' | 'autre' | 'autres';
+  category: 'statistiques' | 'autres';
 }
 
 const pilotageModules: PilotageModule[] = [
@@ -61,38 +61,21 @@ const pilotageModules: PilotageModule[] = [
     href: ROUTES.pilotage.indicateursTechniciens,
     category: 'statistiques',
   },
-  // AUTRE
+  // AUTRES
   {
     id: 'gestion_sav',
     title: 'Gestion des SAV',
     description: 'Suivi et gestion des SAV',
     icon: ListTodo,
     href: ROUTES.pilotage.indicateursSav,
-    category: 'autre',
-  },
-  {
-    id: 'maintenance_preventive',
-    title: 'Maintenance préventive',
-    description: 'Véhicules, matériel et EPI',
-    icon: Car,
-    href: ROUTES.pilotage.maintenance,
     category: 'autres',
   },
   {
     id: 'actions',
-    title: 'Actions à Mener',
+    title: 'Actions à mener',
     description: 'Suivi des actions et tâches en cours',
     icon: ListTodo,
     href: ROUTES.pilotage.actions,
-    category: 'autres',
-  },
-  {
-    id: 'commercial',
-    title: 'Commercial',
-    description: 'Outils et suivi commercial',
-    icon: ShoppingCart,
-    href: ROUTES.pilotage.commercial,
-    badge: 'Nouveau',
     category: 'autres',
   },
 ];
@@ -103,15 +86,10 @@ const PILOTAGE_GROUPS = {
     icon: BarChart3,
     colorClass: 'text-helpconfort-blue',
   },
-  autre: {
-    title: 'Autre',
-    icon: ListTodo,
-    colorClass: 'text-helpconfort-orange',
-  },
   autres: {
     title: 'Autres',
-    icon: Building2,
-    colorClass: 'text-muted-foreground',
+    icon: ListTodo,
+    colorClass: 'text-helpconfort-orange',
   },
 } as const;
 
@@ -149,7 +127,6 @@ export default function PilotageIndex() {
   const modulesByCategory = useMemo(() => {
     const groups: Record<string, PilotageModule[]> = {
       statistiques: [],
-      autre: [],
       autres: [],
     };
     
@@ -174,26 +151,6 @@ export default function PilotageIndex() {
           defaultOpen={true}
         >
           {modulesByCategory.statistiques.map(module => (
-            <PilotageTileCard
-              key={module.id}
-              module={module}
-              title={getModuleTitle(module)}
-              badge={module.badge}
-              isAdmin={isPlatformAdmin}
-            />
-          ))}
-        </CollapsibleSection>
-      )}
-
-      {/* Autre */}
-      {modulesByCategory.autre.length > 0 && (
-        <CollapsibleSection
-          id="pilotage_autre"
-          title={PILOTAGE_GROUPS.autre.title}
-          icon={PILOTAGE_GROUPS.autre.icon}
-          colorClass={PILOTAGE_GROUPS.autre.colorClass}
-        >
-          {modulesByCategory.autre.map(module => (
             <PilotageTileCard
               key={module.id}
               module={module}
