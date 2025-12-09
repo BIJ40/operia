@@ -47,7 +47,7 @@ import { ROUTES } from '@/config/routes';
 import { logError } from '@/lib/logger';
 import { cn } from '@/lib/utils';
 import { RHNotificationBadge } from '@/components/rh/RHNotificationBadge';
-import { AiUnifiedBar } from '@/components/ai';
+import { UnifiedSearchFloatingBar } from '@/components/unified-search';
 import { LiveSupportIndicator } from '@/components/support/LiveSupportIndicator';
 import { GlobalLiveSupportManager } from '@/components/support/GlobalLiveSupportManager';
 import { IconNavBar } from './IconNavBar';
@@ -354,7 +354,7 @@ export function UnifiedHeader() {
         
         {/* Barre de recherche IA unifiée - sous le menu principal */}
         <div className="border-t border-border/50 bg-background/50">
-          <AiUnifiedBar />
+          <UnifiedSearchFloatingBar />
         </div>
         
         {/* Subtitle bar - below AI search */}

@@ -35,8 +35,8 @@ export function UnifiedSearchFloatingBar() {
 
   return (
     <>
-      <div className="w-full flex justify-center py-3">
-        <div className="relative flex items-center justify-center" style={{ padding: '24px' }}>
+      <div className="w-full flex justify-center py-2">
+        <div className="relative flex items-center justify-center">
           {/* Décorateurs d'animation - ordre z-index */}
           {animation.decorators?.showGlow && (
             <GlowDecorator 
@@ -57,29 +57,27 @@ export function UnifiedSearchFloatingBar() {
             <WaveDotsDecorator glowColor={animation.decorators.glowColor} />
           )}
           
-          {/* Bouton principal avec animation Framer Motion */}
+          {/* Bouton compact style barre de recherche */}
           <motion.button
             onClick={() => setIsModalOpen(true)}
             className={cn(
-              "relative z-10 flex items-center gap-2 px-5 h-11 rounded-full",
-              "bg-gradient-to-r from-helpconfort-blue/20 to-helpconfort-blue/30",
-              "border-2 border-helpconfort-blue/40",
-              "hover:border-helpconfort-blue/60",
-              "hover:bg-gradient-to-r hover:from-helpconfort-blue/30 hover:to-helpconfort-blue/40",
-              "shadow-lg shadow-helpconfort-blue/20",
-              "transition-colors duration-200"
+              "relative z-10 flex items-center gap-2 px-4 h-9 rounded-full",
+              "bg-background/95 backdrop-blur-sm",
+              "border border-border/60 hover:border-helpconfort-blue/50",
+              "shadow-sm hover:shadow-md hover:shadow-helpconfort-blue/10",
+              "transition-all duration-200 cursor-text"
             )}
             initial={animation.buttonMotion.initial as any}
             animate={animation.buttonMotion.animate as any}
             transition={animation.buttonMotion.transition as any}
-            whileHover={animation.buttonMotion.whileHover as any}
-            whileTap={animation.buttonMotion.whileTap as any}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
           >
-            <Sparkles className="w-5 h-5 text-helpconfort-blue drop-shadow" />
-            <span className="text-sm font-medium text-foreground">
-              Assistant IA...
+            <Sparkles className="w-4 h-4 text-helpconfort-blue" />
+            <span className="text-sm text-muted-foreground">
+              Posez votre question...
             </span>
-            <kbd className="hidden sm:inline-flex ml-2 px-1.5 py-0.5 text-[10px] font-mono bg-muted/80 rounded border border-border/50">
+            <kbd className="hidden sm:inline-flex ml-auto px-1.5 py-0.5 text-[10px] font-mono bg-muted/80 rounded border border-border/50 text-muted-foreground">
               ⌘K
             </kbd>
           </motion.button>
