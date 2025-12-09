@@ -116,6 +116,7 @@ function ModuleAccessDeniedPage({
     parc: 'Parc',
     messaging: 'Messagerie interne',
     unified_search: 'Recherche unifiée',
+    technicien: 'Technicien',
   };
 
   return (
