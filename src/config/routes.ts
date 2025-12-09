@@ -184,9 +184,11 @@ export const ROUTES = {
   technicien: {
     index: '/technicien',
     bonIntervention: '/technicien/bon-intervention',
-    bonInterventionDetail: (interventionId: string) => `/technicien/bon-intervention/${interventionId}`,
+    bonInterventionDetail: '/technicien/bon-intervention/:interventionId',
+    bonInterventionSignature: '/technicien/bon-intervention/:interventionId/signature',
+    bonInterventionRecap: '/technicien/bon-intervention/:interventionId/recap',
     pvApporteur: '/technicien/pv-apporteur',
-    pvApporteurDetail: (dossierId: string) => `/technicien/pv-apporteur/${dossierId}`,
+    pvApporteurDetail: '/technicien/pv-apporteur/:dossierId',
   },
 
   // ============================================
