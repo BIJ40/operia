@@ -4,7 +4,7 @@ import { PublicLanding } from './PublicLanding';
 import { LoginDialog } from '@/components/LoginDialog';
 import { ImageModal } from '@/components/ImageModal';
 import { AiUnifiedProvider } from '@/components/ai';
-import { AiUnifiedBar } from '@/components/ai/AiUnifiedBar';
+import { UnifiedSearchFloatingBar } from '@/components/unified-search';
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useStorageQuota } from '@/hooks/use-storage-quota';
@@ -61,7 +61,7 @@ export function MainLayout({
           {showHeader && isAuthenticated && (
             <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border/30">
               <div className="container mx-auto px-4 py-2">
-                <AiUnifiedBar />
+                <UnifiedSearchFloatingBar />
               </div>
             </div>
           )}
