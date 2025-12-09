@@ -20,8 +20,9 @@ import { TypesApporteursWidget } from "@/apogee-connect/components/widgets/Types
 import { ParticuliersWidget } from "@/apogee-connect/components/widgets/ParticuliersWidget";
 import { SegmentationChart } from "@/apogee-connect/components/widgets/SegmentationChart";
 import { ApporteurTypeTimeline } from "@/apogee-connect/components/widgets/ApporteurTypeTimeline";
-// StatIA imports
 import { useApporteursStatia } from "@/statia/hooks/useApporteursStatia";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { ROUTES } from "@/config/routes";
 
 export default function IndicateursApporteurs() {
   const { filters: secondaryFilters } = useSecondaryFilters();
@@ -157,12 +158,12 @@ export default function IndicateursApporteurs() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-          Les apporteurs
-        </h1>
-        <SecondaryPeriodSelector />
-      </div>
+      <PageHeader
+        title="Les apporteurs"
+        backTo={ROUTES.pilotage.index}
+        backLabel="Mon Agence"
+        rightElement={<SecondaryPeriodSelector />}
+      />
 
       {/* 5 KPIs principaux - STATIA */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">

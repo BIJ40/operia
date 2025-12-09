@@ -18,6 +18,8 @@ import { ActionType } from '@/apogee-connect/types/actions';
 import { toast } from '@/hooks/use-toast';
 import { ConditionalRender } from '@/components/PermissionGuard';
 import { useAuth } from '@/contexts/AuthContext';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { ROUTES } from '@/config/routes';
 
 function ActionsAMenerContent() {
   const { isAgencyReady, currentAgency } = useAgency();
@@ -132,16 +134,14 @@ function ActionsAMenerContent() {
     <>
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="space-y-6">
-          {/* En-tête */}
+          {/* En-tête avec PageHeader */}
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-                Actions à mener
-              </h1>
-              <p className="text-muted-foreground mt-2">
-                Dossiers nécessitant une action de votre part
-              </p>
-            </div>
+            <PageHeader
+              title="Actions à mener"
+              subtitle="Dossiers nécessitant une action de votre part"
+              backTo={ROUTES.pilotage.index}
+              backLabel="Mon Agence"
+            />
             {/* Configuration visible uniquement pour les admins */}
             <ConditionalRender minRole="franchisee_admin">
               <ActionsConfigDialog />

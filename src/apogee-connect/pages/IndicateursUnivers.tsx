@@ -8,6 +8,8 @@ import { UniversDossiersChart } from "@/apogee-connect/components/widgets/Univer
 import { UniversTransfoChart } from "@/apogee-connect/components/widgets/UniversTransfoChart";
 import { UniversApporteurMatrix } from "@/apogee-connect/components/widgets/UniversApporteurMatrix";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { ROUTES } from "@/config/routes";
 
 export default function IndicateursUnivers() {
   const { isAgencyReady } = useAgency();
@@ -41,18 +43,13 @@ export default function IndicateursUnivers() {
 
   return (
     <div className="space-y-8">
-      {/* En-tête avec titre et sélecteur de période */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-            Les univers
-          </h1>
-          <p className="text-sm text-muted-foreground mt-2">
-            Statistiques et performances par univers métier
-          </p>
-        </div>
-        <SecondaryPeriodSelector />
-      </div>
+      <PageHeader
+        title="Les univers"
+        subtitle="Statistiques et performances par univers métier"
+        backTo={ROUTES.pilotage.index}
+        backLabel="Mon Agence"
+        rightElement={<SecondaryPeriodSelector />}
+      />
 
       {/* Layout avec 8 tuiles (4x2) à gauche et graphique à droite */}
       {isLoading ? (

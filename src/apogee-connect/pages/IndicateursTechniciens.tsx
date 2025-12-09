@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTechniciensStatia } from "@/statia/hooks/useTechniciensStatia";
 import { Users, TrendingUp, Clock, Award } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { ROUTES } from "@/config/routes";
 
 export default function IndicateursTechniciens() {
   const { isAgencyReady } = useAgency();
@@ -69,18 +71,13 @@ export default function IndicateursTechniciens() {
 
   return (
     <div className="space-y-8">
-      {/* En-tête avec titre et sélecteur de période */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-            Techniciens par univers
-          </h1>
-          <p className="text-sm text-muted-foreground mt-2">
-            Analyse croisée du CA, des heures et de la performance par technicien et domaine
-          </p>
-        </div>
-        <SecondaryPeriodSelector />
-      </div>
+      <PageHeader
+        title="Techniciens par univers"
+        subtitle="Analyse croisée du CA, des heures et de la performance par technicien et domaine"
+        backTo={ROUTES.pilotage.index}
+        backLabel="Mon Agence"
+        rightElement={<SecondaryPeriodSelector />}
+      />
       
       {/* KPIs globaux */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
