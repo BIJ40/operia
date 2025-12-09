@@ -252,13 +252,16 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
           )}
           {/* Menu dernières modifications */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="sm:size-default">
-                <Clock className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Dernières modif</span>
-                <ChevronDown className="h-4 w-4 sm:ml-1" />
-              </Button>
-            </DropdownMenuTrigger>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-8 w-8">
+                    <Clock className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent>Dernières modifications</TooltipContent>
+            </Tooltip>
             <DropdownMenuContent align="start" className="bg-background border shadow-lg z-50 w-80">
               {recentTickets.length === 0 ? (
                 <div className="px-3 py-2 text-sm text-muted-foreground">
@@ -302,13 +305,16 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
           
           {/* Export dropdown */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="sm:size-default">
-                <Download className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Exporter</span>
-                <ChevronDown className="h-4 w-4 sm:ml-2" />
-              </Button>
-            </DropdownMenuTrigger>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-8 w-8">
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent>Exporter</TooltipContent>
+            </Tooltip>
             <DropdownMenuContent align="start" className="bg-background border shadow-lg z-50">
               <DropdownMenuItem onClick={() => exportToCSV({ tickets, statuses, modules, priorities, ownerSides })}>
                 <FileText className="h-4 w-4 mr-2 text-green-600" />
@@ -340,16 +346,15 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
               <Link to={ROUTES.projects.incomplete}>
                 <Button 
                   variant="outline" 
-                  size="sm"
-                  className={incompleteCount > 0 ? "text-orange-600 border-orange-300 hover:bg-orange-50" : ""}
+                  size="icon"
+                  className={`h-8 w-8 ${incompleteCount > 0 ? "text-orange-600 border-orange-300 hover:bg-orange-50" : ""}`}
                 >
-                  <AlertCircle className="h-4 w-4 mr-1" />
-                  Incomplets
+                  <AlertCircle className="h-4 w-4" />
                 </Button>
               </Link>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{incompleteCount} ticket{incompleteCount > 1 ? 's' : ''} à compléter</p>
+              <p>Incomplets ({incompleteCount})</p>
             </TooltipContent>
           </Tooltip>
           {/* Menu IA regroupé */}
@@ -401,12 +406,16 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
           </DropdownMenu>
           {isPlatformAdmin && (
             <>
-              <Link to={ROUTES.projects.permissions}>
-                <Button variant="outline" size="sm">
-                  <Shield className="h-4 w-4 mr-2" />
-                  Permissions
-                </Button>
-              </Link>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link to={ROUTES.projects.permissions}>
+                    <Button variant="outline" size="icon" className="h-8 w-8">
+                      <Shield className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>Permissions</TooltipContent>
+              </Tooltip>
               <Button variant="ghost" size="icon" onClick={() => setShowConfigDialog(true)} aria-label="Configuration">
                 <Settings className="h-4 w-4" />
               </Button>
