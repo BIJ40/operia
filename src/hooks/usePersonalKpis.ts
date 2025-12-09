@@ -128,12 +128,22 @@ function calculateTechnicienKpisStatia(
     totalRanking: techRanking.length 
   });
 
+  // Convertir l'ID en string et number pour comparaison flexible
+  const apogeeUserIdStr = String(apogeeUserId);
+  const apogeeUserIdNum = Number(apogeeUserId);
+
   // === 2. Interventions ce mois (assignées OU visites avec participation) ===
   const techInterventions = (interventions || []).filter((inter: any) => {
-    // Vérifier assignation directe OU participation à une visite
-    const isAssigned = inter.userId === apogeeUserId;
+    // Vérifier assignation directe OU participation à une visite (comparaison flexible)
+    const interUserId = inter.userId;
+    const isAssigned = interUserId === apogeeUserId || 
+                       interUserId === apogeeUserIdStr || 
+                       Number(interUserId) === apogeeUserIdNum;
+    
     const hasVisiteParticipation = (inter.visites || []).some((v: any) => 
-      (v.usersIds || []).includes(apogeeUserId)
+      (v.usersIds || []).some((uid: any) => 
+        uid === apogeeUserId || uid === apogeeUserIdStr || Number(uid) === apogeeUserIdNum
+      )
     );
     
     if (!isAssigned && !hasVisiteParticipation) return false;
@@ -148,6 +158,13 @@ function calculateTechnicienKpisStatia(
     } catch {
       return false;
     }
+  });
+
+  console.log('[usePersonalKpis] Interventions:', { 
+    apogeeUserId, 
+    techInterventionsCount: techInterventions.length,
+    totalInterventions: (interventions || []).length,
+    sampleIntervention: (interventions || [])[0]
   });
 
   // === 3. Dossiers traités = projets FACTURÉS où technicien a intervenu ===
@@ -168,6 +185,13 @@ function calculateTechnicienKpisStatia(
   // Projets avec factures où technicien a intervenu
   const facturedProjectIds = new Set(monthFactures.map((f: any) => f.projectId));
   const dossiersTraites = [...techProjectIds].filter(pid => facturedProjectIds.has(pid)).length;
+  
+  console.log('[usePersonalKpis] Dossiers:', { 
+    techProjectIds: techProjectIds.size, 
+    monthFactures: monthFactures.length,
+    facturedProjectIds: facturedProjectIds.size,
+    dossiersTraites
+  });
 
   // === 4. Heures travaillées (via créneaux ou durée des visites) ===
   let heuresProductives = 0;
@@ -179,7 +203,12 @@ function calculateTechnicienKpisStatia(
     const isProductive = isProductiveType(type);
     
     for (const visite of visites) {
-      if ((visite.usersIds || []).includes(apogeeUserId)) {
+      const visiteUserIds = visite.usersIds || [];
+      const isTechInVisite = visiteUserIds.some((uid: any) => 
+        uid === apogeeUserId || uid === apogeeUserIdStr || Number(uid) === apogeeUserIdNum
+      );
+      
+      if (isTechInVisite) {
         // Durée depuis créneaux ou estimation
         let duree = 0;
         
@@ -203,12 +232,24 @@ function calculateTechnicienKpisStatia(
     }
     
     // Si pas de visites mais technicien assigné directement
-    if (visites.length === 0 && inter.userId === apogeeUserId) {
-      const duree = inter.duree || inter.tempsPrevu || 2;
-      heuresTotales += duree;
-      if (isProductive) heuresProductives += duree;
+    if (visites.length === 0) {
+      const interUserId = inter.userId;
+      const isDirectAssign = interUserId === apogeeUserId || 
+                             interUserId === apogeeUserIdStr || 
+                             Number(interUserId) === apogeeUserIdNum;
+      if (isDirectAssign) {
+        const duree = inter.duree || inter.tempsPrevu || 2;
+        heuresTotales += duree;
+        if (isProductive) heuresProductives += duree;
+      }
     }
   }
+
+  console.log('[usePersonalKpis] Heures:', { 
+    heuresTotales, 
+    heuresProductives,
+    interventionsCount: techInterventions.length
+  });
 
   // === 5. Taux de productivité = heures productives / heures totales ===
   const tauxProductivite = heuresTotales > 0 
