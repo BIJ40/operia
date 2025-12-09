@@ -171,11 +171,10 @@ export const PAGE_HEADER_MATCHERS: PageHeaderConfig[] = [
   // ============================================
   // SUPPORT
   // ============================================
-  { match: (path) => path === '/support/helpcenter', pageKey: 'support_helpcenter', defaultTitle: 'Centre d\'Aide', defaultSubtitle: 'FAQ, Chat et assistance en ligne', icon: 'HelpCircle', parentRoute: '/support', parentLabel: 'Support' },
+  { match: (path) => path === '/support', pageKey: 'support_index', defaultTitle: 'Support', defaultSubtitle: 'Chat IA et assistance', icon: 'Headset', parentRoute: '/', parentLabel: 'Accueil' },
   { match: (path) => path === '/support/mes-demandes', pageKey: 'support_mes_demandes', defaultTitle: 'Mes Demandes', defaultSubtitle: 'Créer et suivre vos demandes de support', icon: 'MessageSquare', parentRoute: '/support', parentLabel: 'Support' },
   { match: (path) => path === '/support/faq', pageKey: 'support_faq', defaultTitle: 'FAQ', defaultSubtitle: 'Questions fréquemment posées', icon: 'HelpCircle', parentRoute: '/support', parentLabel: 'Support' },
   { match: (path) => path === '/support/console', pageKey: 'support_console', defaultTitle: 'Console Support', defaultSubtitle: 'Traiter les demandes de support', icon: 'Headset', parentRoute: '/support', parentLabel: 'Support' },
-  { match: (path) => path === '/support', pageKey: 'support_index', defaultTitle: 'Support', defaultSubtitle: 'Assistance et demandes', icon: 'LifeBuoy', parentRoute: '/', parentLabel: 'Accueil' },
   
   // ============================================
   // ESPACE FRANCHISEUR

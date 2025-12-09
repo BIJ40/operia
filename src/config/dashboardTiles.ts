@@ -172,11 +172,11 @@ export const DASHBOARD_TILES: DashboardTile[] = [
   },
   // Support
   {
-    id: 'CENTRE_AIDE',
-    title: 'Centre d\'aide',
-    description: 'FAQ, chat et assistance en ligne',
+    id: 'SUPPORT',
+    title: 'Support',
+    description: 'Chat IA et assistance en ligne',
     icon: HelpCircle,
-    route: ROUTES.support.helpcenter,
+    route: ROUTES.support.index,
     scopeSlug: SCOPE_SLUGS.MES_DEMANDES,
     color: 'primary',
     group: 'support',
