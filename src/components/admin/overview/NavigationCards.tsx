@@ -21,7 +21,8 @@ import {
   Bell,
   FlaskConical,
   Sparkles,
-  LayoutGrid
+  LayoutGrid,
+  ToggleLeft
 } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { cn } from '@/lib/utils';
@@ -195,6 +196,12 @@ export function NavigationCards() {
       title: 'Système',
       description: 'Configuration et surveillance',
       cards: [
+        { 
+          to: ROUTES.admin.featureFlags, 
+          icon: ToggleLeft, 
+          title: 'Gestion des modules', 
+          description: 'Activer/désactiver les modules' 
+        },
         { 
           to: ROUTES.admin.announcements, 
           icon: Bell, 
