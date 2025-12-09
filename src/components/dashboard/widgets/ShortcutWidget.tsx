@@ -41,11 +41,10 @@ export function ShortcutWidget({ route, icon, name }: ShortcutWidgetProps) {
   return (
     <Button
       variant="ghost"
-      className="w-full h-full flex flex-col items-center justify-center gap-2 hover:bg-primary/5 transition-colors"
+      className="w-full h-full flex flex-col items-center justify-center hover:bg-primary/5 transition-colors"
       onClick={() => navigate(route)}
     >
-      {Icon && <Icon className="h-8 w-8 text-primary" />}
-      {name && <span className="text-xs text-muted-foreground text-center">{name}</span>}
+      {Icon && <Icon className="h-10 w-10 text-primary" />}
     </Button>
   );
 }
