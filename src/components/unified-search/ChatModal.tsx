@@ -23,9 +23,13 @@ export function ChatModal({ isOpen, onClose }: ChatModalProps) {
   const allowedContexts = getFilteredContexts(globalRole || 'base_user');
 
   const handleTalkToHuman = async () => {
-    await startNewSession();
-    openChat();
+    // Fermer la modale IA AVANT de démarrer la session live
+    // pour éviter un conflit entre les deux dialogs
     onClose();
+    // Petit délai pour laisser la modale se fermer proprement
+    setTimeout(async () => {
+      await startNewSession();
+    }, 100);
   };
 
   return (
