@@ -140,17 +140,7 @@ const navSections: NavSection[] = [
     label: 'Administration',
     icon: iconAdministration,
     indexUrl: ROUTES.admin.index,
-    items: [
-      { title: 'Utilisateurs', url: ROUTES.admin.users, icon: Users },
-      { title: 'Agences', url: ROUTES.admin.agencies, icon: Building2 },
-      { title: 'Annonces', url: ROUTES.admin.announcements, icon: MessageCircle },
-      { title: 'FAQ', url: ROUTES.admin.faq, icon: HelpCircle },
-      { title: 'Helpi', url: ROUTES.admin.helpi, icon: Brain },
-      { title: 'Feature Flags', url: ROUTES.admin.featureFlags, icon: ToggleLeft },
-      { title: 'Sauvegardes', url: ROUTES.admin.backup, icon: Database },
-      { title: 'Activité', url: ROUTES.admin.userActivity, icon: Activity },
-      { title: 'Paramètres', url: ROUTES.admin.index, icon: Settings },
-    ],
+    items: [], // Pas de dropdown - lien direct vers la page admin
     accessKey: 'canAccessAdmin',
   },
 ];
