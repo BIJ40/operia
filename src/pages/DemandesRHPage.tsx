@@ -19,6 +19,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Inbox, Upload, FileText, X, User, Eye, EyeOff, FolderOpen, FileSignature, Lock } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { ROUTES } from '@/config/routes';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -261,14 +263,20 @@ export default function DemandesRHPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-8 px-4 flex items-center justify-center">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-8 px-4 space-y-6">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <PageHeader
+        title="Demandes de documents RH"
+        subtitle="Gérez les demandes de documents de vos collaborateurs"
+        backTo={ROUTES.pilotage.index}
+        backLabel="Mon Agence"
+      />
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">

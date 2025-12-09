@@ -80,7 +80,7 @@ export default function IndicateursSAV() {
   const COLORS = ["#ef4444", "#f97316", "#f59e0b", "#84cc16", "#06b6d4", "#8b5cf6", "#ec4899", "#f43f5e"];
 
   return (
-    <div className="space-y-8">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
       <PageHeader
         title="Gestion des SAV"
         subtitle="Suivi et analyse des dossiers de service après-vente"

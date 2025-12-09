@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Accordion } from '@/components/ui/accordion';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Users, UserPlus } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { ROUTES } from '@/config/routes';
 import { UserListSkeleton } from '@/components/admin/users/UserListSkeleton';
 
 import {
@@ -111,27 +113,26 @@ export default function EquipePage() {
 
   return (
     <TooltipProvider>
-      <div className="space-y-6">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-primary/10 rounded-lg">
-            <Users className="w-8 h-8 text-primary" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <PageHeader
+            title="Mon Équipe"
+            subtitle="Gestion des utilisateurs de mon agence"
+            backTo={ROUTES.pilotage.index}
+            backLabel="Mon Agence"
+          />
+          <div className="flex items-center gap-3">
+            <Badge variant="outline" className="text-lg px-4 py-2">
+              {filteredUsers.length} membre{filteredUsers.length > 1 ? 's' : ''}
+            </Badge>
+            {canCreateUsers && (
+              <Button onClick={() => setShowCreateDialog(true)}>
+                <UserPlus className="w-4 h-4 mr-2" />
+                Ajouter un membre
+              </Button>
+            )}
           </div>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold">Mon Équipe</h1>
-            <p className="text-muted-foreground">
-              Gestion des utilisateurs de mon agence
-            </p>
-          </div>
-          <Badge variant="outline" className="text-lg px-4 py-2">
-            {filteredUsers.length} membre{filteredUsers.length > 1 ? 's' : ''}
-          </Badge>
-          {canCreateUsers && (
-            <Button onClick={() => setShowCreateDialog(true)}>
-              <UserPlus className="w-4 h-4 mr-2" />
-              Ajouter un membre
-            </Button>
-          )}
         </div>
 
         {/* Filters - Pas de filtre agence car on est déjà filtré sur l'agence courante */}
