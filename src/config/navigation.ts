@@ -165,20 +165,6 @@ export const NAV_GROUPS: NavGroup[] = [
         badge: 'Bientôt',
         isDisabled: true,
       },
-      { 
-        title: 'Demande de congé', 
-        url: ROUTES.rh.demande, 
-        icon: Calendar, 
-        scope: 'mes_indicateurs', 
-        description: 'Soumettre une demande de congé'
-      },
-      { 
-        title: 'Gestion des congés', 
-        url: ROUTES.rh.conges, 
-        icon: Calendar, 
-        scope: 'mes_indicateurs', 
-        description: 'Valider les demandes de congés'
-      },
     ],
   },
   {

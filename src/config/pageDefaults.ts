@@ -149,11 +149,15 @@ export const PAGE_HEADER_MATCHERS: PageHeaderConfig[] = [
   { match: (path) => path === '/hc-agency/rh-tech', pageKey: 'pilotage_rh_tech', defaultTitle: 'RH Tech', defaultSubtitle: 'Planning hebdomadaire des techniciens', icon: 'CalendarDays', parentRoute: '/hc-agency', parentLabel: 'Mon Agence' },
   { match: (path) => path === '/hc-agency/collaborateurs', pageKey: 'pilotage_collaborateurs', defaultTitle: 'Collaborateurs', defaultSubtitle: 'Gestion RH de l\'équipe', icon: 'Users', parentRoute: '/hc-agency', parentLabel: 'Mon Agence' },
   { match: (path) => path.startsWith('/hc-agency/collaborateurs/'), pageKey: 'pilotage_collaborateur_profile', defaultTitle: 'Fiche collaborateur', defaultSubtitle: 'Profil 360°', icon: 'User', parentRoute: '/hc-agency/collaborateurs', parentLabel: 'Collaborateurs' },
-   { match: (path) => path === '/pilotage/mon-coffre-rh', pageKey: 'mon_coffre_rh', defaultTitle: 'Mon Coffre-fort RH', defaultSubtitle: 'Vos documents RH disponibles', icon: 'FolderOpen', parentRoute: '/', parentLabel: 'Accueil' },
-  { match: (path) => path === '/faire-une-demande', pageKey: 'demande_conge', defaultTitle: 'Demande de congé', defaultSubtitle: 'Soumettre une demande de congé', icon: 'Calendar', parentRoute: '/', parentLabel: 'Accueil' },
-  { match: (path) => path === '/hc-agency/demandes-rh', pageKey: 'pilotage_demandes_rh', defaultTitle: 'Demandes RH', defaultSubtitle: 'Demandes de documents des collaborateurs', icon: 'Inbox', parentRoute: '/hc-agency', parentLabel: 'Mon Agence' },
-  { match: (path) => path === '/hc-agency/gestion-conges', pageKey: 'pilotage_gestion_conges', defaultTitle: 'Gestion des congés', defaultSubtitle: 'Valider les demandes de congés et absences', icon: 'Calendar', parentRoute: '/hc-agency', parentLabel: 'Mon Agence' },
-  { match: (path) => path === '/hc-agency/equipe', pageKey: 'pilotage_equipe', defaultTitle: 'Mon équipe', defaultSubtitle: 'Collaborateurs, documents RH et bulletins de salaire', icon: 'Users', parentRoute: '/hc-agency', parentLabel: 'Mon Agence' },
+  // RH Routes (toutes sous /rh/)
+  { match: (path) => path === '/rh/coffre', pageKey: 'rh_coffre', defaultTitle: 'Mon Coffre-fort RH', defaultSubtitle: 'Vos documents RH disponibles', icon: 'FolderOpen', parentRoute: '/rh', parentLabel: 'RH' },
+  { match: (path) => path === '/rh/demande', pageKey: 'rh_demande', defaultTitle: 'Demande de congé', defaultSubtitle: 'Soumettre une demande de congé', icon: 'Calendar', parentRoute: '/rh', parentLabel: 'RH' },
+  { match: (path) => path === '/rh/demandes', pageKey: 'rh_demandes', defaultTitle: 'Demandes RH', defaultSubtitle: 'Demandes de documents des collaborateurs', icon: 'Inbox', parentRoute: '/rh', parentLabel: 'RH' },
+  { match: (path) => path === '/rh/conges', pageKey: 'rh_conges', defaultTitle: 'Gestion des congés', defaultSubtitle: 'Valider les demandes de congés et absences', icon: 'Calendar', parentRoute: '/rh', parentLabel: 'RH' },
+  { match: (path) => path === '/rh/equipe', pageKey: 'rh_equipe', defaultTitle: 'Mon équipe', defaultSubtitle: 'Collaborateurs, documents RH et bulletins de salaire', icon: 'Users', parentRoute: '/rh', parentLabel: 'RH' },
+  { match: (path) => path.startsWith('/rh/equipe/'), pageKey: 'rh_collaborateur_profile', defaultTitle: 'Fiche collaborateur', defaultSubtitle: 'Profil 360°', icon: 'User', parentRoute: '/rh/equipe', parentLabel: 'Mon équipe' },
+  { match: (path) => path === '/rh/dashboard', pageKey: 'rh_dashboard', defaultTitle: 'Dashboard RH', defaultSubtitle: 'Statistiques et indicateurs RH', icon: 'BarChart3', parentRoute: '/rh', parentLabel: 'RH' },
+  { match: (path) => path === '/rh', pageKey: 'rh_index', defaultTitle: 'RH', defaultSubtitle: 'Ressources Humaines', icon: 'Users', parentRoute: '/', parentLabel: 'Accueil' },
   { match: (path) => path === '/hc-agency', pageKey: 'pilotage_index', defaultTitle: 'Mon Agence', defaultSubtitle: 'Gérez votre activité au quotidien', icon: 'Gauge', parentRoute: '/', parentLabel: 'Accueil' },
   
   // ============================================
