@@ -189,6 +189,8 @@ export const ROUTES = {
     bonInterventionRecap: '/technicien/bon-intervention/:interventionId/recap',
     pvApporteur: '/technicien/pv-apporteur',
     pvApporteurDetail: '/technicien/pv-apporteur/:dossierId',
+    pvApporteurSignature: '/technicien/pv-apporteur/:dossierId/signature',
+    pvApporteurRecap: '/technicien/pv-apporteur/:dossierId/recap',
   },
 
   // ============================================
