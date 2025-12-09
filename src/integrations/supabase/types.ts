@@ -2277,6 +2277,53 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_flags: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          is_enabled: boolean
+          module_group: string
+          module_key: string
+          module_label: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_enabled?: boolean
+          module_group: string
+          module_key: string
+          module_label: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_enabled?: boolean
+          module_group?: string
+          module_key?: string
+          module_label?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_flags_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fleet_vehicles: {
         Row: {
           agency_id: string
@@ -2829,6 +2876,8 @@ export type Database = {
           agent_id: string | null
           agent_name: string | null
           closed_at: string | null
+          closed_by: string | null
+          closed_reason: string | null
           created_at: string
           id: string
           notified_at: string | null
@@ -2842,6 +2891,8 @@ export type Database = {
           agent_id?: string | null
           agent_name?: string | null
           closed_at?: string | null
+          closed_by?: string | null
+          closed_reason?: string | null
           created_at?: string
           id?: string
           notified_at?: string | null
@@ -2855,6 +2906,8 @@ export type Database = {
           agent_id?: string | null
           agent_name?: string | null
           closed_at?: string | null
+          closed_by?: string | null
+          closed_reason?: string | null
           created_at?: string
           id?: string
           notified_at?: string | null

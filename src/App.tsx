@@ -54,6 +54,7 @@ const IndicateursSAV = lazy(() => import("./apogee-connect/pages/IndicateursSAV"
 const PlanningHebdo = lazy(() => import("./apogee-connect/pages/PlanningHebdo"));
 const TechInterventionsPage = lazy(() => import("./modules/interventions_rt/pages/TechInterventionsPage"));
 const RtRunnerPage = lazy(() => import("./modules/interventions_rt/pages/RtRunnerPage"));
+const TechnicienIndex = lazy(() => import("./modules/technicien/pages/TechnicienIndex"));
 const EquipePage = lazy(() => import("./pages/EquipePage"));
 const Messages = lazy(() => import("./pages/Messages"));
 
@@ -94,6 +95,7 @@ const TDRUsersPage = lazy(() => import("./pages/TDRUsersPage"));
 // Lazy loaded pages - Admin
 const AdminIndex = lazy(() => import("./pages/AdminIndex"));
 const AdminSupportTickets = lazy(() => import("./pages/AdminSupportTickets"));
+const SupportSettings = lazy(() => import("./pages/admin/SupportSettings"));
 const AdminSupportStats = lazy(() => import("./pages/AdminSupportStats"));
 const AdminEscalationHistory = lazy(() => import("./pages/AdminEscalationHistory"));
 const AdminBackup = lazy(() => import("./pages/AdminBackup"));
@@ -111,6 +113,7 @@ const AdminAnnouncements = lazy(() => import("./pages/admin/AdminAnnouncements")
 const AdminFaq = lazy(() => import("./pages/admin/AdminFaq"));
 const FormationGenerator = lazy(() => import("./pages/admin/FormationGenerator"));
 const AdminWidgets = lazy(() => import("./pages/admin/AdminWidgets"));
+const AdminFeatureFlags = lazy(() => import("./pages/admin/AdminFeatureFlags"));
 const StatiaBuilderAdminPage = lazy(() => import("./statia/pages/StatiaBuilderAdminPage"));
 const StatiaValidatorPage = lazy(() => import("./statia/pages/StatiaValidatorPage"));
 const StatiaBuilderAgencyPage = lazy(() => import("./statia/pages/StatiaBuilderAgencyPage"));
@@ -148,6 +151,7 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { EditorProvider } from "./contexts/EditorContext";
 import { ApporteurEditorProvider } from "./contexts/ApporteurEditorContext";
 import { ImpersonationProvider } from "./contexts/ImpersonationContext";
+import { LiveSupportProvider } from "./contexts/LiveSupportContext";
 import { ChangePasswordDialog } from "./components/ChangePasswordDialog";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { GlobalErrorBoundary } from "./components/system/GlobalErrorBoundary";
@@ -246,6 +250,12 @@ function AppContent() {
           <Route path="/hc-agency/tech-interventions" element={<RoleGuard minRole="franchisee_user"><TechInterventionsPage /></RoleGuard>} />
           <Route path="/hc-agency/tech-interventions/rt/:interventionId" element={<RoleGuard minRole="franchisee_user"><RtRunnerPage /></RoleGuard>} />
           
+          {/* ============================================ */}
+          {/* MODULE TECHNICIEN - Hub + Sous-pages */}
+          {/* ============================================ */}
+          <Route path="/technicien" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><TechnicienIndex /></ModuleGuard></RoleGuard></MainLayout>} />
+          {/* Futures routes BI et PV seront ajoutées ici */}
+          
           {/* Équipe (legacy - redirects to collaborateurs) */}
           <Route path="/hc-agency/equipe" element={<Navigate to="/hc-agency/collaborateurs" replace />} />
           
@@ -272,8 +282,8 @@ function AppContent() {
           {/* Dashboard RH - Statistiques RH (Dirigeant/RH avec option rh_admin) */}
           <Route path="/hc-agency/dashboard-rh" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOption="rh_admin"><RHDashboardPage /></ModuleGuard></RoleGuard></MainLayout>} />
           
-          {/* StatIA Builder - Construction de métriques personnalisées (N2+) */}
-          <Route path="/hc-agency/statia-builder" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><StatiaBuilderAgencyPage /></ModuleGuard></RoleGuard></MainLayout>} />
+          {/* StatIA Builder - Construction de métriques personnalisées (Admin N5+ uniquement) */}
+          <Route path="/hc-agency/statia-builder" element={<MainLayout><RoleGuard minRole="platform_admin"><StatiaBuilderAgencyPage /></RoleGuard></MainLayout>} />
           
           {/* Commercial - Outils commerciaux agence */}
           <Route path="/hc-agency/commercial" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><CommercialPage /></ModuleGuard></RoleGuard></MainLayout>} />
@@ -297,6 +307,8 @@ function AppContent() {
           <Route path="/support/faq" element={<MainLayout><Faq /></MainLayout>} />
           {/* SU Console - Support agents (N5+ strictement) - FIX F-PERM-3 */}
           <Route path="/support/console" element={<MainLayout><SupportConsoleGuard><AdminSupportTickets /></SupportConsoleGuard></MainLayout>} />
+          {/* Support Settings - Admin only */}
+          <Route path="/admin/support/settings" element={<MainLayout><SupportConsoleGuard><SupportSettings /></SupportConsoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* RÉSEAU FRANCHISEUR - Section Index + Sous-pages */}
@@ -372,6 +384,7 @@ function AppContent() {
           <Route path="/admin/statia-builder" element={<Navigate to="/admin/statia-by-bij" replace />} />
           <Route path="/admin/formation-generator" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><FormationGenerator /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/widgets" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminWidgets /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/admin/feature-flags" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminFeatureFlags /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* GESTION DE PROJET (ex Apogée Tickets) */}
@@ -448,15 +461,17 @@ function App() {
         >
           <AuthProvider>
             <ImpersonationProvider>
-              <EditorProvider>
-              <ApporteurEditorProvider>
-                  <GlobalErrorBoundary>
-                    <AppContent />
-                  </GlobalErrorBoundary>
-                  <Toaster />
-                  <Sonner />
-                </ApporteurEditorProvider>
-              </EditorProvider>
+              <LiveSupportProvider>
+                <EditorProvider>
+                <ApporteurEditorProvider>
+                    <GlobalErrorBoundary>
+                      <AppContent />
+                    </GlobalErrorBoundary>
+                    <Toaster />
+                    <Sonner />
+                  </ApporteurEditorProvider>
+                </EditorProvider>
+              </LiveSupportProvider>
             </ImpersonationProvider>
           </AuthProvider>
         </BrowserRouter>

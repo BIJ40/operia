@@ -14,7 +14,8 @@ import {
   GraduationCap, FileText, FolderOpen,
   Headset, HelpCircle, LifeBuoy,
   Network, Building2, PieChart, GitCompare, Coins,
-  Settings, Database, Activity, MessageCircle, Kanban, Sparkles, Brain
+  Settings, Database, Activity, MessageCircle, Kanban, Sparkles, Brain, ToggleLeft,
+  ClipboardList
 } from 'lucide-react';
 
 // Import des icônes personnalisées
@@ -26,6 +27,7 @@ import iconGestionProjet from '@/assets/menu-icons/gestion-projet.png';
 import iconFranchiseur from '@/assets/menu-icons/franchiseur.png';
 import iconAdministration from '@/assets/menu-icons/administration.png';
 import iconRh from '@/assets/menu-icons/rh.png';
+import iconTechnicien from '@/assets/menu-icons/technicien.png';
 
 interface NavItem {
   title: string;
@@ -93,6 +95,18 @@ const navSections: NavSection[] = [
     requiresModule: 'rh',
   },
   {
+    id: 'technicien',
+    label: 'Technicien',
+    icon: iconTechnicien,
+    indexUrl: ROUTES.technicien.index,
+    items: [
+      { title: 'Relevé Technique', url: ROUTES.pilotage.techInterventions, icon: ClipboardList },
+      { title: 'Bon d\'Intervention', url: ROUTES.technicien.bonIntervention, icon: FileText },
+      { title: 'PV Apporteur', url: ROUTES.technicien.pvApporteur, icon: FolderOpen },
+    ],
+    requiresModule: 'pilotage_agence',
+  },
+  {
     id: 'support',
     label: 'Support',
     icon: iconSupport,
@@ -144,6 +158,7 @@ const navSections: NavSection[] = [
       { title: 'Annonces', url: ROUTES.admin.announcements, icon: MessageCircle },
       { title: 'FAQ', url: ROUTES.admin.faq, icon: HelpCircle },
       { title: 'Helpi', url: ROUTES.admin.helpi, icon: Brain },
+      { title: 'Feature Flags', url: ROUTES.admin.featureFlags, icon: ToggleLeft },
       { title: 'Sauvegardes', url: ROUTES.admin.backup, icon: Database },
       { title: 'Activité', url: ROUTES.admin.userActivity, icon: Activity },
       { title: 'Paramètres', url: ROUTES.admin.index, icon: Settings },

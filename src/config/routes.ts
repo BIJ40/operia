@@ -155,6 +155,7 @@ export const ROUTES = {
     systemHealth: '/admin/system-health',
     announcements: '/admin/announcements',
     faq: '/admin/faq',
+    featureFlags: '/admin/feature-flags',
     statia: '/admin/statia-by-bij',
     formationGenerator: '/admin/formation-generator',
     widgets: '/admin/widgets',
@@ -176,6 +177,17 @@ export const ROUTES = {
   // MESSAGING
   // ============================================
   messages: '/messages',
+
+  // ============================================
+  // TECHNICIEN
+  // ============================================
+  technicien: {
+    index: '/technicien',
+    bonIntervention: '/technicien/bon-intervention',
+    bonInterventionDetail: (interventionId: string) => `/technicien/bon-intervention/${interventionId}`,
+    pvApporteur: '/technicien/pv-apporteur',
+    pvApporteurDetail: (dossierId: string) => `/technicien/pv-apporteur/${dossierId}`,
+  },
 
   // ============================================
   // DEV (Admin only)
