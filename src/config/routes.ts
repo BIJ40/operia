@@ -42,8 +42,8 @@ export const ROUTES = {
     // Module RT Technicien
     techInterventions: '/hc-agency/tech-interventions',
     techRtRunner: (interventionId: string) => `/hc-agency/tech-interventions/rt/${interventionId}`,
-    // Hub Statistiques (nouvelle page centrale)
-    statsHub: '/hc-agency/statistiques',
+    // Hub Statistiques (redirige vers indicateurs)
+    statsHub: '/hc-agency/indicateurs',
     // Indicateurs (pages détaillées)
     indicateurs: '/hc-agency/indicateurs',
     indicateursApporteurs: '/hc-agency/indicateurs/apporteurs',
@@ -57,21 +57,6 @@ export const ROUTES = {
     diffusion: '/hc-agency/statistiques/diffusion',
     // RH Tech
     rhTech: '/hc-agency/rh-tech',
-    // Équipe (legacy - redirects to collaborateurs)
-    equipe: '/hc-agency/equipe',
-    // Collaborateurs (Module RH & Parc - Phase 1)
-    collaborateurs: '/hc-agency/collaborateurs',
-    collaborateurProfile: (id: string) => `/hc-agency/collaborateurs/${id}`,
-    // Coffre-fort RH (vue salarié)
-    monCoffreRh: '/pilotage/mon-coffre-rh',
-    // Faire une demande RH (vue salarié)
-    faireUneDemande: '/faire-une-demande',
-    // Demandes RH (vue agence - Dirigeant/RH)
-    demandesRh: '/hc-agency/demandes-rh',
-    // Gestion des congés (vue agence - N2)
-    gestionConges: '/hc-agency/gestion-conges',
-    // Dashboard RH (statistiques RH - Dirigeant/RH)
-    dashboardRh: '/hc-agency/dashboard-rh',
     // StatIA Builder (N2+)
     statiaBuilder: '/hc-agency/statia-builder',
     // Maintenance préventive
@@ -79,6 +64,22 @@ export const ROUTES = {
     // Commercial
     commercial: '/hc-agency/commercial',
     commercialPptx: '/hc-agency/commercial/support-pptx',
+  },
+
+  // ============================================
+  // RH (Ressources Humaines) - Toutes les pages RH unifiées
+  // ============================================
+  rh: {
+    index: '/rh',
+    // Vue Salarié
+    coffre: '/rh/coffre',
+    demande: '/rh/demande',
+    // Vue Dirigeant/RH
+    equipe: '/rh/equipe',
+    collaborateurProfile: (id: string) => `/rh/equipe/${id}`,
+    demandes: '/rh/demandes',
+    conges: '/rh/conges',
+    dashboard: '/rh/dashboard',
   },
 
   // ============================================

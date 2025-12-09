@@ -103,10 +103,10 @@ export function RHNotificationBadge() {
     // Naviguer selon le type
     if (notification.notification_type === 'REQUEST_CREATED') {
       // Pour les RH: aller aux demandes
-      navigate(ROUTES.pilotage.demandesRh);
+      navigate(ROUTES.rh.demandes);
     } else if (notification.related_request_id) {
       // Pour les salariés: aller au coffre-fort
-      navigate(ROUTES.pilotage.monCoffreRh);
+      navigate(ROUTES.rh.coffre);
     }
   };
 

@@ -73,7 +73,6 @@ const navSections: NavSection[] = [
     icon: iconMonAgence,
     indexUrl: ROUTES.pilotage.index,
     items: [
-      { title: 'Mon équipe', url: ROUTES.pilotage.equipe, icon: Users },
       { title: 'Mes Indicateurs', url: ROUTES.pilotage.statsHub, icon: PieChart },
       { title: 'Actions à Mener', url: ROUTES.pilotage.actions, icon: ListTodo },
       { title: 'Commercial', url: ROUTES.pilotage.commercial, icon: BarChart3 },
@@ -87,10 +86,11 @@ const navSections: NavSection[] = [
     id: 'rh',
     label: 'RH',
     icon: iconRh,
-    indexUrl: ROUTES.pilotage.monCoffreRh,
+    indexUrl: ROUTES.rh.index,
     items: [
-      { title: 'Mon Coffre RH', url: ROUTES.pilotage.monCoffreRh, icon: FolderOpen },
-      { title: 'Demandes RH', url: ROUTES.pilotage.demandesRh, icon: FileText },
+      { title: 'Mon équipe', url: ROUTES.rh.equipe, icon: Users },
+      { title: 'Mon Coffre RH', url: ROUTES.rh.coffre, icon: FolderOpen },
+      { title: 'Demandes RH', url: ROUTES.rh.demandes, icon: FileText },
     ],
     requiresModule: 'rh',
   },

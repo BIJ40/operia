@@ -41,7 +41,6 @@ const ROUTE_TO_PAGE_KEY: Record<string, string> = {
   [ROUTES.academy.apporteurs]: 'academy_apporteurs',
   [ROUTES.academy.documents]: 'academy_documents',
   // Pilotage
-  [ROUTES.pilotage.statsHub]: 'pilotage_statistiques',
   [ROUTES.pilotage.indicateurs]: 'pilotage_indicateurs',
   [ROUTES.pilotage.indicateursApporteurs]: 'pilotage_indicateurs_apporteurs',
   [ROUTES.pilotage.indicateursUnivers]: 'pilotage_indicateurs_univers',
@@ -50,7 +49,7 @@ const ROUTE_TO_PAGE_KEY: Record<string, string> = {
   [ROUTES.pilotage.actions]: 'pilotage_actions',
   [ROUTES.pilotage.diffusion]: 'pilotage_diffusion',
   [ROUTES.pilotage.rhTech]: 'pilotage_rh_tech',
-  [ROUTES.pilotage.equipe]: 'pilotage_equipe',
+  [ROUTES.rh.equipe]: 'rh_equipe',
   // Support
   [ROUTES.support.console]: 'support_console',
   // Projects
@@ -205,7 +204,6 @@ export function UnifiedSidebar() {
       indexUrl: ROUTES.pilotage.index,
       icon: Building2,
       items: [
-        { title: 'Mon équipe', url: ROUTES.pilotage.equipe, icon: Users, description: 'Collaborateurs, documents RH et bulletins de salaire' },
         { 
           title: 'Mes Indicateurs', 
           url: ROUTES.pilotage.statsHub,
@@ -228,11 +226,12 @@ export function UnifiedSidebar() {
     {
       label: 'Mon Espace RH',
       labelKey: 'rh',
-      indexUrl: ROUTES.pilotage.monCoffreRh,
+      indexUrl: ROUTES.rh.index,
       icon: Briefcase,
       items: [
-        { title: 'Mon Coffre RH', url: ROUTES.pilotage.monCoffreRh, icon: FolderOpen, description: 'Mes documents RH personnels' },
-        { title: 'Demandes RH', url: ROUTES.pilotage.demandesRh, icon: FileText, description: 'Traiter les demandes de documents', minRole: 'franchisee_admin' },
+        { title: 'Mon équipe', url: ROUTES.rh.equipe, icon: Users, description: 'Collaborateurs, documents RH et bulletins de salaire', minRole: 'franchisee_admin' },
+        { title: 'Mon Coffre RH', url: ROUTES.rh.coffre, icon: FolderOpen, description: 'Mes documents RH personnels' },
+        { title: 'Demandes RH', url: ROUTES.rh.demandes, icon: FileText, description: 'Traiter les demandes de documents', minRole: 'franchisee_admin' },
       ],
       accessKey: 'canAccessPilotageAgence',
     },

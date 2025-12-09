@@ -98,13 +98,6 @@ export const NAV_GROUPS: NavGroup[] = [
     labelKey: 'pilotage',
     items: [
       { 
-        title: 'Mon équipe', 
-        url: ROUTES.pilotage.equipe, 
-        icon: Users, 
-        scope: 'mes_indicateurs', 
-        description: 'Gestion des collaborateurs de l\'agence'
-      },
-      { 
         title: 'Statistiques', 
         url: ROUTES.pilotage.statsHub,
         icon: BarChart3, 
@@ -174,14 +167,14 @@ export const NAV_GROUPS: NavGroup[] = [
       },
       { 
         title: 'Demande de congé', 
-        url: ROUTES.pilotage.faireUneDemande, 
+        url: ROUTES.rh.demande, 
         icon: Calendar, 
         scope: 'mes_indicateurs', 
         description: 'Soumettre une demande de congé'
       },
       { 
         title: 'Gestion des congés', 
-        url: ROUTES.pilotage.gestionConges, 
+        url: ROUTES.rh.conges, 
         icon: Calendar, 
         scope: 'mes_indicateurs', 
         description: 'Valider les demandes de congés'
@@ -395,7 +388,6 @@ export const PAGE_TITLES: Record<string, string> = {
   
   // Pilotage (V2 routes)
   [ROUTES.pilotage.index]: 'Mon Agence',
-  [ROUTES.pilotage.statsHub]: 'Statistiques',
   [ROUTES.pilotage.indicateurs]: 'Indicateurs généraux',
   [ROUTES.pilotage.indicateursApporteurs]: 'Indicateurs Apporteurs',
   [ROUTES.pilotage.indicateursUnivers]: 'Indicateurs Univers',
@@ -404,7 +396,7 @@ export const PAGE_TITLES: Record<string, string> = {
   [ROUTES.pilotage.actions]: 'Actions à Mener',
   [ROUTES.pilotage.diffusion]: 'Mode Diffusion',
   [ROUTES.pilotage.rhTech]: 'RH Tech - Planning',
-  [ROUTES.pilotage.equipe]: 'Mon équipe',
+  [ROUTES.rh.equipe]: 'Mon équipe',
   
   // Support (V2 routes)
   [ROUTES.support.index]: 'Support',
@@ -455,7 +447,7 @@ export const PAGE_TITLES: Record<string, string> = {
   [ROUTES.admin.apogeeTickets]: 'Gestion de Projet',
   
   // RH
-  [ROUTES.pilotage.faireUneDemande]: 'Demande de congé',
+  [ROUTES.rh.demande]: 'Demande de congé',
   
   // User
   [ROUTES.profile]: 'Mon Profil',

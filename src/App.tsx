@@ -218,6 +218,9 @@ function AppContent() {
           {/* ============================================ */}
           <Route path="/hc-agency" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><PilotageIndex /></ModuleGuard></RoleGuard></MainLayout>} />
           
+          {/* Hub Statistiques - Redirect vers Indicateurs */}
+          <Route path="/hc-agency/statistiques" element={<Navigate to="/hc-agency/indicateurs" replace />} />
+          
           {/* Indicateurs détaillés */}
           <Route path="/hc-agency/indicateurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><IndicateursLayout /></ModuleGuard></RoleGuard></MainLayout>}>
             <Route index element={<IndicateursAccueil />} />
@@ -238,31 +241,28 @@ function AppContent() {
           <Route path="/hc-agency/rh-tech" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><PlanningHebdo /></ModuleGuard></RoleGuard></MainLayout>} />
           
           
-          {/* Équipe (legacy - redirects to collaborateurs) */}
-          <Route path="/hc-agency/equipe" element={<Navigate to="/hc-agency/collaborateurs" replace />} />
-          
-          {/* Collaborateurs (Module RH & Parc - Phase 1) */}
-          <Route path="/hc-agency/collaborateurs" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><CollaborateursPage /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/hc-agency/collaborateurs/:id" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><CollaborateurProfilePage /></ModuleGuard></RoleGuard></MainLayout>} />
-          
-          {/* Coffre-fort RH - Vue salarié (nécessite module rh avec option coffre) */}
-          <Route path="/pilotage/mon-coffre-rh" element={<MainLayout><RoleGuard><ModuleGuard moduleKey="rh" requiredOption="coffre"><MonCoffreRH /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/mon-coffre-rh" element={<Navigate to="/pilotage/mon-coffre-rh" replace />} />
-          
-          {/* Page Index RH */}
+          {/* ============================================ */}
+          {/* RH - Toutes les pages RH unifiées */}
+          {/* ============================================ */}
           <Route path="/rh" element={<MainLayout><RoleGuard><ModuleGuard moduleKey="rh"><RHIndex /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/rh/coffre" element={<MainLayout><RoleGuard><ModuleGuard moduleKey="rh" requiredOption="coffre"><MonCoffreRH /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/rh/demande" element={<MainLayout><RoleGuard><ModuleGuard moduleKey="rh" requiredOption="coffre"><FaireUneDemande /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/rh/equipe" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><CollaborateursPage /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/rh/equipe/:id" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><CollaborateurProfilePage /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/rh/demandes" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><DemandesRHPage /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/rh/conges" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><GestionConges /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/rh/dashboard" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOption="rh_admin"><RHDashboardPage /></ModuleGuard></RoleGuard></MainLayout>} />
           
-          {/* Faire une demande RH - Vue salarié (nécessite module rh avec option coffre) */}
-          <Route path="/faire-une-demande" element={<MainLayout><RoleGuard><ModuleGuard moduleKey="rh" requiredOption="coffre"><FaireUneDemande /></ModuleGuard></RoleGuard></MainLayout>} />
-          
-          {/* Demandes RH - Vue agence (Dirigeant/RH avec option rh_viewer OU rh_admin) */}
-          <Route path="/hc-agency/demandes-rh" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><DemandesRHPage /></ModuleGuard></RoleGuard></MainLayout>} />
-          
-          {/* Gestion des congés - Vue agence (N2+) */}
-          <Route path="/hc-agency/gestion-conges" element={<MainLayout><RoleGuard minRole="franchisee_admin"><GestionConges /></RoleGuard></MainLayout>} />
-          
-          {/* Dashboard RH - Statistiques RH (Dirigeant/RH avec option rh_admin) */}
-          <Route path="/hc-agency/dashboard-rh" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOption="rh_admin"><RHDashboardPage /></ModuleGuard></RoleGuard></MainLayout>} />
+          {/* Legacy RH redirects */}
+          <Route path="/pilotage/mon-coffre-rh" element={<Navigate to="/rh/coffre" replace />} />
+          <Route path="/mon-coffre-rh" element={<Navigate to="/rh/coffre" replace />} />
+          <Route path="/faire-une-demande" element={<Navigate to="/rh/demande" replace />} />
+          <Route path="/hc-agency/equipe" element={<Navigate to="/rh/equipe" replace />} />
+          <Route path="/hc-agency/collaborateurs" element={<Navigate to="/rh/equipe" replace />} />
+          <Route path="/hc-agency/collaborateurs/:id" element={<Navigate to="/rh/equipe/:id" replace />} />
+          <Route path="/hc-agency/demandes-rh" element={<Navigate to="/rh/demandes" replace />} />
+          <Route path="/hc-agency/gestion-conges" element={<Navigate to="/rh/conges" replace />} />
+          <Route path="/hc-agency/dashboard-rh" element={<Navigate to="/rh/dashboard" replace />} />
           
           {/* StatIA Builder - Construction de métriques personnalisées (Admin N5+ uniquement) */}
           <Route path="/hc-agency/statia-builder" element={<MainLayout><RoleGuard minRole="platform_admin"><StatiaBuilderAgencyPage /></RoleGuard></MainLayout>} />

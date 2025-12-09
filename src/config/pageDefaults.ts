@@ -31,11 +31,11 @@ export const PAGE_DEFAULTS: PageDefaultConfig[] = [
   { pageKey: 'pilotage_actions', defaultTitle: 'Actions à Mener', defaultSubtitle: 'Suivi des actions et tâches en cours', route: ROUTES.pilotage.actions },
   { pageKey: 'pilotage_diffusion', defaultTitle: 'Mode Diffusion', defaultSubtitle: 'Affichage TV pour l\'agence', route: ROUTES.pilotage.diffusion },
   { pageKey: 'pilotage_rh_tech', defaultTitle: 'RH Tech', defaultSubtitle: 'Planning hebdomadaire des techniciens', route: ROUTES.pilotage.rhTech },
-  { pageKey: 'pilotage_equipe', defaultTitle: 'Mon équipe', defaultSubtitle: 'Collaborateurs, documents RH et bulletins de salaire', route: ROUTES.pilotage.equipe },
-  { pageKey: 'pilotage_mon_coffre_rh', defaultTitle: 'Mon Coffre RH', defaultSubtitle: 'Mes documents personnels et demandes', route: ROUTES.pilotage.monCoffreRh },
-  { pageKey: 'pilotage_demandes_rh', defaultTitle: 'Demandes RH', defaultSubtitle: 'Traitement des demandes de documents', route: ROUTES.pilotage.demandesRh },
-  { pageKey: 'pilotage_dashboard_rh', defaultTitle: 'Dashboard RH', defaultSubtitle: 'Statistiques et indicateurs RH', route: ROUTES.pilotage.dashboardRh },
-  { pageKey: 'pilotage_gestion_conges', defaultTitle: 'Gestion des congés', defaultSubtitle: 'Valider les demandes de congés et absences', route: ROUTES.pilotage.gestionConges },
+  { pageKey: 'rh_equipe', defaultTitle: 'Mon équipe', defaultSubtitle: 'Collaborateurs, documents RH et bulletins de salaire', route: ROUTES.rh.equipe },
+  { pageKey: 'rh_coffre', defaultTitle: 'Mon Coffre RH', defaultSubtitle: 'Mes documents personnels et demandes', route: ROUTES.rh.coffre },
+  { pageKey: 'rh_demandes', defaultTitle: 'Demandes RH', defaultSubtitle: 'Traitement des demandes de documents', route: ROUTES.rh.demandes },
+  { pageKey: 'rh_dashboard', defaultTitle: 'Dashboard RH', defaultSubtitle: 'Statistiques et indicateurs RH', route: ROUTES.rh.dashboard },
+  { pageKey: 'rh_conges', defaultTitle: 'Gestion des congés', defaultSubtitle: 'Valider les demandes de congés et absences', route: ROUTES.rh.conges },
   
   // Support
   { pageKey: 'support_index', defaultTitle: 'Support', defaultSubtitle: 'Assistance et demandes', route: ROUTES.support.index },

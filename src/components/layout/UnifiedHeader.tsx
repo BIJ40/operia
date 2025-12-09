@@ -326,7 +326,7 @@ export function UnifiedHeader() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to={ROUTES.pilotage.monCoffreRh} className="flex items-center gap-2 cursor-pointer">
+                  <Link to={ROUTES.rh.coffre} className="flex items-center gap-2 cursor-pointer">
                     <FolderOpen className="w-4 h-4" />
                     Coffre-fort RH
                   </Link>
