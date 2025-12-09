@@ -150,6 +150,7 @@ export const ROUTES = {
     statia: '/admin/statia-by-bij',
     formationGenerator: '/admin/formation-generator',
     widgets: '/admin/widgets',
+    modules: '/admin/modules',
     // Legacy redirects (kept for backward compatibility)
     apogeeTickets: '/admin/apogee-tickets',
     apogeeTicketsIncomplete: '/admin/apogee-tickets/incomplets',
