@@ -115,8 +115,8 @@ export function LiveSessionsList() {
         <TabsList className="mb-4">
           <TabsTrigger value="active" className="flex items-center gap-1 px-3" title="En cours">
             <Headphones className="w-4 h-4" />
-            {waitingSessions.length > 0 && (
-              <Badge variant="destructive" className="h-5 px-1.5 text-xs">{waitingSessions.length}</Badge>
+            {sessions.length > 0 && (
+              <Badge variant="destructive" className="h-5 px-1.5 text-xs">{sessions.length}</Badge>
             )}
           </TabsTrigger>
           <TabsTrigger value="archive" className="flex items-center gap-1 px-3" title="Archives">

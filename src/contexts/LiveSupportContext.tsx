@@ -82,10 +82,11 @@ export function LiveSupportProvider({ children }: { children: ReactNode }) {
         (payload) => {
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const session = payload.new as LiveSession;
-            if (session.status === 'closed') {
+            // Gérer les différents états de fermeture
+            if (session.status === 'closed' || session.status === 'converted') {
               setActiveSession(null);
               setShowChatDialog(false);
-            } else {
+            } else if (session.status === 'active') {
               setActiveSession(prev => {
                 // Si un agent vient de prendre en charge, rouvrir automatiquement
                 if (session.agent_id && !prev?.agent_id) {
