@@ -347,7 +347,7 @@ export function TicketFilters({
         </div>
         
         {/* Double slider compact */}
-        <div className="flex items-center gap-2 max-w-[280px]">
+        <div className="flex items-center gap-3 max-w-[560px]">
           <Snowflake className="h-3 w-3 shrink-0" style={{ color: getHeatColor(0) }} />
           
           <div className="flex-1 px-1">
@@ -373,7 +373,7 @@ export function TicketFilters({
         </div>
 
         {/* Pastilles de priorité compactes (0-12) */}
-        <div className="flex items-center justify-between max-w-[280px] px-4">
+        <div className="flex items-center justify-between max-w-[560px] px-6">
           {Array.from({ length: 13 }, (_, i) => {
             const isSelected = exactPriority === i;
             const isInRange = exactPriority === undefined && i >= heatMin && i <= heatMax;
