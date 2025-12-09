@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 const ROUTE_TO_PAGE_KEY: Record<string, string> = {
   [ROUTES.academy.apogee]: 'academy_apogee',
@@ -73,7 +74,13 @@ export default function AcademyIndex() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <PageHeader
+        title="Help! Academy"
+        subtitle="Documentation, guides et ressources"
+        backTo="/"
+        backLabel="Accueil"
+      />
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {academyModules.map((module, index) => (
           <IndexTile

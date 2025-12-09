@@ -6,6 +6,7 @@ import { Link, Navigate } from 'react-router-dom';
 import { ROUTES } from '@/config/routes';
 import * as Icons from 'lucide-react';
 import { Clock, Sparkles, RefreshCw, Ban } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -435,6 +436,12 @@ export default function ApogeeGuide() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
       <div className="container max-w-6xl mx-auto px-4 py-8">
+        <PageHeader
+          title="Guide Apogée"
+          subtitle="Toutes les informations pour maîtriser le logiciel Apogée"
+          backTo={ROUTES.academy.index}
+          backLabel="Help! Academy"
+        />
         {!isEditMode && (
           <div className="mb-6 max-w-md mx-auto">
             <div className="relative">

@@ -6,6 +6,7 @@ import { Link, Navigate } from 'react-router-dom';
 import { ROUTES } from '@/config/routes';
 import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Input } from '@/components/ui/input';
 import { ColorPreset } from '@/types/block';
 import { Plus, Trash2, Search, GripVertical, Upload, X, Edit2, Ban, Clock } from 'lucide-react';
@@ -494,19 +495,12 @@ export default function ApporteurGuide() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
       <div className="container max-w-6xl mx-auto px-4 py-8">
-        <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6">
-          <Icons.ArrowLeft className="w-4 h-4" />
-          <span>Retour accueil</span>
-        </Link>
-        
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Guide Apporteurs
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Toutes les informations pour les apporteurs d'affaires
-          </p>
-        </div>
+        <PageHeader
+          title="Guide Apporteurs"
+          subtitle="Toutes les informations pour les apporteurs d'affaires"
+          backTo={ROUTES.academy.index}
+          backLabel="Help! Academy"
+        />
 
         <div className="mb-6 flex gap-3 items-center">
           <div className="relative flex-1">
