@@ -62,6 +62,12 @@ const BonInterventionList = lazy(() => import("./modules/bon_intervention/pages/
 const BonInterventionForm = lazy(() => import("./modules/bon_intervention/pages/BonInterventionForm"));
 const BonInterventionSignature = lazy(() => import("./modules/bon_intervention/pages/BonInterventionSignature"));
 const BonInterventionRecap = lazy(() => import("./modules/bon_intervention/pages/BonInterventionRecap"));
+
+// Lazy loaded pages - PV Apporteur
+const PvApporteurList = lazy(() => import("./modules/pv_apporteur/pages/PvApporteurList"));
+const PvApporteurForm = lazy(() => import("./modules/pv_apporteur/pages/PvApporteurForm"));
+const PvApporteurSignature = lazy(() => import("./modules/pv_apporteur/pages/PvApporteurSignature"));
+const PvApporteurRecap = lazy(() => import("./modules/pv_apporteur/pages/PvApporteurRecap"));
 const EquipePage = lazy(() => import("./pages/EquipePage"));
 const Messages = lazy(() => import("./pages/Messages"));
 
@@ -266,6 +272,13 @@ function AppContent() {
           <Route path="/technicien/bon-intervention" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="technicien"><AgencyProvider><BonInterventionList /></AgencyProvider></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/technicien/bon-intervention/:interventionId" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="technicien"><AgencyProvider><BonInterventionForm /></AgencyProvider></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/technicien/bon-intervention/:interventionId/signature" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="technicien"><AgencyProvider><BonInterventionSignature /></AgencyProvider></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/technicien/bon-intervention/:interventionId/recap" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="technicien"><AgencyProvider><BonInterventionRecap /></AgencyProvider></ModuleGuard></RoleGuard></MainLayout>} />
+          
+          {/* PV Apporteur - Module Technicien */}
+          <Route path="/technicien/pv-apporteur" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="technicien"><AgencyProvider><PvApporteurList /></AgencyProvider></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/technicien/pv-apporteur/:projectId" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="technicien"><AgencyProvider><PvApporteurForm /></AgencyProvider></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/technicien/pv-apporteur/:projectId/signature" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="technicien"><AgencyProvider><PvApporteurSignature /></AgencyProvider></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/technicien/pv-apporteur/:projectId/recap" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="technicien"><AgencyProvider><PvApporteurRecap /></AgencyProvider></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/technicien/bon-intervention/:interventionId/recap" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="technicien"><AgencyProvider><BonInterventionRecap /></AgencyProvider></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* Équipe (legacy - redirects to collaborateurs) */}
