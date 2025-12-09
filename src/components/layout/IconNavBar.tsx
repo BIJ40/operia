@@ -185,12 +185,13 @@ export function IconNavBar() {
     return caps[section.accessKey];
   });
 
-  const isActive = (url: string, sectionId: string) => {
-    if (url === '/') return location.pathname === '/';
-    
+  // Détermine si une SECTION (icône du menu) est active
+  const isSectionActive = (sectionId: string, indexUrl: string) => {
     const path = location.pathname;
     
-    // Routes exclusives RH (ne doivent JAMAIS surligner Mon Agence)
+    if (sectionId === 'home') return path === '/';
+    
+    // Routes exclusives RH
     const rhExclusiveRoutes = [
       '/mon-coffre-rh',
       '/hc-agency/demandes-rh',
@@ -199,24 +200,24 @@ export function IconNavBar() {
       '/hc-agency/gestion-conges',
       '/hc-agency/demande-conge',
     ];
-    
     const isRhRoute = rhExclusiveRoutes.some(r => path === r || path.startsWith(r + '/'));
     
-    // Section RH: uniquement les routes RH
-    if (sectionId === 'rh') {
-      return isRhRoute;
-    }
+    if (sectionId === 'rh') return isRhRoute;
     
-    // Section Mon Agence: exclure strictement les routes RH
     if (sectionId === 'agence') {
       if (isRhRoute) return false;
-      // Vérifier que la route correspond vraiment à Mon Agence
       const agenceRoutes = ['/hc-agency', '/indicateurs', '/pilotage'];
       return agenceRoutes.some(r => path.startsWith(r));
     }
     
-    // Autres sections: match standard par préfixe
-    return path.startsWith(url);
+    return path.startsWith(indexUrl);
+  };
+
+  // Détermine si un ITEM du dropdown est actif (match exact ou préfixe direct)
+  const isItemActive = (itemUrl: string) => {
+    const path = location.pathname;
+    // Match exact ou sous-route directe
+    return path === itemUrl || path.startsWith(itemUrl + '/');
   };
 
   const handleNavClick = (sectionId: string) => {
@@ -227,7 +228,7 @@ export function IconNavBar() {
     <nav className="flex items-center gap-1 px-2">
       {filteredSections.map((section) => {
         const hasDropdown = section.items.length > 0;
-        const active = isActive(section.indexUrl, section.id);
+        const active = isSectionActive(section.id, section.indexUrl);
 
         if (!hasDropdown) {
           // Simple link (Accueil)
@@ -290,7 +291,7 @@ export function IconNavBar() {
                 </div>
                 {section.items.map((item) => {
                   const Icon = item.icon;
-                  const itemActive = location.pathname === item.url;
+                  const itemActive = isItemActive(item.url);
                   return (
                     <Link
                       key={item.url}
