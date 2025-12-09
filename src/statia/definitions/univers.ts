@@ -539,11 +539,51 @@ export const caMensuelParUnivers: StatDefinition = {
       totalCA += meta.montantNetHT;
     }
     
-    // Convertir en tableau pour le graphique
-    const monthlyData = Object.entries(byMonthAndUnivers).map(([month, univers]) => ({
-      month,
-      ...univers
-    }));
+    // Convertir en tableau pour le graphique - avec TRI CHRONOLOGIQUE
+    const monthlyData = Object.entries(byMonthAndUnivers)
+      .map(([month, univers]) => ({
+        month,
+        ...univers
+      }))
+      .sort((a, b) => {
+        // Parser les mois français ("janv. 2025", "févr. 2025", etc.)
+        const parseMonthKey = (key: string): Date => {
+          const monthNames: Record<string, number> = {
+            'janv': 0, 'jan': 0, 'janvier': 0,
+            'févr': 1, 'fév': 1, 'février': 1,
+            'mars': 2, 'mar': 2,
+            'avr': 3, 'avril': 3,
+            'mai': 4,
+            'juin': 5, 'jun': 5,
+            'juil': 6, 'jul': 6, 'juillet': 6,
+            'août': 7, 'aou': 7,
+            'sept': 8, 'sep': 8, 'septembre': 8,
+            'oct': 9, 'octobre': 9,
+            'nov': 10, 'novembre': 10,
+            'déc': 11, 'dec': 11, 'décembre': 11,
+          };
+          
+          const parts = key.toLowerCase().replace('.', '').split(' ');
+          const monthStr = parts[0];
+          const yearStr = parts[1] || new Date().getFullYear().toString();
+          
+          // Trouver le mois
+          let monthIndex = 0;
+          for (const [prefix, idx] of Object.entries(monthNames)) {
+            if (monthStr.startsWith(prefix)) {
+              monthIndex = idx;
+              break;
+            }
+          }
+          
+          const year = parseInt(yearStr, 10) || new Date().getFullYear();
+          return new Date(year, monthIndex, 1);
+        };
+        
+        const dateA = parseMonthKey(a.month);
+        const dateB = parseMonthKey(b.month);
+        return dateA.getTime() - dateB.getTime();
+      });
     
     return {
       value: monthlyData,
