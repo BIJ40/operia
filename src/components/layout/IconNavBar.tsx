@@ -172,11 +172,20 @@ export function IconNavBar() {
   const caps = getRoleCapabilities(globalRole);
   const [openPopover, setOpenPopover] = useState<string | null>(null);
   
-  // Déterminer le niveau du rôle pour affichage conditionnel
-  const roleLevel = globalRole ? (globalRole === 'franchisor_user' ? 3 : globalRole === 'franchisor_admin' ? 4 : 0) : 0;
-  const isFranchiseurOnly = roleLevel === 3 || roleLevel === 4;
+  // Déterminer si c'est un utilisateur N3/N4 (franchiseur uniquement)
+  const isFranchiseurOnly = globalRole === 'franchisor_user' || globalRole === 'franchisor_admin';
 
   const filteredSections = navSections.filter(section => {
+    // Pour N3/N4: on ne garde que Accueil, Franchiseur et Support
+    if (isFranchiseurOnly) {
+      if (section.id === 'home' || section.id === 'franchiseur' || section.id === 'support') {
+        // Vérifier les accès pour ces sections
+        if (section.accessKey && !caps[section.accessKey]) return false;
+        return true;
+      }
+      return false; // Cacher les autres sections
+    }
+    
     // Module check
     if (section.requiresModule && !hasModule(section.requiresModule as any)) {
       return false;
