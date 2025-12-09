@@ -110,13 +110,23 @@ function calculateTechnicienKpisStatia(
   // === 1. CA du mois (utilise le moteur StatIA) ===
   const statiaParams: CaParTechnicienParams = {
     dateRange: { start: monthStart, end: monthEnd },
-    filters: { technicienId: apogeeUserId },
   };
   const caResult = computeCaParTechnicienCore(
     { factures, projects, interventions, users },
     statiaParams
   );
-  const caMonth = caResult.value || 0;
+  
+  // Extraire le CA du technicien spécifique depuis le ranking
+  const techRanking = caResult.ranking || [];
+  const myTechData = techRanking.find((t: any) => t.id === apogeeUserId);
+  const caMonth = myTechData?.value || 0;
+  
+  console.log('[usePersonalKpis] Technician CA extraction:', { 
+    apogeeUserId, 
+    myTechData,
+    caMonth,
+    totalRanking: techRanking.length 
+  });
 
   // === 2. Interventions ce mois (assignées OU visites avec participation) ===
   const techInterventions = (interventions || []).filter((inter: any) => {
