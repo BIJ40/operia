@@ -96,16 +96,16 @@ export default function FranchiseurHome() {
   return (
     <FranchiseurPageContainer>
       <FranchiseurPageHeader
-        title="Tableau de bord Réseau"
+        title="Dashboard"
         subtitle="Vue d'ensemble des performances du réseau HelpConfort"
         icon={<LayoutDashboard className="h-6 w-6 text-helpconfort-blue" />}
-        actions={
-          <div className="flex flex-col sm:flex-row gap-3">
-            <AgencySelector />
-            <NetworkPeriodSelector />
-          </div>
-        }
       />
+
+      {/* Filtres séparés sous le header */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <AgencySelector />
+        <NetworkPeriodSelector />
+      </div>
 
       {/* Ligne 1: KPIs temporels */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
