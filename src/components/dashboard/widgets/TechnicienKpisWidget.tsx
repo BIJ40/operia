@@ -30,20 +30,6 @@ const TECH_KPIS = [
     format: 'number',
     color: 'from-orange-500 to-orange-600'
   },
-  { 
-    key: 'heuresTravaillees', 
-    label: 'Heures travaillées', 
-    icon: Clock,
-    format: 'hours',
-    color: 'from-purple-500 to-purple-600'
-  },
-  { 
-    key: 'tauxProductivite', 
-    label: 'Taux productivité', 
-    icon: Calendar,
-    format: 'percent',
-    color: 'from-cyan-500 to-cyan-600'
-  },
 ];
 
 function formatValue(value: number | undefined, format: string): string {
