@@ -143,7 +143,7 @@ export function MegaMenu({ section, onClose }: MegaMenuProps) {
 
   return (
     <div 
-      className="absolute top-full left-0 z-50"
+      className="absolute top-full left-0 z-[100]"
       style={{ paddingTop: 0 }}
     >
       {/* Invisible bridge to prevent gap between trigger and menu */}
