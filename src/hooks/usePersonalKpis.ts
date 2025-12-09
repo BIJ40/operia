@@ -1,11 +1,13 @@
 /**
  * Hook pour récupérer les KPIs personnels basés sur l'apogee_user_id
+ * Utilise les métriques StatIA existantes avec filtre userId
  */
 
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
-import { DataService } from '@/apogee-connect/services/dataService';
 import { startOfMonth, endOfMonth, parseISO, isWithinInterval } from 'date-fns';
+import { computeCaParTechnicienCore, CaParTechnicienParams } from '@/statia/engines/caParTechnicienCore';
+import { DataService } from '@/apogee-connect/services/dataService';
 
 interface TechnicienKpis {
   caMonth: number;
@@ -51,17 +53,17 @@ export function usePersonalKpis() {
       const isTechnicien = roleAgence.includes('technic') || roleAgence.includes('tech');
       const isAssistante = roleAgence.includes('assist') || roleAgence.includes('secr') || roleAgence.includes('admin');
 
-      // Charger les données Apogée
-      const apiData = await DataService.loadAllData(true);
-      
       const now = new Date();
       const monthStart = startOfMonth(now);
       const monthEnd = endOfMonth(now);
 
+      // Charger les données via DataService (même source que StatIA)
+      const apiData = await DataService.loadAllData(true);
+
       if (isTechnicien) {
         return {
           type: 'technicien' as const,
-          data: calculateTechnicienKpis(apiData, apogeeUserId, monthStart, monthEnd),
+          data: calculateTechnicienKpisStatia(apiData, apogeeUserId, monthStart, monthEnd),
         };
       }
 
@@ -79,16 +81,33 @@ export function usePersonalKpis() {
   });
 }
 
-function calculateTechnicienKpis(
+/**
+ * Calcule les KPIs technicien en utilisant le moteur StatIA
+ */
+function calculateTechnicienKpisStatia(
   apiData: any,
   apogeeUserId: number,
   monthStart: Date,
   monthEnd: Date
 ): TechnicienKpis {
-  const { factures, interventions, projects } = apiData;
+  const { factures, interventions, projects, users } = apiData;
   const interval = { start: monthStart, end: monthEnd };
 
-  // Interventions du technicien ce mois
+  // Utiliser le moteur StatIA pour le CA (SOURCE DE VÉRITÉ)
+  const statiaParams: CaParTechnicienParams = {
+    dateRange: { start: monthStart, end: monthEnd },
+    filters: {
+      technicienId: apogeeUserId,
+    },
+  };
+  
+  const caResult = computeCaParTechnicienCore(
+    { factures, projects, interventions, users },
+    statiaParams
+  );
+  const caMonth = caResult.value || 0;
+
+  // Interventions du technicien ce mois (logique simple)
   const techInterventions = (interventions || []).filter((inter: any) => {
     // Vérifier si le technicien est assigné
     const isAssigned = inter.userId === apogeeUserId || 
@@ -110,43 +129,9 @@ function calculateTechnicienKpis(
     }
   });
 
-  // Dossiers traités (projets avec interventions validées)
+  // Dossiers traités (projets avec interventions)
   const projectIds = new Set(techInterventions.map((i: any) => i.projectId));
   const dossiersTraites = projectIds.size;
-
-  // CA du technicien (proportionnel au temps passé sur les factures)
-  let caMonth = 0;
-  const facturesMonth = (factures || []).filter((f: any) => {
-    const dateStr = f.dateReelle || f.date;
-    if (!dateStr) return false;
-    try {
-      const factDate = typeof dateStr === 'string' ? parseISO(dateStr) : new Date(dateStr);
-      return isWithinInterval(factDate, interval);
-    } catch {
-      return false;
-    }
-  });
-
-  for (const facture of facturesMonth) {
-    const projectInterventions = techInterventions.filter(
-      (i: any) => i.projectId === facture.projectId
-    );
-    
-    if (projectInterventions.length > 0) {
-      // Le technicien a travaillé sur ce dossier
-      const allProjectInterventions = (interventions || []).filter(
-        (i: any) => i.projectId === facture.projectId
-      );
-      
-      // Calculer le ratio d'interventions
-      const techCount = projectInterventions.length;
-      const totalCount = allProjectInterventions.length || 1;
-      const ratio = techCount / totalCount;
-      
-      const montant = facture.data?.totalHT || facture.totalHT || 0;
-      caMonth += montant * ratio;
-    }
-  }
 
   // Heures travaillées (estimation basée sur les créneaux)
   let heuresTravaillees = 0;
@@ -154,13 +139,12 @@ function calculateTechnicienKpis(
     const visites = inter.visites || [];
     for (const visite of visites) {
       if ((visite.usersIds || []).includes(apogeeUserId)) {
-        const duree = visite.duree || visite.tempsPrevu || 2; // défaut 2h
+        const duree = visite.duree || visite.tempsPrevu || 2;
         heuresTravaillees += duree;
       }
     }
-    // Si pas de visites mais intervention assignée
     if (visites.length === 0 && inter.userId === apogeeUserId) {
-      heuresTravaillees += 2; // estimation par défaut
+      heuresTravaillees += 2;
     }
   }
 
@@ -182,6 +166,9 @@ function calculateTechnicienKpis(
   };
 }
 
+/**
+ * Calcule les KPIs assistante
+ */
 function calculateAssistanteKpis(
   apiData: any,
   apogeeUserId: number,
@@ -221,9 +208,8 @@ function calculateAssistanteKpis(
     }
   }).length;
 
-  // Dossiers créés ce mois (via history createdBy)
+  // Dossiers créés ce mois
   const dossiersCrees = (projects || []).filter((p: any) => {
-    // Vérifier si l'utilisateur a créé le dossier
     const history = p.history || [];
     const creationEntry = history.find((h: any) => 
       h.kind === 0 || h.labelKind?.toLowerCase().includes('création')
@@ -244,7 +230,7 @@ function calculateAssistanteKpis(
     }
   }).length;
 
-  // RDV planifiés ce mois (interventions state=planned créées par l'utilisateur)
+  // RDV planifiés ce mois
   const rdvPlanifies = (interventions || []).filter((i: any) => {
     const dateStr = i.dateReelle || i.date;
     if (!dateStr) return false;
@@ -257,13 +243,13 @@ function calculateAssistanteKpis(
     }
   }).length;
 
-  // Dossiers en cours (non clôturés)
+  // Dossiers en cours
   const dossiersEnCours = (projects || []).filter((p: any) => {
     const state = (p.state || '').toLowerCase();
     return !['clos', 'closed', 'cancelled', 'annule'].includes(state);
   }).length;
 
-  // Clients contactés (estimation via dossiers)
+  // Clients contactés
   const clientsContactes = new Set(
     (projects || [])
       .filter((p: any) => {
