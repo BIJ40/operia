@@ -132,6 +132,34 @@ function calculateTechnicienKpisStatia(
   const apogeeUserIdStr = String(apogeeUserId);
   const apogeeUserIdNum = Number(apogeeUserId);
 
+  // Debug: examiner la structure des interventions
+  const sampleInter = (interventions || [])[0];
+  console.log('[usePersonalKpis] Sample intervention structure:', {
+    apogeeUserId,
+    sampleUserId: sampleInter?.userId,
+    sampleVisites: sampleInter?.visites?.slice(0, 1),
+    sampleType: sampleInter?.type,
+    sampleDate: sampleInter?.dateReelle || sampleInter?.date,
+  });
+
+  // Chercher toutes les interventions où ce technicien apparaît (sans filtre de date)
+  const allTechInterventionsNoDate = (interventions || []).filter((inter: any) => {
+    const interUserId = inter.userId;
+    const isAssigned = interUserId === apogeeUserId || 
+                       interUserId === apogeeUserIdStr || 
+                       Number(interUserId) === apogeeUserIdNum;
+    
+    const hasVisiteParticipation = (inter.visites || []).some((v: any) => 
+      (v.usersIds || []).some((uid: any) => 
+        uid === apogeeUserId || uid === apogeeUserIdStr || Number(uid) === apogeeUserIdNum
+      )
+    );
+    
+    return isAssigned || hasVisiteParticipation;
+  });
+
+  console.log('[usePersonalKpis] Tech interventions (sans filtre date):', allTechInterventionsNoDate.length);
+
   // === 2. Interventions ce mois (assignées OU visites avec participation) ===
   const techInterventions = (interventions || []).filter((inter: any) => {
     // Vérifier assignation directe OU participation à une visite (comparaison flexible)
@@ -160,11 +188,12 @@ function calculateTechnicienKpisStatia(
     }
   });
 
-  console.log('[usePersonalKpis] Interventions:', { 
+  console.log('[usePersonalKpis] Interventions (avec date):', { 
     apogeeUserId, 
     techInterventionsCount: techInterventions.length,
     totalInterventions: (interventions || []).length,
-    sampleIntervention: (interventions || [])[0]
+    monthStart: monthStart.toISOString(),
+    monthEnd: monthEnd.toISOString()
   });
 
   // === 3. Dossiers traités = projets FACTURÉS où technicien a intervenu ===
