@@ -203,7 +203,7 @@ export default function CategoryPage({ scope }: CategoryPageProps) {
   };
 
   return (
-    <div className="space-y-6 pb-8 max-w-5xl mx-auto">
+    <div className="space-y-6 pb-8">
       {/* Header */}
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm pb-4 pt-2 -mx-4 px-4">
         <div className="flex items-center justify-between gap-2">

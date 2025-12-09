@@ -18,7 +18,7 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
   base_user: {
     help_academy: {
       enabled: true,
-      options: { apogee: true, helpconfort: false, apporteurs: false, edition: false }
+      options: { apogee: true, apporteurs: false, helpconfort: false, base_documentaire: true, edition: false }
     },
     support: {
       enabled: true,
@@ -30,7 +30,7 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
   franchisee_user: {
     help_academy: {
       enabled: true,
-      options: { apogee: true, helpconfort: false, apporteurs: true, edition: false }
+      options: { apogee: true, apporteurs: true, helpconfort: false, base_documentaire: true, edition: false }
     },
     support: {
       enabled: true,
@@ -40,17 +40,13 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
       enabled: true,
       options: { coffre: true, rh_viewer: false, rh_admin: false }
     },
-    technicien: {
-      enabled: true,
-      options: { bon_intervention: true, pv_reception: true, planning: true }
-    },
   },
   
   // N2 - Admin franchisé (dirigeant agence)
   franchisee_admin: {
     help_academy: {
       enabled: true,
-      options: { apogee: true, helpconfort: true, apporteurs: true, edition: false }
+      options: { apogee: true, apporteurs: true, helpconfort: true, base_documentaire: true, edition: false }
     },
     pilotage_agence: {
       enabled: true,
@@ -64,17 +60,13 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
       enabled: true,
       options: { coffre: false, rh_viewer: true, rh_admin: true }
     },
-    technicien: {
-      enabled: true,
-      options: { bon_intervention: true, pv_reception: true, planning: true }
-    },
   },
   
   // N3 - Utilisateur franchiseur (animateur réseau)
   franchisor_user: {
     help_academy: {
       enabled: true,
-      options: { apogee: true, helpconfort: true, apporteurs: true, edition: false }
+      options: { apogee: true, apporteurs: true, helpconfort: true, base_documentaire: true, edition: false }
     },
     pilotage_agence: {
       enabled: true,
@@ -88,17 +80,13 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
       enabled: true,
       options: { user: true, agent: true, admin: false }
     },
-    technicien: {
-      enabled: true,
-      options: { bon_intervention: true, pv_reception: true, planning: true }
-    },
   },
   
   // N4 - Admin franchiseur (directeur réseau)
   franchisor_admin: {
     help_academy: {
       enabled: true,
-      options: { apogee: true, helpconfort: true, apporteurs: true, edition: true }
+      options: { apogee: true, apporteurs: true, helpconfort: true, base_documentaire: true, edition: true }
     },
     pilotage_agence: {
       enabled: true,
@@ -112,17 +100,13 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
       enabled: true,
       options: { user: true, agent: true, admin: true }
     },
-    technicien: {
-      enabled: true,
-      options: { bon_intervention: true, pv_reception: true, planning: true }
-    },
   },
   
   // N5 - Admin plateforme
   platform_admin: {
     help_academy: {
       enabled: true,
-      options: { apogee: true, helpconfort: true, apporteurs: true, edition: true }
+      options: { apogee: true, apporteurs: true, helpconfort: true, base_documentaire: true, edition: true }
     },
     pilotage_agence: {
       enabled: true,
@@ -140,17 +124,13 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
       enabled: true,
       options: { users: true, agencies: true, permissions: true, backup: true, logs: false }
     },
-    technicien: {
-      enabled: true,
-      options: { bon_intervention: true, pv_reception: true, planning: true }
-    },
   },
   
   // N6 - Superadmin
   superadmin: {
     help_academy: {
       enabled: true,
-      options: { apogee: true, helpconfort: true, apporteurs: true, edition: true }
+      options: { apogee: true, apporteurs: true, helpconfort: true, base_documentaire: true, edition: true }
     },
     pilotage_agence: {
       enabled: true,
@@ -167,10 +147,6 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
     admin_plateforme: {
       enabled: true,
       options: { users: true, agencies: true, permissions: true, backup: true, logs: true }
-    },
-    technicien: {
-      enabled: true,
-      options: { bon_intervention: true, pv_reception: true, planning: true }
     },
   },
 };

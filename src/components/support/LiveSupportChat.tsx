@@ -46,8 +46,6 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
   const [agentConnected, setAgentConnected] = useState(false);
   const [waitingForAgent, setWaitingForAgent] = useState(true);
   const [sessionClosed, setSessionClosed] = useState<'closed' | 'converted' | null>(null);
-  const [closedBy, setClosedBy] = useState<'user' | 'agent' | null>(null);
-  const [closedReason, setClosedReason] = useState<string | null>(null);
   const [pendingAttachment, setPendingAttachment] = useState<{ url: string; type: string } | null>(null);
 
   const userName = firstName || lastName || user?.email?.split('@')[0] || 'Utilisateur';
@@ -101,25 +99,16 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
           filter: `id=eq.${sessionId}`,
         },
         (payload) => {
-          const session = payload.new as { 
-            agent_id: string | null; 
-            status: string;
-            closed_by?: 'user' | 'agent';
-            closed_reason?: string;
-          };
+          const session = payload.new as { agent_id: string | null; status: string };
           if (session.agent_id) {
             setAgentConnected(true);
             setWaitingForAgent(false);
           }
-          // Gérer les différents status de fermeture avec raison
+          // Gérer les différents status de fermeture
           if (session.status === 'closed') {
             setSessionClosed('closed');
-            setClosedBy(session.closed_by || null);
-            setClosedReason(session.closed_reason || null);
           } else if (session.status === 'converted') {
             setSessionClosed('converted');
-            setClosedBy('agent');
-            setClosedReason('Converti en ticket support');
           }
         }
       )
@@ -229,7 +218,7 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
         .eq('id', sessionId);
       
       setSessionNotified(true);
-      toast.info('Le support a été notifié de votre demande');
+      toast.info('Un agent va vous répondre bientôt');
     } catch (notifyError) {
       logError('live-support', 'Notify error (non-blocking)', notifyError);
     }
@@ -241,12 +230,7 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
     try {
       await supabase
         .from('live_support_sessions')
-        .update({ 
-          status: 'closed',
-          closed_at: new Date().toISOString(),
-          closed_by: 'user',
-          closed_reason: 'Fermé par l\'utilisateur',
-        } as any)
+        .update({ status: 'closed' })
         .eq('id', sessionId);
 
       toast.success('Conversation terminée');
@@ -369,7 +353,7 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
           ) : agentConnected ? (
             <Badge variant="default" className="text-xs bg-green-500">
               <CheckCheck className="w-3 h-3 mr-1" />
-              Support connecté
+              Agent connecté
             </Badge>
           ) : (
             <Badge variant="outline" className="text-xs">
@@ -389,15 +373,15 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
               {waitingForAgent ? (
                 <>
                   <p className="text-sm text-muted-foreground">
-                    Le support a été notifié de votre demande
+                    Un agent va vous répondre dans quelques instants...
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Vous pouvez commencer à décrire votre problème
+                    Vous pouvez commencer à écrire votre message
                   </p>
                 </>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  Décrivez votre problème, le support est prêt à vous aider
+                  Décrivez votre problème, un agent est prêt à vous aider
                 </p>
               )}
             </div>
@@ -498,16 +482,14 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
                   <CheckCircle className="w-6 h-6 text-green-500" />
                 </div>
                 <div className="text-center">
-                  <p className="font-medium text-foreground">
-                    {closedBy === 'agent' ? 'Session fermée par le support' : 'Conversation terminée'}
-                  </p>
+                  <p className="font-medium text-foreground">Conversation terminée</p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {closedReason || 'Cette session de chat a été clôturée.'}
+                    Cette session de chat a été clôturée.
                   </p>
                 </div>
               </>
             )}
-            <Button
+            <Button 
               variant="outline" 
               size="sm" 
               onClick={() => {
@@ -595,6 +577,13 @@ export function LiveSupportChat({ onClose, className }: LiveSupportChatProps) {
               )}
             </Button>
           </div>
+          
+          {!isConnected && (
+            <div className="flex items-center gap-1 mt-2 text-xs text-amber-600">
+              <AlertCircle className="w-3 h-3" />
+              Connexion en cours...
+            </div>
+          )}
         </div>
       )}
     </div>

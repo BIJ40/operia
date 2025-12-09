@@ -155,7 +155,6 @@ export const ROUTES = {
     systemHealth: '/admin/system-health',
     announcements: '/admin/announcements',
     faq: '/admin/faq',
-    featureFlags: '/admin/feature-flags',
     statia: '/admin/statia-by-bij',
     formationGenerator: '/admin/formation-generator',
     widgets: '/admin/widgets',
@@ -177,21 +176,6 @@ export const ROUTES = {
   // MESSAGING
   // ============================================
   messages: '/messages',
-
-  // ============================================
-  // TECHNICIEN
-  // ============================================
-  technicien: {
-    index: '/technicien',
-    bonIntervention: '/technicien/bon-intervention',
-    bonInterventionDetail: '/technicien/bon-intervention/:interventionId',
-    bonInterventionSignature: '/technicien/bon-intervention/:interventionId/signature',
-    bonInterventionRecap: '/technicien/bon-intervention/:interventionId/recap',
-    pvApporteur: '/technicien/pv-apporteur',
-    pvApporteurDetail: '/technicien/pv-apporteur/:dossierId',
-    pvApporteurSignature: '/technicien/pv-apporteur/:dossierId/signature',
-    pvApporteurRecap: '/technicien/pv-apporteur/:dossierId/recap',
-  },
 
   // ============================================
   // DEV (Admin only)

@@ -248,29 +248,36 @@ export function useSupportNotifications() {
       )
       .subscribe();
 
-    // V3: Écouter les sessions de chat live (tous les événements pour mise à jour instantanée)
+    // V3: Écouter les nouvelles sessions de chat live
     const liveSessionsChannel = supabase
       .channel('live-support-sessions-notifications')
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'live_support_sessions',
         },
         async (payload) => {
-          console.log('[Support Notifications] Live session change:', payload.eventType, payload);
           loadLiveSessions();
+          playNotificationSound();
           
-          // Notification uniquement pour les nouvelles sessions (INSERT)
-          if (payload.eventType === 'INSERT') {
-            playNotificationSound();
-            const session = payload.new as { user_name?: string; agency_slug?: string };
-            toast.error('🔴 Chat en direct demandé', {
-              description: `${session.user_name || 'Un utilisateur'}${session.agency_slug ? ` (${session.agency_slug})` : ''} demande une assistance immédiate`,
-              duration: 10000,
-            });
-          }
+          const session = payload.new as { user_name?: string; agency_slug?: string };
+          toast.error('🔴 Chat en direct demandé', {
+            description: `${session.user_name || 'Un utilisateur'}${session.agency_slug ? ` (${session.agency_slug})` : ''} demande une assistance immédiate`,
+            duration: 10000,
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'live_support_sessions',
+        },
+        () => {
+          loadLiveSessions();
         }
       )
       .subscribe();

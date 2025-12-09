@@ -153,9 +153,8 @@ export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: Escal
     const currentLevel = ticket.support_level || 1;
     
     if (isApogeeService || isAutreService) {
-      // P1-07: Afficher les agents de niveau >= targetLevel au lieu de strictement égal
-      const meetsLevel = u.support_level >= targetLevel;
-      if (!meetsLevel) return false;
+      const correctLevel = u.support_level === targetLevel;
+      if (!correctLevel) return false;
       
       const hasApogeeCompetency = u.service_competencies?.apogee !== false;
       

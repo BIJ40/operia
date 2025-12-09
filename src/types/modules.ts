@@ -19,7 +19,6 @@ export const MODULES = {
   parc: 'parc', // Module Parc séparé
   messaging: 'messaging', // Chat interne
   unified_search: 'unified_search', // Barre de recherche unifiée (Stats + Docs)
-  technicien: 'technicien', // Module Technicien (Bon d'intervention, PV réception)
 } as const;
 
 export type ModuleKey = keyof typeof MODULES;
@@ -28,8 +27,9 @@ export type ModuleKey = keyof typeof MODULES;
 export const MODULE_OPTIONS = {
   help_academy: {
     apogee: 'help_academy.apogee',
-    helpconfort: 'help_academy.helpconfort',
     apporteurs: 'help_academy.apporteurs',
+    helpconfort: 'help_academy.helpconfort',
+    base_documentaire: 'help_academy.base_documentaire',
     edition: 'help_academy.edition',
   },
   pilotage_agence: {
@@ -81,11 +81,6 @@ export const MODULE_OPTIONS = {
     stats: 'unified_search.stats',  // Recherche statistiques
     docs: 'unified_search.docs',    // Recherche documentaire
   },
-  technicien: {
-    bon_intervention: 'technicien.bon_intervention', // Remplir bons d'intervention
-    pv_reception: 'technicien.pv_reception',         // PV de réception
-    planning: 'technicien.planning',                 // Voir son planning
-  },
 } as const;
 
 export type ModuleOptionPath = typeof MODULE_OPTIONS[ModuleKey][keyof typeof MODULE_OPTIONS[ModuleKey]];
@@ -119,9 +114,10 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
     minRole: 'base_user',
     options: [
-      { key: 'apogee', path: 'help_academy.apogee', label: 'Apogée', description: 'Guide du logiciel Apogée', defaultEnabled: true },
-      { key: 'helpconfort', path: 'help_academy.helpconfort', label: 'HelpConfort', description: 'Guide des procédures HelpConfort', defaultEnabled: false },
-      { key: 'apporteurs', path: 'help_academy.apporteurs', label: 'Apporteurs', description: 'Guide des prescripteurs', defaultEnabled: true },
+      { key: 'apogee', path: 'help_academy.apogee', label: 'Guide Apogée', description: 'Accès au guide Apogée', defaultEnabled: true },
+      { key: 'apporteurs', path: 'help_academy.apporteurs', label: 'Guide Apporteurs', description: 'Accès au guide Apporteurs', defaultEnabled: true },
+      { key: 'helpconfort', path: 'help_academy.helpconfort', label: 'Guide HelpConfort', description: 'Accès au guide HelpConfort', defaultEnabled: false },
+      { key: 'base_documentaire', path: 'help_academy.base_documentaire', label: 'Base documentaire', description: 'Accès aux documents téléchargeables', defaultEnabled: true },
       { key: 'edition', path: 'help_academy.edition', label: 'Mode édition', description: 'Modifier le contenu des guides', defaultEnabled: false },
     ],
   },
@@ -246,19 +242,6 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'docs', path: 'unified_search.docs', label: 'Recherche Docs', description: 'Rechercher dans la documentation (Apogée, HelpConfort)', defaultEnabled: true },
     ],
   },
-  {
-    key: 'technicien',
-    label: 'Technicien',
-    description: 'Outils terrain : bon d\'intervention, PV réception, planning',
-    icon: 'Wrench',
-    defaultForRoles: ['franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
-    minRole: 'franchisee_user',
-    options: [
-      { key: 'bon_intervention', path: 'technicien.bon_intervention', label: 'Bon d\'intervention', description: 'Remplir les bons d\'intervention sur le terrain', defaultEnabled: true },
-      { key: 'pv_reception', path: 'technicien.pv_reception', label: 'PV de réception', description: 'Créer des PV de réception travaux', defaultEnabled: true },
-      { key: 'planning', path: 'technicien.planning', label: 'Planning', description: 'Consulter son planning d\'interventions', defaultEnabled: true },
-    ],
-  },
 ];
 
 // Structure de stockage des modules activés (JSONB dans profiles)
@@ -273,7 +256,6 @@ export interface EnabledModules {
   parc?: boolean | ModuleOptionsState;
   messaging?: boolean | ModuleOptionsState;
   unified_search?: boolean | ModuleOptionsState;
-  technicien?: boolean | ModuleOptionsState;
 }
 
 export interface ModuleOptionsState {

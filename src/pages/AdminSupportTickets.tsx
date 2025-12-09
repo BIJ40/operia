@@ -27,10 +27,8 @@ import { KanbanView } from '@/components/admin/support/KanbanView';
 import { SupportLevelBadge } from '@/components/SupportLevelBadge';
 import { ROUTES } from '@/config/routes';
 import { ScreenShareSession } from '@/components/support/ScreenShareSession';
-import { AgentUnifiedChat } from '@/components/admin/support/AgentUnifiedChat';
+import { LiveSessionsList } from '@/components/admin/support/LiveSessionsList';
 import { useSupportNotifications } from '@/hooks/use-support-notifications';
-import { Link } from 'react-router-dom';
-import { Settings } from 'lucide-react';
 
 export default function AdminSupportTickets() {
   const { canManageTickets, user, globalRole } = useAuth();
@@ -395,9 +393,11 @@ export default function AdminSupportTickets() {
                     </TabsTrigger>
                   </TabsList>
 
-                  {/* Onglet Chat Live - Vue unifiée */}
+                  {/* Onglet Chat Live */}
                   <TabsContent value="live" className="mt-2">
-                    <AgentUnifiedChat />
+                    <ScrollArea className="h-[550px]">
+                      <LiveSessionsList />
+                    </ScrollArea>
                   </TabsContent>
 
                   <TabsContent value="actifs" className="mt-2">

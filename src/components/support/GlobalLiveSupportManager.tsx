@@ -5,7 +5,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { MessageCircle } from 'lucide-react';
-import { useLiveSupportContext } from '@/contexts/LiveSupportContext';
+import { useLiveSupportSession } from '@/hooks/useLiveSupportSession';
 import { LiveSupportChat } from './LiveSupportChat';
 
 export function GlobalLiveSupportManager() {
@@ -13,7 +13,8 @@ export function GlobalLiveSupportManager() {
     hasActiveSession, 
     showChatDialog, 
     closeChatDialog,
-  } = useLiveSupportContext();
+    closeSession,
+  } = useLiveSupportSession();
 
   // Ne rien afficher si pas de session active
   if (!hasActiveSession) return null;
@@ -23,7 +24,7 @@ export function GlobalLiveSupportManager() {
       {/* Dialog de chat - accessible de partout */}
       <Dialog open={showChatDialog} onOpenChange={closeChatDialog} modal={true}>
         <DialogContent 
-          className="sm:max-w-xl h-[70vh] p-0 flex flex-col [&>button]:hidden"
+          className="sm:max-w-xl h-[70vh] p-0 flex flex-col"
           onPointerDownOutside={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
         >

@@ -760,7 +760,6 @@ interface DocSearchResult {
   similarity: number;
   blockType: string;
   sourceId: string;
-  blockSlug: string | null;
   url: string;
 }
 
@@ -786,8 +785,7 @@ async function searchDocsWithHelpi(authHeader: string, query: string, blockTypes
       similarity: r.similarity || 0,
       blockType: r.block_type || 'apogee',
       sourceId: r.source_id || '',
-      blockSlug: r.block_slug || null,
-      url: buildDocUrl(r.block_type, r.block_slug || r.source_id)
+      url: buildDocUrl(r.block_type, r.source_id)
     }));
     
     return results;
@@ -797,11 +795,11 @@ async function searchDocsWithHelpi(authHeader: string, query: string, blockTypes
   }
 }
 
-function buildDocUrl(blockType: string, slugOrId: string): string {
-  if (!slugOrId) return '#';
+function buildDocUrl(blockType: string, sourceId: string): string {
+  if (!sourceId) return '#';
   switch (blockType) {
-    case 'apogee': return `/academy/apogee/category/${slugOrId}`;
-    case 'helpconfort': return `/academy/hc-base/category/${slugOrId}`;
+    case 'apogee': return `/academy/apogee/category/${sourceId}`;
+    case 'helpconfort': return `/academy/hc-base/category/${sourceId}`;
     case 'faq': return `/support/faq`;
     case 'document': return `/academy/hc-base`;
     default: return '#';

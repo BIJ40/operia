@@ -9,7 +9,6 @@ import { MainLayout } from "./components/layout";
 import { Loader2 } from "lucide-react";
 import { RoleGuard } from "./components/auth/RoleGuard";
 import { ModuleGuard } from "./components/auth/ModuleGuard";
-import { AgencyProvider } from "./apogee-connect/contexts/AgencyContext";
 import { SupportConsoleGuard } from "./components/auth/SupportConsoleGuard";
 import { FaqAdminGuard } from "./components/auth/FaqAdminGuard";
 
@@ -55,19 +54,6 @@ const IndicateursSAV = lazy(() => import("./apogee-connect/pages/IndicateursSAV"
 const PlanningHebdo = lazy(() => import("./apogee-connect/pages/PlanningHebdo"));
 const TechInterventionsPage = lazy(() => import("./modules/interventions_rt/pages/TechInterventionsPage"));
 const RtRunnerPage = lazy(() => import("./modules/interventions_rt/pages/RtRunnerPage"));
-const TechnicienIndex = lazy(() => import("./modules/technicien/pages/TechnicienIndex"));
-
-// Lazy loaded pages - Bon d'Intervention
-const BonInterventionList = lazy(() => import("./modules/bon_intervention/pages/BonInterventionList"));
-const BonInterventionForm = lazy(() => import("./modules/bon_intervention/pages/BonInterventionForm"));
-const BonInterventionSignature = lazy(() => import("./modules/bon_intervention/pages/BonInterventionSignature"));
-const BonInterventionRecap = lazy(() => import("./modules/bon_intervention/pages/BonInterventionRecap"));
-
-// Lazy loaded pages - PV Apporteur
-const PvApporteurList = lazy(() => import("./modules/pv_apporteur/pages/PvApporteurList"));
-const PvApporteurForm = lazy(() => import("./modules/pv_apporteur/pages/PvApporteurForm"));
-const PvApporteurSignature = lazy(() => import("./modules/pv_apporteur/pages/PvApporteurSignature"));
-const PvApporteurRecap = lazy(() => import("./modules/pv_apporteur/pages/PvApporteurRecap"));
 const EquipePage = lazy(() => import("./pages/EquipePage"));
 const Messages = lazy(() => import("./pages/Messages"));
 
@@ -108,7 +94,6 @@ const TDRUsersPage = lazy(() => import("./pages/TDRUsersPage"));
 // Lazy loaded pages - Admin
 const AdminIndex = lazy(() => import("./pages/AdminIndex"));
 const AdminSupportTickets = lazy(() => import("./pages/AdminSupportTickets"));
-const SupportSettings = lazy(() => import("./pages/admin/SupportSettings"));
 const AdminSupportStats = lazy(() => import("./pages/AdminSupportStats"));
 const AdminEscalationHistory = lazy(() => import("./pages/AdminEscalationHistory"));
 const AdminBackup = lazy(() => import("./pages/AdminBackup"));
@@ -126,7 +111,6 @@ const AdminAnnouncements = lazy(() => import("./pages/admin/AdminAnnouncements")
 const AdminFaq = lazy(() => import("./pages/admin/AdminFaq"));
 const FormationGenerator = lazy(() => import("./pages/admin/FormationGenerator"));
 const AdminWidgets = lazy(() => import("./pages/admin/AdminWidgets"));
-const AdminFeatureFlags = lazy(() => import("./pages/admin/AdminFeatureFlags"));
 const StatiaBuilderAdminPage = lazy(() => import("./statia/pages/StatiaBuilderAdminPage"));
 const StatiaValidatorPage = lazy(() => import("./statia/pages/StatiaValidatorPage"));
 const StatiaBuilderAgencyPage = lazy(() => import("./statia/pages/StatiaBuilderAgencyPage"));
@@ -164,7 +148,6 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { EditorProvider } from "./contexts/EditorContext";
 import { ApporteurEditorProvider } from "./contexts/ApporteurEditorContext";
 import { ImpersonationProvider } from "./contexts/ImpersonationContext";
-import { LiveSupportProvider } from "./contexts/LiveSupportContext";
 import { ChangePasswordDialog } from "./components/ChangePasswordDialog";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { GlobalErrorBoundary } from "./components/system/GlobalErrorBoundary";
@@ -263,24 +246,6 @@ function AppContent() {
           <Route path="/hc-agency/tech-interventions" element={<RoleGuard minRole="franchisee_user"><TechInterventionsPage /></RoleGuard>} />
           <Route path="/hc-agency/tech-interventions/rt/:interventionId" element={<RoleGuard minRole="franchisee_user"><RtRunnerPage /></RoleGuard>} />
           
-          {/* ============================================ */}
-          {/* MODULE TECHNICIEN - Hub + Sous-pages */}
-          {/* ============================================ */}
-          <Route path="/technicien" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="technicien"><TechnicienIndex /></ModuleGuard></RoleGuard></MainLayout>} />
-          
-          {/* Bon d'Intervention - Module Technicien (nécessite AgencyProvider pour useWeeklyTechPlanning) */}
-          <Route path="/technicien/bon-intervention" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="technicien"><AgencyProvider><BonInterventionList /></AgencyProvider></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/technicien/bon-intervention/:interventionId" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="technicien"><AgencyProvider><BonInterventionForm /></AgencyProvider></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/technicien/bon-intervention/:interventionId/signature" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="technicien"><AgencyProvider><BonInterventionSignature /></AgencyProvider></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/technicien/bon-intervention/:interventionId/recap" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="technicien"><AgencyProvider><BonInterventionRecap /></AgencyProvider></ModuleGuard></RoleGuard></MainLayout>} />
-          
-          {/* PV Apporteur - Module Technicien */}
-          <Route path="/technicien/pv-apporteur" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="technicien"><AgencyProvider><PvApporteurList /></AgencyProvider></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/technicien/pv-apporteur/:projectId" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="technicien"><AgencyProvider><PvApporteurForm /></AgencyProvider></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/technicien/pv-apporteur/:projectId/signature" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="technicien"><AgencyProvider><PvApporteurSignature /></AgencyProvider></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/technicien/pv-apporteur/:projectId/recap" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="technicien"><AgencyProvider><PvApporteurRecap /></AgencyProvider></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/technicien/bon-intervention/:interventionId/recap" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="technicien"><AgencyProvider><BonInterventionRecap /></AgencyProvider></ModuleGuard></RoleGuard></MainLayout>} />
-          
           {/* Équipe (legacy - redirects to collaborateurs) */}
           <Route path="/hc-agency/equipe" element={<Navigate to="/hc-agency/collaborateurs" replace />} />
           
@@ -307,8 +272,8 @@ function AppContent() {
           {/* Dashboard RH - Statistiques RH (Dirigeant/RH avec option rh_admin) */}
           <Route path="/hc-agency/dashboard-rh" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOption="rh_admin"><RHDashboardPage /></ModuleGuard></RoleGuard></MainLayout>} />
           
-          {/* StatIA Builder - Construction de métriques personnalisées (Admin N5+ uniquement) */}
-          <Route path="/hc-agency/statia-builder" element={<MainLayout><RoleGuard minRole="platform_admin"><StatiaBuilderAgencyPage /></RoleGuard></MainLayout>} />
+          {/* StatIA Builder - Construction de métriques personnalisées (N2+) */}
+          <Route path="/hc-agency/statia-builder" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><StatiaBuilderAgencyPage /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* Commercial - Outils commerciaux agence */}
           <Route path="/hc-agency/commercial" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><CommercialPage /></ModuleGuard></RoleGuard></MainLayout>} />
@@ -332,8 +297,6 @@ function AppContent() {
           <Route path="/support/faq" element={<MainLayout><Faq /></MainLayout>} />
           {/* SU Console - Support agents (N5+ strictement) - FIX F-PERM-3 */}
           <Route path="/support/console" element={<MainLayout><SupportConsoleGuard><AdminSupportTickets /></SupportConsoleGuard></MainLayout>} />
-          {/* Support Settings - Admin only */}
-          <Route path="/admin/support/settings" element={<MainLayout><SupportConsoleGuard><SupportSettings /></SupportConsoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* RÉSEAU FRANCHISEUR - Section Index + Sous-pages */}
@@ -409,7 +372,6 @@ function AppContent() {
           <Route path="/admin/statia-builder" element={<Navigate to="/admin/statia-by-bij" replace />} />
           <Route path="/admin/formation-generator" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><FormationGenerator /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/widgets" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminWidgets /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/admin/feature-flags" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminFeatureFlags /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* GESTION DE PROJET (ex Apogée Tickets) */}
@@ -436,7 +398,7 @@ function AppContent() {
           {/* ============================================ */}
           <Route path="/profile" element={<MainLayout><RoleGuard><Profile /></RoleGuard></MainLayout>} />
           <Route path="/favorites" element={<MainLayout><RoleGuard><Favorites /></RoleGuard></MainLayout>} />
-          <Route path="/changelog" element={<MainLayout requireAuth={false}><Changelog /></MainLayout>} />
+          <Route path="/changelog" element={<MainLayout><Changelog /></MainLayout>} />
           <Route path="/security-audit-report" element={<MainLayout><RoleGuard minRole="platform_admin"><SecurityAuditReport /></RoleGuard></MainLayout>} />
           <Route path="/security-documentation" element={<MainLayout><RoleGuard minRole="platform_admin"><SecurityDocumentation /></RoleGuard></MainLayout>} />
           
@@ -486,17 +448,15 @@ function App() {
         >
           <AuthProvider>
             <ImpersonationProvider>
-              <LiveSupportProvider>
-                <EditorProvider>
-                <ApporteurEditorProvider>
-                    <GlobalErrorBoundary>
-                      <AppContent />
-                    </GlobalErrorBoundary>
-                    <Toaster />
-                    <Sonner />
-                  </ApporteurEditorProvider>
-                </EditorProvider>
-              </LiveSupportProvider>
+              <EditorProvider>
+              <ApporteurEditorProvider>
+                  <GlobalErrorBoundary>
+                    <AppContent />
+                  </GlobalErrorBoundary>
+                  <Toaster />
+                  <Sonner />
+                </ApporteurEditorProvider>
+              </EditorProvider>
             </ImpersonationProvider>
           </AuthProvider>
         </BrowserRouter>

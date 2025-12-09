@@ -1,40 +1,43 @@
-export const APP_VERSION = '0.7.8';
-export const APP_CODENAME = 'Live Support & FAQ Integration';
+export const APP_VERSION = '0.7.7';
+export const APP_CODENAME = 'Audit complet Support Live';
 
 /**
- * Changelog v0.7.8 (2025-12-08)
+ * Changelog v0.7.7 (2025-12-07)
  * =============================
  * 
- * LIVE SUPPORT AMÉLIORATIONS
- * ---------------------------
+ * AUDIT COMPLET SUPPORT LIVE CHAT
+ * --------------------------------
  * 
- * 1. Context partagé LiveSupportContext
- *    - État centralisé pour session/dialog/messages
- *    - Synchronisation Indicator ↔ ChatDialog
- *    - Bouton "En attente..." fonctionnel
+ * 1. Correction conversion chat → ticket
+ *    - Type ticket correctement défini à 'ticket' (non 'chat_human')
+ *    - Liaison converted_ticket_id dans live_support_sessions
+ *    - Statut session mis à 'converted' après conversion
  * 
- * 2. Notifications temps réel corrigées
- *    - Écoute DELETE en plus de INSERT/UPDATE
- *    - Badge "Live" = sessions en attente uniquement
- *    - Mise à jour instantanée du compteur
+ * 2. Abonnement Realtime côté client
+ *    - useLiveSupportSession écoute status='converted'
+ *    - Fermeture automatique du chat côté client après conversion
+ *    - Reset de l'état local (sessionId, messages)
  * 
- * TICKETS → FAQ
- * --------------
+ * 3. Bouton Fermer fonctionnel
+ *    - onClose prop propagé depuis GlobalLiveSupportManager
+ *    - onClose prop propagé depuis AiInlineResult
+ *    - Reset état local avant appel onClose
  * 
- * 3. Reformulation IA des tickets résolus
- *    - Edge function reformulate-ticket-faq
- *    - Gemini 2.5 Flash via Lovable AI Gateway
- *    - Extraction question/réponse structurée
+ * 4. UI Console Support icônes seules
+ *    - Onglets Live/Actifs/Archives → icônes uniquement
+ *    - Onglets En cours/Archives sessions → icônes uniquement
+ *    - Tooltips via attribut title
  * 
- * 4. Ajout direct à la FAQ
- *    - Dialog TicketToFaqDialog
- *    - Sélection catégorie et contexte
- *    - Publication immédiate ou brouillon
+ * 5. Workflow unifié SU ↔ Client
+ *    - Agent ferme avec "Convertir en ticket" → ticket créé
+ *    - Client voit notification "Session convertie en ticket"
+ *    - Chat se ferme automatiquement côté client
+ *    - Ticket visible dans "Actifs" console support
  * 
- * CORRECTIONS PRÉCÉDENTES (v0.7.7)
+ * CORRECTIONS PRÉCÉDENTES (v0.7.x)
  * ---------------------------------
- * - Conversion chat → ticket type correct
- * - Abonnement Realtime status='converted'
- * - Bouton Fermer fonctionnel
- * - UI Console Support icônes seules
+ * - Correction RLS live_support_sessions
+ * - Création automatique session côté client
+ * - Badge "nouveau message" temps réel
+ * - Validation Zod conversations chatbot
  */

@@ -10,8 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle2, User, ArrowUpCircle, Clock, AlertTriangle, BookOpen } from 'lucide-react';
-import { TicketToFaqDialog } from './TicketToFaqDialog';
+import { CheckCircle2, User, ArrowUpCircle, Clock, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { SupportTicket } from '@/hooks/use-admin-support';
@@ -52,7 +51,6 @@ export function TicketDetails({
   onEscalate,
   supportUsers = [],
 }: TicketDetailsProps) {
-  const [showFaqDialog, setShowFaqDialog] = useState(false);
   const canEscalate = ticket.support_level && ticket.support_level < 3;
   const isResolved = ticket.status === 'resolved' || ticket.status === 'closed';
   
@@ -77,19 +75,6 @@ export function TicketDetails({
               <Button onClick={onEscalate} variant="outline" size="sm" className="text-orange-600 border-orange-300 hover:bg-orange-50 dark:hover:bg-orange-950/30">
                 <ArrowUpCircle className="w-4 h-4 mr-1" />
                 Escalader N{(ticket.support_level || 1) + 1}
-              </Button>
-            )}
-            
-            {/* Bouton Ajouter à la FAQ (tickets résolus) */}
-            {isResolved && (
-              <Button 
-                onClick={() => setShowFaqDialog(true)} 
-                variant="outline" 
-                size="sm"
-                className="text-violet-600 border-violet-300 hover:bg-violet-50 dark:border-violet-700 dark:text-violet-300 dark:hover:bg-violet-950/30"
-              >
-                <BookOpen className="w-4 h-4 mr-1" />
-                Ajouter à la FAQ
               </Button>
             )}
             
@@ -274,14 +259,6 @@ export function TicketDetails({
               </Accordion>
             </div>
           )}
-
-        {/* Dialog FAQ pour tickets résolus */}
-        <TicketToFaqDialog
-          open={showFaqDialog}
-          onOpenChange={setShowFaqDialog}
-          ticketSubject={ticket.subject || ''}
-          ticketMessages={ticket.chatbot_conversation || []}
-        />
       </CardContent>
     </Card>
   );

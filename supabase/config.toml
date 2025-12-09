@@ -119,6 +119,3 @@ verify_jwt = false
 
 [functions.generate-embeddings]
 verify_jwt = true
-
-[functions.reformulate-ticket-faq]
-verify_jwt = true

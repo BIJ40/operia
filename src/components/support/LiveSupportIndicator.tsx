@@ -6,7 +6,7 @@
 import { motion } from 'framer-motion';
 import { MessageCircle, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useLiveSupportContext } from '@/contexts/LiveSupportContext';
+import { useLiveSupportSession } from '@/hooks/useLiveSupportSession';
 import { cn } from '@/lib/utils';
 
 interface LiveSupportIndicatorProps {
@@ -20,22 +20,13 @@ export function LiveSupportIndicator({ className }: LiveSupportIndicatorProps) {
     isConnected, 
     openChat, 
     closeSession 
-  } = useLiveSupportContext();
+  } = useLiveSupportSession();
 
   if (!hasActiveSession) return null;
 
   const handleClose = (e: React.MouseEvent) => {
     e.stopPropagation();
     closeSession();
-  };
-
-  const handleOpenChat = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('[LiveSupportIndicator] Opening chat, hasActiveSession:', hasActiveSession);
-    if (hasActiveSession) {
-      openChat();
-    }
   };
 
   return (
@@ -46,7 +37,7 @@ export function LiveSupportIndicator({ className }: LiveSupportIndicatorProps) {
       className={cn("flex items-center", className)}
     >
       <Button
-        onClick={handleOpenChat}
+        onClick={openChat}
         size="sm"
         className={cn(
           "relative gap-2 rounded-full px-4 shadow-lg transition-all",

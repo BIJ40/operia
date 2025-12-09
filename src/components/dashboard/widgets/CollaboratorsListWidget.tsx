@@ -55,7 +55,7 @@ export function CollaboratorsListWidget() {
           Aucun collaborateur
         </p>
         <Button asChild size="sm" variant="outline">
-          <Link to="/hc-agency/collaborateurs">
+          <Link to="/hc-agency/equipe">
             <Plus className="h-4 w-4 mr-1" />
             Ajouter un collaborateur
           </Link>
@@ -82,7 +82,7 @@ export function CollaboratorsListWidget() {
       {collaborators.map((collab) => (
         <Link
           key={collab.id}
-          to={`/hc-agency/collaborateurs/${collab.id}`}
+          to={`/hc-agency/equipe/${collab.id}`}
           className="flex items-center gap-2 p-2 rounded-lg hover:bg-accent/50 transition-colors"
         >
           <Avatar className="h-8 w-8">
@@ -102,7 +102,7 @@ export function CollaboratorsListWidget() {
       ))}
       
       <Link
-        to="/hc-agency/collaborateurs"
+        to="/hc-agency/equipe"
         className="flex items-center justify-center gap-1 p-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
       >
         <User className="h-3 w-3" />
