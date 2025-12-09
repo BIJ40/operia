@@ -15,6 +15,7 @@ import { usePendingDocumentRequestsCount } from "@/hooks/useDocumentRequests";
 import { Badge } from "@/components/ui/badge";
 import { isModuleOptionEnabled } from "@/types/modules";
 import { ROUTES } from "@/config/routes";
+import { PageHeader } from "@/components/layout/PageHeader";
 import type { LucideIcon } from "lucide-react";
 
 interface RHModule {
@@ -184,17 +185,13 @@ export default function RHIndex() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-helpconfort-orange/10">
-          <Users className="h-6 w-6 text-helpconfort-orange" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Ressources Humaines</h1>
-          <p className="text-sm text-muted-foreground">Gestion RH et documents collaborateurs</p>
-        </div>
-      </div>
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <PageHeader
+        title="Ressources Humaines"
+        subtitle="Gestion RH et documents collaborateurs"
+        backTo="/"
+        backLabel="Accueil"
+      />
 
       {/* Sections */}
       {(['salarie', 'dirigeant'] as const).map(sectionKey => {

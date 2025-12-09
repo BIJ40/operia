@@ -64,10 +64,10 @@ export default function CollaborateursPage() {
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       <PageHeader
-        title="Collaborateurs"
+        title="Mon équipe"
         subtitle="Gestion des collaborateurs de l'agence"
-        backTo={ROUTES.pilotage.index}
-        backLabel="Mon Agence"
+        backTo={ROUTES.rh.index}
+        backLabel="Espace RH"
       />
       <CollaboratorList
         collaborators={collaborators}

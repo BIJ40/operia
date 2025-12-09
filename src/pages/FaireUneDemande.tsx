@@ -24,6 +24,8 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { LeaveRequestWizard } from '@/components/leave/LeaveRequestWizard';
 import { JustificationUpload } from '@/components/leave/JustificationUpload';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { ROUTES } from '@/config/routes';
 
 const STATUS_ICONS: Record<LeaveStatus, typeof Clock> = {
   DRAFT: Clock,
@@ -59,7 +61,13 @@ export default function FaireUneDemande() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <PageHeader
+        title="Faire une demande"
+        subtitle="Demandez un congé, une absence ou un document"
+        backTo={ROUTES.rh.index}
+        backLabel="Espace RH"
+      />
       {/* Bouton principal */}
       <Card className="border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-helpconfort-blue/5 via-background to-background">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
