@@ -23,6 +23,7 @@ export interface DashboardTile {
   requiresModule?: ModuleKey; // Requires specific module to be enabled
   requiresModuleOption?: string; // Requires specific module option (e.g., 'coffre' for rh_parc.coffre)
   requiresModuleOptions?: string[]; // OR logic - at least one option required
+  featureFlagKey?: string; // Clé du feature flag global (ex: 'pilotage.actions-mener')
   badge?: string;
   isDisabled?: boolean; // Tuile grisée "Bientôt disponible"
 }
@@ -84,6 +85,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     color: 'accent',
     group: 'pilotage',
     requiresModule: 'pilotage_agence',
+    featureFlagKey: 'pilotage.actions-mener',
   },
   {
     id: 'MAINTENANCE_PREVENTIVE',
@@ -106,6 +108,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     color: 'accent',
     group: 'pilotage',
     requiresModule: 'pilotage_agence',
+    featureFlagKey: 'pilotage.diffusion',
     badge: 'En cours',
   },
   {
@@ -119,6 +122,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     group: 'rh',
     requiresModule: 'rh',
     requiresModuleOptions: ['rh_viewer', 'rh_admin'],
+    featureFlagKey: 'rh.validation-plannings',
     badge: 'Bientôt',
     isDisabled: true,
   },
