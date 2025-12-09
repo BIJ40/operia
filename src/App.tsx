@@ -19,7 +19,6 @@ import Error403 from "./pages/Error403";
 
 // Dashboard
 const Dashboard = lazy(() => import("./pages/Dashboard"));
-const HubHome = lazy(() => import("./pages/HubHome"));
 const DashboardWidgets = lazy(() => import("./pages/DashboardWidgets"));
 import Error500 from "./pages/Error500";
 
@@ -189,9 +188,6 @@ function AppContent() {
       
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          {/* Hub Central - Navigation expérimentale */}
-          <Route path="/hub" element={<MainLayout><RoleGuard minRole="franchisee_user"><HubHome /></RoleGuard></MainLayout>} />
-          
           {/* Dashboard / Home - Le dashboard personnalisable est la page d'accueil */}
           <Route path="/" element={<MainLayout><RoleGuard minRole="franchisee_user"><Dashboard /></RoleGuard></MainLayout>} />
           <Route path="/widgets" element={<MainLayout><RoleGuard minRole="franchisee_user"><DashboardWidgets /></RoleGuard></MainLayout>} />
