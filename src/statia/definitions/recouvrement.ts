@@ -6,6 +6,7 @@
 import { StatDefinition, LoadedData, StatParams, StatResult } from './types';
 import { extractFactureMeta } from '../rules/rules';
 import { isFactureStateIncluded } from '../engine/normalizers';
+import { calculateDelaiPaiementApporteur } from '../shared/delaiPaiementApporteur';
 
 /**
  * Taux de Recouvrement Global (en flux sur la période)
@@ -314,9 +315,6 @@ export const delaiPaiementDossier: StatDefinition = {
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const { projects, clients } = data;
     
-    // Utiliser la fonction centralisée de calcul délai paiement apporteur
-    const { calculateDelaiPaiementApporteur } = require('../shared/delaiPaiementApporteur');
-    
     const result = calculateDelaiPaiementApporteur(projects, clients, {
       dateStart: params.dateRange.start,
       dateEnd: params.dateRange.end,
@@ -326,17 +324,17 @@ export const delaiPaiementDossier: StatDefinition = {
     
     // Retourner les valeurs globales (pas par apporteur)
     return {
-      value: result.globalAverageDays ?? 0,
+      value: result.moyenneGlobale ?? 0,
       metadata: {
         computedAt: new Date(),
         source: 'projects',
-        recordCount: result.debugStats?.totalProjectsAnalyzed || 0,
+        recordCount: result.nbDossiersTotal || 0,
       },
       breakdown: {
-        moyenne: result.globalAverageDays,
-        mediane: result.globalMedianDays,
-        nbDossiersValides: result.debugStats?.projectsWithValidDelay || 0,
-        nbApporteurs: result.apporteurs.length,
+        moyenne: result.moyenneGlobale,
+        mediane: result.medianeGlobale,
+        nbDossiersValides: result.nbDossiersTotal || 0,
+        nbApporteurs: result.nbApporteurs,
       }
     };
   }
