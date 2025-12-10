@@ -1,11 +1,11 @@
-import { useStatiaIndicateurs } from '@/statia/hooks/useStatiaIndicateurs';
+import { useApporteursStatia } from '@/statia/hooks/useApporteursStatia';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrency } from '@/lib/formatters';
 import { AlertCircle } from 'lucide-react';
 
 export default function EncoursModal() {
-  const { data, isLoading } = useStatiaIndicateurs();
+  const { data, isLoading } = useApporteursStatia();
   if (isLoading) return <Skeleton className="h-48 w-full" />;
 
   return (
@@ -15,7 +15,7 @@ export default function EncoursModal() {
         <div>
           <p className="text-sm text-muted-foreground">Encours Global TTC</p>
           <p className="text-4xl font-bold text-orange-600 mt-1">
-            {data?.encoursGlobalTTC ? formatCurrency(data.encoursGlobalTTC) : '–'}
+            {data?.duGlobal ? formatCurrency(data.duGlobal) : '–'}
           </p>
         </div>
       </div>

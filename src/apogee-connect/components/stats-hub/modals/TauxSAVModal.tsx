@@ -12,9 +12,9 @@ export default function TauxSAVModal() {
       <div className="flex items-start gap-3">
         <AlertTriangle className="h-6 w-6 text-red-500" />
         <div>
-          <p className="text-sm text-muted-foreground">Taux SAV (YTD)</p>
+          <p className="text-sm text-muted-foreground">Taux SAV Global</p>
           <p className="text-4xl font-bold text-red-600 mt-1">
-            {(data?.tauxSAVYTD ?? 0).toFixed(1)}%
+            {(data?.tauxSavGlobal ?? 0).toFixed(1)}%
           </p>
         </div>
       </div>

@@ -7,7 +7,7 @@ export default function SAVListeModal() {
   const { data, isLoading } = useStatiaSAVMetrics();
   if (isLoading) return <Skeleton className="h-80 w-full" />;
 
-  const count = data?.nbSAVDossiers ?? 0;
+  const count = data?.nbSavGlobal ?? 0;
 
   return (
     <Card className="p-4">
