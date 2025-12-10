@@ -74,7 +74,7 @@ export function KpiCard({
       .trim();
   };
 
-  return (
+  const cardContent = (
     <Card
       className={cn(
         'relative p-4 border-l-4 cursor-pointer group',
@@ -86,33 +86,7 @@ export function KpiCard({
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-2">
-        <div className="flex items-center gap-1">
-          <h4 className="text-sm font-medium text-muted-foreground">{title}</h4>
-          {breakdown && Object.keys(breakdown).length > 0 && (
-            <TooltipProvider>
-              <Tooltip delayDuration={200}>
-                <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
-                  <Info className="h-3.5 w-3.5 text-muted-foreground/60 hover:text-muted-foreground cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent 
-                  side="top" 
-                  align="start"
-                  className="max-w-xs bg-popover border border-border shadow-lg p-3"
-                >
-                  <div className="space-y-1.5">
-                    <p className="font-semibold text-sm text-foreground mb-2">Détail du calcul</p>
-                    {Object.entries(breakdown).map(([key, val]) => (
-                      <div key={key} className="flex justify-between gap-4 text-xs">
-                        <span className="text-muted-foreground">{formatBreakdownLabel(key)}</span>
-                        <span className="font-medium text-foreground">{formatBreakdownValue(key, val)}</span>
-                      </div>
-                    ))}
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-        </div>
+        <h4 className="text-sm font-medium text-muted-foreground">{title}</h4>
         <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
 
@@ -147,7 +121,7 @@ export function KpiCard({
           )}
         </div>
 
-      {/* Mini graph - visible container */}
+        {/* Mini graph */}
         <div className="w-24 h-14 flex-shrink-0 bg-muted/30 rounded-md overflow-hidden">
           {miniGraphType === 'sparkline' && sparklineData.length > 0 && (
             <MiniSparkline data={sparklineData} color={color} />
@@ -164,4 +138,34 @@ export function KpiCard({
       </div>
     </Card>
   );
+
+  // If breakdown exists, wrap in tooltip
+  if (breakdown && Object.keys(breakdown).length > 0) {
+    return (
+      <TooltipProvider>
+        <Tooltip delayDuration={300}>
+          <TooltipTrigger asChild>
+            {cardContent}
+          </TooltipTrigger>
+          <TooltipContent 
+            side="top" 
+            align="center"
+            className="max-w-xs bg-popover border border-border shadow-lg p-3"
+          >
+            <div className="space-y-1.5">
+              <p className="font-semibold text-sm text-foreground mb-2">Détail du calcul</p>
+              {Object.entries(breakdown).map(([key, val]) => (
+                <div key={key} className="flex justify-between gap-4 text-xs">
+                  <span className="text-muted-foreground">{formatBreakdownLabel(key)}</span>
+                  <span className="font-medium text-foreground">{formatBreakdownValue(key, val)}</span>
+                </div>
+              ))}
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return cardContent;
 }
