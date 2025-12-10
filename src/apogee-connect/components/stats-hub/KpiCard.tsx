@@ -92,7 +92,7 @@ export function KpiCard({
         </div>
 
         {/* Mini graph */}
-        <div className="w-16 h-10 flex items-end">
+        <div className="w-20 h-12 flex-shrink-0">
           {miniGraphType === 'sparkline' && sparklineData.length > 0 && (
             <MiniSparkline data={sparklineData} color={color} />
           )}
