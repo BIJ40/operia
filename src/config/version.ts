@@ -1,40 +1,36 @@
-export const APP_VERSION = '0.7.8';
-export const APP_CODENAME = 'Live Support & FAQ Integration';
+export const APP_VERSION = '0.7.9';
+export const APP_CODENAME = 'Modules & Stabilité';
 
 /**
- * Changelog v0.7.8 (2025-12-08)
+ * Changelog v0.7.9 (2025-12-10)
  * =============================
  * 
- * LIVE SUPPORT AMÉLIORATIONS
- * ---------------------------
+ * GESTION DES MODULES
+ * --------------------
  * 
- * 1. Context partagé LiveSupportContext
- *    - État centralisé pour session/dialog/messages
- *    - Synchronisation Indicator ↔ ChatDialog
- *    - Bouton "En attente..." fonctionnel
+ * 1. Nouveaux modules Pilotage Agence
+ *    - stats_hub: Stats Hub avancé (désactivé par défaut)
+ *    - veille_apporteurs: Veille Apporteurs (désactivé par défaut)
+ *    - Guards ModuleGuard sur toutes les routes concernées
  * 
- * 2. Notifications temps réel corrigées
- *    - Écoute DELETE en plus de INSERT/UPDATE
- *    - Badge "Live" = sessions en attente uniquement
- *    - Mise à jour instantanée du compteur
+ * 2. Protection des routes par module
+ *    - /hc-agency/stats-hub → pilotage_agence.stats_hub
+ *    - /hc-agency/indicateurs → pilotage_agence.indicateurs
+ *    - /hc-agency/veille-apporteurs → pilotage_agence.veille_apporteurs
+ *    - /hc-agency/actions → pilotage_agence.actions_a_mener
+ *    - /hc-agency/statistiques/diffusion → pilotage_agence.diffusion
  * 
- * TICKETS → FAQ
- * --------------
+ * CORRECTIONS STABILITÉ
+ * ----------------------
  * 
- * 3. Reformulation IA des tickets résolus
- *    - Edge function reformulate-ticket-faq
- *    - Gemini 2.5 Flash via Lovable AI Gateway
- *    - Extraction question/réponse structurée
+ * 3. Rechargement intempestif des pages corrigé
+ *    - AgencyContext: cache vidé uniquement si agence change réellement
+ *    - useStatiaSAVMetrics: queryKey sans overridesVersion
+ *    - Persistance état lors changement d'onglet navigateur
  * 
- * 4. Ajout direct à la FAQ
- *    - Dialog TicketToFaqDialog
- *    - Sélection catégorie et contexte
- *    - Publication immédiate ou brouillon
- * 
- * CORRECTIONS PRÉCÉDENTES (v0.7.7)
- * ---------------------------------
- * - Conversion chat → ticket type correct
- * - Abonnement Realtime status='converted'
- * - Bouton Fermer fonctionnel
- * - UI Console Support icônes seules
+ * PRÉCÉDENT (v0.7.8)
+ * -------------------
+ * - Live Support améliorations
+ * - Tickets → FAQ avec reformulation IA
+ * - Notifications temps réel corrigées
  */
