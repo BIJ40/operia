@@ -1,13 +1,13 @@
 import { useFilters } from "@/apogee-connect/contexts/FiltersContext";
-import { UnifiedPeriodSelector } from "@/components/shared/UnifiedPeriodSelector";
+import { UnifiedPeriodSelector, PeriodValue } from "@/components/shared/UnifiedPeriodSelector";
 
 export const PeriodSelector = () => {
   const { filters, setDateRange } = useFilters();
 
   return (
     <UnifiedPeriodSelector
-      value={filters.periodLabel}
-      onChange={(start, end, label) => setDateRange(start, end, label)}
+      value={filters.periodType || 'month'}
+      onChange={(start, end, label, periodValue) => setDateRange(start, end, label, periodValue)}
       availablePeriods={['today', 'yesterday', 'week', 'month', 'month-1', 'year', 'year-1', 'custom']}
       variant="compact"
       showCustomPicker={true}
