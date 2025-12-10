@@ -1,6 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StatsHubProvider, useStatsHub } from '../components/stats-hub/StatsHubContext';
-import { StatModal } from '../components/stats-hub/StatModal';
 import { TABS_CONFIG, TabId } from '../components/stats-hub/types';
 import { GeneralTab, ApporteursTab, TechniciensTab, UniversTab, SAVTab } from '../components/stats-hub/tabs';
 import { LayoutDashboard, Building2, Users, Layers, AlertTriangle } from 'lucide-react';
@@ -69,11 +68,9 @@ function StatsHubContent() {
         </AnimatePresence>
       </Tabs>
 
-      <StatModal />
-
       {/* Keyboard hint */}
       <div className="text-center text-xs text-muted-foreground">
-        Touches 1-5 pour changer d'onglet • Cliquer sur une tuile pour les détails
+        Touches 1-5 pour changer d'onglet
       </div>
     </div>
   );
