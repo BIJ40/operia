@@ -22,11 +22,21 @@ function parseDate(val: any): Date | null {
 
 /**
  * Vérifie si une intervention est de type SAV
- * RÈGLE MÉTIER STRICTE: type2 === "SAV" (égalité exacte) OU picto SAV
+ * RÈGLE MÉTIER STRICTE: type2 === "SAV" (égalité exacte) au niveau intervention OU visite OU picto SAV
  */
 function isSAVIntervention(intervention: any): boolean {
   const type2 = (intervention.type2 || intervention.data?.type2 || '').toLowerCase().trim();
   if (type2 === 'sav') return true;
+  
+  // Vérifier les visites
+  const visites = intervention.data?.visites || intervention.visites || [];
+  if (Array.isArray(visites)) {
+    const hasSAVVisite = visites.some((visite: any) => {
+      const visiteType2 = (visite.type2 || visite.data?.type2 || '').toLowerCase().trim();
+      return visiteType2 === 'sav';
+    });
+    if (hasSAVVisite) return true;
+  }
   
   const pictos = intervention.data?.pictosInterv ?? [];
   if (Array.isArray(pictos) && pictos.some((p: any) => String(p).toLowerCase().trim() === 'sav')) {

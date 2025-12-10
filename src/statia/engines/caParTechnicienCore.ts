@@ -51,11 +51,21 @@ export function isRTIntervention(intervention: any): boolean {
 
 /**
  * Vérifie si une intervention est de type SAV - NON PRODUCTIF pour les stats technicien
- * RÈGLE MÉTIER STRICTE: type2 === "SAV" (égalité exacte, pas includes)
+ * RÈGLE MÉTIER STRICTE: type2 === "SAV" (égalité exacte) au niveau intervention OU visite
  */
 export function isSAVIntervention(intervention: any): boolean {
   const type2 = (intervention.type2 || intervention.data?.type2 || '').toLowerCase().trim();
-  return type2 === 'sav';
+  if (type2 === 'sav') return true;
+  
+  // Vérifier aussi les visites
+  const visites = intervention.data?.visites || intervention.visites || [];
+  if (Array.isArray(visites)) {
+    return visites.some((visite: any) => {
+      const visiteType2 = (visite.type2 || visite.data?.type2 || '').toLowerCase().trim();
+      return visiteType2 === 'sav';
+    });
+  }
+  return false;
 }
 
 /**

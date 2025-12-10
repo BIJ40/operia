@@ -344,17 +344,29 @@ export function isInterventionRealisee(intervention: any): boolean {
 
 /**
  * Vérifie si une intervention est de type SAV
- * RÈGLE MÉTIER STRICTE: type2 === "SAV" (égalité exacte) OU picto SAV
+ * RÈGLE MÉTIER STRICTE: 
+ * - type2 === "SAV" (égalité exacte) au niveau intervention OU visite
+ * - OU picto SAV présent
  * NE PAS utiliser .includes() pour éviter les faux positifs (ex: "savoir" contient "sav")
  */
 export function isSAVIntervention(intervention: any): boolean {
-  // Règle 1: Type2 d'intervention === "SAV" (égalité stricte, pas includes)
+  // Règle 1: Type2 d'intervention === "SAV" (égalité stricte)
   const type2 = (intervention.data?.type2 || intervention.type2 || '').toLowerCase().trim();
   if (type2 === 'sav') {
     return true;
   }
   
-  // Règle 2: Picto SAV présent (égalité stricte)
+  // Règle 2: Type2 d'une visite === "SAV" (égalité stricte)
+  const visites = intervention.data?.visites || intervention.visites || [];
+  if (Array.isArray(visites)) {
+    const hasSAVVisite = visites.some((visite: any) => {
+      const visiteType2 = (visite.type2 || visite.data?.type2 || '').toLowerCase().trim();
+      return visiteType2 === 'sav';
+    });
+    if (hasSAVVisite) return true;
+  }
+  
+  // Règle 3: Picto SAV présent (égalité stricte)
   const pictos = intervention.data?.pictosInterv || intervention.pictosInterv || [];
   if (Array.isArray(pictos)) {
     const hasSAVPicto = pictos.some((picto: any) => {
