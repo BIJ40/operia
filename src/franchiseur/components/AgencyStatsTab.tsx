@@ -15,6 +15,9 @@ interface AgencyStatsTabProps {
 
 export function AgencyStatsTab({ agencySlug }: AgencyStatsTabProps) {
   const { filters } = useFilters();
+  
+  // Ne pas charger les données pour les agences système (templates)
+  const isSystemAgency = agencySlug?.startsWith('_');
 
   const { data, isLoading } = useQuery({
     queryKey: ['franchiseur-agency-stats', agencySlug, filters.dateRange],
@@ -61,10 +64,19 @@ export function AgencyStatsTab({ agencySlug }: AgencyStatsTabProps) {
         volumeDevis: caDevis,
       };
     },
-    enabled: !!agencySlug,
+    enabled: !!agencySlug && !isSystemAgency,
     staleTime: 5 * 60 * 1000,
   });
 
+
+  // Afficher un message pour les agences système
+  if (isSystemAgency) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        <p>Cette agence système ne dispose pas de statistiques Apogée.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
