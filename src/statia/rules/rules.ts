@@ -204,12 +204,17 @@ export function isProductiveIntervention(intervention: any): boolean {
 
 /**
  * Vérifie si une intervention est SAV
+ * RÈGLE MÉTIER STRICTE: type2 === "SAV" (égalité exacte) OU picto SAV
  */
 export function isSAVIntervention(intervention: any): boolean {
-  const type = resolveInterventionType(intervention);
-  return type.toLowerCase() === 'sav' || 
-         intervention.data?.isSAV === true ||
-         intervention.isSAV === true;
+  const type2 = (intervention.data?.type2 || intervention.type2 || '').toLowerCase().trim();
+  if (type2 === 'sav') return true;
+  
+  const pictos = intervention.data?.pictosInterv || [];
+  if (Array.isArray(pictos) && pictos.some((p: any) => String(p).toLowerCase().trim() === 'sav')) {
+    return true;
+  }
+  return false;
 }
 
 /**

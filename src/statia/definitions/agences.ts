@@ -20,11 +20,19 @@ function parseDate(val: any): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
+/**
+ * Vérifie si une intervention est de type SAV
+ * RÈGLE MÉTIER STRICTE: type2 === "SAV" (égalité exacte) OU picto SAV
+ */
 function isSAVIntervention(intervention: any): boolean {
-  const type2 = (intervention.type2 || intervention.data?.type2 || '').toLowerCase();
-  const type = (intervention.type || intervention.data?.type || '').toLowerCase();
+  const type2 = (intervention.type2 || intervention.data?.type2 || '').toLowerCase().trim();
+  if (type2 === 'sav') return true;
+  
   const pictos = intervention.data?.pictosInterv ?? [];
-  return type2.includes('sav') || type.includes('sav') || pictos.includes('SAV');
+  if (Array.isArray(pictos) && pictos.some((p: any) => String(p).toLowerCase().trim() === 'sav')) {
+    return true;
+  }
+  return false;
 }
 
 // ============= METRIC: CA par Agence =============

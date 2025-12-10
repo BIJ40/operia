@@ -267,18 +267,16 @@ export const SPECIAL_PRODUCTIVE_TYPE2 = [
 ];
 
 /**
- * Types SAV - RÈGLE HARMONISÉE
+ * Types SAV - RÈGLE MÉTIER STRICTE
  * 
- * La détection SAV utilise `.includes('sav')` sur type/type2 pour matcher:
- * - "SAV"
- * - "SAV + Dépannage"  
- * - "Retour SAV"
- * - etc.
+ * La détection SAV utilise UNIQUEMENT:
+ * - type2 === "SAV" (égalité EXACTE, pas includes)
+ * - OU picto SAV présent
  * 
- * Cette liste est conservée pour référence mais la détection réelle
- * utilise `.includes('sav')` dans toutes les fonctions isSAVIntervention/isSavProjectAutoDetect
+ * NE PAS utiliser .includes('sav') pour éviter les faux positifs
+ * (ex: "savoir" contient "sav" mais n'est pas un SAV)
  */
-export const SAV_TYPES = ['SAV', 'sav'];
+export const SAV_TYPES = ['SAV'];
 
 /**
  * Types RT uniquement

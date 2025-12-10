@@ -344,19 +344,17 @@ export function isInterventionRealisee(intervention: any): boolean {
 
 /**
  * Vérifie si une intervention est de type SAV
- * RÈGLE HARMONISÉE: type/type2 CONTIENT "sav" OU picto SAV présent
- * Permet de matcher "SAV", "SAV + Dépannage", "Retour SAV", etc.
+ * RÈGLE MÉTIER STRICTE: type2 === "SAV" (égalité exacte) OU picto SAV
+ * NE PAS utiliser .includes() pour éviter les faux positifs (ex: "savoir" contient "sav")
  */
 export function isSAVIntervention(intervention: any): boolean {
-  // Règle 1: Type d'intervention CONTIENT "sav" (pas égalité stricte)
+  // Règle 1: Type2 d'intervention === "SAV" (égalité stricte, pas includes)
   const type2 = (intervention.data?.type2 || intervention.type2 || '').toLowerCase().trim();
-  const type = (intervention.data?.type || intervention.type || '').toLowerCase().trim();
-  
-  if (type2.includes('sav') || type.includes('sav')) {
+  if (type2 === 'sav') {
     return true;
   }
   
-  // Règle 2: Picto SAV présent dans les pictos de l'intervention (égalité stricte pour pictos)
+  // Règle 2: Picto SAV présent (égalité stricte)
   const pictos = intervention.data?.pictosInterv || intervention.pictosInterv || [];
   if (Array.isArray(pictos)) {
     const hasSAVPicto = pictos.some((picto: any) => {
