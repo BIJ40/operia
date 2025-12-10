@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { TabId } from './types';
 
 const STORAGE_KEY = 'stats-hub-active-tab';
-const VALID_TABS: TabId[] = ['general', 'apporteurs', 'techniciens', 'univers', 'sav'];
+const VALID_TABS: TabId[] = ['general', 'apporteurs', 'techniciens', 'univers', 'sav', 'previsionnel'];
 
 function getStoredTab(): TabId {
   try {
@@ -35,14 +35,14 @@ export function StatsHubProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Keyboard shortcuts for tabs (1-5)
+  // Keyboard shortcuts for tabs (1-6)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
       const num = parseInt(e.key);
-      if (num >= 1 && num <= 5) {
+      if (num >= 1 && num <= 6) {
         setActiveTab(VALID_TABS[num - 1]);
       }
     };

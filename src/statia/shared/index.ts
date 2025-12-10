@@ -30,3 +30,11 @@ export {
   isAvoirType,
   type FactureMeta,
 } from './factureMeta';
+
+// Charge travaux à venir
+export {
+  computeChargeTravauxAvenirParUnivers,
+  type ChargeTravauxResult,
+  type ChargeTravauxProjet,
+  type ChargeTravauxUniversStats
+} from './chargeTravauxEngine';

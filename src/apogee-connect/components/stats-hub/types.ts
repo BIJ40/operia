@@ -2,7 +2,7 @@
  * Types pour le Stats Hub unifié
  */
 
-export type TabId = 'general' | 'apporteurs' | 'techniciens' | 'univers' | 'sav';
+export type TabId = 'general' | 'apporteurs' | 'techniciens' | 'univers' | 'sav' | 'previsionnel';
 
 export interface TabConfig {
   id: TabId;
@@ -17,6 +17,7 @@ export const TABS_CONFIG: TabConfig[] = [
   { id: 'techniciens', label: 'Techniciens', icon: 'Users', color: 'green' },
   { id: 'univers', label: 'Univers', icon: 'Layers', color: 'purple' },
   { id: 'sav', label: 'SAV', icon: 'AlertTriangle', color: 'orange' },
+  { id: 'previsionnel', label: 'Prévisionnel', icon: 'Calendar', color: 'cyan' },
 ];
 
 export type MiniGraphType = 'sparkline' | 'gauge' | 'bar' | 'none';
@@ -106,6 +107,14 @@ export const STATS_INDEX: StatItem[] = [
   { id: 'widget_sav_type', tab: 'sav', title: 'SAV par Type', miniGraphType: 'none', order: 6, isWidget: true, modalContentId: 'sav_type' },
   { id: 'widget_sav_evolution', tab: 'sav', title: 'Évolution SAV', miniGraphType: 'none', order: 7, isWidget: true, modalContentId: 'sav_evolution' },
   { id: 'widget_sav_liste', tab: 'sav', title: 'Liste Dossiers SAV', miniGraphType: 'none', order: 8, isWidget: true, modalContentId: 'sav_liste' },
+
+  // === PRÉVISIONNEL (4 KPIs + 2 Widgets) ===
+  { id: 'prev_heures_tech', tab: 'previsionnel', title: 'Heures Tech', subtitle: 'à planifier', miniGraphType: 'bar', order: 1 },
+  { id: 'prev_heures_rdv', tab: 'previsionnel', title: 'Heures RDV', subtitle: 'à programmer', miniGraphType: 'bar', order: 2 },
+  { id: 'prev_nb_dossiers', tab: 'previsionnel', title: 'Dossiers', subtitle: 'en attente', miniGraphType: 'bar', order: 3 },
+  { id: 'prev_nb_univers', tab: 'previsionnel', title: 'Univers', subtitle: 'concernés', miniGraphType: 'bar', order: 4 },
+  { id: 'widget_charge_univers', tab: 'previsionnel', title: 'Charge par Univers', miniGraphType: 'none', order: 5, isWidget: true, modalContentId: 'charge_univers' },
+  { id: 'widget_dossiers_liste', tab: 'previsionnel', title: 'Liste des Dossiers', miniGraphType: 'none', order: 6, isWidget: true, modalContentId: 'dossiers_liste' },
 ];
 
 // Helper pour obtenir toutes les stats d'un onglet
