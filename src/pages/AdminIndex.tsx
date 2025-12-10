@@ -2,8 +2,7 @@ import { Link } from 'react-router-dom';
 import { 
   Settings, Users, Building2, Activity, TrendingUp, Headset, BarChart3, 
   History, Bot, BookOpen, FlaskConical, Sparkles, Database, FileStack, 
-  Archive, Bell, LayoutGrid, HardDrive, ToggleLeft, HelpCircle, Shield,
-  Key, UserCog, FolderLock, Brain, Cpu, Server, FileText
+  Archive, Bell, HardDrive, HelpCircle, Shield, Brain, Cpu, FileText
 } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { cn } from '@/lib/utils';
@@ -89,12 +88,10 @@ export default function AdminIndex() {
           icon={Shield} 
           color="bg-red-500"
         >
-          <AdminLink to={ROUTES.admin.users} icon={Users} title="Utilisateurs" description="Comptes et rôles" />
+          <AdminLink to={ROUTES.admin.permissionsCenter} icon={Shield} title="Centre de Permissions" description="Rôles, modules et accès" />
+          <AdminLink to={ROUTES.admin.users} icon={Users} title="Utilisateurs" description="Gestion des comptes" />
           <AdminLink to={ROUTES.admin.agencies} icon={Building2} title="Agences" description="Configuration agences" />
           <AdminLink to={ROUTES.admin.userActivity} icon={TrendingUp} title="Activité" description="Connexions utilisateurs" />
-          <AdminLink to={ROUTES.admin.featureFlags} icon={ToggleLeft} title="Feature Flags" description="Modules activables" />
-          <AdminLink to={ROUTES.admin.widgets} icon={LayoutGrid} title="Widgets" description="Permissions dashboard" />
-          <AdminLink to={ROUTES.projects.permissions} icon={Key} title="Permissions Projet" description="Rôles gestion projet" />
         </AdminSection>
 
         {/* INTELLIGENCE ARTIFICIELLE */}
