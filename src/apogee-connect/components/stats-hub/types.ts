@@ -109,8 +109,8 @@ export const STATS_INDEX: StatItem[] = [
   { id: 'widget_sav_liste', tab: 'sav', title: 'Liste Dossiers SAV', miniGraphType: 'none', order: 8, isWidget: true, modalContentId: 'sav_liste' },
 
   // === PRÉVISIONNEL (4 KPIs + 2 Widgets) ===
-  { id: 'prev_heures_tech', tab: 'previsionnel', title: 'Heures Tech', subtitle: 'à planifier', miniGraphType: 'bar', order: 1 },
-  { id: 'prev_heures_rdv', tab: 'previsionnel', title: 'Heures RDV', subtitle: 'à programmer', miniGraphType: 'bar', order: 2 },
+{ id: 'prev_heures_tech', tab: 'previsionnel', title: 'Heures Homme', subtitle: 'à planifier', miniGraphType: 'bar', order: 1 },
+  { id: 'prev_heures_rdv', tab: 'previsionnel', title: 'Durée totale inter', subtitle: 'à programmer', miniGraphType: 'bar', order: 2 },
   { id: 'prev_nb_dossiers', tab: 'previsionnel', title: 'Dossiers', subtitle: 'en attente', miniGraphType: 'bar', order: 3 },
   { id: 'prev_nb_univers', tab: 'previsionnel', title: 'Univers', subtitle: 'concernés', miniGraphType: 'bar', order: 4 },
   { id: 'widget_charge_univers', tab: 'previsionnel', title: 'Charge par Univers', miniGraphType: 'none', order: 5, isWidget: true, modalContentId: 'charge_univers' },

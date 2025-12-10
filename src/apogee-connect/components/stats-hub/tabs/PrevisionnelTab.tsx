@@ -18,10 +18,10 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
 import { Button } from '@/components/ui/button';
 
-// Tooltip explicatif pour Heures Technicien
-const HeuresTechTooltip = () => (
+// Tooltip explicatif pour Heures Homme
+const HeuresHommeTooltip = () => (
   <div className="space-y-3 max-w-xs">
-    <p className="font-medium">Heures Technicien = Σ (nbHeures × nbTechs)</p>
+    <p className="font-medium">Heures Homme = Σ (nbHeures × nbTechs)</p>
     <p className="text-xs text-muted-foreground">
       Charge de main d'œuvre réelle : temps cumulé de travail de tous les techniciens mobilisés.
     </p>
@@ -46,12 +46,12 @@ const HeuresTechTooltip = () => (
   </div>
 );
 
-// Tooltip explicatif pour Heures RDV
-const HeuresRdvTooltip = () => (
+// Tooltip explicatif pour Durée totale inter
+const DureeTotaleInterTooltip = () => (
   <div className="space-y-3 max-w-xs">
-    <p className="font-medium">Heures RDV = Σ nbHeures</p>
+    <p className="font-medium">Durée totale inter = Σ nbHeures</p>
     <p className="text-xs text-muted-foreground">
-      Durée brute des interventions : temps que va durer chaque RDV, indépendamment du nombre de techniciens.
+      Durée brute des interventions : temps que va durer chaque intervention, indépendamment du nombre de techniciens.
     </p>
     <table className="w-full text-xs border-collapse">
       <thead>
@@ -223,11 +223,11 @@ export function PrevisionnelTab() {
                       <div className="flex items-center gap-2 cursor-help">
                         <Clock className="h-5 w-5 text-helpconfort-orange" />
                         <span className="text-2xl font-bold">{Math.round(totaux.totalHeuresTech)}h</span>
-                        <span className="text-muted-foreground">heures technicien</span>
+                        <span className="text-muted-foreground">Heures Homme</span>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="p-4">
-                      <HeuresTechTooltip />
+                      <HeuresHommeTooltip />
                     </TooltipContent>
                   </Tooltip>
                   <div className="h-8 w-px bg-border" />
@@ -236,11 +236,11 @@ export function PrevisionnelTab() {
                       <div className="flex items-center gap-2 cursor-help">
                         <Calendar className="h-5 w-5 text-cyan-500" />
                         <span className="text-2xl font-bold">{Math.round(totaux.totalHeuresRdv)}h</span>
-                        <span className="text-muted-foreground">heures RDV</span>
+                        <span className="text-muted-foreground">Durée totale inter</span>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="p-4">
-                      <HeuresRdvTooltip />
+                      <DureeTotaleInterTooltip />
                     </TooltipContent>
                   </Tooltip>
                 </div>
@@ -358,8 +358,8 @@ export function PrevisionnelTab() {
                 <TableRow>
                   <TableHead>Univers</TableHead>
                   <TableHead className="text-right">Dossiers</TableHead>
-                  <TableHead className="text-right">Heures RDV</TableHead>
-                  <TableHead className="text-right">Heures Tech</TableHead>
+                  <TableHead className="text-right">Durée totale inter</TableHead>
+                  <TableHead className="text-right">Heures Homme</TableHead>
                   <TableHead className="text-right">À planifier</TableHead>
                   <TableHead className="text-right">À commander</TableHead>
                   <TableHead className="text-right">Fournitures</TableHead>
@@ -431,8 +431,8 @@ export function PrevisionnelTab() {
                   <TableHead>Libellé</TableHead>
                   <TableHead>État</TableHead>
                   <TableHead>Univers</TableHead>
-                  <TableHead className="text-right">Heures RDV</TableHead>
-                  <TableHead className="text-right">Heures Tech</TableHead>
+                  <TableHead className="text-right">Durée totale inter</TableHead>
+                  <TableHead className="text-right">Heures Homme</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
