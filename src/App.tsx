@@ -127,6 +127,7 @@ const ApogeeTicketsDuplicates = lazy(() => import("./apogee-tickets/pages/Apogee
 const Profile = lazy(() => import("./pages/Profile"));
 const Favorites = lazy(() => import("./pages/Favorites"));
 const Changelog = lazy(() => import("./pages/Changelog"));
+const Roadmap = lazy(() => import("./pages/Roadmap"));
 const SecurityAuditReport = lazy(() => import("./pages/SecurityAuditReport"));
 const SecurityDocumentation = lazy(() => import("./pages/SecurityDocumentation"));
 
@@ -374,6 +375,7 @@ function AppContent() {
           <Route path="/favorites" element={<Navigate to="/academy/favoris" replace />} />
           <Route path="/academy/favoris" element={<MainLayout><RoleGuard><ModuleGuard moduleKey="help_academy"><Favorites /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/changelog" element={<MainLayout><Changelog /></MainLayout>} />
+          <Route path="/roadmap" element={<MainLayout><Roadmap /></MainLayout>} />
           <Route path="/security-audit-report" element={<MainLayout><RoleGuard minRole="platform_admin"><SecurityAuditReport /></RoleGuard></MainLayout>} />
           <Route path="/security-documentation" element={<MainLayout><RoleGuard minRole="platform_admin"><SecurityDocumentation /></RoleGuard></MainLayout>} />
           

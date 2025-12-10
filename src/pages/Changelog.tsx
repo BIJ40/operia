@@ -1,7 +1,8 @@
 import { CHANGELOG, CHANGE_TYPE_CONFIG, getCurrentVersion, getPreviousVersions } from '@/config/changelog';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { FileText, Shield, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
+import { FileText, Shield, ExternalLink, ChevronDown, ChevronUp, Map } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -69,6 +70,15 @@ export default function Changelog() {
 
   return (
     <div className="container mx-auto px-4 py-6 space-y-8">
+      {/* Lien Roadmap */}
+      <Link 
+        to="/roadmap"
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-helpconfort-blue/10 to-helpconfort-orange/10 border border-helpconfort-blue/20 hover:border-helpconfort-blue/40 transition-colors text-sm font-medium text-helpconfort-blue"
+      >
+        <Map className="w-4 h-4" />
+        Voir la Roadmap 2026
+      </Link>
+
       {/* Version actuelle */}
       <section>
         <div className="flex items-center gap-2 mb-4">
