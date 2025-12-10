@@ -57,8 +57,20 @@ export interface DelaiPaiementDossierOptions {
 function getFacturationDate(project: any): Date | null {
   // Priorité 1: dateStateFacture
   if (project.dateStateFacture) {
-    const date = new Date(project.dateStateFacture);
-    return isNaN(date.getTime()) ? null : date;
+    const raw = String(project.dateStateFacture);
+
+    // Si c'est au format Apogée "dd/MM/yyyy HH:mm:ss"
+    if (/^\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}:\d{2}$/.test(raw)) {
+      const date = parseDateModifApogee(raw);
+      if (date) return date;
+    }
+
+    // Sinon on tente en ISO
+    const isoDate = new Date(raw);
+    if (!isNaN(isoDate.getTime())) {
+      return isoDate;
+    }
+    // Si c'est invalide on ne return pas, on retombe sur l'historique
   }
   
   // Priorité 2: Premier event history avec "=> Facturé"
