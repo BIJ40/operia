@@ -362,7 +362,7 @@ export function PrevisionnelTab() {
                   <TableHead className="text-right">Heures Homme</TableHead>
                   <TableHead className="text-right">À planifier</TableHead>
                   <TableHead className="text-right">À commander</TableHead>
-                  <TableHead className="text-right">Fournitures</TableHead>
+                  <TableHead className="text-right">Att. Fourn</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
