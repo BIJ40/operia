@@ -29,7 +29,7 @@ export function MiniGauge({ value, color = 'primary' }: MiniGaugeProps) {
   const strokeDashoffset = circumference - (clampedValue / 100) * circumference;
 
   return (
-    <div className="relative w-10 h-10">
+    <div className="relative w-12 h-12">
       <svg className="w-full h-full transform -rotate-90" viewBox="0 0 40 40">
         {/* Background circle */}
         <circle
@@ -57,7 +57,7 @@ export function MiniGauge({ value, color = 'primary' }: MiniGaugeProps) {
       </svg>
       {/* Center value */}
       <div className={cn(
-        'absolute inset-0 flex items-center justify-center text-[10px] font-bold',
+        'absolute inset-0 flex items-center justify-center text-xs font-bold',
         colorMap[color] || colorMap.primary
       )}>
         {Math.round(clampedValue)}%

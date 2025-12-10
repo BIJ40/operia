@@ -21,8 +21,8 @@ export function MiniBar({ data, color = 'primary' }: MiniBarProps) {
   const fillColor = colorMap[color] || colorMap.primary;
 
   return (
-    <ResponsiveContainer width="100%" height={40}>
-      <BarChart data={chartData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart data={chartData} margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
         <Bar
           dataKey="value"
           fill={fillColor}
