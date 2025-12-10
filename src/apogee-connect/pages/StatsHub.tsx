@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiltersProvider } from '../contexts/FiltersContext';
 import { ApiToggleProvider } from '../contexts/ApiToggleContext';
 import { AgencyProvider } from '../contexts/AgencyContext';
+import { SecondaryFiltersProvider } from '../contexts/SecondaryFiltersContext';
 
 const TAB_ICONS: Record<TabId, React.ReactNode> = {
   general: <LayoutDashboard className="h-4 w-4" />,
@@ -81,9 +82,11 @@ export default function StatsHub() {
     <AgencyProvider>
       <ApiToggleProvider>
         <FiltersProvider>
-          <StatsHubProvider>
-            <StatsHubContent />
-          </StatsHubProvider>
+          <SecondaryFiltersProvider>
+            <StatsHubProvider>
+              <StatsHubContent />
+            </StatsHubProvider>
+          </SecondaryFiltersProvider>
         </FiltersProvider>
       </ApiToggleProvider>
     </AgencyProvider>
