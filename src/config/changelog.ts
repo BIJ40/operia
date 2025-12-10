@@ -15,6 +15,39 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.7.9",
+    title: "Widgets StatIA & Administration Refonte",
+    date: "2025-12-10",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // NOUVEAUX WIDGETS STATIA
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Widget Taux SAV : KPI avec jauge visuelle et indicateur YTD' },
+      { type: 'feature', description: 'Widget CA Mensuel Chart : graphique évolution CA sur 12 mois' },
+      { type: 'feature', description: 'Widget CA Apporteurs : bar chart horizontal top apporteurs' },
+      { type: 'feature', description: 'Widget Panier Moyen : KPI avec tendance vs mois précédent' },
+      { type: 'feature', description: 'Widget Recouvrement : KPI avec cercle de progression encaissé/total' },
+      { type: 'feature', description: 'Widget Techniciens Productivité : tableau CA par technicien' },
+      { type: 'feature', description: '6 templates widgets ajoutés à la bibliothèque système' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // PAGE ADMINISTRATION REFONTE
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'Page /admin refaite avec 5 sections thématiques' },
+      { type: 'improvement', description: 'Section "Droits, Permissions & Modules" : users, agencies, flags, widgets' },
+      { type: 'improvement', description: 'Section "Intelligence Artificielle" : Helpi, guides, StatIA, formation' },
+      { type: 'improvement', description: 'Section "Support & Assistance" : console, stats, escalation, FAQ' },
+      { type: 'improvement', description: 'Section "Données & Sauvegardes" : backups, cache, storage' },
+      { type: 'improvement', description: 'Section "Système & Monitoring" : health, metadata, annonces' },
+      { type: 'improvement', description: 'Menu Administration : navigation directe (plus de dropdown)' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // UX & TEXTES
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'fix', description: 'Message accueil dashboard : passage au tutoiement' },
+    ],
+  },
+  {
     version: "V0.7.8",
     title: "Live Support & FAQ Integration",
     date: "2025-12-08",
