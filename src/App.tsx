@@ -46,10 +46,6 @@ const DiffusionDashboard = lazy(() => import("./pages/DiffusionDashboard"));
 // Lazy loaded pages - Indicateurs
 const IndicateursLayout = lazy(() => import("./apogee-connect/pages/IndicateursLayout"));
 const IndicateursAccueil = lazy(() => import("./apogee-connect/pages/IndicateursAccueil"));
-const IndicateursApporteurs = lazy(() => import("./apogee-connect/pages/IndicateursApporteurs"));
-const IndicateursUnivers = lazy(() => import("./apogee-connect/pages/IndicateursUnivers"));
-const IndicateursTechniciens = lazy(() => import("./apogee-connect/pages/IndicateursTechniciens"));
-const IndicateursSAV = lazy(() => import("./apogee-connect/pages/IndicateursSAV"));
 const StatsHub = lazy(() => import("./apogee-connect/pages/StatsHub"));
 const VeilleApporteursPage = lazy(() => import("./pages/VeilleApporteursPage"));
 const PlanningHebdo = lazy(() => import("./apogee-connect/pages/PlanningHebdo"));
@@ -223,11 +219,12 @@ function AppContent() {
           {/* Indicateurs détaillés */}
           <Route path="/hc-agency/indicateurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><IndicateursLayout /></ModuleGuard></RoleGuard></MainLayout>}>
             <Route index element={<IndicateursAccueil />} />
-            <Route path="apporteurs" element={<IndicateursApporteurs />} />
-            <Route path="univers" element={<IndicateursUnivers />} />
-            <Route path="techniciens" element={<IndicateursTechniciens />} />
-            <Route path="sav" element={<IndicateursSAV />} />
           </Route>
+          {/* Legacy routes - redirect to StatsHub */}
+          <Route path="/hc-agency/indicateurs/apporteurs" element={<Navigate to="/hc-agency/stats-hub" replace />} />
+          <Route path="/hc-agency/indicateurs/univers" element={<Navigate to="/hc-agency/stats-hub" replace />} />
+          <Route path="/hc-agency/indicateurs/techniciens" element={<Navigate to="/hc-agency/stats-hub" replace />} />
+          <Route path="/hc-agency/indicateurs/sav" element={<Navigate to="/hc-agency/stats-hub" replace />} />
           
           {/* Veille Apporteurs */}
           <Route path="/hc-agency/veille-apporteurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><VeilleApporteursPage /></ModuleGuard></RoleGuard></MainLayout>} />
