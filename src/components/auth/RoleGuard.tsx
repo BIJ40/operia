@@ -1,12 +1,12 @@
 /**
- * RoleGuard V2.0 - Composant de protection de routes basé sur les rôles globaux
- * Remplace les vérifications isAdmin dispersées dans le code
+ * RoleGuard V2.1 - Utilise le Permissions Engine centralisé
+ * Protection de routes basée sur les rôles globaux
  */
 
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useHasGlobalRole } from '@/hooks/useHasGlobalRole';
+import { hasMinRole } from '@/permissions';
 import { GlobalRole, GLOBAL_ROLE_LABELS } from '@/types/globalRoles';
 import { Loader2, ShieldX } from 'lucide-react';
 
@@ -15,7 +15,7 @@ interface RoleGuardProps {
   minRole?: GlobalRole;
   /** Contenu à afficher si autorisé */
   children: ReactNode;
-  /** Redirection si non autorisé (défaut: /unauthorized) */
+  /** Redirection si non autorisé (défaut: /) */
   redirectTo?: string;
   /** Afficher une page d'erreur au lieu de rediriger */
   showError?: boolean;
@@ -24,18 +24,13 @@ interface RoleGuardProps {
 }
 
 /**
- * Guard de route basé sur les rôles V2.0
+ * Guard de route basé sur les rôles V2.1
+ * Utilise le Permissions Engine centralisé
  * 
  * @example
  * // Accès réservé aux platform_admin (N5+)
  * <RoleGuard minRole="platform_admin">
  *   <AdminUsersUnified />
- * </RoleGuard>
- * 
- * @example
- * // Accès réservé aux franchisor_user (N3+)
- * <RoleGuard minRole="franchisor_user" redirectTo="/">
- *   <FranchiseurDashboard />
  * </RoleGuard>
  */
 export function RoleGuard({ 
@@ -45,8 +40,7 @@ export function RoleGuard({
   showError = false,
   errorMessage
 }: RoleGuardProps) {
-  const { user, isAuthLoading } = useAuth();
-  const hasRequiredRole = useHasGlobalRole(minRole);
+  const { user, isAuthLoading, globalRole } = useAuth();
 
   // Afficher un loader pendant le chargement
   if (isAuthLoading) {
@@ -63,12 +57,14 @@ export function RoleGuard({
     return <Navigate to="/" replace />;
   }
 
-  // Vérifier le rôle si requis
-  if (minRole && !hasRequiredRole) {
+  // Vérifier le rôle si requis - utilise le Permissions Engine
+  const hasRequiredRole = !minRole || hasMinRole(globalRole, minRole);
+
+  if (!hasRequiredRole) {
     if (showError) {
       return (
         <AccessDeniedPage 
-          requiredRole={minRole} 
+          requiredRole={minRole!} 
           message={errorMessage}
         />
       );
