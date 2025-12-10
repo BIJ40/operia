@@ -298,45 +298,45 @@ export const encoursParApporteur: StatDefinition = {
 };
 
 /**
- * Délai de Paiement Dossier
+ * Délai de Paiement Dossier (Global)
  * Délai moyen entre facturation et clôture du dossier
+ * Utilise la même logique centralisée que delai_paiement_apporteur
  */
 export const delaiPaiementDossier: StatDefinition = {
   id: 'delai_paiement_dossier',
   label: 'Délai de Paiement',
   description: 'Délai moyen en jours entre facturation et clôture du dossier',
   category: 'recouvrement',
-  source: 'projects',
+  source: ['projects', 'clients'],
   aggregation: 'avg',
   unit: 'jours',
   dimensions: ['apporteur', 'univers'],
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { projects } = data;
+    const { projects, clients } = data;
     
-    // Import dynamique pour éviter les dépendances circulaires
-    const { calculateDelaiPaiementDossier } = require('../shared/delaiPaiementDossier');
+    // Utiliser la fonction centralisée de calcul délai paiement apporteur
+    const { calculateDelaiPaiementApporteur } = require('../shared/delaiPaiementApporteur');
     
-    const result = calculateDelaiPaiementDossier(projects, {
+    const result = calculateDelaiPaiementApporteur(projects, clients, {
       dateStart: params.dateRange.start,
       dateEnd: params.dateRange.end,
       maxDelaiJours: 365,
       debug: false
     });
     
+    // Retourner les valeurs globales (pas par apporteur)
     return {
-      value: result.moyenne,
+      value: result.globalAverageDays ?? 0,
       metadata: {
         computedAt: new Date(),
         source: 'projects',
-        recordCount: result.nbDossiersValides,
+        recordCount: result.debugStats?.totalProjectsAnalyzed || 0,
       },
       breakdown: {
-        moyenne: result.moyenne,
-        mediane: result.mediane,
-        min: result.min,
-        max: result.max,
-        nbDossiersValides: result.nbDossiersValides,
-        debug: result.debug
+        moyenne: result.globalAverageDays,
+        mediane: result.globalMedianDays,
+        nbDossiersValides: result.debugStats?.projectsWithValidDelay || 0,
+        nbApporteurs: result.apporteurs.length,
       }
     };
   }
