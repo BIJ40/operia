@@ -51,6 +51,7 @@ const IndicateursUnivers = lazy(() => import("./apogee-connect/pages/Indicateurs
 const IndicateursTechniciens = lazy(() => import("./apogee-connect/pages/IndicateursTechniciens"));
 const IndicateursSAV = lazy(() => import("./apogee-connect/pages/IndicateursSAV"));
 const StatsHub = lazy(() => import("./apogee-connect/pages/StatsHub"));
+const VeilleApporteursPage = lazy(() => import("./pages/VeilleApporteursPage"));
 const PlanningHebdo = lazy(() => import("./apogee-connect/pages/PlanningHebdo"));
 const EquipePage = lazy(() => import("./pages/EquipePage"));
 const Messages = lazy(() => import("./pages/Messages"));
@@ -225,6 +226,9 @@ function AppContent() {
             <Route path="techniciens" element={<IndicateursTechniciens />} />
             <Route path="sav" element={<IndicateursSAV />} />
           </Route>
+          
+          {/* Veille Apporteurs */}
+          <Route path="/veille-apporteurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><VeilleApporteursPage /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* Actions à Mener */}
           <Route path="/hc-agency/actions" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><ActionsAMener /></ModuleGuard></RoleGuard></MainLayout>} />
