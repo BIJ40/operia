@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import { MonthlyUniversCA } from "@/apogee-connect/utils/universCalculations";
@@ -10,6 +11,19 @@ interface UniversStackedChartProps {
 }
 
 export const UniversStackedChart = ({ data, universes, loading }: UniversStackedChartProps) => {
+  const [animationKey, setAnimationKey] = useState(0);
+
+  // Redraw animation every 5 seconds
+  useEffect(() => {
+    if (loading || data.length === 0) return;
+    
+    const interval = setInterval(() => {
+      setAnimationKey(prev => prev + 1);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [loading, data.length]);
+
   if (loading) {
     return (
       <Card className="h-full">
@@ -87,7 +101,7 @@ export const UniversStackedChart = ({ data, universes, loading }: UniversStacked
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={320}>
-          <AreaChart data={data}>
+          <AreaChart data={data} key={animationKey}>
             <defs>
               {sortedUniverses.map((universe) => (
                 <linearGradient key={universe.slug} id={`color-${universe.slug}`} x1="0" y1="0" x2="0" y2="1">
@@ -122,6 +136,9 @@ export const UniversStackedChart = ({ data, universes, loading }: UniversStacked
                 stroke={universe.colorHex}
                 fill={`url(#color-${universe.slug})`}
                 strokeWidth={2}
+                isAnimationActive={true}
+                animationDuration={1500}
+                animationEasing="ease-out"
               />
             ))}
           </AreaChart>
