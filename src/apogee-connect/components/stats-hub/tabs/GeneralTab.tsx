@@ -1,5 +1,6 @@
 import { useStatiaIndicateurs } from '@/statia/hooks/useStatiaIndicateurs';
 import { useStatiaSAVMetrics } from '@/statia/hooks/useStatiaSAVMetrics';
+import { useFilters } from '@/apogee-connect/contexts/FiltersContext';
 import { KpiCard } from '../KpiCard';
 import { WidgetCard } from '../WidgetCard';
 import { useStatsHub } from '../StatsHubContext';
@@ -21,18 +22,22 @@ const itemVariants = {
 
 export function GeneralTab() {
   const { openStat } = useStatsHub();
+  const { filters } = useFilters();
   const { data, isLoading } = useStatiaIndicateurs();
   const { data: savData } = useStatiaSAVMetrics();
 
+  // Label dynamique basé sur la période sélectionnée
+  const periodLabel = filters.periodLabel || 'ce mois';
+
   const kpis = [
-    { id: 'dossiers_recus', title: 'Dossiers reçus', value: data?.dossiersJour ?? 0, format: 'number', miniType: 'sparkline' as const, color: 'blue' },
-    { id: 'devis_emis', title: 'Devis émis', value: data?.devisJour ?? 0, format: 'number', miniType: 'sparkline' as const, color: 'blue' },
-    { id: 'ca_mensuel', title: 'CA Mensuel', value: data?.caJour ?? 0, format: 'currency', miniType: 'sparkline' as const, color: 'blue' },
-    { id: 'panier_moyen', title: 'Panier moyen', value: data?.panierMoyen?.panierMoyen ?? 0, format: 'currency', miniType: 'bar' as const, color: 'blue' },
-    { id: 'taux_sav', title: 'Taux SAV', value: savData?.tauxSavGlobal ?? 0, format: 'percent', miniType: 'gauge' as const, color: 'blue' },
-    { id: 'taux_transfo', title: 'Taux transfo', subtitle: 'Devis', value: data?.tauxTransformationDevis?.tauxTransformation ?? 0, format: 'percent', miniType: 'gauge' as const, color: 'blue' },
+    { id: 'dossiers_recus', title: 'Dossiers reçus', subtitle: periodLabel, value: data?.dossiersJour ?? 0, format: 'number', miniType: 'sparkline' as const, color: 'blue' },
+    { id: 'devis_emis', title: 'Devis émis', subtitle: periodLabel, value: data?.devisJour ?? 0, format: 'number', miniType: 'sparkline' as const, color: 'green' },
+    { id: 'ca_periode', title: 'CA Période', subtitle: `HT - ${periodLabel}`, value: data?.caJour ?? 0, format: 'currency', miniType: 'sparkline' as const, color: 'blue' },
+    { id: 'panier_moyen', title: 'Panier moyen', subtitle: periodLabel, value: data?.panierMoyen?.panierMoyen ?? 0, format: 'currency', miniType: 'bar' as const, color: 'purple' },
+    { id: 'taux_sav', title: 'Taux SAV', subtitle: periodLabel, value: savData?.tauxSavGlobal ?? 0, format: 'percent', miniType: 'gauge' as const, color: 'orange' },
+    { id: 'taux_transfo', title: 'Taux transfo', subtitle: periodLabel, value: data?.tauxTransformationDevis?.tauxTransformation ?? 0, format: 'percent', miniType: 'gauge' as const, color: 'green' },
     { id: 'delai_facture', title: 'Délai moyen', subtitle: 'Dossier → Facture', value: data?.delaiDossierFacture?.delaiMoyen ?? 0, format: 'days', miniType: 'bar' as const, color: 'blue' },
-    { id: 'rt_jour', title: 'RT du jour', value: data?.rtJour ?? 0, format: 'number', miniType: 'sparkline' as const, color: 'blue' },
+    { id: 'rt_periode', title: 'RT', subtitle: periodLabel, value: data?.rtJour ?? 0, format: 'number', miniType: 'sparkline' as const, color: 'purple' },
   ];
 
   const formatValue = (value: number, format: string) => {
