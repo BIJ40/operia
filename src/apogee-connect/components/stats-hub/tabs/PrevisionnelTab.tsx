@@ -634,10 +634,18 @@ export function PrevisionnelTab() {
       {debug && (
         <motion.div variants={itemVariants}>
           <Card className="bg-muted/50">
-            <CardContent className="py-3">
+            <CardContent className="py-3 space-y-1">
               <p className="text-xs text-muted-foreground">
-                Debug: {debug.totalProjects} projets • {debug.projectsEligibleState} éligibles • {debug.projectsAvecRT} avec RT • {debug.rtBlocksCount} blocs RT • {debug.devisTotal || 0} devis • {debug.devisIndexed || 0} indexés
+                Debug: {debug.totalProjects} projets • {debug.projectsEligibleState} éligibles • {debug.projectsAvecRT} avec RT • {debug.rtBlocksCount} blocs RT
               </p>
+              <p className="text-xs text-muted-foreground">
+                Devis: {debug.devisTotal || 0} total • {debug.devisIndexed || 0} indexés • {debug.devisMatchedToProjects || 0} matchés • {formatCurrency(debug.devisHTCalculated || 0)} CA calculé
+              </p>
+              {debug.sampleDevis && (
+                <p className="text-xs text-muted-foreground font-mono">
+                  Sample: id={debug.sampleDevis.id} projectId={debug.sampleDevis.projectId} state={debug.sampleDevis.state} HT={debug.sampleDevis.totalHT ?? debug.sampleDevis.dataTotalHT}
+                </p>
+              )}
             </CardContent>
           </Card>
         </motion.div>

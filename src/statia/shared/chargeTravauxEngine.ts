@@ -73,6 +73,9 @@ export interface ChargeTravauxResult {
     interventionsIndexed: number;
     devisTotal: number;
     devisIndexed: number;
+    devisMatchedToProjects: number;
+    devisHTCalculated: number;
+    sampleDevis: any;
   };
 }
 
@@ -230,11 +233,12 @@ function calculateDevisHTForProject(projectDevis: any[]): number {
     // Exclure les devis non "vivants"
     if (DEVIS_ETATS_EXCLUS.has(devisState)) continue;
 
-    // Priorité: totalHT > amount > data.totalHT
+    // Priorité: data.totalHT (structure API) > totalHT (racine) > amount
     const montant =
+      parseNumericValue(d.data?.totalHT) ||
+      parseNumericValue(d.data?.totalTTC) ||
       parseNumericValue(d.totalHT) ||
       parseNumericValue(d.amount) ||
-      parseNumericValue(d.data?.totalHT) ||
       0;
 
     if (montant > 0) {
@@ -266,7 +270,17 @@ export function computeChargeTravauxAvenirParUnivers(
     interventionsTotal: interventions.length,
     interventionsIndexed: Array.from(byProjectId.values()).flat().length,
     devisTotal: devis.length,
-    devisIndexed: Array.from(devisByProjectId.values()).flat().length
+    devisIndexed: Array.from(devisByProjectId.values()).flat().length,
+    devisMatchedToProjects: 0,
+    devisHTCalculated: 0,
+    sampleDevis: devis.length > 0 ? { 
+      id: devis[0]?.id, 
+      projectId: devis[0]?.projectId, 
+      state: devis[0]?.state, 
+      totalHT: devis[0]?.totalHT,
+      dataTotalHT: devis[0]?.data?.totalHT,
+      keys: Object.keys(devis[0] || {}).slice(0, 10)
+    } : null
   };
 
   const parProjet: ChargeTravauxProjet[] = [];
@@ -317,7 +331,13 @@ export function computeChargeTravauxAvenirParUnivers(
 
     // Calcul du CA devis pour ce projet
     const projectDevis = devisByProjectId.get(projectId) || [];
+    if (projectDevis.length > 0) {
+      debug.devisMatchedToProjects += projectDevis.length;
+    }
     const totalDevisHTProjet = calculateDevisHTForProject(projectDevis);
+    if (totalDevisHTProjet > 0) {
+      debug.devisHTCalculated += totalDevisHTProjet;
+    }
 
     // Univers du projet
     const universes = (project?.data?.universes as string[]) || ['Non classé'];

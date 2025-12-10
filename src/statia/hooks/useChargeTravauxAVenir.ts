@@ -20,7 +20,7 @@ export function useChargeTravauxAVenir() {
           parEtat: [],
           parProjet: [],
           totaux: { totalHeuresRdv: 0, totalHeuresTech: 0, totalNbTechs: 0, nbDossiers: 0, totalDevisHT: 0 },
-          debug: { totalProjects: 0, projectsEligibleState: 0, projectsAvecRT: 0, rtBlocksCount: 0, interventionsTotal: 0, interventionsIndexed: 0, devisTotal: 0, devisIndexed: 0 }
+          debug: { totalProjects: 0, projectsEligibleState: 0, projectsAvecRT: 0, rtBlocksCount: 0, interventionsTotal: 0, interventionsIndexed: 0, devisTotal: 0, devisIndexed: 0, devisMatchedToProjects: 0, devisHTCalculated: 0, sampleDevis: null }
         };
       }
 
