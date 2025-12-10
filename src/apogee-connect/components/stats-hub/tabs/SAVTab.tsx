@@ -1,88 +1,254 @@
-import { useStatiaSAVMetrics } from '@/statia/hooks/useStatiaSAVMetrics';
-import { KpiCard } from '../KpiCard';
-import { WidgetCard } from '../WidgetCard';
-import { useStatsHub } from '../StatsHubContext';
-import { formatCurrency, formatPercent } from '@/lib/formatters';
-import { motion } from 'framer-motion';
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.05 }
-  }
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 }
-};
+import { useState } from "react";
+import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
+import { useStatiaSAVMetrics } from "@/statia/hooks/useStatiaSAVMetrics";
+import { SAVDossierList } from "@/apogee-connect/components/sav/SAVDossierList";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card } from "@/components/ui/card";
+import { AlertTriangle, TrendingUp, Users, Layers, ChevronDown, ChevronUp } from "lucide-react";
+import { formatEuros, formatUniverseLabel, formatApporteurType } from "@/apogee-connect/utils/formatters";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 
 export function SAVTab() {
-  const { openStat } = useStatsHub();
+  const { isAgencyReady } = useAgency();
+  const [showAllApporteurs, setShowAllApporteurs] = useState(false);
   const { data, isLoading } = useStatiaSAVMetrics();
 
-  const kpis = [
-    { id: 'sav_taux_global', title: 'Taux SAV Global', value: data?.tauxSavGlobal ?? 0, format: 'percent', miniType: 'gauge' as const },
-    { id: 'sav_nb_dossiers', title: 'Nb dossiers SAV', value: data?.nbSavGlobal ?? 0, format: 'number', miniType: 'sparkline' as const },
-    { id: 'sav_cout_estime', title: 'Coût SAV estimé', value: data?.coutSavEstime ?? 0, format: 'currency', miniType: 'bar' as const },
-    { id: 'sav_ca_impacte', title: 'CA impacté', value: data?.caSav ?? 0, format: 'currency', miniType: 'bar' as const },
-  ];
+  if (!isAgencyReady || isLoading) {
+    return (
+      <div className="space-y-8">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-32" />)}
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          {[1, 2].map((i) => <Skeleton key={i} className="h-80" />)}
+        </div>
+      </div>
+    );
+  }
 
-  const widgets = [
-    { id: 'widget_sav_liste', title: 'Liste des dossiers SAV' },
-    { id: 'widget_sav_univers', title: 'SAV par Univers' },
-  ];
+  const {
+    tauxSavGlobal = 0,
+    nbSavGlobal = 0,
+    tauxSavParUnivers = {},
+    tauxSavParApporteur = {},
+    tauxSavParTypeApporteur = {},
+    caSav = 0,
+    coutSavEstime = 0,
+    dossiersSAV = [],
+  } = data || {};
 
-  const formatValue = (value: number, format: string) => {
-    switch (format) {
-      case 'currency': return formatCurrency(value);
-      case 'percent': return formatPercent(value);
-      default: return String(value);
-    }
-  };
+  const universData = Object.entries(tauxSavParUnivers)
+    .filter(([_, v]) => v.sav > 0)
+    .map(([univers, stats]) => ({
+      name: formatUniverseLabel(univers),
+      value: stats.sav,
+      taux: stats.taux,
+      total: stats.total,
+    }));
+
+  const typeApporteurData = Object.entries(tauxSavParTypeApporteur)
+    .filter(([_, v]) => v.sav > 0)
+    .map(([type, stats]) => ({
+      name: formatApporteurType(type),
+      value: stats.sav,
+      taux: stats.taux,
+      total: stats.total,
+    }));
+
+  const apporteurList = Object.entries(tauxSavParApporteur)
+    .filter(([_, v]) => v.sav > 0)
+    .map(([nom, stats]) => ({
+      nom,
+      sav: stats.sav,
+      total: stats.total,
+      taux: stats.taux,
+    }))
+    .sort((a, b) => b.sav - a.sav);
+
+  const COLORS = ["#ef4444", "#f97316", "#f59e0b", "#84cc16", "#06b6d4", "#8b5cf6", "#ec4899", "#f43f5e"];
 
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="space-y-6"
-    >
-      {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {kpis.map(kpi => (
-          <motion.div key={kpi.id} variants={itemVariants}>
-            <KpiCard
-              title={kpi.title}
-              value={formatValue(kpi.value, kpi.format)}
-              miniGraphType={kpi.miniType}
-              sparklineData={[5, 8, 6, 10, 7, 12]}
-              gaugeValue={kpi.format === 'percent' ? kpi.value : undefined}
-              color="hsl(0, 70%, 50%)"
-              onClick={() => openStat(kpi.id)}
-              isLoading={isLoading}
-            />
-          </motion.div>
-        ))}
+    <div className="space-y-8">
+      {/* KPI Globaux */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-xl border border-red-200 p-5 bg-gradient-to-br from-background to-red-50 border-l-4 border-l-red-500 hover:shadow-lg transition-all">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full border-2 border-red-300 flex items-center justify-center">
+              <AlertTriangle className="w-6 h-6 text-red-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Taux SAV Global</p>
+              <p className="text-2xl font-bold text-red-600">{tauxSavGlobal.toFixed(1)}%</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-orange-200 p-5 bg-gradient-to-b from-orange-50/50 to-background border-l-4 border-l-orange-500 hover:shadow-lg transition-all">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg border-2 border-orange-300 flex items-center justify-center">
+              <TrendingUp className="w-6 h-6 text-orange-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Coût moyen / dossier</p>
+              <p className="text-2xl font-bold text-orange-600">
+                {nbSavGlobal > 0 ? formatEuros(coutSavEstime / nbSavGlobal) : "–"}
+              </p>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mt-3">Total: {formatEuros(coutSavEstime)} sur {nbSavGlobal} dossiers</p>
+        </div>
+
+        <div className="rounded-xl border border-red-200/50 p-5 bg-gradient-to-r from-red-50/30 to-background border-l-4 border-l-red-400 hover:shadow-lg transition-all">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full border-2 border-red-300 flex items-center justify-center">
+              <Users className="w-6 h-6 text-red-500" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Dossiers SAV</p>
+              <p className="text-2xl font-bold text-red-500">{nbSavGlobal}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-rose-200 p-5 bg-gradient-to-br from-rose-100/50 to-background border-l-4 border-l-rose-500 hover:shadow-lg transition-all">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full border-2 border-rose-300 flex items-center justify-center">
+              <Layers className="w-6 h-6 text-rose-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">CA Impacté</p>
+              <p className="text-2xl font-bold text-rose-600">{formatEuros(caSav)}</p>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mt-3">CA des dossiers avec SAV</p>
+        </div>
       </div>
 
-      {/* Widgets */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {widgets.map(widget => (
-          <motion.div key={widget.id} variants={itemVariants}>
-            <WidgetCard
-              title={widget.title}
-              color="hsl(0, 70%, 50%)"
-              onClick={() => openStat(widget.id)}
-            >
-              <div className="h-24 flex items-center justify-center text-muted-foreground text-sm">
-                Cliquer pour voir le détail
-              </div>
-            </WidgetCard>
-          </motion.div>
-        ))}
+      {/* SAV par type apporteur et par univers - Camemberts */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card className="p-6 border-l-4 border-l-accent shadow-lg">
+          <h2 className="text-lg font-bold mb-4">SAV par type d'apporteur</h2>
+          {typeApporteurData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie data={typeApporteurData} cx="50%" cy="50%" outerRadius={100} fill="#8884d8" dataKey="value">
+                  {typeApporteurData.map((_, index) => (
+                    <Cell key={`cell-type-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value: number, name: string, entry: any) => {
+                    const total = typeApporteurData.reduce((sum, item) => sum + item.value, 0);
+                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : "0.0";
+                    return [
+                      <div key="tooltip">
+                        <div>{value} dossiers ({percentage}%)</div>
+                        <div>Taux SAV: {entry.payload.taux.toFixed(1)}%</div>
+                      </div>,
+                      name,
+                    ];
+                  }}
+                />
+                <Legend formatter={(value: string, entry: any) => `${value} (${entry.payload.value})`} />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              Aucun SAV détecté sur la période
+            </div>
+          )}
+        </Card>
+
+        <Card className="p-6 border-l-4 border-l-accent shadow-lg">
+          <h2 className="text-lg font-bold mb-4">SAV par univers</h2>
+          {universData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie data={universData} cx="50%" cy="50%" outerRadius={100} fill="#8884d8" dataKey="value">
+                  {universData.map((_, index) => (
+                    <Cell key={`cell-univers-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value: number, name: string, entry: any) => {
+                    const total = universData.reduce((sum, item) => sum + item.value, 0);
+                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : "0.0";
+                    return [
+                      <div key="tooltip">
+                        <div>{value} dossiers ({percentage}%)</div>
+                        <div>Taux SAV: {entry.payload.taux.toFixed(1)}%</div>
+                      </div>,
+                      name,
+                    ];
+                  }}
+                />
+                <Legend formatter={(value: string, entry: any) => `${value} (${entry.payload.value})`} />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              Aucun SAV détecté sur la période
+            </div>
+          )}
+        </Card>
       </div>
-    </motion.div>
+
+      {/* SAV par apporteur - Liste */}
+      <Card className="p-6 border-l-4 border-l-accent shadow-lg">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold">SAV par apporteurs</h2>
+          {apporteurList.length > 5 && (
+            <button
+              onClick={() => setShowAllApporteurs(!showAllApporteurs)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors"
+            >
+              {showAllApporteurs ? (
+                <>Voir moins <ChevronUp size={16} /></>
+              ) : (
+                <>Voir plus ({apporteurList.length - 5} autres) <ChevronDown size={16} /></>
+              )}
+            </button>
+          )}
+        </div>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Apporteur</TableHead>
+                <TableHead className="text-right">Dossiers SAV</TableHead>
+                <TableHead className="text-right">Total dossiers</TableHead>
+                <TableHead className="text-right">Taux SAV</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {(showAllApporteurs ? apporteurList : apporteurList.slice(0, 5)).map((item) => (
+                <TableRow key={item.nom}>
+                  <TableCell className="font-medium">{item.nom}</TableCell>
+                  <TableCell className="text-right">{item.sav}</TableCell>
+                  <TableCell className="text-right">{item.total}</TableCell>
+                  <TableCell className="text-right">
+                    <Badge variant={item.taux > 20 ? "destructive" : "secondary"}>
+                      {item.taux.toFixed(1)}%
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
+
+      {/* Liste des dossiers SAV avec gestion */}
+      <SAVDossierList dossiers={dossiersSAV} isLoading={isLoading} />
+    </div>
   );
 }
