@@ -299,11 +299,40 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
         throw new Error('Vous ne pouvez pas attribuer ce rôle');
       }
       
+      // 1. Mise à jour du profil (global_role + enabled_modules JSONB pour compatibilité)
       const { error } = await supabase
         .from('profiles')
         .update({ global_role: globalRole, enabled_modules: enabledModules as Json })
         .eq('id', userId);
       if (error) throw error;
+      
+      // 2. Synchronisation vers user_modules table (P3.2 migration)
+      if (enabledModules) {
+        // Supprimer les anciens modules
+        await supabase
+          .from('user_modules')
+          .delete()
+          .eq('user_id', userId);
+        
+        // Insérer les nouveaux modules
+        const moduleRows = Object.entries(enabledModules)
+          .filter(([, value]) => {
+            if (!value) return false;
+            return typeof value === 'boolean' ? value : value.enabled;
+          })
+          .map(([key, value]) => ({
+            user_id: userId,
+            module_key: key,
+            options: typeof value === 'object' && value.options ? value.options : null,
+            enabled_at: new Date().toISOString(),
+            enabled_by: user?.id || null,
+          }));
+        
+        if (moduleRows.length > 0) {
+          await supabase.from('user_modules').insert(moduleRows);
+        }
+      }
+      
       return { userId, globalRole, enabledModules };
     },
     onSuccess: ({ userId }) => {
