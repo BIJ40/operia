@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
-import { startOfDay, startOfWeek, startOfMonth, startOfYear, subDays, subWeeks, subMonths, subYears } from 'date-fns';
+import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { startOfDay, startOfWeek, startOfMonth, startOfYear, subDays, subWeeks, subMonths, subYears, format, parseISO } from 'date-fns';
 
 export type NetworkPeriod = 'day' | 'day-1' | 'week' | 'week-1' | 'month' | 'month-1' | 'year' | 'year-1' | 'custom';
 
@@ -47,17 +48,57 @@ function getDateRangeForPeriod(period: NetworkPeriod): DateRange {
 }
 
 export function NetworkFiltersProvider({ children }: { children: ReactNode }) {
-  const [period, setPeriodState] = useState<NetworkPeriod>('month');
-  const [dateRange, setDateRange] = useState<DateRange>(getDateRangeForPeriod('month'));
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Lire la période depuis l'URL
+  const periodFromUrl = searchParams.get('networkPeriod') as NetworkPeriod | null;
+  const customFromUrl = searchParams.get('networkFrom');
+  const customToUrl = searchParams.get('networkTo');
+  
+  const validPeriods: NetworkPeriod[] = ['day', 'day-1', 'week', 'week-1', 'month', 'month-1', 'year', 'year-1', 'custom'];
+  const initialPeriod = periodFromUrl && validPeriods.includes(periodFromUrl) ? periodFromUrl : 'month';
+  
+  // Pour custom, parser les dates depuis l'URL
+  const initialDateRange = initialPeriod === 'custom' && customFromUrl && customToUrl
+    ? { from: parseISO(customFromUrl), to: parseISO(customToUrl) }
+    : getDateRangeForPeriod(initialPeriod);
+  
+  const [period, setPeriodState] = useState<NetworkPeriod>(initialPeriod);
+  const [dateRange, setDateRangeState] = useState<DateRange>(initialDateRange);
   const [comparisonPeriod, setComparisonPeriod] = useState<NetworkPeriod | null>(null);
   const [comparisonDateRange, setComparisonDateRange] = useState<DateRange | null>(null);
 
-  const setPeriod = (newPeriod: NetworkPeriod) => {
+  // Persister dans l'URL
+  const persistToUrl = useCallback((newPeriod: NetworkPeriod, customRange?: DateRange) => {
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      newParams.set('networkPeriod', newPeriod);
+      
+      if (newPeriod === 'custom' && customRange) {
+        newParams.set('networkFrom', format(customRange.from, 'yyyy-MM-dd'));
+        newParams.set('networkTo', format(customRange.to, 'yyyy-MM-dd'));
+      } else {
+        newParams.delete('networkFrom');
+        newParams.delete('networkTo');
+      }
+      
+      return newParams;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const setPeriod = useCallback((newPeriod: NetworkPeriod) => {
     setPeriodState(newPeriod);
     if (newPeriod !== 'custom') {
-      setDateRange(getDateRangeForPeriod(newPeriod));
+      const newRange = getDateRangeForPeriod(newPeriod);
+      setDateRangeState(newRange);
+      persistToUrl(newPeriod);
     }
-  };
+  }, [persistToUrl]);
+
+  const setDateRange = useCallback((range: DateRange) => {
+    setDateRangeState(range);
+    persistToUrl('custom', range);
+  }, [persistToUrl]);
 
   return (
     <NetworkFiltersContext.Provider
