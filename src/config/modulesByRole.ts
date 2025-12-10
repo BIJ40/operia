@@ -63,14 +63,11 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
   },
   
   // N3 - Utilisateur franchiseur (animateur réseau)
+  // PAS de pilotage_agence, rh, parc : N3 n'a pas d'agence propre
   franchisor_user: {
     help_academy: {
       enabled: true,
       options: { apogee: true, helpconfort: true, apporteurs: true, edition: false }
-    },
-    pilotage_agence: {
-      enabled: true,
-      options: { indicateurs: true, actions_a_mener: true, diffusion: true, exports: true }
     },
     reseau_franchiseur: {
       enabled: true,
@@ -83,14 +80,11 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
   },
   
   // N4 - Admin franchiseur (directeur réseau)
+  // PAS de pilotage_agence, rh, parc : N4 n'a pas d'agence propre
   franchisor_admin: {
     help_academy: {
       enabled: true,
       options: { apogee: true, helpconfort: true, apporteurs: true, edition: true }
-    },
-    pilotage_agence: {
-      enabled: true,
-      options: { indicateurs: true, actions_a_mener: true, diffusion: true, exports: true }
     },
     reseau_franchiseur: {
       enabled: true,

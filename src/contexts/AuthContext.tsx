@@ -154,6 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const accessContext: AccessControlContext = {
     globalRole: globalRole ?? 'base_user',
     enabledModules: enabledModules ?? {},
+    agencyId, // Pour les contrôles de modules nécessitant une agence (pilotage_agence, rh, parc)
   };
 
   // ============================================================================
