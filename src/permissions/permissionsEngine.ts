@@ -86,7 +86,7 @@ export function hasAccess(params: HasAccessParams): boolean {
   
   // 2. Vérifier rôle minimum du module
   const minRole = MODULE_MIN_ROLES[moduleId];
-  if (minRole && !hasMinRole(globalRole, minRole)) {
+  if (minRole && globalRole && !hasMinRole(globalRole, minRole)) {
     return false;
   }
   
@@ -171,7 +171,8 @@ export function getEffectiveModules(ctx: PermissionContext): EffectiveModule[] {
     }
     
     // Vérifier rôle minimum
-    if (globalRole && !hasMinRole(globalRole, moduleDef.minRole)) {
+    const modMinRole = moduleDef.minRole;
+    if (globalRole && modMinRole && !hasMinRole(globalRole, modMinRole)) {
       result.push({
         id: moduleKey,
         enabled: false,
@@ -344,15 +345,23 @@ export function explainAccess(params: HasAccessParams): AccessTrace[] {
   
   // Step 2: Vérifier rôle minimum
   const minRole = MODULE_MIN_ROLES[moduleId];
-  const hasMin = hasMinRole(globalRole, minRole);
-  traces.push({
-    step: 'min_role_check',
-    result: hasMin,
-    reason: hasMin 
-      ? `Rôle ${globalRole} >= ${minRole} (minimum requis)`
-      : `Rôle ${globalRole || 'null'} < ${minRole} (minimum requis)`,
-  });
-  if (!hasMin) return traces;
+  if (minRole) {
+    const hasMin = hasMinRole(globalRole, minRole);
+    traces.push({
+      step: 'min_role_check',
+      result: hasMin,
+      reason: hasMin 
+        ? `Rôle ${globalRole} >= ${minRole} (minimum requis)`
+        : `Rôle ${globalRole || 'null'} < ${minRole} (minimum requis)`,
+    });
+    if (!hasMin) return traces;
+  } else {
+    traces.push({
+      step: 'min_role_check',
+      result: true,
+      reason: `Pas de rôle minimum défini pour le module ${moduleId}`,
+    });
+  }
   
   // Step 3: Vérifier agence si nécessaire
   if (AGENCY_REQUIRED_MODULES.includes(moduleId)) {

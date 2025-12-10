@@ -64,29 +64,37 @@ function PermissionSimulator() {
   });
 
   const result = useMemo(() => {
-    const enabledModules = config.useTemplate 
-      ? getDefaultModulesForRole(config.globalRole)
-      : {};
+    try {
+      const enabledModules = config.useTemplate 
+        ? getDefaultModulesForRole(config.globalRole)
+        : {};
 
-    const ctx = {
-      globalRole: config.globalRole,
-      enabledModules,
-      agencyId: config.hasAgency ? 'fake-agency-id' : null,
-    };
+      const ctx = {
+        globalRole: config.globalRole,
+        enabledModules,
+        agencyId: config.hasAgency ? 'fake-agency-id' : null,
+      };
 
-    const access = hasAccess({
-      ...ctx,
-      moduleId: config.targetModule,
-      optionId: config.targetOption || undefined,
-    });
+      const access = hasAccess({
+        ...ctx,
+        moduleId: config.targetModule,
+        optionId: config.targetOption || undefined,
+      });
 
-    const traces = explainAccess({
-      ...ctx,
-      moduleId: config.targetModule,
-      optionId: config.targetOption || undefined,
-    });
+      const traces = explainAccess({
+        ...ctx,
+        moduleId: config.targetModule,
+        optionId: config.targetOption || undefined,
+      });
 
-    return { access, traces };
+      return { access, traces };
+    } catch (error) {
+      console.error('Erreur dans le simulateur:', error);
+      return { 
+        access: false, 
+        traces: [{ step: 'error', result: false, reason: `Erreur: ${error}` }] 
+      };
+    }
   }, [config]);
 
   const targetModuleDef = MODULE_DEFINITIONS.find(m => m.key === config.targetModule);
