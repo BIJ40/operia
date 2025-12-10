@@ -33,6 +33,7 @@ import {
   NETWORK_MIN_ROLE,
   ROLE_HIERARCHY,
   MODULE_MIN_ROLES,
+  MODULE_OPTION_MIN_ROLES,
 } from './constants';
 
 // ============================================================================
@@ -108,8 +109,19 @@ export function hasAccess(params: HasAccessParams): boolean {
   }
   
   // 6. Vérifier option spécifique si demandée
-  if (optionId && moduleAccess.options) {
-    return moduleAccess.options[optionId] === true;
+  if (optionId) {
+    // Vérifier le rôle minimum de l'option
+    const optionMinRoleKey = `${moduleId}.${optionId}`;
+    const optionMinRole = MODULE_OPTION_MIN_ROLES[optionMinRoleKey];
+    if (optionMinRole && !hasMinRole(globalRole, optionMinRole)) {
+      return false;
+    }
+    
+    // Vérifier si l'option est activée
+    if (moduleAccess.options) {
+      return moduleAccess.options[optionId] === true;
+    }
+    return false;
   }
   
   return true;

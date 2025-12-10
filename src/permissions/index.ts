@@ -32,6 +32,7 @@ export {
   NETWORK_MIN_ROLE,
   ROLE_HIERARCHY,
   MODULE_MIN_ROLES,
+  MODULE_OPTION_MIN_ROLES,
   MODULE_LABELS,
 } from './constants';
 
