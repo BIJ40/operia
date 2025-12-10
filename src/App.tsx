@@ -147,13 +147,15 @@ import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { GlobalErrorBoundary } from "./components/system/GlobalErrorBoundary";
 import { AnnouncementGate } from "./components/announcements/AnnouncementGate";
 
-// Optimized QueryClient with caching
+// Optimized QueryClient with caching - NO automatic refetching on tab switch
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 1000 * 60 * 10, // 10 minutes
       gcTime: 30 * 60 * 1000, // 30 minutes (formerly cacheTime)
       refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      refetchOnMount: false,
       retry: 1,
     },
   },
