@@ -1,6 +1,7 @@
 /**
  * Onglet 3 - Gestion Utilisateurs
  * Liste des utilisateurs avec détection d'anomalies et actions de gestion
+ * P2: Filtres avancés (agence), Export CSV
  */
 
 import { useState, useMemo } from 'react';
@@ -17,11 +18,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { 
   AlertTriangle, Search, Filter, CheckCircle, XCircle, AlertCircle, 
-  RefreshCw, Building2, Pencil, Wand2, Layers
+  RefreshCw, Building2, Pencil, Layers
 } from 'lucide-react';
 import { GLOBAL_ROLE_LABELS, GlobalRole } from '@/types/globalRoles';
 import { validateUserPermissions, ROLE_HIERARCHY, PermissionIssue } from '@/permissions';
 import { UserEditDialog } from '../components/UserEditDialog';
+import { UserExportCSV } from '../components/UserExportCSV';
 
 interface UserWithIssues {
   id: string;
@@ -194,7 +196,21 @@ export function UserManagementTab() {
   const [search, setSearch] = useState('');
   const [filterIssues, setFilterIssues] = useState<'all' | 'errors' | 'warnings' | 'ok'>('all');
   const [filterRole, setFilterRole] = useState<string>('all');
+  const [filterAgency, setFilterAgency] = useState<string>('all');
   const [editingUser, setEditingUser] = useState<UserWithIssues | null>(null);
+
+  // Liste des agences uniques
+  const agencies = useMemo(() => {
+    if (!users) return [];
+    const uniqueAgencies = new Map<string, string>();
+    users.forEach(u => {
+      if (u.agency_id && u.agency_label) {
+        uniqueAgencies.set(u.agency_id, u.agency_label);
+      }
+    });
+    return Array.from(uniqueAgencies.entries())
+      .sort((a, b) => a[1].localeCompare(b[1]));
+  }, [users]);
 
   // Statistiques
   const stats = useMemo(() => {
@@ -216,16 +232,19 @@ export function UserManagementTab() {
         const matchesSearch = 
           user.email.toLowerCase().includes(searchLower) ||
           (user.first_name?.toLowerCase().includes(searchLower)) ||
-          (user.last_name?.toLowerCase().includes(searchLower));
+          (user.last_name?.toLowerCase().includes(searchLower)) ||
+          (user.agency_label?.toLowerCase().includes(searchLower));
         if (!matchesSearch) return false;
       }
       if (filterIssues === 'errors' && !user.issues.some(i => i.type === 'error')) return false;
       if (filterIssues === 'warnings' && (!user.issues.some(i => i.type === 'warning') || user.issues.some(i => i.type === 'error'))) return false;
       if (filterIssues === 'ok' && user.issues.length > 0) return false;
       if (filterRole !== 'all' && user.global_role !== filterRole) return false;
+      if (filterAgency === 'none' && user.agency_id !== null) return false;
+      if (filterAgency !== 'all' && filterAgency !== 'none' && user.agency_id !== filterAgency) return false;
       return true;
     });
-  }, [users, search, filterIssues, filterRole]);
+  }, [users, search, filterIssues, filterRole, filterAgency]);
 
   if (isLoading) {
     return (
@@ -294,7 +313,7 @@ export function UserManagementTab() {
         <div className="relative flex-1 min-w-[180px]">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
-            placeholder="Rechercher..."
+            placeholder="Rechercher (nom, email, agence)..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-8 h-9"
@@ -306,15 +325,29 @@ export function UserManagementTab() {
             <SelectValue placeholder="Rôle" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tous</SelectItem>
+            <SelectItem value="all">Tous les rôles</SelectItem>
             {Object.entries(GLOBAL_ROLE_LABELS).map(([role, label]) => (
               <SelectItem key={role} value={role}>{label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={filterAgency} onValueChange={setFilterAgency}>
+          <SelectTrigger className="w-[150px] h-9">
+            <Building2 className="h-3.5 w-3.5 mr-1" />
+            <SelectValue placeholder="Agence" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Toutes agences</SelectItem>
+            <SelectItem value="none">Sans agence</SelectItem>
+            {agencies.map(([id, label]) => (
+              <SelectItem key={id} value={id}>{label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => refetch()}>
           <RefreshCw className="h-4 w-4" />
         </Button>
+        <UserExportCSV users={filteredUsers} />
       </div>
 
       {/* Liste compacte */}

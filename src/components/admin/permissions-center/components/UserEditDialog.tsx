@@ -1,6 +1,7 @@
 /**
  * Dialog d'édition des permissions d'un utilisateur
  * Permet de modifier le rôle global, les modules et appliquer des templates
+ * P2.3: Inclut l'historique des modifications
  */
 
 import { useState, useEffect } from 'react';
@@ -23,11 +24,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { Crown, Layers, Wand2, Save, Loader2, ChevronRight } from 'lucide-react';
+import { Crown, Layers, Wand2, Save, Loader2, ChevronRight, History } from 'lucide-react';
 import { GlobalRole, GLOBAL_ROLE_LABELS, GLOBAL_ROLES } from '@/types/globalRoles';
 import { MODULE_DEFINITIONS, ModuleKey, EnabledModules, getDefaultModulesForRole, ModuleOptionsState } from '@/types/modules';
 import { getUserManagementCapabilities } from '@/config/roleMatrix';
 import { useAuth } from '@/contexts/AuthContext';
+import { PermissionAuditLog } from './PermissionAuditLog';
 
 interface UserEditDialogProps {
   user: {
@@ -168,18 +170,22 @@ export function UserEditDialog({ user, open, onOpenChange }: UserEditDialogProps
         </DialogHeader>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="role" className="flex items-center gap-1.5">
               <Crown className="h-3.5 w-3.5" />
-              Rôle
+              <span className="hidden sm:inline">Rôle</span>
             </TabsTrigger>
             <TabsTrigger value="modules" className="flex items-center gap-1.5">
               <Layers className="h-3.5 w-3.5" />
-              Modules
+              <span className="hidden sm:inline">Modules</span>
             </TabsTrigger>
             <TabsTrigger value="template" className="flex items-center gap-1.5">
               <Wand2 className="h-3.5 w-3.5" />
-              Template
+              <span className="hidden sm:inline">Template</span>
+            </TabsTrigger>
+            <TabsTrigger value="history" className="flex items-center gap-1.5">
+              <History className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Historique</span>
             </TabsTrigger>
           </TabsList>
           
@@ -293,6 +299,11 @@ export function UserEditDialog({ user, open, onOpenChange }: UserEditDialogProps
                 </Button>
               ))}
             </div>
+          </TabsContent>
+          
+          {/* Onglet Historique - P2.3 */}
+          <TabsContent value="history" className="mt-4">
+            {user && <PermissionAuditLog userId={user.id} />}
           </TabsContent>
         </Tabs>
         
