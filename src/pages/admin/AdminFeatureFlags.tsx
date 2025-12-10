@@ -26,6 +26,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 const GROUP_COLORS: Record<string, string> = {
   rh: 'bg-violet-500/10 text-violet-700 border-violet-200',
@@ -156,15 +157,12 @@ export default function AdminFeatureFlags() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-primary/10">
-          <ToggleLeft className="h-6 w-6 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold">Feature Flags</h1>
-          <p className="text-muted-foreground">Activer ou désactiver les modules de l'application</p>
-        </div>
-      </div>
+      <PageHeader
+        title="Feature Flags"
+        subtitle="Activer ou désactiver les modules de l'application"
+        backTo="/admin"
+        backLabel="Administration"
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

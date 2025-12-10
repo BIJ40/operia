@@ -4,25 +4,25 @@
  */
 
 import { useState } from 'react';
-import { Shield, Grid3X3, FileCode2, Users, FlaskConical } from 'lucide-react';
+import { Grid3X3, FileCode2, Users, FlaskConical } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RoleMatrixTab } from './tabs/RoleMatrixTab';
 import { RoleTemplatesTab } from './tabs/RoleTemplatesTab';
 import { UserManagementTab } from './tabs/UserManagementTab';
 import { SimulatorAuditTab } from './tabs/SimulatorAuditTab';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 export default function PermissionsCenterPage() {
   const [activeTab, setActiveTab] = useState('users');
 
   return (
     <div className="container py-6 space-y-6">
-      <div className="flex items-center gap-3 mb-6">
-        <Shield className="h-8 w-8 text-primary" />
-        <div>
-          <h1 className="text-2xl font-bold">Centre de Permissions</h1>
-          <p className="text-muted-foreground">Gestion centralisée des rôles, modules et accès</p>
-        </div>
-      </div>
+      <PageHeader
+        title="Centre de Permissions"
+        subtitle="Gestion centralisée des rôles, modules et accès"
+        backTo="/admin"
+        backLabel="Administration"
+      />
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-4 h-auto p-1">

@@ -26,6 +26,7 @@ import {
   useFormationStats,
   FormationContent
 } from "@/hooks/useFormationContent";
+import { PageHeader } from '@/components/layout/PageHeader';
 
 interface Block {
   id: string;
@@ -183,9 +184,16 @@ export default function FormationGenerator() {
   }
 
   return (
-    <div className="space-y-6">
-        {/* Stats tiles with blue gradient */}
-        {stats && (
+    <div className="container py-6 space-y-6">
+      <PageHeader
+        title="Générateur de Formation"
+        subtitle="Génération automatique des contenus pédagogiques"
+        backTo="/admin"
+        backLabel="Administration"
+      />
+
+      {/* Stats tiles with blue gradient */}
+      {stats && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Card className="border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-helpconfort-blue/5 via-background to-background">
               <CardContent className="pt-4">

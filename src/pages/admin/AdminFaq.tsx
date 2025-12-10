@@ -18,6 +18,7 @@ import {
   ContextType,
   CONTEXT_OPTIONS,
 } from '@/components/admin/faq';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 export default function AdminFaq() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -198,20 +199,20 @@ export default function AdminFaq() {
 
   // HUB VIEW
   return (
-    <div className="space-y-6">
+    <div className="container py-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">HUB FAQ</h1>
-          <p className="text-muted-foreground">
-            {totalFaqs} FAQ au total · {totalPublished} publiées
-          </p>
-        </div>
-        <Button onClick={openCreateDialog} className="bg-helpconfort-blue hover:bg-helpconfort-blue/90">
-          <Plus className="h-4 w-4 mr-2" />
-          Nouvelle FAQ
-        </Button>
-      </div>
+      <PageHeader
+        title="HUB FAQ"
+        subtitle={`${totalFaqs} FAQ au total · ${totalPublished} publiées`}
+        backTo="/admin"
+        backLabel="Administration"
+        rightElement={
+          <Button onClick={openCreateDialog} className="bg-helpconfort-blue hover:bg-helpconfort-blue/90">
+            <Plus className="h-4 w-4 mr-2" />
+            Nouvelle FAQ
+          </Button>
+        }
+      />
 
       {/* Global AI Search */}
       <Card>

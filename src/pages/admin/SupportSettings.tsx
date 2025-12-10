@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { logError } from '@/lib/logger';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 interface SupportAgentConfig {
   id: string;
@@ -207,37 +208,32 @@ export default function SupportSettings() {
   const hasPendingChanges = pendingChanges.size > 0;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Settings className="w-6 h-6 text-helpconfort-blue" />
-            Paramètres Support
-          </h1>
-          <p className="text-muted-foreground">
-            Configuration des agents, niveaux et compétences
-          </p>
-        </div>
-        
-        <Button 
-          onClick={saveChanges} 
-          disabled={!hasPendingChanges || isSaving}
-          className="bg-helpconfort-blue hover:bg-helpconfort-blue/90"
-        >
-          {isSaving ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <Save className="w-4 h-4 mr-2" />
-          )}
-          Sauvegarder
-          {hasPendingChanges && (
-            <Badge variant="secondary" className="ml-2">
-              {pendingChanges.size}
-            </Badge>
-          )}
-        </Button>
-      </div>
+    <div className="container py-6 space-y-6">
+      <PageHeader
+        title="Paramètres Support"
+        subtitle="Configuration des agents, niveaux et compétences"
+        backTo="/admin"
+        backLabel="Administration"
+        rightElement={
+          <Button 
+            onClick={saveChanges} 
+            disabled={!hasPendingChanges || isSaving}
+            className="bg-helpconfort-blue hover:bg-helpconfort-blue/90"
+          >
+            {isSaving ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4 mr-2" />
+            )}
+            Sauvegarder
+            {hasPendingChanges && (
+              <Badge variant="secondary" className="ml-2">
+                {pendingChanges.size}
+              </Badge>
+            )}
+          </Button>
+        }
+      />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
