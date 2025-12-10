@@ -14,6 +14,13 @@ export {
   type DelaiPaiementDossierOptions
 } from './delaiPaiementDossier';
 
+export {
+  calculateDelaiPaiementApporteur,
+  type DelaiPaiementApporteurResult,
+  type DelaiPaiementApporteurOptions,
+  type ApporteurDelaiStats
+} from './delaiPaiementApporteur';
+
 // P0: Helper facture pour calcul CA unifié
 export {
   extractFactureMeta,
