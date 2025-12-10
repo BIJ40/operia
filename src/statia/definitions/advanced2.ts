@@ -74,11 +74,20 @@ const caClientsTop20: StatDefinition = {
   unit: '%',
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const { factures, projects } = data;
+    const { dateRange } = params;
+
+    // Filtrer les factures par période
+    const filteredFactures = factures.filter(f => {
+      const factureDate = f.dateReelle || f.date;
+      if (!factureDate || !dateRange?.start || !dateRange?.end) return true;
+      const d = new Date(factureDate);
+      return d >= dateRange.start && d <= dateRange.end;
+    });
 
     // Grouper le CA par client
     const caByClient: Record<string, number> = {};
 
-    for (const facture of factures) {
+    for (const facture of filteredFactures) {
       const project = projects.find(p => p.id === facture.projectId);
       const clientId = project?.clientId?.toString();
       if (!clientId) continue;
@@ -90,7 +99,7 @@ const caClientsTop20: StatDefinition = {
 
     const clientIds = Object.keys(caByClient);
     if (clientIds.length === 0) {
-      return { value: 0, breakdown: { clientCount: 0, top20Count: 0 } };
+      return { value: null, breakdown: { clientCount: 0, top20Count: 0 } };
     }
 
     // Trier par CA décroissant
