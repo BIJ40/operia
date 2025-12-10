@@ -66,11 +66,11 @@ function RoleTemplateCard({ role }: { role: GlobalRole }) {
             const isEnabled = typeof moduleState === 'boolean' 
               ? moduleState 
               : moduleState?.enabled ?? false;
-            const options = typeof moduleState === 'object' 
-              ? moduleState.options || {} 
+            const options = typeof moduleState === 'object' && moduleState !== null
+              ? (moduleState as any).options || {} 
               : {};
-            const moduleMinRole = MODULE_MIN_ROLES[moduleDef.key];
-            const moduleMinLevel = ROLE_HIERARCHY[moduleMinRole];
+            const moduleMinRole = MODULE_MIN_ROLES[moduleDef.key] || 'base_user';
+            const moduleMinLevel = ROLE_HIERARCHY[moduleMinRole] ?? 0;
             const canAccessModule = roleLevel >= moduleMinLevel;
 
             return (
@@ -105,13 +105,13 @@ function RoleTemplateCard({ role }: { role: GlobalRole }) {
                   <Switch checked={isEnabled} disabled className="pointer-events-none" />
                 </div>
                 
-                {moduleDef.options.length > 0 && (
+                {moduleDef.options && moduleDef.options.length > 0 && (
                   <div className="mt-2 pl-4 border-l-2 border-primary/20 space-y-1">
                     {moduleDef.options.map(opt => {
                       const optEnabled = options[opt.key] ?? opt.defaultEnabled;
                       const optMinRoleKey = `${moduleDef.key}.${opt.key}`;
                       const optMinRole = MODULE_OPTION_MIN_ROLES[optMinRoleKey];
-                      const optMinLevel = optMinRole ? ROLE_HIERARCHY[optMinRole] : moduleMinLevel;
+                      const optMinLevel = optMinRole ? (ROLE_HIERARCHY[optMinRole] ?? 0) : moduleMinLevel;
                       const canAccessOption = roleLevel >= optMinLevel;
                       
                       return (
@@ -240,9 +240,9 @@ export function RoleTemplatesTab() {
                       const moduleState = template?.[mod.key];
                       const isEnabled = typeof moduleState === 'boolean' 
                         ? moduleState 
-                        : moduleState?.enabled ?? false;
-                      const minRole = MODULE_MIN_ROLES[mod.key];
-                      const canAccess = ROLE_HIERARCHY[role] >= ROLE_HIERARCHY[minRole];
+                        : (moduleState as any)?.enabled ?? false;
+                      const minRole = MODULE_MIN_ROLES[mod.key] || 'base_user';
+                      const canAccess = (ROLE_HIERARCHY[role] ?? 0) >= (ROLE_HIERARCHY[minRole] ?? 0);
                       
                       return (
                         <td key={role} className="text-center p-2">
