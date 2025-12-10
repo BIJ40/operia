@@ -1,4 +1,4 @@
-import { ArrowLeft, Rocket, Users, Building2, Sparkles, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Rocket, Users, Building2, Sparkles, CheckCircle2, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -31,6 +31,15 @@ const ROADMAP_ITEMS = [
     textColor: 'text-purple-600',
   },
   {
+    date: '06/26',
+    title: 'RH Agence: Contrats & Docs',
+    description: 'Génération automatique de modèles préremplis',
+    icon: FileText,
+    color: 'bg-teal-500',
+    borderColor: 'border-teal-500',
+    textColor: 'text-teal-600',
+  },
+  {
     date: '12/26',
     title: 'Smart Suggestion Engine',
     description: 'Devis intelligents avec suggestions automatiques',
@@ -43,7 +52,7 @@ const ROADMAP_ITEMS = [
 
 export default function Roadmap() {
   return (
-    <div className="container mx-auto px-4 py-6 space-y-8">
+    <div className="container mx-auto px-4 py-6 space-y-8 overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link 
@@ -60,47 +69,79 @@ export default function Roadmap() {
         <p className="text-muted-foreground">Les prochaines évolutions de la plateforme HelpConfort</p>
       </div>
 
-      {/* Timeline horizontale */}
-      <div className="relative mt-16 pb-8">
-        {/* Ligne horizontale */}
-        <div className="absolute top-8 left-0 right-0 h-1 bg-gradient-to-r from-green-500 via-blue-500 via-purple-500 to-orange-500 rounded-full" />
+      {/* Timeline horizontale avec alternance haut/bas */}
+      <div className="relative mt-12 pt-32 pb-32">
+        {/* Ligne horizontale centrale */}
+        <div className="absolute top-1/2 left-4 right-4 h-1 bg-gradient-to-r from-green-500 via-blue-500 via-purple-500 via-teal-500 to-orange-500 rounded-full transform -translate-y-1/2" />
 
-        {/* Items */}
-        <div className="relative grid grid-cols-1 md:grid-cols-4 gap-6">
+        {/* Container des items avec flex pour distribution égale */}
+        <div className="relative flex justify-between px-4">
           {ROADMAP_ITEMS.map((item, index) => {
             const Icon = item.icon;
+            const isTop = index % 2 === 0; // Alternance haut/bas
+            
             return (
-              <div key={index} className="flex flex-col items-center">
-                {/* Point sur la ligne */}
-                <div className={cn(
-                  "w-16 h-16 rounded-full flex items-center justify-center shadow-lg z-10",
-                  item.color,
-                  "ring-4 ring-background"
-                )}>
-                  <Icon className="w-8 h-8 text-white" />
+              <div 
+                key={index} 
+                className={cn(
+                  "flex flex-col items-center relative",
+                  "w-[18%]" // Largeur fixe pour chaque item
+                )}
+              >
+                {/* Trait vertical de connexion */}
+                <div 
+                  className={cn(
+                    "absolute w-0.5 bg-current opacity-30",
+                    item.textColor,
+                    isTop ? "bottom-1/2 h-20" : "top-1/2 h-20"
+                  )}
+                  style={{ 
+                    left: '50%', 
+                    transform: 'translateX(-50%)',
+                  }}
+                />
+
+                {/* Point sur la ligne centrale */}
+                <div 
+                  className={cn(
+                    "absolute left-1/2 transform -translate-x-1/2 w-10 h-10 rounded-full flex items-center justify-center shadow-lg z-10",
+                    item.color,
+                    "ring-4 ring-background"
+                  )}
+                  style={{ top: '50%', transform: 'translate(-50%, -50%)' }}
+                >
+                  <Icon className="w-5 h-5 text-white" />
                 </div>
 
-                {/* Date */}
-                <div className={cn(
-                  "mt-4 px-3 py-1 rounded-full text-sm font-bold",
-                  item.color,
-                  "text-white"
-                )}>
-                  {item.date}
-                </div>
+                {/* Card positionnée en haut ou en bas */}
+                <div 
+                  className={cn(
+                    "absolute left-1/2 transform -translate-x-1/2 w-full",
+                    isTop ? "bottom-[calc(50%+3rem)]" : "top-[calc(50%+3rem)]"
+                  )}
+                >
+                  {/* Date badge */}
+                  <div className={cn(
+                    "mx-auto w-fit px-2 py-0.5 rounded-full text-xs font-bold mb-2",
+                    item.color,
+                    "text-white"
+                  )}>
+                    {item.date}
+                  </div>
 
-                {/* Card */}
-                <div className={cn(
-                  "mt-4 p-4 rounded-xl border-2 bg-card w-full text-center",
-                  item.borderColor,
-                  "hover:shadow-lg transition-shadow"
-                )}>
-                  <h3 className={cn("font-bold text-lg", item.textColor)}>
-                    {item.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    {item.description}
-                  </p>
+                  {/* Card content */}
+                  <div className={cn(
+                    "p-3 rounded-xl border-2 bg-card text-center",
+                    item.borderColor,
+                    "hover:shadow-lg transition-shadow"
+                  )}>
+                    <h3 className={cn("font-bold text-sm leading-tight", item.textColor)}>
+                      {item.title}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1 leading-tight">
+                      {item.description}
+                    </p>
+                  </div>
                 </div>
               </div>
             );
@@ -109,7 +150,7 @@ export default function Roadmap() {
       </div>
 
       {/* Note */}
-      <div className="text-center text-sm text-muted-foreground mt-8">
+      <div className="text-center text-sm text-muted-foreground">
         <CheckCircle2 className="w-4 h-4 inline-block mr-2" />
         Les dates sont indicatives et peuvent évoluer selon les priorités
       </div>
