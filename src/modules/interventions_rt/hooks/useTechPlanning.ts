@@ -9,6 +9,7 @@ import { fr } from 'date-fns/locale';
 import { apogeeProxy } from '@/services/apogeeProxy';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { logDebug } from '@/lib/logger';
 
 export type DateFilter = 'today' | 'tomorrow' | 'all';
 
@@ -222,17 +223,19 @@ export function useTechPlanning(): UseTechPlanningResult {
     const today = startOfDay(new Date());
     const tomorrow = startOfDay(addDays(new Date(), 1));
 
-    // Debug: voir toutes les interventions et leurs userIds
-    console.log('[TechPlanning] Filtering interventions:', {
-      totalInterventions: apiData.interventions.length,
-      filterByApogeeUserId: apogeeUserId,
-      sampleInterventions: apiData.interventions.slice(0, 5).map((i: any) => ({
-        id: i.id,
-        userId: i.userId || i.user_id,
-        date: i.date || i.dateIntervention,
-        state: i.state
-      }))
-    });
+    // Debug: voir toutes les interventions et leurs userIds (dev only)
+    if (import.meta.env.DEV) {
+      logDebug('[TechPlanning] Filtering interventions:', {
+        totalInterventions: apiData.interventions.length,
+        filterByApogeeUserId: apogeeUserId,
+        sampleInterventions: apiData.interventions.slice(0, 5).map((i: any) => ({
+          id: i.id,
+          userId: i.userId || i.user_id,
+          date: i.date || i.dateIntervention,
+          state: i.state
+        }))
+      });
+    }
 
     const mapped = apiData.interventions
       .filter((int: any) => {

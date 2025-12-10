@@ -8,6 +8,7 @@ import { MessageCircle, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLiveSupportContext } from '@/contexts/LiveSupportContext';
 import { cn } from '@/lib/utils';
+import { logDebug } from '@/lib/logger';
 
 interface LiveSupportIndicatorProps {
   className?: string;
@@ -32,7 +33,7 @@ export function LiveSupportIndicator({ className }: LiveSupportIndicatorProps) {
   const handleOpenChat = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('[LiveSupportIndicator] Opening chat, hasActiveSession:', hasActiveSession);
+    logDebug('[LiveSupportIndicator] Opening chat, hasActiveSession:', hasActiveSession);
     if (hasActiveSession) {
       openChat();
     }

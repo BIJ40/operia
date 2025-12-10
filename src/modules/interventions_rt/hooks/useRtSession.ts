@@ -4,6 +4,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { RtEngine } from '../services/rtEngine';
 import { rtTreePlomberie } from '../services/rtTreePlomberie';
+import { logDebug } from '@/lib/logger';
 import { 
   RtSession, 
   RtAnswer, 
@@ -182,7 +183,7 @@ export function useRtSession(): UseRtSessionResult {
       created_at: new Date().toISOString(),
     };
     mockSuggestions.push(newSuggestion);
-    console.log('Suggestion submitted:', newSuggestion);
+    logDebug('[RT Session] Suggestion submitted:', newSuggestion);
   }, []);
 
   const completeSession = useCallback(() => {
