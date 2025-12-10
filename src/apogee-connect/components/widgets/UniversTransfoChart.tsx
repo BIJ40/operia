@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
 import { formatEuros } from "@/apogee-connect/utils/formatters";
@@ -13,7 +14,9 @@ export const UniversTransfoChart = ({
   universes,
   loading,
 }: UniversTransfoChartProps) => {
-  // Préparer les données pour le graphique
+  const [animationKey, setAnimationKey] = useState(0);
+
+  // Prepare chart data
   const chartData = universes
     .map((u) => ({
       name: u.label,
@@ -25,6 +28,17 @@ export const UniversTransfoChart = ({
     .filter((d) => d.caDevis > 0 || d.caFactures > 0)
     .sort((a, b) => b.tauxTransfo - a.tauxTransfo);
 
+  // Animation every 5 seconds - bars fill from bottom
+  useEffect(() => {
+    if (loading || chartData.length === 0) return;
+    
+    const interval = setInterval(() => {
+      setAnimationKey(prev => prev + 1);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [loading, chartData.length]);
+
   if (loading || chartData.length === 0) {
     return (
       <Card>
@@ -34,7 +48,7 @@ export const UniversTransfoChart = ({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[400px] flex items-center justify-center text-muted-foreground">
+          <div className="h-[300px] flex items-center justify-center text-muted-foreground">
             {loading ? "Chargement..." : "Aucune donnée disponible"}
           </div>
         </CardContent>
@@ -42,37 +56,39 @@ export const UniversTransfoChart = ({
     );
   }
 
-  // Graphique combiné : barres pour CA + ligne pour taux
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-2">
         <CardTitle className="bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
           Taux de transformation par univers
         </CardTitle>
-        <p className="text-sm text-muted-foreground mt-2">
+        <p className="text-sm text-muted-foreground">
           CA facturé vs CA devis acceptés
         </p>
       </CardHeader>
       <CardContent>
-        <div className="space-y-6">
-          {/* Graphique barres groupées */}
-          <ResponsiveContainer width="100%" height={350}>
-            <BarChart data={chartData}>
+        <div className="space-y-4">
+          {/* Animated Bar Chart */}
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={chartData} key={animationKey}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
                 dataKey="name"
                 angle={-45}
                 textAnchor="end"
-                height={100}
+                height={80}
+                tick={{ fontSize: 11 }}
               />
               <YAxis
                 yAxisId="left"
                 tickFormatter={(value) => formatEuros(value)}
+                tick={{ fontSize: 11 }}
               />
               <YAxis
                 yAxisId="right"
                 orientation="right"
                 tickFormatter={(value) => `${value.toFixed(0)}%`}
+                tick={{ fontSize: 11 }}
               />
               <Tooltip
                 formatter={(value: number, name: string) => {
@@ -82,19 +98,27 @@ export const UniversTransfoChart = ({
                   return [formatEuros(value), name];
                 }}
               />
-              <Legend />
+              <Legend wrapperStyle={{ paddingTop: 10 }} />
               <Bar
                 yAxisId="left"
                 dataKey="caDevis"
                 name="CA Devis"
                 fill="#94a3b8"
-                radius={[8, 8, 0, 0]}
+                radius={[4, 4, 0, 0]}
+                isAnimationActive={true}
+                animationDuration={1500}
+                animationEasing="ease-out"
+                animationBegin={0}
               />
               <Bar
                 yAxisId="left"
                 dataKey="caFactures"
                 name="CA Facturé"
-                radius={[8, 8, 0, 0]}
+                radius={[4, 4, 0, 0]}
+                isAnimationActive={true}
+                animationDuration={1500}
+                animationEasing="ease-out"
+                animationBegin={200}
               >
                 {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
@@ -105,14 +129,18 @@ export const UniversTransfoChart = ({
                 dataKey="tauxTransfo"
                 name="Taux transformation"
                 fill="#22c55e"
-                radius={[8, 8, 0, 0]}
+                radius={[4, 4, 0, 0]}
+                isAnimationActive={true}
+                animationDuration={1500}
+                animationEasing="ease-out"
+                animationBegin={400}
               />
             </BarChart>
           </ResponsiveContainer>
 
-          {/* Tableau récapitulatif */}
+          {/* Compact summary table */}
           <div className="border rounded-lg overflow-hidden">
-            <table className="w-full text-sm">
+            <table className="w-full text-xs">
               <thead className="bg-muted">
                 <tr>
                   <th className="p-2 text-left">Univers</th>
@@ -122,7 +150,7 @@ export const UniversTransfoChart = ({
                 </tr>
               </thead>
               <tbody>
-                {chartData.map((item, idx) => (
+                {chartData.slice(0, 5).map((item, idx) => (
                   <tr key={idx} className="border-t hover:bg-muted/50">
                     <td className="p-2 font-medium" style={{ color: item.color }}>
                       {item.name}
