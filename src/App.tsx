@@ -50,6 +50,7 @@ const IndicateursApporteurs = lazy(() => import("./apogee-connect/pages/Indicate
 const IndicateursUnivers = lazy(() => import("./apogee-connect/pages/IndicateursUnivers"));
 const IndicateursTechniciens = lazy(() => import("./apogee-connect/pages/IndicateursTechniciens"));
 const IndicateursSAV = lazy(() => import("./apogee-connect/pages/IndicateursSAV"));
+const StatsHub = lazy(() => import("./apogee-connect/pages/StatsHub"));
 const PlanningHebdo = lazy(() => import("./apogee-connect/pages/PlanningHebdo"));
 const EquipePage = lazy(() => import("./pages/EquipePage"));
 const Messages = lazy(() => import("./pages/Messages"));
@@ -212,7 +213,8 @@ function AppContent() {
           {/* ============================================ */}
           <Route path="/hc-agency" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><PilotageIndex /></ModuleGuard></RoleGuard></MainLayout>} />
           
-          {/* Hub Statistiques - Redirect vers Indicateurs */}
+          {/* Hub Statistiques - Nouvelle page unifiée */}
+          <Route path="/hc-agency/stats-hub" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><StatsHub /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/hc-agency/statistiques" element={<Navigate to="/hc-agency/indicateurs" replace />} />
           
           {/* Indicateurs détaillés */}
