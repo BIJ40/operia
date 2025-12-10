@@ -134,70 +134,61 @@ export function GeneralTab() {
         </motion.div>
       </div>
 
-      {/* KPIs Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {kpis.map(kpi => {
-          const colors = colorMap[kpi.color] || colorMap.blue;
-          return (
-            <motion.div key={kpi.title} variants={itemVariants}>
-              <Card className={`border-l-4 ${colors.border} bg-gradient-to-br ${colors.bg} to-background hover:shadow-lg hover:-translate-y-1 transition-all`}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <kpi.icon className={`w-4 h-4 ${colors.text}`} />
-                    {kpi.title}
-                  </CardTitle>
-                  <p className="text-xs text-muted-foreground/70">{kpi.subtitle}</p>
-                </CardHeader>
-                <CardContent>
-                  <p className={`text-2xl font-bold ${colors.text}`}>
-                    {formatValue(kpi.value, kpi.format)}
-                  </p>
-                </CardContent>
-              </Card>
-            </motion.div>
-          );
-        })}
+      {/* KPIs + Histogram side by side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* KPIs Grid - compact */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {kpis.map(kpi => {
+            const colors = colorMap[kpi.color] || colorMap.blue;
+            return (
+              <motion.div key={kpi.title} variants={itemVariants}>
+                <Card className={`border-l-4 ${colors.border} bg-gradient-to-br ${colors.bg} to-background hover:shadow-md hover:-translate-y-0.5 transition-all h-full`}>
+                  <CardHeader className="p-2 pb-1">
+                    <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                      <kpi.icon className={`w-3 h-3 ${colors.text}`} />
+                      {kpi.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-2 pt-0">
+                    <p className={`text-lg font-bold ${colors.text}`}>
+                      {formatValue(kpi.value, kpi.format)}
+                    </p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* Dossiers vs Devis - compact */}
+        <motion.div variants={itemVariants}>
+          <Card className="p-3 h-full">
+            <CardHeader className="p-0 pb-2">
+              <CardTitle className="text-sm">Dossiers vs Devis par mois</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={monthlyData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="mois" tick={{ fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 10 }} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                      fontSize: '12px'
+                    }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: '10px' }} />
+                  <Bar dataKey="dossiers" fill="hsl(220, 70%, 50%)" name="Dossiers" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="devis" fill="hsl(142, 70%, 45%)" name="Devis" radius={[2, 2, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
-
-      {/* Graphique CA Evolution - Animation continue */}
-      <motion.div variants={itemVariants}>
-        <Card className="p-6">
-          <CardHeader className="px-0 pt-0">
-            <CardTitle className="text-lg">Évolution CA Mensuel</CardTitle>
-          </CardHeader>
-          <CardContent className="px-0 pb-0">
-            <AnimatedAreaChart data={monthlyData} animationInterval={5000} />
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Graphique Dossiers vs Devis */}
-      <motion.div variants={itemVariants}>
-        <Card className="p-6">
-          <CardHeader className="px-0 pt-0">
-            <CardTitle className="text-lg">Dossiers vs Devis par mois</CardTitle>
-          </CardHeader>
-          <CardContent className="px-0 pb-0">
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="mois" className="text-xs" />
-                <YAxis className="text-xs" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))', 
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
-                  }}
-                />
-                <Legend />
-                <Bar dataKey="dossiers" fill="hsl(220, 70%, 50%)" name="Dossiers" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="devis" fill="hsl(142, 70%, 45%)" name="Devis" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </motion.div>
     </motion.div>
   );
 }
