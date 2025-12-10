@@ -451,7 +451,7 @@ export default function IndicateursAccueil() {
       {/* Graphique CA Mensuel */}
       <div>
         <div className="flex items-center gap-4 mb-4">
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-helpconfort-blue-dark to-helpconfort-blue-lighter bg-clip-text text-transparent">
             Évolution du CA
           </h2>
           <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>

@@ -88,6 +88,7 @@ export default {
           blue: {
             DEFAULT: "hsl(var(--hc-blue))",
             light: "hsl(var(--hc-blue-light))",
+            lighter: "hsl(var(--hc-blue-lighter))",
             dark: "hsl(var(--hc-blue-dark))",
             main: "hsl(var(--hc-blue))",
           },

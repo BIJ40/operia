@@ -90,7 +90,7 @@ export default function SupportIndex() {
     <div className="container mx-auto py-4 sm:py-6 px-3 sm:px-4">
       <div className="mb-4 sm:mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-helpconfort-blue-dark to-helpconfort-blue-lighter bg-clip-text text-transparent">
             Support
           </h1>
           <p className="text-muted-foreground mt-1">

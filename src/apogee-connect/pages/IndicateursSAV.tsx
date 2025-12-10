@@ -182,7 +182,7 @@ export default function IndicateursSAV() {
           <div className="grid gap-6 md:grid-cols-2">
             {/* SAV par type apporteur */}
             <Card className="p-6 border-l-4 border-l-accent shadow-lg">
-              <h2 className="text-lg font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent mb-4">
+              <h2 className="text-lg font-bold bg-gradient-to-r from-helpconfort-blue-dark to-helpconfort-blue-lighter bg-clip-text text-transparent mb-4">
                 SAV par type d'apporteur
               </h2>
               {typeApporteurData.length > 0 ? (
@@ -225,7 +225,7 @@ export default function IndicateursSAV() {
 
             {/* SAV par univers */}
             <Card className="p-6 border-l-4 border-l-accent shadow-lg">
-              <h2 className="text-lg font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent mb-4">
+              <h2 className="text-lg font-bold bg-gradient-to-r from-helpconfort-blue-dark to-helpconfort-blue-lighter bg-clip-text text-transparent mb-4">
                 SAV par univers
               </h2>
               {universData.length > 0 ? (
@@ -270,7 +270,7 @@ export default function IndicateursSAV() {
           {/* SAV par apporteur - Liste */}
           <Card className="p-6 border-l-4 border-l-accent shadow-lg">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
+              <h2 className="text-xl font-bold bg-gradient-to-r from-helpconfort-blue-dark to-helpconfort-blue-lighter bg-clip-text text-transparent">
                 SAV par apporteurs
               </h2>
               {apporteurList.length > 5 && (

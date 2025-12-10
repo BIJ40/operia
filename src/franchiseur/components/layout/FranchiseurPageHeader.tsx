@@ -46,7 +46,7 @@ export function FranchiseurPageHeader({
             </div>
           )}
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-helpconfort-blue to-helpconfort-blue-dark bg-clip-text text-transparent">
+            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-helpconfort-blue-dark to-helpconfort-blue-lighter bg-clip-text text-transparent">
               {title}
             </h1>
             {subtitle && (
