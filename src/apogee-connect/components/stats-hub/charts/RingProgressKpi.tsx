@@ -56,7 +56,7 @@ export function RingProgressKpi({
             strokeDasharray={circumference}
             initial={{ strokeDashoffset: circumference }}
             animate={{ strokeDashoffset }}
-            transition={{ duration: 1.2, ease: "easeOut" }}
+            transition={{ duration: 2.5, ease: [0.4, 0, 0.2, 1] }}
           />
         </svg>
         
@@ -66,7 +66,7 @@ export function RingProgressKpi({
             className="text-lg font-bold"
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3, duration: 0.4 }}
+            transition={{ delay: 1.5, duration: 0.6, ease: "easeOut" }}
           >
             {formatValue(value)}
           </motion.span>

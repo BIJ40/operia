@@ -49,7 +49,7 @@ export function AnimatedAreaChart({ data, animationInterval = 10000 }: AnimatedA
           fill={`url(#colorCA-${animationKey})`}
           isAnimationActive={true}
           animationBegin={0}
-          animationDuration={1500}
+          animationDuration={2500}
           animationEasing="ease-out"
         />
       </AreaChart>

@@ -88,9 +88,9 @@ export function DonutKpiChart({
               initial={{ strokeDashoffset: circumference }}
               animate={{ strokeDashoffset: segment.dashOffset }}
               transition={{ 
-                duration: 1, 
-                ease: "easeOut",
-                delay: index * 0.1 
+                duration: 2.5, 
+                ease: [0.4, 0, 0.2, 1],
+                delay: index * 0.2 
               }}
             />
           ))}
@@ -102,7 +102,7 @@ export function DonutKpiChart({
             className="text-lg font-bold"
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.5, duration: 0.3 }}
+            transition={{ delay: 1.5, duration: 0.6, ease: "easeOut" }}
           >
             {centerValue ?? formatValue(total)}
           </motion.span>
@@ -119,7 +119,7 @@ export function DonutKpiChart({
               className="flex items-center gap-2"
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 1.8 + segmentData.indexOf(segment) * 0.1, duration: 0.4 }}
             >
               <div
                 className="w-3 h-3 rounded-sm flex-shrink-0"
