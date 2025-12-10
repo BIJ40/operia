@@ -13,7 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 
 export function AgencySelector() {
   const [open, setOpen] = useState(false);
@@ -115,50 +115,48 @@ export function AgencySelector() {
             />
           </div>
         </div>
-        <ScrollArea className="max-h-[300px]">
-          <div className="p-1">
-            {/* Select All Option */}
-            <div
-              onClick={handleSelectAll}
-              className={cn(
-                "flex items-center gap-2 px-2 py-2 rounded-md cursor-pointer transition-colors",
-                localSelection.length === 0 
-                  ? "bg-helpconfort-blue/10 text-helpconfort-blue" 
-                  : "hover:bg-muted"
-              )}
-            >
-              <Checkbox 
-                checked={localSelection.length === 0}
-                className="pointer-events-none border-helpconfort-blue data-[state=checked]:bg-helpconfort-blue data-[state=checked]:text-white"
-              />
-              <span className="text-sm font-medium">Toutes les agences ({availableAgencies.length})</span>
-            </div>
-
-            {/* Agency List */}
-            {filteredAgencies.length === 0 ? (
-              <p className="text-sm text-muted-foreground p-2 text-center">Aucune agence trouvée</p>
-            ) : (
-              filteredAgencies.map((agency) => (
-                <div
-                  key={agency.id}
-                  onClick={(e) => handleToggleAgency(agency.id, e)}
-                  className={cn(
-                    "flex items-center gap-2 px-2 py-2 rounded-md cursor-pointer transition-colors",
-                    localSelection.includes(agency.id) 
-                      ? "bg-helpconfort-blue/10 text-helpconfort-blue" 
-                      : "hover:bg-muted"
-                  )}
-                >
-                  <Checkbox 
-                    checked={localSelection.includes(agency.id)}
-                    className="pointer-events-none border-helpconfort-blue data-[state=checked]:bg-helpconfort-blue data-[state=checked]:text-white"
-                  />
-                  <span className="text-sm">{agency.label}</span>
-                </div>
-              ))
+        <div className="max-h-[300px] overflow-y-auto p-1">
+          {/* Select All Option */}
+          <div
+            onClick={handleSelectAll}
+            className={cn(
+              "flex items-center gap-2 px-2 py-2 rounded-md cursor-pointer transition-colors",
+              localSelection.length === 0 
+                ? "bg-helpconfort-blue/10 text-helpconfort-blue" 
+                : "hover:bg-muted"
             )}
+          >
+            <Checkbox 
+              checked={localSelection.length === 0}
+              className="pointer-events-none border-helpconfort-blue data-[state=checked]:bg-helpconfort-blue data-[state=checked]:text-white"
+            />
+            <span className="text-sm font-medium">Toutes les agences ({availableAgencies.length})</span>
           </div>
-        </ScrollArea>
+
+          {/* Agency List */}
+          {filteredAgencies.length === 0 ? (
+            <p className="text-sm text-muted-foreground p-2 text-center">Aucune agence trouvée</p>
+          ) : (
+            filteredAgencies.map((agency) => (
+              <div
+                key={agency.id}
+                onClick={(e) => handleToggleAgency(agency.id, e)}
+                className={cn(
+                  "flex items-center gap-2 px-2 py-2 rounded-md cursor-pointer transition-colors",
+                  localSelection.includes(agency.id) 
+                    ? "bg-helpconfort-blue/10 text-helpconfort-blue" 
+                    : "hover:bg-muted"
+                )}
+              >
+                <Checkbox 
+                  checked={localSelection.includes(agency.id)}
+                  className="pointer-events-none border-helpconfort-blue data-[state=checked]:bg-helpconfort-blue data-[state=checked]:text-white"
+                />
+                <span className="text-sm">{agency.label}</span>
+              </div>
+            ))
+          )}
+        </div>
       </PopoverContent>
     </Popover>
   );
