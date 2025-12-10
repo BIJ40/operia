@@ -7,6 +7,7 @@ import { StatDefinition, LoadedData, StatParams, StatResult } from './types';
 import { isFactureStateIncluded, isSAVIntervention } from '../engine/normalizers';
 import { extractFactureMeta } from '../rules/rules';
 import { indexProjectsById } from '../engine/loaders';
+import { calculateDelaiPaiementApporteur } from '../shared';
 
 // ==================== TYPES ====================
 
@@ -1037,94 +1038,52 @@ export const apporteursDuGlobalTtc: StatDefinition = {
 };
 
 /**
- * Délai Paiement Moyen Apporteurs
- * Délai moyen entre date facture et date du dernier règlement (factures payées uniquement)
+ * Délai Paiement Moyen Apporteurs (V2)
+ * Délai moyen entre facturation et clôture du dossier, groupé par apporteur
+ * Source: projects (events history => Facturé / => Clos)
  */
 export const apporteursDelaiPaiementMoyen: StatDefinition = {
   id: 'apporteurs_delai_paiement_moyen',
   label: 'Délai Paiement Moyen',
-  description: 'Délai moyen en jours entre facturation et dernier règlement (factures payées avec apporteur)',
+  description: 'Délai moyen en jours entre facturation et clôture dossier (par apporteur)',
   category: 'apporteur',
-  source: ['factures', 'projects'],
+  source: ['projects', 'clients'],
   aggregation: 'avg',
   unit: 'j',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { factures, projects } = data;
+    const { projects, clients } = data;
     
-    const projectsById = indexProjectsById(projects);
-    const delais: number[] = [];
-    
-    for (const facture of factures) {
-      const meta = extractFactureMeta(facture);
-      
-      // Exclure les avoirs
-      if (meta.isAvoir) continue;
-      
-      // Filtrer par date
-      const dateFacture = meta.date ? new Date(meta.date) : null;
-      if (!dateFacture || dateFacture < params.dateRange.start || dateFacture > params.dateRange.end) continue;
-      
-      // Vérifier que la facture a un apporteur
-      const projectId = facture.projectId || facture.project_id;
-      const project = projectId ? projectsById.get(projectId) : null;
-      const apporteurId = project?.data?.commanditaireId || project?.commanditaireId;
-      
-      // EXCLUSION: factures sans apporteur
-      if (!apporteurId) continue;
-      
-      // Calculer TTC et payé
-      const totalTTC = facture.totalTTC || facture.data?.totalTTC || (meta.montantBrutHT * 1.2);
-      const payments = facture.payments || facture.data?.payments || [];
-      
-      if (!Array.isArray(payments) || payments.length === 0) continue;
-      
-      const paidTTC = payments.reduce((sum: number, p: any) => sum + (p.amount || p.montant || 0), 0);
-      const restantDu = Math.max(totalTTC - paidTTC, 0);
-      
-      // Ne garder que les factures ENTIÈREMENT payées (reste = 0)
-      if (restantDu > 0) continue;
-      
-      // Trouver la date du DERNIER règlement
-      let dateDernierReglement: Date | null = null;
-      for (const p of payments) {
-        const pDate = p.date || p.dateReglement || p.created_at;
-        if (pDate) {
-          try {
-            const parsed = new Date(pDate);
-            if (!dateDernierReglement || parsed > dateDernierReglement) {
-              dateDernierReglement = parsed;
-            }
-          } catch { continue; }
-        }
+    // Utiliser la fonction partagée centralisée
+    const result = calculateDelaiPaiementApporteur(
+      projects,
+      clients || [],
+      {
+        dateStart: params.dateRange.start,
+        dateEnd: params.dateRange.end,
+        maxDelaiJours: 365,
+        debug: false
       }
-      
-      if (!dateDernierReglement) continue;
-      
-      // Calculer le délai en jours
-      const diffMs = dateDernierReglement.getTime() - dateFacture.getTime();
-      const delaiJours = Math.round(diffMs / (1000 * 60 * 60 * 24));
-      
-      if (delaiJours >= 0) {
-        delais.push(delaiJours);
-      }
-    }
-    
-    const moyenneDelai = delais.length > 0 
-      ? delais.reduce((s, d) => s + d, 0) / delais.length 
-      : 0;
+    );
     
     return {
-      value: Math.round(moyenneDelai * 10) / 10,
+      value: result.moyenneGlobale ?? 0,
       metadata: {
         computedAt: new Date(),
-        source: 'factures',
-        recordCount: delais.length,
+        source: 'projects',
+        recordCount: result.nbDossiersTotal,
       },
       breakdown: {
-        nbFacturesPayees: delais.length,
-        delaiMin: delais.length > 0 ? Math.min(...delais) : 0,
-        delaiMax: delais.length > 0 ? Math.max(...delais) : 0,
-        delaiMedian: delais.length > 0 ? delais.sort((a, b) => a - b)[Math.floor(delais.length / 2)] : 0,
+        nbDossiersClos: result.nbDossiersTotal,
+        nbApporteurs: result.nbApporteurs,
+        delaiMedian: result.medianeGlobale ?? 0,
+        delaiMin: result.parApporteur.length > 0 
+          ? Math.min(...result.parApporteur.map(a => a.delaiMin ?? Infinity)) 
+          : 0,
+        delaiMax: result.parApporteur.length > 0 
+          ? Math.max(...result.parApporteur.map(a => a.delaiMax ?? 0)) 
+          : 0,
+        parApporteur: result.parApporteur,
+        debug: result.debug,
       }
     };
   }
