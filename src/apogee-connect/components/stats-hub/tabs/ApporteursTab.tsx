@@ -21,6 +21,8 @@ import { SegmentationChart } from "@/apogee-connect/components/widgets/Segmentat
 import { ApporteurTypeTimeline } from "@/apogee-connect/components/widgets/ApporteurTypeTimeline";
 import { useApporteursStatia } from "@/statia/hooks/useApporteursStatia";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DonutKpiChart, RingProgressKpi } from "../charts";
 
 export function ApporteursTab() {
   const { filters: secondaryFilters } = useSecondaryFilters();
@@ -132,6 +134,53 @@ export function ApporteursTab() {
 
   return (
     <div className="space-y-8">
+      {/* Section visuelle avec donuts */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Donut CA par Top Apporteurs */}
+        <Card className="p-4">
+          <CardHeader className="pb-2 px-0 pt-0">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Répartition CA Top Apporteurs</CardTitle>
+          </CardHeader>
+          <CardContent className="px-0 pb-0">
+            <DonutKpiChart
+              segments={topApporteursForWidget.slice(0, 5).map((a, i) => ({
+                label: a.name,
+                value: a.caHT,
+                color: ['hsl(220, 70%, 50%)', 'hsl(142, 70%, 45%)', 'hsl(280, 70%, 50%)', 'hsl(35, 90%, 55%)', 'hsl(340, 70%, 50%)'][i],
+              }))}
+              centerLabel="CA HT"
+              size={140}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Ring progress Dû Global */}
+        <Card className="p-4 flex items-center justify-center">
+          <RingProgressKpi
+            value={statiaKpis?.duGlobal || 0}
+            maxValue={statiaKpis?.caTotal || 100000}
+            label="Dû global"
+            subtitle="TTC à encaisser"
+            color="hsl(35, 90%, 55%)"
+            size={140}
+            formatValue={(v) => formatEuros(v)}
+          />
+        </Card>
+
+        {/* Ring progress Taux Transfo */}
+        <Card className="p-4 flex items-center justify-center">
+          <RingProgressKpi
+            value={statiaKpis?.tauxTransformationMoyen || 0}
+            maxValue={100}
+            label="Taux transfo"
+            subtitle="Devis → Factures"
+            color="hsl(280, 70%, 50%)"
+            size={140}
+            formatValue={(v) => `${v.toFixed(0)}%`}
+          />
+        </Card>
+      </div>
+
       {/* 5 KPIs principaux */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <KpiTile icon={Euro} title="Dû global TTC" value={formatEuros(statiaKpis?.duGlobal || 0)} color="orange" subtitle="à encaisser" />
