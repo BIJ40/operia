@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { FolderOpen, FileText, Euro, ShoppingCart, AlertTriangle, Percent, Clock, Wrench } from 'lucide-react';
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { AnimatedAreaChart } from '../AnimatedAreaChart';
+import { RingProgressKpi, DonutKpiChart } from '../charts';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -74,6 +75,65 @@ export function GeneralTab() {
       animate="visible"
       className="space-y-8"
     >
+      {/* Section visuelle avec rings */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <motion.div variants={itemVariants}>
+          <Card className="p-4 flex items-center justify-center h-full">
+            <RingProgressKpi
+              value={savData?.tauxSavGlobal ?? 0}
+              maxValue={10}
+              label="Taux SAV"
+              subtitle={periodLabel}
+              color="hsl(35, 90%, 55%)"
+              size={120}
+              formatValue={(v) => `${v.toFixed(1)}%`}
+            />
+          </Card>
+        </motion.div>
+
+        <motion.div variants={itemVariants}>
+          <Card className="p-4 flex items-center justify-center h-full">
+            <RingProgressKpi
+              value={data?.tauxTransformationDevis?.tauxTransformation ?? 0}
+              maxValue={100}
+              label="Taux transfo"
+              subtitle="Devis → Factures"
+              color="hsl(142, 70%, 45%)"
+              size={120}
+              formatValue={(v) => `${v.toFixed(0)}%`}
+            />
+          </Card>
+        </motion.div>
+
+        <motion.div variants={itemVariants}>
+          <Card className="p-4 flex items-center justify-center h-full">
+            <RingProgressKpi
+              value={data?.delaiDossierFacture?.delaiMoyen ?? 0}
+              maxValue={45}
+              label="Délai moyen"
+              subtitle="Jours"
+              color="hsl(220, 70%, 50%)"
+              size={120}
+              formatValue={(v) => `${Math.round(v)}j`}
+            />
+          </Card>
+        </motion.div>
+
+        <motion.div variants={itemVariants}>
+          <Card className="p-4 flex items-center justify-center h-full">
+            <RingProgressKpi
+              value={data?.panierMoyen?.panierMoyen ?? 0}
+              maxValue={3000}
+              label="Panier moyen"
+              subtitle="HT"
+              color="hsl(280, 70%, 50%)"
+              size={120}
+              formatValue={(v) => formatCurrency(v)}
+            />
+          </Card>
+        </motion.div>
+      </div>
+
       {/* KPIs Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {kpis.map(kpi => {
