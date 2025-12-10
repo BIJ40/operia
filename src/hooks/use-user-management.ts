@@ -16,6 +16,7 @@ import { logAuth } from '@/lib/logger';
 import { toast } from 'sonner';
 import type { Json } from '@/integrations/supabase/types';
 import { useAdminAgencies } from './use-admin-agencies';
+import { enabledModulesToRows } from '@/lib/userModulesUtils';
 
 export interface UserProfile {
   id: string;
@@ -306,7 +307,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
         .eq('id', userId);
       if (error) throw error;
       
-      // 2. Synchronisation vers user_modules table (P3.2 migration)
+      // 2. Synchronisation vers user_modules table (P3.2 migration - via utilitaire centralisé)
       if (enabledModules) {
         // Supprimer les anciens modules
         await supabase
@@ -314,19 +315,8 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
           .delete()
           .eq('user_id', userId);
         
-        // Insérer les nouveaux modules
-        const moduleRows = Object.entries(enabledModules)
-          .filter(([, value]) => {
-            if (!value) return false;
-            return typeof value === 'boolean' ? value : value.enabled;
-          })
-          .map(([key, value]) => ({
-            user_id: userId,
-            module_key: key,
-            options: typeof value === 'object' && value.options ? value.options : null,
-            enabled_at: new Date().toISOString(),
-            enabled_by: user?.id || null,
-          }));
+        // Insérer les nouveaux modules via utilitaire centralisé
+        const moduleRows = enabledModulesToRows(userId, enabledModules, user?.id);
         
         if (moduleRows.length > 0) {
           await supabase.from('user_modules').insert(moduleRows);

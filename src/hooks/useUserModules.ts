@@ -3,77 +3,28 @@
  * 
  * P3.2 - Normalisation enabled_modules JSONB → table relationnelle
  * Ce hook remplace progressivement l'accès direct à profiles.enabled_modules
+ * 
+ * NOTE: Les fonctions de conversion sont centralisées dans src/lib/userModulesUtils.ts
+ * - userModulesToEnabledModules() - conversion user_modules rows → EnabledModules
+ * - enabledModulesToRows() - conversion EnabledModules → rows pour insertion
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import type { ModuleKey, EnabledModules, ModuleOptionsState } from '@/types/modules';
+import type { ModuleKey, EnabledModules } from '@/types/modules';
+import { 
+  userModulesToEnabledModules, 
+  enabledModulesToRows,
+  type UserModuleRow,
+  type UserModuleReadRow 
+} from '@/lib/userModulesUtils';
 
-// Type pour une ligne de user_modules
-export interface UserModuleRow {
-  id: string;
-  user_id: string;
-  module_key: string;
-  options: Record<string, boolean> | null;
-  enabled_at: string;
-  enabled_by: string | null;
-  created_at: string;
-  updated_at: string;
-}
+// Re-export des types pour compatibilité
+export type { UserModuleRow, UserModuleReadRow };
 
-/**
- * Convertit les rows user_modules en format EnabledModules (compatibilité JSONB)
- */
-export function rowsToEnabledModules(rows: UserModuleRow[]): EnabledModules {
-  const result: EnabledModules = {};
-  
-  for (const row of rows) {
-    const moduleKey = row.module_key as ModuleKey;
-    if (row.options && Object.keys(row.options).length > 0) {
-      result[moduleKey] = {
-        enabled: true,
-        options: row.options,
-      };
-    } else {
-      result[moduleKey] = { enabled: true };
-    }
-  }
-  
-  return result;
-}
-
-/**
- * Convertit EnabledModules en rows pour insertion
- */
-export function enabledModulesToRows(
-  userId: string, 
-  enabledModules: EnabledModules,
-  enabledBy?: string
-): Omit<UserModuleRow, 'id' | 'created_at' | 'updated_at'>[] {
-  const rows: Omit<UserModuleRow, 'id' | 'created_at' | 'updated_at'>[] = [];
-  
-  for (const [key, value] of Object.entries(enabledModules)) {
-    if (!value) continue;
-    
-    const isEnabled = typeof value === 'boolean' ? value : value.enabled;
-    if (!isEnabled) continue;
-    
-    const options = typeof value === 'object' && value.options 
-      ? value.options 
-      : null;
-    
-    rows.push({
-      user_id: userId,
-      module_key: key,
-      options,
-      enabled_at: new Date().toISOString(),
-      enabled_by: enabledBy || null,
-    });
-  }
-  
-  return rows;
-}
+// Re-export des fonctions de conversion pour compatibilité avec le code existant
+export { userModulesToEnabledModules as rowsToEnabledModules, enabledModulesToRows };
 
 /**
  * Hook principal pour récupérer les modules d'un utilisateur
@@ -94,7 +45,7 @@ export function useUserModules(userId?: string) {
       
       if (error) throw error;
       
-      return rowsToEnabledModules(data as UserModuleRow[]);
+      return userModulesToEnabledModules(data as UserModuleRow[]);
     },
     enabled: !!targetUserId,
     staleTime: 5 * 60 * 1000, // 5 minutes
