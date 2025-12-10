@@ -30,6 +30,7 @@ import { MODULE_DEFINITIONS, ModuleKey, EnabledModules, getDefaultModulesForRole
 import { getUserManagementCapabilities } from '@/config/roleMatrix';
 import { useAuth } from '@/contexts/AuthContext';
 import { PermissionAuditLog } from './PermissionAuditLog';
+import { userModulesToEnabledModules, enabledModulesToRows } from '@/lib/userModulesUtils';
 
 interface UserEditDialogProps {
   user: {
@@ -59,7 +60,7 @@ export function UserEditDialog({ user, open, onOpenChange }: UserEditDialogProps
       setSelectedRole(user.global_role);
       setIsLoadingModules(true);
       
-      // Charger depuis user_modules table
+      // Charger depuis user_modules table (via utilitaire centralisé)
       supabase
         .from('user_modules')
         .select('module_key, options')
@@ -70,14 +71,8 @@ export function UserEditDialog({ user, open, onOpenChange }: UserEditDialogProps
             // Fallback vers JSONB
             setModules((user.enabled_modules || {}) as EnabledModules);
           } else if (userModules && userModules.length > 0) {
-            // Convertir user_modules en EnabledModules format
-            const converted: EnabledModules = {};
-            for (const row of userModules) {
-              converted[row.module_key as ModuleKey] = {
-                enabled: true,
-                options: (row.options as Record<string, boolean>) || {},
-              };
-            }
+            // Utiliser l'utilitaire centralisé pour la conversion
+            const converted = userModulesToEnabledModules(userModules);
             setModules(converted);
           } else {
             // Fallback vers JSONB si table vide
@@ -119,21 +114,8 @@ export function UserEditDialog({ user, open, onOpenChange }: UserEditDialogProps
         
       if (deleteError) throw deleteError;
       
-      // 3. Insérer les nouveaux modules
-      const modulesToInsert = Object.entries(modules)
-        .filter(([_, value]) => {
-          if (typeof value === 'boolean') return value;
-          if (typeof value === 'object' && value !== null) return (value as ModuleOptionsState).enabled;
-          return false;
-        })
-        .map(([moduleKey, value]) => ({
-          user_id: user.id,
-          module_key: moduleKey,
-          options: typeof value === 'object' && value !== null 
-            ? (value as ModuleOptionsState).options || {}
-            : {},
-          enabled_by: currentUser?.id || null,
-        }));
+      // 3. Insérer les nouveaux modules (via utilitaire centralisé)
+      const modulesToInsert = enabledModulesToRows(user.id, modules, currentUser?.id);
       
       if (modulesToInsert.length > 0) {
         const { error: insertError } = await supabase

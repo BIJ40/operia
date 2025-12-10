@@ -17,6 +17,8 @@ import {
   hasModuleOption as hasModuleOptionFn,
 } from '@/types/accessControl';
 import { getRoleCapabilities } from '@/config/roleMatrix';
+import { hasAccess, hasMinRole, getUserManagementCapabilities, isModuleEnabled, isModuleOptionEnabled } from '@/permissions';
+import { userModulesToEnabledModules } from '@/lib/userModulesUtils';
 
 // Types pour le module Support
 interface SupportModuleOptions {
@@ -172,19 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return hasModuleOptionFn(accessContext, moduleKey, optionKey);
   }, [accessContext]);
 
-  // ============================================================================
-  // Helper: Convertir user_modules rows en EnabledModules JSONB format
-  // ============================================================================
-  const convertUserModulesToEnabledModules = (rows: Array<{ module_key: string; options: unknown }>): EnabledModules => {
-    const result: EnabledModules = {};
-    for (const row of rows) {
-      result[row.module_key as ModuleKey] = {
-        enabled: true,
-        options: (row.options as Record<string, boolean>) || {},
-      };
-    }
-    return result;
-  };
+  // Helper convertUserModulesToEnabledModules déplacé vers src/lib/userModulesUtils.ts
 
   // ============================================================================
   // Chargement des données utilisateur (V2 + user_modules table)
@@ -248,8 +238,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Priorité: user_modules table > profiles.enabled_modules JSONB
       let resolvedModules: EnabledModules;
       if (userModules && userModules.length > 0) {
-        // Utiliser la nouvelle table user_modules
-        resolvedModules = convertUserModulesToEnabledModules(userModules);
+        // Utiliser la nouvelle table user_modules (via utilitaire centralisé)
+        resolvedModules = userModulesToEnabledModules(userModules);
         if (import.meta.env.DEV) {
           logAuth.info('[AUTH] Modules loaded from user_modules table:', userModules.length);
         }
