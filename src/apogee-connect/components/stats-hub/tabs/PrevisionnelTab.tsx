@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Calendar, FolderOpen, Layers, ChevronDown, ChevronUp, Users, Package, ShoppingCart, ClipboardList } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { motion } from 'framer-motion';
 import {
   Table,
@@ -14,8 +15,64 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
 import { Button } from '@/components/ui/button';
+
+// Tooltip explicatif pour Heures Technicien
+const HeuresTechTooltip = () => (
+  <div className="space-y-3 max-w-xs">
+    <p className="font-medium">Heures Technicien = Σ (nbHeures × nbTechs)</p>
+    <p className="text-xs text-muted-foreground">
+      Charge de main d'œuvre réelle : temps cumulé de travail de tous les techniciens mobilisés.
+    </p>
+    <table className="w-full text-xs border-collapse">
+      <thead>
+        <tr className="border-b border-muted">
+          <th className="text-left py-1">Dossier</th>
+          <th className="text-right py-1">Heures</th>
+          <th className="text-right py-1">Techs</th>
+          <th className="text-right py-1 font-bold">H. Tech</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>A</td><td className="text-right">6h</td><td className="text-right">1</td><td className="text-right font-medium">6h</td></tr>
+        <tr><td>B</td><td className="text-right">8h</td><td className="text-right">2</td><td className="text-right font-medium">16h</td></tr>
+        <tr><td>C</td><td className="text-right">4h</td><td className="text-right">3</td><td className="text-right font-medium">12h</td></tr>
+        <tr className="border-t border-muted font-bold">
+          <td>Total</td><td className="text-right">18h</td><td></td><td className="text-right">34h</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+);
+
+// Tooltip explicatif pour Heures RDV
+const HeuresRdvTooltip = () => (
+  <div className="space-y-3 max-w-xs">
+    <p className="font-medium">Heures RDV = Σ nbHeures</p>
+    <p className="text-xs text-muted-foreground">
+      Durée brute des interventions : temps que va durer chaque RDV, indépendamment du nombre de techniciens.
+    </p>
+    <table className="w-full text-xs border-collapse">
+      <thead>
+        <tr className="border-b border-muted">
+          <th className="text-left py-1">Dossier</th>
+          <th className="text-right py-1">Heures</th>
+          <th className="text-right py-1">Techs</th>
+          <th className="text-right py-1 font-bold">H. RDV</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>A</td><td className="text-right">6h</td><td className="text-right">1</td><td className="text-right font-medium">6h</td></tr>
+        <tr><td>B</td><td className="text-right">8h</td><td className="text-right">2</td><td className="text-right font-medium">8h</td></tr>
+        <tr><td>C</td><td className="text-right">4h</td><td className="text-right">3</td><td className="text-right font-medium">4h</td></tr>
+        <tr className="border-t border-muted font-bold">
+          <td>Total</td><td></td><td></td><td className="text-right">18h</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+);
 
 const UNIVERS_COLORS: Record<string, string> = {
   'Plomberie': '#3b82f6',
@@ -152,32 +209,48 @@ export function PrevisionnelTab() {
       <motion.div variants={itemVariants}>
         <Card className="bg-gradient-to-r from-helpconfort-blue/10 to-helpconfort-orange/10 border-helpconfort-blue/30">
           <CardContent className="py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                  <FolderOpen className="h-5 w-5 text-helpconfort-blue" />
-                  <span className="text-2xl font-bold">{totaux.nbDossiers}</span>
-                  <span className="text-muted-foreground">dossiers total</span>
+            <TooltipProvider delayDuration={200}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-2">
+                    <FolderOpen className="h-5 w-5 text-helpconfort-blue" />
+                    <span className="text-2xl font-bold">{totaux.nbDossiers}</span>
+                    <span className="text-muted-foreground">dossiers total</span>
+                  </div>
+                  <div className="h-8 w-px bg-border" />
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-2 cursor-help">
+                        <Clock className="h-5 w-5 text-helpconfort-orange" />
+                        <span className="text-2xl font-bold">{Math.round(totaux.totalHeuresTech)}h</span>
+                        <span className="text-muted-foreground">heures technicien</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="p-4">
+                      <HeuresTechTooltip />
+                    </TooltipContent>
+                  </Tooltip>
+                  <div className="h-8 w-px bg-border" />
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-2 cursor-help">
+                        <Calendar className="h-5 w-5 text-cyan-500" />
+                        <span className="text-2xl font-bold">{Math.round(totaux.totalHeuresRdv)}h</span>
+                        <span className="text-muted-foreground">heures RDV</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="p-4">
+                      <HeuresRdvTooltip />
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
-                <div className="h-8 w-px bg-border" />
                 <div className="flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-helpconfort-orange" />
-                  <span className="text-2xl font-bold">{Math.round(totaux.totalHeuresTech)}h</span>
-                  <span className="text-muted-foreground">heures technicien</span>
-                </div>
-                <div className="h-8 w-px bg-border" />
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-cyan-500" />
-                  <span className="text-2xl font-bold">{Math.round(totaux.totalHeuresRdv)}h</span>
-                  <span className="text-muted-foreground">heures RDV</span>
+                  <Layers className="h-5 w-5 text-purple-500" />
+                  <span className="text-lg font-semibold">{parUnivers.length}</span>
+                  <span className="text-muted-foreground">univers</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Layers className="h-5 w-5 text-purple-500" />
-                <span className="text-lg font-semibold">{parUnivers.length}</span>
-                <span className="text-muted-foreground">univers</span>
-              </div>
-            </div>
+            </TooltipProvider>
           </CardContent>
         </Card>
       </motion.div>
@@ -197,7 +270,7 @@ export function PrevisionnelTab() {
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis type="number" tick={{ fontSize: 10 }} />
                     <YAxis dataKey="name" type="category" tick={{ fontSize: 10 }} width={75} />
-                    <Tooltip
+                    <RechartsTooltip
                       contentStyle={{
                         backgroundColor: 'hsl(var(--card))',
                         border: '1px solid hsl(var(--border))',
@@ -252,7 +325,7 @@ export function PrevisionnelTab() {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip
+                    <RechartsTooltip
                       contentStyle={{
                         backgroundColor: 'hsl(var(--card))',
                         border: '1px solid hsl(var(--border))',
