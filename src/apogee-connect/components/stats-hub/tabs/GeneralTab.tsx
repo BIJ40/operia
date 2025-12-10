@@ -201,8 +201,8 @@ export function GeneralTab() {
                     }}
                   />
                   <Legend wrapperStyle={{ fontSize: '10px' }} />
-                  <Bar dataKey="dossiers" fill="hsl(220, 70%, 50%)" name="Dossiers" radius={[2, 2, 0, 0]} />
-                  <Bar dataKey="devis" fill="hsl(142, 70%, 45%)" name="Devis" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="dossiers" fill="hsl(220, 70%, 50%)" name="Dossiers" radius={[2, 2, 0, 0]} animationDuration={2500} animationEasing="ease-out" />
+                  <Bar dataKey="devis" fill="hsl(142, 70%, 45%)" name="Devis" radius={[2, 2, 0, 0]} animationDuration={2500} animationEasing="ease-out" animationBegin={300} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -240,6 +240,8 @@ export function GeneralTab() {
                   <Bar 
                     dataKey="ca" 
                     radius={[0, 4, 4, 0]}
+                    animationDuration={2500}
+                    animationEasing="ease-out"
                   >
                     {trancheHoraireChartData.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={TRANCHE_COLORS[index % TRANCHE_COLORS.length]} />
