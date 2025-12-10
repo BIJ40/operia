@@ -114,7 +114,7 @@ export function UserEditDialog({ user, open, onOpenChange }: UserEditDialogProps
         
       if (deleteError) throw deleteError;
       
-      // 3. Insérer les nouveaux modules (via utilitaire centralisé)
+      // 3. Insérer les nouveaux modules (via utilitaire centralisé - source unique P3.2)
       const modulesToInsert = enabledModulesToRows(user.id, modules, currentUser?.id);
       
       if (modulesToInsert.length > 0) {
@@ -124,13 +124,7 @@ export function UserEditDialog({ user, open, onOpenChange }: UserEditDialogProps
           
         if (insertError) throw insertError;
       }
-      
-      // 4. Mettre à jour aussi le JSONB pour compatibilité (durant migration)
-      const modulesJson = JSON.parse(JSON.stringify(modules));
-      await supabase
-        .from('profiles')
-        .update({ enabled_modules: modulesJson })
-        .eq('id', user.id);
+      // P3.2 Migration complète: JSONB profiles.enabled_modules supprimé, user_modules = source unique
     },
     onSuccess: () => {
       toast.success('Permissions mises à jour');
