@@ -6,7 +6,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency, formatPercent } from '@/lib/formatters';
 import { motion } from 'framer-motion';
 import { FolderOpen, FileText, Euro, ShoppingCart, AlertTriangle, Percent, Clock, Wrench } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
+import { AnimatedAreaChart } from '../AnimatedAreaChart';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -98,43 +99,14 @@ export function GeneralTab() {
         })}
       </div>
 
-      {/* Graphique CA Evolution */}
+      {/* Graphique CA Evolution - Animation continue */}
       <motion.div variants={itemVariants}>
         <Card className="p-6">
           <CardHeader className="px-0 pt-0">
             <CardTitle className="text-lg">Évolution CA Mensuel</CardTitle>
           </CardHeader>
           <CardContent className="px-0 pb-0">
-            <ResponsiveContainer width="100%" height={350}>
-              <AreaChart data={monthlyData}>
-                <defs>
-                  <linearGradient id="colorCA" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="mois" className="text-xs" />
-                <YAxis tickFormatter={(v) => `${(v/1000).toFixed(0)}k€`} className="text-xs" />
-                <Tooltip 
-                  formatter={(value: number) => [formatCurrency(value), 'CA HT']}
-                  labelStyle={{ color: 'hsl(var(--foreground))' }}
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))', 
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
-                  }}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="ca" 
-                  stroke="hsl(var(--primary))" 
-                  strokeWidth={2}
-                  fillOpacity={1} 
-                  fill="url(#colorCA)" 
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            <AnimatedAreaChart data={monthlyData} animationInterval={5000} />
           </CardContent>
         </Card>
       </motion.div>
