@@ -124,7 +124,8 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Pilotage Agence',
     description: 'Statistiques, actions à mener et diffusion',
     icon: 'BarChart3',
-    defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
+    // N3/N4 exclus : ils n'ont pas d'agence propre, ils utilisent reseau_franchiseur
+    defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_user',
     options: [
       { key: 'indicateurs', path: 'pilotage_agence.indicateurs', label: 'Mes indicateurs', description: 'KPIs et statistiques agence', defaultEnabled: true },
@@ -195,7 +196,9 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'RH',
     description: 'Gestion des ressources humaines',
     icon: 'Briefcase',
-    defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
+    // N3/N4 exclus : ils ne gèrent pas de collaborateurs, c'est un module agence
+    // N1 inclus pour l'option coffre (accès perso uniquement)
+    defaultForRoles: ['franchisee_user', 'franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'base_user',
     options: [
       { key: 'coffre', path: 'rh.coffre', label: 'Mon Coffre RH', description: 'Accès à ses propres documents RH et demandes', defaultEnabled: false },
@@ -208,7 +211,8 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Parc',
     description: 'Gestion flotte véhicules et équipements',
     icon: 'Truck',
-    defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
+    // N3/N4 exclus : ils ne gèrent pas de flotte, c'est un module agence
+    defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_user',
     options: [
       { key: 'vehicules', path: 'parc.vehicules', label: 'Véhicules', description: 'Gestion de la flotte véhicules', defaultEnabled: true },

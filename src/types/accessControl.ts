@@ -11,7 +11,14 @@ import { ModuleKey, EnabledModules, isModuleEnabled, isModuleOptionEnabled, canA
 export interface AccessControlContext {
   globalRole: GlobalRole | null;
   enabledModules: EnabledModules | null;
+  agencyId?: string | null; // Pour les contrôles de modules nécessitant une agence
 }
+
+/**
+ * Modules nécessitant une agence pour être accessibles
+ * Ces modules sont liés à la gestion d'une agence spécifique
+ */
+const AGENCY_REQUIRED_MODULES: ModuleKey[] = ['pilotage_agence', 'rh', 'parc'];
 
 /**
  * Vérifie si l'utilisateur a au minimum le rôle spécifié
@@ -25,12 +32,20 @@ export function hasGlobalRole(ctx: AccessControlContext, requiredRole: GlobalRol
  * RÈGLE ABSOLUE: superadmin et platform_admin ont TOUS les modules, toujours
  * RÈGLE: Si un module est dans defaultForRoles pour le rôle de l'utilisateur,
  *        il est considéré comme accessible même sans activation explicite
+ * RÈGLE: Certains modules nécessitent une agence (pilotage_agence, rh, parc)
  */
 export function hasModule(ctx: AccessControlContext, moduleKey: ModuleKey): boolean {
   // RÈGLE ABSOLUE: N5+ (platform_admin, superadmin) ont accès à TOUS les modules
   const roleLevel = ctx.globalRole ? GLOBAL_ROLES[ctx.globalRole] : 0;
   if (roleLevel >= GLOBAL_ROLES.platform_admin) {
     return true; // Bypass complet pour N5+
+  }
+  
+  // NOUVEAU: Modules nécessitant une agence
+  if (AGENCY_REQUIRED_MODULES.includes(moduleKey)) {
+    if (!ctx.agencyId) {
+      return false; // Pas d'agence = pas d'accès aux modules agence
+    }
   }
   
   // 1. Vérifier que le rôle permet l'accès au module
@@ -41,7 +56,7 @@ export function hasModule(ctx: AccessControlContext, moduleKey: ModuleKey): bool
     return true;
   }
   
-  // 3. NOUVEAU: Si le module est dans defaultForRoles pour ce rôle, 
+  // 3. Si le module est dans defaultForRoles pour ce rôle, 
   //    considérer comme accessible (support des utilisateurs sans enabled_modules complet)
   if (ctx.globalRole) {
     const moduleDef = MODULE_DEFINITIONS.find(m => m.key === moduleKey);
