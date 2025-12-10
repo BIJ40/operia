@@ -276,8 +276,13 @@ src/statia/hooks/useApporteursStatia.ts:244-245 - tauxFidelite, croissanceCA
 
 ## 🎯 CONCLUSION
 
-Le projet est **production-ready**. Les console.log ont été conditionnés et la migration user_modules finalisée.
+Le projet est **production-ready à 90%**. 
 
-**Prochaines étapes recommandées:** Typage des API Apogée et résolution des TODOs critiques.
+**P3 Backlog (post-production):**
+- Typage API Apogée et dataService.ts
+- Résolution TODOs critiques
+- Déplacement fichiers dev vers `__tests__/`
+- ESLint --fix global
+- Vérification intégrité user_modules
 
-**Score global: 88%** - Projet solide avec dette technique minimale.
+**Score global: 90%** - Projet prêt pour production. Backlog P3 à traiter en maintenance.
