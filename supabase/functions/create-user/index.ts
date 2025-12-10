@@ -4,6 +4,7 @@ import { Resend } from 'https://esm.sh/resend@4.0.0'
 import { GLOBAL_ROLES, getRoleLevel, canAccessUsersPage, canEditTarget } from '../_shared/roles.ts'
 import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts'
 import { validateString, validateOptionalString, validateOptionalBoolean } from '../_shared/validation.ts'
+import { getDefaultModulesForRole, EnabledModule } from '../_shared/defaultModules.ts'
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
 
@@ -228,6 +229,40 @@ serve(async (req) => {
           .from('profiles')
           .update({ agency_id: existingAgency.id })
           .eq('id', newUser.user.id)
+      }
+    }
+
+    // Insérer les modules par défaut dans user_modules (table relationnelle V2)
+    const defaultModules = getDefaultModulesForRole(globalRole)
+    const moduleRows = Object.entries(defaultModules)
+      .filter(([_, mod]: [string, EnabledModule]) => mod.enabled)
+      .map(([moduleKey, mod]: [string, EnabledModule]) => ({
+        user_id: newUser.user.id,
+        module_key: moduleKey,
+        options: mod.options || {},
+        enabled_by: user.id
+      }))
+
+    if (moduleRows.length > 0) {
+      const { error: modulesError } = await supabaseAdmin
+        .from('user_modules')
+        .insert(moduleRows)
+
+      if (modulesError) {
+        console.error('[create-user] Erreur insertion modules:', modulesError)
+        // Non-bloquant: l'utilisateur est créé, les modules peuvent être ajoutés manuellement
+      } else {
+        console.log(`[create-user] ${moduleRows.length} modules par défaut insérés`)
+      }
+
+      // Également mettre à jour enabled_modules JSONB pour compatibilité descendante
+      const { error: jsonbError } = await supabaseAdmin
+        .from('profiles')
+        .update({ enabled_modules: defaultModules })
+        .eq('id', newUser.user.id)
+
+      if (jsonbError) {
+        console.error('[create-user] Erreur mise à jour enabled_modules JSONB:', jsonbError)
       }
     }
 
