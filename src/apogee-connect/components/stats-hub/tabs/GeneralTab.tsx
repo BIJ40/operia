@@ -1,4 +1,5 @@
-import { useStatiaIndicateurs } from '@/statia/hooks/useStatiaIndicateurs';
+import { useMemo } from 'react';
+import { useStatiaIndicateurs, useStatiaKpi } from '@/statia/hooks/useStatiaIndicateurs';
 import { useStatiaSAVMetrics } from '@/statia/hooks/useStatiaSAVMetrics';
 import { useFilters } from '@/apogee-connect/contexts/FiltersContext';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency, formatPercent } from '@/lib/formatters';
 import { motion } from 'framer-motion';
 import { FolderOpen, FileText, Euro, ShoppingCart, AlertTriangle, Percent, Clock, Wrench } from 'lucide-react';
-import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell } from 'recharts';
 import { AnimatedAreaChart } from '../AnimatedAreaChart';
 import { RingProgressKpi, DonutKpiChart } from '../charts';
 
@@ -24,8 +25,27 @@ export function GeneralTab() {
   const { filters } = useFilters();
   const { data, isLoading } = useStatiaIndicateurs();
   const { data: savData } = useStatiaSAVMetrics();
+  const { data: caTrancheData, isLoading: isTrancheLoading } = useStatiaKpi('ca_par_tranche_horaire');
 
   const periodLabel = filters.periodLabel || 'ce mois';
+
+  // Transformer les données de tranche horaire pour le graphique
+  const trancheHoraireChartData = useMemo(() => {
+    if (!caTrancheData?.value || typeof caTrancheData.value !== 'object') return [];
+    
+    const trancheOrder = ['Matin (6h-12h)', 'Midi (12h-14h)', 'Après-midi (14h-18h)', 'Soirée (18h-21h)', 'Hors horaires (21h-6h)', 'Non classé'];
+    const value = caTrancheData.value as Record<string, number>;
+    
+    return trancheOrder
+      .filter(tranche => value[tranche] !== undefined && value[tranche] > 0)
+      .map(tranche => ({
+        name: tranche.replace(/\s*\([^)]*\)/g, ''), // Simplifier le label
+        fullName: tranche,
+        ca: Math.round(value[tranche]),
+      }));
+  }, [caTrancheData]);
+
+  const TRANCHE_COLORS = ['#3b82f6', '#f59e0b', '#10b981', '#8b5cf6', '#6b7280', '#94a3b8'];
 
   if (isLoading) {
     return (
@@ -189,6 +209,48 @@ export function GeneralTab() {
           </Card>
         </motion.div>
       </div>
+
+      {/* CA par tranche horaire */}
+      {trancheHoraireChartData.length > 0 && (
+        <motion.div variants={itemVariants}>
+          <Card className="p-4">
+            <CardHeader className="p-0 pb-3">
+              <CardTitle className="text-sm">CA par tranche horaire</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart 
+                  data={trancheHoraireChartData} 
+                  layout="vertical"
+                  margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={(v) => formatCurrency(v)} />
+                  <YAxis dataKey="name" type="category" tick={{ fontSize: 10 }} width={70} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                      fontSize: '12px'
+                    }}
+                    formatter={(value: number) => [formatCurrency(value), 'CA HT']}
+                    labelFormatter={(label) => trancheHoraireChartData.find(d => d.name === label)?.fullName || label}
+                  />
+                  <Bar 
+                    dataKey="ca" 
+                    radius={[0, 4, 4, 0]}
+                  >
+                    {trancheHoraireChartData.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={TRANCHE_COLORS[index % TRANCHE_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
     </motion.div>
   );
 }
