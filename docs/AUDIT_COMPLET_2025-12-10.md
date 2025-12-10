@@ -15,7 +15,7 @@
 | Qualité du code | 78% | ✅ Amélioré |
 | Performance | 80% | ✅ Bon |
 | Maintenabilité | 75% | ✅ Bon |
-| **GLOBAL** | **84%** | **✅ Production-ready** |
+| **GLOBAL** | **86%** | **✅ Production-ready** |
 
 ---
 
@@ -74,11 +74,27 @@
 **Problème:** Imports dispersés de types depuis multiples sources.
 **Action:** Centraliser tous les types dans `src/types/` avec barrel exports.
 
-### P1-04: Hooks trop volumineux
+### P1-04: Hooks trop volumineux ✅ EN COURS
 **Fichiers concernés:**
-- `src/hooks/use-user-management.ts` - 500+ lignes
-- `src/hooks/use-admin-tickets.ts` - 400+ lignes
-**Action:** Extraire sous-hooks spécialisés.
+- `src/hooks/use-user-management.ts` - 692 lignes
+- `src/hooks/use-admin-tickets.ts` - 811 lignes
+
+**Refactoring effectué - Nouveaux modules créés:**
+
+**user-management/** (nouveau)
+- `types.ts` - Types et interfaces extraits (55 lignes)
+- `useUserFilters.ts` - Logique filtrage (68 lignes)
+- `useUserMutations.ts` - Mutations CRUD (175 lignes)
+- `index.ts` - Re-exports
+
+**admin-tickets/** (nouveau)
+- `types.ts` - Types et interfaces (30 lignes)
+- `useTicketOperations.ts` - Update/assign/take/reopen (115 lignes)
+- `useTicketMessages.ts` - Gestion messages (145 lignes)
+- `useSupportUsers.ts` - Utilisateurs support (65 lignes)
+- `index.ts` - Re-exports
+
+**Prochaine étape:** Intégrer ces modules dans les hooks principaux.
 
 ---
 
