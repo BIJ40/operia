@@ -7,7 +7,7 @@ interface AnimatedAreaChartProps {
   animationInterval?: number; // ms between redraws
 }
 
-export function AnimatedAreaChart({ data, animationInterval = 5000 }: AnimatedAreaChartProps) {
+export function AnimatedAreaChart({ data, animationInterval = 10000 }: AnimatedAreaChartProps) {
   const [animationKey, setAnimationKey] = useState(0);
 
   // Redraw every X seconds
