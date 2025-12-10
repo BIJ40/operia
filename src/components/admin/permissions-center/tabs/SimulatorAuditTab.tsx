@@ -155,14 +155,14 @@ function PermissionSimulator() {
             <div className="space-y-2">
               <Label>Option spécifique (optionnel)</Label>
               <Select 
-                value={config.targetOption} 
-                onValueChange={(v) => setConfig(c => ({ ...c, targetOption: v }))}
+                value={config.targetOption || '__none__'} 
+                onValueChange={(v) => setConfig(c => ({ ...c, targetOption: v === '__none__' ? '' : v }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Aucune option" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Aucune option</SelectItem>
+                  <SelectItem value="__none__">Aucune option</SelectItem>
                   {targetModuleDef.options.map(opt => (
                     <SelectItem key={opt.key} value={opt.key}>
                       {opt.label}
