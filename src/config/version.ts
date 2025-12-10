@@ -1,36 +1,33 @@
-export const APP_VERSION = '0.7.9';
-export const APP_CODENAME = 'Modules & Stabilité';
+export const APP_VERSION = '0.7.10';
+export const APP_CODENAME = 'Prévisionnel CA Devis';
 
 /**
- * Changelog v0.7.9 (2025-12-10)
- * =============================
+ * Changelog v0.7.10 (2025-12-10)
+ * ==============================
  * 
- * GESTION DES MODULES
- * --------------------
+ * PRÉVISIONNEL - CA DEVIS
+ * ------------------------
  * 
- * 1. Nouveaux modules Pilotage Agence
- *    - stats_hub: Stats Hub avancé (désactivé par défaut)
- *    - veille_apporteurs: Veille Apporteurs (désactivé par défaut)
- *    - Guards ModuleGuard sur toutes les routes concernées
+ * 1. Intégration CA devis dans charge travaux à venir
+ *    - Calcul du CA devis (HT) pour les projets éligibles
+ *    - États inclus: devis_to_order, wait_fourn, to_planify_tvx
+ *    - Exclusion devis: draft, rejected, canceled
+ *    - Ventilation proportionnelle par univers
  * 
- * 2. Protection des routes par module
- *    - /hc-agency/stats-hub → pilotage_agence.stats_hub
- *    - /hc-agency/indicateurs → pilotage_agence.indicateurs
- *    - /hc-agency/veille-apporteurs → pilotage_agence.veille_apporteurs
- *    - /hc-agency/actions → pilotage_agence.actions_a_mener
- *    - /hc-agency/statistiques/diffusion → pilotage_agence.diffusion
+ * 2. Nouveaux KPIs et graphiques
+ *    - KPI "CA estimé" global sur tuile principale
+ *    - CA devis par état (À planifier, À commander, Att. Fourn)
+ *    - Graphique barres CA Devis par Univers
+ *    - Graphique camembert CA Devis par État
  * 
- * CORRECTIONS STABILITÉ
- * ----------------------
+ * 3. Engine chargeTravauxEngine enrichi
+ *    - Types ChargeTravauxProjet/UniversStats avec devisHT
+ *    - Fonction calculateDevisHTForProject
+ *    - Debug étendu: devisMatchedToProjects, devisHTCalculated
  * 
- * 3. Rechargement intempestif des pages corrigé
- *    - AgencyContext: cache vidé uniquement si agence change réellement
- *    - useStatiaSAVMetrics: queryKey sans overridesVersion
- *    - Persistance état lors changement d'onglet navigateur
- * 
- * PRÉCÉDENT (v0.7.8)
+ * PRÉCÉDENT (v0.7.9)
  * -------------------
- * - Live Support améliorations
- * - Tickets → FAQ avec reformulation IA
- * - Notifications temps réel corrigées
+ * - Gestion des modules pilotage_agence
+ * - Protection routes par ModuleGuard
+ * - Corrections stabilité rechargement pages
  */
