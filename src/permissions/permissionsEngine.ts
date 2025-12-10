@@ -12,8 +12,6 @@ import {
   ModuleKey, 
   EnabledModules, 
   MODULE_DEFINITIONS,
-  isModuleEnabled as legacyIsModuleEnabled,
-  isModuleOptionEnabled as legacyIsModuleOptionEnabled,
 } from '@/types/modules';
 import { DEFAULT_MODULES_BY_ROLE } from '@/config/modulesByRole';
 import {
