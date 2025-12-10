@@ -51,12 +51,40 @@ export function UserEditDialog({ user, open, onOpenChange }: UserEditDialogProps
   const [selectedRole, setSelectedRole] = useState<GlobalRole | null>(null);
   const [modules, setModules] = useState<EnabledModules>({});
   const [activeTab, setActiveTab] = useState('role');
+  const [isLoadingModules, setIsLoadingModules] = useState(false);
   
-  // Charger les données initiales de l'utilisateur
+  // Charger les données initiales de l'utilisateur (incluant user_modules)
   useEffect(() => {
     if (user && open) {
       setSelectedRole(user.global_role);
-      setModules((user.enabled_modules || {}) as EnabledModules);
+      setIsLoadingModules(true);
+      
+      // Charger depuis user_modules table
+      supabase
+        .from('user_modules')
+        .select('module_key, options')
+        .eq('user_id', user.id)
+        .then(({ data: userModules, error }) => {
+          if (error) {
+            console.error('Erreur chargement user_modules:', error);
+            // Fallback vers JSONB
+            setModules((user.enabled_modules || {}) as EnabledModules);
+          } else if (userModules && userModules.length > 0) {
+            // Convertir user_modules en EnabledModules format
+            const converted: EnabledModules = {};
+            for (const row of userModules) {
+              converted[row.module_key as ModuleKey] = {
+                enabled: true,
+                options: (row.options as Record<string, boolean>) || {},
+              };
+            }
+            setModules(converted);
+          } else {
+            // Fallback vers JSONB si table vide
+            setModules((user.enabled_modules || {}) as EnabledModules);
+          }
+          setIsLoadingModules(false);
+        });
     }
   }, [user, open]);
   
@@ -70,27 +98,62 @@ export function UserEditDialog({ user, open, onOpenChange }: UserEditDialogProps
     (user.global_role && assignableRoles.includes(user.global_role))
   );
   
-  // Mutation pour sauvegarder
+  // Mutation pour sauvegarder (écriture dans user_modules + profiles.global_role)
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('Pas d\'utilisateur sélectionné');
       
-      // Cast explicite pour Supabase Json type
-      const modulesJson = JSON.parse(JSON.stringify(modules));
-      
-      const { error } = await supabase
+      // 1. Mettre à jour le rôle global dans profiles
+      const { error: roleError } = await supabase
         .from('profiles')
-        .update({
-          global_role: selectedRole,
-          enabled_modules: modulesJson,
-        })
+        .update({ global_role: selectedRole })
         .eq('id', user.id);
         
-      if (error) throw error;
+      if (roleError) throw roleError;
+      
+      // 2. Supprimer les modules existants dans user_modules
+      const { error: deleteError } = await supabase
+        .from('user_modules')
+        .delete()
+        .eq('user_id', user.id);
+        
+      if (deleteError) throw deleteError;
+      
+      // 3. Insérer les nouveaux modules
+      const modulesToInsert = Object.entries(modules)
+        .filter(([_, value]) => {
+          if (typeof value === 'boolean') return value;
+          if (typeof value === 'object' && value !== null) return (value as ModuleOptionsState).enabled;
+          return false;
+        })
+        .map(([moduleKey, value]) => ({
+          user_id: user.id,
+          module_key: moduleKey,
+          options: typeof value === 'object' && value !== null 
+            ? (value as ModuleOptionsState).options || {}
+            : {},
+          enabled_by: currentUser?.id || null,
+        }));
+      
+      if (modulesToInsert.length > 0) {
+        const { error: insertError } = await supabase
+          .from('user_modules')
+          .insert(modulesToInsert);
+          
+        if (insertError) throw insertError;
+      }
+      
+      // 4. Mettre à jour aussi le JSONB pour compatibilité (durant migration)
+      const modulesJson = JSON.parse(JSON.stringify(modules));
+      await supabase
+        .from('profiles')
+        .update({ enabled_modules: modulesJson })
+        .eq('id', user.id);
     },
     onSuccess: () => {
       toast.success('Permissions mises à jour');
       queryClient.invalidateQueries({ queryKey: ['permissions-center-users'] });
+      queryClient.invalidateQueries({ queryKey: ['user-modules', user?.id] });
       onOpenChange(false);
     },
     onError: (error) => {
