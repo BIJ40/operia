@@ -212,12 +212,12 @@ function AppContent() {
           {/* ============================================ */}
           <Route path="/hc-agency" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><PilotageIndex /></ModuleGuard></RoleGuard></MainLayout>} />
           
-          {/* Hub Statistiques - Nouvelle page unifiée */}
-          <Route path="/hc-agency/stats-hub" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><StatsHub /></ModuleGuard></RoleGuard></MainLayout>} />
+          {/* Hub Statistiques - Nouvelle page unifiée (requiert option stats_hub) */}
+          <Route path="/hc-agency/stats-hub" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="stats_hub"><StatsHub /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/hc-agency/statistiques" element={<Navigate to="/hc-agency/indicateurs" replace />} />
           
-          {/* Indicateurs détaillés */}
-          <Route path="/hc-agency/indicateurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><IndicateursLayout /></ModuleGuard></RoleGuard></MainLayout>}>
+          {/* Indicateurs détaillés (option indicateurs) */}
+          <Route path="/hc-agency/indicateurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="indicateurs"><IndicateursLayout /></ModuleGuard></RoleGuard></MainLayout>}>
             <Route index element={<IndicateursAccueil />} />
           </Route>
           {/* Legacy routes - redirect to StatsHub */}
@@ -226,15 +226,15 @@ function AppContent() {
           <Route path="/hc-agency/indicateurs/techniciens" element={<Navigate to="/hc-agency/stats-hub" replace />} />
           <Route path="/hc-agency/indicateurs/sav" element={<Navigate to="/hc-agency/stats-hub" replace />} />
           
-          {/* Veille Apporteurs */}
-          <Route path="/hc-agency/veille-apporteurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><VeilleApporteursPage /></ModuleGuard></RoleGuard></MainLayout>} />
+          {/* Veille Apporteurs (option veille_apporteurs) */}
+          <Route path="/hc-agency/veille-apporteurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="veille_apporteurs"><VeilleApporteursPage /></ModuleGuard></RoleGuard></MainLayout>} />
           
-          {/* Actions à Mener */}
-          <Route path="/hc-agency/actions" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><ActionsAMener /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/hc-agency/actions/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><CategoryActionsAMener /></ModuleGuard></RoleGuard></MainLayout>} />
+          {/* Actions à Mener (option actions_a_mener) */}
+          <Route path="/hc-agency/actions" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="actions_a_mener"><ActionsAMener /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/hc-agency/actions/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="actions_a_mener"><CategoryActionsAMener /></ModuleGuard></RoleGuard></MainLayout>} />
           
-          {/* Diffusion (sous statistiques) */}
-          <Route path="/hc-agency/statistiques/diffusion" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><DiffusionDashboard /></ModuleGuard></RoleGuard></MainLayout>} />
+          {/* Diffusion (option diffusion) */}
+          <Route path="/hc-agency/statistiques/diffusion" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="diffusion"><DiffusionDashboard /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* RH Tech */}
           <Route path="/hc-agency/rh-tech" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><PlanningHebdo /></ModuleGuard></RoleGuard></MainLayout>} />
