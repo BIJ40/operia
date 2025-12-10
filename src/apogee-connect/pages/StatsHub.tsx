@@ -9,6 +9,7 @@ import { ROUTES } from '@/config/routes';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiltersProvider } from '../contexts/FiltersContext';
 import { ApiToggleProvider } from '../contexts/ApiToggleContext';
+import { AgencyProvider } from '../contexts/AgencyContext';
 
 const TAB_ICONS: Record<TabId, React.ReactNode> = {
   general: <LayoutDashboard className="h-4 w-4" />,
@@ -77,12 +78,14 @@ function StatsHubContent() {
 
 export default function StatsHub() {
   return (
-    <ApiToggleProvider>
-      <FiltersProvider>
-        <StatsHubProvider>
-          <StatsHubContent />
-        </StatsHubProvider>
-      </FiltersProvider>
-    </ApiToggleProvider>
+    <AgencyProvider>
+      <ApiToggleProvider>
+        <FiltersProvider>
+          <StatsHubProvider>
+            <StatsHubContent />
+          </StatsHubProvider>
+        </FiltersProvider>
+      </ApiToggleProvider>
+    </AgencyProvider>
   );
 }
