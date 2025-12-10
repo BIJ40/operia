@@ -7,6 +7,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, Rea
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { logDebug, logError, logWarn } from '@/lib/logger';
 
 interface LiveSession {
   id: string;
@@ -61,7 +62,7 @@ export function LiveSupportProvider({ children }: { children: ReactNode }) {
         if (error) throw error;
         setActiveSession(data);
       } catch (err) {
-        console.error('Error loading live session:', err);
+        logError('[LiveSupport] Error loading live session:', err);
       } finally {
         setIsLoading(false);
       }
@@ -137,7 +138,7 @@ export function LiveSupportProvider({ children }: { children: ReactNode }) {
   }, [activeSession?.id, showChatDialog]);
 
   const openChat = useCallback(() => {
-    console.log('[LiveSupportContext] openChat called, hasActiveSession:', !!activeSession);
+    logDebug('[LiveSupport] openChat called, hasActiveSession:', !!activeSession);
     if (activeSession) {
       setShowChatDialog(true);
       setHasNewMessage(false);
@@ -151,7 +152,7 @@ export function LiveSupportProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      console.log('[LiveSupportContext] Starting new session for user:', user.id);
+      logDebug('[LiveSupport] Starting new session for user:', user.id);
       
       const { data: newSession, error } = await supabase
         .from('live_support_sessions')
@@ -167,7 +168,7 @@ export function LiveSupportProvider({ children }: { children: ReactNode }) {
 
       if (error) throw error;
 
-      console.log('[LiveSupportContext] New session created:', newSession);
+      logDebug('[LiveSupport] New session created:', newSession);
       setActiveSession(newSession);
       setShowChatDialog(true);
       
@@ -180,12 +181,12 @@ export function LiveSupportProvider({ children }: { children: ReactNode }) {
           }
         });
       } catch (notifyError) {
-        console.warn('Could not notify support agents:', notifyError);
+        logWarn('[LiveSupport] Could not notify support agents:', notifyError);
       }
 
       toast.success('Session de support démarrée');
     } catch (err) {
-      console.error('Error starting live session:', err);
+      logError('[LiveSupport] Error starting live session:', err);
       toast.error('Impossible de démarrer la session de support');
     }
   }, [user?.id, user?.email, firstName, lastName]);
@@ -211,7 +212,7 @@ export function LiveSupportProvider({ children }: { children: ReactNode }) {
       setActiveSession(null);
       setShowChatDialog(false);
     } catch (err) {
-      console.error('Error closing session:', err);
+      logError('[LiveSupport] Error closing session:', err);
     }
   }, [activeSession?.id]);
 

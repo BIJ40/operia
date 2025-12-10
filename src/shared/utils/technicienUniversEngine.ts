@@ -18,6 +18,7 @@ import { buildTechMap, resolveTech, TechnicienInfo } from "@/apogee-connect/util
 import { extractFactureMeta } from "@/statia/rules/rules";
 // Import centralisé depuis StatIA normalizers (source unique de vérité)
 import { normalizeUniversSlug } from "@/statia/engine/normalizers";
+import { logDebug } from "@/lib/logger";
 
 // ===============================
 // TYPES
@@ -504,16 +505,18 @@ export function aggregateTechUniversStatsMultiAgency(
   const totalHeuresReseau = result.reduce((sum, t) => sum + t.totaux.heures, 0);
   const totalDossiersReseau = result.reduce((sum, t) => sum + t.totaux.nbDossiers, 0);
   
-  console.log("[STATIA RESEAU] Stats agrégées multi-agences:", {
-    nbAgences: agenciesData.length,
-    nbTechniciens: result.length,
-    totalCATechReseau: Math.round(totalCATechReseau * 100) / 100,
-    totalHeuresReseau: Math.round(totalHeuresReseau * 10) / 10,
-    totalDossiersReseau,
-    caParHeureReseau: totalHeuresReseau > 0 
-      ? Math.round(totalCATechReseau / totalHeuresReseau) 
-      : 0
-  });
+  if (import.meta.env.DEV) {
+    logDebug("[STATIA RESEAU] Stats agrégées multi-agences:", {
+      nbAgences: agenciesData.length,
+      nbTechniciens: result.length,
+      totalCATechReseau: Math.round(totalCATechReseau * 100) / 100,
+      totalHeuresReseau: Math.round(totalHeuresReseau * 10) / 10,
+      totalDossiersReseau,
+      caParHeureReseau: totalHeuresReseau > 0 
+        ? Math.round(totalCATechReseau / totalHeuresReseau) 
+        : 0
+    });
+  }
 
   return result;
 }

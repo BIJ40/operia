@@ -23,6 +23,7 @@
 import { isFactureStateIncluded } from '../engine/normalizers';
 import { extractFactureMeta } from '../rules/rules';
 import type { LoadedData, StatParams, StatResult } from '../definitions/types';
+import { logDebug } from '@/lib/logger';
 
 // ============= HELPERS MÉTIER =============
 
@@ -192,7 +193,9 @@ export function computeCaParTechnicienCore(
   const interventions = data.interventions || [];
   const users = data.users || [];
   
-  console.log(`[STATIA CORE ca_par_technicien] Données: ${factures.length} factures, ${projects.length} projets, ${interventions.length} interventions, ${users.length} users`);
+  if (import.meta.env.DEV) {
+    logDebug(`[STATIA CORE ca_par_technicien] Données: ${factures.length} factures, ${projects.length} projets, ${interventions.length} interventions, ${users.length} users`);
+  }
   
   // Index projects par id
   const projectsById = new Map<string | number, any>();
@@ -310,7 +313,9 @@ export function computeCaParTechnicienCore(
     facturesTraitees++;
   }
   
-  console.log(`[STATIA CORE ca_par_technicien] Résultat: ${facturesTraitees} factures traitées, ${techCA.size} techniciens, ${dossiersIgnores} dossiers ignorés, CA total ${Math.round(totalCADistribue)}€`);
+  if (import.meta.env.DEV) {
+    logDebug(`[STATIA CORE ca_par_technicien] Résultat: ${facturesTraitees} factures traitées, ${techCA.size} techniciens, ${dossiersIgnores} dossiers ignorés, CA total ${Math.round(totalCADistribue)}€`);
+  }
   
   // Construire le ranking
   const sorted = Array.from(techCA.entries())
@@ -321,7 +326,9 @@ export function computeCaParTechnicienCore(
     .filter(x => x.value !== 0)
     .sort((a, b) => b.value - a.value);
   
-  console.log(`[STATIA CORE ca_par_technicien] Top 3: ${sorted.slice(0, 3).map(t => `${t.name}=${t.value}€`).join(', ')}`);
+  if (import.meta.env.DEV) {
+    logDebug(`[STATIA CORE ca_par_technicien] Top 3: ${sorted.slice(0, 3).map(t => `${t.name}=${t.value}€`).join(', ')}`);
+  }
   
   // MODE FILTRÉ: un seul technicien demandé
   if (filterTechnicienId) {

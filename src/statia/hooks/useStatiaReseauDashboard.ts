@@ -70,15 +70,6 @@ export function useStatiaReseauDashboard(params?: UseStatiaReseauDashboardParams
   // Mode "Toutes les agences" = tableau vide → on passe undefined à l'engine
   const isAllAgencies = effectiveScopeAgences.length === 0;
   
-  console.log('[useStatiaReseauDashboard] Params:', {
-    selectedAgencies,
-    selectedAgenciesLength: selectedAgencies.length,
-    effectiveScopeAgences,
-    effectiveScopeAgencesLength: effectiveScopeAgences.length,
-    isAllAgencies,
-    dateRange,
-  });
-  
   const query = useQuery<ReseauDashboardData>({
     queryKey: [
       'statia-reseau-dashboard',

@@ -14,6 +14,7 @@ import {
 } from '../engine/normalizers';
 import { extractFactureMeta } from '../rules/rules';
 import { indexProjectsById } from '../engine/loaders';
+import { logDebug } from '@/lib/logger';
 
 // Univers à exclure (identique au moteur technicien)
 const EXCLUDED_UNIVERSES = new Set([
@@ -148,8 +149,10 @@ export const caParUnivers: StatDefinition = {
     let totalCA = 0;
     let nbFacturesTraitees = 0;
     
-    // DEBUG: log pour comprendre
-    console.log('[StatIA ca_par_univers] factures:', factures.length, 'projects:', projects.length);
+    // DEBUG: log pour comprendre (uniquement en dev)
+    if (import.meta.env.DEV) {
+      logDebug('[StatIA ca_par_univers] factures:', factures.length, 'projects:', projects.length);
+    }
     
     for (const facture of factures) {
       const meta = extractFactureMeta(facture);
@@ -186,7 +189,9 @@ export const caParUnivers: StatDefinition = {
       nbFacturesTraitees++;
     }
     
-    console.log('[StatIA ca_par_univers] traites:', nbFacturesTraitees, 'CA total:', totalCA, 'univers:', Object.keys(byUnivers));
+    if (import.meta.env.DEV) {
+      logDebug('[StatIA ca_par_univers] traites:', nbFacturesTraitees, 'CA total:', totalCA, 'univers:', Object.keys(byUnivers));
+    }
     
     // Arrondir les valeurs
     for (const key of Object.keys(byUnivers)) {
@@ -825,12 +830,14 @@ export const rentabiliteParUnivers: StatDefinition = {
     // Types productifs selon spec: dépannage, travaux (exclure RT, SAV, diagnostic)
     const PRODUCTIVE_TYPES = new Set(['depan', 'tvx', 'depannage', 'travaux', 'work', 'repair', 'recherche_fuite']);
     
-    // DEBUG LOGS
-    console.log('[rentabilite_par_univers] Data:', {
-      factures: factures?.length ?? 0,
-      interventions: interventions?.length ?? 0,
-      projects: projects?.length ?? 0,
-    });
+    // DEBUG LOGS (dev only)
+    if (import.meta.env.DEV) {
+      logDebug('[rentabilite_par_univers] Data:', {
+        factures: factures?.length ?? 0,
+        interventions: interventions?.length ?? 0,
+        projects: projects?.length ?? 0,
+      });
+    }
     
     // 1. Calculer CA par univers (même logique que ca_par_univers)
     let facturesTraitees = 0;
@@ -929,14 +936,14 @@ export const rentabiliteParUnivers: StatDefinition = {
       }
     }
     
-    console.log('[rentabilite_par_univers] Stats:', {
-      facturesTraitees,
-      interventionsTraitees,
-      visitesTraitees,
-      totalHeures,
-      caByUnivers,
-      heuresByUnivers,
-    });
+    if (import.meta.env.DEV) {
+      logDebug('[rentabilite_par_univers] Stats:', {
+        facturesTraitees,
+        interventionsTraitees,
+        visitesTraitees,
+        totalHeures,
+      });
+    }
     
     // 3. Calculer rentabilité par univers
     const result: Record<string, number> = {};
