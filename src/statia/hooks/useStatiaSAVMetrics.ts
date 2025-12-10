@@ -10,7 +10,6 @@ import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { useSecondaryFilters } from "@/apogee-connect/contexts/SecondaryFiltersContext";
 import { getMetricForAgency } from "@/statia/api/getMetricForAgency";
 import { getGlobalApogeeDataServices } from "@/statia/adapters/dataServiceAdapter";
-import { useSavOverrides } from "@/hooks/use-sav-overrides";
 import { supabase } from "@/integrations/supabase/client";
 import type { SAVDossier } from "@/apogee-connect/components/sav/SAVDossierList";
 import { 
@@ -33,17 +32,13 @@ interface SAVMetrics {
 export function useStatiaSAVMetrics() {
   const { currentAgency, isAgencyReady } = useAgency();
   const { filters } = useSecondaryFilters();
-  const { overridesMap } = useSavOverrides();
   
   const agencySlug = currentAgency?.id;
 
-  // Version basée sur le contenu réel des overrides pour invalidation
-  const overridesVersion = Array.from(overridesMap.entries())
-    .map(([k, v]) => `${k}:${v.is_confirmed_sav}:${v.cout_sav_manuel}:${v.techniciens_override?.join(',')}`)
-    .join('|');
-
+  // NE PAS inclure overrides dans queryKey - le filtrage est fait côté composant
+  // via useSavOverrides() qui gère l'état optimiste localement
   return useQuery({
-    queryKey: ["statia-sav-metrics", agencySlug, filters.dateRange, overridesVersion],
+    queryKey: ["statia-sav-metrics", agencySlug, filters.dateRange],
     queryFn: async (): Promise<SAVMetrics> => {
       if (!agencySlug) throw new Error("Agency not available");
 
