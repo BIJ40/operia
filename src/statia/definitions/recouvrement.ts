@@ -297,10 +297,56 @@ export const encoursParApporteur: StatDefinition = {
   }
 };
 
+/**
+ * Délai de Paiement Dossier
+ * Délai moyen entre facturation et clôture du dossier
+ */
+export const delaiPaiementDossier: StatDefinition = {
+  id: 'delai_paiement_dossier',
+  label: 'Délai de Paiement',
+  description: 'Délai moyen en jours entre facturation et clôture du dossier',
+  category: 'recouvrement',
+  source: 'projects',
+  aggregation: 'avg',
+  unit: 'jours',
+  dimensions: ['apporteur', 'univers'],
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { projects } = data;
+    
+    // Import dynamique pour éviter les dépendances circulaires
+    const { calculateDelaiPaiementDossier } = require('../shared/delaiPaiementDossier');
+    
+    const result = calculateDelaiPaiementDossier(projects, {
+      dateStart: params.dateRange.start,
+      dateEnd: params.dateRange.end,
+      maxDelaiJours: 365,
+      debug: false
+    });
+    
+    return {
+      value: result.moyenne,
+      metadata: {
+        computedAt: new Date(),
+        source: 'projects',
+        recordCount: result.nbDossiersValides,
+      },
+      breakdown: {
+        moyenne: result.moyenne,
+        mediane: result.mediane,
+        min: result.min,
+        max: result.max,
+        nbDossiersValides: result.nbDossiersValides,
+        debug: result.debug
+      }
+    };
+  }
+};
+
 export const recouvrementDefinitions = {
   taux_recouvrement_global: tauxRecouvrementGlobal,
   montant_encaisse: montantEncaisse,
   montant_restant: montantRestant,
   factures_impayees: facturesImpayees,
   encours_par_apporteur: encoursParApporteur,
+  delai_paiement_dossier: delaiPaiementDossier,
 };

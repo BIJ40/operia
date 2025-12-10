@@ -8,6 +8,12 @@ export {
   type DelaiPremierDevisOptions 
 } from './delaiPremierDevis';
 
+export {
+  calculateDelaiPaiementDossier,
+  type DelaiPaiementDossierResult,
+  type DelaiPaiementDossierOptions
+} from './delaiPaiementDossier';
+
 // P0: Helper facture pour calcul CA unifié
 export {
   extractFactureMeta,
