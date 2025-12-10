@@ -64,11 +64,13 @@ function isInterventionRealisee(intervention: any): boolean {
   return ['done', 'finished', 'validated', 'completed', 'réalisée', 'terminée'].includes(state);
 }
 
+/**
+ * Vérifie si une intervention est de type SAV
+ * RÈGLE MÉTIER STRICTE: type2 === "SAV" (égalité exacte, pas includes)
+ */
 function isSAVIntervention(intervention: any): boolean {
   const type2 = (intervention.data?.type2 || intervention.type2 || '').toLowerCase().trim();
-  const type = (intervention.data?.type || intervention.type || '').toLowerCase().trim();
-  // RÈGLE HARMONISÉE: type/type2 CONTIENT "sav"
-  return type2.includes('sav') || type.includes('sav');
+  return type2 === 'sav';
 }
 
 // ============================================================================

@@ -114,17 +114,28 @@ function getApporteurTypeForProject(
 
 /**
  * Vérifie si un projet est un dossier SAV
+ * RÈGLE MÉTIER STRICTE: type2 === "SAV" (via interventions) OU picto SAV
  */
-function isSavProject(project: any): boolean {
-  // Vérifier le flag SAV direct
-  if (project?.data?.isSav || project?.isSav) return true;
+function isSavProject(project: any, interventions?: any[]): boolean {
+  const projectId = String(project.id);
   
-  // Vérifier si c'est un dossier enfant/lié (SAV = reprise)
-  if (project?.data?.parentProjectId || project?.parentProjectId) return true;
+  // 1. Vérifier si le projet a des interventions avec type2 === "SAV"
+  if (interventions && interventions.length > 0) {
+    const hasSAVIntervention = interventions.some(interv => {
+      const intervProjectId = String(interv.projectId || interv.project_id);
+      if (intervProjectId !== projectId) return false;
+      const type2 = (interv.data?.type2 || interv.type2 || '').toLowerCase().trim();
+      return type2 === 'sav';
+    });
+    if (hasSAVIntervention) return true;
+  }
   
-  // RÈGLE STRICTE: univers === "sav" (égalité exacte)
-  const universes = project?.data?.universes || project?.universes || [];
-  if (universes.some((u: string) => String(u).toLowerCase().trim() === 'sav')) return true;
+  // 2. Pictos du projet === "sav" (égalité stricte)
+  const d = project?.data || {};
+  const pictos = d.pictosInterv || d.pictos || project.pictosInterv || [];
+  if (Array.isArray(pictos) && pictos.some((p: any) => String(p).toLowerCase().trim() === 'sav')) {
+    return true;
+  }
   
   return false;
 }
@@ -800,12 +811,12 @@ export const tauxSavParTypeApporteur: StatDefinition = {
   label: 'Taux SAV par Type d\'Apporteur',
   description: 'Taux de SAV par type d\'apporteur',
   category: 'apporteur',
-  source: ['projects', 'clients'],
+  source: ['projects', 'clients', 'interventions'],
   dimensions: ['type_apporteur'],
   aggregation: 'ratio',
   unit: '%',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { projects, clients } = data;
+    const { projects, clients, interventions = [] } = data;
     
     const apporteursInfoById = mapApporteurInfos(clients);
     
@@ -828,7 +839,7 @@ export const tauxSavParTypeApporteur: StatDefinition = {
       
       totalByType[typeApporteur] = (totalByType[typeApporteur] || 0) + 1;
       
-      if (isSavProject(project)) {
+      if (isSavProject(project, interventions)) {
         savByType[typeApporteur] = (savByType[typeApporteur] || 0) + 1;
       }
       
