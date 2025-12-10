@@ -28,13 +28,13 @@ export const UniversDossiersChart = ({
 
   const totalDossiers = chartData.reduce((sum, d) => sum + d.value, 0);
 
-  // Animation every 5 seconds for bar chart
+  // Animation every 10 seconds for bar chart
   useEffect(() => {
     if (loading || chartData.length === 0) return;
     
     const interval = setInterval(() => {
       setAnimationKey(prev => prev + 1);
-    }, 5000);
+    }, 10000);
 
     return () => clearInterval(interval);
   }, [loading, chartData.length]);

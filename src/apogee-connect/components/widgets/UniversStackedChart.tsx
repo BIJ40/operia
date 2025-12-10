@@ -13,13 +13,13 @@ interface UniversStackedChartProps {
 export const UniversStackedChart = ({ data, universes, loading }: UniversStackedChartProps) => {
   const [animationKey, setAnimationKey] = useState(0);
 
-  // Redraw animation every 5 seconds
+  // Redraw animation every 10 seconds
   useEffect(() => {
     if (loading || data.length === 0) return;
     
     const interval = setInterval(() => {
       setAnimationKey(prev => prev + 1);
-    }, 5000);
+    }, 10000);
 
     return () => clearInterval(interval);
   }, [loading, data.length]);

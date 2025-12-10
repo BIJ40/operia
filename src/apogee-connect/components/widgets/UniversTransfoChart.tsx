@@ -28,13 +28,13 @@ export const UniversTransfoChart = ({
     .filter((d) => d.caDevis > 0 || d.caFactures > 0)
     .sort((a, b) => b.tauxTransfo - a.tauxTransfo);
 
-  // Animation every 5 seconds - bars fill from bottom
+  // Animation every 10 seconds - bars fill from bottom
   useEffect(() => {
     if (loading || chartData.length === 0) return;
     
     const interval = setInterval(() => {
       setAnimationKey(prev => prev + 1);
-    }, 5000);
+    }, 10000);
 
     return () => clearInterval(interval);
   }, [loading, chartData.length]);
