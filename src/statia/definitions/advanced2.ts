@@ -6,6 +6,7 @@
 
 import { StatDefinition, LoadedData, StatParams, StatResult } from './types';
 import { extractProjectUniverses } from '../engine/normalizers';
+import { extractFactureMeta, isFactureIncludedForStat } from '../shared/factureMeta';
 import { differenceInDays, parseISO, getDay, format, subYears } from 'date-fns';
 
 // ===========================================================================
@@ -74,32 +75,30 @@ const caClientsTop20: StatDefinition = {
   unit: '%',
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const { factures, projects } = data;
-    const { dateRange } = params;
-
-    // Filtrer les factures par période
-    const filteredFactures = factures.filter(f => {
-      const factureDate = f.dateReelle || f.date;
-      if (!factureDate || !dateRange?.start || !dateRange?.end) return true;
-      const d = new Date(factureDate);
-      return d >= dateRange.start && d <= dateRange.end;
-    });
 
     // Grouper le CA par client
     const caByClient: Record<string, number> = {};
+    let recordCount = 0;
 
-    for (const facture of filteredFactures) {
+    for (const facture of factures) {
+      const meta = extractFactureMeta(facture);
+      if (!isFactureIncludedForStat(meta, params)) continue;
+      
       const project = projects.find(p => p.id === facture.projectId);
       const clientId = project?.clientId?.toString();
       if (!clientId) continue;
 
-      const isAvoir = facture.typeFacture?.toLowerCase() === 'avoir';
-      const montant = isAvoir ? -Math.abs(facture.totalHT || 0) : (facture.totalHT || 0);
-      caByClient[clientId] = (caByClient[clientId] || 0) + montant;
+      caByClient[clientId] = (caByClient[clientId] || 0) + meta.montantNetHT;
+      recordCount++;
     }
 
     const clientIds = Object.keys(caByClient);
     if (clientIds.length === 0) {
-      return { value: null, breakdown: { clientCount: 0, top20Count: 0 } };
+      return { 
+        value: 0, 
+        breakdown: { clientCount: 0, top20Count: 0, top20CA: 0, totalCA: 0 },
+        metadata: { computedAt: new Date(), source: 'factures', recordCount: 0 }
+      };
     }
 
     // Trier par CA décroissant
@@ -114,7 +113,8 @@ const caClientsTop20: StatDefinition = {
 
     return {
       value: Math.round(ratio * 100) / 100,
-      breakdown: { clientCount: clientIds.length, top20Count, top20CA, totalCA }
+      breakdown: { clientCount: clientIds.length, top20Count, top20CA, totalCA },
+      metadata: { computedAt: new Date(), source: 'factures', recordCount }
     };
   }
 };
