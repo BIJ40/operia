@@ -1,6 +1,6 @@
 import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { useIndicateursUniversStatia } from "@/apogee-connect/hooks/useIndicateursUniversStatia";
-import { UniversKpiCard } from "@/apogee-connect/components/widgets/UniversKpiCard";
+import { UniversCarousel } from "@/apogee-connect/components/widgets/UniversCarousel";
 import { UniversStackedChart } from "@/apogee-connect/components/widgets/UniversStackedChart";
 import { UniversDossiersChart } from "@/apogee-connect/components/widgets/UniversDossiersChart";
 import { UniversTransfoChart } from "@/apogee-connect/components/widgets/UniversTransfoChart";
@@ -13,16 +13,18 @@ export function UniversTab() {
 
   if (!isAgencyReady || isLoading) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-          <div className="lg:col-span-3 grid grid-cols-4 gap-4">
-            {[...Array(8)].map((_, i) => (
-              <Skeleton key={i} className="h-48" />
-            ))}
-          </div>
           <div className="lg:col-span-2">
-            <Skeleton className="h-full min-h-[400px]" />
+            <Skeleton className="h-64" />
           </div>
+          <div className="lg:col-span-3">
+            <Skeleton className="h-64" />
+          </div>
+        </div>
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+          <Skeleton className="h-80" />
+          <Skeleton className="h-80" />
         </div>
       </div>
     );
@@ -34,7 +36,6 @@ export function UniversTab() {
   const transfoParUnivers = data?.transfoParUnivers || {};
   const matrixUniversApporteur = data?.matrixUniversApporteur || {};
   const universes = data?.universes || [];
-  const universesMap = new Map(universes.map(u => [u.slug, u]));
 
   if (stats.length === 0) {
     return (
@@ -50,27 +51,19 @@ export function UniversTab() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Layout avec tuiles + graphique empilé */}
+    <div className="space-y-6">
+      {/* Layout with carousel + stacked chart */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        {/* Tuiles univers */}
-        <div className="lg:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-4">
-          {stats.map((stat) => {
-            const universeRef = universesMap.get(stat.univers);
-            return (
-              <UniversKpiCard
-                key={stat.univers}
-                stat={stat}
-                color={universeRef?.colorHex || '#6B7280'}
-                label={universeRef?.label || stat.univers}
-                icon={universeRef?.icon || 'HelpCircle'}
-              />
-            );
-          })}
+        {/* Universe cards carousel (2 at a time) */}
+        <div className="lg:col-span-2">
+          <UniversCarousel 
+            stats={stats}
+            universes={universes}
+          />
         </div>
 
-        {/* Graphique empilé */}
-        <div className="lg:col-span-2">
+        {/* Stacked area chart */}
+        <div className="lg:col-span-3">
           <UniversStackedChart 
             data={monthlyCA}
             universes={universes}
@@ -79,8 +72,8 @@ export function UniversTab() {
         </div>
       </div>
 
-      {/* Graphiques dossiers et transformation */}
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+      {/* Charts for dossiers and transformation */}
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
         <UniversDossiersChart
           data={dossiersParUnivers}
           universes={universes}
@@ -93,7 +86,7 @@ export function UniversTab() {
         />
       </div>
 
-      {/* Tableau croisé univers × apporteur */}
+      {/* Universe x Apporteur matrix */}
       <UniversApporteurMatrix
         data={matrixUniversApporteur}
         universes={universes}
