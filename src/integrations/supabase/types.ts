@@ -5037,6 +5037,54 @@ export type Database = {
         }
         Relationships: []
       }
+      user_modules: {
+        Row: {
+          created_at: string | null
+          enabled_at: string | null
+          enabled_by: string | null
+          id: string
+          module_key: string
+          options: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          enabled_at?: string | null
+          enabled_by?: string | null
+          id?: string
+          module_key: string
+          options?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          enabled_at?: string | null
+          enabled_by?: string | null
+          id?: string
+          module_key?: string
+          options?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_modules_enabled_by_fkey"
+            columns: ["enabled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_modules_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_presence: {
         Row: {
           last_seen: string
@@ -5282,6 +5330,10 @@ export type Database = {
           total_chunks: number
         }[]
       }
+      get_module_options_v2: {
+        Args: { _module_key: string; _user_id: string }
+        Returns: Json
+      }
       get_unread_rh_notifications_count: { Args: never; Returns: number }
       get_user_agency: { Args: { _user_id: string }; Returns: string }
       get_user_agency_id: { Args: { _user_id: string }; Returns: string }
@@ -5342,6 +5394,10 @@ export type Database = {
       }
       has_min_support_level: {
         Args: { _min_level: number; _user_id: string }
+        Returns: boolean
+      }
+      has_module_v2: {
+        Args: { _module_key: string; _user_id: string }
         Returns: boolean
       }
       has_support_access: { Args: { _user_id: string }; Returns: boolean }
