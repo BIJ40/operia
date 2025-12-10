@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import type { Database } from '@/integrations/supabase/types';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 type Announcement = Database['public']['Tables']['priority_announcements']['Row'];
 
@@ -72,18 +73,19 @@ export default function AdminAnnouncements() {
   if (!user) return null;
 
   return (
-    <div className="container mx-auto py-8 px-4 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground">
-            Diffusez des informations prioritaires à vos utilisateurs
-          </p>
-        </div>
-        <Button onClick={handleCreate} className="bg-helpconfort-blue hover:bg-helpconfort-blue/90">
-          <Plus className="h-4 w-4 mr-2" />
-          Nouvelle annonce
-        </Button>
-      </div>
+    <div className="container mx-auto py-6 space-y-6">
+      <PageHeader
+        title="Annonces prioritaires"
+        subtitle="Diffusez des informations prioritaires à vos utilisateurs"
+        backTo="/admin"
+        backLabel="Administration"
+        rightElement={
+          <Button onClick={handleCreate} className="bg-helpconfort-blue hover:bg-helpconfort-blue/90">
+            <Plus className="h-4 w-4 mr-2" />
+            Nouvelle annonce
+          </Button>
+        }
+      />
 
       {isLoading ? (
         <div className="text-center py-12 text-muted-foreground">Chargement...</div>

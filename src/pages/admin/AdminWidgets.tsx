@@ -30,6 +30,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 const WIDGET_TYPE_ICONS = {
   kpi: TrendingUp,
@@ -161,19 +162,13 @@ export default function AdminWidgets() {
   }, {} as Record<number, number>);
 
   return (
-    <div className="container max-w-7xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3 pb-4 border-b border-border/50">
-        <div className="w-12 h-12 rounded-xl bg-helpconfort-blue/10 flex items-center justify-center">
-          <LayoutGrid className="w-6 h-6 text-helpconfort-blue" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Gestion des Widgets</h1>
-          <p className="text-sm text-muted-foreground">
-            Configurez les permissions d'accès aux widgets du dashboard
-          </p>
-        </div>
-      </div>
+    <div className="container max-w-7xl mx-auto py-6 space-y-6">
+      <PageHeader
+        title="Gestion des Widgets"
+        subtitle="Configurez les permissions d'accès aux widgets du dashboard"
+        backTo="/admin"
+        backLabel="Administration"
+      />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
