@@ -33,9 +33,11 @@ export const MODULE_OPTIONS = {
   },
   pilotage_agence: {
     indicateurs: 'pilotage_agence.indicateurs',
+    stats_hub: 'pilotage_agence.stats_hub',
     actions_a_mener: 'pilotage_agence.actions_a_mener',
     diffusion: 'pilotage_agence.diffusion',
     exports: 'pilotage_agence.exports',
+    veille_apporteurs: 'pilotage_agence.veille_apporteurs',
   },
   reseau_franchiseur: {
     dashboard: 'reseau_franchiseur.dashboard',
@@ -128,7 +130,9 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_user',
     options: [
-      { key: 'indicateurs', path: 'pilotage_agence.indicateurs', label: 'Mes indicateurs', description: 'KPIs et statistiques agence', defaultEnabled: true },
+      { key: 'indicateurs', path: 'pilotage_agence.indicateurs', label: 'Vue d\'ensemble', description: 'Page d\'accueil avec KPIs principaux', defaultEnabled: true },
+      { key: 'stats_hub', path: 'pilotage_agence.stats_hub', label: 'Stats Hub', description: 'Tableaux de bord avancés (CA, Univers, Apporteurs, Techniciens, SAV)', defaultEnabled: false },
+      { key: 'veille_apporteurs', path: 'pilotage_agence.veille_apporteurs', label: 'Veille Apporteurs', description: 'Surveillance des apporteurs inactifs ou en déclin', defaultEnabled: false },
       { key: 'actions_a_mener', path: 'pilotage_agence.actions_a_mener', label: 'Actions à mener', description: 'Liste des actions prioritaires', defaultEnabled: true },
       { key: 'diffusion', path: 'pilotage_agence.diffusion', label: 'Écran diffusion', description: 'Affichage sur écran TV', defaultEnabled: true },
       { key: 'exports', path: 'pilotage_agence.exports', label: 'Exports', description: 'Export des données', defaultEnabled: false },
