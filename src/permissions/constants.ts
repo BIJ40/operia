@@ -67,10 +67,50 @@ export const MODULE_MIN_ROLES: Record<ModuleKey, GlobalRole> = {
   support: 'base_user',
   admin_plateforme: 'platform_admin',
   apogee_tickets: 'base_user',
-  rh: 'base_user',
+  rh: 'base_user',  // Module accessible N0+ mais options différenciées
   parc: 'franchisee_user',
   messaging: 'franchisee_user',
   unified_search: 'franchisee_user',
+};
+
+// ============================================================================
+// RÈGLE 8: RÔLE MINIMUM PAR OPTION DE MODULE
+// ============================================================================
+
+/** 
+ * Rôle minimum requis pour chaque option de module
+ * Format: "moduleKey.optionKey" -> GlobalRole
+ * 
+ * Exemple RH:
+ * - coffre: N0/N1 (salarié consulte ses documents)
+ * - rh_viewer: N2+ (voir équipe sans paie)
+ * - rh_admin: N2+ (gestion complète RH/paie)
+ */
+export const MODULE_OPTION_MIN_ROLES: Record<string, GlobalRole> = {
+  // RH - Module à 2 facettes
+  'rh.coffre': 'base_user',           // N0 - Salarié consulte son coffre
+  'rh.rh_viewer': 'franchisee_admin', // N2 - Dirigeant voit l'équipe
+  'rh.rh_admin': 'franchisee_admin',  // N2 - Dirigeant gère RH complet
+  
+  // Support - Agent vs utilisateur
+  'support.agent': 'base_user',       // N0 - Peut être agent support externe
+  
+  // Parc - Options futures
+  'parc.fleet': 'franchisee_user',    // N1 - Consulte le parc
+  'parc.epi': 'franchisee_user',      // N1 - Consulte les EPI
+  
+  // Help Academy - Options par section
+  'help_academy.apogee': 'base_user',
+  'help_academy.apporteurs': 'base_user',
+  'help_academy.helpconfort': 'base_user',
+  
+  // Pilotage Agence
+  'pilotage_agence.kpis': 'franchisee_user',
+  'pilotage_agence.diffusion': 'franchisee_user',
+  
+  // Admin
+  'admin_plateforme.users': 'platform_admin',
+  'admin_plateforme.faq': 'platform_admin',
 };
 
 // ============================================================================
