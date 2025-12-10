@@ -228,7 +228,7 @@ function AppContent() {
           </Route>
           
           {/* Veille Apporteurs */}
-          <Route path="/veille-apporteurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><VeilleApporteursPage /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/hc-agency/veille-apporteurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><VeilleApporteursPage /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* Actions à Mener */}
           <Route path="/hc-agency/actions" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><ActionsAMener /></ModuleGuard></RoleGuard></MainLayout>} />
