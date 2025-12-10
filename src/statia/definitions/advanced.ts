@@ -335,12 +335,107 @@ export const caParTrancheHoraire: StatDefinition = {
   aggregation: 'sum',
   unit: '€',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    // TODO: Implémenter quand techTimeStart sera disponible de façon fiable
-    // Logique: associer facture → interventions → tranche horaire
+    const { factures, interventions } = data;
+    const { dateRange } = params;
+    
+    // Définir les tranches horaires
+    const getTrancheHoraire = (hour: number): string => {
+      if (hour >= 6 && hour < 12) return 'Matin (6h-12h)';
+      if (hour >= 12 && hour < 14) return 'Midi (12h-14h)';
+      if (hour >= 14 && hour < 18) return 'Après-midi (14h-18h)';
+      if (hour >= 18 && hour < 21) return 'Soirée (18h-21h)';
+      return 'Hors horaires (21h-6h)';
+    };
+    
+    // Index des interventions par projectId
+    const interventionsByProject: Record<string, any[]> = {};
+    for (const interv of interventions) {
+      const projectId = interv.projectId?.toString();
+      if (!projectId) continue;
+      if (!interventionsByProject[projectId]) {
+        interventionsByProject[projectId] = [];
+      }
+      interventionsByProject[projectId].push(interv);
+    }
+    
+    // Calcul CA par tranche
+    const caByTranche: Record<string, number> = {};
+    let totalProcessed = 0;
+    
+    for (const facture of factures) {
+      const meta = extractFactureMeta(facture);
+      if (!isFactureStateIncluded(facture.state)) continue;
+      
+      // Filtre période
+      const factureDate = meta.date ? new Date(meta.date) : null;
+      if (!factureDate) continue;
+      if (dateRange?.start && factureDate < dateRange.start) continue;
+      if (dateRange?.end && factureDate > dateRange.end) continue;
+      
+      const montant = meta.isAvoir ? -Math.abs(meta.montantNetHT) : meta.montantNetHT;
+      const projectId = facture.projectId?.toString();
+      
+      // Trouver les interventions du projet
+      const projectIntervs = projectId ? (interventionsByProject[projectId] || []) : [];
+      
+      if (projectIntervs.length === 0) {
+        // Pas d'intervention → catégorie "Non classé"
+        caByTranche['Non classé'] = (caByTranche['Non classé'] || 0) + montant;
+        totalProcessed++;
+        continue;
+      }
+      
+      // Chercher l'heure de la première intervention validée
+      let trancheFound = false;
+      for (const interv of projectIntervs) {
+        // Chercher l'heure dans visites ou techTimeStart
+        const visites = interv.visites || [];
+        for (const visite of visites) {
+          const heureDebut = visite.heureDebut || visite.techTimeStart;
+          if (heureDebut) {
+            // Format "HH:mm" ou timestamp
+            let hour: number;
+            if (typeof heureDebut === 'string' && heureDebut.includes(':')) {
+              hour = parseInt(heureDebut.split(':')[0], 10);
+            } else if (typeof heureDebut === 'number') {
+              hour = new Date(heureDebut).getHours();
+            } else {
+              continue;
+            }
+            
+            if (!isNaN(hour)) {
+              const tranche = getTrancheHoraire(hour);
+              caByTranche[tranche] = (caByTranche[tranche] || 0) + montant;
+              trancheFound = true;
+              break;
+            }
+          }
+        }
+        if (trancheFound) break;
+        
+        // Fallback sur intervention.date si format datetime
+        if (!trancheFound && interv.date) {
+          const intervDate = new Date(interv.date);
+          const hour = intervDate.getHours();
+          if (hour !== 0) { // 0h = pas d'heure précise
+            const tranche = getTrancheHoraire(hour);
+            caByTranche[tranche] = (caByTranche[tranche] || 0) + montant;
+            trancheFound = true;
+          }
+        }
+        if (trancheFound) break;
+      }
+      
+      if (!trancheFound) {
+        caByTranche['Non classé'] = (caByTranche['Non classé'] || 0) + montant;
+      }
+      totalProcessed++;
+    }
+    
     return {
-      value: {},
-      metadata: { computedAt: new Date(), source: 'factures', recordCount: 0 },
-      breakdown: { error: 'Métrique non implémentée - nécessite techTimeStart' }
+      value: caByTranche,
+      metadata: { computedAt: new Date(), source: 'factures', recordCount: totalProcessed },
+      breakdown: { trancheCount: Object.keys(caByTranche).length }
     };
   }
 };
