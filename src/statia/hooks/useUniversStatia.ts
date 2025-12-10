@@ -8,6 +8,7 @@ import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { useSecondaryFilters } from "@/apogee-connect/contexts/SecondaryFiltersContext";
 import { getGlobalApogeeDataServices } from "@/statia/adapters/dataServiceAdapter";
 import { getMetricForAgency } from "@/statia/api/getMetricForAgency";
+import { startOfYear, endOfYear } from "date-fns";
 
 export interface UniversStatItem {
   univers: string;
@@ -26,6 +27,13 @@ export function useUniversStatia() {
   const dateRange = filters.dateRange;
   const services = getGlobalApogeeDataServices();
 
+  // Plage annuelle pour le graphique d'évolution (indépendante du sélecteur)
+  const now = new Date();
+  const yearlyDateRange = {
+    start: startOfYear(now),
+    end: endOfYear(now),
+  };
+
   return useQuery({
     queryKey: ["univers-statia", agencySlug, dateRange?.start?.toISOString(), dateRange?.end?.toISOString()],
     queryFn: async () => {
@@ -34,6 +42,7 @@ export function useUniversStatia() {
       }
 
       // Récupérer toutes les métriques en parallèle
+      // Note: ca_mensuel_par_univers utilise yearlyDateRange (graphique d'évolution décorrélé)
       const [
         caResult,
         dossiersResult,
@@ -49,7 +58,8 @@ export function useUniversStatia() {
         getMetricForAgency('panier_moyen_par_univers', agencySlug, { dateRange }, services),
         getMetricForAgency('interventions_par_univers', agencySlug, { dateRange }, services),
         getMetricForAgency('taux_sav_par_univers', agencySlug, { dateRange }, services),
-        getMetricForAgency('ca_mensuel_par_univers', agencySlug, { dateRange }, services),
+        // Graphique évolution = année complète, pas la période sélectionnée
+        getMetricForAgency('ca_mensuel_par_univers', agencySlug, { dateRange: yearlyDateRange }, services),
         getMetricForAgency('taux_transfo_par_univers', agencySlug, { dateRange }, services),
         getMetricForAgency('matrix_univers_apporteur', agencySlug, { dateRange }, services),
       ]);
@@ -79,7 +89,7 @@ export function useUniversStatia() {
       // Trier par CA décroissant
       stats.sort((a, b) => b.caHT - a.caHT);
 
-      // CA Mensuel (pour graphique empilé)
+      // CA Mensuel (pour graphique empilé) - année complète
       const monthlyCA = caMensuelResult.value as Array<{ month: string; [key: string]: number | string }> || [];
 
       // Transformation (pour graphique)
