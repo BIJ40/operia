@@ -7,6 +7,7 @@ import { LayoutDashboard, Building2, Users, Layers, AlertTriangle } from 'lucide
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ROUTES } from '@/config/routes';
 import { motion, AnimatePresence } from 'framer-motion';
+import { FiltersProvider } from '../contexts/FiltersContext';
 
 const TAB_ICONS: Record<TabId, React.ReactNode> = {
   general: <LayoutDashboard className="h-4 w-4" />,
@@ -75,8 +76,10 @@ function StatsHubContent() {
 
 export default function StatsHub() {
   return (
-    <StatsHubProvider>
-      <StatsHubContent />
-    </StatsHubProvider>
+    <FiltersProvider>
+      <StatsHubProvider>
+        <StatsHubContent />
+      </StatsHubProvider>
+    </FiltersProvider>
   );
 }
