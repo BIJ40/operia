@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, ReactNode } from "react";
-import { startOfToday, endOfToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, format } from "date-fns";
+import { startOfToday, endOfToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subDays, subMonths, subYears, format } from "date-fns";
 import { fr } from "date-fns/locale";
 
-export type PeriodType = 'today' | 'week' | 'month' | 'year';
+export type PeriodType = 'today' | 'yesterday' | 'week' | 'month' | 'month-1' | 'year' | 'year-1' | 'custom';
 
 export interface GlobalFilters {
   dateRange: {
@@ -48,7 +48,8 @@ export const FiltersProvider = ({ children }: { children: ReactNode }) => {
   const [filters, setFilters] = useState<GlobalFilters>(defaultFilters);
 
   const setDateRange = (start: Date, end: Date, label?: string, periodType?: PeriodType | string) => {
-    const validPeriodType = periodType && ['today', 'week', 'month', 'year'].includes(periodType as string) 
+    const validPeriodTypes: PeriodType[] = ['today', 'yesterday', 'week', 'month', 'month-1', 'year', 'year-1', 'custom'];
+    const validPeriodType = periodType && validPeriodTypes.includes(periodType as PeriodType) 
       ? periodType as PeriodType 
       : undefined;
     setFilters(prev => ({ ...prev, dateRange: { start, end }, periodLabel: label, periodType: validPeriodType }));
@@ -64,6 +65,14 @@ export const FiltersProvider = ({ children }: { children: ReactNode }) => {
         end = endOfToday();
         label = "aujourd'hui";
         break;
+      case 'yesterday':
+        const yesterday = subDays(now, 1);
+        start = startOfToday();
+        start.setDate(start.getDate() - 1);
+        end = new Date(start);
+        end.setHours(23, 59, 59, 999);
+        label = "hier";
+        break;
       case 'week':
         start = startOfWeek(now, { weekStartsOn: 1 });
         end = endOfWeek(now, { weekStartsOn: 1 });
@@ -74,10 +83,28 @@ export const FiltersProvider = ({ children }: { children: ReactNode }) => {
         end = endOfMonth(now);
         label = `en ${format(now, "MMMM", { locale: fr })}`;
         break;
+      case 'month-1':
+        const lastMonth = subMonths(now, 1);
+        start = startOfMonth(lastMonth);
+        end = endOfMonth(lastMonth);
+        label = `en ${format(lastMonth, "MMMM", { locale: fr })}`;
+        break;
       case 'year':
         start = startOfYear(now);
         end = endOfYear(now);
         label = `en ${now.getFullYear()}`;
+        break;
+      case 'year-1':
+        const lastYear = subYears(now, 1);
+        start = startOfYear(lastYear);
+        end = endOfYear(lastYear);
+        label = `en ${lastYear.getFullYear()}`;
+        break;
+      case 'custom':
+      default:
+        start = filters.dateRange.start;
+        end = filters.dateRange.end;
+        label = filters.periodLabel || "période personnalisée";
         break;
     }
 
