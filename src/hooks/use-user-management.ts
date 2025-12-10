@@ -14,7 +14,7 @@ import {
 import { EnabledModules, ModuleOptionsState, ModuleKey, MODULE_DEFINITIONS } from '@/types/modules';
 import { logAuth } from '@/lib/logger';
 import { toast } from 'sonner';
-import type { Json } from '@/integrations/supabase/types';
+// Json type removed - no longer writing to JSONB (P3.2 migration complete)
 import { useAdminAgencies } from './use-admin-agencies';
 import { enabledModulesToRows } from '@/lib/userModulesUtils';
 
@@ -300,26 +300,27 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
         throw new Error('Vous ne pouvez pas attribuer ce rôle');
       }
       
-      // 1. Mise à jour du profil (global_role + enabled_modules JSONB pour compatibilité)
+      // 1. Mise à jour du profil (global_role uniquement - JSONB supprimé P3.2)
       const { error } = await supabase
         .from('profiles')
-        .update({ global_role: globalRole, enabled_modules: enabledModules as Json })
+        .update({ global_role: globalRole })
         .eq('id', userId);
       if (error) throw error;
       
-      // 2. Synchronisation vers user_modules table (P3.2 migration - via utilitaire centralisé)
+      // 2. Écriture UNIQUE vers user_modules table (source de vérité P3.2)
+      // Supprimer les anciens modules
+      await supabase
+        .from('user_modules')
+        .delete()
+        .eq('user_id', userId);
+      
+      // Insérer les nouveaux modules via utilitaire centralisé
       if (enabledModules) {
-        // Supprimer les anciens modules
-        await supabase
-          .from('user_modules')
-          .delete()
-          .eq('user_id', userId);
-        
-        // Insérer les nouveaux modules via utilitaire centralisé
         const moduleRows = enabledModulesToRows(userId, enabledModules, user?.id);
         
         if (moduleRows.length > 0) {
-          await supabase.from('user_modules').insert(moduleRows);
+          const { error: insertError } = await supabase.from('user_modules').insert(moduleRows);
+          if (insertError) throw insertError;
         }
       }
       
@@ -330,7 +331,8 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       toast.success('Permissions enregistrées');
       setModifiedUsers(prev => { const next = { ...prev }; delete next[userId]; return next; });
       queryClient.invalidateQueries({ queryKey: ['user-management'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] }); // backward compat
+      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] });
+      queryClient.invalidateQueries({ queryKey: ['user-modules'] }); // Invalider cache user_modules
     },
     onError: (error) => {
       logAuth.error('Erreur sauvegarde:', error);

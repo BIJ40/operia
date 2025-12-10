@@ -14,19 +14,20 @@
 | Sécurité | 90% | ✅ Production-ready |
 | Qualité du code | 78% | ✅ Amélioré |
 | Performance | 80% | ✅ Bon |
-| Maintenabilité | 72% | ⚠️ En amélioration |
-| **GLOBAL** | **82%** | **✅ Production-ready** |
+| Maintenabilité | 75% | ✅ Bon |
+| **GLOBAL** | **84%** | **✅ Production-ready** |
 
 ---
 
 ## 🔴 PROBLÈMES CRITIQUES (P0) - CORRIGÉS
 
-### P0-01: Migration enabled_modules ✅ EN COURS
-**Statut:** Dual-write actif (table + JSONB)
+### P0-01: Migration enabled_modules ✅ TERMINÉE
+**Statut:** Source unique = table `user_modules` (JSONB supprimé)
 - ✅ `src/lib/userModulesUtils.ts` - Utilitaires centralisés créés
-- ✅ `src/contexts/AuthContext.tsx` - Utilise utilitaires centralisés
-- ✅ `src/hooks/use-user-management.ts` - Dual-write implémenté
+- ✅ `src/contexts/AuthContext.tsx` - Lecture user_modules avec fallback JSONB (rétrocompat)
+- ✅ `src/hooks/use-user-management.ts` - Écriture UNIQUE vers user_modules (JSONB supprimé)
 - ✅ `src/hooks/useUserModules.ts` - Re-export depuis userModulesUtils
+- ✅ `src/components/admin/permissions-center/components/UserEditDialog.tsx` - Écriture vers user_modules uniquement
 
 ### P0-02: Console.log en production ✅ CORRIGÉ (80%)
 **Fichiers corrigés (migration vers logDebug/logError):**
