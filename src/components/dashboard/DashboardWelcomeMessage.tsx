@@ -29,7 +29,7 @@ export function DashboardWelcomeMessage() {
         <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
         <div className="flex-1">
           <p className="text-sm text-foreground">
-            <strong>Organisez votre Dashboard:</strong> cliquez sur modifier et ajoutez/organisez vos widgets disponibles
+            <strong>Organise ton Dashboard :</strong> clique sur modifier et ajoute/organise tes widgets disponibles
           </p>
         </div>
         <Button
