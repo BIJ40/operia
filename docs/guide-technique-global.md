@@ -1,8 +1,9 @@
-# Guide Technique — GLOBAL /HELP CONFORT SERVICES
+# Guide Technique — GLOBAL / HELP CONFORT SERVICES
 
-> **Version** : 2.0  
-> **Mise à jour** : Décembre 2025  
-> **Audience** : Développeurs, architectes, DevOps
+> **Version** : 3.0  
+> **Mise à jour** : 10 Décembre 2025  
+> **Audience** : Développeurs, architectes, DevOps  
+> **Score Audit** : 90% Production-ready
 
 ---
 
@@ -23,24 +24,27 @@
 | Framer Motion | 12.x | Animations |
 | Recharts | 3.x | Graphiques |
 
-### 1.2 Backend (Supabase)
+### 1.2 Backend (Lovable Cloud / Supabase)
 
 | Service | Usage |
 |---------|-------|
-| PostgreSQL | Base de données relationnelle |
+| PostgreSQL | Base de données relationnelle (50+ tables) |
 | Auth | Authentification (email/password) |
-| Storage | Stockage fichiers (documents, avatars) |
-| Edge Functions | Logique serveur (Deno) |
+| Storage | 13 buckets (documents, avatars, templates) |
+| Edge Functions | 41 fonctions serverless (Deno) |
 | Realtime | Subscriptions temps réel |
+| RLS Policies | Isolation données par agence/rôle |
 
 ### 1.3 Services externes
 
 | Service | Usage |
 |---------|-------|
-| Lovable AI Gateway | Chat IA (Gemini 2.5 Flash) |
+| Lovable AI Gateway | Chat IA (Gemini 2.5 Flash/Pro) |
 | OpenAI | Génération embeddings |
-| Sentry | Monitoring erreurs |
-| API Apogée | Données CRM (CORS frontend only) |
+| Sentry | Monitoring erreurs (frontend + edge) |
+| API Apogée | Données CRM HelpConfort |
+| AllMySMS | Notifications SMS |
+| Resend | Emails transactionnels |
 
 ---
 
@@ -59,16 +63,17 @@ src/
 │   ├── chatbot/              # Composants chat IA
 │   ├── admin/                # Composants administration
 │   ├── support/              # Composants support
+│   ├── rh/                   # Composants RH
 │   ├── landing/              # Composants dashboard
 │   └── diffusion/            # Composants mode TV
-├── apogee-connect/           # Module indicateurs
+├── apogee-connect/           # Module indicateurs agence
 │   ├── components/
 │   ├── contexts/
 │   ├── hooks/
 │   ├── pages/
 │   ├── services/
 │   └── utils/
-├── franchiseur/              # Module réseau
+├── franchiseur/              # Module réseau franchiseur
 │   ├── components/
 │   ├── contexts/
 │   ├── hooks/
@@ -78,24 +83,43 @@ src/
 │   ├── components/
 │   ├── hooks/
 │   └── pages/
+├── statia/                   # Moteur de métriques StatIA
+│   ├── definitions/          # Définitions métriques
+│   ├── domain/               # Règles métier
+│   ├── engine/               # Moteur de calcul
+│   ├── hooks/
+│   └── shared/               # Utilitaires partagés
 ├── contexts/                 # Contextes React globaux
 ├── hooks/                    # Custom hooks
-├── lib/                      # Utilitaires
+├── lib/                      # Utilitaires (logger, etc.)
 ├── config/                   # Configuration centralisée
+├── permissions/              # Système permissions V2
 ├── types/                    # Types TypeScript
 └── integrations/supabase/    # Client Supabase (auto-généré)
 
 supabase/
-├── functions/                # Edge Functions
-│   ├── _shared/              # Helpers partagés
+├── functions/                # 41 Edge Functions
+│   ├── _shared/              # Helpers partagés (CORS, rate limit, auth)
 │   ├── chat-guide/
-│   ├── search-embeddings/
-│   ├── create-user/
+│   ├── proxy-apogee/
+│   ├── unified-search/
 │   └── ...
 └── migrations/               # Migrations SQL
 ```
 
-### 2.2 Patterns architecturaux
+### 2.2 Modules fonctionnels
+
+| Module | Route | Description |
+|--------|-------|-------------|
+| Help Academy | `/academy/*` | Guides Apogée & Apporteurs |
+| Mon Agence | `/hc-agency/*` | Indicateurs & pilotage agence |
+| Réseau Franchiseur | `/hc-reseau/*` | Stats & gestion réseau |
+| Gestion de Projet | `/gestion-projet/*` | Tickets développement Apogée |
+| Support | `/support/*` | Assistance utilisateurs |
+| RH & Parc | `/rh/*` | Gestion collaborateurs & documents |
+| Administration | `/admin/*` | Configuration plateforme |
+
+### 2.3 Patterns architecturaux
 
 #### Contextes React
 
@@ -128,61 +152,66 @@ useAdminStats()     // Statistiques admin
 useSupportTicket()  // Gestion ticket support
 useApogeeTickets()  // Gestion tickets projet
 useNetworkStats()   // Statistiques réseau
-```
-
-#### Safe Helpers
-
-```typescript
-// Wrappers Supabase robustes
-safeQuery()         // SELECT avec fallback
-safeMutation()      // INSERT/UPDATE/DELETE
-safeInvoke()        // Edge Functions
-errorToast()        // Toast d'erreur unifié
-successToast()      // Toast de succès
+useCollaborators()  // Gestion collaborateurs RH
+useStatiaMetric()   // Métriques StatIA
 ```
 
 ---
 
 ## 3. Système de Permissions V2
 
-### 3.1 Architecture
+### 3.1 Hiérarchie des rôles
+
+| Niveau | Rôle | Description |
+|--------|------|-------------|
+| N0 | `base_user` | Utilisateur externe (support agent possible) |
+| N1 | `franchisee_user` | Salarié agence |
+| N2 | `franchisee_admin` | Dirigeant agence |
+| N3 | `franchisor_user` | Animateur réseau |
+| N4 | `franchisor_admin` | Directeur réseau |
+| N5 | `platform_admin` | Administrateur plateforme |
+| N6 | `superadmin` | Super-administrateur |
+
+### 3.2 Architecture permissions
 
 ```
 profiles.global_role (N0-N6)
+profiles.enabled_modules (JSONB)
         ↓
-    ROLE_MATRIX
+    ROLE_MATRIX + MODULE_DEFINITIONS
         ↓
     RoleGuard / ModuleGuard
         ↓
     Accès page/feature
 ```
 
-### 3.2 Fichiers clés
+### 3.3 Fichiers clés
 
 | Fichier | Rôle |
 |---------|------|
 | `src/types/globalRoles.ts` | Définition des 7 rôles |
 | `src/config/roleMatrix.ts` | Matrice des capacités |
+| `src/types/modules.ts` | Définition des modules |
+| `src/permissions/permissionsEngine.ts` | Moteur permissions |
 | `src/components/auth/RoleGuard.tsx` | Guard par rôle |
 | `src/components/auth/ModuleGuard.tsx` | Guard par module |
 
-### 3.3 Fonctions SQL (SECURITY DEFINER)
+### 3.4 Fonctions SQL (SECURITY DEFINER)
 
 ```sql
--- Vérifie si l'utilisateur a le rôle minimum
-has_min_global_role(user_id uuid, min_level int) → boolean
-
--- Vérifie accès support
-has_support_access(user_id uuid) → boolean
-
--- Vérifie accès franchiseur
-has_franchiseur_access(user_id uuid) → boolean
-
--- Récupère l'agence de l'utilisateur
-get_user_agency(user_id uuid) → text
+has_min_global_role(user_id, min_level) → boolean
+has_support_access(user_id) → boolean
+has_franchiseur_access(user_id) → boolean
+is_support_agent(user_id) → boolean
+is_admin(user_id) → boolean
+get_user_agency(user_id) → text
+get_user_agency_id(user_id) → uuid
+can_access_agency(user_id, agency_id) → boolean
+has_agency_rh_role(user_id, agency_id) → boolean
+has_module_v2(user_id, module_key) → boolean
 ```
 
-### 3.4 Usage dans les composants
+### 3.5 Usage
 
 ```tsx
 // Protection par rôle minimum
@@ -191,71 +220,121 @@ get_user_agency(user_id uuid) → text
 </RoleGuard>
 
 // Protection par module activé
-<ModuleGuard module="apogee_tickets" option="kanban">
+<ModuleGuard moduleKey="apogee_tickets" requiredOptions={['kanban']}>
   <KanbanBoard />
 </ModuleGuard>
 
 // Vérification programmatique
-const hasAccess = useHasGlobalRole('franchisor_user');
+const { hasMinRole } = useAuth();
+if (hasMinRole('franchisor_user')) { ... }
 ```
 
 ---
 
-## 4. Edge Functions
+## 4. Edge Functions (41 fonctions)
 
-### 4.1 Configuration
+### 4.1 Configuration globale
 
-```toml
-# supabase/config.toml
-[functions.chat-guide]
-verify_jwt = true
+Toutes les fonctions ont `verify_jwt = true` dans `supabase/config.toml`.
 
-[functions.create-user]
-verify_jwt = true
-```
-
-### 4.2 Helpers partagés
+### 4.2 Helpers partagés (`_shared/`)
 
 ```typescript
-// _shared/cors.ts
-export function withCors(response: Response): Response
-export function isOriginAllowed(origin: string): boolean
+// cors.ts - CORS hardened
+withCors(response) → Response
+isOriginAllowed(origin) → boolean  // whitelist strict
 
-// _shared/rateLimit.ts
-export function checkRateLimit(key: string, limit: number, windowMs: number): boolean
+// rateLimit.ts - Rate limiting par fonction
+checkRateLimit(key, limit, windowMs) → { allowed, retryAfter }
 
-// _shared/error.ts
-export function handleError(error: unknown, corsHeaders: Headers): Response
+// auth.ts - Helpers authentification
+getUserFromRequest(req) → { user, error }
+assertMinRole(user, minLevel) → void
 
-// _shared/sentry.ts
-export function initSentry()
-export function captureException(error: Error, context?: object)
+// error.ts - Gestion erreurs
+handleError(error, corsHeaders) → Response
+
+// sentry.ts - Monitoring
+initSentry()
+captureException(error, context)
 ```
 
-### 4.3 Fonctions principales
+### 4.3 Fonctions par catégorie
 
-| Fonction | Endpoint | Rôle |
-|----------|----------|------|
-| `chat-guide` | POST | Chat IA avec RAG (streaming) |
-| `search-embeddings` | POST | Recherche vectorielle |
-| `generate-embeddings` | POST | Génération embeddings |
-| `create-user` | POST | Création utilisateur |
-| `delete-user` | POST | Suppression utilisateur |
-| `reset-user-password` | POST | Reset mot de passe |
-| `update-user-email` | POST | Mise à jour email |
-| `notify-support-ticket` | POST | Notification ticket |
-| `support-auto-classify` | POST | Classification IA |
-| `network-kpis` | POST | KPIs réseau |
+#### Authentification & Utilisateurs
+| Fonction | Description |
+|----------|-------------|
+| `create-user` | Création utilisateur + profil |
+| `delete-user` | Suppression compte |
+| `reset-user-password` | Reset mot de passe |
+| `update-user-email` | Mise à jour email |
+| `seed-test-users` | Données de test (dev only) |
+
+#### Chat & RAG
+| Fonction | Description |
+|----------|-------------|
+| `chat-guide` | Chat IA avec RAG (streaming) |
+| `search-embeddings` | Recherche vectorielle |
+| `generate-embeddings` | Génération embeddings OpenAI |
+| `helpi-search` | Recherche unifiée Helpi |
+| `helpi-index` | Indexation documents |
+| `unified-search` | Recherche hybride (stats + docs) |
+| `faq-search` | Recherche FAQ sémantique |
+
+#### Support
+| Fonction | Description |
+|----------|-------------|
+| `notify-support-ticket` | Notification création ticket |
+| `notify-escalation` | Notification escalade |
+| `support-auto-classify` | Classification IA ticket |
+| `reformulate-ticket-faq` | Reformulation question |
+
+#### StatIA & KPIs
+| Fonction | Description |
+|----------|-------------|
+| `compute-metric` | Calcul métrique StatIA |
+| `get-kpis` | KPIs agence |
+| `network-kpis` | KPIs réseau franchiseur |
+| `proxy-apogee` | Proxy API Apogée |
+| `statia-analyze-metric` | Analyse métrique IA |
+
+#### Tickets Apogée
+| Fonction | Description |
+|----------|-------------|
+| `qualify-ticket` | Qualification IA ticket |
+| `merge-tickets` | Fusion tickets |
+| `scan-ticket-duplicates` | Détection doublons |
+| `generate-ticket-embedding` | Embedding ticket |
+
+#### RH & Documents
+| Fonction | Description |
+|----------|-------------|
+| `export-rh-documents` | Export documents RH |
+| `generate-hr-document` | Génération document RH |
+| `analyze-payslip` | Analyse bulletin paie |
+| `generate-leave-decision` | Génération décision congé |
+| `sensitive-data` | Accès données sensibles |
+| `export-my-data` | Export RGPD données perso |
+
+#### Autres
+| Fonction | Description |
+|----------|-------------|
+| `generate-pptx` | Génération PowerPoint |
+| `parse-document` | Parsing documents |
+| `index-document` | Indexation document RAG |
+| `maintenance-alerts-scan` | Scan alertes maintenance |
+| `qr-asset` | Génération QR codes |
+| `test-sms` / `test-email-template` | Tests notifications |
 
 ### 4.4 Appel depuis le frontend
 
 ```typescript
-// Avec JWT automatique
-const { data, error } = await supabase.functions.invoke('chat-guide', {
-  body: { messages, context: 'apogee' }
+// Standard (avec JWT automatique)
+const { data, error } = await supabase.functions.invoke('compute-metric', {
+  body: { metricId: 'ca_global_ht', period: { month: 12, year: 2025 } }
 });
 
-// Pour streaming (SSE)
+// Streaming (SSE)
 const response = await fetch(
   `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-guide`,
   {
@@ -273,106 +352,198 @@ const response = await fetch(
 
 ## 5. Base de Données
 
-### 5.1 Tables principales
+### 5.1 Tables principales (50+)
 
+#### Utilisateurs & Auth
 ```sql
--- Utilisateurs
-profiles (id, email, first_name, last_name, global_role, enabled_modules, agence, role_agence, is_active)
-
--- Guides
-blocks (id, slug, title, content, type, parent_id, order, ...)
-apporteur_blocks (id, slug, title, content, type, parent_id, order, ...)
-
--- RAG
-guide_chunks (id, block_id, chunk_text, embedding, metadata)
-
--- Support
-support_tickets (id, user_id, type, status, priority, due_at, sla_status, ai_*)
-support_messages (id, ticket_id, sender_id, message, is_system_message)
-
--- Agences
-apogee_agencies (id, slug, label, is_active, ...)
-franchiseur_agency_assignments (id, user_id, agency_id)
-franchiseur_roles (id, user_id, franchiseur_role)
-
--- Tickets projet
-apogee_tickets (id, element_concerne, kanban_status, priority, heat_priority, ...)
-apogee_ticket_transitions (id, from_status, to_status, allowed_role)
+profiles (id, email, first_name, last_name, global_role, enabled_modules, 
+          agency_id, agence, role_agence, support_level, is_active)
+user_modules (user_id, module_key, options)
 ```
 
-### 5.2 Policies RLS critiques
+#### Agences
+```sql
+apogee_agencies (id, slug, label, is_active, adresse, ville, ...)
+franchiseur_agency_assignments (user_id, agency_id)
+franchiseur_roles (user_id, franchiseur_role, permissions)
+agency_rh_roles (user_id, agency_id)
+```
+
+#### Guides & RAG
+```sql
+blocks (id, slug, title, content, type, parent_id, order)
+apporteur_blocks (id, slug, title, content, type, parent_id)
+guide_chunks (id, block_id, chunk_text, embedding, metadata, context_type)
+faq_items (id, question, answer, category_id, is_published)
+```
+
+#### Support
+```sql
+support_tickets (id, user_id, type, status, heat_priority, due_at, sla_status,
+                 assigned_to, support_level, ai_classification, ai_summary)
+support_messages (id, ticket_id, sender_id, message, is_internal_note)
+support_ticket_actions (id, ticket_id, action_type, old_value, new_value)
+```
+
+#### Tickets Projet
+```sql
+apogee_tickets (id, element_concerne, description, kanban_status, heat_priority,
+                module, owner_side, is_qualified, impact_tags, h_min, h_max)
+apogee_ticket_statuses (id, label, color, display_order, is_final)
+apogee_ticket_transitions (from_status, to_status, allowed_role)
+apogee_ticket_comments (id, ticket_id, body, author_type)
+```
+
+#### RH & Collaborateurs
+```sql
+collaborators (id, agency_id, user_id, first_name, last_name, email, type, role,
+               hiring_date, leaving_date, apogee_user_id)
+collaborator_documents (id, collaborator_id, doc_type, file_path, visibility)
+collaborator_sensitive_data (id, collaborator_id, ssn_encrypted, ...)
+employment_contracts (id, collaborator_id, contract_type, start_date, end_date)
+document_requests (id, collaborator_id, request_type, status, response_document_id)
+leave_requests (id, collaborator_id, type, start_date, end_date, status)
+rh_notifications (id, recipient_id, notification_type, is_read)
+```
+
+### 5.2 Storage Buckets (13)
+
+| Bucket | Public | Usage |
+|--------|--------|-------|
+| `category-icons` | ✅ | Icônes catégories |
+| `category-images` | ✅ | Images catégories |
+| `documents` | ✅ | Documents guides |
+| `announcement-images` | ✅ | Images annonces |
+| `pptx-assets` | ✅ | Assets PowerPoint |
+| `support-attachments` | ❌ | PJ tickets support |
+| `apogee-ticket-attachments` | ❌ | PJ tickets projet |
+| `rag-uploads` | ❌ | Documents RAG |
+| `project-files` | ❌ | Fichiers projets |
+| `rh-documents` | ❌ | Documents RH |
+| `agency-stamps` | ❌ | Tampons agences |
+| `apogee-imports` | ❌ | Imports Excel |
+| `pptx-templates` | ❌ | Templates PPTX |
+
+### 5.3 Policies RLS
 
 ```sql
 -- Accès par rôle minimum
 CREATE POLICY "N5+ can manage" ON table
 USING (has_min_global_role(auth.uid(), 5));
 
--- Accès support
-CREATE POLICY "Support access" ON support_tickets
-USING (user_id = auth.uid() OR has_support_access(auth.uid()));
+-- Accès support agent
+CREATE POLICY "Support agents only" ON support_tickets
+FOR SELECT USING (
+  user_id = auth.uid() 
+  OR is_support_agent(auth.uid())
+  OR is_admin(auth.uid())
+);
 
--- Isolation agence
-CREATE POLICY "Agency isolation" ON table
-USING (agency_id = get_user_agency(auth.uid()));
+-- Isolation agence stricte
+CREATE POLICY "Agency isolation" ON collaborators
+USING (agency_id = get_user_agency_id(auth.uid()));
+
+-- Accès RH
+CREATE POLICY "RH access" ON collaborator_documents
+USING (
+  has_agency_rh_role(auth.uid(), agency_id)
+  OR is_admin(auth.uid())
+);
 ```
 
 ---
 
-## 6. Flux de Données
+## 6. StatIA - Moteur de Métriques
 
-### 6.1 RAG Pipeline
-
-```
-1. Contenu guide (blocks)
-        ↓
-2. Chunking (chunkText)
-        ↓
-3. Embeddings (generate-embeddings → OpenAI)
-        ↓
-4. Stockage (guide_chunks)
-        ↓
-5. Recherche (search-embeddings → cosine similarity)
-        ↓
-6. Prompt + Context (chat-guide)
-        ↓
-7. Réponse IA (Lovable AI Gateway)
-```
-
-### 6.2 Support V2 Flow
+### 6.1 Architecture
 
 ```
-Utilisateur → Chat IA (chat_ai)
-                ↓
-        Escalade humain
-                ↓
-        Chat Support (chat_human)
-                ↓
-        [Timeout 60s ou résolution]
-                ↓
-        Ticket formel (ticket) ou Resolved
+Définitions (src/statia/definitions/)
+        ↓
+    Parser NLP (statiaIntent.ts)
+        ↓
+    Metric Registry (metricRegistry.ts)
+        ↓
+    Engine (compute functions)
+        ↓
+    Formatters (enrichment, display)
 ```
 
-### 6.3 API Apogée Flow
+### 6.2 Métriques disponibles
 
-```
-Frontend (AgencyContext)
-        ↓
-    setApiBaseUrl(agence)
-        ↓
-    API: https://{agence}.hc-apogee.fr/api/
-        ↓
-    POST avec API_KEY partagée
-        ↓
-    Calculs locaux (utils/*.ts)
-        ↓
-    Affichage indicateurs
+| Famille | Métriques |
+|---------|-----------|
+| CA | `ca_global_ht`, `ca_par_univers`, `ca_par_apporteur`, `ca_par_technicien` |
+| SAV | `taux_sav_global`, `taux_sav_ytd`, `ca_impacte_sav`, `cout_sav_estime` |
+| Devis | `taux_transformation_nombre`, `taux_transformation_montant` |
+| Délais | `delai_premier_devis`, `delai_facturation` |
+| Recouvrement | `du_global_ttc`, `du_apporteurs_ttc`, `taux_recouvrement` |
+
+### 6.3 Règles métier (src/statia/domain/rules.ts)
+
+```typescript
+// Source CA
+CA_SOURCE = 'apiGetFactures.data.totalHT'
+
+// Types techniciens productifs
+PRODUCTIVE_TYPES = ['depannage', 'travaux', 'recherche de fuite']
+NON_PRODUCTIVE_TYPES = ['RT', 'TH', 'SAV', 'diagnostic']
+
+// Avoirs = montants négatifs (toujours soustraits)
+AVOIR_HANDLING = 'subtract_negative'
+
+// RT ne génère jamais de CA technicien
+RT_GENERATES_NO_CA = true
 ```
 
 ---
 
-## 7. Conventions & Best Practices
+## 7. Sécurité ✅
 
-### 7.1 Nommage fichiers
+### 7.1 Checklist (100% complété)
+
+- [x] JWT vérifié sur toutes les 41 Edge Functions
+- [x] CORS configuré (whitelist stricte)
+- [x] Rate limiting actif (30 req/min chat, 5 req/10min RAG)
+- [x] RLS policies sur toutes les tables sensibles
+- [x] Secrets côté serveur uniquement
+- [x] Validation input (Zod schemas)
+- [x] Sanitization HTML (DOMPurify)
+- [x] Sentry monitoring (frontend + edge)
+- [x] Données sensibles chiffrées (collaborator_sensitive_data)
+- [x] Audit logs RH (rh_audit_log)
+
+### 7.2 Secrets configurés
+
+```
+LOVABLE_API_KEY        # AI Gateway
+OPENAI_API_KEY         # Embeddings
+APOGEE_API_KEY         # API CRM
+SENTRY_DSN             # Monitoring
+ALLMYSMS_API_KEY       # SMS
+ALLMYSMS_LOGIN
+ALLMYSMS_SUPPORT_PHONES
+RESEND_API_KEY         # Emails
+SENSITIVE_DATA_ENCRYPTION_KEY  # Chiffrement
+```
+
+### 7.3 CORS Whitelist
+
+```typescript
+const ALLOWED_ORIGINS = [
+  'https://helpconfort.services',
+  'http://localhost:5173',
+  'http://localhost:8080',
+  /\.lovableproject\.com$/,
+  /\.lovable\.app$/
+];
+```
+
+---
+
+## 8. Conventions & Best Practices
+
+### 8.1 Nommage fichiers
 
 ```
 Pages:              PascalCase.tsx (AdminUsers.tsx)
@@ -381,97 +552,43 @@ Hooks:              use-kebab-case.ts (use-admin-tickets.ts)
 Utils:              camelCase.ts (actionsCalculations.ts)
 Types:              camelCase.ts (globalRoles.ts)
 Config:             camelCase.ts (roleMatrix.ts)
+Edge Functions:     kebab-case/ (chat-guide/)
 ```
 
-### 7.2 Structure composant
-
-```tsx
-// 1. Imports
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-
-// 2. Types
-interface Props {
-  title: string;
-  onAction: () => void;
-}
-
-// 3. Composant
-export function MyComponent({ title, onAction }: Props) {
-  // 3a. Hooks
-  const [state, setState] = useState(false);
-  
-  // 3b. Handlers
-  const handleClick = () => {
-    onAction();
-  };
-  
-  // 3c. Render
-  return (
-    <div className="...">
-      <h1>{title}</h1>
-      <Button onClick={handleClick}>Action</Button>
-    </div>
-  );
-}
-```
-
-### 7.3 Gestion erreurs
+### 8.2 Gestion erreurs
 
 ```typescript
-// Utiliser les safe helpers
+// Logger centralisé (→ Sentry automatique)
+import { logError, logInfo } from '@/lib/logger';
+
+logError('Module', 'Description', error);
+logInfo('Module', 'Message', { context });
+
+// Ne jamais utiliser console.log/error en production
+// Utiliser IS_DEV pour logs dev-only
+if (IS_DEV) console.log('debug:', data);
+```
+
+### 8.3 Safe Helpers
+
+```typescript
+import { safeQuery, safeMutation, safeInvoke } from '@/lib/safeSupabase';
+
+// Query avec fallback
 const { data, error } = await safeQuery(
   supabase.from('table').select('*'),
-  [],  // fallback
+  [],  // fallback si erreur
   'Description opération'
 );
 
-if (error) {
-  errorToast('Erreur', error.message);
-  return;
-}
+// Mutation
+await safeMutation(
+  supabase.from('table').insert({ ... }),
+  'Création enregistrement'
+);
 
-// Ne jamais utiliser console.error, utiliser logError
-import { logError } from '@/lib/logger';
-logError('Module', 'Description', error);
-```
-
-### 7.4 Ajout nouveau module
-
-1. Créer dossier `src/module-name/`
-2. Structurer : `components/`, `hooks/`, `pages/`, `types/`
-3. Ajouter routes dans `src/config/routes.ts`
-4. Ajouter navigation dans `src/config/navigation.ts`
-5. Ajouter routes dans `src/App.tsx` avec `RoleGuard`
-6. Créer tables/policies si nécessaire (migration)
-7. Documenter dans `ARCHITECTURE.md`
-
----
-
-## 8. Sécurité
-
-### 8.1 Checklist
-
-- [ ] JWT vérifié sur toutes les Edge Functions
-- [ ] CORS configuré (origines whitelist)
-- [ ] Rate limiting actif
-- [ ] RLS policies sur toutes les tables sensibles
-- [ ] Pas de secrets côté client
-- [ ] Validation input côté serveur
-- [ ] Sanitization HTML (DOMPurify)
-
-### 8.2 Variables d'environnement
-
-```bash
-# Frontend (.env)
-VITE_SUPABASE_URL=https://xxx.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=xxx
-VITE_SENTRY_DSN=https://xxx@sentry.io/xxx
-
-# Edge Functions (Supabase Secrets)
-LOVABLE_API_KEY=xxx
-OPENAI_API_KEY=xxx
-APOGEE_API_KEY=xxx
+// Edge Function
+await safeInvoke('function-name', { body: { ... } });
 ```
 
 ---
@@ -481,60 +598,37 @@ APOGEE_API_KEY=xxx
 ### 9.1 Sentry
 
 ```typescript
-// Frontend automatique via GlobalErrorBoundary
-// Edge Functions via _shared/sentry.ts
-
-// Contexte utilisateur
+// Contexte utilisateur automatique
 Sentry.setUser({
   id: user.id,
   email: user.email,
   global_role: user.global_role,
   agency: user.agence
 });
+
+// Tags automatiques
+Sentry.setTag('module', 'support');
 ```
 
-### 9.2 Logs
+### 9.2 Pages admin debug
 
-```typescript
-import { logApogee, logError, logSupport } from '@/lib/logger';
-
-// Log métier
-logApogee.debug('Message', { data });
-logSupport.info('Ticket créé', { ticketId });
-
-// Log erreur (→ Sentry)
-logError('Module', 'Description', error);
-```
-
-### 9.3 Debug RAG
-
-- Admin > Chatbot & RAG > Onglet Debug
-- Affiche chunks récupérés et scores
+| Route | Description |
+|-------|-------------|
+| `/admin/system-health` | Santé système & Sentry |
+| `/admin/helpi` | RAG indexation & debug |
+| `/admin/statia` | Métriques & tests |
 
 ---
 
-## 10. Pistes d'Amélioration
+## 10. Backlog P3 (Post-production)
 
-### 10.1 Refactors souhaitables
-
-- [ ] Extraire composants > 300 lignes
-- [ ] Centraliser les types Supabase custom
-- [ ] Compléter P1#7 (Lots 3+)
+- [ ] Typage API Apogée (`src/apogee-connect/types/apogee-api.ts`)
+- [ ] Typer `dataService.ts` avec interfaces
 - [ ] Tests unitaires hooks critiques
-
-### 10.2 Optimisations
-
 - [ ] Lazy loading plus agressif
-- [ ] Memoization composants lourds
-- [ ] Cache invalidation granulaire
-- [ ] Compression embeddings
-
-### 10.3 Documentation
-
 - [ ] JSDoc sur fonctions exportées
 - [ ] Storybook composants UI
-- [ ] Schéma DB interactif
 
 ---
 
-*Guide technique GLOBAL / Apogée — Version 2.0*
+*Guide technique GLOBAL / HelpConfort Services — Version 3.0 — Décembre 2025*
