@@ -11,6 +11,7 @@ import { FiltersProvider } from '../contexts/FiltersContext';
 import { ApiToggleProvider } from '../contexts/ApiToggleContext';
 import { AgencyProvider } from '../contexts/AgencyContext';
 import { SecondaryFiltersProvider } from '../contexts/SecondaryFiltersContext';
+import { PeriodSelector } from '../components/filters/PeriodSelector';
 
 const TAB_ICONS: Record<TabId, React.ReactNode> = {
   general: <LayoutDashboard className="h-4 w-4" />,
@@ -38,6 +39,7 @@ function StatsHubContent() {
         title="Hub Statistiques"
         backTo={ROUTES.pilotage.index}
         backLabel="Mon Agence"
+        rightElement={<PeriodSelector />}
       />
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabId)}>
