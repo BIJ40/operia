@@ -1,13 +1,13 @@
 /**
- * ModuleGuard - Composant de protection de routes basé sur les modules activés
- * Permet l'accès si l'utilisateur a le module activé OU est admin (N5+)
+ * ModuleGuard V2.1 - Utilise le Permissions Engine centralisé
+ * Protection de routes basée sur les modules activés
  */
 
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { ModuleKey, isModuleEnabled, isModuleOptionEnabled } from '@/types/modules';
-import { hasMinimumRole } from '@/types/globalRoles';
+import { hasAccess, MODULE_LABELS } from '@/permissions';
+import { ModuleKey } from '@/types/modules';
 import { Loader2, Lock } from 'lucide-react';
 
 interface ModuleGuardProps {
@@ -28,12 +28,14 @@ interface ModuleGuardProps {
 }
 
 /**
- * Guard de route basé sur les modules V2.0
+ * Guard de route basé sur les modules V2.1
+ * Utilise le Permissions Engine centralisé
+ * 
  * Autorise l'accès si:
- * - L'utilisateur a le module activé dans enabled_modules
+ * - L'utilisateur a le module activé (explicite ou par défaut du rôle)
  * - ET l'option spécifique si requiredOption est défini
  * - OU au moins une des options dans requiredOptions (logique OR)
- * - OU l'utilisateur est platform_admin/superadmin (N5+)
+ * - OU l'utilisateur est platform_admin/superadmin (N5+ bypass)
  */
 export function ModuleGuard({ 
   moduleKey, 
@@ -44,7 +46,7 @@ export function ModuleGuard({
   showError = false,
   errorMessage
 }: ModuleGuardProps) {
-  const { user, isAuthLoading, enabledModules, globalRole } = useAuth();
+  const { user, isAuthLoading, enabledModules, globalRole, agencyId } = useAuth();
 
   // Afficher un loader pendant le chargement
   if (isAuthLoading) {
@@ -61,26 +63,37 @@ export function ModuleGuard({
     return <Navigate to="/" replace />;
   }
 
-  // Admin bypass (N5+ a toujours accès)
-  const isAdmin = hasMinimumRole(globalRole, 'platform_admin');
-  
-  // Vérifier si le module est activé
-  const hasModule = isModuleEnabled(enabledModules, moduleKey);
-  
-  // Vérifier les options (logique OR si requiredOptions, sinon requiredOption simple)
-  let hasRequiredOption = true;
-  
+  // Construire le contexte de permissions
+  const permissionContext = {
+    globalRole,
+    enabledModules,
+    agencyId,
+  };
+
+  // Vérifier l'accès au module via le Permissions Engine
+  let canAccessModule = false;
+
   if (requiredOptions && requiredOptions.length > 0) {
-    // Logique OR : au moins une des options doit être activée
-    hasRequiredOption = requiredOptions.some(opt => 
-      isModuleOptionEnabled(enabledModules, moduleKey, opt)
+    // Logique OR : au moins une des options doit être accessible
+    canAccessModule = requiredOptions.some(opt => 
+      hasAccess({ ...permissionContext, moduleId: moduleKey, optionId: opt })
     );
   } else if (requiredOption) {
     // Option unique requise
-    hasRequiredOption = isModuleOptionEnabled(enabledModules, moduleKey, requiredOption);
+    canAccessModule = hasAccess({ 
+      ...permissionContext, 
+      moduleId: moduleKey, 
+      optionId: requiredOption 
+    });
+  } else {
+    // Juste le module
+    canAccessModule = hasAccess({ 
+      ...permissionContext, 
+      moduleId: moduleKey 
+    });
   }
 
-  if (!isAdmin && (!hasModule || !hasRequiredOption)) {
+  if (!canAccessModule) {
     if (showError) {
       return (
         <ModuleAccessDeniedPage 
@@ -105,19 +118,6 @@ function ModuleAccessDeniedPage({
   moduleKey: ModuleKey;
   message?: string;
 }) {
-  const moduleLabels: Record<ModuleKey, string> = {
-    help_academy: 'Help! Academy',
-    pilotage_agence: 'Pilotage Agence',
-    reseau_franchiseur: 'Réseau Franchiseur',
-    support: 'Support',
-    admin_plateforme: 'Administration',
-    apogee_tickets: 'Gestion de Projet',
-    rh: 'RH',
-    parc: 'Parc',
-    messaging: 'Messagerie interne',
-    unified_search: 'Recherche unifiée',
-  };
-
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-8">
       <div className="flex items-center justify-center w-20 h-20 rounded-full bg-destructive/10 mb-6">
@@ -131,7 +131,7 @@ function ModuleAccessDeniedPage({
       </p>
       <p className="text-sm text-muted-foreground">
         Module requis : <span className="font-semibold text-foreground">
-          {moduleLabels[moduleKey] || moduleKey}
+          {MODULE_LABELS[moduleKey] || moduleKey}
         </span>
       </p>
     </div>
