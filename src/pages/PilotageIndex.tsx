@@ -1,4 +1,4 @@
-import { BarChart3, ListTodo, PieChart, TrendingUp, Building2, Users, ChevronDown } from 'lucide-react';
+import { BarChart3, ListTodo, PieChart, TrendingUp, Building2, Users, ChevronDown, Radar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
@@ -75,6 +75,14 @@ const pilotageModules: PilotageModule[] = [
     description: 'Suivi des actions et tâches en cours',
     icon: ListTodo,
     href: ROUTES.pilotage.actions,
+    category: 'autres',
+  },
+  {
+    id: 'veille_apporteurs',
+    title: 'Veille Apporteurs',
+    description: 'Suivi performance et alertes apporteurs',
+    icon: Radar,
+    href: ROUTES.pilotage.veilleApporteurs,
     category: 'autres',
   },
 ];
