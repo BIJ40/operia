@@ -173,26 +173,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [accessContext]);
 
   // ============================================================================
-  // Chargement des données utilisateur (V2 ONLY)
+  // Helper: Convertir user_modules rows en EnabledModules JSONB format
+  // ============================================================================
+  const convertUserModulesToEnabledModules = (rows: Array<{ module_key: string; options: unknown }>): EnabledModules => {
+    const result: EnabledModules = {};
+    for (const row of rows) {
+      result[row.module_key as ModuleKey] = {
+        enabled: true,
+        options: (row.options as Record<string, boolean>) || {},
+      };
+    }
+    return result;
+  };
+
+  // ============================================================================
+  // Chargement des données utilisateur (V2 + user_modules table)
   // ============================================================================
   const loadUserData = useCallback(async (userId: string) => {
     try {
-      // Charger le profil avec les champs V2 - avec timeout pour éviter blocage infini
-      const timeoutPromise = new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout: chargement profil trop long')), 10000)
-      );
-      
-      const queryPromise = supabase
+      // Requêtes parallèles avec timeout global
+      const timeoutId = setTimeout(() => {
+        throw new Error('Timeout: chargement profil trop long');
+      }, 10000);
+
+      // Requête profil
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('first_name, last_name, agence, agency_id, role_agence, must_change_password, global_role, enabled_modules, is_active, is_salaried_manager')
         .eq('id', userId)
         .single();
       
-      const { data: profile, error } = await Promise.race([queryPromise, timeoutPromise]);
+      // Requête user_modules (nouvelle table normalisée)
+      const { data: userModules, error: modulesError } = await supabase
+        .from('user_modules')
+        .select('module_key, options')
+        .eq('user_id', userId);
       
-      if (error) {
-        logAuth.error('Erreur requête profil:', error);
-        throw error;
+      clearTimeout(timeoutId);
+      
+      if (profileError) {
+        logAuth.error('Erreur requête profil:', profileError);
+        throw profileError;
+      }
+      
+      if (modulesError) {
+        logAuth.warn('[AUTH] Erreur requête user_modules, fallback JSONB:', modulesError);
       }
       
       setFirstName(profile?.first_name || null);
@@ -219,13 +244,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // V2.0 - Utiliser directement les valeurs de la DB
       const dbGlobalRole = profile?.global_role as GlobalRole | null;
-      const dbEnabledModules = profile?.enabled_modules as EnabledModules | null;
+      
+      // Priorité: user_modules table > profiles.enabled_modules JSONB
+      let resolvedModules: EnabledModules;
+      if (userModules && userModules.length > 0) {
+        // Utiliser la nouvelle table user_modules
+        resolvedModules = convertUserModulesToEnabledModules(userModules);
+        if (import.meta.env.DEV) {
+          logAuth.info('[AUTH] Modules loaded from user_modules table:', userModules.length);
+        }
+      } else {
+        // Fallback vers JSONB (pour compatibilité durant migration)
+        resolvedModules = (profile?.enabled_modules as EnabledModules | null) || {};
+        if (import.meta.env.DEV) {
+          logAuth.info('[AUTH] Modules loaded from JSONB fallback');
+        }
+      }
 
       // Définir le rôle global (valeur par défaut si non défini)
       setGlobalRole(dbGlobalRole || 'base_user');
       
-      // Définir les modules activés (objet vide si non défini)
-      setEnabledModules(dbEnabledModules || {});
+      // Définir les modules activés
+      setEnabledModules(resolvedModules);
 
       // Configurer Sentry avec le contexte utilisateur
       const { data: userData } = await supabase.auth.getUser();
@@ -243,7 +283,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logAuth.info('[AUTH][V2] User loaded:', {
           userId,
           globalRole: dbGlobalRole || 'base_user (default)',
-          modulesCount: dbEnabledModules ? Object.keys(dbEnabledModules).length : 0,
+          modulesCount: Object.keys(resolvedModules).length,
+          moduleSource: (userModules && userModules.length > 0) ? 'user_modules' : 'jsonb_fallback',
         });
       }
 
