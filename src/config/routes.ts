@@ -151,6 +151,7 @@ export const ROUTES = {
     formationGenerator: '/admin/formation-generator',
     widgets: '/admin/widgets',
     modules: '/admin/modules',
+    permissionsCenter: '/admin/permissions',
     // Legacy redirects (kept for backward compatibility)
     apogeeTickets: '/admin/apogee-tickets',
     apogeeTicketsIncomplete: '/admin/apogee-tickets/incomplets',
