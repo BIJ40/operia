@@ -3,8 +3,14 @@ import { cn } from '@/lib/utils';
 import { MiniSparkline } from './MiniSparkline';
 import { MiniGauge } from './MiniGauge';
 import { MiniBar } from './MiniBar';
-import { ChevronRight, TrendingUp, TrendingDown } from 'lucide-react';
+import { ChevronRight, TrendingUp, TrendingDown, Info } from 'lucide-react';
 import type { MiniGraphType } from './types';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface KpiCardProps {
   title: string;
@@ -20,6 +26,7 @@ interface KpiCardProps {
   color?: string;
   onClick?: () => void;
   isLoading?: boolean;
+  breakdown?: Record<string, any>;
 }
 
 export function KpiCard({
@@ -33,6 +40,7 @@ export function KpiCard({
   color = 'primary',
   onClick,
   isLoading,
+  breakdown,
 }: KpiCardProps) {
   const colorClasses: Record<string, string> = {
     primary: 'border-l-primary',
@@ -41,6 +49,29 @@ export function KpiCard({
     orange: 'border-l-helpconfort-orange',
     purple: 'border-l-purple-500',
     red: 'border-l-red-500',
+  };
+
+  // Format breakdown values for display
+  const formatBreakdownValue = (key: string, val: any): string => {
+    if (val === null || val === undefined) return '–';
+    if (typeof val === 'number') {
+      if (key.toLowerCase().includes('taux') || key.toLowerCase().includes('percent')) {
+        return `${val.toFixed(1)}%`;
+      }
+      if (key.toLowerCase().includes('montant') || key.toLowerCase().includes('ca') || key.toLowerCase().includes('ht')) {
+        return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(val);
+      }
+      return val.toLocaleString('fr-FR');
+    }
+    return String(val);
+  };
+
+  const formatBreakdownLabel = (key: string): string => {
+    return key
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/_/g, ' ')
+      .replace(/^\w/, c => c.toUpperCase())
+      .trim();
   };
 
   return (
@@ -55,14 +86,39 @@ export function KpiCard({
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-2">
-        <div>
+        <div className="flex items-center gap-1">
           <h4 className="text-sm font-medium text-muted-foreground">{title}</h4>
-          {subtitle && (
-            <span className="text-xs text-muted-foreground/70">{subtitle}</span>
+          {breakdown && Object.keys(breakdown).length > 0 && (
+            <TooltipProvider>
+              <Tooltip delayDuration={200}>
+                <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+                  <Info className="h-3.5 w-3.5 text-muted-foreground/60 hover:text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent 
+                  side="top" 
+                  align="start"
+                  className="max-w-xs bg-popover border border-border shadow-lg p-3"
+                >
+                  <div className="space-y-1.5">
+                    <p className="font-semibold text-sm text-foreground mb-2">Détail du calcul</p>
+                    {Object.entries(breakdown).map(([key, val]) => (
+                      <div key={key} className="flex justify-between gap-4 text-xs">
+                        <span className="text-muted-foreground">{formatBreakdownLabel(key)}</span>
+                        <span className="font-medium text-foreground">{formatBreakdownValue(key, val)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
         </div>
         <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
+
+      {subtitle && (
+        <span className="text-xs text-muted-foreground/70 block -mt-1 mb-2">{subtitle}</span>
+      )}
 
       {/* Value */}
       <div className="flex items-end justify-between">
