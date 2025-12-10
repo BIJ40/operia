@@ -2,7 +2,7 @@ import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import {
   GraduationCap, FileText, FolderOpen, BarChart3, ListTodo, Tv, Heart,
   Headset, Network, Building2, PieChart, GitCompare, Briefcase,
-  Coins, Settings, Users, Database, Activity, ChevronRight, Home, Calendar, LifeBuoy, MessageCircle, Kanban, FolderKanban, HelpCircle, Sparkles, Wrench, Brain
+  Coins, Settings, Users, Database, Activity, ChevronRight, Home, Calendar, LifeBuoy, MessageCircle, Kanban, FolderKanban, HelpCircle, Sparkles, Wrench, Brain, Radar
 } from 'lucide-react';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import {
@@ -224,6 +224,7 @@ export function UnifiedSidebar() {
           ]
         },
         { title: 'Actions à Mener', url: ROUTES.pilotage.actions, icon: ListTodo, description: 'Suivi des actions et tâches en cours', featureFlagKey: 'pilotage.actions-mener' },
+        { title: 'Veille Apporteurs', url: ROUTES.pilotage.veilleApporteurs, icon: Radar, description: 'Suivi performance et alertes apporteurs' },
         { title: 'Commercial', url: ROUTES.pilotage.commercial, icon: Briefcase, description: 'Outils et suivi commercial' },
         { title: 'Diffusion', url: ROUTES.pilotage.diffusion, icon: Tv, description: 'Mode affichage TV agence', badge: 'En cours', featureFlagKey: 'pilotage.diffusion' },
         { title: 'Validation plannings', url: ROUTES.pilotage.rhTech, icon: Calendar, description: 'Validation des plannings hebdomadaires', badge: 'Bientôt', isDisabled: true, featureFlagKey: 'rh.validation-plannings' },
