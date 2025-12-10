@@ -17,8 +17,9 @@ export function useChargeTravauxAVenir() {
       if (!agencySlug) {
         return {
           parUnivers: [],
+          parEtat: [],
           parProjet: [],
-          totaux: { totalHeuresRdv: 0, totalHeuresTech: 0, nbDossiers: 0 },
+          totaux: { totalHeuresRdv: 0, totalHeuresTech: 0, totalNbTechs: 0, nbDossiers: 0 },
           debug: { totalProjects: 0, projectsEligibleState: 0, projectsAvecRT: 0, rtBlocksCount: 0 }
         };
       }
@@ -38,4 +39,4 @@ export function useChargeTravauxAVenir() {
   });
 }
 
-export type { ChargeTravauxResult, ChargeTravauxProjet, ChargeTravauxUniversStats } from '../shared/chargeTravauxEngine';
+export type { ChargeTravauxResult, ChargeTravauxProjet, ChargeTravauxUniversStats, ChargeParEtatStats } from '../shared/chargeTravauxEngine';
