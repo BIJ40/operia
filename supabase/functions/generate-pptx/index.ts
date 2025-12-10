@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
 
 interface CommercialProfile {
   agence_nom_long: string | null;
@@ -36,17 +32,18 @@ interface CommercialProfile {
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight
+  const corsResult = handleCorsPreflightOrReject(req);
+  if (corsResult) return corsResult;
 
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      const response = new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
       });
+      return withCors(req, response);
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -59,18 +56,20 @@ serve(async (req) => {
     });
     const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
     if (userError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      const response = new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
       });
+      return withCors(req, response);
     }
 
     const { agencyId } = await req.json();
     if (!agencyId) {
-      return new Response(JSON.stringify({ error: 'agencyId required' }), {
+      const response = new Response(JSON.stringify({ error: 'agencyId required' }), {
         status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
       });
+      return withCors(req, response);
     }
 
     console.log(`[generate-pptx] Starting generation for agency: ${agencyId}`);
@@ -84,10 +83,11 @@ serve(async (req) => {
 
     if (profileError || !profile) {
       console.error('[generate-pptx] Profile not found:', profileError);
-      return new Response(JSON.stringify({ error: 'Profil commercial non trouvé pour cette agence' }), {
+      const response = new Response(JSON.stringify({ error: 'Profil commercial non trouvé pour cette agence' }), {
         status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
       });
+      return withCors(req, response);
     }
 
     // Get agency info
@@ -104,12 +104,13 @@ serve(async (req) => {
 
     if (templateError || !templateData) {
       console.error('[generate-pptx] Template not found:', templateError);
-      return new Response(JSON.stringify({ 
+      const response = new Response(JSON.stringify({ 
         error: 'Template PPTX non trouvé. Veuillez uploader le modèle maître.' 
       }), {
         status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
       });
+      return withCors(req, response);
     }
 
     console.log('[generate-pptx] Template loaded, processing...');
@@ -194,10 +195,11 @@ serve(async (req) => {
 
     if (uploadError) {
       console.error('[generate-pptx] Upload error:', uploadError);
-      return new Response(JSON.stringify({ error: 'Erreur lors de la sauvegarde du fichier' }), {
+      const response = new Response(JSON.stringify({ error: 'Erreur lors de la sauvegarde du fichier' }), {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
       });
+      return withCors(req, response);
     }
 
     // Generate signed URL
@@ -207,30 +209,33 @@ serve(async (req) => {
 
     if (signedUrlError) {
       console.error('[generate-pptx] Signed URL error:', signedUrlError);
-      return new Response(JSON.stringify({ error: 'Erreur lors de la génération du lien' }), {
+      const response = new Response(JSON.stringify({ error: 'Erreur lors de la génération du lien' }), {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
       });
+      return withCors(req, response);
     }
 
     console.log('[generate-pptx] Generation complete:', generatedPath);
 
-    return new Response(JSON.stringify({
+    const response = new Response(JSON.stringify({
       success: true,
       downloadUrl: signedUrlData.signedUrl,
       fileName: `support_commercial_${agencySlug}_${timestamp}.pptx`,
       generatedAt: new Date().toISOString(),
       path: generatedPath
     }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
     });
+    return withCors(req, response);
 
   } catch (error: unknown) {
     console.error('[generate-pptx] Error:', error);
     const message = error instanceof Error ? error.message : 'Internal error';
-    return new Response(JSON.stringify({ error: message }), {
+    const response = new Response(JSON.stringify({ error: message }), {
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
     });
+    return withCors(req, response);
   }
 });

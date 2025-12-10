@@ -3,16 +3,12 @@
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight
+  const corsResult = handleCorsPreflightOrReject(req);
+  if (corsResult) return corsResult;
 
   try {
     const { subject, messages } = await req.json();
@@ -89,15 +85,17 @@ Reformule ce ticket en une paire question/réponse FAQ.`;
       };
     }
 
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    const finalResponse = new Response(JSON.stringify(result), {
+      headers: { 'Content-Type': 'application/json' },
     });
+    return withCors(req, finalResponse);
 
   } catch (error) {
     console.error('Error in reformulate-ticket-faq:', error);
-    return new Response(
+    const errorResponse = new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
+    return withCors(req, errorResponse);
   }
 });

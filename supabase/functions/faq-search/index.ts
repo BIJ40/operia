@@ -5,26 +5,22 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
 
 serve(async (req) => {
   // Handle CORS preflight
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResult = handleCorsPreflightOrReject(req);
+  if (corsResult) return corsResult;
 
   try {
     const { query, context_type } = await req.json();
 
     if (!query || typeof query !== 'string') {
-      return new Response(
+      const response = new Response(
         JSON.stringify({ error: 'Query is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
+      return withCors(req, response);
     }
 
     // Initialize Supabase client
@@ -49,10 +45,11 @@ serve(async (req) => {
     }
 
     if (!faqs || faqs.length === 0) {
-      return new Response(
+      const response = new Response(
         JSON.stringify({ results: [] }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { 'Content-Type': 'application/json' } }
       );
+      return withCors(req, response);
     }
 
     // Build FAQ list for AI
@@ -114,10 +111,11 @@ Retourne les indices des FAQ pertinentes au format JSON.`
         )
         .slice(0, 10);
 
-      return new Response(
+      const response = new Response(
         JSON.stringify({ results: fallbackResults, fallback: true }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { 'Content-Type': 'application/json' } }
       );
+      return withCors(req, response);
     }
 
     const aiData = await aiResponse.json();
@@ -143,10 +141,11 @@ Retourne les indices des FAQ pertinentes au format JSON.`
         )
         .slice(0, 10);
 
-      return new Response(
+      const response = new Response(
         JSON.stringify({ results: fallbackResults, fallback: true }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { 'Content-Type': 'application/json' } }
       );
+      return withCors(req, response);
     }
 
     // Map indices back to FAQs
@@ -154,17 +153,19 @@ Retourne les indices des FAQ pertinentes au format JSON.`
       .filter(idx => idx >= 0 && idx < faqs.length)
       .map(idx => faqs[idx]);
 
-    return new Response(
+    const response = new Response(
       JSON.stringify({ results }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { 'Content-Type': 'application/json' } }
     );
+    return withCors(req, response);
 
   } catch (error) {
     console.error('FAQ Search error:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(
+    const response = new Response(
       JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
+    return withCors(req, response);
   }
 });

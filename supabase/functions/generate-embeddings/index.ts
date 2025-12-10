@@ -5,11 +5,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
 
 interface EmbeddingRequest {
   text?: string;
@@ -85,18 +81,18 @@ async function generateEmbeddings(texts: string[]): Promise<number[][]> {
 
 serve(async (req) => {
   // Handle CORS preflight
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResult = handleCorsPreflightOrReject(req);
+  if (corsResult) return corsResult;
 
   try {
     // Verify authentication
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(
+      const response = new Response(
         JSON.stringify({ error: "No authorization header" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 401, headers: { "Content-Type": "application/json" } }
       );
+      return withCors(req, response);
     }
 
     const supabase = createClient(
@@ -109,10 +105,11 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
     if (userError || !user) {
-      return new Response(
+      const response = new Response(
         JSON.stringify({ error: "Invalid token" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 401, headers: { "Content-Type": "application/json" } }
       );
+      return withCors(req, response);
     }
 
     const body: EmbeddingRequest = await req.json();
@@ -121,51 +118,56 @@ serve(async (req) => {
     // Single text embedding
     if (body.text) {
       const embedding = await generateEmbedding(body.text);
-      return new Response(
+      const response = new Response(
         JSON.stringify({ embedding }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { "Content-Type": "application/json" } }
       );
+      return withCors(req, response);
     }
 
     // Multiple texts
     if (body.texts && body.texts.length > 0) {
       const embeddings = await generateEmbeddings(body.texts);
-      return new Response(
+      const response = new Response(
         JSON.stringify({ embeddings }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { "Content-Type": "application/json" } }
       );
+      return withCors(req, response);
     }
 
     // Block reindexing (legacy support)
     if (body.blockId) {
       console.log("[GENERATE-EMBEDDINGS] Block reindex requested, use helpi-index instead");
-      return new Response(
+      const response = new Response(
         JSON.stringify({ 
           success: true, 
           message: "Use helpi-index for block reindexing",
           blocks_processed: 0,
           chunks_created: 0
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { "Content-Type": "application/json" } }
       );
+      return withCors(req, response);
     }
 
     // Full reindex (legacy support) - redirect to message
-    return new Response(
+    const response = new Response(
       JSON.stringify({ 
         success: true,
         message: "Use helpi-index for full reindexing",
         blocks_processed: 0,
         chunks_created: 0
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { "Content-Type": "application/json" } }
     );
+    return withCors(req, response);
 
   } catch (error) {
     console.error("[GENERATE-EMBEDDINGS] Error:", error);
-    return new Response(
+    const response = new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
+    return withCors(req, response);
   }
 });
