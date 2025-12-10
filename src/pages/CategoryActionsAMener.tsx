@@ -268,7 +268,7 @@ export default function CategoryActionsAMener() {
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
       <div className="container max-w-5xl mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-helpconfort-blue-dark to-helpconfort-blue-lighter bg-clip-text text-transparent">
             {category.title}
           </h1>
         </div>

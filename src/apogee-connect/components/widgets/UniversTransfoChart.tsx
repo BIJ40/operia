@@ -43,7 +43,7 @@ export const UniversTransfoChart = ({
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
+          <CardTitle className="bg-gradient-to-r from-helpconfort-blue-dark to-helpconfort-blue-lighter bg-clip-text text-transparent">
             Taux de transformation par univers
           </CardTitle>
         </CardHeader>
@@ -59,7 +59,7 @@ export const UniversTransfoChart = ({
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
+        <CardTitle className="bg-gradient-to-r from-helpconfort-blue-dark to-helpconfort-blue-lighter bg-clip-text text-transparent">
           Taux de transformation par univers
         </CardTitle>
         <p className="text-sm text-muted-foreground">

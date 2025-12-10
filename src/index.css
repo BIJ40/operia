@@ -72,7 +72,8 @@
 
     /* Palette HelpConfort étendue */
     --hc-blue: 200 100% 43%;
-    --hc-blue-light: 200 100% 50%;
+    --hc-blue-light: 200 100% 55%;
+    --hc-blue-lighter: 200 80% 65%;
     --hc-blue-dark: 203 100% 40%;
     --hc-orange: 43 100% 51%;
     --hc-orange-light: 43 100% 60%;

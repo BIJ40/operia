@@ -92,7 +92,7 @@ export const UniversStackedChart = ({ data, universes, loading }: UniversStacked
   return (
     <Card className="flex flex-col">
       <CardHeader>
-        <CardTitle className="bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
+        <CardTitle className="bg-gradient-to-r from-helpconfort-blue-dark to-helpconfort-blue-lighter bg-clip-text text-transparent">
           Évolution du CA par univers
         </CardTitle>
         <CardDescription>
