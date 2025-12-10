@@ -1,8 +1,8 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StatsHubProvider, useStatsHub } from '../components/stats-hub/StatsHubContext';
 import { TABS_CONFIG, TabId } from '../components/stats-hub/types';
-import { GeneralTab, ApporteursTab, TechniciensTab, UniversTab, SAVTab } from '../components/stats-hub/tabs';
-import { LayoutDashboard, Building2, Users, Layers, AlertTriangle } from 'lucide-react';
+import { GeneralTab, ApporteursTab, TechniciensTab, UniversTab, SAVTab, PrevisionnelTab } from '../components/stats-hub/tabs';
+import { LayoutDashboard, Building2, Users, Layers, AlertTriangle, CalendarClock } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ROUTES } from '@/config/routes';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,6 +18,7 @@ const TAB_ICONS: Record<TabId, React.ReactNode> = {
   techniciens: <Users className="h-4 w-4" />,
   univers: <Layers className="h-4 w-4" />,
   sav: <AlertTriangle className="h-4 w-4" />,
+  previsionnel: <CalendarClock className="h-4 w-4" />,
 };
 
 const TAB_COMPONENTS: Record<TabId, React.ComponentType> = {
@@ -26,6 +27,7 @@ const TAB_COMPONENTS: Record<TabId, React.ComponentType> = {
   techniciens: TechniciensTab,
   univers: UniversTab,
   sav: SAVTab,
+  previsionnel: PrevisionnelTab,
 };
 
 function StatsHubContent() {
@@ -42,7 +44,7 @@ function StatsHubContent() {
       />
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabId)}>
-        <TabsList className="grid w-full grid-cols-5 mb-6">
+        <TabsList className="grid w-full grid-cols-6 mb-6">
           {TABS_CONFIG.map(tab => (
             <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-2">
               {TAB_ICONS[tab.id]}
@@ -70,7 +72,7 @@ function StatsHubContent() {
 
       {/* Keyboard hint */}
       <div className="text-center text-xs text-muted-foreground">
-        Touches 1-5 pour changer d'onglet
+        Touches 1-6 pour changer d'onglet
       </div>
     </div>
   );
