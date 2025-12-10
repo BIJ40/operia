@@ -4,7 +4,7 @@ import { useChargeTravauxAVenir } from '@/statia/hooks/useChargeTravauxAVenir';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Calendar, FolderOpen, Layers, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
+import { Clock, Calendar, FolderOpen, Layers, ChevronDown, ChevronUp, Users, Package, ShoppingCart, ClipboardList } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
   Table,
@@ -29,10 +29,10 @@ const UNIVERS_COLORS: Record<string, string> = {
   'Non classé': '#6b7280',
 };
 
-const ETAT_COLORS: Record<string, string> = {
-  'À planifier TVX': '#3b82f6',
-  'À commander': '#f59e0b',
-  'En attente fournitures': '#8b5cf6',
+const ETAT_CONFIG: Record<string, { color: string; icon: typeof Clock; bgClass: string }> = {
+  'to_planify_tvx': { color: '#3b82f6', icon: ClipboardList, bgClass: 'bg-blue-500/10' },
+  'devis_to_order': { color: '#f59e0b', icon: ShoppingCart, bgClass: 'bg-amber-500/10' },
+  'wait_fourn': { color: '#8b5cf6', icon: Package, bgClass: 'bg-purple-500/10' },
 };
 
 const containerVariants = {
@@ -62,30 +62,11 @@ export function PrevisionnelTab() {
   }, [data]);
 
   const pieData = useMemo(() => {
-    if (!data?.parUnivers) return [];
-    return data.parUnivers.filter(u => u.totalHeuresTech > 0).map(u => ({
-      name: u.univers,
-      value: Math.round(u.totalHeuresTech * 10) / 10,
-      color: UNIVERS_COLORS[u.univers] || '#6b7280'
-    }));
-  }, [data]);
-
-  const etatChartData = useMemo(() => {
-    if (!data?.parUnivers) return [];
-    const totaux = {
-      'À planifier TVX': 0,
-      'À commander': 0,
-      'En attente fournitures': 0
-    };
-    data.parUnivers.forEach(u => {
-      totaux['À planifier TVX'] += u.totalHeuresTech_A_planifier_TVX;
-      totaux['À commander'] += u.totalHeuresTech_A_commander;
-      totaux['En attente fournitures'] += u.totalHeuresTech_En_attente_fournitures;
-    });
-    return Object.entries(totaux).filter(([_, v]) => v > 0).map(([name, value]) => ({
-      name,
-      value: Math.round(value * 10) / 10,
-      color: ETAT_COLORS[name]
+    if (!data?.parEtat) return [];
+    return data.parEtat.filter(e => e.totalHeuresTech > 0).map(e => ({
+      name: e.etatLabel,
+      value: Math.round(e.totalHeuresTech * 10) / 10,
+      color: ETAT_CONFIG[e.etat]?.color || '#6b7280'
     }));
   }, [data]);
 
@@ -98,9 +79,10 @@ export function PrevisionnelTab() {
   if (!isAgencyReady || isLoading) {
     return (
       <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-4">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-28" />)}
+        <div className="grid gap-4 md:grid-cols-3">
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-32" />)}
         </div>
+        <Skeleton className="h-28" />
         <div className="grid gap-4 md:grid-cols-2">
           {[1, 2].map(i => <Skeleton key={i} className="h-80" />)}
         </div>
@@ -108,9 +90,10 @@ export function PrevisionnelTab() {
     );
   }
 
-  const { totaux, parUnivers, parProjet, debug } = data || {
-    totaux: { totalHeuresRdv: 0, totalHeuresTech: 0, nbDossiers: 0 },
+  const { totaux, parUnivers, parEtat, parProjet, debug } = data || {
+    totaux: { totalHeuresRdv: 0, totalHeuresTech: 0, totalNbTechs: 0, nbDossiers: 0 },
     parUnivers: [],
+    parEtat: [],
     parProjet: [],
     debug: { totalProjects: 0, projectsEligibleState: 0, projectsAvecRT: 0, rtBlocksCount: 0 }
   };
@@ -122,60 +105,82 @@ export function PrevisionnelTab() {
       animate="visible"
       className="space-y-6"
     >
-      {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <motion.div variants={itemVariants}>
-          <Card className="border-l-4 border-l-cyan-500">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Heures Technicien</CardTitle>
-              <Clock className="h-4 w-4 text-cyan-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{Math.round(totaux.totalHeuresTech)}h</div>
-              <p className="text-xs text-muted-foreground">charge à venir</p>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={itemVariants}>
-          <Card className="border-l-4 border-l-blue-500">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Heures RDV</CardTitle>
-              <Calendar className="h-4 w-4 text-blue-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{Math.round(totaux.totalHeuresRdv)}h</div>
-              <p className="text-xs text-muted-foreground">à programmer</p>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={itemVariants}>
-          <Card className="border-l-4 border-l-green-500">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Dossiers</CardTitle>
-              <FolderOpen className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totaux.nbDossiers}</div>
-              <p className="text-xs text-muted-foreground">en attente travaux</p>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={itemVariants}>
-          <Card className="border-l-4 border-l-purple-500">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Univers</CardTitle>
-              <Layers className="h-4 w-4 text-purple-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{parUnivers.length}</div>
-              <p className="text-xs text-muted-foreground">concernés</p>
-            </CardContent>
-          </Card>
-        </motion.div>
+      {/* Cards par État */}
+      <div className="grid gap-4 md:grid-cols-3">
+        {parEtat.map((etatStats) => {
+          const config = ETAT_CONFIG[etatStats.etat] || { color: '#6b7280', icon: FolderOpen, bgClass: 'bg-muted' };
+          const Icon = config.icon;
+          return (
+            <motion.div key={etatStats.etat} variants={itemVariants}>
+              <Card className={`border-l-4 ${config.bgClass}`} style={{ borderLeftColor: config.color }}>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">{etatStats.etatLabel}</CardTitle>
+                  <Icon className="h-5 w-5" style={{ color: config.color }} />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold" style={{ color: config.color }}>{etatStats.nbDossiers}</div>
+                  <p className="text-sm text-muted-foreground mt-1">dossiers</p>
+                  <div className="flex gap-4 mt-3 text-xs">
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-3 w-3 text-muted-foreground" />
+                      <span className="font-medium">{Math.round(etatStats.totalHeuresTech)}h</span>
+                      <span className="text-muted-foreground">tech</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Users className="h-3 w-3 text-muted-foreground" />
+                      <span className="font-medium">{etatStats.totalNbTechs}</span>
+                      <span className="text-muted-foreground">techs</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          );
+        })}
+        {parEtat.length === 0 && (
+          <motion.div variants={itemVariants} className="col-span-3">
+            <Card className="border-dashed">
+              <CardContent className="py-8 text-center text-muted-foreground">
+                Aucun dossier en attente de travaux
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
       </div>
+
+      {/* Total Card */}
+      <motion.div variants={itemVariants}>
+        <Card className="bg-gradient-to-r from-helpconfort-blue/10 to-helpconfort-orange/10 border-helpconfort-blue/30">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <FolderOpen className="h-5 w-5 text-helpconfort-blue" />
+                  <span className="text-2xl font-bold">{totaux.nbDossiers}</span>
+                  <span className="text-muted-foreground">dossiers total</span>
+                </div>
+                <div className="h-8 w-px bg-border" />
+                <div className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-helpconfort-orange" />
+                  <span className="text-2xl font-bold">{Math.round(totaux.totalHeuresTech)}h</span>
+                  <span className="text-muted-foreground">heures technicien</span>
+                </div>
+                <div className="h-8 w-px bg-border" />
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-cyan-500" />
+                  <span className="text-2xl font-bold">{Math.round(totaux.totalHeuresRdv)}h</span>
+                  <span className="text-muted-foreground">heures RDV</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Layers className="h-5 w-5 text-purple-500" />
+                <span className="text-lg font-semibold">{parUnivers.length}</span>
+                <span className="text-muted-foreground">univers</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Charts Row */}
       <div className="grid gap-4 md:grid-cols-2">
@@ -200,7 +205,12 @@ export function PrevisionnelTab() {
                       }}
                       formatter={(value: number) => [`${value}h`, 'Heures Tech']}
                     />
-                    <Bar dataKey="heuresTech" radius={[0, 4, 4, 0]}>
+                    <Bar 
+                      dataKey="heuresTech" 
+                      radius={[0, 4, 4, 0]}
+                      animationDuration={2500}
+                      animationEasing="ease-out"
+                    >
                       {chartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
@@ -223,11 +233,11 @@ export function PrevisionnelTab() {
               <CardTitle className="text-sm">Répartition par État</CardTitle>
             </CardHeader>
             <CardContent>
-              {etatChartData.length > 0 ? (
+              {pieData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={280}>
                   <PieChart>
                     <Pie
-                      data={etatChartData}
+                      data={pieData}
                       cx="50%"
                       cy="50%"
                       innerRadius={60}
@@ -235,8 +245,10 @@ export function PrevisionnelTab() {
                       paddingAngle={2}
                       dataKey="value"
                       label={({ name, value }) => `${value}h`}
+                      animationDuration={2500}
+                      animationEasing="ease-out"
                     >
-                      {etatChartData.map((entry, index) => (
+                      {pieData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
@@ -351,31 +363,34 @@ export function PrevisionnelTab() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {visibleDossiers.map((d) => (
-                  <TableRow key={d.projectId}>
-                    <TableCell className="font-mono text-xs">{d.reference || d.projectId}</TableCell>
-                    <TableCell className="max-w-[200px] truncate">{d.label || '—'}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        style={{ borderColor: ETAT_COLORS[d.etatWorkflow] || '#6b7280', color: ETAT_COLORS[d.etatWorkflow] || '#6b7280' }}
-                      >
-                        {d.etatWorkflow}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1 flex-wrap">
-                        {d.universes.map((u) => (
-                          <Badge key={u} variant="secondary" className="text-xs">
-                            {u}
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">{d.totalHeuresRdv > 0 ? `${d.totalHeuresRdv}h` : '—'}</TableCell>
-                    <TableCell className="text-right font-semibold">{d.totalHeuresTech > 0 ? `${d.totalHeuresTech}h` : '—'}</TableCell>
-                  </TableRow>
-                ))}
+                {visibleDossiers.map((d) => {
+                  const etatConfig = ETAT_CONFIG[d.etatWorkflow] || { color: '#6b7280' };
+                  return (
+                    <TableRow key={d.projectId}>
+                      <TableCell className="font-mono text-xs">{d.reference || d.projectId}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">{d.label || '—'}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          style={{ borderColor: etatConfig.color, color: etatConfig.color }}
+                        >
+                          {d.etatWorkflowLabel}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1 flex-wrap">
+                          {d.universes.map((u) => (
+                            <Badge key={u} variant="secondary" className="text-xs">
+                              {u}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">{d.totalHeuresRdv > 0 ? `${d.totalHeuresRdv}h` : '—'}</TableCell>
+                      <TableCell className="text-right font-semibold">{d.totalHeuresTech > 0 ? `${d.totalHeuresTech}h` : '—'}</TableCell>
+                    </TableRow>
+                  );
+                })}
                 {visibleDossiers.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center text-muted-foreground py-8">

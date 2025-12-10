@@ -36,5 +36,6 @@ export {
   computeChargeTravauxAvenirParUnivers,
   type ChargeTravauxResult,
   type ChargeTravauxProjet,
-  type ChargeTravauxUniversStats
+  type ChargeTravauxUniversStats,
+  type ChargeParEtatStats
 } from './chargeTravauxEngine';

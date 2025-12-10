@@ -3,21 +3,26 @@
  * Basé sur les RT (Relevé Technique) par univers
  */
 
-// États workflow éligibles pour le calcul
-const ETATS_ELIGIBLES = [
-  'À planifier TVX',
-  'À commander', 
-  'En attente fournitures'
-];
+// Mapping des états API vers labels affichés
+const STATE_MAPPING: Record<string, string> = {
+  'to_planify_tvx': 'À planifier TVX',
+  'devis_to_order': 'À commander',
+  'wait_fourn': 'En attente fournitures'
+};
+
+// États éligibles (clés API)
+const ETATS_ELIGIBLES = ['to_planify_tvx', 'devis_to_order', 'wait_fourn'];
 
 export interface ChargeTravauxProjet {
   projectId: number | string;
   reference?: string;
   label?: string;
-  etatWorkflow: 'À planifier TVX' | 'À commander' | 'En attente fournitures' | string;
+  etatWorkflow: string;
+  etatWorkflowLabel: string;
   universes: string[];
   totalHeuresRdv: number;
   totalHeuresTech: number;
+  nbTechs: number;
 }
 
 export interface ChargeTravauxUniversStats {
@@ -30,12 +35,23 @@ export interface ChargeTravauxUniversStats {
   totalHeuresTech_En_attente_fournitures: number;
 }
 
+export interface ChargeParEtatStats {
+  etat: string;
+  etatLabel: string;
+  nbDossiers: number;
+  totalHeuresRdv: number;
+  totalHeuresTech: number;
+  totalNbTechs: number;
+}
+
 export interface ChargeTravauxResult {
   parUnivers: ChargeTravauxUniversStats[];
+  parEtat: ChargeParEtatStats[];
   parProjet: ChargeTravauxProjet[];
   totaux: {
     totalHeuresRdv: number;
     totalHeuresTech: number;
+    totalNbTechs: number;
     nbDossiers: number;
   };
   debug: {
@@ -44,31 +60,6 @@ export interface ChargeTravauxResult {
     projectsAvecRT: number;
     rtBlocksCount: number;
   };
-}
-
-/**
- * Extrait l'état workflow actuel d'un projet à partir de son historique
- */
-function getEtatWorkflowActuel(project: any): string | null {
-  const history = project?.data?.history;
-  if (!Array.isArray(history) || history.length === 0) return null;
-
-  // Filtrer les événements de type transition workflow (kind === 2)
-  const transitionEvents = history.filter((h: any) => 
-    h?.kind === 2 && typeof h?.labelKind === 'string' && h.labelKind.includes('=>')
-  );
-
-  if (transitionEvents.length === 0) return null;
-
-  // Prendre le dernier événement (le plus récent)
-  const lastEvent = transitionEvents[transitionEvents.length - 1];
-  const labelKind = lastEvent.labelKind as string;
-
-  // Parser "ÉTAT_AVANT => ÉTAT_APRÈS"
-  const parts = labelKind.split('=>');
-  if (parts.length < 2) return null;
-
-  return parts[1].trim();
 }
 
 /**
@@ -83,14 +74,16 @@ function isProjectCanceled(project: any): boolean {
  * Extrait les données de chiffrage depuis le chemin correct:
  * intervention.data.chiffrage.postes[].items[].data.nbHeures/nbTechs
  */
-function extractRTDataFromIntervention(intervention: any): { heuresRdv: number; heuresTech: number } {
+function extractRTDataFromIntervention(intervention: any): { heuresRdv: number; heuresTech: number; nbTechs: number; blocksCount: number } {
   let totalHeuresRdv = 0;
   let totalHeuresTech = 0;
+  let maxNbTechs = 0;
+  let blocksCount = 0;
   
   try {
     const chiffrage = intervention?.data?.chiffrage;
     if (!chiffrage?.postes || !Array.isArray(chiffrage.postes)) {
-      return { heuresRdv: 0, heuresTech: 0 };
+      return { heuresRdv: 0, heuresTech: 0, nbTechs: 0, blocksCount: 0 };
     }
     
     for (const poste of chiffrage.postes) {
@@ -115,6 +108,8 @@ function extractRTDataFromIntervention(intervention: any): { heuresRdv: number; 
           if (!isNaN(nbHeures) && nbHeures > 0) {
             totalHeuresRdv += nbHeures;
             totalHeuresTech += nbHeures * nbTechs;
+            maxNbTechs = Math.max(maxNbTechs, nbTechs);
+            blocksCount++;
           }
         }
       }
@@ -123,7 +118,7 @@ function extractRTDataFromIntervention(intervention: any): { heuresRdv: number; 
     // Ignorer les erreurs de parsing
   }
   
-  return { heuresRdv: totalHeuresRdv, heuresTech: totalHeuresTech };
+  return { heuresRdv: totalHeuresRdv, heuresTech: totalHeuresTech, nbTechs: maxNbTechs, blocksCount };
 }
 
 /**
@@ -163,6 +158,19 @@ export function computeChargeTravauxAvenirParUnivers(
 
   const parProjet: ChargeTravauxProjet[] = [];
   const universMap = new Map<string, ChargeTravauxUniversStats>();
+  const etatMap = new Map<string, ChargeParEtatStats>();
+
+  // Initialiser les stats par état
+  for (const [etat, label] of Object.entries(STATE_MAPPING)) {
+    etatMap.set(etat, {
+      etat,
+      etatLabel: label,
+      nbDossiers: 0,
+      totalHeuresRdv: 0,
+      totalHeuresTech: 0,
+      totalNbTechs: 0
+    });
+  }
 
   // Index des interventions par projectId
   const interventionsByProject = new Map<string | number, any[]>();
@@ -180,25 +188,29 @@ export function computeChargeTravauxAvenirParUnivers(
     // Vérifier si le projet est annulé
     if (isProjectCanceled(project)) continue;
 
-    // Déterminer l'état workflow actuel
-    const etatWorkflow = getEtatWorkflowActuel(project);
-    if (!etatWorkflow || !ETATS_ELIGIBLES.includes(etatWorkflow)) continue;
+    // Filtrer par state direct (API values)
+    const state = project?.state?.toLowerCase?.() || '';
+    if (!ETATS_ELIGIBLES.includes(state)) continue;
 
     debug.projectsEligibleState++;
+
+    const etatLabel = STATE_MAPPING[state] || state;
 
     // Récupérer les interventions du projet
     const projectInterventions = interventionsByProject.get(project.id) || [];
     
     let totalHeuresRdv = 0;
     let totalHeuresTech = 0;
+    let maxNbTechs = 0;
 
     for (const interv of projectInterventions) {
       const rtData = extractRTDataFromIntervention(interv);
-      if (rtData.heuresRdv > 0) {
-        debug.rtBlocksCount++;
+      if (rtData.blocksCount > 0) {
+        debug.rtBlocksCount += rtData.blocksCount;
       }
       totalHeuresRdv += rtData.heuresRdv;
       totalHeuresTech += rtData.heuresTech;
+      maxNbTechs = Math.max(maxNbTechs, rtData.nbTechs);
     }
 
     // Même sans RT, on compte le dossier (charge = 0)
@@ -213,11 +225,22 @@ export function computeChargeTravauxAvenirParUnivers(
       projectId: project.id,
       reference: project.ref || project.reference,
       label: project.label || project.name,
-      etatWorkflow,
+      etatWorkflow: state,
+      etatWorkflowLabel: etatLabel,
       universes: normalizedUniverses,
       totalHeuresRdv,
-      totalHeuresTech
+      totalHeuresTech,
+      nbTechs: maxNbTechs
     });
+
+    // Mise à jour des stats par état
+    const etatStats = etatMap.get(state);
+    if (etatStats) {
+      etatStats.nbDossiers++;
+      etatStats.totalHeuresRdv += totalHeuresRdv;
+      etatStats.totalHeuresTech += totalHeuresTech;
+      etatStats.totalNbTechs += maxNbTechs;
+    }
 
     // Ventilation par univers (répartition égale si multiple)
     const universeCount = normalizedUniverses.length || 1;
@@ -243,11 +266,11 @@ export function computeChargeTravauxAvenirParUnivers(
       stats.totalHeuresTech += heuresTechShare;
 
       // Ventilation par état
-      if (etatWorkflow === 'À planifier TVX') {
+      if (state === 'to_planify_tvx') {
         stats.totalHeuresTech_A_planifier_TVX += heuresTechShare;
-      } else if (etatWorkflow === 'À commander') {
+      } else if (state === 'devis_to_order') {
         stats.totalHeuresTech_A_commander += heuresTechShare;
-      } else if (etatWorkflow === 'En attente fournitures') {
+      } else if (state === 'wait_fourn') {
         stats.totalHeuresTech_En_attente_fournitures += heuresTechShare;
       }
     }
@@ -256,14 +279,20 @@ export function computeChargeTravauxAvenirParUnivers(
   const parUnivers = Array.from(universMap.values())
     .sort((a, b) => b.totalHeuresTech - a.totalHeuresTech);
 
+  const parEtat = Array.from(etatMap.values())
+    .filter(e => e.nbDossiers > 0)
+    .sort((a, b) => b.nbDossiers - a.nbDossiers);
+
   const totaux = {
     totalHeuresRdv: parProjet.reduce((sum, p) => sum + p.totalHeuresRdv, 0),
     totalHeuresTech: parProjet.reduce((sum, p) => sum + p.totalHeuresTech, 0),
+    totalNbTechs: parProjet.reduce((sum, p) => sum + p.nbTechs, 0),
     nbDossiers: parProjet.length
   };
 
   return {
     parUnivers,
+    parEtat,
     parProjet,
     totaux,
     debug
