@@ -8,7 +8,7 @@ import { useStatiaIndicateurs } from '@/statia/hooks/useStatiaIndicateurs';
 import { useTechniciensStatia } from '@/statia/hooks/useTechniciensStatia';
 import { useApporteursStatia } from '@/statia/hooks/useApporteursStatia';
 import { useStatiaSAVMetrics } from '@/statia/hooks/useStatiaSAVMetrics';
-import { useIndicateursUniversStatia } from '@/statia/hooks/useIndicateursUniversStatia';
+import { useUniversStatia } from '@/statia/hooks/useUniversStatia';
 import { formatCurrency } from '@/lib/formatters';
 import { LayoutDashboard, Building2, Users, Layers, AlertTriangle } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -27,28 +27,28 @@ function StatsHubContent() {
   
   // Load all data
   const { data: generalData, isLoading: generalLoading } = useStatiaIndicateurs();
-  const { techniciens, isLoading: techLoading } = useTechniciensStatia();
-  const { topApporteurs, duGlobalTTC, isLoading: appLoading } = useApporteursStatia();
+  const techData = useTechniciensStatia();
+  const { data: appData, isLoading: appLoading } = useApporteursStatia();
   const { data: savData, isLoading: savLoading } = useStatiaSAVMetrics();
-  const { data: universData, isLoading: universLoading } = useIndicateursUniversStatia();
+  const { data: universData, isLoading: universLoading } = useUniversStatia();
 
   // Helper to get value for a stat
   const getStatValue = (statId: string): string => {
     switch (statId) {
-      case 'dossiers_recus': return String(generalData?.dossiersRecusMois ?? '–');
-      case 'dossiers_moyenne': return (generalData?.moyenneDossiersJour ?? 0).toFixed(1);
-      case 'devis_emis': return String(generalData?.devisEmis ?? '–');
-      case 'ca_mensuel': return generalData?.caMensuelHT ? formatCurrency(generalData.caMensuelHT) : '–';
-      case 'ca_ytd': return generalData?.caYTD ? formatCurrency(generalData.caYTD) : '–';
-      case 'encours_global': return generalData?.encoursGlobalTTC ? formatCurrency(generalData.encoursGlobalTTC) : '–';
-      case 'taux_sav': return `${(savData?.tauxSAVYTD ?? 0).toFixed(1)}%`;
-      case 'panier_moyen': return generalData?.panierMoyenHT ? formatCurrency(generalData.panierMoyenHT) : '–';
-      case 'apporteurs_du_global': return duGlobalTTC ? formatCurrency(duGlobalTTC) : '–';
-      case 'apporteurs_nb_actifs': return String(topApporteurs.length);
-      case 'tech_nb_actifs': return String(techniciens.length);
-      case 'tech_ca_total': return formatCurrency(techniciens.reduce((s, t) => s + t.ca, 0));
-      case 'sav_taux_global': return `${(savData?.tauxSAVYTD ?? 0).toFixed(1)}%`;
-      case 'sav_nb_dossiers': return String(savData?.nbSAVDossiers ?? 0);
+      case 'dossiers_recus': return String(generalData?.dossiersJour ?? '–');
+      case 'dossiers_moyenne': return '–'; // Calculated differently
+      case 'devis_emis': return String(generalData?.devisJour ?? '–');
+      case 'ca_mensuel': return generalData?.caJour ? formatCurrency(generalData.caJour) : '–';
+      case 'ca_ytd': return '–'; // Not in current structure
+      case 'encours_global': return '–'; // Not in current structure
+      case 'taux_sav': return `${(generalData?.tauxSAVGlobal ?? 0).toFixed(1)}%`;
+      case 'panier_moyen': return generalData?.panierMoyen ? formatCurrency(generalData.panierMoyen.panierMoyen) : '–';
+      case 'apporteurs_du_global': return appData?.duGlobal ? formatCurrency(appData.duGlobal) : '–';
+      case 'apporteurs_nb_actifs': return String(appData?.apporteursActifs ?? 0);
+      case 'tech_nb_actifs': return String(techData.nbTechniciens ?? 0);
+      case 'tech_ca_total': return formatCurrency(techData.caTotal ?? 0);
+      case 'sav_taux_global': return `${(savData?.tauxSavGlobal ?? 0).toFixed(1)}%`;
+      case 'sav_nb_dossiers': return String(savData?.nbSavGlobal ?? 0);
       default: return '–';
     }
   };
@@ -59,7 +59,7 @@ function StatsHubContent() {
   };
 
   const getGaugeValue = (statId: string): number => {
-    if (statId.includes('taux_sav') || statId === 'sav_taux_global') return savData?.tauxSAVYTD ?? 0;
+    if (statId.includes('taux_sav') || statId === 'sav_taux_global') return savData?.tauxSavGlobal ?? 0;
     if (statId.includes('taux_transfo')) return 65;
     return 50;
   };
@@ -69,7 +69,7 @@ function StatsHubContent() {
     const kpis = stats.filter(s => !s.isWidget);
     const widgets = stats.filter(s => s.isWidget);
     const isLoading = tabId === 'general' ? generalLoading : 
-                      tabId === 'techniciens' ? techLoading :
+                      tabId === 'techniciens' ? techData.isLoading :
                       tabId === 'apporteurs' ? appLoading :
                       tabId === 'sav' ? savLoading : universLoading;
 
@@ -138,7 +138,8 @@ function StatsHubContent() {
     <div className="container mx-auto px-4 py-6 space-y-6">
       <PageHeader
         title="Hub Statistiques"
-        backLink={{ to: ROUTES.MON_AGENCE, label: "Mon Agence" }}
+        backTo={ROUTES.pilotage.index}
+        backLabel="Mon Agence"
       />
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabId)}>

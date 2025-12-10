@@ -12,15 +12,15 @@ export default function CAMensuelModal() {
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <Card className="p-4 border-l-4 border-l-primary">
-          <p className="text-sm text-muted-foreground">CA Mensuel HT</p>
+          <p className="text-sm text-muted-foreground">CA Période HT</p>
           <p className="text-3xl font-bold text-primary">
-            {data?.caMensuelHT ? formatCurrency(data.caMensuelHT) : '–'}
+            {data?.caJour ? formatCurrency(data.caJour) : '–'}
           </p>
         </Card>
         <Card className="p-4 border-l-4 border-l-green-500">
-          <p className="text-sm text-muted-foreground">CA YTD</p>
+          <p className="text-sm text-muted-foreground">CA Devis</p>
           <p className="text-3xl font-bold text-green-600">
-            {data?.caYTD ? formatCurrency(data.caYTD) : '–'}
+            {data?.caDevis ? formatCurrency(data.caDevis) : '–'}
           </p>
         </Card>
       </div>

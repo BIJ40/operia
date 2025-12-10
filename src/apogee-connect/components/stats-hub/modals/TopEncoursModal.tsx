@@ -5,7 +5,9 @@ import { formatCurrency } from '@/lib/formatters';
 import { AlertCircle, Building2 } from 'lucide-react';
 
 export default function TopEncoursModal() {
-  const { flopApporteurs, isLoading } = useApporteursStatia();
+  const { data, isLoading } = useApporteursStatia();
+  const topEncours = data?.topEncours ?? [];
+  
   if (isLoading) return <Skeleton className="h-80 w-full" />;
 
   return (
@@ -15,12 +17,12 @@ export default function TopEncoursModal() {
         <h4 className="font-semibold">Top 10 Encours</h4>
       </div>
       <div className="space-y-2">
-        {flopApporteurs.slice(0, 10).map((a, i) => (
-          <div key={a.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+        {topEncours.map((a, i) => (
+          <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
             <div className="flex items-center gap-3">
               <span className="w-6 h-6 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xs font-bold">{i + 1}</span>
               <Building2 className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">{a.nom}</span>
+              <span className="font-medium">{a.name}</span>
             </div>
             <span className="font-bold text-orange-600">{formatCurrency(a.encours || 0)}</span>
           </div>
