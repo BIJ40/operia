@@ -91,13 +91,15 @@ export function KpiCard({
           )}
         </div>
 
-        {/* Mini graph */}
-        <div className="w-20 h-12 flex-shrink-0">
+      {/* Mini graph - visible container */}
+        <div className="w-24 h-14 flex-shrink-0 bg-muted/30 rounded-md overflow-hidden">
           {miniGraphType === 'sparkline' && sparklineData.length > 0 && (
             <MiniSparkline data={sparklineData} color={color} />
           )}
           {miniGraphType === 'gauge' && (
-            <MiniGauge value={gaugeValue} color={color} />
+            <div className="w-full h-full flex items-center justify-center">
+              <MiniGauge value={gaugeValue} color={color} />
+            </div>
           )}
           {miniGraphType === 'bar' && sparklineData.length > 0 && (
             <MiniBar data={sparklineData} color={color} />
