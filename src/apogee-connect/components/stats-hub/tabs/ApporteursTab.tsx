@@ -16,7 +16,7 @@ import { TopApporteursWidget } from "@/apogee-connect/components/widgets/TopAppo
 import { DossiersConfiesWidget } from "@/apogee-connect/components/widgets/DossiersConfiesWidget";
 import { FlopApporteursWidget } from "@/apogee-connect/components/widgets/FlopApporteursWidget";
 import { TypesApporteursWidget } from "@/apogee-connect/components/widgets/TypesApporteursWidget";
-import { ParticuliersWidget } from "@/apogee-connect/components/widgets/ParticuliersWidget";
+
 import { SegmentationChart } from "@/apogee-connect/components/widgets/SegmentationChart";
 import { ApporteurTypeTimeline } from "@/apogee-connect/components/widgets/ApporteurTypeTimeline";
 import { useApporteursStatia } from "@/statia/hooks/useApporteursStatia";
@@ -105,17 +105,6 @@ export function ApporteursTab() {
     }));
   }, [statiaKpis]);
 
-  const particuliersStats = useMemo(() => {
-    const cdStats = statiaKpis?.statsByType?.find(s => s.type === 'Clients Directs');
-    return {
-      caHT: cdStats?.caHT || 0,
-      nbDossiers: cdStats?.nbDossiers || 0,
-      nbFactures: cdStats?.nbDossiers || 0,
-      panierMoyen: cdStats?.panierMoyen || 0,
-      tauxTransformation: cdStats?.tauxTransfo || 0,
-      tauxSAV: cdStats?.tauxSav || 0,
-    };
-  }, [statiaKpis]);
 
   const isLoading = isStatiaLoading || isWidgetsLoading;
 
@@ -206,11 +195,8 @@ export function ApporteursTab() {
         <DossiersConfiesWidget dossiers={widgetsData?.dossiersConfiesParApporteur || []} />
       </div>
 
-      {/* Types d'apporteurs + Segmentation */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TypesApporteursWidget data={typesApporteursStats} />
-        <ParticuliersWidget stats={particuliersStats} />
-      </div>
+      {/* Types d'apporteurs */}
+      <TypesApporteursWidget data={typesApporteursStats} />
 
       {/* Graphique segmentation */}
       <SegmentationChart data={segmentationData} />
