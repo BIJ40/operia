@@ -1,6 +1,6 @@
 /**
  * Moteur de calcul de la charge de travail TRAVAUX à venir
- * Basé sur les RT (Relevé Technique) par univers
+ * Croisement projets ↔ interventions via projectId
  */
 
 // Mapping des états API vers labels affichés
@@ -11,7 +11,7 @@ const STATE_MAPPING: Record<string, string> = {
 };
 
 // États éligibles (clés API)
-const ETATS_ELIGIBLES = ['to_planify_tvx', 'devis_to_order', 'wait_fourn'];
+const ETATS_ELIGIBLES = new Set(['to_planify_tvx', 'devis_to_order', 'wait_fourn']);
 
 export interface ChargeTravauxProjet {
   projectId: number | string;
@@ -59,66 +59,110 @@ export interface ChargeTravauxResult {
     projectsEligibleState: number;
     projectsAvecRT: number;
     rtBlocksCount: number;
+    interventionsTotal: number;
+    interventionsIndexed: number;
   };
 }
 
 /**
- * Vérifie si un projet est annulé
+ * Indexe les interventions par projectId (gère string et number)
  */
-function isProjectCanceled(project: any): boolean {
-  const state = project?.state?.toLowerCase?.();
-  return state === 'canceled' || state === 'cancelled';
+function groupInterventionsByProjectId(interventions: any[]): Map<number, any[]> {
+  const map = new Map<number, any[]>();
+
+  for (const itv of interventions) {
+    const pid = itv?.projectId ?? itv?.project_id;
+    if (!pid) continue;
+
+    const key = Number(pid);
+    if (isNaN(key)) continue;
+    
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(itv);
+  }
+
+  return map;
 }
 
 /**
- * Extrait les données de chiffrage depuis le chemin correct:
- * intervention.data.chiffrage.postes[].items[].data.nbHeures/nbTechs
+ * Extrait les heures depuis le chiffrage d'une intervention
+ * Chemin: intervention.data.chiffrage.postes[].items[].data.nbHeures/nbTechs
+ * Fallback: dFields avec EXPORT_generiqueSlug "nombre_de techniciens" / "temps_total d'intervention"
  */
-function extractRTDataFromIntervention(intervention: any): { heuresRdv: number; heuresTech: number; nbTechs: number; blocksCount: number } {
-  let totalHeuresRdv = 0;
+function extractHoursFromIntervention(intervention: any): { heuresRdv: number; heuresTech: number; nbTechs: number; blocksCount: number } {
+  const chiffrage = intervention?.data?.chiffrage;
+  if (!chiffrage?.postes || !Array.isArray(chiffrage.postes)) {
+    return { heuresRdv: 0, heuresTech: 0, nbTechs: 0, blocksCount: 0 };
+  }
+
+  let totalHeures = 0;
   let totalHeuresTech = 0;
   let maxNbTechs = 0;
   let blocksCount = 0;
-  
-  try {
-    const chiffrage = intervention?.data?.chiffrage;
-    if (!chiffrage?.postes || !Array.isArray(chiffrage.postes)) {
-      return { heuresRdv: 0, heuresTech: 0, nbTechs: 0, blocksCount: 0 };
-    }
+
+  for (const poste of chiffrage.postes) {
+    const items = poste?.items || [];
     
-    for (const poste of chiffrage.postes) {
-      if (!poste?.items || !Array.isArray(poste.items)) continue;
+    for (const item of items) {
+      if (!item?.IS_BLOCK || item?.slug !== 'chiffrage') continue;
       
-      for (const item of poste.items) {
-        // Vérifier que c'est un bloc chiffrage avec slug="chiffrage"
-        if (item?.IS_BLOCK && item?.slug === 'chiffrage' && item?.data) {
-          const rawNbHeures = item.data.nbHeures;
-          const rawNbTechs = item.data.nbTechs;
+      const data = item.data || {};
+      blocksCount++;
+
+      // 1) Lecture directe nbHeures / nbTechs
+      let nbHeures = parseNumericValue(data.nbHeures);
+      let nbTechs = parseNumericValue(data.nbTechs);
+
+      // 2) Fallback: chercher dans les dFields si valeurs vides ou nulles
+      if (nbHeures === 0 || nbTechs === 0) {
+        const subItems = data.subItems || [];
+        
+        for (const sub of subItems) {
+          if (!sub?.IS_BLOCK || sub?.slug !== 'dfields') continue;
           
-          // nbHeures peut être string ou number
-          const nbHeures = typeof rawNbHeures === 'string' 
-            ? parseFloat(rawNbHeures) 
-            : (typeof rawNbHeures === 'number' ? rawNbHeures : 0);
+          const dFields = sub.data?.dFields || [];
+          
+          for (const df of dFields) {
+            const slug = String(df.EXPORT_generiqueSlug || '').toLowerCase();
             
-          // nbTechs est généralement un number, défaut 1
-          const nbTechs = typeof rawNbTechs === 'number' && rawNbTechs >= 1 
-            ? rawNbTechs 
-            : 1;
-          
-          if (!isNaN(nbHeures) && nbHeures > 0) {
-            totalHeuresRdv += nbHeures;
-            totalHeuresTech += nbHeures * nbTechs;
-            maxNbTechs = Math.max(maxNbTechs, nbTechs);
-            blocksCount++;
+            if (slug.includes('nombre_de techniciens') || slug.includes('nombre_de_techniciens')) {
+              const val = parseNumericValue(df.value);
+              if (val > 0 && nbTechs === 0) nbTechs = val;
+            }
+            
+            if (slug.includes("temps_total d'intervention") || slug.includes("temps_total_d'intervention") || slug.includes('temps_total')) {
+              const val = parseNumericValue(df.value);
+              if (val > 0 && nbHeures === 0) nbHeures = val;
+            }
           }
         }
       }
+
+      // Validation finale
+      if (nbHeures <= 0) continue;
+      if (nbTechs <= 0) nbTechs = 1;
+
+      totalHeures += nbHeures;
+      totalHeuresTech += nbHeures * nbTechs; // 2 tech × 6h = 12h main d'œuvre
+      maxNbTechs = Math.max(maxNbTechs, nbTechs);
     }
-  } catch {
-    // Ignorer les erreurs de parsing
   }
-  
-  return { heuresRdv: totalHeuresRdv, heuresTech: totalHeuresTech, nbTechs: maxNbTechs, blocksCount };
+
+  return { heuresRdv: totalHeures, heuresTech: totalHeuresTech, nbTechs: maxNbTechs, blocksCount };
+}
+
+/**
+ * Parse une valeur numérique (string ou number)
+ */
+function parseNumericValue(value: any): number {
+  if (value == null) return 0;
+  if (typeof value === 'number') return isNaN(value) ? 0 : value;
+  if (typeof value === 'string') {
+    const cleaned = value.replace(',', '.').trim();
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? 0 : num;
+  }
+  return 0;
 }
 
 /**
@@ -144,16 +188,22 @@ function normalizeUnivers(univers: string): string {
 
 /**
  * Calcule la charge de travaux à venir par univers
+ * Croisement: projects.id ↔ interventions.projectId
  */
 export function computeChargeTravauxAvenirParUnivers(
   projects: any[],
   interventions: any[]
 ): ChargeTravauxResult {
+  // Index des interventions par projectId
+  const byProjectId = groupInterventionsByProjectId(interventions);
+
   const debug = {
     totalProjects: projects.length,
     projectsEligibleState: 0,
     projectsAvecRT: 0,
-    rtBlocksCount: 0
+    rtBlocksCount: 0,
+    interventionsTotal: interventions.length,
+    interventionsIndexed: Array.from(byProjectId.values()).flat().length
   };
 
   const parProjet: ChargeTravauxProjet[] = [];
@@ -172,64 +222,48 @@ export function computeChargeTravauxAvenirParUnivers(
     });
   }
 
-  // Index des interventions par projectId
-  const interventionsByProject = new Map<string | number, any[]>();
-  for (const interv of interventions) {
-    const pid = interv?.projectId ?? interv?.project_id;
-    if (pid) {
-      if (!interventionsByProject.has(pid)) {
-        interventionsByProject.set(pid, []);
-      }
-      interventionsByProject.get(pid)!.push(interv);
-    }
-  }
-
   for (const project of projects) {
-    // Vérifier si le projet est annulé
-    if (isProjectCanceled(project)) continue;
-
-    // Filtrer par state direct (API values)
-    const state = project?.state?.toLowerCase?.() || '';
-    if (!ETATS_ELIGIBLES.includes(state)) continue;
+    // Filtrer par state (API values)
+    const state = String(project?.state || '').toLowerCase();
+    if (!ETATS_ELIGIBLES.has(state)) continue;
 
     debug.projectsEligibleState++;
 
+    const projectId = Number(project.id);
     const etatLabel = STATE_MAPPING[state] || state;
 
-    // Récupérer les interventions du projet
-    const projectInterventions = interventionsByProject.get(project.id) || [];
-    
-    let totalHeuresRdv = 0;
-    let totalHeuresTech = 0;
+    // Récupérer les interventions du projet via le croisement projectId
+    const intervs = byProjectId.get(projectId) || [];
+
+    let heuresRdv = 0;
+    let heuresTech = 0;
     let maxNbTechs = 0;
 
-    for (const interv of projectInterventions) {
-      const rtData = extractRTDataFromIntervention(interv);
-      if (rtData.blocksCount > 0) {
-        debug.rtBlocksCount += rtData.blocksCount;
-      }
-      totalHeuresRdv += rtData.heuresRdv;
-      totalHeuresTech += rtData.heuresTech;
-      maxNbTechs = Math.max(maxNbTechs, rtData.nbTechs);
+    for (const itv of intervs) {
+      const { heuresRdv: hRdv, heuresTech: hTech, nbTechs: nTech, blocksCount } = extractHoursFromIntervention(itv);
+      heuresRdv += hRdv;
+      heuresTech += hTech;
+      maxNbTechs = Math.max(maxNbTechs, nTech);
+      debug.rtBlocksCount += blocksCount;
     }
 
-    // Même sans RT, on compte le dossier (charge = 0)
-    const universes = (project?.data?.universes as string[]) || ['Non classé'];
-    const normalizedUniverses = universes.map(normalizeUnivers);
-
-    if (totalHeuresRdv > 0 || totalHeuresTech > 0) {
+    if (heuresRdv > 0 || heuresTech > 0) {
       debug.projectsAvecRT++;
     }
 
+    // Univers du projet
+    const universes = (project?.data?.universes as string[]) || ['Non classé'];
+    const normalizedUniverses = universes.map(normalizeUnivers);
+
     parProjet.push({
-      projectId: project.id,
+      projectId,
       reference: project.ref || project.reference,
       label: project.label || project.name,
       etatWorkflow: state,
       etatWorkflowLabel: etatLabel,
       universes: normalizedUniverses,
-      totalHeuresRdv,
-      totalHeuresTech,
+      totalHeuresRdv: heuresRdv,
+      totalHeuresTech: heuresTech,
       nbTechs: maxNbTechs
     });
 
@@ -237,15 +271,15 @@ export function computeChargeTravauxAvenirParUnivers(
     const etatStats = etatMap.get(state);
     if (etatStats) {
       etatStats.nbDossiers++;
-      etatStats.totalHeuresRdv += totalHeuresRdv;
-      etatStats.totalHeuresTech += totalHeuresTech;
+      etatStats.totalHeuresRdv += heuresRdv;
+      etatStats.totalHeuresTech += heuresTech;
       etatStats.totalNbTechs += maxNbTechs;
     }
 
     // Ventilation par univers (répartition égale si multiple)
     const universeCount = normalizedUniverses.length || 1;
-    const heuresRdvShare = totalHeuresRdv / universeCount;
-    const heuresTechShare = totalHeuresTech / universeCount;
+    const heuresRdvShare = heuresRdv / universeCount;
+    const heuresTechShare = heuresTech / universeCount;
 
     for (const univers of normalizedUniverses) {
       if (!universMap.has(univers)) {
