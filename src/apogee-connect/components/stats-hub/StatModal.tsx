@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useStatsHub } from './StatsHubContext';
 import { getNextStat, getPrevStat } from './types';
 import { Suspense, lazy } from 'react';
@@ -94,7 +94,7 @@ export function StatModal() {
             </Button>
           </div>
           
-          <DialogTitle className="text-lg font-semibold flex-1 text-center">
+          <DialogTitle className="text-lg font-semibold flex-1 text-center pr-8">
             {selectedStat.title}
             {selectedStat.subtitle && (
               <span className="text-muted-foreground font-normal ml-2">
@@ -102,10 +102,6 @@ export function StatModal() {
               </span>
             )}
           </DialogTitle>
-          
-          <Button variant="ghost" size="icon" onClick={closeStat} className="h-8 w-8">
-            <X className="h-4 w-4" />
-          </Button>
         </DialogHeader>
 
         <div className="py-4">
