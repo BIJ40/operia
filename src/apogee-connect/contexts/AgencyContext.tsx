@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { DataService } from '@/apogee-connect/services/dataService';
 import { logApogee } from '@/lib/logger';
@@ -21,6 +21,9 @@ export function AgencyProvider({ children }: { children: ReactNode }) {
   const { agence, isAuthLoading } = useAuth();
   const [isApiConfigured, setIsApiConfigured] = useState(false);
   
+  // Track previous agency to only clear cache when agency actually changes
+  const previousAgencyRef = useRef<string | null>(null);
+  
   // Construire l'agence à partir du profil utilisateur
   const currentAgency: Agency | null = agence 
     ? {
@@ -41,14 +44,20 @@ export function AgencyProvider({ children }: { children: ReactNode }) {
     // Auth OK mais aucune agence
     if (!agence) {
       logApogee.warn('Aucune agence définie pour l\'utilisateur');
-      setIsApiConfigured(true); // Marqué comme configuré même sans agence
+      setIsApiConfigured(true);
+      previousAgencyRef.current = null;
       return;
     }
 
-    // Auth OK et agence présente - Le proxy gère automatiquement le routing
+    // Auth OK et agence présente
     if (currentAgency) {
-      logApogee.info(`Configuration de l'agence: ${currentAgency.id} (via proxy sécurisé)`);
-      DataService.clearCache();
+      // Ne vider le cache QUE si l'agence a réellement changé
+      if (previousAgencyRef.current !== null && previousAgencyRef.current !== agence) {
+        logApogee.info(`Changement d'agence: ${previousAgencyRef.current} → ${agence}`);
+        DataService.clearCache();
+      }
+      
+      previousAgencyRef.current = agence;
       setIsApiConfigured(true);
     }
   }, [isAuthLoading, agence, currentAgency?.id]);
