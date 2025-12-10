@@ -2,14 +2,13 @@
  * Edge Function: maintenance-alerts-scan
  * CRON job quotidien pour scanner les événements de maintenance
  * et générer des alertes automatiques (overdue, upcoming)
+ * 
+ * SECURITY: Cette fonction utilise verify_jwt=false mais est protégée
+ * par un webhook secret obligatoire.
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
 
 interface MaintenanceEvent {
   id: string;
@@ -30,8 +29,21 @@ interface MaintenanceAlert {
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+  const corsResult = handleCorsPreflightOrReject(req);
+  if (corsResult) return corsResult;
+
+  // Validate webhook secret for non-browser calls
+  const webhookSecret = Deno.env.get('MAINTENANCE_WEBHOOK_SECRET');
+  const providedSecret = req.headers.get('x-webhook-secret');
+  
+  // If webhook secret is configured, it must match
+  if (webhookSecret && providedSecret !== webhookSecret) {
+    console.error('[maintenance-alerts-scan] Invalid or missing webhook secret');
+    const response = new Response(
+      JSON.stringify({ error: 'Unauthorized - Invalid webhook secret' }),
+      { status: 401, headers: { 'Content-Type': 'application/json' } }
+    );
+    return withCors(req, response);
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -58,18 +70,20 @@ Deno.serve(async (req) => {
 
     if (eventsError) {
       console.error('[maintenance-alerts-scan] Error fetching events:', eventsError);
-      return new Response(
+      const response = new Response(
         JSON.stringify({ success: false, error: eventsError.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
       );
+      return withCors(req, response);
     }
 
     if (!events || events.length === 0) {
       console.log('[maintenance-alerts-scan] No events to process');
-      return new Response(
+      const response = new Response(
         JSON.stringify({ success: true, message: 'No events to process', stats: { processed: 0 } }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { 'Content-Type': 'application/json' } }
       );
+      return withCors(req, response);
     }
 
     console.log(`[maintenance-alerts-scan] Found ${events.length} events to check`);
@@ -158,15 +172,17 @@ Deno.serve(async (req) => {
 
     console.log('[maintenance-alerts-scan] Scan completed:', stats);
 
-    return new Response(
+    const response = new Response(
       JSON.stringify({ success: true, stats }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { 'Content-Type': 'application/json' } }
     );
+    return withCors(req, response);
   } catch (error) {
     console.error('[maintenance-alerts-scan] Unexpected error:', error);
-    return new Response(
+    const response = new Response(
       JSON.stringify({ success: false, error: String(error) }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
+    return withCors(req, response);
   }
 });
