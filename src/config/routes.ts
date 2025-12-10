@@ -43,8 +43,8 @@ export const ROUTES = {
     // Module RT Technicien
     techInterventions: '/hc-agency/tech-interventions',
     techRtRunner: (interventionId: string) => `/hc-agency/tech-interventions/rt/${interventionId}`,
-    // Hub Statistiques (redirige vers indicateurs)
-    statsHub: '/hc-agency/indicateurs',
+    // Hub Statistiques
+    statsHub: '/hc-agency/stats-hub',
     // Indicateurs (pages détaillées)
     indicateurs: '/hc-agency/indicateurs',
     indicateursApporteurs: '/hc-agency/indicateurs/apporteurs',
