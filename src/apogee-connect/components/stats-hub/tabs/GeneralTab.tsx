@@ -25,14 +25,14 @@ export function GeneralTab() {
   const { data: savData } = useStatiaSAVMetrics();
 
   const kpis = [
-    { id: 'dossiers_recus', title: 'Dossiers reçus', value: data?.dossiersJour ?? 0, format: 'number', miniType: 'sparkline' as const },
-    { id: 'devis_emis', title: 'Devis émis', value: data?.devisJour ?? 0, format: 'number', miniType: 'sparkline' as const },
-    { id: 'ca_mensuel', title: 'CA Mensuel', value: data?.caJour ?? 0, format: 'currency', miniType: 'sparkline' as const },
-    { id: 'panier_moyen', title: 'Panier moyen', value: data?.panierMoyen?.panierMoyen ?? 0, format: 'currency', miniType: 'bar' as const },
-    { id: 'taux_sav', title: 'Taux SAV', value: savData?.tauxSavGlobal ?? 0, format: 'percent', miniType: 'gauge' as const },
-    { id: 'taux_transfo', title: 'Taux transfo', subtitle: 'Devis', value: data?.tauxTransformationDevis?.tauxTransformation ?? 0, format: 'percent', miniType: 'gauge' as const },
-    { id: 'delai_facture', title: 'Délai moyen', subtitle: 'Dossier → Facture', value: data?.delaiDossierFacture?.delaiMoyen ?? 0, format: 'days', miniType: 'bar' as const },
-    { id: 'rt_jour', title: 'RT du jour', value: data?.rtJour ?? 0, format: 'number', miniType: 'sparkline' as const },
+    { id: 'dossiers_recus', title: 'Dossiers reçus', value: data?.dossiersJour ?? 0, format: 'number', miniType: 'sparkline' as const, color: 'blue' },
+    { id: 'devis_emis', title: 'Devis émis', value: data?.devisJour ?? 0, format: 'number', miniType: 'sparkline' as const, color: 'blue' },
+    { id: 'ca_mensuel', title: 'CA Mensuel', value: data?.caJour ?? 0, format: 'currency', miniType: 'sparkline' as const, color: 'blue' },
+    { id: 'panier_moyen', title: 'Panier moyen', value: data?.panierMoyen?.panierMoyen ?? 0, format: 'currency', miniType: 'bar' as const, color: 'blue' },
+    { id: 'taux_sav', title: 'Taux SAV', value: savData?.tauxSavGlobal ?? 0, format: 'percent', miniType: 'gauge' as const, color: 'blue' },
+    { id: 'taux_transfo', title: 'Taux transfo', subtitle: 'Devis', value: data?.tauxTransformationDevis?.tauxTransformation ?? 0, format: 'percent', miniType: 'gauge' as const, color: 'blue' },
+    { id: 'delai_facture', title: 'Délai moyen', subtitle: 'Dossier → Facture', value: data?.delaiDossierFacture?.delaiMoyen ?? 0, format: 'days', miniType: 'bar' as const, color: 'blue' },
+    { id: 'rt_jour', title: 'RT du jour', value: data?.rtJour ?? 0, format: 'number', miniType: 'sparkline' as const, color: 'blue' },
   ];
 
   const formatValue = (value: number, format: string) => {
@@ -62,7 +62,7 @@ export function GeneralTab() {
               miniGraphType={kpi.miniType}
               sparklineData={[10, 15, 12, 18, 14, 20, 16, 22]}
               gaugeValue={kpi.format === 'percent' ? kpi.value : undefined}
-              color="hsl(var(--primary))"
+              color={kpi.color}
               onClick={() => openStat(kpi.id)}
               isLoading={isLoading}
             />
@@ -74,7 +74,7 @@ export function GeneralTab() {
       <motion.div variants={itemVariants}>
         <WidgetCard
           title="Évolution CA Mensuel"
-          color="hsl(var(--primary))"
+          color="blue"
           onClick={() => openStat('widget_ca_mensuel')}
         >
           <div className="h-32 flex items-center justify-center text-muted-foreground text-sm">
