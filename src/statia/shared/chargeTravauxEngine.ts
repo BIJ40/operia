@@ -1,6 +1,6 @@
 /**
  * Moteur de calcul de la charge de travail TRAVAUX à venir
- * Croisement projets ↔ interventions via projectId
+ * Croisement projets ↔ interventions ↔ devis via projectId
  */
 
 // Mapping des états API vers labels affichés
@@ -13,6 +13,9 @@ const STATE_MAPPING: Record<string, string> = {
 // États éligibles (clés API)
 const ETATS_ELIGIBLES = new Set(['to_planify_tvx', 'devis_to_order', 'wait_fourn']);
 
+// États de devis éligibles (on exclut draft, rejected, canceled)
+const DEVIS_ETATS_EXCLUS = new Set(['draft', 'rejected', 'canceled']);
+
 export interface ChargeTravauxProjet {
   projectId: number | string;
   reference?: string;
@@ -23,6 +26,7 @@ export interface ChargeTravauxProjet {
   totalHeuresRdv: number;
   totalHeuresTech: number;
   nbTechs: number;
+  devisHT: number;
 }
 
 export interface ChargeTravauxUniversStats {
@@ -33,6 +37,10 @@ export interface ChargeTravauxUniversStats {
   totalHeuresTech_A_planifier_TVX: number;
   totalHeuresTech_A_commander: number;
   totalHeuresTech_En_attente_fournitures: number;
+  devisHTTotal: number;
+  devisHT_A_planifier_TVX: number;
+  devisHT_A_commander: number;
+  devisHT_En_attente_fournitures: number;
 }
 
 export interface ChargeParEtatStats {
@@ -42,6 +50,7 @@ export interface ChargeParEtatStats {
   totalHeuresRdv: number;
   totalHeuresTech: number;
   totalNbTechs: number;
+  devisHT: number;
 }
 
 export interface ChargeTravauxResult {
@@ -53,6 +62,7 @@ export interface ChargeTravauxResult {
     totalHeuresTech: number;
     totalNbTechs: number;
     nbDossiers: number;
+    totalDevisHT: number;
   };
   debug: {
     totalProjects: number;
@@ -61,6 +71,8 @@ export interface ChargeTravauxResult {
     rtBlocksCount: number;
     interventionsTotal: number;
     interventionsIndexed: number;
+    devisTotal: number;
+    devisIndexed: number;
   };
 }
 
@@ -79,6 +91,26 @@ function groupInterventionsByProjectId(interventions: any[]): Map<number, any[]>
     
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(itv);
+  }
+
+  return map;
+}
+
+/**
+ * Indexe les devis par projectId
+ */
+function groupDevisByProjectId(devis: any[]): Map<number, any[]> {
+  const map = new Map<number, any[]>();
+
+  for (const d of devis) {
+    const pid = d?.projectId ?? d?.project_id;
+    if (!pid) continue;
+
+    const key = Number(pid);
+    if (isNaN(key)) continue;
+    
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(d);
   }
 
   return map;
@@ -187,15 +219,44 @@ function normalizeUnivers(univers: string): string {
 }
 
 /**
+ * Calcule le montant HT total des devis éligibles pour un projet
+ */
+function calculateDevisHTForProject(projectDevis: any[]): number {
+  let total = 0;
+
+  for (const d of projectDevis) {
+    const devisState = String(d.state || '').toLowerCase();
+    
+    // Exclure les devis non "vivants"
+    if (DEVIS_ETATS_EXCLUS.has(devisState)) continue;
+
+    // Priorité: totalHT > amount > data.totalHT
+    const montant =
+      parseNumericValue(d.totalHT) ||
+      parseNumericValue(d.amount) ||
+      parseNumericValue(d.data?.totalHT) ||
+      0;
+
+    if (montant > 0) {
+      total += montant;
+    }
+  }
+
+  return total;
+}
+
+/**
  * Calcule la charge de travaux à venir par univers
- * Croisement: projects.id ↔ interventions.projectId
+ * Croisement: projects.id ↔ interventions.projectId ↔ devis.projectId
  */
 export function computeChargeTravauxAvenirParUnivers(
   projects: any[],
-  interventions: any[]
+  interventions: any[],
+  devis: any[] = []
 ): ChargeTravauxResult {
-  // Index des interventions par projectId
+  // Index des interventions et devis par projectId
   const byProjectId = groupInterventionsByProjectId(interventions);
+  const devisByProjectId = groupDevisByProjectId(devis);
 
   const debug = {
     totalProjects: projects.length,
@@ -203,7 +264,9 @@ export function computeChargeTravauxAvenirParUnivers(
     projectsAvecRT: 0,
     rtBlocksCount: 0,
     interventionsTotal: interventions.length,
-    interventionsIndexed: Array.from(byProjectId.values()).flat().length
+    interventionsIndexed: Array.from(byProjectId.values()).flat().length,
+    devisTotal: devis.length,
+    devisIndexed: Array.from(devisByProjectId.values()).flat().length
   };
 
   const parProjet: ChargeTravauxProjet[] = [];
@@ -218,7 +281,8 @@ export function computeChargeTravauxAvenirParUnivers(
       nbDossiers: 0,
       totalHeuresRdv: 0,
       totalHeuresTech: 0,
-      totalNbTechs: 0
+      totalNbTechs: 0,
+      devisHT: 0
     });
   }
 
@@ -251,6 +315,10 @@ export function computeChargeTravauxAvenirParUnivers(
       debug.projectsAvecRT++;
     }
 
+    // Calcul du CA devis pour ce projet
+    const projectDevis = devisByProjectId.get(projectId) || [];
+    const totalDevisHTProjet = calculateDevisHTForProject(projectDevis);
+
     // Univers du projet
     const universes = (project?.data?.universes as string[]) || ['Non classé'];
     const normalizedUniverses = universes.map(normalizeUnivers);
@@ -264,7 +332,8 @@ export function computeChargeTravauxAvenirParUnivers(
       universes: normalizedUniverses,
       totalHeuresRdv: heuresRdv,
       totalHeuresTech: heuresTech,
-      nbTechs: maxNbTechs
+      nbTechs: maxNbTechs,
+      devisHT: totalDevisHTProjet
     });
 
     // Mise à jour des stats par état
@@ -274,12 +343,14 @@ export function computeChargeTravauxAvenirParUnivers(
       etatStats.totalHeuresRdv += heuresRdv;
       etatStats.totalHeuresTech += heuresTech;
       etatStats.totalNbTechs += maxNbTechs;
+      etatStats.devisHT += totalDevisHTProjet;
     }
 
     // Ventilation par univers (répartition égale si multiple)
     const universeCount = normalizedUniverses.length || 1;
     const heuresRdvShare = heuresRdv / universeCount;
     const heuresTechShare = heuresTech / universeCount;
+    const devisHTShare = totalDevisHTProjet / universeCount;
 
     for (const univers of normalizedUniverses) {
       if (!universMap.has(univers)) {
@@ -290,7 +361,11 @@ export function computeChargeTravauxAvenirParUnivers(
           totalHeuresTech: 0,
           totalHeuresTech_A_planifier_TVX: 0,
           totalHeuresTech_A_commander: 0,
-          totalHeuresTech_En_attente_fournitures: 0
+          totalHeuresTech_En_attente_fournitures: 0,
+          devisHTTotal: 0,
+          devisHT_A_planifier_TVX: 0,
+          devisHT_A_commander: 0,
+          devisHT_En_attente_fournitures: 0
         });
       }
 
@@ -298,14 +373,18 @@ export function computeChargeTravauxAvenirParUnivers(
       stats.nbDossiers++;
       stats.totalHeuresRdv += heuresRdvShare;
       stats.totalHeuresTech += heuresTechShare;
+      stats.devisHTTotal += devisHTShare;
 
       // Ventilation par état
       if (state === 'to_planify_tvx') {
         stats.totalHeuresTech_A_planifier_TVX += heuresTechShare;
+        stats.devisHT_A_planifier_TVX += devisHTShare;
       } else if (state === 'devis_to_order') {
         stats.totalHeuresTech_A_commander += heuresTechShare;
+        stats.devisHT_A_commander += devisHTShare;
       } else if (state === 'wait_fourn') {
         stats.totalHeuresTech_En_attente_fournitures += heuresTechShare;
+        stats.devisHT_En_attente_fournitures += devisHTShare;
       }
     }
   }
@@ -321,7 +400,8 @@ export function computeChargeTravauxAvenirParUnivers(
     totalHeuresRdv: parProjet.reduce((sum, p) => sum + p.totalHeuresRdv, 0),
     totalHeuresTech: parProjet.reduce((sum, p) => sum + p.totalHeuresTech, 0),
     totalNbTechs: parProjet.reduce((sum, p) => sum + p.nbTechs, 0),
-    nbDossiers: parProjet.length
+    nbDossiers: parProjet.length,
+    totalDevisHT: parProjet.reduce((sum, p) => sum + p.devisHT, 0)
   };
 
   return {

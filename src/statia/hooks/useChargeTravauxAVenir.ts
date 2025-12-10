@@ -19,8 +19,8 @@ export function useChargeTravauxAVenir() {
           parUnivers: [],
           parEtat: [],
           parProjet: [],
-          totaux: { totalHeuresRdv: 0, totalHeuresTech: 0, totalNbTechs: 0, nbDossiers: 0 },
-          debug: { totalProjects: 0, projectsEligibleState: 0, projectsAvecRT: 0, rtBlocksCount: 0, interventionsTotal: 0, interventionsIndexed: 0 }
+          totaux: { totalHeuresRdv: 0, totalHeuresTech: 0, totalNbTechs: 0, nbDossiers: 0, totalDevisHT: 0 },
+          debug: { totalProjects: 0, projectsEligibleState: 0, projectsAvecRT: 0, rtBlocksCount: 0, interventionsTotal: 0, interventionsIndexed: 0, devisTotal: 0, devisIndexed: 0 }
         };
       }
 
@@ -32,7 +32,10 @@ export function useChargeTravauxAVenir() {
       // Charger toutes les interventions
       const interventions = await services.getInterventions(agencySlug, undefined);
 
-      return computeChargeTravauxAvenirParUnivers(projects, interventions);
+      // Charger tous les devis
+      const devis = await services.getDevis(agencySlug, undefined);
+
+      return computeChargeTravauxAvenirParUnivers(projects, interventions, devis);
     },
     enabled: isAgencyReady && !!agencySlug,
     staleTime: 1000 * 60 * 5, // 5 minutes

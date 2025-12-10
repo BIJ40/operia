@@ -4,7 +4,7 @@ import { useChargeTravauxAVenir } from '@/statia/hooks/useChargeTravauxAVenir';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Calendar, FolderOpen, Layers, ChevronDown, ChevronUp, Users, Package, ShoppingCart, ClipboardList } from 'lucide-react';
+import { Clock, Calendar, FolderOpen, Layers, ChevronDown, ChevronUp, Users, Package, ShoppingCart, ClipboardList, Euro } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { motion } from 'framer-motion';
 import {
@@ -17,6 +17,13 @@ import {
 } from '@/components/ui/table';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
 import { Button } from '@/components/ui/button';
+
+// Formatage monétaire
+const formatCurrency = (value: number): string => {
+  if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M€`;
+  if (value >= 1000) return `${(value / 1000).toFixed(0)}k€`;
+  return `${Math.round(value)}€`;
+};
 
 // Tooltip explicatif pour Heures Homme
 const HeuresHommeTooltip = () => (
@@ -74,6 +81,20 @@ const DureeTotaleInterTooltip = () => (
   </div>
 );
 
+// Tooltip explicatif pour CA devis estimé
+const CADevisTooltip = () => (
+  <div className="space-y-2 max-w-xs">
+    <p className="font-medium">CA Devis estimé = Σ devis.totalHT</p>
+    <p className="text-xs text-muted-foreground">
+      Somme des montants HT des devis associés aux dossiers en attente de travaux.
+    </p>
+    <p className="text-xs text-muted-foreground">
+      États inclus : envoyé, accepté, commandé, facturé.
+      <br/>États exclus : brouillon, rejeté, annulé.
+    </p>
+  </div>
+);
+
 const UNIVERS_COLORS: Record<string, string> = {
   'Plomberie': '#3b82f6',
   'Électricité': '#f59e0b',
@@ -118,11 +139,32 @@ export function PrevisionnelTab() {
     }));
   }, [data]);
 
+  const chartDataCA = useMemo(() => {
+    if (!data?.parUnivers) return [];
+    return data.parUnivers
+      .filter(u => u.devisHTTotal > 0)
+      .sort((a, b) => b.devisHTTotal - a.devisHTTotal)
+      .map(u => ({
+        name: u.univers,
+        ca: Math.round(u.devisHTTotal),
+        color: UNIVERS_COLORS[u.univers] || '#6b7280'
+      }));
+  }, [data]);
+
   const pieData = useMemo(() => {
     if (!data?.parEtat) return [];
     return data.parEtat.filter(e => e.totalHeuresTech > 0).map(e => ({
       name: e.etatLabel,
       value: Math.round(e.totalHeuresTech * 10) / 10,
+      color: ETAT_CONFIG[e.etat]?.color || '#6b7280'
+    }));
+  }, [data]);
+
+  const pieDataCA = useMemo(() => {
+    if (!data?.parEtat) return [];
+    return data.parEtat.filter(e => e.devisHT > 0).map(e => ({
+      name: e.etatLabel,
+      value: Math.round(e.devisHT),
       color: ETAT_CONFIG[e.etat]?.color || '#6b7280'
     }));
   }, [data]);
@@ -148,11 +190,11 @@ export function PrevisionnelTab() {
   }
 
   const { totaux, parUnivers, parEtat, parProjet, debug } = data || {
-    totaux: { totalHeuresRdv: 0, totalHeuresTech: 0, totalNbTechs: 0, nbDossiers: 0 },
+    totaux: { totalHeuresRdv: 0, totalHeuresTech: 0, totalNbTechs: 0, nbDossiers: 0, totalDevisHT: 0 },
     parUnivers: [],
     parEtat: [],
     parProjet: [],
-    debug: { totalProjects: 0, projectsEligibleState: 0, projectsAvecRT: 0, rtBlocksCount: 0 }
+    debug: { totalProjects: 0, projectsEligibleState: 0, projectsAvecRT: 0, rtBlocksCount: 0, devisTotal: 0, devisIndexed: 0 }
   };
 
   return (
@@ -184,9 +226,8 @@ export function PrevisionnelTab() {
                       <span className="text-muted-foreground">tech</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Users className="h-3 w-3 text-muted-foreground" />
-                      <span className="font-medium">{etatStats.totalNbTechs}</span>
-                      <span className="text-muted-foreground">techs</span>
+                      <Euro className="h-3 w-3 text-muted-foreground" />
+                      <span className="font-medium">{formatCurrency(etatStats.devisHT)}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -210,14 +251,14 @@ export function PrevisionnelTab() {
         <Card className="bg-gradient-to-r from-helpconfort-blue/10 to-helpconfort-orange/10 border-helpconfort-blue/30">
           <CardContent className="py-4">
             <TooltipProvider delayDuration={200}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-6">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="flex items-center gap-6 flex-wrap">
                   <div className="flex items-center gap-2">
                     <FolderOpen className="h-5 w-5 text-helpconfort-blue" />
                     <span className="text-2xl font-bold">{totaux.nbDossiers}</span>
                     <span className="text-muted-foreground">dossiers total</span>
                   </div>
-                  <div className="h-8 w-px bg-border" />
+                  <div className="h-8 w-px bg-border hidden md:block" />
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div className="flex items-center gap-2 cursor-help">
@@ -230,7 +271,7 @@ export function PrevisionnelTab() {
                       <HeuresHommeTooltip />
                     </TooltipContent>
                   </Tooltip>
-                  <div className="h-8 w-px bg-border" />
+                  <div className="h-8 w-px bg-border hidden md:block" />
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div className="flex items-center gap-2 cursor-help">
@@ -241,6 +282,19 @@ export function PrevisionnelTab() {
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="p-4">
                       <DureeTotaleInterTooltip />
+                    </TooltipContent>
+                  </Tooltip>
+                  <div className="h-8 w-px bg-border hidden md:block" />
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-2 cursor-help">
+                        <Euro className="h-5 w-5 text-green-500" />
+                        <span className="text-2xl font-bold">{formatCurrency(totaux.totalDevisHT)}</span>
+                        <span className="text-muted-foreground">CA estimé</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="p-4">
+                      <CADevisTooltip />
                     </TooltipContent>
                   </Tooltip>
                 </div>
@@ -255,13 +309,13 @@ export function PrevisionnelTab() {
         </Card>
       </motion.div>
 
-      {/* Charts Row */}
+      {/* Charts Row - Heures */}
       <div className="grid gap-4 md:grid-cols-2">
         {/* Bar Chart - Charge par Univers */}
         <motion.div variants={itemVariants}>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Charge par Univers (heures tech)</CardTitle>
+              <CardTitle className="text-sm">Charge par Univers (heures homme)</CardTitle>
             </CardHeader>
             <CardContent>
               {chartData.length > 0 ? (
@@ -276,7 +330,7 @@ export function PrevisionnelTab() {
                         border: '1px solid hsl(var(--border))',
                         borderRadius: '8px'
                       }}
-                      formatter={(value: number) => [`${value}h`, 'Heures Tech']}
+                      formatter={(value: number) => [`${value}h`, 'Heures Homme']}
                     />
                     <Bar 
                       dataKey="heuresTech" 
@@ -303,7 +357,7 @@ export function PrevisionnelTab() {
         <motion.div variants={itemVariants}>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Répartition par État</CardTitle>
+              <CardTitle className="text-sm">Répartition par État (heures)</CardTitle>
             </CardHeader>
             <CardContent>
               {pieData.length > 0 ? (
@@ -346,6 +400,97 @@ export function PrevisionnelTab() {
         </motion.div>
       </div>
 
+      {/* Charts Row - CA Devis */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Bar Chart - CA Devis par Univers */}
+        <motion.div variants={itemVariants}>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">CA Devis par Univers</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {chartDataCA.length > 0 ? (
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={chartDataCA} layout="vertical" margin={{ left: 80, right: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={(v) => formatCurrency(v)} />
+                    <YAxis dataKey="name" type="category" tick={{ fontSize: 10 }} width={75} />
+                    <RechartsTooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                      formatter={(value: number) => [formatCurrency(value), 'CA Devis']}
+                    />
+                    <Bar 
+                      dataKey="ca" 
+                      radius={[0, 4, 4, 0]}
+                      animationDuration={2500}
+                      animationEasing="ease-out"
+                    >
+                      {chartDataCA.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-[280px] flex items-center justify-center text-muted-foreground">
+                  Aucun devis associé
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Pie Chart - CA par État */}
+        <motion.div variants={itemVariants}>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">CA Devis par État</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {pieDataCA.length > 0 ? (
+                <ResponsiveContainer width="100%" height={280}>
+                  <PieChart>
+                    <Pie
+                      data={pieDataCA}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={2}
+                      dataKey="value"
+                      label={({ value }) => formatCurrency(value)}
+                      animationDuration={2500}
+                      animationEasing="ease-out"
+                    >
+                      {pieDataCA.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                      formatter={(value: number) => [formatCurrency(value), '']}
+                    />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-[280px] flex items-center justify-center text-muted-foreground">
+                  Aucun devis
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+
       {/* Table - Détail par Univers */}
       <motion.div variants={itemVariants}>
         <Card>
@@ -358,8 +503,9 @@ export function PrevisionnelTab() {
                 <TableRow>
                   <TableHead>Univers</TableHead>
                   <TableHead className="text-right">Dossiers</TableHead>
-                  <TableHead className="text-right">Durée totale inter</TableHead>
-                  <TableHead className="text-right">Heures Homme</TableHead>
+                  <TableHead className="text-right">Durée totale</TableHead>
+                  <TableHead className="text-right">H. Homme</TableHead>
+                  <TableHead className="text-right">CA Devis</TableHead>
                   <TableHead className="text-right">À planifier</TableHead>
                   <TableHead className="text-right">À commander</TableHead>
                   <TableHead className="text-right">Att. Fourn</TableHead>
@@ -380,6 +526,9 @@ export function PrevisionnelTab() {
                     <TableCell className="text-right font-medium">{u.nbDossiers}</TableCell>
                     <TableCell className="text-right">{Math.round(u.totalHeuresRdv * 10) / 10}h</TableCell>
                     <TableCell className="text-right font-semibold">{Math.round(u.totalHeuresTech * 10) / 10}h</TableCell>
+                    <TableCell className="text-right text-green-600 font-medium">
+                      {u.devisHTTotal > 0 ? formatCurrency(u.devisHTTotal) : '—'}
+                    </TableCell>
                     <TableCell className="text-right text-blue-600">
                       {u.totalHeuresTech_A_planifier_TVX > 0 && `${Math.round(u.totalHeuresTech_A_planifier_TVX * 10) / 10}h`}
                     </TableCell>
@@ -393,7 +542,7 @@ export function PrevisionnelTab() {
                 ))}
                 {parUnivers.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                       Aucun dossier en attente de travaux
                     </TableCell>
                   </TableRow>
@@ -431,8 +580,9 @@ export function PrevisionnelTab() {
                   <TableHead>Libellé</TableHead>
                   <TableHead>État</TableHead>
                   <TableHead>Univers</TableHead>
-                  <TableHead className="text-right">Durée totale inter</TableHead>
-                  <TableHead className="text-right">Heures Homme</TableHead>
+                  <TableHead className="text-right">Durée</TableHead>
+                  <TableHead className="text-right">H. Homme</TableHead>
+                  <TableHead className="text-right">CA Devis</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -461,12 +611,15 @@ export function PrevisionnelTab() {
                       </TableCell>
                       <TableCell className="text-right">{d.totalHeuresRdv > 0 ? `${d.totalHeuresRdv}h` : '—'}</TableCell>
                       <TableCell className="text-right font-semibold">{d.totalHeuresTech > 0 ? `${d.totalHeuresTech}h` : '—'}</TableCell>
+                      <TableCell className="text-right text-green-600 font-medium">
+                        {d.devisHT > 0 ? formatCurrency(d.devisHT) : '—'}
+                      </TableCell>
                     </TableRow>
                   );
                 })}
                 {visibleDossiers.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                       Aucun dossier en attente
                     </TableCell>
                   </TableRow>
@@ -483,7 +636,7 @@ export function PrevisionnelTab() {
           <Card className="bg-muted/50">
             <CardContent className="py-3">
               <p className="text-xs text-muted-foreground">
-                Debug: {debug.totalProjects} projets analysés • {debug.projectsEligibleState} éligibles • {debug.projectsAvecRT} avec RT • {debug.rtBlocksCount} blocs RT
+                Debug: {debug.totalProjects} projets • {debug.projectsEligibleState} éligibles • {debug.projectsAvecRT} avec RT • {debug.rtBlocksCount} blocs RT • {debug.devisTotal || 0} devis • {debug.devisIndexed || 0} indexés
               </p>
             </CardContent>
           </Card>
