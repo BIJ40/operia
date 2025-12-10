@@ -24,6 +24,7 @@ import { clientsDefinitions } from './clients';
 import { agencesDefinitions } from './agences';
 import { operationsDefinitions } from './operations';
 import { devisAdvancedDefinitions } from './devisAdvanced';
+import { veilleApporteursDefinitions } from './veilleApporteurs';
 
 // Export types
 export * from './types';
@@ -88,6 +89,9 @@ export const STAT_DEFINITIONS: StatDefinitionRegistry = {
   
   // V2.1: Devis avancés
   ...devisAdvancedDefinitions,
+  
+  // V2.2: Veille Apporteurs
+  ...veilleApporteursDefinitions,
 };
 
 /**
