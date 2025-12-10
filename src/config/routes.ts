@@ -54,6 +54,8 @@ export const ROUTES = {
     // Actions à mener
     actions: '/hc-agency/actions',
     actionsCategory: (slug: string) => `/hc-agency/actions/category/${slug}`,
+    // Veille Apporteurs
+    veilleApporteurs: '/hc-agency/veille-apporteurs',
     // Diffusion (sous statistiques)
     diffusion: '/hc-agency/statistiques/diffusion',
     // RH Tech
