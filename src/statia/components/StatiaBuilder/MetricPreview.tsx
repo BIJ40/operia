@@ -152,15 +152,15 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
     return definition?.dimensions?.includes(dim);
   };
 
-  // Créer les services pour l'API StatIA
+  // Créer les services pour l'API StatIA (signatures alignées avec ApogeeDataServices)
   const createServices = () => {
     return {
-      getFactures: async () => apogeeData?.factures || [],
-      getDevis: async () => apogeeData?.devis || [],
-      getInterventions: async () => apogeeData?.interventions || [],
-      getProjects: async () => apogeeData?.projects || [],
-      getUsers: async () => apogeeData?.users || [],
-      getClients: async () => apogeeData?.clients || [],
+      getFactures: async (_agencySlug: string, _dateRange: any) => apogeeData?.factures || [],
+      getDevis: async (_agencySlug: string, _dateRange: any) => apogeeData?.devis || [],
+      getInterventions: async (_agencySlug: string, _dateRange: any) => apogeeData?.interventions || [],
+      getProjects: async (_agencySlug: string, _dateRange: any) => apogeeData?.projects || [],
+      getUsers: async (_agencySlug: string) => apogeeData?.users || [],
+      getClients: async (_agencySlug: string) => apogeeData?.clients || [],
     };
   };
 
