@@ -80,69 +80,49 @@ function isProjectCanceled(project: any): boolean {
 }
 
 /**
- * Recherche récursive des blocs chiffrage dans une structure de données
- */
-function findChiffrageBlocks(obj: any, blocks: { nbHeures: number; nbTechs: number }[] = []): { nbHeures: number; nbTechs: number }[] {
-  if (!obj || typeof obj !== 'object') return blocks;
-
-  // Check si c'est un bloc chiffrage
-  if (obj.IS_BLOCK === true && obj.slug === 'chiffrage' && obj.data) {
-    const data = obj.data;
-    const nbHeures = parseFloat(data.nbHeures) || 0;
-    const nbTechs = typeof data.nbTechs === 'number' ? data.nbTechs : 1;
-    
-    if (nbHeures > 0) {
-      blocks.push({ nbHeures, nbTechs });
-    }
-  }
-
-  // Recherche récursive
-  if (Array.isArray(obj)) {
-    for (const item of obj) {
-      findChiffrageBlocks(item, blocks);
-    }
-  } else {
-    for (const key of Object.keys(obj)) {
-      if (key !== 'history') { // Éviter de parser l'historique
-        findChiffrageBlocks(obj[key], blocks);
-      }
-    }
-  }
-
-  return blocks;
-}
-
-/**
- * Extrait nbHeures et nbTechs depuis une intervention (RT)
+ * Extrait les données de chiffrage depuis le chemin correct:
+ * intervention.data.chiffrage.postes[].items[].data.nbHeures/nbTechs
  */
 function extractRTDataFromIntervention(intervention: any): { heuresRdv: number; heuresTech: number } {
   let totalHeuresRdv = 0;
   let totalHeuresTech = 0;
-
-  // Recherche dans data
-  const blocks = findChiffrageBlocks(intervention?.data);
   
-  // Recherche aussi dans docsCommanditaireBefore et After
-  findChiffrageBlocks(intervention?.docsCommanditaireBefore, blocks);
-  findChiffrageBlocks(intervention?.docsCommanditaireAfter, blocks);
-  
-  // Recherche dans subItems si présent
-  findChiffrageBlocks(intervention?.subItems, blocks);
-  
-  // Recherche à la racine aussi (certains RT ont les données directement)
-  if (intervention?.data?.nbHeures || intervention?.nbHeures) {
-    const nbHeures = parseFloat(intervention?.data?.nbHeures ?? intervention?.nbHeures) || 0;
-    const nbTechs = intervention?.data?.nbTechs ?? intervention?.nbTechs ?? 1;
-    if (nbHeures > 0 && !blocks.some(b => b.nbHeures === nbHeures)) {
-      blocks.push({ nbHeures, nbTechs: typeof nbTechs === 'number' ? nbTechs : 1 });
+  try {
+    const chiffrage = intervention?.data?.chiffrage;
+    if (!chiffrage?.postes || !Array.isArray(chiffrage.postes)) {
+      return { heuresRdv: 0, heuresTech: 0 };
     }
+    
+    for (const poste of chiffrage.postes) {
+      if (!poste?.items || !Array.isArray(poste.items)) continue;
+      
+      for (const item of poste.items) {
+        // Vérifier que c'est un bloc chiffrage avec slug="chiffrage"
+        if (item?.IS_BLOCK && item?.slug === 'chiffrage' && item?.data) {
+          const rawNbHeures = item.data.nbHeures;
+          const rawNbTechs = item.data.nbTechs;
+          
+          // nbHeures peut être string ou number
+          const nbHeures = typeof rawNbHeures === 'string' 
+            ? parseFloat(rawNbHeures) 
+            : (typeof rawNbHeures === 'number' ? rawNbHeures : 0);
+            
+          // nbTechs est généralement un number, défaut 1
+          const nbTechs = typeof rawNbTechs === 'number' && rawNbTechs >= 1 
+            ? rawNbTechs 
+            : 1;
+          
+          if (!isNaN(nbHeures) && nbHeures > 0) {
+            totalHeuresRdv += nbHeures;
+            totalHeuresTech += nbHeures * nbTechs;
+          }
+        }
+      }
+    }
+  } catch {
+    // Ignorer les erreurs de parsing
   }
-
-  for (const block of blocks) {
-    totalHeuresRdv += block.nbHeures;
-    totalHeuresTech += block.nbHeures * block.nbTechs;
-  }
-
+  
   return { heuresRdv: totalHeuresRdv, heuresTech: totalHeuresTech };
 }
 
