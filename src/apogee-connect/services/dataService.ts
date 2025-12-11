@@ -36,6 +36,12 @@ function validateAndCast<T>(data: unknown[], entityName: string, schema: z.ZodSc
 // TTL du cache en millisecondes (5 minutes)
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
+// Délai entre chaque appel API (ms) pour éviter rate limiting
+const API_THROTTLE_DELAY_MS = 500;
+
+// Fonction sleep pour throttling
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 /** Structure des données en cache */
 export interface CachedData {
   users: User[];
@@ -145,55 +151,61 @@ export class DataService {
     
     try {
       usersRes = await apogeeProxy.getUsers(proxyOptions) || [];
-      logApogee.debug('[SEQUENTIAL] Users loaded:', usersRes.length);
+      logApogee.debug('[THROTTLED] Users loaded:', usersRes.length);
     } catch (e) {
-      logApogee.warn('[SEQUENTIAL] Users failed:', e);
+      logApogee.warn('[THROTTLED] Users failed:', e);
     }
+    await sleep(API_THROTTLE_DELAY_MS);
     
     try {
       clientsRes = await apogeeProxy.getClients(proxyOptions) || [];
-      logApogee.debug('[SEQUENTIAL] Clients loaded:', clientsRes.length);
+      logApogee.debug('[THROTTLED] Clients loaded:', clientsRes.length);
     } catch (e) {
-      logApogee.warn('[SEQUENTIAL] Clients failed:', e);
+      logApogee.warn('[THROTTLED] Clients failed:', e);
     }
+    await sleep(API_THROTTLE_DELAY_MS);
     
     try {
       projectsRes = await apogeeProxy.getProjects(proxyOptions) || [];
-      logApogee.debug('[SEQUENTIAL] Projects loaded:', projectsRes.length);
+      logApogee.debug('[THROTTLED] Projects loaded:', projectsRes.length);
     } catch (e) {
-      logApogee.warn('[SEQUENTIAL] Projects failed:', e);
+      logApogee.warn('[THROTTLED] Projects failed:', e);
     }
+    await sleep(API_THROTTLE_DELAY_MS);
     
     try {
       interventionsRes = await apogeeProxy.getInterventions(proxyOptions) || [];
-      logApogee.debug('[SEQUENTIAL] Interventions loaded:', interventionsRes.length);
+      logApogee.debug('[THROTTLED] Interventions loaded:', interventionsRes.length);
     } catch (e) {
-      logApogee.warn('[SEQUENTIAL] Interventions failed:', e);
+      logApogee.warn('[THROTTLED] Interventions failed:', e);
     }
+    await sleep(API_THROTTLE_DELAY_MS);
     
     try {
       facturesRes = await apogeeProxy.getFactures(proxyOptions) || [];
-      logApogee.debug('[SEQUENTIAL] Factures loaded:', facturesRes.length);
+      logApogee.debug('[THROTTLED] Factures loaded:', facturesRes.length);
     } catch (e) {
-      logApogee.warn('[SEQUENTIAL] Factures failed:', e);
+      logApogee.warn('[THROTTLED] Factures failed:', e);
     }
+    await sleep(API_THROTTLE_DELAY_MS);
     
     try {
       devisRes = await apogeeProxy.getDevis(proxyOptions) || [];
-      logApogee.debug('[SEQUENTIAL] Devis loaded:', devisRes.length);
+      logApogee.debug('[THROTTLED] Devis loaded:', devisRes.length);
     } catch (e) {
-      logApogee.warn('[SEQUENTIAL] Devis failed:', e);
+      logApogee.warn('[THROTTLED] Devis failed:', e);
     }
+    await sleep(API_THROTTLE_DELAY_MS);
     
     try {
       creneauxRes = await apogeeProxy.getInterventionsCreneaux(proxyOptions) || [];
-      logApogee.debug('[SEQUENTIAL] Creneaux loaded:', creneauxRes.length);
+      logApogee.debug('[THROTTLED] Creneaux loaded:', creneauxRes.length);
     } catch (e) {
-      logApogee.warn('[SEQUENTIAL] Creneaux failed:', e);
+      logApogee.warn('[THROTTLED] Creneaux failed:', e);
     }
     
     const duration = Date.now() - startTime;
-    logApogee.info(`[SEQUENTIAL] Toutes les données chargées en ${duration}ms`);
+    logApogee.info(`[THROTTLED] Toutes les données chargées en ${duration}ms (avec délai ${API_THROTTLE_DELAY_MS}ms entre chaque appel)`);
 
     logApogee.debug('Réponses API brutes:', {
       users: Array.isArray(usersRes) ? usersRes.length : 0,
