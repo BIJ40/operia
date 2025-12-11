@@ -99,9 +99,9 @@ Deno.serve(async (req) => {
       ));
     }
 
-    // 3. Rate limiting adapté au rôle (300 req/min pour franchiseur, 30 pour les autres)
+    // 3. Rate limiting adapté au rôle (1000 req/min pour franchiseur, 100 pour les autres)
     const isFranchiseurRole = ['franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(profile.global_role || '');
-    const rateLimit = isFranchiseurRole ? 300 : 30; // Franchiseur = 300 (dashboard multi-agences avec 40+ agences), autres = 30
+    const rateLimit = isFranchiseurRole ? 1000 : 100; // Limites élevées pour permettre le chargement complet
     const rateLimitKey = `proxy-apogee:${user.id}`;
     const rateCheck = await checkRateLimit(rateLimitKey, { limit: rateLimit, windowMs: 60 * 1000 });
     if (!rateCheck.allowed) {
