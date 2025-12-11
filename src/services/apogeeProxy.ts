@@ -7,6 +7,8 @@
  * Features:
  * - Request deduplication: identical concurrent requests share the same promise
  * - TTL cache: responses cached for 60 seconds to reduce API calls
+ * - Request queue: limits concurrent requests to avoid rate limiting
+ * - Auto-retry on 429 with exponential backoff
  * 
  * Usage:
  * ```typescript
@@ -48,6 +50,20 @@ const inFlightRequests = new Map<string, Promise<unknown>>();
 const responseCache = new Map<string, { data: unknown; timestamp: number }>();
 const CACHE_TTL_MS = 60 * 1000; // 60 seconds
 
+// Request queue configuration
+const MAX_CONCURRENT_REQUESTS = 10; // Max parallel requests
+const REQUEST_DELAY_MS = 50; // Delay between batch starts
+const MAX_RETRIES = 3;
+const RETRY_BASE_DELAY_MS = 1000;
+
+// Queue state
+let activeRequests = 0;
+const requestQueue: Array<{
+  execute: () => Promise<void>;
+  resolve: (value: unknown) => void;
+  reject: (error: unknown) => void;
+}> = [];
+
 function getCacheKey(endpoint: string, options: ApogeeProxyOptions): string {
   // CRITICAL: Always include agencySlug in cache key - no 'default' fallback
   // This prevents admin from seeing cached data from wrong agency
@@ -72,6 +88,57 @@ function setCachedResponse(key: string, data: unknown): void {
 }
 
 /**
+ * Process the next item in the request queue
+ */
+function processQueue(): void {
+  if (requestQueue.length === 0 || activeRequests >= MAX_CONCURRENT_REQUESTS) {
+    return;
+  }
+
+  const item = requestQueue.shift();
+  if (!item) return;
+
+  activeRequests++;
+  
+  item.execute()
+    .then(() => item.resolve(undefined))
+    .catch((err) => item.reject(err))
+    .finally(() => {
+      activeRequests--;
+      // Small delay before processing next to avoid burst
+      setTimeout(processQueue, REQUEST_DELAY_MS);
+    });
+}
+
+/**
+ * Add a request to the queue
+ */
+function enqueue<T>(execute: () => Promise<T>): Promise<T> {
+  return new Promise((resolve, reject) => {
+    requestQueue.push({
+      execute: async () => {
+        try {
+          const result = await execute();
+          resolve(result);
+        } catch (err) {
+          reject(err);
+        }
+      },
+      resolve: resolve as (value: unknown) => void,
+      reject,
+    });
+    processQueue();
+  });
+}
+
+/**
+ * Sleep helper
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
  * Vide le cache pour une agence spécifique ou tout le cache
  * Utile lors d'un changement d'agence par un admin
  */
@@ -92,7 +159,51 @@ export function clearProxyCache(agencySlug?: string): void {
 }
 
 /**
- * Appelle le proxy Apogée sécurisé avec deduplication et cache
+ * Execute a single API call with retry logic
+ */
+async function executeWithRetry<T>(
+  endpoint: string,
+  agencySlug: string | undefined,
+  filters: Record<string, unknown> | undefined,
+  retryCount = 0
+): Promise<T> {
+  const { data, error } = await supabase.functions.invoke<ApogeeProxyResponse<T>>('proxy-apogee', {
+    body: {
+      endpoint,
+      agencySlug,
+      filters,
+    },
+  });
+
+  // Handle rate limit (429)
+  if (error?.message?.includes('429') || data?.error?.includes('Trop de requêtes')) {
+    if (retryCount < MAX_RETRIES) {
+      // Extract retryAfter from response or use exponential backoff
+      const retryAfter = (data as any)?.retryAfter || Math.pow(2, retryCount) * RETRY_BASE_DELAY_MS / 1000;
+      const delayMs = Math.min(retryAfter * 1000, 30000); // Max 30s wait
+      
+      logApogee.warn(`[PROXY] Rate limited on ${endpoint}, retrying in ${delayMs}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+      await sleep(delayMs);
+      return executeWithRetry<T>(endpoint, agencySlug, filters, retryCount + 1);
+    }
+    throw new Error(`Rate limit exceeded after ${MAX_RETRIES} retries`);
+  }
+
+  if (error) {
+    logApogee.error(`[PROXY] Function error for ${endpoint}:`, error);
+    throw new Error(`Erreur proxy Apogée: ${error.message}`);
+  }
+
+  if (!data?.success) {
+    logApogee.error(`[PROXY] API error for ${endpoint}:`, data?.error);
+    throw new Error(data?.error || 'Erreur inconnue du proxy Apogée');
+  }
+
+  return data.data as T;
+}
+
+/**
+ * Appelle le proxy Apogée sécurisé avec deduplication, cache et queue
  */
 async function callProxy<T = unknown>(
   endpoint: string,
@@ -116,40 +227,24 @@ async function callProxy<T = unknown>(
     return inFlight as Promise<T>;
   }
 
-  logApogee.debug(`[PROXY] Calling ${endpoint}`, { agencySlug: agencySlug || 'user-default' });
+  logApogee.debug(`[PROXY] Queueing ${endpoint}`, { agencySlug: agencySlug || 'user-default' });
 
-  // Create the actual request promise
-  const requestPromise = (async () => {
+  // Create the actual request promise with queue
+  const requestPromise = enqueue(async () => {
     try {
-      const { data, error } = await supabase.functions.invoke<ApogeeProxyResponse<T>>('proxy-apogee', {
-        body: {
-          endpoint,
-          agencySlug,
-          filters,
-        },
-      });
-
-      if (error) {
-        logApogee.error(`[PROXY] Function error for ${endpoint}:`, error);
-        throw new Error(`Erreur proxy Apogée: ${error.message}`);
-      }
-
-      if (!data?.success) {
-        logApogee.error(`[PROXY] API error for ${endpoint}:`, data?.error);
-        throw new Error(data?.error || 'Erreur inconnue du proxy Apogée');
-      }
-
-      logApogee.debug(`[PROXY] Success ${endpoint}:`, { itemCount: data.meta?.itemCount });
+      const result = await executeWithRetry<T>(endpoint, agencySlug, filters);
+      
+      logApogee.debug(`[PROXY] Success ${endpoint}`);
       
       // Cache the successful response
-      setCachedResponse(cacheKey, data.data);
+      setCachedResponse(cacheKey, result);
       
-      return data.data as T;
+      return result;
     } finally {
       // Always remove from in-flight map when done
       inFlightRequests.delete(cacheKey);
     }
-  })();
+  });
 
   // Store in in-flight map
   inFlightRequests.set(cacheKey, requestPromise);
@@ -204,10 +299,11 @@ export const apogeeProxy = {
     callProxy<any[]>('getInterventionsCreneaux', options),
 
   /**
-   * Récupère toutes les données en parallèle
+   * Récupère toutes les données en parallèle (avec queue intégrée)
    */
   getAllData: async (options?: ApogeeProxyOptions) => {
     // Use Promise.allSettled to prevent one failure from breaking all
+    // The queue will handle rate limiting automatically
     const results = await Promise.allSettled([
       apogeeProxy.getUsers(options),
       apogeeProxy.getClients(options),
