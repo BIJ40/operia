@@ -50,19 +50,49 @@ const memoryCache = new Map<string, { data: unknown; timestamp: number }>();
 // In-flight request deduplication map
 const inFlightRequests = new Map<string, Promise<unknown>>();
 
-// Request queue configuration
-const MAX_CONCURRENT_REQUESTS = 10;
-const REQUEST_DELAY_MS = 50;
-const MAX_RETRIES = 3;
-const RETRY_BASE_DELAY_MS = 1000;
+// Request queue configuration - CONSERVATIVE to avoid 429s
+const MAX_CONCURRENT_REQUESTS = 3; // Very conservative
+const REQUEST_DELAY_MS = 200; // 200ms between batch starts
+const MAX_RETRIES = 2;
+const RETRY_BASE_DELAY_MS = 2000;
 
 // Queue state
 let activeRequests = 0;
+let globalPauseUntil = 0; // Timestamp until which ALL requests are paused
 const requestQueue: Array<{
   execute: () => Promise<void>;
   resolve: (value: unknown) => void;
   reject: (error: unknown) => void;
 }> = [];
+
+/**
+ * Set global pause for all requests (used when rate limited)
+ */
+function setGlobalPause(durationMs: number): void {
+  const newPauseUntil = Date.now() + durationMs;
+  if (newPauseUntil > globalPauseUntil) {
+    globalPauseUntil = newPauseUntil;
+    logApogee.warn(`[PROXY] Global pause set for ${durationMs / 1000}s`);
+  }
+}
+
+/**
+ * Check if we're in global pause
+ */
+function isGloballyPaused(): boolean {
+  return Date.now() < globalPauseUntil;
+}
+
+/**
+ * Wait until global pause ends
+ */
+async function waitForGlobalPause(): Promise<void> {
+  if (isGloballyPaused()) {
+    const waitTime = globalPauseUntil - Date.now();
+    logApogee.info(`[PROXY] Waiting ${Math.round(waitTime / 1000)}s for rate limit cooldown...`);
+    await sleep(waitTime);
+  }
+}
 
 export interface ApogeeProxyOptions {
   agencySlug?: string;
@@ -233,7 +263,12 @@ function setCachedResponse(key: string, data: unknown): void {
 /**
  * Process the next item in the request queue
  */
-function processQueue(): void {
+async function processQueue(): Promise<void> {
+  // Wait for global pause if active
+  if (isGloballyPaused()) {
+    await waitForGlobalPause();
+  }
+  
   if (requestQueue.length === 0 || activeRequests >= MAX_CONCURRENT_REQUESTS) {
     return;
   }
@@ -248,7 +283,7 @@ function processQueue(): void {
     .catch((err) => item.reject(err))
     .finally(() => {
       activeRequests--;
-      // Small delay before processing next to avoid burst
+      // Delay before processing next to avoid burst
       setTimeout(processQueue, REQUEST_DELAY_MS);
     });
 }
@@ -261,6 +296,8 @@ function enqueue<T>(execute: () => Promise<T>): Promise<T> {
     requestQueue.push({
       execute: async () => {
         try {
+          // Wait for global pause before executing
+          await waitForGlobalPause();
           const result = await execute();
           resolve(result);
         } catch (err) {
@@ -385,6 +422,9 @@ async function executeWithRetry<T>(
   filters: Record<string, unknown> | undefined,
   retryCount = 0
 ): Promise<T> {
+  // Wait for any global pause before making request
+  await waitForGlobalPause();
+  
   const { data, error } = await supabase.functions.invoke<ApogeeProxyResponse<T>>('proxy-apogee', {
     body: {
       endpoint,
@@ -395,12 +435,15 @@ async function executeWithRetry<T>(
 
   // Handle rate limit (429)
   if (error?.message?.includes('429') || data?.error?.includes('Trop de requêtes')) {
+    // Extract retryAfter from response
+    const retryAfter = (data as any)?.retryAfter || 30;
+    const delayMs = retryAfter * 1000;
+    
+    // SET GLOBAL PAUSE - this stops ALL pending requests
+    setGlobalPause(delayMs + 1000); // Add 1s buffer
+    
     if (retryCount < MAX_RETRIES) {
-      // Extract retryAfter from response or use exponential backoff
-      const retryAfter = (data as any)?.retryAfter || Math.pow(2, retryCount) * RETRY_BASE_DELAY_MS / 1000;
-      const delayMs = Math.min(retryAfter * 1000, 30000); // Max 30s wait
-      
-      logApogee.warn(`[PROXY] Rate limited on ${endpoint}, retrying in ${delayMs}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+      logApogee.warn(`[PROXY] Rate limited on ${endpoint}, global pause for ${retryAfter}s (attempt ${retryCount + 1}/${MAX_RETRIES})`);
       await sleep(delayMs);
       return executeWithRetry<T>(endpoint, agencySlug, filters, retryCount + 1);
     }
