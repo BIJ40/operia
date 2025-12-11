@@ -109,7 +109,7 @@ export function TauxSavWidget() {
 
       {/* Labels */}
       <div className="text-center space-y-1">
-        <p className="text-xs text-muted-foreground">Taux SAV YTD</p>
+        <p className="text-xs text-foreground font-medium">Taux SAV YTD</p>
         <div className="flex items-center gap-3 text-xs">
           <span className="text-muted-foreground">Ce mois:</span>
           <span className={cn("font-semibold", getColor(tauxMonth))}>
