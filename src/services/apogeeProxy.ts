@@ -290,21 +290,26 @@ export const apogeeProxy: ApogeeProxy = {
   setTTL: setApogeeCacheTTL,
   
   /**
-   * Load all data for an agency in parallel
+   * Load all data for an agency SEQUENTIALLY
+   * Évite les 429 rate limit en espaçant les requêtes
    * Results are cached for TTL duration (2h default)
    */
   getAllData: async (agencySlug, bypassCache = false) => {
     const opts = { agencySlug, bypassCache };
     
-    // Execute all requests in parallel
-    const [users, clients, projects, interventions, factures, devis] = await Promise.all([
-      proxyRequest<any[]>('apiGetUsers', opts),
-      proxyRequest<any[]>('apiGetClients', opts),
-      proxyRequest<any[]>('apiGetProjects', opts),
-      proxyRequest<any[]>('apiGetInterventions', opts),
-      proxyRequest<any[]>('apiGetFactures', opts),
-      proxyRequest<any[]>('apiGetDevis', opts),
-    ]);
+    logApogee.info(`[PROXY] Loading all data SEQUENTIALLY for ${agencySlug}`);
+    const startTime = Date.now();
+    
+    // Execute requests ONE BY ONE to avoid rate limiting
+    const users = await proxyRequest<any[]>('apiGetUsers', opts);
+    const clients = await proxyRequest<any[]>('apiGetClients', opts);
+    const projects = await proxyRequest<any[]>('apiGetProjects', opts);
+    const interventions = await proxyRequest<any[]>('apiGetInterventions', opts);
+    const factures = await proxyRequest<any[]>('apiGetFactures', opts);
+    const devis = await proxyRequest<any[]>('apiGetDevis', opts);
+    
+    const duration = Date.now() - startTime;
+    logApogee.info(`[PROXY] All data loaded for ${agencySlug} in ${duration}ms (sequential)`);
     
     return { 
       users: users || [], 
