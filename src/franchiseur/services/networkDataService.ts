@@ -25,7 +25,7 @@ export class NetworkDataService {
       logNetwork.info(`Loading data for agency ${agencySlug} via secure proxy`);
       
       // Use secure proxy to load all data
-      const loadedData = await apogeeProxy.getAllData({ agencySlug });
+      const loadedData = await apogeeProxy.getAllData(agencySlug);
       
       return {
         users: loadedData.users || [],
@@ -65,7 +65,7 @@ export class NetworkDataService {
       try {
         logNetwork.debug(`${agencySlug}: chargement via proxy...`);
         
-        const loadedData = await apogeeProxy.getAllData({ agencySlug });
+        const loadedData = await apogeeProxy.getAllData(agencySlug);
         const data = {
           users: loadedData.users || [],
           clients: loadedData.clients || [],

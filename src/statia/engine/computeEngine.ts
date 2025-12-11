@@ -143,7 +143,7 @@ export async function loadSourceData(
   debug.apiUrl = `proxy-apogee (agency: ${params.agency_slug})`;
   
   // Charger toutes les données via proxy sécurisé
-  const allData = await apogeeProxy.getAllData({ agencySlug: params.agency_slug });
+  const allData = await apogeeProxy.getAllData(params.agency_slug);
   
   // Mapper les sources
   const sourceMapping: Record<ApogeeSourceName, keyof typeof allData> = {
