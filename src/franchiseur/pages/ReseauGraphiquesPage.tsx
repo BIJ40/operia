@@ -183,20 +183,19 @@ export default function ReseauGraphiquesPage() {
     [agences]
   );
 
-  // Productivité CA/tech
+  // Productivité CA/tech - inclure les agences même avec ca_par_technicien_actif null (afficher 0)
   const productiviteData = useMemo(() =>
     agences
-      .filter(a => a.ca_par_technicien_actif !== null && a.ca_par_technicien_actif > 0)
+      .filter(a => a.ca_par_technicien_actif !== null || a.nb_techniciens_actifs > 0)
       .sort((a, b) => (b.ca_par_technicien_actif || 0) - (a.ca_par_technicien_actif || 0))
       .slice(0, 12)
       .map(a => ({ name: a.agency_name.length > 12 ? a.agency_name.slice(0, 12) + '...' : a.agency_name, ca: a.ca_par_technicien_actif || 0 })),
     [agences]
   );
 
-  // Techniciens actifs
+  // Techniciens actifs - inclure toutes les agences sélectionnées
   const techActifsData = useMemo(() =>
     agences
-      .filter(a => a.nb_techniciens_actifs > 0)
       .sort((a, b) => b.nb_techniciens_actifs - a.nb_techniciens_actifs)
       .slice(0, 12)
       .map(a => ({ name: a.agency_name.length > 12 ? a.agency_name.slice(0, 12) + '...' : a.agency_name, techs: a.nb_techniciens_actifs })),
