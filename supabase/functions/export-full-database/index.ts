@@ -9,27 +9,43 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { handleCorsPreflightOrReject, withCors } from "../_shared/cors.ts";
 
 const ALL_TABLES = [
-  // Batch 1 - Core
-  "profiles", "apogee_agencies", "collaborators", "collaborator_documents",
-  "collaborator_sensitive_data", "employment_contracts", "document_requests", "leave_requests",
-  // Batch 2 - Support
+  // Batch 0 - Core users
+  "profiles", "apogee_agencies",
+  // Batch 1 - Collaborators
+  "collaborators", "collaborator_documents",
+  // Batch 2 - HR
+  "collaborator_sensitive_data", "employment_contracts",
+  // Batch 3 - Requests
+  "document_requests", "leave_requests",
+  // Batch 4 - Support
   "support_tickets", "support_ticket_actions",
-  // Batch 3 - Apogee Tickets
-  "apogee_tickets", "apogee_ticket_comments", "apogee_ticket_attachments",
+  // Batch 5 - Apogee Tickets core
+  "apogee_tickets",
+  // Batch 6 - Apogee Tickets related
+  "apogee_ticket_comments", "apogee_ticket_attachments",
+  // Batch 7 - Apogee Tickets meta
   "apogee_ticket_history", "apogee_ticket_statuses", "apogee_modules", "apogee_priorities",
-  // Batch 4 - Content
-  "blocks", "apporteur_blocks", "categories", "documents", "favorites",
-  // Batch 5 - FAQ/RAG
-  "faq_categories", "faq_items", "chatbot_queries",
-  // Batch 6 - Config
-  "feature_flags", "user_modules", "agency_royalty_config", "agency_royalty_tiers",
-  // Batch 7 - Messaging
+  // Batch 8 - Blocks (heavy)
+  "blocks",
+  // Batch 9 - Apporteur blocks (heavy)
+  "apporteur_blocks",
+  // Batch 10 - Content light
+  "categories", "documents", "favorites",
+  // Batch 11 - FAQ
+  "faq_categories", "faq_items",
+  // Batch 12 - Chatbot
+  "chatbot_queries",
+  // Batch 13 - Config
+  "feature_flags", "user_modules",
+  // Batch 14 - Royalty
+  "agency_royalty_config", "agency_royalty_tiers",
+  // Batch 15 - Messaging
   "conversations", "conversation_members", "messages",
-  // Batch 8 - Misc
+  // Batch 16 - Misc
   "announcements", "announcement_reads", "animator_visits", "expense_requests", "fleet_vehicles",
 ];
 
-const BATCH_SIZE = 5;
+const BATCH_SIZE = 2;
 
 serve(async (req) => {
   const corsResponse = handleCorsPreflightOrReject(req);
@@ -115,7 +131,7 @@ serve(async (req) => {
         const { data, error } = await supabaseAdmin
           .from(tableName)
           .select("*")
-          .limit(500);
+          .limit(200);
 
         if (error) {
           console.warn(`[export-full-database] Error ${tableName}:`, error.message);
