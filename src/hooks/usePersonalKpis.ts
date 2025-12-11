@@ -69,7 +69,7 @@ export function usePersonalKpis() {
       const monthEnd = endOfMonth(now);
 
       // Charger les données via DataService (même source que StatIA)
-      const apiData = await DataService.loadAllData(true);
+      const apiData = await DataService.loadAllData(true, false, agence);
       
       console.log('[usePersonalKpis] Data loaded:', {
         factures: apiData.factures?.length || 0,

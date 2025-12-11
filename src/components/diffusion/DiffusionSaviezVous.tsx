@@ -16,7 +16,7 @@ export const DiffusionSaviezVous = ({ currentMonthIndex, templates }: DiffusionS
   const { data } = useQuery({
     queryKey: ['diffusion-saviez-vous', agence],
     queryFn: async () => {
-      const allData = await DataService.loadAllData(true);
+      const allData = await DataService.loadAllData(true, false, agence);
       return allData;
     },
     enabled: !!agence,

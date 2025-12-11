@@ -74,7 +74,7 @@ export function useRecouvrementStats(options: {
         } else {
           // Pas d'agencySlug fourni = utiliser DataService pour l'agence de l'utilisateur
           logApogee.debug('useRecouvrementStats - Chargement via DataService pour agence utilisateur');
-          const allData = await DataService.loadAllData(true, false);
+          const allData = await DataService.loadAllData(true, false, effectiveSlug);
           factures = allData.factures;
         }
 
@@ -136,12 +136,13 @@ export function useRecouvrementStats(options: {
  */
 export function useRecouvrementByClient(options: { enabled?: boolean } = {}) {
   const { filters } = useFilters();
-  const { isAgencyReady } = useAgency();
+  const { isAgencyReady, currentAgency } = useAgency();
+  const agencySlug = currentAgency?.slug;
 
   return useQuery({
-    queryKey: ['recouvrement-by-client', filters.dateRange],
+    queryKey: ['recouvrement-by-client', agencySlug, filters.dateRange],
     queryFn: async () => {
-      const allData = await DataService.loadAllData(true, false);
+      const allData = await DataService.loadAllData(true, false, agencySlug);
       const clientsMap = new Map(
         (allData.clients || []).map(c => [
           c.id,
@@ -152,7 +153,7 @@ export function useRecouvrementByClient(options: { enabled?: boolean } = {}) {
       const { calculateRecouvrementByClient } = await import('@/apogee-connect/utils/recouvrementCalculations');
       return calculateRecouvrementByClient(allData.factures, filters, clientsMap);
     },
-    enabled: isAgencyReady && (options.enabled !== false),
+    enabled: isAgencyReady && !!agencySlug && (options.enabled !== false),
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -164,12 +165,13 @@ export function useRecouvrementByClient(options: { enabled?: boolean } = {}) {
  */
 export function useRecouvrementByProject(options: { enabled?: boolean } = {}) {
   const { filters } = useFilters();
-  const { isAgencyReady } = useAgency();
+  const { isAgencyReady, currentAgency } = useAgency();
+  const agencySlug = currentAgency?.slug;
 
   return useQuery({
-    queryKey: ['recouvrement-by-project', filters.dateRange],
+    queryKey: ['recouvrement-by-project', agencySlug, filters.dateRange],
     queryFn: async () => {
-      const allData = await DataService.loadAllData(true, false);
+      const allData = await DataService.loadAllData(true, false, agencySlug);
       const projectsMap = new Map(
         (allData.projects || []).map(p => [p.id, p.nom || p.id])
       );
@@ -177,7 +179,7 @@ export function useRecouvrementByProject(options: { enabled?: boolean } = {}) {
       const { calculateRecouvrementByProject } = await import('@/apogee-connect/utils/recouvrementCalculations');
       return calculateRecouvrementByProject(allData.factures, filters, projectsMap);
     },
-    enabled: isAgencyReady && (options.enabled !== false),
+    enabled: isAgencyReady && !!agencySlug && (options.enabled !== false),
     staleTime: 5 * 60 * 1000,
   });
 }

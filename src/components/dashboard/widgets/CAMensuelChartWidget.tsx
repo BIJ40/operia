@@ -20,7 +20,7 @@ export function CAMensuelChartWidget() {
     queryFn: async () => {
       if (!agencySlug) return null;
       
-      const apiData = await DataService.loadAllData(true);
+      const apiData = await DataService.loadAllData(true, false, agencySlug);
       const rawData = calculateMonthlyCA(
         apiData.factures || [],
         apiData.clients || [],

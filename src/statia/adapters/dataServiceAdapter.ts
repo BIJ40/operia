@@ -53,7 +53,7 @@ export function createApogeeDataServicesAdapter(): ApogeeDataServices {
     
     loadingPromise = (async () => {
       try {
-        const loaded = await DataService.loadAllData(true);
+        const loaded = await DataService.loadAllData(true, false, agencySlug);
         const result: CachedData = {
           users: loaded.users || [],
           clients: loaded.clients || [],

@@ -19,7 +19,7 @@ export const SlideUniversApporteurs = ({ currentMonthIndex }: SlideUniversApport
 
   const { data } = useQuery({
     queryKey: ['diffusion-univers-apporteurs', agence, currentMonthIndex],
-    queryFn: async () => await DataService.loadAllData(true),
+    queryFn: async () => await DataService.loadAllData(true, false, agence),
     enabled: !!agence,
   });
 

@@ -15,7 +15,7 @@ export const SlideSegmentation = ({ currentMonthIndex }: SlideSegmentationProps)
 
   const { data } = useQuery({
     queryKey: ['diffusion-segmentation', agence, currentMonthIndex],
-    queryFn: async () => await DataService.loadAllData(true),
+    queryFn: async () => await DataService.loadAllData(true, false, agence),
     enabled: !!agence,
   });
 

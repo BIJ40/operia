@@ -39,7 +39,7 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
     enabled: technicienIds.length > 0,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      const apiData = await DataService.loadAllData(true);
+      const apiData = await DataService.loadAllData(true, false);
       return apiData.users || [];
     },
   });

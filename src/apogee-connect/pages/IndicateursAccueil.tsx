@@ -32,7 +32,7 @@ export default function IndicateursAccueil() {
     enabled: isAgencyReady && isApiEnabled,
     queryFn: async () => {
       if (!currentAgency?.id) return null;
-      const apiData = await DataService.loadAllData(isApiEnabled);
+      const apiData = await DataService.loadAllData(isApiEnabled, false, userAgency);
       return calculateMonthlyCA(
         apiData.factures || [],
         apiData.clients || [],

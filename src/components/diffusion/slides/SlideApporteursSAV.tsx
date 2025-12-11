@@ -16,7 +16,7 @@ export const SlideApporteursSAV = ({ currentMonthIndex }: SlideApporteursSAVProp
 
   const { data } = useQuery({
     queryKey: ['diffusion-apporteurs-sav', agence, currentMonthIndex],
-    queryFn: async () => await DataService.loadAllData(true),
+    queryFn: async () => await DataService.loadAllData(true, false, agence),
     enabled: !!agence,
   });
 

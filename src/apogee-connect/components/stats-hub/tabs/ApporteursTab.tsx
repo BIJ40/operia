@@ -39,7 +39,7 @@ export function ApporteursTab() {
         logWarn('STATSHUB_APPORTEURS', 'Agence non définie');
         return null;
       }
-      const apiData = await DataService.loadAllData(isApiEnabled);
+      const apiData = await DataService.loadAllData(isApiEnabled, false, currentAgency?.id);
       const dossiersConfiesParApporteur = calculateDossiersConfiesParApporteur(
         apiData.projects || [],
         apiData.clients || [],

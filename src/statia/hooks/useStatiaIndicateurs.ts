@@ -54,30 +54,30 @@ export interface IndicateursData {
 /**
  * Crée un service de données compatible StatIA à partir de DataService
  */
-function createStatiaServices(isApiEnabled: boolean) {
+function createStatiaServices(isApiEnabled: boolean, agencySlug?: string) {
   return {
     getFactures: async () => {
-      const data = await DataService.loadAllData(isApiEnabled);
+      const data = await DataService.loadAllData(isApiEnabled, false, agencySlug);
       return data.factures || [];
     },
     getDevis: async () => {
-      const data = await DataService.loadAllData(isApiEnabled);
+      const data = await DataService.loadAllData(isApiEnabled, false, agencySlug);
       return data.devis || [];
     },
     getInterventions: async () => {
-      const data = await DataService.loadAllData(isApiEnabled);
+      const data = await DataService.loadAllData(isApiEnabled, false, agencySlug);
       return data.interventions || [];
     },
     getProjects: async () => {
-      const data = await DataService.loadAllData(isApiEnabled);
+      const data = await DataService.loadAllData(isApiEnabled, false, agencySlug);
       return data.projects || [];
     },
     getUsers: async () => {
-      const data = await DataService.loadAllData(isApiEnabled);
+      const data = await DataService.loadAllData(isApiEnabled, false, agencySlug);
       return data.users || [];
     },
     getClients: async () => {
-      const data = await DataService.loadAllData(isApiEnabled);
+      const data = await DataService.loadAllData(isApiEnabled, false, agencySlug);
       return data.clients || [];
     },
   };
@@ -103,7 +103,7 @@ export function useStatiaIndicateurs(selectedYear?: number) {
       }
 
       // Charger toutes les données une seule fois
-      const apiData = await DataService.loadAllData(isApiEnabled);
+      const apiData = await DataService.loadAllData(isApiEnabled, false, userAgency);
       
       const loadedData: LoadedData = {
         factures: apiData.factures || [],
@@ -294,7 +294,7 @@ export function useStatiaKpi(metricId: string, dateRange?: DateRange) {
     queryFn: async () => {
       if (!currentAgency?.id) return null;
       
-      const apiData = await DataService.loadAllData(isApiEnabled);
+      const apiData = await DataService.loadAllData(isApiEnabled, false, currentAgency?.id);
       
       const loadedData: LoadedData = {
         factures: apiData.factures || [],
