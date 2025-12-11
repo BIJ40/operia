@@ -1,6 +1,6 @@
 /**
  * Edge Function: export-full-database
- * Export complet de la base de données pour les admins (N5+)
+ * Export de la base de données par batch pour éviter les limites mémoire
  * Usage: backup, migration, livraison client
  */
 
@@ -8,64 +8,34 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { handleCorsPreflightOrReject, withCors } from "../_shared/cors.ts";
 
-const TABLES_TO_EXPORT = [
-  // Core
-  "profiles",
-  "apogee_agencies",
-  "collaborators",
-  "collaborator_documents",
-  "collaborator_sensitive_data",
-  "employment_contracts",
-  "document_requests",
-  "leave_requests",
-  // Support
-  "support_tickets",
-  "support_ticket_messages",
-  "support_ticket_actions",
-  "support_ticket_attachments",
-  // Apogee Tickets
-  "apogee_tickets",
-  "apogee_ticket_comments",
-  "apogee_ticket_attachments",
-  "apogee_ticket_history",
-  "apogee_ticket_statuses",
-  "apogee_modules",
-  "apogee_priorities",
-  // Content
-  "blocks",
-  "apporteur_blocks",
-  "categories",
-  "documents",
-  "favorites",
-  // FAQ/RAG
-  "faq_categories",
-  "faq_items",
-  "guide_chunks",
-  "chatbot_queries",
-  // Config
-  "feature_flags",
-  "user_modules",
-  "agency_royalty_config",
-  "agency_royalty_tiers",
-  // Messaging
-  "conversations",
-  "conversation_members",
-  "messages",
-  // Misc
-  "announcements",
-  "announcement_reads",
-  "animator_visits",
-  "expense_requests",
-  "fleet_vehicles",
+const ALL_TABLES = [
+  // Batch 1 - Core
+  "profiles", "apogee_agencies", "collaborators", "collaborator_documents",
+  "collaborator_sensitive_data", "employment_contracts", "document_requests", "leave_requests",
+  // Batch 2 - Support
+  "support_tickets", "support_ticket_actions",
+  // Batch 3 - Apogee Tickets
+  "apogee_tickets", "apogee_ticket_comments", "apogee_ticket_attachments",
+  "apogee_ticket_history", "apogee_ticket_statuses", "apogee_modules", "apogee_priorities",
+  // Batch 4 - Content
+  "blocks", "apporteur_blocks", "categories", "documents", "favorites",
+  // Batch 5 - FAQ/RAG
+  "faq_categories", "faq_items", "chatbot_queries",
+  // Batch 6 - Config
+  "feature_flags", "user_modules", "agency_royalty_config", "agency_royalty_tiers",
+  // Batch 7 - Messaging
+  "conversations", "conversation_members", "messages",
+  // Batch 8 - Misc
+  "announcements", "announcement_reads", "animator_visits", "expense_requests", "fleet_vehicles",
 ];
 
+const BATCH_SIZE = 5;
+
 serve(async (req) => {
-  // Handle CORS
   const corsResponse = handleCorsPreflightOrReject(req);
   if (corsResponse) return corsResponse;
 
   try {
-    // Initialize Supabase client with user's JWT
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return withCors(req, new Response(
@@ -80,17 +50,14 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      console.error("[export-full-database] Auth error:", authError);
       return withCors(req, new Response(
         JSON.stringify({ error: "Utilisateur non authentifié" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
       ));
     }
 
-    // Check admin rights (N5+)
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
@@ -104,62 +71,71 @@ serve(async (req) => {
 
     const adminRoles = ["platform_admin", "superadmin"];
     if (!profile || !adminRoles.includes(profile.global_role)) {
-      console.warn(`[export-full-database] Unauthorized access attempt by user ${user.id}`);
       return withCors(req, new Response(
         JSON.stringify({ error: "Accès réservé aux administrateurs (N5+)" }),
         { status: 403, headers: { "Content-Type": "application/json" } }
       ));
     }
 
-    console.log(`[export-full-database] Starting full export for admin ${user.id}`);
+    // Parse request to get batch number
+    const url = new URL(req.url);
+    const batchParam = url.searchParams.get("batch");
+    
+    // If no batch specified, return metadata about available batches
+    if (!batchParam) {
+      const totalBatches = Math.ceil(ALL_TABLES.length / BATCH_SIZE);
+      return withCors(req, new Response(
+        JSON.stringify({
+          total_tables: ALL_TABLES.length,
+          batch_size: BATCH_SIZE,
+          total_batches: totalBatches,
+          tables: ALL_TABLES,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      ));
+    }
 
-    // Export tables in smaller batches to avoid memory limits
-    const exportData: Record<string, unknown[]> = {
-      _meta: [{
-        export_date: new Date().toISOString(),
-        exported_by: user.id,
-        tables_count: TABLES_TO_EXPORT.length,
-      }],
-    };
+    const batchNum = parseInt(batchParam, 10);
+    const startIdx = batchNum * BATCH_SIZE;
+    const tablesToExport = ALL_TABLES.slice(startIdx, startIdx + BATCH_SIZE);
 
-    // Process tables sequentially with smaller limits to avoid memory issues
-    for (const tableName of TABLES_TO_EXPORT) {
+    if (tablesToExport.length === 0) {
+      return withCors(req, new Response(
+        JSON.stringify({ error: "Batch invalide" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      ));
+    }
+
+    console.log(`[export-full-database] Batch ${batchNum}: exporting ${tablesToExport.join(", ")}`);
+
+    const exportData: Record<string, unknown[]> = {};
+
+    for (const tableName of tablesToExport) {
       try {
         const { data, error } = await supabaseAdmin
           .from(tableName)
           .select("*")
-          .limit(1000); // Reduced limit per table
+          .limit(500);
 
         if (error) {
-          console.warn(`[export-full-database] Error exporting ${tableName}:`, error.message);
+          console.warn(`[export-full-database] Error ${tableName}:`, error.message);
           exportData[tableName] = [{ _error: error.message }];
         } else {
           exportData[tableName] = data ?? [];
-          console.log(`[export-full-database] Exported ${tableName}: ${data?.length ?? 0} rows`);
+          console.log(`[export-full-database] ${tableName}: ${data?.length ?? 0} rows`);
         }
       } catch (tableError) {
-        console.warn(`[export-full-database] Exception for ${tableName}:`, tableError);
-        exportData[tableName] = [{ _error: "Table not found or inaccessible" }];
+        exportData[tableName] = [{ _error: "Table not found" }];
       }
     }
 
-    // Calculate stats
-    const totalRows = Object.values(exportData).reduce(
-      (sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 
-      0
-    );
-    
-    console.log(`[export-full-database] Export completed. Total rows: ${totalRows}`);
-
-    // Return as compact JSON (no pretty print to save memory)
-    const jsonString = JSON.stringify(exportData);
-    
-    return withCors(req, new Response(jsonString, {
+    return withCors(req, new Response(JSON.stringify({
+      batch: batchNum,
+      tables: tablesToExport,
+      data: exportData,
+    }), {
       status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Content-Disposition": `attachment; filename="database-export-${new Date().toISOString().split('T')[0]}.json"`,
-      },
+      headers: { "Content-Type": "application/json" },
     }));
 
   } catch (error) {
