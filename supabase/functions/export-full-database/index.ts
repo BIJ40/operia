@@ -8,6 +8,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { handleCorsPreflightOrReject, withCors } from "../_shared/cors.ts";
 
+// 107 tables - Liste complète organisée en batches de 2
 const ALL_TABLES = [
   // Batch 0 - Core users
   "profiles", "apogee_agencies",
@@ -23,61 +24,119 @@ const ALL_TABLES = [
   "employment_contracts", "leave_requests",
   // Batch 6 - Requests & logs
   "document_requests", "document_access_logs",
-  // Batch 7 - Support
+  // Batch 7 - HR generated & payslips
+  "hr_generated_documents", "payslip_data",
+  // Batch 8 - Salary & audit
+  "salary_history", "rh_audit_log",
+  // Batch 9 - RH notifications & sensitive logs
+  "rh_notifications", "sensitive_data_access_log",
+  // Batch 10 - Support tickets core
   "support_tickets", "support_ticket_actions",
-  // Batch 8 - Apogee Tickets core (heavy)
-  "apogee_tickets",
-  // Batch 9 - Apogee Tickets comments
-  "apogee_ticket_comments", "apogee_ticket_attachments",
-  // Batch 10 - Apogee Tickets history
-  "apogee_ticket_history", "apogee_ticket_views",
-  // Batch 11 - Apogee Tickets config
-  "apogee_ticket_statuses", "apogee_ticket_transitions",
-  // Batch 12 - Apogee Tickets roles & permissions
-  "apogee_ticket_user_roles", "apogee_ticket_field_permissions",
-  // Batch 13 - Apogee Tickets tags
-  "apogee_ticket_tags", "apogee_impact_tags",
-  // Batch 14 - Apogee reference tables
-  "apogee_modules", "apogee_priorities",
-  // Batch 15 - Apogee reference tables 2
-  "apogee_owner_sides", "apogee_reported_by",
-  // Batch 16 - Apogee guides
-  "apogee_guides",
-  // Batch 17 - Blocks (heavy)
-  "blocks",
-  // Batch 18 - Apporteur blocks (heavy)
-  "apporteur_blocks",
-  // Batch 19 - Content
+  // Batch 11 - Support tickets views & attachments
+  "support_ticket_views", "support_attachments",
+  // Batch 12 - Support messages (heavy)
+  "support_messages", "support_presence",
+  // Batch 13 - Live support
+  "live_support_sessions", "live_support_messages",
+  // Batch 14 - Typing & presence
+  "typing_status", "user_presence",
+  // Batch 15 - Apogee Tickets core (heavy)
+  "apogee_tickets", "apogee_ticket_comments",
+  // Batch 16 - Apogee Tickets attachments & history
+  "apogee_ticket_attachments", "apogee_ticket_history",
+  // Batch 17 - Apogee Tickets views & statuses
+  "apogee_ticket_views", "apogee_ticket_statuses",
+  // Batch 18 - Apogee Tickets transitions & roles
+  "apogee_ticket_transitions", "apogee_ticket_user_roles",
+  // Batch 19 - Apogee Tickets permissions & tags
+  "apogee_ticket_field_permissions", "apogee_ticket_tags",
+  // Batch 20 - Apogee impact tags & modules
+  "apogee_impact_tags", "apogee_modules",
+  // Batch 21 - Apogee priorities & owner_sides
+  "apogee_priorities", "apogee_owner_sides",
+  // Batch 22 - Apogee reported_by & guides
+  "apogee_reported_by", "apogee_guides",
+  // Batch 23 - Ticket embeddings & duplicates (heavy)
+  "ticket_embeddings", "ticket_duplicate_suggestions",
+  // Batch 24 - Blocks (heavy)
+  "blocks", "apporteur_blocks",
+  // Batch 25 - Content categories & documents
   "categories", "documents",
-  // Batch 20 - Content 2
-  "favorites",
-  // Batch 21 - FAQ
+  // Batch 26 - Content sections & favorites
+  "sections", "favorites",
+  // Batch 27 - FAQ
   "faq_categories", "faq_items",
-  // Batch 22 - Chatbot (heavy)
-  "chatbot_queries",
-  // Batch 23 - AI & cache
-  "ai_search_cache",
-  // Batch 24 - Royalty config
+  // Batch 28 - Chatbot (heavy)
+  "chatbot_queries", "ai_search_cache",
+  // Batch 29 - Guide chunks & knowledge base (heavy - embeddings)
+  "guide_chunks", "knowledge_base",
+  // Batch 30 - RAG index
+  "rag_index_documents", "rag_index_jobs",
+  // Batch 31 - Royalty config
   "agency_royalty_config", "agency_royalty_tiers",
-  // Batch 25 - Royalty calculations
-  "agency_royalty_calculations",
-  // Batch 26 - Messaging
+  // Batch 32 - Royalty calculations
+  "agency_royalty_calculations", "sav_dossier_overrides",
+  // Batch 33 - Messaging conversations
   "conversations", "conversation_members",
-  // Batch 27 - Messages
+  // Batch 34 - Messages (heavy)
   "messages",
-  // Batch 28 - Announcements
+  // Batch 35 - Announcements
   "priority_announcements", "announcement_reads",
-  // Batch 29 - Visits & expenses
+  // Batch 36 - Visits & expenses
   "animator_visits", "expense_requests",
-  // Batch 30 - Fleet
-  "fleet_vehicles",
-  // Batch 31 - Settings
+  // Batch 37 - Fleet
+  "fleet_vehicles", "french_holidays",
+  // Batch 38 - Maintenance core
+  "maintenance_events", "maintenance_alerts",
+  // Batch 39 - Maintenance plans
+  "maintenance_plan_items", "maintenance_plan_templates",
+  // Batch 40 - StatIA metrics
+  "metrics_definitions", "metrics_cache",
+  // Batch 41 - StatIA custom & validations
+  "statia_custom_metrics", "statia_metric_validations",
+  // Batch 42 - StatIA widgets
+  "statia_widgets", "widget_templates",
+  // Batch 43 - User widgets
+  "user_widgets", "user_widget_preferences",
+  // Batch 44 - User dashboard
+  "user_dashboard_settings", "user_quick_notes",
+  // Batch 45 - User actions & history
+  "user_actions_config", "user_history",
+  // Batch 46 - User connections
+  "user_connection_logs", "user_calendar_connections",
+  // Batch 47 - User creation & consents
+  "user_creation_requests", "user_consents",
+  // Batch 48 - App settings
   "app_notification_settings", "diffusion_settings",
-  // Batch 32 - Feature flags
-  "feature_flags",
+  // Batch 49 - Feature flags & storage
+  "feature_flags", "storage_quota_alerts",
+  // Batch 50 - Rate limits & page metadata
+  "rate_limits", "page_metadata",
+  // Batch 51 - Franchiseur
+  "franchiseur_agency_assignments", "franchiseur_roles",
+  // Batch 52 - Formation & tools
+  "formation_content", "tools",
+  // Batch 53 - Home cards
+  "home_cards", "planning_signatures",
 ];
 
 const BATCH_SIZE = 2;
+
+// Tables avec beaucoup de données ou champs volumineux (embeddings, content)
+const HEAVY_TABLES = [
+  "blocks", 
+  "apporteur_blocks", 
+  "apogee_tickets", 
+  "chatbot_queries", 
+  "faq_items",
+  "guide_chunks",        // embeddings
+  "knowledge_base",      // embeddings
+  "ticket_embeddings",   // embeddings
+  "support_messages",    // messages volumineux
+  "live_support_messages",
+  "messages",            // messages potentiellement nombreux
+  "metrics_cache",       // cache potentiellement volumineux
+];
 
 serve(async (req) => {
   const corsResponse = handleCorsPreflightOrReject(req);
@@ -157,9 +216,6 @@ serve(async (req) => {
     console.log(`[export-full-database] Batch ${batchNum}: exporting ${tablesToExport.join(", ")}`);
 
     const exportData: Record<string, unknown[]> = {};
-    
-    // Heavy tables with large content fields need smaller limits
-    const HEAVY_TABLES = ["blocks", "apporteur_blocks", "apogee_tickets", "chatbot_queries", "faq_items"];
 
     for (const tableName of tablesToExport) {
       try {
