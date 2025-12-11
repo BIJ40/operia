@@ -36,6 +36,14 @@ import { logApogee } from '@/lib/logger';
 // Cache TTL - Default 2 hours
 let CACHE_TTL_MS = 2 * 60 * 60 * 1000;
 
+// Délai entre chaque appel API (ms) pour éviter rate limiting
+const API_THROTTLE_DELAY_MS = 500;
+
+/**
+ * Fonction sleep pour throttling
+ */
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 /**
  * Set the cache TTL
  */
@@ -290,26 +298,36 @@ export const apogeeProxy: ApogeeProxy = {
   setTTL: setApogeeCacheTTL,
   
   /**
-   * Load all data for an agency SEQUENTIALLY
-   * Évite les 429 rate limit en espaçant les requêtes
+   * Load all data for an agency SEQUENTIALLY WITH THROTTLING
+   * Évite les 429 rate limit en espaçant les requêtes de 500ms
    * Results are cached for TTL duration (2h default)
    */
   getAllData: async (agencySlug, bypassCache = false) => {
     const opts = { agencySlug, bypassCache };
     
-    logApogee.info(`[PROXY] Loading all data SEQUENTIALLY for ${agencySlug}`);
+    logApogee.info(`[PROXY] Loading all data SEQUENTIALLY WITH THROTTLE (${API_THROTTLE_DELAY_MS}ms) for ${agencySlug}`);
     const startTime = Date.now();
     
-    // Execute requests ONE BY ONE to avoid rate limiting
+    // Execute requests ONE BY ONE with delay to avoid rate limiting
     const users = await proxyRequest<any[]>('apiGetUsers', opts);
+    await sleep(API_THROTTLE_DELAY_MS);
+    
     const clients = await proxyRequest<any[]>('apiGetClients', opts);
+    await sleep(API_THROTTLE_DELAY_MS);
+    
     const projects = await proxyRequest<any[]>('apiGetProjects', opts);
+    await sleep(API_THROTTLE_DELAY_MS);
+    
     const interventions = await proxyRequest<any[]>('apiGetInterventions', opts);
+    await sleep(API_THROTTLE_DELAY_MS);
+    
     const factures = await proxyRequest<any[]>('apiGetFactures', opts);
+    await sleep(API_THROTTLE_DELAY_MS);
+    
     const devis = await proxyRequest<any[]>('apiGetDevis', opts);
     
     const duration = Date.now() - startTime;
-    logApogee.info(`[PROXY] All data loaded for ${agencySlug} in ${duration}ms (sequential)`);
+    logApogee.info(`[PROXY] All data loaded for ${agencySlug} in ${duration}ms (throttled sequential)`);
     
     return { 
       users: users || [], 
