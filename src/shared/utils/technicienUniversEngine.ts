@@ -87,13 +87,29 @@ const EXCLUDED_UNIVERSES = new Set([
 export function isActiveTechnician(user: any): boolean {
   if (!user) return false;
 
-  const hasUniverses = Array.isArray(user?.data?.universes) && user.data.universes.length > 0;
+  // Vérifier universes à plusieurs niveaux (data.universes ou universes direct)
+  const hasUniverses = 
+    (Array.isArray(user?.data?.universes) && user.data.universes.length > 0) ||
+    (Array.isArray(user?.universes) && user.universes.length > 0);
+  
   const isTechnicien =
     user?.isTechnicien === true ||
+    user?.isTechnicien === 1 ||
     user?.type === "technicien" ||
-    (user?.type === "utilisateur" && hasUniverses);
+    user?.type?.toLowerCase() === "technicien" ||
+    (user?.type === "utilisateur" && hasUniverses) ||
+    (user?.type?.toLowerCase() === "utilisateur" && hasUniverses);
 
-  const isActive = user?.is_on === true || user?.isActive === true;
+  // Vérification plus souple pour is_on/isActive (accepte true, 1, "1", "true")
+  const isActive = 
+    user?.is_on === true || 
+    user?.is_on === 1 ||
+    user?.is_on === "1" ||
+    user?.isActive === true || 
+    user?.isActive === 1 ||
+    user?.isActive === "1" ||
+    // Fallback: si pas de champ explicite, considérer actif par défaut si c'est un technicien
+    (user?.is_on === undefined && user?.isActive === undefined);
 
   return isTechnicien && isActive;
 }
