@@ -43,27 +43,35 @@ export class NetworkDataService {
 
   /**
    * Load data for multiple agencies via secure proxy
-   * Uses parallel loading since proxy handles agency isolation
+   * SEQUENTIAL LOADING with throttling to avoid 429 rate limits
    */
   static async loadMultiAgencyData(agencySlugs: string[], dateRange?: DateRange) {
     const results = [];
     
-    logNetwork.info(`Chargement de ${agencySlugs.length} agences via proxy sécurisé...`);
+    logNetwork.info(`Chargement SÉQUENTIEL de ${agencySlugs.length} agences via proxy sécurisé...`);
     
-    // Load agencies in parallel - proxy handles isolation
-    const loadPromises = agencySlugs.map(async (agencySlug) => {
+    // Délai entre chaque agence (ms) pour éviter rate limiting
+    const INTER_AGENCY_DELAY_MS = 500;
+    
+    // Helper sleep function
+    const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+    
+    // Load agencies ONE BY ONE with delay to avoid rate limiting
+    for (let i = 0; i < agencySlugs.length; i++) {
+      const agencySlug = agencySlugs[i];
       const cacheKey = `${agencySlug}-${dateRange?.from?.toISOString()}-${dateRange?.to?.toISOString()}`;
       
-      // Check cache
+      // Check cache first
       const cached = dataCache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
         logNetwork.debug(`${agencySlug}: données en cache`);
-        return { agencyId: agencySlug, data: cached.data };
+        results.push({ agencyId: agencySlug, data: cached.data });
+        continue; // No delay needed for cached data
       }
 
       // Load fresh data via secure proxy
       try {
-        logNetwork.debug(`${agencySlug}: chargement via proxy...`);
+        logNetwork.debug(`${agencySlug}: chargement via proxy... (${i + 1}/${agencySlugs.length})`);
         
         const loadedData = await apogeeProxy.getAllData(agencySlug);
         const data = {
@@ -80,18 +88,15 @@ export class NetworkDataService {
         // Cache the data
         dataCache.set(cacheKey, { data, timestamp: Date.now() });
         
-        return { agencyId: agencySlug, data };
+        results.push({ agencyId: agencySlug, data });
       } catch (error) {
         logNetwork.error(`${agencySlug}: échec chargement`, error);
-        return { agencyId: agencySlug, data: null, error };
+        // Continue with next agency even if one fails
       }
-    });
-
-    const loadedResults = await Promise.all(loadPromises);
-    
-    for (const result of loadedResults) {
-      if (result.data) {
-        results.push(result);
+      
+      // Throttle between agencies (except for last one)
+      if (i < agencySlugs.length - 1) {
+        await sleep(INTER_AGENCY_DELAY_MS);
       }
     }
 
