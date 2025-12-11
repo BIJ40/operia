@@ -37,7 +37,7 @@ function validateAndCast<T>(data: unknown[], entityName: string, schema: z.ZodSc
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
 // Délai entre chaque appel API (ms) pour éviter rate limiting
-const API_THROTTLE_DELAY_MS = 500;
+const API_THROTTLE_DELAY_MS = 1000;
 
 // Fonction sleep pour throttling
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));

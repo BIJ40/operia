@@ -37,7 +37,7 @@ import { logApogee } from '@/lib/logger';
 let CACHE_TTL_MS = 2 * 60 * 60 * 1000;
 
 // Délai entre chaque appel API (ms) pour éviter rate limiting
-const API_THROTTLE_DELAY_MS = 500;
+const API_THROTTLE_DELAY_MS = 1000;
 
 /**
  * Fonction sleep pour throttling
