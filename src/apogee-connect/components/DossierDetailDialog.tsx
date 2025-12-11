@@ -1,12 +1,17 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle, Calendar, Euro, FileText, User, Wrench } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { AlertCircle, Calendar, Euro, FileText, User, Wrench, Eye, EyeOff, Loader2, Shield } from 'lucide-react';
 import { DataService } from '../services/dataService';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface DossierDetailDialogProps {
   open: boolean;
@@ -19,7 +24,21 @@ type ApiProject = any;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ApiClient = any;
 
+interface ClientContact {
+  email: string | null;
+  tel: string | null;
+  tel2: string | null;
+  tel3: string | null;
+  adresse: string | null;
+  codePostal: string | null;
+  ville: string | null;
+}
+
 export function DossierDetailDialog({ open, onOpenChange, projectId }: DossierDetailDialogProps) {
+  const { agence } = useAuth();
+  const [showContact, setShowContact] = useState(false);
+  const [contactData, setContactData] = useState<ClientContact | null>(null);
+
   const { data, isLoading, error } = useQuery({
     queryKey: ['dossier-detail', projectId],
     enabled: open && !!projectId,
@@ -39,8 +58,55 @@ export function DossierDetailDialog({ open, onOpenChange, projectId }: DossierDe
     },
   });
 
+  const fetchContactMutation = useMutation({
+    mutationFn: async () => {
+      if (!data?.client || !data?.project || !agence) {
+        throw new Error('Données manquantes');
+      }
+
+      const { data: response, error } = await supabase.functions.invoke('get-client-contact', {
+        body: {
+          clientId: data.client.id,
+          projectId: data.project.id,
+          agencySlug: agence,
+        },
+      });
+
+      if (error) throw error;
+      if (!response.success) throw new Error(response.error || 'Erreur inconnue');
+      
+      return response.data as ClientContact;
+    },
+    onSuccess: (contactInfo) => {
+      setContactData(contactInfo);
+      setShowContact(true);
+      toast.success('Coordonnées chargées (accès audité)');
+    },
+    onError: (err) => {
+      toast.error(`Erreur: ${err instanceof Error ? err.message : 'Impossible de charger les coordonnées'}`);
+    },
+  });
+
+  const handleShowContact = () => {
+    if (showContact) {
+      setShowContact(false);
+      setContactData(null);
+    } else {
+      fetchContactMutation.mutate();
+    }
+  };
+
+  // Reset contact data when dialog closes
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      setShowContact(false);
+      setContactData(null);
+    }
+    onOpenChange(newOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">Détails du dossier</DialogTitle>
@@ -105,9 +171,27 @@ export function DossierDetailDialog({ open, onOpenChange, projectId }: DossierDe
             {data.client && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <User className="w-5 h-5" />
-                    Client
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <User className="w-5 h-5" />
+                      Client
+                    </span>
+                    <Button
+                      variant={showContact ? "secondary" : "outline"}
+                      size="sm"
+                      onClick={handleShowContact}
+                      disabled={fetchContactMutation.isPending}
+                      className="gap-2"
+                    >
+                      {fetchContactMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : showContact ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                      {showContact ? 'Masquer' : 'Voir coordonnées'}
+                    </Button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -120,29 +204,72 @@ export function DossierDetailDialog({ open, onOpenChange, projectId }: DossierDe
                          'Non renseigné'}
                       </p>
                     </div>
-                    {data.client.email && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Email</p>
-                        <p className="font-medium">{data.client.email}</p>
-                      </div>
-                    )}
-                    {data.client.tel && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Téléphone</p>
-                        <p className="font-medium">{data.client.tel}</p>
-                      </div>
-                    )}
-                    {data.client.adresse && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Adresse</p>
-                        <p className="font-medium">
-                          {data.client.adresse}
-                          {data.client.codePostal && ` ${data.client.codePostal}`}
-                          {data.client.ville && ` ${data.client.ville}`}
+                    
+                    {/* Email - masqué par défaut */}
+                    <div>
+                      <p className="text-sm text-muted-foreground">Email</p>
+                      {showContact && contactData?.email ? (
+                        <p className="font-medium text-primary">{contactData.email}</p>
+                      ) : (
+                        <p className="font-medium text-muted-foreground flex items-center gap-1">
+                          <Shield className="w-3 h-3" />
+                          {data.client.email === '***' ? 'Données protégées' : data.client.email || 'Non renseigné'}
                         </p>
-                      </div>
-                    )}
+                      )}
+                    </div>
+
+                    {/* Téléphone - masqué par défaut */}
+                    <div>
+                      <p className="text-sm text-muted-foreground">Téléphone</p>
+                      {showContact && contactData?.tel ? (
+                        <div className="space-y-1">
+                          <p className="font-medium text-primary">{contactData.tel}</p>
+                          {contactData.tel2 && <p className="text-sm text-primary">{contactData.tel2}</p>}
+                          {contactData.tel3 && <p className="text-sm text-primary">{contactData.tel3}</p>}
+                        </div>
+                      ) : (
+                        <p className="font-medium text-muted-foreground flex items-center gap-1">
+                          <Shield className="w-3 h-3" />
+                          {data.client.tel === '***' ? 'Données protégées' : data.client.tel || 'Non renseigné'}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Adresse - masquée par défaut */}
+                    <div>
+                      <p className="text-sm text-muted-foreground">Adresse</p>
+                      {showContact && contactData?.adresse ? (
+                        <p className="font-medium text-primary">
+                          {contactData.adresse}
+                          {contactData.codePostal && ` ${contactData.codePostal}`}
+                          {contactData.ville && ` ${contactData.ville}`}
+                        </p>
+                      ) : (
+                        <p className="font-medium text-muted-foreground flex items-center gap-1">
+                          <Shield className="w-3 h-3" />
+                          {data.client.adresse === '***' ? 'Données protégées' : (
+                            data.client.adresse ? (
+                              <>
+                                {data.client.adresse}
+                                {data.client.codePostal && ` ${data.client.codePostal}`}
+                                {data.client.ville && ` ${data.client.ville}`}
+                              </>
+                            ) : 'Non renseigné'
+                          )}
+                        </p>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Notice de sécurité */}
+                  {showContact && (
+                    <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                      <p className="text-xs text-amber-700 dark:text-amber-400 flex items-center gap-2">
+                        <Shield className="w-4 h-4" />
+                        Accès aux données sensibles enregistré pour audit RGPD
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
