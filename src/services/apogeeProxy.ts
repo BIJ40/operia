@@ -53,59 +53,73 @@ export function setApogeeCacheTTL(ttlMs: number): void {
 }
 
 // =============================================================================
-// GLOBAL REQUEST QUEUE - Garantit UNE SEULE requête à la fois
+// SEMAPHORE - Parallélisme limité (3 requêtes simultanées max)
 // =============================================================================
 
-class RequestQueue {
-  private queue: Array<() => Promise<void>> = [];
-  private isProcessing = false;
-  private lastRequestTime = 0;
-  private readonly minDelayMs = 500; // Délai minimum entre requêtes
+class Semaphore {
+  private running = 0;
+  private queue: Array<() => void> = [];
+  private readonly maxConcurrent: number;
+  private readonly minDelayMs: number;
+  private lastStartTime = 0;
 
-  async enqueue<T>(fn: () => Promise<T>): Promise<T> {
-    return new Promise((resolve, reject) => {
-      this.queue.push(async () => {
-        // Attendre le délai minimum depuis la dernière requête
-        const now = Date.now();
-        const timeSinceLastRequest = now - this.lastRequestTime;
-        if (timeSinceLastRequest < this.minDelayMs) {
-          await sleep(this.minDelayMs - timeSinceLastRequest);
-        }
-        
-        try {
-          const result = await fn();
-          this.lastRequestTime = Date.now();
-          resolve(result);
-        } catch (error) {
-          reject(error);
-        }
-      });
-      
-      this.processQueue();
+  constructor(maxConcurrent = 3, minDelayMs = 200) {
+    this.maxConcurrent = maxConcurrent;
+    this.minDelayMs = minDelayMs;
+  }
+
+  async acquire(): Promise<void> {
+    // Si on peut lancer immédiatement
+    if (this.running < this.maxConcurrent) {
+      // Attendre un délai minimum depuis le dernier lancement
+      const now = Date.now();
+      const timeSinceLast = now - this.lastStartTime;
+      if (timeSinceLast < this.minDelayMs) {
+        await sleep(this.minDelayMs - timeSinceLast);
+      }
+      this.running++;
+      this.lastStartTime = Date.now();
+      return;
+    }
+
+    // Sinon, attendre qu'un slot se libère
+    return new Promise((resolve) => {
+      this.queue.push(resolve);
     });
   }
 
-  private async processQueue() {
-    if (this.isProcessing) return;
-    this.isProcessing = true;
-
-    while (this.queue.length > 0) {
-      const task = this.queue.shift();
-      if (task) {
-        await task();
+  release(): void {
+    this.running--;
+    if (this.queue.length > 0 && this.running < this.maxConcurrent) {
+      const next = this.queue.shift();
+      if (next) {
+        this.running++;
+        this.lastStartTime = Date.now();
+        next();
       }
     }
+  }
 
-    this.isProcessing = false;
+  async run<T>(fn: () => Promise<T>): Promise<T> {
+    await this.acquire();
+    try {
+      return await fn();
+    } finally {
+      this.release();
+    }
   }
 
   get pendingCount() {
     return this.queue.length;
   }
+
+  get activeCount() {
+    return this.running;
+  }
 }
 
-// Instance globale de la queue
-const globalRequestQueue = new RequestQueue();
+// Instance globale du sémaphore - 3 requêtes simultanées max
+const globalSemaphore = new Semaphore(3, 200);
 
 // =============================================================================
 // MEMORY CACHE
@@ -239,9 +253,9 @@ async function executeRequest<T>(
   agencySlug: string,
   filters?: Record<string, unknown>
 ): Promise<T> {
-  // Utiliser la queue globale pour garantir une seule requête à la fois
-  return globalRequestQueue.enqueue(async () => {
-    logApogee.debug(`[QUEUE] Processing ${endpoint}:${agencySlug} (${globalRequestQueue.pendingCount} pending)`);
+  // Utiliser le sémaphore pour limiter à 3 requêtes simultanées
+  return globalSemaphore.run(async () => {
+    logApogee.debug(`[SEMAPHORE] Processing ${endpoint}:${agencySlug} (${globalSemaphore.activeCount} active, ${globalSemaphore.pendingCount} pending)`);
     
     const { data, error } = await supabase.functions.invoke<ApogeeProxyResponse<T>>('proxy-apogee', {
       body: {
@@ -357,18 +371,18 @@ export const apogeeProxy: ApogeeProxy = {
   setTTL: setApogeeCacheTTL,
   
   /**
-   * Load all data for an agency via GLOBAL QUEUE
-   * La queue globale garantit qu'une seule requête s'exécute à la fois
+   * Load all data for an agency via SEMAPHORE (3 concurrent max)
+   * Le sémaphore limite à 3 requêtes simultanées pour éviter le rate limiting
    * Results are cached for TTL duration (2h default)
    */
   getAllData: async (agencySlug, bypassCache = false) => {
     const opts = { agencySlug, bypassCache };
     
-    logApogee.info(`[PROXY] Loading all data via GLOBAL QUEUE for ${agencySlug}`);
+    logApogee.info(`[PROXY] Loading all data via SEMAPHORE for ${agencySlug}`);
     const startTime = Date.now();
     
-    // La queue globale gère automatiquement le throttling
-    // Toutes ces requêtes passent par la queue une par une
+    // Le sémaphore gère automatiquement le throttling avec max 3 requêtes parallèles
+    // Cela permet un bon compromis entre vitesse et respect des limites
     const [users, clients, projects, interventions, factures, devis] = await Promise.all([
       proxyRequest<any[]>('apiGetUsers', opts),
       proxyRequest<any[]>('apiGetClients', opts),
@@ -379,7 +393,7 @@ export const apogeeProxy: ApogeeProxy = {
     ]);
     
     const duration = Date.now() - startTime;
-    logApogee.info(`[PROXY] All data loaded for ${agencySlug} in ${duration}ms (via queue)`);
+    logApogee.info(`[PROXY] All data loaded for ${agencySlug} in ${duration}ms (via semaphore)`);
     
     return { 
       users: users || [], 
