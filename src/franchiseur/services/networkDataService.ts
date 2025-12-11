@@ -43,35 +43,25 @@ export class NetworkDataService {
 
   /**
    * Load data for multiple agencies via secure proxy
-   * SEQUENTIAL LOADING with throttling to avoid 429 rate limits
+   * La QUEUE GLOBALE dans apogeeProxy gère automatiquement le throttling
    */
   static async loadMultiAgencyData(agencySlugs: string[], dateRange?: DateRange) {
-    const results = [];
+    logNetwork.info(`Chargement de ${agencySlugs.length} agences via proxy sécurisé (queue globale)...`);
     
-    logNetwork.info(`Chargement SÉQUENTIEL de ${agencySlugs.length} agences via proxy sécurisé...`);
-    
-    // Délai entre chaque agence (ms) pour éviter rate limiting
-    const INTER_AGENCY_DELAY_MS = 500;
-    
-    // Helper sleep function
-    const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-    
-    // Load agencies ONE BY ONE with delay to avoid rate limiting
-    for (let i = 0; i < agencySlugs.length; i++) {
-      const agencySlug = agencySlugs[i];
+    // Charger toutes les agences en parallèle - la queue globale serialize automatiquement
+    const loadPromises = agencySlugs.map(async (agencySlug) => {
       const cacheKey = `${agencySlug}-${dateRange?.from?.toISOString()}-${dateRange?.to?.toISOString()}`;
       
       // Check cache first
       const cached = dataCache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
         logNetwork.debug(`${agencySlug}: données en cache`);
-        results.push({ agencyId: agencySlug, data: cached.data });
-        continue; // No delay needed for cached data
+        return { agencyId: agencySlug, data: cached.data };
       }
 
-      // Load fresh data via secure proxy
+      // Load fresh data via secure proxy (queue gère le throttling)
       try {
-        logNetwork.debug(`${agencySlug}: chargement via proxy... (${i + 1}/${agencySlugs.length})`);
+        logNetwork.debug(`${agencySlug}: chargement via proxy...`);
         
         const loadedData = await apogeeProxy.getAllData(agencySlug);
         const data = {
@@ -83,22 +73,20 @@ export class NetworkDataService {
           devis: loadedData.devis || [],
         };
 
-        logNetwork.debug(`${agencySlug}: ${data.factures.length} factures, ${data.projects.length} projets, ${data.interventions.length} interventions`);
+        logNetwork.debug(`${agencySlug}: ${data.factures.length} factures, ${data.projects.length} projets`);
 
         // Cache the data
         dataCache.set(cacheKey, { data, timestamp: Date.now() });
         
-        results.push({ agencyId: agencySlug, data });
+        return { agencyId: agencySlug, data };
       } catch (error) {
         logNetwork.error(`${agencySlug}: échec chargement`, error);
-        // Continue with next agency even if one fails
+        return { agencyId: agencySlug, data: null, error };
       }
-      
-      // Throttle between agencies (except for last one)
-      if (i < agencySlugs.length - 1) {
-        await sleep(INTER_AGENCY_DELAY_MS);
-      }
-    }
+    });
+
+    const loadedResults = await Promise.all(loadPromises);
+    const results = loadedResults.filter(r => r.data !== null);
 
     logNetwork.info(`Chargement terminé: ${results.length}/${agencySlugs.length} agences OK`);
     return results;
