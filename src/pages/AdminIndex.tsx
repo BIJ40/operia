@@ -7,6 +7,7 @@ import {
 import { ROUTES } from '@/config/routes';
 import { cn } from '@/lib/utils';
 import { StatsOverview } from '@/components/admin/overview/StatsOverview';
+import { DatabaseExportButton } from '@/components/admin/DatabaseExportButton';
 
 interface AdminLinkProps {
   to: string;
@@ -129,6 +130,16 @@ export default function AdminIndex() {
           <AdminLink to={ROUTES.admin.cacheBackup} icon={Archive} title="Cache Backup" description="Gestion du cache" />
           <AdminLink to={ROUTES.admin.storageQuota} icon={HardDrive} title="Stockage" description="Quotas et espace" />
         </AdminSection>
+
+        {/* Export Rapide */}
+        <div className="flex items-center gap-4 p-4 rounded-lg border border-border/50 bg-card/50">
+          <Database className="w-5 h-5 text-primary" />
+          <div className="flex-1">
+            <h4 className="font-medium text-sm">Export complet de la base de données</h4>
+            <p className="text-xs text-muted-foreground">Télécharger toutes vos données au format JSON</p>
+          </div>
+          <DatabaseExportButton />
+        </div>
 
         {/* SYSTÈME & MONITORING */}
         <AdminSection 
