@@ -1,5 +1,5 @@
 /**
- * Bouton d'export complet de la base de données en 3 fichiers
+ * Bouton d'export complet de la base de données en 6 fichiers
  */
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -31,7 +31,7 @@ export function DatabaseExportButton() {
     setProgress('Initialisation...');
     
     try {
-      logInfo('[DatabaseExportButton] Starting 3-part database export...');
+      logInfo('[DatabaseExportButton] Starting 6-part database export...');
       
       const session = await supabase.auth.getSession();
       const token = session.data.session?.access_token;
@@ -39,9 +39,9 @@ export function DatabaseExportButton() {
 
       const baseUrl = import.meta.env.VITE_SUPABASE_URL;
       
-      // Export each part separately
-      for (let part = 1; part <= 3; part++) {
-        setProgress(`Export partie ${part}/3...`);
+      // Export each part separately (6 parts)
+      for (let part = 1; part <= 6; part++) {
+        setProgress(`Export partie ${part}/6...`);
         
         const res = await fetch(
           `${baseUrl}/functions/v1/export-full-database?part=${part}`,
@@ -59,13 +59,13 @@ export function DatabaseExportButton() {
         logInfo(`[DatabaseExportButton] Part ${part} downloaded`);
         
         // Small delay between downloads
-        if (part < 3) {
+        if (part < 6) {
           await new Promise(r => setTimeout(r, 500));
         }
       }
 
       toast.success('Export réussi', {
-        description: '3 fichiers JSON téléchargés',
+        description: '6 fichiers JSON téléchargés',
       });
       logInfo('[DatabaseExportButton] Export completed successfully');
     } catch (err: any) {
@@ -89,7 +89,7 @@ export function DatabaseExportButton() {
       ) : (
         <Download className="h-4 w-4" />
       )}
-      {isExporting ? progress || 'Export en cours...' : 'Exporter la base (3 fichiers JSON)'}
+      {isExporting ? progress || 'Export en cours...' : 'Exporter la base (6 fichiers JSON)'}
     </Button>
   );
 }

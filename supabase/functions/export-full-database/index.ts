@@ -1,6 +1,6 @@
 /**
  * Edge Function: export-full-database
- * Export de la base de données en 3 parties pour éviter les limites mémoire
+ * Export de la base de données en 6 parties pour éviter les limites mémoire
  * Usage: backup, migration, livraison client
  */
 
@@ -10,107 +10,168 @@ import { handleCorsPreflightOrReject, withCors } from "../_shared/cors.ts";
 
 // Tables avec embeddings - EXCLUES car régénérables via RAG indexing
 const EXCLUDED_EMBEDDING_TABLES = [
-  "guide_chunks",        // embeddings volumineux - régénérable
-  "ticket_embeddings",   // embeddings volumineux - régénérable  
-  "knowledge_base",      // embeddings volumineux - régénérable
+  "guide_chunks",
+  "ticket_embeddings",
+  "knowledge_base",
 ];
 
-// 104 tables divisées en 3 parties (~35 tables chacune)
+// Part 1 - Core users & agencies (~17 tables)
 const TABLES_PART_1 = [
-  // Core users & agencies
-  "profiles", "apogee_agencies", "agency_commercial_profile", "agency_stamps",
-  "agency_rh_roles", "user_modules",
-  // Collaborators & HR
-  "collaborators", "collaborator_documents", "collaborator_sensitive_data", 
-  "collaborator_document_folders", "employment_contracts", "leave_requests",
-  "document_requests", "document_access_logs", "hr_generated_documents", 
-  "payslip_data", "salary_history", "rh_audit_log", "rh_notifications", 
-  "sensitive_data_access_log",
-  // Support tickets
-  "support_tickets", "support_ticket_actions", "support_ticket_views", 
-  "support_attachments", "support_messages", "support_presence",
-  // Live support
-  "live_support_sessions", "live_support_messages", "typing_status", "user_presence",
-  // Royalty
-  "agency_royalty_config", "agency_royalty_tiers", "agency_royalty_calculations",
-];
-
-const TABLES_PART_2 = [
-  // Apogee Tickets
-  "apogee_tickets", "apogee_ticket_comments", "apogee_ticket_attachments", 
-  "apogee_ticket_history", "apogee_ticket_views", "apogee_ticket_statuses",
-  "apogee_ticket_transitions", "apogee_ticket_user_roles", 
-  "apogee_ticket_field_permissions", "apogee_ticket_tags",
-  "apogee_impact_tags", "apogee_modules", "apogee_priorities", "apogee_owner_sides",
-  "apogee_reported_by", "apogee_guides", "ticket_duplicate_suggestions",
-  // Content & blocks
-  "blocks", "apporteur_blocks", "categories", "documents", "sections", "favorites",
-  // FAQ & chatbot
-  "faq_categories", "faq_items", "chatbot_queries", "ai_search_cache",
-  // RAG
-  "rag_index_documents", "rag_index_jobs",
-  // SAV
-  "sav_dossier_overrides",
-];
-
-const TABLES_PART_3 = [
-  // Messaging
-  "conversations", "conversation_members", "messages",
-  // Announcements
-  "priority_announcements", "announcement_reads",
-  // Visits & expenses
-  "animator_visits", "expense_requests",
-  // Fleet & holidays
-  "fleet_vehicles", "french_holidays",
-  // Maintenance
-  "maintenance_events", "maintenance_alerts", "maintenance_plan_items", 
-  "maintenance_plan_templates",
-  // StatIA & metrics
-  "metrics_definitions", "metrics_cache", "statia_custom_metrics", 
-  "statia_metric_validations", "statia_widgets", "widget_templates",
-  // User widgets & settings
-  "user_widgets", "user_widget_preferences", "user_dashboard_settings", 
-  "user_quick_notes", "user_actions_config", "user_history",
-  "user_connection_logs", "user_calendar_connections", "user_creation_requests", 
+  "profiles",
+  "apogee_agencies",
+  "agency_commercial_profile",
+  "agency_stamps",
+  "agency_rh_roles",
+  "user_modules",
   "user_consents",
-  // App settings
-  "app_notification_settings", "diffusion_settings", "feature_flags", 
-  "storage_quota_alerts", "rate_limits", "page_metadata",
-  // Franchiseur
-  "franchiseur_agency_assignments", "franchiseur_roles",
-  // Formation & tools
-  "formation_content", "tools", "home_cards", "planning_signatures",
+  "user_creation_requests",
+  "franchiseur_roles",
+  "franchiseur_agency_assignments",
+  "agency_royalty_config",
+  "agency_royalty_tiers",
+  "agency_royalty_calculations",
+  "french_holidays",
+  "categories",
+  "feature_flags",
+  "page_metadata",
+];
+
+// Part 2 - Collaborators & HR Documents (~17 tables)
+const TABLES_PART_2 = [
+  "collaborators",
+  "collaborator_documents",
+  "collaborator_sensitive_data",
+  "collaborator_document_folders",
+  "employment_contracts",
+  "document_requests",
+  "document_access_logs",
+  "hr_generated_documents",
+  "payslip_data",
+  "salary_history",
+  "rh_audit_log",
+  "rh_notifications",
+  "sensitive_data_access_log",
+  "leave_requests",
+  "leave_balances",
+  "user_connection_logs",
+  "user_history",
+];
+
+// Part 3 - Support & Live Support (~17 tables)
+const TABLES_PART_3 = [
+  "support_tickets",
+  "support_ticket_actions",
+  "support_ticket_views",
+  "support_attachments",
+  "support_messages",
+  "support_presence",
+  "live_support_sessions",
+  "live_support_messages",
+  "typing_status",
+  "user_presence",
+  "chatbot_queries",
+  "faq_categories",
+  "faq_items",
+  "ai_search_cache",
+  "rag_index_documents",
+  "rag_index_jobs",
+  "formation_content",
+];
+
+// Part 4 - Apogee Tickets (~17 tables)
+const TABLES_PART_4 = [
+  "apogee_tickets",
+  "apogee_ticket_comments",
+  "apogee_ticket_attachments",
+  "apogee_ticket_history",
+  "apogee_ticket_views",
+  "apogee_ticket_statuses",
+  "apogee_ticket_transitions",
+  "apogee_ticket_user_roles",
+  "apogee_ticket_field_permissions",
+  "apogee_ticket_tags",
+  "apogee_impact_tags",
+  "apogee_modules",
+  "apogee_priorities",
+  "apogee_owner_sides",
+  "apogee_reported_by",
+  "apogee_guides",
+  "ticket_duplicate_suggestions",
+];
+
+// Part 5 - Content Blocks & Messaging (~17 tables)
+const TABLES_PART_5 = [
+  "blocks",
+  "apporteur_blocks",
+  "documents",
+  "sections",
+  "favorites",
+  "conversations",
+  "conversation_members",
+  "messages",
+  "priority_announcements",
+  "announcement_reads",
+  "home_cards",
+  "tools",
+  "planning_signatures",
+  "sav_dossier_overrides",
+  "user_calendar_connections",
+  "user_actions_config",
+  "user_quick_notes",
+];
+
+// Part 6 - Fleet, Maintenance, StatIA & Settings (~17 tables)
+const TABLES_PART_6 = [
+  "animator_visits",
+  "expense_requests",
+  "fleet_vehicles",
+  "maintenance_events",
+  "maintenance_alerts",
+  "maintenance_plan_items",
+  "maintenance_plan_templates",
+  "metrics_definitions",
+  "metrics_cache",
+  "statia_custom_metrics",
+  "statia_metric_validations",
+  "statia_widgets",
+  "widget_templates",
+  "user_widgets",
+  "user_widget_preferences",
+  "user_dashboard_settings",
+  "app_notification_settings",
+  "diffusion_settings",
+  "storage_quota_alerts",
+  "rate_limits",
 ];
 
 // Limites par table pour éviter les dépassements mémoire
 const TABLE_LIMITS: Record<string, number> = {
-  // Tables très lourdes - limite stricte
-  "profiles": 100,
-  "collaborators": 100,
-  "collaborator_documents": 50,
-  "support_tickets": 50,
-  "support_messages": 30,
-  "support_ticket_actions": 50,
-  "live_support_sessions": 50,
-  "live_support_messages": 30,
-  "chatbot_queries": 50,
-  "faq_items": 50,
-  "messages": 30,
+  "profiles": 300,
+  "collaborators": 300,
+  "collaborator_documents": 200,
+  "support_tickets": 200,
+  "support_messages": 100,
+  "support_ticket_actions": 200,
+  "live_support_sessions": 200,
+  "live_support_messages": 100,
+  "chatbot_queries": 200,
+  "faq_items": 200,
+  "messages": 100,
   "metrics_cache": 0, // Skip - regenerable
-  "blocks": 100,
-  "apporteur_blocks": 100,
-  "apogee_tickets": 200,
+  "blocks": 300,
+  "apporteur_blocks": 300,
+  "apogee_tickets": 500,
   "apogee_ticket_comments": 500,
-  "apogee_ticket_history": 200,
+  "apogee_ticket_history": 500,
   "apogee_guides": 500,
-  "user_connection_logs": 200,
-  "rag_index_documents": 50,
-  "rh_audit_log": 200,
-  "document_access_logs": 100,
-  "payslip_data": 200,
+  "user_connection_logs": 500,
+  "rag_index_documents": 200,
+  "rh_audit_log": 500,
+  "document_access_logs": 300,
+  "payslip_data": 500,
 };
 
-const DEFAULT_LIMIT = 300;
+const DEFAULT_LIMIT = 500;
 
 serve(async (req) => {
   const corsResponse = handleCorsPreflightOrReject(req);
@@ -158,7 +219,6 @@ serve(async (req) => {
       ));
     }
 
-    // Parse request to get part number (1, 2, or 3)
     const url = new URL(req.url);
     const partParam = url.searchParams.get("part");
     
@@ -166,36 +226,38 @@ serve(async (req) => {
     if (!partParam) {
       return withCors(req, new Response(
         JSON.stringify({
-          total_parts: 3,
+          total_parts: 6,
           parts: [
-            { part: 1, tables_count: TABLES_PART_1.length, tables: TABLES_PART_1 },
-            { part: 2, tables_count: TABLES_PART_2.length, tables: TABLES_PART_2 },
-            { part: 3, tables_count: TABLES_PART_3.length, tables: TABLES_PART_3 },
+            { part: 1, tables_count: TABLES_PART_1.length, description: "Core users & agencies" },
+            { part: 2, tables_count: TABLES_PART_2.length, description: "Collaborators & HR Documents" },
+            { part: 3, tables_count: TABLES_PART_3.length, description: "Support & Live Support" },
+            { part: 4, tables_count: TABLES_PART_4.length, description: "Apogee Tickets" },
+            { part: 5, tables_count: TABLES_PART_5.length, description: "Content Blocks & Messaging" },
+            { part: 6, tables_count: TABLES_PART_6.length, description: "Fleet, Maintenance, StatIA & Settings" },
           ],
-          total_tables: TABLES_PART_1.length + TABLES_PART_2.length + TABLES_PART_3.length,
+          total_tables: TABLES_PART_1.length + TABLES_PART_2.length + TABLES_PART_3.length + 
+                        TABLES_PART_4.length + TABLES_PART_5.length + TABLES_PART_6.length,
         }),
         { status: 200, headers: { "Content-Type": "application/json" } }
       ));
     }
 
     const partNum = parseInt(partParam, 10);
-    let tablesToExport: string[] = [];
-    
-    switch (partNum) {
-      case 1:
-        tablesToExport = TABLES_PART_1;
-        break;
-      case 2:
-        tablesToExport = TABLES_PART_2;
-        break;
-      case 3:
-        tablesToExport = TABLES_PART_3;
-        break;
-      default:
-        return withCors(req, new Response(
-          JSON.stringify({ error: "Part invalide (1, 2 ou 3)" }),
-          { status: 400, headers: { "Content-Type": "application/json" } }
-        ));
+    const partsMap: Record<number, string[]> = {
+      1: TABLES_PART_1,
+      2: TABLES_PART_2,
+      3: TABLES_PART_3,
+      4: TABLES_PART_4,
+      5: TABLES_PART_5,
+      6: TABLES_PART_6,
+    };
+
+    const tablesToExport = partsMap[partNum];
+    if (!tablesToExport) {
+      return withCors(req, new Response(
+        JSON.stringify({ error: "Part invalide (1-6)" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      ));
     }
 
     console.log(`[export-full-database] Part ${partNum}: exporting ${tablesToExport.length} tables`);
@@ -211,6 +273,12 @@ serve(async (req) => {
     for (const tableName of tablesToExport) {
       try {
         const tableLimit = TABLE_LIMITS[tableName] ?? DEFAULT_LIMIT;
+        
+        // Skip tables with limit 0
+        if (tableLimit === 0) {
+          exportData[tableName] = [{ _skipped: "regenerable" }];
+          continue;
+        }
         
         const { data, error } = await supabaseAdmin
           .from(tableName)
