@@ -11,38 +11,70 @@ import { handleCorsPreflightOrReject, withCors } from "../_shared/cors.ts";
 const ALL_TABLES = [
   // Batch 0 - Core users
   "profiles", "apogee_agencies",
-  // Batch 1 - Collaborators
+  // Batch 1 - Agency config
+  "agency_commercial_profile", "agency_stamps",
+  // Batch 2 - Agency roles
+  "agency_rh_roles", "user_modules",
+  // Batch 3 - Collaborators
   "collaborators", "collaborator_documents",
-  // Batch 2 - HR
-  "collaborator_sensitive_data", "employment_contracts",
-  // Batch 3 - Requests
-  "document_requests", "leave_requests",
-  // Batch 4 - Support
+  // Batch 4 - Collaborator details
+  "collaborator_sensitive_data", "collaborator_document_folders",
+  // Batch 5 - HR contracts
+  "employment_contracts", "leave_requests",
+  // Batch 6 - Requests & logs
+  "document_requests", "document_access_logs",
+  // Batch 7 - Support
   "support_tickets", "support_ticket_actions",
-  // Batch 5 - Apogee Tickets core
+  // Batch 8 - Apogee Tickets core (heavy)
   "apogee_tickets",
-  // Batch 6 - Apogee Tickets related
+  // Batch 9 - Apogee Tickets comments
   "apogee_ticket_comments", "apogee_ticket_attachments",
-  // Batch 7 - Apogee Tickets meta
-  "apogee_ticket_history", "apogee_ticket_statuses", "apogee_modules", "apogee_priorities",
-  // Batch 8 - Blocks (heavy)
+  // Batch 10 - Apogee Tickets history
+  "apogee_ticket_history", "apogee_ticket_views",
+  // Batch 11 - Apogee Tickets config
+  "apogee_ticket_statuses", "apogee_ticket_transitions",
+  // Batch 12 - Apogee Tickets roles & permissions
+  "apogee_ticket_user_roles", "apogee_ticket_field_permissions",
+  // Batch 13 - Apogee Tickets tags
+  "apogee_ticket_tags", "apogee_impact_tags",
+  // Batch 14 - Apogee reference tables
+  "apogee_modules", "apogee_priorities",
+  // Batch 15 - Apogee reference tables 2
+  "apogee_owner_sides", "apogee_reported_by",
+  // Batch 16 - Apogee guides
+  "apogee_guides",
+  // Batch 17 - Blocks (heavy)
   "blocks",
-  // Batch 9 - Apporteur blocks (heavy)
+  // Batch 18 - Apporteur blocks (heavy)
   "apporteur_blocks",
-  // Batch 10 - Content light
-  "categories", "documents", "favorites",
-  // Batch 11 - FAQ
+  // Batch 19 - Content
+  "categories", "documents",
+  // Batch 20 - Content 2
+  "favorites",
+  // Batch 21 - FAQ
   "faq_categories", "faq_items",
-  // Batch 12 - Chatbot
+  // Batch 22 - Chatbot (heavy)
   "chatbot_queries",
-  // Batch 13 - Config
-  "feature_flags", "user_modules",
-  // Batch 14 - Royalty
+  // Batch 23 - AI & cache
+  "ai_search_cache",
+  // Batch 24 - Royalty config
   "agency_royalty_config", "agency_royalty_tiers",
-  // Batch 15 - Messaging
-  "conversations", "conversation_members", "messages",
-  // Batch 16 - Misc
-  "announcements", "announcement_reads", "animator_visits", "expense_requests", "fleet_vehicles",
+  // Batch 25 - Royalty calculations
+  "agency_royalty_calculations",
+  // Batch 26 - Messaging
+  "conversations", "conversation_members",
+  // Batch 27 - Messages
+  "messages",
+  // Batch 28 - Announcements
+  "priority_announcements", "announcement_reads",
+  // Batch 29 - Visits & expenses
+  "animator_visits", "expense_requests",
+  // Batch 30 - Fleet
+  "fleet_vehicles",
+  // Batch 31 - Settings
+  "app_notification_settings", "diffusion_settings",
+  // Batch 32 - Feature flags
+  "feature_flags",
 ];
 
 const BATCH_SIZE = 2;
