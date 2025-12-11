@@ -11,6 +11,7 @@ import { useStatiaReseauDashboard } from '@/statia/hooks/useStatiaReseauDashboar
 import { useStatiaComparatifAgences } from '@/statia/hooks/useStatiaComparatifAgences';
 import { useNetworkFilters } from '@/franchiseur/contexts/NetworkFiltersContext';
 import { useFranchiseur } from '@/franchiseur/contexts/FranchiseurContext';
+import { useFranchiseurStatsStatia } from '../hooks/useFranchiseurStatsStatia';
 import { FranchiseurPageHeader } from '../components/layout/FranchiseurPageHeader';
 import { FranchiseurPageContainer } from '../components/layout/FranchiseurPageContainer';
 import { format } from 'date-fns';
@@ -89,8 +90,9 @@ export default function ReseauGraphiquesPage() {
     dateEnd,
     scopeAgencies: selectedAgencies.length > 0 ? selectedAgencies : undefined,
   });
+  const { data: franchiseurStatsData, isLoading: loadingStats } = useFranchiseurStatsStatia();
 
-  const isLoading = loadingDashboard || loadingComparatif;
+  const isLoading = loadingDashboard || loadingComparatif || loadingStats;
 
   // Prepared data
   const agences = comparatifData?.agences || [];
@@ -98,6 +100,7 @@ export default function ReseauGraphiquesPage() {
   const savSeriesData = dashboardData?.blocSav.serieTauxSavMensuel || [];
   const partCAAgences = dashboardData?.blocCA.partCAParAgence || [];
   const topApporteurs = dashboardData?.blocApporteurs.top3ApporteursCA || [];
+  const technicienStats = franchiseurStatsData?.technicienStats || [];
 
   // CA par agence for bar chart
   const caParAgenceData = useMemo(() => 
@@ -228,6 +231,20 @@ export default function ReseauGraphiquesPage() {
       { subject: 'CA/Tech', agence: normalize(topAgency.ca_par_technicien_actif || 0, avgCaTech * 2), reseau: 50, fullMark: 100 },
     ];
   }, [agences]);
+
+  // TOP 10 techniciens individuels (CA par technicien)
+  const topTechniciensData = useMemo(() =>
+    technicienStats
+      .slice(0, 10)
+      .map(tech => ({
+        name: tech.technicienNom.length > 15 ? tech.technicienNom.slice(0, 15) + '...' : tech.technicienNom,
+        fullName: tech.technicienNom,
+        ca: tech.totaux.caHT,
+        heures: tech.totaux.heures,
+        agence: tech.agenceLabel || tech.agenceSlug || 'N/A',
+      })),
+    [technicienStats]
+  );
 
   // Theme filter
   const showSection = (section: GraphTheme) => theme === 'all' || theme === section;
@@ -682,7 +699,38 @@ export default function ReseauGraphiquesPage() {
               </CardContent>
             </Card>
 
-            {/* 20. Radar profil agence */}
+            {/* 20. TOP 10 Techniciens - CA individuel */}
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>TOP 10 Techniciens - CA individuel</CardTitle>
+                <CardDescription>Performance individuelle des collaborateurs (CA HT)</CardDescription>
+              </CardHeader>
+              <CardContent className="h-[400px]">
+                {topTechniciensData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={topTechniciensData} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis type="number" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k€`} />
+                      <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11 }} />
+                      <Tooltip 
+                        formatter={(v: number) => formatCurrency(v)}
+                        labelFormatter={(_, payload) => {
+                          const item = payload?.[0]?.payload;
+                          if (item) return `${item.fullName} (${item.agence})`;
+                          return '';
+                        }}
+                      />
+                      <Legend />
+                      <Bar dataKey="ca" name="CA HT" fill={HELPCONFORT_BLUE} radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-muted-foreground">Aucune donnée technicien</div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* 21. Radar profil agence */}
             <Card className="lg:col-span-2">
               <CardHeader>
                 <CardTitle>Profil agence vs moyenne réseau</CardTitle>
