@@ -5,25 +5,64 @@
  * AUCUNE clé API n'est exposée côté client.
  * 
  * Features:
+ * - PERSISTENT CACHE: localStorage cache with configurable TTL (default 2h)
  * - Request deduplication: identical concurrent requests share the same promise
- * - TTL cache: responses cached for 60 seconds to reduce API calls
  * - Request queue: limits concurrent requests to avoid rate limiting
  * - Auto-retry on 429 with exponential backoff
  * 
  * Usage:
  * ```typescript
- * import { apogeeProxy } from '@/services/apogeeProxy';
+ * import { apogeeProxy, setApogéeCacheTTL, clearApogeeCache } from '@/services/apogeeProxy';
+ * 
+ * // Configure cache TTL (optional, default 2h)
+ * setApogéeCacheTTL(6 * 60 * 60 * 1000); // 6 hours
  * 
  * // Pour l'agence de l'utilisateur connecté
  * const users = await apogeeProxy.getUsers();
  * 
  * // Pour une agence spécifique (franchiseur uniquement)
  * const factures = await apogeeProxy.getFactures({ agencySlug: 'dax' });
+ * 
+ * // Force refresh (bypass cache)
+ * const freshData = await apogeeProxy.getFactures({ skipCache: true });
+ * 
+ * // Clear all cached data
+ * clearApogeeCache();
  * ```
  */
 
 import { supabase } from '@/integrations/supabase/client';
 import { logApogee } from '@/lib/logger';
+
+// ============================================================================
+// CONFIGURATION
+// ============================================================================
+
+const STORAGE_PREFIX = 'apogee_cache_';
+const STORAGE_META_KEY = 'apogee_cache_meta';
+
+// Default TTL: 2 hours (configurable)
+let PERSISTENT_CACHE_TTL_MS = 2 * 60 * 60 * 1000;
+
+// In-memory cache for current session (faster access)
+const memoryCache = new Map<string, { data: unknown; timestamp: number }>();
+
+// In-flight request deduplication map
+const inFlightRequests = new Map<string, Promise<unknown>>();
+
+// Request queue configuration
+const MAX_CONCURRENT_REQUESTS = 10;
+const REQUEST_DELAY_MS = 50;
+const MAX_RETRIES = 3;
+const RETRY_BASE_DELAY_MS = 1000;
+
+// Queue state
+let activeRequests = 0;
+const requestQueue: Array<{
+  execute: () => Promise<void>;
+  resolve: (value: unknown) => void;
+  reject: (error: unknown) => void;
+}> = [];
 
 export interface ApogeeProxyOptions {
   agencySlug?: string;
@@ -43,48 +82,152 @@ export interface ApogeeProxyResponse<T = unknown> {
   };
 }
 
-// In-flight request deduplication map
-const inFlightRequests = new Map<string, Promise<unknown>>();
+export interface ApogeeCacheInfo {
+  totalEntries: number;
+  totalSizeKB: number;
+  oldestEntry: Date | null;
+  newestEntry: Date | null;
+  entriesByAgency: Record<string, number>;
+}
 
-// TTL cache for responses (60 seconds)
-const responseCache = new Map<string, { data: unknown; timestamp: number }>();
-const CACHE_TTL_MS = 60 * 1000; // 60 seconds
+// ============================================================================
+// CACHE TTL CONFIGURATION
+// ============================================================================
 
-// Request queue configuration
-const MAX_CONCURRENT_REQUESTS = 10; // Max parallel requests
-const REQUEST_DELAY_MS = 50; // Delay between batch starts
-const MAX_RETRIES = 3;
-const RETRY_BASE_DELAY_MS = 1000;
+/**
+ * Configure le TTL du cache persistant
+ * @param ttlMs Durée en millisecondes (ex: 2 * 60 * 60 * 1000 pour 2h)
+ */
+export function setApogeeCacheTTL(ttlMs: number): void {
+  PERSISTENT_CACHE_TTL_MS = ttlMs;
+  logApogee.info(`[CACHE] TTL configuré à ${ttlMs / 1000 / 60} minutes`);
+}
 
-// Queue state
-let activeRequests = 0;
-const requestQueue: Array<{
-  execute: () => Promise<void>;
-  resolve: (value: unknown) => void;
-  reject: (error: unknown) => void;
-}> = [];
+/**
+ * Retourne le TTL actuel en millisecondes
+ */
+export function getApogeeCacheTTL(): number {
+  return PERSISTENT_CACHE_TTL_MS;
+}
+
+// ============================================================================
+// CACHE STORAGE FUNCTIONS
+// ============================================================================
 
 function getCacheKey(endpoint: string, options: ApogeeProxyOptions): string {
-  // CRITICAL: Always include agencySlug in cache key - no 'default' fallback
-  // This prevents admin from seeing cached data from wrong agency
   const slug = options.agencySlug || '_no_agency_';
   return `${endpoint}:${slug}:${JSON.stringify(options.filters || {})}`;
 }
 
+function getStorageKey(cacheKey: string): string {
+  return `${STORAGE_PREFIX}${cacheKey}`;
+}
+
+/**
+ * Sauvegarde dans localStorage avec compression basique
+ */
+function saveToStorage(key: string, data: unknown, timestamp: number): void {
+  try {
+    const storageKey = getStorageKey(key);
+    const payload = JSON.stringify({ data, timestamp });
+    localStorage.setItem(storageKey, payload);
+    
+    // Update meta (track all cache keys)
+    updateCacheMeta(key, timestamp);
+  } catch (e) {
+    // localStorage full or unavailable - just use memory cache
+    logApogee.warn(`[CACHE] localStorage save failed for ${key}:`, e);
+  }
+}
+
+/**
+ * Charge depuis localStorage
+ */
+function loadFromStorage<T>(key: string): { data: T; timestamp: number } | null {
+  try {
+    const storageKey = getStorageKey(key);
+    const raw = localStorage.getItem(storageKey);
+    if (!raw) return null;
+    
+    const parsed = JSON.parse(raw);
+    return parsed as { data: T; timestamp: number };
+  } catch (e) {
+    logApogee.warn(`[CACHE] localStorage load failed for ${key}:`, e);
+    return null;
+  }
+}
+
+/**
+ * Met à jour les métadonnées du cache
+ */
+function updateCacheMeta(key: string, timestamp: number): void {
+  try {
+    const raw = localStorage.getItem(STORAGE_META_KEY);
+    const meta: Record<string, number> = raw ? JSON.parse(raw) : {};
+    meta[key] = timestamp;
+    localStorage.setItem(STORAGE_META_KEY, JSON.stringify(meta));
+  } catch (e) {
+    // Ignore meta errors
+  }
+}
+
+/**
+ * Supprime une entrée du cache
+ */
+function removeFromStorage(key: string): void {
+  try {
+    localStorage.removeItem(getStorageKey(key));
+    
+    // Update meta
+    const raw = localStorage.getItem(STORAGE_META_KEY);
+    if (raw) {
+      const meta = JSON.parse(raw);
+      delete meta[key];
+      localStorage.setItem(STORAGE_META_KEY, JSON.stringify(meta));
+    }
+  } catch (e) {
+    // Ignore
+  }
+}
+
+// ============================================================================
+// CACHE ACCESS FUNCTIONS
+// ============================================================================
+
 function getCachedResponse<T>(key: string): T | null {
-  const cached = responseCache.get(key);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-    logApogee.debug(`[PROXY] Cache hit for ${key}`);
-    return cached.data as T;
+  const now = Date.now();
+  
+  // 1. Check memory cache first (fastest)
+  const memoryCached = memoryCache.get(key);
+  if (memoryCached && now - memoryCached.timestamp < PERSISTENT_CACHE_TTL_MS) {
+    logApogee.debug(`[CACHE] Memory hit for ${key}`);
+    return memoryCached.data as T;
   }
-  if (cached) {
-    responseCache.delete(key); // Expired
+  
+  // 2. Check localStorage (persistent)
+  const storageCached = loadFromStorage<T>(key);
+  if (storageCached && now - storageCached.timestamp < PERSISTENT_CACHE_TTL_MS) {
+    // Restore to memory cache for faster subsequent access
+    memoryCache.set(key, storageCached);
+    logApogee.debug(`[CACHE] Storage hit for ${key} (age: ${Math.round((now - storageCached.timestamp) / 1000 / 60)}min)`);
+    return storageCached.data;
   }
+  
+  // 3. Expired or not found - clean up
+  if (memoryCached) memoryCache.delete(key);
+  if (storageCached) removeFromStorage(key);
+  
   return null;
 }
 
 function setCachedResponse(key: string, data: unknown): void {
-  responseCache.set(key, { data, timestamp: Date.now() });
+  const timestamp = Date.now();
+  
+  // Save to both memory and localStorage
+  memoryCache.set(key, { data, timestamp });
+  saveToStorage(key, data, timestamp);
+  
+  logApogee.debug(`[CACHE] Stored ${key}`);
 }
 
 /**
@@ -145,17 +288,92 @@ function sleep(ms: number): Promise<void> {
 export function clearProxyCache(agencySlug?: string): void {
   if (agencySlug) {
     // Clear only cache entries for this agency
-    for (const key of responseCache.keys()) {
+    for (const key of memoryCache.keys()) {
       if (key.includes(`:${agencySlug}:`)) {
-        responseCache.delete(key);
+        memoryCache.delete(key);
+        removeFromStorage(key);
       }
     }
-    logApogee.debug(`[PROXY] Cache cleared for agency: ${agencySlug}`);
+    logApogee.info(`[CACHE] Cache cleared for agency: ${agencySlug}`);
   } else {
     // Clear all cache
-    responseCache.clear();
-    logApogee.debug(`[PROXY] Full cache cleared`);
+    clearApogeeCache();
   }
+}
+
+/**
+ * Vide complètement le cache Apogée (mémoire + localStorage)
+ */
+export function clearApogeeCache(): void {
+  // Clear memory
+  memoryCache.clear();
+  
+  // Clear localStorage
+  try {
+    const raw = localStorage.getItem(STORAGE_META_KEY);
+    if (raw) {
+      const meta = JSON.parse(raw);
+      for (const key of Object.keys(meta)) {
+        localStorage.removeItem(getStorageKey(key));
+      }
+    }
+    localStorage.removeItem(STORAGE_META_KEY);
+    logApogee.info(`[CACHE] Full cache cleared`);
+  } catch (e) {
+    logApogee.warn(`[CACHE] Error clearing localStorage:`, e);
+  }
+}
+
+/**
+ * Retourne des informations sur le cache actuel
+ */
+export function getApogeeCacheInfo(): ApogeeCacheInfo {
+  const entriesByAgency: Record<string, number> = {};
+  let totalSize = 0;
+  let oldestTimestamp: number | null = null;
+  let newestTimestamp: number | null = null;
+  let totalEntries = 0;
+  
+  try {
+    const raw = localStorage.getItem(STORAGE_META_KEY);
+    if (raw) {
+      const meta: Record<string, number> = JSON.parse(raw);
+      
+      for (const [key, timestamp] of Object.entries(meta)) {
+        totalEntries++;
+        
+        // Track timestamps
+        if (oldestTimestamp === null || timestamp < oldestTimestamp) {
+          oldestTimestamp = timestamp;
+        }
+        if (newestTimestamp === null || timestamp > newestTimestamp) {
+          newestTimestamp = timestamp;
+        }
+        
+        // Extract agency from key
+        const parts = key.split(':');
+        const agency = parts[1] || 'unknown';
+        entriesByAgency[agency] = (entriesByAgency[agency] || 0) + 1;
+        
+        // Estimate size
+        const storageKey = getStorageKey(key);
+        const item = localStorage.getItem(storageKey);
+        if (item) {
+          totalSize += item.length * 2; // UTF-16 = 2 bytes per char
+        }
+      }
+    }
+  } catch (e) {
+    // Ignore errors
+  }
+  
+  return {
+    totalEntries,
+    totalSizeKB: Math.round(totalSize / 1024),
+    oldestEntry: oldestTimestamp ? new Date(oldestTimestamp) : null,
+    newestEntry: newestTimestamp ? new Date(newestTimestamp) : null,
+    entriesByAgency,
+  };
 }
 
 /**
