@@ -3,7 +3,7 @@ import {
   MessageSquare, Network, Users, Database, Settings, LucideIcon,
   PieChart, Coins, LifeBuoy, Headphones, GraduationCap, Kanban, Activity,
   HelpCircle, Calendar, UserCog, Briefcase, Inbox, Building2, GitCompare,
-  MessagesSquare, Wrench, Brain, Car, Radar
+  MessagesSquare, Wrench, Brain, Car, Radar, ToggleLeft, LayoutDashboard, LineChart
 } from 'lucide-react';
 import { ROUTES } from './routes';
 import { ModuleKey } from '@/types/modules';
@@ -390,6 +390,38 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     color: 'primary',
     group: 'admin',
     requiresAdmin: true,
+  },
+  {
+    id: 'ADMIN_FEATURE_FLAGS',
+    title: 'Feature Flags',
+    description: 'Activation des fonctionnalités',
+    icon: ToggleLeft,
+    route: ROUTES.admin.featureFlags,
+    scopeSlug: SCOPE_SLUGS.ADMIN_SETTINGS,
+    color: 'primary',
+    group: 'admin',
+    requiresAdmin: true,
+  },
+  {
+    id: 'ADMIN_WIDGETS',
+    title: 'Widgets',
+    description: 'Configuration des widgets dashboard',
+    icon: LayoutDashboard,
+    route: ROUTES.admin.widgets,
+    scopeSlug: SCOPE_SLUGS.ADMIN_SETTINGS,
+    color: 'primary',
+    group: 'admin',
+    requiresAdmin: true,
+  },
+  {
+    id: 'FRANCHISEUR_GRAPHIQUES',
+    title: 'Graphiques',
+    description: 'Visualisations graphiques du réseau',
+    icon: LineChart,
+    route: ROUTES.reseau.graphiques,
+    scopeSlug: SCOPE_SLUGS.FRANCHISEUR_KPI,
+    color: 'accent',
+    group: 'franchiseur',
   },
 ];
 
