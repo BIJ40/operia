@@ -85,21 +85,32 @@ const TABLES_PART_3 = [
 // Limites par table pour éviter les dépassements mémoire
 const TABLE_LIMITS: Record<string, number> = {
   // Tables très lourdes - limite stricte
+  "profiles": 100,
+  "collaborators": 100,
+  "collaborator_documents": 50,
+  "support_tickets": 50,
+  "support_messages": 30,
+  "support_ticket_actions": 50,
+  "live_support_sessions": 50,
+  "live_support_messages": 30,
   "chatbot_queries": 50,
   "faq_items": 50,
-  "support_messages": 50,
-  "live_support_messages": 50,
-  "messages": 50,
-  "metrics_cache": 50,
+  "messages": 30,
+  "metrics_cache": 0, // Skip - regenerable
   "blocks": 100,
   "apporteur_blocks": 100,
   "apogee_tickets": 200,
+  "apogee_ticket_comments": 500,
   "apogee_ticket_history": 200,
+  "apogee_guides": 500,
   "user_connection_logs": 200,
   "rag_index_documents": 50,
+  "rh_audit_log": 200,
+  "document_access_logs": 100,
+  "payslip_data": 200,
 };
 
-const DEFAULT_LIMIT = 500;
+const DEFAULT_LIMIT = 300;
 
 serve(async (req) => {
   const corsResponse = handleCorsPreflightOrReject(req);
