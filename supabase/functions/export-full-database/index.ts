@@ -1,6 +1,6 @@
 /**
  * Edge Function: export-full-database
- * Export de la base de données par batch pour éviter les limites mémoire
+ * Export de la base de données en 3 parties pour éviter les limites mémoire
  * Usage: backup, migration, livraison client
  */
 
@@ -15,134 +15,91 @@ const EXCLUDED_EMBEDDING_TABLES = [
   "knowledge_base",      // embeddings volumineux - régénérable
 ];
 
-// 104 tables (107 - 3 embedding tables) organisées en batches de 2
-const ALL_TABLES = [
-  // Batch 0 - Core users
-  "profiles", "apogee_agencies",
-  // Batch 1 - Agency config
-  "agency_commercial_profile", "agency_stamps",
-  // Batch 2 - Agency roles
+// 104 tables divisées en 3 parties (~35 tables chacune)
+const TABLES_PART_1 = [
+  // Core users & agencies
+  "profiles", "apogee_agencies", "agency_commercial_profile", "agency_stamps",
   "agency_rh_roles", "user_modules",
-  // Batch 3 - Collaborators
-  "collaborators", "collaborator_documents",
-  // Batch 4 - Collaborator details
-  "collaborator_sensitive_data", "collaborator_document_folders",
-  // Batch 5 - HR contracts
-  "employment_contracts", "leave_requests",
-  // Batch 6 - Requests & logs
-  "document_requests", "document_access_logs",
-  // Batch 7 - HR generated & payslips
-  "hr_generated_documents", "payslip_data",
-  // Batch 8 - Salary & audit
-  "salary_history", "rh_audit_log",
-  // Batch 9 - RH notifications & sensitive logs
-  "rh_notifications", "sensitive_data_access_log",
-  // Batch 10 - Support tickets core
-  "support_tickets", "support_ticket_actions",
-  // Batch 11 - Support tickets views & attachments
-  "support_ticket_views", "support_attachments",
-  // Batch 12 - Support messages (heavy)
-  "support_messages", "support_presence",
-  // Batch 13 - Live support
-  "live_support_sessions", "live_support_messages",
-  // Batch 14 - Typing & presence
-  "typing_status", "user_presence",
-  // Batch 15 - Apogee Tickets core (heavy)
-  "apogee_tickets", "apogee_ticket_comments",
-  // Batch 16 - Apogee Tickets attachments & history
-  "apogee_ticket_attachments", "apogee_ticket_history",
-  // Batch 17 - Apogee Tickets views & statuses
-  "apogee_ticket_views", "apogee_ticket_statuses",
-  // Batch 18 - Apogee Tickets transitions & roles
-  "apogee_ticket_transitions", "apogee_ticket_user_roles",
-  // Batch 19 - Apogee Tickets permissions & tags
-  "apogee_ticket_field_permissions", "apogee_ticket_tags",
-  // Batch 20 - Apogee impact tags & modules
-  "apogee_impact_tags", "apogee_modules",
-  // Batch 21 - Apogee priorities & owner_sides
-  "apogee_priorities", "apogee_owner_sides",
-  // Batch 22 - Apogee reported_by & guides
-  "apogee_reported_by", "apogee_guides",
-  // Batch 23 - Ticket duplicates & blocks
-  "ticket_duplicate_suggestions", "blocks",
-  // Batch 24 - Blocks apporteur
-  "apporteur_blocks", "categories",
-  // Batch 25 - Content documents
-  "documents", "sections",
-  // Batch 26 - Favorites & FAQ categories
-  "favorites", "faq_categories",
-  // Batch 27 - FAQ items (heavy)
-  "faq_items", "chatbot_queries",
-  // Batch 28 - AI cache
-  "ai_search_cache", "rag_index_documents",
-  // Batch 29 - RAG jobs
-  "rag_index_jobs", "agency_royalty_config",
-  // Batch 30 - Royalty tiers
-  "agency_royalty_tiers", "agency_royalty_calculations",
-  // Batch 31 - SAV overrides
-  "sav_dossier_overrides", "conversations",
-  // Batch 32 - Conversation members
-  "conversation_members", "messages",
-  // Batch 33 - Announcements
-  "priority_announcements", "announcement_reads",
-  // Batch 34 - Visits
-  "animator_visits", "expense_requests",
-  // Batch 35 - Fleet
-  "fleet_vehicles", "french_holidays",
-  // Batch 36 - Maintenance
-  "maintenance_events", "maintenance_alerts",
-  // Batch 37 - Maintenance plans
-  "maintenance_plan_items", "maintenance_plan_templates",
-  // Batch 38 - Metrics
-  "metrics_definitions", "metrics_cache",
-  // Batch 39 - StatIA
-  "statia_custom_metrics", "statia_metric_validations",
-  // Batch 40 - StatIA widgets
-  "statia_widgets", "widget_templates",
-  // Batch 41 - User widgets
-  "user_widgets", "user_widget_preferences",
-  // Batch 42 - User dashboard
-  "user_dashboard_settings", "user_quick_notes",
-  // Batch 43 - User actions
-  "user_actions_config", "user_history",
-  // Batch 44 - User connections
-  "user_connection_logs", "user_calendar_connections",
-  // Batch 45 - User creation
-  "user_creation_requests", "user_consents",
-  // Batch 46 - App settings
-  "app_notification_settings", "diffusion_settings",
-  // Batch 47 - Feature flags
-  "feature_flags", "storage_quota_alerts",
-  // Batch 48 - Rate limits
-  "rate_limits", "page_metadata",
-  // Batch 49 - Franchiseur
-  "franchiseur_agency_assignments", "franchiseur_roles",
-  // Batch 50 - Formation
-  "formation_content", "tools",
-  // Batch 51 - Home
-  "home_cards", "planning_signatures",
+  // Collaborators & HR
+  "collaborators", "collaborator_documents", "collaborator_sensitive_data", 
+  "collaborator_document_folders", "employment_contracts", "leave_requests",
+  "document_requests", "document_access_logs", "hr_generated_documents", 
+  "payslip_data", "salary_history", "rh_audit_log", "rh_notifications", 
+  "sensitive_data_access_log",
+  // Support tickets
+  "support_tickets", "support_ticket_actions", "support_ticket_views", 
+  "support_attachments", "support_messages", "support_presence",
+  // Live support
+  "live_support_sessions", "live_support_messages", "typing_status", "user_presence",
+  // Royalty
+  "agency_royalty_config", "agency_royalty_tiers", "agency_royalty_calculations",
 ];
 
-const BATCH_SIZE = 2;
+const TABLES_PART_2 = [
+  // Apogee Tickets
+  "apogee_tickets", "apogee_ticket_comments", "apogee_ticket_attachments", 
+  "apogee_ticket_history", "apogee_ticket_views", "apogee_ticket_statuses",
+  "apogee_ticket_transitions", "apogee_ticket_user_roles", 
+  "apogee_ticket_field_permissions", "apogee_ticket_tags",
+  "apogee_impact_tags", "apogee_modules", "apogee_priorities", "apogee_owner_sides",
+  "apogee_reported_by", "apogee_guides", "ticket_duplicate_suggestions",
+  // Content & blocks
+  "blocks", "apporteur_blocks", "categories", "documents", "sections", "favorites",
+  // FAQ & chatbot
+  "faq_categories", "faq_items", "chatbot_queries", "ai_search_cache",
+  // RAG
+  "rag_index_documents", "rag_index_jobs",
+  // SAV
+  "sav_dossier_overrides",
+];
+
+const TABLES_PART_3 = [
+  // Messaging
+  "conversations", "conversation_members", "messages",
+  // Announcements
+  "priority_announcements", "announcement_reads",
+  // Visits & expenses
+  "animator_visits", "expense_requests",
+  // Fleet & holidays
+  "fleet_vehicles", "french_holidays",
+  // Maintenance
+  "maintenance_events", "maintenance_alerts", "maintenance_plan_items", 
+  "maintenance_plan_templates",
+  // StatIA & metrics
+  "metrics_definitions", "metrics_cache", "statia_custom_metrics", 
+  "statia_metric_validations", "statia_widgets", "widget_templates",
+  // User widgets & settings
+  "user_widgets", "user_widget_preferences", "user_dashboard_settings", 
+  "user_quick_notes", "user_actions_config", "user_history",
+  "user_connection_logs", "user_calendar_connections", "user_creation_requests", 
+  "user_consents",
+  // App settings
+  "app_notification_settings", "diffusion_settings", "feature_flags", 
+  "storage_quota_alerts", "rate_limits", "page_metadata",
+  // Franchiseur
+  "franchiseur_agency_assignments", "franchiseur_roles",
+  // Formation & tools
+  "formation_content", "tools", "home_cards", "planning_signatures",
+];
 
 // Limites par table pour éviter les dépassements mémoire
 const TABLE_LIMITS: Record<string, number> = {
   // Tables très lourdes - limite stricte
-  "chatbot_queries": 30,
-  "faq_items": 30,
-  "support_messages": 30,
-  "live_support_messages": 30,
-  "messages": 30,
-  "metrics_cache": 30,
-  "blocks": 50,
-  "apporteur_blocks": 50,
-  "apogee_tickets": 100,
-  "apogee_ticket_history": 100,
-  "user_connection_logs": 100,
-  "rag_index_documents": 30,
+  "chatbot_queries": 50,
+  "faq_items": 50,
+  "support_messages": 50,
+  "live_support_messages": 50,
+  "messages": 50,
+  "metrics_cache": 50,
+  "blocks": 100,
+  "apporteur_blocks": 100,
+  "apogee_tickets": 200,
+  "apogee_ticket_history": 200,
+  "user_connection_logs": 200,
+  "rag_index_documents": 50,
 };
 
-const DEFAULT_LIMIT = 200;
+const DEFAULT_LIMIT = 500;
 
 serve(async (req) => {
   const corsResponse = handleCorsPreflightOrReject(req);
@@ -190,38 +147,55 @@ serve(async (req) => {
       ));
     }
 
-    // Parse request to get batch number
+    // Parse request to get part number (1, 2, or 3)
     const url = new URL(req.url);
-    const batchParam = url.searchParams.get("batch");
+    const partParam = url.searchParams.get("part");
     
-    // If no batch specified, return metadata about available batches
-    if (!batchParam) {
-      const totalBatches = Math.ceil(ALL_TABLES.length / BATCH_SIZE);
+    // If no part specified, return metadata
+    if (!partParam) {
       return withCors(req, new Response(
         JSON.stringify({
-          total_tables: ALL_TABLES.length,
-          batch_size: BATCH_SIZE,
-          total_batches: totalBatches,
-          tables: ALL_TABLES,
+          total_parts: 3,
+          parts: [
+            { part: 1, tables_count: TABLES_PART_1.length, tables: TABLES_PART_1 },
+            { part: 2, tables_count: TABLES_PART_2.length, tables: TABLES_PART_2 },
+            { part: 3, tables_count: TABLES_PART_3.length, tables: TABLES_PART_3 },
+          ],
+          total_tables: TABLES_PART_1.length + TABLES_PART_2.length + TABLES_PART_3.length,
         }),
         { status: 200, headers: { "Content-Type": "application/json" } }
       ));
     }
 
-    const batchNum = parseInt(batchParam, 10);
-    const startIdx = batchNum * BATCH_SIZE;
-    const tablesToExport = ALL_TABLES.slice(startIdx, startIdx + BATCH_SIZE);
-
-    if (tablesToExport.length === 0) {
-      return withCors(req, new Response(
-        JSON.stringify({ error: "Batch invalide" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      ));
+    const partNum = parseInt(partParam, 10);
+    let tablesToExport: string[] = [];
+    
+    switch (partNum) {
+      case 1:
+        tablesToExport = TABLES_PART_1;
+        break;
+      case 2:
+        tablesToExport = TABLES_PART_2;
+        break;
+      case 3:
+        tablesToExport = TABLES_PART_3;
+        break;
+      default:
+        return withCors(req, new Response(
+          JSON.stringify({ error: "Part invalide (1, 2 ou 3)" }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        ));
     }
 
-    console.log(`[export-full-database] Batch ${batchNum}: exporting ${tablesToExport.join(", ")}`);
+    console.log(`[export-full-database] Part ${partNum}: exporting ${tablesToExport.length} tables`);
 
-    const exportData: Record<string, unknown[]> = {};
+    const exportData: Record<string, unknown[]> = {
+      _meta: [{
+        export_date: new Date().toISOString(),
+        part: partNum,
+        tables_count: tablesToExport.length,
+      }],
+    };
 
     for (const tableName of tablesToExport) {
       try {
@@ -237,18 +211,14 @@ serve(async (req) => {
           exportData[tableName] = [{ _error: error.message }];
         } else {
           exportData[tableName] = data ?? [];
-          console.log(`[export-full-database] ${tableName}: ${data?.length ?? 0} rows (limit: ${tableLimit})`);
+          console.log(`[export-full-database] ${tableName}: ${data?.length ?? 0} rows`);
         }
       } catch (tableError) {
         exportData[tableName] = [{ _error: "Table not found" }];
       }
     }
 
-    return withCors(req, new Response(JSON.stringify({
-      batch: batchNum,
-      tables: tablesToExport,
-      data: exportData,
-    }), {
+    return withCors(req, new Response(JSON.stringify(exportData), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     }));
