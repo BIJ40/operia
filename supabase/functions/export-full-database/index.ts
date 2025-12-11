@@ -125,20 +125,26 @@ serve(async (req) => {
     console.log(`[export-full-database] Batch ${batchNum}: exporting ${tablesToExport.join(", ")}`);
 
     const exportData: Record<string, unknown[]> = {};
+    
+    // Heavy tables with large content fields need smaller limits
+    const HEAVY_TABLES = ["blocks", "apporteur_blocks", "apogee_tickets", "chatbot_queries", "faq_items"];
 
     for (const tableName of tablesToExport) {
       try {
+        const isHeavy = HEAVY_TABLES.includes(tableName);
+        const tableLimit = isHeavy ? 50 : 200;
+        
         const { data, error } = await supabaseAdmin
           .from(tableName)
           .select("*")
-          .limit(200);
+          .limit(tableLimit);
 
         if (error) {
           console.warn(`[export-full-database] Error ${tableName}:`, error.message);
           exportData[tableName] = [{ _error: error.message }];
         } else {
           exportData[tableName] = data ?? [];
-          console.log(`[export-full-database] ${tableName}: ${data?.length ?? 0} rows`);
+          console.log(`[export-full-database] ${tableName}: ${data?.length ?? 0} rows (limit: ${tableLimit})`);
         }
       } catch (tableError) {
         exportData[tableName] = [{ _error: "Table not found" }];
