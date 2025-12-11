@@ -53,7 +53,8 @@ export function setApogeeCacheTTL(ttlMs: number): void {
 }
 
 // =============================================================================
-// SEMAPHORE - Parallélisme limité (3 requêtes simultanées max)
+// SEMAPHORE - Parallélisme limité (15 requêtes simultanées max sur 20 possibles)
+// Serveur Apogée configuré pour 20 req simultanées - on garde 5 slots de marge
 // =============================================================================
 
 class Semaphore {
@@ -63,7 +64,7 @@ class Semaphore {
   private readonly minDelayMs: number;
   private lastStartTime = 0;
 
-  constructor(maxConcurrent = 3, minDelayMs = 200) {
+  constructor(maxConcurrent = 15, minDelayMs = 50) {
     this.maxConcurrent = maxConcurrent;
     this.minDelayMs = minDelayMs;
   }
@@ -118,8 +119,8 @@ class Semaphore {
   }
 }
 
-// Instance globale du sémaphore - 3 requêtes simultanées max
-const globalSemaphore = new Semaphore(3, 200);
+// Instance globale du sémaphore - 15 requêtes simultanées (serveur: 20 max)
+const globalSemaphore = new Semaphore(15, 50);
 
 // =============================================================================
 // MEMORY CACHE
@@ -371,8 +372,8 @@ export const apogeeProxy: ApogeeProxy = {
   setTTL: setApogeeCacheTTL,
   
   /**
-   * Load all data for an agency via SEMAPHORE (3 concurrent max)
-   * Le sémaphore limite à 3 requêtes simultanées pour éviter le rate limiting
+   * Load all data for an agency via SEMAPHORE (15 concurrent max)
+   * Serveur Apogée configuré pour 20 req simultanées - 15 utilisées avec marge sécurité
    * Results are cached for TTL duration (2h default)
    */
   getAllData: async (agencySlug, bypassCache = false) => {
