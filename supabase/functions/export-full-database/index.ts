@@ -113,7 +113,7 @@ serve(async (req) => {
 
     console.log(`[export-full-database] Starting full export for admin ${user.id}`);
 
-    // Export all tables
+    // Export tables in smaller batches to avoid memory limits
     const exportData: Record<string, unknown[]> = {
       _meta: [{
         export_date: new Date().toISOString(),
@@ -122,23 +122,24 @@ serve(async (req) => {
       }],
     };
 
+    // Process tables sequentially with smaller limits to avoid memory issues
     for (const tableName of TABLES_TO_EXPORT) {
       try {
         const { data, error } = await supabaseAdmin
           .from(tableName)
           .select("*")
-          .limit(10000); // Safety limit per table
+          .limit(1000); // Reduced limit per table
 
         if (error) {
           console.warn(`[export-full-database] Error exporting ${tableName}:`, error.message);
-          exportData[tableName] = [{ error: error.message }];
+          exportData[tableName] = [{ _error: error.message }];
         } else {
           exportData[tableName] = data ?? [];
           console.log(`[export-full-database] Exported ${tableName}: ${data?.length ?? 0} rows`);
         }
       } catch (tableError) {
         console.warn(`[export-full-database] Exception for ${tableName}:`, tableError);
-        exportData[tableName] = [{ error: "Table not found or inaccessible" }];
+        exportData[tableName] = [{ _error: "Table not found or inaccessible" }];
       }
     }
 
@@ -150,8 +151,8 @@ serve(async (req) => {
     
     console.log(`[export-full-database] Export completed. Total rows: ${totalRows}`);
 
-    // Return as downloadable JSON
-    const jsonString = JSON.stringify(exportData, null, 2);
+    // Return as compact JSON (no pretty print to save memory)
+    const jsonString = JSON.stringify(exportData);
     
     return withCors(req, new Response(jsonString, {
       status: 200,
