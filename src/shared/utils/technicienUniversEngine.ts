@@ -29,6 +29,8 @@ export interface TechUniversStats {
   technicienNom: string;
   technicienColor: string;
   technicienActif: boolean;
+  agenceSlug?: string;
+  agenceLabel?: string;
   universes: {
     [universSlug: string]: {
       caHT: number;
@@ -427,6 +429,8 @@ interface AgencyDataForStats {
   projects: any[];
   interventions: any[];
   users: any[];
+  agenceSlug?: string;
+  agenceLabel?: string;
 }
 
 /**
@@ -452,9 +456,11 @@ export function aggregateTechUniversStatsMultiAgency(
     // Agréger avec les stats existantes
     agencyStats.forEach((stat) => {
       if (!techMap.has(stat.technicienId)) {
-        // Nouveau technicien : copier tel quel
+        // Nouveau technicien : copier tel quel avec info agence
         techMap.set(stat.technicienId, {
           ...stat,
+          agenceSlug: agencyData.agenceSlug,
+          agenceLabel: agencyData.agenceLabel,
           universes: { ...stat.universes },
           totaux: { ...stat.totaux },
         });

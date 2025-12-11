@@ -41,7 +41,7 @@ export default function FranchiseurStats() {
     );
   }
 
-  const adaptedTechStats: TechUniversStats[] = (data?.technicienStats || []).slice(0, 5);
+  const adaptedTechStats: TechUniversStats[] = (data?.technicienStats || []).slice(0, 10);
 
   return (
     <FranchiseurPageContainer>
@@ -91,7 +91,7 @@ export default function FranchiseurStats() {
         <CardContent className="p-6">
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-foreground">
-              TOP 5 Collaborateurs du Réseau
+              TOP 10 Collaborateurs du Réseau
             </h3>
             <p className="text-sm text-muted-foreground">
               Meilleurs collaborateurs par CA, heures et performance sur l'ensemble du réseau

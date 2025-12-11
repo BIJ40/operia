@@ -149,9 +149,16 @@ export const TechnicienUniversHeatmap = ({
                         className="w-3 h-3 rounded-full flex-shrink-0"
                         style={{ backgroundColor: tech.technicienColor }}
                       />
-                      <span style={{ color: tech.technicienColor }}>
-                        {tech.technicienNom}
-                      </span>
+                      <div className="flex flex-col">
+                        <span style={{ color: tech.technicienColor }}>
+                          {tech.technicienNom}
+                        </span>
+                        {tech.agenceLabel && (
+                          <span className="text-xs text-muted-foreground">
+                            {tech.agenceLabel}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </td>
                   {universes.map((univers) => {

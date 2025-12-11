@@ -77,6 +77,8 @@ export function useFranchiseurStatsStatia() {
             projects: agency.data.projects,
             interventions: agency.data.interventions,
             users: agency.data.users,
+            agenceSlug: agency.agencyId,
+            agenceLabel: agency.agencyLabel,
           }));
 
         const technicienStats = aggregateTechUniversStatsMultiAgency(
