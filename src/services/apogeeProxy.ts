@@ -53,6 +53,61 @@ export function setApogeeCacheTTL(ttlMs: number): void {
 }
 
 // =============================================================================
+// GLOBAL REQUEST QUEUE - Garantit UNE SEULE requête à la fois
+// =============================================================================
+
+class RequestQueue {
+  private queue: Array<() => Promise<void>> = [];
+  private isProcessing = false;
+  private lastRequestTime = 0;
+  private readonly minDelayMs = 500; // Délai minimum entre requêtes
+
+  async enqueue<T>(fn: () => Promise<T>): Promise<T> {
+    return new Promise((resolve, reject) => {
+      this.queue.push(async () => {
+        // Attendre le délai minimum depuis la dernière requête
+        const now = Date.now();
+        const timeSinceLastRequest = now - this.lastRequestTime;
+        if (timeSinceLastRequest < this.minDelayMs) {
+          await sleep(this.minDelayMs - timeSinceLastRequest);
+        }
+        
+        try {
+          const result = await fn();
+          this.lastRequestTime = Date.now();
+          resolve(result);
+        } catch (error) {
+          reject(error);
+        }
+      });
+      
+      this.processQueue();
+    });
+  }
+
+  private async processQueue() {
+    if (this.isProcessing) return;
+    this.isProcessing = true;
+
+    while (this.queue.length > 0) {
+      const task = this.queue.shift();
+      if (task) {
+        await task();
+      }
+    }
+
+    this.isProcessing = false;
+  }
+
+  get pendingCount() {
+    return this.queue.length;
+  }
+}
+
+// Instance globale de la queue
+const globalRequestQueue = new RequestQueue();
+
+// =============================================================================
 // MEMORY CACHE
 // =============================================================================
 
@@ -177,36 +232,40 @@ interface ApogeeProxyResponse<T = unknown> {
 // =============================================================================
 
 /**
- * Execute proxy request
+ * Execute proxy request VIA GLOBAL QUEUE
  */
 async function executeRequest<T>(
   endpoint: string,
   agencySlug: string,
   filters?: Record<string, unknown>
 ): Promise<T> {
-  const { data, error } = await supabase.functions.invoke<ApogeeProxyResponse<T>>('proxy-apogee', {
-    body: {
-      endpoint,
-      agencySlug,
-      filters,
-    },
-  });
+  // Utiliser la queue globale pour garantir une seule requête à la fois
+  return globalRequestQueue.enqueue(async () => {
+    logApogee.debug(`[QUEUE] Processing ${endpoint}:${agencySlug} (${globalRequestQueue.pendingCount} pending)`);
+    
+    const { data, error } = await supabase.functions.invoke<ApogeeProxyResponse<T>>('proxy-apogee', {
+      body: {
+        endpoint,
+        agencySlug,
+        filters,
+      },
+    });
 
-  if (error) {
-    // Check for rate limit - log but don't block forever
-    if (error.message?.includes('429')) {
-      logApogee.warn(`[PROXY] Rate limited on ${endpoint}:${agencySlug}`);
-      throw new Error(`Rate limited: ${endpoint}`);
+    if (error) {
+      if (error.message?.includes('429')) {
+        logApogee.warn(`[PROXY] Rate limited on ${endpoint}:${agencySlug}`);
+        throw new Error(`Rate limited: ${endpoint}`);
+      }
+      throw new Error(error.message || `API error on ${endpoint}`);
     }
-    throw new Error(error.message || `API error on ${endpoint}`);
-  }
 
-  if (!data?.success) {
-    throw new Error(data?.error || `Failed: ${endpoint}`);
-  }
+    if (!data?.success) {
+      throw new Error(data?.error || `Failed: ${endpoint}`);
+    }
 
-  logApogee.debug(`[PROXY] Success ${endpoint}`);
-  return data.data as T;
+    logApogee.debug(`[PROXY] Success ${endpoint}:${agencySlug}`);
+    return data.data as T;
+  });
 }
 
 /**
@@ -241,7 +300,7 @@ async function proxyRequest<T>(
     return inFlight as Promise<T>;
   }
   
-  // Execute request
+  // Execute request via queue
   const requestPromise = executeRequest<T>(endpoint, agencySlug, filters)
     .then((result) => {
       setCachedResponse(cacheKey, result);
@@ -298,36 +357,29 @@ export const apogeeProxy: ApogeeProxy = {
   setTTL: setApogeeCacheTTL,
   
   /**
-   * Load all data for an agency SEQUENTIALLY WITH THROTTLING
-   * Évite les 429 rate limit en espaçant les requêtes de 500ms
+   * Load all data for an agency via GLOBAL QUEUE
+   * La queue globale garantit qu'une seule requête s'exécute à la fois
    * Results are cached for TTL duration (2h default)
    */
   getAllData: async (agencySlug, bypassCache = false) => {
     const opts = { agencySlug, bypassCache };
     
-    logApogee.info(`[PROXY] Loading all data SEQUENTIALLY WITH THROTTLE (${API_THROTTLE_DELAY_MS}ms) for ${agencySlug}`);
+    logApogee.info(`[PROXY] Loading all data via GLOBAL QUEUE for ${agencySlug}`);
     const startTime = Date.now();
     
-    // Execute requests ONE BY ONE with delay to avoid rate limiting
-    const users = await proxyRequest<any[]>('apiGetUsers', opts);
-    await sleep(API_THROTTLE_DELAY_MS);
-    
-    const clients = await proxyRequest<any[]>('apiGetClients', opts);
-    await sleep(API_THROTTLE_DELAY_MS);
-    
-    const projects = await proxyRequest<any[]>('apiGetProjects', opts);
-    await sleep(API_THROTTLE_DELAY_MS);
-    
-    const interventions = await proxyRequest<any[]>('apiGetInterventions', opts);
-    await sleep(API_THROTTLE_DELAY_MS);
-    
-    const factures = await proxyRequest<any[]>('apiGetFactures', opts);
-    await sleep(API_THROTTLE_DELAY_MS);
-    
-    const devis = await proxyRequest<any[]>('apiGetDevis', opts);
+    // La queue globale gère automatiquement le throttling
+    // Toutes ces requêtes passent par la queue une par une
+    const [users, clients, projects, interventions, factures, devis] = await Promise.all([
+      proxyRequest<any[]>('apiGetUsers', opts),
+      proxyRequest<any[]>('apiGetClients', opts),
+      proxyRequest<any[]>('apiGetProjects', opts),
+      proxyRequest<any[]>('apiGetInterventions', opts),
+      proxyRequest<any[]>('apiGetFactures', opts),
+      proxyRequest<any[]>('apiGetDevis', opts),
+    ]);
     
     const duration = Date.now() - startTime;
-    logApogee.info(`[PROXY] All data loaded for ${agencySlug} in ${duration}ms (throttled sequential)`);
+    logApogee.info(`[PROXY] All data loaded for ${agencySlug} in ${duration}ms (via queue)`);
     
     return { 
       users: users || [], 
