@@ -1,7 +1,10 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { logError, logDebug } from '@/lib/logger';
+
+const STORAGE_KEY = 'franchiseur_selected_agencies';
 
 /**
  * Mapping global_role → FranchiseurRole:
@@ -48,12 +51,72 @@ function deriveFranchiseurRole(globalRole: string | null): FranchiseurRole {
   }
 }
 
+/**
+ * Récupère les agences persistées depuis localStorage ou URL
+ */
+function getPersistedAgencies(searchParams: URLSearchParams): string[] {
+  // Priorité 1: URL params
+  const urlAgencies = searchParams.get('agencies');
+  if (urlAgencies) {
+    const agencies = urlAgencies.split(',').filter(Boolean);
+    if (agencies.length > 0) {
+      return agencies;
+    }
+  }
+  
+  // Priorité 2: localStorage
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const agencies = JSON.parse(stored);
+      if (Array.isArray(agencies) && agencies.length > 0) {
+        return agencies;
+      }
+    }
+  } catch {
+    // Ignore parsing errors
+  }
+  
+  return [];
+}
+
 export function FranchiseurProvider({ children }: { children: ReactNode }) {
   const { user, isFranchiseur, isAdmin, globalRole, isAuthLoading } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [franchiseurRole, setFranchiseurRole] = useState<FranchiseurRole>(null);
   const [assignedAgencies, setAssignedAgencies] = useState<string[]>([]);
-  const [selectedAgencies, setSelectedAgencies] = useState<string[]>([]);
+  const [selectedAgencies, setSelectedAgenciesState] = useState<string[]>(() => 
+    getPersistedAgencies(searchParams)
+  );
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Persistance des agences sélectionnées
+  const setSelectedAgencies = useCallback((agencies: string[]) => {
+    setSelectedAgenciesState(agencies);
+    
+    // Persister dans localStorage
+    try {
+      if (agencies.length > 0) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(agencies));
+      } else {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    } catch {
+      // Ignore storage errors
+    }
+    
+    // Persister dans l'URL
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      if (agencies.length > 0) {
+        newParams.set('agencies', agencies.join(','));
+      } else {
+        newParams.delete('agencies');
+      }
+      return newParams;
+    }, { replace: true });
+  }, [setSearchParams]);
 
   useEffect(() => {
     // CRITICAL: Wait for AuthContext to finish loading before making decisions
@@ -82,7 +145,11 @@ export function FranchiseurProvider({ children }: { children: ReactNode }) {
         logDebug('FRANCHISEUR_CONTEXT', 'Admin user, setting DG role');
         setFranchiseurRole('dg');
         setAssignedAgencies([]);
-        setSelectedAgencies([]);
+        // Ne pas reset selectedAgencies si déjà initialisé avec des valeurs persistées
+        if (!isInitialized && selectedAgencies.length === 0) {
+          // Pas de reset, garder les valeurs persistées
+        }
+        setIsInitialized(true);
         setIsLoading(false);
         return;
       }
@@ -113,14 +180,18 @@ export function FranchiseurProvider({ children }: { children: ReactNode }) {
         if (assignments) {
           const agencyIds = assignments.map(a => a.agency_id);
           setAssignedAgencies(agencyIds);
-          setSelectedAgencies(agencyIds);
+          // Ne définir les agences que si pas déjà persistées
+          if (!isInitialized && selectedAgencies.length === 0) {
+            setSelectedAgenciesState(agencyIds);
+          }
         }
       } else {
         // Directeur and DG see all agencies
         setAssignedAgencies([]);
-        setSelectedAgencies([]);
+        // Ne pas reset les agences sélectionnées persistées
       }
 
+      setIsInitialized(true);
       setIsLoading(false);
     };
 
