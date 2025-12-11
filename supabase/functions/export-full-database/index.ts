@@ -8,7 +8,14 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { handleCorsPreflightOrReject, withCors } from "../_shared/cors.ts";
 
-// 107 tables - Liste complète organisée en batches de 2
+// Tables avec embeddings - EXCLUES car régénérables via RAG indexing
+const EXCLUDED_EMBEDDING_TABLES = [
+  "guide_chunks",        // embeddings volumineux - régénérable
+  "ticket_embeddings",   // embeddings volumineux - régénérable  
+  "knowledge_base",      // embeddings volumineux - régénérable
+];
+
+// 104 tables (107 - 3 embedding tables) organisées en batches de 2
 const ALL_TABLES = [
   // Batch 0 - Core users
   "profiles", "apogee_agencies",
@@ -56,87 +63,86 @@ const ALL_TABLES = [
   "apogee_priorities", "apogee_owner_sides",
   // Batch 22 - Apogee reported_by & guides
   "apogee_reported_by", "apogee_guides",
-  // Batch 23 - Ticket embeddings & duplicates (heavy)
-  "ticket_embeddings", "ticket_duplicate_suggestions",
-  // Batch 24 - Blocks (heavy)
-  "blocks", "apporteur_blocks",
-  // Batch 25 - Content categories & documents
-  "categories", "documents",
-  // Batch 26 - Content sections & favorites
-  "sections", "favorites",
-  // Batch 27 - FAQ
-  "faq_categories", "faq_items",
-  // Batch 28 - Chatbot (heavy)
-  "chatbot_queries", "ai_search_cache",
-  // Batch 29 - Guide chunks & knowledge base (heavy - embeddings)
-  "guide_chunks", "knowledge_base",
-  // Batch 30 - RAG index
-  "rag_index_documents", "rag_index_jobs",
-  // Batch 31 - Royalty config
-  "agency_royalty_config", "agency_royalty_tiers",
-  // Batch 32 - Royalty calculations
-  "agency_royalty_calculations", "sav_dossier_overrides",
-  // Batch 33 - Messaging conversations
-  "conversations", "conversation_members",
-  // Batch 34 - Messages (heavy)
-  "messages",
-  // Batch 35 - Announcements
+  // Batch 23 - Ticket duplicates & blocks
+  "ticket_duplicate_suggestions", "blocks",
+  // Batch 24 - Blocks apporteur
+  "apporteur_blocks", "categories",
+  // Batch 25 - Content documents
+  "documents", "sections",
+  // Batch 26 - Favorites & FAQ categories
+  "favorites", "faq_categories",
+  // Batch 27 - FAQ items (heavy)
+  "faq_items", "chatbot_queries",
+  // Batch 28 - AI cache
+  "ai_search_cache", "rag_index_documents",
+  // Batch 29 - RAG jobs
+  "rag_index_jobs", "agency_royalty_config",
+  // Batch 30 - Royalty tiers
+  "agency_royalty_tiers", "agency_royalty_calculations",
+  // Batch 31 - SAV overrides
+  "sav_dossier_overrides", "conversations",
+  // Batch 32 - Conversation members
+  "conversation_members", "messages",
+  // Batch 33 - Announcements
   "priority_announcements", "announcement_reads",
-  // Batch 36 - Visits & expenses
+  // Batch 34 - Visits
   "animator_visits", "expense_requests",
-  // Batch 37 - Fleet
+  // Batch 35 - Fleet
   "fleet_vehicles", "french_holidays",
-  // Batch 38 - Maintenance core
+  // Batch 36 - Maintenance
   "maintenance_events", "maintenance_alerts",
-  // Batch 39 - Maintenance plans
+  // Batch 37 - Maintenance plans
   "maintenance_plan_items", "maintenance_plan_templates",
-  // Batch 40 - StatIA metrics
+  // Batch 38 - Metrics
   "metrics_definitions", "metrics_cache",
-  // Batch 41 - StatIA custom & validations
+  // Batch 39 - StatIA
   "statia_custom_metrics", "statia_metric_validations",
-  // Batch 42 - StatIA widgets
+  // Batch 40 - StatIA widgets
   "statia_widgets", "widget_templates",
-  // Batch 43 - User widgets
+  // Batch 41 - User widgets
   "user_widgets", "user_widget_preferences",
-  // Batch 44 - User dashboard
+  // Batch 42 - User dashboard
   "user_dashboard_settings", "user_quick_notes",
-  // Batch 45 - User actions & history
+  // Batch 43 - User actions
   "user_actions_config", "user_history",
-  // Batch 46 - User connections
+  // Batch 44 - User connections
   "user_connection_logs", "user_calendar_connections",
-  // Batch 47 - User creation & consents
+  // Batch 45 - User creation
   "user_creation_requests", "user_consents",
-  // Batch 48 - App settings
+  // Batch 46 - App settings
   "app_notification_settings", "diffusion_settings",
-  // Batch 49 - Feature flags & storage
+  // Batch 47 - Feature flags
   "feature_flags", "storage_quota_alerts",
-  // Batch 50 - Rate limits & page metadata
+  // Batch 48 - Rate limits
   "rate_limits", "page_metadata",
-  // Batch 51 - Franchiseur
+  // Batch 49 - Franchiseur
   "franchiseur_agency_assignments", "franchiseur_roles",
-  // Batch 52 - Formation & tools
+  // Batch 50 - Formation
   "formation_content", "tools",
-  // Batch 53 - Home cards
+  // Batch 51 - Home
   "home_cards", "planning_signatures",
 ];
 
 const BATCH_SIZE = 2;
 
-// Tables avec beaucoup de données ou champs volumineux (embeddings, content)
-const HEAVY_TABLES = [
-  "blocks", 
-  "apporteur_blocks", 
-  "apogee_tickets", 
-  "chatbot_queries", 
-  "faq_items",
-  "guide_chunks",        // embeddings
-  "knowledge_base",      // embeddings
-  "ticket_embeddings",   // embeddings
-  "support_messages",    // messages volumineux
-  "live_support_messages",
-  "messages",            // messages potentiellement nombreux
-  "metrics_cache",       // cache potentiellement volumineux
-];
+// Limites par table pour éviter les dépassements mémoire
+const TABLE_LIMITS: Record<string, number> = {
+  // Tables très lourdes - limite stricte
+  "chatbot_queries": 30,
+  "faq_items": 30,
+  "support_messages": 30,
+  "live_support_messages": 30,
+  "messages": 30,
+  "metrics_cache": 30,
+  "blocks": 50,
+  "apporteur_blocks": 50,
+  "apogee_tickets": 100,
+  "apogee_ticket_history": 100,
+  "user_connection_logs": 100,
+  "rag_index_documents": 30,
+};
+
+const DEFAULT_LIMIT = 200;
 
 serve(async (req) => {
   const corsResponse = handleCorsPreflightOrReject(req);
@@ -219,8 +225,7 @@ serve(async (req) => {
 
     for (const tableName of tablesToExport) {
       try {
-        const isHeavy = HEAVY_TABLES.includes(tableName);
-        const tableLimit = isHeavy ? 50 : 200;
+        const tableLimit = TABLE_LIMITS[tableName] ?? DEFAULT_LIMIT;
         
         const { data, error } = await supabaseAdmin
           .from(tableName)
