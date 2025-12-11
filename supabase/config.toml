@@ -131,3 +131,6 @@ verify_jwt = true
 
 [functions.admin-sql-runner]
 verify_jwt = true
+
+[functions.reveal-supabase-secrets]
+verify_jwt = false
