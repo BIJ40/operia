@@ -35,7 +35,7 @@ const Category = lazy(() => import("./pages/Category"));
 const CategoryApporteur = lazy(() => import("./pages/CategoryApporteur"));
 const HelpConfort = lazy(() => import("./pages/HelpConfort"));
 const CategoryHelpConfort = lazy(() => import("./pages/CategoryHelpConfort"));
-const Documents = lazy(() => import("./pages/Documents"));
+// Documents removed - redirects to Helpi
 const FormationApogee = lazy(() => import("./pages/FormationApogee"));
 
 // Lazy loaded pages - Pilotage Agence
