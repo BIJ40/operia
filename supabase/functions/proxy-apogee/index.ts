@@ -18,6 +18,79 @@ import { handleCorsPreflightOrReject, withCors, getCorsHeaders, isOriginAllowed 
 import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
 import { captureEdgeException } from '../_shared/sentry.ts';
 
+// =============================================================================
+// MASQUAGE DONNÉES SENSIBLES - SÉCURITÉ NAVIGATEUR
+// =============================================================================
+
+/**
+ * Masque les données sensibles AVANT envoi au navigateur.
+ * Les données originales ne quittent JAMAIS le serveur.
+ */
+function maskSensitiveData(data: unknown, endpoint: string): unknown {
+  if (!Array.isArray(data)) return data;
+
+  if (endpoint === 'apiGetClients' || endpoint === 'getClients') {
+    return data.map((client: Record<string, unknown>) => ({
+      ...client,
+      // Données sensibles masquées
+      email: client.email ? '***' : null,
+      tel: client.tel ? '***' : null,
+      tel2: client.tel2 ? '***' : null,
+      tel3: client.tel3 ? '***' : null,
+      adresse: client.adresse ? '***' : null,
+      codePostal: typeof client.codePostal === 'string' && client.codePostal.length >= 2 
+        ? client.codePostal.substring(0, 2) + '***' 
+        : client.codePostal ? '***' : null,
+      // Données conservées pour les calculs
+      id: client.id,
+      nom: client.nom,
+      prenom: client.prenom,
+      raisonSociale: client.raisonSociale,
+      type: client.type,
+      typeClient: client.typeClient,
+      codeCompta: client.codeCompta,
+      ville: client.ville, // Conservé pour stats géographiques
+    }));
+  }
+
+  if (endpoint === 'apiGetUsers' || endpoint === 'getUsers') {
+    return data.map((user: Record<string, unknown>) => ({
+      ...user,
+      // Données sensibles masquées
+      email: user.email ? '***' : null,
+      tel: user.tel ? '***' : null,
+      // Données conservées
+      id: user.id,
+      nom: user.nom,
+      prenom: user.prenom,
+      firstname: user.firstname,
+      lastname: user.lastname,
+      name: user.name,
+      initiales: user.initiales,
+      universes: user.universes,
+      type: user.type,
+      role: user.role,
+      bgcolor: user.bgcolor,
+      color: user.color,
+    }));
+  }
+
+  if (endpoint === 'apiGetProjects' || endpoint === 'getProjects') {
+    return data.map((project: Record<string, unknown>) => ({
+      ...project,
+      // Données sensibles masquées
+      adresse: project.adresse ? '***' : null,
+      codePostal: typeof project.codePostal === 'string' && project.codePostal.length >= 2
+        ? project.codePostal.substring(0, 2) + '***'
+        : project.codePostal ? '***' : null,
+      // Ville conservée pour stats géographiques
+    }));
+  }
+
+  // Autres endpoints: pas de masquage (interventions, factures, devis = pas de données sensibles directes)
+  return data;
+}
+
 // Endpoints Apogée autorisés (whitelist)
 const ALLOWED_ENDPOINTS = [
   'apiGetUsers',
@@ -197,15 +270,18 @@ Deno.serve(async (req) => {
       ));
     }
 
-    const data = await apiResponse.json();
-    const itemCount = Array.isArray(data) ? data.length : undefined;
+    const rawData = await apiResponse.json();
+    const itemCount = Array.isArray(rawData) ? rawData.length : undefined;
     
-    console.log(`[PROXY-APOGEE] Success: ${endpoint} returned ${itemCount ?? 'object'} items`);
+    // 9. MASQUAGE SÉCURITÉ - Données sensibles ne quittent JAMAIS le serveur
+    const maskedData = maskSensitiveData(rawData, endpoint);
+    
+    console.log(`[PROXY-APOGEE] Success: ${endpoint} returned ${itemCount ?? 'object'} items (masked)`);
 
-    // 9. Retourner la réponse
+    // 10. Retourner la réponse masquée
     const response: ProxyResponse = {
       success: true,
-      data,
+      data: maskedData,
       meta: {
         endpoint,
         agencySlug: targetAgency,

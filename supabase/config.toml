@@ -126,5 +126,8 @@ verify_jwt = true
 [functions.reformulate-ticket-faq]
 verify_jwt = true
 
+[functions.get-client-contact]
+verify_jwt = true
+
 [functions.admin-sql-runner]
 verify_jwt = true

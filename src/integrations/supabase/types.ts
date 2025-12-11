@@ -4124,6 +4124,45 @@ export type Database = {
           },
         ]
       }
+      sensitive_data_access_logs: {
+        Row: {
+          access_type: string
+          accessed_at: string
+          agency_slug: string
+          client_id: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          project_id: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          access_type?: string
+          accessed_at?: string
+          agency_slug: string
+          client_id: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          project_id: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          access_type?: string
+          accessed_at?: string
+          agency_slug?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          project_id?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       statia_custom_metrics: {
         Row: {
           agency_slug: string | null
