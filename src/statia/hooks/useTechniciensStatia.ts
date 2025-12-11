@@ -101,8 +101,8 @@ export function useTechniciensStatia(): TechniciensStatiaData {
         throw new Error("Aucune agence définie");
       }
       
-      // Charger les services de données
-      const rawData = await DataService.loadAllData();
+      // Charger les services de données avec l'agence explicite
+      const rawData = await DataService.loadAllData(true, false, agencySlug);
       
       // Initialiser l'enrichment service pour avoir les couleurs des univers
       EnrichmentService.initialize(rawData);

@@ -26,7 +26,7 @@ export function useIndicateursUniversStatia() {
   const universesQuery = useQuery({
     queryKey: ["universes-enrichment", agencySlug],
     queryFn: async () => {
-      const rawData = await DataService.loadAllData();
+      const rawData = await DataService.loadAllData(true, false, agencySlug);
       EnrichmentService.initialize(rawData);
       return EnrichmentService.getAllUniverses();
     },
