@@ -20,7 +20,7 @@ export function ActionsAMenerCard() {
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       try {
-        const apiData = await DataService.loadAllData(true);
+        const apiData = await DataService.loadAllData(true, false, agence);
         
         const actions = buildActionsAMener(
           apiData.projects || [],

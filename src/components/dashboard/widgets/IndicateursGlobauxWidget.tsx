@@ -116,7 +116,7 @@ export function IndicateursGlobauxWidget() {
     queryFn: async () => {
       if (!agencySlug) return null;
 
-      const apiData = await DataService.loadAllData(true);
+      const apiData = await DataService.loadAllData(true, false, agencySlug);
       
       const loadedData: LoadedData = {
         factures: apiData.factures || [],
@@ -192,7 +192,7 @@ export function IndicateursGlobauxWidget() {
       if (!agencySlug) return null;
       
       try {
-        const apiData = await DataService.loadAllData(true);
+        const apiData = await DataService.loadAllData(true, false, agencySlug);
         const rawData = calculateMonthlyCA(
           apiData.factures || [],
           apiData.clients || [],

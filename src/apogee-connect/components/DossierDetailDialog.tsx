@@ -25,7 +25,7 @@ export function DossierDetailDialog({ open, onOpenChange, projectId }: DossierDe
     enabled: open && !!projectId,
     staleTime: 2 * 60 * 1000,
     queryFn: async () => {
-      const apiData = await DataService.loadAllData(true);
+      const apiData = await DataService.loadAllData(true, false);
       
       const project: ApiProject = apiData.projects?.find((p: ApiProject) => String(p.id) === String(projectId));
       if (!project) throw new Error('Dossier non trouvé');

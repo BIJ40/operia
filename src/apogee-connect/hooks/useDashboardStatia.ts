@@ -109,7 +109,7 @@ export function useDashboardStatia() {
       logApogee.debug('[Dashboard StatIA] Chargement hybride StatIA + Legacy');
       
       // Charger les données brutes pour les calculs legacy
-      const apiData = await DataService.loadAllData(isApiEnabled);
+      const apiData = await DataService.loadAllData(isApiEnabled, false, agencySlug);
       
       // ========================================
       // MÉTRIQUES StatIA (source de vérité)

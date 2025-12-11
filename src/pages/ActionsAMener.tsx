@@ -36,7 +36,7 @@ function ActionsAMenerContent() {
     enabled: isAgencyReady && !isLoadingConfig,
     staleTime: 2 * 60 * 1000,
     queryFn: async () => {
-      const apiData = await DataService.loadAllData(true);
+      const apiData = await DataService.loadAllData(true, false, currentAgency?.id);
       
       const actionsList = buildActionsAMener(
         apiData.projects || [],
