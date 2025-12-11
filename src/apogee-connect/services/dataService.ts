@@ -129,25 +129,71 @@ export class DataService {
       return this.cache;
     }
 
-    logApogee.info('Chargement des données via proxy sécurisé (cache expiré ou forcé)...');
+    logApogee.info('Chargement des données via proxy sécurisé SÉQUENTIEL (cache expiré ou forcé)...');
     
     const proxyOptions = agencySlug ? { agencySlug } : undefined;
+    const startTime = Date.now();
     
-    const results = await Promise.allSettled([
-      apogeeProxy.getUsers(proxyOptions),
-      apogeeProxy.getClients(proxyOptions),
-      apogeeProxy.getProjects(proxyOptions),
-      apogeeProxy.getInterventions(proxyOptions),
-      apogeeProxy.getFactures(proxyOptions),
-      apogeeProxy.getDevis(proxyOptions),
-      apogeeProxy.getInterventionsCreneaux(proxyOptions),
-    ]);
-
-    const [usersRes, clientsRes, projectsRes, interventionsRes, facturesRes, devisRes, creneauxRes] = results.map((res, index) => {
-      if (res.status === 'fulfilled') return res.value;
-      logApogee.warn(`Erreur lors de l'appel API #${index}:`, res.reason);
-      return [];
-    });
+    // APPELS SÉQUENTIELS (un par un) pour éviter les rate limits 429
+    let usersRes: any[] = [];
+    let clientsRes: any[] = [];
+    let projectsRes: any[] = [];
+    let interventionsRes: any[] = [];
+    let facturesRes: any[] = [];
+    let devisRes: any[] = [];
+    let creneauxRes: any[] = [];
+    
+    try {
+      usersRes = await apogeeProxy.getUsers(proxyOptions) || [];
+      logApogee.debug('[SEQUENTIAL] Users loaded:', usersRes.length);
+    } catch (e) {
+      logApogee.warn('[SEQUENTIAL] Users failed:', e);
+    }
+    
+    try {
+      clientsRes = await apogeeProxy.getClients(proxyOptions) || [];
+      logApogee.debug('[SEQUENTIAL] Clients loaded:', clientsRes.length);
+    } catch (e) {
+      logApogee.warn('[SEQUENTIAL] Clients failed:', e);
+    }
+    
+    try {
+      projectsRes = await apogeeProxy.getProjects(proxyOptions) || [];
+      logApogee.debug('[SEQUENTIAL] Projects loaded:', projectsRes.length);
+    } catch (e) {
+      logApogee.warn('[SEQUENTIAL] Projects failed:', e);
+    }
+    
+    try {
+      interventionsRes = await apogeeProxy.getInterventions(proxyOptions) || [];
+      logApogee.debug('[SEQUENTIAL] Interventions loaded:', interventionsRes.length);
+    } catch (e) {
+      logApogee.warn('[SEQUENTIAL] Interventions failed:', e);
+    }
+    
+    try {
+      facturesRes = await apogeeProxy.getFactures(proxyOptions) || [];
+      logApogee.debug('[SEQUENTIAL] Factures loaded:', facturesRes.length);
+    } catch (e) {
+      logApogee.warn('[SEQUENTIAL] Factures failed:', e);
+    }
+    
+    try {
+      devisRes = await apogeeProxy.getDevis(proxyOptions) || [];
+      logApogee.debug('[SEQUENTIAL] Devis loaded:', devisRes.length);
+    } catch (e) {
+      logApogee.warn('[SEQUENTIAL] Devis failed:', e);
+    }
+    
+    try {
+      creneauxRes = await apogeeProxy.getInterventionsCreneaux(proxyOptions) || [];
+      logApogee.debug('[SEQUENTIAL] Creneaux loaded:', creneauxRes.length);
+    } catch (e) {
+      logApogee.warn('[SEQUENTIAL] Creneaux failed:', e);
+    }
+    
+    const duration = Date.now() - startTime;
+    logApogee.info(`[SEQUENTIAL] Toutes les données chargées en ${duration}ms`);
 
     logApogee.debug('Réponses API brutes:', {
       users: Array.isArray(usersRes) ? usersRes.length : 0,
