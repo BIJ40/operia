@@ -190,11 +190,11 @@ export function PrevisionnelTab() {
   }
 
   const { totaux, parUnivers, parEtat, parProjet, debug } = data || {
-    totaux: { totalHeuresRdv: 0, totalHeuresTech: 0, totalNbTechs: 0, nbDossiers: 0, totalDevisHT: 0 },
+    totaux: { totalHeuresRdv: 0, totalHeuresTech: 0, totalNbTechs: 0, nbDossiers: 0, totalDevisHT: 0, caPlanifie: 0 },
     parUnivers: [],
     parEtat: [],
     parProjet: [],
-    debug: { totalProjects: 0, projectsEligibleState: 0, projectsAvecRT: 0, rtBlocksCount: 0, devisTotal: 0, devisIndexed: 0 }
+    debug: { totalProjects: 0, projectsEligibleState: 0, projectsAvecRT: 0, rtBlocksCount: 0, devisTotal: 0, devisIndexed: 0, caPlanifieDevisCount: 0 }
   };
 
   return (
@@ -204,8 +204,8 @@ export function PrevisionnelTab() {
       animate="visible"
       className="space-y-6"
     >
-      {/* Cards par État */}
-      <div className="grid gap-4 md:grid-cols-3">
+      {/* Cards par État + CA Planifié */}
+      <div className="grid gap-4 md:grid-cols-4">
         {parEtat.map((etatStats) => {
           const config = ETAT_CONFIG[etatStats.etat] || { color: '#6b7280', icon: FolderOpen, bgClass: 'bg-muted' };
           const Icon = config.icon;
@@ -235,8 +235,48 @@ export function PrevisionnelTab() {
             </motion.div>
           );
         })}
+        
+        {/* Card CA Planifié (devis "to order") */}
+        <motion.div variants={itemVariants}>
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Card className="border-l-4 bg-emerald-500/10 cursor-help" style={{ borderLeftColor: '#10b981' }}>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">CA Planifié</CardTitle>
+                    <Euro className="h-5 w-5 text-emerald-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold text-emerald-600">{formatCurrency(totaux.caPlanifie)}</div>
+                    <p className="text-sm text-muted-foreground mt-1">devis acceptés</p>
+                    <div className="flex gap-4 mt-3 text-xs">
+                      <div className="flex items-center gap-1">
+                        <FolderOpen className="h-3 w-3 text-muted-foreground" />
+                        <span className="font-medium">{debug.caPlanifieDevisCount || 0}</span>
+                        <span className="text-muted-foreground">dossiers</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="p-4 max-w-xs">
+                <div className="space-y-2">
+                  <p className="font-medium">CA Planifié = Σ devis "to order"</p>
+                  <p className="text-xs text-muted-foreground">
+                    Somme des montants HT des devis acceptés (status = "to order") 
+                    pour les dossiers en attente de travaux.
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    1 seul devis comptabilisé par dossier (pas de double comptage).
+                  </p>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </motion.div>
+
         {parEtat.length === 0 && (
-          <motion.div variants={itemVariants} className="col-span-3">
+          <motion.div variants={itemVariants} className="col-span-4">
             <Card className="border-dashed">
               <CardContent className="py-8 text-center text-muted-foreground">
                 Aucun dossier en attente de travaux

@@ -63,6 +63,7 @@ export interface ChargeTravauxResult {
     totalNbTechs: number;
     nbDossiers: number;
     totalDevisHT: number;
+    caPlanifie: number; // CA des devis "to order" uniquement (dossiers planifiés)
   };
   debug: {
     totalProjects: number;
@@ -75,6 +76,7 @@ export interface ChargeTravauxResult {
     devisIndexed: number;
     devisMatchedToProjects: number;
     devisHTCalculated: number;
+    caPlanifieDevisCount: number;
     sampleDevis: any;
   };
 }
@@ -250,6 +252,36 @@ function calculateDevisHTForProject(projectDevis: any[]): number {
 }
 
 /**
+ * Vérifie si un devis est "to order" (accepté/commandé)
+ */
+function isDevisToOrder(d: any): boolean {
+  const state = String(d?.state ?? d?.status ?? d?.data?.state ?? '').trim().toLowerCase();
+  return state === 'to order' || state === 'to_order' || state === 'order';
+}
+
+/**
+ * Calcule le CA Planifié (devis "to order" uniquement) pour un projet
+ * Règle métier: 1 seul devis "to order" max par dossier
+ */
+function calculateCAPlanifieForProject(projectDevis: any[]): number {
+  for (const d of projectDevis) {
+    if (!isDevisToOrder(d)) continue;
+
+    const montant =
+      parseNumericValue(d.data?.totalHT) ||
+      parseNumericValue(d.totalHT) ||
+      parseNumericValue(d.amount) ||
+      0;
+
+    if (montant > 0) {
+      return montant; // 1 seul devis "to order" max par dossier
+    }
+  }
+
+  return 0;
+}
+
+/**
  * Calcule la charge de travaux à venir par univers
  * Croisement: projects.id ↔ interventions.projectId ↔ devis.projectId
  */
@@ -273,6 +305,7 @@ export function computeChargeTravauxAvenirParUnivers(
     devisIndexed: Array.from(devisByProjectId.values()).flat().length,
     devisMatchedToProjects: 0,
     devisHTCalculated: 0,
+    caPlanifieDevisCount: 0,
     sampleDevis: devis.length > 0 ? { 
       id: devis[0]?.id, 
       projectId: devis[0]?.projectId, 
@@ -282,6 +315,10 @@ export function computeChargeTravauxAvenirParUnivers(
       keys: Object.keys(devis[0] || {}).slice(0, 10)
     } : null
   };
+
+  // Calcul CA Planifié (devis "to order" uniquement)
+  let totalCAPlanifie = 0;
+  const projectsWithToOrderDevis = new Set<number>();
 
   const parProjet: ChargeTravauxProjet[] = [];
   const universMap = new Map<string, ChargeTravauxUniversStats>();
@@ -337,6 +374,14 @@ export function computeChargeTravauxAvenirParUnivers(
     const totalDevisHTProjet = calculateDevisHTForProject(projectDevis);
     if (totalDevisHTProjet > 0) {
       debug.devisHTCalculated += totalDevisHTProjet;
+    }
+
+    // Calcul CA Planifié (devis "to order" uniquement)
+    const caPlanifieProjet = calculateCAPlanifieForProject(projectDevis);
+    if (caPlanifieProjet > 0 && !projectsWithToOrderDevis.has(projectId)) {
+      totalCAPlanifie += caPlanifieProjet;
+      projectsWithToOrderDevis.add(projectId);
+      debug.caPlanifieDevisCount++;
     }
 
     // Univers du projet
@@ -421,7 +466,8 @@ export function computeChargeTravauxAvenirParUnivers(
     totalHeuresTech: parProjet.reduce((sum, p) => sum + p.totalHeuresTech, 0),
     totalNbTechs: parProjet.reduce((sum, p) => sum + p.nbTechs, 0),
     nbDossiers: parProjet.length,
-    totalDevisHT: parProjet.reduce((sum, p) => sum + p.devisHT, 0)
+    totalDevisHT: parProjet.reduce((sum, p) => sum + p.devisHT, 0),
+    caPlanifie: totalCAPlanifie
   };
 
   return {
