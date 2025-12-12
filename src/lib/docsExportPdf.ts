@@ -478,7 +478,8 @@ class ComprehensivePDFGenerator {
       const isMain = !item.startsWith('  ');
       this.doc.setFontSize(isMain ? 11 : 9);
       this.doc.setFont('helvetica', isMain ? 'bold' : 'normal');
-      this.doc.setTextColor(isMain ? COLORS.primary : COLORS.text);
+      const textColor = isMain ? COLORS.primary : COLORS.text;
+      this.doc.setTextColor(textColor[0], textColor[1], textColor[2]);
       this.doc.text(item, this.margin, this.currentY);
       this.currentY += isMain ? 8 : 6;
     });
