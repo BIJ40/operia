@@ -48,7 +48,7 @@ const IndicateursLayout = lazy(() => import("./apogee-connect/pages/IndicateursL
 const IndicateursAccueil = lazy(() => import("./apogee-connect/pages/IndicateursAccueil"));
 const StatsHub = lazy(() => import("./apogee-connect/pages/StatsHub"));
 const VeilleApporteursPage = lazy(() => import("./pages/VeilleApporteursPage"));
-const PlanningHebdo = lazy(() => import("./pages/PlanningTechnicienHebdo"));
+const PlanningHebdo = lazy(() => import("./apogee-connect/pages/PlanningHebdo"));
 // RH Tech hub page
 const RHTech = lazy(() => import("./pages/RHTechPage"));
 const EquipePage = lazy(() => import("./pages/EquipePage"));
