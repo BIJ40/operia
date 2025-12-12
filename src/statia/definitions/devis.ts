@@ -707,6 +707,123 @@ export const delaiMoyenValidationDevis: StatDefinition = {
   },
 };
 
+// ============= METRIC: CA Planifié (devis "to order" uniquement) =============
+
+/**
+ * CA Planifié — CA HT des dossiers planifiés
+ * 
+ * RÈGLE MÉTIER (figée) :
+ * - Dossier planifié = au moins 1 intervention planifiée dans la période
+ * - Devis comptabilisé = status === "to order" (équivalent accepté/commandé)
+ * - CA HT = somme HT des devis "to order", 1 fois par dossier
+ * - On ignore tous les autres devis (brouillon, refusé, annulé, etc.)
+ */
+export const caPlanifie: StatDefinition = {
+  id: 'ca_planifie',
+  label: 'CA Planifié',
+  description: 'CA HT des dossiers avec intervention planifiée et devis accepté (to order)',
+  category: 'devis',
+  source: ['devis', 'interventions'],
+  aggregation: 'sum',
+  unit: '€',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { devis, interventions } = data;
+    
+    const dateMin = params.dateRange.start;
+    const dateMax = params.dateRange.end;
+    
+    // Helper: parser une date avec fallbacks multiples
+    const parseDate = (s?: string | null): Date | null => {
+      if (!s) return null;
+      const iso = s.includes(' ') ? s.replace(' ', 'T') : s;
+      const d = new Date(iso);
+      return Number.isNaN(d.getTime()) ? null : d;
+    };
+    
+    // Helper: récupérer le projectId avec tous les alias possibles
+    const getProjectId = (x: any): number | null => {
+      const v = x?.projectId ?? x?.project_id ?? x?.refId ?? x?.ref_id ?? x?.dossierId ?? x?.dossier_id ?? null;
+      return v == null ? null : Number(v);
+    };
+    
+    // Helper: récupérer le montant HT
+    const getHT = (d: any): number => {
+      const raw = d?.data?.totalHT ?? d?.totalHT ?? d?.total_ht ?? 0;
+      return typeof raw === 'string' ? parseFloat(raw.replace(',', '.')) || 0 : Number(raw) || 0;
+    };
+    
+    // Helper: vérifier si le devis est accepté (to order)
+    const isAcceptedDevis = (d: any): boolean => {
+      const status = String(d?.status ?? d?.state ?? d?.statut ?? d?.data?.state ?? d?.data?.status ?? '').trim().toLowerCase();
+      return status === 'to order' || status === 'to_order' || status === 'order';
+    };
+    
+    // 1️⃣ Identifier les dossiers planifiés dans la période
+    const plannedProjects = new Set<number>();
+    
+    for (const itv of interventions ?? []) {
+      const pid = getProjectId(itv);
+      if (!pid) continue;
+      
+      const dateStr = itv.date ?? itv.start ?? itv.dateDebut ?? itv.data?.date;
+      const d = parseDate(dateStr);
+      if (!d) continue;
+      if (d < dateMin || d > dateMax) continue;
+      
+      plannedProjects.add(pid);
+    }
+    
+    // 2️⃣ Récupérer les devis acceptés par dossier (1 seul devis max par dossier)
+    const acceptedDevisByProject = new Map<number, any>();
+    
+    for (const dv of devis ?? []) {
+      if (!isAcceptedDevis(dv)) continue;
+      
+      const pid = getProjectId(dv);
+      if (!pid) continue;
+      
+      // 1 devis accepté max par dossier (logique "to order")
+      acceptedDevisByProject.set(pid, dv);
+    }
+    
+    // 3️⃣ Calculer le CA HT planifié
+    let caHtTotal = 0;
+    const details: Array<{ projectId: number; caHt: number }> = [];
+    
+    for (const projectId of plannedProjects) {
+      const dv = acceptedDevisByProject.get(projectId);
+      if (!dv) continue;
+      
+      const ht = getHT(dv);
+      caHtTotal += ht;
+      details.push({ projectId, caHt: ht });
+    }
+    
+    details.sort((a, b) => b.caHt - a.caHt);
+    
+    logDebug('STATIA', 'caPlanifie - RESULT', {
+      nbDossiersPlannifies: plannedProjects.size,
+      nbDossiersAvecDevisAcceptes: details.length,
+      caHtTotal: Math.round(caHtTotal * 100) / 100,
+    });
+    
+    return {
+      value: Math.round(caHtTotal * 100) / 100,
+      metadata: {
+        computedAt: new Date(),
+        source: 'devis',
+        recordCount: details.length,
+      },
+      breakdown: {
+        nbDossiersPlannifies: plannedProjects.size,
+        nbDossiersAvecDevisAcceptes: details.length,
+        caHtTotal: Math.round(caHtTotal * 100) / 100,
+        details: details.slice(0, 10), // Top 10 pour debug
+      },
+    };
+  },
+};
+
 export const devisDefinitions = {
   taux_transformation_devis_nombre: tauxTransformationDevisNombre,
   taux_transformation_devis_montant: tauxTransformationDevisMontant,
@@ -717,4 +834,5 @@ export const devisDefinitions = {
   repartition_devis_par_univers: repartitionDevisParUnivers,
   repartition_devis_par_type_apporteur: repartitionDevisParTypeApporteur,
   delai_devis_apres_intervention: delaiDevisApresIntervention,
+  ca_planifie: caPlanifie,
 };
