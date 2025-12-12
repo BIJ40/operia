@@ -59,7 +59,8 @@ export const ROUTES = {
     // Diffusion (sous statistiques)
     diffusion: '/hc-agency/statistiques/diffusion',
     // RH Tech
-    rhTech: '/hc-agency/rh-tech',
+    rhTech: '/pilotage/rh-tech',
+    planningHebdo: '/pilotage/rh-tech/planning',
     // Maintenance préventive
     maintenance: '/hc-agency/maintenance',
     // Commercial
