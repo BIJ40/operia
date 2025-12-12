@@ -1,15 +1,15 @@
 import React, { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { UserCheck } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ROUTES } from "@/config/routes";
 import { TechWeeklyPlanningList } from "@/apogee-connect/components/TechWeeklyPlanningList";
 import { AgencyProvider, useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { ApiToggleProvider } from "@/apogee-connect/contexts/ApiToggleContext";
+import { apogeeProxy } from "@/services/apogeeProxy";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useWeeklyTechPlanning } from "@/apogee-connect/hooks/useWeeklyTechPlanning";
-
 interface TechnicienOption {
   id: number;
   firstname: string;
@@ -21,15 +21,22 @@ function PlanningHebdoContent() {
   const { isAgencyReady } = useAgency();
   const [selectedTechId, setSelectedTechId] = useState<number | undefined>(undefined);
 
-  // Récupérer aussi les users bruts depuis le hook (source: apiGetUsers)
-  const { users, isLoading: loadingPlanning } = useWeeklyTechPlanning(undefined, true);
+  // Fetch users directement depuis apiGetUsers
+  const { data: usersData, isLoading: loadingUsers } = useQuery<any[]>({
+    queryKey: ["planning-users-select"],
+    queryFn: async () => {
+      const result = await apogeeProxy.getUsers();
+      return (result || []) as any[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const techniciensList = useMemo<TechnicienOption[]>(() => {
-    if (!users || users.length === 0) return [];
+    if (!usersData || usersData.length === 0) return [];
 
-    const list = (users as any[])
-      .filter((u) => u?.is_on === true)
-      .map((u) => ({
+    const list = usersData
+      .filter((u: any) => u?.is_on === true)
+      .map((u: any) => ({
         id: u.id,
         firstname: (u.firstname || "").trim(),
         name: (u.name || "").trim(),
@@ -42,7 +49,7 @@ function PlanningHebdoContent() {
       }));
 
     return list.sort((a, b) => a.firstname.localeCompare(b.firstname));
-  }, [users]);
+  }, [usersData]);
 
 
   if (!isAgencyReady) {
@@ -84,7 +91,7 @@ function PlanningHebdoContent() {
             onValueChange={(value) =>
               setSelectedTechId(value === "all" ? undefined : Number(value))
             }
-            disabled={loadingPlanning || techniciensList.length === 0}
+            disabled={loadingUsers || techniciensList.length === 0}
           >
             <SelectTrigger className="w-full lg:w-[250px]">
               <SelectValue placeholder="Sélectionner un technicien" />
