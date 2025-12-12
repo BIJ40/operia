@@ -1,12 +1,10 @@
 import React, { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { UserCheck } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ROUTES } from "@/config/routes";
 import { TechWeeklyPlanningList } from "@/apogee-connect/components/TechWeeklyPlanningList";
 import { AgencyProvider, useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { ApiToggleProvider } from "@/apogee-connect/contexts/ApiToggleContext";
-import { apogeeProxy } from "@/services/apogeeProxy";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,27 +21,28 @@ function PlanningHebdoContent() {
   const { isAgencyReady } = useAgency();
   const [selectedTechId, setSelectedTechId] = useState<number | undefined>(undefined);
 
-  // Réutiliser les données du hook de planning hebdo pour récupérer les techniciens
-  const { planningByTech, isLoading: loadingPlanning } = useWeeklyTechPlanning(undefined, true);
+  // Récupérer aussi les users bruts depuis le hook (source: apiGetUsers)
+  const { users, isLoading: loadingPlanning } = useWeeklyTechPlanning(undefined, true);
 
   const techniciensList = useMemo<TechnicienOption[]>(() => {
-    if (!planningByTech) return [];
+    if (!users || users.length === 0) return [];
 
-    const list = Object.values(planningByTech).map((tech) => {
-      const parts = tech.techName.split(" ");
-      const lastName = parts.pop() || "";
-      const firstName = parts.join(" ");
-
-      return {
-        id: tech.techId,
-        firstname: firstName || tech.techName,
-        name: lastName,
-        color: tech.color || null,
-      };
-    });
+    const list = (users as any[])
+      .filter((u) => u?.is_on === true)
+      .map((u) => ({
+        id: u.id,
+        firstname: (u.firstname || "").trim(),
+        name: (u.name || "").trim(),
+        color:
+          u.data?.bgcolor?.hex ||
+          u.bgcolor?.hex ||
+          u.data?.color?.hex ||
+          u.color?.hex ||
+          null,
+      }));
 
     return list.sort((a, b) => a.firstname.localeCompare(b.firstname));
-  }, [planningByTech]);
+  }, [users]);
 
 
   if (!isAgencyReady) {

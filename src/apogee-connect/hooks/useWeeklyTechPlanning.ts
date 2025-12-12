@@ -19,6 +19,7 @@ import { logApogee } from "@/lib/logger";
 interface WeeklyPlanningHookResult {
   data: WeeklyTechPlanning[] | undefined;
   planningByTech: PlanningByTech | undefined;
+  users: RawUser[] | undefined;
   isLoading: boolean;
   error: unknown;
   weekDate: Date;
@@ -155,6 +156,7 @@ export function useWeeklyTechPlanning(techFilterId?: number, showInactiveTechs =
   return {
     data: weeklyData,
     planningByTech,
+    users,
     isLoading,
     error,
     weekDate,
