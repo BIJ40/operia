@@ -171,16 +171,18 @@ export default function PlanningTechnicienHebdo() {
   
   const isLoading = loadingUsers || loadingCreneaux;
   
-  // Liste des techniciens (is_on=true - le type peut être absent ou varié)
+  // DEBUG: Afficher le premier user pour comprendre la structure
+  console.log("[DEBUG] users array:", users?.length, "first user:", users?.[0]);
+  
+  // Liste des techniciens - SANS FILTRE pour diagnostic
   const techniciens = useMemo(() => {
-    return users
-      .filter((u) => Boolean(u.is_on))
-      .map((u) => ({
-        id: u.id,
-        label: `${(u.firstname ?? "").trim()} ${(u.name ?? "").trim()}`.trim() || `#${u.id}`,
-        color: u.data?.bgcolor?.hex ?? undefined,
-      }))
-      .sort((a, b) => a.label.localeCompare(b.label));
+    return (users ?? []).map((u) => ({
+      id: u.id,
+      label: `${(u.firstname ?? "").trim()} ${(u.name ?? "").trim()}`.trim() || `#${u.id}`,
+      color: u.data?.bgcolor?.hex ?? undefined,
+      isOn: u.is_on, // pour debug
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
   }, [users]);
   
   // Semaine courante
