@@ -4,7 +4,9 @@
  */
 
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import { Calendar } from 'lucide-react';
 import { useCollaborators } from '@/hooks/useCollaborators';
 import { useUserManagement } from '@/hooks/use-user-management';
 import { useAdminAgencies } from '@/hooks/use-admin-agencies';
@@ -13,6 +15,7 @@ import { CollaboratorList } from '@/components/collaborators';
 import { CreateUserDialog } from '@/components/admin/users';
 import { GlobalRole, getRoleLevel } from '@/types/globalRoles';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/config/routes';
 import { getUserManagementCapabilities } from '@/config/roleMatrix';
 
@@ -68,6 +71,14 @@ export default function CollaborateursPage() {
         subtitle="Gestion des collaborateurs de l'agence"
         backTo={ROUTES.rh.index}
         backLabel="Espace RH"
+        rightElement={
+          <Button asChild variant="outline" size="sm">
+            <Link to={ROUTES.rh.plannings} className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Plannings
+            </Link>
+          </Button>
+        }
       />
       <CollaboratorList
         collaborators={collaborators}
