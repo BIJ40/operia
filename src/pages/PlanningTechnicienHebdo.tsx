@@ -171,18 +171,17 @@ export default function PlanningTechnicienHebdo() {
   
   const isLoading = loadingUsers || loadingCreneaux;
   
-  // DEBUG: Afficher le premier user pour comprendre la structure
-  console.log("[DEBUG] users array:", users?.length, "first user:", users?.[0]);
-  
-  // Liste des techniciens - SANS FILTRE pour diagnostic
+  // Liste des techniciens actifs (filtre robuste is_on + type="technicien")
   const techniciens = useMemo(() => {
-    return (users ?? []).map((u) => ({
-      id: u.id,
-      label: `${(u.firstname ?? "").trim()} ${(u.name ?? "").trim()}`.trim() || `#${u.id}`,
-      color: u.data?.bgcolor?.hex ?? undefined,
-      isOn: u.is_on, // pour debug
-    }))
-    .sort((a, b) => a.label.localeCompare(b.label));
+    return (users ?? [])
+      .filter((u) => u?.is_on === true)
+      .filter((u) => String(u?.type ?? "").toLowerCase() === "technicien")
+      .map((u) => ({
+        id: u.id,
+        label: `${(u.firstname ?? "").trim()} ${(u.name ?? "").trim()}`.trim() || `#${u.id}`,
+        color: u.data?.bgcolor?.hex ?? undefined,
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   }, [users]);
   
   // Semaine courante
@@ -240,6 +239,7 @@ export default function PlanningTechnicienHebdo() {
               <Select
                 value={selectedTechId?.toString() ?? ""}
                 onValueChange={(v) => setSelectedTechId(v ? Number(v) : undefined)}
+                disabled={isLoading}
               >
                 <SelectTrigger className="w-[250px]">
                   <SelectValue placeholder="Sélectionner un technicien" />
@@ -262,17 +262,13 @@ export default function PlanningTechnicienHebdo() {
               </Select>
             )}
           </div>
-          {/* Debug info */}
-          <div className="text-xs text-muted-foreground">
-            loading={String(isLoading)} / users={users?.length ?? 0} / techs={techniciens.length}
-          </div>
           {!isLoading && techniciens.length === 0 && (
             <div className="text-xs text-destructive">
-              Aucun technicien actif trouvé (filtre: is_on truthy)
+              Aucun technicien actif trouvé (is_on=true, type="technicien").
             </div>
           )}
         </div>
-        
+
         {/* Navigation semaine */}
         <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" onClick={goToPrevWeek}>
