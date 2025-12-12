@@ -145,33 +145,39 @@ const TABLES_PART_6 = [
 ];
 
 // Limites par table pour éviter les dépassements mémoire
+// CRITICAL: blocks contient du HTML volumineux, limites très basses
 const TABLE_LIMITS: Record<string, number> = {
-  "profiles": 300,
-  "collaborators": 300,
-  "collaborator_documents": 200,
-  "support_tickets": 200,
-  "support_messages": 100,
-  "support_ticket_actions": 200,
-  "live_support_sessions": 200,
-  "live_support_messages": 100,
-  "chatbot_queries": 200,
-  "faq_items": 200,
-  "messages": 100,
+  "profiles": 200,
+  "collaborators": 200,
+  "collaborator_documents": 100,
+  "support_tickets": 100,
+  "support_messages": 50,
+  "support_ticket_actions": 100,
+  "live_support_sessions": 100,
+  "live_support_messages": 50,
+  "chatbot_queries": 100,
+  "faq_items": 100,
+  "messages": 50,
   "metrics_cache": 0, // Skip - regenerable
-  "blocks": 300,
-  "apporteur_blocks": 300,
-  "apogee_tickets": 500,
-  "apogee_ticket_comments": 500,
-  "apogee_ticket_history": 500,
-  "apogee_guides": 500,
-  "user_connection_logs": 500,
-  "rag_index_documents": 200,
-  "rh_audit_log": 500,
-  "document_access_logs": 300,
-  "payslip_data": 500,
+  // Part 5 - Tables volumineuses avec HTML/contenu
+  "blocks": 50, // Contenu HTML très volumineux
+  "apporteur_blocks": 50, // Contenu HTML très volumineux
+  "documents": 100,
+  // Part 4 - Tickets
+  "apogee_tickets": 200,
+  "apogee_ticket_comments": 200,
+  "apogee_ticket_history": 200,
+  "apogee_guides": 200,
+  // Autres
+  "user_connection_logs": 200,
+  "rag_index_documents": 100,
+  "rh_audit_log": 200,
+  "document_access_logs": 100,
+  "payslip_data": 200,
+  "formation_content": 50, // Contenu volumineux
 };
 
-const DEFAULT_LIMIT = 500;
+const DEFAULT_LIMIT = 200;
 
 serve(async (req) => {
   const corsResponse = handleCorsPreflightOrReject(req);
