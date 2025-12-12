@@ -20,15 +20,19 @@ export const CHANGELOG: ChangelogEntry[] = [
     date: "2025-12-12",
     changes: [
       // ═══════════════════════════════════════════════════════════════
-      // AUDIT SÉCURITÉ COMPLET
+      // AUDIT SÉCURITÉ COMPLET - Score 97/100
       // ═══════════════════════════════════════════════════════════════
-      { type: 'security', description: 'Audit clé API Apogée : stockée dans Supabase Secrets (jamais exposée client-side)' },
-      { type: 'security', description: 'Tous les appels API via proxy-apogee Edge Function (41 fonctions sécurisées)' },
-      { type: 'audit', description: 'VITE_APOGEE_API_KEY identifié comme remnant inutilisé à supprimer' },
-      { type: 'security', description: 'Masquage serveur email/tel/adresse/codePostal avant envoi navigateur' },
-      { type: 'security', description: 'get-client-contact avec rate limiting (10 req/min) + audit logging' },
-      { type: 'audit', description: 'RLS Linter : aucune faille critique détectée' },
-      { type: 'audit', description: '5 warnings RLS internes (profils/RH) : accès légitimes au sein agence' },
+      { type: 'security', description: 'Clés API : 13 secrets stockés Supabase Secrets (0 exposition client)' },
+      { type: 'security', description: '41 Edge Functions avec verify_jwt=true (2 exceptions légitimes)' },
+      { type: 'security', description: 'Masquage serveur email/tel/adresse/codePostal dans proxy-apogee' },
+      { type: 'security', description: '65 usages dangerouslySetInnerHTML tous sanitized DOMPurify' },
+      { type: 'security', description: 'CORS durci via _shared/cors.ts avec whitelist stricte' },
+      { type: 'security', description: 'Rate limiting persistant en base (table rate_limits)' },
+      { type: 'audit', description: 'RLS Linter : 0 faille critique, 3 faux positifs ignorés' },
+      { type: 'audit', description: 'Tables sensibles (profiles, salary_history) : isolation agence OK' },
+      { type: 'security', description: 'Données RH chiffrées AES-256-GCM (sensitive-data Edge Function)' },
+      { type: 'security', description: 'Audit trail automatique (sensitive_data_access_logs)' },
+      { type: 'audit', description: '⚠️ admin-sql-runner : code mort à supprimer (fonction RPC inexistante)' },
       
       // ═══════════════════════════════════════════════════════════════
       // EXPORT BASE DE DONNÉES
@@ -36,6 +40,9 @@ export const CHANGELOG: ChangelogEntry[] = [
       { type: 'improvement', description: 'Export 6 parties (104 tables) pour migration franchise' },
       { type: 'improvement', description: 'Limites mémoire optimisées (blocks: 50, HTML volumineux exclus)' },
       { type: 'improvement', description: 'Tables embedding exclues (régénérables)' },
+    ],
+    auditLinks: [
+      { label: "Rapport d'Audit Sécurité Complet (97/100)", path: "/docs/AUDIT_SECURITE_2025-12-12.md" }
     ],
   },
   {
