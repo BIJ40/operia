@@ -13,10 +13,11 @@ import { Badge } from "@/components/ui/badge";
 import { useApogeeUsers } from "@/shared/api/apogee/useApogeeUsers";
 import { usePlanningCreneaux } from "@/shared/api/apogee/usePlanningCreneaux";
 import { buildUserMap, toEvents } from "@/shared/planning/planningMapper";
-import { buildTechMap } from "@/apogee-connect/utils/techTools";
 import { getWeekRange, formatWeekRange, buildLunchBreakBlocks, getWeekDays } from "@/shared/planning/weekUtils";
 import { computeWeeklyWorkMinutes, formatMinutes } from "@/shared/planning/workTime";
 import type { PlanningEvent } from "@/shared/types/apogeePlanning";
+import { AgencyProvider } from "@/apogee-connect/contexts/AgencyContext";
+import { ApiToggleProvider } from "@/apogee-connect/contexts/ApiToggleContext";
 
 // Heures affichées dans la grille
 const START_HOUR = 7;
@@ -163,7 +164,7 @@ function WeekGrid({
   );
 }
 
-export default function PlanningTechnicienHebdo() {
+function PlanningTechnicienHebdoContent() {
   const [weekDate, setWeekDate] = useState<Date>(new Date());
   const [selectedTechId, setSelectedTechId] = useState<number | undefined>(undefined);
   
@@ -399,3 +400,14 @@ export default function PlanningTechnicienHebdo() {
     </div>
   );
 }
+
+export default function PlanningTechnicienHebdo() {
+  return (
+    <ApiToggleProvider>
+      <AgencyProvider>
+        <PlanningTechnicienHebdoContent />
+      </AgencyProvider>
+    </ApiToggleProvider>
+  );
+}
+
