@@ -10,6 +10,7 @@ import { apogeeProxy } from "@/services/apogeeProxy";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface TechnicienOption {
   id: number;
@@ -20,24 +21,29 @@ interface TechnicienOption {
 
 function PlanningHebdoContent() {
   const { isAgencyReady } = useAgency();
+  const { agence } = useAuth();
   const [selectedTechId, setSelectedTechId] = useState<number | undefined>(undefined);
 
-  // Fetch users with is_on: true filter
-  const { data: usersData, isLoading: loadingUsers } = useQuery<any[]>({
-    queryKey: ["planning-users-select"],
+  // Fetch users with is_on: true filter - enabled if agency is ready OR if user has an agence
+  const { data: usersData, isLoading: loadingUsers, error: usersError } = useQuery<any[]>({
+    queryKey: ["planning-users-select", agence],
     queryFn: async () => {
       const result = await apogeeProxy.getUsers();
+      console.log("[PlanningHebdo] Users fetched:", result?.length || 0, "users");
       return (result || []) as any[];
     },
-    enabled: isAgencyReady,
+    enabled: isAgencyReady || !!agence,
     staleTime: 5 * 60 * 1000,
   });
 
   // Filter technicians: is_on === true
   const techniciensList = useMemo<TechnicienOption[]>(() => {
-    if (!usersData) return [];
+    if (!usersData) {
+      console.log("[PlanningHebdo] No usersData available");
+      return [];
+    }
     
-    return usersData
+    const filtered = usersData
       .filter((u: any) => u?.is_on === true)
       .map((u: any) => ({
         id: u.id,
@@ -46,6 +52,9 @@ function PlanningHebdoContent() {
         color: u.data?.bgcolor?.hex || u.bgcolor?.hex || u.data?.color?.hex || u.color?.hex || null,
       }))
       .sort((a, b) => a.firstname.localeCompare(b.firstname));
+    
+    console.log("[PlanningHebdo] Technicians with is_on=true:", filtered.length);
+    return filtered;
   }, [usersData]);
 
   if (!isAgencyReady) {
