@@ -172,28 +172,45 @@ export default function PlanningTechnicienHebdo() {
   
   const isLoading = loadingUsers || loadingCreneaux;
   
-  // Liste des techniciens via buildTechMap (même logique que Stats Hub)
-  const techniciens = useMemo(() => {
-    const techMap = buildTechMap(users);
-    return Object.values(techMap)
-      .filter(t => t.actif)
-      .map(t => ({
-        id: t.id,
-        label: `${t.prenom} ${t.nom}`.trim() || `#${t.id}`,
-        color: t.color,
-      }))
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }, [users]);
-  
-  // Semaine courante
-  const { weekStart, weekEnd } = useMemo(() => getWeekRange(weekDate), [weekDate]);
-  const weekLabel = useMemo(() => formatWeekRange(weekStart, weekEnd), [weekStart, weekEnd]);
-  
-  // Mapper les events
+  // Mapper les events (même si users est vide, on a quand même les userIds)
   const allEvents = useMemo(() => {
     const userMap = buildUserMap(users);
     return toEvents(creneaux, userMap);
   }, [users, creneaux]);
+  
+  // Liste des techniciens : d'abord via buildTechMap(users), sinon fallback sur les events
+  const techniciens = useMemo(() => {
+    const techMap = buildTechMap(users);
+
+    let list = Object.values(techMap)
+      .filter((t) => t.actif)
+      .map((t) => ({
+        id: t.id,
+        label: `${t.prenom} ${t.nom}`.trim() || `#${t.id}`,
+        color: t.color,
+      }));
+
+    // Fallback: si aucun technicien détecté via users, on dérive depuis les créneaux
+    if (list.length === 0 && allEvents.length > 0) {
+      const byId = new Map<number, { id: number; label: string; color: string }>();
+      for (const e of allEvents) {
+        if (!byId.has(e.userId)) {
+          byId.set(e.userId, {
+            id: e.userId,
+            label: e.title || `Tech #${e.userId}`,
+            color: e.color || "#808080",
+          });
+        }
+      }
+      list = Array.from(byId.values());
+    }
+
+    return list.sort((a, b) => a.label.localeCompare(b.label));
+  }, [users, allEvents]);
+  
+  // Semaine courante
+  const { weekStart, weekEnd } = useMemo(() => getWeekRange(weekDate), [weekDate]);
+  const weekLabel = useMemo(() => formatWeekRange(weekStart, weekEnd), [weekStart, weekEnd]);
   
   // Filtrer par technicien et semaine
   const filteredEvents = useMemo(() => {
