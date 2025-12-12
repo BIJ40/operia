@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { useApogeeUsers } from "@/shared/api/apogee/useApogeeUsers";
 import { usePlanningCreneaux } from "@/shared/api/apogee/usePlanningCreneaux";
 import { buildUserMap, toEvents } from "@/shared/planning/planningMapper";
+import { buildTechMap } from "@/apogee-connect/utils/techTools";
 import { getWeekRange, formatWeekRange, buildLunchBreakBlocks, getWeekDays } from "@/shared/planning/weekUtils";
 import { computeWeeklyWorkMinutes, formatMinutes } from "@/shared/planning/workTime";
 import type { PlanningEvent } from "@/shared/types/apogeePlanning";
@@ -171,15 +172,15 @@ export default function PlanningTechnicienHebdo() {
   
   const isLoading = loadingUsers || loadingCreneaux;
   
-  // Liste des techniciens actifs (filtre robuste is_on + type="technicien")
+  // Liste des techniciens via buildTechMap (même logique que Stats Hub)
   const techniciens = useMemo(() => {
-    return (users ?? [])
-      .filter((u) => u?.is_on === true)
-      .filter((u) => String(u?.type ?? "").toLowerCase() === "technicien")
-      .map((u) => ({
-        id: u.id,
-        label: `${(u.firstname ?? "").trim()} ${(u.name ?? "").trim()}`.trim() || `#${u.id}`,
-        color: u.data?.bgcolor?.hex ?? undefined,
+    const techMap = buildTechMap(users);
+    return Object.values(techMap)
+      .filter(t => t.actif)
+      .map(t => ({
+        id: t.id,
+        label: `${t.prenom} ${t.nom}`.trim() || `#${t.id}`,
+        color: t.color,
       }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }, [users]);
