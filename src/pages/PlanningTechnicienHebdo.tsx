@@ -229,35 +229,45 @@ export default function PlanningTechnicienHebdo() {
       
       <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
         {/* Sélecteur technicien */}
-        <div className="flex items-center gap-3">
-          <label className="text-sm font-medium">Technicien :</label>
-          {isLoading ? (
-            <Skeleton className="h-10 w-[250px]" />
-          ) : (
-            <Select
-              value={selectedTechId?.toString() ?? ""}
-              onValueChange={(v) => setSelectedTechId(v ? Number(v) : undefined)}
-              disabled={techniciens.length === 0}
-            >
-              <SelectTrigger className="w-[250px]">
-                <SelectValue placeholder="Sélectionner un technicien" />
-              </SelectTrigger>
-              <SelectContent>
-                {techniciens.map((t) => (
-                  <SelectItem key={t.id} value={t.id.toString()}>
-                    <div className="flex items-center gap-2">
-                      {t.color && (
-                        <span
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: t.color }}
-                        />
-                      )}
-                      <span>{t.label}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-medium">Technicien :</label>
+            {isLoading ? (
+              <Skeleton className="h-10 w-[250px]" />
+            ) : (
+              <Select
+                value={selectedTechId?.toString() ?? ""}
+                onValueChange={(v) => setSelectedTechId(v ? Number(v) : undefined)}
+              >
+                <SelectTrigger className="w-[250px]">
+                  <SelectValue placeholder="Sélectionner un technicien" />
+                </SelectTrigger>
+                <SelectContent>
+                  {techniciens.map((t) => (
+                    <SelectItem key={t.id} value={String(t.id)}>
+                      <div className="flex items-center gap-2">
+                        {t.color && (
+                          <span
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: t.color }}
+                          />
+                        )}
+                        <span>{t.label}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+          {/* Debug info */}
+          <div className="text-xs text-muted-foreground">
+            loading={String(isLoading)} / users={users?.length ?? 0} / techs={techniciens.length}
+          </div>
+          {!isLoading && techniciens.length === 0 && (
+            <div className="text-xs text-destructive">
+              Aucun technicien actif trouvé (filtre: is_on truthy)
+            </div>
           )}
         </div>
         
