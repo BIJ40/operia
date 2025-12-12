@@ -24,15 +24,19 @@ function PlanningHebdoContent() {
   const { agence } = useAuth();
   const [selectedTechId, setSelectedTechId] = useState<number | undefined>(undefined);
 
-  // Fetch users with is_on: true filter - enabled if agency is ready OR if user has an agence
+  // Fetch users with is_on: true filter - always enabled once we have any context
   const { data: usersData, isLoading: loadingUsers, error: usersError } = useQuery<any[]>({
     queryKey: ["planning-users-select", agence],
     queryFn: async () => {
+      console.log("[PlanningHebdo] Fetching users from apiGetUsers...");
       const result = await apogeeProxy.getUsers();
-      console.log("[PlanningHebdo] Users fetched:", result?.length || 0, "users");
+      console.log("[PlanningHebdo] Raw users fetched:", result?.length || 0, "users");
+      if (result && result.length > 0) {
+        console.log("[PlanningHebdo] First user sample:", JSON.stringify(result[0], null, 2).substring(0, 500));
+      }
       return (result || []) as any[];
     },
-    enabled: isAgencyReady || !!agence,
+    enabled: true, // Always try to fetch
     staleTime: 5 * 60 * 1000,
   });
 
