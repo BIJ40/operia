@@ -15,6 +15,62 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.7.12",
+    title: "Audit Sécurité & Export DB",
+    date: "2025-12-12",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // AUDIT SÉCURITÉ COMPLET
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'security', description: 'Audit clé API Apogée : stockée dans Supabase Secrets (jamais exposée client-side)' },
+      { type: 'security', description: 'Tous les appels API via proxy-apogee Edge Function (41 fonctions sécurisées)' },
+      { type: 'audit', description: 'VITE_APOGEE_API_KEY identifié comme remnant inutilisé à supprimer' },
+      { type: 'security', description: 'Masquage serveur email/tel/adresse/codePostal avant envoi navigateur' },
+      { type: 'security', description: 'get-client-contact avec rate limiting (10 req/min) + audit logging' },
+      { type: 'audit', description: 'RLS Linter : aucune faille critique détectée' },
+      { type: 'audit', description: '5 warnings RLS internes (profils/RH) : accès légitimes au sein agence' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // EXPORT BASE DE DONNÉES
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'Export 6 parties (104 tables) pour migration franchise' },
+      { type: 'improvement', description: 'Limites mémoire optimisées (blocks: 50, HTML volumineux exclus)' },
+      { type: 'improvement', description: 'Tables embedding exclues (régénérables)' },
+    ],
+  },
+  {
+    version: "V0.7.11",
+    title: "Sécurité Données Navigateur",
+    date: "2025-12-11",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // PROTECTION DONNÉES SENSIBLES
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'security', description: 'Masquage serveur dans proxy-apogee : email/tel/adresse/codePostal (XX***)' },
+      { type: 'security', description: 'Données sensibles JAMAIS envoyées au navigateur' },
+      { type: 'feature', description: 'Nouvelle Edge Function get-client-contact avec accès contrôlé' },
+      { type: 'security', description: 'Validation JWT obligatoire + rate limiting 10 req/min' },
+      { type: 'feature', description: 'Table sensitive_data_access_logs pour traçabilité RGPD' },
+      { type: 'improvement', description: 'DossierDetailDialog : affichage "***" par défaut, lazy-load coordonnées' },
+    ],
+  },
+  {
+    version: "V0.7.10",
+    title: "Charge Travaux & CA Devis",
+    date: "2025-12-11",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // PRÉVISIONNEL - CHARGE TRAVAUX À VENIR
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Intégration CA devis dans charge travaux à venir' },
+      { type: 'feature', description: 'KPI "CA estimé" affiché dans onglet Prévisionnel' },
+      { type: 'feature', description: 'Graphique répartition CA devis par état (À commander, En attente, À planifier)' },
+      { type: 'feature', description: 'Graphique répartition CA devis par univers' },
+      { type: 'improvement', description: 'Engine chargeTravauxEngine enrichi avec devisHT et distribution univers' },
+      { type: 'improvement', description: 'Filtrage devis éligibles (exclusion draft/rejected/canceled)' },
+    ],
+  },
+  {
     version: "V0.7.9",
     title: "Widgets StatIA & Administration Refonte",
     date: "2025-12-10",
