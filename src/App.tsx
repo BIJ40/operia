@@ -49,6 +49,7 @@ const IndicateursAccueil = lazy(() => import("./apogee-connect/pages/Indicateurs
 const StatsHub = lazy(() => import("./apogee-connect/pages/StatsHub"));
 const VeilleApporteursPage = lazy(() => import("./pages/VeilleApporteursPage"));
 const PlanningHebdo = lazy(() => import("./apogee-connect/pages/PlanningHebdo"));
+const RHTech = lazy(() => import("./pages/RHTechPage"));
 const EquipePage = lazy(() => import("./pages/EquipePage"));
 const Messages = lazy(() => import("./pages/Messages"));
 
@@ -237,7 +238,8 @@ function AppContent() {
           <Route path="/hc-agency/statistiques/diffusion" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="diffusion"><DiffusionDashboard /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* RH Tech */}
-          <Route path="/hc-agency/rh-tech" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><PlanningHebdo /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/pilotage/rh-tech" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><RHTech /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/pilotage/rh-tech/planning" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><PlanningHebdo /></ModuleGuard></RoleGuard></MainLayout>} />
           
           
           {/* ============================================ */}
