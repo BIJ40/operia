@@ -1,15 +1,16 @@
 import React, { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { UserCheck } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ROUTES } from "@/config/routes";
 import { TechWeeklyPlanningList } from "@/apogee-connect/components/TechWeeklyPlanningList";
 import { AgencyProvider, useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { ApiToggleProvider } from "@/apogee-connect/contexts/ApiToggleContext";
-import { apogeeProxy } from "@/services/apogeeProxy";
+import { useApogeeUsers } from "@/shared/api/apogee/useApogeeUsers";
+import { buildTechMap } from "@/apogee-connect/utils/techTools";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+
 interface TechnicienOption {
   id: number;
   firstname: string;
@@ -21,35 +22,23 @@ function PlanningHebdoContent() {
   const { isAgencyReady } = useAgency();
   const [selectedTechId, setSelectedTechId] = useState<number | undefined>(undefined);
 
-  // Fetch users directement depuis apiGetUsers
-  const { data: usersData, isLoading: loadingUsers } = useQuery<any[]>({
-    queryKey: ["planning-users-select"],
-    queryFn: async () => {
-      const result = await apogeeProxy.getUsers();
-      return (result || []) as any[];
-    },
-    staleTime: 5 * 60 * 1000,
-  });
+  // Récupération des techniciens via le même pipeline que Stats Hub
+  const { users, loading: loadingUsers } = useApogeeUsers();
 
   const techniciensList = useMemo<TechnicienOption[]>(() => {
-    if (!usersData || usersData.length === 0) return [];
+    if (!users || users.length === 0) return [];
 
-    const list = usersData
-      .filter((u: any) => u?.is_on === true)
-      .map((u: any) => ({
-        id: u.id,
-        firstname: (u.firstname || "").trim(),
-        name: (u.name || "").trim(),
-        color:
-          u.data?.bgcolor?.hex ||
-          u.bgcolor?.hex ||
-          u.data?.color?.hex ||
-          u.color?.hex ||
-          null,
-      }));
+    const techMap = buildTechMap(users as any[]);
 
-    return list.sort((a, b) => a.firstname.localeCompare(b.firstname));
-  }, [usersData]);
+    return Object.values(techMap)
+      .map((t) => ({
+        id: t.id,
+        firstname: t.prenom,
+        name: t.nom,
+        color: t.color || null,
+      }))
+      .sort((a, b) => a.firstname.localeCompare(b.firstname));
+  }, [users]);
 
 
   if (!isAgencyReady) {
