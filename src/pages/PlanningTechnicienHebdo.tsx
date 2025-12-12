@@ -174,7 +174,7 @@ export default function PlanningTechnicienHebdo() {
   // Liste des techniciens (is_on=true - le type peut être absent ou varié)
   const techniciens = useMemo(() => {
     return users
-      .filter((u) => u.is_on === true)
+      .filter((u) => Boolean(u.is_on))
       .map((u) => ({
         id: u.id,
         label: `${(u.firstname ?? "").trim()} ${(u.name ?? "").trim()}`.trim() || `#${u.id}`,
