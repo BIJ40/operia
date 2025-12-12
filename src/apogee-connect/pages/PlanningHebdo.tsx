@@ -1,23 +1,28 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Users, UserCheck } from "lucide-react";
-import { AppLayout } from "@/apogee-connect/components/layout/AppLayout";
+import { UserCheck } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ROUTES } from "@/config/routes";
 import { TechWeeklyPlanningList } from "@/apogee-connect/components/TechWeeklyPlanningList";
 import { AgencyProvider, useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { ApiToggleProvider } from "@/apogee-connect/contexts/ApiToggleContext";
-import { useTechniciens } from "@/apogee-connect/hooks/useTechniciens";
 import { apogeeProxy } from "@/services/apogeeProxy";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+
+interface TechnicienOption {
+  id: number;
+  firstname: string;
+  name: string;
+  color: string | null;
+}
 
 function PlanningHebdoContent() {
   const { isAgencyReady } = useAgency();
   const [selectedTechId, setSelectedTechId] = useState<number | undefined>(undefined);
 
-  // Fetch users for technician selection
+  // Fetch users with is_on: true filter
   const { data: usersData, isLoading: loadingUsers } = useQuery<any[]>({
     queryKey: ["planning-users-select"],
     queryFn: async () => {
@@ -28,17 +33,28 @@ function PlanningHebdoContent() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { techniciensList } = useTechniciens(usersData || []);
+  // Filter technicians: is_on === true
+  const techniciensList = useMemo<TechnicienOption[]>(() => {
+    if (!usersData) return [];
+    
+    return usersData
+      .filter((u: any) => u?.is_on === true)
+      .map((u: any) => ({
+        id: u.id,
+        firstname: (u.firstname || "").trim(),
+        name: (u.name || "").trim(),
+        color: u.data?.bgcolor?.hex || u.bgcolor?.hex || u.data?.color?.hex || u.color?.hex || null,
+      }))
+      .sort((a, b) => a.firstname.localeCompare(b.firstname));
+  }, [usersData]);
 
   if (!isAgencyReady) {
     return (
-      <AppLayout>
-        <div className="p-6 space-y-4">
-          <Skeleton className="h-8 w-64" />
-          <Skeleton className="h-12 w-full max-w-md" />
-          <Skeleton className="h-96 w-full" />
-        </div>
-      </AppLayout>
+      <div className="p-6 space-y-4">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-12 w-full max-w-md" />
+        <Skeleton className="h-96 w-full" />
+      </div>
     );
   }
 
@@ -87,10 +103,7 @@ function PlanningHebdoContent() {
                         style={{ backgroundColor: tech.color }}
                       />
                     )}
-                    {tech.prenom} {tech.nom}
-                    {!tech.actif && (
-                      <span className="text-xs text-muted-foreground">(inactif)</span>
-                    )}
+                    {tech.firstname} {tech.name}
                   </div>
                 </SelectItem>
               ))}
