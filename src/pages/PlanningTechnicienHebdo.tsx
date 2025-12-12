@@ -178,35 +178,48 @@ export default function PlanningTechnicienHebdo() {
     return toEvents(creneaux, userMap);
   }, [users, creneaux]);
   
-  // Liste des techniciens : d'abord via buildTechMap(users), sinon fallback sur les events
-  const techniciens = useMemo(() => {
-    const techMap = buildTechMap(users);
+  // Liste techniciens avec filtre robuste + fallback "tous les techniciens"
+  const { techniciansAll, techniciansActive, techniciens } = useMemo(() => {
+    console.log("[PLANNING] users length:", users?.length);
+    console.log("[PLANNING] first user:", users?.[0]);
 
-    let list = Object.values(techMap)
-      .filter((t) => t.actif)
-      .map((t) => ({
-        id: t.id,
-        label: `${t.prenom} ${t.nom}`.trim() || `#${t.id}`,
-        color: t.color,
-      }));
+    const norm = (v: any) => String(v ?? "").trim().toLowerCase();
 
-    // Fallback: si aucun technicien détecté via users, on dérive depuis les créneaux
-    if (list.length === 0 && allEvents.length > 0) {
-      const byId = new Map<number, { id: number; label: string; color: string }>();
-      for (const e of allEvents) {
-        if (!byId.has(e.userId)) {
-          byId.set(e.userId, {
-            id: e.userId,
-            label: e.title || `Tech #${e.userId}`,
-            color: e.color || "#808080",
-          });
-        }
-      }
-      list = Array.from(byId.values());
-    }
+    const isActive = (u: any) => {
+      const v = u?.is_on ?? u?.isOn ?? u?.is_active ?? u?.isActive;
+      return v === true || v === 1 || v === "1" || norm(v) === "true";
+    };
 
-    return list.sort((a, b) => a.label.localeCompare(b.label));
-  }, [users, allEvents]);
+    const isTech = (u: any) => norm(u?.type) === "technicien";
+
+    const techniciansAll = (users ?? []).filter(isTech);
+    const techniciansActive = techniciansAll.filter(isActive);
+
+    console.log(
+      "[PLANNING] techsAll:",
+      techniciansAll.map((u: any) => ({ id: u.id, type: u.type, is_on: u.is_on, isOn: u.isOn }))
+    );
+    console.log(
+      "[PLANNING] techsActive:",
+      techniciansActive.map((u: any) => ({ id: u.id, type: u.type, is_on: u.is_on, isOn: u.isOn }))
+    );
+
+    const technicians = techniciansActive.length > 0 ? techniciansActive : techniciansAll;
+
+    const techniciens = technicians.map((u: any) => ({
+      id: u.id,
+      label:
+        `${(u.firstname ?? "").trim()} ${(u.name ?? "").trim()}`.trim() || `#${u.id}`,
+      color:
+        u.data?.bgcolor?.hex ||
+        u.bgcolor?.hex ||
+        u.data?.color?.hex ||
+        u.color?.hex ||
+        "#808080",
+    }));
+
+    return { techniciansAll, techniciansActive, techniciens };
+  }, [users]);
   
   // Semaine courante
   const { weekStart, weekEnd } = useMemo(() => getWeekRange(weekDate), [weekDate]);
@@ -280,9 +293,15 @@ export default function PlanningTechnicienHebdo() {
               </Select>
             )}
           </div>
-          {!isLoading && techniciens.length === 0 && (
-            <div className="text-xs text-destructive">
-              Aucun technicien actif trouvé (is_on=true, type="technicien").
+          {(techniciens?.length ?? 0) === 0 && (
+            <div className="text-xs text-destructive mt-2">
+              Aucun technicien trouvé (vérifier la structure de apiGetUsers dans la console).
+            </div>
+          )}
+
+          {(techniciens?.length ?? 0) > 0 && techniciansActive.length === 0 && (
+            <div className="text-xs text-amber-600 mt-2">
+              Attention: aucun technicien marqué actif, affichage de tous les techniciens (fallback).
             </div>
           )}
         </div>
