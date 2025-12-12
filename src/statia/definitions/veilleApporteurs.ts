@@ -265,8 +265,13 @@ export const apporteursEnDeclassement: StatDefinition = {
       let tag: ApporteurEnDeclassement['tag'] = 'stable';
       
       if (CA_B_HT === 0 && CA_A_HT > 0) {
+        // Nouveau apporteur avec CA en période A = croissance à partir de 0
         tag = 'nouveau';
-        variationPct = null; // N/A pour les nouveaux
+        variationPct = 100; // +100% par convention (croissance depuis 0)
+      } else if (CA_B_HT === 0 && CA_A_HT === 0) {
+        // Aucun CA dans les deux périodes
+        tag = 'stable';
+        variationPct = 0;
       } else if (CA_B_HT > 0) {
         variationPct = ((CA_A_HT - CA_B_HT) / CA_B_HT) * 100;
         
