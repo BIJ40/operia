@@ -469,6 +469,54 @@ function calculateDailyWorkingMinutes(slots: TechPlanningSlot[]): number {
 // BUILD WEEKLY TECH PLANNING
 // ========================================
 
+/**
+ * Découpe un slot multi-jours en slots quotidiens
+ * Ex: Un congé de 274h débutant le lundi 08:00 sera découpé en 
+ * plusieurs jours de 07:00-19:00 (ou la portion effective)
+ */
+function splitSlotIntoDays(slot: TechPlanningSlot, days: Date[]): TechPlanningSlot[] {
+  const slotStart = new Date(slot.start);
+  const slotEnd = new Date(slot.end);
+  
+  // Si le slot ne couvre qu'un seul jour, pas besoin de découper
+  if (isSameDay(slotStart, slotEnd)) {
+    return [slot];
+  }
+
+  const result: TechPlanningSlot[] = [];
+  
+  days.forEach((day) => {
+    // Définir les limites de la journée (07:00 - 19:00)
+    const dayStart = new Date(day);
+    dayStart.setHours(7, 0, 0, 0);
+    const dayEnd = new Date(day);
+    dayEnd.setHours(19, 0, 0, 0);
+    
+    // Vérifier si le slot chevauche cette journée
+    if (slotEnd <= dayStart || slotStart >= dayEnd) {
+      return; // Pas de chevauchement
+    }
+    
+    // Calculer l'intersection
+    const effectiveStart = slotStart > dayStart ? slotStart : dayStart;
+    const effectiveEnd = slotEnd < dayEnd ? slotEnd : dayEnd;
+    
+    const durationMinutes = Math.round((effectiveEnd.getTime() - effectiveStart.getTime()) / 60000);
+    
+    if (durationMinutes > 0) {
+      result.push({
+        ...slot,
+        slotId: slot.slotId + day.getTime(), // ID unique par jour
+        start: effectiveStart.toISOString(),
+        end: effectiveEnd.toISOString(),
+        durationMinutes,
+      });
+    }
+  });
+  
+  return result;
+}
+
 export function buildWeeklyTechPlanning(
   planningByTech: PlanningByTech,
   weekDate: Date
@@ -480,11 +528,18 @@ export function buildWeeklyTechPlanning(
   const result: WeeklyTechPlanning[] = [];
 
   Object.values(planningByTech).forEach((techPlanning) => {
+    // D'abord, éclater les slots multi-jours en slots quotidiens
+    const expandedSlots: TechPlanningSlot[] = [];
+    techPlanning.slots.forEach((slot) => {
+      const splitSlots = splitSlotIntoDays(slot, days);
+      expandedSlots.push(...splitSlots);
+    });
+    
     const daily: DailyTechPlanning[] = [];
     let weeklyTotal = 0;
 
     days.forEach((day) => {
-      const slotsOfDay = techPlanning.slots.filter((slot) =>
+      const slotsOfDay = expandedSlots.filter((slot) =>
         isSameDay(new Date(slot.start), day)
       );
 
