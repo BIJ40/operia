@@ -71,6 +71,12 @@ function EventBlock({ event, dayStart }: EventBlockProps) {
   
   const timeStr = `${format(event.start, "HH:mm")} - ${format(event.end, "HH:mm")}`;
   
+  // Construire le label client (nom + ville)
+  const clientLabel = [event.clientName, event.clientCity].filter(Boolean).join(" - ");
+  
+  // Tooltip complet
+  const tooltipParts = [event.title, clientLabel, timeStr].filter(Boolean);
+  
   return (
     <div
       className="absolute left-1 right-1 rounded-md px-2 py-1 text-xs overflow-hidden shadow-sm border border-white/20"
@@ -80,10 +86,13 @@ function EventBlock({ event, dayStart }: EventBlockProps) {
         backgroundColor: getEventColor(event.refType),
         color: getEventTextColor(event.refType),
       }}
-      title={`${event.title}\n${timeStr}`}
+      title={tooltipParts.join("\n")}
     >
       <div className="font-medium truncate">{event.title}</div>
-      {height > 30 && <div className="opacity-80 truncate">{timeStr}</div>}
+      {clientLabel && height > 30 && (
+        <div className="opacity-90 truncate text-[10px]">{clientLabel}</div>
+      )}
+      {height > 50 && <div className="opacity-80 truncate">{timeStr}</div>}
     </div>
   );
 }
