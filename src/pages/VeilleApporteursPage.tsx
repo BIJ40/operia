@@ -2,7 +2,6 @@
  * Page Veille Apporteurs - Radar temps réel de la performance apporteurs
  */
 
-import { useState } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,6 +21,7 @@ import { useVeilleApporteurs, VeilleFilterType, VeilleSortKey } from '@/statia/h
 import { VeilleApporteurConsolide } from '@/statia/engines/veilleApporteursEngine';
 import { ROUTES } from '@/config/routes';
 import { cn } from '@/lib/utils';
+import { useSessionState } from '@/hooks/useSessionState';
 
 const formatCurrency = (v: number) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v);
 const formatPercent = (v: number | null) => v === null ? 'N/A' : `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`;
@@ -111,7 +111,8 @@ export default function VeilleApporteursPage() {
     updateFilters, resetFilters, setActiveFilter, toggleSort, setSearchQuery, setSelectedApporteur, refetch
   } = useVeilleApporteurs();
   
-  const [showFilters, setShowFilters] = useState(false);
+  // Affichage filtres persisté
+  const [showFilters, setShowFilters] = useSessionState<boolean>('veille-show-filters', false);
   
   const FILTER_TABS: { id: VeilleFilterType; label: string }[] = [
     { id: 'all', label: 'Tous' },

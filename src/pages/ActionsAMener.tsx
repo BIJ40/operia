@@ -20,16 +20,17 @@ import { ConditionalRender } from '@/components/PermissionGuard';
 import { useAuth } from '@/contexts/AuthContext';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ROUTES } from '@/config/routes';
+import { useSessionState } from '@/hooks/useSessionState';
 
 function ActionsAMenerContent() {
   const { isAgencyReady, currentAgency } = useAgency();
   const { config, isLoading: isLoadingConfig } = useActionsConfig();
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   
-  // États des filtres
-  const [actionTypeFilter, setActionTypeFilter] = useState<ActionType | 'all'>('all');
-  const [clientFilter, setClientFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'late'>('all');
+  // États des filtres avec persistance sessionStorage
+  const [actionTypeFilter, setActionTypeFilter] = useSessionState<ActionType | 'all'>('actions-actionTypeFilter', 'all');
+  const [clientFilter, setClientFilter] = useSessionState<string>('actions-clientFilter', 'all');
+  const [statusFilter, setStatusFilter] = useSessionState<'all' | 'late'>('actions-statusFilter', 'all');
 
   const { data: actions, isLoading, error } = useQuery({
     queryKey: ['actions-a-mener', currentAgency?.id, config],

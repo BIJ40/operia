@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePersistedTab } from '@/hooks/usePersistedTab';
+import { useSessionState } from '@/hooks/useSessionState';
 import { useAdminTickets } from '@/hooks/use-admin-tickets';
 import { Ticket } from '@/hooks/use-user-tickets';
 import { useAuth } from '@/contexts/AuthContext';
@@ -66,9 +67,9 @@ export default function AdminSupportTickets() {
   const { liveChatCount } = useSupportNotifications();
 
   const [newMessage, setNewMessage] = useState('');
-  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
+  const [viewMode, setViewMode] = useSessionState<'list' | 'kanban'>('support-view-mode', 'list');
   const [activeTab, setActiveTab] = usePersistedTab('actifs');
-  const [isKanbanCollapsed, setIsKanbanCollapsed] = useState(false);
+  const [isKanbanCollapsed, setIsKanbanCollapsed] = useSessionState<boolean>('support-kanban-collapsed', false);
   const [showScreenShare, setShowScreenShare] = useState(false);
 
   // Auto-switch to archives tab when selected ticket becomes resolved
