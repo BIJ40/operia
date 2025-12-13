@@ -341,6 +341,7 @@ export interface ApogeeProxy {
   getFactures: <T = any[]>(options?: ApogeeProxyOptions) => Promise<T>;
   getDevis: <T = any[]>(options?: ApogeeProxyOptions) => Promise<T>;
   getInterventionsCreneaux: <T = any[]>(options?: ApogeeProxyOptions) => Promise<T>;
+  getPlanningCreneaux: <T = any[]>(options?: ApogeeProxyOptions) => Promise<T>;
   
   // Utility methods
   clearCache: (agencySlug?: string) => void;
@@ -366,6 +367,7 @@ export const apogeeProxy: ApogeeProxy = {
   getFactures: (options = {}) => proxyRequest('apiGetFactures', options),
   getDevis: (options = {}) => proxyRequest('apiGetDevis', options),
   getInterventionsCreneaux: (options = {}) => proxyRequest('getInterventionsCreneaux', options),
+  getPlanningCreneaux: (options = {}) => proxyRequest('apiGetPlanningCreneaux', { ...options, filters: { refType: 'all' } }),
   
   clearCache: clearApogeeCache,
   getCacheInfo: getApogeeCacheInfo,
