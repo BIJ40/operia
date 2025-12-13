@@ -3,6 +3,7 @@
  */
 
 import { unwrapArray, isActiveUser, type NormalizedCreneau } from "./normalize";
+import type { EnrichedCreneau } from "@/shared/api/apogee/usePlanningData";
 
 export interface TechOption {
   id: number;
@@ -17,6 +18,9 @@ export interface PlanningEvent {
   start: Date;
   end: Date;
   title: string;
+  clientName?: string;
+  clientCity?: string;
+  projectRef?: string;
   color?: string;
 }
 
@@ -40,11 +44,6 @@ function isTechnicienUser(u: Record<string, unknown>): boolean {
   );
 }
 
-/**
- * Construit la liste des techniciens pour le planning
- * RÈGLE: même détection de technicien que les stats, mais SANS filtrer sur is_on
- * (on affiche tous les techniciens, actifs ou non).
- */
 /**
  * Construit la liste des techniciens ACTIFS pour le planning
  * RÈGLE: type technicien (isTechnicienUser) ET is_on === true
@@ -83,7 +82,7 @@ export function buildTechOptions(rawUsers: unknown): TechOption[] {
 }
 
 export function buildEvents(
-  creneaux: NormalizedCreneau[],
+  creneaux: (NormalizedCreneau | EnrichedCreneau)[],
   techId?: number,
   weekStart?: Date,
   weekEnd?: Date
@@ -100,6 +99,12 @@ export function buildEvents(
     if (weekStart && start < weekStart) continue;
     if (weekEnd && start > weekEnd) continue;
 
+    // Récupérer les infos client si disponibles (EnrichedCreneau)
+    const enriched = c as EnrichedCreneau;
+    const clientName = enriched.clientName;
+    const clientCity = enriched.clientCity;
+    const projectRef = enriched.projectRef;
+
     // Un event par userId
     for (const uid of c.usersIds ?? []) {
       if (techId && uid !== techId) continue;
@@ -111,6 +116,9 @@ export function buildEvents(
         start,
         end,
         title: getEventTitle(c.refType),
+        clientName,
+        clientCity,
+        projectRef,
       });
     }
   }
