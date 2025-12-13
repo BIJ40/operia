@@ -42,16 +42,15 @@ function isTechnicienUser(u: Record<string, unknown>): boolean {
 
 /**
  * Construit la liste des techniciens pour le planning
- * RÈGLE IDENTIQUE À techTools.ts (buildTechMap)
+ * RÈGLE: même détection de technicien que les stats, mais SANS filtrer sur is_on
+ * (on affiche tous les techniciens, actifs ou non).
  */
 export function buildTechOptions(rawUsers: unknown): TechOption[] {
   const users = unwrapArray(rawUsers);
   return users
     .filter((u) => {
       const obj = u as Record<string, unknown>;
-      // is_on doit être true
-      if (!isActiveUser(obj)) return false;
-      // Doit être un technicien selon la règle métier
+      // Ne PAS filtrer sur is_on ici : on veut la liste complète
       return isTechnicienUser(obj);
     })
     .map((u) => {
@@ -63,9 +62,12 @@ export function buildTechOptions(rawUsers: unknown): TechOption[] {
       // Extraction couleur avec fallbacks (même logique que techTools)
       const data = obj.data as Record<string, unknown> | undefined;
       const bgcolor = data?.bgcolor as Record<string, string> | undefined;
-      const color = bgcolor?.hex || (obj.bgcolor as Record<string, string>)?.hex || 
-                    (data?.color as Record<string, string>)?.hex || 
-                    (obj.color as Record<string, string>)?.hex || "#808080";
+      const color =
+        bgcolor?.hex ||
+        (obj.bgcolor as Record<string, string> | undefined)?.hex ||
+        (data?.color as Record<string, string> | undefined)?.hex ||
+        (obj.color as Record<string, string> | undefined)?.hex ||
+        "#808080";
       
       return {
         id: Number(obj.id),
