@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { logError } from '@/lib/logger';
@@ -23,6 +24,18 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { GLOBAL_ROLE_LABELS, GLOBAL_ROLE_COLORS, GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { MODULE_DEFINITIONS, EnabledModules } from '@/types/modules';
+import { ALL_USER_QUERY_PATTERNS } from '@/lib/queryKeys';
+
+// ✅ SYNCHRONISATION COMPLÈTE: fonction pour invalider TOUTES les query keys utilisateurs
+function invalidateAllUserQueries(queryClient: ReturnType<typeof useQueryClient>) {
+  ALL_USER_QUERY_PATTERNS.forEach(pattern => {
+    queryClient.invalidateQueries({ queryKey: [pattern] });
+  });
+  queryClient.invalidateQueries({ predicate: (query) => 
+    query.queryKey[0] === 'agency-users' || 
+    query.queryKey[0] === 'user-profile'
+  });
+}
 
 interface ProfileData {
   id: string;
@@ -49,6 +62,7 @@ const ROLE_AGENCE_LABELS: Record<string, string> = {
 export default function Profile() {
   const { user, isAuthenticated, globalRole } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -146,6 +160,9 @@ export default function Profile() {
 
       setAvatarUrl(publicUrl);
       toast.success('Photo de profil mise à jour');
+      
+      // ✅ SYNCHRONISATION: Invalider les caches utilisateurs
+      invalidateAllUserQueries(queryClient);
     } catch (error) {
       logError('PROFILE', 'Error uploading avatar:', error);
       toast.error('Erreur lors du téléchargement');
@@ -178,6 +195,9 @@ export default function Profile() {
 
       toast.success('Profil mis à jour avec succès');
       loadProfile();
+      
+      // ✅ SYNCHRONISATION: Invalider les caches utilisateurs
+      invalidateAllUserQueries(queryClient);
     } catch (error) {
       logError('PROFILE', 'Error saving profile:', error);
       toast.error('Erreur lors de la mise à jour du profil');

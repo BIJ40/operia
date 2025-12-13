@@ -17,6 +17,19 @@ import { toast } from 'sonner';
 // Json type removed - no longer writing to JSONB (P3.2 migration complete)
 import { useAdminAgencies } from './use-admin-agencies';
 import { enabledModulesToRows } from '@/lib/userModulesUtils';
+import { ALL_USER_QUERY_PATTERNS } from '@/lib/queryKeys';
+
+// ✅ SYNCHRONISATION COMPLÈTE: fonction centralisée pour invalider TOUTES les query keys utilisateurs
+function invalidateAllUserQueries(queryClient: ReturnType<typeof useQueryClient>) {
+  ALL_USER_QUERY_PATTERNS.forEach(pattern => {
+    queryClient.invalidateQueries({ queryKey: [pattern] });
+  });
+  // Invalider aussi les queries préfixées (agency-users avec slug, user-profile avec id)
+  queryClient.invalidateQueries({ predicate: (query) => 
+    query.queryKey[0] === 'agency-users' || 
+    query.queryKey[0] === 'user-profile'
+  });
+}
 
 export interface UserProfile {
   id: string;
@@ -330,9 +343,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       logAuth.info(`Permissions sauvegardées pour user ${userId}`);
       toast.success('Permissions enregistrées');
       setModifiedUsers(prev => { const next = { ...prev }; delete next[userId]; return next; });
-      queryClient.invalidateQueries({ queryKey: ['user-management'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] });
-      queryClient.invalidateQueries({ queryKey: ['user-modules'] }); // Invalider cache user_modules
+      invalidateAllUserQueries(queryClient);
     },
     onError: (error) => {
       logAuth.error('Erreur sauvegarde:', error);
@@ -371,8 +382,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
     },
     onSuccess: () => {
       toast.success('Utilisateur créé avec succès');
-      queryClient.invalidateQueries({ queryKey: ['user-management'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] }); // backward compat
+      invalidateAllUserQueries(queryClient);
     },
     onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
   });
@@ -398,8 +408,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
     onSuccess: (targetUser) => {
       logAuth.info(`[USER_MGMT] Utilisateur désactivé: ${targetUser.email}`);
       toast.success(`${targetUser.email || 'Utilisateur'} a été désactivé`);
-      queryClient.invalidateQueries({ queryKey: ['user-management'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] }); // backward compat
+      invalidateAllUserQueries(queryClient);
     },
     onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
   });
@@ -416,8 +425,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
     onSuccess: (targetUser) => {
       logAuth.info(`[USER_MGMT] Utilisateur réactivé: ${targetUser.email}`);
       toast.success(`${targetUser.email || 'Utilisateur'} a été réactivé`);
-      queryClient.invalidateQueries({ queryKey: ['user-management'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] }); // backward compat
+      invalidateAllUserQueries(queryClient);
     },
     onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
   });
@@ -437,8 +445,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
     onSuccess: (targetUser) => {
       logAuth.info(`[USER_MGMT] Utilisateur SUPPRIMÉ définitivement: ${targetUser.email}`);
       toast.success(`${targetUser.email || 'Utilisateur'} a été supprimé définitivement`);
-      queryClient.invalidateQueries({ queryKey: ['user-management'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] }); // backward compat
+      invalidateAllUserQueries(queryClient);
     },
     onError: (error: Error) => toast.error(`Erreur suppression: ${error.message}`),
   });
@@ -509,8 +516,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
     },
     onSuccess: () => {
       toast.success('Informations mises à jour');
-      queryClient.invalidateQueries({ queryKey: ['user-management'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] }); // backward compat
+      invalidateAllUserQueries(queryClient);
     },
     onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
   });
@@ -524,8 +530,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
     },
     onSuccess: () => {
       toast.success('Email mis à jour');
-      queryClient.invalidateQueries({ queryKey: ['user-management'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] }); // backward compat
+      invalidateAllUserQueries(queryClient);
     },
     onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
   });
@@ -539,8 +544,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
     },
     onSuccess: () => {
       toast.success('Mot de passe réinitialisé');
-      queryClient.invalidateQueries({ queryKey: ['user-management'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] }); // backward compat
+      invalidateAllUserQueries(queryClient);
     },
     onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
   });

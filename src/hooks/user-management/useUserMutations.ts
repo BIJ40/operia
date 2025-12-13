@@ -10,6 +10,7 @@ import { enabledModulesToRows } from '@/lib/userModulesUtils';
 import { logAuth } from '@/lib/logger';
 import { toast } from 'sonner';
 import { UserProfile, CreateUserData, UpdateUserData } from './types';
+import { ALL_USER_QUERY_PATTERNS } from '@/lib/queryKeys';
 
 interface UseUserMutationsOptions {
   capabilities: UserManagementCapabilities;
@@ -26,10 +27,16 @@ export function useUserMutations({
 }: UseUserMutationsOptions) {
   const queryClient = useQueryClient();
 
+  // ✅ SYNCHRONISATION COMPLÈTE: invalide TOUTES les query keys utilisateurs
   const invalidateUserQueries = () => {
-    queryClient.invalidateQueries({ queryKey: ['user-management'] });
-    queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] });
-    queryClient.invalidateQueries({ queryKey: ['user-modules'] });
+    ALL_USER_QUERY_PATTERNS.forEach(pattern => {
+      queryClient.invalidateQueries({ queryKey: [pattern] });
+    });
+    // Invalider aussi les queries préfixées (agency-users avec slug, user-profile avec id)
+    queryClient.invalidateQueries({ predicate: (query) => 
+      query.queryKey[0] === 'agency-users' || 
+      query.queryKey[0] === 'user-profile'
+    });
   };
 
   const saveMutation = useMutation({
