@@ -278,7 +278,9 @@ export function UsersAccessTab() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {user.role_agence?.toLowerCase().includes('tête de réseau') || user.role_agence?.toLowerCase().includes('tete de reseau') ? (
+                        {user.role_agence?.toLowerCase().includes('tête de réseau') || 
+                         user.role_agence?.toLowerCase().includes('tete de reseau') ||
+                         user.role_agence?.toLowerCase().includes('tete_de_reseau') ? (
                           <span className="font-medium text-primary">SIÈGE</span>
                         ) : user.agency?.label ? (
                           user.agency.label
