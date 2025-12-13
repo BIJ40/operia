@@ -8,6 +8,8 @@ import { ROUTES } from '@/config/routes';
 import { cn } from '@/lib/utils';
 import { StatsOverview } from '@/components/admin/overview/StatsOverview';
 import { DatabaseExportButton } from '@/components/admin/DatabaseExportButton';
+import { MaintenanceModeCard } from '@/components/admin/MaintenanceModeCard';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AdminLinkProps {
   to: string;
@@ -64,6 +66,9 @@ function AdminSection({ title, icon: Icon, color, children }: AdminSectionProps)
 
 // Route protégée par RoleGuard (N5+) dans App.tsx
 export default function AdminIndex() {
+  const { hasGlobalRole } = useAuth();
+  const isSuperadmin = hasGlobalRole('superadmin');
+
   return (
     <div className="container max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
       {/* Header */}
@@ -76,6 +81,9 @@ export default function AdminIndex() {
           <p className="text-sm text-muted-foreground">Centre de contrôle HC Services</p>
         </div>
       </div>
+
+      {/* Mode Maintenance - Visible uniquement pour N6 */}
+      {isSuperadmin && <MaintenanceModeCard />}
 
       {/* Stats Overview */}
       <StatsOverview />

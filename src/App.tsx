@@ -168,13 +168,22 @@ function PageLoader() {
   );
 }
 
+import { useMaintenanceMode } from "./hooks/useMaintenanceMode";
+import { MaintenanceBlock } from "./components/maintenance/MaintenanceBlock";
+
 function AppContent() {
   const { mustChangePassword, user, isAuthLoading } = useAuth();
+  const { isBlocked, message, isLoading: isMaintenanceLoading } = useMaintenanceMode();
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 
   useEffect(() => {
     setShowPasswordDialog(mustChangePassword);
   }, [mustChangePassword]);
+
+  // Afficher le blocage maintenance si l'utilisateur n'est pas dans la whitelist
+  if (!isAuthLoading && !isMaintenanceLoading && user && isBlocked) {
+    return <MaintenanceBlock message={message} />;
+  }
 
   return (
     <>

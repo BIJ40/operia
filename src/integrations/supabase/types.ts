@@ -3205,6 +3205,39 @@ export type Database = {
           },
         ]
       }
+      maintenance_settings: {
+        Row: {
+          created_at: string
+          enabled_at: string | null
+          enabled_by: string | null
+          id: string
+          is_enabled: boolean
+          message: string
+          updated_at: string
+          whitelisted_user_ids: string[]
+        }
+        Insert: {
+          created_at?: string
+          enabled_at?: string | null
+          enabled_by?: string | null
+          id?: string
+          is_enabled?: boolean
+          message?: string
+          updated_at?: string
+          whitelisted_user_ids?: string[]
+        }
+        Update: {
+          created_at?: string
+          enabled_at?: string | null
+          enabled_by?: string | null
+          id?: string
+          is_enabled?: boolean
+          message?: string
+          updated_at?: string
+          whitelisted_user_ids?: string[]
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
@@ -5351,6 +5384,7 @@ export type Database = {
         Args: { _from_status: string; _to_status: string; _user_id: string }
         Returns: boolean
       }
+      can_user_login: { Args: { p_user_id: string }; Returns: boolean }
       cleanup_ai_search_cache: { Args: never; Returns: number }
       cleanup_expired_request_locks: { Args: never; Returns: number }
       get_collaborator_sensitive_data: {
