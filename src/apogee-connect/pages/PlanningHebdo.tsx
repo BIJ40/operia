@@ -22,14 +22,18 @@ function PlanningHebdoContent() {
   const { isAgencyReady } = useAgency();
   const [selectedTechId, setSelectedTechId] = useState<number | undefined>(undefined);
 
-  // Charger la sélection initiale depuis la session (persistance onglet)
+  // Charger la sélection initiale depuis le stockage (persistance même si la page se recharge)
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const stored = window.sessionStorage.getItem("rh-planning-selected-tech-id");
-    if (!stored || stored === "all") return;
-    const parsed = Number(stored);
-    if (!Number.isNaN(parsed)) {
-      setSelectedTechId(parsed);
+    try {
+      const stored = window.localStorage.getItem("rh-planning-selected-tech-id");
+      if (!stored || stored === "all") return;
+      const parsed = Number(stored);
+      if (!Number.isNaN(parsed)) {
+        setSelectedTechId(parsed);
+      }
+    } catch {
+      // ignore storage errors
     }
   }, []);
   const { users, loading: loadingUsers } = useApogeeUsers();
@@ -90,7 +94,11 @@ function PlanningHebdoContent() {
               const newId = value === "all" ? undefined : Number(value);
               setSelectedTechId(newId);
               if (typeof window !== "undefined") {
-                window.sessionStorage.setItem("rh-planning-selected-tech-id", value);
+                try {
+                  window.localStorage.setItem("rh-planning-selected-tech-id", value);
+                } catch {
+                  // ignore storage errors
+                }
               }
             }}
             disabled={loadingUsers || techniciensList.length === 0}

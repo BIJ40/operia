@@ -31,12 +31,16 @@ export function useWeeklyTechPlanning(techFilterId?: number, showInactiveTechs =
   const { isAgencyReady } = useAgency();
   const [weekDate, setWeekDate] = useState<Date>(() => {
     if (typeof window !== "undefined") {
-      const stored = window.sessionStorage.getItem("rh-planning-week-date");
-      if (stored) {
-        const parsed = new Date(stored);
-        if (!isNaN(parsed.getTime())) {
-          return parsed;
+      try {
+        const stored = window.localStorage.getItem("rh-planning-week-date");
+        if (stored) {
+          const parsed = new Date(stored);
+          if (!isNaN(parsed.getTime())) {
+            return parsed;
+          }
         }
+      } catch {
+        // ignore storage errors
       }
     }
     return new Date();
@@ -161,7 +165,11 @@ export function useWeeklyTechPlanning(techFilterId?: number, showInactiveTechs =
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      window.sessionStorage.setItem("rh-planning-week-date", weekDate.toISOString());
+      try {
+        window.localStorage.setItem("rh-planning-week-date", weekDate.toISOString());
+      } catch {
+        // ignore storage errors
+      }
     }
   }, [weekDate]);
 
