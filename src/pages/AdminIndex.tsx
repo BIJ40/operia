@@ -97,6 +97,7 @@ export default function AdminIndex() {
           icon={Shield} 
           color="bg-red-500"
         >
+          <AdminLink to="/admin/droits" icon={Shield} title="Console Droits & Accès" description="Plans, souscriptions et permissions" />
           <AdminLink to={ROUTES.admin.permissionsCenter} icon={Shield} title="Centre de Permissions" description="Rôles, modules et accès" />
           <AdminLink to={ROUTES.admin.users} icon={Users} title="Utilisateurs" description="Gestion des comptes" />
           <AdminLink to={ROUTES.admin.agencies} icon={Building2} title="Agences" description="Configuration agences" />
