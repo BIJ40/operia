@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Layers, Check, X, Info, ChevronDown, ChevronRight } from 'lucide-react';
+import { Layers, Check, X, Info, ChevronDown, ChevronRight, ExternalLink } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -222,10 +222,32 @@ export function PlansEditorTab() {
                                       isOptionEnabled ? 'bg-primary/5' : 'bg-background'
                                     }`}
                                   >
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 flex-1">
                                       <div className={`w-2 h-2 rounded-full ${isOptionEnabled ? 'bg-primary' : 'bg-muted'}`} />
-                                      <div>
-                                        <div className="text-sm font-medium">{option.label}</div>
+                                      <div className="flex-1">
+                                        <div className="text-sm font-medium flex items-center gap-2">
+                                          {option.label}
+                                          {option.routes && option.routes.length > 0 && (
+                                            <TooltipProvider>
+                                              <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                  <span className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary cursor-help">
+                                                    <ExternalLink className="h-3 w-3" />
+                                                    {option.routes.length} page{option.routes.length > 1 ? 's' : ''}
+                                                  </span>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="right" className="max-w-xs">
+                                                  <p className="font-medium mb-1">Pages concernées :</p>
+                                                  <ul className="text-xs space-y-0.5">
+                                                    {option.routes.map(route => (
+                                                      <li key={route} className="font-mono text-primary">{route}</li>
+                                                    ))}
+                                                  </ul>
+                                                </TooltipContent>
+                                              </Tooltip>
+                                            </TooltipProvider>
+                                          )}
+                                        </div>
                                         <div className="text-xs text-muted-foreground">{option.description}</div>
                                       </div>
                                     </div>
