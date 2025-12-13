@@ -20,11 +20,15 @@ export interface PlanningEvent {
   color?: string;
 }
 
+/**
+ * Construit la liste des utilisateurs pour le planning
+ * RÈGLE: prend tous les users avec is_on=true (pas de filtre type="technicien" strict)
+ * Car certains techniciens ont type="utilisateur" avec universes rempli
+ */
 export function buildTechOptions(rawUsers: unknown): TechOption[] {
   const users = unwrapArray(rawUsers);
   return users
-    .filter(isActiveUser)
-    .filter(isTechnician)
+    .filter(isActiveUser) // is_on=true seulement
     .map((u) => {
       const obj = u as Record<string, unknown>;
       const firstname = String(obj.firstname ?? "").trim();
