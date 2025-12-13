@@ -95,9 +95,9 @@ export function getUserManagementCapabilities(role: GlobalRole | null): UserMana
       return {
         viewScope: 'ownAgency',
         manageScope: 'ownAgency',
-        canCreateRoles: ['base_user', 'franchisee_user'], // Max N1
-        canEditRoles: ['base_user', 'franchisee_user'],
-        canDeactivateRoles: ['base_user', 'franchisee_user'],
+        canCreateRoles: ['franchisee_user'], // Max N1 - base_user exclu (N5/N6 seulement)
+        canEditRoles: ['franchisee_user'],
+        canDeactivateRoles: ['franchisee_user'],
         canDeleteUsers: false,
       };
 
@@ -105,9 +105,9 @@ export function getUserManagementCapabilities(role: GlobalRole | null): UserMana
       return {
         viewScope: 'allAgencies',
         manageScope: 'assignedAgencies',
-        canCreateRoles: ['base_user', 'franchisee_user', 'franchisee_admin'], // Max N2
-        canEditRoles: ['base_user', 'franchisee_user', 'franchisee_admin'],
-        canDeactivateRoles: ['base_user', 'franchisee_user', 'franchisee_admin'],
+        canCreateRoles: ['franchisee_user', 'franchisee_admin'], // Max N2 - base_user exclu
+        canEditRoles: ['franchisee_user', 'franchisee_admin'],
+        canDeactivateRoles: ['franchisee_user', 'franchisee_admin'],
         canDeleteUsers: false,
       };
 
@@ -115,9 +115,9 @@ export function getUserManagementCapabilities(role: GlobalRole | null): UserMana
       return {
         viewScope: 'allAgencies',
         manageScope: 'allAgencies',
-        canCreateRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user'], // Max N3
-        canEditRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user'],
-        canDeactivateRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user'],
+        canCreateRoles: ['franchisee_user', 'franchisee_admin', 'franchisor_user'], // Max N3 - base_user exclu
+        canEditRoles: ['franchisee_user', 'franchisee_admin', 'franchisor_user'],
+        canDeactivateRoles: ['franchisee_user', 'franchisee_admin', 'franchisor_user'],
         canDeleteUsers: false,
       };
 
