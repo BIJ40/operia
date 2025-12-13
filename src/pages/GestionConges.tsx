@@ -36,6 +36,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { JustificationUpload } from '@/components/leave/JustificationUpload';
+import { useSessionState } from '@/hooks/useSessionState';
 
 const STATUS_ICONS: Record<LeaveStatus, typeof Clock> = {
   DRAFT: Clock,
@@ -66,6 +67,9 @@ export default function GestionConges() {
   const [comment, setComment] = useState('');
   const [refusalReason, setRefusalReason] = useState('');
   const [endDateInput, setEndDateInput] = useState('');
+  
+  // Tab actif persisté
+  const [activeCongesTab, setActiveCongesTab] = useSessionState<string>('gestion-conges-tab', 'pending');
 
   const formatDate = (date: string) => {
     return format(new Date(date), 'dd MMM yyyy', { locale: fr });
@@ -316,7 +320,7 @@ export default function GestionConges() {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <Tabs defaultValue="pending" className="w-full">
+        <Tabs defaultValue={activeCongesTab} onValueChange={setActiveCongesTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="pending" className="gap-2">
               <Clock className="h-4 w-4" />

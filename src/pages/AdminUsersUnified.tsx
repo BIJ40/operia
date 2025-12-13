@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useUserManagement, UserProfile } from '@/hooks/use-user-management';
 import { GLOBAL_ROLES } from '@/types/globalRoles';
@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getUserManagementCapabilities } from '@/config/roleMatrix';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useSessionState } from '@/hooks/useSessionState';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -135,8 +136,43 @@ export default function AdminUsersUnified() {
   const [reactivateDialog, setReactivateDialog] = useState<{ open: boolean; user: UserProfile | null }>({ open: false, user: null });
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; user: UserProfile | null }>({ open: false, user: null });
   
-  // Accordion state
-  const [openItems, setOpenItems] = useState<string[]>([]);
+  // Accordion state avec persistance
+  const [openItems, setOpenItems] = useSessionState<string[]>('admin-users-open-items', []);
+  
+  // Synchronisation des filtres avec sessionStorage
+  const [persistedFilters, setPersistedFilters] = useSessionState<{
+    searchQuery: string;
+    agencyFilter: string;
+    roleFilter: string;
+    moduleFilter: string;
+    showDeactivated: boolean;
+  }>('admin-users-filters', {
+    searchQuery: '',
+    agencyFilter: 'all',
+    roleFilter: 'all',
+    moduleFilter: 'all',
+    showDeactivated: false,
+  });
+  
+  // Restaurer les filtres au montage
+  useEffect(() => {
+    if (persistedFilters.searchQuery) setSearchQuery(persistedFilters.searchQuery);
+    if (persistedFilters.agencyFilter !== 'all') setAgencyFilter(persistedFilters.agencyFilter);
+    if (persistedFilters.roleFilter !== 'all') setRoleFilter(persistedFilters.roleFilter);
+    if (persistedFilters.moduleFilter !== 'all') setModuleFilter(persistedFilters.moduleFilter);
+    if (persistedFilters.showDeactivated) setShowDeactivated(persistedFilters.showDeactivated);
+  }, []);
+  
+  // Persister les filtres quand ils changent
+  useEffect(() => {
+    setPersistedFilters({
+      searchQuery,
+      agencyFilter,
+      roleFilter,
+      moduleFilter,
+      showDeactivated,
+    });
+  }, [searchQuery, agencyFilter, roleFilter, moduleFilter, showDeactivated]);
 
   // Get effective values for a user
   const getEffectiveRole = (user: UserProfile) => modifiedUsers[user.id]?.global_role ?? user.global_role;

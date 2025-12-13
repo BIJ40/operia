@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useMemo } from "react";
 import { UserCheck } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ROUTES } from "@/config/routes";
@@ -10,6 +10,7 @@ import { buildTechMap } from "@/apogee-connect/utils/techTools";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSessionState } from "@/hooks/useSessionState";
 
 interface TechnicienOption {
   id: number;
@@ -20,22 +21,8 @@ interface TechnicienOption {
 
 function PlanningHebdoContent() {
   const { isAgencyReady } = useAgency();
-  const [selectedTechId, setSelectedTechId] = useState<number | undefined>(undefined);
-
-  // Charger la sélection initiale depuis le stockage (persistance même si la page se recharge)
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const stored = window.localStorage.getItem("rh-planning-selected-tech-id");
-      if (!stored || stored === "all") return;
-      const parsed = Number(stored);
-      if (!Number.isNaN(parsed)) {
-        setSelectedTechId(parsed);
-      }
-    } catch {
-      // ignore storage errors
-    }
-  }, []);
+  // Persistance avec sessionStorage pour survie au changement d'onglets
+  const [selectedTechId, setSelectedTechId] = useSessionState<number | undefined>('rh-planning-selected-tech-id', undefined);
   const { users, loading: loadingUsers } = useApogeeUsers();
 
   const techniciensList = useMemo<TechnicienOption[]>(() => {
@@ -93,13 +80,6 @@ function PlanningHebdoContent() {
             onValueChange={(value) => {
               const newId = value === "all" ? undefined : Number(value);
               setSelectedTechId(newId);
-              if (typeof window !== "undefined") {
-                try {
-                  window.localStorage.setItem("rh-planning-selected-tech-id", value);
-                } catch {
-                  // ignore storage errors
-                }
-              }
             }}
             disabled={loadingUsers || techniciensList.length === 0}
           >
