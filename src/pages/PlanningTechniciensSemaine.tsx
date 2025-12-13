@@ -276,7 +276,32 @@ function PlanningTechniciensSemaineContent() {
   const hasError = usersError || creneauxError;
   
   return (
-    <div className="container mx-auto py-6 space-y-6 print:py-2 print:space-y-2">
+    <div className="container mx-auto py-6 space-y-6 print:py-0 print:space-y-2 print:max-w-none print:w-full">
+      {/* Styles d'impression */}
+      <style>
+        {`
+          @media print {
+            @page {
+              size: landscape;
+              margin: 10mm;
+            }
+            body, html {
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            header, nav, aside, footer, .print\\:hidden {
+              display: none !important;
+            }
+            #print-header, #print-header * {
+              display: flex !important;
+            }
+            .print-only {
+              display: flex !important;
+            }
+          }
+        `}
+      </style>
+      
       <div className="print:hidden">
         <PageHeader
           title="Planning Techniciens"
@@ -324,22 +349,17 @@ function PlanningTechniciensSemaineContent() {
               )}
             </div>
             
-            {/* Navigation semaine */}
+            {/* Navigation semaine avec flèches et label */}
             <div className="flex items-center gap-2">
               <Button variant="outline" size="icon" onClick={handlePrevWeek}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button variant="outline" onClick={handleToday}>
-                Aujourd'hui
-              </Button>
+              <span className="text-sm font-medium text-muted-foreground min-w-[160px] text-center">
+                {weekLabel}
+              </span>
               <Button variant="outline" size="icon" onClick={handleNextWeek}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
-            </div>
-            
-            {/* Label semaine */}
-            <div className="text-sm font-medium text-muted-foreground">
-              {weekLabel}
             </div>
             
             {/* Bouton imprimer */}
@@ -348,7 +368,6 @@ function PlanningTechniciensSemaineContent() {
               size="icon"
               onClick={() => window.print()}
               title="Imprimer"
-              className="print:hidden"
             >
               <Printer className="h-4 w-4" />
             </Button>
