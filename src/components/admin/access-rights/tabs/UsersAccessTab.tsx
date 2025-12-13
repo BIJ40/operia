@@ -9,12 +9,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Search, Settings2, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { GLOBAL_ROLE_LABELS } from '@/types/globalRoles';
+import { GLOBAL_ROLE_LABELS, type GlobalRole } from '@/types/globalRoles';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAllAgencySubscriptions } from '@/hooks/access-rights/useAgencySubscription';
+import { toast } from 'sonner';
 
 interface UserRow {
   id: string;
@@ -33,6 +35,8 @@ interface UserRow {
 export function UsersAccessTab() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   
   const { data: users, isLoading } = useQuery({
     queryKey: ['access-rights-users'],
@@ -198,7 +202,14 @@ export function UsersAccessTab() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="icon">
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setDialogOpen(true);
+                          }}
+                        >
                           <Settings2 className="h-4 w-4" />
                         </Button>
                       </TableCell>
@@ -214,6 +225,54 @@ export function UsersAccessTab() {
           {filteredUsers.length} utilisateur(s) affiché(s)
         </div>
       </CardContent>
+      
+      {/* Dialog de gestion utilisateur */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Gérer l'utilisateur</DialogTitle>
+            <DialogDescription>
+              {selectedUser?.first_name} {selectedUser?.last_name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedUser && (
+            <div className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Rôle global</label>
+                <Select 
+                  value={selectedUser.global_role || ''} 
+                  onValueChange={(value) => {
+                    toast.info('Modification du rôle à implémenter');
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner un rôle" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(GLOBAL_ROLE_LABELS).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Agence</label>
+                <div className="text-sm text-muted-foreground p-2 bg-muted rounded">
+                  {selectedUser.agency?.label || 'Sans agence'}
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-2 pt-4">
+                <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                  Fermer
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
