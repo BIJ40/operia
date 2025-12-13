@@ -190,10 +190,28 @@ function PlanningTechniciensSemaineContent() {
     [creneaux, selectedTechId, currentWeekStart, weekEnd]
   );
   
+  // Debug: log events pour comprendre le calcul des heures
+  console.log('[PlanningTechniciens] events count:', events.length, 'filtered by tech:', selectedTechId);
+  
   const workMinutes = useMemo(
     () => computeWeeklyWorkMinutes(events, currentWeekStart),
     [events, currentWeekStart]
   );
+  
+  console.log('[PlanningTechniciens] workMinutes computed:', workMinutes, 'from', events.filter(e => e.refType === 'visite-interv').length, 'work events');
+  
+  // Trouver le nom du technicien sélectionné
+  const selectedTechLabel = useMemo(() => {
+    if (!selectedTechId) return null;
+    const tech = techOptions.find((t) => t.id === selectedTechId);
+    return tech ? tech.label : null;
+  }, [selectedTechId, techOptions]);
+  
+  const selectedTechColor = useMemo(() => {
+    if (!selectedTechId) return null;
+    const tech = techOptions.find((t) => t.id === selectedTechId);
+    return tech?.color ?? null;
+  }, [selectedTechId, techOptions]);
   
   const handlePrevWeek = () => setCurrentWeekStart((prev) => subWeeks(prev, 1));
   const handleNextWeek = () => setCurrentWeekStart((prev) => addWeeks(prev, 1));
@@ -273,19 +291,31 @@ function PlanningTechniciensSemaineContent() {
               {weekLabel}
             </div>
             
-            {/* Temps total */}
-            {selectedTechId && (
-              <div className="ml-auto flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-lg">
-                <Clock className="h-4 w-4 text-primary" />
-                <span className="font-semibold text-primary">
-                  {formatMinutes(workMinutes)}
-                </span>
-                <span className="text-sm text-muted-foreground">travaillées</span>
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>
+      
+      {/* Bandeau nom technicien + heures (visible pour impression) */}
+      {selectedTechId && selectedTechLabel && (
+        <div className="flex items-center justify-between bg-muted/50 border rounded-lg px-4 py-3 print:bg-white print:border-2">
+          <div className="flex items-center gap-3">
+            {selectedTechColor && (
+              <div
+                className="w-4 h-4 rounded-full flex-shrink-0"
+                style={{ backgroundColor: selectedTechColor }}
+              />
+            )}
+            <span className="font-semibold text-lg">{selectedTechLabel}</span>
+          </div>
+          <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-lg">
+            <Clock className="h-4 w-4 text-primary" />
+            <span className="font-semibold text-primary">
+              {formatMinutes(workMinutes)}
+            </span>
+            <span className="text-sm text-muted-foreground">travaillées</span>
+          </div>
+        </div>
+      )}
       
       {/* Erreurs */}
       {hasError && (
