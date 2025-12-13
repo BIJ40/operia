@@ -1,0 +1,362 @@
+/**
+ * Hook pour la gestion des utilisateurs dans la Console Droits & Accès
+ */
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
+import { EnabledModules, ModuleKey } from '@/types/modules';
+import { getUserManagementCapabilities, UserManagementCapabilities } from '@/config/roleMatrix';
+import { enabledModulesToRows } from '@/lib/userModulesUtils';
+import { logAuth } from '@/lib/logger';
+import { toast } from 'sonner';
+
+export interface UserRow {
+  id: string;
+  email: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  global_role: GlobalRole | null;
+  agency_id: string | null;
+  agence: string | null;
+  role_agence: string | null;
+  is_active: boolean;
+  enabled_modules: EnabledModules | null;
+  created_at: string;
+  deactivated_at: string | null;
+  deactivated_by: string | null;
+  must_change_password: boolean | null;
+  apogee_user_id: number | null;
+  agency?: {
+    id: string;
+    label: string;
+    slug: string;
+  } | null;
+}
+
+export interface Agency {
+  id: string;
+  slug: string;
+  label: string;
+  is_active: boolean;
+}
+
+export function useAccessRightsUsers() {
+  const { globalRole, agence, user } = useAuth();
+  const queryClient = useQueryClient();
+  const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
+  
+  // Dialog states
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [deactivateDialogOpen, setDeactivateDialogOpen] = useState(false);
+  const [reactivateDialogOpen, setReactivateDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  // Get user capabilities
+  const capabilities: UserManagementCapabilities = getUserManagementCapabilities(globalRole);
+  const currentUserLevel = globalRole ? GLOBAL_ROLES[globalRole] : 0;
+
+  // Fetch all users
+  const { data: users, isLoading: isLoadingUsers } = useQuery({
+    queryKey: ['access-rights-users'],
+    queryFn: async (): Promise<UserRow[]> => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select(`
+          id, email, first_name, last_name, global_role, agency_id, agence, role_agence,
+          is_active, enabled_modules, created_at, deactivated_at, deactivated_by,
+          must_change_password, apogee_user_id,
+          agency:apogee_agencies(id, label, slug)
+        `)
+        .order('last_name');
+      
+      if (error) throw error;
+      return data as UserRow[];
+    },
+  });
+
+  // Fetch all agencies
+  const { data: agencies } = useQuery({
+    queryKey: ['access-rights-agencies'],
+    queryFn: async (): Promise<Agency[]> => {
+      const { data, error } = await supabase
+        .from('apogee_agencies')
+        .select('id, slug, label, is_active')
+        .eq('is_active', true)
+        .order('label');
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const invalidateQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['access-rights-users'] });
+    queryClient.invalidateQueries({ queryKey: ['user-management'] });
+  };
+
+  // Create user mutation
+  const createUserMutation = useMutation({
+    mutationFn: async (userData: {
+      email: string;
+      password: string;
+      firstName: string;
+      lastName: string;
+      agence: string;
+      roleAgence: string;
+      globalRole: GlobalRole;
+      sendEmail: boolean;
+    }) => {
+      let effectiveGlobalRole = userData.globalRole;
+      if (userData.roleAgence?.toLowerCase() === 'dirigeant') {
+        effectiveGlobalRole = 'franchisee_admin';
+      }
+      
+      if (!capabilities.canCreateRoles.includes(effectiveGlobalRole)) {
+        throw new Error('Vous ne pouvez pas créer un utilisateur avec ce rôle');
+      }
+      
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: { ...userData, globalRole: effectiveGlobalRole } 
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Utilisateur créé avec succès');
+      setCreateDialogOpen(false);
+      invalidateQueries();
+    },
+    onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
+  });
+
+  // Update user mutation
+  const updateUserMutation = useMutation({
+    mutationFn: async ({ userId, data }: { 
+      userId: string; 
+      data: {
+        first_name?: string;
+        last_name?: string;
+        agence?: string;
+        role_agence?: string;
+        global_role?: GlobalRole;
+      } 
+    }) => {
+      const { error } = await supabase.from('profiles').update(data).eq('id', userId);
+      if (error) throw error;
+      return { userId, data };
+    },
+    onSuccess: () => {
+      toast.success('Utilisateur mis à jour');
+      invalidateQueries();
+    },
+    onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
+  });
+
+  // Update email mutation
+  const updateEmailMutation = useMutation({
+    mutationFn: async ({ userId, newEmail }: { userId: string; newEmail: string }) => {
+      const { data, error } = await supabase.functions.invoke('update-user-email', {
+        body: { userId, newEmail },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return { userId, newEmail };
+    },
+    onSuccess: () => {
+      toast.success('Email mis à jour');
+      invalidateQueries();
+    },
+    onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
+  });
+
+  // Reset password mutation
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ userId, newPassword }: { userId: string; newPassword: string }) => {
+      const { data, error } = await supabase.functions.invoke('reset-user-password', {
+        body: { userId, newPassword },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return { userId };
+    },
+    onSuccess: () => {
+      toast.success('Mot de passe réinitialisé');
+    },
+    onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
+  });
+
+  // Deactivate user mutation
+  const deactivateMutation = useMutation({
+    mutationFn: async (targetUser: UserRow) => {
+      if (!targetUser.global_role || !capabilities.canDeactivateRoles.includes(targetUser.global_role)) {
+        throw new Error('Vous ne pouvez pas désactiver cet utilisateur');
+      }
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          is_active: false, 
+          deactivated_at: new Date().toISOString(), 
+          deactivated_by: user?.email || 'unknown' 
+        })
+        .eq('id', targetUser.id);
+      if (error) throw error;
+      return targetUser;
+    },
+    onSuccess: (targetUser) => {
+      logAuth.info(`[ACCESS_RIGHTS] Utilisateur désactivé: ${targetUser.email}`);
+      toast.success(`${targetUser.email || 'Utilisateur'} a été désactivé`);
+      setDeactivateDialogOpen(false);
+      setSelectedUser(null);
+      invalidateQueries();
+    },
+    onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
+  });
+
+  // Reactivate user mutation
+  const reactivateMutation = useMutation({
+    mutationFn: async (targetUser: UserRow) => {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_active: true, deactivated_at: null, deactivated_by: null })
+        .eq('id', targetUser.id);
+      if (error) throw error;
+      return targetUser;
+    },
+    onSuccess: (targetUser) => {
+      logAuth.info(`[ACCESS_RIGHTS] Utilisateur réactivé: ${targetUser.email}`);
+      toast.success(`${targetUser.email || 'Utilisateur'} a été réactivé`);
+      setReactivateDialogOpen(false);
+      setSelectedUser(null);
+      invalidateQueries();
+    },
+    onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
+  });
+
+  // Hard delete mutation
+  const hardDeleteMutation = useMutation({
+    mutationFn: async (targetUser: UserRow) => {
+      if (!capabilities.canDeleteUsers) {
+        throw new Error('Vous n\'avez pas les droits pour supprimer définitivement cet utilisateur');
+      }
+      
+      const { data, error } = await supabase.functions.invoke('delete-user', { 
+        body: { userId: targetUser.id } 
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return targetUser;
+    },
+    onSuccess: (targetUser) => {
+      logAuth.info(`[ACCESS_RIGHTS] Utilisateur SUPPRIMÉ définitivement: ${targetUser.email}`);
+      toast.success(`${targetUser.email || 'Utilisateur'} a été supprimé définitivement`);
+      setDeleteDialogOpen(false);
+      setSelectedUser(null);
+      invalidateQueries();
+    },
+    onError: (error: Error) => toast.error(`Erreur suppression: ${error.message}`),
+  });
+
+  // Module toggle mutations
+  const saveModulesMutation = useMutation({
+    mutationFn: async ({ userId, enabledModules }: { 
+      userId: string; 
+      enabledModules: EnabledModules | null;
+    }) => {
+      await supabase.from('user_modules').delete().eq('user_id', userId);
+      
+      if (enabledModules) {
+        const moduleRows = enabledModulesToRows(userId, enabledModules, user?.id);
+        if (moduleRows.length > 0) {
+          const { error: insertError } = await supabase.from('user_modules').insert(moduleRows);
+          if (insertError) throw insertError;
+        }
+      }
+      
+      return { userId, enabledModules };
+    },
+    onSuccess: () => {
+      toast.success('Modules mis à jour');
+      invalidateQueries();
+    },
+    onError: (error) => {
+      logAuth.error('Erreur sauvegarde modules:', error);
+      toast.error('Erreur lors de la sauvegarde des modules');
+    },
+  });
+
+  // Actions handlers
+  const openEditDialog = (user: UserRow) => {
+    setSelectedUser(user);
+    setEditDialogOpen(true);
+  };
+
+  const openDeactivateDialog = (user: UserRow) => {
+    setSelectedUser(user);
+    setDeactivateDialogOpen(true);
+  };
+
+  const openReactivateDialog = (user: UserRow) => {
+    setSelectedUser(user);
+    setReactivateDialogOpen(true);
+  };
+
+  const openDeleteDialog = (user: UserRow) => {
+    setSelectedUser(user);
+    setDeleteDialogOpen(true);
+  };
+
+  // Can the current user edit this target user?
+  const canEditUser = (targetUser: UserRow): boolean => {
+    if (!globalRole) return false;
+    if (!targetUser.global_role) return true;
+    return capabilities.canEditRoles.includes(targetUser.global_role);
+  };
+
+  return {
+    // Data
+    users: users ?? [],
+    agencies: agencies ?? [],
+    isLoading: isLoadingUsers,
+    capabilities,
+    currentUserLevel,
+    currentUserAgency: agence ?? null,
+    
+    // Selected user
+    selectedUser,
+    setSelectedUser,
+    
+    // Dialog states
+    editDialogOpen,
+    setEditDialogOpen,
+    createDialogOpen,
+    setCreateDialogOpen,
+    deactivateDialogOpen,
+    setDeactivateDialogOpen,
+    reactivateDialogOpen,
+    setReactivateDialogOpen,
+    deleteDialogOpen,
+    setDeleteDialogOpen,
+    
+    // Mutations
+    createUserMutation,
+    updateUserMutation,
+    updateEmailMutation,
+    resetPasswordMutation,
+    deactivateMutation,
+    reactivateMutation,
+    hardDeleteMutation,
+    saveModulesMutation,
+    
+    // Handlers
+    openEditDialog,
+    openDeactivateDialog,
+    openReactivateDialog,
+    openDeleteDialog,
+    canEditUser,
+  };
+}

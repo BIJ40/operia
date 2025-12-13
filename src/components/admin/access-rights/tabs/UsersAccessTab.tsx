@@ -1,88 +1,98 @@
 /**
- * Onglet Utilisateurs - Gestion des accès par utilisateur
+ * Onglet Utilisateurs - Gestion complète des accès par utilisateur
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Search, Settings2, Users } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { GLOBAL_ROLE_LABELS, type GlobalRole } from '@/types/globalRoles';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Search, Users, UserPlus, MoreHorizontal, Pencil, UserX, UserCheck, Trash2 } from 'lucide-react';
+import { GLOBAL_ROLE_LABELS, GLOBAL_ROLE_COLORS, type GlobalRole } from '@/types/globalRoles';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAllAgencySubscriptions } from '@/hooks/access-rights/useAgencySubscription';
-import { toast } from 'sonner';
-
-interface UserRow {
-  id: string;
-  email: string | null;
-  first_name: string | null;
-  last_name: string | null;
-  global_role: string | null;
-  agency_id: string | null;
-  is_active: boolean;
-  agency?: {
-    label: string;
-    slug: string;
-  } | null;
-}
+import { useAccessRightsUsers, UserRow } from '@/hooks/access-rights/useAccessRightsUsers';
+import { CreateUserDialog, EditUserDialog, DeactivateDialog, ReactivateDialog, DeleteDialog } from '@/components/admin/users/UserDialogs';
+import { ModuleKey, EnabledModules } from '@/types/modules';
 
 export function UsersAccessTab() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
-  const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('active');
   
-  const { data: users, isLoading } = useQuery({
-    queryKey: ['access-rights-users'],
-    queryFn: async (): Promise<UserRow[]> => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select(`
-          id, email, first_name, last_name, global_role, agency_id, is_active,
-          agency:apogee_agencies(label, slug)
-        `)
-        .order('last_name');
-      
-      if (error) throw error;
-      return data as UserRow[];
-    },
-  });
+  // Local module state for editing
+  const [localModules, setLocalModules] = useState<EnabledModules | null>(null);
+  
+  const {
+    users,
+    agencies,
+    isLoading,
+    capabilities,
+    currentUserLevel,
+    currentUserAgency,
+    selectedUser,
+    setSelectedUser,
+    editDialogOpen,
+    setEditDialogOpen,
+    createDialogOpen,
+    setCreateDialogOpen,
+    deactivateDialogOpen,
+    setDeactivateDialogOpen,
+    reactivateDialogOpen,
+    setReactivateDialogOpen,
+    deleteDialogOpen,
+    setDeleteDialogOpen,
+    createUserMutation,
+    updateUserMutation,
+    updateEmailMutation,
+    resetPasswordMutation,
+    deactivateMutation,
+    reactivateMutation,
+    hardDeleteMutation,
+    saveModulesMutation,
+    openEditDialog,
+    openDeactivateDialog,
+    openReactivateDialog,
+    openDeleteDialog,
+    canEditUser,
+  } = useAccessRightsUsers();
   
   const { data: subscriptions } = useAllAgencySubscriptions();
   
-  // Créer une map agencyId -> plan
-  const agencyPlanMap = new Map<string, string>();
-  subscriptions?.forEach(sub => {
-    agencyPlanMap.set(sub.agency_id, sub.tier_key);
-  });
+  // Create agency plan map
+  const agencyPlanMap = useMemo(() => {
+    const map = new Map<string, string>();
+    subscriptions?.forEach(sub => {
+      map.set(sub.agency_id, sub.tier_key);
+    });
+    return map;
+  }, [subscriptions]);
   
-  const filteredUsers = users?.filter(user => {
-    const matchesSearch = !search || 
-      user.email?.toLowerCase().includes(search.toLowerCase()) ||
-      user.first_name?.toLowerCase().includes(search.toLowerCase()) ||
-      user.last_name?.toLowerCase().includes(search.toLowerCase());
-    
-    const matchesRole = roleFilter === 'all' || user.global_role === roleFilter;
-    
-    return matchesSearch && matchesRole;
-  }) || [];
+  // Filter users
+  const filteredUsers = useMemo(() => {
+    return users.filter(user => {
+      const matchesSearch = !search || 
+        user.email?.toLowerCase().includes(search.toLowerCase()) ||
+        user.first_name?.toLowerCase().includes(search.toLowerCase()) ||
+        user.last_name?.toLowerCase().includes(search.toLowerCase()) ||
+        user.agency?.label?.toLowerCase().includes(search.toLowerCase());
+      
+      const matchesRole = roleFilter === 'all' || user.global_role === roleFilter;
+      
+      const matchesStatus = statusFilter === 'all' || 
+        (statusFilter === 'active' && user.is_active) ||
+        (statusFilter === 'inactive' && !user.is_active);
+      
+      return matchesSearch && matchesRole && matchesStatus;
+    });
+  }, [users, search, roleFilter, statusFilter]);
 
-  const getRoleBadgeColor = (role: string | null) => {
-    switch (role) {
-      case 'superadmin': return 'bg-red-500';
-      case 'platform_admin': return 'bg-orange-500';
-      case 'franchisor_admin': return 'bg-purple-500';
-      case 'franchisor_user': return 'bg-blue-500';
-      case 'franchisee_admin': return 'bg-green-500';
-      case 'franchisee_user': return 'bg-teal-500';
-      default: return 'bg-muted';
-    }
+  const getRoleBadgeColor = (role: GlobalRole | null) => {
+    if (!role) return 'bg-muted';
+    return GLOBAL_ROLE_COLORS[role] || 'bg-muted';
   };
   
   const getPlanBadgeColor = (plan: string | undefined) => {
@@ -94,16 +104,85 @@ export function UsersAccessTab() {
     }
   };
 
+  // Handle edit dialog open - initialize local modules state
+  const handleOpenEditDialog = (user: UserRow) => {
+    setLocalModules(user.enabled_modules);
+    openEditDialog(user);
+  };
+
+  // Module toggle handler
+  const handleModuleToggle = (moduleKey: ModuleKey, enabled: boolean) => {
+    setLocalModules(prev => {
+      const currentModule = prev?.[moduleKey];
+      const currentOptions = typeof currentModule === 'object' ? currentModule?.options || {} : {};
+      return {
+        ...prev,
+        [moduleKey]: { enabled, options: currentOptions }
+      };
+    });
+  };
+
+  // Module option toggle handler
+  const handleModuleOptionToggle = (moduleKey: ModuleKey, optionKey: string, enabled: boolean) => {
+    setLocalModules(prev => {
+      const currentModule = prev?.[moduleKey];
+      const isEnabled = typeof currentModule === 'object' ? currentModule?.enabled ?? false : !!currentModule;
+      const currentOptions = typeof currentModule === 'object' ? currentModule?.options || {} : {};
+      return {
+        ...prev,
+        [moduleKey]: {
+          enabled: isEnabled,
+          options: {
+            ...currentOptions,
+            [optionKey]: enabled
+          }
+        }
+      };
+    });
+  };
+
+  // Save modules when closing edit dialog
+  const handleCloseEditDialog = (open: boolean) => {
+    if (!open && selectedUser && localModules) {
+      // Check if modules changed
+      const modulesChanged = JSON.stringify(localModules) !== JSON.stringify(selectedUser.enabled_modules);
+      if (modulesChanged) {
+        saveModulesMutation.mutate({ userId: selectedUser.id, enabledModules: localModules });
+      }
+    }
+    setEditDialogOpen(open);
+    if (!open) {
+      setLocalModules(null);
+    }
+  };
+
+  // Convert UserRow to UserProfile format for dialogs
+  const userAsProfile = selectedUser ? {
+    ...selectedUser,
+    global_role: selectedUser.global_role,
+    enabled_modules: localModules ?? selectedUser.enabled_modules,
+  } : null;
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5" />
-          Utilisateurs et Accès
-        </CardTitle>
-        <CardDescription>
-          Visualisez et gérez les accès utilisateurs selon leur rôle et le plan de leur agence
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Utilisateurs et Accès
+            </CardTitle>
+            <CardDescription>
+              Gérez les utilisateurs, leurs rôles et leurs accès modules
+            </CardDescription>
+          </div>
+          {capabilities.canCreateRoles.length > 0 && (
+            <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
+              <UserPlus className="h-4 w-4" />
+              Nouvel utilisateur
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Filtres */}
@@ -111,14 +190,14 @@ export function UsersAccessTab() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Rechercher par nom ou email..."
+              placeholder="Rechercher par nom, email ou agence..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
             />
           </div>
           <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filtrer par rôle" />
             </SelectTrigger>
             <SelectContent>
@@ -126,6 +205,16 @@ export function UsersAccessTab() {
               {Object.entries(GLOBAL_ROLE_LABELS).map(([key, label]) => (
                 <SelectItem key={key} value={key}>{label}</SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Statut" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous</SelectItem>
+              <SelectItem value="active">Actifs</SelectItem>
+              <SelectItem value="inactive">Inactifs</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -136,9 +225,9 @@ export function UsersAccessTab() {
             <TableHeader>
               <TableRow>
                 <TableHead>Utilisateur</TableHead>
-                <TableHead>Rôle Global</TableHead>
+                <TableHead>Rôle</TableHead>
                 <TableHead>Agence</TableHead>
-                <TableHead>Plan Agence</TableHead>
+                <TableHead>Plan</TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -147,12 +236,12 @@ export function UsersAccessTab() {
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell><Skeleton className="h-6 w-32" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-10 w-40" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-28" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-16" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-16" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-8 ml-auto" /></TableCell>
+                    <TableCell><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
                   </TableRow>
                 ))
               ) : filteredUsers.length === 0 ? (
@@ -164,9 +253,10 @@ export function UsersAccessTab() {
               ) : (
                 filteredUsers.map((user) => {
                   const agencyPlan = user.agency_id ? agencyPlanMap.get(user.agency_id) : undefined;
+                  const canEdit = canEditUser(user);
                   
                   return (
-                    <TableRow key={user.id}>
+                    <TableRow key={user.id} className={!user.is_active ? 'opacity-60' : ''}>
                       <TableCell>
                         <div>
                           <div className="font-medium">
@@ -175,11 +265,16 @@ export function UsersAccessTab() {
                           <div className="text-sm text-muted-foreground">
                             {user.email}
                           </div>
+                          {user.role_agence && (
+                            <div className="text-xs text-muted-foreground mt-0.5">
+                              {user.role_agence}
+                            </div>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={`${getRoleBadgeColor(user.global_role)} text-white`}>
-                          {GLOBAL_ROLE_LABELS[user.global_role as keyof typeof GLOBAL_ROLE_LABELS] || user.global_role || 'N/A'}
+                        <Badge className={getRoleBadgeColor(user.global_role)}>
+                          {GLOBAL_ROLE_LABELS[user.global_role as keyof typeof GLOBAL_ROLE_LABELS] || 'N/A'}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -193,7 +288,7 @@ export function UsersAccessTab() {
                             {agencyPlan}
                           </Badge>
                         ) : (
-                          <span className="text-muted-foreground italic">—</span>
+                          <span className="text-muted-foreground">—</span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -202,16 +297,57 @@ export function UsersAccessTab() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setDialogOpen(true);
-                          }}
-                        >
-                          <Settings2 className="h-4 w-4" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem 
+                              onClick={() => handleOpenEditDialog(user)}
+                              disabled={!canEdit}
+                            >
+                              <Pencil className="h-4 w-4 mr-2" />
+                              Modifier
+                            </DropdownMenuItem>
+                            
+                            <DropdownMenuSeparator />
+                            
+                            {user.is_active ? (
+                              <DropdownMenuItem 
+                                onClick={() => openDeactivateDialog(user)}
+                                disabled={!canEdit}
+                                className="text-orange-600"
+                              >
+                                <UserX className="h-4 w-4 mr-2" />
+                                Désactiver
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem 
+                                onClick={() => openReactivateDialog(user)}
+                                disabled={!canEdit}
+                                className="text-green-600"
+                              >
+                                <UserCheck className="h-4 w-4 mr-2" />
+                                Réactiver
+                              </DropdownMenuItem>
+                            )}
+                            
+                            {capabilities.canDeleteUsers && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  onClick={() => openDeleteDialog(user)}
+                                  className="text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Supprimer définitivement
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   );
@@ -222,57 +358,75 @@ export function UsersAccessTab() {
         </div>
         
         <div className="text-sm text-muted-foreground">
-          {filteredUsers.length} utilisateur(s) affiché(s)
+          {filteredUsers.length} utilisateur(s) sur {users.length}
         </div>
       </CardContent>
       
-      {/* Dialog de gestion utilisateur */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Gérer l'utilisateur</DialogTitle>
-            <DialogDescription>
-              {selectedUser?.first_name} {selectedUser?.last_name}
-            </DialogDescription>
-          </DialogHeader>
-          
-          {selectedUser && (
-            <div className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Rôle global</label>
-                <Select 
-                  value={selectedUser.global_role || ''} 
-                  onValueChange={(value) => {
-                    toast.info('Modification du rôle à implémenter');
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un rôle" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(GLOBAL_ROLE_LABELS).map(([key, label]) => (
-                      <SelectItem key={key} value={key}>{label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Agence</label>
-                <div className="text-sm text-muted-foreground p-2 bg-muted rounded">
-                  {selectedUser.agency?.label || 'Sans agence'}
-                </div>
-              </div>
-              
-              <div className="flex justify-end gap-2 pt-4">
-                <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                  Fermer
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Dialogs */}
+      <CreateUserDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onSubmit={(data) => createUserMutation.mutate(data)}
+        isPending={createUserMutation.isPending}
+        assignableRoles={capabilities.canCreateRoles}
+        agencies={agencies}
+        currentUserLevel={currentUserLevel}
+        currentUserAgency={currentUserAgency}
+      />
+      
+      <EditUserDialog
+        user={userAsProfile}
+        open={editDialogOpen}
+        onOpenChange={handleCloseEditDialog}
+        onSave={(data) => {
+          if (selectedUser) {
+            updateUserMutation.mutate({ userId: selectedUser.id, data });
+          }
+        }}
+        onUpdateEmail={(newEmail) => {
+          if (selectedUser) {
+            updateEmailMutation.mutate({ userId: selectedUser.id, newEmail });
+          }
+        }}
+        onResetPassword={(newPassword) => {
+          if (selectedUser) {
+            resetPasswordMutation.mutate({ userId: selectedUser.id, newPassword });
+          }
+        }}
+        isPending={updateUserMutation.isPending}
+        isEmailPending={updateEmailMutation.isPending}
+        isPasswordPending={resetPasswordMutation.isPending}
+        agencies={agencies}
+        assignableRoles={capabilities.canEditRoles}
+        canEditRoleAgence={true}
+        onModuleToggle={handleModuleToggle}
+        onModuleOptionToggle={handleModuleOptionToggle}
+        canEdit={selectedUser ? canEditUser(selectedUser) : false}
+      />
+      
+      <DeactivateDialog
+        open={deactivateDialogOpen}
+        onOpenChange={setDeactivateDialogOpen}
+        onConfirm={() => selectedUser && deactivateMutation.mutate(selectedUser)}
+        isPending={deactivateMutation.isPending}
+        user={userAsProfile}
+      />
+      
+      <ReactivateDialog
+        open={reactivateDialogOpen}
+        onOpenChange={setReactivateDialogOpen}
+        onConfirm={() => selectedUser && reactivateMutation.mutate(selectedUser)}
+        isPending={reactivateMutation.isPending}
+        user={userAsProfile}
+      />
+      
+      <DeleteDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={() => selectedUser && hardDeleteMutation.mutate(selectedUser)}
+        isPending={hardDeleteMutation.isPending}
+        user={userAsProfile}
+      />
     </Card>
   );
 }
