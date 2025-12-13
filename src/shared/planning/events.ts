@@ -88,16 +88,20 @@ export function buildEvents(
   weekEnd?: Date
 ): PlanningEvent[] {
   const out: PlanningEvent[] = [];
-  
-  for (const c of creneaux ?? []) {
-    const start = new Date(c.date);
-    if (isNaN(start.getTime())) continue;
-    
-    const end = new Date(start.getTime() + c.duree * 60_000);
 
-    // Filtrage par semaine
-    if (weekStart && start < weekStart) continue;
-    if (weekEnd && start > weekEnd) continue;
+  // Normaliser bornes de semaine (si fournies)
+  const weekStartTs = weekStart ? weekStart.getTime() : undefined;
+  const weekEndTs = weekEnd ? weekEnd.getTime() : undefined;
+
+  for (const c of creneaux ?? []) {
+    const slotStart = new Date(c.date);
+    if (isNaN(slotStart.getTime())) continue;
+
+    const slotEnd = new Date(slotStart.getTime() + c.duree * 60_000);
+
+    // Appliquer un premier filtre large sur la semaine (intervalle entier en dehors de la semaine)
+    if (weekStartTs !== undefined && slotEnd.getTime() < weekStartTs) continue;
+    if (weekEndTs !== undefined && slotStart.getTime() > weekEndTs) continue;
 
     // Récupérer les infos client si disponibles (EnrichedCreneau)
     const enriched = c as EnrichedCreneau;
@@ -106,24 +110,54 @@ export function buildEvents(
     const projectRef = enriched.projectRef;
     const interventionType = enriched.interventionType;
 
-    // Un event par userId
-    for (const uid of c.usersIds ?? []) {
-      if (techId && uid !== techId) continue;
-      
-      out.push({
-        id: `${c.id}:${uid}`,
-        refType: c.refType,
-        userId: uid,
-        start,
-        end,
-        title: getEventTitle(interventionType || c.refType),
-        clientName,
-        clientCity,
-        projectRef,
-      });
+    // On découpe le créneau en événements quotidiens pour que les congés longs
+    // s'affichent sur chaque jour de la semaine
+    const dayCursor = new Date(slotStart);
+    dayCursor.setHours(0, 0, 0, 0);
+
+    while (dayCursor.getTime() <= slotEnd.getTime()) {
+      // Filtre semaine: ignorer les jours en dehors des bornes
+      if (weekStartTs !== undefined && dayCursor.getTime() < weekStartTs) {
+        dayCursor.setDate(dayCursor.getDate() + 1);
+        continue;
+      }
+      if (weekEndTs !== undefined && dayCursor.getTime() > weekEndTs) break;
+
+      // Limites de la journée 07:00 - 19:00
+      const dayStart = new Date(dayCursor);
+      dayStart.setHours(7, 0, 0, 0);
+      const dayEnd = new Date(dayCursor);
+      dayEnd.setHours(19, 0, 0, 0);
+
+      const segStart = new Date(
+        Math.max(slotStart.getTime(), dayStart.getTime())
+      );
+      const segEnd = new Date(
+        Math.min(slotEnd.getTime(), dayEnd.getTime())
+      );
+
+      if (segEnd.getTime() > segStart.getTime()) {
+        for (const uid of c.usersIds ?? []) {
+          if (techId && uid !== techId) continue;
+
+          out.push({
+            id: `${c.id}:${uid}:${dayCursor.getTime()}`,
+            refType: c.refType,
+            userId: uid,
+            start: segStart,
+            end: segEnd,
+            title: getEventTitle(interventionType || c.refType),
+            clientName,
+            clientCity,
+            projectRef,
+          });
+        }
+      }
+
+      dayCursor.setDate(dayCursor.getDate() + 1);
     }
   }
-  
+
   return out;
 }
 
