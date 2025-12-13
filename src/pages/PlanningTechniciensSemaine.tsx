@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { startOfWeek, addDays, format, addWeeks, subWeeks, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Clock, Calendar, AlertCircle } from "lucide-react";
@@ -27,6 +27,10 @@ const HOUR_START = 7;
 const HOUR_END = 19;
 const HOUR_HEIGHT = 48; // px par heure
 const TOTAL_HOURS = HOUR_END - HOUR_START;
+
+// Clés de persistance (sessionStorage)
+const STORAGE_KEY_SELECTED_TECH = "planning-tech-week-selected-tech";
+const STORAGE_KEY_WEEK_START = "planning-tech-week-start";
 
 function getEventColor(refType: string): string {
   switch (refType) {
@@ -166,10 +170,32 @@ function DayColumn({ day, events, showLunch }: DayColumnProps) {
 }
 
 function PlanningTechniciensSemaineContent() {
-  const [selectedTechId, setSelectedTechId] = useState<number | null>(null);
-  const [currentWeekStart, setCurrentWeekStart] = useState(() =>
-    startOfWeek(new Date(), { weekStartsOn: 1 })
-  );
+  const [selectedTechId, setSelectedTechId] = useState<number | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const stored = window.sessionStorage.getItem(STORAGE_KEY_SELECTED_TECH);
+      return stored ? Number(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
+    if (typeof window === "undefined") {
+      return startOfWeek(new Date(), { weekStartsOn: 1 });
+    }
+    try {
+      const stored = window.sessionStorage.getItem(STORAGE_KEY_WEEK_START);
+      if (stored) {
+        const parsed = new Date(stored);
+        if (!isNaN(parsed.getTime())) {
+          return startOfWeek(parsed, { weekStartsOn: 1 });
+        }
+      }
+    } catch {
+      // ignore storage errors
+    }
+    return startOfWeek(new Date(), { weekStartsOn: 1 });
+  });
   
   const { users, loading: usersLoading, error: usersError } = useApogeeUsersNormalized();
   const { creneaux, loading: creneauxLoading, error: creneauxError } = usePlanningData();
@@ -212,6 +238,29 @@ function PlanningTechniciensSemaineContent() {
     const tech = techOptions.find((t) => t.id === selectedTechId);
     return tech?.color ?? null;
   }, [selectedTechId, techOptions]);
+  
+  // Persister les filtres dans la session (pour éviter le reset au changement d'onglet)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      if (selectedTechId != null) {
+        window.sessionStorage.setItem(STORAGE_KEY_SELECTED_TECH, String(selectedTechId));
+      } else {
+        window.sessionStorage.removeItem(STORAGE_KEY_SELECTED_TECH);
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, [selectedTechId]);
+  
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.sessionStorage.setItem(STORAGE_KEY_WEEK_START, currentWeekStart.toISOString());
+    } catch {
+      // ignore storage errors
+    }
+  }, [currentWeekStart]);
   
   const handlePrevWeek = () => setCurrentWeekStart((prev) => subWeeks(prev, 1));
   const handleNextWeek = () => setCurrentWeekStart((prev) => addWeeks(prev, 1));
