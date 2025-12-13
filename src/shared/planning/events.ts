@@ -2,7 +2,7 @@
  * Construction des événements planning à partir des créneaux normalisés
  */
 
-import { unwrapArray, isActiveUser, isTechnician, type NormalizedCreneau } from "./normalize";
+import { unwrapArray, isActiveUser, type NormalizedCreneau } from "./normalize";
 
 export interface TechOption {
   id: number;
@@ -21,27 +21,51 @@ export interface PlanningEvent {
 }
 
 /**
- * Construit la liste des utilisateurs pour le planning
- * RÈGLE: prend tous les users avec is_on=true (pas de filtre type="technicien" strict)
- * Car certains techniciens ont type="utilisateur" avec universes rempli
+ * Détecte si un utilisateur est un technicien
+ * RÈGLE IDENTIQUE À techTools.ts:
+ * - isTechnicien=true OU
+ * - type="technicien" OU  
+ * - (type="utilisateur" ET universes non vide)
+ */
+function isTechnicienUser(u: Record<string, unknown>): boolean {
+  const type = String(u.type ?? "").toLowerCase();
+  const data = u.data as Record<string, unknown> | undefined;
+  const universes = data?.universes;
+  const hasUniverses = Array.isArray(universes) && universes.length > 0;
+  
+  return (
+    u.isTechnicien === true ||
+    type === "technicien" ||
+    (type === "utilisateur" && hasUniverses)
+  );
+}
+
+/**
+ * Construit la liste des techniciens pour le planning
+ * RÈGLE IDENTIQUE À techTools.ts (buildTechMap)
  */
 export function buildTechOptions(rawUsers: unknown): TechOption[] {
   const users = unwrapArray(rawUsers);
   return users
-    .filter(isActiveUser) // is_on=true seulement
+    .filter((u) => {
+      const obj = u as Record<string, unknown>;
+      // is_on doit être true
+      if (!isActiveUser(obj)) return false;
+      // Doit être un technicien selon la règle métier
+      return isTechnicienUser(obj);
+    })
     .map((u) => {
       const obj = u as Record<string, unknown>;
       const firstname = String(obj.firstname ?? "").trim();
       const name = String(obj.name ?? "").trim();
       const label = `${firstname} ${name}`.trim() || `#${obj.id}`;
       
-      // Extraction couleur avec fallbacks
-      let color: string | undefined;
+      // Extraction couleur avec fallbacks (même logique que techTools)
       const data = obj.data as Record<string, unknown> | undefined;
-      if (data?.bgcolor) {
-        const bgcolor = data.bgcolor as Record<string, string>;
-        color = bgcolor.hex8 ?? bgcolor.hex;
-      }
+      const bgcolor = data?.bgcolor as Record<string, string> | undefined;
+      const color = bgcolor?.hex || (obj.bgcolor as Record<string, string>)?.hex || 
+                    (data?.color as Record<string, string>)?.hex || 
+                    (obj.color as Record<string, string>)?.hex || "#808080";
       
       return {
         id: Number(obj.id),
