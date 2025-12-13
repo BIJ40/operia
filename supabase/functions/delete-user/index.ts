@@ -109,39 +109,81 @@ serve(async (req) => {
     
     // === TABLES AVEC FK SANS CASCADE ===
     
-    // 1. agency_rh_roles (granted_by sans CASCADE)
+    // 1. conversations (created_by → auth.users, NO ACTION)
+    await supabaseAdmin.from('conversations').update({ created_by: null }).eq('created_by', userId)
+    
+    // 2. statia_widgets (created_by → auth.users, NO ACTION)
+    await supabaseAdmin.from('statia_widgets').delete().eq('created_by', userId)
+    
+    // 3. statia_custom_metrics (created_by → auth.users)
+    await supabaseAdmin.from('statia_custom_metrics').delete().eq('created_by', userId)
+    
+    // 4. leave_requests (created_by + validated_by → profiles, NO ACTION)
+    await supabaseAdmin.from('leave_requests').update({ created_by: null }).eq('created_by', userId)
+    await supabaseAdmin.from('leave_requests').update({ validated_by: null }).eq('validated_by', userId)
+    
+    // 5. collaborator_document_folders (created_by → profiles, NO ACTION)
+    await supabaseAdmin.from('collaborator_document_folders').update({ created_by: null }).eq('created_by', userId)
+    
+    // 6. rh_notifications (recipient_id CASCADE, sender_id SET NULL)
+    await supabaseAdmin.from('rh_notifications').delete().eq('recipient_id', userId)
+    await supabaseAdmin.from('rh_notifications').update({ sender_id: null }).eq('sender_id', userId)
+    
+    // 7. user_presence (user_id → auth.users)
+    await supabaseAdmin.from('user_presence').delete().eq('user_id', userId)
+    
+    // 8. apogee_ticket_tags (created_by)
+    await supabaseAdmin.from('apogee_ticket_tags').update({ created_by: null }).eq('created_by', userId)
+    
+    // 9. user_modules (user_id → profiles)
+    await supabaseAdmin.from('user_modules').delete().eq('user_id', userId)
+    
+    // 10. user_consents (user_id)
+    await supabaseAdmin.from('user_consents').delete().eq('user_id', userId)
+    
+    // 11. sensitive_data_access_logs (user_id)
+    await supabaseAdmin.from('sensitive_data_access_logs').delete().eq('user_id', userId)
+    
+    // 12. agency_rh_roles (granted_by sans CASCADE)
     await supabaseAdmin.from('agency_rh_roles').update({ granted_by: null }).eq('granted_by', userId)
     await supabaseAdmin.from('agency_rh_roles').delete().eq('user_id', userId)
     
-    // 2. Supprimer les assignments d'agences
+    // 13. Supprimer les assignments d'agences
     await supabaseAdmin.from('franchiseur_agency_assignments').delete().eq('user_id', userId)
     
-    // 3. Supprimer les rôles franchiseur
+    // 14. Supprimer les rôles franchiseur
     await supabaseAdmin.from('franchiseur_roles').delete().eq('user_id', userId)
     
-    // 4. Collaborators (anciennement agency_collaborators) - SET NULL sur user_id et created_by
+    // 15. Collaborators - SET NULL sur user_id et created_by
     await supabaseAdmin.from('collaborators').update({ created_by: null }).eq('created_by', userId)
     await supabaseAdmin.from('collaborators').update({ user_id: null }).eq('user_id', userId)
     
-    // 5. collaborator_documents (uploaded_by sans CASCADE)
+    // 16. collaborator_documents (uploaded_by sans CASCADE)
     await supabaseAdmin.from('collaborator_documents').update({ uploaded_by: null }).eq('uploaded_by', userId)
     
-    // 6. document_requests (processed_by sans CASCADE)
-    await supabaseAdmin.from('document_requests').update({ processed_by: null }).eq('processed_by', userId)
+    // 17. collaborator_sensitive_data (last_accessed_by)
+    await supabaseAdmin.from('collaborator_sensitive_data').update({ last_accessed_by: null }).eq('last_accessed_by', userId)
     
-    // 7. employment_contracts (created_by sans CASCADE)
+    // 18. document_requests (processed_by + locked_by sans CASCADE)
+    await supabaseAdmin.from('document_requests').update({ processed_by: null }).eq('processed_by', userId)
+    await supabaseAdmin.from('document_requests').update({ locked_by: null }).eq('locked_by', userId)
+    
+    // 19. document_access_logs (accessed_by)
+    await supabaseAdmin.from('document_access_logs').delete().eq('accessed_by', userId)
+    
+    // 20. employment_contracts (created_by sans CASCADE)
     await supabaseAdmin.from('employment_contracts').update({ created_by: null }).eq('created_by', userId)
     
-    // 8. salary_history (decided_by sans CASCADE)
+    // 21. salary_history (decided_by sans CASCADE)
     await supabaseAdmin.from('salary_history').update({ decided_by: null }).eq('decided_by', userId)
     
-    // 9. Messages (sender_id sans CASCADE)
+    // 22. Messages (sender_id sans CASCADE)
     await supabaseAdmin.from('messages').delete().eq('sender_id', userId)
     
-    // 10. ticket_duplicate_suggestions (reviewed_by sans CASCADE)
+    // 23. ticket_duplicate_suggestions (reviewed_by sans CASCADE)
     await supabaseAdmin.from('ticket_duplicate_suggestions').update({ reviewed_by: null }).eq('reviewed_by', userId)
     
-    // 11. Supprimer les tickets support et dépendances
+    // 24. Supprimer les tickets support et dépendances
     const { data: supportTickets } = await supabaseAdmin
       .from('support_tickets')
       .select('id')
@@ -156,7 +198,7 @@ serve(async (req) => {
     await supabaseAdmin.from('support_tickets').delete().eq('user_id', userId)
     await supabaseAdmin.from('support_tickets').update({ assigned_to: null }).eq('assigned_to', userId)
     
-    // 12. Supprimer les tickets Apogée (FK sans CASCADE)
+    // 25. Supprimer les tickets Apogée (FK sans CASCADE)
     await supabaseAdmin.from('apogee_ticket_comments').update({ created_by_user_id: null }).eq('created_by_user_id', userId)
     await supabaseAdmin.from('apogee_ticket_history').delete().eq('user_id', userId)
     await supabaseAdmin.from('apogee_ticket_attachments').update({ uploaded_by: null }).eq('uploaded_by', userId)
@@ -168,7 +210,7 @@ serve(async (req) => {
       qualified_by: null
     }).or(`created_by_user_id.eq.${userId},last_modified_by_user_id.eq.${userId},qualified_by.eq.${userId}`)
     
-    // 13. Supprimer les autres données (avec CASCADE ou à nettoyer)
+    // 26. Supprimer les autres données
     await supabaseAdmin.from('chatbot_queries').delete().eq('user_id', userId)
     await supabaseAdmin.from('favorites').delete().eq('user_id', userId)
     await supabaseAdmin.from('announcement_reads').delete().eq('user_id', userId)
@@ -179,7 +221,13 @@ serve(async (req) => {
     }).or(`requester_id.eq.${userId},approver_id.eq.${userId}`)
     await supabaseAdmin.from('planning_signatures').update({ signed_by_user_id: null }).eq('signed_by_user_id', userId)
     
-    // 14. Conversation members et typing status (avec CASCADE normalement)
+    // 27. agency_stamps (uploaded_by)
+    await supabaseAdmin.from('agency_stamps').update({ uploaded_by: null }).eq('uploaded_by', userId)
+    
+    // 28. rh_audit_log (user_id)
+    await supabaseAdmin.from('rh_audit_log').delete().eq('user_id', userId)
+    
+    // 29. Conversation members et typing status
     await supabaseAdmin.from('typing_status').delete().eq('user_id', userId)
     await supabaseAdmin.from('conversation_members').delete().eq('user_id', userId)
     
