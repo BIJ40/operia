@@ -36,17 +36,51 @@ export function buildLunchBlocks(weekStart: Date): LunchBlock[] {
  * Calcule le temps de travail hebdo en minutes
  * Exclut le chevauchement avec la pause méridiane 12:00-13:00
  */
+/**
+ * Fusionne les intervalles de temps qui se chevauchent
+ */
+function mergeIntervals(intervals: { start: Date; end: Date }[]): { start: Date; end: Date }[] {
+  if (intervals.length === 0) return [];
+
+  // Trier par date de début
+  const sorted = [...intervals].sort((a, b) => a.start.getTime() - b.start.getTime());
+  const merged: { start: Date; end: Date }[] = [sorted[0]];
+
+  for (let i = 1; i < sorted.length; i++) {
+    const current = sorted[i];
+    const last = merged[merged.length - 1];
+
+    // Si chevauchement ou contigu, on fusionne
+    if (current.start.getTime() <= last.end.getTime()) {
+      last.end = new Date(Math.max(last.end.getTime(), current.end.getTime()));
+    } else {
+      merged.push(current);
+    }
+  }
+
+  return merged;
+}
+
+/**
+ * Calcule le temps de travail hebdo en minutes
+ * Fusionne les créneaux qui se chevauchent pour ne pas compter deux fois
+ * Exclut le chevauchement avec la pause méridiane 12:00-13:00
+ */
 export function computeWeeklyWorkMinutes(events: PlanningEvent[], weekStart: Date): number {
   const lunch = buildLunchBlocks(weekStart);
   const work = events.filter((e) => e.refType === "visite-interv");
 
+  // Fusionner les créneaux qui se chevauchent
+  const intervals = work.map((e) => ({ start: e.start, end: e.end }));
+  const merged = mergeIntervals(intervals);
+
   let total = 0;
   let minusLunch = 0;
 
-  for (const ev of work) {
-    total += Math.round((ev.end.getTime() - ev.start.getTime()) / 60_000);
+  for (const interval of merged) {
+    total += Math.round((interval.end.getTime() - interval.start.getTime()) / 60_000);
     for (const lb of lunch) {
-      minusLunch += overlapMinutes(ev.start, ev.end, lb.start, lb.end);
+      minusLunch += overlapMinutes(interval.start, interval.end, lb.start, lb.end);
     }
   }
 
