@@ -141,6 +141,6 @@ function getEventTitle(refType: string): string {
     case "diagnostic": return "Diagnostic";
     case "conge": return "Congé";
     case "rappel": return "Rappel";
-    default: return refType || "RDV";
+    default: return "";
   }
 }
