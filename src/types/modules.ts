@@ -103,6 +103,7 @@ export interface ModuleOptionDefinition {
   label: string;
   description: string;
   defaultEnabled: boolean;
+  routes?: string[]; // Pages/routes concernées par cette option
 }
 
 // Configuration complète des modules
@@ -115,10 +116,10 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
     minRole: 'base_user',
     options: [
-      { key: 'apogee', path: 'help_academy.apogee', label: 'Apogée', description: 'Guide du logiciel Apogée', defaultEnabled: true },
-      { key: 'helpconfort', path: 'help_academy.helpconfort', label: 'HelpConfort', description: 'Guide des procédures HelpConfort', defaultEnabled: false },
-      { key: 'apporteurs', path: 'help_academy.apporteurs', label: 'Apporteurs', description: 'Guide des prescripteurs', defaultEnabled: true },
-      { key: 'edition', path: 'help_academy.edition', label: 'Mode édition', description: 'Modifier le contenu des guides', defaultEnabled: false },
+      { key: 'apogee', path: 'help_academy.apogee', label: 'Apogée', description: 'Guide du logiciel Apogée', defaultEnabled: true, routes: ['/apogee'] },
+      { key: 'helpconfort', path: 'help_academy.helpconfort', label: 'HelpConfort', description: 'Guide des procédures HelpConfort', defaultEnabled: false, routes: ['/helpconfort'] },
+      { key: 'apporteurs', path: 'help_academy.apporteurs', label: 'Apporteurs', description: 'Guide des prescripteurs', defaultEnabled: true, routes: ['/apporteurs'] },
+      { key: 'edition', path: 'help_academy.edition', label: 'Mode édition', description: 'Modifier le contenu des guides', defaultEnabled: false, routes: [] },
     ],
   },
   {
@@ -130,12 +131,12 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_user',
     options: [
-      { key: 'indicateurs', path: 'pilotage_agence.indicateurs', label: 'Vue d\'ensemble', description: 'Page d\'accueil avec KPIs principaux', defaultEnabled: true },
-      { key: 'stats_hub', path: 'pilotage_agence.stats_hub', label: 'Stats Hub', description: 'Tableaux de bord avancés (CA, Univers, Apporteurs, Techniciens, SAV)', defaultEnabled: false },
-      { key: 'veille_apporteurs', path: 'pilotage_agence.veille_apporteurs', label: 'Veille Apporteurs', description: 'Surveillance des apporteurs inactifs ou en déclin', defaultEnabled: false },
-      { key: 'actions_a_mener', path: 'pilotage_agence.actions_a_mener', label: 'Actions à mener', description: 'Liste des actions prioritaires', defaultEnabled: true },
-      { key: 'diffusion', path: 'pilotage_agence.diffusion', label: 'Écran diffusion', description: 'Affichage sur écran TV', defaultEnabled: true },
-      { key: 'exports', path: 'pilotage_agence.exports', label: 'Exports', description: 'Export des données', defaultEnabled: false },
+      { key: 'indicateurs', path: 'pilotage_agence.indicateurs', label: 'Vue d\'ensemble', description: 'Page d\'accueil avec KPIs principaux', defaultEnabled: true, routes: ['/hc-agency'] },
+      { key: 'stats_hub', path: 'pilotage_agence.stats_hub', label: 'Stats Hub', description: 'Tableaux de bord avancés', defaultEnabled: false, routes: ['/hc-agency/stats-hub'] },
+      { key: 'veille_apporteurs', path: 'pilotage_agence.veille_apporteurs', label: 'Veille Apporteurs', description: 'Surveillance des apporteurs', defaultEnabled: false, routes: ['/hc-agency/veille-apporteurs'] },
+      { key: 'actions_a_mener', path: 'pilotage_agence.actions_a_mener', label: 'Actions à mener', description: 'Liste des actions prioritaires', defaultEnabled: true, routes: ['/hc-agency/actions'] },
+      { key: 'diffusion', path: 'pilotage_agence.diffusion', label: 'Écran diffusion', description: 'Affichage sur écran TV', defaultEnabled: true, routes: ['/hc-agency/diffusion'] },
+      { key: 'exports', path: 'pilotage_agence.exports', label: 'Exports', description: 'Export des données', defaultEnabled: false, routes: ['/hc-agency/exports'] },
     ],
   },
   {
@@ -146,11 +147,11 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisor_user',
     options: [
-      { key: 'dashboard', path: 'reseau_franchiseur.dashboard', label: 'Dashboard', description: 'Vue d\'ensemble réseau', defaultEnabled: true },
-      { key: 'stats', path: 'reseau_franchiseur.stats', label: 'Statistiques', description: 'KPIs consolidés réseau', defaultEnabled: true },
-      { key: 'agences', path: 'reseau_franchiseur.agences', label: 'Gestion agences', description: 'Fiches et paramètres agences', defaultEnabled: true },
-      { key: 'redevances', path: 'reseau_franchiseur.redevances', label: 'Redevances', description: 'Calcul et suivi des redevances', defaultEnabled: false },
-      { key: 'comparatifs', path: 'reseau_franchiseur.comparatifs', label: 'Comparatifs', description: 'Comparaison inter-agences', defaultEnabled: true },
+      { key: 'dashboard', path: 'reseau_franchiseur.dashboard', label: 'Dashboard', description: 'Vue d\'ensemble réseau', defaultEnabled: true, routes: ['/hc-reseau'] },
+      { key: 'stats', path: 'reseau_franchiseur.stats', label: 'Statistiques', description: 'KPIs consolidés réseau', defaultEnabled: true, routes: ['/hc-reseau/tableaux'] },
+      { key: 'agences', path: 'reseau_franchiseur.agences', label: 'Gestion agences', description: 'Fiches et paramètres agences', defaultEnabled: true, routes: ['/hc-reseau/agences'] },
+      { key: 'redevances', path: 'reseau_franchiseur.redevances', label: 'Redevances', description: 'Calcul et suivi des redevances', defaultEnabled: false, routes: ['/hc-reseau/redevances'] },
+      { key: 'comparatifs', path: 'reseau_franchiseur.comparatifs', label: 'Comparatifs', description: 'Comparaison inter-agences', defaultEnabled: true, routes: ['/hc-reseau/comparatif'] },
     ],
   },
   {
@@ -161,9 +162,9 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
     minRole: 'base_user',
     options: [
-      { key: 'user', path: 'support.user', label: 'Créer tickets', description: 'Créer et suivre ses propres tickets', defaultEnabled: true },
-      { key: 'agent', path: 'support.agent', label: 'Agent support', description: 'Répondre aux tickets des utilisateurs', defaultEnabled: false },
-      { key: 'admin', path: 'support.admin', label: 'Admin support', description: 'Gérer l\'équipe et les escalades', defaultEnabled: false },
+      { key: 'user', path: 'support.user', label: 'Créer tickets', description: 'Créer et suivre ses propres tickets', defaultEnabled: true, routes: ['/support', '/support/mes-demandes'] },
+      { key: 'agent', path: 'support.agent', label: 'Agent support', description: 'Répondre aux tickets des utilisateurs', defaultEnabled: false, routes: ['/admin/support'] },
+      { key: 'admin', path: 'support.admin', label: 'Admin support', description: 'Gérer l\'équipe et les escalades', defaultEnabled: false, routes: ['/admin/support/team'] },
     ],
   },
   {
@@ -174,12 +175,12 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['platform_admin', 'superadmin'],
     minRole: 'platform_admin',
     options: [
-      { key: 'users', path: 'admin_plateforme.users', label: 'Utilisateurs', description: 'Gestion des comptes utilisateurs', defaultEnabled: true },
-      { key: 'agencies', path: 'admin_plateforme.agencies', label: 'Agences', description: 'Configuration des agences', defaultEnabled: true },
-      { key: 'permissions', path: 'admin_plateforme.permissions', label: 'Permissions', description: 'Rôles et droits d\'accès', defaultEnabled: true },
-      { key: 'backup', path: 'admin_plateforme.backup', label: 'Sauvegardes', description: 'Import/export de données', defaultEnabled: true },
-      { key: 'logs', path: 'admin_plateforme.logs', label: 'Logs', description: 'Journaux d\'activité', defaultEnabled: false },
-      { key: 'faq_admin', path: 'admin_plateforme.faq_admin', label: 'Admin FAQ', description: 'Gestion de la FAQ (sans accès /admin)', defaultEnabled: false },
+      { key: 'users', path: 'admin_plateforme.users', label: 'Utilisateurs', description: 'Gestion des comptes utilisateurs', defaultEnabled: true, routes: ['/admin/utilisateurs'] },
+      { key: 'agencies', path: 'admin_plateforme.agencies', label: 'Agences', description: 'Configuration des agences', defaultEnabled: true, routes: ['/admin/agences'] },
+      { key: 'permissions', path: 'admin_plateforme.permissions', label: 'Permissions', description: 'Rôles et droits d\'accès', defaultEnabled: true, routes: ['/admin/droits'] },
+      { key: 'backup', path: 'admin_plateforme.backup', label: 'Sauvegardes', description: 'Import/export de données', defaultEnabled: true, routes: ['/admin/backup'] },
+      { key: 'logs', path: 'admin_plateforme.logs', label: 'Logs', description: 'Journaux d\'activité', defaultEnabled: false, routes: ['/admin/logs'] },
+      { key: 'faq_admin', path: 'admin_plateforme.faq_admin', label: 'Admin FAQ', description: 'Gestion de la FAQ', defaultEnabled: false, routes: ['/admin/faq'] },
     ],
   },
   {
@@ -190,9 +191,9 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['platform_admin', 'superadmin'],
     minRole: 'base_user',
     options: [
-      { key: 'kanban', path: 'apogee_tickets.kanban', label: 'Kanban', description: 'Tableau Kanban des tickets', defaultEnabled: true },
-      { key: 'import', path: 'apogee_tickets.import', label: 'Import', description: 'Import depuis fichiers Excel', defaultEnabled: true },
-      { key: 'manage', path: 'apogee_tickets.manage', label: 'Gestion', description: 'Créer et gérer les tickets', defaultEnabled: true },
+      { key: 'kanban', path: 'apogee_tickets.kanban', label: 'Kanban', description: 'Tableau Kanban des tickets', defaultEnabled: true, routes: ['/gestion-projet'] },
+      { key: 'import', path: 'apogee_tickets.import', label: 'Import', description: 'Import depuis fichiers Excel', defaultEnabled: true, routes: ['/gestion-projet/import'] },
+      { key: 'manage', path: 'apogee_tickets.manage', label: 'Gestion', description: 'Créer et gérer les tickets', defaultEnabled: true, routes: ['/gestion-projet'] },
     ],
   },
   {
@@ -205,9 +206,9 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['franchisee_user', 'franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'base_user',
     options: [
-      { key: 'coffre', path: 'rh.coffre', label: 'Mon Coffre RH', description: 'Accès à ses propres documents RH et demandes', defaultEnabled: false },
-      { key: 'rh_viewer', path: 'rh.rh_viewer', label: 'Gestionnaire RH', description: 'Voir/traiter les documents et demandes RH de l\'équipe (sans paie)', defaultEnabled: false },
-      { key: 'rh_admin', path: 'rh.rh_admin', label: 'Admin RH', description: 'Gestion complète RH : salaires, contrats, paramètres paie', defaultEnabled: false },
+      { key: 'coffre', path: 'rh.coffre', label: 'Mon Coffre RH', description: 'Accès à ses propres documents RH', defaultEnabled: false, routes: ['/mon-coffre-rh'] },
+      { key: 'rh_viewer', path: 'rh.rh_viewer', label: 'Gestionnaire RH', description: 'Documents et demandes équipe', defaultEnabled: false, routes: ['/equipe'] },
+      { key: 'rh_admin', path: 'rh.rh_admin', label: 'Admin RH', description: 'Gestion complète : salaires, contrats', defaultEnabled: false, routes: ['/equipe/salaires'] },
     ],
   },
   {
@@ -219,9 +220,9 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_user',
     options: [
-      { key: 'vehicules', path: 'parc.vehicules', label: 'Véhicules', description: 'Gestion de la flotte véhicules', defaultEnabled: true },
-      { key: 'epi', path: 'parc.epi', label: 'EPI', description: 'Équipements de protection individuelle', defaultEnabled: true },
-      { key: 'equipements', path: 'parc.equipements', label: 'Équipements', description: 'Autres équipements professionnels', defaultEnabled: true },
+      { key: 'vehicules', path: 'parc.vehicules', label: 'Véhicules', description: 'Gestion flotte véhicules', defaultEnabled: true, routes: ['/parc/vehicules'] },
+      { key: 'epi', path: 'parc.epi', label: 'EPI', description: 'Équipements de protection', defaultEnabled: true, routes: ['/parc/epi'] },
+      { key: 'equipements', path: 'parc.equipements', label: 'Équipements', description: 'Autres équipements', defaultEnabled: true, routes: ['/parc/equipements'] },
     ],
   },
   {
@@ -232,8 +233,8 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_user',
     options: [
-      { key: 'dm', path: 'messaging.dm', label: 'Messages directs', description: 'Conversations privées à deux', defaultEnabled: true },
-      { key: 'groups', path: 'messaging.groups', label: 'Groupes', description: 'Créer et gérer des groupes de discussion', defaultEnabled: true },
+      { key: 'dm', path: 'messaging.dm', label: 'Messages directs', description: 'Conversations privées', defaultEnabled: true, routes: ['/messages'] },
+      { key: 'groups', path: 'messaging.groups', label: 'Groupes', description: 'Groupes de discussion', defaultEnabled: true, routes: ['/messages/groups'] },
     ],
   },
   {
@@ -244,8 +245,8 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_user',
     options: [
-      { key: 'stats', path: 'unified_search.stats', label: 'Recherche Stats', description: 'Poser des questions sur les statistiques agence', defaultEnabled: true },
-      { key: 'docs', path: 'unified_search.docs', label: 'Recherche Docs', description: 'Rechercher dans la documentation (Apogée, HelpConfort)', defaultEnabled: true },
+      { key: 'stats', path: 'unified_search.stats', label: 'Recherche Stats', description: 'Questions sur les statistiques', defaultEnabled: true, routes: [] },
+      { key: 'docs', path: 'unified_search.docs', label: 'Recherche Docs', description: 'Recherche documentation', defaultEnabled: true, routes: [] },
     ],
   },
 ];
