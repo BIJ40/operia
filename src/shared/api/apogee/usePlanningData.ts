@@ -5,26 +5,32 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { apogeeProxy } from "@/services/apogeeProxy";
+import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { normalizeCreneaux, unwrapArray, type NormalizedCreneau } from "@/shared/planning/normalize";
 
 export function usePlanningData() {
+  const { currentAgency, isAgencyReady } = useAgency();
+  const agencySlug = currentAgency?.slug;
+
   const { data, isLoading, error } = useQuery<NormalizedCreneau[]>({
-    queryKey: ["apogee-planning-data"],
+    queryKey: ["apogee-planning-data", agencySlug],
+    enabled: isAgencyReady && !!agencySlug,
     queryFn: async () => {
       try {
+        if (!agencySlug) return [];
         // Essayer d'abord getInterventionsCreneaux (endpoint confirmé)
-        const result = await apogeeProxy.getInterventionsCreneaux();
+        const result = await apogeeProxy.getInterventionsCreneaux({ agencySlug });
         const normalized = normalizeCreneaux(result);
         
         if (normalized.length > 0) {
           return normalized;
         }
         
-        // Fallback: essayer via autre méthode si disponible
+        // Fallback simple: aucune autre source fiable pour l'instant
         return [];
       } catch (err) {
         console.error("[usePlanningData] Erreur:", err);
-        return [];
+        throw err;
       }
     },
     staleTime: 5 * 60 * 1000,
@@ -38,10 +44,15 @@ export function usePlanningData() {
 }
 
 export function useApogeeUsersNormalized() {
+  const { currentAgency, isAgencyReady } = useAgency();
+  const agencySlug = currentAgency?.slug;
+
   const { data, isLoading, error } = useQuery({
-    queryKey: ["apogee-users-normalized"],
+    queryKey: ["apogee-users-normalized", agencySlug],
+    enabled: isAgencyReady && !!agencySlug,
     queryFn: async () => {
-      const result = await apogeeProxy.getUsers();
+      if (!agencySlug) return [];
+      const result = await apogeeProxy.getUsers({ agencySlug });
       return unwrapArray(result);
     },
     staleTime: 5 * 60 * 1000,
