@@ -63,7 +63,8 @@ export function useAccessRightsUsers() {
   const { data: users, isLoading: isLoadingUsers } = useQuery({
     queryKey: ['access-rights-users'],
     queryFn: async (): Promise<UserRow[]> => {
-      const { data, error } = await supabase
+      // Fetch users with optional agency join
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select(`
           id, email, first_name, last_name, global_role, agency_id, agence, role_agence,
@@ -73,8 +74,27 @@ export function useAccessRightsUsers() {
         `)
         .order('last_name');
       
-      if (error) throw error;
-      return data as UserRow[];
+      if (profilesError) throw profilesError;
+      
+      // Fetch all agencies to resolve by slug when agency_id is null
+      const { data: allAgencies } = await supabase
+        .from('apogee_agencies')
+        .select('id, label, slug');
+      
+      const agencyBySlug = new Map(allAgencies?.map(a => [a.slug?.toLowerCase(), a]) ?? []);
+      
+      // Enrich users: if agency is null but agence (slug) exists, resolve it
+      const enrichedUsers = profilesData?.map(user => {
+        if (!user.agency && user.agence) {
+          const resolvedAgency = agencyBySlug.get(user.agence.toLowerCase());
+          if (resolvedAgency) {
+            return { ...user, agency: resolvedAgency };
+          }
+        }
+        return user;
+      }) ?? [];
+      
+      return enrichedUsers as UserRow[];
     },
   });
 
