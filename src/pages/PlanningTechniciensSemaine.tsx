@@ -482,7 +482,7 @@ function PlanningTechniciensSemaineContent() {
             className="w-4 h-4 rounded"
             style={{ backgroundColor: getEventColor("rappel") }}
           />
-          <span>Rappel</span>
+          <span>Tâche</span>
         </div>
         <div className="flex items-center gap-2">
           <div
