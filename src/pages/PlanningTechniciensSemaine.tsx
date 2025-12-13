@@ -377,7 +377,7 @@ function PlanningTechniciensSemaineContent() {
       
       {/* Bandeau nom technicien + heures (visible pour impression) */}
       {selectedTechId && selectedTechLabel && (
-        <div className="flex flex-col gap-2 bg-muted/50 border rounded-lg px-4 py-3 print:bg-white print:border-2" id="print-header">
+        <div className="bg-muted/50 border rounded-lg px-4 py-3 print:bg-white print:border-2 print:py-2" id="print-header">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {selectedTechColor && (
@@ -387,26 +387,23 @@ function PlanningTechniciensSemaineContent() {
                 />
               )}
               <span className="font-semibold text-lg">{selectedTechLabel}</span>
-              {/* Bloc visible uniquement à l'impression */}
+              {/* Bloc visible uniquement à l'impression: à ___ le ___ Signature: [box] */}
               <span className="hidden print:inline-flex items-center gap-2 text-sm">
                 <span>à</span>
-                <span className="border-b border-black w-32 inline-block">&nbsp;</span>
+                <span className="border-b border-black w-28 inline-block">&nbsp;</span>
                 <span>le</span>
-                <span className="border-b border-black w-24 inline-block">&nbsp;</span>
+                <span className="border-b border-black w-20 inline-block">&nbsp;</span>
+                <span className="ml-4">Signature :</span>
+                <span className="border border-black w-32 h-8 inline-block align-middle">&nbsp;</span>
               </span>
             </div>
-            <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-lg print:bg-transparent print:border print:border-black">
+            <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-lg print:bg-transparent print:border print:border-black print:px-2 print:py-1">
               <Clock className="h-4 w-4 text-primary print:text-black" />
               <span className="font-semibold text-primary print:text-black">
                 {formatMinutes(workMinutes)}
               </span>
               <span className="text-sm text-muted-foreground print:text-black">travaillées</span>
             </div>
-          </div>
-          {/* Signature visible uniquement à l'impression */}
-          <div className="hidden print:flex items-center justify-end gap-2 text-sm pt-2">
-            <span>Signature :</span>
-            <span className="border border-black w-40 h-10 inline-block">&nbsp;</span>
           </div>
         </div>
       )}
