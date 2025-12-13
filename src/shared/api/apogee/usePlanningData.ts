@@ -35,11 +35,10 @@ interface RawProject {
 
 interface RawClient {
   id: number;
-  firstname?: string;
-  lastname?: string;
-  company?: string;
-  city?: string;
+  nom?: string;
+  prenom?: string;
   ville?: string;
+  city?: string;
 }
 
 export function usePlanningData() {
@@ -92,16 +91,13 @@ export function usePlanningData() {
         
         let clientName: string | undefined;
         if (client) {
-          if (client.company) {
-            clientName = client.company;
-          } else {
-            const fn = client.firstname || "";
-            const ln = client.lastname || "";
-            clientName = `${fn} ${ln}`.trim() || undefined;
-          }
+          // Priorité: nom complet (prenom + nom), sinon juste nom
+          const prenom = (client.prenom || "").trim();
+          const nom = (client.nom || "").trim();
+          clientName = `${prenom} ${nom}`.trim() || undefined;
         }
         
-        const clientCity = client?.city || client?.ville || undefined;
+        const clientCity = client?.ville || client?.city || undefined;
         
         return {
           ...creneau,
