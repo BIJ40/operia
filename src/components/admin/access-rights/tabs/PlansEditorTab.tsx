@@ -207,40 +207,42 @@ export function PlansEditorTab() {
                           />
                         </div>
                         
-                        {/* Options panel */}
+                        {/* Options panel - exclude user-only options (edition, agent) */}
                         {isExpanded && (
                           <div className="border-t bg-muted/10 p-3 space-y-2">
-                            {moduleDef.options.map(option => {
-                              const isOptionEnabled = options[option.key] ?? false;
+                            {moduleDef.options
+                              .filter(option => !['edition', 'agent'].includes(option.key))
+                              .map(option => {
+                                const isOptionEnabled = options[option.key] ?? false;
                               
-                              return (
-                                <div 
-                                  key={option.key}
-                                  className={`flex items-center justify-between p-2 rounded ${
-                                    isOptionEnabled ? 'bg-primary/5' : 'bg-background'
-                                  }`}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <div className={`w-2 h-2 rounded-full ${isOptionEnabled ? 'bg-primary' : 'bg-muted'}`} />
-                                    <div>
-                                      <div className="text-sm font-medium">{option.label}</div>
-                                      <div className="text-xs text-muted-foreground">{option.description}</div>
+                                return (
+                                  <div 
+                                    key={option.key}
+                                    className={`flex items-center justify-between p-2 rounded ${
+                                      isOptionEnabled ? 'bg-primary/5' : 'bg-background'
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <div className={`w-2 h-2 rounded-full ${isOptionEnabled ? 'bg-primary' : 'bg-muted'}`} />
+                                      <div>
+                                        <div className="text-sm font-medium">{option.label}</div>
+                                        <div className="text-xs text-muted-foreground">{option.description}</div>
+                                      </div>
                                     </div>
+                                    <Switch
+                                      checked={isOptionEnabled}
+                                      onCheckedChange={(checked) => handleOptionToggle(
+                                        plan.key, 
+                                        moduleDef.key, 
+                                        option.key, 
+                                        options, 
+                                        checked
+                                      )}
+                                      disabled={updateModule.isPending}
+                                    />
                                   </div>
-                                  <Switch
-                                    checked={isOptionEnabled}
-                                    onCheckedChange={(checked) => handleOptionToggle(
-                                      plan.key, 
-                                      moduleDef.key, 
-                                      option.key, 
-                                      options, 
-                                      checked
-                                    )}
-                                    disabled={updateModule.isPending}
-                                  />
-                                </div>
-                              );
-                            })}
+                                );
+                              })}
                           </div>
                         )}
                       </div>
