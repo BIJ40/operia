@@ -121,6 +121,36 @@ export type Database = {
           },
         ]
       }
+      agency_module_overrides: {
+        Row: {
+          agency_id: string
+          created_at: string | null
+          forced_enabled: boolean | null
+          id: string
+          module_key: string
+          options_override: Json | null
+          set_by: string | null
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string | null
+          forced_enabled?: boolean | null
+          id?: string
+          module_key: string
+          options_override?: Json | null
+          set_by?: string | null
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string | null
+          forced_enabled?: boolean | null
+          id?: string
+          module_key?: string
+          options_override?: Json | null
+          set_by?: string | null
+        }
+        Relationships: []
+      }
       agency_rh_roles: {
         Row: {
           agency_id: string
@@ -348,6 +378,50 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      agency_subscription: {
+        Row: {
+          agency_id: string
+          assigned_by: string | null
+          created_at: string | null
+          id: string
+          status: string
+          tier_key: string
+          updated_at: string | null
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          agency_id: string
+          assigned_by?: string | null
+          created_at?: string | null
+          id?: string
+          status?: string
+          tier_key: string
+          updated_at?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          agency_id?: string
+          assigned_by?: string | null
+          created_at?: string | null
+          id?: string
+          status?: string
+          tier_key?: string
+          updated_at?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_subscription_tier_key_fkey"
+            columns: ["tier_key"]
+            isOneToOne: false
+            referencedRelation: "plan_tiers"
+            referencedColumns: ["key"]
           },
         ]
       }
@@ -3529,6 +3603,104 @@ export type Database = {
           },
         ]
       }
+      permission_audit: {
+        Row: {
+          action: string
+          agency_id: string | null
+          changes: Json | null
+          created_at: string | null
+          editor_id: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          agency_id?: string | null
+          changes?: Json | null
+          created_at?: string | null
+          editor_id: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          agency_id?: string | null
+          changes?: Json | null
+          created_at?: string | null
+          editor_id?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
+      plan_tier_modules: {
+        Row: {
+          created_at: string | null
+          enabled: boolean | null
+          id: string
+          module_key: string
+          options_override: Json | null
+          tier_key: string
+        }
+        Insert: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          module_key: string
+          options_override?: Json | null
+          tier_key: string
+        }
+        Update: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          module_key?: string
+          options_override?: Json | null
+          tier_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_tier_modules_tier_key_fkey"
+            columns: ["tier_key"]
+            isOneToOne: false
+            referencedRelation: "plan_tiers"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      plan_tiers: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          is_system: boolean | null
+          key: string
+          label: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          is_system?: boolean | null
+          key: string
+          label: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          is_system?: boolean | null
+          key?: string
+          label?: string
+        }
+        Relationships: []
+      }
       planning_signatures: {
         Row: {
           comment: string | null
@@ -3635,6 +3807,7 @@ export type Database = {
           phone: string | null
           role_agence: string | null
           support_level: number | null
+          support_role: Database["public"]["Enums"]["support_role"] | null
           updated_at: string
         }
         Insert: {
@@ -3658,6 +3831,7 @@ export type Database = {
           phone?: string | null
           role_agence?: string | null
           support_level?: number | null
+          support_role?: Database["public"]["Enums"]["support_role"] | null
           updated_at?: string
         }
         Update: {
@@ -3681,6 +3855,7 @@ export type Database = {
           phone?: string | null
           role_agence?: string | null
           support_level?: number | null
+          support_role?: Database["public"]["Enums"]["support_role"] | null
           updated_at?: string
         }
         Relationships: [
@@ -5380,6 +5555,10 @@ export type Database = {
         Args: { _agency_id: string; _user_id: string }
         Returns: boolean
       }
+      can_manage_user_db: {
+        Args: { p_editor_id: string; p_target_id: string }
+        Returns: boolean
+      }
       can_transition_ticket: {
         Args: { _from_status: string; _to_status: string; _user_id: string }
         Returns: boolean
@@ -5387,6 +5566,14 @@ export type Database = {
       can_user_login: { Args: { p_user_id: string }; Returns: boolean }
       cleanup_ai_search_cache: { Args: never; Returns: number }
       cleanup_expired_request_locks: { Args: never; Returns: number }
+      get_agency_enabled_modules: {
+        Args: { p_agency_id: string }
+        Returns: {
+          enabled: boolean
+          module_key: string
+          options: Json
+        }[]
+      }
       get_collaborator_sensitive_data: {
         Args: { p_collaborator_id: string }
         Returns: {
@@ -5417,6 +5604,14 @@ export type Database = {
         Args: { _user_id: string }
         Returns: {
           agency_id: string
+        }[]
+      }
+      get_user_effective_modules: {
+        Args: { p_user_id: string }
+        Returns: {
+          enabled: boolean
+          module_key: string
+          options: Json
         }[]
       }
       get_user_global_role_level: {
@@ -5634,6 +5829,7 @@ export type Database = {
         | "marche_batiment"
         | "groupe_laposte_axeo"
         | "faq"
+      support_role: "none" | "agent" | "admin"
       system_role: "visiteur" | "utilisateur" | "support" | "admin"
     }
     CompositeTypes: {
@@ -5795,6 +5991,7 @@ export const Constants = {
         "groupe_laposte_axeo",
         "faq",
       ],
+      support_role: ["none", "agent", "admin"],
       system_role: ["visiteur", "utilisateur", "support", "admin"],
     },
   },
