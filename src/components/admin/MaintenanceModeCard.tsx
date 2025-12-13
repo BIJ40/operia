@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
-import { Shield, ShieldAlert, UserCheck, Plus, X, Loader2 } from 'lucide-react';
+import { Shield, ShieldAlert, UserCheck, X, Loader2, Check, ChevronsUpDown } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useMaintenanceAdmin } from '@/hooks/useMaintenanceMode';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { cn } from '@/lib/utils';
 
 interface UserInfo {
   id: string;
@@ -23,9 +25,10 @@ export function MaintenanceModeCard() {
   const { settings, isLoading, updateSettings, isUpdating } = useMaintenanceAdmin();
   const { user } = useAuth();
   const [message, setMessage] = useState('');
-  const [newUserId, setNewUserId] = useState('');
   const [whitelistedUsers, setWhitelistedUsers] = useState<UserInfo[]>([]);
+  const [allUsers, setAllUsers] = useState<UserInfo[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [open, setOpen] = useState(false);
 
   // Sync message from settings
   useEffect(() => {
@@ -33,6 +36,22 @@ export function MaintenanceModeCard() {
       setMessage(settings.message);
     }
   }, [settings?.message]);
+
+  // Load all users for the dropdown
+  useEffect(() => {
+    const loadAllUsers = async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, email, first_name, last_name')
+        .eq('is_active', true)
+        .order('first_name');
+      
+      if (!error && data) {
+        setAllUsers(data);
+      }
+    };
+    loadAllUsers();
+  }, []);
 
   // Load whitelisted users info
   useEffect(() => {
@@ -84,30 +103,22 @@ export function MaintenanceModeCard() {
     }
   };
 
-  const handleAddUser = async () => {
-    if (!newUserId.trim()) return;
-    
-    // Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(newUserId.trim())) {
-      toast.error('Format UUID invalide');
-      return;
-    }
-
+  const handleToggleUser = async (userId: string) => {
     const currentIds = settings?.whitelisted_user_ids ?? [];
-    if (currentIds.includes(newUserId.trim())) {
-      toast.error('Utilisateur déjà dans la liste');
-      return;
-    }
-
+    const isSelected = currentIds.includes(userId);
+    
     try {
-      await updateSettings({ 
-        whitelisted_user_ids: [...currentIds, newUserId.trim()] 
-      });
-      setNewUserId('');
-      toast.success('Utilisateur ajouté à la whitelist');
+      if (isSelected) {
+        await updateSettings({ 
+          whitelisted_user_ids: currentIds.filter(id => id !== userId) 
+        });
+      } else {
+        await updateSettings({ 
+          whitelisted_user_ids: [...currentIds, userId] 
+        });
+      }
     } catch (error) {
-      toast.error('Erreur lors de l\'ajout');
+      toast.error('Erreur lors de la modification');
     }
   };
 
@@ -121,6 +132,11 @@ export function MaintenanceModeCard() {
     } catch (error) {
       toast.error('Erreur lors de la suppression');
     }
+  };
+
+  const getUserLabel = (u: UserInfo) => {
+    const name = [u.first_name, u.last_name].filter(Boolean).join(' ');
+    return name || u.email || u.id;
   };
 
   if (isLoading) {
@@ -185,22 +201,56 @@ export function MaintenanceModeCard() {
             <Label>Utilisateurs autorisés (whitelist)</Label>
           </div>
           
-          {/* Add user form */}
-          <div className="flex gap-2">
-            <Input
-              placeholder="UUID de l'utilisateur"
-              value={newUserId}
-              onChange={(e) => setNewUserId(e.target.value)}
-              className="font-mono text-sm"
-            />
-            <Button 
-              size="sm" 
-              onClick={handleAddUser}
-              disabled={isUpdating || !newUserId.trim()}
-            >
-              <Plus className="w-4 h-4" />
-            </Button>
-          </div>
+          {/* Multi-select user dropdown */}
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={open}
+                className="w-full justify-between"
+                disabled={isUpdating}
+              >
+                <span className="truncate">
+                  {whitelistedUsers.length > 0 
+                    ? `${whitelistedUsers.length} utilisateur(s) sélectionné(s)`
+                    : "Sélectionner des utilisateurs..."}
+                </span>
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[400px] p-0 bg-popover border z-50" align="start">
+              <Command>
+                <CommandInput placeholder="Rechercher un utilisateur..." />
+                <CommandList>
+                  <CommandEmpty>Aucun utilisateur trouvé.</CommandEmpty>
+                  <CommandGroup className="max-h-64 overflow-y-auto">
+                    {allUsers.map((u) => {
+                      const isSelected = settings?.whitelisted_user_ids?.includes(u.id) ?? false;
+                      return (
+                        <CommandItem
+                          key={u.id}
+                          value={`${u.first_name} ${u.last_name} ${u.email}`}
+                          onSelect={() => handleToggleUser(u.id)}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              isSelected ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          <div className="flex flex-col">
+                            <span>{getUserLabel(u)}</span>
+                            <span className="text-xs text-muted-foreground">{u.email}</span>
+                          </div>
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
 
           {/* Whitelisted users list */}
           <div className="space-y-2">
