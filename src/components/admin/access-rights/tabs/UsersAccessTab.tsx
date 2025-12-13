@@ -278,7 +278,7 @@ export function UsersAccessTab() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {(['franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'] as const).includes(user.global_role as any) ? (
+                        {user.role_agence?.toLowerCase().includes('tête de réseau') || user.role_agence?.toLowerCase().includes('tete de reseau') ? (
                           <span className="font-medium text-primary">SIÈGE</span>
                         ) : user.agency?.label ? (
                           user.agency.label
