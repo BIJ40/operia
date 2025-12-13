@@ -58,7 +58,7 @@ export function ApogeeUserSelect({ value, onChange, collaboratorName, label, age
 
   // Filtrer et trier les techniciens actifs
   const technicians = useMemo(() => {
-    if (!apogeeUsers) return [];
+    if (!apogeeUsers || !Array.isArray(apogeeUsers)) return [];
     
     return apogeeUsers
       .filter(u => u.is_on === true)
