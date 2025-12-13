@@ -72,13 +72,21 @@ export function usePlanningData() {
       const clientMap = new Map<number, RawClient>();
       clients.forEach(c => clientMap.set(c.id, c));
       
-      // Map créneau.id → intervention (l'id du créneau correspond à l'id de l'intervention)
-      const interventionMap = new Map<number, RawIntervention>();
-      interventions.forEach(i => interventionMap.set(i.id, i));
+      // Map pEventId → intervention (la jointure se fait via visites[].pEventId)
+      const pEventToIntervention = new Map<number, RawIntervention>();
+      for (const interv of interventions) {
+        const visites = interv.data?.visites ?? [];
+        for (const v of visites) {
+          if (v.pEventId) {
+            pEventToIntervention.set(v.pEventId, interv);
+          }
+        }
+      }
       
       // Enrichir les créneaux
       return creneaux.map(creneau => {
-        const intervention = interventionMap.get(creneau.id);
+        // creneau.id = pEventId dans les visites
+        const intervention = pEventToIntervention.get(creneau.id);
         const project = intervention?.projectId ? projectMap.get(intervention.projectId) : undefined;
         const client = project?.clientId ? clientMap.get(project.clientId) : undefined;
         
