@@ -45,13 +45,17 @@ function isTechnicienUser(u: Record<string, unknown>): boolean {
  * RÈGLE: même détection de technicien que les stats, mais SANS filtrer sur is_on
  * (on affiche tous les techniciens, actifs ou non).
  */
+/**
+ * Construit la liste des techniciens ACTIFS pour le planning
+ * RÈGLE: type technicien (isTechnicienUser) ET is_on === true
+ */
 export function buildTechOptions(rawUsers: unknown): TechOption[] {
   const users = unwrapArray(rawUsers);
   return users
     .filter((u) => {
       const obj = u as Record<string, unknown>;
-      // Ne PAS filtrer sur is_on ici : on veut la liste complète
-      return isTechnicienUser(obj);
+      // Doit être un technicien ET is_on === true
+      return isTechnicienUser(obj) && isActiveUser(obj);
     })
     .map((u) => {
       const obj = u as Record<string, unknown>;
