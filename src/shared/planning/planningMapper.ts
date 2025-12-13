@@ -24,7 +24,7 @@ export function toEvents(creneaux: PlanningCreneau[], userMap: ReturnType<typeof
       const u = userMap.get(uid);
       out.push({
         id: `${c.id}:${uid}`,
-        refType: String(c.refType ?? "unknown"),
+        refType: String(c.refType ?? ""),
         start,
         end,
         userId: uid,
