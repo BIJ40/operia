@@ -11,6 +11,7 @@ import { getUserManagementCapabilities, UserManagementCapabilities } from '@/con
 import { enabledModulesToRows } from '@/lib/userModulesUtils';
 import { logAuth } from '@/lib/logger';
 import { toast } from 'sonner';
+import { USER_QUERY_KEYS, ALL_USER_QUERY_PATTERNS } from '@/lib/queryKeys';
 
 export interface UserRow {
   id: string;
@@ -92,9 +93,16 @@ export function useAccessRightsUsers() {
     },
   });
 
+  // ✅ SYNCHRONISATION COMPLÈTE: invalide TOUTES les query keys utilisateurs
   const invalidateQueries = () => {
-    queryClient.invalidateQueries({ queryKey: ['access-rights-users'] });
-    queryClient.invalidateQueries({ queryKey: ['user-management'] });
+    ALL_USER_QUERY_PATTERNS.forEach(pattern => {
+      queryClient.invalidateQueries({ queryKey: [pattern] });
+    });
+    // Invalider aussi les queries préfixées (agency-users avec slug)
+    queryClient.invalidateQueries({ predicate: (query) => 
+      query.queryKey[0] === 'agency-users' || 
+      query.queryKey[0] === 'user-profile'
+    });
   };
 
   // Create user mutation

@@ -13,6 +13,18 @@ import { toast } from 'sonner';
 import type { GlobalRole } from '@/types/globalRoles';
 import type { EnabledModules } from '@/types/modules';
 import type { Json } from '@/integrations/supabase/types';
+import { ALL_USER_QUERY_PATTERNS } from '@/lib/queryKeys';
+
+// ✅ SYNCHRONISATION COMPLÈTE: fonction centralisée pour invalider TOUTES les query keys utilisateurs
+function invalidateAllUserQueries(queryClient: ReturnType<typeof useQueryClient>) {
+  ALL_USER_QUERY_PATTERNS.forEach(pattern => {
+    queryClient.invalidateQueries({ queryKey: [pattern] });
+  });
+  queryClient.invalidateQueries({ predicate: (query) => 
+    query.queryKey[0] === 'agency-users' || 
+    query.queryKey[0] === 'user-profile'
+  });
+}
 
 export interface UserCreationRequest {
   id: string;
@@ -186,7 +198,7 @@ export function useUserCreationRequests() {
     onSuccess: () => {
       toast.success('Utilisateur créé avec succès.');
       queryClient.invalidateQueries({ queryKey: ['user-creation-requests'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] });
+      invalidateAllUserQueries(queryClient);
     },
     onError: (error: Error) => {
       toast.error(`Erreur : ${error.message}`);
