@@ -19,6 +19,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { usePlanningData, useApogeeUsersNormalized } from "@/shared/api/apogee/usePlanningData";
 import { buildTechOptions, buildEvents, type PlanningEvent } from "@/shared/planning/events";
 import { buildLunchBlocks, computeWeeklyWorkMinutes, formatMinutes, getWeekDays } from "@/shared/planning/time";
+import { ApiToggleProvider } from "@/apogee-connect/contexts/ApiToggleContext";
+import { AgencyProvider } from "@/apogee-connect/contexts/AgencyContext";
 
 // Constantes grille
 const HOUR_START = 7;
@@ -154,7 +156,7 @@ function DayColumn({ day, events, showLunch }: DayColumnProps) {
   );
 }
 
-export default function PlanningTechniciensSemaine() {
+function PlanningTechniciensSemaineContent() {
   const [selectedTechId, setSelectedTechId] = useState<number | null>(null);
   const [currentWeekStart, setCurrentWeekStart] = useState(() =>
     startOfWeek(new Date(), { weekStartsOn: 1 })
@@ -239,7 +241,7 @@ export default function PlanningTechniciensSemaine() {
               
               {techOptions.length === 0 && !usersLoading && (
                 <p className="text-xs text-destructive mt-1">
-                  Aucun technicien actif trouvé
+                  Aucun technicien trouvé
                 </p>
               )}
             </div>
@@ -357,5 +359,15 @@ export default function PlanningTechniciensSemaine() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PlanningTechniciensSemaine() {
+  return (
+    <ApiToggleProvider>
+      <AgencyProvider>
+        <PlanningTechniciensSemaineContent />
+      </AgencyProvider>
+    </ApiToggleProvider>
   );
 }
