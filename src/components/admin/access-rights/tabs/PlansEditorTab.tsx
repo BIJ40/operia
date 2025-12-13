@@ -1,15 +1,16 @@
 /**
  * Onglet Plans - Édition des templates de plans (N5/N6)
+ * Permet de configurer les modules ET sous-options par plan
  */
 
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Layers, Check, X, Info } from 'lucide-react';
+import { Layers, Check, X, Info, ChevronDown, ChevronRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   usePlanTiers, 
   useUpdatePlanTierModule 
@@ -23,18 +24,51 @@ export function PlansEditorTab() {
   const updateModule = useUpdatePlanTierModule();
   const { log } = useAuditLog();
   const [expandedPlan, setExpandedPlan] = useState<string>('PRO');
+  const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
   
-  const handleModuleToggle = async (tierKey: string, moduleKey: string, currentEnabled: boolean) => {
+  const toggleModuleExpand = (tierKey: string, moduleKey: string) => {
+    const key = `${tierKey}-${moduleKey}`;
+    setExpandedModules(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+  
+  const handleModuleToggle = async (tierKey: string, moduleKey: string, currentEnabled: boolean, currentOptions: Record<string, boolean> | null) => {
     await updateModule.mutateAsync({
       tierKey,
       moduleKey,
       enabled: !currentEnabled,
+      optionsOverride: currentOptions || undefined,
     });
     
     await log({
       action: currentEnabled ? 'disable_plan_module' : 'enable_plan_module',
       entityType: 'plan_tier_module',
       changes: { tier: tierKey, module: moduleKey, enabled: !currentEnabled },
+    });
+  };
+  
+  const handleOptionToggle = async (
+    tierKey: string, 
+    moduleKey: string, 
+    optionKey: string, 
+    currentOptions: Record<string, boolean> | null,
+    newValue: boolean
+  ) => {
+    const updatedOptions = {
+      ...(currentOptions || {}),
+      [optionKey]: newValue,
+    };
+    
+    await updateModule.mutateAsync({
+      tierKey,
+      moduleKey,
+      enabled: true, // Si on active une option, le module doit être activé
+      optionsOverride: updatedOptions,
+    });
+    
+    await log({
+      action: newValue ? 'enable_plan_option' : 'disable_plan_option',
+      entityType: 'plan_tier_module',
+      changes: { tier: tierKey, module: moduleKey, option: optionKey, enabled: newValue },
     });
   };
   
@@ -47,7 +81,6 @@ export function PlansEditorTab() {
     switch (plan) {
       case 'PRO': return 'bg-gradient-to-r from-purple-500 to-pink-500 text-white';
       case 'STARTER': return 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white';
-      case 'FREE': return 'bg-muted text-muted-foreground';
       default: return 'bg-muted';
     }
   };
@@ -78,7 +111,7 @@ export function PlansEditorTab() {
           Configuration des Plans
         </CardTitle>
         <CardDescription>
-          Définissez les modules inclus dans chaque plan. Ces configurations s'appliquent à toutes les agences abonnées.
+          Définissez les modules et sous-options inclus dans chaque plan. Ces configurations s'appliquent à toutes les agences abonnées.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -109,50 +142,107 @@ export function PlansEditorTab() {
                   {plan.description}
                 </p>
                 
-                <div className="grid gap-3">
+                <div className="space-y-2">
                   {MODULE_DEFINITIONS.map(moduleDef => {
                     const tierModule = getModuleForPlan(plan.key, moduleDef.key);
                     const isEnabled = tierModule?.enabled ?? false;
+                    const options = tierModule?.options_override ?? {};
+                    const expandKey = `${plan.key}-${moduleDef.key}`;
+                    const isExpanded = expandedModules[expandKey] ?? false;
+                    const enabledOptionsCount = Object.values(options).filter(Boolean).length;
                     
                     return (
-                      <div 
-                        key={moduleDef.key}
-                        className={`flex items-center justify-between p-3 rounded-lg border ${
-                          isEnabled ? 'bg-primary/5 border-primary/20' : 'bg-muted/30'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-md ${isEnabled ? 'bg-primary/10' : 'bg-muted'}`}>
-                            {isEnabled ? (
-                              <Check className="h-4 w-4 text-primary" />
-                            ) : (
-                              <X className="h-4 w-4 text-muted-foreground" />
-                            )}
-                          </div>
-                          <div>
-                            <div className="font-medium flex items-center gap-2">
-                              {moduleDef.label}
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger>
-                                    <Info className="h-3 w-3 text-muted-foreground" />
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p className="max-w-xs">{moduleDef.description}</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
+                      <div key={moduleDef.key} className="border rounded-lg overflow-hidden">
+                        {/* Module header */}
+                        <div 
+                          className={`flex items-center justify-between p-3 ${
+                            isEnabled ? 'bg-primary/5' : 'bg-muted/30'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3 flex-1">
+                            <button 
+                              onClick={() => toggleModuleExpand(plan.key, moduleDef.key)}
+                              className="p-1 hover:bg-muted rounded"
+                            >
+                              {isExpanded ? (
+                                <ChevronDown className="h-4 w-4" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4" />
+                              )}
+                            </button>
+                            <div className={`p-2 rounded-md ${isEnabled ? 'bg-primary/10' : 'bg-muted'}`}>
+                              {isEnabled ? (
+                                <Check className="h-4 w-4 text-primary" />
+                              ) : (
+                                <X className="h-4 w-4 text-muted-foreground" />
+                              )}
                             </div>
-                            <div className="text-xs text-muted-foreground">
-                              {moduleDef.options.length} option(s) disponible(s)
+                            <div>
+                              <div className="font-medium flex items-center gap-2">
+                                {moduleDef.label}
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <Info className="h-3 w-3 text-muted-foreground" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p className="max-w-xs">{moduleDef.description}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {enabledOptionsCount > 0 ? (
+                                  <span className="text-primary">{enabledOptionsCount}/{moduleDef.options.length} options actives</span>
+                                ) : (
+                                  <span>{moduleDef.options.length} options disponibles</span>
+                                )}
+                              </div>
                             </div>
                           </div>
+                          <Switch
+                            checked={isEnabled}
+                            onCheckedChange={() => handleModuleToggle(plan.key, moduleDef.key, isEnabled, options)}
+                            disabled={updateModule.isPending}
+                          />
                         </div>
-                        <Switch
-                          checked={isEnabled}
-                          onCheckedChange={() => handleModuleToggle(plan.key, moduleDef.key, isEnabled)}
-                          disabled={updateModule.isPending}
-                        />
+                        
+                        {/* Options panel */}
+                        {isExpanded && (
+                          <div className="border-t bg-muted/10 p-3 space-y-2">
+                            {moduleDef.options.map(option => {
+                              const isOptionEnabled = options[option.key] ?? false;
+                              
+                              return (
+                                <div 
+                                  key={option.key}
+                                  className={`flex items-center justify-between p-2 rounded ${
+                                    isOptionEnabled ? 'bg-primary/5' : 'bg-background'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <div className={`w-2 h-2 rounded-full ${isOptionEnabled ? 'bg-primary' : 'bg-muted'}`} />
+                                    <div>
+                                      <div className="text-sm font-medium">{option.label}</div>
+                                      <div className="text-xs text-muted-foreground">{option.description}</div>
+                                    </div>
+                                  </div>
+                                  <Switch
+                                    checked={isOptionEnabled}
+                                    onCheckedChange={(checked) => handleOptionToggle(
+                                      plan.key, 
+                                      moduleDef.key, 
+                                      option.key, 
+                                      options, 
+                                      checked
+                                    )}
+                                    disabled={updateModule.isPending}
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
