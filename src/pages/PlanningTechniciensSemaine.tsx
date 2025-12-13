@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { startOfWeek, addDays, format, addWeeks, subWeeks, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Clock, Calendar, AlertCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Calendar, AlertCircle, Printer } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -276,16 +276,18 @@ function PlanningTechniciensSemaineContent() {
   const hasError = usersError || creneauxError;
   
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <PageHeader
-        title="Planning Techniciens"
-        subtitle="Vue hebdomadaire des interventions"
-        backTo="/rh/equipe"
-        backLabel="Mon équipe"
-      />
+    <div className="container mx-auto py-6 space-y-6 print:py-2 print:space-y-2">
+      <div className="print:hidden">
+        <PageHeader
+          title="Planning Techniciens"
+          subtitle="Vue hebdomadaire des interventions"
+          backTo="/rh/equipe"
+          backLabel="Mon équipe"
+        />
+      </div>
       
       {/* Contrôles */}
-      <Card>
+      <Card className="print:hidden">
         <CardContent className="pt-6">
           <div className="flex flex-wrap items-center gap-4">
             {/* Sélection technicien */}
@@ -340,28 +342,52 @@ function PlanningTechniciensSemaineContent() {
               {weekLabel}
             </div>
             
+            {/* Bouton imprimer */}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => window.print()}
+              title="Imprimer"
+              className="print:hidden"
+            >
+              <Printer className="h-4 w-4" />
+            </Button>
           </div>
         </CardContent>
       </Card>
       
       {/* Bandeau nom technicien + heures (visible pour impression) */}
       {selectedTechId && selectedTechLabel && (
-        <div className="flex items-center justify-between bg-muted/50 border rounded-lg px-4 py-3 print:bg-white print:border-2">
-          <div className="flex items-center gap-3">
-            {selectedTechColor && (
-              <div
-                className="w-4 h-4 rounded-full flex-shrink-0"
-                style={{ backgroundColor: selectedTechColor }}
-              />
-            )}
-            <span className="font-semibold text-lg">{selectedTechLabel}</span>
+        <div className="flex flex-col gap-2 bg-muted/50 border rounded-lg px-4 py-3 print:bg-white print:border-2" id="print-header">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {selectedTechColor && (
+                <div
+                  className="w-4 h-4 rounded-full flex-shrink-0 print:hidden"
+                  style={{ backgroundColor: selectedTechColor }}
+                />
+              )}
+              <span className="font-semibold text-lg">{selectedTechLabel}</span>
+              {/* Bloc visible uniquement à l'impression */}
+              <span className="hidden print:inline-flex items-center gap-2 text-sm">
+                <span>à</span>
+                <span className="border-b border-black w-32 inline-block">&nbsp;</span>
+                <span>le</span>
+                <span className="border-b border-black w-24 inline-block">&nbsp;</span>
+              </span>
+            </div>
+            <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-lg print:bg-transparent print:border print:border-black">
+              <Clock className="h-4 w-4 text-primary print:text-black" />
+              <span className="font-semibold text-primary print:text-black">
+                {formatMinutes(workMinutes)}
+              </span>
+              <span className="text-sm text-muted-foreground print:text-black">travaillées</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-lg">
-            <Clock className="h-4 w-4 text-primary" />
-            <span className="font-semibold text-primary">
-              {formatMinutes(workMinutes)}
-            </span>
-            <span className="text-sm text-muted-foreground">travaillées</span>
+          {/* Signature visible uniquement à l'impression */}
+          <div className="hidden print:flex items-center justify-end gap-2 text-sm pt-2">
+            <span>Signature :</span>
+            <span className="border border-black w-40 h-10 inline-block">&nbsp;</span>
           </div>
         </div>
       )}
@@ -417,7 +443,7 @@ function PlanningTechniciensSemaineContent() {
       </Card>
       
       {/* Légende */}
-      <div className="flex flex-wrap gap-4 text-sm">
+      <div className="flex flex-wrap gap-4 text-sm print:hidden">
         <div className="flex items-center gap-2">
           <div
             className="w-4 h-4 rounded"
