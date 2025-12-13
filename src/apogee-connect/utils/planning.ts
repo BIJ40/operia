@@ -493,20 +493,24 @@ function splitSlotIntoDays(slot: TechPlanningSlot, days: Date[]): TechPlanningSl
     dayEnd.setHours(19, 0, 0, 0);
     
     // Vérifier si le slot chevauche cette journée
-    if (slotEnd <= dayStart || slotStart >= dayEnd) {
+    // slotEnd doit être APRÈS le début de la journée ET slotStart doit être AVANT la fin de la journée
+    const slotEndsAfterDayStarts = slotEnd.getTime() > dayStart.getTime();
+    const slotStartsBeforeDayEnds = slotStart.getTime() < dayEnd.getTime();
+    
+    if (!slotEndsAfterDayStarts || !slotStartsBeforeDayEnds) {
       return; // Pas de chevauchement
     }
     
     // Calculer l'intersection
-    const effectiveStart = slotStart > dayStart ? slotStart : dayStart;
-    const effectiveEnd = slotEnd < dayEnd ? slotEnd : dayEnd;
+    const effectiveStart = slotStart.getTime() > dayStart.getTime() ? slotStart : dayStart;
+    const effectiveEnd = slotEnd.getTime() < dayEnd.getTime() ? slotEnd : dayEnd;
     
     const durationMinutes = Math.round((effectiveEnd.getTime() - effectiveStart.getTime()) / 60000);
     
     if (durationMinutes > 0) {
       result.push({
         ...slot,
-        slotId: slot.slotId + day.getTime(), // ID unique par jour
+        slotId: Number(`${slot.slotId}${day.getDate()}`), // ID unique par jour
         start: effectiveStart.toISOString(),
         end: effectiveEnd.toISOString(),
         durationMinutes,
