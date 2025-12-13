@@ -2,6 +2,7 @@
  * Hook unifié pour les données planning
  * Gère les fallbacks et la normalisation
  * Enrichit les créneaux avec les infos client (nom + ville)
+ * Utilise apiGetPlanningCreneaux pour récupérer tous les types d'événements
  */
 
 import { useQuery } from "@tanstack/react-query";
@@ -14,6 +15,14 @@ export interface EnrichedCreneau extends NormalizedCreneau {
   clientCity?: string;
   projectRef?: string;
   interventionType?: string;
+}
+
+interface RawPlanningCreneau {
+  id: number;
+  refType?: string;
+  date?: string;
+  duree?: number;
+  usersIds?: number[];
 }
 
 interface RawIntervention {
@@ -56,15 +65,15 @@ export function usePlanningData() {
     queryFn: async () => {
       if (!agencySlug) return [];
       
-      // Charger les créneaux et les données de jointure en parallèle
-      const [creneauxRaw, interventionsRaw, projectsRaw, clientsRaw] = await Promise.all([
-        apogeeProxy.getInterventionsCreneaux({ agencySlug }),
+      // Charger les créneaux planning (tous types) et les données de jointure en parallèle
+      const [planningCreneauxRaw, interventionsRaw, projectsRaw, clientsRaw] = await Promise.all([
+        apogeeProxy.getPlanningCreneaux({ agencySlug }),
         apogeeProxy.getInterventions({ agencySlug }),
         apogeeProxy.getProjects({ agencySlug }),
         apogeeProxy.getClients({ agencySlug }),
       ]);
       
-      const creneaux = normalizeCreneaux(creneauxRaw);
+      const planningCreneaux = unwrapArray(planningCreneauxRaw) as RawPlanningCreneau[];
       const interventions = unwrapArray(interventionsRaw) as RawIntervention[];
       const projects = unwrapArray(projectsRaw) as RawProject[];
       const clients = unwrapArray(clientsRaw) as RawClient[];
@@ -98,34 +107,49 @@ export function usePlanningData() {
         }
       }
       
-      // Enrichir les créneaux
-      return creneaux.map(creneau => {
-        // creneau.id = pEventId dans les visites
-        const intervention = pEventToIntervention.get(creneau.id);
-        const visite = pEventToVisite.get(creneau.id);
-        const project = intervention?.projectId ? projectMap.get(intervention.projectId) : undefined;
-        const client = project?.clientId ? clientMap.get(project.clientId) : undefined;
+      // Normaliser et enrichir les créneaux du nouveau endpoint
+      const enrichedCreneaux: EnrichedCreneau[] = planningCreneaux.map(creneau => {
+        const normalizedCreneau: NormalizedCreneau = {
+          id: creneau.id,
+          refType: creneau.refType || "",
+          date: creneau.date || "",
+          duree: creneau.duree || 0,
+          usersIds: creneau.usersIds || [],
+        };
         
-        let clientName: string | undefined;
-        if (client) {
-          const prenom = (client.prenom || "").trim();
-          const nom = (client.nom || "").trim();
-          clientName = `${prenom} ${nom}`.trim() || undefined;
+        // Pour les visite-interv, on enrichit avec les infos client/projet
+        if (creneau.refType === "visite-interv") {
+          const intervention = pEventToIntervention.get(creneau.id);
+          const visite = pEventToVisite.get(creneau.id);
+          const project = intervention?.projectId ? projectMap.get(intervention.projectId) : undefined;
+          const client = project?.clientId ? clientMap.get(project.clientId) : undefined;
+          
+          let clientName: string | undefined;
+          if (client) {
+            const prenom = (client.prenom || "").trim();
+            const nom = (client.nom || "").trim();
+            clientName = `${prenom} ${nom}`.trim() || undefined;
+          }
+          
+          const clientCity = client?.ville || client?.city || undefined;
+          
+          // Type d'intervention: visite.type2 > visite.type > intervention.type2 > intervention.type
+          const interventionType = visite?.type2 || visite?.type || intervention?.type2 || intervention?.type;
+          
+          return {
+            ...normalizedCreneau,
+            clientName,
+            clientCity,
+            projectRef: project?.ref,
+            interventionType,
+          };
         }
         
-        const clientCity = client?.ville || client?.city || undefined;
-        
-        // Type d'intervention: visite.type2 > visite.type > intervention.type2 > intervention.type
-        const interventionType = visite?.type2 || visite?.type || intervention?.type2 || intervention?.type;
-        
-        return {
-          ...creneau,
-          clientName,
-          clientCity,
-          projectRef: project?.ref,
-          interventionType,
-        };
+        // Pour les autres types (conge, rappel, etc.), pas d'enrichissement client
+        return normalizedCreneau;
       });
+      
+      return enrichedCreneaux;
     },
     staleTime: 5 * 60 * 1000,
   });

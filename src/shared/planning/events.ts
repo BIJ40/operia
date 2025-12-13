@@ -130,17 +130,23 @@ export function buildEvents(
 function getEventTitle(refType: string): string {
   const normalized = (refType || "").toLowerCase().trim();
   switch (normalized) {
-    case "visite-interv": return "Intervention";
+    // Types d'intervention visite-interv enrichis
+    case "visite-interv": return ""; // Affiche rien, le détail client/projet suffit
     case "depannage": return "Dépannage";
     case "travaux": 
     case "tvx": return "Travaux";
     case "rt":
-    case "rdv": return "RDV Technique";
+    case "rdvtech":
+    case "releve technique": return "RDV Technique";
     case "sav": return "SAV";
     case "th": return "TH";
     case "diagnostic": return "Diagnostic";
+    // Types du nouveau endpoint apiGetPlanningCreneaux
     case "conge": return "Congé";
     case "rappel": return "Rappel";
+    case "absence": return "Absence";
+    case "tache": return "Tâche";
+    case "rdv": return "RDV";
     default: return "";
   }
 }
