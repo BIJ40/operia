@@ -47,7 +47,7 @@ export function normalizeCreneaux(raw: unknown): NormalizedCreneau[] {
       const obj = r as Record<string, unknown>;
       return {
         id: Number(obj.id),
-        refType: String(obj.refType ?? "unknown"),
+        refType: String(obj.refType ?? ""),
         date: String(obj.date ?? ""),
         duree: toNum(obj.duree),
         usersIds: Array.isArray(obj.usersIds) ? obj.usersIds.map(Number) : [],

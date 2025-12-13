@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { addWeeks, subWeeks } from "date-fns";
 import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
@@ -29,7 +29,18 @@ interface WeeklyPlanningHookResult {
 
 export function useWeeklyTechPlanning(techFilterId?: number, showInactiveTechs = false): WeeklyPlanningHookResult {
   const { isAgencyReady } = useAgency();
-  const [weekDate, setWeekDate] = useState<Date>(new Date());
+  const [weekDate, setWeekDate] = useState<Date>(() => {
+    if (typeof window !== "undefined") {
+      const stored = window.sessionStorage.getItem("rh-planning-week-date");
+      if (stored) {
+        const parsed = new Date(stored);
+        if (!isNaN(parsed.getTime())) {
+          return parsed;
+        }
+      }
+    }
+    return new Date();
+  });
 
   // Fetch créneaux
   const {
@@ -147,6 +158,12 @@ export function useWeeklyTechPlanning(techFilterId?: number, showInactiveTechs =
 
     return { planningByTech: planning, weeklyData: weekly };
   }, [creneaux, users, interventions, projects, clients, weekDate, techFilterId, showInactiveTechs, isLoading, error]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem("rh-planning-week-date", weekDate.toISOString());
+    }
+  }, [weekDate]);
 
   const goToPrevWeek = () => setWeekDate((prev) => subWeeks(prev, 1));
   const goToNextWeek = () => setWeekDate((prev) => addWeeks(prev, 1));

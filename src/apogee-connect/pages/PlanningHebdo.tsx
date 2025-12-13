@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { UserCheck } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ROUTES } from "@/config/routes";
@@ -22,7 +22,16 @@ function PlanningHebdoContent() {
   const { isAgencyReady } = useAgency();
   const [selectedTechId, setSelectedTechId] = useState<number | undefined>(undefined);
 
-  // Récupération des techniciens via le même pipeline que Stats Hub
+  // Charger la sélection initiale depuis la session (persistance onglet)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = window.sessionStorage.getItem("rh-planning-selected-tech-id");
+    if (!stored || stored === "all") return;
+    const parsed = Number(stored);
+    if (!Number.isNaN(parsed)) {
+      setSelectedTechId(parsed);
+    }
+  }, []);
   const { users, loading: loadingUsers } = useApogeeUsers();
 
   const techniciensList = useMemo<TechnicienOption[]>(() => {
@@ -77,9 +86,13 @@ function PlanningHebdoContent() {
         <CardContent className="space-y-3">
           <Select
             value={selectedTechId?.toString() ?? "all"}
-            onValueChange={(value) =>
-              setSelectedTechId(value === "all" ? undefined : Number(value))
-            }
+            onValueChange={(value) => {
+              const newId = value === "all" ? undefined : Number(value);
+              setSelectedTechId(newId);
+              if (typeof window !== "undefined") {
+                window.sessionStorage.setItem("rh-planning-selected-tech-id", value);
+              }
+            }}
             disabled={loadingUsers || techniciensList.length === 0}
           >
             <SelectTrigger className="w-full lg:w-[250px]">
