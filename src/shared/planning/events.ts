@@ -137,6 +137,13 @@ export function buildEvents(
       );
 
       if (segEnd.getTime() > segStart.getTime()) {
+        // Filtrer les congés de moins de 4h (240 minutes)
+        const segDurationMinutes = (segEnd.getTime() - segStart.getTime()) / 60_000;
+        if (c.refType === "conge" && segDurationMinutes < 240) {
+          dayCursor.setDate(dayCursor.getDate() + 1);
+          continue;
+        }
+        
         for (const uid of c.usersIds ?? []) {
           if (techId && uid !== techId) continue;
 
@@ -177,7 +184,7 @@ function getEventTitle(refType: string): string {
     case "diagnostic": return "Diagnostic";
     // Types du nouveau endpoint apiGetPlanningCreneaux
     case "conge": return "Congé";
-    case "rappel": return "Rappel";
+    case "rappel": return "Tâche";
     case "absence": return "Absence";
     case "tache": return "Tâche";
     case "rdv": return "RDV";
