@@ -104,6 +104,7 @@ export function buildEvents(
     const clientName = enriched.clientName;
     const clientCity = enriched.clientCity;
     const projectRef = enriched.projectRef;
+    const interventionType = enriched.interventionType;
 
     // Un event par userId
     for (const uid of c.usersIds ?? []) {
@@ -115,7 +116,7 @@ export function buildEvents(
         userId: uid,
         start,
         end,
-        title: getEventTitle(c.refType),
+        title: getEventTitle(interventionType || c.refType),
         clientName,
         clientCity,
         projectRef,
@@ -127,10 +128,19 @@ export function buildEvents(
 }
 
 function getEventTitle(refType: string): string {
-  switch (refType) {
+  const normalized = (refType || "").toLowerCase().trim();
+  switch (normalized) {
     case "visite-interv": return "Intervention";
+    case "depannage": return "Dépannage";
+    case "travaux": 
+    case "tvx": return "Travaux";
+    case "rt":
+    case "rdv": return "RDV Technique";
+    case "sav": return "SAV";
+    case "th": return "TH";
+    case "diagnostic": return "Diagnostic";
     case "conge": return "Congé";
     case "rappel": return "Rappel";
-    default: return refType;
+    default: return refType || "RDV";
   }
 }

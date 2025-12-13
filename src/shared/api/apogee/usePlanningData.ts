@@ -13,16 +13,21 @@ export interface EnrichedCreneau extends NormalizedCreneau {
   clientName?: string;
   clientCity?: string;
   projectRef?: string;
+  interventionType?: string;
 }
 
 interface RawIntervention {
   id: number;
   projectId?: number;
+  type?: string;
+  type2?: string;
   data?: {
     visites?: Array<{
       pEventId?: number;
       date?: string;
       usersIds?: number[];
+      type?: string;
+      type2?: string;
     }>;
   };
 }
@@ -82,16 +87,27 @@ export function usePlanningData() {
         }
       }
       
+      // Map pEventId → visite pour récupérer le type
+      const pEventToVisite = new Map<number, { type?: string; type2?: string }>();
+      for (const interv of interventions) {
+        const visites = interv.data?.visites ?? [];
+        for (const v of visites) {
+          if (v.pEventId) {
+            pEventToVisite.set(v.pEventId, { type: v.type, type2: v.type2 });
+          }
+        }
+      }
+      
       // Enrichir les créneaux
       return creneaux.map(creneau => {
         // creneau.id = pEventId dans les visites
         const intervention = pEventToIntervention.get(creneau.id);
+        const visite = pEventToVisite.get(creneau.id);
         const project = intervention?.projectId ? projectMap.get(intervention.projectId) : undefined;
         const client = project?.clientId ? clientMap.get(project.clientId) : undefined;
         
         let clientName: string | undefined;
         if (client) {
-          // Priorité: nom complet (prenom + nom), sinon juste nom
           const prenom = (client.prenom || "").trim();
           const nom = (client.nom || "").trim();
           clientName = `${prenom} ${nom}`.trim() || undefined;
@@ -99,11 +115,15 @@ export function usePlanningData() {
         
         const clientCity = client?.ville || client?.city || undefined;
         
+        // Type d'intervention: visite.type2 > visite.type > intervention.type2 > intervention.type
+        const interventionType = visite?.type2 || visite?.type || intervention?.type2 || intervention?.type;
+        
         return {
           ...creneau,
           clientName,
           clientCity,
           projectRef: project?.ref,
+          interventionType,
         };
       });
     },
