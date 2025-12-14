@@ -179,8 +179,12 @@ export function useAccessRightsUsers() {
       if (error) throw error;
       return { userId, data };
     },
-    onSuccess: () => {
+    onSuccess: ({ userId, data }) => {
       toast.success('Utilisateur mis à jour');
+      // Update selectedUser with new data to keep dialog in sync
+      if (selectedUser && selectedUser.id === userId) {
+        setSelectedUser(prev => prev ? { ...prev, ...data } : null);
+      }
       invalidateQueries();
     },
     onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
