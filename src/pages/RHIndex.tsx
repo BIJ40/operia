@@ -6,7 +6,8 @@ import {
   CalendarCheck,
   FolderOpen,
   Send,
-  ChevronRight
+  ChevronRight,
+  Car
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
@@ -82,6 +83,15 @@ const RH_MODULES: RHModule[] = [
     description: 'Validez et suivez les congés de l\'équipe',
     icon: CalendarCheck,
     href: ROUTES.rh.conges,
+    section: 'dirigeant',
+    enabled: true,
+  },
+  {
+    id: 'parc-vehicules',
+    title: 'Parc & Véhicules',
+    description: 'Gérez les véhicules, CT, entretiens et assurances',
+    icon: Car,
+    href: ROUTES.agency.maintenance,
     section: 'dirigeant',
     enabled: true,
   },

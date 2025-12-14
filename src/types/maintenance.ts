@@ -89,6 +89,19 @@ export interface FleetVehicle {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  // Nouvelles colonnes assurance/leasing/alertes
+  insurance_company: string | null;
+  insurance_contract_number: string | null;
+  insurance_expiry_at: string | null;
+  leasing_company: string | null;
+  leasing_monthly_amount: number | null;
+  leasing_end_at: string | null;
+  ct_alert_days: number | null;
+  revision_alert_days: number | null;
+  insurance_alert_days: number | null;
+  leasing_alert_days: number | null;
+  fuel_type: string | null;
+  vin: string | null;
   // Relations jointes
   collaborator?: {
     id: string;

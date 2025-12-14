@@ -2448,10 +2448,20 @@ export type Database = {
           assigned_collaborator_id: string | null
           brand: string | null
           created_at: string | null
+          ct_alert_days: number | null
           ct_due_at: string | null
+          fuel_type: string | null
           id: string
+          insurance_alert_days: number | null
+          insurance_company: string | null
+          insurance_contract_number: string | null
+          insurance_expiry_at: string | null
           last_ct_at: string | null
           last_revision_at: string | null
+          leasing_alert_days: number | null
+          leasing_company: string | null
+          leasing_end_at: string | null
+          leasing_monthly_amount: number | null
           mileage_km: number | null
           model: string | null
           name: string
@@ -2460,8 +2470,10 @@ export type Database = {
           notes: string | null
           qr_token: string | null
           registration: string | null
+          revision_alert_days: number | null
           status: string
           updated_at: string | null
+          vin: string | null
           year: number | null
         }
         Insert: {
@@ -2469,10 +2481,20 @@ export type Database = {
           assigned_collaborator_id?: string | null
           brand?: string | null
           created_at?: string | null
+          ct_alert_days?: number | null
           ct_due_at?: string | null
+          fuel_type?: string | null
           id?: string
+          insurance_alert_days?: number | null
+          insurance_company?: string | null
+          insurance_contract_number?: string | null
+          insurance_expiry_at?: string | null
           last_ct_at?: string | null
           last_revision_at?: string | null
+          leasing_alert_days?: number | null
+          leasing_company?: string | null
+          leasing_end_at?: string | null
+          leasing_monthly_amount?: number | null
           mileage_km?: number | null
           model?: string | null
           name: string
@@ -2481,8 +2503,10 @@ export type Database = {
           notes?: string | null
           qr_token?: string | null
           registration?: string | null
+          revision_alert_days?: number | null
           status?: string
           updated_at?: string | null
+          vin?: string | null
           year?: number | null
         }
         Update: {
@@ -2490,10 +2514,20 @@ export type Database = {
           assigned_collaborator_id?: string | null
           brand?: string | null
           created_at?: string | null
+          ct_alert_days?: number | null
           ct_due_at?: string | null
+          fuel_type?: string | null
           id?: string
+          insurance_alert_days?: number | null
+          insurance_company?: string | null
+          insurance_contract_number?: string | null
+          insurance_expiry_at?: string | null
           last_ct_at?: string | null
           last_revision_at?: string | null
+          leasing_alert_days?: number | null
+          leasing_company?: string | null
+          leasing_end_at?: string | null
+          leasing_monthly_amount?: number | null
           mileage_km?: number | null
           model?: string | null
           name?: string
@@ -2502,8 +2536,10 @@ export type Database = {
           notes?: string | null
           qr_token?: string | null
           registration?: string | null
+          revision_alert_days?: number | null
           status?: string
           updated_at?: string | null
+          vin?: string | null
           year?: number | null
         }
         Relationships: [
