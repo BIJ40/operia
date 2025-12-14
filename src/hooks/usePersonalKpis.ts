@@ -136,6 +136,7 @@ function calculateTechnicienKpisStatia(
   // === 1. CA du mois (utilise le moteur StatIA) ===
   const statiaParams: CaParTechnicienParams = {
     dateRange: { start: monthStart, end: monthEnd },
+    topN: 100, // Récupérer tous les techniciens pour trouver le nôtre
   };
   const caResult = computeCaParTechnicienCore(
     { factures, projects, interventions, users },
