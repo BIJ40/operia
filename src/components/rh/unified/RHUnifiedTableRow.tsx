@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -11,9 +12,9 @@ import { RHVehicleSelectCell } from './RHVehicleSelectCell';
 import { RHCartePopup, formatCarteDisplay } from './RHCartePopup';
 import { RHDocumentUploadPopup } from './RHDocumentUploadPopup';
 import { RHMaterielPopup } from './RHMaterielPopup';
-import { RHIdentifiantsPopup } from './RHIdentifiantsPopup';
+import { RHIdentifiantsDynamicColumns } from './RHIdentifiantsDynamicColumns';
 import { RHDocumentCell } from './RHDocumentCell';
-import { ExternalLink, Paperclip, Package, Key } from 'lucide-react';
+import { ExternalLink, Paperclip, Package } from 'lucide-react';
 
 interface RHUnifiedTableRowProps {
   collaborator: RHCollaborator;
@@ -44,6 +45,7 @@ export function RHUnifiedTableRow({
   onAssetsUpdate,
 }: RHUnifiedTableRowProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const tabGroups = TAB_COLUMNS[activeTab];
   const status = getStatusIndicator(collaborator);
   
@@ -52,7 +54,23 @@ export function RHUnifiedTableRow({
   const [carteBancairePopupOpen, setCarteBancairePopupOpen] = useState(false);
   const [carteAutrePopupOpen, setCarteAutrePopupOpen] = useState(false);
   const [materielPopupOpen, setMaterielPopupOpen] = useState(false);
-  const [identifiantsPopupOpen, setIdentifiantsPopupOpen] = useState(false);
+  
+  // Callback pour rafraîchir les identifiants
+  const handleIdentifiantsRefresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['rh-collaborators'] });
+  }, [queryClient]);
+  
+  // Parse identifiants from it_access
+  const getIdentifiants = () => {
+    const encrypted = collaborator.it_access?.identifiants_encrypted;
+    if (!encrypted) return [];
+    try {
+      const parsed = JSON.parse(encrypted);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  };
   
   // Document upload popup state
   const [docUploadPopup, setDocUploadPopup] = useState<{ open: boolean; fieldKey: string; fieldLabel: string }>({
@@ -263,31 +281,18 @@ export function RHUnifiedTableRow({
       );
     }
     
-    // Identifiants
+    // Identifiants - colonnes dynamiques
     if (colId === 'identifiants_liste') {
-      const identifiants = collaborator.it_access?.identifiants_encrypted;
-      let count = 0;
-      if (identifiants) {
-        try {
-          const parsed = JSON.parse(identifiants);
-          count = Array.isArray(parsed) ? parsed.length : 0;
-        } catch {
-          count = 0;
-        }
-      }
+      const identifiants = getIdentifiants();
       
       return (
         <TableCell key={colId} className={cellClass}>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-xs font-normal w-full justify-start"
-            onDoubleClick={() => setIdentifiantsPopupOpen(true)}
-            title="Double-clic pour modifier"
-          >
-            <Key className="h-3 w-3 mr-1" />
-            {count > 0 ? `${count} accès` : '—'}
-          </Button>
+          <RHIdentifiantsDynamicColumns
+            collaboratorId={collaborator.id}
+            collaboratorName={collaboratorName}
+            identifiants={identifiants}
+            onRefresh={handleIdentifiantsRefresh}
+          />
         </TableCell>
       );
     }
@@ -339,13 +344,6 @@ export function RHUnifiedTableRow({
       collaboratorName={collaboratorName}
     />
     
-    {/* Identifiants Popup */}
-    <RHIdentifiantsPopup
-      isOpen={identifiantsPopupOpen}
-      onClose={() => setIdentifiantsPopupOpen(false)}
-      collaboratorId={collaborator.id}
-      collaboratorName={collaboratorName}
-    />
     
     <TableRow 
       className={cn(
