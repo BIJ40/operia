@@ -5925,6 +5925,14 @@ export type Database = {
           options: Json
         }[]
       }
+      get_agency_rh_managers: {
+        Args: { p_agency_id: string }
+        Returns: {
+          first_name: string
+          id: string
+          last_name: string
+        }[]
+      }
       get_collaborator_sensitive_data: {
         Args: { p_collaborator_id: string }
         Returns: {
