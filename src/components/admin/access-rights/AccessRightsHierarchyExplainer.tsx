@@ -3,17 +3,33 @@
  * Explique clairement quelle règle prend le dessus sur quelle autre
  */
 
-import { Info, ChevronDown, ChevronUp, HelpCircle, Shield, Building2, User, Layers } from 'lucide-react';
+import { Info, ChevronDown, ChevronUp, HelpCircle, Shield, Building2, User, Layers, FileDown } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useState } from 'react';
+import { downloadModulesDocumentationPdf } from '@/lib/modulesExportPdf';
+import { toast } from 'sonner';
 
 // Bannière d'information globale
 export function AccessRightsGlobalBanner() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownloadPdf = async () => {
+    setIsDownloading(true);
+    try {
+      await downloadModulesDocumentationPdf();
+      toast.success('Documentation PDF téléchargée');
+    } catch (error) {
+      console.error('Erreur téléchargement PDF:', error);
+      toast.error('Erreur lors du téléchargement');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-900">
@@ -28,15 +44,27 @@ export function AccessRightsGlobalBanner() {
               Les accès modules sont déterminés par une <strong>hiérarchie de priorité</strong>. 
               Les niveaux supérieurs l'emportent toujours sur les niveaux inférieurs.
             </p>
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" size="sm" className="text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900">
-                {isOpen ? (
-                  <>Réduire <ChevronUp className="h-4 w-4 ml-1" /></>
-                ) : (
-                  <>Voir la hiérarchie <ChevronDown className="h-4 w-4 ml-1" /></>
-                )}
+            <div className="flex gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900"
+                onClick={handleDownloadPdf}
+                disabled={isDownloading}
+              >
+                <FileDown className="h-4 w-4 mr-1" />
+                {isDownloading ? 'Téléchargement...' : 'PDF Modules'}
               </Button>
-            </CollapsibleTrigger>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900">
+                  {isOpen ? (
+                    <>Réduire <ChevronUp className="h-4 w-4 ml-1" /></>
+                  ) : (
+                    <>Voir la hiérarchie <ChevronDown className="h-4 w-4 ml-1" /></>
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+            </div>
           </div>
           
           <CollapsibleContent className="mt-4">
