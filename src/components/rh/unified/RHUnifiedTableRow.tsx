@@ -222,21 +222,30 @@ export function RHUnifiedTableRow({
     // Matériels
     if (colId === 'materiels_liste') {
       const equipements = (assets?.autres_equipements as unknown as { nom: string }[]) || [];
-      const displayText = equipements.length > 0 
-        ? equipements.map(e => e.nom).join(', ') 
-        : '—';
+      const count = equipements.length;
       
       return (
         <TableCell key={colId} className={cellClass}>
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 px-2 text-xs font-normal w-full justify-start"
+            className="h-7 px-2 text-xs font-normal w-full justify-start gap-2"
             onDoubleClick={() => setMaterielPopupOpen(true)}
-            title="Double-clic pour modifier"
+            title={count > 0 ? `${count} équipement(s): ${equipements.map(e => e.nom).join(', ')}` : 'Double-clic pour ajouter'}
           >
-            <Package className="h-3 w-3 mr-1" />
-            {displayText}
+            <Package className={cn("h-3.5 w-3.5", count > 0 ? "text-primary" : "text-muted-foreground")} />
+            {count > 0 ? (
+              <span className="inline-flex items-center gap-1">
+                <span className="bg-primary text-primary-foreground text-[10px] font-medium px-1.5 py-0.5 rounded-full">
+                  {count}
+                </span>
+                <span className="text-muted-foreground truncate max-w-[100px]">
+                  {equipements.map(e => e.nom).join(', ')}
+                </span>
+              </span>
+            ) : (
+              <span className="text-muted-foreground">—</span>
+            )}
           </Button>
         </TableCell>
       );
