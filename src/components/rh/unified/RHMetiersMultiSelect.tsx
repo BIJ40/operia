@@ -31,10 +31,10 @@ export function RHMetiersMultiSelect({
   const addCompetence = useAddCompetenceCatalogue();
   const updateCompetencies = useUpdateCompetencies();
 
-  // Sync local state when props change
-  React.useEffect(() => {
-    setLocalSelected(selectedMetiers);
-  }, [selectedMetiers]);
+  // On initialise à partir des props mais on ne resynchronise pas ensuite
+  // pour éviter d'effacer la sélection locale quand la requête de rafraîchissement
+  // renvoie encore des données vides.
+
 
   const handleToggle = (metier: string) => {
     const updated = localSelected.includes(metier)
@@ -80,8 +80,8 @@ export function RHMetiersMultiSelect({
   };
 
   const handleOpenChange = (isOpen: boolean) => {
-    if (!isOpen && JSON.stringify(localSelected.sort()) !== JSON.stringify(selectedMetiers.sort())) {
-      // Save on close if changes
+    if (!isOpen) {
+      // Sauvegarde systématique à la fermeture pour ne pas perdre la saisie
       handleSave();
     }
     setOpen(isOpen);
