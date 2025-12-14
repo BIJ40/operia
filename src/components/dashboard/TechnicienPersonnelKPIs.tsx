@@ -11,8 +11,8 @@ import { usePersonalKpis } from '@/hooks/usePersonalKpis';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export function TechnicienPersonnelKPIs() {
-  const { periodLabel } = useDashboardPeriod();
-  const { data, isLoading } = usePersonalKpis();
+  const { periodLabel, dateRange } = useDashboardPeriod();
+  const { data, isLoading } = usePersonalKpis({ dateRange });
 
   if (isLoading) {
     return (
