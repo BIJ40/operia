@@ -9,8 +9,6 @@ import {
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
-import { usePendingDocumentRequestsCount } from "@/hooks/useDocumentRequests";
-import { Badge } from "@/components/ui/badge";
 import { ROUTES } from "@/config/routes";
 import { PageHeader } from "@/components/layout/PageHeader";
 import type { LucideIcon } from "lucide-react";
@@ -65,22 +63,15 @@ const MAINTENANCE_MODULES: RHModule[] = [
   },
 ];
 
-function BlueTileCard({ module, badge }: { module: RHModule; badge?: number }) {
+function BlueTileCard({ module }: { module: RHModule }) {
   const Icon = module.icon;
   
   return (
     <Link to={module.href} className="block group">
       <Card className="h-full transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-helpconfort-blue/5 via-background to-background">
         <CardContent className="p-4">
-          <div className="flex items-start justify-between">
-            <div className="p-2 rounded-lg bg-helpconfort-blue/10">
-              <Icon className="h-5 w-5 text-helpconfort-blue" />
-            </div>
-            {badge !== undefined && badge > 0 && (
-              <Badge variant="destructive" className="text-xs">
-                {badge}
-              </Badge>
-            )}
+          <div className="p-2 rounded-lg bg-helpconfort-blue/10 w-fit">
+            <Icon className="h-5 w-5 text-helpconfort-blue" />
           </div>
           <h3 className="mt-3 font-semibold text-foreground group-hover:text-primary transition-colors">
             {module.title}
@@ -100,18 +91,10 @@ function BlueTileCard({ module, badge }: { module: RHModule; badge?: number }) {
 
 export default function RHIndex() {
   const { globalRole } = useAuth();
-  const { count: pendingCount } = usePendingDocumentRequestsCount();
   
   const isPlatformAdmin = globalRole === 'platform_admin' || globalRole === 'superadmin';
   const isN2Plus = globalRole === 'franchisee_admin' || globalRole === 'franchisor_user' || 
                    globalRole === 'franchisor_admin' || isPlatformAdmin;
-  
-  const getBadge = (moduleId: string): number | undefined => {
-    if (moduleId === 'demandes-rh' && pendingCount) {
-      return pendingCount;
-    }
-    return undefined;
-  };
 
   if (!isN2Plus) {
     return (
@@ -144,11 +127,7 @@ export default function RHIndex() {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {RH_MODULES.map(module => (
-            <BlueTileCard 
-              key={module.id} 
-              module={module} 
-              badge={getBadge(module.id)}
-            />
+            <BlueTileCard key={module.id} module={module} />
           ))}
         </div>
       </section>
