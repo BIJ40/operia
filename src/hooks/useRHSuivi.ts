@@ -37,6 +37,7 @@ export function useRHCollaborators() {
           rh_it_access(*)
         `)
         .eq('agency_id', agencyId)
+        .is('leaving_date', null) // Exclure les collaborateurs ayant quitté l'agence
         .order('last_name', { ascending: true });
       
       if (error) throw error;
