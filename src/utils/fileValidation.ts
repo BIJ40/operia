@@ -14,6 +14,9 @@ export const ALLOWED_MIME_TYPES: Record<string, string[]> = {
   'image/jpeg': ['.jpg', '.jpeg'],
   'image/png': ['.png'],
   'image/webp': ['.webp'],
+  // Cartes photos iPhone / Carte Vitale (HEIC)
+  'image/heic': ['.heic'],
+  'image/heif': ['.heif'],
 };
 
 export const MAX_FILE_SIZE_MB = 10;
