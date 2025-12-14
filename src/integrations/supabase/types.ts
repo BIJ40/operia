@@ -2559,6 +2559,110 @@ export type Database = {
           },
         ]
       }
+      flow_blocks: {
+        Row: {
+          category: string
+          created_at: string
+          icon: string | null
+          id: string
+          is_active: boolean
+          name: string
+          schema: Json
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          icon?: string | null
+          id: string
+          is_active?: boolean
+          name: string
+          schema?: Json
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          schema?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      flow_schema_versions: {
+        Row: {
+          created_at: string
+          id: string
+          is_published: boolean
+          json: Json
+          published_at: string | null
+          published_by: string | null
+          schema_id: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          json?: Json
+          published_at?: string | null
+          published_by?: string | null
+          schema_id: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          json?: Json
+          published_at?: string | null
+          published_by?: string | null
+          schema_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flow_schema_versions_schema_id_fkey"
+            columns: ["schema_id"]
+            isOneToOne: false
+            referencedRelation: "flow_schemas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flow_schemas: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          domain: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          domain: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          domain?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       formation_content: {
         Row: {
           created_at: string
