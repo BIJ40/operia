@@ -71,8 +71,16 @@ export default function PilotageIndex() {
 
   return (
     <div className="container mx-auto py-8 px-4 space-y-6">
-      {/* Espace vide au-dessus */}
-      <div className="h-24" />
+      {/* Header Mon Agence */}
+      <div className="flex items-center gap-5 py-6">
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-lg">
+          <Building2 className="w-9 h-9 text-white" />
+        </div>
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">Mon Agence</h1>
+          <p className="text-muted-foreground">Pilotez votre activité et suivez vos indicateurs clés</p>
+        </div>
+      </div>
       
       {/* Tuiles principales - 4 en ligne */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
