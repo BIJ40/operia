@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
 import { 
-  Briefcase, 
   FileText, 
   Users, 
-  CalendarDays, 
+  CalendarDays,
+  CalendarCheck,
   LayoutDashboard,
   FolderOpen,
   Send,
@@ -59,6 +59,15 @@ const RH_MODULES: RHModule[] = [
     enabled: true,
   },
   {
+    id: 'plannings',
+    title: 'Plannings',
+    description: 'Consultez et signez les plannings hebdomadaires',
+    icon: CalendarDays,
+    href: ROUTES.rh.plannings,
+    section: 'dirigeant',
+    enabled: true,
+  },
+  {
     id: 'demandes-rh',
     title: 'Demandes RH',
     description: 'Traitez les demandes des collaborateurs',
@@ -80,7 +89,7 @@ const RH_MODULES: RHModule[] = [
     id: 'gestion-conges',
     title: 'Gestion des congés',
     description: 'Validez et suivez les congés de l\'équipe',
-    icon: CalendarDays,
+    icon: CalendarCheck,
     href: ROUTES.rh.conges,
     section: 'dirigeant',
     enabled: true,
