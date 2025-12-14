@@ -89,6 +89,30 @@ serve(async (req) => {
       });
     }
 
+    // Vérifier que la demande est APPROVED avant de générer
+    if (rhRequest.status !== 'APPROVED') {
+      return new Response(JSON.stringify({ error: 'Seules les demandes approuvées peuvent générer une lettre' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Vérifier que c'est une demande EPI_RENEWAL
+    if (rhRequest.request_type !== 'EPI_RENEWAL') {
+      return new Response(JSON.stringify({ error: 'Génération de lettre disponible uniquement pour les demandes EPI' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Vérifier qu'une lettre n'existe pas déjà
+    if (rhRequest.generated_letter_path) {
+      return new Response(JSON.stringify({ error: 'Une lettre existe déjà pour cette demande' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Load collaborator via employee_user_id
     const { data: collaborator } = await supabase
       .from('collaborators')
@@ -291,7 +315,7 @@ serve(async (req) => {
       .from('rh-documents')
       .upload(filePath, pdfBytes, {
         contentType: 'application/pdf',
-        upsert: true,
+        upsert: false, // Ne pas écraser une lettre existante
       });
 
     if (uploadError) {

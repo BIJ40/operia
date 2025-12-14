@@ -6,7 +6,8 @@ export { useMyDocuments, useDownloadDocument, type MyDocument } from "./useMyDoc
 export { 
   useMyRequests, 
   useCreateRequest, 
-  useCancelRequest, 
+  useCancelRequest,
+  useDownloadMyLetter,
   type RHRequest, 
   type RequestType, 
   type RequestStatus, 

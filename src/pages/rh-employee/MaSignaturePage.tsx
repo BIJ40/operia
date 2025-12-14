@@ -1,7 +1,7 @@
 /**
  * Page Ma Signature - Capture et gestion de la signature personnelle
  */
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { PenTool, Trash2, Save, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -12,23 +12,79 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useMySignature, useSaveSignature, useDeleteSignature } from "@/hooks/rh-employee";
 import { SignaturePad } from "@/components/signature";
 
+/**
+ * Convertit un dataURL SVG en dataURL PNG
+ */
+async function svgToPngDataUrl(svgDataUrl: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width || 400;
+      canvas.height = img.height || 200;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Canvas context unavailable'));
+        return;
+      }
+      // Fill white background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => reject(new Error('Failed to load SVG'));
+    img.src = svgDataUrl;
+  });
+}
+
 export default function MaSignaturePage() {
   const { data: signature, isLoading } = useMySignature();
   const saveSignature = useSaveSignature();
   const deleteSignature = useDeleteSignature();
   const [isEditing, setIsEditing] = useState(false);
   const [newSignature, setNewSignature] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = () => {
-    if (newSignature) {
-      saveSignature.mutate(newSignature, {
-        onSuccess: () => {
-          setIsEditing(false);
-          setNewSignature(null);
-        },
-      });
+  const handleSave = useCallback(async () => {
+    if (!newSignature) return;
+    
+    setIsSaving(true);
+    try {
+      // Convertir SVG en PNG pour stockage
+      const pngDataUrl = await svgToPngDataUrl(newSignature);
+      
+      saveSignature.mutate(
+        { signatureSvg: newSignature, signaturePngBase64: pngDataUrl },
+        {
+          onSuccess: () => {
+            setIsEditing(false);
+            setNewSignature(null);
+            setIsSaving(false);
+          },
+          onError: () => {
+            setIsSaving(false);
+          },
+        }
+      );
+    } catch (error) {
+      console.error('Erreur conversion signature:', error);
+      // Sauvegarder quand même avec juste le SVG
+      saveSignature.mutate(
+        { signatureSvg: newSignature },
+        {
+          onSuccess: () => {
+            setIsEditing(false);
+            setNewSignature(null);
+            setIsSaving(false);
+          },
+          onError: () => {
+            setIsSaving(false);
+          },
+        }
+      );
     }
-  };
+  }, [newSignature, saveSignature]);
 
   const handleDelete = () => {
     if (confirm("Voulez-vous vraiment supprimer votre signature ?")) {
@@ -135,11 +191,11 @@ export default function MaSignaturePage() {
               )}
               <Button
                 onClick={handleSave}
-                disabled={!newSignature || saveSignature.isPending}
+                disabled={!newSignature || isSaving || saveSignature.isPending}
                 className="flex-1"
               >
                 <Save className="w-4 h-4 mr-2" />
-                {saveSignature.isPending ? "Enregistrement..." : "Enregistrer"}
+                {isSaving || saveSignature.isPending ? "Enregistrement..." : "Enregistrer"}
               </Button>
             </div>
           </CardContent>

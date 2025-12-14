@@ -11,6 +11,7 @@ export interface UserSignature {
   id: string;
   user_id: string;
   signature_svg: string;
+  signature_png_base64?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -45,10 +46,10 @@ export function useSaveSignature() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (signatureSvg: string) => {
+    mutationFn: async ({ signatureSvg, signaturePngBase64 }: { signatureSvg: string; signaturePngBase64?: string }) => {
       if (!user?.id) throw new Error("Utilisateur non connecté");
 
-      logInfo("Sauvegarde signature utilisateur");
+      logInfo("Sauvegarde signature utilisateur (SVG + PNG)");
 
       const { data, error } = await supabase
         .from("user_signatures")
@@ -56,6 +57,7 @@ export function useSaveSignature() {
           {
             user_id: user.id,
             signature_svg: signatureSvg,
+            signature_png_base64: signaturePngBase64 || null,
             updated_at: new Date().toISOString(),
           },
           { onConflict: "user_id" }
