@@ -43,6 +43,7 @@ const STATUS_CONFIG: Record<RequestStatus, { label: string; variant: "default" |
   SUBMITTED: { label: "En attente", variant: "secondary" },
   APPROVED: { label: "Approuvée", variant: "default" },
   REJECTED: { label: "Refusée", variant: "destructive" },
+  CANCELLED: { label: "Annulée", variant: "outline" },
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -63,9 +64,9 @@ export default function DemandesRHPage() {
   const { data: pendingRequests = [], isLoading: loadingPending } = useAgencyRequests({
     status: ["SUBMITTED"],
   });
-  // processedRequests = APPROVED + REJECTED
+  // processedRequests = APPROVED + REJECTED + CANCELLED
   const { data: processedRequests = [], isLoading: loadingProcessed } = useAgencyRequests({
-    status: ["APPROVED", "REJECTED"],
+    status: ["APPROVED", "REJECTED", "CANCELLED"],
   });
 
   // Mutations

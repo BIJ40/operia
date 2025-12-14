@@ -34,6 +34,7 @@ const STATUS_ICONS: Record<LeaveStatus, typeof Clock> = {
   ACKNOWLEDGED: Eye,
   APPROVED: CheckCircle,
   REFUSED: XCircle,
+  CANCELLED: XCircle,
   CLOSED: CheckCircle,
 };
 

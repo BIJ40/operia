@@ -43,6 +43,7 @@ const STATUS_BADGE_VARIANTS: Record<RequestStatus, 'outline' | 'default' | 'seco
   SUBMITTED: 'default',
   APPROVED: 'secondary',
   REJECTED: 'destructive',
+  CANCELLED: 'outline',
 };
 
 const STATUS_LABELS: Record<RequestStatus, string> = {
@@ -50,6 +51,7 @@ const STATUS_LABELS: Record<RequestStatus, string> = {
   SUBMITTED: 'En attente',
   APPROVED: 'Approuvé',
   REJECTED: 'Refusé',
+  CANCELLED: 'Annulée',
 };
 
 export default function DemandesRHUnifiedPage() {
