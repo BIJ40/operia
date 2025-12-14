@@ -1,10 +1,12 @@
 /**
  * Onglet Véhicules - Liste et filtres des véhicules de l'agence
+ * Édition inline (double-clic + auto-save 10s)
  */
 
 import { useState } from 'react';
 import { useFleetVehicles } from '@/hooks/maintenance/useFleetVehicles';
-import type { FleetVehicle, FleetVehiclesFilters, VehicleStatus } from '@/types/maintenance';
+import { useVehicleInlineEdit } from '@/hooks/maintenance/useVehicleInlineEdit';
+import type { FleetVehicle, FleetVehiclesFilters, VehicleStatus, FleetVehicleFormData } from '@/types/maintenance';
 import { VEHICLE_STATUSES } from '@/types/maintenance';
 import {
   Card,
@@ -24,9 +26,10 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, AlertTriangle, Clock, QrCode } from 'lucide-react';
+import { Plus, AlertTriangle, Clock, QrCode, Save } from 'lucide-react';
 import { VehicleFormDialog } from './VehicleFormDialog';
 import { QrCodeModal } from './QrCodeModal';
+import { VehicleEditableCell } from './VehicleEditableCell';
 
 export function VehiclesTab() {
   const [filters, setFilters] = useState<FleetVehiclesFilters>({
@@ -41,6 +44,7 @@ export function VehiclesTab() {
   const [qrVehicle, setQrVehicle] = useState<FleetVehicle | null>(null);
 
   const { data: vehicles = [], isLoading } = useFleetVehicles(undefined, filters);
+  const { handleValueChange, getLocalValue, saveChanges, hasPendingChanges } = useVehicleInlineEdit();
 
   const handleSearchChange = (value: string) => {
     setFilters((prev) => ({ ...prev, search: value || undefined }));
@@ -66,10 +70,22 @@ export function VehiclesTab() {
         <div>
           <CardTitle>Véhicules</CardTitle>
           <CardDescription>
-            Suivi CT, révisions, kilométrage et statut des véhicules
+            Double-clic pour modifier • Sauvegarde auto après 10s
           </CardDescription>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {hasPendingChanges && (
+            <Button
+              type="button"
+              size="sm"
+              variant="default"
+              className="gap-1"
+              onClick={() => saveChanges()}
+            >
+              <Save className="h-3.5 w-3.5" />
+              Sauvegarder
+            </Button>
+          )}
           <Input
             placeholder="Rechercher (nom, immat.)"
             className="w-48"
@@ -136,15 +152,17 @@ export function VehiclesTab() {
             Aucun véhicule trouvé avec ces filtres.
           </p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" data-vehicle-table>
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/40 text-xs uppercase text-muted-foreground">
-                  <th className="py-2 pr-4 text-left font-medium">Véhicule</th>
+                  <th className="py-2 pr-4 text-left font-medium">Nom</th>
                   <th className="px-4 py-2 text-left font-medium">Immat.</th>
+                  <th className="px-4 py-2 text-left font-medium">Marque</th>
+                  <th className="px-4 py-2 text-left font-medium">Modèle</th>
                   <th className="px-4 py-2 text-left font-medium">Km</th>
                   <th className="px-4 py-2 text-left font-medium">CT</th>
-                  <th className="px-4 py-2 text-left font-medium">Prochaine révision</th>
+                  <th className="px-4 py-2 text-left font-medium">Révision</th>
                   <th className="px-4 py-2 text-left font-medium">Statut</th>
                   <th className="px-4 py-2 text-left font-medium">Affecté à</th>
                   <th className="px-4 py-2 text-left font-medium w-12">QR</th>
@@ -154,11 +172,9 @@ export function VehiclesTab() {
                 {vehicles.map((vehicle) => (
                   <VehicleRow 
                     key={vehicle.id}
-                    vehicle={vehicle} 
-                    onEdit={(v) => {
-                      setEditingVehicle(v);
-                      setIsFormOpen(true);
-                    }}
+                    vehicle={vehicle}
+                    getLocalValue={getLocalValue}
+                    onValueChange={handleValueChange}
                     onShowQr={(v) => setQrVehicle(v)}
                   />
                 ))}
@@ -206,55 +222,89 @@ function VehiclesSkeleton() {
 
 interface VehicleRowProps {
   vehicle: FleetVehicle;
-  onEdit: (vehicle: FleetVehicle) => void;
+  getLocalValue: (vehicleId: string, field: keyof FleetVehicleFormData, originalValue: unknown) => unknown;
+  onValueChange: (vehicleId: string, field: keyof FleetVehicleFormData, value: unknown) => void;
   onShowQr: (vehicle: FleetVehicle) => void;
 }
 
-function VehicleRow({ vehicle, onEdit, onShowQr }: VehicleRowProps) {
-  const ctLabel = vehicle.ct_due_at
-    ? new Date(vehicle.ct_due_at).toLocaleDateString('fr-FR')
-    : '—';
-
-  const nextRevLabel = vehicle.next_revision_at
-    ? new Date(vehicle.next_revision_at).toLocaleDateString('fr-FR')
-    : '—';
-
-  const statusConfig = VEHICLE_STATUSES.find((s) => s.value === vehicle.status);
-  const statusVariant = vehicle.status === 'active' ? 'default' : 'secondary';
-
+function VehicleRow({ vehicle, getLocalValue, onValueChange, onShowQr }: VehicleRowProps) {
   return (
-    <tr className="border-b hover:bg-muted/40 cursor-pointer" onClick={() => onEdit(vehicle)}>
-      <td className="py-2 pr-4 align-middle">
-        <div className="flex flex-col">
-          <span className="font-medium">{vehicle.name}</span>
-          {(vehicle.brand || vehicle.model) && (
-            <span className="text-xs text-muted-foreground">
-              {[vehicle.brand, vehicle.model].filter(Boolean).join(' ')}
-            </span>
-          )}
-        </div>
+    <tr className="border-b hover:bg-muted/20">
+      <td className="py-1 pr-4 align-middle">
+        <VehicleEditableCell
+          value={getLocalValue(vehicle.id, 'name', vehicle.name)}
+          field="name"
+          vehicleId={vehicle.id}
+          onValueChange={onValueChange}
+        />
       </td>
-      <td className="px-4 py-2 align-middle text-sm font-mono">
-        {vehicle.registration || '—'}
+      <td className="px-4 py-1 align-middle">
+        <VehicleEditableCell
+          value={getLocalValue(vehicle.id, 'registration', vehicle.registration)}
+          field="registration"
+          vehicleId={vehicle.id}
+          onValueChange={onValueChange}
+          className="font-mono"
+        />
       </td>
-      <td className="px-4 py-2 align-middle text-sm">
-        {vehicle.mileage_km != null
-          ? `${vehicle.mileage_km.toLocaleString('fr-FR')} km`
-          : '—'}
+      <td className="px-4 py-1 align-middle">
+        <VehicleEditableCell
+          value={getLocalValue(vehicle.id, 'brand', vehicle.brand)}
+          field="brand"
+          vehicleId={vehicle.id}
+          onValueChange={onValueChange}
+        />
       </td>
-      <td className="px-4 py-2 align-middle text-sm">{ctLabel}</td>
-      <td className="px-4 py-2 align-middle text-sm">{nextRevLabel}</td>
-      <td className="px-4 py-2 align-middle">
-        <Badge variant={statusVariant} className="text-xs">
-          {statusConfig?.label || vehicle.status}
-        </Badge>
+      <td className="px-4 py-1 align-middle">
+        <VehicleEditableCell
+          value={getLocalValue(vehicle.id, 'model', vehicle.model)}
+          field="model"
+          vehicleId={vehicle.id}
+          onValueChange={onValueChange}
+        />
       </td>
-      <td className="px-4 py-2 align-middle text-sm">
+      <td className="px-4 py-1 align-middle">
+        <VehicleEditableCell
+          value={getLocalValue(vehicle.id, 'mileage_km', vehicle.mileage_km)}
+          field="mileage_km"
+          vehicleId={vehicle.id}
+          onValueChange={onValueChange}
+          type="number"
+        />
+      </td>
+      <td className="px-4 py-1 align-middle">
+        <VehicleEditableCell
+          value={getLocalValue(vehicle.id, 'ct_due_at', vehicle.ct_due_at)}
+          field="ct_due_at"
+          vehicleId={vehicle.id}
+          onValueChange={onValueChange}
+          type="date"
+        />
+      </td>
+      <td className="px-4 py-1 align-middle">
+        <VehicleEditableCell
+          value={getLocalValue(vehicle.id, 'next_revision_at', vehicle.next_revision_at)}
+          field="next_revision_at"
+          vehicleId={vehicle.id}
+          onValueChange={onValueChange}
+          type="date"
+        />
+      </td>
+      <td className="px-4 py-1 align-middle">
+        <VehicleEditableCell
+          value={getLocalValue(vehicle.id, 'status', vehicle.status)}
+          field="status"
+          vehicleId={vehicle.id}
+          onValueChange={onValueChange}
+          type="status"
+        />
+      </td>
+      <td className="px-4 py-1 align-middle text-sm">
         {vehicle.collaborator
           ? `${vehicle.collaborator.first_name} ${vehicle.collaborator.last_name}`
           : <span className="text-muted-foreground">Non affecté</span>}
       </td>
-      <td className="px-4 py-2 align-middle">
+      <td className="px-4 py-1 align-middle">
         <Button
           variant="ghost"
           size="icon"
