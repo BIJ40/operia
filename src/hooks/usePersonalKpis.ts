@@ -74,6 +74,10 @@ export function usePersonalKpis(options?: UsePersonalKpisOptions) {
       const isAssistante = roleAgence.includes('assist') || roleAgence.includes('secr') || roleAgence.includes('admin');
 
       console.log('[usePersonalKpis] Profile:', { apogeeUserId, roleAgence, isTechnicien, isAssistante });
+      console.log('[usePersonalKpis] DateRange utilisé:', { 
+        start: dateRange.start.toISOString(), 
+        end: dateRange.end.toISOString() 
+      });
 
       // Charger les données via DataService (même source que StatIA)
       const apiData = await DataService.loadAllData(true, false, agence);
