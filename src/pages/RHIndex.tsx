@@ -1,13 +1,11 @@
 import { Link } from "react-router-dom";
 import { 
-  FileText, 
   Users, 
   CalendarDays,
-  CalendarCheck,
-  FolderOpen,
-  Send,
-  ChevronRight,
-  Car
+  FileText,
+  Car,
+  HardHat,
+  ChevronRight
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,7 +13,6 @@ import { usePendingDocumentRequestsCount } from "@/hooks/useDocumentRequests";
 import { Badge } from "@/components/ui/badge";
 import { ROUTES } from "@/config/routes";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { RHDashboard } from "@/components/rh/dashboard";
 import type { LucideIcon } from "lucide-react";
 
 interface RHModule {
@@ -25,39 +22,15 @@ interface RHModule {
   icon: LucideIcon;
   href: string;
   badge?: number;
-  section: 'salarie' | 'dirigeant';
-  enabled?: boolean;
 }
 
 const RH_MODULES: RHModule[] = [
-  // Vue Salarié
-  {
-    id: 'mon-coffre-rh',
-    title: 'Mon Coffre RH',
-    description: 'Accédez à vos documents personnels et bulletins de paie',
-    icon: FolderOpen,
-    href: ROUTES.rh.coffre,
-    section: 'salarie',
-    enabled: true,
-  },
-  {
-    id: 'faire-demande',
-    title: 'Faire une demande',
-    description: 'Demandez un document ou un congé',
-    icon: Send,
-    href: ROUTES.rh.demande,
-    section: 'salarie',
-    enabled: false,
-  },
-  // Vue Dirigeant
   {
     id: 'mon-equipe',
     title: 'Mon équipe',
     description: 'Gérez les collaborateurs et leurs dossiers RH',
     icon: Users,
     href: ROUTES.rh.equipe,
-    section: 'dirigeant',
-    enabled: true,
   },
   {
     id: 'plannings',
@@ -65,8 +38,6 @@ const RH_MODULES: RHModule[] = [
     description: 'Consultez et signez les plannings hebdomadaires',
     icon: CalendarDays,
     href: ROUTES.rh.plannings,
-    section: 'dirigeant',
-    enabled: true,
   },
   {
     id: 'demandes-rh',
@@ -74,48 +45,36 @@ const RH_MODULES: RHModule[] = [
     description: 'Traitez les demandes des collaborateurs',
     icon: FileText,
     href: ROUTES.rh.demandes,
-    section: 'dirigeant',
-    enabled: false,
-  },
-  {
-    id: 'gestion-conges',
-    title: 'Gestion des congés',
-    description: 'Validez et suivez les congés de l\'équipe',
-    icon: CalendarCheck,
-    href: ROUTES.rh.conges,
-    section: 'dirigeant',
-    enabled: true,
-  },
-  {
-    id: 'parc-vehicules',
-    title: 'Parc & Véhicules',
-    description: 'Gérez les véhicules, CT, entretiens et assurances',
-    icon: Car,
-    href: ROUTES.rh.parc,
-    section: 'dirigeant',
-    enabled: true,
   },
 ];
 
-function RHTileCard({ module, badge }: { module: RHModule; badge?: number }) {
+const MAINTENANCE_MODULES: RHModule[] = [
+  {
+    id: 'parc-vehicules',
+    title: 'Parc Véhicules',
+    description: 'Gérez les véhicules, CT, entretiens et assurances',
+    icon: Car,
+    href: ROUTES.rh.parc,
+  },
+  {
+    id: 'materiel-epi',
+    title: 'Matériel & EPI',
+    description: 'Gérez le matériel et les équipements de protection',
+    icon: HardHat,
+    href: ROUTES.rh.epi,
+  },
+];
+
+function BlueTileCard({ module, badge }: { module: RHModule; badge?: number }) {
   const Icon = module.icon;
-  const isOrange = module.section === 'dirigeant';
   
   return (
     <Link to={module.href} className="block group">
-      <Card className={`h-full transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 border-l-4 ${
-        isOrange ? 'border-l-helpconfort-orange' : 'border-l-helpconfort-blue'
-      } bg-gradient-to-br ${
-        isOrange ? 'from-helpconfort-orange/5' : 'from-helpconfort-blue/5'
-      } via-background to-background`}>
+      <Card className="h-full transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-helpconfort-blue/5 via-background to-background">
         <CardContent className="p-4">
           <div className="flex items-start justify-between">
-            <div className={`p-2 rounded-lg ${
-              isOrange ? 'bg-helpconfort-orange/10' : 'bg-helpconfort-blue/10'
-            }`}>
-              <Icon className={`h-5 w-5 ${
-                isOrange ? 'text-helpconfort-orange' : 'text-helpconfort-blue'
-              }`} />
+            <div className="p-2 rounded-lg bg-helpconfort-blue/10">
+              <Icon className="h-5 w-5 text-helpconfort-blue" />
             </div>
             {badge !== undefined && badge > 0 && (
               <Badge variant="destructive" className="text-xs">
@@ -144,27 +103,9 @@ export default function RHIndex() {
   const { count: pendingCount } = usePendingDocumentRequestsCount();
   
   const isPlatformAdmin = globalRole === 'platform_admin' || globalRole === 'superadmin';
-  // N2+ = vue dirigeant UNIQUEMENT
   const isN2Plus = globalRole === 'franchisee_admin' || globalRole === 'franchisor_user' || 
                    globalRole === 'franchisor_admin' || isPlatformAdmin;
-  // N1 = vue salarié UNIQUEMENT
-  const isN1 = globalRole === 'franchisee_user';
   
-  // Chaque rôle voit UNIQUEMENT sa section - pas de mélange
-  const visibleModules = RH_MODULES.filter(module => {
-    if (module.enabled === false) return false;
-    
-    // N2+ voit UNIQUEMENT la section dirigeant
-    if (isN2Plus) return module.section === 'dirigeant';
-    
-    // N1 voit UNIQUEMENT la section salarié
-    if (isN1) return module.section === 'salarie';
-    
-    // N0 ou autres : aucun accès RH
-    return false;
-  });
-  
-  // Get badge for a module
   const getBadge = (moduleId: string): number | undefined => {
     if (moduleId === 'demandes-rh' && pendingCount) {
       return pendingCount;
@@ -172,46 +113,61 @@ export default function RHIndex() {
     return undefined;
   };
 
+  if (!isN2Plus) {
+    return (
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <PageHeader
+          title="RH & PARC"
+          subtitle="Accès restreint"
+          backTo="/"
+          backLabel="Accueil"
+        />
+        <p className="text-muted-foreground">Vous n'avez pas accès à cette section.</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
       <PageHeader
-        title="Ressources Humaines"
-        subtitle={isN2Plus ? "Gestion RH et documents collaborateurs" : "Mon espace RH personnel"}
+        title="RH & PARC"
+        subtitle="Gestion des ressources humaines et du matériel"
         backTo="/"
         backLabel="Accueil"
       />
 
-      {/* N2+: Dashboard intégré + tiles de navigation */}
-      {isN2Plus && (
-        <>
-          <RHDashboard />
-          <div className="pt-4">
-            <h2 className="text-lg font-semibold mb-3">Accès rapides</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {visibleModules.map(module => (
-                <RHTileCard 
-                  key={module.id} 
-                  module={module} 
-                  badge={getBadge(module.id)}
-                />
-              ))}
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* N1: Tiles seulement */}
-      {isN1 && (
+      {/* Section Ressources Humaines */}
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+          <Users className="h-5 w-5 text-helpconfort-blue" />
+          Ressources Humaines
+        </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {visibleModules.map(module => (
-            <RHTileCard 
+          {RH_MODULES.map(module => (
+            <BlueTileCard 
               key={module.id} 
               module={module} 
               badge={getBadge(module.id)}
             />
           ))}
         </div>
-      )}
+      </section>
+
+      {/* Section Maintenance Matériel */}
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+          <HardHat className="h-5 w-5 text-helpconfort-blue" />
+          Maintenance Matériel
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {MAINTENANCE_MODULES.map(module => (
+            <BlueTileCard 
+              key={module.id} 
+              module={module}
+            />
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
