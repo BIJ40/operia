@@ -111,33 +111,33 @@ export function useApproveRequest() {
         throw error;
       }
 
-      // Get collaborator_id for the employee
+      // Get collaborator_id for the employee (optional)
       const { data: collaborator } = await supabase
         .from("collaborators")
         .select("id")
         .eq("user_id", request.employee_user_id)
         .maybeSingle();
 
-      // Create notification for the employee
-      if (collaborator?.id) {
-        const notificationTitle = request.request_type === "LEAVE" 
-          ? "Demande de congé approuvée" 
-          : "Demande approuvée";
-        const notificationMessage = request.request_type === "LEAVE"
-          ? "Votre demande de congé a été acceptée"
-          : "Votre demande a été acceptée";
+      // Create notification for the employee (N2→N1)
+      const notificationTitle = request.request_type === "LEAVE" 
+        ? "Demande de congé approuvée" 
+        : "Demande approuvée";
+      const notificationMessage = request.request_type === "LEAVE"
+        ? "Votre demande de congé a été acceptée"
+        : "Votre demande a été acceptée";
 
-        await supabase.from("rh_notifications").insert({
-          collaborator_id: collaborator.id,
-          recipient_id: request.employee_user_id,
-          sender_id: user.id,
-          agency_id: request.agency_id || agencyId,
-          notification_type: "REQUEST_COMPLETED",
-          title: notificationTitle,
-          message: notificationMessage,
-          related_request_id: requestId,
-        });
-      }
+      const { error: notifErr } = await supabase.from("rh_notifications").insert({
+        collaborator_id: collaborator?.id ?? null,
+        recipient_id: request.employee_user_id,
+        sender_id: user.id,
+        agency_id: request.agency_id,
+        notification_type: "REQUEST_COMPLETED",
+        title: notificationTitle,
+        message: notificationMessage,
+        related_request_id: requestId,
+      });
+
+      if (notifErr) logError("Erreur notification N2→N1 (approve):", notifErr);
 
       logInfo(`Demande ${requestId} approuvée`);
     },
@@ -190,33 +190,33 @@ export function useRejectRequest() {
         throw error;
       }
 
-      // Get collaborator_id for the employee
+      // Get collaborator_id for the employee (optional)
       const { data: collaborator } = await supabase
         .from("collaborators")
         .select("id")
         .eq("user_id", request.employee_user_id)
         .maybeSingle();
 
-      // Create notification for the employee
-      if (collaborator?.id) {
-        const notificationTitle = request.request_type === "LEAVE" 
-          ? "Demande de congé refusée" 
-          : "Demande refusée";
-        const notificationMessage = request.request_type === "LEAVE"
-          ? `Votre demande de congé a été refusée. Motif : ${comment}`
-          : `Votre demande a été refusée. Motif : ${comment}`;
+      // Create notification for the employee (N2→N1)
+      const notificationTitle = request.request_type === "LEAVE" 
+        ? "Demande de congé refusée" 
+        : "Demande refusée";
+      const notificationMessage = request.request_type === "LEAVE"
+        ? `Votre demande de congé a été refusée. Motif : ${comment}`
+        : `Votre demande a été refusée. Motif : ${comment}`;
 
-        await supabase.from("rh_notifications").insert({
-          collaborator_id: collaborator.id,
-          recipient_id: request.employee_user_id,
-          sender_id: user.id,
-          agency_id: request.agency_id || agencyId,
-          notification_type: "REQUEST_REJECTED",
-          title: notificationTitle,
-          message: notificationMessage,
-          related_request_id: requestId,
-        });
-      }
+      const { error: notifErr } = await supabase.from("rh_notifications").insert({
+        collaborator_id: collaborator?.id ?? null,
+        recipient_id: request.employee_user_id,
+        sender_id: user.id,
+        agency_id: request.agency_id,
+        notification_type: "REQUEST_REJECTED",
+        title: notificationTitle,
+        message: notificationMessage,
+        related_request_id: requestId,
+      });
+
+      if (notifErr) logError("Erreur notification N2→N1 (reject):", notifErr);
 
       logInfo(`Demande ${requestId} refusée`);
     },
