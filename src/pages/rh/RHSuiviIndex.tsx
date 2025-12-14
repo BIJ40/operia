@@ -7,7 +7,9 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useRHCollaborators, useRHTablePrefs, useUpdateRHTablePrefs } from '@/hooks/useRHSuivi';
 import { RHUnifiedTable } from '@/components/rh/unified/RHUnifiedTable';
 import { TAB_COLUMNS, RHTabId } from '@/components/rh/unified/RHUnifiedTableColumns';
-import { Users } from 'lucide-react';
+import { CompetencesMatrixPrint } from '@/components/rh/CompetencesMatrixPrint';
+import { Users, Printer } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 // Colonnes visibles par défaut par onglet
 const DEFAULT_VISIBLE_COLUMNS: Record<RHTabId, string[]> = {
@@ -23,6 +25,8 @@ export default function RHSuiviIndex() {
   const { data: collaborators = [], isLoading, refetch } = useRHCollaborators();
   const { data: tablePrefs } = useRHTablePrefs();
   const updatePrefs = useUpdateRHTablePrefs();
+  
+  const [showCompetencesMatrix, setShowCompetencesMatrix] = useState(false);
 
   // Onglet actif - persiste en sessionStorage
   const [activeTab, setActiveTab] = useState<RHTabId>(() => {
@@ -83,16 +87,27 @@ export default function RHSuiviIndex() {
 
   return (
     <div className="container py-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-primary/10">
-          <Users className="h-6 w-6 text-primary" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Users className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Suivi RH</h1>
+            <p className="text-muted-foreground">
+              Vue complète de tous les collaborateurs et leurs informations
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Suivi RH</h1>
-          <p className="text-muted-foreground">
-            Vue complète de tous les collaborateurs et leurs informations
-          </p>
-        </div>
+        
+        <Button
+          variant="outline"
+          onClick={() => setShowCompetencesMatrix(true)}
+          className="gap-2"
+        >
+          <Printer className="h-4 w-4" />
+          Matrice Compétences
+        </Button>
       </div>
 
       <RHUnifiedTable
@@ -103,6 +118,11 @@ export default function RHSuiviIndex() {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onRefresh={refetch}
+      />
+      
+      <CompetencesMatrixPrint
+        open={showCompetencesMatrix}
+        onOpenChange={setShowCompetencesMatrix}
       />
     </div>
   );

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Select,
   SelectContent,
@@ -15,8 +16,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Save, Zap, Plus, X, Clock } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Save, Zap, Plus, X, Clock, Wrench, Printer } from 'lucide-react';
 import { useUpdateCompetencies } from '@/hooks/useRHSuivi';
+import { useCompetencesCatalogue, useAddCompetenceCatalogue } from '@/hooks/useRHCompetencesCatalogue';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { RHCollaborator, CACESEntry } from '@/types/rh-suivi';
@@ -31,14 +40,19 @@ const HAB_ELEC_STATUTS = ['B0', 'B1', 'B1V', 'B2', 'B2V', 'BR', 'BC', 'H0', 'H1'
 export function RHTabCompetences({ collaborator }: Props) {
   const comp = collaborator.competencies;
   const updateComp = useUpdateCompetencies();
+  const { data: catalogueCompetences = [] } = useCompetencesCatalogue();
+  const addCompetence = useAddCompetenceCatalogue();
   
   const [form, setForm] = useState({
     habilitation_electrique_statut: comp?.habilitation_electrique_statut || '',
     habilitation_electrique_date: comp?.habilitation_electrique_date || '',
     caces: (comp?.caces || []) as CACESEntry[],
+    competences_techniques: (comp?.competences_techniques || []) as string[],
   });
 
   const [newCaces, setNewCaces] = useState({ type: '', date: '', expiration: '' });
+  const [showAddCompetence, setShowAddCompetence] = useState(false);
+  const [newCompetenceLabel, setNewCompetenceLabel] = useState('');
 
   const handleSave = () => {
     updateComp.mutate({
@@ -63,8 +77,84 @@ export function RHTabCompetences({ collaborator }: Props) {
     }));
   };
 
+  const toggleCompetence = (label: string) => {
+    setForm(f => {
+      const has = f.competences_techniques.includes(label);
+      return {
+        ...f,
+        competences_techniques: has
+          ? f.competences_techniques.filter(c => c !== label)
+          : [...f.competences_techniques, label],
+      };
+    });
+  };
+
+  const handleAddNewCompetence = () => {
+    if (!newCompetenceLabel.trim()) return;
+    addCompetence.mutate(newCompetenceLabel.trim(), {
+      onSuccess: () => {
+        // Auto-select the new competence
+        setForm(f => ({
+          ...f,
+          competences_techniques: [...f.competences_techniques, newCompetenceLabel.trim()],
+        }));
+        setNewCompetenceLabel('');
+        setShowAddCompetence(false);
+      },
+    });
+  };
+
+  // Get all unique competences (from catalogue)
+  const allCompetences = catalogueCompetences.map(c => c.label);
+
   return (
     <div className="space-y-6">
+      {/* Compétences techniques */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Wrench className="h-4 w-4 text-helpconfort-blue" />
+            Compétences techniques
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {allCompetences.map((comp) => (
+              <label
+                key={comp}
+                className="flex items-center gap-2 p-2 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors"
+              >
+                <Checkbox
+                  checked={form.competences_techniques.includes(comp)}
+                  onCheckedChange={() => toggleCompetence(comp)}
+                />
+                <span className="text-sm">{comp}</span>
+              </label>
+            ))}
+          </div>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowAddCompetence(true)}
+            className="gap-1"
+          >
+            <Plus className="h-4 w-4" />
+            Ajouter une compétence
+          </Button>
+
+          {form.competences_techniques.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-2 border-t">
+              {form.competences_techniques.map((c) => (
+                <Badge key={c} variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
+                  {c}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Habilitation électrique */}
       <Card>
         <CardHeader>
@@ -197,6 +287,36 @@ export function RHTabCompetences({ collaborator }: Props) {
           Enregistrer les modifications
         </Button>
       </div>
+
+      {/* Dialog pour ajouter une compétence */}
+      <Dialog open={showAddCompetence} onOpenChange={setShowAddCompetence}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ajouter une compétence</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Nom de la compétence</Label>
+              <Input
+                value={newCompetenceLabel}
+                onChange={(e) => setNewCompetenceLabel(e.target.value)}
+                placeholder="Ex: Maçonnerie, Climatisation..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddCompetence(false)}>
+              Annuler
+            </Button>
+            <Button 
+              onClick={handleAddNewCompetence}
+              disabled={!newCompetenceLabel.trim() || addCompetence.isPending}
+            >
+              Ajouter
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
