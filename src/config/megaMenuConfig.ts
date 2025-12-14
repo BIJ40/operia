@@ -91,6 +91,15 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
       },
       // === Vue Dirigeant (N2+) - RH ===
       { 
+        label: 'Suivi RH', 
+        href: ROUTES.rh.suivi, 
+        icon: 'ClipboardList', 
+        description: 'Vue complète des collaborateurs',
+        section: 'dirigeant',
+        minRole: 'franchisee_admin',
+        requiresOption: { module: 'rh', option: 'rh_viewer' },
+      },
+      { 
         label: 'Mon équipe', 
         href: ROUTES.rh.equipe, 
         icon: 'Users', 
