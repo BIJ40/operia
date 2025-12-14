@@ -2,7 +2,7 @@
  * Dialog de création / édition d'un véhicule
  */
 
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -62,19 +62,38 @@ export function VehicleFormDialog({ open, onOpenChange, vehicle }: VehicleFormDi
   const form = useForm<VehicleFormValues>({
     resolver: zodResolver(vehicleSchema),
     defaultValues: {
-      name: vehicle?.name || '',
-      registration: vehicle?.registration || '',
-      brand: vehicle?.brand || '',
-      model: vehicle?.model || '',
-      year: vehicle?.year || undefined,
-      mileage_km: vehicle?.mileage_km || undefined,
-      status: vehicle?.status || 'active',
-      ct_due_at: vehicle?.ct_due_at ? vehicle.ct_due_at.split('T')[0] : '',
-      next_revision_at: vehicle?.next_revision_at ? vehicle.next_revision_at.split('T')[0] : '',
-      assigned_collaborator_id: vehicle?.assigned_collaborator_id || '',
-      notes: vehicle?.notes || '',
+      name: '',
+      registration: '',
+      brand: '',
+      model: '',
+      year: undefined,
+      mileage_km: undefined,
+      status: 'active',
+      ct_due_at: '',
+      next_revision_at: '',
+      assigned_collaborator_id: '',
+      notes: '',
     },
   });
+
+  // Reset form when vehicle changes or dialog opens
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        name: vehicle?.name || '',
+        registration: vehicle?.registration || '',
+        brand: vehicle?.brand || '',
+        model: vehicle?.model || '',
+        year: vehicle?.year || undefined,
+        mileage_km: vehicle?.mileage_km || undefined,
+        status: vehicle?.status || 'active',
+        ct_due_at: vehicle?.ct_due_at ? vehicle.ct_due_at.split('T')[0] : '',
+        next_revision_at: vehicle?.next_revision_at ? vehicle.next_revision_at.split('T')[0] : '',
+        assigned_collaborator_id: vehicle?.assigned_collaborator_id || '',
+        notes: vehicle?.notes || '',
+      });
+    }
+  }, [open, vehicle, form]);
 
   const onSubmit = async (data: VehicleFormValues) => {
     const payload: FleetVehicleFormData = {

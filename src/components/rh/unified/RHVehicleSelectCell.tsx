@@ -198,7 +198,7 @@ export function RHVehicleSelectCell({ collaboratorId, currentVehicleId, onVehicl
                   </div>
                 )}
                 <Link 
-                  to={ROUTES.agency.maintenance} 
+                  to={ROUTES.rh.parc} 
                   className="flex items-center gap-1 text-primary hover:underline mt-2"
                 >
                   <ExternalLink className="h-3 w-3" />

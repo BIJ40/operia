@@ -122,10 +122,32 @@ export function useCreateFleetVehicle() {
       if (!result.success) {
         throw new Error(result.error?.message || 'Erreur création véhicule');
       }
-      return result.data?.[0];
+
+      const createdVehicle = result.data?.[0];
+
+      // Sync rh_assets if vehicle is assigned to a collaborator
+      if (createdVehicle && data.assigned_collaborator_id) {
+        const vehicleInfo = {
+          vehicle_id: createdVehicle.id,
+          name: createdVehicle.name,
+          registration: createdVehicle.registration,
+          brand: createdVehicle.brand,
+          model: createdVehicle.model,
+        };
+        await supabase
+          .from('rh_assets')
+          .upsert({
+            collaborator_id: data.assigned_collaborator_id,
+            vehicule_attribue: JSON.stringify(vehicleInfo),
+          }, { onConflict: 'collaborator_id' });
+      }
+
+      return createdVehicle;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: ['rh-suivi'] });
+      queryClient.invalidateQueries({ queryKey: ['collaborators'] });
     },
   });
 }
@@ -135,6 +157,13 @@ export function useUpdateFleetVehicle() {
 
   return useMutation({
     mutationFn: async ({ vehicleId, data }: { vehicleId: string; data: Partial<FleetVehicleFormData> }) => {
+      // Get previous vehicle data to check if collaborator changed
+      const { data: prevVehicle } = await supabase
+        .from('fleet_vehicles')
+        .select('assigned_collaborator_id, name, registration, brand, model')
+        .eq('id', vehicleId)
+        .single();
+
       const result = await safeMutation<FleetVehicle[]>(
         supabase
           .from('fleet_vehicles')
@@ -147,11 +176,49 @@ export function useUpdateFleetVehicle() {
       if (!result.success) {
         throw new Error(result.error?.message || 'Erreur mise à jour véhicule');
       }
-      return result.data?.[0];
+
+      const updatedVehicle = result.data?.[0];
+
+      // Sync rh_assets if assigned_collaborator_id changed
+      if (data.assigned_collaborator_id !== undefined) {
+        const prevCollabId = prevVehicle?.assigned_collaborator_id;
+        const newCollabId = data.assigned_collaborator_id;
+
+        // Clear previous assignment in rh_assets if different
+        if (prevCollabId && prevCollabId !== newCollabId) {
+          await supabase
+            .from('rh_assets')
+            .upsert({
+              collaborator_id: prevCollabId,
+              vehicule_attribue: null,
+            }, { onConflict: 'collaborator_id' });
+        }
+
+        // Set new assignment in rh_assets
+        if (newCollabId) {
+          const vehicleInfo = {
+            vehicle_id: vehicleId,
+            name: data.name || updatedVehicle?.name || prevVehicle?.name,
+            registration: data.registration ?? updatedVehicle?.registration ?? prevVehicle?.registration,
+            brand: data.brand ?? updatedVehicle?.brand ?? prevVehicle?.brand,
+            model: data.model ?? updatedVehicle?.model ?? prevVehicle?.model,
+          };
+          await supabase
+            .from('rh_assets')
+            .upsert({
+              collaborator_id: newCollabId,
+              vehicule_attribue: JSON.stringify(vehicleInfo),
+            }, { onConflict: 'collaborator_id' });
+        }
+      }
+
+      return updatedVehicle;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY, 'detail', variables.vehicleId] });
+      queryClient.invalidateQueries({ queryKey: ['rh-suivi'] });
+      queryClient.invalidateQueries({ queryKey: ['collaborators'] });
     },
   });
 }
