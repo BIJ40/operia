@@ -100,16 +100,19 @@ export function RHNotificationBadge() {
   const isRH = globalRole && ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(globalRole);
 
   const handleNotificationClick = (notification: RHNotification) => {
-    // Naviguer selon le type
+    // Navigation selon le type de notification
     if (notification.notification_type === 'REQUEST_CREATED') {
-      // Pour les RH: aller aux demandes
+      // RH: aller à la liste des demandes RH
       navigate(ROUTES.rh.demandes);
     } else if (notification.notification_type === 'REQUEST_COMPLETED' || notification.notification_type === 'REQUEST_REJECTED') {
-      // Pour les salariés: aller à mes demandes
+      // Salarié: aller à mes demandes
       navigate(ROUTES.rh.demande);
-    } else if (notification.related_document_id) {
-      // Pour les salariés: aller au coffre-fort
+    } else if (notification.notification_type === 'DOCUMENT_ADDED' || notification.related_document_id) {
+      // Document ajouté: aller au coffre-fort
       navigate(ROUTES.rh.coffre);
+    } else {
+      // Fallback: mes demandes
+      navigate(ROUTES.rh.demande);
     }
   };
 

@@ -3,6 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect } from 'react';
 
+// Rôles N2+ qui reçoivent REQUEST_CREATED
+const RH_ROLES = ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'];
+
 export type RHNotificationType = 
   | 'REQUEST_CREATED'
   | 'REQUEST_COMPLETED'
@@ -30,11 +33,12 @@ export interface RHNotification {
  * Hook pour récupérer les notifications RH de l'utilisateur
  */
 export function useRHNotifications() {
-  const { user } = useAuth();
+  const { user, globalRole } = useAuth();
   const queryClient = useQueryClient();
+  const isRH = globalRole && RH_ROLES.includes(globalRole);
 
   const query = useQuery({
-    queryKey: ['rh-notifications', user?.id],
+    queryKey: ['rh-notifications', user?.id, isRH],
     queryFn: async (): Promise<RHNotification[]> => {
       if (!user?.id) return [];
       
@@ -45,18 +49,28 @@ export function useRHNotifications() {
         .eq('user_id', user.id)
         .maybeSingle();
 
-      // Construire les filtres
+      // Construire les filtres de base
       const filters = [`recipient_id.eq.${user.id}`];
       if (collaborator?.id) {
         filters.push(`collaborator_id.eq.${collaborator.id}`);
       }
 
-      // Récupérer les notifications où l'utilisateur est destinataire (recipient_id)
-      // OU où son collaborator_id est référencé
-      const { data, error } = await supabase
+      // Récupérer les notifications
+      let query = supabase
         .from('rh_notifications')
         .select('*')
-        .or(filters.join(','))
+        .or(filters.join(','));
+
+      // Filtrer par type selon le rôle
+      if (isRH) {
+        // N2+ voit REQUEST_CREATED (nouvelles demandes)
+        query = query.eq('notification_type', 'REQUEST_CREATED');
+      } else {
+        // N1 voit uniquement COMPLETED/REJECTED (réponses à ses demandes)
+        query = query.in('notification_type', ['REQUEST_COMPLETED', 'REQUEST_REJECTED', 'DOCUMENT_ADDED']);
+      }
+
+      const { data, error } = await query
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -102,11 +116,12 @@ export function useRHNotifications() {
  * Hook pour compter les notifications non lues
  */
 export function useUnreadRHNotificationsCount() {
-  const { user } = useAuth();
+  const { user, globalRole } = useAuth();
   const queryClient = useQueryClient();
+  const isRH = globalRole && RH_ROLES.includes(globalRole);
 
   const query = useQuery({
-    queryKey: ['rh-notifications-count', user?.id],
+    queryKey: ['rh-notifications-count', user?.id, isRH],
     queryFn: async (): Promise<number> => {
       if (!user?.id) return 0;
       
@@ -123,11 +138,20 @@ export function useUnreadRHNotificationsCount() {
         filters.push(`collaborator_id.eq.${collaborator.id}`);
       }
 
-      const { count, error } = await supabase
+      let query = supabase
         .from('rh_notifications')
         .select('*', { count: 'exact', head: true })
         .or(filters.join(','))
         .eq('is_read', false);
+
+      // Filtrer par type selon le rôle
+      if (isRH) {
+        query = query.eq('notification_type', 'REQUEST_CREATED');
+      } else {
+        query = query.in('notification_type', ['REQUEST_COMPLETED', 'REQUEST_REJECTED', 'DOCUMENT_ADDED']);
+      }
+
+      const { count, error } = await query;
 
       if (error) {
         console.error('[useUnreadRHNotificationsCount] Error:', error);
