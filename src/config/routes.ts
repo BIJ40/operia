@@ -73,6 +73,9 @@ export const ROUTES = {
   // ============================================
   rh: {
     index: '/rh',
+    // Suivi RH (N2 back-office)
+    suivi: '/rh/suivi',
+    suiviCollaborateur: (id: string) => `/rh/suivi/${id}`,
     // Vue Salarié
     coffre: '/rh/coffre',
     demande: '/rh/demande',
