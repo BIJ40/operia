@@ -21,10 +21,10 @@ export function RHUnifiedTableHeader({ activeTab, visibleColumns }: RHUnifiedTab
     <TableHeader className="sticky top-0 z-10 bg-background">
       {/* Ligne 1 : Headers groupés - TOUJOURS afficher la partie COLLABORATEUR */}
       <TableRow className="border-b-0">
-        {/* Colonnes fixes - COLLABORATEUR toujours visible */}
+        {/* Colonnes fixes - COLLABORATEUR toujours visible avec largeur fixe */}
         <TableHead 
           colSpan={FIXED_COLUMNS.length + 1} 
-          className="bg-muted/50 text-center font-semibold border-r"
+          className="bg-muted/50 text-center font-semibold border-r min-w-[320px] w-[320px]"
         >
           👤 COLLABORATEUR
         </TableHead>
@@ -46,12 +46,20 @@ export function RHUnifiedTableHeader({ activeTab, visibleColumns }: RHUnifiedTab
       
       {/* Ligne 2 : Colonnes détaillées */}
       <TableRow>
-        {/* Colonne statut (indicateur visuel) */}
-        <TableHead className="w-10 px-2 bg-muted/30"></TableHead>
+        {/* Colonne statut (indicateur visuel) - largeur fixe */}
+        <TableHead className="w-10 min-w-[40px] px-2 bg-muted/30"></TableHead>
         
-        {/* Colonnes fixes avec fond légèrement différent */}
-        {FIXED_COLUMNS.map((col) => (
-          <TableHead key={col.id} className="font-medium whitespace-nowrap bg-muted/30">
+        {/* Colonnes fixes avec largeurs fixes */}
+        {FIXED_COLUMNS.map((col, idx) => (
+          <TableHead 
+            key={col.id} 
+            className={cn(
+              "font-medium whitespace-nowrap bg-muted/30",
+              col.id === 'last_name' && "min-w-[100px] w-[100px]",
+              col.id === 'first_name' && "min-w-[100px] w-[100px]",
+              col.id === 'type' && "min-w-[80px] w-[80px]"
+            )}
+          >
             {col.label}
           </TableHead>
         ))}
