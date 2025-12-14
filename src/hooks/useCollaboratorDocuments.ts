@@ -160,6 +160,7 @@ export function useCollaboratorDocuments(collaboratorId: string | undefined) {
     },
     onSuccess: (doc, variables) => {
       queryClient.invalidateQueries({ queryKey: ['collaborator-documents', variables.collaborator_id] });
+      queryClient.invalidateQueries({ queryKey: ['rh-documents-check', variables.collaborator_id] });
       // Log audit
       logAction.mutate({
         actionType: 'DOCUMENT_UPLOAD',
@@ -190,6 +191,7 @@ export function useCollaboratorDocuments(collaboratorId: string | undefined) {
     },
     onSuccess: (result, variables) => {
       queryClient.invalidateQueries({ queryKey: ['collaborator-documents', collaboratorId] });
+      queryClient.invalidateQueries({ queryKey: ['rh-documents-check', result.collaborator_id] });
       // Log audit
       logAction.mutate({
         actionType: 'DOCUMENT_UPDATE',
@@ -226,6 +228,7 @@ export function useCollaboratorDocuments(collaboratorId: string | undefined) {
     },
     onSuccess: (_, doc) => {
       queryClient.invalidateQueries({ queryKey: ['collaborator-documents', collaboratorId] });
+      queryClient.invalidateQueries({ queryKey: ['rh-documents-check', doc.collaborator_id] });
       // Log audit
       logAction.mutate({
         actionType: 'DOCUMENT_DELETE',

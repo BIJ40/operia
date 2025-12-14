@@ -2,6 +2,7 @@
  * Onglet Documents
  */
 
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +11,6 @@ import {
   FolderOpen, 
   Upload, 
   FileText, 
-  Download,
   Eye,
   EyeOff,
   Calendar
@@ -20,6 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { RHCollaborator } from '@/types/rh-suivi';
+import { RHDocumentPreviewPopup } from '@/components/rh/unified/RHDocumentPreviewPopup';
 
 interface Props {
   collaborator: RHCollaborator;
@@ -39,6 +40,8 @@ interface CollaboratorDocument {
 }
 
 export function RHTabDocuments({ collaborator }: Props) {
+  const [previewDoc, setPreviewDoc] = React.useState<CollaboratorDocument | null>(null);
+
   const { data: documents, isLoading } = useQuery({
     queryKey: ['collaborator-documents', collaborator.id],
     queryFn: async (): Promise<CollaboratorDocument[]> => {
@@ -53,29 +56,14 @@ export function RHTabDocuments({ collaborator }: Props) {
     },
   });
 
-  const handleDownload = async (doc: CollaboratorDocument) => {
-    const { data, error } = await supabase.storage
-      .from('rh-documents')
-      .download(doc.file_path);
-    
-    if (error || !data) return;
-    
-    const url = URL.createObjectURL(data);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = doc.file_name;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
   const getDocTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      'payslip': 'Bulletin de paie',
-      'contract': 'Contrat',
-      'certificate': 'Attestation',
-      'medical': 'Médical',
-      'training': 'Formation',
-      'other': 'Autre',
+      payslip: 'Bulletin de paie',
+      contract: 'Contrat',
+      certificate: 'Attestation',
+      medical: 'Médical',
+      training: 'Formation',
+      other: 'Autre',
     };
     return labels[type] || type;
   };
@@ -113,57 +101,76 @@ export function RHTabDocuments({ collaborator }: Props) {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {documents?.map(doc => (
-            <Card key={doc.id}>
-              <CardContent className="p-4 flex items-center gap-4">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <FileText className="h-5 w-5 text-primary" />
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium truncate">{doc.title}</p>
-                    <Badge variant="outline" className="shrink-0">
-                      {getDocTypeLabel(doc.doc_type)}
-                    </Badge>
-                    {doc.employee_visible ? (
-                      <Badge variant="secondary" className="gap-1 shrink-0">
-                        <Eye className="h-3 w-3" />
-                        Visible salarié
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="gap-1 shrink-0 text-muted-foreground">
-                        <EyeOff className="h-3 w-3" />
-                        RH uniquement
-                      </Badge>
-                    )}
+        <>
+          <div className="space-y-3">
+            {documents?.map(doc => (
+              <Card key={doc.id}>
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <FileText className="h-5 w-5 text-primary" />
                   </div>
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {format(new Date(doc.created_at), 'dd MMM yyyy', { locale: fr })}
-                    </span>
-                    {doc.period_year && doc.period_month && (
-                      <span>
-                        Période: {format(new Date(doc.period_year, doc.period_month - 1), 'MMMM yyyy', { locale: fr })}
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="font-medium truncate text-left hover:underline"
+                        onClick={() => setPreviewDoc(doc)}
+                      >
+                        {doc.title}
+                      </button>
+                      <Badge variant="outline" className="shrink-0">
+                        {getDocTypeLabel(doc.doc_type)}
+                      </Badge>
+                      {doc.employee_visible ? (
+                        <Badge variant="secondary" className="gap-1 shrink-0">
+                          <Eye className="h-3 w-3" />
+                          Visible salarié
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="gap-1 shrink-0 text-muted-foreground">
+                          <EyeOff className="h-3 w-3" />
+                          RH uniquement
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {format(new Date(doc.created_at), 'dd MMM yyyy', { locale: fr })}
                       </span>
-                    )}
-                    <span className="text-xs">{doc.file_name}</span>
+                      {doc.period_year && doc.period_month && (
+                        <span>
+                          P&eacute;riode: {format(new Date(doc.period_year, doc.period_month - 1), 'MMMM yyyy', { locale: fr })}
+                        </span>
+                      )}
+                      <span className="text-xs truncate max-w-[200px]">{doc.file_name}</span>
+                    </div>
                   </div>
-                </div>
 
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={() => handleDownload(doc)}
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => setPreviewDoc(doc)}
+                    title="Prévisualiser le document"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {previewDoc && (
+            <RHDocumentPreviewPopup
+              open={!!previewDoc}
+              onOpenChange={(open) => !open && setPreviewDoc(null)}
+              title={previewDoc.title}
+              filePath={previewDoc.file_path}
+              fileName={previewDoc.file_name}
+            />
+          )}
+        </>
       )}
     </div>
   );
