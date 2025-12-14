@@ -76,13 +76,26 @@ export function useAgencyRequests(filters?: {
 }
 
 export function useApproveRequest() {
-  const { user } = useAuth();
+  const { user, agencyId } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ requestId, comment }: { requestId: string; comment?: string }) => {
       if (!user?.id) throw new Error("Non authentifié");
 
+      // Get request details first to find the employee
+      const { data: request, error: fetchError } = await supabase
+        .from("rh_requests")
+        .select("employee_user_id, request_type, agency_id")
+        .eq("id", requestId)
+        .single();
+
+      if (fetchError) {
+        logError("Erreur récupération demande:", fetchError);
+        throw fetchError;
+      }
+
+      // Update the request status
       const { error } = await supabase
         .from("rh_requests")
         .update({
@@ -98,10 +111,40 @@ export function useApproveRequest() {
         throw error;
       }
 
+      // Get collaborator_id for the employee
+      const { data: collaborator } = await supabase
+        .from("collaborators")
+        .select("id")
+        .eq("user_id", request.employee_user_id)
+        .maybeSingle();
+
+      // Create notification for the employee
+      if (collaborator?.id) {
+        const notificationTitle = request.request_type === "LEAVE" 
+          ? "Demande de congé approuvée" 
+          : "Demande approuvée";
+        const notificationMessage = request.request_type === "LEAVE"
+          ? "Votre demande de congé a été acceptée"
+          : "Votre demande a été acceptée";
+
+        await supabase.from("rh_notifications").insert({
+          collaborator_id: collaborator.id,
+          recipient_id: request.employee_user_id,
+          sender_id: user.id,
+          agency_id: request.agency_id || agencyId,
+          notification_type: "REQUEST_COMPLETED",
+          title: notificationTitle,
+          message: notificationMessage,
+          related_request_id: requestId,
+        });
+      }
+
       logInfo(`Demande ${requestId} approuvée`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["agency-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["rh-notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["rh-notifications-count"] });
       toast.success("Demande approuvée");
     },
     onError: (error) => {
@@ -111,7 +154,7 @@ export function useApproveRequest() {
 }
 
 export function useRejectRequest() {
-  const { user } = useAuth();
+  const { user, agencyId } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -119,6 +162,19 @@ export function useRejectRequest() {
       if (!user?.id) throw new Error("Non authentifié");
       if (!comment.trim()) throw new Error("Un motif de refus est requis");
 
+      // Get request details first to find the employee
+      const { data: request, error: fetchError } = await supabase
+        .from("rh_requests")
+        .select("employee_user_id, request_type, agency_id")
+        .eq("id", requestId)
+        .single();
+
+      if (fetchError) {
+        logError("Erreur récupération demande:", fetchError);
+        throw fetchError;
+      }
+
+      // Update the request status
       const { error } = await supabase
         .from("rh_requests")
         .update({
@@ -134,10 +190,40 @@ export function useRejectRequest() {
         throw error;
       }
 
+      // Get collaborator_id for the employee
+      const { data: collaborator } = await supabase
+        .from("collaborators")
+        .select("id")
+        .eq("user_id", request.employee_user_id)
+        .maybeSingle();
+
+      // Create notification for the employee
+      if (collaborator?.id) {
+        const notificationTitle = request.request_type === "LEAVE" 
+          ? "Demande de congé refusée" 
+          : "Demande refusée";
+        const notificationMessage = request.request_type === "LEAVE"
+          ? `Votre demande de congé a été refusée. Motif : ${comment}`
+          : `Votre demande a été refusée. Motif : ${comment}`;
+
+        await supabase.from("rh_notifications").insert({
+          collaborator_id: collaborator.id,
+          recipient_id: request.employee_user_id,
+          sender_id: user.id,
+          agency_id: request.agency_id || agencyId,
+          notification_type: "REQUEST_REJECTED",
+          title: notificationTitle,
+          message: notificationMessage,
+          related_request_id: requestId,
+        });
+      }
+
       logInfo(`Demande ${requestId} refusée`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["agency-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["rh-notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["rh-notifications-count"] });
       toast.success("Demande refusée");
     },
     onError: (error) => {

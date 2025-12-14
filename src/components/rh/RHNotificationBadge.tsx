@@ -104,7 +104,10 @@ export function RHNotificationBadge() {
     if (notification.notification_type === 'REQUEST_CREATED') {
       // Pour les RH: aller aux demandes
       navigate(ROUTES.rh.demandes);
-    } else if (notification.related_request_id) {
+    } else if (notification.notification_type === 'REQUEST_COMPLETED' || notification.notification_type === 'REQUEST_REJECTED') {
+      // Pour les salariés: aller à mes demandes
+      navigate(ROUTES.rh.demande);
+    } else if (notification.related_document_id) {
       // Pour les salariés: aller au coffre-fort
       navigate(ROUTES.rh.coffre);
     }
