@@ -190,31 +190,53 @@ export function getEffectiveModules(ctx: PermissionContext): EffectiveModule[] {
         ? explicitModule 
         : explicitModule?.enabled ?? false;
       
-      const options = typeof explicitModule === 'object' && explicitModule?.options
+      // IMPORTANT: Fusionner les options explicites avec les valeurs par défaut de MODULE_DEFINITIONS
+      // Cela garantit que si options est vide {}, on utilise les defaultEnabled
+      const explicitOptions = typeof explicitModule === 'object' && explicitModule?.options
         ? explicitModule.options
         : {};
+      
+      const mergedOptions: Record<string, boolean> = {};
+      for (const optDef of moduleDef.options) {
+        // Priorité: option explicite > defaultEnabled de la définition
+        if (explicitOptions[optDef.key] !== undefined) {
+          mergedOptions[optDef.key] = explicitOptions[optDef.key];
+        } else {
+          mergedOptions[optDef.key] = optDef.defaultEnabled;
+        }
+      }
         
       result.push({
         id: moduleKey,
         enabled: isEnabled,
         source: 'explicit',
-        options,
+        options: mergedOptions,
       });
     } else if (defaultModule !== undefined) {
       // Fallback sur le défaut du rôle
       const isEnabled = typeof defaultModule === 'boolean'
         ? defaultModule
         : defaultModule?.enabled ?? false;
-        
-      const options = typeof defaultModule === 'object' && defaultModule?.options
+      
+      // Fusionner les options du défaut du rôle avec les valeurs de MODULE_DEFINITIONS
+      const defaultOptions = typeof defaultModule === 'object' && defaultModule?.options
         ? defaultModule.options
         : {};
+      
+      const mergedOptions: Record<string, boolean> = {};
+      for (const optDef of moduleDef.options) {
+        if (defaultOptions[optDef.key] !== undefined) {
+          mergedOptions[optDef.key] = defaultOptions[optDef.key];
+        } else {
+          mergedOptions[optDef.key] = optDef.defaultEnabled;
+        }
+      }
         
       result.push({
         id: moduleKey,
         enabled: isEnabled,
         source: 'default',
-        options,
+        options: mergedOptions,
       });
     } else {
       // Module non configuré
