@@ -126,12 +126,15 @@ export function useCreateRequest() {
             related_request_id: data.id,
           }));
 
-          const { error: notifErr } = await supabase
+          const { data: notifData, error: notifErr } = await supabase
             .from("rh_notifications")
-            .insert(notifications);
+            .insert(notifications)
+            .select("id");
 
           if (notifErr) {
             logError("Erreur notification N1→N2:", notifErr);
+          } else {
+            logInfo(`OK notifications créées: ${notifData?.length ?? 0}`);
           }
         }
       }
