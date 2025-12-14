@@ -212,16 +212,10 @@ export function UnifiedSidebar() {
       icon: Building2,
       items: [
         { 
-          title: 'Mes Indicateurs', 
+          title: 'Stats Hub', 
           url: ROUTES.agency.statsHub,
           icon: PieChart, 
-          children: [
-            { title: 'Indicateurs généraux', url: ROUTES.agency.indicateurs, icon: BarChart3, description: 'Tableau de bord et KPI de votre agence' },
-            { title: 'Indicateurs Apporteurs', url: ROUTES.agency.indicateursApporteurs, icon: Users, description: 'Statistiques apporteurs' },
-            { title: 'Indicateurs Univers', url: ROUTES.agency.indicateursUnivers, icon: Building2, description: 'Statistiques par univers' },
-            { title: 'Indicateurs Techniciens', url: ROUTES.agency.indicateursTechniciens, icon: Calendar, description: 'Statistiques techniciens' },
-            { title: 'Indicateurs SAV', url: ROUTES.agency.indicateursSav, icon: LifeBuoy, description: 'Statistiques SAV' },
-          ]
+          description: 'Centre statistiques unifié'
         },
         { title: 'Actions à Mener', url: ROUTES.agency.actions, icon: ListTodo, description: 'Suivi des actions et tâches en cours', featureFlagKey: 'pilotage.actions-mener' },
         { title: 'Veille Apporteurs', url: ROUTES.agency.veilleApporteurs, icon: Radar, description: 'Suivi performance et alertes apporteurs' },
