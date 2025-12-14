@@ -156,18 +156,25 @@ export default function RHIndex() {
   const { count: pendingCount } = usePendingDocumentRequestsCount();
   
   const isPlatformAdmin = globalRole === 'platform_admin' || globalRole === 'superadmin';
+  // N2+ (franchisee_admin) = accès back-office RH
+  const isN2Plus = globalRole === 'franchisee_admin' || globalRole === 'franchisor_user' || 
+                   globalRole === 'franchisor_admin' || isPlatformAdmin;
   
   // Check if user has a specific RH option
-  const hasRHOption = (options: string[] | undefined) => {
+  const hasRHOption = (options: string[] | undefined, section: 'salarie' | 'dirigeant') => {
     if (!options) return true;
     if (isPlatformAdmin) return true;
     
+    // N2+ a automatiquement accès à la vue dirigeant
+    if (section === 'dirigeant' && isN2Plus) return true;
+    
+    // Sinon vérifier les options du module
     return options.some(opt => isModuleOptionEnabled(enabledModules, 'rh', opt));
   };
   
   // Filter modules based on user permissions and enabled status
   const visibleModules = RH_MODULES.filter(module => 
-    module.enabled !== false && hasRHOption(module.requiresOption)
+    module.enabled !== false && hasRHOption(module.requiresOption, module.section)
   );
   
   // Group by section
