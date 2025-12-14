@@ -104,6 +104,11 @@ export function useCreateRequest() {
       if (mgrError) {
         logError("Erreur récupération profiles agence:", mgrError);
       } else {
+        logInfo("Profils agence pour notif RH", {
+          agencyId: collaborator.agency_id,
+          count: agencyUsers?.length ?? 0,
+          sample: agencyUsers?.slice(0, 5),
+        });
         // Filtrer N2+ (getRoleLevel >= 2) et exclure l'expéditeur
         const recipients = (agencyUsers ?? [])
           .filter(u => !!u.id && u.id !== user.id) // évite null et soi-même
