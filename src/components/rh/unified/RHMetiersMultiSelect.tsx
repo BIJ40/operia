@@ -71,7 +71,6 @@ export function RHMetiersMultiSelect({
         collaboratorId,
         data: { competences_techniques: localSelected }
       });
-      toast.success("Métiers sauvegardés");
       setOpen(false);
     } catch (error) {
       toast.error("Erreur lors de la sauvegarde");
