@@ -15,6 +15,8 @@ import { LoadedData, StatParams } from '@/statia/definitions/types';
 import { supabase } from '@/integrations/supabase/client';
 import { loadSAVOverridesByAgencyUuid } from '@/statia/services/savOverridesService';
 import { useDashboardPeriod } from '@/pages/DashboardStatic';
+import { getMetricForAgency } from '@/statia/api/getMetricForAgency';
+import { getGlobalApogeeDataServices } from '@/statia/adapters/dataServiceAdapter';
 
 // Configuration des KPIs à afficher
 const KPI_CONFIG: Array<{ 
@@ -167,12 +169,25 @@ export function IndicateursGlobauxWidget() {
       
       for (const kpi of KPI_CONFIG) {
         try {
-          const result = await computeStat(kpi.statId, params, services, { useCache: false });
-          results[kpi.id] = kpi.getValue(result);
+          // Pour tous les KPIs sauf le SAV, on utilise computeStat directement
+          if (kpi.id !== 'sav') {
+            const result = await computeStat(kpi.statId, params, services, { useCache: false });
+            results[kpi.id] = kpi.getValue(result);
+          }
         } catch (error) {
           console.error(`[Widget] Erreur calcul ${kpi.statId}:`, error);
           results[kpi.id] = null;
         }
+      }
+
+      // Pour le Taux SAV, on s'aligne strictement sur la logique de la carte Taux SAV
+      try {
+        const statiaServices = getGlobalApogeeDataServices();
+        const savResult = await getMetricForAgency('taux_sav_global', agencySlug, { dateRange }, statiaServices);
+        results['sav'] = savResult?.value ?? null;
+      } catch (error) {
+        console.error('[Widget] Erreur calcul taux_sav_global (KPI):', error);
+        results['sav'] = null;
       }
 
       return results;
