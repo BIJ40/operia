@@ -95,52 +95,63 @@ export function useCreateRequest() {
         throw error;
       }
 
-      // Notification N1→N2 : récupérer les profiles de l'agence et filtrer N2+ en JS
-      const { data: agencyUsers, error: mgrError } = await supabase
-        .from("profiles")
-        .select("id, global_role")
-        .eq("agency_id", collaborator.agency_id);
+      // Notification N1→N2 : récupérer les N2+ de l'agence via RPC sécurisée
+      // On utilise une approche qui contourne les RLS en passant par le recipient connu
+      const { data: agencyN2Users, error: mgrError } = await supabase
+        .rpc("get_agency_rh_managers", { p_agency_id: collaborator.agency_id });
 
+      // Fallback: si la RPC n'existe pas, on tente avec agency_id direct (N2+ peuvent voir)
+      let recipients: string[] = [];
+      
       if (mgrError) {
-        logError("Erreur récupération profiles agence:", mgrError);
-      } else {
-        logInfo("Profils agence pour notif RH", {
-          agencyId: collaborator.agency_id,
-          count: agencyUsers?.length ?? 0,
-          sample: agencyUsers?.slice(0, 5),
-        });
-        // Filtrer N2+ (getRoleLevel >= 2) et exclure l'expéditeur
-        const recipients = (agencyUsers ?? [])
-          .filter(u => !!u.id && u.id !== user.id) // évite null et soi-même
-          .filter(u => getRoleLevel(u.global_role) >= 2) // N2+ = franchisee_admin (2) et plus
+        logError("RPC get_agency_rh_managers indisponible, fallback:", mgrError);
+        // Fallback: essayer directement - marche si la RLS permet
+        const { data: fallbackUsers } = await supabase
+          .from("profiles")
+          .select("id, global_role, agency_id")
+          .eq("agency_id", collaborator.agency_id);
+        
+        recipients = (fallbackUsers ?? [])
+          .filter(u => !!u.id && u.id !== user.id)
+          .filter(u => getRoleLevel(u.global_role) >= 2)
           .map(u => u.id);
+      } else {
+        recipients = (agencyN2Users ?? [])
+          .filter((u: { id: string }) => u.id !== user.id)
+          .map((u: { id: string }) => u.id);
+      }
 
-        const label = requestTypeLabel[payload.request_type] ?? payload.request_type;
+      logInfo("Destinataires N2+ pour notif RH", {
+        agencyId: collaborator.agency_id,
+        count: recipients.length,
+        recipients,
+      });
 
-        logInfo(`Notif N1→N2: ${recipients.length} destinataires pour demande ${data.id}`, recipients);
+      const label = requestTypeLabel[payload.request_type] ?? payload.request_type;
 
-        if (recipients.length > 0) {
-          const notifications = recipients.map((recipient_id) => ({
-            collaborator_id: collaborator.id ?? null,
-            recipient_id,
-            sender_id: user.id,
-            agency_id: collaborator.agency_id,
-            notification_type: "REQUEST_CREATED",
-            title: `Nouvelle demande : ${label}`,
-            message: `${collaborator.first_name} ${collaborator.last_name} a soumis une demande de ${label}`,
-            related_request_id: data.id,
-          }));
+      logInfo(`Notif N1→N2: ${recipients.length} destinataires pour demande ${data.id}`, recipients);
 
-          const { data: notifData, error: notifErr } = await supabase
-            .from("rh_notifications")
-            .insert(notifications)
-            .select("id");
+      if (recipients.length > 0) {
+        const notifications = recipients.map((recipient_id) => ({
+          collaborator_id: collaborator.id ?? null,
+          recipient_id,
+          sender_id: user.id,
+          agency_id: collaborator.agency_id,
+          notification_type: "REQUEST_CREATED",
+          title: `Nouvelle demande : ${label}`,
+          message: `${collaborator.first_name} ${collaborator.last_name} a soumis une demande de ${label}`,
+          related_request_id: data.id,
+        }));
 
-          if (notifErr) {
-            logError("Erreur notification N1→N2:", notifErr);
-          } else {
-            logInfo(`OK notifications créées: ${notifData?.length ?? 0}`);
-          }
+        const { data: notifData, error: notifErr } = await supabase
+          .from("rh_notifications")
+          .insert(notifications)
+          .select("id");
+
+        if (notifErr) {
+          logError("Erreur notification N1→N2:", notifErr);
+        } else {
+          logInfo(`OK notifications créées: ${notifData?.length ?? 0}`);
         }
       }
 
