@@ -28,7 +28,9 @@ interface WeeklyPlanningHookResult {
 }
 
 export function useWeeklyTechPlanning(techFilterId?: number, showInactiveTechs = false): WeeklyPlanningHookResult {
-  const { isAgencyReady } = useAgency();
+  const { isAgencyReady, currentAgency } = useAgency();
+  const agencySlug = currentAgency?.slug;
+  
   const [weekDate, setWeekDate] = useState<Date>(() => {
     if (typeof window !== "undefined") {
       try {
@@ -52,14 +54,15 @@ export function useWeeklyTechPlanning(techFilterId?: number, showInactiveTechs =
     isLoading: loadingCreneaux,
     error: errorCreneaux,
   } = useQuery<RawCreneau[] | null>({
-    queryKey: ["planning-creneaux"],
+    queryKey: ["planning-creneaux", agencySlug],
     queryFn: async () => {
+      if (!agencySlug) throw new Error("Agency slug required");
       logApogee.debug("Fetching créneaux planning via proxy...");
-      const result = await apogeeProxy.getInterventionsCreneaux();
+      const result = await apogeeProxy.getInterventionsCreneaux({ agencySlug });
       logApogee.debug(`Créneaux récupérés: ${(result as RawCreneau[] | null)?.length || 0}`);
       return result as RawCreneau[] | null;
     },
-    enabled: isAgencyReady,
+    enabled: isAgencyReady && !!agencySlug,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -69,13 +72,14 @@ export function useWeeklyTechPlanning(techFilterId?: number, showInactiveTechs =
     isLoading: loadingUsers,
     error: errorUsers,
   } = useQuery<RawUser[]>({
-    queryKey: ["planning-users"],
+    queryKey: ["planning-users", agencySlug],
     queryFn: async () => {
+      if (!agencySlug) throw new Error("Agency slug required");
       logApogee.debug("Fetching users for planning via proxy...");
-      const result = await apogeeProxy.getUsers();
+      const result = await apogeeProxy.getUsers({ agencySlug });
       return (result || []) as RawUser[];
     },
-    enabled: isAgencyReady,
+    enabled: isAgencyReady && !!agencySlug,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -85,13 +89,14 @@ export function useWeeklyTechPlanning(techFilterId?: number, showInactiveTechs =
     isLoading: loadingInterventions,
     error: errorInterventions,
   } = useQuery<RawIntervention[]>({
-    queryKey: ["planning-interventions"],
+    queryKey: ["planning-interventions", agencySlug],
     queryFn: async () => {
+      if (!agencySlug) throw new Error("Agency slug required");
       logApogee.debug("Fetching interventions for planning via proxy...");
-      const result = await apogeeProxy.getInterventions();
+      const result = await apogeeProxy.getInterventions({ agencySlug });
       return (result || []) as RawIntervention[];
     },
-    enabled: isAgencyReady,
+    enabled: isAgencyReady && !!agencySlug,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -101,13 +106,14 @@ export function useWeeklyTechPlanning(techFilterId?: number, showInactiveTechs =
     isLoading: loadingProjects,
     error: errorProjects,
   } = useQuery<RawProject[]>({
-    queryKey: ["planning-projects"],
+    queryKey: ["planning-projects", agencySlug],
     queryFn: async () => {
+      if (!agencySlug) throw new Error("Agency slug required");
       logApogee.debug("Fetching projects for planning via proxy...");
-      const result = await apogeeProxy.getProjects();
+      const result = await apogeeProxy.getProjects({ agencySlug });
       return (result || []) as RawProject[];
     },
-    enabled: isAgencyReady,
+    enabled: isAgencyReady && !!agencySlug,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -117,13 +123,14 @@ export function useWeeklyTechPlanning(techFilterId?: number, showInactiveTechs =
     isLoading: loadingClients,
     error: errorClients,
   } = useQuery<RawClient[]>({
-    queryKey: ["planning-clients"],
+    queryKey: ["planning-clients", agencySlug],
     queryFn: async () => {
+      if (!agencySlug) throw new Error("Agency slug required");
       logApogee.debug("Fetching clients for planning via proxy...");
-      const result = await apogeeProxy.getClients();
+      const result = await apogeeProxy.getClients({ agencySlug });
       return (result || []) as RawClient[];
     },
-    enabled: isAgencyReady,
+    enabled: isAgencyReady && !!agencySlug,
     staleTime: 5 * 60 * 1000,
   });
 
