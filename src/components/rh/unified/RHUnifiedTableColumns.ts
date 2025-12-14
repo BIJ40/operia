@@ -42,12 +42,19 @@ export const TAB_COLUMNS: Record<RHTabId, ColumnGroup[]> = {
   general: [
     {
       id: 'contact',
-      label: 'Contact',
+      label: '📞 Contact',
       columns: [
-        { id: 'email', label: 'Email', accessor: (row) => row.email },
+        { id: 'email', label: 'Email', accessor: (row) => row.email, className: 'email-truncate' },
         { id: 'phone', label: 'Téléphone', accessor: (row) => row.phone },
-        { id: 'emergency_contact', label: 'ICE Contact', accessor: () => null, sensitive: true },
-        { id: 'emergency_phone', label: 'ICE Tél', accessor: () => null, sensitive: true },
+      ],
+    },
+    {
+      id: 'ice',
+      label: '❤️ ICE',
+      className: 'bg-red-50 dark:bg-red-950/30',
+      columns: [
+        { id: 'emergency_contact', label: 'Contact', accessor: () => null, sensitive: true },
+        { id: 'emergency_phone', label: 'Téléphone', accessor: () => null, sensitive: true },
       ],
     },
     {

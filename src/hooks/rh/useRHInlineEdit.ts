@@ -48,11 +48,19 @@ const COLUMN_TO_FIELD_MAP: Record<string, { table: string; field: string }> = {
   notes: { table: 'collaborators', field: 'notes' },
   hiring_date: { table: 'collaborators', field: 'hiring_date' },
   leaving_date: { table: 'collaborators', field: 'leaving_date' },
+  permis: { table: 'collaborators', field: 'permis' },
+  cni: { table: 'collaborators', field: 'cni' },
+  // Sensitive data (ICE + RH info)
+  emergency_contact: { table: 'collaborator_sensitive_data', field: 'emergency_contact_encrypted' },
+  emergency_phone: { table: 'collaborator_sensitive_data', field: 'emergency_phone_encrypted' },
+  social_security_number: { table: 'collaborator_sensitive_data', field: 'social_security_number_encrypted' },
   // EPI profile
   taille_haut: { table: 'rh_epi_profiles', field: 'taille_haut' },
   taille_bas: { table: 'rh_epi_profiles', field: 'taille_bas' },
   pointure: { table: 'rh_epi_profiles', field: 'pointure' },
   taille_gants: { table: 'rh_epi_profiles', field: 'taille_gants' },
+  statut_epi: { table: 'rh_epi_profiles', field: 'statut_epi' },
+  date_renouvellement: { table: 'rh_epi_profiles', field: 'date_renouvellement' },
   // Competencies
   hab_elec_statut: { table: 'rh_competencies', field: 'habilitation_electrique_statut' },
   hab_elec_date: { table: 'rh_competencies', field: 'habilitation_electrique_date' },
@@ -74,10 +82,10 @@ const NON_EDITABLE_COLUMNS = [
   'carte_carburant',
   'carte_bancaire',
   'carte_autre',
-  'statut_epi',
-  'date_renouvellement',
   'caces_count',
   'acces_outils',
+  'materiels_liste',
+  'identifiants_liste',
 ];
 
 export function useRHInlineEdit(
@@ -169,6 +177,18 @@ export function useRHInlineEdit(
               .from('collaborators')
               .update(fields)
               .eq('id', collaboratorId);
+            
+            if (error) throw error;
+          } else if (table === 'collaborator_sensitive_data') {
+            // Sensitive data table uses upsert with special handling
+            const { error } = await supabase
+              .from('collaborator_sensitive_data')
+              .upsert({ 
+                collaborator_id: collaboratorId, 
+                ...fields,
+              }, { 
+                onConflict: 'collaborator_id' 
+              });
             
             if (error) throw error;
           } else {

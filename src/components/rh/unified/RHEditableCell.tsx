@@ -1,9 +1,28 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+
+// Options pour les tailles
+const TAILLE_HAUT_OPTIONS = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL'];
+const TAILLE_BAS_OPTIONS = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL'];
+const POINTURE_OPTIONS = Array.from({ length: 15 }, (_, i) => String(36 + i)); // 36 à 50
+const TAILLE_GANTS_OPTIONS = ['6', '7', '8', '9', '10', '11', '12'];
+
+// Colonnes avec dropdown de tailles
+const SIZE_DROPDOWN_COLUMNS: Record<string, string[]> = {
+  taille_haut: TAILLE_HAUT_OPTIONS,
+  taille_bas: TAILLE_BAS_OPTIONS,
+  pointure: POINTURE_OPTIONS,
+  taille_gants: TAILLE_GANTS_OPTIONS,
+};
+
+// Colonnes avec email (affichage tronqué + tooltip)
+const EMAIL_COLUMNS = ['email'];
 
 interface RHEditableCellProps {
   value: unknown;
@@ -89,9 +108,76 @@ export function RHEditableCell({
     }
   };
 
+  const handleSelectChange = (newValue: string) => {
+    setEditValue(newValue);
+    onValueChange(collaboratorId, columnId, newValue);
+  };
+
   // For boolean or non-editable values, just display
   if (typeof value === 'boolean' || !editable) {
     return <div className={className}>{formatDisplayValue(value)}</div>;
+  }
+
+  // Dropdown pour les tailles
+  if (SIZE_DROPDOWN_COLUMNS[columnId]) {
+    const options = SIZE_DROPDOWN_COLUMNS[columnId];
+    return (
+      <Select value={editValue || ''} onValueChange={handleSelectChange}>
+        <SelectTrigger className={cn("h-7 text-sm", className)}>
+          <SelectValue placeholder="—" />
+        </SelectTrigger>
+        <SelectContent className="bg-popover">
+          <SelectItem value="">—</SelectItem>
+          {options.map((opt) => (
+            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  }
+
+  // Email avec tooltip
+  if (EMAIL_COLUMNS.includes(columnId)) {
+    const displayValue = formatDisplayValue(value);
+    const hasValue = value !== null && value !== undefined && value !== '';
+    
+    if (isEditing) {
+      return (
+        <Input
+          ref={inputRef}
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          onClick={(e) => e.stopPropagation()}
+          className={cn("h-7 text-sm px-1", className)}
+        />
+      );
+    }
+    
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div 
+              className={cn(
+                "min-h-[28px] px-1 py-0.5 rounded cursor-text hover:bg-muted/50 transition-colors max-w-[100px] truncate",
+                className
+              )}
+              onDoubleClick={handleDoubleClick}
+              title="Double-clic pour modifier"
+            >
+              {displayValue}
+            </div>
+          </TooltipTrigger>
+          {hasValue && (
+            <TooltipContent>
+              <p>{String(value)}</p>
+            </TooltipContent>
+          )}
+        </Tooltip>
+      </TooltipProvider>
+    );
   }
 
   if (isEditing) {
