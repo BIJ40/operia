@@ -35,11 +35,6 @@ export const FIXED_COLUMNS: ColumnDef[] = [
     label: 'Prénom',
     accessor: (row) => row.first_name,
   },
-  {
-    id: 'type',
-    label: 'Type',
-    accessor: (row) => row.type,
-  },
 ];
 
 // Configuration par onglet
