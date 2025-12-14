@@ -36,23 +36,34 @@ export function useRHNotifications() {
   const query = useQuery({
     queryKey: ['rh-notifications', user?.id],
     queryFn: async (): Promise<RHNotification[]> => {
+      if (!user?.id) return [];
+      
       // D'abord récupérer le collaborator_id de l'utilisateur
       const { data: collaborator } = await supabase
         .from('collaborators')
         .select('id')
-        .eq('user_id', user?.id || '')
+        .eq('user_id', user.id)
         .maybeSingle();
+
+      // Construire les filtres
+      const filters = [`recipient_id.eq.${user.id}`];
+      if (collaborator?.id) {
+        filters.push(`collaborator_id.eq.${collaborator.id}`);
+      }
 
       // Récupérer les notifications où l'utilisateur est destinataire (recipient_id)
       // OU où son collaborator_id est référencé
       const { data, error } = await supabase
         .from('rh_notifications')
         .select('*')
-        .or(`recipient_id.eq.${user?.id || ''},collaborator_id.eq.${collaborator?.id || '00000000-0000-0000-0000-000000000000'}`)
+        .or(filters.join(','))
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (error) throw error;
+      if (error) {
+        console.error('[useRHNotifications] Error:', error);
+        throw error;
+      }
       return (data || []) as unknown as RHNotification[];
     },
     enabled: !!user,
@@ -97,20 +108,31 @@ export function useUnreadRHNotificationsCount() {
   const query = useQuery({
     queryKey: ['rh-notifications-count', user?.id],
     queryFn: async (): Promise<number> => {
+      if (!user?.id) return 0;
+      
       // Compter directement via une requête
       const { data: collaborator } = await supabase
         .from('collaborators')
         .select('id')
-        .eq('user_id', user?.id || '')
+        .eq('user_id', user.id)
         .maybeSingle();
+
+      // Construire les filtres
+      const filters = [`recipient_id.eq.${user.id}`];
+      if (collaborator?.id) {
+        filters.push(`collaborator_id.eq.${collaborator.id}`);
+      }
 
       const { count, error } = await supabase
         .from('rh_notifications')
         .select('*', { count: 'exact', head: true })
-        .or(`recipient_id.eq.${user?.id || ''},collaborator_id.eq.${collaborator?.id || '00000000-0000-0000-0000-000000000000'}`)
+        .or(filters.join(','))
         .eq('is_read', false);
 
-      if (error) throw error;
+      if (error) {
+        console.error('[useUnreadRHNotificationsCount] Error:', error);
+        throw error;
+      }
       return count || 0;
     },
     enabled: !!user,
