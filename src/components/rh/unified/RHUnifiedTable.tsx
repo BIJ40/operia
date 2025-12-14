@@ -1,0 +1,266 @@
+import React, { useMemo, useState } from 'react';
+import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Search, Settings2, Users, Wrench } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { RHCollaborator } from '@/types/rh-suivi';
+import { RHUnifiedTableHeader } from './RHUnifiedTableHeader';
+import { RHUnifiedTableRow } from './RHUnifiedTableRow';
+import { RHDocumentPopup, DocumentType } from './RHDocumentPopup';
+import { 
+  TAB_CONFIG, 
+  TAB_COLUMNS, 
+  COLLABORATOR_CATEGORIES, 
+  CollaboratorCategory,
+  RHTabId 
+} from './RHUnifiedTableColumns';
+import { Skeleton } from '@/components/ui/skeleton';
+
+interface RHUnifiedTableProps {
+  collaborators: RHCollaborator[];
+  isLoading: boolean;
+  visibleColumns: string[];
+  onToggleColumn: (columnId: string) => void;
+  activeTab: RHTabId;
+  onTabChange: (tab: RHTabId) => void;
+}
+
+export function RHUnifiedTable({
+  collaborators,
+  isLoading,
+  visibleColumns,
+  onToggleColumn,
+  activeTab,
+  onTabChange,
+}: RHUnifiedTableProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [documentPopup, setDocumentPopup] = useState<{
+    open: boolean;
+    collaboratorId: string;
+    collaboratorName: string;
+    docType: DocumentType;
+  }>({
+    open: false,
+    collaboratorId: '',
+    collaboratorName: '',
+    docType: 'cni',
+  });
+
+  // Filtrer par recherche
+  const filteredCollaborators = useMemo(() => {
+    if (!searchQuery) return collaborators;
+    const query = searchQuery.toLowerCase();
+    return collaborators.filter(c => 
+      c.first_name?.toLowerCase().includes(query) ||
+      c.last_name?.toLowerCase().includes(query) ||
+      c.email?.toLowerCase().includes(query) ||
+      c.role?.toLowerCase().includes(query)
+    );
+  }, [collaborators, searchQuery]);
+
+  // Grouper par catégorie
+  const groupedCollaborators = useMemo(() => {
+    const groups: Record<CollaboratorCategory, RHCollaborator[]> = {
+      ADMINISTRATIF: [],
+      TERRAIN: [],
+    };
+
+    filteredCollaborators.forEach(collab => {
+      const collabType = collab.type || 'AUTRE';
+      let foundCategory: CollaboratorCategory = 'TERRAIN';
+      
+      for (const [key, config] of Object.entries(COLLABORATOR_CATEGORIES)) {
+        if ((config.types as readonly string[]).includes(collabType)) {
+          foundCategory = key as CollaboratorCategory;
+          break;
+        }
+      }
+      
+      groups[foundCategory].push(collab);
+    });
+
+    // Trier chaque groupe par nom
+    Object.values(groups).forEach(group => {
+      group.sort((a, b) => (a.last_name || '').localeCompare(b.last_name || ''));
+    });
+
+    return groups;
+  }, [filteredCollaborators]);
+
+  // Stats
+  const stats = useMemo(() => ({
+    total: collaborators.length,
+    active: collaborators.filter(c => !c.leaving_date).length,
+    administratif: groupedCollaborators.ADMINISTRATIF.length,
+    terrain: groupedCollaborators.TERRAIN.length,
+  }), [collaborators, groupedCollaborators]);
+
+  // Colonnes disponibles pour l'onglet actif
+  const availableColumns = useMemo(() => {
+    return TAB_COLUMNS[activeTab].flatMap(group => group.columns);
+  }, [activeTab]);
+
+  const handleDocumentClick = (collaboratorId: string, docType: DocumentType) => {
+    const collab = collaborators.find(c => c.id === collaboratorId);
+    if (!collab) return;
+    
+    setDocumentPopup({
+      open: true,
+      collaboratorId,
+      collaboratorName: `${collab.first_name} ${collab.last_name}`,
+      docType,
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex gap-4">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-10 flex-1" />
+        </div>
+        <Skeleton className="h-96 w-full" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Stats rapides */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="bg-card rounded-lg p-3 border">
+          <div className="flex items-center gap-2 text-muted-foreground text-sm">
+            <Users className="h-4 w-4" />
+            Total
+          </div>
+          <p className="text-2xl font-bold">{stats.total}</p>
+        </div>
+        <div className="bg-card rounded-lg p-3 border">
+          <div className="flex items-center gap-2 text-green-600 text-sm">
+            <div className="w-2 h-2 rounded-full bg-green-500" />
+            Actifs
+          </div>
+          <p className="text-2xl font-bold text-green-600">{stats.active}</p>
+        </div>
+        <div className="bg-card rounded-lg p-3 border">
+          <div className="flex items-center gap-2 text-blue-600 text-sm">
+            🏢 Administratif
+          </div>
+          <p className="text-2xl font-bold text-blue-600">{stats.administratif}</p>
+        </div>
+        <div className="bg-card rounded-lg p-3 border">
+          <div className="flex items-center gap-2 text-orange-600 text-sm">
+            🔧 Terrain
+          </div>
+          <p className="text-2xl font-bold text-orange-600">{stats.terrain}</p>
+        </div>
+      </div>
+
+      {/* Barre de recherche + onglets + toggle colonnes */}
+      <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+        <div className="relative w-full lg:w-80">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Rechercher un collaborateur..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
+        <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as RHTabId)} className="w-full lg:w-auto">
+          <TabsList className="grid grid-cols-4 lg:grid-cols-7 h-auto">
+            {TAB_CONFIG.map((tab) => (
+              <TabsTrigger key={tab.id} value={tab.id} className="text-xs px-2 py-1.5">
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Settings2 className="h-4 w-4 mr-2" />
+              Colonnes
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>Colonnes visibles</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {availableColumns.map((col) => (
+              <DropdownMenuCheckboxItem
+                key={col.id}
+                checked={visibleColumns.includes(col.id)}
+                onCheckedChange={() => onToggleColumn(col.id)}
+              >
+                {col.label}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Tableau */}
+      <div className="border rounded-lg overflow-auto max-h-[calc(100vh-350px)]">
+        <Table>
+          <RHUnifiedTableHeader activeTab={activeTab} visibleColumns={visibleColumns} />
+          <TableBody>
+            {Object.entries(COLLABORATOR_CATEGORIES).map(([categoryKey, categoryConfig]) => {
+              const categoryCollabs = groupedCollaborators[categoryKey as CollaboratorCategory];
+              if (categoryCollabs.length === 0) return null;
+
+              return (
+                <React.Fragment key={categoryKey}>
+                  {/* Header de catégorie */}
+                  <TableRow className={cn("hover:bg-transparent", categoryConfig.className)}>
+                    <TableCell colSpan={99} className="py-2 font-semibold">
+                      <div className="flex items-center gap-2">
+                        <span>{categoryConfig.icon}</span>
+                        <span>{categoryConfig.label}</span>
+                        <span className="text-muted-foreground font-normal">
+                          ({categoryCollabs.length})
+                        </span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+
+                  {/* Lignes des collaborateurs */}
+                  {categoryCollabs.map((collab) => (
+                    <RHUnifiedTableRow
+                      key={collab.id}
+                      collaborator={collab}
+                      activeTab={activeTab}
+                      visibleColumns={visibleColumns}
+                      onDocumentClick={handleDocumentClick}
+                    />
+                  ))}
+                </React.Fragment>
+              );
+            })}
+
+            {filteredCollaborators.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={99} className="h-32 text-center text-muted-foreground">
+                  Aucun collaborateur trouvé
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Popup document */}
+      <RHDocumentPopup
+        open={documentPopup.open}
+        onOpenChange={(open) => setDocumentPopup(prev => ({ ...prev, open }))}
+        documentType={documentPopup.docType}
+        collaboratorId={documentPopup.collaboratorId}
+        collaboratorName={documentPopup.collaboratorName}
+      />
+    </div>
+  );
+}
