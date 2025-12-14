@@ -112,7 +112,8 @@ export function RHUnifiedTableRow({
             value={assets?.vehicule_attribue || null}
             onSave={(data) => {
               const jsonValue = JSON.stringify(data);
-              onValueChange(collaborator.id, 'vehicule_attribue', jsonValue);
+              // Sauvegarde dans les "assets" du collaborateur pour qu'il soit visible et persistant
+              onAssetsUpdate?.(collaborator.id, 'vehicule_attribue', jsonValue);
             }}
           />
         </TableCell>
