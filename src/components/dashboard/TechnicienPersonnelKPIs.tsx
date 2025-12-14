@@ -1,24 +1,18 @@
 /**
  * KPIs personnels pour les techniciens (N1)
- * Affiche: Mon CA, Mes interventions, Mon taux SAV
+ * Affiche: Mon CA, Mes interventions, Dossiers facturés
+ * Utilise usePersonalKpis pour récupérer les vraies données via apogee_user_id
  */
 
-import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Euro, Wrench, AlertTriangle } from 'lucide-react';
+import { Euro, Wrench, FolderCheck, LinkIcon } from 'lucide-react';
 import { useDashboardPeriod } from '@/pages/DashboardStatic';
+import { usePersonalKpis } from '@/hooks/usePersonalKpis';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export function TechnicienPersonnelKPIs() {
   const { periodLabel } = useDashboardPeriod();
-  
-  // TODO: Implémenter le hook useTechnicienPersonnelStats
-  // basé sur apogee_user_id du collaborateur connecté
-  const isLoading = false;
-  const stats = {
-    caPersonnel: 12450,
-    interventionsRealisees: 28,
-    tauxSavPersonnel: 2.1,
-  };
+  const { data, isLoading } = usePersonalKpis();
 
   if (isLoading) {
     return (
@@ -26,6 +20,30 @@ export function TechnicienPersonnelKPIs() {
         {[1, 2, 3].map((i) => (
           <Skeleton key={i} className="h-24" />
         ))}
+      </div>
+    );
+  }
+
+  // Si pas de lien apogee_user_id
+  if (data?.type === 'not_linked') {
+    return (
+      <Alert variant="default" className="bg-amber-500/10 border-amber-500/20">
+        <LinkIcon className="h-4 w-4 text-amber-600" />
+        <AlertDescription className="text-amber-700">
+          Votre compte n'est pas lié à un technicien Apogée. 
+          Contactez votre responsable pour configurer votre profil.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  // Extraire les stats technicien
+  const stats = data?.type === 'technicien' ? data.data : null;
+
+  if (!stats) {
+    return (
+      <div className="text-sm text-muted-foreground p-4">
+        Données indisponibles
       </div>
     );
   }
@@ -44,7 +62,7 @@ export function TechnicienPersonnelKPIs() {
           <div>
             <p className="text-xs text-muted-foreground">Mon CA</p>
             <p className="text-xl font-bold">
-              {stats.caPersonnel.toLocaleString('fr-FR')} €
+              {stats.caMonth.toLocaleString('fr-FR')} €
             </p>
           </div>
         </div>
@@ -60,14 +78,14 @@ export function TechnicienPersonnelKPIs() {
           </div>
         </div>
 
-        {/* Mon taux SAV */}
-        <div className="flex items-center gap-3 p-4 rounded-lg bg-orange-500/5 border border-orange-500/10">
-          <div className="p-2 rounded-full bg-orange-500/10">
-            <AlertTriangle className="h-5 w-5 text-orange-500" />
+        {/* Dossiers facturés */}
+        <div className="flex items-center gap-3 p-4 rounded-lg bg-green-500/5 border border-green-500/10">
+          <div className="p-2 rounded-full bg-green-500/10">
+            <FolderCheck className="h-5 w-5 text-green-500" />
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Mon taux SAV</p>
-            <p className="text-xl font-bold">{stats.tauxSavPersonnel.toFixed(1)} %</p>
+            <p className="text-xs text-muted-foreground">Dossiers facturés</p>
+            <p className="text-xl font-bold">{stats.dossiersTraites}</p>
           </div>
         </div>
       </div>
