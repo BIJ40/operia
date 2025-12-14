@@ -182,13 +182,11 @@ function PrintSignatureBox({
 }) {
   const { signature, isSignedByTech } = usePlanningSignature({ techId, weekDate });
   
-  if (isSignedByTech && signature?.tech_signature_png) {
+  if (isSignedByTech && signature?.tech_signature_png && signature?.tech_signed_at) {
+    const signedDate = format(new Date(signature.tech_signed_at), "dd/MM/yyyy 'à' HH:mm", { locale: fr });
     return (
-      <span className="hidden print:inline-flex items-center gap-2 text-sm">
-        <span>à</span>
-        <span className="border-b border-black w-28 inline-block">&nbsp;</span>
-        <span>le</span>
-        <span className="border-b border-black w-20 inline-block">&nbsp;</span>
+      <span className="hidden print:inline-flex items-center gap-2 text-sm ml-4">
+        <span>Signé le {signedDate}</span>
         <span className="ml-4">Signature :</span>
         <span className="border border-black w-32 h-10 inline-flex items-center justify-center">
           <img 
@@ -203,13 +201,11 @@ function PrintSignatureBox({
     );
   }
   
-  // Pas de signature : cadre vide
+  // Pas de signature : cadre vide avec champs à remplir
   return (
-    <span className="hidden print:inline-flex items-center gap-2 text-sm">
-      <span>à</span>
-      <span className="border-b border-black w-28 inline-block">&nbsp;</span>
-      <span>le</span>
-      <span className="border-b border-black w-20 inline-block">&nbsp;</span>
+    <span className="hidden print:inline-flex items-center gap-2 text-sm ml-4">
+      <span>Signé le</span>
+      <span className="border-b border-black w-32 inline-block">&nbsp;</span>
       <span className="ml-4">Signature :</span>
       <span className="border border-black w-32 h-10 inline-block align-middle">&nbsp;</span>
     </span>
@@ -242,20 +238,10 @@ function PlanningSignatureN2Section({
   // État 3: Signé par le tech
   if (isSignedByTech && signature?.tech_signed_at) {
     return (
-      <div className="flex items-center gap-2">
-        <Badge variant="default" className="bg-emerald-600 text-white">
-          <CheckCircle className="w-3 h-3 mr-1" />
-          Signé le {format(new Date(signature.tech_signed_at), "dd/MM/yyyy HH:mm", { locale: fr })}
-        </Badge>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => window.print()}
-        >
-          <Printer className="w-4 h-4 mr-1" />
-          Imprimer
-        </Button>
-      </div>
+      <Badge variant="default" className="bg-emerald-600 text-white">
+        <CheckCircle className="w-3 h-3 mr-1" />
+        Signé le {format(new Date(signature.tech_signed_at), "dd/MM/yyyy HH:mm", { locale: fr })}
+      </Badge>
     );
   }
 
@@ -550,14 +536,6 @@ function PlanningTechniciensSemaineContent() {
               </div>
             </div>
             
-            {/* Heures version impression */}
-            <div className="hidden print:flex items-center gap-2 border border-black px-2 py-1">
-              <Clock className="h-4 w-4 text-black" />
-              <span className="font-semibold text-black">
-                {formatMinutes(workMinutes)}
-              </span>
-              <span className="text-sm text-black">travaillées</span>
-            </div>
           </div>
         </div>
       )}
