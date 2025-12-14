@@ -1,6 +1,7 @@
 /**
  * Hook pour gérer les demandes RH du salarié
  */
+import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -36,6 +37,32 @@ export interface CreateRequestPayload {
 
 export function useMyRequests() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Realtime subscription pour mise à jour instantanée
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel("my-requests-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "rh_requests",
+          filter: `employee_user_id=eq.${user.id}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["my-requests", user.id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, queryClient]);
 
   return useQuery({
     queryKey: ["my-requests", user?.id],
