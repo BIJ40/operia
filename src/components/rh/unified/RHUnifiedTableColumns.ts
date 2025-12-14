@@ -154,7 +154,8 @@ export const TAB_COLUMNS: Record<RHTabId, ColumnGroup[]> = {
   documents: [
     {
       id: 'documents',
-      label: 'Documents',
+      label: '📄 DOCUMENTS',
+      className: 'bg-amber-50 dark:bg-amber-950/30',
       columns: [
         { id: 'docs_icons', label: 'Documents disponibles', accessor: () => null },
       ],

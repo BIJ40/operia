@@ -17,52 +17,47 @@ export function RHUnifiedTableHeader({ activeTab, visibleColumns }: RHUnifiedTab
     columns: group.columns.filter(col => visibleColumns.includes(col.id)),
   })).filter(group => group.columns.length > 0);
 
-  // Calculer le nombre total de colonnes pour les groupes
-  const hasMultipleColumns = visibleGroups.some(g => g.columns.length > 1);
-
   return (
     <TableHeader className="sticky top-0 z-10 bg-background">
-      {/* Ligne 1 : Headers groupés (si nécessaire) */}
-      {hasMultipleColumns && (
-        <TableRow className="border-b-0">
-          {/* Colonnes fixes - header vide pour l'alignement */}
-          <TableHead 
-            colSpan={FIXED_COLUMNS.length + 1} 
-            className="bg-muted/50 text-center font-semibold border-r"
+      {/* Ligne 1 : Headers groupés - TOUJOURS afficher la partie COLLABORATEUR */}
+      <TableRow className="border-b-0">
+        {/* Colonnes fixes - COLLABORATEUR toujours visible */}
+        <TableHead 
+          colSpan={FIXED_COLUMNS.length + 1} 
+          className="bg-muted/50 text-center font-semibold border-r"
+        >
+          👤 COLLABORATEUR
+        </TableHead>
+        
+        {/* Headers groupés des colonnes de l'onglet */}
+        {visibleGroups.map((group) => (
+          <TableHead
+            key={group.id}
+            colSpan={group.columns.length}
+            className={cn(
+              "text-center font-semibold border-r last:border-r-0",
+              group.className
+            )}
           >
-            Collaborateur
+            {group.label}
           </TableHead>
-          
-          {/* Headers groupés des colonnes de l'onglet */}
-          {visibleGroups.map((group, idx) => (
-            <TableHead
-              key={group.id}
-              colSpan={group.columns.length}
-              className={cn(
-                "text-center font-semibold border-r last:border-r-0",
-                group.className
-              )}
-            >
-              {group.label}
-            </TableHead>
-          ))}
-        </TableRow>
-      )}
+        ))}
+      </TableRow>
       
       {/* Ligne 2 : Colonnes détaillées */}
       <TableRow>
         {/* Colonne statut (indicateur visuel) */}
-        <TableHead className="w-10 px-2"></TableHead>
+        <TableHead className="w-10 px-2 bg-muted/30"></TableHead>
         
-        {/* Colonnes fixes */}
+        {/* Colonnes fixes avec fond légèrement différent */}
         {FIXED_COLUMNS.map((col) => (
-          <TableHead key={col.id} className="font-medium whitespace-nowrap">
+          <TableHead key={col.id} className="font-medium whitespace-nowrap bg-muted/30">
             {col.label}
           </TableHead>
         ))}
         
         {/* Colonnes de l'onglet actif */}
-        {visibleGroups.map((group, groupIdx) => (
+        {visibleGroups.map((group) => (
           group.columns.map((col, colIdx) => (
             <TableHead 
               key={col.id}
