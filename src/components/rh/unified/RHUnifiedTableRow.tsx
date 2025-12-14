@@ -9,7 +9,8 @@ import { DocumentIcons, DocumentType } from './RHDocumentPopup';
 import { RHEditableCell } from './RHEditableCell';
 import { RHVehiculePopup, formatVehiculeDisplay } from './RHVehiculePopup';
 import { RHCartePopup, formatCarteDisplay } from './RHCartePopup';
-import { ExternalLink } from 'lucide-react';
+import { RHDocumentUploadPopup } from './RHDocumentUploadPopup';
+import { ExternalLink, Paperclip } from 'lucide-react';
 
 interface RHUnifiedTableRowProps {
   collaborator: RHCollaborator;
@@ -48,6 +49,13 @@ export function RHUnifiedTableRow({
   const [carteCarburantPopupOpen, setCarteCarburantPopupOpen] = useState(false);
   const [carteBancairePopupOpen, setCarteBancairePopupOpen] = useState(false);
   const [carteAutrePopupOpen, setCarteAutrePopupOpen] = useState(false);
+  
+  // Document upload popup state
+  const [docUploadPopup, setDocUploadPopup] = useState<{ open: boolean; fieldKey: string; fieldLabel: string }>({
+    open: false, fieldKey: '', fieldLabel: ''
+  });
+  
+  const collaboratorName = `${collaborator.first_name} ${collaborator.last_name}`;
 
   // Filtrer les groupes et colonnes visibles
   const visibleGroups = tabGroups.map(group => ({
@@ -62,6 +70,22 @@ export function RHUnifiedTableRow({
 
   const assets = collaborator.assets;
 
+  // Bouton pour ouvrir l'upload de documents
+  const renderDocUploadButton = (fieldKey: string, fieldLabel: string) => (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-5 w-5 opacity-40 hover:opacity-100"
+      onClick={(e) => {
+        e.stopPropagation();
+        setDocUploadPopup({ open: true, fieldKey, fieldLabel });
+      }}
+      title="Ajouter un document"
+    >
+      <Paperclip className="h-3 w-3" />
+    </Button>
+  );
+
   // Render special popup cells
   const renderPopupCell = (colId: string, colIdx: number, className?: string) => {
     const cellClass = cn(colIdx === 0 && "border-l", className, "p-1");
@@ -69,15 +93,18 @@ export function RHUnifiedTableRow({
     if (colId === 'vehicule_attribue') {
       return (
         <TableCell key={colId} className={cellClass}>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-xs font-normal w-full justify-start"
-            onDoubleClick={() => setVehiculePopupOpen(true)}
-            title="Double-clic pour modifier"
-          >
-            {formatVehiculeDisplay(assets?.vehicule_attribue || null)}
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs font-normal flex-1 justify-start"
+              onDoubleClick={() => setVehiculePopupOpen(true)}
+              title="Double-clic pour modifier"
+            >
+              {formatVehiculeDisplay(assets?.vehicule_attribue || null)}
+            </Button>
+            {renderDocUploadButton('vehicule', 'Véhicule')}
+          </div>
           <RHVehiculePopup
             open={vehiculePopupOpen}
             onOpenChange={setVehiculePopupOpen}
@@ -94,15 +121,18 @@ export function RHUnifiedTableRow({
     if (colId === 'carte_carburant') {
       return (
         <TableCell key={colId} className={cellClass}>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-xs font-normal w-full justify-start"
-            onDoubleClick={() => setCarteCarburantPopupOpen(true)}
-            title="Double-clic pour modifier"
-          >
-            {formatCarteDisplay(assets?.carte_carburant || false, assets?.numero_carte_carburant || undefined)}
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs font-normal flex-1 justify-start"
+              onDoubleClick={() => setCarteCarburantPopupOpen(true)}
+              title="Double-clic pour modifier"
+            >
+              {formatCarteDisplay(assets?.carte_carburant || false, assets?.numero_carte_carburant || undefined)}
+            </Button>
+            {renderDocUploadButton('carte_carburant', 'Carte Carburant')}
+          </div>
           <RHCartePopup
             open={carteCarburantPopupOpen}
             onOpenChange={setCarteCarburantPopupOpen}
@@ -123,15 +153,18 @@ export function RHUnifiedTableRow({
     if (colId === 'carte_bancaire') {
       return (
         <TableCell key={colId} className={cellClass}>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-xs font-normal w-full justify-start"
-            onDoubleClick={() => setCarteBancairePopupOpen(true)}
-            title="Double-clic pour modifier"
-          >
-            {formatCarteDisplay(assets?.carte_bancaire || false, assets?.numero_carte_bancaire || undefined)}
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs font-normal flex-1 justify-start"
+              onDoubleClick={() => setCarteBancairePopupOpen(true)}
+              title="Double-clic pour modifier"
+            >
+              {formatCarteDisplay(assets?.carte_bancaire || false, assets?.numero_carte_bancaire || undefined)}
+            </Button>
+            {renderDocUploadButton('carte_bancaire', 'Carte Bancaire')}
+          </div>
           <RHCartePopup
             open={carteBancairePopupOpen}
             onOpenChange={setCarteBancairePopupOpen}
@@ -152,15 +185,18 @@ export function RHUnifiedTableRow({
     if (colId === 'carte_autre') {
       return (
         <TableCell key={colId} className={cellClass}>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-xs font-normal w-full justify-start"
-            onDoubleClick={() => setCarteAutrePopupOpen(true)}
-            title="Double-clic pour modifier"
-          >
-            {assets?.carte_autre_nom || '—'}
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs font-normal flex-1 justify-start"
+              onDoubleClick={() => setCarteAutrePopupOpen(true)}
+              title="Double-clic pour modifier"
+            >
+              {assets?.carte_autre_nom || '—'}
+            </Button>
+            {renderDocUploadButton('carte_autre', 'Autre Carte')}
+          </div>
           <RHCartePopup
             open={carteAutrePopupOpen}
             onOpenChange={setCarteAutrePopupOpen}
@@ -182,8 +218,21 @@ export function RHUnifiedTableRow({
   };
 
   const POPUP_COLUMNS = ['vehicule_attribue', 'carte_carburant', 'carte_bancaire', 'carte_autre'];
+  
+  // Colonnes avec possibilité d'upload de documents
+  const DOCUMENT_UPLOAD_COLUMNS = ['habilitation_electrique', 'caces', 'visite_medicale'];
 
   return (
+    <>
+    {/* Document Upload Popup */}
+    <RHDocumentUploadPopup
+      open={docUploadPopup.open}
+      onOpenChange={(open) => setDocUploadPopup({ ...docUploadPopup, open })}
+      collaboratorId={collaborator.id}
+      collaboratorName={collaboratorName}
+      fieldKey={docUploadPopup.fieldKey}
+      fieldLabel={docUploadPopup.fieldLabel}
+    />
     <TableRow 
       className={cn(
         "hover:bg-muted/30 transition-colors",
@@ -245,6 +294,9 @@ export function RHUnifiedTableRow({
           const displayValue = getLocalValue(collaborator.id, col.id, originalValue);
           const editable = isEditable(col.id);
           
+          // Colonnes avec possibilité d'upload de documents
+          const canUploadDoc = DOCUMENT_UPLOAD_COLUMNS.includes(col.id);
+          
           return (
             <TableCell 
               key={col.id}
@@ -254,17 +306,23 @@ export function RHUnifiedTableRow({
                 "p-1"
               )}
             >
-              <RHEditableCell
-                value={displayValue}
-                columnId={col.id}
-                collaboratorId={collaborator.id}
-                editable={editable}
-                onValueChange={onValueChange}
-              />
+              <div className="flex items-center gap-1">
+                <div className="flex-1">
+                  <RHEditableCell
+                    value={displayValue}
+                    columnId={col.id}
+                    collaboratorId={collaborator.id}
+                    editable={editable}
+                    onValueChange={onValueChange}
+                  />
+                </div>
+                {canUploadDoc && renderDocUploadButton(col.id, col.label)}
+              </div>
             </TableCell>
           );
         })
       ))}
     </TableRow>
+    </>
   );
 }
