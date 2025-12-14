@@ -91,6 +91,7 @@ export const ROUTES = {
     // Parc & Matériel
     parc: '/rh/parc',
     vehicule: (id: string) => `/rh/parc/vehicule/${id}`,
+    epi: '/rh/epi',
   },
 
   // ============================================
