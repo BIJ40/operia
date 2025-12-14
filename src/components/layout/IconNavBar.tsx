@@ -89,6 +89,7 @@ const navSections: NavSection[] = [
     icon: iconRh,
     indexUrl: ROUTES.rh.index,
     items: [
+      { title: 'Suivi RH', url: ROUTES.rh.suivi, icon: ClipboardList },
       { title: 'Mon équipe', url: ROUTES.rh.equipe, icon: Users },
       { title: 'Mon Coffre RH', url: ROUTES.rh.coffre, icon: FolderOpen },
       { title: 'Demandes RH', url: ROUTES.rh.demandes, icon: FileText },
