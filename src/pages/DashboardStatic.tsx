@@ -2,7 +2,7 @@
  * DashboardStatic - Page d'accueil avec layout fixe et sélecteur de période
  */
 
-import { useState, useMemo, createContext, useContext } from 'react';
+import { useState, useMemo, createContext, useContext, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -123,8 +123,19 @@ export default function DashboardStatic() {
   const { firstName } = useAuth();
   const greeting = getGreeting();
   
-  // État du sélecteur de période - défaut: mois en cours
-  const [selectedPeriod, setSelectedPeriod] = useState<PeriodKey>('month');
+  // État du sélecteur de période - défaut: mois en cours, mais persisté en sessionStorage
+  const [selectedPeriod, setSelectedPeriod] = useState<PeriodKey>(() => {
+    if (typeof window === 'undefined') return 'month';
+    const stored = window.sessionStorage.getItem('dashboard-selected-period') as PeriodKey | null;
+    const isValid = stored && PERIODS.some((p) => p.key === stored);
+    return isValid ? stored! : 'month';
+  });
+  
+  // Sauvegarde de la période sélectionnée pour éviter la réinitialisation au changement d'onglet / reload
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.sessionStorage.setItem('dashboard-selected-period', selectedPeriod);
+  }, [selectedPeriod]);
   
   // Calcul des dates selon la période sélectionnée
   const periodConfig = useMemo(() => {
