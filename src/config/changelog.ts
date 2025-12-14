@@ -15,6 +15,22 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.7.13",
+    title: "Sync Profils ↔ Collaborateurs",
+    date: "2025-12-14",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // SYNCHRONISATION BIDIRECTIONNELLE
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'apogee_user_id : sync bidirectionnel collaborateurs ↔ profiles' },
+      { type: 'improvement', description: 'role → role_agence : sync bidirectionnel collaborateurs → profiles' },
+      { type: 'improvement', description: 'agency_id → agence (slug) : sync bidirectionnel collaborateurs → profiles' },
+      { type: 'fix', description: 'Trigger sync_profile_on_collaborator_update étendu à tous les champs' },
+      { type: 'improvement', description: 'Backfill données existantes (apogee_user_id, role_agence, agence)' },
+      { type: 'improvement', description: 'Visibilité Admin : toutes modifications collaborateur remontent' },
+    ],
+  },
+  {
     version: "V0.7.12",
     title: "Audit Sécurité & Export DB",
     date: "2025-12-12",
