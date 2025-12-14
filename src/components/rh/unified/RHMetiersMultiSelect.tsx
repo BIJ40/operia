@@ -149,7 +149,7 @@ export function RHMetiersMultiSelect({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-64 p-2" align="start">
-        <ScrollArea className="max-h-[260px]">
+        <ScrollArea className="h-64 pr-1">
           {loadingCatalogue ? (
             <div className="flex items-center justify-center py-4">
               <Loader2 className="h-4 w-4 animate-spin" />
