@@ -98,48 +98,11 @@ export const NAV_GROUPS: NavGroup[] = [
     labelKey: 'pilotage',
     items: [
       { 
-        title: 'Statistiques', 
+        title: 'Stats Hub', 
         url: ROUTES.agency.statsHub,
         icon: BarChart3, 
         scope: 'mes_indicateurs',
-        description: 'Statistiques et indicateurs de l\'agence',
-        children: [
-          { 
-            title: 'Vue d\'ensemble', 
-            url: ROUTES.agency.statsHub, 
-            icon: BarChart3, 
-            scope: 'mes_indicateurs', 
-            description: 'Vue globale des statistiques' 
-          },
-          { 
-            title: 'Mon CA', 
-            url: ROUTES.agency.indicateurs, 
-            icon: BarChart3, 
-            scope: 'mes_indicateurs', 
-            description: 'Indicateurs de chiffre d\'affaires' 
-          },
-          { 
-            title: 'Mes Univers', 
-            url: ROUTES.agency.indicateursUnivers, 
-            icon: BarChart3, 
-            scope: 'mes_indicateurs', 
-            description: 'Statistiques par univers métier' 
-          },
-          { 
-            title: 'Mes Apporteurs', 
-            url: ROUTES.agency.indicateursApporteurs, 
-            icon: BarChart3, 
-            scope: 'mes_indicateurs', 
-            description: 'Statistiques apporteurs d\'affaires' 
-          },
-          { 
-            title: 'Mes SAV', 
-            url: ROUTES.agency.indicateursSav, 
-            icon: BarChart3, 
-            scope: 'mes_indicateurs', 
-            description: 'Statistiques SAV' 
-          },
-        ]
+        description: 'Statistiques et indicateurs de l\'agence'
       },
       { 
         title: 'Actions à Mener', 
