@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { startOfWeek, endOfWeek, format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import { logApogee } from "@/lib/logger";
+import { toast } from "sonner";
 
 interface PlanningSignature {
   id: string;
@@ -12,6 +13,11 @@ interface PlanningSignature {
   signed_at: string | null;
   signed_by_user_id: string | null;
   comment: string | null;
+  // Nouvelles colonnes workflow
+  sent_at: string | null;
+  sent_by_user_id: string | null;
+  tech_signed_at: string | null;
+  tech_signature_png: string | null;
 }
 
 interface UsePlanningSignatureArgs {
@@ -48,6 +54,111 @@ export function usePlanningSignature({ techId, weekDate }: UsePlanningSignatureA
     enabled: !!techId && !!user,
   });
 
+  // N2 envoie le planning au technicien
+  const sendToTechMutation = useMutation({
+    mutationFn: async () => {
+      if (!user?.id) throw new Error("Utilisateur non connecté");
+
+      const payload = {
+        tech_id: techId,
+        week_start: weekStartStr,
+        week_end: weekEndStr,
+        sent_at: new Date().toISOString(),
+        sent_by_user_id: user.id,
+      };
+
+      logApogee.info(`Envoi planning tech ${techId} semaine ${weekStartStr}`);
+
+      const { error } = await supabase
+        .from("planning_signatures")
+        .upsert(payload, {
+          onConflict: "tech_id,week_start",
+        });
+
+      if (error) {
+        logApogee.error("Erreur envoi planning:", error);
+        throw error;
+      }
+
+      // Note: Les notifications sont gérées manuellement si besoin
+      // Le technicien voit directement l'état "En attente signature" sur son planning
+    },
+    onSuccess: () => {
+      toast.success("Planning envoyé au technicien");
+      queryClient.invalidateQueries({
+        queryKey: ["planning-signature", techId, weekStartStr],
+      });
+    },
+    onError: () => {
+      toast.error("Erreur lors de l'envoi");
+    },
+  });
+
+  // N1 signe son planning avec sa signature personnelle
+  const techSignMutation = useMutation({
+    mutationFn: async (signaturePng: string) => {
+      if (!user?.id) throw new Error("Utilisateur non connecté");
+      if (!data?.id) throw new Error("Aucun planning à signer");
+
+      logApogee.info(`Signature tech planning ${techId} semaine ${weekStartStr}`);
+
+      const { error } = await supabase
+        .from("planning_signatures")
+        .update({
+          tech_signed_at: new Date().toISOString(),
+          tech_signature_png: signaturePng,
+        })
+        .eq("id", data.id);
+
+      if (error) {
+        logApogee.error("Erreur signature tech:", error);
+        throw error;
+      }
+
+      // Note: Le N2 voit directement le statut "Signé" sur le planning
+    },
+    onSuccess: () => {
+      toast.success("Planning signé avec succès");
+      queryClient.invalidateQueries({
+        queryKey: ["planning-signature", techId, weekStartStr],
+      });
+    },
+    onError: () => {
+      toast.error("Erreur lors de la signature");
+    },
+  });
+
+  // Annuler l'envoi (N2)
+  const cancelSendMutation = useMutation({
+    mutationFn: async () => {
+      if (!data?.id) throw new Error("Aucun planning à annuler");
+
+      logApogee.info(`Annulation envoi planning tech ${techId} semaine ${weekStartStr}`);
+
+      const { error } = await supabase
+        .from("planning_signatures")
+        .update({ 
+          sent_at: null, 
+          sent_by_user_id: null,
+          tech_signed_at: null,
+          tech_signature_png: null,
+        })
+        .eq("id", data.id);
+
+      if (error) {
+        logApogee.error("Erreur annulation:", error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success("Envoi annulé");
+      queryClient.invalidateQueries({
+        queryKey: ["planning-signature", techId, weekStartStr],
+      });
+    },
+  });
+
+  // Legacy: validation simple (conservé pour compatibilité)
   const signMutation = useMutation({
     mutationFn: async (comment?: string) => {
       if (!user?.id) throw new Error("Utilisateur non connecté");
@@ -108,9 +219,23 @@ export function usePlanningSignature({ techId, weekDate }: UsePlanningSignatureA
     signature: data,
     isLoading,
     error,
+    // États du workflow
+    isSent: !!data?.sent_at,
+    isSignedByTech: !!data?.tech_signed_at,
+    // Legacy
     isSigned: !!data?.signed_at,
+    // Actions N2
+    sendToTech: () => sendToTechMutation.mutate(),
+    cancelSend: () => cancelSendMutation.mutate(),
+    // Actions N1
+    techSign: (signaturePng: string) => techSignMutation.mutate(signaturePng),
+    // Legacy
     signPlanning: (comment?: string) => signMutation.mutate(comment),
     unsignPlanning: () => unsignMutation.mutate(),
+    // Loading states
+    isSending: sendToTechMutation.isPending,
+    isTechSigning: techSignMutation.isPending,
+    isCancelling: cancelSendMutation.isPending,
     isSigning: signMutation.isPending,
     isUnsigning: unsignMutation.isPending,
   };

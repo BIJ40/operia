@@ -3751,9 +3751,13 @@ export type Database = {
           comment: string | null
           created_at: string
           id: string
+          sent_at: string | null
+          sent_by_user_id: string | null
           signed_at: string | null
           signed_by_user_id: string | null
           tech_id: number
+          tech_signature_png: string | null
+          tech_signed_at: string | null
           updated_at: string
           week_end: string
           week_start: string
@@ -3762,9 +3766,13 @@ export type Database = {
           comment?: string | null
           created_at?: string
           id?: string
+          sent_at?: string | null
+          sent_by_user_id?: string | null
           signed_at?: string | null
           signed_by_user_id?: string | null
           tech_id: number
+          tech_signature_png?: string | null
+          tech_signed_at?: string | null
           updated_at?: string
           week_end: string
           week_start: string
@@ -3773,9 +3781,13 @@ export type Database = {
           comment?: string | null
           created_at?: string
           id?: string
+          sent_at?: string | null
+          sent_by_user_id?: string | null
           signed_at?: string | null
           signed_by_user_id?: string | null
           tech_id?: number
+          tech_signature_png?: string | null
+          tech_signed_at?: string | null
           updated_at?: string
           week_end?: string
           week_start?: string

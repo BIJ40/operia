@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useRef } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Calendar, Clock, CheckCircle, XCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, Clock, CheckCircle, Send, Loader2, Printer } from "lucide-react";
 import { useWeeklyTechPlanning } from "@/apogee-connect/hooks/useWeeklyTechPlanning";
 import { usePlanningSignature } from "@/apogee-connect/hooks/usePlanningSignature";
 import { formatMinutesToHours, WeeklyTechPlanning } from "@/apogee-connect/utils/planning";
@@ -14,60 +14,154 @@ import { cn } from "@/lib/utils";
 interface TechWeeklyPlanningListProps {
   techFilterId?: number;
   showInactiveTechs?: boolean;
+  isN1View?: boolean; // true = vue technicien, false = vue N2
 }
 
-// Sub-component for tech signature
-function TechSignatureSection({ 
+// Sub-component for N2 signature section
+function TechSignatureSectionN2({ 
   techId, 
-  weekDate 
+  weekDate,
+  techName,
 }: { 
   techId: number; 
   weekDate: Date;
+  techName: string;
 }) {
-  const { signature, isSigned, signPlanning, unsignPlanning, isSigning, isUnsigning, isLoading } = 
-    usePlanningSignature({ techId, weekDate });
+  const { 
+    signature, 
+    isSent, 
+    isSignedByTech, 
+    sendToTech, 
+    cancelSend,
+    isSending,
+    isCancelling,
+    isLoading 
+  } = usePlanningSignature({ techId, weekDate });
 
   if (isLoading) {
     return <Skeleton className="h-8 w-48" />;
   }
 
-  return (
-    <div className="flex items-center gap-3">
-      {isSigned && signature?.signed_at ? (
-        <>
-          <Badge variant="default" className="bg-emerald-600 text-white">
-            <CheckCircle className="w-3 h-3 mr-1" />
-            Validé le {format(new Date(signature.signed_at), "dd/MM/yyyy HH:mm", { locale: fr })}
-          </Badge>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => unsignPlanning()}
-            disabled={isUnsigning}
-            className="text-xs text-muted-foreground hover:text-destructive"
-          >
-            <XCircle className="w-3 h-3 mr-1" />
-            Annuler
-          </Button>
-        </>
-      ) : (
+  // État 3: Signé par le tech
+  if (isSignedByTech && signature?.tech_signed_at) {
+    return (
+      <div className="flex items-center gap-3">
+        <Badge variant="default" className="bg-emerald-600 text-white">
+          <CheckCircle className="w-3 h-3 mr-1" />
+          Signé le {format(new Date(signature.tech_signed_at), "dd/MM/yyyy HH:mm", { locale: fr })}
+        </Badge>
         <Button
-          onClick={() => signPlanning()}
-          disabled={isSigning}
+          variant="outline"
           size="sm"
-          className="bg-emerald-600 hover:bg-emerald-500"
+          onClick={() => {
+            // Imprimer le planning
+            window.print();
+          }}
         >
-          <CheckCircle className="w-4 h-4 mr-2" />
-          {isSigning ? "Validation..." : "Valider mon planning"}
+          <Printer className="w-4 h-4 mr-1" />
+          Imprimer
         </Button>
+      </div>
+    );
+  }
+
+  // État 2: Envoyé, en attente signature tech
+  if (isSent && signature?.sent_at) {
+    return (
+      <div className="flex items-center gap-3">
+        <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+          <Clock className="w-3 h-3 mr-1" />
+          En attente signature
+        </Badge>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => cancelSend()}
+          disabled={isCancelling}
+          className="text-xs text-muted-foreground hover:text-destructive"
+        >
+          {isCancelling ? <Loader2 className="w-3 h-3 animate-spin" /> : "Annuler"}
+        </Button>
+      </div>
+    );
+  }
+
+  // État 1: Non envoyé
+  return (
+    <Button
+      onClick={() => sendToTech()}
+      disabled={isSending}
+      size="sm"
+      variant="outline"
+      className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+    >
+      {isSending ? (
+        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+      ) : (
+        <Send className="w-4 h-4 mr-2" />
       )}
-    </div>
+      Envoyer au technicien
+    </Button>
+  );
+}
+
+// Sub-component for N1 signature section (technicien)
+function TechSignatureSectionN1({ 
+  techId, 
+  weekDate,
+  onRequestSign,
+}: { 
+  techId: number; 
+  weekDate: Date;
+  onRequestSign: () => void;
+}) {
+  const { 
+    signature, 
+    isSent, 
+    isSignedByTech,
+    isLoading 
+  } = usePlanningSignature({ techId, weekDate });
+
+  if (isLoading) {
+    return <Skeleton className="h-8 w-48" />;
+  }
+
+  // Déjà signé
+  if (isSignedByTech && signature?.tech_signed_at) {
+    return (
+      <Badge variant="default" className="bg-emerald-600 text-white">
+        <CheckCircle className="w-3 h-3 mr-1" />
+        Signé le {format(new Date(signature.tech_signed_at), "dd/MM/yyyy HH:mm", { locale: fr })}
+      </Badge>
+    );
+  }
+
+  // Planning envoyé, prêt à signer
+  if (isSent) {
+    return (
+      <Button
+        onClick={onRequestSign}
+        size="sm"
+        className="bg-emerald-600 hover:bg-emerald-500"
+      >
+        <CheckCircle className="w-4 h-4 mr-2" />
+        Signer mon planning
+      </Button>
+    );
+  }
+
+  // Pas encore envoyé par N2
+  return (
+    <Badge variant="secondary" className="text-muted-foreground">
+      En attente de validation
+    </Badge>
   );
 }
 
 export const TechWeeklyPlanningList: React.FC<TechWeeklyPlanningListProps> = ({
   techFilterId,
   showInactiveTechs = false,
+  isN1View = false,
 }) => {
   const {
     data,
@@ -78,6 +172,15 @@ export const TechWeeklyPlanningList: React.FC<TechWeeklyPlanningListProps> = ({
     goToNextWeek,
     goToCurrentWeek,
   } = useWeeklyTechPlanning(techFilterId, showInactiveTechs);
+
+  // Pour le modal de signature N1
+  const [showSignModal, setShowSignModal] = React.useState(false);
+  const [signingTechId, setSigningTechId] = React.useState<number | null>(null);
+
+  const handleRequestSign = (techId: number) => {
+    setSigningTechId(techId);
+    setShowSignModal(true);
+  };
 
   if (isLoading) {
     return (
@@ -145,7 +248,7 @@ export const TechWeeklyPlanningList: React.FC<TechWeeklyPlanningListProps> = ({
 
       {/* Tech Planning Cards */}
       {data.map((techWeek: WeeklyTechPlanning) => (
-        <Card key={techWeek.techId} className="overflow-hidden">
+        <Card key={techWeek.techId} className="overflow-hidden print:break-inside-avoid">
           <CardHeader className="pb-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -161,7 +264,20 @@ export const TechWeeklyPlanningList: React.FC<TechWeeklyPlanningListProps> = ({
                   {formatMinutesToHours(techWeek.weeklyTotalMinutes)}
                 </Badge>
               </div>
-              <TechSignatureSection techId={techWeek.techId} weekDate={weekDate} />
+              
+              {isN1View ? (
+                <TechSignatureSectionN1 
+                  techId={techWeek.techId} 
+                  weekDate={weekDate}
+                  onRequestSign={() => handleRequestSign(techWeek.techId)}
+                />
+              ) : (
+                <TechSignatureSectionN2 
+                  techId={techWeek.techId} 
+                  weekDate={weekDate}
+                  techName={techWeek.techName}
+                />
+              )}
             </div>
           </CardHeader>
           <CardContent>
@@ -242,6 +358,123 @@ export const TechWeeklyPlanningList: React.FC<TechWeeklyPlanningListProps> = ({
           </CardContent>
         </Card>
       ))}
+
+      {/* Modal de signature N1 */}
+      {showSignModal && signingTechId && (
+        <PlanningSignModal
+          techId={signingTechId}
+          weekDate={weekDate}
+          onClose={() => {
+            setShowSignModal(false);
+            setSigningTechId(null);
+          }}
+        />
+      )}
     </div>
   );
 };
+
+// Modal pour signer le planning (N1)
+function PlanningSignModal({
+  techId,
+  weekDate,
+  onClose,
+}: {
+  techId: number;
+  weekDate: Date;
+  onClose: () => void;
+}) {
+  const { techSign, isTechSigning } = usePlanningSignature({ techId, weekDate });
+  const [signatureData, setSignatureData] = React.useState<string | null>(null);
+  const [loadingSignature, setLoadingSignature] = React.useState(true);
+
+  // Charger la signature personnelle depuis user_signatures
+  React.useEffect(() => {
+    async function loadSignature() {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("user_signatures")
+        .select("signature_png_base64, signature_svg")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (data?.signature_png_base64) {
+        setSignatureData(data.signature_png_base64);
+      } else if (data?.signature_svg) {
+        // Fallback sur SVG (sera converti en PNG côté serveur si besoin)
+        setSignatureData(data.signature_svg);
+      }
+      setLoadingSignature(false);
+    }
+    loadSignature();
+  }, []);
+
+  const handleSign = async () => {
+    if (!signatureData) return;
+    await techSign(signatureData);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <Card className="w-full max-w-md mx-4">
+        <CardHeader>
+          <CardTitle>Signer mon planning</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {loadingSignature ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : signatureData ? (
+            <div className="border rounded-lg p-4 bg-muted/30">
+              <p className="text-sm text-muted-foreground mb-2">Votre signature :</p>
+              <img 
+                src={signatureData.startsWith("data:") ? signatureData : `data:image/png;base64,${signatureData}`}
+                alt="Ma signature"
+                className="max-h-24 mx-auto"
+              />
+            </div>
+          ) : (
+            <div className="text-center py-4">
+              <p className="text-muted-foreground text-sm">
+                Aucune signature enregistrée. 
+              </p>
+              <p className="text-sm mt-1">
+                <a href="/rh/signature" className="text-primary hover:underline">
+                  Créer ma signature →
+                </a>
+              </p>
+            </div>
+          )}
+
+          <p className="text-sm text-muted-foreground">
+            En signant, vous confirmez avoir pris connaissance de votre planning 
+            pour la semaine du {format(weekDate, "dd MMMM yyyy", { locale: fr })}.
+          </p>
+
+          <div className="flex gap-3 justify-end">
+            <Button variant="outline" onClick={onClose}>
+              Annuler
+            </Button>
+            <Button 
+              onClick={handleSign}
+              disabled={!signatureData || isTechSigning}
+              className="bg-emerald-600 hover:bg-emerald-500"
+            >
+              {isTechSigning ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <CheckCircle className="w-4 h-4 mr-2" />
+              )}
+              Confirmer et signer
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
