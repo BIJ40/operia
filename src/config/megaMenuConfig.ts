@@ -109,15 +109,6 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
         requiresOption: { module: 'rh', option: 'rh_admin' },
       },
       { 
-        label: 'Dashboard RH', 
-        href: ROUTES.rh.dashboard, 
-        icon: 'BarChart3', 
-        description: 'Statistiques RH',
-        section: 'dirigeant',
-        minRole: 'franchisee_admin',
-        requiresOption: { module: 'rh', option: 'rh_admin' },
-      },
-      { 
         label: 'Gestion congés', 
         href: ROUTES.rh.conges, 
         icon: 'Calendar', 

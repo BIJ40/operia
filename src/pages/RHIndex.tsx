@@ -4,7 +4,6 @@ import {
   Users, 
   CalendarDays,
   CalendarCheck,
-  LayoutDashboard,
   FolderOpen,
   Send,
   ChevronRight
@@ -15,6 +14,7 @@ import { usePendingDocumentRequestsCount } from "@/hooks/useDocumentRequests";
 import { Badge } from "@/components/ui/badge";
 import { ROUTES } from "@/config/routes";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { RHDashboard } from "@/components/rh/dashboard";
 import type { LucideIcon } from "lucide-react";
 
 interface RHModule {
@@ -75,15 +75,6 @@ const RH_MODULES: RHModule[] = [
     href: ROUTES.rh.demandes,
     section: 'dirigeant',
     enabled: false,
-  },
-  {
-    id: 'dashboard-rh',
-    title: 'Dashboard RH',
-    description: 'Statistiques et indicateurs RH',
-    icon: LayoutDashboard,
-    href: ROUTES.rh.dashboard,
-    section: 'dirigeant',
-    enabled: true,
   },
   {
     id: 'gestion-conges',
@@ -180,16 +171,37 @@ export default function RHIndex() {
         backLabel="Accueil"
       />
 
-      {/* Affichage direct sans section headers - chaque rôle ne voit qu'une seule section */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {visibleModules.map(module => (
-          <RHTileCard 
-            key={module.id} 
-            module={module} 
-            badge={getBadge(module.id)}
-          />
-        ))}
-      </div>
+      {/* N2+: Dashboard intégré + tiles de navigation */}
+      {isN2Plus && (
+        <>
+          <RHDashboard />
+          <div className="pt-4">
+            <h2 className="text-lg font-semibold mb-3">Accès rapides</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {visibleModules.map(module => (
+                <RHTileCard 
+                  key={module.id} 
+                  module={module} 
+                  badge={getBadge(module.id)}
+                />
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* N1: Tiles seulement */}
+      {isN1 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {visibleModules.map(module => (
+            <RHTileCard 
+              key={module.id} 
+              module={module} 
+              badge={getBadge(module.id)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
