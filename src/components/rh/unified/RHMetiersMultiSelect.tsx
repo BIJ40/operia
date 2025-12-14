@@ -5,9 +5,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ChevronDown, Plus, Loader2 } from 'lucide-react';
+import { ChevronDown, Plus, Loader2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useCompetencesCatalogue, useAddCompetenceCatalogue } from '@/hooks/useRHCompetencesCatalogue';
+import { useCompetencesCatalogue, useAddCompetenceCatalogue, useDeleteCompetenceCatalogue } from '@/hooks/useRHCompetencesCatalogue';
 import { useUpdateCompetencies, useRHCollaborators } from '@/hooks/useRHSuivi';
 import { toast } from 'sonner';
 
@@ -30,6 +30,7 @@ export function RHMetiersMultiSelect({
   const { data: catalogue = [], isLoading: loadingCatalogue } = useCompetencesCatalogue();
   const { data: collaborators = [] } = useRHCollaborators();
   const addCompetence = useAddCompetenceCatalogue();
+  const deleteCompetence = useDeleteCompetenceCatalogue();
   const updateCompetencies = useUpdateCompetencies();
 
   // Catalogue complet + tous les métiers réellement utilisés dans l'agence
@@ -156,18 +157,41 @@ export function RHMetiersMultiSelect({
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-1">
-              {allMetiers.map((label) => (
-                <label
-                  key={label}
-                  className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer"
-                >
-                  <Checkbox
-                    checked={localSelected.includes(label)}
-                    onCheckedChange={() => handleToggle(label)}
-                  />
-                  <span className="text-xs truncate" title={label}>{label}</span>
-                </label>
-              ))}
+              {allMetiers.map((label) => {
+                const catalogueItem = catalogue.find(c => c.label.toLowerCase() === label.toLowerCase());
+                const canDelete = catalogueItem && !catalogueItem.is_default;
+                
+                return (
+                  <div
+                    key={label}
+                    className="group flex items-center gap-1 px-2 py-1.5 rounded hover:bg-muted"
+                  >
+                    <label className="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+                      <Checkbox
+                        checked={localSelected.includes(label)}
+                        onCheckedChange={() => handleToggle(label)}
+                      />
+                      <span className="text-xs truncate" title={label}>{label}</span>
+                    </label>
+                    {canDelete && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (catalogueItem) {
+                            deleteCompetence.mutate(catalogueItem.id);
+                            setLocalSelected(prev => prev.filter(m => m.toLowerCase() !== label.toLowerCase()));
+                          }
+                        }}
+                        className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-destructive/20 rounded transition-opacity"
+                        title="Supprimer du catalogue"
+                      >
+                        <X className="h-3 w-3 text-destructive" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </ScrollArea>

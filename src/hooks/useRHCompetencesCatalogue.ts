@@ -54,13 +54,36 @@ export function useAddCompetenceCatalogue() {
       if (error) throw error;
     },
     onSuccess: () => {
-      // Invalider le catalogue et les collaborateurs pour rafraîchir les listes
       queryClient.invalidateQueries({ queryKey: ['rh-competences-catalogue', agencyId] });
       queryClient.invalidateQueries({ queryKey: ['rh-competences-catalogue'] });
       toast.success('Métier ajouté au catalogue');
     },
     onError: () => {
       toast.error('Erreur lors de l\'ajout');
+    },
+  });
+}
+
+export function useDeleteCompetenceCatalogue() {
+  const queryClient = useQueryClient();
+  const { agencyId } = useAuth();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('rh_competences_catalogue')
+        .delete()
+        .eq('id', id)
+        .eq('is_default', false); // Sécurité: ne jamais supprimer les defaults
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rh-competences-catalogue', agencyId] });
+      queryClient.invalidateQueries({ queryKey: ['rh-competences-catalogue'] });
+    },
+    onError: () => {
+      toast.error('Erreur lors de la suppression');
     },
   });
 }
