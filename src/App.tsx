@@ -95,6 +95,7 @@ const AdminBackup = lazy(() => import("./pages/AdminBackup"));
 const AdminHelpConfortBackup = lazy(() => import("./pages/AdminHelpConfortBackup"));
 const AdminAgencies = lazy(() => import("./pages/AdminAgencies"));
 const AdminStorageQuota = lazy(() => import("./pages/AdminStorageQuota"));
+const UnifiedManagementPage = lazy(() => import("./pages/admin/UnifiedManagementPage"));
 const AdminCacheBackup = lazy(() => import("./pages/AdminCacheBackup"));
 const AdminUserActivity = lazy(() => import("./pages/AdminUserActivity"));
 const AdminUsersUnified = lazy(() => import("./pages/AdminUsersUnified"));
@@ -370,8 +371,9 @@ function AppContent() {
           
           <Route path="/admin/feature-flags" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminFeatureFlags /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/modules" element={<Navigate to="/admin/feature-flags" replace />} />
-          <Route path="/admin/permissions-center" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><PermissionsCenterPage /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/admin/droits" element={<MainLayout><RoleGuard minRole="franchisee_admin"><AccessRightsConsole /></RoleGuard></MainLayout>} />
+          <Route path="/admin/permissions-center" element={<Navigate to="/admin/gestion" replace />} />
+          <Route path="/admin/droits" element={<Navigate to="/admin/gestion" replace />} />
+          <Route path="/admin/gestion" element={<MainLayout><RoleGuard minRole="franchisee_admin"><UnifiedManagementPage /></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* GESTION DE PROJET (ex Apogée Tickets) */}
