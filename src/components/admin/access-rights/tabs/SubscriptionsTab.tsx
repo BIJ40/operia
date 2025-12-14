@@ -15,10 +15,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   useAllAgencySubscriptions, 
-  useUpdateAgencySubscription 
-} from '@/hooks/access-rights/useAgencySubscription';
-import { usePlanTiers } from '@/hooks/access-rights/usePlanTiers';
-import { useAuditLog } from '@/hooks/access-rights/usePermissionAudit';
+  useUpdateAgencySubscription,
+  usePlanTiers,
+  useAuditLog,
+} from '@/hooks/access-rights';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
