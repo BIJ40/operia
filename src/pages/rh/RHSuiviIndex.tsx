@@ -8,8 +8,7 @@ import { useRHCollaborators, useRHTablePrefs, useUpdateRHTablePrefs } from '@/ho
 import { RHUnifiedTable } from '@/components/rh/unified/RHUnifiedTable';
 import { TAB_COLUMNS, RHTabId } from '@/components/rh/unified/RHUnifiedTableColumns';
 import { CompetencesMatrixPrint } from '@/components/rh/CompetencesMatrixPrint';
-import { Users, Printer } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Users } from 'lucide-react';
 
 // Colonnes visibles par défaut par onglet
 const DEFAULT_VISIBLE_COLUMNS: Record<RHTabId, string[]> = {
@@ -99,15 +98,6 @@ export default function RHSuiviIndex() {
             </p>
           </div>
         </div>
-        
-        <Button
-          variant="outline"
-          onClick={() => setShowCompetencesMatrix(true)}
-          className="gap-2"
-        >
-          <Printer className="h-4 w-4" />
-          Matrice Compétences
-        </Button>
       </div>
 
       <RHUnifiedTable
@@ -118,6 +108,7 @@ export default function RHSuiviIndex() {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onRefresh={refetch}
+        onPrintMatrix={() => setShowCompetencesMatrix(true)}
       />
       
       <CompetencesMatrixPrint
