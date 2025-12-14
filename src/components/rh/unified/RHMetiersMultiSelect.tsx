@@ -149,14 +149,14 @@ export function RHMetiersMultiSelect({
           <ChevronDown className="h-3 w-3 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-56 p-2" align="start">
-        <ScrollArea className="max-h-[250px]">
+      <PopoverContent className="w-64 p-2" align="start">
+        <ScrollArea className="max-h-[260px]">
           {loadingCatalogue ? (
             <div className="flex items-center justify-center py-4">
               <Loader2 className="h-4 w-4 animate-spin" />
             </div>
           ) : (
-            <div className="space-y-1">
+            <div className="grid grid-cols-2 gap-1">
               {allMetiers.map((label) => (
                 <label
                   key={label}
@@ -166,7 +166,7 @@ export function RHMetiersMultiSelect({
                     checked={localSelected.includes(label)}
                     onCheckedChange={() => handleToggle(label)}
                   />
-                  <span className="text-sm">{label}</span>
+                  <span className="text-xs truncate" title={label}>{label}</span>
                 </label>
               ))}
             </div>
