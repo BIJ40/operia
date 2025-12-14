@@ -99,7 +99,7 @@ export function useCreateLeaveRequest() {
       // Get collaborator and agency
       const { data: collaborator, error: collabError } = await supabase
         .from('collaborators')
-        .select('id, agency_id')
+        .select('id, agency_id, first_name, last_name')
         .eq('user_id', user.id)
         .single();
 
@@ -118,11 +118,41 @@ export function useCreateLeaveRequest() {
         .single();
 
       if (error) throw error;
+
+      // Notify N2 managers (RH roles + dirigeants) of the agency
+      const { data: rhManagers } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('agency_id', collaborator.agency_id)
+        .or('global_role.eq.franchisee_admin,global_role.eq.franchisor_user,global_role.eq.franchisor_admin,global_role.eq.platform_admin,global_role.eq.superadmin');
+
+      if (rhManagers?.length) {
+        const employeeName = `${collaborator.first_name} ${collaborator.last_name}`;
+        const notifications = rhManagers
+          .filter(m => m.id !== user.id)
+          .map(manager => ({
+            collaborator_id: collaborator.id,
+            recipient_id: manager.id,
+            sender_id: user.id,
+            agency_id: collaborator.agency_id,
+            notification_type: 'REQUEST_CREATED',
+            title: 'Nouvelle demande de congé',
+            message: `${employeeName} a soumis une demande de congé`,
+            related_request_id: data.id,
+          }));
+
+        if (notifications.length) {
+          await supabase.from('rh_notifications').insert(notifications);
+        }
+      }
+
       return data as LeaveRequest;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-leave-requests'] });
       queryClient.invalidateQueries({ queryKey: ['agency-leave-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['rh-notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['rh-notifications-count'] });
       successToast('Demande envoyée');
     },
     onError: (error: Error) => {
@@ -147,6 +177,15 @@ export function useUpdateLeaveRequest() {
         updatePayload.validated_at = new Date().toISOString();
       }
 
+      // Get request details before update for notification
+      const { data: existingRequest, error: fetchError } = await supabase
+        .from('leave_requests')
+        .select('collaborator_id, agency_id, created_by')
+        .eq('id', id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
       const { data, error } = await supabase
         .from('leave_requests')
         .update(updatePayload)
@@ -155,11 +194,40 @@ export function useUpdateLeaveRequest() {
         .single();
 
       if (error) throw error;
+
+      // Notify employee if status changed to APPROVED or REFUSED
+      if (updates.status === 'APPROVED' || updates.status === 'REFUSED') {
+        // Get the user_id from collaborator
+        const { data: collaborator } = await supabase
+          .from('collaborators')
+          .select('user_id')
+          .eq('id', existingRequest.collaborator_id)
+          .maybeSingle();
+
+        if (collaborator?.user_id) {
+          const isApproved = updates.status === 'APPROVED';
+          await supabase.from('rh_notifications').insert({
+            collaborator_id: existingRequest.collaborator_id,
+            recipient_id: collaborator.user_id,
+            sender_id: user?.id,
+            agency_id: existingRequest.agency_id,
+            notification_type: isApproved ? 'REQUEST_COMPLETED' : 'REQUEST_REJECTED',
+            title: isApproved ? 'Demande de congé approuvée' : 'Demande de congé refusée',
+            message: isApproved 
+              ? 'Votre demande de congé a été acceptée' 
+              : `Votre demande de congé a été refusée${updates.refusal_reason ? `. Motif : ${updates.refusal_reason}` : ''}`,
+            related_request_id: id,
+          });
+        }
+      }
+
       return data as LeaveRequest;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['my-leave-requests'] });
       queryClient.invalidateQueries({ queryKey: ['agency-leave-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['rh-notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['rh-notifications-count'] });
       
       if (data.status === 'APPROVED') {
         successToast('Demande acceptée');
