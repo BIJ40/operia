@@ -30,8 +30,8 @@ export function TechnicienPersonnelKPIs() {
       <Alert variant="default" className="bg-amber-500/10 border-amber-500/20">
         <LinkIcon className="h-4 w-4 text-amber-600" />
         <AlertDescription className="text-amber-700">
-          Votre compte n'est pas lié à un technicien Apogée. 
-          Contactez votre responsable pour configurer votre profil.
+          Votre compte utilisateur n'est pas encore lié à votre profil Apogée. 
+          Contactez votre responsable RH ou votre agence pour faire lier votre compte.
         </AlertDescription>
       </Alert>
     );

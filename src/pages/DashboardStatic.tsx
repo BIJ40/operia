@@ -12,6 +12,8 @@
  */
 
 import { useState, useMemo, createContext, useContext, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -132,7 +134,7 @@ function getGreeting(): string {
 }
 
 export default function DashboardStatic() {
-  const { firstName, globalRole, roleAgence } = useAuth();
+  const { firstName, globalRole, roleAgence, user } = useAuth();
   const greeting = getGreeting();
   
   // Détermination du niveau d'accès
@@ -149,6 +151,22 @@ export default function DashboardStatic() {
   
   // N2+ = accès aux KPIs agence
   const hasAgencyAccess = isN2 || isN5orN6;
+  
+  // Vérifier si le N1 a une liaison apogee_user_id (pour masquer le sélecteur si pas lié)
+  const { data: hasApogeeLink } = useQuery({
+    queryKey: ['dashboard-apogee-link', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return false;
+      const { data } = await supabase
+        .from('collaborators')
+        .select('apogee_user_id')
+        .eq('user_id', user.id)
+        .single();
+      return !!data?.apogee_user_id;
+    },
+    enabled: !!user?.id && isN1,
+    staleTime: 5 * 60 * 1000,
+  });
   
   // État du sélecteur de période - défaut: mois en cours, mais persisté en sessionStorage
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodKey>(() => {
@@ -517,8 +535,8 @@ export default function DashboardStatic() {
     );
   };
 
-  // Afficher le sélecteur de période uniquement pour N2+
-  const showPeriodSelector = hasAgencyAccess || isN1;
+  // Afficher le sélecteur de période uniquement pour N2+ ou N1 avec liaison Apogée
+  const showPeriodSelector = hasAgencyAccess || (isN1 && hasApogeeLink === true);
 
   return (
     <DashboardPeriodContext.Provider value={periodConfig}>
