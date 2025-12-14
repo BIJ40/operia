@@ -7,7 +7,8 @@ import {
   HardHat,
   ChevronRight,
   FolderOpen,
-  Calendar
+  Calendar,
+  ClipboardList
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,6 +43,13 @@ const MON_ESPACE_MODULES: RHModule[] = [
 ];
 
 const RH_MODULES: RHModule[] = [
+  {
+    id: 'suivi-rh',
+    title: 'Suivi RH',
+    description: 'Vue complète des collaborateurs',
+    icon: ClipboardList,
+    href: ROUTES.rh.suivi,
+  },
   {
     id: 'mon-equipe',
     title: 'Mon équipe',
