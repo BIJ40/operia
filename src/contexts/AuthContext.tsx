@@ -248,6 +248,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               : {},
           };
         }
+
+        // Règle métier: dans le plan PRO, certaines options de pilotage_agence sont incluses d'office
+        // On considère qu'une agence est en PRO si elle a accès à parc ou reseau_franchiseur
+        const parcModule = resolvedModules.parc as any;
+        const reseauModule = resolvedModules.reseau_franchiseur as any;
+        const isProAgency = !!(
+          (parcModule && typeof parcModule === 'object' && parcModule.enabled) ||
+          (reseauModule && typeof reseauModule === 'object' && reseauModule.enabled)
+        );
+
+        const pilotageModule = resolvedModules.pilotage_agence as any;
+        if (isProAgency && pilotageModule && typeof pilotageModule === 'object' && pilotageModule.enabled) {
+          const pilotageOptions = (pilotageModule.options && typeof pilotageModule.options === 'object')
+            ? pilotageModule.options as Record<string, boolean>
+            : {};
+
+          resolvedModules.pilotage_agence = {
+            enabled: true,
+            options: {
+              ...pilotageOptions,
+              // Stats Hub inclus dans le plan PRO (mais pas dans STARTER)
+              stats_hub: true,
+            },
+          } as any;
+        }
+
         if (import.meta.env.DEV) {
           logAuth.info('[AUTH] Modules loaded from RPC get_user_effective_modules:', effectiveModules.length);
         }
