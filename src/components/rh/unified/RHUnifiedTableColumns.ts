@@ -101,12 +101,19 @@ export const TAB_COLUMNS: Record<RHTabId, ColumnGroup[]> = {
   ],
   competences: [
     {
+      id: 'metiers',
+      label: 'Métiers',
+      className: 'bg-green-50 dark:bg-green-950/30',
+      columns: [
+        { id: 'metiers_liste', label: 'Compétences', accessor: (row) => row.competencies?.competences_techniques?.join(', ') || '' },
+      ],
+    },
+    {
       id: 'habilitations',
-      label: 'Habilitations',
+      label: 'Hab.',
       className: 'bg-purple-50 dark:bg-purple-950/30',
       columns: [
-        { id: 'hab_elec_statut', label: 'Hab. Élec.', accessor: (row) => row.competencies?.habilitation_electrique_statut },
-        { id: 'hab_elec_date', label: 'Date', accessor: (row) => row.competencies?.habilitation_electrique_date },
+        { id: 'hab_elec_statut', label: 'Élec.', accessor: (row) => row.competencies?.habilitation_electrique_statut },
       ],
     },
     {
@@ -114,7 +121,7 @@ export const TAB_COLUMNS: Record<RHTabId, ColumnGroup[]> = {
       label: 'CACES',
       className: 'bg-indigo-50 dark:bg-indigo-950/30',
       columns: [
-        { id: 'caces_count', label: 'Nb CACES', accessor: (row) => row.competencies?.caces?.length || 0 },
+        { id: 'caces_count', label: 'Nb', accessor: (row) => row.competencies?.caces?.length || 0 },
       ],
     },
   ],
