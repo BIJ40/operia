@@ -1,19 +1,17 @@
-import { Link } from "react-router-dom";
 import { 
   Users, 
   CalendarDays,
   FileText,
   Car,
   HardHat,
-  ChevronRight,
   FolderOpen,
   Calendar,
   ClipboardList
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { ROUTES } from "@/config/routes";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { IndexTile } from "@/components/ui/index-tile";
 import type { LucideIcon } from "lucide-react";
 
 interface RHModule {
@@ -90,31 +88,6 @@ const MAINTENANCE_MODULES: RHModule[] = [
   },
 ];
 
-function BlueTileCard({ module }: { module: RHModule }) {
-  const Icon = module.icon;
-  
-  return (
-    <Link to={module.href} className="block group">
-      <Card className="h-full transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-helpconfort-blue/5 via-background to-background">
-        <CardContent className="p-4">
-          <div className="p-2 rounded-lg bg-helpconfort-blue/10 w-fit">
-            <Icon className="h-5 w-5 text-helpconfort-blue" />
-          </div>
-          <h3 className="mt-3 font-semibold text-foreground group-hover:text-primary transition-colors">
-            {module.title}
-          </h3>
-          <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
-            {module.description}
-          </p>
-          <div className="mt-3 flex items-center text-xs text-muted-foreground group-hover:text-primary transition-colors">
-            <span>Accéder</span>
-            <ChevronRight className="h-3 w-3 ml-1" />
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
-  );
-}
 
 export default function RHIndex() {
   const { globalRole } = useAuth();
@@ -154,7 +127,13 @@ export default function RHIndex() {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {MON_ESPACE_MODULES.map(module => (
-            <BlueTileCard key={module.id} module={module} />
+            <IndexTile
+              key={module.id}
+              title={module.title}
+              description={module.description}
+              icon={module.icon}
+              href={module.href}
+            />
           ))}
         </div>
       </section>
@@ -167,7 +146,13 @@ export default function RHIndex() {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {RH_MODULES.map(module => (
-            <BlueTileCard key={module.id} module={module} />
+            <IndexTile
+              key={module.id}
+              title={module.title}
+              description={module.description}
+              icon={module.icon}
+              href={module.href}
+            />
           ))}
         </div>
       </section>
@@ -180,9 +165,12 @@ export default function RHIndex() {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {MAINTENANCE_MODULES.map(module => (
-            <BlueTileCard 
-              key={module.id} 
-              module={module}
+            <IndexTile
+              key={module.id}
+              title={module.title}
+              description={module.description}
+              icon={module.icon}
+              href={module.href}
             />
           ))}
         </div>
