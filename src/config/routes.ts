@@ -88,6 +88,9 @@ export const ROUTES = {
     demandes: '/rh/demandes',
     conges: '/rh/conges',
     dashboard: '/rh/dashboard',
+    // Parc & Matériel
+    parc: '/rh/parc',
+    vehicule: (id: string) => `/rh/parc/vehicule/${id}`,
   },
 
   // ============================================

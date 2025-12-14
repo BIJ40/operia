@@ -7,7 +7,7 @@ import { RHCollaborator } from '@/types/rh-suivi';
 import { FIXED_COLUMNS, TAB_COLUMNS, RHTabId } from './RHUnifiedTableColumns';
 import { DocumentIcons, DocumentType } from './RHDocumentPopup';
 import { RHEditableCell } from './RHEditableCell';
-import { RHVehiculePopup, formatVehiculeDisplay } from './RHVehiculePopup';
+import { RHVehicleSelectCell } from './RHVehicleSelectCell';
 import { RHCartePopup, formatCarteDisplay } from './RHCartePopup';
 import { RHDocumentUploadPopup } from './RHDocumentUploadPopup';
 import { RHMaterielPopup } from './RHMaterielPopup';
@@ -48,7 +48,6 @@ export function RHUnifiedTableRow({
   const status = getStatusIndicator(collaborator);
   
   // Popup states
-  const [vehiculePopupOpen, setVehiculePopupOpen] = useState(false);
   const [carteCarburantPopupOpen, setCarteCarburantPopupOpen] = useState(false);
   const [carteBancairePopupOpen, setCarteBancairePopupOpen] = useState(false);
   const [carteAutrePopupOpen, setCarteAutrePopupOpen] = useState(false);
@@ -94,27 +93,9 @@ export function RHUnifiedTableRow({
     if (colId === 'vehicule_attribue') {
       return (
         <TableCell key={colId} className={cellClass}>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs font-normal flex-1 justify-start"
-              onDoubleClick={() => setVehiculePopupOpen(true)}
-              title="Double-clic pour modifier"
-            >
-              {formatVehiculeDisplay(assets?.vehicule_attribue || null)}
-            </Button>
-            {renderDocUploadButton('vehicule', 'Véhicule')}
-          </div>
-          <RHVehiculePopup
-            open={vehiculePopupOpen}
-            onOpenChange={setVehiculePopupOpen}
-            value={assets?.vehicule_attribue || null}
-            onSave={(data) => {
-              const jsonValue = JSON.stringify(data);
-              // Sauvegarde dans les "assets" du collaborateur pour qu'il soit visible et persistant
-              onAssetsUpdate?.(collaborator.id, 'vehicule_attribue', jsonValue);
-            }}
+          <RHVehicleSelectCell
+            collaboratorId={collaborator.id}
+            currentVehicleId={null}
           />
         </TableCell>
       );
