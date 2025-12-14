@@ -5,7 +5,9 @@ import {
   FileText,
   Car,
   HardHat,
-  ChevronRight
+  ChevronRight,
+  FolderOpen,
+  Calendar
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,25 +24,42 @@ interface RHModule {
   badge?: number;
 }
 
+const MON_ESPACE_MODULES: RHModule[] = [
+  {
+    id: 'mon-coffre-rh',
+    title: 'Mon Coffre RH',
+    description: 'Mes documents personnels',
+    icon: FolderOpen,
+    href: ROUTES.rh.coffre,
+  },
+  {
+    id: 'demande-conge',
+    title: 'Demande de congé',
+    description: 'Poser une demande',
+    icon: Calendar,
+    href: ROUTES.rh.demande,
+  },
+];
+
 const RH_MODULES: RHModule[] = [
   {
     id: 'mon-equipe',
     title: 'Mon équipe',
-    description: 'Gérez les collaborateurs et leurs dossiers RH',
+    description: 'Collaborateurs et RH',
     icon: Users,
     href: ROUTES.rh.equipe,
   },
   {
     id: 'plannings',
     title: 'Plannings',
-    description: 'Consultez et signez les plannings hebdomadaires',
+    description: 'Plannings hebdomadaires',
     icon: CalendarDays,
     href: ROUTES.rh.plannings,
   },
   {
     id: 'demandes-rh',
     title: 'Demandes RH',
-    description: 'Traitez les demandes des collaborateurs',
+    description: 'Traiter les demandes',
     icon: FileText,
     href: ROUTES.rh.demandes,
   },
@@ -119,11 +138,24 @@ export default function RHIndex() {
         backLabel="Accueil"
       />
 
-      {/* Section Ressources Humaines */}
+      {/* Section Mon Espace */}
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+          <FolderOpen className="h-5 w-5 text-helpconfort-blue" />
+          Mon Espace
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {MON_ESPACE_MODULES.map(module => (
+            <BlueTileCard key={module.id} module={module} />
+          ))}
+        </div>
+      </section>
+
+      {/* Section Gestion RH */}
       <section className="space-y-4">
         <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
           <Users className="h-5 w-5 text-helpconfort-blue" />
-          Ressources Humaines
+          Gestion RH
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {RH_MODULES.map(module => (
