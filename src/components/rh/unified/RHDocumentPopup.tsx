@@ -158,9 +158,11 @@ export function RHDocumentPopup({
 interface DocumentIconsProps {
   collaboratorId: string;
   onDocumentClick: (type: DocumentType) => void;
+  large?: boolean; // Pour afficher des icônes plus grandes
+  showVisibilityToggle?: boolean; // Pour afficher le toggle coffre
 }
 
-export function DocumentIcons({ collaboratorId, onDocumentClick }: DocumentIconsProps) {
+export function DocumentIcons({ collaboratorId, onDocumentClick, large = false, showVisibilityToggle = false }: DocumentIconsProps) {
   const [previewDoc, setPreviewDoc] = useState<{type: DocumentType; filePath: string; fileName: string} | null>(null);
 
   // Query to check which document types exist for this collaborator
@@ -188,7 +190,16 @@ export function DocumentIcons({ collaboratorId, onDocumentClick }: DocumentIcons
 
   const handleClick = (docType: DocumentInfo, e: React.MouseEvent) => {
     e.stopPropagation();
-    const doc = existingDocs.find(d => d.doc_type === docType.type);
+    // Chercher avec les anciens ET nouveaux codes
+    const typeMapping: Record<DocumentType, string[]> = {
+      cni: ['cni', 'ID_CARD'],
+      permis: ['permis', 'DRIVING_LICENSE'],
+      carte_vitale: ['carte_vitale', 'VITALE', 'CARTE_VITALE'],
+      contrat: ['contrat', 'CONTRACT'],
+      rib: ['rib', 'RIB'],
+    };
+    
+    const doc = existingDocs.find(d => typeMapping[docType.type]?.includes(d.doc_type));
     
     if (doc) {
       // Document exists - show preview
@@ -203,25 +214,42 @@ export function DocumentIcons({ collaboratorId, onDocumentClick }: DocumentIcons
     }
   };
 
+  // Check if document exists with old or new codes
+  const hasDocument = (type: DocumentType) => {
+    const typeMapping: Record<DocumentType, string[]> = {
+      cni: ['cni', 'ID_CARD'],
+      permis: ['permis', 'DRIVING_LICENSE'],
+      carte_vitale: ['carte_vitale', 'VITALE', 'CARTE_VITALE'],
+      contrat: ['contrat', 'CONTRACT'],
+      rib: ['rib', 'RIB'],
+    };
+    return existingDocs.some(d => typeMapping[type]?.includes(d.doc_type));
+  };
+
   const docInfo = previewDoc ? DOCUMENT_TYPES.find(d => d.type === previewDoc.type) : null;
+
+  // Classes pour la taille des icônes
+  const iconSize = large ? 'h-6 w-6' : 'h-4 w-4';
+  const buttonPadding = large ? 'p-2' : 'p-1';
 
   return (
     <>
-      <div className="flex items-center gap-1">
+      <div className={cn("flex items-center", large ? "gap-3" : "gap-1")}>
         {DOCUMENT_TYPES.map((docType) => {
-          const hasDoc = existingDocs.some(d => d.doc_type === docType.type);
+          const hasDoc = hasDocument(docType.type);
           
           return (
             <button
               key={docType.type}
               onClick={(e) => handleClick(docType, e)}
               className={cn(
-                "p-1 rounded hover:bg-muted transition-colors",
+                "rounded hover:bg-muted transition-colors",
+                buttonPadding,
                 hasDoc ? docType.color : "text-muted-foreground/40"
               )}
               title={`${docType.label}${hasDoc ? ' ✓' : ' (vide)'}`}
             >
-              {docType.icon}
+              {React.cloneElement(docType.icon as React.ReactElement, { className: iconSize })}
             </button>
           );
         })}
