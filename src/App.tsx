@@ -276,7 +276,7 @@ function AppContent() {
           <Route path="/rh/equipe/plannings" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><PlanningHebdo /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/rh/equipe/:id" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><CollaborateurProfilePage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/rh/demandes" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><DemandesRHPage /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/rh/conges" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><GestionConges /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/rh/conges" element={<Navigate to="/rh/demandes" replace />} />
           <Route path="/rh/dashboard" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOption="rh_admin"><RHDashboardPage /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* Legacy RH redirects */}
@@ -287,7 +287,7 @@ function AppContent() {
           <Route path="/hc-agency/collaborateurs" element={<Navigate to="/rh/equipe" replace />} />
           <Route path="/hc-agency/collaborateurs/:id" element={<Navigate to="/rh/equipe/:id" replace />} />
           <Route path="/hc-agency/demandes-rh" element={<Navigate to="/rh/demandes" replace />} />
-          <Route path="/hc-agency/gestion-conges" element={<Navigate to="/rh/conges" replace />} />
+          <Route path="/hc-agency/gestion-conges" element={<Navigate to="/rh/demandes" replace />} />
           <Route path="/hc-agency/dashboard-rh" element={<Navigate to="/rh/dashboard" replace />} />
           
           {/* Redirect legacy StatIA Builder route to admin */}
