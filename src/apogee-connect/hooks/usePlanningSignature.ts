@@ -4,6 +4,7 @@ import { startOfWeek, endOfWeek, format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import { logApogee } from "@/lib/logger";
 import { toast } from "sonner";
+import { createPlanningNotification } from "@/hooks/planning/usePlanningNotifications";
 
 interface PlanningSignature {
   id: string;
@@ -80,8 +81,24 @@ export function usePlanningSignature({ techId, weekDate }: UsePlanningSignatureA
         throw error;
       }
 
-      // Note: Les notifications sont gérées manuellement si besoin
-      // Le technicien voit directement l'état "En attente signature" sur son planning
+      // Créer notification pour le technicien (N1)
+      // Trouver le user_id du technicien via son apogee_user_id
+      const { data: collaborator } = await supabase
+        .from("collaborators")
+        .select("user_id, agency_id")
+        .eq("apogee_user_id", techId)
+        .maybeSingle();
+
+      if (collaborator?.user_id && collaborator?.agency_id) {
+        await createPlanningNotification({
+          agencyId: collaborator.agency_id,
+          techId,
+          recipientUserId: collaborator.user_id,
+          senderUserId: user.id,
+          notificationType: "PLANNING_SENT",
+          weekStart: weekStartStr,
+        });
+      }
     },
     onSuccess: () => {
       toast.success("Planning envoyé au technicien");
@@ -115,7 +132,31 @@ export function usePlanningSignature({ techId, weekDate }: UsePlanningSignatureA
         throw error;
       }
 
-      // Note: Le N2 voit directement le statut "Signé" sur le planning
+      // Créer notification pour le N2 (celui qui a envoyé le planning)
+      if (data?.sent_by_user_id) {
+        // Récupérer les infos du tech pour le message
+        const { data: collaborator } = await supabase
+          .from("collaborators")
+          .select("first_name, last_name, agency_id")
+          .eq("apogee_user_id", techId)
+          .maybeSingle();
+
+        if (collaborator?.agency_id) {
+          const techName = [collaborator.first_name, collaborator.last_name]
+            .filter(Boolean)
+            .join(" ") || "Le technicien";
+
+          await createPlanningNotification({
+            agencyId: collaborator.agency_id,
+            techId,
+            recipientUserId: data.sent_by_user_id,
+            senderUserId: user.id,
+            notificationType: "PLANNING_SIGNED",
+            weekStart: weekStartStr,
+            techName,
+          });
+        }
+      }
     },
     onSuccess: () => {
       toast.success("Planning signé avec succès");

@@ -3746,6 +3746,73 @@ export type Database = {
         }
         Relationships: []
       }
+      planning_notifications: {
+        Row: {
+          agency_id: string
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string | null
+          notification_type: string
+          read_at: string | null
+          recipient_user_id: string
+          sender_user_id: string | null
+          tech_id: number
+          title: string
+          week_start: string
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          notification_type: string
+          read_at?: string | null
+          recipient_user_id: string
+          sender_user_id?: string | null
+          tech_id: number
+          title: string
+          week_start: string
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          notification_type?: string
+          read_at?: string | null
+          recipient_user_id?: string
+          sender_user_id?: string | null
+          tech_id?: number
+          title?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planning_notifications_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "planning_notifications_recipient_user_id_fkey"
+            columns: ["recipient_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "planning_notifications_sender_user_id_fkey"
+            columns: ["sender_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       planning_signatures: {
         Row: {
           comment: string | null
