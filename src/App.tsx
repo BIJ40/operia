@@ -63,7 +63,7 @@ const MonPlanningPage = lazy(() => import("./pages/rh-employee/MonPlanningPage")
 const MaSignaturePage = lazy(() => import("./pages/rh-employee/MaSignaturePage"));
 const GestionConges = lazy(() => import("./pages/GestionConges"));
 const DemandesRHPage = lazy(() => import("./pages/rh/DemandesRHUnifiedPage"));
-const RHDashboardPage = lazy(() => import("./pages/RHDashboardPage"));
+
 const RHIndex = lazy(() => import("./pages/RHIndex"));
 // Suivi RH (nouveau module N2)
 const RHSuiviIndex = lazy(() => import("./pages/rh/RHSuiviIndex"));
@@ -277,7 +277,7 @@ function AppContent() {
           <Route path="/rh/equipe/:id" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><CollaborateurProfilePage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/rh/demandes" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><DemandesRHPage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/rh/conges" element={<Navigate to="/rh/demandes" replace />} />
-          <Route path="/rh/dashboard" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOption="rh_admin"><RHDashboardPage /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/rh/dashboard" element={<Navigate to="/rh" replace />} />
           
           {/* Legacy RH redirects */}
           <Route path="/pilotage/mon-coffre-rh" element={<Navigate to="/rh/coffre" replace />} />
