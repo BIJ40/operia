@@ -11,9 +11,9 @@ import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const ROUTE_TO_PAGE_KEY: Record<string, string> = {
-  [ROUTES.pilotage.indicateurs]: 'pilotage_indicateurs',
-  [ROUTES.pilotage.actions]: 'pilotage_actions',
-  [ROUTES.pilotage.diffusion]: 'pilotage_diffusion',
+  [ROUTES.agency.indicateurs]: 'pilotage_indicateurs',
+  [ROUTES.agency.actions]: 'pilotage_actions',
+  [ROUTES.agency.diffusion]: 'pilotage_diffusion',
 };
 
 interface PilotageModule {
@@ -33,7 +33,7 @@ const pilotageModules: PilotageModule[] = [
     title: 'Général',
     description: 'KPI généraux de votre agence',
     icon: BarChart3,
-    href: ROUTES.pilotage.indicateurs,
+    href: ROUTES.agency.indicateurs,
     category: 'statistiques',
   },
   {
@@ -41,7 +41,7 @@ const pilotageModules: PilotageModule[] = [
     title: 'Apporteurs',
     description: 'Analyse du CA par source d\'affaires',
     icon: TrendingUp,
-    href: ROUTES.pilotage.indicateursApporteurs,
+    href: ROUTES.agency.indicateursApporteurs,
     category: 'statistiques',
   },
   {
@@ -49,7 +49,7 @@ const pilotageModules: PilotageModule[] = [
     title: 'Univers',
     description: 'Répartition du CA par métier',
     icon: PieChart,
-    href: ROUTES.pilotage.indicateursUnivers,
+    href: ROUTES.agency.indicateursUnivers,
     category: 'statistiques',
   },
   {
@@ -57,7 +57,7 @@ const pilotageModules: PilotageModule[] = [
     title: 'Techniciens',
     description: 'CA et activité par technicien',
     icon: Users,
-    href: ROUTES.pilotage.indicateursTechniciens,
+    href: ROUTES.agency.indicateursTechniciens,
     category: 'statistiques',
   },
   // AUTRES
@@ -66,7 +66,7 @@ const pilotageModules: PilotageModule[] = [
     title: 'Gestion des SAV',
     description: 'Suivi et gestion des SAV',
     icon: ListTodo,
-    href: ROUTES.pilotage.indicateursSav,
+    href: ROUTES.agency.indicateursSav,
     category: 'autres',
   },
   {
@@ -74,7 +74,7 @@ const pilotageModules: PilotageModule[] = [
     title: 'Actions à mener',
     description: 'Suivi des actions et tâches en cours',
     icon: ListTodo,
-    href: ROUTES.pilotage.actions,
+    href: ROUTES.agency.actions,
     category: 'autres',
   },
   {
@@ -82,7 +82,7 @@ const pilotageModules: PilotageModule[] = [
     title: 'Veille Apporteurs',
     description: 'Suivi performance et alertes apporteurs',
     icon: Radar,
-    href: ROUTES.pilotage.veilleApporteurs,
+    href: ROUTES.agency.veilleApporteurs,
     category: 'autres',
   },
 ];

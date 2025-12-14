@@ -274,7 +274,7 @@ export default function DemandesRHPage() {
       <PageHeader
         title="Demandes de documents RH"
         subtitle="Gérez les demandes de documents de vos collaborateurs"
-        backTo={ROUTES.pilotage.index}
+        backTo={ROUTES.agency.index}
         backLabel="Mon Agence"
       />
       <Card>

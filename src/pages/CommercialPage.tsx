@@ -20,7 +20,7 @@ const commercialModules: CommercialModule[] = [
     title: 'Support Commercial PPTX',
     description: 'Générer un PowerPoint commercial personnalisé par agence',
     icon: Presentation,
-    href: ROUTES.pilotage.commercialPptx,
+    href: ROUTES.agency.commercialPptx,
   },
   {
     id: 'pipeline',

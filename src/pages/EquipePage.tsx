@@ -151,7 +151,7 @@ export default function EquipePage() {
           <PageHeader
             title="Mon Équipe"
             subtitle="Gestion des utilisateurs de mon agence"
-            backTo={ROUTES.pilotage.index}
+            backTo={ROUTES.agency.index}
             backLabel="Mon Agence"
           />
           <div className="flex items-center gap-3">

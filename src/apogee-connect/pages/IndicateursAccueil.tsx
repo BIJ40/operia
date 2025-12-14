@@ -86,7 +86,7 @@ export default function IndicateursAccueil() {
       <PageHeader
         title="Indicateurs généraux"
         subtitle="Vue d'ensemble des KPI de votre agence"
-        backTo={ROUTES.pilotage.index}
+        backTo={ROUTES.agency.index}
         backLabel="Mon Agence"
       />
       

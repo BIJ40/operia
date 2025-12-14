@@ -57,7 +57,7 @@ function PlanningHebdoContent() {
       <PageHeader
         title="Planning Hebdomadaire Techniciens"
         subtitle="Visualisez et validez les plannings de la semaine"
-        backTo={ROUTES.pilotage.rhTech}
+        backTo={ROUTES.agency.rhTech}
         backLabel="RH Techniciens"
       />
 

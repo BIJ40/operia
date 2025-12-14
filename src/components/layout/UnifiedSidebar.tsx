@@ -33,7 +33,7 @@ import { getCurrentVersion } from '@/config/changelog';
 const ROUTE_TO_PAGE_KEY: Record<string, string> = {
   // Index pages (sections)
   [ROUTES.academy.index]: 'academy_index',
-  [ROUTES.pilotage.index]: 'pilotage_index',
+  [ROUTES.agency.index]: 'pilotage_index',
   [ROUTES.support.index]: 'support_index',
   [ROUTES.projects.index]: 'projects_index',
   [ROUTES.reseau.index]: 'reseau_index',
@@ -43,14 +43,14 @@ const ROUTE_TO_PAGE_KEY: Record<string, string> = {
   [ROUTES.academy.apporteurs]: 'academy_apporteurs',
   [ROUTES.academy.documents]: 'academy_documents',
   // Pilotage
-  [ROUTES.pilotage.indicateurs]: 'pilotage_indicateurs',
-  [ROUTES.pilotage.indicateursApporteurs]: 'pilotage_indicateurs_apporteurs',
-  [ROUTES.pilotage.indicateursUnivers]: 'pilotage_indicateurs_univers',
-  [ROUTES.pilotage.indicateursTechniciens]: 'pilotage_indicateurs_techniciens',
-  [ROUTES.pilotage.indicateursSav]: 'pilotage_indicateurs_sav',
-  [ROUTES.pilotage.actions]: 'pilotage_actions',
-  [ROUTES.pilotage.diffusion]: 'pilotage_diffusion',
-  [ROUTES.pilotage.rhTech]: 'pilotage_rh_tech',
+  [ROUTES.agency.indicateurs]: 'pilotage_indicateurs',
+  [ROUTES.agency.indicateursApporteurs]: 'pilotage_indicateurs_apporteurs',
+  [ROUTES.agency.indicateursUnivers]: 'pilotage_indicateurs_univers',
+  [ROUTES.agency.indicateursTechniciens]: 'pilotage_indicateurs_techniciens',
+  [ROUTES.agency.indicateursSav]: 'pilotage_indicateurs_sav',
+  [ROUTES.agency.actions]: 'pilotage_actions',
+  [ROUTES.agency.diffusion]: 'pilotage_diffusion',
+  [ROUTES.agency.rhTech]: 'pilotage_rh_tech',
   [ROUTES.rh.equipe]: 'rh_equipe',
   // Support
   [ROUTES.support.console]: 'support_console',
@@ -151,12 +151,12 @@ export function UnifiedSidebar() {
     
     // Auto-ouvrir le sous-menu Statistiques si on est sur une de ses routes
     const statsRoutes = [
-      ROUTES.pilotage.statsHub,
-      ROUTES.pilotage.indicateurs,
-      ROUTES.pilotage.indicateursApporteurs,
-      ROUTES.pilotage.indicateursUnivers,
-      ROUTES.pilotage.indicateursTechniciens,
-      ROUTES.pilotage.indicateursSav,
+      ROUTES.agency.statsHub,
+      ROUTES.agency.indicateurs,
+      ROUTES.agency.indicateursApporteurs,
+      ROUTES.agency.indicateursUnivers,
+      ROUTES.agency.indicateursTechniciens,
+      ROUTES.agency.indicateursSav,
     ];
     if (statsRoutes.some(route => location.pathname === route || location.pathname.startsWith(route + '/'))) {
       setOpenSubmenus(new Set(['statistiques']));
@@ -208,26 +208,26 @@ export function UnifiedSidebar() {
     {
       label: 'Mon Agence',
       labelKey: 'pilotage',
-      indexUrl: ROUTES.pilotage.index,
+      indexUrl: ROUTES.agency.index,
       icon: Building2,
       items: [
         { 
           title: 'Mes Indicateurs', 
-          url: ROUTES.pilotage.statsHub,
+          url: ROUTES.agency.statsHub,
           icon: PieChart, 
           children: [
-            { title: 'Indicateurs généraux', url: ROUTES.pilotage.indicateurs, icon: BarChart3, description: 'Tableau de bord et KPI de votre agence' },
-            { title: 'Indicateurs Apporteurs', url: ROUTES.pilotage.indicateursApporteurs, icon: Users, description: 'Statistiques apporteurs' },
-            { title: 'Indicateurs Univers', url: ROUTES.pilotage.indicateursUnivers, icon: Building2, description: 'Statistiques par univers' },
-            { title: 'Indicateurs Techniciens', url: ROUTES.pilotage.indicateursTechniciens, icon: Calendar, description: 'Statistiques techniciens' },
-            { title: 'Indicateurs SAV', url: ROUTES.pilotage.indicateursSav, icon: LifeBuoy, description: 'Statistiques SAV' },
+            { title: 'Indicateurs généraux', url: ROUTES.agency.indicateurs, icon: BarChart3, description: 'Tableau de bord et KPI de votre agence' },
+            { title: 'Indicateurs Apporteurs', url: ROUTES.agency.indicateursApporteurs, icon: Users, description: 'Statistiques apporteurs' },
+            { title: 'Indicateurs Univers', url: ROUTES.agency.indicateursUnivers, icon: Building2, description: 'Statistiques par univers' },
+            { title: 'Indicateurs Techniciens', url: ROUTES.agency.indicateursTechniciens, icon: Calendar, description: 'Statistiques techniciens' },
+            { title: 'Indicateurs SAV', url: ROUTES.agency.indicateursSav, icon: LifeBuoy, description: 'Statistiques SAV' },
           ]
         },
-        { title: 'Actions à Mener', url: ROUTES.pilotage.actions, icon: ListTodo, description: 'Suivi des actions et tâches en cours', featureFlagKey: 'pilotage.actions-mener' },
-        { title: 'Veille Apporteurs', url: ROUTES.pilotage.veilleApporteurs, icon: Radar, description: 'Suivi performance et alertes apporteurs' },
-        { title: 'Commercial', url: ROUTES.pilotage.commercial, icon: Briefcase, description: 'Outils et suivi commercial' },
-        { title: 'Diffusion', url: ROUTES.pilotage.diffusion, icon: Tv, description: 'Mode affichage TV agence', badge: 'En cours', featureFlagKey: 'pilotage.diffusion' },
-        { title: 'Validation plannings', url: ROUTES.pilotage.rhTech, icon: Calendar, description: 'Validation des plannings hebdomadaires', badge: 'Bientôt', isDisabled: true, featureFlagKey: 'rh.validation-plannings' },
+        { title: 'Actions à Mener', url: ROUTES.agency.actions, icon: ListTodo, description: 'Suivi des actions et tâches en cours', featureFlagKey: 'pilotage.actions-mener' },
+        { title: 'Veille Apporteurs', url: ROUTES.agency.veilleApporteurs, icon: Radar, description: 'Suivi performance et alertes apporteurs' },
+        { title: 'Commercial', url: ROUTES.agency.commercial, icon: Briefcase, description: 'Outils et suivi commercial' },
+        { title: 'Diffusion', url: ROUTES.agency.diffusion, icon: Tv, description: 'Mode affichage TV agence', badge: 'En cours', featureFlagKey: 'pilotage.diffusion' },
+        { title: 'Validation plannings', url: ROUTES.agency.rhTech, icon: Calendar, description: 'Validation des plannings hebdomadaires', badge: 'Bientôt', isDisabled: true, featureFlagKey: 'rh.validation-plannings' },
       ],
       accessKey: 'canAccessPilotageAgence',
     },
@@ -246,10 +246,10 @@ export function UnifiedSidebar() {
     {
       label: 'Espace Technicien',
       labelKey: 'technicien',
-      indexUrl: ROUTES.pilotage.techInterventions,
+      indexUrl: ROUTES.agency.techInterventions,
       icon: Wrench,
       items: [
-        { title: 'APP', url: ROUTES.pilotage.techInterventions, icon: Wrench, description: 'Interventions et relevés techniques' },
+        { title: 'APP', url: ROUTES.agency.techInterventions, icon: Wrench, description: 'Interventions et relevés techniques' },
       ],
     },
     {

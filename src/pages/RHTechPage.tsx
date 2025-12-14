@@ -11,13 +11,13 @@ export default function RHTechPage() {
       <PageHeader
         title="RH Techniciens"
         subtitle="Gestion des plannings et ressources humaines des techniciens"
-        backTo={ROUTES.pilotage.index}
+        backTo={ROUTES.agency.index}
         backLabel="Mon Agence"
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Planning Hebdomadaire */}
-        <Link to={ROUTES.pilotage.planningHebdo}>
+        <Link to={ROUTES.agency.planningHebdo}>
           <Card className="h-full transition-all duration-300 hover:shadow-lg hover:border-primary/50 cursor-pointer group">
             <CardHeader>
               <div className="flex items-center gap-3">

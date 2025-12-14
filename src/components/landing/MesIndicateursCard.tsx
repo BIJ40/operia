@@ -11,7 +11,7 @@ export function MesIndicateursCard() {
 
   return (
     <Link
-      to={ROUTES.pilotage.indicateurs}
+      to={ROUTES.agency.indicateurs}
       className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl p-4 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex flex-col gap-3"
     >
       {/* En-tête avec icône et titre */}

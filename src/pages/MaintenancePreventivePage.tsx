@@ -40,7 +40,7 @@ export default function MaintenancePreventivePage() {
       <PageHeader
         title="Maintenance préventive"
         subtitle="Suivi des véhicules, matériel, EPI et contrôles réglementaires"
-        backTo={ROUTES.pilotage.index}
+        backTo={ROUTES.agency.index}
         backLabel="Mon Agence"
         rightElement={
           alertsCount > 0 ? (

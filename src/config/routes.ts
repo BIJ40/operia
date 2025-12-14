@@ -36,9 +36,9 @@ export const ROUTES = {
   },
 
   // ============================================
-  // PILOTAGE AGENCE
+  // MON AGENCE (hc-agency)
   // ============================================
-  pilotage: {
+  agency: {
     index: '/hc-agency',
     // Module RT Technicien
     techInterventions: '/hc-agency/tech-interventions',
@@ -59,8 +59,8 @@ export const ROUTES = {
     // Diffusion (sous statistiques)
     diffusion: '/hc-agency/statistiques/diffusion',
     // RH Tech
-    rhTech: '/pilotage/rh-tech',
-    planningHebdo: '/pilotage/rh-tech/planning',
+    rhTech: '/hc-agency/rh-tech',
+    planningHebdo: '/hc-agency/rh-tech/planning',
     // Maintenance préventive
     maintenance: '/hc-agency/maintenance',
     // Commercial
@@ -213,16 +213,16 @@ type StaticRoutes =
   | typeof ROUTES['academy']['apogee']
   | typeof ROUTES['academy']['apporteurs']
   | typeof ROUTES['academy']['documents']
-  | typeof ROUTES['pilotage']['index']
-  | typeof ROUTES['pilotage']['statsHub']
-  | typeof ROUTES['pilotage']['indicateurs']
-  | typeof ROUTES['pilotage']['indicateursApporteurs']
-  | typeof ROUTES['pilotage']['indicateursUnivers']
-  | typeof ROUTES['pilotage']['indicateursTechniciens']
-  | typeof ROUTES['pilotage']['indicateursSav']
-  | typeof ROUTES['pilotage']['actions']
-  | typeof ROUTES['pilotage']['diffusion']
-  | typeof ROUTES['pilotage']['rhTech']
+  | typeof ROUTES['agency']['index']
+  | typeof ROUTES['agency']['statsHub']
+  | typeof ROUTES['agency']['indicateurs']
+  | typeof ROUTES['agency']['indicateursApporteurs']
+  | typeof ROUTES['agency']['indicateursUnivers']
+  | typeof ROUTES['agency']['indicateursTechniciens']
+  | typeof ROUTES['agency']['indicateursSav']
+  | typeof ROUTES['agency']['actions']
+  | typeof ROUTES['agency']['diffusion']
+  | typeof ROUTES['agency']['rhTech']
   | typeof ROUTES['support']['index']
   | typeof ROUTES['support']['userTickets']
   | typeof ROUTES['support']['console']
@@ -259,10 +259,10 @@ export function getLegacyRouteRedirect(path: string): string | null {
     [ROUTES.legacy.apogee]: ROUTES.academy.apogee,
     [ROUTES.legacy.apporteurs]: ROUTES.academy.apporteurs,
     [ROUTES.legacy.helpconfort]: ROUTES.academy.documents,
-    [ROUTES.legacy.mesIndicateurs]: ROUTES.pilotage.indicateurs,
-    [ROUTES.legacy.actionsAMener]: ROUTES.pilotage.actions,
-    [ROUTES.legacy.diffusion]: ROUTES.pilotage.diffusion,
-    [ROUTES.legacy.rhTech]: ROUTES.pilotage.rhTech,
+    [ROUTES.legacy.mesIndicateurs]: ROUTES.agency.indicateurs,
+    [ROUTES.legacy.actionsAMener]: ROUTES.agency.actions,
+    [ROUTES.legacy.diffusion]: ROUTES.agency.diffusion,
+    [ROUTES.legacy.rhTech]: ROUTES.agency.rhTech,
     [ROUTES.legacy.mesDemandes]: ROUTES.support.userTickets,
     [ROUTES.legacy.tetDeReseau]: ROUTES.reseau.dashboard,
   };
