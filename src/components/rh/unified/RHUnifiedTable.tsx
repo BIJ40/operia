@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { RHCollaborator } from '@/types/rh-suivi';
 import { RHUnifiedTableHeader } from './RHUnifiedTableHeader';
 import { RHUnifiedTableRow } from './RHUnifiedTableRow';
-import { RHDocumentPopup, DocumentType } from './RHDocumentPopup';
+import { RHDocumentPopup, DocumentType, DOCUMENT_TYPES } from './RHDocumentPopup';
 import { 
   TAB_CONFIG, 
   TAB_COLUMNS, 
@@ -20,6 +20,9 @@ import {
 } from './RHUnifiedTableColumns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRHInlineEdit } from '@/hooks/rh/useRHInlineEdit';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface RHUnifiedTableProps {
   collaborators: RHCollaborator[];
@@ -51,6 +54,57 @@ export function RHUnifiedTable({
     collaboratorId: '',
     collaboratorName: '',
     docType: 'cni',
+  });
+  
+  const queryClient = useQueryClient();
+
+  const uploadIdentityDocument = useMutation({
+    mutationFn: async ({ collaboratorId, docType, file }: { collaboratorId: string; docType: DocumentType; file: File }) => {
+      const collab = collaborators.find(c => c.id === collaboratorId);
+      if (!collab) throw new Error('Collaborateur introuvable');
+      const agencyId = collab.agency_id;
+      if (!agencyId) throw new Error('Agence requise');
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${docType}_${Date.now()}.${fileExt}`;
+      const filePath = `${agencyId}/${collaboratorId}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('rh-documents')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { user } } = await supabase.auth.getUser();
+
+      const docInfo = DOCUMENT_TYPES.find(d => d.type === docType);
+
+      const { error: insertError } = await supabase
+        .from('collaborator_documents')
+        .insert({
+          collaborator_id: collaboratorId,
+          agency_id: agencyId,
+          doc_type: docType,
+          title: docInfo?.label || docType,
+          file_name: file.name,
+          file_path: filePath,
+          file_size: file.size,
+          file_type: file.type,
+          uploaded_by: user?.id,
+          visibility: 'rh_only',
+          employee_visible: false,
+        });
+
+      if (insertError) throw insertError;
+    },
+    onSuccess: (_, variables) => {
+      toast.success('Document ajouté');
+      queryClient.invalidateQueries({ queryKey: ['collaborator-documents', variables.collaboratorId] });
+      queryClient.invalidateQueries({ queryKey: ['rh-documents-check', variables.collaboratorId] });
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || 'Erreur lors de l\'upload du document');
+    },
   });
 
   // Inline edit hook
@@ -310,6 +364,11 @@ export function RHUnifiedTable({
         documentType={documentPopup.docType}
         collaboratorId={documentPopup.collaboratorId}
         collaboratorName={documentPopup.collaboratorName}
+        onUpload={(file) => uploadIdentityDocument.mutateAsync({
+          collaboratorId: documentPopup.collaboratorId,
+          docType: documentPopup.docType,
+          file,
+        })}
       />
     </div>
   );
