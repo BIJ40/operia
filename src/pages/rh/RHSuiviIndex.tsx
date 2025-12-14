@@ -11,11 +11,11 @@ import { Users } from 'lucide-react';
 
 // Colonnes visibles par défaut par onglet
 const DEFAULT_VISIBLE_COLUMNS: Record<RHTabId, string[]> = {
-  general: ['email', 'phone', 'emergency_contact', 'emergency_phone', 'hiring_date', 'leaving_date', 'role', 'notes', 'social_security_number', 'permis', 'cni'],
+  general: ['email', 'phone', 'emergency_contact', 'emergency_phone', 'social_security_number', 'permis', 'cni', 'notes', 'hiring_date', 'leaving_date'],
   securite: ['taille_haut', 'taille_bas', 'pointure', 'statut_epi', 'date_renouvellement'],
   competences: ['hab_elec_statut', 'hab_elec_date', 'caces_count'],
-  parc: ['vehicule_attribue', 'carte_carburant', 'carte_bancaire', 'carte_autre', 'tablette_telephone', 'imei'],
-  it: ['acces_outils', 'notes_it'],
+  parc: ['vehicule_attribue', 'carte_carburant', 'carte_bancaire', 'carte_autre', 'materiels_liste'],
+  idmdp: ['identifiants_liste'],
   documents: ['docs_icons'],
 };
 

@@ -10,7 +10,9 @@ import { RHEditableCell } from './RHEditableCell';
 import { RHVehiculePopup, formatVehiculeDisplay } from './RHVehiculePopup';
 import { RHCartePopup, formatCarteDisplay } from './RHCartePopup';
 import { RHDocumentUploadPopup } from './RHDocumentUploadPopup';
-import { ExternalLink, Paperclip } from 'lucide-react';
+import { RHMaterielPopup } from './RHMaterielPopup';
+import { RHIdentifiantsPopup } from './RHIdentifiantsPopup';
+import { ExternalLink, Paperclip, Package, Key } from 'lucide-react';
 
 interface RHUnifiedTableRowProps {
   collaborator: RHCollaborator;
@@ -49,6 +51,8 @@ export function RHUnifiedTableRow({
   const [carteCarburantPopupOpen, setCarteCarburantPopupOpen] = useState(false);
   const [carteBancairePopupOpen, setCarteBancairePopupOpen] = useState(false);
   const [carteAutrePopupOpen, setCarteAutrePopupOpen] = useState(false);
+  const [materielPopupOpen, setMaterielPopupOpen] = useState(false);
+  const [identifiantsPopupOpen, setIdentifiantsPopupOpen] = useState(false);
   
   // Document upload popup state
   const [docUploadPopup, setDocUploadPopup] = useState<{ open: boolean; fieldKey: string; fieldLabel: string }>({
@@ -214,10 +218,62 @@ export function RHUnifiedTableRow({
       );
     }
     
+    // Matériels
+    if (colId === 'materiels_liste') {
+      const equipements = (assets?.autres_equipements as unknown as { nom: string }[]) || [];
+      const displayText = equipements.length > 0 
+        ? equipements.map(e => e.nom).join(', ') 
+        : '—';
+      
+      return (
+        <TableCell key={colId} className={cellClass}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs font-normal w-full justify-start"
+            onDoubleClick={() => setMaterielPopupOpen(true)}
+            title="Double-clic pour modifier"
+          >
+            <Package className="h-3 w-3 mr-1" />
+            {displayText}
+          </Button>
+        </TableCell>
+      );
+    }
+    
+    // Identifiants
+    if (colId === 'identifiants_liste') {
+      const identifiants = collaborator.it_access?.identifiants_encrypted;
+      let count = 0;
+      if (identifiants) {
+        try {
+          const parsed = JSON.parse(identifiants);
+          count = Array.isArray(parsed) ? parsed.length : 0;
+        } catch {
+          count = 0;
+        }
+      }
+      
+      return (
+        <TableCell key={colId} className={cellClass}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs font-normal w-full justify-start"
+            onDoubleClick={() => setIdentifiantsPopupOpen(true)}
+            title="Double-clic pour modifier"
+          >
+            <Key className="h-3 w-3 mr-1" />
+            {count > 0 ? `${count} accès` : '—'}
+          </Button>
+        </TableCell>
+      );
+    }
+    
     return null;
   };
 
-  const POPUP_COLUMNS = ['vehicule_attribue', 'carte_carburant', 'carte_bancaire', 'carte_autre'];
+  const POPUP_COLUMNS = ['vehicule_attribue', 'carte_carburant', 'carte_bancaire', 'carte_autre', 'materiels_liste', 'identifiants_liste'];
   
   // Colonnes avec possibilité d'upload de documents
   const DOCUMENT_UPLOAD_COLUMNS = ['habilitation_electrique', 'caces', 'visite_medicale'];
@@ -233,6 +289,23 @@ export function RHUnifiedTableRow({
       fieldKey={docUploadPopup.fieldKey}
       fieldLabel={docUploadPopup.fieldLabel}
     />
+    
+    {/* Materiel Popup */}
+    <RHMaterielPopup
+      isOpen={materielPopupOpen}
+      onClose={() => setMaterielPopupOpen(false)}
+      collaboratorId={collaborator.id}
+      collaboratorName={collaboratorName}
+    />
+    
+    {/* Identifiants Popup */}
+    <RHIdentifiantsPopup
+      isOpen={identifiantsPopupOpen}
+      onClose={() => setIdentifiantsPopupOpen(false)}
+      collaboratorId={collaborator.id}
+      collaboratorName={collaboratorName}
+    />
+    
     <TableRow 
       className={cn(
         "hover:bg-muted/30 transition-colors",
