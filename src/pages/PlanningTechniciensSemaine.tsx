@@ -17,6 +17,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { PlanningNotificationBadge } from "@/components/planning/PlanningNotificationBadge";
 
 import { usePlanningData, useApogeeUsersNormalized } from "@/shared/api/apogee/usePlanningData";
 import { buildTechOptions, buildEvents, type PlanningEvent } from "@/shared/planning/events";
@@ -425,13 +426,14 @@ function PlanningTechniciensSemaineContent() {
         `}
       </style>
       
-      <div className="print:hidden">
+      <div className="print:hidden flex items-start justify-between gap-4">
         <PageHeader
           title="Planning Techniciens"
           subtitle="Vue hebdomadaire des interventions"
           backTo="/rh/equipe"
           backLabel="Mon équipe"
         />
+        <PlanningNotificationBadge />
       </div>
       
       {/* Contrôles */}

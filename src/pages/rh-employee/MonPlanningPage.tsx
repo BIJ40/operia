@@ -13,6 +13,7 @@ import { AgencyProvider, useAgency } from "@/apogee-connect/contexts/AgencyConte
 import { ApiToggleProvider } from "@/apogee-connect/contexts/ApiToggleContext";
 import { useMyCollaborator } from "@/hooks/rh-employee";
 import { CollaboratorNotConfigured } from "@/components/rh-employee/CollaboratorNotConfigured";
+import { PlanningNotificationBadge } from "@/components/planning/PlanningNotificationBadge";
 
 function MonPlanningContent() {
   const { isAgencyReady } = useAgency();
@@ -73,11 +74,14 @@ function MonPlanningContent() {
 
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
-      <PageHeader
-        title="Mon Planning"
-        subtitle={`Planning de ${collaborator.first_name} ${collaborator.last_name}`}
-        backTo="/rh"
-      />
+      <div className="flex items-start justify-between gap-4">
+        <PageHeader
+          title="Mon Planning"
+          subtitle={`Planning de ${collaborator.first_name} ${collaborator.last_name}`}
+          backTo="/rh"
+        />
+        <PlanningNotificationBadge />
+      </div>
 
       {/* Planning filtré sur le technicien connecté, mode N1 */}
       <TechWeeklyPlanningList 
