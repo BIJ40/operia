@@ -68,10 +68,6 @@ export function RHUnifiedTableRow({
     columns: group.columns.filter(col => visibleColumns.includes(col.id)),
   })).filter(group => group.columns.length > 0);
 
-  const handleOpenDetail = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigate(`/rh/suivi/${collaborator.id}`);
-  };
 
   const assets = collaborator.assets;
 
@@ -387,21 +383,7 @@ export function RHUnifiedTableRow({
       <TableCell className="font-medium min-w-[100px] w-[100px] bg-muted/10">
         <div className="flex items-center gap-1">
           <span className="truncate">{collaborator.last_name}</span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-5 w-5 opacity-50 hover:opacity-100"
-            onClick={handleOpenDetail}
-            title="Voir la fiche complète"
-          >
-            <ExternalLink className="h-3 w-3" />
-          </Button>
-          {activeTab === 'documents' && (
-            <DocumentIcons
-              collaboratorId={collaborator.id}
-              onDocumentClick={(docType) => onDocumentClick(collaborator.id, docType)}
-            />
-          )}
+          {/* Bouton fiche détail supprimé - doublon avec le tableau */}
         </div>
       </TableCell>
       <TableCell className="min-w-[100px] w-[100px] bg-muted/10">{collaborator.first_name}</TableCell>
@@ -409,14 +391,33 @@ export function RHUnifiedTableRow({
       {/* Colonnes de l'onglet actif - ÉDITABLES */}
       {visibleGroups.map((group) => (
         group.columns.map((col, colIdx) => {
-          // Cas spécial pour les icônes de documents
+          // Cas spécial pour les icônes de documents (plus grandes)
           if (col.id === 'docs_icons') {
             return (
               <TableCell key={col.id} className={cn(colIdx === 0 && "border-l", group.className)}>
                 <DocumentIcons
                   collaboratorId={collaborator.id}
                   onDocumentClick={(docType) => onDocumentClick(collaborator.id, docType)}
+                  large
                 />
+              </TableCell>
+            );
+          }
+          
+          // Cas spécial pour l'accès coffre
+          if (col.id === 'docs_coffre') {
+            return (
+              <TableCell key={col.id} className={cn(colIdx === 0 && "border-l", group.className)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-3 text-xs gap-1.5"
+                  onClick={() => navigate(`/rh/suivi/${collaborator.id}?tab=documents`)}
+                  title="Gérer les documents et leur visibilité coffre"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Gérer coffre
+                </Button>
               </TableCell>
             );
           }
