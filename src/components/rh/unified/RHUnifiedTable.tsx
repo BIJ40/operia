@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Search, Settings2, Users, Save, Loader2 } from 'lucide-react';
+import { Search, Settings2, Users, Save, Loader2, Printer } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RHCollaborator } from '@/types/rh-suivi';
 import { RHUnifiedTableHeader } from './RHUnifiedTableHeader';
@@ -33,6 +33,7 @@ interface RHUnifiedTableProps {
   activeTab: RHTabId;
   onTabChange: (tab: RHTabId) => void;
   onRefresh: () => void;
+  onPrintMatrix: () => void;
 }
 
 export function RHUnifiedTable({
@@ -43,6 +44,7 @@ export function RHUnifiedTable({
   activeTab,
   onTabChange,
   onRefresh,
+  onPrintMatrix,
 }: RHUnifiedTableProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [documentPopup, setDocumentPopup] = useState<{
@@ -199,34 +201,46 @@ export function RHUnifiedTable({
 
   return (
     <div className="space-y-4">
-      {/* Stats rapides */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-card rounded-lg p-3 border">
-          <div className="flex items-center gap-2 text-muted-foreground text-sm">
-            <Users className="h-4 w-4" />
-            Total
+      {/* Stats rapides - compactes */}
+      <div className="grid grid-cols-5 gap-2">
+        <div className="bg-gradient-to-br from-helpconfort-blue/10 via-background to-background rounded-lg px-3 py-2 border border-helpconfort-blue/15 border-l-4 border-l-helpconfort-blue">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Total</span>
+            <Users className="h-3.5 w-3.5 text-helpconfort-blue" />
           </div>
-          <p className="text-2xl font-bold">{stats.total}</p>
+          <p className="text-lg font-bold">{stats.total}</p>
         </div>
-        <div className="bg-card rounded-lg p-3 border">
-          <div className="flex items-center gap-2 text-green-600 text-sm">
+        <div className="bg-gradient-to-br from-green-500/10 via-background to-background rounded-lg px-3 py-2 border border-green-500/15 border-l-4 border-l-green-500">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Actifs</span>
             <div className="w-2 h-2 rounded-full bg-green-500" />
-            Actifs
           </div>
-          <p className="text-2xl font-bold text-green-600">{stats.active}</p>
+          <p className="text-lg font-bold text-green-600">{stats.active}</p>
         </div>
-        <div className="bg-card rounded-lg p-3 border">
-          <div className="flex items-center gap-2 text-blue-600 text-sm">
-            🏢 Administratif
+        <div className="bg-gradient-to-br from-blue-500/10 via-background to-background rounded-lg px-3 py-2 border border-blue-500/15 border-l-4 border-l-blue-500">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Administratif</span>
+            <span className="text-xs">🏢</span>
           </div>
-          <p className="text-2xl font-bold text-blue-600">{stats.administratif}</p>
+          <p className="text-lg font-bold text-blue-600">{stats.administratif}</p>
         </div>
-        <div className="bg-card rounded-lg p-3 border">
-          <div className="flex items-center gap-2 text-orange-600 text-sm">
-            🔧 Terrain
+        <div className="bg-gradient-to-br from-orange-500/10 via-background to-background rounded-lg px-3 py-2 border border-orange-500/15 border-l-4 border-l-orange-500">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Terrain</span>
+            <span className="text-xs">🔧</span>
           </div>
-          <p className="text-2xl font-bold text-orange-600">{stats.terrain}</p>
+          <p className="text-lg font-bold text-orange-600">{stats.terrain}</p>
         </div>
+        <button
+          onClick={onPrintMatrix}
+          className="bg-gradient-to-br from-purple-500/10 via-background to-background rounded-lg px-3 py-2 border border-purple-500/15 border-l-4 border-l-purple-500 hover:shadow-md transition-all cursor-pointer text-left"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Compétences</span>
+            <Printer className="h-3.5 w-3.5 text-purple-500" />
+          </div>
+          <p className="text-sm font-semibold text-purple-600">Imprimer</p>
+        </button>
       </div>
 
       {/* Barre de recherche + onglets + toggle colonnes */}
