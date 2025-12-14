@@ -52,11 +52,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
     moduleKey: 'pilotage_agence',
     accessKey: 'canAccessPilotageAgence',
     links: [
-      { label: 'Hub Statistiques', href: ROUTES.agency.statsHub, icon: 'BarChart2', description: 'Centre statistiques', minRole: 'franchisee_admin' },
-      { label: 'Indicateurs Apporteurs', href: ROUTES.agency.indicateursApporteurs, icon: 'Handshake', description: 'CA par apporteur', minRole: 'franchisee_admin' },
-      { label: 'Indicateurs Univers', href: ROUTES.agency.indicateursUnivers, icon: 'PieChart', description: 'CA par univers', minRole: 'franchisee_admin' },
-      { label: 'Indicateurs Techniciens', href: ROUTES.agency.indicateursTechniciens, icon: 'Wrench', description: 'CA par technicien', minRole: 'franchisee_admin' },
-      { label: 'Indicateurs SAV', href: ROUTES.agency.indicateursSav, icon: 'LifeBuoy', description: 'Service après-vente', minRole: 'franchisee_admin' },
+      { label: 'Stats Hub', href: ROUTES.agency.statsHub, icon: 'BarChart2', description: 'Centre statistiques', minRole: 'franchisee_admin' },
       { label: 'Actions à Mener', href: ROUTES.agency.actions, icon: 'ListTodo', description: 'Tâches opérationnelles', minRole: 'franchisee_admin' },
       { label: 'Diffusion', href: ROUTES.agency.diffusion, icon: 'Tv', description: 'Mode TV agence', minRole: 'franchisee_admin' },
     ],
