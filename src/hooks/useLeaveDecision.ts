@@ -74,15 +74,20 @@ export function useSendLeaveNotification() {
       };
 
       const notificationMessage = message || STATUS_MESSAGES[status] || 'Mise à jour de votre demande de congé';
+      const notificationType = status === 'REFUSED' ? 'REQUEST_REJECTED' : 'REQUEST_COMPLETED';
+
+      // Get agency_id from collaborator
+      const { data: collabData } = await supabase.from('collaborators').select('agency_id').eq('id', collaboratorId).single();
 
       // Create RH notification using the correct table structure
       const { error: notifError } = await supabase
         .from('rh_notifications')
         .insert({
           collaborator_id: collaboratorId,
-          agency_id: (await supabase.from('collaborators').select('agency_id').eq('id', collaboratorId).single()).data?.agency_id || '',
-          notification_type: 'LEAVE_STATUS_UPDATE',
-          title: 'Demande de congé',
+          recipient_id: collaborator.user_id,
+          agency_id: collabData?.agency_id || '',
+          notification_type: notificationType,
+          title: status === 'REFUSED' ? 'Demande de congé refusée' : 'Demande de congé traitée',
           message: notificationMessage,
           related_request_id: leaveRequestId,
         });
