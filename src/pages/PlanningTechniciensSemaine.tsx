@@ -172,46 +172,37 @@ function DayColumn({ day, events, showLunch }: DayColumnProps) {
   );
 }
 
-// Composant pour afficher la signature dans le print header
+// Composant pour afficher uniquement le cadre de signature dans le header d'impression
 function PrintSignatureBox({ 
   techId, 
   weekDate,
-  workMinutes
 }: { 
   techId: number; 
   weekDate: Date;
-  workMinutes: number;
 }) {
   const { signature, isSignedByTech } = usePlanningSignature({ techId, weekDate });
   
-  if (isSignedByTech && signature?.tech_signature_png && signature?.tech_signed_at) {
-    const signedDate = format(new Date(signature.tech_signed_at), "dd/MM/yyyy 'à' HH:mm", { locale: fr });
+  // Affichage uniquement à l'impression, en ligne avec le reste
+  if (isSignedByTech && signature?.tech_signature_png) {
     return (
-      <span className="hidden print:inline-flex items-center gap-2 text-sm ml-4">
-        <span>Signé le {signedDate}</span>
-        <span className="ml-2">Signature :</span>
+      <span className="hidden print:inline-flex items-center ml-2">
         <span className="border border-black w-28 h-8 inline-flex items-center justify-center">
           <img 
-            src={signature.tech_signature_png.startsWith('data:') 
+            src={signature.tech_signature_png.startsWith("data:") 
               ? signature.tech_signature_png 
               : `data:image/png;base64,${signature.tech_signature_png}`}
             alt="Signature"
             className="max-h-7 max-w-24 object-contain"
           />
         </span>
-        <span className="ml-3 font-semibold">{formatMinutes(workMinutes)} travaillées</span>
       </span>
     );
   }
   
-  // Pas de signature : cadre vide avec champs à remplir
+  // Pas de signature : cadre vide
   return (
-    <span className="hidden print:inline-flex items-center gap-2 text-sm ml-4">
-      <span>Signé le</span>
-      <span className="border-b border-black w-28 inline-block">&nbsp;</span>
-      <span className="ml-2">Signature :</span>
-      <span className="border border-black w-28 h-8 inline-block align-middle">&nbsp;</span>
-      <span className="ml-3 font-semibold">{formatMinutes(workMinutes)} travaillées</span>
+    <span className="hidden print:inline-flex items-center ml-2">
+      <span className="border border-black w-28 h-8 inline-block align-middle" />
     </span>
   );
 }
@@ -519,24 +510,20 @@ function PlanningTechniciensSemaineContent() {
                 />
               )}
               <span className="font-semibold text-lg">{selectedTechLabel}</span>
-              {/* Bloc visible uniquement à l'impression: Signé le... Signature: [PNG] XX h travaillées */}
-              <PrintSignatureBox techId={selectedTechId} weekDate={currentWeekStart} workMinutes={workMinutes} />
-            </div>
-            
-            <div className="flex items-center gap-3 print:hidden">
-              {/* Section Signature N2 */}
-              <PlanningSignatureN2Section 
-                techId={selectedTechId} 
-                weekDate={currentWeekStart} 
-              />
-              
-              {/* Heures travaillées */}
-              <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-lg">
-                <Clock className="h-4 w-4 text-primary" />
-                <span className="font-semibold text-primary">
-                  {formatMinutes(workMinutes)}
-                </span>
-                <span className="text-sm text-muted-foreground">travaillées</span>
+              {/* Bouton vert (signature N2) + cadre de signature + badge heures sur une seule ligne */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <PlanningSignatureN2Section 
+                  techId={selectedTechId} 
+                  weekDate={currentWeekStart} 
+                />
+                <PrintSignatureBox techId={selectedTechId} weekDate={currentWeekStart} />
+                <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-lg">
+                  <Clock className="h-4 w-4 text-primary" />
+                  <span className="font-semibold text-primary">
+                    {formatMinutes(workMinutes)}
+                  </span>
+                  <span className="text-sm text-muted-foreground">travaillées</span>
+                </div>
               </div>
             </div>
             
