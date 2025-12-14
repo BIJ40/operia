@@ -276,9 +276,9 @@ function AppContent() {
           <Route path="/rh/equipe/plannings" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><PlanningHebdo /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/rh/equipe/:id" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><CollaborateurProfilePage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/rh/demandes" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><DemandesRHPage /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/rh/parc" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh"><MaintenancePreventivePage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/rh/conges" element={<Navigate to="/rh/demandes" replace />} />
           <Route path="/rh/dashboard" element={<Navigate to="/rh" replace />} />
-          
           {/* Legacy RH redirects */}
           <Route path="/pilotage/mon-coffre-rh" element={<Navigate to="/rh/coffre" replace />} />
           <Route path="/mon-coffre-rh" element={<Navigate to="/rh/coffre" replace />} />
@@ -297,8 +297,8 @@ function AppContent() {
           <Route path="/hc-agency/commercial" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><CommercialPage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/hc-agency/commercial/support-pptx" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><CommercialSupportPptx /></ModuleGuard></RoleGuard></MainLayout>} />
           
-          {/* Maintenance Préventive (Module Parc) */}
-          <Route path="/hc-agency/maintenance" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><MaintenancePreventivePage /></ModuleGuard></RoleGuard></MainLayout>} />
+          {/* Maintenance Préventive - Redirect legacy route to /rh/parc */}
+          <Route path="/hc-agency/maintenance" element={<Navigate to="/rh/parc" replace />} />
           
           {/* ============================================ */}
           {/* SUPPORT V2 - Unified Support System */}
