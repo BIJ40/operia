@@ -66,8 +66,8 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
   // ============================================
   {
     id: 'rh',
-    title: 'RH',
-    description: 'Ressources humaines',
+    title: 'RH & PARC',
+    description: 'Ressources humaines & matériel',
     icon: 'Briefcase',
     href: '/rh',
     moduleKey: 'rh',
@@ -90,6 +90,15 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
         requiresOption: { module: 'rh', option: 'coffre' },
       },
       // === Vue Dirigeant (N2+) ===
+      { 
+        label: 'Suivi RH', 
+        href: ROUTES.rh.suivi, 
+        icon: 'LayoutList', 
+        description: 'Tableau unifié RH',
+        section: 'dirigeant',
+        minRole: 'franchisee_admin',
+        requiresOption: { module: 'rh', option: 'rh_viewer' },
+      },
       { 
         label: 'Mon équipe', 
         href: ROUTES.rh.equipe, 
@@ -116,6 +125,15 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
         section: 'dirigeant',
         minRole: 'franchisee_admin',
         requiresOption: { module: 'rh', option: 'rh_admin' },
+      },
+      { 
+        label: 'Parc Véhicules', 
+        href: ROUTES.rh.parc, 
+        icon: 'Car', 
+        description: 'Gestion de flotte',
+        section: 'dirigeant',
+        minRole: 'franchisee_admin',
+        requiresOption: { module: 'rh', option: 'rh_viewer' },
       },
     ],
   },
