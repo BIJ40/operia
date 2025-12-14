@@ -171,6 +171,8 @@ export function useAccessRightsUsers() {
         agence?: string;
         role_agence?: string;
         global_role?: GlobalRole;
+        apogee_user_id?: number | null;
+        support_level?: number;
       } 
     }) => {
       const { error } = await supabase.from('profiles').update(data).eq('id', userId);
