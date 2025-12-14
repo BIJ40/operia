@@ -193,11 +193,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq('id', userId)
         .single();
       
-      // Requête user_modules (nouvelle table normalisée)
-      const { data: userModules, error: modulesError } = await supabase
-        .from('user_modules')
-        .select('module_key, options')
-        .eq('user_id', userId);
+      // Appeler la RPC qui combine plan agence + overrides utilisateur
+      const { data: effectiveModules, error: modulesError } = await supabase.rpc(
+        'get_user_effective_modules',
+        { p_user_id: userId }
+      );
       
       clearTimeout(timeoutId);
       
@@ -207,7 +207,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       if (modulesError) {
-        logAuth.warn('[AUTH] Erreur requête user_modules, fallback JSONB:', modulesError);
+        logAuth.warn('[AUTH] Erreur requête get_user_effective_modules:', modulesError);
       }
       
       setFirstName(profile?.first_name || null);
@@ -235,19 +235,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // V2.0 - Utiliser directement les valeurs de la DB
       const dbGlobalRole = profile?.global_role as GlobalRole | null;
       
-      // Priorité: user_modules table > profiles.enabled_modules JSONB
-      let resolvedModules: EnabledModules;
-      if (userModules && userModules.length > 0) {
-        // Utiliser la nouvelle table user_modules (via utilitaire centralisé)
-        resolvedModules = userModulesToEnabledModules(userModules);
+      // Convertir le résultat de la RPC get_user_effective_modules en EnabledModules
+      // La RPC combine: plan agence (plan_tier_modules) + overrides agence + overrides utilisateur
+      let resolvedModules: EnabledModules = {};
+      if (effectiveModules && Array.isArray(effectiveModules) && effectiveModules.length > 0) {
+        for (const row of effectiveModules) {
+          const moduleKey = row.module_key as ModuleKey;
+          resolvedModules[moduleKey] = {
+            enabled: row.enabled === true,
+            options: (typeof row.options === 'object' && row.options !== null) 
+              ? row.options as Record<string, boolean>
+              : {},
+          };
+        }
         if (import.meta.env.DEV) {
-          logAuth.info('[AUTH] Modules loaded from user_modules table:', userModules.length);
+          logAuth.info('[AUTH] Modules loaded from RPC get_user_effective_modules:', effectiveModules.length);
         }
       } else {
-        // Fallback vers JSONB (pour compatibilité durant migration)
-        resolvedModules = (profile?.enabled_modules as EnabledModules | null) || {};
+        // Fallback minimal si RPC échoue ou retourne vide
+        resolvedModules = {};
         if (import.meta.env.DEV) {
-          logAuth.info('[AUTH] Modules loaded from JSONB fallback');
+          logAuth.info('[AUTH] No effective modules returned from RPC');
         }
       }
 
@@ -274,7 +282,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           userId,
           globalRole: dbGlobalRole || 'base_user (default)',
           modulesCount: Object.keys(resolvedModules).length,
-          moduleSource: (userModules && userModules.length > 0) ? 'user_modules' : 'jsonb_fallback',
+          moduleSource: 'rpc_get_user_effective_modules',
         });
       }
 
