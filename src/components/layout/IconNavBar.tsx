@@ -15,7 +15,7 @@ import {
   Headset, HelpCircle, LifeBuoy,
   Network, Building2, PieChart, GitCompare, Coins,
   Settings, Database, Activity, MessageCircle, Kanban, Sparkles, Brain, ToggleLeft,
-  ClipboardList
+  ClipboardList, CalendarDays, HardHat
 } from 'lucide-react';
 
 // Import des icônes personnalisées
@@ -89,11 +89,13 @@ const navSections: NavSection[] = [
     icon: iconRh,
     indexUrl: ROUTES.rh.index,
     items: [
-      { title: 'Suivi RH', url: ROUTES.rh.suivi, icon: ClipboardList },
-      { title: 'Mon équipe', url: ROUTES.rh.equipe, icon: Users },
-      { title: 'Mon Coffre RH', url: ROUTES.rh.coffre, icon: FolderOpen },
-      { title: 'Demandes RH', url: ROUTES.rh.demandes, icon: FileText },
-      { title: 'Parc Véhicules', url: ROUTES.rh.parc, icon: Car },
+      { title: 'Mon Coffre RH', url: ROUTES.rh.coffre, icon: FolderOpen, description: 'Mes documents personnels' },
+      { title: 'Demande de congé', url: ROUTES.rh.demande, icon: Calendar, description: 'Poser une demande' },
+      { title: 'Mon équipe', url: ROUTES.rh.equipe, icon: Users, description: 'Collaborateurs et RH' },
+      { title: 'Plannings', url: ROUTES.rh.plannings, icon: CalendarDays, description: 'Plannings hebdomadaires' },
+      { title: 'Demandes RH', url: ROUTES.rh.demandes, icon: FileText, description: 'Traiter les demandes' },
+      { title: 'Parc Véhicules', url: ROUTES.rh.parc, icon: Car, description: 'Gestion de flotte' },
+      { title: 'Matériel & EPI', url: ROUTES.rh.epi, icon: HardHat, description: 'Équipements de protection' },
     ],
     requiresModule: 'rh',
   },
