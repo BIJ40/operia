@@ -58,6 +58,13 @@ export function useMyRequests() {
   });
 }
 
+const requestTypeLabel: Record<RequestType, string> = {
+  EPI_RENEWAL: "Renouvellement EPI",
+  LEAVE: "Congé",
+  DOCUMENT: "Document",
+  OTHER: "Autre",
+};
+
 export function useCreateRequest() {
   const { user } = useAuth();
   const { data: collaborator } = useMyCollaborator();
@@ -87,10 +94,43 @@ export function useCreateRequest() {
         throw error;
       }
 
+      // Notification N1→N2 : récupérer les RH de l'agence
+      const { data: rhUsers } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("agency_id", collaborator.agency_id)
+        .gte("global_role", "franchisee_admin");
+
+      const label = requestTypeLabel[payload.request_type] ?? payload.request_type;
+
+      // Créer notification pour chaque N2+ de l'agence
+      if (rhUsers && rhUsers.length > 0) {
+        const notifications = rhUsers.map((rh) => ({
+          collaborator_id: collaborator.id ?? null,
+          recipient_id: rh.id,
+          sender_id: user.id,
+          agency_id: collaborator.agency_id,
+          notification_type: "REQUEST_CREATED",
+          title: `Nouvelle demande : ${label}`,
+          message: `${collaborator.first_name} ${collaborator.last_name} a soumis une demande de ${label}`,
+          related_request_id: data.id,
+        }));
+
+        const { error: notifErr } = await supabase
+          .from("rh_notifications")
+          .insert(notifications);
+
+        if (notifErr) {
+          logError("Erreur notification N1→N2:", notifErr);
+        }
+      }
+
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["rh-notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["rh-notifications-count"] });
       toast.success("Demande envoyée avec succès");
     },
     onError: (error) => {

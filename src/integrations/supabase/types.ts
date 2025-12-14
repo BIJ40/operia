@@ -4304,7 +4304,7 @@ export type Database = {
       rh_notifications: {
         Row: {
           agency_id: string
-          collaborator_id: string
+          collaborator_id: string | null
           created_at: string
           id: string
           is_read: boolean
@@ -4319,7 +4319,7 @@ export type Database = {
         }
         Insert: {
           agency_id: string
-          collaborator_id: string
+          collaborator_id?: string | null
           created_at?: string
           id?: string
           is_read?: boolean
@@ -4334,7 +4334,7 @@ export type Database = {
         }
         Update: {
           agency_id?: string
-          collaborator_id?: string
+          collaborator_id?: string | null
           created_at?: string
           id?: string
           is_read?: boolean
@@ -4380,7 +4380,7 @@ export type Database = {
             foreignKeyName: "rh_notifications_related_request_id_fkey"
             columns: ["related_request_id"]
             isOneToOne: false
-            referencedRelation: "document_requests"
+            referencedRelation: "rh_requests"
             referencedColumns: ["id"]
           },
           {
