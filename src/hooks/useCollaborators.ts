@@ -93,12 +93,25 @@ export function useCollaborators(agencyId?: string) {
       const { birth_date, social_security_number, emergency_contact, emergency_phone, ...safeData } = data;
 
       // Update collaborateur (sans données sensibles)
+      // Forcer null si apogee_user_id est undefined (pour pouvoir "désélectionner")
+      const updatePayload = {
+        ...safeData,
+        apogee_user_id: 'apogee_user_id' in data 
+          ? (data.apogee_user_id ?? null) 
+          : undefined,
+        updated_at: new Date().toISOString(),
+      };
+      
+      // Supprimer les champs undefined pour éviter de les envoyer
+      Object.keys(updatePayload).forEach(key => {
+        if (updatePayload[key as keyof typeof updatePayload] === undefined) {
+          delete updatePayload[key as keyof typeof updatePayload];
+        }
+      });
+
       const { data: result, error } = await supabase
         .from('collaborators')
-        .update({
-          ...safeData,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updatePayload)
         .eq('id', id)
         .select()
         .single();
