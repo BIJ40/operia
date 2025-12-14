@@ -45,7 +45,8 @@ export async function getBlock(id: string): Promise<QuestionBlock | null> {
 export async function createBlock(block: Omit<QuestionBlock, 'created_at' | 'updated_at' | 'is_active'>): Promise<QuestionBlock> {
   const { data, error } = await supabase
     .from('flow_blocks')
-    .insert(block as unknown as Record<string, unknown>)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .insert(block as any)
     .select()
     .single();
 
@@ -227,13 +228,14 @@ export async function saveNewVersion(schemaId: string, json: FlowSchemaJson): Pr
 
   const nextVersion = (maxVersionData?.version || 0) + 1;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await supabase
     .from('flow_schema_versions')
-    .insert([{
+    .insert({
       schema_id: schemaId,
       version: nextVersion,
-      json: json as unknown as Record<string, unknown>,
-    }])
+      json: json as any,
+    })
     .select()
     .single();
 
