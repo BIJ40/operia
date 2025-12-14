@@ -4176,11 +4176,44 @@ export type Database = {
           },
         ]
       }
+      rh_competences_catalogue: {
+        Row: {
+          agency_id: string | null
+          created_at: string | null
+          id: string
+          is_default: boolean | null
+          label: string
+        }
+        Insert: {
+          agency_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          label: string
+        }
+        Update: {
+          agency_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          label?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rh_competences_catalogue_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rh_competencies: {
         Row: {
           autres_habilitations: Json | null
           caces: Json | null
           collaborator_id: string
+          competences_techniques: string[] | null
           created_at: string | null
           derniere_maj: string | null
           habilitation_electrique_date: string | null
@@ -4192,6 +4225,7 @@ export type Database = {
           autres_habilitations?: Json | null
           caces?: Json | null
           collaborator_id: string
+          competences_techniques?: string[] | null
           created_at?: string | null
           derniere_maj?: string | null
           habilitation_electrique_date?: string | null
@@ -4203,6 +4237,7 @@ export type Database = {
           autres_habilitations?: Json | null
           caces?: Json | null
           collaborator_id?: string
+          competences_techniques?: string[] | null
           created_at?: string | null
           derniere_maj?: string | null
           habilitation_electrique_date?: string | null

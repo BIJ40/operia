@@ -51,6 +51,7 @@ export interface RHCompetencies {
   habilitation_electrique_date: string | null;
   caces: CACESEntry[];
   autres_habilitations: HabilitationEntry[];
+  competences_techniques: string[];
   derniere_maj: string;
   created_at: string;
   updated_at: string;
