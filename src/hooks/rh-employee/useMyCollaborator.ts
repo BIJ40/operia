@@ -4,7 +4,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { logError } from "@/lib/logger";
+import { logError, logWarn } from "@/lib/logger";
 
 export interface MyCollaborator {
   id: string;
@@ -19,6 +19,9 @@ export interface MyCollaborator {
   leaving_date: string | null;
   apogee_user_id: number | null;
 }
+
+// Flag pour éviter le spam de logs
+let warnedNoCollaborator = false;
 
 export function useMyCollaborator() {
   const { user } = useAuth();
@@ -40,6 +43,12 @@ export function useMyCollaborator() {
       if (error) {
         logError("Erreur récupération collaborateur:", error);
         throw error;
+      }
+
+      // Log unique si pas de collaborateur trouvé
+      if (!data && !warnedNoCollaborator) {
+        warnedNoCollaborator = true;
+        logWarn("useMyCollaborator: Aucun collaborateur lié à l'utilisateur", { userId: user.id });
       }
 
       return data as MyCollaborator | null;

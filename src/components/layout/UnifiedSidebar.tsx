@@ -237,10 +237,15 @@ export function UnifiedSidebar() {
       indexUrl: ROUTES.rh.index,
       icon: Briefcase,
       items: [
+        // Back-office N2
         { title: 'Suivi RH', url: ROUTES.rh.suivi, icon: Users, description: 'Gestion complète des collaborateurs (back-office)', minRole: 'franchisee_admin' },
         { title: 'Mon équipe', url: ROUTES.rh.equipe, icon: Users, description: 'Collaborateurs, documents RH et bulletins de salaire', minRole: 'franchisee_admin' },
+        { title: 'Traiter demandes', url: ROUTES.rh.demandes, icon: FileText, description: 'Traiter les demandes de documents', minRole: 'franchisee_admin' },
+        // Portail salarié N1+
         { title: 'Mon Coffre RH', url: ROUTES.rh.coffre, icon: FolderOpen, description: 'Mes documents RH personnels' },
-        { title: 'Demandes RH', url: ROUTES.rh.demandes, icon: FileText, description: 'Traiter les demandes de documents', minRole: 'franchisee_admin' },
+        { title: 'Mes demandes', url: ROUTES.rh.demande, icon: FileText, description: 'Créer et suivre mes demandes' },
+        { title: 'Mon planning', url: ROUTES.rh.monPlanning, icon: Calendar, description: 'Mon planning hebdomadaire' },
+        { title: 'Ma signature', url: ROUTES.rh.signature, icon: FileText, description: 'Gérer ma signature personnelle' },
       ],
       accessKey: 'canAccessPilotageAgence',
     },

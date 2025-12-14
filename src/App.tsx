@@ -56,8 +56,11 @@ const Messages = lazy(() => import("./pages/Messages"));
 // Lazy loaded pages - Collaborateurs (Module RH & Parc)
 const CollaborateursPage = lazy(() => import("./pages/CollaborateursPage"));
 const CollaborateurProfilePage = lazy(() => import("./pages/CollaborateurProfilePage"));
-const MonCoffreRH = lazy(() => import("./pages/MonCoffreRH"));
-const FaireUneDemande = lazy(() => import("./pages/FaireUneDemande"));
+// Portail Salarié P1
+const MesCoffreRHPage = lazy(() => import("./pages/rh-employee/MesCoffreRHPage"));
+const MesDemandesPage = lazy(() => import("./pages/rh-employee/MesDemandesPage"));
+const MonPlanningPage = lazy(() => import("./pages/rh-employee/MonPlanningPage"));
+const MaSignaturePage = lazy(() => import("./pages/rh-employee/MaSignaturePage"));
 const GestionConges = lazy(() => import("./pages/GestionConges"));
 const DemandesRHPage = lazy(() => import("./pages/DemandesRHPage"));
 const RHDashboardPage = lazy(() => import("./pages/RHDashboardPage"));
@@ -264,8 +267,11 @@ function AppContent() {
           <Route path="/rh/suivi" element={<MainLayout><RoleGuard minRole="franchisee_admin"><RHSuiviIndex /></RoleGuard></MainLayout>} />
           <Route path="/rh/suivi/:id" element={<MainLayout><RoleGuard minRole="franchisee_admin"><RHCollaborateurPage /></RoleGuard></MainLayout>} />
           
-          <Route path="/rh/coffre" element={<MainLayout><RoleGuard><ModuleGuard moduleKey="rh" requiredOption="coffre"><MonCoffreRH /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/rh/demande" element={<MainLayout><RoleGuard><ModuleGuard moduleKey="rh" requiredOption="coffre"><FaireUneDemande /></ModuleGuard></RoleGuard></MainLayout>} />
+          {/* Portail Salarié P1 - N1+ */}
+          <Route path="/rh/coffre" element={<MainLayout><RoleGuard minRole="franchisee_user"><MesCoffreRHPage /></RoleGuard></MainLayout>} />
+          <Route path="/rh/demande" element={<MainLayout><RoleGuard minRole="franchisee_user"><MesDemandesPage /></RoleGuard></MainLayout>} />
+          <Route path="/rh/mon-planning" element={<MainLayout><RoleGuard minRole="franchisee_user"><MonPlanningPage /></RoleGuard></MainLayout>} />
+          <Route path="/rh/signature" element={<MainLayout><RoleGuard minRole="franchisee_user"><MaSignaturePage /></RoleGuard></MainLayout>} />
           <Route path="/rh/equipe" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><CollaborateursPage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/rh/equipe/plannings" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><PlanningHebdo /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/rh/equipe/:id" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><CollaborateurProfilePage /></ModuleGuard></RoleGuard></MainLayout>} />
