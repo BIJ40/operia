@@ -143,14 +143,14 @@ export interface UserSignature {
 export interface RHColumnDef {
   id: string;
   label: string;
-  category: 'general' | 'securite' | 'competences' | 'parc' | 'it' | 'documents';
+  category: 'general' | 'securite' | 'competences' | 'parc' | 'idmdp' | 'documents';
   accessor: (row: RHCollaborator) => string | number | boolean | null | undefined;
   sensitive?: boolean; // N2 strict fields
   defaultVisible?: boolean;
 }
 
 // Tab definitions
-export type RHTabId = 'general' | 'securite' | 'competences' | 'parc' | 'it' | 'documents';
+export type RHTabId = 'general' | 'securite' | 'competences' | 'parc' | 'idmdp' | 'documents';
 
 export interface RHTab {
   id: RHTabId;
@@ -163,6 +163,6 @@ export const RH_TABS: RHTab[] = [
   { id: 'securite', label: 'Sécurité & EPI', icon: 'Shield' },
   { id: 'competences', label: 'Compétences', icon: 'Award' },
   { id: 'parc', label: 'Parc & Matériel', icon: 'Car' },
-  { id: 'it', label: 'IT & Accès', icon: 'Laptop' },
+  { id: 'idmdp', label: 'ID / MDP', icon: 'Key' },
   { id: 'documents', label: 'Documents', icon: 'FolderOpen' },
 ];

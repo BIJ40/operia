@@ -5,7 +5,7 @@
 
 import { RHCollaborator } from '@/types/rh-suivi';
 
-export type RHTabId = 'general' | 'securite' | 'competences' | 'parc' | 'it' | 'documents';
+export type RHTabId = 'general' | 'securite' | 'competences' | 'parc' | 'idmdp' | 'documents';
 
 export interface ColumnGroup {
   id: string;
@@ -46,15 +46,19 @@ export const TAB_COLUMNS: Record<RHTabId, ColumnGroup[]> = {
       columns: [
         { id: 'email', label: 'Email', accessor: (row) => row.email },
         { id: 'phone', label: 'Téléphone', accessor: (row) => row.phone },
+        { id: 'emergency_contact', label: 'ICE Contact', accessor: () => null, sensitive: true },
+        { id: 'emergency_phone', label: 'ICE Tél', accessor: () => null, sensitive: true },
       ],
     },
     {
-      id: 'ice',
-      label: 'ICE',
-      className: 'bg-red-50 dark:bg-red-950/30',
+      id: 'infos_rh',
+      label: 'Infos RH',
+      className: 'bg-slate-50 dark:bg-slate-950/30',
       columns: [
-        { id: 'emergency_contact', label: 'Contact', accessor: () => null, sensitive: true },
-        { id: 'emergency_phone', label: 'Téléphone', accessor: () => null, sensitive: true },
+        { id: 'social_security_number', label: 'N° Sécu', accessor: () => null, sensitive: true },
+        { id: 'permis', label: 'Permis', accessor: (row) => row.permis },
+        { id: 'cni', label: 'CNI', accessor: (row) => row.cni },
+        { id: 'notes', label: 'Observations', accessor: (row) => row.notes },
       ],
     },
     {
@@ -63,24 +67,6 @@ export const TAB_COLUMNS: Record<RHTabId, ColumnGroup[]> = {
       columns: [
         { id: 'hiring_date', label: 'Entrée', accessor: (row) => row.hiring_date },
         { id: 'leaving_date', label: 'Sortie', accessor: (row) => row.leaving_date },
-      ],
-    },
-    {
-      id: 'identite',
-      label: 'Identité',
-      columns: [
-        { id: 'role', label: 'Fonction', accessor: (row) => row.role },
-        { id: 'notes', label: 'Observations', accessor: (row) => row.notes },
-      ],
-    },
-    {
-      id: 'divers',
-      label: 'Divers',
-      className: 'bg-slate-50 dark:bg-slate-950/30',
-      columns: [
-        { id: 'social_security_number', label: 'N° Sécu', accessor: () => null, sensitive: true },
-        { id: 'permis', label: 'Permis', accessor: (row) => row.permis },
-        { id: 'cni', label: 'CNI', accessor: (row) => row.cni },
       ],
     },
   ],
@@ -145,22 +131,21 @@ export const TAB_COLUMNS: Record<RHTabId, ColumnGroup[]> = {
       ],
     },
     {
-      id: 'materiel_it',
-      label: '📱 MATÉRIEL IT',
+      id: 'materiels',
+      label: '📱 MATÉRIELS',
       className: 'bg-purple-50 dark:bg-purple-950/30',
       columns: [
-        { id: 'tablette_telephone', label: 'Tablette / Tél', accessor: (row) => row.assets?.tablette_telephone },
-        { id: 'imei', label: 'IMEI', accessor: (row) => row.assets?.imei },
+        { id: 'materiels_liste', label: 'Équipements', accessor: () => null },
       ],
     },
   ],
-  it: [
+  idmdp: [
     {
-      id: 'acces',
-      label: 'Accès',
+      id: 'identifiants',
+      label: '🔐 IDENTIFIANTS',
+      className: 'bg-amber-50 dark:bg-amber-950/30',
       columns: [
-        { id: 'acces_outils', label: 'Outils', accessor: (row) => row.it_access?.acces_outils?.join(', ') },
-        { id: 'notes_it', label: 'Notes IT', accessor: (row) => row.it_access?.notes_it },
+        { id: 'identifiants_liste', label: 'ID / MDP', accessor: () => null, sensitive: true },
       ],
     },
   ],
@@ -181,7 +166,7 @@ export const TAB_CONFIG: { id: RHTabId; label: string; icon: string }[] = [
   { id: 'securite', label: 'Sécurité & EPI', icon: 'Shield' },
   { id: 'competences', label: 'Compétences', icon: 'Award' },
   { id: 'parc', label: 'Parc & Matériel', icon: 'Car' },
-  { id: 'it', label: 'IT & Accès', icon: 'Laptop' },
+  { id: 'idmdp', label: 'ID / MDP', icon: 'Key' },
   { id: 'documents', label: 'Documents', icon: 'FolderOpen' },
 ];
 
