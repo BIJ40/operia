@@ -50,7 +50,6 @@ export function RHUnifiedTableRow({
   const navigate = useNavigate();
   const tabGroups = TAB_COLUMNS[activeTab];
   const status = getStatusIndicator(collaborator);
-  const typeInfo = getTypeLabel(collaborator.type);
 
   // Filtrer les groupes et colonnes visibles
   const visibleGroups = tabGroups.map(group => ({
@@ -100,11 +99,6 @@ export function RHUnifiedTableRow({
         </div>
       </TableCell>
       <TableCell className="min-w-[100px] w-[100px] bg-muted/10">{collaborator.first_name}</TableCell>
-      <TableCell className="min-w-[80px] w-[80px] bg-muted/10">
-        <Badge variant={typeInfo.variant} className="text-xs">
-          {typeInfo.label}
-        </Badge>
-      </TableCell>
 
       {/* Colonnes de l'onglet actif - ÉDITABLES */}
       {visibleGroups.map((group) => (
