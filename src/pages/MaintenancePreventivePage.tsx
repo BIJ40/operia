@@ -38,10 +38,10 @@ export default function MaintenancePreventivePage() {
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       <PageHeader
-        title="Maintenance préventive"
+        title="Parc & Véhicules"
         subtitle="Suivi des véhicules, matériel, EPI et contrôles réglementaires"
-        backTo={ROUTES.agency.index}
-        backLabel="Mon Agence"
+        backTo={ROUTES.rh.index}
+        backLabel="RH & PARC"
         rightElement={
           alertsCount > 0 ? (
             <Badge variant="destructive" className="gap-1.5 px-3 py-1.5 text-sm">
