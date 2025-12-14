@@ -35,7 +35,9 @@ export function RHLoginNotificationPopup() {
   const [open, setOpen] = useState(false);
   const [notification, setNotification] = useState<PendingNotification | null>(null);
 
-  const isRH = globalRole && ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(globalRole);
+  const isRH =
+    globalRole &&
+    ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(globalRole);
 
   // Check for unread request notifications on login
   const { data: unreadNotifications } = useQuery({
@@ -63,6 +65,51 @@ export function RHLoginNotificationPopup() {
     refetchOnMount: true,
   });
 
+  // Realtime: afficher immédiatement les nouvelles notifications pertinentes
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('rh-login-notifications-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'rh_notifications',
+        },
+        (payload) => {
+          const newNotif = payload.new as PendingNotification & { recipient_id?: string };
+
+          if (!newNotif || newNotif.recipient_id !== user.id) return;
+
+          const isForRH = isRH && newNotif.notification_type === 'REQUEST_CREATED';
+          const isForEmployee =
+            !isRH &&
+            (newNotif.notification_type === 'REQUEST_COMPLETED' || newNotif.notification_type === 'REQUEST_REJECTED');
+
+          if (isForRH || isForEmployee) {
+            // Invalider la query et afficher immédiatement la popup
+            queryClient.invalidateQueries({ queryKey: ['rh-login-notifications'] });
+            setNotification({
+              id: newNotif.id,
+              notification_type: newNotif.notification_type,
+              title: newNotif.title,
+              message: newNotif.message,
+              related_request_id: newNotif.related_request_id ?? null,
+              created_at: newNotif.created_at,
+            });
+            setOpen(true);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, isRH, queryClient]);
+
   // Mark notification as read
   const markAsRead = useMutation({
     mutationFn: async (notificationId: string) => {
@@ -70,7 +117,7 @@ export function RHLoginNotificationPopup() {
         .from('rh_notifications')
         .update({ is_read: true, read_at: new Date().toISOString() })
         .eq('id', notificationId);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
@@ -80,7 +127,7 @@ export function RHLoginNotificationPopup() {
     },
   });
 
-  // Show popup when unread notification found
+  // Show popup when unread notification found (au login / refresh)
   useEffect(() => {
     if (unreadNotifications && unreadNotifications.length > 0) {
       setNotification(unreadNotifications[0]);
@@ -121,9 +168,7 @@ export function RHLoginNotificationPopup() {
             ) : (
               <XCircle className="h-8 w-8 text-destructive" />
             )}
-            <AlertDialogTitle className="text-lg">
-              {notification.title}
-            </AlertDialogTitle>
+            <AlertDialogTitle className="text-lg">{notification.title}</AlertDialogTitle>
           </div>
           <AlertDialogDescription className="text-base pt-2">
             {notification.message}
@@ -136,10 +181,7 @@ export function RHLoginNotificationPopup() {
           >
             Fermer
           </button>
-          <AlertDialogAction
-            onClick={handleView}
-            className="sm:w-auto"
-          >
+          <AlertDialogAction onClick={handleView} className="sm:w-auto">
             Voir mes demandes
           </AlertDialogAction>
         </AlertDialogFooter>
