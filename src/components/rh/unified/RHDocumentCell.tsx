@@ -85,6 +85,7 @@ export function RHDocumentCell({ collaboratorId, agencyId, docType, className }:
       toast.success('Document uploadé avec succès');
       queryClient.invalidateQueries({ queryKey: ['rh-document', collaboratorId, docType] });
       queryClient.invalidateQueries({ queryKey: ['collaborator-documents', collaboratorId] });
+      queryClient.invalidateQueries({ queryKey: ['rh-documents-check', collaboratorId] });
       setIsOpen(false);
     },
     onError: (error) => {

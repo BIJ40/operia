@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileText, CreditCard, Car, Heart, X, Eye, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 export type DocumentType = 'cni' | 'permis' | 'carte_vitale' | 'contrat' | 'rib';
 
@@ -154,15 +156,30 @@ export function RHDocumentPopup({
 // Composant pour afficher les icônes de documents dans le tableau
 interface DocumentIconsProps {
   collaboratorId: string;
-  documents?: { type: DocumentType; url: string }[];
   onDocumentClick: (type: DocumentType) => void;
 }
 
-export function DocumentIcons({ documents = [], onDocumentClick }: DocumentIconsProps) {
+export function DocumentIcons({ collaboratorId, onDocumentClick }: DocumentIconsProps) {
+  // Query to check which document types exist for this collaborator
+  const { data: existingDocs = [] } = useQuery({
+    queryKey: ['rh-documents-check', collaboratorId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('collaborator_documents')
+        .select('doc_type')
+        .eq('collaborator_id', collaboratorId)
+        .in('doc_type', ['permis', 'cni', 'carte_vitale', 'contrat', 'rib']);
+      
+      if (error) throw error;
+      return data?.map(d => d.doc_type) || [];
+    },
+    staleTime: 30000, // Cache 30 seconds
+  });
+
   return (
     <div className="flex items-center gap-1">
       {DOCUMENT_TYPES.map((docType) => {
-        const hasDoc = documents.some(d => d.type === docType.type);
+        const hasDoc = existingDocs.includes(docType.type);
         
         return (
           <button
