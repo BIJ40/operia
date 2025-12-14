@@ -54,7 +54,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
     links: [
       { label: 'Stats Hub', href: ROUTES.agency.statsHub, icon: 'BarChart2', description: 'Centre statistiques', minRole: 'franchisee_admin' },
       { label: 'Actions à Mener', href: ROUTES.agency.actions, icon: 'ListTodo', description: 'Tâches opérationnelles', minRole: 'franchisee_admin' },
-      { label: 'Diffusion', href: ROUTES.agency.diffusion, icon: 'Tv', description: 'Mode TV agence', minRole: 'franchisee_admin' },
+      { label: 'Veille Apporteurs', href: ROUTES.agency.veilleApporteurs, icon: 'Radar', description: 'Alertes apporteurs', minRole: 'franchisee_admin' },
     ],
   },
 
