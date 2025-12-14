@@ -142,7 +142,8 @@ export const TAB_COLUMNS: Record<RHTabId, ColumnGroup[]> = {
       label: '📱 MATÉRIELS',
       className: 'bg-purple-50 dark:bg-purple-950/30',
       columns: [
-        { id: 'materiels_liste', label: 'Équipements', accessor: () => null },
+        { id: 'informatique_liste', label: 'Informatique', accessor: () => null },
+        { id: 'outils_liste', label: 'Outils', accessor: () => null },
       ],
     },
   ],

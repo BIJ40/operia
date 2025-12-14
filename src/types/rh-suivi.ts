@@ -88,9 +88,15 @@ export interface RHAssets {
   updated_at: string;
 }
 
+export type EquipmentCategory = 'informatique' | 'outils';
+
 export interface EquipmentEntry {
+  id?: string;
   nom: string;
+  categorie: EquipmentCategory;
   numero_serie?: string;
+  imei?: string;
+  notes?: string;
   date_attribution?: string;
 }
 

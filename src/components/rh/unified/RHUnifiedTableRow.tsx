@@ -219,10 +219,11 @@ export function RHUnifiedTableRow({
       );
     }
     
-    // Matériels
-    if (colId === 'materiels_liste') {
-      const equipements = (assets?.autres_equipements as unknown as { nom: string }[]) || [];
-      const count = equipements.length;
+    // Informatique
+    if (colId === 'informatique_liste') {
+      const equipements = (assets?.autres_equipements as unknown as { nom: string; categorie?: string }[]) || [];
+      const infoItems = equipements.filter(e => e.categorie === 'informatique' || !e.categorie);
+      const count = infoItems.length;
       
       return (
         <TableCell key={colId} className={cellClass}>
@@ -231,16 +232,49 @@ export function RHUnifiedTableRow({
             size="sm"
             className="h-7 px-2 text-xs font-normal w-full justify-start gap-2"
             onDoubleClick={() => setMaterielPopupOpen(true)}
-            title={count > 0 ? `${count} équipement(s): ${equipements.map(e => e.nom).join(', ')}` : 'Double-clic pour ajouter'}
+            title={count > 0 ? `${count}: ${infoItems.map(e => e.nom).join(', ')}` : 'Double-clic pour ajouter'}
           >
-            <Package className={cn("h-3.5 w-3.5", count > 0 ? "text-primary" : "text-muted-foreground")} />
+            <Package className={cn("h-3.5 w-3.5", count > 0 ? "text-blue-600" : "text-muted-foreground")} />
             {count > 0 ? (
               <span className="inline-flex items-center gap-1">
-                <span className="bg-primary text-primary-foreground text-[10px] font-medium px-1.5 py-0.5 rounded-full">
+                <span className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 text-[10px] font-medium px-1.5 py-0.5 rounded-full">
                   {count}
                 </span>
-                <span className="text-muted-foreground truncate max-w-[100px]">
-                  {equipements.map(e => e.nom).join(', ')}
+                <span className="text-muted-foreground truncate max-w-[80px]">
+                  {infoItems.map(e => e.nom).join(', ')}
+                </span>
+              </span>
+            ) : (
+              <span className="text-muted-foreground">—</span>
+            )}
+          </Button>
+        </TableCell>
+      );
+    }
+    
+    // Outils
+    if (colId === 'outils_liste') {
+      const equipements = (assets?.autres_equipements as unknown as { nom: string; categorie?: string }[]) || [];
+      const outilItems = equipements.filter(e => e.categorie === 'outils');
+      const count = outilItems.length;
+      
+      return (
+        <TableCell key={colId} className={cellClass}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs font-normal w-full justify-start gap-2"
+            onDoubleClick={() => setMaterielPopupOpen(true)}
+            title={count > 0 ? `${count}: ${outilItems.map(e => e.nom).join(', ')}` : 'Double-clic pour ajouter'}
+          >
+            <Package className={cn("h-3.5 w-3.5", count > 0 ? "text-orange-600" : "text-muted-foreground")} />
+            {count > 0 ? (
+              <span className="inline-flex items-center gap-1">
+                <span className="bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300 text-[10px] font-medium px-1.5 py-0.5 rounded-full">
+                  {count}
+                </span>
+                <span className="text-muted-foreground truncate max-w-[80px]">
+                  {outilItems.map(e => e.nom).join(', ')}
                 </span>
               </span>
             ) : (
@@ -283,7 +317,7 @@ export function RHUnifiedTableRow({
     return null;
   };
 
-  const POPUP_COLUMNS = ['vehicule_attribue', 'carte_carburant', 'carte_bancaire', 'carte_autre', 'materiels_liste', 'identifiants_liste'];
+  const POPUP_COLUMNS = ['vehicule_attribue', 'carte_carburant', 'carte_bancaire', 'carte_autre', 'informatique_liste', 'outils_liste', 'identifiants_liste'];
   
   // Colonnes avec possibilité d'upload de documents
   const DOCUMENT_UPLOAD_COLUMNS = ['habilitation_electrique', 'caces', 'visite_medicale'];
