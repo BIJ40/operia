@@ -32,6 +32,13 @@ const MON_ESPACE_MODULES: RHModule[] = [
     href: ROUTES.rh.coffre,
   },
   {
+    id: 'mon-planning',
+    title: 'Mon Planning',
+    description: 'Mon planning hebdomadaire',
+    icon: CalendarDays,
+    href: ROUTES.rh.monPlanning,
+  },
+  {
     id: 'demande-conge',
     title: 'Demande de congé',
     description: 'Poser une demande',
@@ -96,16 +103,35 @@ export default function RHIndex() {
   const isN2Plus = globalRole === 'franchisee_admin' || globalRole === 'franchisor_user' || 
                    globalRole === 'franchisor_admin' || isPlatformAdmin;
 
+  // N1: Afficher uniquement "Mon Espace"
   if (!isN2Plus) {
     return (
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
         <PageHeader
           title="RH & PARC"
-          subtitle="Accès restreint"
+          subtitle="Mon espace personnel"
           backTo="/"
           backLabel="Accueil"
         />
-        <p className="text-muted-foreground">Vous n'avez pas accès à cette section.</p>
+
+        {/* Section Mon Espace pour N1 */}
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+            <FolderOpen className="h-5 w-5 text-helpconfort-blue" />
+            Mon Espace
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {MON_ESPACE_MODULES.map(module => (
+              <IndexTile
+                key={module.id}
+                title={module.title}
+                description={module.description}
+                icon={module.icon}
+                href={module.href}
+              />
+            ))}
+          </div>
+        </section>
       </div>
     );
   }
