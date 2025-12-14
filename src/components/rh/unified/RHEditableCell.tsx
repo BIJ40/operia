@@ -121,13 +121,19 @@ export function RHEditableCell({
   // Dropdown pour les tailles
   if (SIZE_DROPDOWN_COLUMNS[columnId]) {
     const options = SIZE_DROPDOWN_COLUMNS[columnId];
+    const currentValue = editValue || '__EMPTY__';
     return (
-      <Select value={editValue || ''} onValueChange={handleSelectChange}>
+      <Select 
+        value={currentValue} 
+        onValueChange={(v) => handleSelectChange(v === '__EMPTY__' ? '' : v)}
+      >
         <SelectTrigger className={cn("h-7 text-sm", className)}>
-          <SelectValue placeholder="—" />
+          <SelectValue placeholder="—">
+            {currentValue === '__EMPTY__' ? '—' : currentValue}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent className="bg-popover">
-          <SelectItem value="">—</SelectItem>
+          <SelectItem value="__EMPTY__">—</SelectItem>
           {options.map((opt) => (
             <SelectItem key={opt} value={opt}>{opt}</SelectItem>
           ))}
