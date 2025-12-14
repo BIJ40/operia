@@ -6,6 +6,7 @@ import { Upload, FileText, CreditCard, Car, Heart, X, Eye, Download } from 'luci
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { RHDocumentPreviewPopup } from './RHDocumentPreviewPopup';
 
 export type DocumentType = 'cni' | 'permis' | 'carte_vitale' | 'contrat' | 'rib';
 
@@ -160,44 +161,78 @@ interface DocumentIconsProps {
 }
 
 export function DocumentIcons({ collaboratorId, onDocumentClick }: DocumentIconsProps) {
+  const [previewDoc, setPreviewDoc] = useState<{type: DocumentType; filePath: string; fileName: string} | null>(null);
+
   // Query to check which document types exist for this collaborator
   const { data: existingDocs = [] } = useQuery({
     queryKey: ['rh-documents-check', collaboratorId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('collaborator_documents')
-        .select('doc_type')
+        .select('doc_type, file_path, file_name')
         .eq('collaborator_id', collaboratorId)
         .in('doc_type', ['permis', 'cni', 'carte_vitale', 'contrat', 'rib']);
       
       if (error) throw error;
-      return data?.map(d => d.doc_type) || [];
+      return data || [];
     },
     staleTime: 30000, // Cache 30 seconds
   });
 
+  const handleClick = (docType: DocumentInfo, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const doc = existingDocs.find(d => d.doc_type === docType.type);
+    
+    if (doc) {
+      // Document exists - show preview
+      setPreviewDoc({
+        type: docType.type,
+        filePath: doc.file_path,
+        fileName: doc.file_name
+      });
+    } else {
+      // No document - open upload
+      onDocumentClick(docType.type);
+    }
+  };
+
+  const docInfo = previewDoc ? DOCUMENT_TYPES.find(d => d.type === previewDoc.type) : null;
+
   return (
-    <div className="flex items-center gap-1">
-      {DOCUMENT_TYPES.map((docType) => {
-        const hasDoc = existingDocs.includes(docType.type);
-        
-        return (
-          <button
-            key={docType.type}
-            onClick={(e) => {
-              e.stopPropagation();
-              onDocumentClick(docType.type);
-            }}
-            className={cn(
-              "p-1 rounded hover:bg-muted transition-colors",
-              hasDoc ? docType.color : "text-muted-foreground/40"
-            )}
-            title={`${docType.label}${hasDoc ? ' ✓' : ' (vide)'}`}
-          >
-            {docType.icon}
-          </button>
-        );
-      })}
-    </div>
+    <>
+      <div className="flex items-center gap-1">
+        {DOCUMENT_TYPES.map((docType) => {
+          const hasDoc = existingDocs.some(d => d.doc_type === docType.type);
+          
+          return (
+            <button
+              key={docType.type}
+              onClick={(e) => handleClick(docType, e)}
+              className={cn(
+                "p-1 rounded hover:bg-muted transition-colors",
+                hasDoc ? docType.color : "text-muted-foreground/40"
+              )}
+              title={`${docType.label}${hasDoc ? ' ✓' : ' (vide)'}`}
+            >
+              {docType.icon}
+            </button>
+          );
+        })}
+      </div>
+
+      {previewDoc && docInfo && (
+        <RHDocumentPreviewPopup
+          open={!!previewDoc}
+          onOpenChange={(open) => !open && setPreviewDoc(null)}
+          title={docInfo.label}
+          filePath={previewDoc.filePath}
+          fileName={previewDoc.fileName}
+          onReplace={() => {
+            setPreviewDoc(null);
+            onDocumentClick(previewDoc.type);
+          }}
+        />
+      )}
+    </>
   );
 }

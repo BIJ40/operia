@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, Upload, ExternalLink } from 'lucide-react';
+import { FileText, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { RHDocumentPreviewPopup } from './RHDocumentPreviewPopup';
 
 interface RHDocumentCellProps {
   collaboratorId: string;
@@ -22,7 +23,8 @@ const DOC_TYPE_LABELS: Record<string, string> = {
 };
 
 export function RHDocumentCell({ collaboratorId, agencyId, docType, className }: RHDocumentCellProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const queryClient = useQueryClient();
 
@@ -86,7 +88,7 @@ export function RHDocumentCell({ collaboratorId, agencyId, docType, className }:
       queryClient.invalidateQueries({ queryKey: ['rh-document', collaboratorId, docType] });
       queryClient.invalidateQueries({ queryKey: ['collaborator-documents', collaboratorId] });
       queryClient.invalidateQueries({ queryKey: ['rh-documents-check', collaboratorId] });
-      setIsOpen(false);
+      setIsUploadOpen(false);
     },
     onError: (error) => {
       toast.error(`Erreur: ${error.message}`);
@@ -110,49 +112,84 @@ export function RHDocumentCell({ collaboratorId, agencyId, docType, className }:
     disabled: isUploading,
   });
 
-  const handleOpenDocument = async () => {
-    if (!existingDoc?.file_path) return;
-    
-    const { data } = await supabase.storage
-      .from('rh-documents')
-      .createSignedUrl(existingDoc.file_path, 3600);
-    
-    if (data?.signedUrl) {
-      window.open(data.signedUrl, '_blank');
-    }
-  };
 
   if (isLoading) {
     return <div className={cn("h-7 w-7 animate-pulse bg-muted rounded", className)} />;
   }
 
-  // Document exists - show icon
+  // Document exists - show preview popup on click
   if (existingDoc) {
     return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn("h-7 w-7 text-primary hover:text-primary/80", className)}
-              onClick={handleOpenDocument}
+      <>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn("h-7 w-7 text-primary hover:text-primary/80", className)}
+                onClick={() => setIsPreviewOpen(true)}
+              >
+                <FileText className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Voir {DOC_TYPE_LABELS[docType]}</p>
+              <p className="text-xs text-muted-foreground">{existingDoc.file_name}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        
+        <RHDocumentPreviewPopup
+          open={isPreviewOpen}
+          onOpenChange={setIsPreviewOpen}
+          title={DOC_TYPE_LABELS[docType]}
+          filePath={existingDoc.file_path}
+          fileName={existingDoc.file_name}
+          onReplace={() => {
+            setIsPreviewOpen(false);
+            setIsUploadOpen(true);
+          }}
+        />
+        
+        {/* Upload dialog for replacement */}
+        <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Remplacer {DOC_TYPE_LABELS[docType]}</DialogTitle>
+            </DialogHeader>
+            <div
+              {...getRootProps()}
+              className={cn(
+                "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
+                isDragActive ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50",
+                isUploading && "opacity-50 cursor-not-allowed"
+              )}
             >
-              <FileText className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Voir {DOC_TYPE_LABELS[docType]}</p>
-            <p className="text-xs text-muted-foreground">{existingDoc.file_name}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+              <input {...getInputProps()} />
+              <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+              {isUploading ? (
+                <p className="text-sm text-muted-foreground">Upload en cours...</p>
+              ) : isDragActive ? (
+                <p className="text-sm text-primary">Déposez le fichier ici</p>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    Glissez-déposez ou cliquez pour sélectionner
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">PDF, PNG, JPG</p>
+                </>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      </>
     );
   }
 
   // No document - show upload dialog
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
       <DialogTrigger asChild>
         <Button
           variant="ghost"
