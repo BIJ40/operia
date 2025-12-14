@@ -175,10 +175,12 @@ function DayColumn({ day, events, showLunch }: DayColumnProps) {
 // Composant pour afficher la signature dans le print header
 function PrintSignatureBox({ 
   techId, 
-  weekDate 
+  weekDate,
+  workMinutes
 }: { 
   techId: number; 
-  weekDate: Date; 
+  weekDate: Date;
+  workMinutes: number;
 }) {
   const { signature, isSignedByTech } = usePlanningSignature({ techId, weekDate });
   
@@ -187,16 +189,17 @@ function PrintSignatureBox({
     return (
       <span className="hidden print:inline-flex items-center gap-2 text-sm ml-4">
         <span>Signé le {signedDate}</span>
-        <span className="ml-4">Signature :</span>
-        <span className="border border-black w-32 h-10 inline-flex items-center justify-center">
+        <span className="ml-2">Signature :</span>
+        <span className="border border-black w-28 h-8 inline-flex items-center justify-center">
           <img 
             src={signature.tech_signature_png.startsWith('data:') 
               ? signature.tech_signature_png 
               : `data:image/png;base64,${signature.tech_signature_png}`}
             alt="Signature"
-            className="max-h-9 max-w-28 object-contain"
+            className="max-h-7 max-w-24 object-contain"
           />
         </span>
+        <span className="ml-3 font-semibold">{formatMinutes(workMinutes)} travaillées</span>
       </span>
     );
   }
@@ -205,9 +208,10 @@ function PrintSignatureBox({
   return (
     <span className="hidden print:inline-flex items-center gap-2 text-sm ml-4">
       <span>Signé le</span>
-      <span className="border-b border-black w-32 inline-block">&nbsp;</span>
-      <span className="ml-4">Signature :</span>
-      <span className="border border-black w-32 h-10 inline-block align-middle">&nbsp;</span>
+      <span className="border-b border-black w-28 inline-block">&nbsp;</span>
+      <span className="ml-2">Signature :</span>
+      <span className="border border-black w-28 h-8 inline-block align-middle">&nbsp;</span>
+      <span className="ml-3 font-semibold">{formatMinutes(workMinutes)} travaillées</span>
     </span>
   );
 }
@@ -515,8 +519,8 @@ function PlanningTechniciensSemaineContent() {
                 />
               )}
               <span className="font-semibold text-lg">{selectedTechLabel}</span>
-              {/* Bloc visible uniquement à l'impression: à ___ le ___ Signature: [signature PNG] */}
-              <PrintSignatureBox techId={selectedTechId} weekDate={currentWeekStart} />
+              {/* Bloc visible uniquement à l'impression: Signé le... Signature: [PNG] XX h travaillées */}
+              <PrintSignatureBox techId={selectedTechId} weekDate={currentWeekStart} workMinutes={workMinutes} />
             </div>
             
             <div className="flex items-center gap-3 print:hidden">
