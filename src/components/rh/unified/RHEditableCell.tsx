@@ -8,8 +8,8 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 // Options pour les tailles
-const TAILLE_HAUT_OPTIONS = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL'];
-const TAILLE_BAS_OPTIONS = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL'];
+const TAILLE_HAUT_OPTIONS = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', '5XL'];
+const TAILLE_BAS_OPTIONS = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', '5XL'];
 const POINTURE_OPTIONS = Array.from({ length: 15 }, (_, i) => String(36 + i)); // 36 à 50
 const TAILLE_GANTS_OPTIONS = ['6', '7', '8', '9', '10', '11', '12'];
 
