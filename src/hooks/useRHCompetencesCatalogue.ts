@@ -54,7 +54,9 @@ export function useAddCompetenceCatalogue() {
       if (error) throw error;
     },
     onSuccess: () => {
+      // Invalider le catalogue et les collaborateurs pour rafraîchir les listes
       queryClient.invalidateQueries({ queryKey: ['rh-competences-catalogue', agencyId] });
+      queryClient.invalidateQueries({ queryKey: ['rh-competences-catalogue'] });
       toast.success('Métier ajouté au catalogue');
     },
     onError: () => {
