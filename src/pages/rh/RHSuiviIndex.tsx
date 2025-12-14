@@ -306,7 +306,7 @@ export default function RHSuiviIndex() {
                     <TableRow 
                       key={collaborator.id}
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => navigate(`/rh/${collaborator.id}`)}
+                      onClick={() => navigate(`/rh/suivi/${collaborator.id}`)}
                     >
                       {visibleColumns.map(col => (
                         <TableCell key={col.id}>

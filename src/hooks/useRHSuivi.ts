@@ -130,15 +130,13 @@ export function useUpdateCompetencies() {
   
   return useMutation({
     mutationFn: async ({ collaboratorId, data }: { collaboratorId: string; data: Partial<RHCompetencies> }) => {
-      const { caces, autres_habilitations, ...rest } = data;
+      // JSONB fields - do NOT stringify, store native arrays/objects
       const { error } = await supabase
         .from('rh_competencies')
         .upsert({ 
           collaborator_id: collaboratorId,
           derniere_maj: new Date().toISOString(),
-          caces: caces ? JSON.stringify(caces) : undefined,
-          autres_habilitations: autres_habilitations ? JSON.stringify(autres_habilitations) : undefined,
-          ...rest 
+          ...data 
         } as any, { 
           onConflict: 'collaborator_id' 
         });
@@ -165,13 +163,12 @@ export function useUpdateAssets() {
   
   return useMutation({
     mutationFn: async ({ collaboratorId, data }: { collaboratorId: string; data: Partial<RHAssets> }) => {
-      const { autres_equipements, ...rest } = data;
+      // JSONB fields - do NOT stringify, store native arrays/objects
       const { error } = await supabase
         .from('rh_assets')
         .upsert({ 
           collaborator_id: collaboratorId,
-          autres_equipements: autres_equipements ? JSON.stringify(autres_equipements) : undefined,
-          ...rest 
+          ...data 
         } as any, { 
           onConflict: 'collaborator_id' 
         });

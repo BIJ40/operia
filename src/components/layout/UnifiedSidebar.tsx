@@ -237,6 +237,7 @@ export function UnifiedSidebar() {
       indexUrl: ROUTES.rh.index,
       icon: Briefcase,
       items: [
+        { title: 'Suivi RH', url: ROUTES.rh.suivi, icon: Users, description: 'Gestion complète des collaborateurs (back-office)', minRole: 'franchisee_admin' },
         { title: 'Mon équipe', url: ROUTES.rh.equipe, icon: Users, description: 'Collaborateurs, documents RH et bulletins de salaire', minRole: 'franchisee_admin' },
         { title: 'Mon Coffre RH', url: ROUTES.rh.coffre, icon: FolderOpen, description: 'Mes documents RH personnels' },
         { title: 'Demandes RH', url: ROUTES.rh.demandes, icon: FileText, description: 'Traiter les demandes de documents', minRole: 'franchisee_admin' },
