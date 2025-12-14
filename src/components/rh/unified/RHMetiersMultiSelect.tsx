@@ -31,6 +31,13 @@ export function RHMetiersMultiSelect({
   const addCompetence = useAddCompetenceCatalogue();
   const updateCompetencies = useUpdateCompetencies();
 
+  // Catalogue complet + métiers déjà présents sur le collaborateur (pour couvrir l'historique)
+  const allMetiers = React.useMemo(() => {
+    const base = catalogue.map(c => c.label);
+    const extras = localSelected.filter(m => !base.some(b => b.toLowerCase() === m.toLowerCase()));
+    return [...base, ...extras];
+  }, [catalogue, localSelected]);
+
   // On initialise à partir des props mais on ne resynchronise pas ensuite
   // pour éviter d'effacer la sélection locale quand la requête de rafraîchissement
   // renvoie encore des données vides.
@@ -135,16 +142,16 @@ export function RHMetiersMultiSelect({
             </div>
           ) : (
             <div className="space-y-1">
-              {catalogue.map((comp) => (
+              {allMetiers.map((label) => (
                 <label
-                  key={comp.id}
+                  key={label}
                   className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer"
                 >
                   <Checkbox
-                    checked={localSelected.includes(comp.label)}
-                    onCheckedChange={() => handleToggle(comp.label)}
+                    checked={localSelected.includes(label)}
+                    onCheckedChange={() => handleToggle(label)}
                   />
-                  <span className="text-sm">{comp.label}</span>
+                  <span className="text-sm">{label}</span>
                 </label>
               ))}
             </div>

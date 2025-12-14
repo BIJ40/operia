@@ -2,7 +2,7 @@
  * Onglet Compétences & Habilitations
  */
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -104,8 +104,12 @@ export function RHTabCompetences({ collaborator }: Props) {
     });
   };
 
-  // Get all unique competences (from catalogue)
-  const allCompetences = catalogueCompetences.map(c => c.label);
+  // Get all unique competences (catalogue + déjà présentes sur le collaborateur)
+  const allCompetences = React.useMemo(() => {
+    const base = catalogueCompetences.map(c => c.label);
+    const extras = form.competences_techniques.filter(c => !base.some(b => b.toLowerCase() === c.toLowerCase()));
+    return [...base, ...extras];
+  }, [catalogueCompetences, form.competences_techniques]);
 
   return (
     <div className="space-y-6">
