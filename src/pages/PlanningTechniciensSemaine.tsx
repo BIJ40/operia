@@ -1,9 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
 import { startOfWeek, addDays, format, addWeeks, subWeeks, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Clock, Calendar, AlertCircle, Printer } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, AlertCircle, Printer, Send, CheckCircle, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { usePlanningSignature } from "@/apogee-connect/hooks/usePlanningSignature";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -166,6 +168,89 @@ function DayColumn({ day, events, showLunch }: DayColumnProps) {
         ))}
       </div>
     </div>
+  );
+}
+
+// Composant signature N2 pour le planning
+function PlanningSignatureN2Section({ 
+  techId, 
+  weekDate,
+}: { 
+  techId: number; 
+  weekDate: Date;
+}) {
+  const { 
+    signature, 
+    isSent, 
+    isSignedByTech, 
+    sendToTech, 
+    cancelSend,
+    isSending,
+    isCancelling,
+    isLoading 
+  } = usePlanningSignature({ techId, weekDate });
+
+  if (isLoading) {
+    return <div className="h-8 w-40 bg-muted animate-pulse rounded" />;
+  }
+
+  // État 3: Signé par le tech
+  if (isSignedByTech && signature?.tech_signed_at) {
+    return (
+      <div className="flex items-center gap-2">
+        <Badge variant="default" className="bg-emerald-600 text-white">
+          <CheckCircle className="w-3 h-3 mr-1" />
+          Signé le {format(new Date(signature.tech_signed_at), "dd/MM/yyyy HH:mm", { locale: fr })}
+        </Badge>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => window.print()}
+        >
+          <Printer className="w-4 h-4 mr-1" />
+          Imprimer
+        </Button>
+      </div>
+    );
+  }
+
+  // État 2: Envoyé, en attente signature tech
+  if (isSent && signature?.sent_at) {
+    return (
+      <div className="flex items-center gap-2">
+        <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+          <Clock className="w-3 h-3 mr-1" />
+          En attente signature
+        </Badge>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => cancelSend()}
+          disabled={isCancelling}
+          className="text-xs text-muted-foreground hover:text-destructive"
+        >
+          {isCancelling ? <Loader2 className="w-3 h-3 animate-spin" /> : "Annuler"}
+        </Button>
+      </div>
+    );
+  }
+
+  // État 1: Non envoyé
+  return (
+    <Button
+      onClick={() => sendToTech()}
+      disabled={isSending}
+      size="sm"
+      variant="outline"
+      className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+    >
+      {isSending ? (
+        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+      ) : (
+        <Send className="w-4 h-4 mr-2" />
+      )}
+      Envoyer au technicien
+    </Button>
   );
 }
 
@@ -375,10 +460,10 @@ function PlanningTechniciensSemaineContent() {
         </CardContent>
       </Card>
       
-      {/* Bandeau nom technicien + heures (visible pour impression) */}
+      {/* Bandeau nom technicien + heures + signature N2 */}
       {selectedTechId && selectedTechLabel && (
         <div className="bg-muted/50 border rounded-lg px-4 py-3 print:bg-white print:border-2 print:py-2" id="print-header">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
               {selectedTechColor && (
                 <div
@@ -397,12 +482,31 @@ function PlanningTechniciensSemaineContent() {
                 <span className="border border-black w-32 h-8 inline-block align-middle">&nbsp;</span>
               </span>
             </div>
-            <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-lg print:bg-transparent print:border print:border-black print:px-2 print:py-1">
-              <Clock className="h-4 w-4 text-primary print:text-black" />
-              <span className="font-semibold text-primary print:text-black">
+            
+            <div className="flex items-center gap-3 print:hidden">
+              {/* Section Signature N2 */}
+              <PlanningSignatureN2Section 
+                techId={selectedTechId} 
+                weekDate={currentWeekStart} 
+              />
+              
+              {/* Heures travaillées */}
+              <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-lg">
+                <Clock className="h-4 w-4 text-primary" />
+                <span className="font-semibold text-primary">
+                  {formatMinutes(workMinutes)}
+                </span>
+                <span className="text-sm text-muted-foreground">travaillées</span>
+              </div>
+            </div>
+            
+            {/* Heures version impression */}
+            <div className="hidden print:flex items-center gap-2 border border-black px-2 py-1">
+              <Clock className="h-4 w-4 text-black" />
+              <span className="font-semibold text-black">
                 {formatMinutes(workMinutes)}
               </span>
-              <span className="text-sm text-muted-foreground print:text-black">travaillées</span>
+              <span className="text-sm text-black">travaillées</span>
             </div>
           </div>
         </div>
