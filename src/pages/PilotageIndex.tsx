@@ -1,20 +1,12 @@
-import { BarChart3, ListTodo, PieChart, TrendingUp, Building2, Users, ChevronDown, Radar } from 'lucide-react';
+import { BarChart3, ListTodo, Radar, Building2, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
-import { useMenuLabels } from '@/hooks/use-page-metadata';
 import { AgencyInfoTile } from '@/components/pilotage/AgencyInfoTile';
 import { useAuth } from '@/contexts/AuthContext';
-import { CollapsibleSection } from '@/components/dashboard/CollapsibleSection';
-import { memo, useMemo, useState, useEffect } from 'react';
+import { memo, useState, useEffect } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const ROUTE_TO_PAGE_KEY: Record<string, string> = {
-  [ROUTES.agency.indicateurs]: 'pilotage_indicateurs',
-  [ROUTES.agency.actions]: 'pilotage_actions',
-  [ROUTES.agency.diffusion]: 'pilotage_diffusion',
-};
 
 interface PilotageModule {
   id: string;
@@ -23,51 +15,15 @@ interface PilotageModule {
   icon: LucideIcon;
   href: string;
   badge?: string | number;
-  category: 'statistiques' | 'autres';
 }
 
 const pilotageModules: PilotageModule[] = [
-  // STATISTIQUES
   {
-    id: 'stats_general',
-    title: 'Général',
-    description: 'KPI généraux de votre agence',
+    id: 'stats_hub',
+    title: 'Stats Hub',
+    description: 'Centre statistiques unifié de l\'agence',
     icon: BarChart3,
-    href: ROUTES.agency.indicateurs,
-    category: 'statistiques',
-  },
-  {
-    id: 'stats_apporteurs',
-    title: 'Apporteurs',
-    description: 'Analyse du CA par source d\'affaires',
-    icon: TrendingUp,
-    href: ROUTES.agency.indicateursApporteurs,
-    category: 'statistiques',
-  },
-  {
-    id: 'stats_univers',
-    title: 'Univers',
-    description: 'Répartition du CA par métier',
-    icon: PieChart,
-    href: ROUTES.agency.indicateursUnivers,
-    category: 'statistiques',
-  },
-  {
-    id: 'stats_techniciens',
-    title: 'Techniciens',
-    description: 'CA et activité par technicien',
-    icon: Users,
-    href: ROUTES.agency.indicateursTechniciens,
-    category: 'statistiques',
-  },
-  // AUTRES
-  {
-    id: 'gestion_sav',
-    title: 'Gestion des SAV',
-    description: 'Suivi et gestion des SAV',
-    icon: ListTodo,
-    href: ROUTES.agency.indicateursSav,
-    category: 'autres',
+    href: ROUTES.agency.statsHub,
   },
   {
     id: 'actions',
@@ -75,7 +31,6 @@ const pilotageModules: PilotageModule[] = [
     description: 'Suivi des actions et tâches en cours',
     icon: ListTodo,
     href: ROUTES.agency.actions,
-    category: 'autres',
   },
   {
     id: 'veille_apporteurs',
@@ -83,28 +38,13 @@ const pilotageModules: PilotageModule[] = [
     description: 'Suivi performance et alertes apporteurs',
     icon: Radar,
     href: ROUTES.agency.veilleApporteurs,
-    category: 'autres',
   },
 ];
-
-const PILOTAGE_GROUPS = {
-  statistiques: {
-    title: 'Statistiques',
-    icon: BarChart3,
-    colorClass: 'text-helpconfort-blue',
-  },
-  autres: {
-    title: 'Autres',
-    icon: ListTodo,
-    colorClass: 'text-helpconfort-orange',
-  },
-} as const;
 
 // Custom hook for agency info collapse state
 const AGENCY_INFO_STORAGE_KEY = 'pilotage-agency-info-open';
 
 export default function PilotageIndex() {
-  const menuLabels = useMenuLabels();
   const { globalRole } = useAuth();
   
   const [isAgencyInfoOpen, setIsAgencyInfoOpen] = useState(() => {
@@ -122,72 +62,19 @@ export default function PilotageIndex() {
 
   const isPlatformAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';
 
-  const getModuleTitle = (module: PilotageModule): string => {
-    const pageKey = ROUTE_TO_PAGE_KEY[module.href];
-    if (pageKey && menuLabels.has(pageKey)) {
-      return menuLabels.get(pageKey)!;
-    }
-    return module.title;
-  };
-
-  // Grouper par catégorie
-  const modulesByCategory = useMemo(() => {
-    const groups: Record<string, PilotageModule[]> = {
-      statistiques: [],
-      autres: [],
-    };
-    
-    pilotageModules.forEach(module => {
-      if (groups[module.category]) {
-        groups[module.category].push(module);
-      }
-    });
-    
-    return groups;
-  }, []);
-
   return (
     <div className="container mx-auto py-8 px-4 space-y-6">
-      {/* Statistiques - déplié par défaut, pas de lien sur le titre */}
-      {modulesByCategory.statistiques.length > 0 && (
-        <CollapsibleSection
-          id="pilotage_statistiques"
-          title={PILOTAGE_GROUPS.statistiques.title}
-          icon={PILOTAGE_GROUPS.statistiques.icon}
-          colorClass={PILOTAGE_GROUPS.statistiques.colorClass}
-          defaultOpen={true}
-        >
-          {modulesByCategory.statistiques.map(module => (
-            <PilotageTileCard
-              key={module.id}
-              module={module}
-              title={getModuleTitle(module)}
-              badge={module.badge}
-              isAdmin={isPlatformAdmin}
-            />
-          ))}
-        </CollapsibleSection>
-      )}
-
-      {/* Autres */}
-      {modulesByCategory.autres.length > 0 && (
-        <CollapsibleSection
-          id="pilotage_autres"
-          title={PILOTAGE_GROUPS.autres.title}
-          icon={PILOTAGE_GROUPS.autres.icon}
-          colorClass={PILOTAGE_GROUPS.autres.colorClass}
-        >
-          {modulesByCategory.autres.map(module => (
-            <PilotageTileCard
-              key={module.id}
-              module={module}
-              title={getModuleTitle(module)}
-              badge={module.badge}
-              isAdmin={isPlatformAdmin}
-            />
-          ))}
-        </CollapsibleSection>
-      )}
+      {/* Tuiles principales */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {pilotageModules.map(module => (
+          <PilotageTileCard
+            key={module.id}
+            module={module}
+            badge={module.badge}
+            isAdmin={isPlatformAdmin}
+          />
+        ))}
+      </div>
 
       {/* Informations de l'agence - section collapsible */}
       <section className="group/section">
@@ -262,7 +149,6 @@ export default function PilotageIndex() {
 
 interface PilotageTileCardProps {
   module: PilotageModule;
-  title: string;
   badge?: string | number;
   isAdmin?: boolean;
   isClickable?: boolean;
@@ -270,7 +156,6 @@ interface PilotageTileCardProps {
 
 const PilotageTileCard = memo(function PilotageTileCard({ 
   module, 
-  title, 
   badge, 
   isAdmin,
   isClickable = true 
@@ -283,7 +168,6 @@ const PilotageTileCard = memo(function PilotageTileCard({
       group relative rounded-xl border border-helpconfort-blue/15 p-4
       bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-background to-background
       shadow-sm transition-all duration-300 border-l-4 border-l-helpconfort-blue
-      min-w-[280px] md:min-w-0 snap-start
       ${isDisabled 
         ? 'opacity-50 cursor-not-allowed' 
         : 'cursor-pointer hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5'
@@ -304,7 +188,7 @@ const PilotageTileCard = memo(function PilotageTileCard({
           <Icon className="w-5 h-5 text-helpconfort-blue" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-base font-semibold text-foreground truncate">{title}</p>
+          <p className="text-base font-semibold text-foreground truncate">{module.title}</p>
           <p className="text-xs text-muted-foreground truncate">{module.description}</p>
         </div>
         <ArrowRight className={`w-4 h-4 flex-shrink-0 text-muted-foreground ${!isDisabled && 'group-hover:text-helpconfort-blue group-hover:translate-x-0.5'} transition-all`} aria-hidden="true" />
