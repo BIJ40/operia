@@ -31,9 +31,14 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
   const techniciens = collaborators.filter(c => 
     c.type === 'TECHNICIEN' && !c.leaving_date
   );
-
-  // Get all unique competences
-  const allCompetences = catalogue.map(c => c.label);
+ 
+  // Get all unique competences (catalogue + réellement utilisées par les techniciens)
+  const allCompetences = Array.from(
+    new Set([
+      ...catalogue.map(c => c.label),
+      ...techniciens.flatMap(t => t.competencies?.competences_techniques || []),
+    ])
+  ).sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
 
   const handlePrint = () => {
     const printContent = printRef.current;

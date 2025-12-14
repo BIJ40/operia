@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChevronDown, Plus, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCompetencesCatalogue, useAddCompetenceCatalogue } from '@/hooks/useRHCompetencesCatalogue';
-import { useUpdateCompetencies } from '@/hooks/useRHSuivi';
+import { useUpdateCompetencies, useRHCollaborators } from '@/hooks/useRHSuivi';
 import { toast } from 'sonner';
 
 interface RHMetiersMultiSelectProps {
@@ -28,15 +28,30 @@ export function RHMetiersMultiSelect({
   const [showAddInput, setShowAddInput] = useState(false);
   
   const { data: catalogue = [], isLoading: loadingCatalogue } = useCompetencesCatalogue();
+  const { data: collaborators = [] } = useRHCollaborators();
   const addCompetence = useAddCompetenceCatalogue();
   const updateCompetencies = useUpdateCompetencies();
 
-  // Catalogue complet + métiers déjà présents sur le collaborateur (pour couvrir l'historique)
+  // Catalogue complet + tous les métiers réellement utilisés dans l'agence
   const allMetiers = React.useMemo(() => {
     const base = catalogue.map(c => c.label);
-    const extras = localSelected.filter(m => !base.some(b => b.toLowerCase() === m.toLowerCase()));
-    return [...base, ...extras];
-  }, [catalogue, localSelected]);
+    const fromTechs = collaborators.flatMap(c => c.competencies?.competences_techniques || []);
+    const extras = [...fromTechs, ...localSelected].filter(label =>
+      !base.some(b => b.toLowerCase() === label.toLowerCase())
+    );
+
+    const unique: string[] = [];
+    const pushIfNotExists = (label: string) => {
+      if (!unique.some(b => b.toLowerCase() === label.toLowerCase())) {
+        unique.push(label);
+      }
+    };
+
+    base.forEach(pushIfNotExists);
+    extras.forEach(pushIfNotExists);
+
+    return unique.sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+  }, [catalogue, collaborators, localSelected]);
 
   // On initialise à partir des props mais on ne resynchronise pas ensuite
   // pour éviter d'effacer la sélection locale quand la requête de rafraîchissement
