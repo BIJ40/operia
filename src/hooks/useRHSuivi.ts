@@ -43,10 +43,11 @@ export function useRHCollaborators() {
       
       return (data || []).map(c => ({
         ...c,
-        epi_profile: c.rh_epi_profiles?.[0] || null,
-        competencies: c.rh_competencies?.[0] || null,
-        assets: c.rh_assets?.[0] || null,
-        it_access: c.rh_it_access?.[0] || null,
+        // Relations 1-1 renvoyées comme objets (et non tableaux)
+        epi_profile: (c as any).rh_epi_profiles || null,
+        competencies: (c as any).rh_competencies || null,
+        assets: (c as any).rh_assets || null,
+        it_access: (c as any).rh_it_access || null,
       })) as RHCollaborator[];
     },
     enabled: !!agencyId,
@@ -79,10 +80,10 @@ export function useRHCollaborator(collaboratorId: string | undefined) {
       
       return {
         ...data,
-        epi_profile: data.rh_epi_profiles?.[0] || null,
-        competencies: data.rh_competencies?.[0] || null,
-        assets: data.rh_assets?.[0] || null,
-        it_access: data.rh_it_access?.[0] || null,
+        epi_profile: (data as any).rh_epi_profiles || null,
+        competencies: (data as any).rh_competencies || null,
+        assets: (data as any).rh_assets || null,
+        it_access: (data as any).rh_it_access || null,
       } as RHCollaborator;
     },
     enabled: !!collaboratorId,
