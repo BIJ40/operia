@@ -4257,6 +4257,50 @@ export type Database = {
           },
         ]
       }
+      rh_letter_templates: {
+        Row: {
+          agency_id: string | null
+          body_markdown: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          subject: string
+          template_key: string
+          updated_at: string | null
+        }
+        Insert: {
+          agency_id?: string | null
+          body_markdown: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          subject: string
+          template_key: string
+          updated_at?: string | null
+        }
+        Update: {
+          agency_id?: string | null
+          body_markdown?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          subject?: string
+          template_key?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rh_letter_templates_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rh_notifications: {
         Row: {
           agency_id: string
@@ -4353,7 +4397,9 @@ export type Database = {
           agency_id: string
           created_at: string | null
           decision_comment: string | null
+          employee_can_download: boolean | null
           employee_user_id: string
+          generated_letter_file_name: string | null
           generated_letter_path: string | null
           id: string
           payload: Json | null
@@ -4367,7 +4413,9 @@ export type Database = {
           agency_id: string
           created_at?: string | null
           decision_comment?: string | null
+          employee_can_download?: boolean | null
           employee_user_id: string
+          generated_letter_file_name?: string | null
           generated_letter_path?: string | null
           id?: string
           payload?: Json | null
@@ -4381,7 +4429,9 @@ export type Database = {
           agency_id?: string
           created_at?: string | null
           decision_comment?: string | null
+          employee_can_download?: boolean | null
           employee_user_id?: string
+          generated_letter_file_name?: string | null
           generated_letter_path?: string | null
           id?: string
           payload?: Json | null
@@ -5661,6 +5711,7 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          signature_png_base64: string | null
           signature_svg: string
           updated_at: string | null
           user_id: string
@@ -5668,6 +5719,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           id?: string
+          signature_png_base64?: string | null
           signature_svg: string
           updated_at?: string | null
           user_id: string
@@ -5675,6 +5727,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           id?: string
+          signature_png_base64?: string | null
           signature_svg?: string
           updated_at?: string | null
           user_id?: string

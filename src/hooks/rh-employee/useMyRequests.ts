@@ -19,6 +19,8 @@ export interface RHRequest {
   status: RequestStatus;
   payload: Record<string, unknown>;
   generated_letter_path: string | null;
+  generated_letter_file_name: string | null;
+  employee_can_download: boolean;
   reviewed_by: string | null;
   reviewed_at: string | null;
   decision_comment: string | null;

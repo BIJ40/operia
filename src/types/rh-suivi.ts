@@ -110,9 +110,11 @@ export interface RHRequest {
   request_type: 'EPI_RENEWAL' | 'LEAVE' | 'DOCUMENT' | 'OTHER';
   employee_user_id: string;
   agency_id: string;
-  status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
+  status: 'DRAFT' | 'SUBMITTED' | 'IN_PROGRESS' | 'APPROVED' | 'REJECTED';
   payload: Record<string, unknown>;
   generated_letter_path: string | null;
+  generated_letter_file_name: string | null;
+  employee_can_download: boolean;
   reviewed_by: string | null;
   reviewed_at: string | null;
   decision_comment: string | null;
@@ -124,6 +126,7 @@ export interface UserSignature {
   id: string;
   user_id: string;
   signature_svg: string;
+  signature_png_base64: string | null;
   created_at: string;
   updated_at: string;
 }
