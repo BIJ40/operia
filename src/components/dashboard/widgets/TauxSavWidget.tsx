@@ -1,12 +1,14 @@
 /**
- * Widget Taux SAV - utilise la période du dashboard
+ * Widget Taux SAV - lié au sélecteur de période du dashboard
  */
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { getMetricForAgency } from '@/statia/api/getMetricForAgency';
 import { getGlobalApogeeDataServices } from '@/statia/adapters/dataServiceAdapter';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { useDashboardPeriod } from '@/pages/DashboardStatic';
 
 export function TauxSavWidget() {
@@ -16,10 +18,25 @@ export function TauxSavWidget() {
   const { dateRange, periodLabel } = useDashboardPeriod();
   const services = getGlobalApogeeDataServices();
 
+  // mode = 'period' => utilise la période sélectionnée
+  // mode = 'ytd'    => Year-to-Date (année courante)
+  const [mode, setMode] = useState<'period' | 'ytd'>('period');
+
   const { data, isLoading } = useQuery({
-    queryKey: ['widget-taux-sav', agencySlug, dateRange.start.toISOString(), dateRange.end.toISOString()],
+    queryKey: ['widget-taux-sav', agencySlug, mode, dateRange.start.toISOString(), dateRange.end.toISOString()],
     queryFn: async () => {
       if (!agencySlug) return null;
+
+      if (mode === 'ytd') {
+        // Variante annualisée explicite : métrique YTD côté StatIA, toujours sur l'année en cours
+        const now = new Date();
+        const yearStart = new Date(now.getFullYear(), 0, 1);
+        const ytdRange = { start: yearStart, end: now };
+        const result = await getMetricForAgency('taux_sav_ytd', agencySlug, { dateRange: ytdRange }, services);
+        return { taux: Number(result.value) || 0 };
+      }
+
+      // Variante liée à la temporalité sélectionnée
       const result = await getMetricForAgency('taux_sav_global', agencySlug, { dateRange }, services);
       return { taux: Number(result.value) || 0 };
     },
@@ -29,7 +46,7 @@ export function TauxSavWidget() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex flex-col items-center justify-center h-full gap-2">
         <Skeleton className="h-24 w-24 rounded-full" />
       </div>
     );
@@ -56,6 +73,26 @@ export function TauxSavWidget() {
 
   return (
     <div className="flex flex-col items-center justify-center h-full gap-2">
+      {/* Petit sélecteur de mode Période / Année */}
+      <div className="flex items-center gap-1 mb-1">
+        <Button
+          variant={mode === 'period' ? 'default' : 'outline'}
+          size="sm"
+          className="h-6 px-2 text-[10px]"
+          onClick={() => setMode('period')}
+        >
+          Période
+        </Button>
+        <Button
+          variant={mode === 'ytd' ? 'default' : 'outline'}
+          size="sm"
+          className="h-6 px-2 text-[10px]"
+          onClick={() => setMode('ytd')}
+        >
+          Année
+        </Button>
+      </div>
+
       <div className="relative">
         <svg width="100" height="100" viewBox="0 0 100 100">
           <circle cx="50" cy="50" r={radius} fill="none" className="stroke-muted" strokeWidth="8" />
@@ -72,7 +109,10 @@ export function TauxSavWidget() {
           <span className={`text-xl font-bold ${getColor()}`}>{taux.toFixed(1)}%</span>
         </div>
       </div>
-      <p className="text-xs text-muted-foreground text-center capitalize">{periodLabel}</p>
+
+      <p className="text-xs text-muted-foreground text-center capitalize">
+        {mode === 'period' ? periodLabel : 'Année en cours'}
+      </p>
     </div>
   );
 }
