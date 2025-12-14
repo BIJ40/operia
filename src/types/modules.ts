@@ -65,9 +65,10 @@ export const MODULE_OPTIONS = {
     manage: 'apogee_tickets.manage',
   },
   rh: {
-    coffre: 'rh.coffre',       // Coffre-fort salarié (accès perso uniquement)
-    rh_viewer: 'rh.rh_viewer', // Gestion RH opérationnelle (sans paie)
-    rh_admin: 'rh.rh_admin',   // Administration RH complète (paie incluse)
+    coffre: 'rh.coffre',           // Coffre-fort salarié (accès perso uniquement)
+    mon_planning: 'rh.mon_planning', // Accès à son planning personnel
+    rh_viewer: 'rh.rh_viewer',     // Gestion RH opérationnelle (sans paie)
+    rh_admin: 'rh.rh_admin',       // Administration RH complète (paie incluse)
   },
   parc: {
     vehicules: 'parc.vehicules',     // Gestion flotte véhicules
@@ -206,9 +207,10 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['franchisee_user', 'franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'base_user',
     options: [
-      { key: 'coffre', path: 'rh.coffre', label: 'Mon Coffre RH', description: 'Accès à ses propres documents RH', defaultEnabled: false, routes: ['/mon-coffre-rh'] },
-      { key: 'rh_viewer', path: 'rh.rh_viewer', label: 'Gestionnaire RH', description: 'Documents et demandes équipe', defaultEnabled: false, routes: ['/equipe'] },
-      { key: 'rh_admin', path: 'rh.rh_admin', label: 'Admin RH', description: 'Gestion complète : salaires, contrats', defaultEnabled: false, routes: ['/equipe/salaires'] },
+      { key: 'coffre', path: 'rh.coffre', label: 'Mon Coffre RH', description: 'Accès à ses propres documents RH', defaultEnabled: false, routes: ['/rh/coffre'] },
+      { key: 'mon_planning', path: 'rh.mon_planning', label: 'Mon Planning', description: 'Accès à son planning personnel', defaultEnabled: false, routes: ['/rh/mon-planning'] },
+      { key: 'rh_viewer', path: 'rh.rh_viewer', label: 'Gestionnaire RH', description: 'Documents et demandes équipe', defaultEnabled: false, routes: ['/rh/equipe'] },
+      { key: 'rh_admin', path: 'rh.rh_admin', label: 'Admin RH', description: 'Gestion complète : salaires, contrats', defaultEnabled: false, routes: ['/rh/suivi'] },
     ],
   },
   {

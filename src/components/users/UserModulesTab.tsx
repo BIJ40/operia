@@ -57,6 +57,22 @@ const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     category: 'rh',
   },
   {
+    key: 'rh_mon_planning',
+    moduleKey: 'rh',
+    optionKey: 'mon_planning',
+    label: 'Mon Planning Personnel',
+    shortDescription: 'Accès à son planning hebdomadaire',
+    features: [
+      'Consulter son planning de la semaine',
+      'Voir ses RDV et interventions',
+      'Signer et valider son planning',
+    ],
+    targetUsers: 'Techniciens et collaborateurs terrain',
+    icon: <Users className="w-5 h-5" />,
+    color: 'text-emerald-500',
+    category: 'rh',
+  },
+  {
     key: 'rh_viewer',
     moduleKey: 'rh',
     optionKey: 'rh_viewer',
@@ -264,13 +280,13 @@ const CATEGORY_INFO: Record<string, { label: string; icon: React.ReactNode; desc
 
 // Mapping rôle global → options RH autorisées
 const RH_OPTIONS_BY_ROLE: Record<GlobalRole, string[]> = {
-  base_user: ['coffre'],
-  franchisee_user: ['coffre'],
-  franchisee_admin: ['coffre', 'rh_viewer', 'rh_admin'],
-  franchisor_user: ['coffre', 'rh_viewer', 'rh_admin'],
-  franchisor_admin: ['coffre', 'rh_viewer', 'rh_admin'],
-  platform_admin: ['coffre', 'rh_viewer', 'rh_admin'],
-  superadmin: ['coffre', 'rh_viewer', 'rh_admin'],
+  base_user: ['coffre', 'mon_planning'],
+  franchisee_user: ['coffre', 'mon_planning'],
+  franchisee_admin: ['coffre', 'mon_planning', 'rh_viewer', 'rh_admin'],
+  franchisor_user: ['coffre', 'mon_planning', 'rh_viewer', 'rh_admin'],
+  franchisor_admin: ['coffre', 'mon_planning', 'rh_viewer', 'rh_admin'],
+  platform_admin: ['coffre', 'mon_planning', 'rh_viewer', 'rh_admin'],
+  superadmin: ['coffre', 'mon_planning', 'rh_viewer', 'rh_admin'],
 };
 
 export const UserModulesTab = memo(function UserModulesTab({
