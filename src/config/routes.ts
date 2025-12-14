@@ -76,10 +76,12 @@ export const ROUTES = {
     // Suivi RH (N2 back-office)
     suivi: '/rh/suivi',
     suiviCollaborateur: (id: string) => `/rh/suivi/${id}`,
-    // Vue Salarié
+    // Portail Salarié P1 (N1+)
     coffre: '/rh/coffre',
     demande: '/rh/demande',
-    // Vue Dirigeant/RH
+    monPlanning: '/rh/mon-planning',
+    signature: '/rh/signature',
+    // Vue Dirigeant/RH (N2)
     equipe: '/rh/equipe',
     plannings: '/rh/equipe/plannings',
     collaborateurProfile: (id: string) => `/rh/equipe/${id}`,

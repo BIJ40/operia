@@ -2,7 +2,7 @@
  * Page Mes Demandes RH - Création et suivi des demandes
  */
 import React, { useState } from "react";
-import { Plus, FileText, Clock, CheckCircle, XCircle, Trash2 } from "lucide-react";
+import { Plus, FileText, Clock, CheckCircle, XCircle, Trash2, User } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -15,7 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useMyRequests, useCreateRequest, useCancelRequest, type RequestType, type RequestStatus } from "@/hooks/rh-employee";
+import { useMyRequests, useCreateRequest, useCancelRequest, useMyCollaborator, type RequestType, type RequestStatus } from "@/hooks/rh-employee";
+import { CollaboratorNotConfigured } from "@/components/rh-employee/CollaboratorNotConfigured";
 
 const REQUEST_TYPES: { value: RequestType; label: string; emoji: string }[] = [
   { value: "EPI_RENEWAL", label: "Renouvellement EPI", emoji: "🦺" },
@@ -134,11 +135,12 @@ function CreateRequestDialog({ onClose }: { onClose: () => void }) {
 }
 
 export default function MesDemandesPage() {
+  const { data: collaborator, isLoading: isLoadingCollaborator } = useMyCollaborator();
   const { data: requests, isLoading, error } = useMyRequests();
   const cancelRequest = useCancelRequest();
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  if (isLoading) {
+  if (isLoadingCollaborator || isLoading) {
     return (
       <div className="container mx-auto px-4 py-6 space-y-6">
         <PageHeader
@@ -151,6 +153,20 @@ export default function MesDemandesPage() {
             <Skeleton key={i} className="h-24 w-full" />
           ))}
         </div>
+      </div>
+    );
+  }
+
+  // Cas: pas de collaborateur lié
+  if (!collaborator) {
+    return (
+      <div className="container mx-auto px-4 py-6 space-y-6">
+        <PageHeader
+          title="Mes Demandes RH"
+          subtitle="Vos demandes en cours et passées"
+          backTo="/rh"
+        />
+        <CollaboratorNotConfigured />
       </div>
     );
   }

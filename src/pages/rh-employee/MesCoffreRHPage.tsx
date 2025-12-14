@@ -10,7 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useMyDocuments, useDownloadDocument } from "@/hooks/rh-employee";
+import { useMyDocuments, useDownloadDocument, useMyCollaborator } from "@/hooks/rh-employee";
+import { CollaboratorNotConfigured } from "@/components/rh-employee/CollaboratorNotConfigured";
 import { DOCUMENT_TYPES } from "@/types/collaboratorDocument";
 
 const getDocTypeLabel = (docType: string) => {
@@ -36,6 +37,7 @@ const getDocTypeIcon = (docType: string) => {
 };
 
 export default function MesCoffreRHPage() {
+  const { data: collaborator, isLoading: isLoadingCollaborator } = useMyCollaborator();
   const { data: documents, isLoading, error } = useMyDocuments();
   const { downloadDocument } = useDownloadDocument();
 
@@ -47,7 +49,7 @@ export default function MesCoffreRHPage() {
     }
   };
 
-  if (isLoading) {
+  if (isLoadingCollaborator || isLoading) {
     return (
       <div className="container mx-auto px-4 py-6 space-y-6">
         <PageHeader
@@ -60,6 +62,20 @@ export default function MesCoffreRHPage() {
             <Skeleton key={i} className="h-40 w-full" />
           ))}
         </div>
+      </div>
+    );
+  }
+
+  // Cas: pas de collaborateur lié
+  if (!collaborator) {
+    return (
+      <div className="container mx-auto px-4 py-6 space-y-6">
+        <PageHeader
+          title="Mon Coffre-Fort RH"
+          subtitle="Vos documents RH personnels"
+          backTo="/rh"
+        />
+        <CollaboratorNotConfigured />
       </div>
     );
   }
