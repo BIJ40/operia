@@ -121,6 +121,7 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
           .legend-box.green { background: #22c55e; }
           .legend-box.white { background: #fff; }
           @media print {
+            @page { size: landscape; }
             body { padding: 10px; }
           }
         </style>
