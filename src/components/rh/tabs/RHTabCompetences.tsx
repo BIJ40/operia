@@ -122,7 +122,7 @@ export function RHTabCompetences({ collaborator }: Props) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-[260px] overflow-y-auto pr-1">
             {allCompetences.map((comp) => (
               <label
                 key={comp}
@@ -132,7 +132,7 @@ export function RHTabCompetences({ collaborator }: Props) {
                   checked={form.competences_techniques.includes(comp)}
                   onCheckedChange={() => toggleCompetence(comp)}
                 />
-                <span className="text-sm">{comp}</span>
+                <span className="text-xs truncate" title={comp}>{comp}</span>
               </label>
             ))}
           </div>
