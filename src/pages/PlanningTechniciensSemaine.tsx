@@ -27,7 +27,8 @@ import { AgencyProvider } from "@/apogee-connect/contexts/AgencyContext";
 // Constantes grille
 const HOUR_START = 7;
 const HOUR_END = 19;
-const HOUR_HEIGHT = 48; // px par heure
+const HOUR_HEIGHT = 48; // px par heure (réduit à l'impression via CSS)
+const PRINT_HOUR_HEIGHT = 38; // px par heure à l'impression (compact)
 const TOTAL_HOURS = HOUR_END - HOUR_START;
 
 // Clés de persistance (sessionStorage)
@@ -85,7 +86,7 @@ function EventBlock({ event, dayStart }: EventBlockProps) {
   
   return (
     <div
-      className="absolute left-1 right-1 rounded-md px-2 py-1 text-xs overflow-hidden shadow-sm border border-white/20"
+      className="absolute left-1 right-1 rounded-md px-2 py-1 text-xs overflow-hidden shadow-sm border border-white/20 planning-event"
       style={{
         top: `${top}px`,
         height: `${height}px`,
@@ -113,7 +114,7 @@ function LunchBlock({ dayStart }: LunchBlockProps) {
   
   return (
     <div
-      className="absolute left-0 right-0 bg-muted/60 border-y border-muted-foreground/20"
+      className="absolute left-0 right-0 bg-muted/60 border-y border-muted-foreground/20 planning-lunch"
       style={{ top: `${top}px`, height: `${height}px` }}
     >
       <div className="text-xs text-muted-foreground text-center pt-4">
@@ -147,14 +148,14 @@ function DayColumn({ day, events, showLunch }: DayColumnProps) {
       
       {/* Grille horaire */}
       <div
-        className="relative border-r border-border/50"
+        className="relative border-r border-border/50 planning-grid"
         style={{ height: `${TOTAL_HOURS * HOUR_HEIGHT}px` }}
       >
         {/* Lignes horaires */}
         {Array.from({ length: TOTAL_HOURS }, (_, i) => (
           <div
             key={i}
-            className="absolute left-0 right-0 border-t border-border/30"
+            className="absolute left-0 right-0 border-t border-border/30 planning-hour-cell"
             style={{ top: `${i * HOUR_HEIGHT}px`, height: `${HOUR_HEIGHT}px` }}
           />
         ))}
@@ -168,6 +169,50 @@ function DayColumn({ day, events, showLunch }: DayColumnProps) {
         ))}
       </div>
     </div>
+  );
+}
+
+// Composant pour afficher la signature dans le print header
+function PrintSignatureBox({ 
+  techId, 
+  weekDate 
+}: { 
+  techId: number; 
+  weekDate: Date; 
+}) {
+  const { signature, isSignedByTech } = usePlanningSignature({ techId, weekDate });
+  
+  if (isSignedByTech && signature?.tech_signature_png) {
+    return (
+      <span className="hidden print:inline-flex items-center gap-2 text-sm">
+        <span>à</span>
+        <span className="border-b border-black w-28 inline-block">&nbsp;</span>
+        <span>le</span>
+        <span className="border-b border-black w-20 inline-block">&nbsp;</span>
+        <span className="ml-4">Signature :</span>
+        <span className="border border-black w-32 h-10 inline-flex items-center justify-center">
+          <img 
+            src={signature.tech_signature_png.startsWith('data:') 
+              ? signature.tech_signature_png 
+              : `data:image/png;base64,${signature.tech_signature_png}`}
+            alt="Signature"
+            className="max-h-9 max-w-28 object-contain"
+          />
+        </span>
+      </span>
+    );
+  }
+  
+  // Pas de signature : cadre vide
+  return (
+    <span className="hidden print:inline-flex items-center gap-2 text-sm">
+      <span>à</span>
+      <span className="border-b border-black w-28 inline-block">&nbsp;</span>
+      <span>le</span>
+      <span className="border-b border-black w-20 inline-block">&nbsp;</span>
+      <span className="ml-4">Signature :</span>
+      <span className="border border-black w-32 h-10 inline-block align-middle">&nbsp;</span>
+    </span>
   );
 }
 
@@ -368,7 +413,7 @@ function PlanningTechniciensSemaineContent() {
           @media print {
             @page {
               size: landscape;
-              margin: 10mm;
+              margin: 5mm;
             }
             body, html {
               -webkit-print-color-adjust: exact !important;
@@ -382,6 +427,18 @@ function PlanningTechniciensSemaineContent() {
             }
             .print-only {
               display: flex !important;
+            }
+            /* Compacter tout le planning pour tenir sur 1 page */
+            .planning-print-container {
+              transform: scale(0.78);
+              transform-origin: top left;
+            }
+            .planning-lunch {
+              display: none !important;
+            }
+            .planning-event {
+              font-size: 10px !important;
+              padding: 1px 3px !important;
             }
           }
         `}
@@ -472,15 +529,8 @@ function PlanningTechniciensSemaineContent() {
                 />
               )}
               <span className="font-semibold text-lg">{selectedTechLabel}</span>
-              {/* Bloc visible uniquement à l'impression: à ___ le ___ Signature: [box] */}
-              <span className="hidden print:inline-flex items-center gap-2 text-sm">
-                <span>à</span>
-                <span className="border-b border-black w-28 inline-block">&nbsp;</span>
-                <span>le</span>
-                <span className="border-b border-black w-20 inline-block">&nbsp;</span>
-                <span className="ml-4">Signature :</span>
-                <span className="border border-black w-32 h-8 inline-block align-middle">&nbsp;</span>
-              </span>
+              {/* Bloc visible uniquement à l'impression: à ___ le ___ Signature: [signature PNG] */}
+              <PrintSignatureBox techId={selectedTechId} weekDate={currentWeekStart} />
             </div>
             
             <div className="flex items-center gap-3 print:hidden">
@@ -523,8 +573,8 @@ function PlanningTechniciensSemaineContent() {
       )}
       
       {/* Planning grille */}
-      <Card>
-        <CardContent className="p-0 overflow-x-auto">
+      <Card className="planning-print-container">
+        <CardContent className="p-0 overflow-x-auto print:overflow-visible">
           {isLoading ? (
             <div className="p-6 space-y-4">
               <Skeleton className="h-8 w-full" />
