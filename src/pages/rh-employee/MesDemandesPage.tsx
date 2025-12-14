@@ -30,6 +30,7 @@ const STATUS_CONFIG: Record<RequestStatus, { label: string; color: string; icon:
   SUBMITTED: { label: "En attente", color: "bg-amber-500/20 text-amber-700", icon: <Clock className="w-3 h-3" /> },
   APPROVED: { label: "Approuvée", color: "bg-emerald-500/20 text-emerald-700", icon: <CheckCircle className="w-3 h-3" /> },
   REJECTED: { label: "Refusée", color: "bg-destructive/20 text-destructive", icon: <XCircle className="w-3 h-3" /> },
+  CANCELLED: { label: "Annulée", color: "bg-muted text-muted-foreground", icon: <XCircle className="w-3 h-3" /> },
 };
 
 function CreateRequestDialog({ onClose }: { onClose: () => void }) {

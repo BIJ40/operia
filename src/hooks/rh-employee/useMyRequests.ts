@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { getRoleLevel } from "@/types/globalRoles";
 
 export type RequestType = "EPI_RENEWAL" | "LEAVE" | "DOCUMENT" | "OTHER";
-export type RequestStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED";
+export type RequestStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "CANCELLED";
 
 export interface RHRequest {
   id: string;
@@ -174,9 +174,10 @@ export function useCancelRequest() {
 
   return useMutation({
     mutationFn: async (requestId: string) => {
+      // Update status to CANCELLED instead of deleting
       const { error } = await supabase
         .from("rh_requests")
-        .delete()
+        .update({ status: "CANCELLED" })
         .eq("id", requestId);
 
       if (error) {
@@ -186,6 +187,7 @@ export function useCancelRequest() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["agency-requests"] });
       toast.success("Demande annulée");
     },
     onError: (error) => {
