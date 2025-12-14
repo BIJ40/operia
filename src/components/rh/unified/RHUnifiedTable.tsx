@@ -3,8 +3,9 @@ import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Search, Settings2, Users, Wrench } from 'lucide-react';
+import { Search, Settings2, Users, Save, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RHCollaborator } from '@/types/rh-suivi';
 import { RHUnifiedTableHeader } from './RHUnifiedTableHeader';
@@ -18,6 +19,7 @@ import {
   RHTabId 
 } from './RHUnifiedTableColumns';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useRHInlineEdit } from '@/hooks/rh/useRHInlineEdit';
 
 interface RHUnifiedTableProps {
   collaborators: RHCollaborator[];
@@ -26,6 +28,7 @@ interface RHUnifiedTableProps {
   onToggleColumn: (columnId: string) => void;
   activeTab: RHTabId;
   onTabChange: (tab: RHTabId) => void;
+  onRefresh: () => void;
 }
 
 export function RHUnifiedTable({
@@ -35,6 +38,7 @@ export function RHUnifiedTable({
   onToggleColumn,
   activeTab,
   onTabChange,
+  onRefresh,
 }: RHUnifiedTableProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [documentPopup, setDocumentPopup] = useState<{
@@ -48,6 +52,16 @@ export function RHUnifiedTable({
     collaboratorName: '',
     docType: 'cni',
   });
+
+  // Inline edit hook
+  const {
+    isSaving,
+    isEditable,
+    handleValueChange,
+    getLocalValue,
+    saveChanges,
+    hasPendingChanges,
+  } = useRHInlineEdit(collaborators, onRefresh);
 
   // Filtrer par recherche
   const filteredCollaborators = useMemo(() => {
@@ -161,14 +175,23 @@ export function RHUnifiedTable({
 
       {/* Barre de recherche + onglets + toggle colonnes */}
       <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-        <div className="relative w-full lg:w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher un collaborateur..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+        <div className="flex items-center gap-2">
+          <div className="relative w-full lg:w-80">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher un collaborateur..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          
+          {/* Indicateur de modifications en attente */}
+          {hasPendingChanges && (
+            <Badge variant="secondary" className="animate-pulse">
+              Modifications en attente
+            </Badge>
+          )}
         </div>
 
         <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as RHTabId)} className="w-full lg:w-auto">
@@ -181,27 +204,44 @@ export function RHUnifiedTable({
           </TabsList>
         </Tabs>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              <Settings2 className="h-4 w-4 mr-2" />
-              Colonnes
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>Colonnes visibles</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {availableColumns.map((col) => (
-              <DropdownMenuCheckboxItem
-                key={col.id}
-                checked={visibleColumns.includes(col.id)}
-                onCheckedChange={() => onToggleColumn(col.id)}
-              >
-                {col.label}
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-2">
+          {/* Bouton sauvegarder */}
+          <Button 
+            variant={hasPendingChanges ? "default" : "outline"} 
+            size="sm"
+            onClick={() => saveChanges()}
+            disabled={!hasPendingChanges || isSaving}
+          >
+            {isSaving ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4 mr-2" />
+            )}
+            Enregistrer
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Settings2 className="h-4 w-4 mr-2" />
+                Colonnes
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Colonnes visibles</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {availableColumns.map((col) => (
+                <DropdownMenuCheckboxItem
+                  key={col.id}
+                  checked={visibleColumns.includes(col.id)}
+                  onCheckedChange={() => onToggleColumn(col.id)}
+                >
+                  {col.label}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* Tableau */}
@@ -236,6 +276,9 @@ export function RHUnifiedTable({
                       activeTab={activeTab}
                       visibleColumns={visibleColumns}
                       onDocumentClick={handleDocumentClick}
+                      isEditable={isEditable}
+                      onValueChange={handleValueChange}
+                      getLocalValue={getLocalValue}
                     />
                   ))}
                 </React.Fragment>
@@ -252,6 +295,11 @@ export function RHUnifiedTable({
           </TableBody>
         </Table>
       </div>
+
+      {/* Légende édition */}
+      <p className="text-xs text-muted-foreground">
+        💡 Double-cliquez sur une cellule pour la modifier. Auto-sauvegarde toutes les 10 secondes.
+      </p>
 
       {/* Popup document */}
       <RHDocumentPopup
