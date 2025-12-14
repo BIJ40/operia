@@ -1,6 +1,7 @@
 /**
  * Page Mon Planning - Planning personnel du technicien
  * Réutilise TechWeeklyPlanningList avec filtre sur l'apogee_user_id du salarié
+ * Mode N1: le tech peut signer son planning après envoi par N2
  */
 import React from "react";
 import { Calendar, AlertTriangle } from "lucide-react";
@@ -78,8 +79,11 @@ function MonPlanningContent() {
         backTo="/rh"
       />
 
-      {/* Planning filtré sur le technicien connecté */}
-      <TechWeeklyPlanningList techFilterId={collaborator.apogee_user_id} />
+      {/* Planning filtré sur le technicien connecté, mode N1 */}
+      <TechWeeklyPlanningList 
+        techFilterId={collaborator.apogee_user_id} 
+        isN1View={true}
+      />
     </div>
   );
 }
