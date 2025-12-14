@@ -172,12 +172,18 @@ export function DocumentIcons({ collaboratorId, onDocumentClick }: DocumentIcons
         .from('collaborator_documents')
         .select('doc_type, file_path, file_name')
         .eq('collaborator_id', collaboratorId)
-        .in('doc_type', ['permis', 'cni', 'carte_vitale', 'contrat', 'rib']);
+        .in('doc_type', [
+          // Identité (anciens et nouveaux codes)
+          'permis', 'cni', 'carte_vitale',
+          'DRIVING_LICENSE', 'ID_CARD', 'VITALE', 'CARTE_VITALE',
+          // Contrat / RIB
+          'contrat', 'rib', 'CONTRACT', 'RIB',
+        ]);
       
       if (error) throw error;
       return data || [];
     },
-    staleTime: 0, // Always refetch to stay in sync with RHDocumentCell
+    staleTime: 0, // Toujours refetch pour rester en synchro avec RHDocumentCell
   });
 
   const handleClick = (docType: DocumentInfo, e: React.MouseEvent) => {
