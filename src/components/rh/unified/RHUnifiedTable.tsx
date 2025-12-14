@@ -60,6 +60,7 @@ export function RHUnifiedTable({
     handleValueChange,
     getLocalValue,
     saveChanges,
+    handleAssetsUpdate,
     hasPendingChanges,
   } = useRHInlineEdit(collaborators, onRefresh);
 
@@ -279,6 +280,7 @@ export function RHUnifiedTable({
                       isEditable={isEditable}
                       onValueChange={handleValueChange}
                       getLocalValue={getLocalValue}
+                      onAssetsUpdate={handleAssetsUpdate}
                     />
                   ))}
                 </React.Fragment>

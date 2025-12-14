@@ -114,7 +114,7 @@ export const TAB_COLUMNS: Record<RHTabId, ColumnGroup[]> = {
       label: '🚗 VÉHICULE',
       className: 'bg-blue-50 dark:bg-blue-950/30',
       columns: [
-        { id: 'vehicule_attribue', label: 'Marque / Modèle', accessor: (row) => row.assets?.vehicule_attribue },
+        { id: 'vehicule_attribue', label: 'Véhicule', accessor: (row) => row.assets?.vehicule_attribue },
       ],
     },
     {
@@ -123,7 +123,8 @@ export const TAB_COLUMNS: Record<RHTabId, ColumnGroup[]> = {
       className: 'bg-green-50 dark:bg-green-950/30',
       columns: [
         { id: 'carte_carburant', label: 'Carburant', accessor: (row) => row.assets?.carte_carburant ? 'Oui' : 'Non' },
-        { id: 'carte_societe', label: 'Société', accessor: (row) => row.assets?.carte_societe ? 'Oui' : 'Non' },
+        { id: 'carte_bancaire', label: 'Bancaire', accessor: (row) => row.assets?.carte_bancaire ? 'Oui' : 'Non' },
+        { id: 'carte_autre', label: 'Autre', accessor: (row) => row.assets?.carte_autre_nom || 'Non' },
       ],
     },
     {

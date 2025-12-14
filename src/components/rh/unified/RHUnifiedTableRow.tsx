@@ -1,13 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TableCell, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { RHCollaborator } from '@/types/rh-suivi';
 import { FIXED_COLUMNS, TAB_COLUMNS, RHTabId } from './RHUnifiedTableColumns';
 import { DocumentIcons, DocumentType } from './RHDocumentPopup';
 import { RHEditableCell } from './RHEditableCell';
+import { RHVehiculePopup, formatVehiculeDisplay } from './RHVehiculePopup';
+import { RHCartePopup, formatCarteDisplay } from './RHCartePopup';
 import { ExternalLink } from 'lucide-react';
 
 interface RHUnifiedTableRowProps {
@@ -18,6 +19,7 @@ interface RHUnifiedTableRowProps {
   isEditable: (columnId: string) => boolean;
   onValueChange: (collaboratorId: string, columnId: string, value: string) => void;
   getLocalValue: (collaboratorId: string, columnId: string, originalValue: unknown) => unknown;
+  onAssetsUpdate?: (collaboratorId: string, field: string, value: unknown) => void;
 }
 
 function getStatusIndicator(collaborator: RHCollaborator) {
@@ -25,17 +27,6 @@ function getStatusIndicator(collaborator: RHCollaborator) {
     return { color: 'bg-gray-400', label: 'Sorti' };
   }
   return { color: 'bg-green-500', label: 'Actif' };
-}
-
-function getTypeLabel(type: string | null) {
-  const labels: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {
-    TECHNICIEN: { label: 'Tech', variant: 'default' },
-    ASSISTANTE: { label: 'Asst', variant: 'secondary' },
-    DIRIGEANT: { label: 'Dir', variant: 'outline' },
-    COMMERCIAL: { label: 'Com', variant: 'secondary' },
-    AUTRE: { label: 'Autre', variant: 'outline' },
-  };
-  return labels[type || ''] || { label: type || '—', variant: 'outline' as const };
 }
 
 export function RHUnifiedTableRow({
@@ -46,10 +37,17 @@ export function RHUnifiedTableRow({
   isEditable,
   onValueChange,
   getLocalValue,
+  onAssetsUpdate,
 }: RHUnifiedTableRowProps) {
   const navigate = useNavigate();
   const tabGroups = TAB_COLUMNS[activeTab];
   const status = getStatusIndicator(collaborator);
+  
+  // Popup states
+  const [vehiculePopupOpen, setVehiculePopupOpen] = useState(false);
+  const [carteCarburantPopupOpen, setCarteCarburantPopupOpen] = useState(false);
+  const [carteBancairePopupOpen, setCarteBancairePopupOpen] = useState(false);
+  const [carteAutrePopupOpen, setCarteAutrePopupOpen] = useState(false);
 
   // Filtrer les groupes et colonnes visibles
   const visibleGroups = tabGroups.map(group => ({
@@ -61,6 +59,129 @@ export function RHUnifiedTableRow({
     e.stopPropagation();
     navigate(`/rh/suivi/${collaborator.id}`);
   };
+
+  const assets = collaborator.assets;
+
+  // Render special popup cells
+  const renderPopupCell = (colId: string, colIdx: number, className?: string) => {
+    const cellClass = cn(colIdx === 0 && "border-l", className, "p-1");
+    
+    if (colId === 'vehicule_attribue') {
+      return (
+        <TableCell key={colId} className={cellClass}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs font-normal w-full justify-start"
+            onDoubleClick={() => setVehiculePopupOpen(true)}
+            title="Double-clic pour modifier"
+          >
+            {formatVehiculeDisplay(assets?.vehicule_attribue || null)}
+          </Button>
+          <RHVehiculePopup
+            open={vehiculePopupOpen}
+            onOpenChange={setVehiculePopupOpen}
+            value={assets?.vehicule_attribue || null}
+            onSave={(data) => {
+              const jsonValue = JSON.stringify(data);
+              onValueChange(collaborator.id, 'vehicule_attribue', jsonValue);
+            }}
+          />
+        </TableCell>
+      );
+    }
+    
+    if (colId === 'carte_carburant') {
+      return (
+        <TableCell key={colId} className={cellClass}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs font-normal w-full justify-start"
+            onDoubleClick={() => setCarteCarburantPopupOpen(true)}
+            title="Double-clic pour modifier"
+          >
+            {formatCarteDisplay(assets?.carte_carburant || false, assets?.numero_carte_carburant || undefined)}
+          </Button>
+          <RHCartePopup
+            open={carteCarburantPopupOpen}
+            onOpenChange={setCarteCarburantPopupOpen}
+            title="Carte Carburant"
+            value={{
+              active: assets?.carte_carburant || false,
+              numero: assets?.numero_carte_carburant || '',
+              fournisseur: assets?.fournisseur_carte_carburant || '',
+            }}
+            onSave={(data) => {
+              onAssetsUpdate?.(collaborator.id, 'carte_carburant_data', data);
+            }}
+          />
+        </TableCell>
+      );
+    }
+    
+    if (colId === 'carte_bancaire') {
+      return (
+        <TableCell key={colId} className={cellClass}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs font-normal w-full justify-start"
+            onDoubleClick={() => setCarteBancairePopupOpen(true)}
+            title="Double-clic pour modifier"
+          >
+            {formatCarteDisplay(assets?.carte_bancaire || false, assets?.numero_carte_bancaire || undefined)}
+          </Button>
+          <RHCartePopup
+            open={carteBancairePopupOpen}
+            onOpenChange={setCarteBancairePopupOpen}
+            title="Carte Bancaire"
+            value={{
+              active: assets?.carte_bancaire || false,
+              numero: assets?.numero_carte_bancaire || '',
+              fournisseur: assets?.fournisseur_carte_bancaire || '',
+            }}
+            onSave={(data) => {
+              onAssetsUpdate?.(collaborator.id, 'carte_bancaire_data', data);
+            }}
+          />
+        </TableCell>
+      );
+    }
+    
+    if (colId === 'carte_autre') {
+      return (
+        <TableCell key={colId} className={cellClass}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs font-normal w-full justify-start"
+            onDoubleClick={() => setCarteAutrePopupOpen(true)}
+            title="Double-clic pour modifier"
+          >
+            {assets?.carte_autre_nom || '—'}
+          </Button>
+          <RHCartePopup
+            open={carteAutrePopupOpen}
+            onOpenChange={setCarteAutrePopupOpen}
+            title="Autre Carte"
+            value={{
+              active: !!assets?.carte_autre_nom,
+              numero: assets?.carte_autre_numero || '',
+              fournisseur: assets?.carte_autre_fournisseur || '',
+            }}
+            onSave={(data) => {
+              onAssetsUpdate?.(collaborator.id, 'carte_autre_data', { ...data, nom: data.active ? (assets?.carte_autre_nom || 'Autre') : '' });
+            }}
+          />
+        </TableCell>
+      );
+    }
+    
+    return null;
+  };
+
+  const POPUP_COLUMNS = ['vehicule_attribue', 'carte_carburant', 'carte_bancaire', 'carte_autre'];
 
   return (
     <TableRow 
@@ -113,6 +234,11 @@ export function RHUnifiedTableRow({
                 />
               </TableCell>
             );
+          }
+          
+          // Colonnes avec popup
+          if (POPUP_COLUMNS.includes(col.id)) {
+            return renderPopupCell(col.id, colIdx, group.className);
           }
           
           const originalValue = col.accessor(collaborator);

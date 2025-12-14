@@ -3999,12 +3999,18 @@ export type Database = {
       rh_assets: {
         Row: {
           autres_equipements: Json | null
+          carte_autre_fournisseur: string | null
+          carte_autre_nom: string | null
+          carte_autre_numero: string | null
+          carte_bancaire: boolean | null
           carte_carburant: boolean | null
-          carte_societe: boolean | null
           collaborator_id: string
           created_at: string | null
+          fournisseur_carte_bancaire: string | null
+          fournisseur_carte_carburant: string | null
           id: string
           imei: string | null
+          numero_carte_bancaire: string | null
           numero_carte_carburant: string | null
           tablette_telephone: string | null
           updated_at: string | null
@@ -4012,12 +4018,18 @@ export type Database = {
         }
         Insert: {
           autres_equipements?: Json | null
+          carte_autre_fournisseur?: string | null
+          carte_autre_nom?: string | null
+          carte_autre_numero?: string | null
+          carte_bancaire?: boolean | null
           carte_carburant?: boolean | null
-          carte_societe?: boolean | null
           collaborator_id: string
           created_at?: string | null
+          fournisseur_carte_bancaire?: string | null
+          fournisseur_carte_carburant?: string | null
           id?: string
           imei?: string | null
+          numero_carte_bancaire?: string | null
           numero_carte_carburant?: string | null
           tablette_telephone?: string | null
           updated_at?: string | null
@@ -4025,12 +4037,18 @@ export type Database = {
         }
         Update: {
           autres_equipements?: Json | null
+          carte_autre_fournisseur?: string | null
+          carte_autre_nom?: string | null
+          carte_autre_numero?: string | null
+          carte_bancaire?: boolean | null
           carte_carburant?: boolean | null
-          carte_societe?: boolean | null
           collaborator_id?: string
           created_at?: string | null
+          fournisseur_carte_bancaire?: string | null
+          fournisseur_carte_carburant?: string | null
           id?: string
           imei?: string | null
+          numero_carte_bancaire?: string | null
           numero_carte_carburant?: string | null
           tablette_telephone?: string | null
           updated_at?: string | null

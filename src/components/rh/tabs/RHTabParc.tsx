@@ -24,7 +24,13 @@ export function RHTabParc({ collaborator }: Props) {
     vehicule_attribue: assets?.vehicule_attribue || '',
     carte_carburant: assets?.carte_carburant || false,
     numero_carte_carburant: assets?.numero_carte_carburant || '',
-    carte_societe: assets?.carte_societe || false,
+    fournisseur_carte_carburant: assets?.fournisseur_carte_carburant || '',
+    carte_bancaire: assets?.carte_bancaire || false,
+    numero_carte_bancaire: assets?.numero_carte_bancaire || '',
+    fournisseur_carte_bancaire: assets?.fournisseur_carte_bancaire || '',
+    carte_autre_nom: assets?.carte_autre_nom || '',
+    carte_autre_numero: assets?.carte_autre_numero || '',
+    carte_autre_fournisseur: assets?.carte_autre_fournisseur || '',
     tablette_telephone: assets?.tablette_telephone || '',
     imei: assets?.imei || '',
   });
@@ -40,7 +46,13 @@ export function RHTabParc({ collaborator }: Props) {
     vehicule_attribue: assets?.vehicule_attribue || '',
     carte_carburant: assets?.carte_carburant || false,
     numero_carte_carburant: assets?.numero_carte_carburant || '',
-    carte_societe: assets?.carte_societe || false,
+    fournisseur_carte_carburant: assets?.fournisseur_carte_carburant || '',
+    carte_bancaire: assets?.carte_bancaire || false,
+    numero_carte_bancaire: assets?.numero_carte_bancaire || '',
+    fournisseur_carte_bancaire: assets?.fournisseur_carte_bancaire || '',
+    carte_autre_nom: assets?.carte_autre_nom || '',
+    carte_autre_numero: assets?.carte_autre_numero || '',
+    carte_autre_fournisseur: assets?.carte_autre_fournisseur || '',
     tablette_telephone: assets?.tablette_telephone || '',
     imei: assets?.imei || '',
   });
@@ -102,13 +114,66 @@ export function RHTabParc({ collaborator }: Props) {
 
           <div className="flex items-center justify-between pt-2 border-t">
             <div className="space-y-0.5">
-              <Label>Carte société</Label>
+              <Label>Carte bancaire</Label>
               <p className="text-xs text-muted-foreground">Le collaborateur dispose d'une carte bancaire société</p>
             </div>
             <Switch
-              checked={form.carte_societe}
-              onCheckedChange={(checked) => setForm(f => ({ ...f, carte_societe: checked }))}
+              checked={form.carte_bancaire}
+              onCheckedChange={(checked) => setForm(f => ({ ...f, carte_bancaire: checked }))}
             />
+          </div>
+          
+          {form.carte_bancaire && (
+            <div className="space-y-2 pl-4 border-l-2 border-muted">
+              <Label>Numéro de carte</Label>
+              <Input
+                value={form.numero_carte_bancaire}
+                onChange={(e) => setForm(f => ({ ...f, numero_carte_bancaire: e.target.value }))}
+                placeholder="Numéro de carte..."
+                className="max-w-xs"
+              />
+              <Label>Fournisseur</Label>
+              <Input
+                value={form.fournisseur_carte_bancaire}
+                onChange={(e) => setForm(f => ({ ...f, fournisseur_carte_bancaire: e.target.value }))}
+                placeholder="Banque..."
+                className="max-w-xs"
+              />
+            </div>
+          )}
+
+          <div className="flex items-center justify-between pt-2 border-t">
+            <div className="space-y-0.5">
+              <Label>Autre carte</Label>
+              <p className="text-xs text-muted-foreground">Autre type de carte (personnalisable)</p>
+            </div>
+          </div>
+          <div className="space-y-2 pl-4 border-l-2 border-muted">
+            <Label>Nom de la carte</Label>
+            <Input
+              value={form.carte_autre_nom}
+              onChange={(e) => setForm(f => ({ ...f, carte_autre_nom: e.target.value }))}
+              placeholder="Ex: Badge, Péage..."
+              className="max-w-xs"
+            />
+            {form.carte_autre_nom && (
+              <>
+                <Label>Numéro</Label>
+                <Input
+                  value={form.carte_autre_numero}
+                  onChange={(e) => setForm(f => ({ ...f, carte_autre_numero: e.target.value }))}
+                  placeholder="Numéro..."
+                  className="max-w-xs"
+                />
+                <Label>Fournisseur</Label>
+                <Input
+                  value={form.carte_autre_fournisseur}
+                  onChange={(e) => setForm(f => ({ ...f, carte_autre_fournisseur: e.target.value }))}
+                  placeholder="Fournisseur..."
+                  className="max-w-xs"
+                />
+              </>
+            )}
           </div>
         </CardContent>
       </Card>
