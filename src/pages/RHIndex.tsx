@@ -13,7 +13,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePendingDocumentRequestsCount } from "@/hooks/useDocumentRequests";
 import { Badge } from "@/components/ui/badge";
-import { isModuleOptionEnabled } from "@/types/modules";
 import { ROUTES } from "@/config/routes";
 import { PageHeader } from "@/components/layout/PageHeader";
 import type { LucideIcon } from "lucide-react";
@@ -26,11 +25,9 @@ interface RHModule {
   href: string;
   badge?: number;
   section: 'salarie' | 'dirigeant';
-  requiresOption?: string[];
-  enabled?: boolean; // Set to false to temporarily hide a module
+  enabled?: boolean;
 }
 
-// Set enabled: false to temporarily hide a module
 const RH_MODULES: RHModule[] = [
   // Vue Salarié
   {
@@ -40,7 +37,6 @@ const RH_MODULES: RHModule[] = [
     icon: FolderOpen,
     href: ROUTES.rh.coffre,
     section: 'salarie',
-    requiresOption: ['coffre'],
     enabled: true,
   },
   {
@@ -50,8 +46,7 @@ const RH_MODULES: RHModule[] = [
     icon: Send,
     href: ROUTES.rh.demande,
     section: 'salarie',
-    requiresOption: ['coffre'],
-    enabled: false, // Temporairement désactivé
+    enabled: false,
   },
   // Vue Dirigeant
   {
@@ -61,7 +56,6 @@ const RH_MODULES: RHModule[] = [
     icon: Users,
     href: ROUTES.rh.equipe,
     section: 'dirigeant',
-    requiresOption: ['rh_viewer', 'rh_admin'],
     enabled: true,
   },
   {
@@ -71,8 +65,7 @@ const RH_MODULES: RHModule[] = [
     icon: FileText,
     href: ROUTES.rh.demandes,
     section: 'dirigeant',
-    requiresOption: ['rh_viewer', 'rh_admin'],
-    enabled: false, // Temporairement désactivé
+    enabled: false,
   },
   {
     id: 'dashboard-rh',
@@ -81,7 +74,6 @@ const RH_MODULES: RHModule[] = [
     icon: LayoutDashboard,
     href: ROUTES.rh.dashboard,
     section: 'dirigeant',
-    requiresOption: ['rh_admin'],
     enabled: true,
   },
   {
@@ -91,23 +83,9 @@ const RH_MODULES: RHModule[] = [
     icon: CalendarDays,
     href: ROUTES.rh.conges,
     section: 'dirigeant',
-    requiresOption: ['rh_viewer', 'rh_admin'],
     enabled: true,
   },
 ];
-
-const RH_GROUPS = {
-  salarie: {
-    title: 'Vue Salarié',
-    icon: Briefcase,
-    colorClass: 'text-helpconfort-blue',
-  },
-  dirigeant: {
-    title: 'Vue Dirigeant',
-    icon: Users,
-    colorClass: 'text-helpconfort-orange',
-  },
-};
 
 function RHTileCard({ module, badge }: { module: RHModule; badge?: number }) {
   const Icon = module.icon;
@@ -152,36 +130,29 @@ function RHTileCard({ module, badge }: { module: RHModule; badge?: number }) {
 }
 
 export default function RHIndex() {
-  const { enabledModules, globalRole } = useAuth();
+  const { globalRole } = useAuth();
   const { count: pendingCount } = usePendingDocumentRequestsCount();
   
   const isPlatformAdmin = globalRole === 'platform_admin' || globalRole === 'superadmin';
-  // N2+ (franchisee_admin) = accès back-office RH
+  // N2+ = vue dirigeant UNIQUEMENT
   const isN2Plus = globalRole === 'franchisee_admin' || globalRole === 'franchisor_user' || 
                    globalRole === 'franchisor_admin' || isPlatformAdmin;
+  // N1 = vue salarié UNIQUEMENT
+  const isN1 = globalRole === 'franchisee_user';
   
-  // Check if user has a specific RH option
-  const hasRHOption = (options: string[] | undefined, section: 'salarie' | 'dirigeant') => {
-    if (!options) return true;
-    if (isPlatformAdmin) return true;
+  // Chaque rôle voit UNIQUEMENT sa section - pas de mélange
+  const visibleModules = RH_MODULES.filter(module => {
+    if (module.enabled === false) return false;
     
-    // N2+ a automatiquement accès à la vue dirigeant
-    if (section === 'dirigeant' && isN2Plus) return true;
+    // N2+ voit UNIQUEMENT la section dirigeant
+    if (isN2Plus) return module.section === 'dirigeant';
     
-    // Sinon vérifier les options du module
-    return options.some(opt => isModuleOptionEnabled(enabledModules, 'rh', opt));
-  };
-  
-  // Filter modules based on user permissions and enabled status
-  const visibleModules = RH_MODULES.filter(module => 
-    module.enabled !== false && hasRHOption(module.requiresOption, module.section)
-  );
-  
-  // Group by section
-  const modulesBySection = {
-    salarie: visibleModules.filter(m => m.section === 'salarie'),
-    dirigeant: visibleModules.filter(m => m.section === 'dirigeant'),
-  };
+    // N1 voit UNIQUEMENT la section salarié
+    if (isN1) return module.section === 'salarie';
+    
+    // N0 ou autres : aucun accès RH
+    return false;
+  });
   
   // Get badge for a module
   const getBadge = (moduleId: string): number | undefined => {
@@ -195,45 +166,21 @@ export default function RHIndex() {
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       <PageHeader
         title="Ressources Humaines"
-        subtitle="Gestion RH et documents collaborateurs"
+        subtitle={isN2Plus ? "Gestion RH et documents collaborateurs" : "Mon espace RH personnel"}
         backTo="/"
         backLabel="Accueil"
       />
 
-      {/* Sections */}
-      {(['salarie', 'dirigeant'] as const).map(sectionKey => {
-        const sectionModules = modulesBySection[sectionKey];
-        if (sectionModules.length === 0) return null;
-        
-        const group = RH_GROUPS[sectionKey];
-        const GroupIcon = group.icon;
-        
-        // Only show section titles if user can see both sections (admin view)
-        const showSectionTitle = modulesBySection.salarie.length > 0 && modulesBySection.dirigeant.length > 0;
-        
-        return (
-          <div key={sectionKey} className="space-y-4">
-            {showSectionTitle && (
-              <div className="flex items-center gap-2">
-                <GroupIcon className={`h-5 w-5 ${group.colorClass}`} />
-                <h2 className="text-lg font-semibold text-foreground">{group.title}</h2>
-                {sectionKey === 'dirigeant' && pendingCount !== undefined && pendingCount > 0 && (
-                  <Badge variant="destructive" className="text-xs">{pendingCount}</Badge>
-                )}
-              </div>
-            )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {sectionModules.map(module => (
-                <RHTileCard 
-                  key={module.id} 
-                  module={module} 
-                  badge={getBadge(module.id)}
-                />
-              ))}
-            </div>
-          </div>
-        );
-      })}
+      {/* Affichage direct sans section headers - chaque rôle ne voit qu'une seule section */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {visibleModules.map(module => (
+          <RHTileCard 
+            key={module.id} 
+            module={module} 
+            badge={getBadge(module.id)}
+          />
+        ))}
+      </div>
     </div>
   );
 }
