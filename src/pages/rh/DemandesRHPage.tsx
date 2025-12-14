@@ -132,7 +132,7 @@ export default function DemandesRHPage() {
     <div className="container mx-auto py-8 px-4 space-y-6">
       <PageHeader 
         title="Demandes RH" 
-        backPath="/rh/suivi"
+        backTo="/rh/suivi"
       />
 
       {/* Search & Filters */}
