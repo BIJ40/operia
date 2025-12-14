@@ -12,6 +12,7 @@ import { RHCartePopup, formatCarteDisplay } from './RHCartePopup';
 import { RHDocumentUploadPopup } from './RHDocumentUploadPopup';
 import { RHMaterielPopup } from './RHMaterielPopup';
 import { RHIdentifiantsPopup } from './RHIdentifiantsPopup';
+import { RHDocumentCell } from './RHDocumentCell';
 import { ExternalLink, Paperclip, Package, Key } from 'lucide-react';
 
 interface RHUnifiedTableRowProps {
@@ -277,6 +278,25 @@ export function RHUnifiedTableRow({
   
   // Colonnes avec possibilité d'upload de documents
   const DOCUMENT_UPLOAD_COLUMNS = ['habilitation_electrique', 'caces', 'visite_medicale'];
+  
+  // Colonnes de documents (permis, cni)
+  const DOCUMENT_CELL_COLUMNS = ['permis', 'cni'];
+
+  // Render document cell for permis/cni
+  const renderDocumentCell = (colId: string, colIdx: number, className?: string) => {
+    const cellClass = cn(colIdx === 0 && "border-l", className, "p-1");
+    const docType = colId as 'permis' | 'cni';
+    
+    return (
+      <TableCell key={colId} className={cellClass}>
+        <RHDocumentCell
+          collaboratorId={collaborator.id}
+          agencyId={collaborator.agency_id}
+          docType={docType}
+        />
+      </TableCell>
+    );
+  };
 
   return (
     <>
@@ -356,6 +376,11 @@ export function RHUnifiedTableRow({
                 />
               </TableCell>
             );
+          }
+          
+          // Colonnes de documents (permis, cni)
+          if (DOCUMENT_CELL_COLUMNS.includes(col.id)) {
+            return renderDocumentCell(col.id, colIdx, group.className);
           }
           
           // Colonnes avec popup
