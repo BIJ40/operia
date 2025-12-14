@@ -38,7 +38,7 @@ function StatsHubContent() {
     <div className="container mx-auto px-4 py-6 space-y-6">
       <PageHeader
         title="Hub Statistiques"
-        backTo={ROUTES.pilotage.index}
+        backTo={ROUTES.agency.index}
         backLabel="Mon Agence"
         rightElement={<PeriodSelector />}
       />

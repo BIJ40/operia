@@ -99,42 +99,42 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { 
         title: 'Statistiques', 
-        url: ROUTES.pilotage.statsHub,
+        url: ROUTES.agency.statsHub,
         icon: BarChart3, 
         scope: 'mes_indicateurs',
         description: 'Statistiques et indicateurs de l\'agence',
         children: [
           { 
             title: 'Vue d\'ensemble', 
-            url: ROUTES.pilotage.statsHub, 
+            url: ROUTES.agency.statsHub, 
             icon: BarChart3, 
             scope: 'mes_indicateurs', 
             description: 'Vue globale des statistiques' 
           },
           { 
             title: 'Mon CA', 
-            url: ROUTES.pilotage.indicateurs, 
+            url: ROUTES.agency.indicateurs, 
             icon: BarChart3, 
             scope: 'mes_indicateurs', 
             description: 'Indicateurs de chiffre d\'affaires' 
           },
           { 
             title: 'Mes Univers', 
-            url: ROUTES.pilotage.indicateursUnivers, 
+            url: ROUTES.agency.indicateursUnivers, 
             icon: BarChart3, 
             scope: 'mes_indicateurs', 
             description: 'Statistiques par univers métier' 
           },
           { 
             title: 'Mes Apporteurs', 
-            url: ROUTES.pilotage.indicateursApporteurs, 
+            url: ROUTES.agency.indicateursApporteurs, 
             icon: BarChart3, 
             scope: 'mes_indicateurs', 
             description: 'Statistiques apporteurs d\'affaires' 
           },
           { 
             title: 'Mes SAV', 
-            url: ROUTES.pilotage.indicateursSav, 
+            url: ROUTES.agency.indicateursSav, 
             icon: BarChart3, 
             scope: 'mes_indicateurs', 
             description: 'Statistiques SAV' 
@@ -143,14 +143,14 @@ export const NAV_GROUPS: NavGroup[] = [
       },
       { 
         title: 'Actions à Mener', 
-        url: ROUTES.pilotage.actions, 
+        url: ROUTES.agency.actions, 
         icon: ListTodo, 
         scope: 'actions_a_mener', 
         description: 'Suivi des actions et tâches en cours' 
       },
       { 
         title: 'Diffusion', 
-        url: ROUTES.pilotage.diffusion, 
+        url: ROUTES.agency.diffusion, 
         icon: Tv, 
         scope: 'diffusion', 
         description: 'Mode affichage TV agence',
@@ -158,7 +158,7 @@ export const NAV_GROUPS: NavGroup[] = [
       },
       { 
         title: 'Les plannings', 
-        url: ROUTES.pilotage.rhTech, 
+        url: ROUTES.agency.rhTech, 
         icon: Calendar, 
         scope: 'mes_indicateurs', 
         description: 'Validation des plannings hebdomadaires',
@@ -345,15 +345,15 @@ export const PAGE_TITLES: Record<string, string> = {
   [ROUTES.academy.documents]: 'Base Documentaire',
   
   // Pilotage (V2 routes)
-  [ROUTES.pilotage.index]: 'Mon Agence',
-  [ROUTES.pilotage.indicateurs]: 'Indicateurs généraux',
-  [ROUTES.pilotage.indicateursApporteurs]: 'Indicateurs Apporteurs',
-  [ROUTES.pilotage.indicateursUnivers]: 'Indicateurs Univers',
-  [ROUTES.pilotage.indicateursTechniciens]: 'Indicateurs Techniciens',
-  [ROUTES.pilotage.indicateursSav]: 'Indicateurs SAV',
-  [ROUTES.pilotage.actions]: 'Actions à Mener',
-  [ROUTES.pilotage.diffusion]: 'Mode Diffusion',
-  [ROUTES.pilotage.rhTech]: 'RH Tech - Planning',
+  [ROUTES.agency.index]: 'Mon Agence',
+  [ROUTES.agency.indicateurs]: 'Indicateurs généraux',
+  [ROUTES.agency.indicateursApporteurs]: 'Indicateurs Apporteurs',
+  [ROUTES.agency.indicateursUnivers]: 'Indicateurs Univers',
+  [ROUTES.agency.indicateursTechniciens]: 'Indicateurs Techniciens',
+  [ROUTES.agency.indicateursSav]: 'Indicateurs SAV',
+  [ROUTES.agency.actions]: 'Actions à Mener',
+  [ROUTES.agency.diffusion]: 'Mode Diffusion',
+  [ROUTES.agency.rhTech]: 'RH Tech - Planning',
   [ROUTES.rh.equipe]: 'Mon équipe',
   
   // Support (V2 routes)

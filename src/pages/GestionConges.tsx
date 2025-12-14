@@ -267,7 +267,7 @@ export default function GestionConges() {
       <PageHeader
         title="Gestion des congés"
         subtitle="Validez ou refusez les demandes de congés de vos collaborateurs"
-        backTo={ROUTES.pilotage.index}
+        backTo={ROUTES.agency.index}
         backLabel="Mon Agence"
       />
 

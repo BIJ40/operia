@@ -140,7 +140,7 @@ function ActionsAMenerContent() {
             <PageHeader
               title="Actions à mener"
               subtitle="Dossiers nécessitant une action de votre part"
-              backTo={ROUTES.pilotage.index}
+              backTo={ROUTES.agency.index}
               backLabel="Mon Agence"
             />
             {/* Configuration visible uniquement pour les admins */}
