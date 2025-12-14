@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Search, Settings2, Users, Save, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RHCollaborator } from '@/types/rh-suivi';
@@ -249,39 +250,52 @@ export function RHUnifiedTable({
           )}
         </div>
 
-        <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as RHTabId)} className="w-full lg:w-auto">
-          <TabsList className="grid grid-cols-4 lg:grid-cols-7 h-auto">
+        <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as RHTabId)} className="flex-1">
+          <TabsList className="grid grid-cols-7 h-auto w-full">
             {TAB_CONFIG.map((tab) => (
-              <TabsTrigger key={tab.id} value={tab.id} className="text-xs px-2 py-1.5">
+              <TabsTrigger key={tab.id} value={tab.id} className="text-sm px-4 py-2">
                 {tab.label}
               </TabsTrigger>
             ))}
           </TabsList>
         </Tabs>
 
-        <div className="flex items-center gap-2">
-          {/* Bouton sauvegarder */}
-          <Button 
-            variant={hasPendingChanges ? "default" : "outline"} 
-            size="sm"
-            onClick={() => saveChanges()}
-            disabled={!hasPendingChanges || isSaving}
-          >
-            {isSaving ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4 mr-2" />
-            )}
-            Enregistrer
-          </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Bouton sauvegarder - icône seule avec tooltip */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant={hasPendingChanges ? "default" : "outline"} 
+                  size="icon"
+                  onClick={() => saveChanges()}
+                  disabled={!hasPendingChanges || isSaving}
+                  className="h-9 w-9"
+                >
+                  {isSaving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Enregistrer</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Settings2 className="h-4 w-4 mr-2" />
-                Colonnes
-              </Button>
-            </DropdownMenuTrigger>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-9 w-9">
+                      <Settings2 className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent>Colonnes</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>Colonnes visibles</DropdownMenuLabel>
               <DropdownMenuSeparator />
