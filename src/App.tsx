@@ -18,8 +18,7 @@ import Error401 from "./pages/Error401";
 import Error403 from "./pages/Error403";
 
 // Dashboard
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const DashboardWidgets = lazy(() => import("./pages/DashboardWidgets"));
+const Dashboard = lazy(() => import("./pages/DashboardStatic"));
 import Error500 from "./pages/Error500";
 
 // Lazy loaded pages - Section Index Pages
@@ -106,7 +105,7 @@ const AdminSystemHealth = lazy(() => import("./pages/AdminSystemHealth"));
 const AdminAnnouncements = lazy(() => import("./pages/admin/AdminAnnouncements"));
 const AdminFaq = lazy(() => import("./pages/admin/AdminFaq"));
 const FormationGenerator = lazy(() => import("./pages/admin/FormationGenerator"));
-const AdminWidgets = lazy(() => import("./pages/admin/AdminWidgets"));
+
 const AdminFeatureFlags = lazy(() => import("./pages/admin/AdminFeatureFlags"));
 const StatiaBuilderAdminPage = lazy(() => import("./statia/pages/StatiaBuilderAdminPage"));
 const PermissionsCenterPage = lazy(() => import("./components/admin/permissions-center/PermissionsCenterPage"));
@@ -193,9 +192,8 @@ function AppContent() {
       
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          {/* Dashboard / Home - Le dashboard personnalisable est la page d'accueil */}
+          {/* Dashboard / Home - Page d'accueil statique */}
           <Route path="/" element={<MainLayout><RoleGuard minRole="franchisee_user"><Dashboard /></RoleGuard></MainLayout>} />
-          <Route path="/widgets" element={<MainLayout><RoleGuard minRole="franchisee_user"><DashboardWidgets /></RoleGuard></MainLayout>} />
           
           {/* Messages - Discussion interne */}
           <Route path="/messages" element={<MainLayout><RoleGuard minRole="franchisee_user"><Messages /></RoleGuard></MainLayout>} />
@@ -369,7 +367,7 @@ function AppContent() {
           <Route path="/admin/statia-validator" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><StatiaValidatorPage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/statia-builder" element={<Navigate to="/admin/statia-by-bij" replace />} />
           <Route path="/admin/formation-generator" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><FormationGenerator /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/admin/widgets" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminWidgets /></ModuleGuard></RoleGuard></MainLayout>} />
+          
           <Route path="/admin/feature-flags" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminFeatureFlags /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/modules" element={<Navigate to="/admin/feature-flags" replace />} />
           <Route path="/admin/permissions-center" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><PermissionsCenterPage /></ModuleGuard></RoleGuard></MainLayout>} />
