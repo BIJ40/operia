@@ -46,7 +46,7 @@ const KPI_CONFIG: Array<{
   },
   { 
     id: 'sav', 
-    statId: 'taux_sav_ytd',
+    statId: 'taux_sav_global',
     label: 'Taux SAV', 
     format: 'percent', 
     color: 'from-red-500 to-red-600', 
