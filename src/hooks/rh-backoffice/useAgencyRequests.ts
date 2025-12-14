@@ -8,7 +8,7 @@ import { logError, logInfo } from "@/lib/logger";
 import { toast } from "sonner";
 
 export type RequestType = "EPI_RENEWAL" | "LEAVE" | "DOCUMENT" | "OTHER";
-export type RequestStatus = "DRAFT" | "SUBMITTED" | "IN_PROGRESS" | "APPROVED" | "REJECTED";
+export type RequestStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED";
 
 export interface RHRequestWithEmployee {
   id: string;

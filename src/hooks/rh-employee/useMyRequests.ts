@@ -123,3 +123,34 @@ export function useCancelRequest() {
     },
   });
 }
+
+/**
+ * Hook pour télécharger la lettre de demande (N1)
+ * Appelle get-rh-letter-download-url et ouvre l'URL
+ */
+export function useDownloadMyLetter() {
+  return useMutation({
+    mutationFn: async (requestId: string) => {
+      logInfo(`Téléchargement lettre pour demande ${requestId}`);
+
+      const { data, error } = await supabase.functions.invoke("get-rh-letter-download-url", {
+        body: { request_id: requestId },
+      });
+
+      if (error) {
+        logError("Erreur téléchargement lettre:", error);
+        throw new Error(error.message || "Erreur téléchargement");
+      }
+
+      if (data?.url) {
+        window.open(data.url, "_blank");
+        return data.url;
+      } else {
+        throw new Error("URL de téléchargement non disponible");
+      }
+    },
+    onError: (error) => {
+      toast.error(`Erreur: ${error.message}`);
+    },
+  });
+}

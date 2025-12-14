@@ -2,7 +2,7 @@
  * Page Mes Demandes RH - Création et suivi des demandes
  */
 import React, { useState } from "react";
-import { Plus, FileText, Clock, CheckCircle, XCircle, Trash2, User } from "lucide-react";
+import { Plus, FileText, Clock, CheckCircle, XCircle, Trash2, User, Download, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useMyRequests, useCreateRequest, useCancelRequest, useMyCollaborator, type RequestType, type RequestStatus } from "@/hooks/rh-employee";
+import { useMyRequests, useCreateRequest, useCancelRequest, useDownloadMyLetter, useMyCollaborator, type RequestType, type RequestStatus } from "@/hooks/rh-employee";
 import { CollaboratorNotConfigured } from "@/components/rh-employee/CollaboratorNotConfigured";
 
 const REQUEST_TYPES: { value: RequestType; label: string; emoji: string }[] = [
@@ -138,6 +138,7 @@ export default function MesDemandesPage() {
   const { data: collaborator, isLoading: isLoadingCollaborator } = useMyCollaborator();
   const { data: requests, isLoading, error } = useMyRequests();
   const cancelRequest = useCancelRequest();
+  const downloadLetter = useDownloadMyLetter();
   const [dialogOpen, setDialogOpen] = useState(false);
 
   if (isLoadingCollaborator || isLoading) {
@@ -288,6 +289,26 @@ export default function MesDemandesPage() {
                     <div className="p-3 rounded-lg bg-muted">
                       <p className="text-sm font-medium">Commentaire:</p>
                       <p className="text-sm text-muted-foreground">{req.decision_comment}</p>
+                    </div>
+                  )}
+
+                  {/* Bouton téléchargement lettre si disponible */}
+                  {req.employee_can_download && req.generated_letter_path && (
+                    <div className="pt-2 border-t">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-emerald-600 hover:text-emerald-700"
+                        onClick={() => downloadLetter.mutate(req.id)}
+                        disabled={downloadLetter.isPending}
+                      >
+                        {downloadLetter.isPending ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Download className="w-4 h-4 mr-2" />
+                        )}
+                        Télécharger la lettre
+                      </Button>
                     </div>
                   )}
 

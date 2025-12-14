@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { ROUTES } from "@/config/routes";
 import {
   useAgencyRequests,
   useApproveRequest,
@@ -40,7 +41,6 @@ import {
 const STATUS_CONFIG: Record<RequestStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   DRAFT: { label: "Brouillon", variant: "outline" },
   SUBMITTED: { label: "En attente", variant: "secondary" },
-  IN_PROGRESS: { label: "En cours", variant: "default" },
   APPROVED: { label: "Approuvée", variant: "default" },
   REJECTED: { label: "Refusée", variant: "destructive" },
 };
@@ -59,10 +59,11 @@ export default function DemandesRHPage() {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectComment, setRejectComment] = useState("");
 
-  // Queries
+  // Queries - pendingRequests = SUBMITTED uniquement
   const { data: pendingRequests = [], isLoading: loadingPending } = useAgencyRequests({
-    status: ["SUBMITTED", "IN_PROGRESS"],
+    status: ["SUBMITTED"],
   });
+  // processedRequests = APPROVED + REJECTED
   const { data: processedRequests = [], isLoading: loadingProcessed } = useAgencyRequests({
     status: ["APPROVED", "REJECTED"],
   });
@@ -132,7 +133,7 @@ export default function DemandesRHPage() {
     <div className="container mx-auto py-8 px-4 space-y-6">
       <PageHeader 
         title="Demandes RH" 
-        backTo="/rh/suivi"
+        backTo={ROUTES.rh.index}
       />
 
       {/* Search & Filters */}
