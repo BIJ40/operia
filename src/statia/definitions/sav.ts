@@ -13,6 +13,32 @@ import { parseISO, isWithinInterval } from 'date-fns';
 // HELPERS SAV
 // ============================================================================
 
+/**
+ * Parse une date au format Apogée "dd/MM/yyyy HH:mm:ss" ou "dd/MM/yyyy" ou ISO
+ */
+function parseApogeeDate(dateStr: string): Date | null {
+  if (!dateStr) return null;
+  
+  // Format Apogée: "dd/MM/yyyy HH:mm:ss" ou "dd/MM/yyyy"
+  const apogeeMatch = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}):(\d{2}))?$/);
+  if (apogeeMatch) {
+    const [, day, month, year, hours = '0', minutes = '0', seconds = '0'] = apogeeMatch;
+    const d = new Date(
+      parseInt(year, 10),
+      parseInt(month, 10) - 1,
+      parseInt(day, 10),
+      parseInt(hours, 10),
+      parseInt(minutes, 10),
+      parseInt(seconds, 10)
+    );
+    return isNaN(d.getTime()) ? null : d;
+  }
+  
+  // Fallback: ISO ou autre format standard
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 function getProjectDate(project: any): Date | null {
   const dateStr =
     project.dateReelle ||
@@ -22,8 +48,7 @@ function getProjectDate(project: any): Date | null {
     project.data?.date ||
     null;
   if (!dateStr) return null;
-  const d = new Date(dateStr);
-  return isNaN(d.getTime()) ? null : d;
+  return parseApogeeDate(dateStr);
 }
 
 /**
