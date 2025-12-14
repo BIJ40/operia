@@ -66,7 +66,7 @@ function StatusBadge({ status }: { status: 'active' | 'inactive' | 'exited' }) {
 export default function RHCollaborateurPage() {
   const { id } = useParams<{ id: string }>();
   const { data: collaborator, isLoading } = useRHCollaborator(id);
-  const [activeTab, setActiveTab] = useState<RHTabId>('essentiel');
+  const [activeTab, setActiveTab] = useState<RHTabId>('general');
 
   if (isLoading) {
     return (
