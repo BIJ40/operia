@@ -21,7 +21,7 @@ const DEFAULT_VISIBLE_COLUMNS: Record<RHTabId, string[]> = {
 };
 
 export default function RHSuiviIndex() {
-  const { data: collaborators = [], isLoading } = useRHCollaborators();
+  const { data: collaborators = [], isLoading, refetch } = useRHCollaborators();
   const { data: tablePrefs } = useRHTablePrefs();
   const updatePrefs = useUpdateRHTablePrefs();
 
@@ -103,6 +103,7 @@ export default function RHSuiviIndex() {
         onToggleColumn={handleToggleColumn}
         activeTab={activeTab}
         onTabChange={setActiveTab}
+        onRefresh={refetch}
       />
     </div>
   );
