@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useMyCollaborator } from "./useMyCollaborator";
 import { logError, logInfo } from "@/lib/logger";
 import { toast } from "sonner";
-import { GLOBAL_ROLES } from "@/types/globalRoles";
+import { getRoleLevel } from "@/types/globalRoles";
 
 export type RequestType = "EPI_RENEWAL" | "LEAVE" | "DOCUMENT" | "OTHER";
 export type RequestStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED";
@@ -106,11 +106,8 @@ export function useCreateRequest() {
       } else {
         // Filtrer N2+ (getRoleLevel >= 2) et exclure l'expéditeur
         const recipients = (agencyUsers ?? [])
-          .filter(u => u.id !== user.id) // évite de se notifier soi-même
-          .filter(u => {
-            const level = GLOBAL_ROLES[u.global_role as keyof typeof GLOBAL_ROLES] ?? 0;
-            return level >= 2; // N2+ = franchisee_admin (2) et plus
-          })
+          .filter(u => !!u.id && u.id !== user.id) // évite null et soi-même
+          .filter(u => getRoleLevel(u.global_role) >= 2) // N2+ = franchisee_admin (2) et plus
           .map(u => u.id);
 
         const label = requestTypeLabel[payload.request_type] ?? payload.request_type;
