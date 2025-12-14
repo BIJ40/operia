@@ -26,11 +26,22 @@ interface AssistanteKpis {
   clientsContactes: number;
 }
 
-export function usePersonalKpis() {
+interface UsePersonalKpisOptions {
+  dateRange?: { start: Date; end: Date };
+}
+
+export function usePersonalKpis(options?: UsePersonalKpisOptions) {
   const { user, agence } = useAuth();
   
+  // Utiliser dateRange fourni ou le mois courant par défaut
+  const now = new Date();
+  const dateRange = options?.dateRange || {
+    start: startOfMonth(now),
+    end: endOfMonth(now),
+  };
+  
   return useQuery({
-    queryKey: ['personal-kpis', user?.id, agence],
+    queryKey: ['personal-kpis', user?.id, agence, dateRange.start.toISOString(), dateRange.end.toISOString()],
     queryFn: async () => {
       if (!user?.id || !agence) return null;
 
@@ -64,10 +75,6 @@ export function usePersonalKpis() {
 
       console.log('[usePersonalKpis] Profile:', { apogeeUserId, roleAgence, isTechnicien, isAssistante });
 
-      const now = new Date();
-      const monthStart = startOfMonth(now);
-      const monthEnd = endOfMonth(now);
-
       // Charger les données via DataService (même source que StatIA)
       const apiData = await DataService.loadAllData(true, false, agence);
       
@@ -81,14 +88,14 @@ export function usePersonalKpis() {
       if (isTechnicien) {
         return {
           type: 'technicien' as const,
-          data: calculateTechnicienKpisStatia(apiData, apogeeUserId, monthStart, monthEnd),
+          data: calculateTechnicienKpisStatia(apiData, apogeeUserId, dateRange.start, dateRange.end),
         };
       }
 
       if (isAssistante) {
         return {
           type: 'assistante' as const,
-          data: calculateAssistanteKpis(apiData, apogeeUserId, monthStart, monthEnd),
+          data: calculateAssistanteKpis(apiData, apogeeUserId, dateRange.start, dateRange.end),
         };
       }
 
