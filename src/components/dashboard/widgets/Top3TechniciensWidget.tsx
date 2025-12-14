@@ -1,6 +1,5 @@
 /**
- * Widget Top 3 Techniciens du mois
- * Affiche les 3 meilleurs techniciens par CA du mois en cours
+ * Widget Top 3 Techniciens - utilise la période du dashboard
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -8,10 +7,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getMetricForAgency } from '@/statia/api/getMetricForAgency';
 import { getGlobalApogeeDataServices } from '@/statia/adapters/dataServiceAdapter';
 import { Skeleton } from '@/components/ui/skeleton';
-import { startOfMonth, endOfMonth, format } from 'date-fns';
+import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Trophy, Medal } from 'lucide-react';
 import { formatEuros } from '@/apogee-connect/utils/formatters';
+import { useDashboardPeriod } from '@/pages/DashboardStatic';
 
 interface TechnicianData {
   id: string | number;
@@ -24,18 +24,13 @@ export function Top3TechniciensWidget() {
   const { agence } = useAuth();
   const agencySlug = agence || '';
 
-  const now = new Date();
-  const dateRange = {
-    start: startOfMonth(now),
-    end: endOfMonth(now),
-  };
-  
-  const currentMonth = format(now, 'MMMM yyyy', { locale: fr });
+  // Utiliser la période du dashboard parent
+  const { dateRange, periodLabel } = useDashboardPeriod();
 
   const services = getGlobalApogeeDataServices();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['widget-top3-techniciens', agencySlug, dateRange.start.toISOString()],
+    queryKey: ['widget-top3-techniciens', agencySlug, dateRange.start.toISOString(), dateRange.end.toISOString()],
     queryFn: async () => {
       if (!agencySlug) return null;
       return getMetricForAgency('ca_par_technicien', agencySlug, { dateRange }, services);
@@ -63,7 +58,7 @@ export function Top3TechniciensWidget() {
     if (dataObj && typeof dataObj === 'object' && !Array.isArray(dataObj)) {
       Object.entries(dataObj as Record<string, unknown>).forEach(([key, val]) => {
         if (key === 'value' || key === 'metadata' || key === 'breakdown') return;
-        if (key === 'agence' || key === 'Agence / Non attribué') return; // Exclure agence
+        if (key === 'agence' || key === 'Agence / Non attribué') return;
         
         if (typeof val === 'object' && val !== null) {
           const item = val as { name?: string; totalCA?: number; ca?: number; color?: string };
@@ -130,7 +125,7 @@ export function Top3TechniciensWidget() {
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-muted-foreground text-center capitalize">{currentMonth}</p>
+      <p className="text-xs text-muted-foreground text-center capitalize">{periodLabel}</p>
       
       {top3.map((tech, index) => {
         const rankStyle = getRankStyle(index);

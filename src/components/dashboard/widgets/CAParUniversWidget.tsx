@@ -1,6 +1,5 @@
 /**
- * Widget CA par Univers - Affiche la répartition du CA par univers
- * Version autonome sans dépendance FiltersProvider
+ * Widget CA par Univers - utilise la période du dashboard
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -8,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getMetricForAgency } from '@/statia/api/getMetricForAgency';
 import { getGlobalApogeeDataServices } from '@/statia/adapters/dataServiceAdapter';
 import { Skeleton } from '@/components/ui/skeleton';
-import { startOfMonth, endOfMonth } from 'date-fns';
+import { useDashboardPeriod } from '@/pages/DashboardStatic';
 
 interface UniversData {
   name: string;
@@ -20,16 +19,13 @@ export function CAParUniversWidget() {
   const { agence } = useAuth();
   const agencySlug = agence || '';
 
-  const now = new Date();
-  const dateRange = {
-    start: startOfMonth(now),
-    end: endOfMonth(now),
-  };
+  // Utiliser la période du dashboard parent
+  const { dateRange } = useDashboardPeriod();
 
   const services = getGlobalApogeeDataServices();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['widget-ca-univers', agencySlug, dateRange.start.toISOString()],
+    queryKey: ['widget-ca-univers', agencySlug, dateRange.start.toISOString(), dateRange.end.toISOString()],
     queryFn: async () => {
       if (!agencySlug) return null;
       return getMetricForAgency('ca_par_univers', agencySlug, { dateRange }, services);

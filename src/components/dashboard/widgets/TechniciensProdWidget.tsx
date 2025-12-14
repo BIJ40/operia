@@ -1,5 +1,5 @@
 /**
- * Widget Productivité Techniciens - Tableau récapitulatif
+ * Widget Productivité Techniciens - utilise la période du dashboard
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -7,8 +7,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getMetricForAgency } from '@/statia/api/getMetricForAgency';
 import { getGlobalApogeeDataServices } from '@/statia/adapters/dataServiceAdapter';
 import { Skeleton } from '@/components/ui/skeleton';
-import { startOfMonth, endOfMonth } from 'date-fns';
 import { formatEuros } from '@/apogee-connect/utils/formatters';
+import { useDashboardPeriod } from '@/pages/DashboardStatic';
 
 interface TechData {
   id: string;
@@ -21,16 +21,13 @@ export function TechniciensProdWidget() {
   const { agence } = useAuth();
   const agencySlug = agence || '';
 
-  const now = new Date();
-  const dateRange = {
-    start: startOfMonth(now),
-    end: endOfMonth(now),
-  };
+  // Utiliser la période du dashboard parent
+  const { dateRange } = useDashboardPeriod();
 
   const services = getGlobalApogeeDataServices();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['widget-tech-prod', agencySlug, dateRange.start.toISOString()],
+    queryKey: ['widget-tech-prod', agencySlug, dateRange.start.toISOString(), dateRange.end.toISOString()],
     queryFn: async () => {
       if (!agencySlug) return null;
       
