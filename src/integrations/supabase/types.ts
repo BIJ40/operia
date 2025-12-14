@@ -1563,6 +1563,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           doc_type: string
+          employee_visible: boolean | null
           file_name: string
           file_path: string
           file_size: number | null
@@ -1584,6 +1585,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           doc_type: string
+          employee_visible?: boolean | null
           file_name: string
           file_path: string
           file_size?: number | null
@@ -1605,6 +1607,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           doc_type?: string
+          employee_visible?: boolean | null
           file_name?: string
           file_path?: string
           file_size?: number | null
@@ -3993,6 +3996,56 @@ export type Database = {
         }
         Relationships: []
       }
+      rh_assets: {
+        Row: {
+          autres_equipements: Json | null
+          carte_carburant: boolean | null
+          carte_societe: boolean | null
+          collaborator_id: string
+          created_at: string | null
+          id: string
+          imei: string | null
+          numero_carte_carburant: string | null
+          tablette_telephone: string | null
+          updated_at: string | null
+          vehicule_attribue: string | null
+        }
+        Insert: {
+          autres_equipements?: Json | null
+          carte_carburant?: boolean | null
+          carte_societe?: boolean | null
+          collaborator_id: string
+          created_at?: string | null
+          id?: string
+          imei?: string | null
+          numero_carte_carburant?: string | null
+          tablette_telephone?: string | null
+          updated_at?: string | null
+          vehicule_attribue?: string | null
+        }
+        Update: {
+          autres_equipements?: Json | null
+          carte_carburant?: boolean | null
+          carte_societe?: boolean | null
+          collaborator_id?: string
+          created_at?: string | null
+          id?: string
+          imei?: string | null
+          numero_carte_carburant?: string | null
+          tablette_telephone?: string | null
+          updated_at?: string | null
+          vehicule_attribue?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rh_assets_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: true
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rh_audit_log: {
         Row: {
           action_type: string
@@ -4059,6 +4112,147 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rh_competencies: {
+        Row: {
+          autres_habilitations: Json | null
+          caces: Json | null
+          collaborator_id: string
+          created_at: string | null
+          derniere_maj: string | null
+          habilitation_electrique_date: string | null
+          habilitation_electrique_statut: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          autres_habilitations?: Json | null
+          caces?: Json | null
+          collaborator_id: string
+          created_at?: string | null
+          derniere_maj?: string | null
+          habilitation_electrique_date?: string | null
+          habilitation_electrique_statut?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          autres_habilitations?: Json | null
+          caces?: Json | null
+          collaborator_id?: string
+          created_at?: string | null
+          derniere_maj?: string | null
+          habilitation_electrique_date?: string | null
+          habilitation_electrique_statut?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rh_competencies_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: true
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rh_epi_profiles: {
+        Row: {
+          collaborator_id: string
+          created_at: string | null
+          date_derniere_remise: string | null
+          date_renouvellement: string | null
+          epi_remis: string[] | null
+          epi_requis: string[] | null
+          id: string
+          notes_securite: string | null
+          pointure: string | null
+          statut_epi: string | null
+          taille_bas: string | null
+          taille_gants: string | null
+          taille_haut: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          collaborator_id: string
+          created_at?: string | null
+          date_derniere_remise?: string | null
+          date_renouvellement?: string | null
+          epi_remis?: string[] | null
+          epi_requis?: string[] | null
+          id?: string
+          notes_securite?: string | null
+          pointure?: string | null
+          statut_epi?: string | null
+          taille_bas?: string | null
+          taille_gants?: string | null
+          taille_haut?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          collaborator_id?: string
+          created_at?: string | null
+          date_derniere_remise?: string | null
+          date_renouvellement?: string | null
+          epi_remis?: string[] | null
+          epi_requis?: string[] | null
+          id?: string
+          notes_securite?: string | null
+          pointure?: string | null
+          statut_epi?: string | null
+          taille_bas?: string | null
+          taille_gants?: string | null
+          taille_haut?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rh_epi_profiles_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: true
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rh_it_access: {
+        Row: {
+          acces_outils: string[] | null
+          collaborator_id: string
+          created_at: string | null
+          id: string
+          identifiants_encrypted: string | null
+          notes_it: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          acces_outils?: string[] | null
+          collaborator_id: string
+          created_at?: string | null
+          id?: string
+          identifiants_encrypted?: string | null
+          notes_it?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          acces_outils?: string[] | null
+          collaborator_id?: string
+          created_at?: string | null
+          id?: string
+          identifiants_encrypted?: string | null
+          notes_it?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rh_it_access_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: true
+            referencedRelation: "collaborators"
             referencedColumns: ["id"]
           },
         ]
@@ -4153,6 +4347,86 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rh_requests: {
+        Row: {
+          agency_id: string
+          created_at: string | null
+          decision_comment: string | null
+          employee_user_id: string
+          generated_letter_path: string | null
+          id: string
+          payload: Json | null
+          request_type: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string | null
+          decision_comment?: string | null
+          employee_user_id: string
+          generated_letter_path?: string | null
+          id?: string
+          payload?: Json | null
+          request_type: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string | null
+          decision_comment?: string | null
+          employee_user_id?: string
+          generated_letter_path?: string | null
+          id?: string
+          payload?: Json | null
+          request_type?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rh_requests_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rh_table_prefs: {
+        Row: {
+          column_order: string[] | null
+          created_at: string | null
+          hidden_columns: string[] | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          column_order?: string[] | null
+          created_at?: string | null
+          hidden_columns?: string[] | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          column_order?: string[] | null
+          created_at?: string | null
+          hidden_columns?: string[] | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       salary_history: {
         Row: {
@@ -5383,6 +5657,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_signatures: {
+        Row: {
+          created_at: string | null
+          id: string
+          signature_svg: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          signature_svg: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          signature_svg?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_widget_preferences: {
         Row: {
           created_at: string | null
@@ -5774,6 +6072,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           doc_type: string
+          employee_visible: boolean | null
           file_name: string
           file_path: string
           file_size: number | null
