@@ -90,10 +90,14 @@ export const TechWeeklyPlanningList: React.FC<TechWeeklyPlanningListProps> = ({
   }
 
   if (error) {
+    console.error("[TechWeeklyPlanningList] Error loading planning:", error);
     return (
       <Card className="border-destructive">
         <CardContent className="pt-6">
           <p className="text-destructive">Erreur lors du chargement du planning.</p>
+          <p className="text-sm text-muted-foreground mt-2">
+            {error instanceof Error ? error.message : "Une erreur inattendue s'est produite."}
+          </p>
         </CardContent>
       </Card>
     );
