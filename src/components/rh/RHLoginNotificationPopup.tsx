@@ -29,26 +29,31 @@ interface PendingNotification {
 }
 
 export function RHLoginNotificationPopup() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, globalRole } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [notification, setNotification] = useState<PendingNotification | null>(null);
 
+  const isRH = globalRole && ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(globalRole);
+
   // Check for unread request notifications on login
   const { data: unreadNotifications } = useQuery({
-    queryKey: ['rh-login-notifications', user?.id],
+    queryKey: ['rh-login-notifications', user?.id, isRH ? 'RH' : 'EMP'],
     queryFn: async () => {
       if (!user?.id) return [];
 
-      const { data, error } = await supabase
+      const baseQuery = supabase
         .from('rh_notifications')
         .select('id, notification_type, title, message, related_request_id, created_at')
         .eq('recipient_id', user.id)
-        .in('notification_type', ['REQUEST_COMPLETED', 'REQUEST_REJECTED'])
         .eq('is_read', false)
         .order('created_at', { ascending: false })
         .limit(1);
+
+      const { data, error } = isRH
+        ? await baseQuery.in('notification_type', ['REQUEST_CREATED'])
+        : await baseQuery.in('notification_type', ['REQUEST_COMPLETED', 'REQUEST_REJECTED']);
 
       if (error) throw error;
       return (data || []) as PendingNotification[];
@@ -88,7 +93,11 @@ export function RHLoginNotificationPopup() {
       await markAsRead.mutateAsync(notification.id);
     }
     setOpen(false);
-    navigate(ROUTES.rh.demande);
+    if (isRH || notification?.notification_type === 'REQUEST_CREATED') {
+      navigate(ROUTES.rh.demandes);
+    } else {
+      navigate(ROUTES.rh.demande);
+    }
   };
 
   const handleClose = async () => {
