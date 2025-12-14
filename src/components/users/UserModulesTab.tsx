@@ -323,18 +323,25 @@ export const UserModulesTab = memo(function UserModulesTab({
   };
 
   const isPermissionAllowed = (perm: PermissionDefinition): boolean => {
+    if (!userRole) return false;
+    
     // Vérifier le rôle minimum du module
     if (!canAccessModule(userRole, perm.moduleKey)) return false;
     
-    // Vérifier les contraintes spécifiques RH
+    // Vérifier les contraintes spécifiques RH (coffre, mon_planning disponibles pour N1)
     if (perm.moduleKey === 'rh' && perm.optionKey) {
-      if (!userRole) return false;
-      return RH_OPTIONS_BY_ROLE[userRole]?.includes(perm.optionKey) ?? false;
+      const allowedOptions = RH_OPTIONS_BY_ROLE[userRole];
+      if (!allowedOptions) return false;
+      return allowedOptions.includes(perm.optionKey);
+    }
+    
+    // Vérifier les contraintes spécifiques Parc (options disponibles pour N2+)
+    if (perm.moduleKey === 'parc' && perm.optionKey) {
+      return GLOBAL_ROLES[userRole] >= GLOBAL_ROLES.franchisee_admin;
     }
     
     // Vérifier le rôle minimum de la permission
     if (perm.minRole) {
-      if (!userRole) return false;
       return GLOBAL_ROLES[userRole] >= GLOBAL_ROLES[perm.minRole];
     }
     
