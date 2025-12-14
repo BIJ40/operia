@@ -164,6 +164,7 @@ export function DocumentIcons({ collaboratorId, onDocumentClick }: DocumentIcons
   const [previewDoc, setPreviewDoc] = useState<{type: DocumentType; filePath: string; fileName: string} | null>(null);
 
   // Query to check which document types exist for this collaborator
+  // Uses same queryKey pattern as RHDocumentCell for sync
   const { data: existingDocs = [] } = useQuery({
     queryKey: ['rh-documents-check', collaboratorId],
     queryFn: async () => {
@@ -176,7 +177,7 @@ export function DocumentIcons({ collaboratorId, onDocumentClick }: DocumentIcons
       if (error) throw error;
       return data || [];
     },
-    staleTime: 30000, // Cache 30 seconds
+    staleTime: 0, // Always refetch to stay in sync with RHDocumentCell
   });
 
   const handleClick = (docType: DocumentInfo, e: React.MouseEvent) => {
