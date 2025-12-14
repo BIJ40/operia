@@ -65,14 +65,15 @@ const COLUMN_TO_FIELD_MAP: Record<string, { table: string; field: string }> = {
   notes_it: { table: 'rh_it_access', field: 'notes_it' },
 };
 
-// Non-editable columns
+// Non-editable columns (handled via popup or not editable)
 const NON_EDITABLE_COLUMNS = [
   'last_name', 
   'first_name', 
   'type', 
   'docs_icons',
   'carte_carburant',
-  'carte_societe',
+  'carte_bancaire',
+  'carte_autre',
   'statut_epi',
   'date_renouvellement',
   'caces_count',
@@ -251,6 +252,55 @@ export function useRHInlineEdit(
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [pendingChanges.size]);
 
+  // Handle assets update (for popup-based fields like cartes)
+  const handleAssetsUpdate = useCallback(async (collaboratorId: string, field: string, value: unknown) => {
+    try {
+      let updateData: Record<string, unknown> = {};
+      
+      if (field === 'carte_carburant_data') {
+        const data = value as { active: boolean; numero: string; fournisseur: string };
+        updateData = {
+          carte_carburant: data.active,
+          numero_carte_carburant: data.numero || null,
+          fournisseur_carte_carburant: data.fournisseur || null,
+        };
+      } else if (field === 'carte_bancaire_data') {
+        const data = value as { active: boolean; numero: string; fournisseur: string };
+        updateData = {
+          carte_bancaire: data.active,
+          numero_carte_bancaire: data.numero || null,
+          fournisseur_carte_bancaire: data.fournisseur || null,
+        };
+      } else if (field === 'carte_autre_data') {
+        const data = value as { active: boolean; numero: string; fournisseur: string; nom?: string };
+        updateData = {
+          carte_autre_nom: data.active ? (data.nom || 'Autre') : null,
+          carte_autre_numero: data.numero || null,
+          carte_autre_fournisseur: data.fournisseur || null,
+        };
+      } else {
+        return;
+      }
+
+      const { error } = await supabase
+        .from('rh_assets')
+        .upsert({ 
+          collaborator_id: collaboratorId, 
+          ...updateData,
+        }, { 
+          onConflict: 'collaborator_id' 
+        });
+
+      if (error) throw error;
+      
+      toast.success('Modifications enregistrées', { duration: 2000 });
+      onRefresh();
+    } catch (error) {
+      logError(error, 'useRHInlineEdit.handleAssetsUpdate');
+      toast.error('Erreur lors de la sauvegarde');
+    }
+  }, [onRefresh]);
+
   return {
     pendingChanges,
     isSaving,
@@ -258,6 +308,7 @@ export function useRHInlineEdit(
     handleValueChange,
     getLocalValue,
     saveChanges,
+    handleAssetsUpdate,
     hasPendingChanges: pendingChanges.size > 0,
   };
 }

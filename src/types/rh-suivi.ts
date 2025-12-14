@@ -69,10 +69,16 @@ export interface HabilitationEntry {
 export interface RHAssets {
   id: string;
   collaborator_id: string;
-  vehicule_attribue: string | null;
+  vehicule_attribue: string | null; // JSON: { marque, modele, immatriculation, autre }
   carte_carburant: boolean;
   numero_carte_carburant: string | null;
-  carte_societe: boolean;
+  fournisseur_carte_carburant: string | null;
+  carte_bancaire: boolean;
+  numero_carte_bancaire: string | null;
+  fournisseur_carte_bancaire: string | null;
+  carte_autre_nom: string | null;
+  carte_autre_numero: string | null;
+  carte_autre_fournisseur: string | null;
   tablette_telephone: string | null;
   imei: string | null;
   autres_equipements: EquipmentEntry[];
