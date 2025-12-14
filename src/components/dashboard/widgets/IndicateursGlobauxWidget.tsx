@@ -1,6 +1,5 @@
 /**
- * Widget Indicateurs Globaux - Version utilisant la même logique que IndicateursAccueil
- * Affiche les KPIs clés + graphique Evolution du CA
+ * Widget Indicateurs Globaux - Version avec sélecteur de période du dashboard
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -12,10 +11,10 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { DataService } from '@/apogee-connect/services/dataService';
 import { computeStat } from '@/statia/engine/computeStat';
 import { calculateMonthlyCA } from '@/apogee-connect/utils/monthlyCalculations';
-import { startOfMonth, endOfMonth } from 'date-fns';
 import { LoadedData, StatParams } from '@/statia/definitions/types';
 import { supabase } from '@/integrations/supabase/client';
 import { loadSAVOverridesByAgencyUuid } from '@/statia/services/savOverridesService';
+import { useDashboardPeriod } from '@/pages/DashboardStatic';
 
 // Configuration des KPIs à afficher
 const KPI_CONFIG: Array<{ 
@@ -36,15 +35,6 @@ const KPI_CONFIG: Array<{
     icon: '€',
     getValue: (r) => r?.value ?? null
   },
-{ 
-    id: 'sav', 
-    statId: 'taux_sav_ytd',
-    label: 'Taux SAV (YTD)', 
-    format: 'percent', 
-    color: 'from-red-500 to-red-600', 
-    icon: 'SAV',
-    getValue: (r) => r?.value ?? null
-  },
   { 
     id: 'transfo', 
     statId: 'taux_transformation_devis_nombre',
@@ -52,6 +42,15 @@ const KPI_CONFIG: Array<{
     format: 'percent', 
     color: 'from-cyan-500 to-cyan-600', 
     icon: '📈',
+    getValue: (r) => r?.value ?? null
+  },
+  { 
+    id: 'sav', 
+    statId: 'taux_sav_ytd',
+    label: 'Taux SAV', 
+    format: 'percent', 
+    color: 'from-red-500 to-red-600', 
+    icon: 'SAV',
     getValue: (r) => r?.value ?? null
   },
   { 
@@ -104,15 +103,12 @@ export function IndicateursGlobauxWidget() {
   const agencySlug = agence || '';
   const selectedYear = new Date().getFullYear();
 
-  const now = new Date();
-  const dateRange = {
-    start: startOfMonth(now),
-    end: endOfMonth(now),
-  };
+  // Utiliser la période du dashboard parent
+  const { dateRange } = useDashboardPeriod();
 
   // Fetch tous les KPIs
   const { data: kpiData, isLoading } = useQuery({
-    queryKey: ['widget-indicateurs-globaux-v4', agencySlug, dateRange.start.toISOString()],
+    queryKey: ['widget-indicateurs-globaux-v5', agencySlug, dateRange.start.toISOString(), dateRange.end.toISOString()],
     queryFn: async () => {
       if (!agencySlug) return null;
 
@@ -187,7 +183,7 @@ export function IndicateursGlobauxWidget() {
 
   // Fetch CA mensuel pour le graphique
   const { data: monthlyData } = useQuery({
-    queryKey: ['widget-ca-mensuel-v3', agencySlug, selectedYear],
+    queryKey: ['widget-ca-mensuel-v4', agencySlug, selectedYear],
     queryFn: async () => {
       if (!agencySlug) return null;
       
@@ -201,7 +197,6 @@ export function IndicateursGlobauxWidget() {
           agencySlug
         );
         
-        // calculateMonthlyCA retourne { mois, ca, nbFactures } - on map vers { month, ca }
         return rawData.map((item: any) => ({
           month: item.mois || item.month,
           ca: item.ca,

@@ -1,5 +1,5 @@
 /**
- * Widget CA par Apporteurs - Top 5 apporteurs avec barres
+ * Widget CA par Apporteurs - utilise la période du dashboard
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getMetricForAgency } from '@/statia/api/getMetricForAgency';
 import { getGlobalApogeeDataServices } from '@/statia/adapters/dataServiceAdapter';
 import { Skeleton } from '@/components/ui/skeleton';
-import { startOfMonth, endOfMonth } from 'date-fns';
+import { useDashboardPeriod } from '@/pages/DashboardStatic';
 
 interface ApporteurData {
   name: string;
@@ -18,16 +18,13 @@ export function CAApporteursWidget() {
   const { agence } = useAuth();
   const agencySlug = agence || '';
 
-  const now = new Date();
-  const dateRange = {
-    start: startOfMonth(now),
-    end: endOfMonth(now),
-  };
+  // Utiliser la période du dashboard parent
+  const { dateRange } = useDashboardPeriod();
 
   const services = getGlobalApogeeDataServices();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['widget-ca-apporteurs', agencySlug, dateRange.start.toISOString()],
+    queryKey: ['widget-ca-apporteurs', agencySlug, dateRange.start.toISOString(), dateRange.end.toISOString()],
     queryFn: async () => {
       if (!agencySlug) return null;
       return getMetricForAgency('ca_par_apporteur', agencySlug, { dateRange }, services);
