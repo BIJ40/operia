@@ -13,8 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Search, Users, UserPlus, MoreHorizontal, Pencil, UserX, UserCheck, Trash2 } from 'lucide-react';
 import { GLOBAL_ROLE_LABELS, GLOBAL_ROLE_COLORS, type GlobalRole } from '@/types/globalRoles';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAllAgencySubscriptions } from '@/hooks/access-rights/useAgencySubscription';
-import { useAccessRightsUsers, UserRow } from '@/hooks/access-rights/useAccessRightsUsers';
+import { useAllAgencySubscriptions, useAccessRightsUsers, UserRow } from '@/hooks/access-rights';
 import { CreateUserDialog, EditUserDialog, DeactivateDialog, ReactivateDialog, DeleteDialog } from '@/components/admin/users/UserDialogs';
 import { ModuleKey, EnabledModules } from '@/types/modules';
 

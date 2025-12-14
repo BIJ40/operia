@@ -13,10 +13,10 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   usePlanTiers, 
-  useUpdatePlanTierModule 
-} from '@/hooks/access-rights/usePlanTiers';
+  useUpdatePlanTierModule,
+  useAuditLog,
+} from '@/hooks/access-rights';
 import { MODULE_DEFINITIONS, ModuleKey } from '@/types/modules';
-import { useAuditLog } from '@/hooks/access-rights/usePermissionAudit';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function PlansEditorTab() {

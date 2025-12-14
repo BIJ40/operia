@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useState } from 'react';
 import { downloadModulesDocumentationPdf } from '@/lib/modulesExportPdf';
 import { toast } from 'sonner';
+import { logError } from '@/lib/logger';
 
 // Bannière d'information globale
 export function AccessRightsGlobalBanner() {
@@ -24,7 +25,7 @@ export function AccessRightsGlobalBanner() {
       await downloadModulesDocumentationPdf();
       toast.success('Documentation PDF téléchargée');
     } catch (error) {
-      console.error('Erreur téléchargement PDF:', error);
+      logError('Erreur téléchargement PDF', error);
       toast.error('Erreur lors du téléchargement');
     } finally {
       setIsDownloading(false);

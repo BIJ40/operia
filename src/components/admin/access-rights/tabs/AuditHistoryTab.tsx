@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { History, Search, User, Building2, Layers, Settings } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { usePermissionAudit } from '@/hooks/access-rights/usePermissionAudit';
+import { usePermissionAudit } from '@/hooks/access-rights';
 import { format, formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ScrollArea } from '@/components/ui/scroll-area';
