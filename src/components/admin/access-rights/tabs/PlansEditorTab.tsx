@@ -110,8 +110,11 @@ export function PlansEditorTab() {
           <Layers className="h-5 w-5" />
           Configuration des Plans
         </CardTitle>
-        <CardDescription>
-          Définissez les modules et sous-options inclus dans chaque plan. Ces configurations s'appliquent à toutes les agences abonnées.
+        <CardDescription className="flex flex-col gap-1">
+          <span>Définissez les modules et sous-options inclus dans chaque plan.</span>
+          <span className="text-purple-600 font-medium">
+            Ce sont les modules de BASE (Priorité 4/4). Les modules utilisateur et overrides agence peuvent y ajouter des accès supplémentaires.
+          </span>
         </CardDescription>
       </CardHeader>
       <CardContent>

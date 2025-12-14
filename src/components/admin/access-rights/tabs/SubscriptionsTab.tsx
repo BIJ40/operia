@@ -101,8 +101,12 @@ export function SubscriptionsTab() {
           <Building2 className="h-5 w-5" />
           Souscriptions par Agence
         </CardTitle>
-        <CardDescription>
-          Gérez le plan de chaque agence (FREE, STARTER, PRO)
+        <CardDescription className="flex flex-col gap-1">
+          <span>Gérez le plan de chaque agence (FREE, STARTER, PRO).</span>
+          <span className="text-blue-600 font-medium">
+            Le plan définit les modules de base pour tous les utilisateurs de l'agence (Priorité 4/4).
+            Les modules utilisateur et overrides agence s'y ajoutent.
+          </span>
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

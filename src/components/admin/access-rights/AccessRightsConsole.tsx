@@ -12,6 +12,7 @@ import { SubscriptionsTab } from './tabs/SubscriptionsTab';
 import { PlansEditorTab } from './tabs/PlansEditorTab';
 import { AuditHistoryTab } from './tabs/AuditHistoryTab';
 import { useAuth } from '@/contexts/AuthContext';
+import { AccessRightsGlobalBanner } from './AccessRightsHierarchyExplainer';
 
 export default function AccessRightsConsole() {
   const [activeTab, setActiveTab] = useState('users');
@@ -28,6 +29,9 @@ export default function AccessRightsConsole() {
         backTo="/admin"
         backLabel="Administration"
       />
+      
+      {/* Bannière explicative globale */}
+      <AccessRightsGlobalBanner />
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-4 h-auto p-1">

@@ -172,8 +172,11 @@ export function UsersAccessTab() {
               <Users className="h-5 w-5" />
               Utilisateurs et Accès
             </CardTitle>
-            <CardDescription>
-              Gérez les utilisateurs, leurs rôles et leurs accès modules
+            <CardDescription className="flex items-center gap-2">
+              Gérez les utilisateurs, leurs rôles et leurs accès modules.
+              <span className="text-green-600 font-medium">
+                Les modules ici s'ajoutent au plan agence (Priorité 2/4).
+              </span>
             </CardDescription>
           </div>
           {capabilities.canCreateRoles.length > 0 && (
