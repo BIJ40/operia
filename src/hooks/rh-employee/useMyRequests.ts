@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useMyCollaborator } from "./useMyCollaborator";
 import { logError, logInfo } from "@/lib/logger";
 import { toast } from "sonner";
+import { GLOBAL_ROLES } from "@/types/globalRoles";
 
 export type RequestType = "EPI_RENEWAL" | "LEAVE" | "DOCUMENT" | "OTHER";
 export type RequestStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED";
@@ -94,34 +95,47 @@ export function useCreateRequest() {
         throw error;
       }
 
-      // Notification N1→N2 : récupérer les RH de l'agence
-      const { data: rhUsers } = await supabase
+      // Notification N1→N2 : récupérer les profiles de l'agence et filtrer N2+ en JS
+      const { data: agencyUsers, error: mgrError } = await supabase
         .from("profiles")
-        .select("id")
-        .eq("agency_id", collaborator.agency_id)
-        .gte("global_role", "franchisee_admin");
+        .select("id, global_role")
+        .eq("agency_id", collaborator.agency_id);
 
-      const label = requestTypeLabel[payload.request_type] ?? payload.request_type;
+      if (mgrError) {
+        logError("Erreur récupération profiles agence:", mgrError);
+      } else {
+        // Filtrer N2+ (getRoleLevel >= 2) et exclure l'expéditeur
+        const recipients = (agencyUsers ?? [])
+          .filter(u => u.id !== user.id) // évite de se notifier soi-même
+          .filter(u => {
+            const level = GLOBAL_ROLES[u.global_role as keyof typeof GLOBAL_ROLES] ?? 0;
+            return level >= 2; // N2+ = franchisee_admin (2) et plus
+          })
+          .map(u => u.id);
 
-      // Créer notification pour chaque N2+ de l'agence
-      if (rhUsers && rhUsers.length > 0) {
-        const notifications = rhUsers.map((rh) => ({
-          collaborator_id: collaborator.id ?? null,
-          recipient_id: rh.id,
-          sender_id: user.id,
-          agency_id: collaborator.agency_id,
-          notification_type: "REQUEST_CREATED",
-          title: `Nouvelle demande : ${label}`,
-          message: `${collaborator.first_name} ${collaborator.last_name} a soumis une demande de ${label}`,
-          related_request_id: data.id,
-        }));
+        const label = requestTypeLabel[payload.request_type] ?? payload.request_type;
 
-        const { error: notifErr } = await supabase
-          .from("rh_notifications")
-          .insert(notifications);
+        logInfo(`Notif N1→N2: ${recipients.length} destinataires pour demande ${data.id}`, recipients);
 
-        if (notifErr) {
-          logError("Erreur notification N1→N2:", notifErr);
+        if (recipients.length > 0) {
+          const notifications = recipients.map((recipient_id) => ({
+            collaborator_id: collaborator.id ?? null,
+            recipient_id,
+            sender_id: user.id,
+            agency_id: collaborator.agency_id,
+            notification_type: "REQUEST_CREATED",
+            title: `Nouvelle demande : ${label}`,
+            message: `${collaborator.first_name} ${collaborator.last_name} a soumis une demande de ${label}`,
+            related_request_id: data.id,
+          }));
+
+          const { error: notifErr } = await supabase
+            .from("rh_notifications")
+            .insert(notifications);
+
+          if (notifErr) {
+            logError("Erreur notification N1→N2:", notifErr);
+          }
         }
       }
 
