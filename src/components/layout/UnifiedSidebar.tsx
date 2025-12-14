@@ -1,7 +1,7 @@
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import {
   GraduationCap, FileText, FolderOpen, BarChart3, ListTodo, Tv, Heart,
-  Headset, Network, Building2, PieChart, GitCompare, Briefcase,
+  Headset, Network, Building2, PieChart, GitCompare, Briefcase, Car,
   Coins, Settings, Users, Database, Activity, ChevronRight, Home, Calendar, LifeBuoy, MessageCircle, Kanban, FolderKanban, HelpCircle, Sparkles, Wrench, Brain, Radar
 } from 'lucide-react';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
@@ -226,7 +226,7 @@ export function UnifiedSidebar() {
       accessKey: 'canAccessPilotageAgence',
     },
     {
-      label: 'Mon Espace RH',
+      label: 'RH & PARC',
       labelKey: 'rh',
       indexUrl: ROUTES.rh.index,
       icon: Briefcase,
@@ -235,6 +235,7 @@ export function UnifiedSidebar() {
         { title: 'Suivi RH', url: ROUTES.rh.suivi, icon: Users, description: 'Gestion complète des collaborateurs (back-office)', minRole: 'franchisee_admin' },
         { title: 'Mon équipe', url: ROUTES.rh.equipe, icon: Users, description: 'Collaborateurs, documents RH et bulletins de salaire', minRole: 'franchisee_admin' },
         { title: 'Traiter demandes', url: ROUTES.rh.demandes, icon: FileText, description: 'Traiter les demandes de documents', minRole: 'franchisee_admin' },
+        { title: 'Parc & Véhicules', url: ROUTES.rh.parc, icon: Car, description: 'Gestion des véhicules et matériels', minRole: 'franchisee_admin' },
         // Portail salarié N1+
         { title: 'Mon Coffre RH', url: ROUTES.rh.coffre, icon: FolderOpen, description: 'Mes documents RH personnels' },
         { title: 'Mes demandes', url: ROUTES.rh.demande, icon: FileText, description: 'Créer et suivre mes demandes' },

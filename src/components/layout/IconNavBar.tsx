@@ -10,7 +10,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import {
-  BarChart3, ListTodo, Tv, Users, Calendar,
+  BarChart3, ListTodo, Tv, Users, Calendar, Car,
   GraduationCap, FileText, FolderOpen, Heart,
   Headset, HelpCircle, LifeBuoy,
   Network, Building2, PieChart, GitCompare, Coins,
@@ -85,13 +85,14 @@ const navSections: NavSection[] = [
   },
   {
     id: 'rh',
-    label: 'RH',
+    label: 'RH & PARC',
     icon: iconRh,
     indexUrl: ROUTES.rh.index,
     items: [
       { title: 'Mon équipe', url: ROUTES.rh.equipe, icon: Users },
       { title: 'Mon Coffre RH', url: ROUTES.rh.coffre, icon: FolderOpen },
       { title: 'Demandes RH', url: ROUTES.rh.demandes, icon: FileText },
+      { title: 'Parc Véhicules', url: ROUTES.rh.parc, icon: Car },
     ],
     requiresModule: 'rh',
   },

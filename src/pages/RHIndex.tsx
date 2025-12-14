@@ -91,7 +91,7 @@ const RH_MODULES: RHModule[] = [
     title: 'Parc & Véhicules',
     description: 'Gérez les véhicules, CT, entretiens et assurances',
     icon: Car,
-    href: ROUTES.agency.maintenance,
+    href: ROUTES.rh.parc,
     section: 'dirigeant',
     enabled: true,
   },
