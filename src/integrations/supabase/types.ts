@@ -4392,6 +4392,90 @@ export type Database = {
           },
         ]
       }
+      rh_personnel_registry: {
+        Row: {
+          agency_id: string
+          autorisation_date: string | null
+          collaborator_id: string
+          created_at: string
+          created_by: string | null
+          date_entree: string | null
+          date_naissance: string | null
+          date_sortie: string | null
+          emploi_occupe: string | null
+          field_modifications: Json
+          id: string
+          last_field_modified_at: string | null
+          last_field_modified_by: string | null
+          nationalite: string | null
+          numero_ordre: number
+          observations: string | null
+          qualification: string | null
+          sexe: string | null
+          temps_partiel: boolean | null
+          type_contrat: string | null
+        }
+        Insert: {
+          agency_id: string
+          autorisation_date?: string | null
+          collaborator_id: string
+          created_at?: string
+          created_by?: string | null
+          date_entree?: string | null
+          date_naissance?: string | null
+          date_sortie?: string | null
+          emploi_occupe?: string | null
+          field_modifications?: Json
+          id?: string
+          last_field_modified_at?: string | null
+          last_field_modified_by?: string | null
+          nationalite?: string | null
+          numero_ordre: number
+          observations?: string | null
+          qualification?: string | null
+          sexe?: string | null
+          temps_partiel?: boolean | null
+          type_contrat?: string | null
+        }
+        Update: {
+          agency_id?: string
+          autorisation_date?: string | null
+          collaborator_id?: string
+          created_at?: string
+          created_by?: string | null
+          date_entree?: string | null
+          date_naissance?: string | null
+          date_sortie?: string | null
+          emploi_occupe?: string | null
+          field_modifications?: Json
+          id?: string
+          last_field_modified_at?: string | null
+          last_field_modified_by?: string | null
+          nationalite?: string | null
+          numero_ordre?: number
+          observations?: string | null
+          qualification?: string | null
+          sexe?: string | null
+          temps_partiel?: boolean | null
+          type_contrat?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rh_personnel_registry_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rh_personnel_registry_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: true
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rh_requests: {
         Row: {
           agency_id: string

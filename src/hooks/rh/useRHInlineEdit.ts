@@ -11,6 +11,34 @@ interface PendingChange {
   timestamp: number;
 }
 
+// Date columns that need ISO format conversion
+const DATE_COLUMNS = ['hiring_date', 'leaving_date', 'hab_elec_date', 'date_renouvellement'];
+
+// Convert DD/MM/YYYY to YYYY-MM-DD (ISO format)
+function convertToISODate(dateStr: string): string | null {
+  if (!dateStr || dateStr.trim() === '') return null;
+  
+  // Check if already in ISO format (YYYY-MM-DD)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return dateStr;
+  }
+  
+  // Convert DD/MM/YYYY to YYYY-MM-DD
+  const match = dateStr.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/);
+  if (match) {
+    const [, day, month, year] = match;
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+  
+  // Try parsing as Date object
+  const date = new Date(dateStr);
+  if (!isNaN(date.getTime())) {
+    return date.toISOString().split('T')[0];
+  }
+  
+  return null;
+}
+
 // Map column IDs to database fields
 const COLUMN_TO_FIELD_MAP: Record<string, { table: string; field: string }> = {
   // Collaborator base fields
@@ -122,7 +150,14 @@ export function useRHInlineEdit(
         if (!changesByTable[table][change.collaboratorId]) {
           changesByTable[table][change.collaboratorId] = {};
         }
-        changesByTable[table][change.collaboratorId][field] = change.value;
+        
+        // Convert date values to ISO format
+        let valueToSave: string | null = change.value;
+        if (DATE_COLUMNS.includes(change.field)) {
+          valueToSave = convertToISODate(change.value);
+        }
+        
+        changesByTable[table][change.collaboratorId][field] = valueToSave as string;
       }
 
       // Execute updates
