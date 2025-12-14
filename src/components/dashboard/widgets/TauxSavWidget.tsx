@@ -20,7 +20,7 @@ export function TauxSavWidget() {
     queryKey: ['widget-taux-sav', agencySlug, dateRange.start.toISOString(), dateRange.end.toISOString()],
     queryFn: async () => {
       if (!agencySlug) return null;
-      const result = await getMetricForAgency('taux_sav_ytd', agencySlug, { dateRange }, services);
+      const result = await getMetricForAgency('taux_sav_global', agencySlug, { dateRange }, services);
       return { taux: Number(result.value) || 0 };
     },
     enabled: !!agencySlug,
