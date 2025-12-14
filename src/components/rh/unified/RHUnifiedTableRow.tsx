@@ -14,6 +14,7 @@ import { RHDocumentUploadPopup } from './RHDocumentUploadPopup';
 import { RHMaterielPopup } from './RHMaterielPopup';
 import { RHIdentifiantsDynamicColumns } from './RHIdentifiantsDynamicColumns';
 import { RHDocumentCell } from './RHDocumentCell';
+import { RHMetiersMultiSelect } from './RHMetiersMultiSelect';
 import { ExternalLink, Paperclip, Package } from 'lucide-react';
 
 interface RHUnifiedTableRowProps {
@@ -296,11 +297,23 @@ export function RHUnifiedTableRow({
         </TableCell>
       );
     }
+    // Métiers multi-select
+    if (colId === 'metiers_liste') {
+      const competences = collaborator.competencies?.competences_techniques || [];
+      return (
+        <TableCell key={colId} className={cellClass}>
+          <RHMetiersMultiSelect
+            collaboratorId={collaborator.id}
+            selectedMetiers={competences}
+          />
+        </TableCell>
+      );
+    }
     
     return null;
   };
 
-  const POPUP_COLUMNS = ['vehicule_attribue', 'carte_carburant', 'carte_bancaire', 'carte_autre', 'informatique_liste', 'outils_liste', 'identifiants_liste'];
+  const POPUP_COLUMNS = ['vehicule_attribue', 'carte_carburant', 'carte_bancaire', 'carte_autre', 'informatique_liste', 'outils_liste', 'identifiants_liste', 'metiers_liste'];
   
   // Colonnes avec possibilité d'upload de documents
   const DOCUMENT_UPLOAD_COLUMNS = ['habilitation_electrique', 'caces', 'visite_medicale'];
