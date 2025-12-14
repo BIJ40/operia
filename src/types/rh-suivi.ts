@@ -16,6 +16,8 @@ export interface RHCollaborator {
   leaving_date: string | null;
   apogee_user_id: number | null;
   notes: string | null;
+  permis?: string | null;
+  cni?: string | null;
   created_at: string;
   updated_at: string;
   // Relations
@@ -141,14 +143,14 @@ export interface UserSignature {
 export interface RHColumnDef {
   id: string;
   label: string;
-  category: 'essentiel' | 'rh' | 'securite' | 'competences' | 'parc' | 'it' | 'documents';
+  category: 'general' | 'securite' | 'competences' | 'parc' | 'it' | 'documents';
   accessor: (row: RHCollaborator) => string | number | boolean | null | undefined;
   sensitive?: boolean; // N2 strict fields
   defaultVisible?: boolean;
 }
 
 // Tab definitions
-export type RHTabId = 'essentiel' | 'rh' | 'securite' | 'competences' | 'parc' | 'it' | 'documents';
+export type RHTabId = 'general' | 'securite' | 'competences' | 'parc' | 'it' | 'documents';
 
 export interface RHTab {
   id: RHTabId;
@@ -157,8 +159,7 @@ export interface RHTab {
 }
 
 export const RH_TABS: RHTab[] = [
-  { id: 'essentiel', label: 'Essentiel', icon: 'User' },
-  { id: 'rh', label: 'RH', icon: 'FileText' },
+  { id: 'general', label: 'Général', icon: 'User' },
   { id: 'securite', label: 'Sécurité & EPI', icon: 'Shield' },
   { id: 'competences', label: 'Compétences', icon: 'Award' },
   { id: 'parc', label: 'Parc & Matériel', icon: 'Car' },

@@ -1715,6 +1715,7 @@ export type Database = {
           apogee_user_id: number | null
           birth_place: string | null
           city: string | null
+          cni: string | null
           created_at: string
           created_by: string | null
           email: string | null
@@ -1725,6 +1726,7 @@ export type Database = {
           last_name: string
           leaving_date: string | null
           notes: string | null
+          permis: string | null
           phone: string | null
           postal_code: string | null
           role: string
@@ -1739,6 +1741,7 @@ export type Database = {
           apogee_user_id?: number | null
           birth_place?: string | null
           city?: string | null
+          cni?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
@@ -1749,6 +1752,7 @@ export type Database = {
           last_name: string
           leaving_date?: string | null
           notes?: string | null
+          permis?: string | null
           phone?: string | null
           postal_code?: string | null
           role?: string
@@ -1763,6 +1767,7 @@ export type Database = {
           apogee_user_id?: number | null
           birth_place?: string | null
           city?: string | null
+          cni?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
@@ -1773,6 +1778,7 @@ export type Database = {
           last_name?: string
           leaving_date?: string | null
           notes?: string | null
+          permis?: string | null
           phone?: string | null
           postal_code?: string | null
           role?: string

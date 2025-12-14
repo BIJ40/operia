@@ -5,7 +5,7 @@
 
 import { RHCollaborator } from '@/types/rh-suivi';
 
-export type RHTabId = 'essentiel' | 'rh' | 'securite' | 'competences' | 'parc' | 'it' | 'documents';
+export type RHTabId = 'general' | 'securite' | 'competences' | 'parc' | 'it' | 'documents';
 
 export interface ColumnGroup {
   id: string;
@@ -39,7 +39,7 @@ export const FIXED_COLUMNS: ColumnDef[] = [
 
 // Configuration par onglet
 export const TAB_COLUMNS: Record<RHTabId, ColumnGroup[]> = {
-  essentiel: [
+  general: [
     {
       id: 'contact',
       label: 'Contact',
@@ -49,21 +49,38 @@ export const TAB_COLUMNS: Record<RHTabId, ColumnGroup[]> = {
       ],
     },
     {
+      id: 'ice',
+      label: 'ICE',
+      className: 'bg-red-50 dark:bg-red-950/30',
+      columns: [
+        { id: 'emergency_contact', label: 'Contact', accessor: () => null, sensitive: true },
+        { id: 'emergency_phone', label: 'Téléphone', accessor: () => null, sensitive: true },
+      ],
+    },
+    {
       id: 'dates',
       label: 'Dates',
       columns: [
-        { id: 'hiring_date', label: 'Date entrée', accessor: (row) => row.hiring_date },
-        { id: 'leaving_date', label: 'Date sortie', accessor: (row) => row.leaving_date },
+        { id: 'hiring_date', label: 'Entrée', accessor: (row) => row.hiring_date },
+        { id: 'leaving_date', label: 'Sortie', accessor: (row) => row.leaving_date },
       ],
     },
-  ],
-  rh: [
     {
       id: 'identite',
       label: 'Identité',
       columns: [
         { id: 'role', label: 'Fonction', accessor: (row) => row.role },
         { id: 'notes', label: 'Observations', accessor: (row) => row.notes },
+      ],
+    },
+    {
+      id: 'divers',
+      label: 'Divers',
+      className: 'bg-slate-50 dark:bg-slate-950/30',
+      columns: [
+        { id: 'social_security_number', label: 'N° Sécu', accessor: () => null, sensitive: true },
+        { id: 'permis', label: 'Permis', accessor: (row) => row.permis },
+        { id: 'cni', label: 'CNI', accessor: (row) => row.cni },
       ],
     },
   ],
@@ -160,8 +177,7 @@ export const TAB_COLUMNS: Record<RHTabId, ColumnGroup[]> = {
 };
 
 export const TAB_CONFIG: { id: RHTabId; label: string; icon: string }[] = [
-  { id: 'essentiel', label: 'Essentiel', icon: 'User' },
-  { id: 'rh', label: 'RH', icon: 'FileText' },
+  { id: 'general', label: 'Général', icon: 'User' },
   { id: 'securite', label: 'Sécurité & EPI', icon: 'Shield' },
   { id: 'competences', label: 'Compétences', icon: 'Award' },
   { id: 'parc', label: 'Parc & Matériel', icon: 'Car' },

@@ -11,11 +11,10 @@ import { Users } from 'lucide-react';
 
 // Colonnes visibles par défaut par onglet
 const DEFAULT_VISIBLE_COLUMNS: Record<RHTabId, string[]> = {
-  essentiel: ['email', 'phone', 'hiring_date', 'leaving_date'],
-  rh: ['role', 'notes'],
+  general: ['email', 'phone', 'emergency_contact', 'emergency_phone', 'hiring_date', 'leaving_date', 'role', 'notes', 'social_security_number', 'permis', 'cni'],
   securite: ['taille_haut', 'taille_bas', 'pointure', 'statut_epi', 'date_renouvellement'],
   competences: ['hab_elec_statut', 'hab_elec_date', 'caces_count'],
-  parc: ['vehicule_attribue', 'carte_carburant', 'carte_societe', 'tablette_telephone', 'imei'],
+  parc: ['vehicule_attribue', 'carte_carburant', 'carte_bancaire', 'carte_autre', 'tablette_telephone', 'imei'],
   it: ['acces_outils', 'notes_it'],
   documents: ['docs_icons'],
 };
@@ -28,7 +27,7 @@ export default function RHSuiviIndex() {
   // Onglet actif - persiste en sessionStorage
   const [activeTab, setActiveTab] = useState<RHTabId>(() => {
     const saved = sessionStorage.getItem('rh_suivi_active_tab');
-    return (saved as RHTabId) || 'essentiel';
+    return (saved as RHTabId) || 'general';
   });
 
   // Colonnes visibles - initialisées depuis les prefs utilisateur ou par défaut
