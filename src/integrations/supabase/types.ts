@@ -4765,9 +4765,12 @@ export type Database = {
           generated_letter_path: string | null
           id: string
           payload: Json | null
+          processing_info: Json | null
           request_type: string
           reviewed_at: string | null
           reviewed_by: string | null
+          seen_at: string | null
+          seen_by: string | null
           status: string
           updated_at: string | null
         }
@@ -4781,9 +4784,12 @@ export type Database = {
           generated_letter_path?: string | null
           id?: string
           payload?: Json | null
+          processing_info?: Json | null
           request_type: string
           reviewed_at?: string | null
           reviewed_by?: string | null
+          seen_at?: string | null
+          seen_by?: string | null
           status?: string
           updated_at?: string | null
         }
@@ -4797,9 +4803,12 @@ export type Database = {
           generated_letter_path?: string | null
           id?: string
           payload?: Json | null
+          processing_info?: Json | null
           request_type?: string
           reviewed_at?: string | null
           reviewed_by?: string | null
+          seen_at?: string | null
+          seen_by?: string | null
           status?: string
           updated_at?: string | null
         }
@@ -4809,6 +4818,13 @@ export type Database = {
             columns: ["agency_id"]
             isOneToOne: false
             referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rh_requests_seen_by_fkey"
+            columns: ["seen_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
