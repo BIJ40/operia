@@ -1,0 +1,19 @@
+{
+  "generatedAt": "2024-12-15T00:00:00.000Z",
+  "summary": {
+    "totalFiles": 0,
+    "uniqueEndpoints": 0,
+    "uniquePropertyChains": 0
+  },
+  "endpoints": [],
+  "propertyChains": [],
+  "groupedByEntity": {
+    "projects": [],
+    "devis": [],
+    "factures": [],
+    "interventions": [],
+    "clients": [],
+    "users": [],
+    "other": []
+  }
+}
