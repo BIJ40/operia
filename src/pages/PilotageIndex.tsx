@@ -26,11 +26,11 @@ const pilotageModules: PilotageModule[] = [
     href: ROUTES.agency.statsHub,
   },
   {
-    id: 'actions',
-    title: 'Actions à mener',
-    description: 'Suivi des actions et tâches en cours',
-    icon: ListTodo,
-    href: ROUTES.agency.actions,
+    id: 'veille_apporteurs',
+    title: 'Veille Apporteurs',
+    description: 'Suivi performance et alertes apporteurs',
+    icon: Radar,
+    href: ROUTES.agency.veilleApporteurs,
   },
   {
     id: 'diffusion',
@@ -40,11 +40,11 @@ const pilotageModules: PilotageModule[] = [
     href: ROUTES.agency.diffusion,
   },
   {
-    id: 'veille_apporteurs',
-    title: 'Veille Apporteurs',
-    description: 'Suivi performance et alertes apporteurs',
-    icon: Radar,
-    href: ROUTES.agency.veilleApporteurs,
+    id: 'actions',
+    title: 'Actions à mener',
+    description: 'Suivi des actions et tâches en cours',
+    icon: ListTodo,
+    href: ROUTES.agency.actions,
   },
 ];
 
