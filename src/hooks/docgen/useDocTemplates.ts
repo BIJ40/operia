@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { TokenConfig } from "@/lib/docgen/tokenConfig";
+import { Json } from "@/integrations/supabase/types";
 
 export interface DocTemplate {
   id: string;
@@ -10,7 +12,7 @@ export interface DocTemplate {
   description: string | null;
   category: string;
   docx_storage_path: string;
-  tokens: string[];
+  tokens: (string | TokenConfig)[];
   is_published: boolean;
   scope: "global" | "agency";
   created_by: string | null;
@@ -65,14 +67,20 @@ export function useCreateDocTemplate() {
       description?: string;
       category: string;
       docx_storage_path: string;
-      tokens: string[];
+      tokens: (string | TokenConfig)[];
       scope: "global" | "agency";
       agency_id?: string;
     }) => {
       const { data: result, error } = await supabase
         .from("doc_templates")
         .insert({
-          ...data,
+          name: data.name,
+          description: data.description,
+          category: data.category,
+          docx_storage_path: data.docx_storage_path,
+          tokens: data.tokens as unknown as Json,
+          scope: data.scope,
+          agency_id: data.agency_id,
           created_by: user?.id,
           is_published: false,
         })
@@ -97,10 +105,15 @@ export function useUpdateDocTemplate() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, ...data }: Partial<DocTemplate> & { id: string }) => {
+    mutationFn: async ({ id, tokens, ...rest }: Partial<DocTemplate> & { id: string }) => {
+      const updateData: Record<string, unknown> = { ...rest };
+      if (tokens !== undefined) {
+        updateData.tokens = tokens as unknown as Json;
+      }
+      
       const { error } = await supabase
         .from("doc_templates")
-        .update(data)
+        .update(updateData)
         .eq("id", id);
 
       if (error) throw error;
