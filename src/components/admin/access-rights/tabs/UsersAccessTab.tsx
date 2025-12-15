@@ -125,16 +125,23 @@ export function UsersAccessTab() {
   const handleModuleOptionToggle = (moduleKey: ModuleKey, optionKey: string, enabled: boolean) => {
     setLocalModules(prev => {
       const currentModule = prev?.[moduleKey];
-      const isEnabled = typeof currentModule === 'object' ? currentModule?.enabled ?? false : !!currentModule;
+      const wasEnabled = typeof currentModule === 'object' ? currentModule?.enabled ?? false : !!currentModule;
       const currentOptions = typeof currentModule === 'object' ? currentModule?.options || {} : {};
+      
+      // Si on active une option, le module doit aussi être activé
+      // Si on désactive une option, on garde le module actif seulement s'il reste des options actives
+      const newOptions = {
+        ...currentOptions,
+        [optionKey]: enabled
+      };
+      const hasAnyOptionEnabled = Object.values(newOptions).some(v => v === true);
+      const shouldBeEnabled = enabled ? true : (wasEnabled || hasAnyOptionEnabled);
+      
       return {
         ...prev,
         [moduleKey]: {
-          enabled: isEnabled,
-          options: {
-            ...currentOptions,
-            [optionKey]: enabled
-          }
+          enabled: shouldBeEnabled,
+          options: newOptions
         }
       };
     });
