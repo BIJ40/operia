@@ -137,6 +137,7 @@ export function MainHeader() {
                 src={operiaLogo} 
                 alt="OPERIA" 
                 className="h-28 w-auto"
+                data-no-modal
               />
             </Link>
 
