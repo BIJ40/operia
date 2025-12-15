@@ -145,7 +145,7 @@ export function MainHeader() {
               {/* Ligne 1 : Navigation + Actions */}
               <div className="flex items-center h-14">
                 {/* Navigation principale - Desktop */}
-                <nav className="hidden lg:flex items-center flex-1 gap-1">
+                <nav className="hidden lg:flex items-center justify-center flex-1 gap-1">
                   {/* Accueil */}
                   <Link
                     to="/"
