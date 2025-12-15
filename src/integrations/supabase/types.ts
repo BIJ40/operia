@@ -4757,6 +4757,8 @@ export type Database = {
       rh_requests: {
         Row: {
           agency_id: string
+          archived_at: string | null
+          archived_by: string | null
           created_at: string | null
           decision_comment: string | null
           employee_can_download: boolean | null
@@ -4776,6 +4778,8 @@ export type Database = {
         }
         Insert: {
           agency_id: string
+          archived_at?: string | null
+          archived_by?: string | null
           created_at?: string | null
           decision_comment?: string | null
           employee_can_download?: boolean | null
@@ -4795,6 +4799,8 @@ export type Database = {
         }
         Update: {
           agency_id?: string
+          archived_at?: string | null
+          archived_by?: string | null
           created_at?: string | null
           decision_comment?: string | null
           employee_can_download?: boolean | null
@@ -4818,6 +4824,13 @@ export type Database = {
             columns: ["agency_id"]
             isOneToOne: false
             referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rh_requests_archived_by_fkey"
+            columns: ["archived_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {

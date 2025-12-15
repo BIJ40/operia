@@ -13,6 +13,7 @@ import {
   useRejectRequest,
   useMarkRequestAsSeen,
   useMarkRequestAsProcessed,
+  useArchiveRequest,
   isVehicleOrEquipmentRequest,
   type RHRequestWithEmployee,
   type RequestStatus,
@@ -39,7 +40,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Loader2, Inbox, Check, X, User, Calendar, FileText, HardHat, Eye, CheckCircle, Car, Wrench } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Loader2, Inbox, Check, X, User, Calendar, FileText, HardHat, Eye, CheckCircle, Car, Wrench, Archive } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ROUTES } from '@/config/routes';
 import { format } from 'date-fns';
@@ -74,7 +76,13 @@ const STATUS_LABELS: Record<RequestStatus, string> = {
   PROCESSED: 'Traitée',
 };
 
+// Helper to check if request can be archived
+function canArchiveRequest(status: RequestStatus): boolean {
+  return ['PROCESSED', 'APPROVED', 'REJECTED'].includes(status);
+}
+
 export default function DemandesRHUnifiedPage() {
+  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
   const [statusFilter, setStatusFilter] = useState<RequestStatus | 'ALL'>('ALL');
   const [typeFilter, setTypeFilter] = useState<RequestType | 'ALL'>('ALL');
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
@@ -88,17 +96,25 @@ export default function DemandesRHUnifiedPage() {
     action_taken: '',
   });
 
-  // Fetch requests from rh_requests table
-  const { data: requests = [], isLoading, error } = useAgencyRequests({
+  // Fetch requests from rh_requests table - separate queries for active and archived
+  const { data: activeRequests = [], isLoading: isLoadingActive } = useAgencyRequests({
     status: statusFilter !== 'ALL' ? [statusFilter] : undefined,
     request_type: typeFilter !== 'ALL' ? [typeFilter] : undefined,
+    archived: false,
   });
+
+  const { data: archivedRequests = [], isLoading: isLoadingArchived } = useAgencyRequests({
+    archived: true,
+  });
+
+  const requests = activeTab === 'active' ? activeRequests : archivedRequests;
+  const isLoading = activeTab === 'active' ? isLoadingActive : isLoadingArchived;
 
   const approveMutation = useApproveRequest();
   const rejectMutation = useRejectRequest();
   const markSeenMutation = useMarkRequestAsSeen();
   const markProcessedMutation = useMarkRequestAsProcessed();
-
+  const archiveMutation = useArchiveRequest();
   // Fetch collaborator names
   const employeeIds = useMemo(() => [...new Set(requests.map(r => r.employee_user_id))], [requests]);
   
@@ -221,53 +237,71 @@ export default function DemandesRHUnifiedPage() {
         backLabel="Espace RH"
       />
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-4">
-          <CardTitle className="flex items-center gap-2">
-            <Inbox className="h-5 w-5" />
-            Demandes ({requests.length})
-          </CardTitle>
-          <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Type</span>
-              <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as RequestType | 'ALL')}>
-                <SelectTrigger className="h-8 w-[150px] text-xs bg-background">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-background">
-                  <SelectItem value="ALL">Tous</SelectItem>
-                  <SelectItem value="LEAVE">Congés</SelectItem>
-                  <SelectItem value="EPI_RENEWAL">EPI</SelectItem>
-                  <SelectItem value="DOCUMENT">Documents</SelectItem>
-                  <SelectItem value="OTHER">Véhicules/Matériel</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Statut</span>
-              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as RequestStatus | 'ALL')}>
-                <SelectTrigger className="h-8 w-[150px] text-xs bg-background">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-background">
-                  <SelectItem value="ALL">Tous</SelectItem>
-                  <SelectItem value="SUBMITTED">En attente</SelectItem>
-                  <SelectItem value="SEEN">Vu</SelectItem>
-                  <SelectItem value="APPROVED">Approuvés</SelectItem>
-                  <SelectItem value="PROCESSED">Traités</SelectItem>
-                  <SelectItem value="REJECTED">Refusés</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardHeader>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'active' | 'archived')} className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="active" className="flex items-center gap-2">
+            <Inbox className="h-4 w-4" />
+            En cours ({activeRequests.length})
+          </TabsTrigger>
+          <TabsTrigger value="archived" className="flex items-center gap-2">
+            <Archive className="h-4 w-4" />
+            Archivées ({archivedRequests.length})
+          </TabsTrigger>
+        </TabsList>
 
-        <CardContent>
-          {error && (
-            <div className="text-sm text-destructive mb-4">
-              Erreur lors du chargement des demandes.
-            </div>
-          )}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-4">
+            <CardTitle className="flex items-center gap-2">
+              {activeTab === 'active' ? (
+                <>
+                  <Inbox className="h-5 w-5" />
+                  Demandes en cours
+                </>
+              ) : (
+                <>
+                  <Archive className="h-5 w-5" />
+                  Demandes archivées
+                </>
+              )}
+            </CardTitle>
+            {activeTab === 'active' && (
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Type</span>
+                  <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as RequestType | 'ALL')}>
+                    <SelectTrigger className="h-8 w-[150px] text-xs bg-background">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background">
+                      <SelectItem value="ALL">Tous</SelectItem>
+                      <SelectItem value="LEAVE">Congés</SelectItem>
+                      <SelectItem value="EPI_RENEWAL">EPI</SelectItem>
+                      <SelectItem value="DOCUMENT">Documents</SelectItem>
+                      <SelectItem value="OTHER">Véhicules/Matériel</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Statut</span>
+                  <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as RequestStatus | 'ALL')}>
+                    <SelectTrigger className="h-8 w-[150px] text-xs bg-background">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background">
+                      <SelectItem value="ALL">Tous</SelectItem>
+                      <SelectItem value="SUBMITTED">En attente</SelectItem>
+                      <SelectItem value="SEEN">Vu</SelectItem>
+                      <SelectItem value="APPROVED">Approuvés</SelectItem>
+                      <SelectItem value="PROCESSED">Traités</SelectItem>
+                      <SelectItem value="REJECTED">Refusés</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+          </CardHeader>
+
+          <CardContent>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {/* Liste des demandes */}
@@ -492,12 +526,35 @@ export default function DemandesRHUnifiedPage() {
                       <div className="text-sm mt-1">{currentRequest.decision_comment}</div>
                     </div>
                   )}
+
+                  {/* Archive button for completed requests */}
+                  {activeTab === 'active' && canArchiveRequest(currentRequest.status) && (
+                    <div className="pt-4 border-t">
+                      <Button
+                        variant="outline"
+                        onClick={() => archiveMutation.mutate(currentRequest.id)}
+                        disabled={archiveMutation.isPending}
+                        className="w-full"
+                      >
+                        {archiveMutation.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          <Archive className="h-4 w-4 mr-2" />
+                        )}
+                        Archiver cette demande
+                      </Button>
+                      <p className="text-xs text-muted-foreground mt-2 text-center">
+                        La demande sera déplacée dans l'onglet "Archivées"
+                      </p>
+                    </div>
+                  )}
                 </>
               )}
             </div>
           </div>
         </CardContent>
       </Card>
+    </Tabs>
 
       {/* Dialog for processing vehicle/equipment requests */}
       <Dialog open={processDialogOpen} onOpenChange={setProcessDialogOpen}>
