@@ -35,8 +35,8 @@ import { ModuleKey } from '@/types/modules';
 import { UnifiedSearchFloatingBar } from '@/components/unified-search';
 import { GLOBAL_ROLES } from '@/types/globalRoles';
 
-// Couleur active HelpConfort
-const HELP_BLUE = '#0066cc';
+// Couleur active - bleu plus moderne et élégant
+const ACTIVE_COLOR = 'hsl(217, 91%, 60%)'; // Un bleu plus vif et moderne
 
 // Map d'icônes pour les sections
 const SECTION_ICONS: Record<string, LucideIcon> = {
@@ -173,18 +173,18 @@ export function TabHeader() {
     return activeTab.section.links.filter(canAccessLink);
   }, [activeTab, userLevel, canAccessSupportConsoleUI, enabledModules, isSalariedManager]);
 
-  // Animation spring pour le morphing
-  const springTransition = {
-    type: 'spring' as const,
-    stiffness: 500,
-    damping: 35,
+  // Animation rapide pour le morphing
+  const morphTransition = {
+    type: 'tween' as const,
+    duration: 0.15,
+    ease: 'easeOut' as const,
   };
 
-  // Animation slide pour les sous-onglets
+  // Animation slide rapide pour les sous-onglets
   const slideVariants = {
-    initial: { opacity: 0, y: -8, height: 0 },
-    animate: { opacity: 1, y: 0, height: 'auto' },
-    exit: { opacity: 0, y: -8, height: 0 },
+    initial: { opacity: 0, y: -4 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -4 },
   };
 
   return (
@@ -214,12 +214,12 @@ export function TabHeader() {
         <div className="mx-auto max-w-[1600px] px-4">
           {/* Ligne 1 : Logo + Search + Actions */}
           <div className="flex items-center h-14 gap-4">
-            {/* Logo */}
+            {/* Logo - plus grand */}
             <Link to="/" className="flex items-center shrink-0">
               <img 
                 src={operiaLogo} 
                 alt="OPERIA" 
-                className="h-10 w-auto"
+                className="h-14 w-auto"
               />
             </Link>
 
@@ -319,13 +319,13 @@ export function TabHeader() {
                       isActive ? "text-white" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                     )}
                   >
-                    {/* Indicateur morphing */}
+                    {/* Indicateur morphing rapide */}
                     {isActive && (
                       <motion.div
                         layoutId="activeTabIndicator"
                         className="absolute inset-0 -z-10 rounded-full"
-                        style={{ backgroundColor: HELP_BLUE }}
-                        transition={springTransition}
+                        style={{ backgroundColor: ACTIVE_COLOR }}
+                        transition={morphTransition}
                       />
                     )}
                     <IconComponent className="w-4 h-4" />
@@ -342,7 +342,7 @@ export function TabHeader() {
             })}
           </nav>
 
-          {/* Ligne 3 : Sous-onglets contextuels avec slide */}
+          {/* Ligne 3 : Sous-onglets contextuels redesignés */}
           <AnimatePresence mode="wait">
             {subTabs.length > 0 && (
               <motion.div
@@ -351,8 +351,8 @@ export function TabHeader() {
                 initial="initial"
                 animate="animate"
                 exit="exit"
-                transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
-                className="flex items-center gap-2 pb-3 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                transition={{ duration: 0.12 }}
+                className="flex items-center gap-1.5 pb-3 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               >
                 {subTabs.map((link) => {
                   const isLinkActive = location.pathname === link.href || location.pathname.startsWith(link.href + '/');
@@ -361,14 +361,9 @@ export function TabHeader() {
                     return (
                       <div
                         key={link.href}
-                        className="shrink-0 rounded-lg border border-muted-foreground/20 px-3 py-1.5 text-xs font-medium text-muted-foreground/50 cursor-not-allowed"
+                        className="shrink-0 px-3 py-1 text-xs font-medium text-muted-foreground/40 cursor-not-allowed"
                       >
                         {link.label}
-                        {link.badge && (
-                          <span className="ml-1.5 text-[10px] bg-muted px-1.5 py-0.5 rounded">
-                            {link.badge}
-                          </span>
-                        )}
                       </div>
                     );
                   }
@@ -381,24 +376,15 @@ export function TabHeader() {
                     >
                       <div
                         className={cn(
-                          "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
+                          "px-3 py-1 text-xs font-medium transition-all duration-150 rounded-md",
                           isLinkActive
-                            ? "border-transparent"
-                            : "border-muted-foreground/20 hover:bg-muted/40"
+                            ? "bg-primary/10 text-primary"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                         )}
-                        style={
-                          isLinkActive
-                            ? { 
-                                backgroundColor: `${HELP_BLUE}15`, 
-                                color: HELP_BLUE, 
-                                borderColor: `${HELP_BLUE}30` 
-                              }
-                            : undefined
-                        }
                       >
                         {link.label}
                         {link.badge && (
-                          <span className="ml-1.5 text-[10px] bg-muted px-1.5 py-0.5 rounded">
+                          <span className="ml-1.5 text-[10px] opacity-60">
                             {link.badge}
                           </span>
                         )}
