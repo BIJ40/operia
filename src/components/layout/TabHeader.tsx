@@ -173,11 +173,11 @@ export function TabHeader() {
     return activeTab.section.links.filter(canAccessLink);
   }, [activeTab, userLevel, canAccessSupportConsoleUI, enabledModules, isSalariedManager]);
 
-  // Animation rapide pour le morphing
+  // Animation fluide pour le morphing - la navigation est instantanée, l'animation suit
   const morphTransition = {
-    type: 'tween' as const,
-    duration: 0.15,
-    ease: 'easeOut' as const,
+    type: 'spring' as const,
+    stiffness: 300,
+    damping: 25,
   };
 
   // Animation slide rapide pour les sous-onglets
