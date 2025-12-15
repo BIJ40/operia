@@ -184,21 +184,23 @@ export default function RHIndex() {
         </div>
       )}
 
-      {/* Section Mon Espace */}
+      {/* Section Mon Espace - N2 doesn't see "Demande RH" */}
       <section className="space-y-4">
         <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
           <FolderOpen className="h-5 w-5 text-helpconfort-blue" />
-          Mon Espace
+          Mon Espace {showN1View ? "Salarié" : ""}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {MON_ESPACE_MODULES.map(module => (
-            <IndexTile
-              key={module.id}
-              title={module.title}
-              description={module.description}
-              icon={module.icon}
-              href={module.href}
-            />
+          {MON_ESPACE_MODULES
+            .filter(module => showN1View || module.id !== 'demande-rh')
+            .map(module => (
+              <IndexTile
+                key={module.id}
+                title={module.title}
+                description={module.description}
+                icon={module.icon}
+                href={module.href}
+              />
           ))}
         </div>
       </section>
