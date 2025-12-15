@@ -136,7 +136,7 @@ export function MainHeader() {
               <img 
                 src={operiaLogo} 
                 alt="OPERIA" 
-                className="h-14 w-auto"
+                className="h-[72px] w-auto"
               />
               <Link 
                 to="/changelog" 
