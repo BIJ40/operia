@@ -73,6 +73,39 @@ const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     category: 'rh',
   },
   {
+    key: 'rh_mon_vehicule',
+    moduleKey: 'rh',
+    optionKey: 'mon_vehicule',
+    label: 'Mon Véhicule',
+    shortDescription: 'Voir son véhicule de service assigné',
+    features: [
+      'Consulter les informations de son véhicule',
+      'Voir les dates de CT et révision',
+      'Consulter les informations d\'assurance',
+      'Voir les détails du leasing',
+    ],
+    targetUsers: 'Techniciens avec véhicule attribué',
+    icon: <Car className="w-5 h-5" />,
+    color: 'text-helpconfort-orange',
+    category: 'rh',
+  },
+  {
+    key: 'rh_mon_materiel',
+    moduleKey: 'rh',
+    optionKey: 'mon_materiel',
+    label: 'Mon Matériel',
+    shortDescription: 'Voir son matériel et équipements assignés',
+    features: [
+      'Consulter le matériel attribué',
+      'Voir ses EPI et équipements',
+      'Suivre les dates de renouvellement',
+    ],
+    targetUsers: 'Techniciens et collaborateurs terrain',
+    icon: <Wrench className="w-5 h-5" />,
+    color: 'text-helpconfort-orange',
+    category: 'rh',
+  },
+  {
     key: 'rh_viewer',
     moduleKey: 'rh',
     optionKey: 'rh_viewer',
@@ -304,13 +337,13 @@ const CATEGORY_INFO: Record<string, { label: string; icon: React.ReactNode; desc
 
 // Mapping rôle global → options RH autorisées
 const RH_OPTIONS_BY_ROLE: Record<GlobalRole, string[]> = {
-  base_user: ['coffre', 'mon_planning'],
-  franchisee_user: ['coffre', 'mon_planning'],
-  franchisee_admin: ['coffre', 'mon_planning', 'rh_viewer', 'rh_admin'],
-  franchisor_user: ['coffre', 'mon_planning', 'rh_viewer', 'rh_admin'],
-  franchisor_admin: ['coffre', 'mon_planning', 'rh_viewer', 'rh_admin'],
-  platform_admin: ['coffre', 'mon_planning', 'rh_viewer', 'rh_admin'],
-  superadmin: ['coffre', 'mon_planning', 'rh_viewer', 'rh_admin'],
+  base_user: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel'],
+  franchisee_user: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel'],
+  franchisee_admin: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel', 'rh_viewer', 'rh_admin'],
+  franchisor_user: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel', 'rh_viewer', 'rh_admin'],
+  franchisor_admin: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel', 'rh_viewer', 'rh_admin'],
+  platform_admin: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel', 'rh_viewer', 'rh_admin'],
+  superadmin: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel', 'rh_viewer', 'rh_admin'],
 };
 
 export const UserModulesTab = memo(function UserModulesTab({
