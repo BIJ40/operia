@@ -342,29 +342,31 @@ export function TabHeader() {
             })}
           </nav>
 
-          {/* Ligne 3 : Sous-onglets contextuels redesignés */}
+          {/* Ligne 3 : Sous-onglets contextuels avec pills arrondis */}
           <AnimatePresence mode="wait">
             {subTabs.length > 0 && (
               <motion.div
                 key={activeTabId}
-                variants={slideVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                transition={{ duration: 0.12 }}
-                className="flex items-center gap-1.5 pb-3 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                className="flex items-center gap-2 pb-3 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               >
-                {subTabs.map((link) => {
+                {subTabs.map((link, index) => {
                   const isLinkActive = location.pathname === link.href || location.pathname.startsWith(link.href + '/');
                   
                   if (link.isDisabled) {
                     return (
-                      <div
+                      <motion.div
                         key={link.href}
-                        className="shrink-0 px-3 py-1 text-xs font-medium text-muted-foreground/40 cursor-not-allowed"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 0.4, scale: 1 }}
+                        transition={{ delay: index * 0.03 }}
+                        className="shrink-0 px-4 py-1.5 text-xs font-medium text-muted-foreground/40 cursor-not-allowed rounded-full border border-muted/30"
                       >
                         {link.label}
-                      </div>
+                      </motion.div>
                     );
                   }
 
@@ -374,12 +376,17 @@ export function TabHeader() {
                       to={link.href}
                       className="shrink-0"
                     >
-                      <div
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: index * 0.03, type: 'spring', stiffness: 500, damping: 30 }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                         className={cn(
-                          "px-3 py-1 text-xs font-medium transition-all duration-150 rounded-md",
+                          "px-4 py-1.5 text-xs font-medium rounded-full border transition-colors",
                           isLinkActive
-                            ? "bg-primary/10 text-primary"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                            ? "bg-primary/15 text-primary border-primary/30 shadow-sm"
+                            : "text-muted-foreground border-border/50 hover:text-foreground hover:bg-muted/50 hover:border-border"
                         )}
                       >
                         {link.label}
@@ -388,7 +395,7 @@ export function TabHeader() {
                             {link.badge}
                           </span>
                         )}
-                      </div>
+                      </motion.div>
                     </NavLink>
                   );
                 })}
