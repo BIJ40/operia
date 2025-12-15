@@ -1,7 +1,7 @@
 import { 
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
   MessageSquare, Network, Users, Database, Settings, LucideIcon,
-  PieChart, Coins, LifeBuoy, Headphones, GraduationCap, Kanban, Activity,
+  PieChart, Coins, Headphones, GraduationCap, Kanban, Activity,
   HelpCircle, Calendar, UserCog, Briefcase, Inbox, Building2, GitCompare,
   MessagesSquare, Wrench, Brain, Car, Radar, ToggleLeft, LayoutDashboard, LineChart
 } from 'lucide-react';
@@ -100,14 +100,14 @@ export const DASHBOARD_TILES: DashboardTile[] = [
   },
   {
     id: 'MAINTENANCE_PREVENTIVE',
-    title: 'Maintenance préventive',
+    title: 'Parc Véhicules',
     description: 'Véhicules, matériel et EPI',
     icon: Car,
-    route: ROUTES.agency.maintenance,
+    route: ROUTES.rh.parc,
     scopeSlug: SCOPE_SLUGS.ACTIONS_A_MENER,
     color: 'accent',
-    group: 'pilotage',
-    requiresModule: 'pilotage_agence',
+    group: 'rh',
+    requiresModule: 'rh',
   },
   {
     id: 'DIFFUSION',
@@ -196,16 +196,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     color: 'primary',
     group: 'support',
   },
-  {
-    id: 'OUVRIR_TICKET',
-    title: 'Ouvrir un ticket',
-    description: 'Créer une nouvelle demande de support',
-    icon: LifeBuoy,
-    route: ROUTES.support.userTickets,
-    scopeSlug: SCOPE_SLUGS.MES_DEMANDES,
-    color: 'primary',
-    group: 'support',
-  },
+  // Tuile "Ouvrir un ticket" supprimée - redirige vers /support qui intègre déjà la création
   {
     id: 'CONSOLE_SUPPORT',
     title: 'Console support',
