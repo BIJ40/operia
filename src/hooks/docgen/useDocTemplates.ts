@@ -148,7 +148,22 @@ export function useParseDocxTokens() {
       });
 
       if (error) throw error;
-      return data as { tokens: string[]; count: number };
+
+      const raw = data as { tokens?: unknown; count?: unknown };
+      const tokens = Array.isArray(raw?.tokens) ? raw.tokens : [];
+
+      // Safety net: keep only clean token names (avoid Word XML fragments)
+      const cleanedTokens = Array.from(
+        new Set(
+          tokens
+            .map((t) => String(t).trim())
+            .map((t) => t.replace(/^\{\{/, "").replace(/\}\}$/, ""))
+            .map((t) => t.replace(/\s+/g, ""))
+            .filter((t) => /^[A-Za-z0-9_.-]+$/.test(t))
+        )
+      );
+
+      return { tokens: cleanedTokens, count: cleanedTokens.length };
     },
     onError: (error) => {
       toast.error("Erreur lors de l'analyse du document");
