@@ -6,7 +6,8 @@ import {
   HardHat,
   FolderOpen,
   Calendar,
-  ClipboardList
+  ClipboardList,
+  Wrench
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ROUTES } from "@/config/routes";
@@ -44,6 +45,13 @@ const MON_ESPACE_MODULES: RHModule[] = [
     description: 'Mon véhicule de service',
     icon: Car,
     href: ROUTES.rh.monVehicule,
+  },
+  {
+    id: 'mon-materiel',
+    title: 'Mon Matériel',
+    description: 'Mon matériel et équipements',
+    icon: Wrench,
+    href: ROUTES.rh.monMateriel,
   },
   {
     id: 'demande-rh',
