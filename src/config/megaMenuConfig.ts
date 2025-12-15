@@ -183,7 +183,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
       { label: 'Kanban', href: ROUTES.projects.kanban, icon: 'Kanban', description: 'Vue tableau' },
       { label: 'Liste', href: ROUTES.projects.list, icon: 'ListTodo', description: 'Vue liste' },
       { label: 'Tickets incomplets', href: ROUTES.projects.incomplete, icon: 'AlertCircle', description: 'À compléter', minRole: 'franchisor_user' },
-      { label: 'Revue', href: ROUTES.projects.review, icon: 'CheckCircle', description: 'Revoir tickets', minRole: 'franchisor_user' },
+      { label: 'Review', href: ROUTES.projects.review, icon: 'CheckCircle', description: 'Revoir tickets', minRole: 'franchisor_user' },
       { label: 'Permissions', href: ROUTES.projects.permissions, icon: 'Shield', description: 'Gérer droits', minRole: 'franchisor_admin' },
       { label: 'Doublons IA', href: ROUTES.projects.duplicates, icon: 'GitCompare', description: 'Détection doublons', minRole: 'franchisor_user' },
     ],
