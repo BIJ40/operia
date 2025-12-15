@@ -301,7 +301,7 @@ export function TabHeader() {
           </div>
 
           {/* Ligne 2 : Onglets principaux avec morphing */}
-          <nav className="flex items-center gap-1 py-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <nav className="flex items-center justify-center gap-1 py-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {topTabs.map((tab) => {
               const isActive = tab.id === activeTabId;
               const IconComponent = tab.icon;
