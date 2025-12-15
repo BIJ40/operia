@@ -361,44 +361,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     init();
     
-    // Track the current user ID to avoid unnecessary reloads
-    let currentUserId: string | null = null;
-    
+    // Keep current user id across auth events (prevents tab-switch UI resets)
+    // Using a ref ensures we don't re-render just to track this.
+    const getCurrentUserId = () => currentUserIdRef.current;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         // Skip initial session - handled by init()
         if (event === 'INITIAL_SESSION') return;
-        
-        // CRITICAL: Ignore TOKEN_REFRESHED if user hasn't changed
-        // This prevents unnecessary re-renders when switching browser tabs
-        if (event === 'TOKEN_REFRESHED' && session?.user?.id === currentUserId) {
-          logAuth.debug('Token refreshed but user unchanged, skipping reload');
+
+        // IMPORTANT: Supabase emits TOKEN_REFRESHED when switching browser tabs.
+        // We do NOT want to trigger any UI state resets (dialogs, filters, etc.)
+        // on a token refresh, since the user hasn't changed.
+        if (event === 'TOKEN_REFRESHED') {
+          if (session?.user?.id && getCurrentUserId() !== session.user.id) {
+            currentUserIdRef.current = session.user.id;
+          }
           return;
         }
-        
+
+        const prevUserId = getCurrentUserId();
         const newUserId = session?.user?.id ?? null;
-        
-        // Skip if user hasn't actually changed (prevents tab-switch re-renders)
-        if (newUserId === currentUserId && event !== 'SIGNED_IN' && event !== 'SIGNED_OUT') {
+        currentUserIdRef.current = newUserId;
+
+        // Skip no-op events when user didn't change (but keep USER_UPDATED)
+        if (
+          newUserId === prevUserId &&
+          event !== 'SIGNED_IN' &&
+          event !== 'SIGNED_OUT' &&
+          event !== 'USER_UPDATED'
+        ) {
           return;
         }
-        
-        currentUserId = newUserId;
+
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
           setTimeout(async () => {
             if (!isMounted || isLoadingUserData) return;
             isLoadingUserData = true;
-            // Only show loading for actual sign-in, not token refresh
+
+            // Only show loading for actual sign-in
             if (event === 'SIGNED_IN') {
               setIsAuthLoading(true);
             }
+
             try {
               await loadUserData(session.user.id);
             } catch (error) {
               logAuth.error('Erreur chargement données utilisateur', error);
             }
+
             if (isMounted) {
               setIsAuthLoading(false);
             }
