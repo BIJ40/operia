@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Building2, MapPin, Calendar, Users, Save, Loader2 } from "lucide-react";
+import { Building2, MapPin, Calendar, Users, Save, Loader2, Mail, Phone } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,8 @@ export function AgencyInfoTile({ hideHeader = false }: AgencyInfoTileProps) {
     adresse: "",
     ville: "",
     code_postal: "",
+    contact_email: "",
+    contact_phone: "",
   });
 
   useEffect(() => {
@@ -39,6 +41,8 @@ export function AgencyInfoTile({ hideHeader = false }: AgencyInfoTileProps) {
         adresse: agency.adresse || "",
         ville: agency.ville || "",
         code_postal: agency.code_postal || "",
+        contact_email: agency.contact_email || "",
+        contact_phone: agency.contact_phone || "",
       });
     }
   }, [agency]);
@@ -56,6 +60,8 @@ export function AgencyInfoTile({ hideHeader = false }: AgencyInfoTileProps) {
           adresse: formData.adresse || null,
           ville: formData.ville || null,
           code_postal: formData.code_postal || null,
+          contact_email: formData.contact_email || null,
+          contact_phone: formData.contact_phone || null,
         })
         .eq('id', agencyId);
 
@@ -327,6 +333,67 @@ export function AgencyInfoTile({ hideHeader = false }: AgencyInfoTileProps) {
                 ) : (
                   <p className="text-muted-foreground">Non renseignée</p>
                 )}
+              </div>
+            )}
+          </div>
+
+          {/* Contact modifiable */}
+          <div className="space-y-3">
+            <Label className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-helpconfort-blue" />
+              Contact de l'agence
+            </Label>
+            
+            {isEditing ? (
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="contact_email" className="text-xs text-muted-foreground">
+                    Email
+                  </Label>
+                  <Input
+                    id="contact_email"
+                    type="email"
+                    value={formData.contact_email}
+                    onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
+                    placeholder="contact@agence.fr"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="contact_phone" className="text-xs text-muted-foreground">
+                    Téléphone
+                  </Label>
+                  <Input
+                    id="contact_phone"
+                    type="tel"
+                    value={formData.contact_phone}
+                    onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
+                    placeholder="01 23 45 67 89"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="grid gap-3 md:grid-cols-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  {agency.contact_email ? (
+                    <a href={`mailto:${agency.contact_email}`} className="hover:underline">
+                      {agency.contact_email}
+                    </a>
+                  ) : (
+                    <span className="text-muted-foreground">Non renseigné</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  {agency.contact_phone ? (
+                    <a href={`tel:${agency.contact_phone}`} className="hover:underline">
+                      {agency.contact_phone}
+                    </a>
+                  ) : (
+                    <span className="text-muted-foreground">Non renseigné</span>
+                  )}
+                </div>
               </div>
             )}
           </div>
