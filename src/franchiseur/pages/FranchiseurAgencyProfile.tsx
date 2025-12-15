@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { usePersistedTab } from "@/hooks/usePersistedState";
 import { useAgency } from "../hooks/useAgencies";
 import { useRoyaltyHistory } from "../hooks/useRoyaltyConfig";
 import { useAgencyUsers } from "../hooks/useAgencyUsers";
@@ -28,6 +29,7 @@ function FranchiseurAgencyProfileContent() {
   const { data: agencyUsers, isLoading: usersLoading } = useAgencyUsers(agency?.slug || null);
   const { franchiseurRole } = useFranchiseur();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = usePersistedTab(`franchiseur-agency-${agencyId}-tab`, 'info');
 
   const canManage = franchiseurRole === "directeur" || franchiseurRole === "dg";
 
@@ -107,7 +109,7 @@ function FranchiseurAgencyProfileContent() {
         )}
       </div>
 
-      <Tabs defaultValue="info" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="info">Informations</TabsTrigger>
           <TabsTrigger value="team">Équipe</TabsTrigger>

@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Database, FileJson, FileText, CheckCircle2 } from 'lucide-react';
 import { useAdminBackup } from '@/hooks/use-admin-backup';
 import { ExportCard, CategoryExportCard, CompleteBackupCard } from '@/components/admin/backup';
+import { usePersistedTab } from '@/hooks/usePersistedState';
 
 // Note: L'accès à cette page est contrôlé par RoleGuard (N5+) dans App.tsx
 
@@ -34,6 +35,8 @@ export default function AdminBackup() {
     importData,
   } = useAdminBackup();
 
+  const [activeTab, setActiveTab] = usePersistedTab('admin-backup-tab', 'structured');
+
   return (
     <div className="container max-w-6xl mx-auto p-8 space-y-8">
       <div className="flex items-center gap-3 mb-8">
@@ -50,7 +53,7 @@ export default function AdminBackup() {
         </Alert>
       )}
 
-      <Tabs defaultValue="structured" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="structured">Export Complet</TabsTrigger>
           <TabsTrigger value="single">Export Catégorie</TabsTrigger>

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { usePersistedTab } from "@/hooks/usePersistedState";
 import { 
   Activity, 
   AlertTriangle, 
@@ -46,6 +47,7 @@ export default function AdminSystemHealth() {
   const [isSmsTestLoading, setIsSmsTestLoading] = useState(false);
   const [notificationSettings, setNotificationSettings] = useState<{ sms_enabled: boolean; email_enabled: boolean } | null>(null);
   const [isNotificationLoading, setIsNotificationLoading] = useState(false);
+  const [activeTab, setActiveTab] = usePersistedTab('admin-system-health-tab', 'overview');
 
   // Load notification settings
   useEffect(() => {
@@ -268,7 +270,7 @@ export default function AdminSystemHealth() {
       </div>
 
       {/* Tabs for different views */}
-      <Tabs defaultValue="overview" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3 mb-6">
           <TabsTrigger value="overview" className="gap-2">
             <Server className="h-4 w-4" />

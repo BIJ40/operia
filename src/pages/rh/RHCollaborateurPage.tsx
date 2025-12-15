@@ -2,8 +2,8 @@
  * Fiche collaborateur avec onglets thématiques
  */
 
-import { useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { usePersistedTab } from '@/hooks/usePersistedState';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -66,7 +66,7 @@ function StatusBadge({ status }: { status: 'active' | 'inactive' | 'exited' }) {
 export default function RHCollaborateurPage() {
   const { id } = useParams<{ id: string }>();
   const { data: collaborator, isLoading } = useRHCollaborator(id);
-  const [activeTab, setActiveTab] = useState<RHTabId>('general');
+  const [activeTab, setActiveTab] = usePersistedTab<RHTabId>(`rh-collaborateur-${id}-tab`, 'general');
 
   if (isLoading) {
     return (
