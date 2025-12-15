@@ -91,7 +91,7 @@ const navSections: NavSection[] = [
     indexUrl: ROUTES.rh.index,
     items: [
       { title: 'Mon Coffre RH', url: ROUTES.rh.coffre, icon: FolderOpen, description: 'Mes documents personnels' },
-      { title: 'Demande de congé', url: ROUTES.rh.demande, icon: Calendar, description: 'Poser une demande' },
+      { title: 'Demande RH', url: ROUTES.rh.demande, icon: Calendar, description: 'Poser une demande' },
       { title: 'Suivi RH', url: ROUTES.rh.suivi, icon: ClipboardList, description: 'Vue complète des collaborateurs' },
       { title: 'Mon équipe', url: ROUTES.rh.equipe, icon: Users, description: 'Collaborateurs et RH' },
       { title: 'Plannings', url: ROUTES.rh.plannings, icon: CalendarDays, description: 'Plannings hebdomadaires' },

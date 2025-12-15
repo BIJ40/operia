@@ -82,7 +82,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
         requiresOption: { module: 'rh', option: 'coffre' },
       },
       { 
-        label: 'Demande de congé', 
+        label: 'Demande RH', 
         href: ROUTES.rh.demande, 
         icon: 'CalendarDays', 
         description: 'Poser une demande',
