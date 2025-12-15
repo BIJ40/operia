@@ -1,8 +1,8 @@
 /**
- * Page Mes Demandes RH - Création et suivi des demandes
+ * Page Mes Demandes RH & Equipement - Création et suivi des demandes
  */
 import React, { useState } from "react";
-import { Plus, FileText, Clock, CheckCircle, XCircle, Trash2, User, Download, Loader2 } from "lucide-react";
+import { Plus, FileText, Clock, CheckCircle, XCircle, Trash2, User, Download, Loader2, Eye, CheckSquare } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -28,6 +28,8 @@ const REQUEST_TYPES: { value: RequestType; label: string; emoji: string }[] = [
 const STATUS_CONFIG: Record<RequestStatus, { label: string; color: string; icon: React.ReactNode }> = {
   DRAFT: { label: "Brouillon", color: "bg-muted text-muted-foreground", icon: <FileText className="w-3 h-3" /> },
   SUBMITTED: { label: "En attente", color: "bg-amber-500/20 text-amber-700", icon: <Clock className="w-3 h-3" /> },
+  SEEN: { label: "Vu", color: "bg-blue-500/20 text-blue-700", icon: <Eye className="w-3 h-3" /> },
+  PROCESSED: { label: "Traité", color: "bg-emerald-500/20 text-emerald-700", icon: <CheckSquare className="w-3 h-3" /> },
   APPROVED: { label: "Approuvée", color: "bg-emerald-500/20 text-emerald-700", icon: <CheckCircle className="w-3 h-3" /> },
   REJECTED: { label: "Refusée", color: "bg-destructive/20 text-destructive", icon: <XCircle className="w-3 h-3" /> },
   CANCELLED: { label: "Annulée", color: "bg-muted text-muted-foreground", icon: <XCircle className="w-3 h-3" /> },
@@ -146,7 +148,7 @@ export default function MesDemandesPage() {
     return (
       <div className="container mx-auto px-4 py-6 space-y-6">
         <PageHeader
-          title="Mes Demandes RH"
+          title="Mes Demandes RH & Equipement"
           subtitle="Vos demandes en cours et passées"
           backTo="/rh"
         />
@@ -164,7 +166,7 @@ export default function MesDemandesPage() {
     return (
       <div className="container mx-auto px-4 py-6 space-y-6">
         <PageHeader
-          title="Mes Demandes RH"
+          title="Mes Demandes RH & Equipement"
           subtitle="Vos demandes en cours et passées"
           backTo="/rh"
         />
@@ -177,7 +179,7 @@ export default function MesDemandesPage() {
     return (
       <div className="container mx-auto px-4 py-6">
         <PageHeader
-          title="Mes Demandes RH"
+          title="Mes Demandes RH & Equipement"
           subtitle="Vos demandes en cours et passées"
           backTo="/rh"
         />
@@ -195,7 +197,7 @@ export default function MesDemandesPage() {
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
       <PageHeader
-        title="Mes Demandes RH"
+        title="Mes Demandes RH & Equipement"
         subtitle="Créez et suivez vos demandes"
         backTo="/rh"
       />

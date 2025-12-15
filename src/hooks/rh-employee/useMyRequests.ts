@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { getRoleLevel } from "@/types/globalRoles";
 
 export type RequestType = "EPI_RENEWAL" | "LEAVE" | "DOCUMENT" | "OTHER";
-export type RequestStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "CANCELLED";
+export type RequestStatus = "DRAFT" | "SUBMITTED" | "SEEN" | "PROCESSED" | "APPROVED" | "REJECTED" | "CANCELLED";
 
 export interface RHRequest {
   id: string;
