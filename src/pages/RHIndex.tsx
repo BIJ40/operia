@@ -39,6 +39,13 @@ const MON_ESPACE_MODULES: RHModule[] = [
     href: ROUTES.rh.monPlanning,
   },
   {
+    id: 'mon-vehicule',
+    title: 'Mon Véhicule',
+    description: 'Mon véhicule de service',
+    icon: Car,
+    href: ROUTES.rh.monVehicule,
+  },
+  {
     id: 'demande-rh',
     title: 'Demande RH',
     description: 'Poser une demande',

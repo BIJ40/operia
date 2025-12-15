@@ -60,6 +60,7 @@ const CollaborateurProfilePage = lazy(() => import("./pages/CollaborateurProfile
 const MesCoffreRHPage = lazy(() => import("./pages/rh-employee/MesCoffreRHPage"));
 const MesDemandesPage = lazy(() => import("./pages/rh-employee/MesDemandesPage"));
 const MonPlanningPage = lazy(() => import("./pages/rh-employee/MonPlanningPage"));
+const MonVehiculePage = lazy(() => import("./pages/rh-employee/MonVehiculePage"));
 const MaSignaturePage = lazy(() => import("./pages/rh-employee/MaSignaturePage"));
 const GestionConges = lazy(() => import("./pages/GestionConges"));
 const DemandesRHPage = lazy(() => import("./pages/rh/DemandesRHUnifiedPage"));
@@ -274,6 +275,7 @@ function AppContent() {
           <Route path="/rh/coffre" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="rh" requiredOptions={['coffre']}><MesCoffreRHPage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/rh/demande" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="rh" requiredOptions={['coffre']}><MesDemandesPage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/rh/mon-planning" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="rh" requiredOptions={['mon_planning']}><MonPlanningPage /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/rh/mon-vehicule" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="rh"><MonVehiculePage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/rh/signature" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="rh"><MaSignaturePage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/rh/equipe" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><CollaborateursPage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/rh/equipe/plannings" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><PlanningHebdo /></ModuleGuard></RoleGuard></MainLayout>} />
