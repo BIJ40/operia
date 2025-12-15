@@ -285,6 +285,7 @@ function AppContent() {
           <Route path="/rh/demandes" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><DemandesRHPage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/rh/parc" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh"><MaintenancePreventivePage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/rh/epi" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh"><EPIPage /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/rh/docgen" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><DocGenPage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/rh/conges" element={<Navigate to="/rh/demandes" replace />} />
           <Route path="/rh/dashboard" element={<Navigate to="/rh" replace />} />
           {/* Legacy RH redirects */}
@@ -397,6 +398,7 @@ function AppContent() {
           <Route path="/admin/gestion" element={<MainLayout><RoleGuard minRole="franchisee_admin"><UnifiedManagementPage /></RoleGuard></MainLayout>} />
           <Route path="/admin/apogee-report" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminApogeeReport /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/flow" element={<MainLayout><RoleGuard minRole="franchisor_admin"><AdminFlow /></RoleGuard></MainLayout>} />
+          <Route path="/admin/templates" element={<MainLayout><RoleGuard minRole="franchisor_admin"><ModuleGuard moduleKey="admin_plateforme"><DocTemplatesPage /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* GESTION DE PROJET (ex Apogée Tickets) */}
