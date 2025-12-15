@@ -361,17 +361,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     init();
     
+    // Track the current user ID to avoid unnecessary reloads
+    let currentUserId: string | null = null;
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        // Skip initial session - handled by init()
         if (event === 'INITIAL_SESSION') return;
         
+        // CRITICAL: Ignore TOKEN_REFRESHED if user hasn't changed
+        // This prevents unnecessary re-renders when switching browser tabs
+        if (event === 'TOKEN_REFRESHED' && session?.user?.id === currentUserId) {
+          logAuth.debug('Token refreshed but user unchanged, skipping reload');
+          return;
+        }
+        
+        const newUserId = session?.user?.id ?? null;
+        
+        // Skip if user hasn't actually changed (prevents tab-switch re-renders)
+        if (newUserId === currentUserId && event !== 'SIGNED_IN' && event !== 'SIGNED_OUT') {
+          return;
+        }
+        
+        currentUserId = newUserId;
         setUser(session?.user ?? null);
         
         if (session?.user) {
           setTimeout(async () => {
             if (!isMounted || isLoadingUserData) return;
             isLoadingUserData = true;
-            setIsAuthLoading(true);
+            // Only show loading for actual sign-in, not token refresh
+            if (event === 'SIGNED_IN') {
+              setIsAuthLoading(true);
+            }
             try {
               await loadUserData(session.user.id);
             } catch (error) {
