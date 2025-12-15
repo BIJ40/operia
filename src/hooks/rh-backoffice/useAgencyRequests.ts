@@ -86,7 +86,7 @@ export function useApproveRequest() {
       // Get request details first to find the employee
       const { data: request, error: fetchError } = await supabase
         .from("rh_requests")
-        .select("employee_user_id, request_type, agency_id")
+        .select("employee_user_id, request_type, agency_id, payload")
         .eq("id", requestId)
         .single();
 
@@ -119,12 +119,22 @@ export function useApproveRequest() {
         .maybeSingle();
 
       // Create notification for the employee (N2→N1)
-      const notificationTitle = request.request_type === "LEAVE" 
-        ? "Demande de congé approuvée" 
-        : "Demande approuvée";
-      const notificationMessage = request.request_type === "LEAVE"
-        ? "Votre demande de congé a été acceptée"
-        : "Votre demande a été acceptée";
+      const payloadObj = (request.payload && typeof request.payload === 'object') ? request.payload as Record<string, unknown> : {};
+      const isVehicle = payloadObj?.is_vehicle_request;
+      const isAnomaly = payloadObj?.is_anomaly;
+      
+      let notificationTitle = "Demande approuvée";
+      let notificationMessage = "Votre demande a été acceptée";
+      
+      if (request.request_type === "LEAVE") {
+        notificationTitle = "Demande de congé approuvée";
+        notificationMessage = "Votre demande de congé a été acceptée";
+      } else if (isVehicle) {
+        notificationTitle = isAnomaly ? "Signalement véhicule traité" : "Demande véhicule acceptée";
+        notificationMessage = isAnomaly 
+          ? "Votre signalement véhicule a été pris en compte"
+          : "Votre demande concernant le véhicule a été acceptée";
+      }
 
       const { error: notifErr } = await supabase.from("rh_notifications").insert({
         collaborator_id: collaborator?.id ?? null,
@@ -165,7 +175,7 @@ export function useRejectRequest() {
       // Get request details first to find the employee
       const { data: request, error: fetchError } = await supabase
         .from("rh_requests")
-        .select("employee_user_id, request_type, agency_id")
+        .select("employee_user_id, request_type, agency_id, payload")
         .eq("id", requestId)
         .single();
 
@@ -198,12 +208,22 @@ export function useRejectRequest() {
         .maybeSingle();
 
       // Create notification for the employee (N2→N1)
-      const notificationTitle = request.request_type === "LEAVE" 
-        ? "Demande de congé refusée" 
-        : "Demande refusée";
-      const notificationMessage = request.request_type === "LEAVE"
-        ? `Votre demande de congé a été refusée. Motif : ${comment}`
-        : `Votre demande a été refusée. Motif : ${comment}`;
+      const payloadObj = (request.payload && typeof request.payload === 'object') ? request.payload as Record<string, unknown> : {};
+      const isVehicle = payloadObj?.is_vehicle_request;
+      const isAnomaly = payloadObj?.is_anomaly;
+      
+      let notificationTitle = "Demande refusée";
+      let notificationMessage = `Votre demande a été refusée. Motif : ${comment}`;
+      
+      if (request.request_type === "LEAVE") {
+        notificationTitle = "Demande de congé refusée";
+        notificationMessage = `Votre demande de congé a été refusée. Motif : ${comment}`;
+      } else if (isVehicle) {
+        notificationTitle = isAnomaly ? "Signalement véhicule refusé" : "Demande véhicule refusée";
+        notificationMessage = isAnomaly 
+          ? `Votre signalement véhicule a été refusé. Motif : ${comment}`
+          : `Votre demande concernant le véhicule a été refusée. Motif : ${comment}`;
+      }
 
       const { error: notifErr } = await supabase.from("rh_notifications").insert({
         collaborator_id: collaborator?.id ?? null,
