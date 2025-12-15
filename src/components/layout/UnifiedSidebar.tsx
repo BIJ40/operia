@@ -249,6 +249,7 @@ export function UnifiedSidebar() {
         { title: 'Mon Coffre RH', url: ROUTES.rh.coffre, icon: FolderOpen, description: 'Mes documents RH personnels' },
         { title: 'Mes demandes', url: ROUTES.rh.demande, icon: FileText, description: 'Créer et suivre mes demandes' },
         { title: 'Mon planning', url: ROUTES.rh.monPlanning, icon: Calendar, description: 'Mon planning hebdomadaire' },
+        { title: 'Mon véhicule', url: ROUTES.rh.monVehicule, icon: Car, description: 'Mon véhicule de service' },
         { title: 'Ma signature', url: ROUTES.rh.signature, icon: FileText, description: 'Gérer ma signature personnelle' },
       ],
       // Pas d'accessKey - le labelKey='rh' gère l'accès via canAccessModule('rh')

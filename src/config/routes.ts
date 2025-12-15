@@ -80,6 +80,7 @@ export const ROUTES = {
     coffre: '/rh/coffre',
     demande: '/rh/demande',
     monPlanning: '/rh/mon-planning',
+    monVehicule: '/rh/mon-vehicule',
     signature: '/rh/signature',
     // Vue Dirigeant/RH (N2)
     equipe: '/rh/equipe',

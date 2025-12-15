@@ -14,3 +14,4 @@ export {
   type CreateRequestPayload 
 } from "./useMyRequests";
 export { useMySignature, useSaveSignature, useDeleteSignature, type UserSignature } from "./useMySignature";
+export { useMyVehicle } from "./useMyVehicle";
