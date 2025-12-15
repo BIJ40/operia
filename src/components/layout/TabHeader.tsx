@@ -351,7 +351,7 @@ export function TabHeader() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                className="flex items-center gap-2 pb-3 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                className="flex items-center justify-center gap-2 pb-3 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               >
                 {subTabs.map((link, index) => {
                   const isLinkActive = location.pathname === link.href || location.pathname.startsWith(link.href + '/');
