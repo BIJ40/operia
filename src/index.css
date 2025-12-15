@@ -594,3 +594,32 @@ button[data-image-modal] {
 .animate-twinkle {
   animation: twinkle 1s ease-in-out infinite;
 }
+
+/* Deadline alert animations */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 hsl(var(--destructive) / 0.4);
+  }
+  50% {
+    opacity: 0.95;
+    box-shadow: 0 0 20px 10px hsl(var(--destructive) / 0.2);
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2s ease-in-out infinite;
+}
+
+@keyframes bounce-slow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 1s ease-in-out infinite;
+}
