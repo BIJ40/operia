@@ -93,6 +93,16 @@ const requestTypeLabel: Record<RequestType, string> = {
   OTHER: "Autre",
 };
 
+// Labels véhicule pour les notifications
+function getRequestLabel(type: RequestType, payload?: Record<string, unknown>): string {
+  if (type === "OTHER" && payload?.is_vehicle_request) {
+    return payload?.is_anomaly 
+      ? `Signalement véhicule (${payload?.category || 'anomalie'})`
+      : `Demande véhicule (${payload?.category || 'autre'})`;
+  }
+  return requestTypeLabel[type] ?? type;
+}
+
 export function useCreateRequest() {
   const { user } = useAuth();
   const { data: collaborator } = useMyCollaborator();
@@ -154,7 +164,7 @@ export function useCreateRequest() {
         recipients,
       });
 
-      const label = requestTypeLabel[payload.request_type] ?? payload.request_type;
+      const label = getRequestLabel(payload.request_type, payload.payload);
 
       logInfo(`Notif N1→N2: ${recipients.length} destinataires pour demande ${data.id}`, recipients);
 
