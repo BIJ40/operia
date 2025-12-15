@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Download, CheckCircle, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Download, CheckCircle, Loader2, Sparkles } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,10 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { DocInstance, useGeneratePreview, useFinalizeDocument, useUpdateDocInstance } from "@/hooks/docgen/useDocInstances";
+import { DocInstance, useGeneratePreview, useFinalizeDocument } from "@/hooks/docgen/useDocInstances";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { categorizeTokens, SMART_TOKENS, SmartTokenKey } from "@/lib/docgen/smartTokens";
+import { categorizeTokens } from "@/lib/docgen/smartTokens";
+import { logError } from "@/lib/logger";
 
 interface DocInstanceEditorProps {
   instance: DocInstance;
@@ -25,19 +26,19 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
 
   const generatePreview = useGeneratePreview();
   const finalizeDocument = useFinalizeDocument();
-  const updateInstance = useUpdateDocInstance();
 
   const tokens = instance.template?.tokens || [];
   const { smartTokens, manualTokens } = categorizeTokens(tokens);
 
-  // Steps: intro (smart tokens) + each manual token + final validation
-  const totalSteps = manualTokens.length + 1; // +1 for final step
-  const isIntroStep = currentStep === 0 && smartTokens.length > 0;
-  const isFinalStep = currentStep === (smartTokens.length > 0 ? manualTokens.length : manualTokens.length - 1);
-  
+  const hasSmartIntro = smartTokens.length > 0;
+
   // Get current manual token index
-  const currentTokenIndex = smartTokens.length > 0 ? currentStep - 1 : currentStep;
+  const currentTokenIndex = hasSmartIntro ? currentStep - 1 : currentStep;
   const currentToken = manualTokens[currentTokenIndex];
+
+  const isLastManualToken = manualTokens.length === 0
+    ? true
+    : currentTokenIndex === manualTokens.length - 1;
 
   // Progress percentage
   const progressPercent = useMemo(() => {
@@ -67,7 +68,7 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
         }
       }
     } catch (error) {
-      console.error("Preview generation error:", error);
+      logError("[DOCGEN] Preview generation failed", error);
     } finally {
       setIsGeneratingPreview(false);
     }
@@ -92,9 +93,9 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
   };
 
   const handleNext = () => {
-    const maxStep = smartTokens.length > 0 ? manualTokens.length : manualTokens.length - 1;
+    const maxStep = hasSmartIntro ? manualTokens.length : Math.max(0, manualTokens.length - 1);
     if (currentStep < maxStep) {
-      setCurrentStep(prev => prev + 1);
+      setCurrentStep((prev) => prev + 1);
     }
   };
 
@@ -158,22 +159,35 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
     return longTokens.some(lt => token.toLowerCase().includes(lt));
   };
 
-  // Calculate step info for display
+  // Step info for display
   const getStepInfo = () => {
-    if (smartTokens.length > 0 && currentStep === 0) {
-      return { current: 1, total: manualTokens.length + 1, label: "Champs automatiques" };
+    const total = Math.max(1, manualTokens.length + (hasSmartIntro ? 1 : 0));
+
+    // No manual tokens: single step (auto-filled or empty)
+    if (manualTokens.length === 0) {
+      return {
+        current: 1,
+        total,
+        label: hasSmartIntro ? "Champs automatiques" : "Aucun champ",
+      };
     }
-    const tokenIdx = smartTokens.length > 0 ? currentStep : currentStep + 1;
-    return { 
-      current: tokenIdx + (smartTokens.length > 0 ? 1 : 0), 
-      total: manualTokens.length + (smartTokens.length > 0 ? 1 : 0),
-      label: currentToken ? getTokenLabel(currentToken) : "Validation"
+
+    if (hasSmartIntro && currentStep === 0) {
+      return { current: 1, total, label: "Champs automatiques" };
+    }
+
+    const current = Math.min(currentStep + 1, total);
+    return {
+      current,
+      total,
+      label: currentToken ? getTokenLabel(currentToken) : "Validation",
     };
   };
 
   const stepInfo = getStepInfo();
-  const canGoNext = currentStep === 0 || (currentToken && tokenValues[currentToken]?.trim());
-  const isLastManualToken = currentTokenIndex === manualTokens.length - 1;
+  const canGoNext = hasSmartIntro && currentStep === 0
+    ? true
+    : !!(currentToken && tokenValues[currentToken]?.trim());
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -219,12 +233,6 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
               )}
               {(currentStep > 0 || smartTokens.length === 0) && currentToken && (
                 getTokenLabel(currentToken)
-              )}
-              {isLastManualToken && currentStep > 0 && !currentToken && (
-                <>
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  Validation finale
-                </>
               )}
             </CardTitle>
             <CardDescription>
@@ -292,18 +300,6 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
               </div>
             )}
 
-            {/* Final Validation Step */}
-            {isLastManualToken && currentStep > 0 && !currentToken && (
-              <div className="space-y-4 flex-1 flex flex-col items-center justify-center text-center">
-                <CheckCircle className="h-16 w-16 text-green-500" />
-                <div>
-                  <h3 className="text-xl font-semibold">Prêt à finaliser</h3>
-                  <p className="text-muted-foreground mt-2">
-                    Tous les champs ont été remplis. Vérifiez l'aperçu et cliquez sur "Valider" pour générer le document final.
-                  </p>
-                </div>
-              </div>
-            )}
 
             {/* Navigation Buttons */}
             <div className="flex gap-3 mt-6 pt-4 border-t">
@@ -330,7 +326,7 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
                 <Button
                   onClick={handleFinalize}
                   disabled={finalizeDocument.isPending || instance.status === "finalized" || progressPercent < 100}
-                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  className="flex-1"
                 >
                   {finalizeDocument.isPending ? (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
