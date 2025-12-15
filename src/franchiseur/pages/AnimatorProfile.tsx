@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { usePersistedTab } from '@/hooks/usePersistedState';
 import { 
   ArrowLeft, Calendar, MapPin, Plus, FileText, 
   Building2, Clock, CheckCircle2, AlertCircle, Edit2, Receipt
@@ -36,6 +37,7 @@ export default function AnimatorProfile() {
   const [visitDialogOpen, setVisitDialogOpen] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [selectedVisit, setSelectedVisit] = useState<AnimatorVisit | null>(null);
+  const [activeTab, setActiveTab] = usePersistedTab(`animator-${animatorId}-visits-tab`, 'upcoming');
   
   // Check access: N3 can only view own profile, N4+ can view all
   const isOwnProfile = user?.id === animatorId;
@@ -296,7 +298,7 @@ export default function AnimatorProfile() {
       </div>
       
       {/* Visits Tabs */}
-      <Tabs defaultValue="upcoming" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-3 max-w-md">
           <TabsTrigger value="upcoming">À venir ({upcomingVisits.length})</TabsTrigger>
           <TabsTrigger value="today">Aujourd'hui ({todayVisits.length})</TabsTrigger>

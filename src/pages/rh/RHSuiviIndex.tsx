@@ -9,6 +9,7 @@ import { RHUnifiedTable } from '@/components/rh/unified/RHUnifiedTable';
 import { TAB_COLUMNS, RHTabId } from '@/components/rh/unified/RHUnifiedTableColumns';
 import { CompetencesMatrixPrint } from '@/components/rh/CompetencesMatrixPrint';
 import { Users } from 'lucide-react';
+import { usePersistedTab } from '@/hooks/usePersistedState';
 
 // Colonnes visibles par défaut par onglet
 const DEFAULT_VISIBLE_COLUMNS: Record<RHTabId, string[]> = {
@@ -27,11 +28,8 @@ export default function RHSuiviIndex() {
   
   const [showCompetencesMatrix, setShowCompetencesMatrix] = useState(false);
 
-  // Onglet actif - persiste en sessionStorage
-  const [activeTab, setActiveTab] = useState<RHTabId>(() => {
-    const saved = sessionStorage.getItem('rh_suivi_active_tab');
-    return (saved as RHTabId) || 'general';
-  });
+  // Onglet actif - persiste en sessionStorage via hook
+  const [activeTab, setActiveTab] = usePersistedTab<RHTabId>('rh_suivi_active_tab', 'general');
 
   // Colonnes visibles - initialisées depuis les prefs utilisateur ou par défaut
   const [visibleColumnsByTab, setVisibleColumnsByTab] = useState<Record<RHTabId, string[]>>(DEFAULT_VISIBLE_COLUMNS);
@@ -52,11 +50,6 @@ export default function RHSuiviIndex() {
       setVisibleColumnsByTab(allColumns);
     }
   }, [tablePrefs]);
-
-  // Sauvegarder l'onglet actif
-  useEffect(() => {
-    sessionStorage.setItem('rh_suivi_active_tab', activeTab);
-  }, [activeTab]);
 
   // Toggle une colonne
   const handleToggleColumn = (columnId: string) => {

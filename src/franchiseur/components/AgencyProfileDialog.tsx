@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { usePersistedTab } from "@/hooks/usePersistedState";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,6 +42,7 @@ export function AgencyProfileDialog({
   const { data: animators } = useAnimators();
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
+  const [dialogTab, setDialogTab] = usePersistedTab(`agency-dialog-${agencyId}-tab`, 'info');
 
   const [formData, setFormData] = useState({
     label: "",
@@ -184,7 +186,7 @@ export function AgencyProfileDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="info" className="w-full">
+        <Tabs value={dialogTab} onValueChange={setDialogTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="info">Informations</TabsTrigger>
             <TabsTrigger value="royalties" disabled={!agencyId || !canManage}>
