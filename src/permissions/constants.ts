@@ -66,7 +66,7 @@ export const MODULE_MIN_ROLES: Record<ModuleKey, GlobalRole> = {
   reseau_franchiseur: 'franchisor_user',
   support: 'base_user',
   admin_plateforme: 'platform_admin',
-  apogee_tickets: 'base_user',
+  apogee_tickets: 'franchisee_user', // Module individuel - N1+ peut y accéder si activé
   rh: 'base_user',  // Module accessible N0+ mais options différenciées
   parc: 'franchisee_user',
   messaging: 'franchisee_user',
