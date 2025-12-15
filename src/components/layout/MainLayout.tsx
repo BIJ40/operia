@@ -1,5 +1,6 @@
 import { ReactNode, useState } from 'react';
 import { MainHeader } from './MainHeader';
+import { TabHeader } from './TabHeader';
 import { PublicLanding } from './PublicLanding';
 import { LoginDialog } from '@/components/LoginDialog';
 import { ImageModal } from '@/components/ImageModal';
@@ -54,7 +55,18 @@ export function MainLayout({
   return (
     <AiUnifiedProvider>
       <div className={`min-h-screen w-full flex flex-col bg-background ${isImpersonating ? 'pt-10' : ''}`}>
-        {showHeader && <MainHeader />}
+        {/* Desktop: TabHeader avec morphing */}
+        {showHeader && (
+          <>
+            <div className="hidden lg:block">
+              <TabHeader />
+            </div>
+            {/* Mobile/Tablet: Header existant */}
+            <div className="lg:hidden">
+              <MainHeader />
+            </div>
+          </>
+        )}
         
         {/* Contenu principal */}
         <main id="main-content" className="flex-1 overflow-auto" role="main">
