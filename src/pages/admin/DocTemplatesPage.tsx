@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, FileText, Upload, Trash2, Settings } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { useDocTemplates, useCreateDocTemplate, useUpdateDocTemplate, useDeleteDocTemplate, useParseDocxTokens, DocTemplate } from "@/hooks/docgen/useDocTemplates";
+import {
+  useDocTemplates,
+  useCreateDocTemplate,
+  useUpdateDocTemplate,
+  useDeleteDocTemplate,
+  useParseDocxTokens,
+  DocTemplate,
+} from "@/hooks/docgen/useDocTemplates";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -38,6 +45,7 @@ import { fr } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
 import TokenConfigEditor from "@/components/docgen/TokenConfigEditor";
 import { TokenConfig, extractTokenNames } from "@/lib/docgen/tokenConfig";
+import { usePersistedDialog } from "@/hooks/usePersistedState";
 
 const CATEGORIES = [
   { value: "attestation", label: "Attestations" },
@@ -57,7 +65,11 @@ export default function DocTemplatesPage() {
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
+
+  const [isTokenConfigOpen, setTokenConfigOpen, tokenConfigTemplateId] =
+    usePersistedDialog("doc-templates-token-config");
   const [editingTemplate, setEditingTemplate] = useState<DocTemplate | null>(null);
+
   const [newTemplate, setNewTemplate] = useState({
     name: "",
     description: "",
@@ -68,6 +80,20 @@ export default function DocTemplatesPage() {
   });
 
   const isAdmin = globalRole === "platform_admin" || globalRole === "superadmin";
+
+  // Restaure la popup de config au retour sur l'onglet navigateur (sessionStorage)
+  useEffect(() => {
+    if (!isTokenConfigOpen) return;
+    if (!tokenConfigTemplateId) return;
+    if (editingTemplate?.id === tokenConfigTemplateId) return;
+
+    const template = templates.find((t) => t.id === tokenConfigTemplateId);
+    if (template) {
+      setEditingTemplate(template);
+    } else {
+      setTokenConfigOpen(false, null);
+    }
+  }, [isTokenConfigOpen, tokenConfigTemplateId, templates, editingTemplate?.id, setTokenConfigOpen]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -144,13 +170,14 @@ export default function DocTemplatesPage() {
 
   const handleSaveTokenConfigs = async (configs: TokenConfig[]) => {
     if (!editingTemplate) return;
-    
+
     await updateTemplate.mutateAsync({
       id: editingTemplate.id,
       tokens: configs,
     });
-    
+
     setEditingTemplate(null);
+    setTokenConfigOpen(false, null);
   };
 
   const getTokenCount = (tokens: (string | TokenConfig)[]): number => {
@@ -356,7 +383,10 @@ export default function DocTemplatesPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => setEditingTemplate(template)}
+                        onClick={() => {
+                          setEditingTemplate(template);
+                          setTokenConfigOpen(true, template.id);
+                        }}
                         title="Configurer les champs"
                       >
                         <Settings className="h-4 w-4" />
@@ -381,8 +411,15 @@ export default function DocTemplatesPage() {
       {/* Token Config Editor Dialog */}
       {editingTemplate && (
         <TokenConfigEditor
-          open={!!editingTemplate}
-          onOpenChange={(open) => !open && setEditingTemplate(null)}
+          open={isTokenConfigOpen && !!editingTemplate}
+          onOpenChange={(open) => {
+            if (!open) {
+              // Radix peut "dismiss" au changement d'onglet navigateur (focus-out) : on ignore.
+              if (document.hidden) return;
+              setEditingTemplate(null);
+              setTokenConfigOpen(false, null);
+            }
+          }}
           tokens={editingTemplate.tokens || []}
           templateName={editingTemplate.name}
           onSave={handleSaveTokenConfigs}
