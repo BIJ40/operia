@@ -28,7 +28,7 @@ import { MegaMenu } from './MegaMenu';
 import { MobileNav } from './MobileNav';
 import { MEGA_MENU_CONFIG, SUPPORT_MENU } from '@/config/megaMenuConfig';
 import { getRoleCapabilities } from '@/config/roleMatrix';
-import logoHelpconfortServices from '@/assets/help-confort-services-logo.png';
+import operiaLogo from '@/assets/operia-logo.png';
 import { RHNotificationBadge } from '@/components/rh/RHNotificationBadge';
 import { isModuleEnabled, ModuleKey } from '@/types/modules';
 import { UnifiedSearchFloatingBar } from '@/components/unified-search';
@@ -134,9 +134,9 @@ export function MainHeader() {
             {/* Logo sur 2 lignes */}
             <div className="flex flex-col items-center justify-center mr-6 shrink-0 py-2">
               <img 
-                src={logoHelpconfortServices} 
-                alt="HelpConfort Services" 
-                className="h-20 w-auto"
+                src={operiaLogo} 
+                alt="OPERIA" 
+                className="h-16 w-auto"
               />
               <Link 
                 to="/changelog" 
