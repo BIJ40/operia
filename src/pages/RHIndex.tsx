@@ -39,8 +39,8 @@ const MON_ESPACE_MODULES: RHModule[] = [
     href: ROUTES.rh.monPlanning,
   },
   {
-    id: 'demande-conge',
-    title: 'Demande de congé',
+    id: 'demande-rh',
+    title: 'Demande RH',
     description: 'Poser une demande',
     icon: Calendar,
     href: ROUTES.rh.demande,
@@ -108,7 +108,7 @@ export default function RHIndex() {
     return (
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
         <PageHeader
-          title="RH & PARC"
+          title="Mon Espace Salarié"
           subtitle="Mon espace personnel"
           backTo="/"
           backLabel="Accueil"
