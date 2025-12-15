@@ -132,13 +132,13 @@ export function MainHeader() {
         <div className="container px-4">
           <div className="flex">
             {/* Logo sur 2 lignes */}
-            <div className="flex items-center mr-6 shrink-0">
+            <Link to="/" className="flex items-center mr-6 shrink-0">
               <img 
                 src={operiaLogo} 
                 alt="OPERIA" 
                 className="h-28 w-auto"
               />
-            </div>
+            </Link>
 
             {/* Colonne droite : Menu + Recherche */}
             <div className="flex-1 flex flex-col">
