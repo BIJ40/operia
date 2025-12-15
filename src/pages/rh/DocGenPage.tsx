@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, FileText, Eye, Download, Trash2 } from "lucide-react";
+import { Plus, FileText, Eye, Download, Trash2, Pencil } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -242,11 +242,22 @@ export default function DocGenPage() {
                       {format(new Date(instance.created_at), "dd MMM yyyy", { locale: fr })}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-1">
+                        {instance.status !== "finalized" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setSelectedInstance(instance)}
+                            title="Modifier"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => setSelectedInstance(instance)}
+                          title="Voir"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>

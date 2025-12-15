@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, CheckCircle, Loader2, Sparkles } from "lucide-react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { ArrowLeft, ChevronLeft, ChevronRight, CheckCircle, Loader2, Sparkles, RotateCcw, Save } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { DocInstance, useFinalizeDocument } from "@/hooks/docgen/useDocInstances";
+import { DocInstance, useFinalizeDocument, useUpdateDocInstance } from "@/hooks/docgen/useDocInstances";
 import { toast } from "sonner";
 import { categorizeTokens } from "@/lib/docgen/smartTokens";
 import { TokenConfig, getTokenConfig, formatTokenLabel } from "@/lib/docgen/tokenConfig";
@@ -20,8 +20,10 @@ interface DocInstanceEditorProps {
 export default function DocInstanceEditor({ instance, onBack }: DocInstanceEditorProps) {
   const [tokenValues, setTokenValues] = useState<Record<string, string>>(instance.token_values || {});
   const [currentStep, setCurrentStep] = useState(0);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const finalizeDocument = useFinalizeDocument();
+  const updateInstance = useUpdateDocInstance();
 
   const tokens = instance.template?.tokens || [];
   const { smartTokens, manualTokens } = categorizeTokens(tokens);
@@ -56,18 +58,63 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
     return Math.round((filledCount / manualTokens.length) * 100);
   }, [manualTokens, tokenValues]);
 
+  // Auto-save token values (debounced)
+  const saveTokenValues = useCallback(async () => {
+    if (!hasUnsavedChanges) return;
+    
+    await updateInstance.mutateAsync({
+      id: instance.id,
+      token_values: tokenValues,
+    });
+    setHasUnsavedChanges(false);
+  }, [instance.id, tokenValues, hasUnsavedChanges, updateInstance]);
+
+  // Auto-save every 5 seconds if there are changes
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    
+    const timer = setTimeout(() => {
+      saveTokenValues();
+    }, 5000);
+    
+    return () => clearTimeout(timer);
+  }, [hasUnsavedChanges, saveTokenValues]);
+
+  // Save on unmount
+  useEffect(() => {
+    return () => {
+      if (hasUnsavedChanges) {
+        // Fire and forget save on unmount
+        updateInstance.mutate({
+          id: instance.id,
+          token_values: tokenValues,
+        });
+      }
+    };
+  }, []);
+
   const handleTokenChange = (token: string, value: string) => {
     setTokenValues(prev => ({ ...prev, [token]: value }));
+    setHasUnsavedChanges(true);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    // Save current values before going next
+    if (hasUnsavedChanges) {
+      await saveTokenValues();
+    }
+    
     const maxStep = hasSmartIntro ? manualTokens.length : Math.max(0, manualTokens.length - 1);
     if (currentStep < maxStep) {
       setCurrentStep((prev) => prev + 1);
     }
   };
 
-  const handlePrevious = () => {
+  const handlePrevious = async () => {
+    if (hasUnsavedChanges) {
+      await saveTokenValues();
+    }
+    
     if (currentStep > 0) {
       setCurrentStep(prev => prev - 1);
     }
@@ -83,6 +130,16 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
       toast.success("Document finalisé et enregistré");
       onBack();
     }
+  };
+
+  // Re-open a finalized document for editing
+  const handleReopen = async () => {
+    await updateInstance.mutateAsync({
+      id: instance.id,
+      status: "draft",
+      final_path: null,
+    });
+    toast.success("Document ré-ouvert pour modification");
   };
 
   // Get title for a token (from config or fallback)
@@ -158,11 +215,30 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
             Template: {instance.template?.name}
           </p>
         </div>
-        <Badge variant={instance.status === "finalized" ? "default" : "secondary"}>
-          {instance.status === "draft" && "Brouillon"}
-          {instance.status === "preview" && "Aperçu"}
-          {instance.status === "finalized" && "Finalisé"}
-        </Badge>
+        <div className="flex items-center gap-2">
+          {hasUnsavedChanges && (
+            <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+              <Save className="h-3 w-3 mr-1" />
+              Non sauvegardé
+            </Badge>
+          )}
+          <Badge variant={instance.status === "finalized" ? "default" : "secondary"}>
+            {instance.status === "draft" && "Brouillon"}
+            {instance.status === "preview" && "Aperçu"}
+            {instance.status === "finalized" && "Finalisé"}
+          </Badge>
+          {instance.status === "finalized" && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleReopen}
+              disabled={updateInstance.isPending}
+            >
+              <RotateCcw className="h-4 w-4 mr-1" />
+              Modifier
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Progress Bar */}
