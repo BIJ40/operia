@@ -64,7 +64,7 @@ export function usePersistedFilter(
  */
 export function usePersistedDialog(
   storageKey: string
-): [boolean, (open: boolean) => void, string | null] {
+): [boolean, (open: boolean, id?: string | null) => void, string | null] {
   const getStored = (): { open: boolean; id: string | null } => {
     const stored = sessionStorage.getItem(storageKey);
     if (stored) {
@@ -79,17 +79,20 @@ export function usePersistedDialog(
 
   const [state, setState] = useState(getStored);
 
-  const setOpen = useCallback((open: boolean, id?: string | null) => {
-    const newState = { open, id: id ?? state.id };
-    setState(newState);
-    if (open) {
-      sessionStorage.setItem(storageKey, JSON.stringify(newState));
-    } else {
-      sessionStorage.removeItem(storageKey);
-    }
-  }, [storageKey, state.id]);
+  const setOpen = useCallback(
+    (open: boolean, id?: string | null) => {
+      const newState = { open, id: id ?? state.id };
+      setState(newState);
+      if (open) {
+        sessionStorage.setItem(storageKey, JSON.stringify(newState));
+      } else {
+        sessionStorage.removeItem(storageKey);
+      }
+    },
+    [storageKey, state.id]
+  );
 
-  return [state.open, (open: boolean) => setOpen(open), state.id];
+  return [state.open, setOpen, state.id];
 }
 
 /**
