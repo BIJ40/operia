@@ -157,21 +157,32 @@ export function IconNavBar() {
   const caps = getRoleCapabilities(globalRole);
   const [openPopover, setOpenPopover] = useState<string | null>(null);
 
-  // Helper unifié pour vérifier l'accès aux modules (même logique que ModuleGuard / UnifiedSidebar)
-  const canAccessModule = (moduleKey: string) =>
-    hasAccess({
+  // N5+ bypass tous les modules
+  const isAdminBypass = globalRole === 'platform_admin' || globalRole === 'superadmin';
+
+  // Helper explicite pour vérifier l'accès aux modules
+  const canAccessModule = (moduleKey: string): boolean => {
+    // N5+ a accès à tout
+    if (isAdminBypass) return true;
+    
+    // Vérification via le moteur de permissions
+    return hasAccess({
       globalRole,
       enabledModules,
       agencyId,
       moduleId: moduleKey as any,
     });
+  };
 
   const filteredSections = navSections.filter(section => {
-    // Module check via permissions engine
-    if (section.requiresModule && !canAccessModule(section.requiresModule)) {
-      return false;
+    // Module check - STRICT: si requiresModule est défini, on vérifie
+    if (section.requiresModule) {
+      const hasModuleAccess = canAccessModule(section.requiresModule);
+      if (!hasModuleAccess) {
+        return false;
+      }
     }
-    // Access check
+    // Access check via capabilities
     if (!section.accessKey) return true;
     if (section.accessKey === 'canAccessPilotageAgence') {
       if (caps.requiresAgencyForPilotage && !agence) return false;
