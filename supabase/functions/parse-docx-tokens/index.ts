@@ -65,6 +65,28 @@ serve(async (req) => {
     const tokens = new Set<string>();
     const tokenRegex = /\{\{([^}]+)\}\}/g;
 
+    const normalizeToken = (raw: string): string | null => {
+      const cleaned = raw
+        .replace(/<[^>]+>/g, "")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&amp;/g, "&")
+        .replace(/&quot;/g, '"')
+        .replace(/&apos;/g, "'")
+        .replace(/\s+/g, "")
+        .trim();
+
+      if (!cleaned) return null;
+
+      // Guard against Word XML fragments accidentally captured between {{ }}
+      if (cleaned.includes("w:") || cleaned.includes("xmlns") || cleaned.includes("</")) return null;
+
+      // Token naming convention: keep it strict to avoid polluted token lists
+      if (!/^[A-Za-z0-9_.-]+$/.test(cleaned)) return null;
+
+      return cleaned;
+    };
+
     // Parse all XML files in the DOCX (document.xml, headers, footers)
     const xmlFiles = [
       "word/document.xml",
@@ -80,12 +102,11 @@ serve(async (req) => {
       const xmlFile = zip.file(xmlPath);
       if (!xmlFile) continue;
 
-      let xmlContent = await xmlFile.async("string");
+      const xmlContent = await xmlFile.async("string");
 
       // Handle Word-fragmented tokens: Word sometimes splits {{token}} across multiple <w:t> runs
-      // Strategy: First extract all text content, then find tokens, then map back
-      
-      // Remove XML tags to get plain text and find tokens
+      // Strategy: extract all visible text content, then find tokens.
+
       const plainText = xmlContent
         .replace(/<[^>]+>/g, "") // Remove all XML tags
         .replace(/&lt;/g, "<")
@@ -96,24 +117,16 @@ serve(async (req) => {
 
       let match;
       while ((match = tokenRegex.exec(plainText)) !== null) {
-        tokens.add(match[1].trim());
+        const tokenName = normalizeToken(match[1] ?? "");
+        if (tokenName) tokens.add(tokenName);
       }
 
-      // Also try to find tokens in the raw XML (for non-fragmented cases)
-      const xmlMatch = xmlContent.matchAll(/\{\{([^}]+)\}\}/g);
-      for (const m of xmlMatch) {
-        tokens.add(m[1].trim());
-      }
-
-      // Handle fragmented tokens: look for patterns like <w:t>{</w:t>...<w:t>{token</w:t>...<w:t>}}</w:t>
-      // This regex finds potential fragments
+      // Extra safety for some fragmented edge cases where braces are split across tags
       const fragmentPattern = /\{(?:<[^>]*>)*\{(?:<[^>]*>)*([^<}]+)(?:<[^>]*>)*\}(?:<[^>]*>)*\}/g;
       let fragMatch;
       while ((fragMatch = fragmentPattern.exec(xmlContent)) !== null) {
-        const tokenName = fragMatch[1].replace(/<[^>]+>/g, "").trim();
-        if (tokenName) {
-          tokens.add(tokenName);
-        }
+        const tokenName = normalizeToken(fragMatch[1] ?? "");
+        if (tokenName) tokens.add(tokenName);
       }
     }
 
