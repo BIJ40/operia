@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { logAuth } from '@/lib/logger';
@@ -112,6 +112,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ============================================================================
   const [globalRole, setGlobalRole] = useState<GlobalRole | null>(null);
   const [enabledModules, setEnabledModules] = useState<EnabledModules | null>(null);
+  
+  // Ref to track user ID across auth events (prevents tab-switch UI resets)
+  const currentUserIdRef = useRef<string | null>(null);
 
   // ============================================================================
   // Calculs dérivés V2
