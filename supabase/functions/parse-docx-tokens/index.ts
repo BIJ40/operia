@@ -62,7 +62,9 @@ serve(async (req) => {
     const JSZip = (await import("https://esm.sh/jszip@3.10.1")).default;
     const zip = await JSZip.loadAsync(await fileData.arrayBuffer());
 
-    const tokens = new Set<string>();
+    // Use array to preserve order of first appearance
+    const tokensOrdered: string[] = [];
+    const tokensSeen = new Set<string>();
     const tokenRegex = /\{\{([^}]+)\}\}/g;
 
     const normalizeToken = (raw: string): string | null => {
@@ -118,7 +120,10 @@ serve(async (req) => {
       let match;
       while ((match = tokenRegex.exec(plainText)) !== null) {
         const tokenName = normalizeToken(match[1] ?? "");
-        if (tokenName) tokens.add(tokenName);
+        if (tokenName && !tokensSeen.has(tokenName)) {
+          tokensSeen.add(tokenName);
+          tokensOrdered.push(tokenName);
+        }
       }
 
       // Extra safety for some fragmented edge cases where braces are split across tags
@@ -126,11 +131,15 @@ serve(async (req) => {
       let fragMatch;
       while ((fragMatch = fragmentPattern.exec(xmlContent)) !== null) {
         const tokenName = normalizeToken(fragMatch[1] ?? "");
-        if (tokenName) tokens.add(tokenName);
+        if (tokenName && !tokensSeen.has(tokenName)) {
+          tokensSeen.add(tokenName);
+          tokensOrdered.push(tokenName);
+        }
       }
     }
 
-    const tokenList = Array.from(tokens).sort();
+    // Return tokens in document order (no sorting)
+    const tokenList = tokensOrdered;
 
     return new Response(JSON.stringify({ 
       success: true, 
