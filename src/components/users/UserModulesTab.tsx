@@ -8,7 +8,7 @@ import {
   Lock, Eye, ShieldCheck, Briefcase, Truck, 
   HelpCircle, CheckCircle2, ChevronDown, ChevronRight,
   FileText, Users, CreditCard, Car, Wrench, AlertTriangle,
-  BookOpen, BarChart3, Headphones, Settings, MessageSquare
+  BookOpen, BarChart3, Headphones, Settings, MessageSquare, Kanban
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -33,7 +33,7 @@ interface PermissionDefinition {
   icon: React.ReactNode;
   color: string;
   minRole?: GlobalRole;
-  category: 'rh' | 'parc' | 'academy' | 'pilotage' | 'support' | 'admin' | 'other';
+  category: 'rh' | 'parc' | 'academy' | 'pilotage' | 'support' | 'admin' | 'projet' | 'other';
 }
 
 const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
@@ -225,6 +225,25 @@ const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     category: 'support',
   },
 
+  // ===== GESTION DE PROJET =====
+  {
+    key: 'apogee_tickets',
+    moduleKey: 'apogee_tickets',
+    label: 'Gestion de Projet',
+    shortDescription: 'Kanban et suivi des tickets Apogée',
+    features: [
+      'Accès au tableau Kanban',
+      'Création et suivi de tickets',
+      'Gestion des priorités et modules',
+      'Import et export de données',
+    ],
+    targetUsers: 'Équipe développement et projet',
+    icon: <Kanban className="w-5 h-5" />,
+    color: 'text-indigo-500',
+    minRole: 'franchisee_admin',
+    category: 'projet',
+  },
+
   // ===== ADMIN =====
   {
     key: 'admin_plateforme',
@@ -275,6 +294,11 @@ const CATEGORY_INFO: Record<string, { label: string; icon: React.ReactNode; desc
     label: 'Administration', 
     icon: <Settings className="w-5 h-5 text-slate-500" />,
     description: 'Configuration système'
+  },
+  projet: { 
+    label: 'Gestion de Projet', 
+    icon: <Kanban className="w-5 h-5 text-indigo-500" />,
+    description: 'Kanban et tickets développement'
   },
 };
 
