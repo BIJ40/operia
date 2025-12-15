@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import {
   Dialog,
   DialogContent,
@@ -79,18 +79,16 @@ export default function TokenConfigEditor({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col overflow-hidden">
-        <DialogHeader className="pb-2 flex-shrink-0">
+      <DialogContent className="max-w-3xl">
+        <DialogHeader className="pb-2">
           <DialogTitle className="text-base">Configurer les champs</DialogTitle>
           <DialogDescription className="text-xs">
             Personnalisez les champs pour "{templateName}"
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 overflow-hidden">
-          <ScrollArea className="h-full">
-            <div className="pr-4">
-              <Accordion type="multiple" className="w-full" defaultValue={defaultOpenItems}>
+        <div className="max-h-[60vh] overflow-y-auto pr-2">
+          <Accordion type="multiple" className="w-full" defaultValue={defaultOpenItems}>
                 {configs.map((config, index) => {
                   const isSmart = isSmartToken(config.token);
                   
@@ -186,8 +184,6 @@ export default function TokenConfigEditor({
                   );
                 })}
               </Accordion>
-            </div>
-          </ScrollArea>
         </div>
 
         <div className="flex justify-end gap-2 pt-3 border-t">
