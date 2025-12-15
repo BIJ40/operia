@@ -264,15 +264,29 @@ serve(async (req) => {
 
     if (gotenbergUrl) {
       // Convert to PDF
+      const gotenbergBaseUrl = gotenbergUrl.replace(/\/+$/, "");
+      const convertUrl = `${gotenbergBaseUrl}/forms/libreoffice/convert`;
+
       const formData = new FormData();
-      formData.append("files", new Blob([modifiedDocx], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" }), "document.docx");
+      formData.append(
+        "files",
+        new Blob([modifiedDocx], {
+          type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        }),
+        "document.docx"
+      );
 
       const gotenbergHeaders: Record<string, string> = {};
-      if (gotenbergApiKey) {
-        gotenbergHeaders["Authorization"] = `Bearer ${gotenbergApiKey}`;
+      const apiKey = gotenbergApiKey?.trim();
+      if (apiKey) {
+        gotenbergHeaders["Authorization"] = apiKey.toLowerCase().startsWith("bearer ")
+          ? apiKey
+          : `Bearer ${apiKey}`;
+        gotenbergHeaders["X-API-Key"] = apiKey;
+        gotenbergHeaders["X-Api-Key"] = apiKey;
       }
 
-      const convertResponse = await fetch(`${gotenbergUrl}/forms/libreoffice/convert`, {
+      const convertResponse = await fetch(convertUrl, {
         method: "POST",
         headers: gotenbergHeaders,
         body: formData,
@@ -281,11 +295,17 @@ serve(async (req) => {
 
       if (!convertResponse.ok) {
         const errorText = await convertResponse.text();
-        console.error("Gotenberg error:", errorText);
-        return new Response(JSON.stringify({ error: "PDF conversion failed" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        console.error(`Gotenberg error (${convertResponse.status}):`, errorText);
+        return new Response(
+          JSON.stringify({
+            error: "PDF conversion failed",
+            details: `[${convertResponse.status}] ${errorText}`,
+          }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
       }
 
       const finalPdf = await convertResponse.arrayBuffer();
