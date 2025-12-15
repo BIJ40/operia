@@ -219,7 +219,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
   // ============================================
   {
     id: 'admin',
-    title: 'Administration',
+    title: 'Admin',
     description: 'Paramètres système',
     icon: 'Settings',
     href: ROUTES.admin.index,
