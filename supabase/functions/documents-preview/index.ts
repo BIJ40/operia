@@ -290,15 +290,23 @@ serve(async (req) => {
         // (e.g. "Bearer ..." or "Basic ...").
         const tokenKey = rawKey.replace(/^(bearer|basic)\s+/i, "");
 
+        // Always send Authorization (common nginx auth setups) + key headers (common reverse-proxy setups)
         if (/^(bearer|basic)\s/i.test(rawKey)) {
           gotenbergHeaders["Authorization"] = rawKey;
+        } else {
+          gotenbergHeaders["Authorization"] = `Bearer ${tokenKey}`;
         }
 
-        // Common reverse-proxy API key headers
         gotenbergHeaders["X-API-Key"] = tokenKey;
         gotenbergHeaders["X-Api-Key"] = tokenKey;
         gotenbergHeaders["X-Gotenberg-Api-Key"] = tokenKey;
       }
+
+      // Some proxies require an explicit Accept
+      gotenbergHeaders["Accept"] = "application/pdf";
+
+      console.log("Gotenberg convertUrl:", convertUrl);
+      console.log("Gotenberg headers:", Object.keys(gotenbergHeaders));
 
       const convertResponse = await fetch(convertUrl, {
         method: "POST",

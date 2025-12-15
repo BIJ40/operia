@@ -281,19 +281,26 @@ serve(async (req) => {
          "document.docx"
        );
 
-       const gotenbergHeaders: Record<string, string> = {};
-       const rawKey = gotenbergApiKey?.trim();
-       if (rawKey) {
-         const tokenKey = rawKey.replace(/^(bearer|basic)\s+/i, "");
+        const gotenbergHeaders: Record<string, string> = {};
+        const rawKey = gotenbergApiKey?.trim();
+        if (rawKey) {
+          const tokenKey = rawKey.replace(/^(bearer|basic)\s+/i, "");
 
-         if (/^(bearer|basic)\s/i.test(rawKey)) {
-           gotenbergHeaders["Authorization"] = rawKey;
-         }
+          if (/^(bearer|basic)\s/i.test(rawKey)) {
+            gotenbergHeaders["Authorization"] = rawKey;
+          } else {
+            gotenbergHeaders["Authorization"] = `Bearer ${tokenKey}`;
+          }
 
-         gotenbergHeaders["X-API-Key"] = tokenKey;
-         gotenbergHeaders["X-Api-Key"] = tokenKey;
-         gotenbergHeaders["X-Gotenberg-Api-Key"] = tokenKey;
-       }
+          gotenbergHeaders["X-API-Key"] = tokenKey;
+          gotenbergHeaders["X-Api-Key"] = tokenKey;
+          gotenbergHeaders["X-Gotenberg-Api-Key"] = tokenKey;
+        }
+
+        gotenbergHeaders["Accept"] = "application/pdf";
+
+        console.log("Gotenberg convertUrl:", convertUrl);
+        console.log("Gotenberg headers:", Object.keys(gotenbergHeaders));
 
       const convertResponse = await fetch(convertUrl, {
         method: "POST",
