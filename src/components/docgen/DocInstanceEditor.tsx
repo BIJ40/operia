@@ -172,19 +172,29 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
       return {
         current: 1,
         total,
-        label: hasSmartIntro ? "Champs automatiques" : "Aucun champ",
+        title: hasSmartIntro ? "Informations automatiques" : "Document prêt",
+        description: hasSmartIntro 
+          ? "Ces données seront remplies automatiquement" 
+          : "Aucune information à saisir",
       };
     }
 
     if (hasSmartIntro && currentStep === 0) {
-      return { current: 1, total, label: "Champs automatiques" };
+      return { 
+        current: 1, 
+        total, 
+        title: "Informations automatiques",
+        description: "Ces données seront remplies automatiquement",
+      };
     }
 
     const current = Math.min(currentStep + 1, total);
+    const tokenNumber = currentTokenIndex + 1;
     return {
       current,
       total,
-      label: currentToken ? getTokenLabel(currentToken) : "Validation",
+      title: `Champ ${tokenNumber}/${manualTokens.length}`,
+      description: currentToken ? getTokenLabel(currentToken) : "Finalisation",
     };
   };
 
@@ -217,9 +227,9 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">
-            Étape {stepInfo.current} / {stepInfo.total} — {stepInfo.label}
+            Étape {stepInfo.current}/{stepInfo.total} — {stepInfo.title}
           </span>
-          <span className="font-medium">{progressPercent}% complété</span>
+          <span className="font-medium">{progressPercent}%</span>
         </div>
         <Progress value={progressPercent} className="h-2" />
       </div>
@@ -232,19 +242,19 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
               {currentStep === 0 && smartTokens.length > 0 && (
                 <>
                   <Sparkles className="h-5 w-5 text-primary" />
-                  Champs automatiques
+                  {stepInfo.title}
                 </>
               )}
               {(currentStep > 0 || smartTokens.length === 0) && currentToken && (
-                getTokenLabel(currentToken)
+                stepInfo.description
               )}
             </CardTitle>
             <CardDescription>
               {currentStep === 0 && smartTokens.length > 0 && 
-                "Ces informations seront remplies automatiquement"
+                stepInfo.description
               }
               {(currentStep > 0 || smartTokens.length === 0) && currentToken &&
-                `Renseignez ${getTokenLabel(currentToken).toLowerCase()}`
+                `Saisissez la valeur pour ce champ du document`
               }
             </CardDescription>
           </CardHeader>
@@ -348,16 +358,11 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-base">Aperçu en direct</CardTitle>
-                <CardDescription>
-                  Se met à jour automatiquement
-                </CardDescription>
-              </div>
+              <CardTitle className="text-base">Aperçu du document</CardTitle>
               {isGeneratingPreview && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Mise à jour...
+                  Génération...
                 </div>
               )}
             </div>
