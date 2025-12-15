@@ -225,8 +225,8 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
     href: ROUTES.admin.index,
     accessKey: 'canAccessAdmin',
     links: [
-      // Groupe: Utilisateurs & Agences
-      { label: 'Utilisateurs', href: ROUTES.admin.users, icon: 'Users', description: 'Comptes utilisateurs', minRole: 'platform_admin', group: 'users' },
+      // Groupe: Gestion Globale & Agences
+      { label: 'Gestion globale', href: ROUTES.admin.users, icon: 'Users', description: 'Droits, accès et souscriptions', minRole: 'platform_admin', group: 'users' },
       { label: 'Agences', href: ROUTES.admin.agencies, icon: 'Building2', description: 'Configuration agences', minRole: 'platform_admin', group: 'users' },
       { label: 'Gestion Widgets', href: ROUTES.admin.widgets, icon: 'LayoutGrid', description: 'Permissions widgets', minRole: 'platform_admin', group: 'users' },
       // Groupe: Contenu
