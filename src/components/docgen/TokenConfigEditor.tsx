@@ -79,112 +79,116 @@ export default function TokenConfigEditor({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
-        <DialogHeader className="pb-2">
+      <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col overflow-hidden">
+        <DialogHeader className="pb-2 flex-shrink-0">
           <DialogTitle className="text-base">Configurer les champs</DialogTitle>
           <DialogDescription className="text-xs">
             Personnalisez les champs pour "{templateName}"
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 max-h-[60vh] pr-4">
-          <Accordion type="multiple" className="w-full" defaultValue={defaultOpenItems}>
-            {configs.map((config, index) => {
-              const isSmart = isSmartToken(config.token);
-              
-              return (
-                <AccordionItem 
-                  key={config.token} 
-                  value={`item-${index}`}
-                  className={cn(
-                    "border-b",
-                    isSmart && "border-l-2 border-l-green-500 bg-green-50/50 dark:bg-green-950/20"
-                  )}
-                >
-                  <AccordionTrigger className="hover:no-underline py-2 px-2">
-                    <div className="flex items-center gap-2 text-left">
-                      <GripVertical className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                      {isSmart && (
-                        <Sparkles className="h-3 w-3 text-green-600 flex-shrink-0" />
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <ScrollArea className="h-full">
+            <div className="pr-4">
+              <Accordion type="multiple" className="w-full" defaultValue={defaultOpenItems}>
+                {configs.map((config, index) => {
+                  const isSmart = isSmartToken(config.token);
+                  
+                  return (
+                    <AccordionItem 
+                      key={config.token} 
+                      value={`item-${index}`}
+                      className={cn(
+                        "border-b",
+                        isSmart && "border-l-2 border-l-green-500 bg-green-50/50 dark:bg-green-950/20"
                       )}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className={cn(
-                          "font-medium text-sm",
-                          isSmart && "text-green-700 dark:text-green-400"
-                        )}>
-                          {config.title || config.token}
-                        </span>
-                        <Badge 
-                          variant={isSmart ? "default" : "outline"} 
-                          className={cn(
-                            "font-mono text-[10px] px-1.5 py-0",
-                            isSmart && "bg-green-600 hover:bg-green-600"
+                    >
+                      <AccordionTrigger className="hover:no-underline py-1.5 px-2">
+                        <div className="flex items-center gap-2 text-left">
+                          <GripVertical className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                          {isSmart && (
+                            <Sparkles className="h-3 w-3 text-green-600 flex-shrink-0" />
                           )}
-                        >
-                          {`{{${config.token}}}`}
-                        </Badge>
-                        {isSmart && (
-                          <span className="text-[10px] text-green-600 dark:text-green-400">
-                            Pré-rempli
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="pt-2 pb-3 px-2">
-                    {isSmart ? (
-                      <div className="pl-5 text-xs text-green-700 dark:text-green-400">
-                        {getSmartTokenDescription(config.token)}
-                      </div>
-                    ) : (
-                      <div className="space-y-3 pl-5">
-                        <div className="space-y-1">
-                          <Label htmlFor={`title-${index}`} className="text-xs">
-                            Titre affiché
-                          </Label>
-                          <Input
-                            id={`title-${index}`}
-                            value={config.title}
-                            onChange={(e) => handleConfigChange(index, "title", e.target.value)}
-                            placeholder="Ex: Salaire mensuel brut"
-                            className="h-8 text-sm"
-                          />
-                        </div>
-
-                        <div className="space-y-1">
-                          <Label htmlFor={`desc-${index}`} className="text-xs">
-                            Description / Instructions
-                          </Label>
-                          <Textarea
-                            id={`desc-${index}`}
-                            value={config.description}
-                            onChange={(e) => handleConfigChange(index, "description", e.target.value)}
-                            placeholder="Ex: Indiquez le montant mensuel brut en euros"
-                            rows={2}
-                            className="text-sm resize-none"
-                          />
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div className="space-y-0">
-                            <Label htmlFor={`required-${index}`} className="text-xs">
-                              Champ obligatoire
-                            </Label>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={cn(
+                              "font-medium text-sm",
+                              isSmart && "text-green-700 dark:text-green-400"
+                            )}>
+                              {config.title || config.token}
+                            </span>
+                            <Badge 
+                              variant={isSmart ? "default" : "outline"} 
+                              className={cn(
+                                "font-mono text-[10px] px-1.5 py-0",
+                                isSmart && "bg-green-600 hover:bg-green-600"
+                              )}
+                            >
+                              {`{{${config.token}}}`}
+                            </Badge>
+                            {isSmart && (
+                              <span className="text-[10px] text-green-600 dark:text-green-400">
+                                Pré-rempli
+                              </span>
+                            )}
                           </div>
-                          <Switch
-                            id={`required-${index}`}
-                            checked={config.required !== false}
-                            onCheckedChange={(checked) => handleConfigChange(index, "required", checked)}
-                          />
                         </div>
-                      </div>
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
-              );
-            })}
-          </Accordion>
-        </ScrollArea>
+                      </AccordionTrigger>
+                      <AccordionContent className="pt-1.5 pb-2 px-2">
+                        {isSmart ? (
+                          <div className="pl-5 text-xs text-green-700 dark:text-green-400">
+                            {getSmartTokenDescription(config.token)}
+                          </div>
+                        ) : (
+                          <div className="space-y-2 pl-5">
+                            <div className="space-y-1">
+                              <Label htmlFor={`title-${index}`} className="text-xs">
+                                Titre affiché
+                              </Label>
+                              <Input
+                                id={`title-${index}`}
+                                value={config.title}
+                                onChange={(e) => handleConfigChange(index, "title", e.target.value)}
+                                placeholder="Ex: Salaire mensuel brut"
+                                className="h-8 text-sm"
+                              />
+                            </div>
+
+                            <div className="space-y-1">
+                              <Label htmlFor={`desc-${index}`} className="text-xs">
+                                Description / Instructions
+                              </Label>
+                              <Textarea
+                                id={`desc-${index}`}
+                                value={config.description}
+                                onChange={(e) => handleConfigChange(index, "description", e.target.value)}
+                                placeholder="Ex: Indiquez le montant mensuel brut en euros"
+                                rows={2}
+                                className="text-sm resize-none"
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                              <div className="space-y-0">
+                                <Label htmlFor={`required-${index}`} className="text-xs">
+                                  Champ obligatoire
+                                </Label>
+                              </div>
+                              <Switch
+                                id={`required-${index}`}
+                                checked={config.required !== false}
+                                onCheckedChange={(checked) => handleConfigChange(index, "required", checked)}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </AccordionContent>
+                    </AccordionItem>
+                  );
+                })}
+              </Accordion>
+            </div>
+          </ScrollArea>
+        </div>
 
         <div className="flex justify-end gap-2 pt-3 border-t">
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
