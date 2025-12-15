@@ -218,6 +218,7 @@ export function TabHeader() {
               src={operiaLogo} 
               alt="OPERIA" 
               className="h-full w-auto max-h-32"
+              data-no-modal
             />
           </Link>
 
