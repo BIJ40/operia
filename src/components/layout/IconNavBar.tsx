@@ -17,6 +17,7 @@ import {
   Settings, Database, Activity, MessageCircle, Kanban, Sparkles, Brain, ToggleLeft,
   ClipboardList, CalendarDays, HardHat
 } from 'lucide-react';
+import { hasAccess } from '@/permissions';
 
 // Import des icônes personnalisées
 import iconAccueil from '@/assets/menu-icons/accueil.png';
@@ -152,13 +153,22 @@ const navSections: NavSection[] = [
 
 export function IconNavBar() {
   const location = useLocation();
-  const { globalRole, agence, hasModule } = useAuth();
+  const { globalRole, agence, agencyId, enabledModules } = useAuth();
   const caps = getRoleCapabilities(globalRole);
   const [openPopover, setOpenPopover] = useState<string | null>(null);
 
+  // Helper unifié pour vérifier l'accès aux modules (même logique que ModuleGuard / UnifiedSidebar)
+  const canAccessModule = (moduleKey: string) =>
+    hasAccess({
+      globalRole,
+      enabledModules,
+      agencyId,
+      moduleId: moduleKey as any,
+    });
+
   const filteredSections = navSections.filter(section => {
-    // Module check
-    if (section.requiresModule && !hasModule(section.requiresModule as any)) {
+    // Module check via permissions engine
+    if (section.requiresModule && !canAccessModule(section.requiresModule)) {
       return false;
     }
     // Access check
