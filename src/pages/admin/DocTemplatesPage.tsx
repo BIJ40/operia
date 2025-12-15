@@ -156,7 +156,7 @@ export default function DocTemplatesPage() {
               Nouveau template
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Créer un template</DialogTitle>
               <DialogDescription>
@@ -258,13 +258,15 @@ export default function DocTemplatesPage() {
 
               {newTemplate.tokens.length > 0 && (
                 <div className="space-y-2">
-                  <Label>Tokens détectés</Label>
-                  <div className="flex flex-wrap gap-1">
-                    {newTemplate.tokens.map((token) => (
-                      <Badge key={token} variant="secondary">
-                        {`{{${token}}}`}
-                      </Badge>
-                    ))}
+                  <Label>Tokens détectés ({newTemplate.tokens.length})</Label>
+                  <div className="max-h-48 overflow-y-auto border rounded-md p-2">
+                    <div className="flex flex-wrap gap-1">
+                      {newTemplate.tokens.map((token) => (
+                        <Badge key={token} variant="secondary">
+                          {`{{${token}}}`}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
