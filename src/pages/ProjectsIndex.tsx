@@ -1,4 +1,4 @@
-import { Kanban, Settings, Star, AlertTriangle } from 'lucide-react';
+import { Kanban, Settings, Star, AlertTriangle, ListTodo } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { IndexTile, type IndexTileProps } from '@/components/ui/index-tile';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,6 +20,12 @@ const PROJECT_MODULES: ProjectModule[] = [
     description: 'Vue Kanban des tickets projet',
     icon: Kanban,
     href: ROUTES.projects.kanban,
+  },
+  {
+    title: 'Liste',
+    description: 'Liste complète des tickets',
+    icon: ListTodo,
+    href: ROUTES.projects.list,
   },
   {
     title: 'Tickets incomplets',
