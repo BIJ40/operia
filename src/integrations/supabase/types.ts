@@ -1934,6 +1934,140 @@ export type Database = {
         }
         Relationships: []
       }
+      doc_instances: {
+        Row: {
+          agency_id: string
+          collaborator_id: string | null
+          created_at: string
+          created_by: string | null
+          final_path: string | null
+          id: string
+          name: string
+          preview_path: string | null
+          status: string
+          template_id: string
+          token_values: Json
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          collaborator_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          final_path?: string | null
+          id?: string
+          name: string
+          preview_path?: string | null
+          status?: string
+          template_id: string
+          token_values?: Json
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          collaborator_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          final_path?: string | null
+          id?: string
+          name?: string
+          preview_path?: string | null
+          status?: string
+          template_id?: string
+          token_values?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doc_instances_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doc_instances_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doc_instances_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doc_instances_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "doc_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      doc_templates: {
+        Row: {
+          agency_id: string | null
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          docx_storage_path: string
+          id: string
+          is_published: boolean
+          name: string
+          scope: string
+          tokens: Json
+          updated_at: string
+        }
+        Insert: {
+          agency_id?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          docx_storage_path: string
+          id?: string
+          is_published?: boolean
+          name: string
+          scope?: string
+          tokens?: Json
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          docx_storage_path?: string
+          id?: string
+          is_published?: boolean
+          name?: string
+          scope?: string
+          tokens?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doc_templates_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doc_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_access_logs: {
         Row: {
           access_type: string

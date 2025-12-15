@@ -131,3 +131,12 @@ verify_jwt = true
 
 [functions.admin-sql-runner]
 verify_jwt = true
+
+[functions.parse-docx-tokens]
+verify_jwt = true
+
+[functions.documents-preview]
+verify_jwt = true
+
+[functions.documents-finalize]
+verify_jwt = true
