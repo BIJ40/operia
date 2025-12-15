@@ -5,6 +5,7 @@ import {
   Coins, Settings, Users, Database, Activity, ChevronRight, Home, Calendar, LifeBuoy, MessageCircle, Kanban, FolderKanban, HelpCircle, Sparkles, Wrench, Brain, Radar
 } from 'lucide-react';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
+import { hasAccess } from '@/permissions';
 import {
   Sidebar,
   SidebarContent,
@@ -96,7 +97,15 @@ interface NavGroup {
 export function UnifiedSidebar() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { globalRole, agence, canAccessSupportConsoleUI, isAdmin, hasModule } = useAuth();
+  const { globalRole, agence, agencyId, canAccessSupportConsoleUI, isAdmin, enabledModules } = useAuth();
+  
+  // Helper unifié pour vérifier l'accès aux modules (utilise permissionsEngine)
+  const canAccessModule = (moduleKey: string) => hasAccess({
+    globalRole,
+    enabledModules,
+    agencyId,
+    moduleId: moduleKey as any,
+  });
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const menuLabels = useMenuLabels();
@@ -314,22 +323,22 @@ export function UnifiedSidebar() {
   const filteredGroups = navGroups.filter(group => {
     // ✅ FIX F-PERM-2: Filtrer le groupe projects si module apogee_tickets non activé
     if (group.labelKey === 'projects') {
-      return hasModule('apogee_tickets');
+      return canAccessModule('apogee_tickets');
     }
     
     // ✅ FIX: Filtrer Help Academy si module help_academy non activé
     if (group.labelKey === 'help-academy') {
-      return hasModule('help_academy');
+      return canAccessModule('help_academy');
     }
     
     // ✅ FIX: Filtrer Pilotage Agence si module pilotage_agence non activé
     if (group.labelKey === 'pilotage') {
-      return hasModule('pilotage_agence');
+      return canAccessModule('pilotage_agence');
     }
     
     // ✅ FIX P0: Filtrer Mon Espace RH si module rh non activé
     if (group.labelKey === 'rh') {
-      return hasModule('rh');
+      return canAccessModule('rh');
     }
     
     if (!group.accessKey) return true;
