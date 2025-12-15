@@ -143,7 +143,7 @@ export default function RHIndex() {
             <FolderOpen className="h-5 w-5 text-helpconfort-blue" />
             Mon Espace
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {MON_ESPACE_MODULES.map(module => (
               <IndexTile
                 key={module.id}
@@ -190,7 +190,7 @@ export default function RHIndex() {
           <FolderOpen className="h-5 w-5 text-helpconfort-blue" />
           Mon Espace {showN1View ? "Salarié" : ""}
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {MON_ESPACE_MODULES
             .filter(module => showN1View || module.id !== 'demande-rh')
             .map(module => (
@@ -212,7 +212,7 @@ export default function RHIndex() {
             <Users className="h-5 w-5 text-helpconfort-blue" />
             Gestion RH
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {RH_MODULES.map(module => (
               <IndexTile
                 key={module.id}
@@ -233,7 +233,7 @@ export default function RHIndex() {
             <HardHat className="h-5 w-5 text-helpconfort-blue" />
             Maintenance Matériel
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {MAINTENANCE_MODULES.map(module => (
               <IndexTile
                 key={module.id}
