@@ -72,39 +72,7 @@ const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     color: 'text-emerald-500',
     category: 'rh',
   },
-  {
-    key: 'rh_mon_vehicule',
-    moduleKey: 'rh',
-    optionKey: 'mon_vehicule',
-    label: 'Mon Véhicule',
-    shortDescription: 'Voir son véhicule de service assigné',
-    features: [
-      'Consulter les informations de son véhicule',
-      'Voir les dates de CT et révision',
-      'Consulter les informations d\'assurance',
-      'Voir les détails du leasing',
-    ],
-    targetUsers: 'Techniciens avec véhicule attribué',
-    icon: <Car className="w-5 h-5" />,
-    color: 'text-helpconfort-orange',
-    category: 'rh',
-  },
-  {
-    key: 'rh_mon_materiel',
-    moduleKey: 'rh',
-    optionKey: 'mon_materiel',
-    label: 'Mon Matériel',
-    shortDescription: 'Voir son matériel et équipements assignés',
-    features: [
-      'Consulter le matériel attribué',
-      'Voir ses EPI et équipements',
-      'Suivre les dates de renouvellement',
-    ],
-    targetUsers: 'Techniciens et collaborateurs terrain',
-    icon: <Wrench className="w-5 h-5" />,
-    color: 'text-helpconfort-orange',
-    category: 'rh',
-  },
+  // Mon Véhicule et Mes Equipements déplacés dans la catégorie 'parc'
   {
     key: 'rh_viewer',
     moduleKey: 'rh',
@@ -148,6 +116,39 @@ const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
 
   // ===== PARC =====
   {
+    key: 'parc_mon_vehicule',
+    moduleKey: 'parc',
+    optionKey: 'mon_vehicule',
+    label: 'Mon Véhicule',
+    shortDescription: 'Voir son véhicule de service assigné',
+    features: [
+      'Consulter les informations de son véhicule',
+      'Voir les dates de CT et révision',
+      'Signaler une anomalie ou panne',
+      'Faire une demande concernant le véhicule',
+    ],
+    targetUsers: 'Techniciens avec véhicule attribué',
+    icon: <Car className="w-5 h-5" />,
+    color: 'text-helpconfort-orange',
+    category: 'parc',
+  },
+  {
+    key: 'parc_mes_equipements',
+    moduleKey: 'parc',
+    optionKey: 'mes_equipements',
+    label: 'Mes Équipements',
+    shortDescription: 'Voir son matériel et équipements assignés',
+    features: [
+      'Consulter le matériel attribué',
+      'Voir ses EPI et équipements',
+      'Signaler un besoin ou problème',
+    ],
+    targetUsers: 'Techniciens et collaborateurs terrain',
+    icon: <Wrench className="w-5 h-5" />,
+    color: 'text-helpconfort-orange',
+    category: 'parc',
+  },
+  {
     key: 'parc_vehicules',
     moduleKey: 'parc',
     optionKey: 'vehicules',
@@ -163,6 +164,7 @@ const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     targetUsers: 'Dirigeant, Responsable logistique',
     icon: <Car className="w-5 h-5" />,
     color: 'text-helpconfort-orange',
+    minRole: 'franchisee_admin',
     category: 'parc',
   },
   {
@@ -180,6 +182,7 @@ const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     ],
     targetUsers: 'Dirigeant, Responsable sécurité',
     icon: <Wrench className="w-5 h-5" />,
+    minRole: 'franchisee_admin',
     color: 'text-helpconfort-orange',
     category: 'parc',
   },
@@ -337,13 +340,24 @@ const CATEGORY_INFO: Record<string, { label: string; icon: React.ReactNode; desc
 
 // Mapping rôle global → options RH autorisées
 const RH_OPTIONS_BY_ROLE: Record<GlobalRole, string[]> = {
-  base_user: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel'],
-  franchisee_user: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel'],
-  franchisee_admin: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel', 'rh_viewer', 'rh_admin'],
-  franchisor_user: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel', 'rh_viewer', 'rh_admin'],
-  franchisor_admin: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel', 'rh_viewer', 'rh_admin'],
-  platform_admin: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel', 'rh_viewer', 'rh_admin'],
-  superadmin: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel', 'rh_viewer', 'rh_admin'],
+  base_user: ['coffre', 'mon_planning'],
+  franchisee_user: ['coffre', 'mon_planning'],
+  franchisee_admin: ['coffre', 'mon_planning', 'rh_viewer', 'rh_admin'],
+  franchisor_user: ['coffre', 'mon_planning', 'rh_viewer', 'rh_admin'],
+  franchisor_admin: ['coffre', 'mon_planning', 'rh_viewer', 'rh_admin'],
+  platform_admin: ['coffre', 'mon_planning', 'rh_viewer', 'rh_admin'],
+  superadmin: ['coffre', 'mon_planning', 'rh_viewer', 'rh_admin'],
+};
+
+// Mapping rôle global → options Parc autorisées
+const PARC_OPTIONS_BY_ROLE: Record<GlobalRole, string[]> = {
+  base_user: ['mon_vehicule', 'mes_equipements'],
+  franchisee_user: ['mon_vehicule', 'mes_equipements'],
+  franchisee_admin: ['mon_vehicule', 'mes_equipements', 'vehicules', 'equipements'],
+  franchisor_user: ['mon_vehicule', 'mes_equipements', 'vehicules', 'equipements'],
+  franchisor_admin: ['mon_vehicule', 'mes_equipements', 'vehicules', 'equipements'],
+  platform_admin: ['mon_vehicule', 'mes_equipements', 'vehicules', 'equipements'],
+  superadmin: ['mon_vehicule', 'mes_equipements', 'vehicules', 'equipements'],
 };
 
 export const UserModulesTab = memo(function UserModulesTab({
@@ -392,9 +406,11 @@ export const UserModulesTab = memo(function UserModulesTab({
       return allowedOptions.includes(perm.optionKey);
     }
     
-    // Vérifier les contraintes spécifiques Parc (options disponibles pour N2+)
+    // Vérifier les contraintes spécifiques Parc
     if (perm.moduleKey === 'parc' && perm.optionKey) {
-      return GLOBAL_ROLES[userRole] >= GLOBAL_ROLES.franchisee_admin;
+      const allowedOptions = PARC_OPTIONS_BY_ROLE[userRole];
+      if (!allowedOptions) return false;
+      return allowedOptions.includes(perm.optionKey);
     }
     
     // Vérifier le rôle minimum de la permission

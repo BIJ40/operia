@@ -1,18 +1,26 @@
 /**
  * Page Mon Véhicule - Véhicule assigné au technicien (N1)
- * Lecture seule - affiche les infos véhicule, CT, entretien, carte carburant
+ * Lecture seule - affiche les infos véhicule, CT, entretien
+ * SANS détails leasing/assurance sensibles
+ * AVEC boutons signalement/demande
  */
-import React from "react";
-import { Car, AlertTriangle, Calendar, Fuel, Gauge, FileText, CheckCircle } from "lucide-react";
+import React, { useState } from "react";
+import { Car, AlertTriangle, Calendar, Fuel, Gauge, FileText, CheckCircle, MessageSquare, Send } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMyCollaborator } from "@/hooks/rh-employee";
 import { useMyVehicle } from "@/hooks/rh-employee/useMyVehicle";
+import { useCreateRequest } from "@/hooks/rh-employee/useMyRequests";
 import { CollaboratorNotConfigured } from "@/components/rh-employee/CollaboratorNotConfigured";
 import { format, parseISO, differenceInDays, isBefore } from "date-fns";
 import { fr } from "date-fns/locale";
+import { toast } from "sonner";
 
 function DateAlertBadge({ date, label }: { date: string | null; label: string }) {
   if (!date) return <span className="text-muted-foreground text-sm">Non renseigné</span>;
@@ -59,11 +67,55 @@ function VehicleInfoRow({ label, value, icon: Icon }: { label: string; value: Re
   );
 }
 
+type RequestModalType = 'anomaly' | 'request' | null;
+
 function MonVehiculeContent() {
   const { data: collaborator, isLoading: loadingCollaborator } = useMyCollaborator();
   const { data: vehicle, isLoading: loadingVehicle } = useMyVehicle();
+  const { mutate: createRequest, isPending: isCreatingRequest } = useCreateRequest();
+  
+  const [modalType, setModalType] = useState<RequestModalType>(null);
+  const [requestCategory, setRequestCategory] = useState<string>('');
+  const [requestMessage, setRequestMessage] = useState('');
 
   const isLoading = loadingCollaborator || loadingVehicle;
+
+  const handleSubmitRequest = () => {
+    if (!requestMessage.trim()) {
+      toast.error("Veuillez saisir un message");
+      return;
+    }
+
+    const isAnomaly = modalType === 'anomaly';
+    const title = isAnomaly 
+      ? `Signalement véhicule: ${requestCategory || 'Anomalie'}`
+      : `Demande véhicule: ${requestCategory || 'Autre'}`;
+    
+    const description = `Véhicule: ${vehicle?.registration || 'N/A'} - ${vehicle?.brand || ''} ${vehicle?.model || ''}\n\n${requestMessage}`;
+
+    createRequest({
+      request_type: 'OTHER',
+      payload: {
+        title,
+        description,
+        vehicle_id: vehicle?.id,
+        vehicle_registration: vehicle?.registration,
+        category: requestCategory,
+        is_anomaly: isAnomaly,
+        is_vehicle_request: true,
+      }
+    }, {
+      onSuccess: () => {
+        toast.success(isAnomaly ? "Signalement envoyé" : "Demande envoyée");
+        setModalType(null);
+        setRequestCategory('');
+        setRequestMessage('');
+      },
+      onError: () => {
+        toast.error("Erreur lors de l'envoi");
+      }
+    });
+  };
 
   if (isLoading) {
     return (
@@ -126,6 +178,25 @@ function MonVehiculeContent() {
         backTo="/rh"
       />
 
+      {/* Boutons d'action */}
+      <div className="flex flex-wrap gap-3">
+        <Button 
+          variant="outline" 
+          className="border-destructive text-destructive hover:bg-destructive/10"
+          onClick={() => setModalType('anomaly')}
+        >
+          <AlertTriangle className="w-4 h-4 mr-2" />
+          Signaler une anomalie
+        </Button>
+        <Button 
+          variant="outline"
+          onClick={() => setModalType('request')}
+        >
+          <MessageSquare className="w-4 h-4 mr-2" />
+          Faire une demande
+        </Button>
+      </div>
+
       <div className="grid gap-6 md:grid-cols-2">
         {/* Informations véhicule */}
         <Card>
@@ -160,7 +231,7 @@ function MonVehiculeContent() {
           </CardContent>
         </Card>
 
-        {/* Dates importantes */}
+        {/* Dates importantes - Sans leasing */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -178,51 +249,10 @@ function MonVehiculeContent() {
               label="Prochaine révision" 
               value={<DateAlertBadge date={vehicle.next_revision_at} label="Révision" />}
             />
-            <VehicleInfoRow 
-              label="Fin d'assurance" 
-              value={<DateAlertBadge date={vehicle.insurance_expiry_at} label="Assurance" />}
-            />
-            {vehicle.leasing_end_at && (
-              <VehicleInfoRow 
-                label="Fin de leasing" 
-                value={<DateAlertBadge date={vehicle.leasing_end_at} label="Leasing" />}
-              />
-            )}
           </CardContent>
         </Card>
 
-        {/* Assurance & Leasing */}
-        {(vehicle.insurance_company || vehicle.leasing_company) && (
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <FileText className="w-5 h-5" />
-                Assurance & Leasing
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {vehicle.insurance_company && (
-                  <>
-                    <VehicleInfoRow label="Assureur" value={vehicle.insurance_company} />
-                    <VehicleInfoRow label="N° contrat" value={vehicle.insurance_contract_number} />
-                  </>
-                )}
-                {vehicle.leasing_company && (
-                  <>
-                    <VehicleInfoRow label="Société de leasing" value={vehicle.leasing_company} />
-                    <VehicleInfoRow 
-                      label="Mensualité" 
-                      value={vehicle.leasing_monthly_amount ? `${vehicle.leasing_monthly_amount.toLocaleString('fr-FR')} €` : null} 
-                    />
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Notes */}
+        {/* Notes (si présentes) */}
         {vehicle.notes && (
           <Card className="md:col-span-2">
             <CardHeader>
@@ -234,6 +264,79 @@ function MonVehiculeContent() {
           </Card>
         )}
       </div>
+
+      {/* Modal Signalement / Demande */}
+      <Dialog open={modalType !== null} onOpenChange={(open) => !open && setModalType(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {modalType === 'anomaly' ? 'Signaler une anomalie' : 'Faire une demande'}
+            </DialogTitle>
+            <DialogDescription>
+              {modalType === 'anomaly' 
+                ? 'Décrivez le problème rencontré avec votre véhicule'
+                : 'Décrivez votre demande concernant le véhicule'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Catégorie</label>
+              <Select value={requestCategory} onValueChange={setRequestCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner une catégorie" />
+                </SelectTrigger>
+                <SelectContent>
+                  {modalType === 'anomaly' ? (
+                    <>
+                      <SelectItem value="panne">Panne</SelectItem>
+                      <SelectItem value="accident">Accident / Sinistre</SelectItem>
+                      <SelectItem value="voyant">Voyant allumé</SelectItem>
+                      <SelectItem value="bruit">Bruit anormal</SelectItem>
+                      <SelectItem value="usure">Usure / Dégradation</SelectItem>
+                      <SelectItem value="autre">Autre</SelectItem>
+                    </>
+                  ) : (
+                    <>
+                      <SelectItem value="entretien">Demande d'entretien</SelectItem>
+                      <SelectItem value="nettoyage">Nettoyage / Lavage</SelectItem>
+                      <SelectItem value="accessoire">Accessoire / Équipement</SelectItem>
+                      <SelectItem value="carburant">Carte carburant</SelectItem>
+                      <SelectItem value="autre">Autre</SelectItem>
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium mb-2 block">Description</label>
+              <Textarea
+                placeholder={modalType === 'anomaly' 
+                  ? "Décrivez le problème en détail..."
+                  : "Décrivez votre demande..."
+                }
+                value={requestMessage}
+                onChange={(e) => setRequestMessage(e.target.value)}
+                rows={4}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setModalType(null)}>
+              Annuler
+            </Button>
+            <Button 
+              onClick={handleSubmitRequest} 
+              disabled={isCreatingRequest || !requestMessage.trim()}
+            >
+              <Send className="w-4 h-4 mr-2" />
+              {isCreatingRequest ? 'Envoi...' : 'Envoyer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
