@@ -11,6 +11,53 @@ export interface TokenConfig {
 }
 
 /**
+ * Smart tokens that are auto-populated from database
+ * These don't need user input
+ */
+export const SMART_TOKEN_PREFIXES = [
+  "AGENCE_",
+  "DIRIGEANT_",
+  "COLLAB_",
+  "DATE_",
+  "USER_",
+] as const;
+
+/**
+ * Check if a token is a smart token (auto-populated)
+ */
+export function isSmartToken(token: string): boolean {
+  const upper = token.toUpperCase();
+  return SMART_TOKEN_PREFIXES.some(prefix => upper.startsWith(prefix));
+}
+
+/**
+ * Get smart token description
+ */
+export function getSmartTokenDescription(token: string): string {
+  const upper = token.toUpperCase();
+  const descriptions: Record<string, string> = {
+    AGENCE_NOM: "Nom de l'agence (auto)",
+    AGENCE_ADRESSE: "Adresse complète de l'agence (auto)",
+    AGENCE_VILLE: "Ville de l'agence (auto)",
+    AGENCE_CODE_POSTAL: "Code postal de l'agence (auto)",
+    AGENCE_TEL: "Téléphone de l'agence (auto)",
+    DIRIGEANT_NOM: "Nom du dirigeant (auto)",
+    DIRIGEANT_PRENOM: "Prénom du dirigeant (auto)",
+    DIRIGEANT_NOM_COMPLET: "Nom complet du dirigeant (auto)",
+    COLLAB_NOM: "Nom du collaborateur (auto)",
+    COLLAB_PRENOM: "Prénom du collaborateur (auto)",
+    DATE_JOUR: "Jour actuel (auto)",
+    DATE_MOIS: "Mois actuel (auto)",
+    DATE_ANNEE: "Année actuelle (auto)",
+    DATE_COMPLETE: "Date formatée complète (auto)",
+    USER_NOM: "Nom de l'utilisateur connecté (auto)",
+    USER_PRENOM: "Prénom de l'utilisateur connecté (auto)",
+    USER_EMAIL: "Email de l'utilisateur connecté (auto)",
+  };
+  return descriptions[upper] || "Champ pré-rempli automatiquement";
+}
+
+/**
  * Check if tokens array contains TokenConfig objects or plain strings
  */
 export function hasTokenConfigs(tokens: unknown[]): tokens is TokenConfig[] {
