@@ -1,4 +1,5 @@
 import React, { useRef } from "react";
+import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Calendar, Clock, CheckCircle, Send, Loader2, Printer } from "lucide-react";
@@ -10,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+
 
 interface TechWeeklyPlanningListProps {
   techFilterId?: number;
@@ -440,13 +442,11 @@ function PlanningSignModal({
             </div>
           ) : (
             <div className="text-center py-4">
-              <p className="text-muted-foreground text-sm">
-                Aucune signature enregistrée. 
-              </p>
+              <p className="text-muted-foreground text-sm">Aucune signature enregistrée.</p>
               <p className="text-sm mt-1">
-                <a href="/rh/signature" className="text-primary hover:underline">
+                <Link to="/rh/signature" className="text-primary hover:underline">
                   Créer ma signature →
-                </a>
+                </Link>
               </p>
             </div>
           )}

@@ -1,10 +1,11 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { 
   Sparkles, 
@@ -253,10 +254,10 @@ export default function FormationGenerator() {
         {/* Action button */}
         <div className="flex justify-end">
           <Button variant="outline" asChild>
-            <a href="/academy/formation" target="_blank">
+            <Link to="/academy/formation" target="_blank" rel="noreferrer">
               <BookOpen className="w-4 h-4 mr-2" />
               Voir le parcours formation
-            </a>
+            </Link>
           </Button>
         </div>
 

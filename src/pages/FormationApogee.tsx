@@ -1,10 +1,11 @@
 import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -289,13 +290,9 @@ export default function FormationApogee() {
         <Card className="max-w-lg mx-auto text-center p-8">
           <GraduationCap className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
           <h2 className="text-xl font-semibold mb-2">Parcours formation en préparation</h2>
-          <p className="text-muted-foreground mb-4">
-            Les contenus de formation sont en cours de génération par l'IA.
-          </p>
+          <p className="text-muted-foreground mb-4">Les contenus de formation sont en cours de génération par l'IA.</p>
           <Button variant="outline" asChild>
-            <a href="/admin/formation-generator">
-              Accéder au générateur
-            </a>
+            <Link to="/admin/formation-generator">Accéder au générateur</Link>
           </Button>
         </Card>
       </div>

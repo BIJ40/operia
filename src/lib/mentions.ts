@@ -1,38 +1,39 @@
-import { Block } from '@/types/block';
+import { Block } from "@/types/block";
+import { clientNavigate } from "@/lib/clientNavigate";
 
 export interface MentionSuggestion {
   id: string;
   label: string;
   slug: string;
   categorySlug?: string;
-  type: 'category' | 'section';
+  type: "category" | "section";
 }
 
 export function getAllMentionSuggestions(blocks: Block[]): MentionSuggestion[] {
   const suggestions: MentionSuggestion[] = [];
 
   // Add all categories
-  const categories = blocks.filter(b => b.type === 'category');
-  categories.forEach(cat => {
+  const categories = blocks.filter((b) => b.type === "category");
+  categories.forEach((cat) => {
     suggestions.push({
       id: cat.id,
       label: cat.title,
       slug: cat.slug,
-      type: 'category',
+      type: "category",
     });
   });
 
   // Add all sections with their parent category
-  const sections = blocks.filter(b => b.type === 'section');
-  sections.forEach(section => {
-    const parentCategory = categories.find(c => c.id === section.parentId);
+  const sections = blocks.filter((b) => b.type === "section");
+  sections.forEach((section) => {
+    const parentCategory = categories.find((c) => c.id === section.parentId);
     if (parentCategory) {
       suggestions.push({
         id: section.id,
         label: `${parentCategory.title} → ${section.title}`,
         slug: section.slug || section.id,
         categorySlug: parentCategory.slug,
-        type: 'section',
+        type: "section",
       });
     } else {
       // If no parent found, still add the section
@@ -40,7 +41,7 @@ export function getAllMentionSuggestions(blocks: Block[]): MentionSuggestion[] {
         id: section.id,
         label: section.title,
         slug: section.slug || section.id,
-        type: 'section',
+        type: "section",
       });
     }
   });
@@ -49,11 +50,12 @@ export function getAllMentionSuggestions(blocks: Block[]): MentionSuggestion[] {
 }
 
 export function navigateToMention(mention: MentionSuggestion) {
-  if (mention.type === 'category') {
+  if (mention.type === "category") {
     // Navigate to category page
-    window.location.href = `/category/${mention.slug}`;
-  } else if (mention.type === 'section' && mention.categorySlug) {
+    clientNavigate(`/category/${mention.slug}`);
+  } else if (mention.type === "section" && mention.categorySlug) {
     // Navigate to category page and scroll to section
-    window.location.href = `/category/${mention.categorySlug}#${mention.id}`;
+    clientNavigate(`/category/${mention.categorySlug}#${mention.id}`);
   }
 }
+
