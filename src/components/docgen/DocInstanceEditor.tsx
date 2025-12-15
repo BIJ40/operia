@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { ArrowLeft, Eye, Download, CheckCircle, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, Eye, Download, CheckCircle, Loader2, Sparkles } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { DocInstance, useGeneratePreview, useFinalizeDocument } from "@/hooks/docgen/useDocInstances";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { categorizeTokens, SMART_TOKENS, SmartTokenKey } from "@/lib/docgen/smartTokens";
 
 interface DocInstanceEditorProps {
   instance: DocInstance;
@@ -25,6 +26,7 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
   const finalizeDocument = useFinalizeDocument();
 
   const tokens = instance.template?.tokens || [];
+  const { smartTokens, manualTokens } = categorizeTokens(tokens);
 
   const handleTokenChange = (token: string, value: string) => {
     setTokenValues(prev => ({ ...prev, [token]: value }));
@@ -70,24 +72,26 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
     }
   };
 
-  // Auto-fill token hints
+  // Get label for smart token
+  const getSmartTokenLabel = (token: string): string => {
+    const info = SMART_TOKENS[token as SmartTokenKey];
+    return info?.label || token;
+  };
+
+  // Auto-fill token hints for manual tokens
   const getTokenHint = (token: string): string => {
     const hints: Record<string, string> = {
-      nom: "Nom du collaborateur",
-      prenom: "Prénom du collaborateur",
-      date: "Date du document",
-      date_embauche: "Date d'embauche",
-      poste: "Intitulé du poste",
-      salaire: "Salaire mensuel",
-      agence: "Nom de l'agence",
-      adresse_agence: "Adresse de l'agence",
-      signature: "Zone de signature",
+      salaire: "Salaire mensuel brut",
+      motif: "Motif du document",
+      duree: "Durée du contrat",
+      periode_essai: "Durée période d'essai",
+      convention: "Convention collective applicable",
     };
     return hints[token.toLowerCase()] || `Valeur pour ${token}`;
   };
 
   const isLongToken = (token: string): boolean => {
-    const longTokens = ["description", "commentaire", "motif", "observations", "details"];
+    const longTokens = ["description", "commentaire", "motif", "observations", "details", "clause"];
     return longTokens.some(lt => token.toLowerCase().includes(lt));
   };
 
@@ -120,35 +124,63 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {tokens.length === 0 ? (
+            {/* Smart tokens (auto-filled) */}
+            {smartTokens.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                  <Sparkles className="h-4 w-4" />
+                  Champs pré-remplis automatiquement
+                </div>
+                <div className="grid gap-2">
+                  {smartTokens.map(({ token, label }) => (
+                    <div key={token} className="flex items-center justify-between p-2 rounded-md bg-primary/5 border border-primary/10">
+                      <span className="text-sm font-medium">{label}</span>
+                      <Badge variant="outline" className="font-mono text-xs">
+                        {`{{${token}}}`}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Ces champs seront remplis automatiquement avec les données de l'agence, du collaborateur, etc.
+                </p>
+                <Separator />
+              </div>
+            )}
+
+            {/* Manual tokens */}
+            {manualTokens.length > 0 ? (
+              <div className="space-y-4">
+                <div className="text-sm font-medium">Champs à remplir manuellement</div>
+                {manualTokens.map((token) => (
+                  <div key={token} className="space-y-2">
+                    <Label htmlFor={token} className="capitalize">
+                      {token.replace(/_/g, " ")}
+                    </Label>
+                    {isLongToken(token) ? (
+                      <Textarea
+                        id={token}
+                        value={tokenValues[token] || ""}
+                        onChange={(e) => handleTokenChange(token, e.target.value)}
+                        placeholder={getTokenHint(token)}
+                        rows={3}
+                      />
+                    ) : (
+                      <Input
+                        id={token}
+                        value={tokenValues[token] || ""}
+                        onChange={(e) => handleTokenChange(token, e.target.value)}
+                        placeholder={getTokenHint(token)}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : smartTokens.length === 0 ? (
               <p className="text-muted-foreground text-center py-4">
                 Aucun champ à remplir
               </p>
-            ) : (
-              tokens.map((token) => (
-                <div key={token} className="space-y-2">
-                  <Label htmlFor={token} className="capitalize">
-                    {token.replace(/_/g, " ")}
-                  </Label>
-                  {isLongToken(token) ? (
-                    <Textarea
-                      id={token}
-                      value={tokenValues[token] || ""}
-                      onChange={(e) => handleTokenChange(token, e.target.value)}
-                      placeholder={getTokenHint(token)}
-                      rows={3}
-                    />
-                  ) : (
-                    <Input
-                      id={token}
-                      value={tokenValues[token] || ""}
-                      onChange={(e) => handleTokenChange(token, e.target.value)}
-                      placeholder={getTokenHint(token)}
-                    />
-                  )}
-                </div>
-              ))
-            )}
+            ) : null}
 
             <Separator className="my-4" />
 
