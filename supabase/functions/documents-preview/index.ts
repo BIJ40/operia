@@ -286,21 +286,18 @@ serve(async (req) => {
       const gotenbergHeaders: Record<string, string> = {};
       const rawKey = gotenbergApiKey?.trim();
       if (rawKey) {
-        // Allow the secret to be either a raw token (preferred) or a full Authorization value
-        // (e.g. "Bearer ..." or "Basic ...").
+        // Accept either:
+        // - raw token (we will send as Bearer by default)
+        // - full Authorization header value ("Bearer ..." or "Basic ...")
         const tokenKey = rawKey.replace(/^(bearer|basic)\s+/i, "");
 
-        // Always send Authorization (common nginx auth setups) + key headers (common reverse-proxy setups)
-        if (/^(bearer|basic)\s/i.test(rawKey)) {
-          // User provided full Authorization value
-          gotenbergHeaders["Authorization"] = rawKey;
-        } else {
-          // Default: send token as-is (some nginx setups expect a raw token in Authorization)
-          gotenbergHeaders["Authorization"] = tokenKey;
-          // Also provide a Bearer variant via alternate header for reverse proxies that look elsewhere
-          gotenbergHeaders["X-Authorization"] = `Bearer ${tokenKey}`;
-        }
+        const authorizationValue = /^(bearer|basic)\s/i.test(rawKey)
+          ? rawKey
+          : `Bearer ${tokenKey}`;
 
+        gotenbergHeaders["Authorization"] = authorizationValue;
+
+        // Common reverse-proxy key headers
         gotenbergHeaders["X-API-Key"] = tokenKey;
         gotenbergHeaders["X-Api-Key"] = tokenKey;
         gotenbergHeaders["X-Gotenberg-Api-Key"] = tokenKey;
@@ -322,6 +319,47 @@ serve(async (req) => {
       if (!convertResponse.ok) {
         const errorText = await convertResponse.text();
         console.error(`Gotenberg error (${convertResponse.status}):`, errorText);
+
+        // If the PDF service is forbidden/unauthorized (often nginx allowlist or auth mismatch),
+        // degrade gracefully to a DOCX preview so the UI doesn't crash.
+        if (convertResponse.status === 401 || convertResponse.status === 403) {
+          const previewPath = `previews/${instance.agency_id}/${instanceId}/preview.docx`;
+
+          const { error: uploadError } = await supabase.storage
+            .from("doc-generated")
+            .upload(previewPath, modifiedDocx, {
+              contentType:
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+              upsert: true,
+            });
+
+          if (uploadError) {
+            return new Response(
+              JSON.stringify({
+                error: "Failed to upload preview",
+                details: uploadError.message,
+              }),
+              {
+                status: 500,
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+              }
+            );
+          }
+
+          return new Response(
+            JSON.stringify({
+              success: true,
+              previewPath,
+              format: "docx",
+              message:
+                "PDF service returned 403/401 — DOCX preview generated instead.",
+            }),
+            {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            }
+          );
+        }
+
         return new Response(
           JSON.stringify({
             error: "PDF conversion failed",
