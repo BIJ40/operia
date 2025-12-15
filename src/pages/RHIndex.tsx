@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { 
   Users, 
   CalendarDays,
@@ -13,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ROUTES } from "@/config/routes";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { IndexTile } from "@/components/ui/index-tile";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { LucideIcon } from "lucide-react";
 
 interface RHModule {
@@ -113,13 +115,19 @@ const MAINTENANCE_MODULES: RHModule[] = [
 
 export default function RHIndex() {
   const { globalRole } = useAuth();
+  const [adminViewMode, setAdminViewMode] = useState<'n1' | 'n2'>('n2');
   
   const isPlatformAdmin = globalRole === 'platform_admin' || globalRole === 'superadmin';
+  const isN5N6 = isPlatformAdmin;
   const isN2Plus = globalRole === 'franchisee_admin' || globalRole === 'franchisor_user' || 
                    globalRole === 'franchisor_admin' || isPlatformAdmin;
 
-  // N1: Afficher uniquement "Mon Espace"
-  if (!isN2Plus) {
+  // Determine which view to show
+  const showN1View = isN5N6 ? adminViewMode === 'n1' : !isN2Plus;
+  const showN2View = isN5N6 ? adminViewMode === 'n2' : isN2Plus;
+
+  // N1 View (Mon Espace Salarié)
+  if (showN1View && !isN5N6) {
     return (
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
         <PageHeader
@@ -154,11 +162,27 @@ export default function RHIndex() {
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
       <PageHeader
-        title="RH & PARC"
-        subtitle="Gestion des ressources humaines et du matériel"
+        title={showN1View ? "Mon Espace Salarié" : "RH & PARC"}
+        subtitle={showN1View ? "Mon espace personnel" : "Gestion des ressources humaines et du matériel"}
         backTo="/"
         backLabel="Accueil"
       />
+
+      {/* Admin View Tabs - N5/N6 only */}
+      {isN5N6 && (
+        <div className="flex justify-center">
+          <Tabs value={adminViewMode} onValueChange={(v) => setAdminViewMode(v as 'n1' | 'n2')}>
+            <TabsList className="bg-muted/50">
+              <TabsTrigger value="n1" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+                Vue N1 (Salarié)
+              </TabsTrigger>
+              <TabsTrigger value="n2" className="data-[state=active]:bg-helpconfort-blue data-[state=active]:text-white">
+                Vue N2 (Dirigeant)
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+      )}
 
       {/* Section Mon Espace */}
       <section className="space-y-4">
@@ -179,43 +203,47 @@ export default function RHIndex() {
         </div>
       </section>
 
-      {/* Section Gestion RH */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
-          <Users className="h-5 w-5 text-helpconfort-blue" />
-          Gestion RH
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {RH_MODULES.map(module => (
-            <IndexTile
-              key={module.id}
-              title={module.title}
-              description={module.description}
-              icon={module.icon}
-              href={module.href}
-            />
-          ))}
-        </div>
-      </section>
+      {/* Section Gestion RH - N2 view only */}
+      {showN2View && (
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+            <Users className="h-5 w-5 text-helpconfort-blue" />
+            Gestion RH
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {RH_MODULES.map(module => (
+              <IndexTile
+                key={module.id}
+                title={module.title}
+                description={module.description}
+                icon={module.icon}
+                href={module.href}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
-      {/* Section Maintenance Matériel */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
-          <HardHat className="h-5 w-5 text-helpconfort-blue" />
-          Maintenance Matériel
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {MAINTENANCE_MODULES.map(module => (
-            <IndexTile
-              key={module.id}
-              title={module.title}
-              description={module.description}
-              icon={module.icon}
-              href={module.href}
-            />
-          ))}
-        </div>
-      </section>
+      {/* Section Maintenance Matériel - N2 view only */}
+      {showN2View && (
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+            <HardHat className="h-5 w-5 text-helpconfort-blue" />
+            Maintenance Matériel
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {MAINTENANCE_MODULES.map(module => (
+              <IndexTile
+                key={module.id}
+                title={module.title}
+                description={module.description}
+                icon={module.icon}
+                href={module.href}
+              />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
