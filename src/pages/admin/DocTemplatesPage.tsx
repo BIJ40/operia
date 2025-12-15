@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, FileText, Upload, Trash2, Eye, Settings, Check, X } from "lucide-react";
+import { Plus, FileText, Upload, Trash2, Settings } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,12 +30,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { useDocTemplates, useCreateDocTemplate, useUpdateDocTemplate, useDeleteDocTemplate, useParseDocxTokens } from "@/hooks/docgen/useDocTemplates";
+import { useDocTemplates, useCreateDocTemplate, useUpdateDocTemplate, useDeleteDocTemplate, useParseDocxTokens, DocTemplate } from "@/hooks/docgen/useDocTemplates";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
+import TokenConfigEditor from "@/components/docgen/TokenConfigEditor";
+import { TokenConfig, extractTokenNames } from "@/lib/docgen/tokenConfig";
 
 const CATEGORIES = [
   { value: "attestation", label: "Attestations" },
@@ -55,13 +57,14 @@ export default function DocTemplatesPage() {
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<DocTemplate | null>(null);
   const [newTemplate, setNewTemplate] = useState({
     name: "",
     description: "",
     category: "autre",
     scope: "global" as "global" | "agency",
     docx_storage_path: "",
-    tokens: [] as string[],
+    tokens: [] as (string | TokenConfig)[],
   });
 
   const isAdmin = globalRole === "platform_admin" || globalRole === "superadmin";
@@ -137,6 +140,21 @@ export default function DocTemplatesPage() {
       id: templateId,
       is_published: !currentState,
     });
+  };
+
+  const handleSaveTokenConfigs = async (configs: TokenConfig[]) => {
+    if (!editingTemplate) return;
+    
+    await updateTemplate.mutateAsync({
+      id: editingTemplate.id,
+      tokens: configs,
+    });
+    
+    setEditingTemplate(null);
+  };
+
+  const getTokenCount = (tokens: (string | TokenConfig)[]): number => {
+    return extractTokenNames(tokens).length;
   };
 
   return (
@@ -258,10 +276,10 @@ export default function DocTemplatesPage() {
 
               {newTemplate.tokens.length > 0 && (
                 <div className="space-y-2">
-                  <Label>Tokens détectés ({newTemplate.tokens.length})</Label>
+                  <Label>Tokens détectés ({getTokenCount(newTemplate.tokens)})</Label>
                   <div className="max-h-48 overflow-y-auto border rounded-md p-2">
                     <div className="flex flex-wrap gap-1">
-                      {newTemplate.tokens.map((token) => (
+                      {extractTokenNames(newTemplate.tokens).map((token) => (
                         <Badge key={token} variant="secondary">
                           {`{{${token}}}`}
                         </Badge>
@@ -324,7 +342,7 @@ export default function DocTemplatesPage() {
                         {template.scope === "global" ? "Global" : "Agence"}
                       </Badge>
                     </TableCell>
-                    <TableCell>{template.tokens?.length || 0}</TableCell>
+                    <TableCell>{getTokenCount(template.tokens || [])}</TableCell>
                     <TableCell>
                       <Switch
                         checked={template.is_published}
@@ -334,7 +352,15 @@ export default function DocTemplatesPage() {
                     <TableCell>
                       {format(new Date(template.created_at), "dd MMM yyyy", { locale: fr })}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right space-x-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setEditingTemplate(template)}
+                        title="Configurer les champs"
+                      >
+                        <Settings className="h-4 w-4" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -351,6 +377,18 @@ export default function DocTemplatesPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Token Config Editor Dialog */}
+      {editingTemplate && (
+        <TokenConfigEditor
+          open={!!editingTemplate}
+          onOpenChange={(open) => !open && setEditingTemplate(null)}
+          tokens={editingTemplate.tokens || []}
+          templateName={editingTemplate.name}
+          onSave={handleSaveTokenConfigs}
+          isSaving={updateTemplate.isPending}
+        />
+      )}
     </div>
   );
 }

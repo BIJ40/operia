@@ -2,6 +2,8 @@
  * Smart tokens pour DocGen - Tokens auto-remplis depuis les données existantes
  */
 
+import { TokenConfig, getTokenName } from "./tokenConfig";
+
 export const SMART_TOKEN_PREFIXES = {
   AGENCE: 'AGENCE_',
   COLLAB: 'COLLAB_',
@@ -69,20 +71,22 @@ export function getSmartTokenInfo(token: string): { label: string; source: strin
 
 /**
  * Separate tokens into smart (auto-filled) and manual
+ * Accepts both string[] and (string | TokenConfig)[]
  */
-export function categorizeTokens(tokens: string[]): {
+export function categorizeTokens(tokens: (string | TokenConfig)[]): {
   smartTokens: { token: string; label: string }[];
   manualTokens: string[];
 } {
   const smartTokens: { token: string; label: string }[] = [];
   const manualTokens: string[] = [];
 
-  for (const token of tokens) {
-    const info = getSmartTokenInfo(token);
+  for (const t of tokens) {
+    const tokenName = getTokenName(t);
+    const info = getSmartTokenInfo(tokenName);
     if (info) {
-      smartTokens.push({ token, label: info.label });
+      smartTokens.push({ token: tokenName, label: info.label });
     } else {
-      manualTokens.push(token);
+      manualTokens.push(tokenName);
     }
   }
 

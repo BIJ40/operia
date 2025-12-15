@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { TokenConfig } from "@/lib/docgen/tokenConfig";
 
 export interface DocInstance {
   id: string;
@@ -19,7 +20,7 @@ export interface DocInstance {
   template?: {
     id: string;
     name: string;
-    tokens: string[];
+    tokens: (string | TokenConfig)[];
   };
 }
 

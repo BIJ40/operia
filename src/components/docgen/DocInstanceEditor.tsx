@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { DocInstance, useFinalizeDocument } from "@/hooks/docgen/useDocInstances";
 import { toast } from "sonner";
 import { categorizeTokens } from "@/lib/docgen/smartTokens";
+import { TokenConfig, getTokenConfig, formatTokenLabel } from "@/lib/docgen/tokenConfig";
 
 interface DocInstanceEditorProps {
   instance: DocInstance;
@@ -25,11 +26,24 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
   const tokens = instance.template?.tokens || [];
   const { smartTokens, manualTokens } = categorizeTokens(tokens);
 
+  // Build a map of token configs for quick lookup
+  const tokenConfigsMap = useMemo(() => {
+    const map = new Map<string, TokenConfig>();
+    for (const t of tokens) {
+      const config = getTokenConfig(t);
+      map.set(config.token, config);
+    }
+    return map;
+  }, [tokens]);
+
   const hasSmartIntro = smartTokens.length > 0;
 
   // Get current manual token index
   const currentTokenIndex = hasSmartIntro ? currentStep - 1 : currentStep;
   const currentToken = manualTokens[currentTokenIndex];
+
+  // Get current token config
+  const currentTokenConfig = currentToken ? tokenConfigsMap.get(currentToken) : undefined;
 
   const isLastManualToken = manualTokens.length === 0
     ? true
@@ -71,35 +85,17 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
     }
   };
 
-  const getTokenHint = (token: string): string => {
-    const hints: Record<string, string> = {
-      salaire: "Ex: 2500 €",
-      motif: "Ex: Réorganisation du service",
-      duree: "Ex: 12 mois",
-      periode_essai: "Ex: 2 mois",
-      convention: "Ex: Bâtiment et travaux publics",
-      poste: "Ex: Technicien plombier",
-      date_debut: "Ex: 01/01/2025",
-      date_fin: "Ex: 31/12/2025",
-    };
-    return hints[token.toLowerCase()] || `Saisissez la valeur...`;
+  // Get title for a token (from config or fallback)
+  const getTokenTitle = (token: string): string => {
+    const config = tokenConfigsMap.get(token);
+    if (config?.title) return config.title;
+    return formatTokenLabel(token);
   };
 
-  const getTokenLabel = (token: string): string => {
-    const labels: Record<string, string> = {
-      salaire: "Salaire mensuel brut",
-      motif: "Motif",
-      duree: "Durée",
-      periode_essai: "Période d'essai",
-      convention: "Convention collective",
-      poste: "Poste occupé",
-      date_debut: "Date de début",
-      date_fin: "Date de fin",
-      description: "Description",
-      commentaire: "Commentaire",
-      observations: "Observations",
-    };
-    return labels[token.toLowerCase()] || token.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+  // Get description for a token (from config)
+  const getTokenDescription = (token: string): string => {
+    const config = tokenConfigsMap.get(token);
+    return config?.description || "";
   };
 
   const isLongToken = (token: string): boolean => {
@@ -134,11 +130,13 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
 
     const current = Math.min(currentStep + 1, total);
     const tokenNumber = currentTokenIndex + 1;
+    const tokenTitle = currentToken ? getTokenTitle(currentToken) : "Finalisation";
+    
     return {
       current,
       total,
       title: `Champ ${tokenNumber}/${manualTokens.length}`,
-      description: currentToken ? getTokenLabel(currentToken) : "Finalisation",
+      description: tokenTitle,
     };
   };
 
@@ -189,16 +187,16 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
               </>
             )}
             {(currentStep > 0 || smartTokens.length === 0) && currentToken && (
-              stepInfo.description
+              getTokenTitle(currentToken)
             )}
           </CardTitle>
           <CardDescription>
             {currentStep === 0 && smartTokens.length > 0 && 
               stepInfo.description
             }
-            {(currentStep > 0 || smartTokens.length === 0) && currentToken &&
-              `Saisissez la valeur pour ce champ du document`
-            }
+            {(currentStep > 0 || smartTokens.length === 0) && currentToken && (
+              getTokenDescription(currentToken) || "Saisissez la valeur pour ce champ du document"
+            )}
           </CardDescription>
         </CardHeader>
 
@@ -229,14 +227,14 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
           {(currentStep > 0 || smartTokens.length === 0) && currentToken && (
             <div className="space-y-4 flex-1">
               <Label htmlFor={currentToken} className="text-lg font-medium">
-                {getTokenLabel(currentToken)}
+                {getTokenTitle(currentToken)}
               </Label>
               {isLongToken(currentToken) ? (
                 <Textarea
                   id={currentToken}
                   value={tokenValues[currentToken] || ""}
                   onChange={(e) => handleTokenChange(currentToken, e.target.value)}
-                  placeholder={getTokenHint(currentToken)}
+                  placeholder="Saisissez la valeur..."
                   rows={6}
                   className="text-lg"
                   autoFocus
@@ -246,14 +244,16 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
                   id={currentToken}
                   value={tokenValues[currentToken] || ""}
                   onChange={(e) => handleTokenChange(currentToken, e.target.value)}
-                  placeholder={getTokenHint(currentToken)}
+                  placeholder="Saisissez la valeur..."
                   className="text-lg h-14"
                   autoFocus
                 />
               )}
-              <p className="text-sm text-muted-foreground">
-                Ce champ sera inséré dans le document à l'emplacement <code className="bg-muted px-1 rounded">{`{{${currentToken}}}`}</code>
-              </p>
+              {getTokenDescription(currentToken) && (
+                <p className="text-sm text-muted-foreground">
+                  {getTokenDescription(currentToken)}
+                </p>
+              )}
             </div>
           )}
 
