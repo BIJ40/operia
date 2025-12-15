@@ -315,8 +315,10 @@ export function TabHeader() {
                 >
                   <div
                     className={cn(
-                      "relative flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors",
-                      isActive ? "text-white" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      "relative flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-all duration-200",
+                      isActive 
+                        ? "text-white" 
+                        : "text-muted-foreground hover:text-foreground hover:bg-accent hover:shadow-md hover:scale-105"
                     )}
                   >
                     {/* Indicateur morphing rapide */}
@@ -382,10 +384,10 @@ export function TabHeader() {
                     >
                       <div
                         className={cn(
-                          "px-4 py-1.5 text-xs font-medium rounded-full border transition-all duration-150",
+                          "px-4 py-1.5 text-xs font-medium rounded-full border transition-all duration-200",
                           isLinkActive
                             ? "bg-primary/15 text-primary border-primary/30 shadow-sm"
-                            : "text-muted-foreground border-border/50 hover:text-foreground hover:bg-muted/50 hover:border-border hover:scale-[1.02] active:scale-[0.98]"
+                            : "text-muted-foreground border-border/50 hover:text-foreground hover:bg-accent hover:border-primary/40 hover:shadow-md hover:scale-105 active:scale-95"
                         )}
                       >
                         {link.label}
