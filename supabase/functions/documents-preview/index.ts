@@ -6,6 +6,88 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const MOIS_FR = [
+  "janvier", "février", "mars", "avril", "mai", "juin",
+  "juillet", "août", "septembre", "octobre", "novembre", "décembre"
+];
+
+/**
+ * Resolve smart tokens from database data
+ */
+// deno-lint-ignore no-explicit-any
+async function resolveSmartTokens(
+  supabase: any,
+  agencyId: string,
+  collaboratorId: string | null
+): Promise<Record<string, string>> {
+  const resolved: Record<string, string> = {};
+  const now = new Date();
+
+  // Date tokens
+  resolved["DATE_JOUR"] = String(now.getDate());
+  resolved["DATE_MOIS"] = MOIS_FR[now.getMonth()];
+  resolved["DATE_ANNEE"] = String(now.getFullYear());
+  resolved["DATE_COMPLETE"] = `${now.getDate()} ${MOIS_FR[now.getMonth()]} ${now.getFullYear()}`;
+
+  // Agency tokens
+  const { data: agency } = await supabase
+    .from("apogee_agencies")
+    .select("label, adresse, code_postal, ville, contact_email, contact_phone")
+    .eq("id", agencyId)
+    .single();
+
+  if (agency) {
+    resolved["AGENCE_NOM"] = agency.label || "";
+    resolved["AGENCE_ADRESSE"] = agency.adresse || "";
+    resolved["AGENCE_CP"] = agency.code_postal || "";
+    resolved["AGENCE_VILLE"] = agency.ville || "";
+    resolved["AGENCE_EMAIL"] = agency.contact_email || "";
+    resolved["AGENCE_TEL"] = agency.contact_phone || "";
+  }
+
+  // Dirigeant tokens (N2 of agency)
+  const { data: dirigeant } = await supabase
+    .from("profiles")
+    .select("first_name, last_name")
+    .eq("agency_id", agencyId)
+    .eq("global_role", "franchisee_admin")
+    .limit(1)
+    .single();
+
+  if (dirigeant) {
+    resolved["DIRIGEANT_NOM"] = dirigeant.last_name || "";
+    resolved["DIRIGEANT_PRENOM"] = dirigeant.first_name || "";
+    resolved["DIRIGEANT_NOM_COMPLET"] = `${dirigeant.first_name || ""} ${dirigeant.last_name || ""}`.trim();
+  }
+
+  // Collaborator tokens (if linked)
+  if (collaboratorId) {
+    const { data: collab } = await supabase
+      .from("collaborators")
+      .select("first_name, last_name, email, phone, street, postal_code, city, role, hiring_date")
+      .eq("id", collaboratorId)
+      .single();
+
+    if (collab) {
+      resolved["COLLAB_NOM"] = collab.last_name || "";
+      resolved["COLLAB_PRENOM"] = collab.first_name || "";
+      resolved["COLLAB_NOM_COMPLET"] = `${collab.first_name || ""} ${collab.last_name || ""}`.trim();
+      resolved["COLLAB_EMAIL"] = collab.email || "";
+      resolved["COLLAB_TEL"] = collab.phone || "";
+      resolved["COLLAB_ADRESSE"] = collab.street || "";
+      resolved["COLLAB_CP"] = collab.postal_code || "";
+      resolved["COLLAB_VILLE"] = collab.city || "";
+      resolved["COLLAB_POSTE"] = collab.role || "";
+      if (collab.hiring_date) {
+        const hd = new Date(collab.hiring_date);
+        resolved["COLLAB_DATE_EMBAUCHE"] = `${hd.getDate()} ${MOIS_FR[hd.getMonth()]} ${hd.getFullYear()}`;
+      }
+    }
+  }
+
+  return resolved;
+}
+
 /**
  * Generate document preview (DOCX -> PDF via Gotenberg)
  * CRITICAL: Does NOT update database - only generates preview file
@@ -41,7 +123,7 @@ serve(async (req) => {
     // Get user profile for agency verification
     const { data: profile } = await supabase
       .from("profiles")
-      .select("agency_id, global_role")
+      .select("agency_id, global_role, first_name, last_name, email")
       .eq("id", user.id)
       .single();
 
@@ -120,7 +202,18 @@ serve(async (req) => {
     const JSZip = (await import("https://esm.sh/jszip@3.10.1")).default;
     const zip = await JSZip.loadAsync(await templateFile.arrayBuffer());
 
-    const values = tokenValues || instance.token_values || {};
+    // Resolve smart tokens first
+    const smartValues = await resolveSmartTokens(supabase, instance.agency_id, instance.collaborator_id);
+    
+    // Add user tokens
+    smartValues["USER_NOM"] = profile.last_name || "";
+    smartValues["USER_PRENOM"] = profile.first_name || "";
+    smartValues["USER_EMAIL"] = profile.email || "";
+
+    // Merge: smart tokens + manual values (manual values can override)
+    const values = { ...smartValues, ...(tokenValues || instance.token_values || {}) };
+
+    console.log("Resolved tokens:", Object.keys(values).length);
 
     // Process all XML files
     const xmlFiles = [
