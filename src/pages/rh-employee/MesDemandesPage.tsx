@@ -2,7 +2,7 @@
  * Page Mes Demandes RH & Equipement - Création et suivi des demandes
  */
 import React, { useState } from "react";
-import { Plus, FileText, Clock, CheckCircle, XCircle, Trash2, User, Download, Loader2, Eye, CheckSquare } from "lucide-react";
+import { Plus, FileText, Clock, CheckCircle, XCircle, Trash2, User, Download, Loader2, Eye, CheckSquare, Archive, Inbox } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -15,7 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useMyRequests, useCreateRequest, useCancelRequest, useDownloadMyLetter, useMyCollaborator, type RequestType, type RequestStatus } from "@/hooks/rh-employee";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useMyRequests, useCreateRequest, useCancelRequest, useDownloadMyLetter, useMyCollaborator, useArchiveMyRequest, canArchiveRequest, type RequestType, type RequestStatus } from "@/hooks/rh-employee";
 import { CollaboratorNotConfigured } from "@/components/rh-employee/CollaboratorNotConfigured";
 
 const REQUEST_TYPES: { value: RequestType; label: string; emoji: string }[] = [
@@ -139,10 +140,16 @@ function CreateRequestDialog({ onClose }: { onClose: () => void }) {
 
 export default function MesDemandesPage() {
   const { data: collaborator, isLoading: isLoadingCollaborator } = useMyCollaborator();
-  const { data: requests, isLoading, error } = useMyRequests();
+  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
+  const { data: activeRequests = [], isLoading: isLoadingActive } = useMyRequests({ archived: false });
+  const { data: archivedRequests = [], isLoading: isLoadingArchived } = useMyRequests({ archived: true });
   const cancelRequest = useCancelRequest();
   const downloadLetter = useDownloadMyLetter();
+  const archiveRequest = useArchiveMyRequest();
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  const requests = activeTab === 'active' ? activeRequests : archivedRequests;
+  const isLoading = activeTab === 'active' ? isLoadingActive : isLoadingArchived;
 
   if (isLoadingCollaborator || isLoading) {
     return (
@@ -175,25 +182,6 @@ export default function MesDemandesPage() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-6">
-        <PageHeader
-          title="Mes Demandes RH & Equipement"
-          subtitle="Vos demandes en cours et passées"
-          backTo="/rh"
-        />
-        <Card className="border-destructive">
-          <CardContent className="pt-6">
-            <p className="text-destructive">
-              Erreur lors du chargement de vos demandes.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
       <PageHeader
@@ -202,41 +190,64 @@ export default function MesDemandesPage() {
         backTo="/rh"
       />
 
-      {/* Actions */}
-      <div className="flex items-center justify-between">
-        <Badge variant="secondary" className="text-sm px-3 py-1">
-          {requests?.length || 0} demande{(requests?.length || 0) > 1 ? "s" : ""}
-        </Badge>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'active' | 'archived')} className="w-full">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <TabsList>
+            <TabsTrigger value="active" className="flex items-center gap-2">
+              <Inbox className="h-4 w-4" />
+              En cours ({activeRequests.length})
+            </TabsTrigger>
+            <TabsTrigger value="archived" className="flex items-center gap-2">
+              <Archive className="h-4 w-4" />
+              Archivées ({archivedRequests.length})
+            </TabsTrigger>
+          </TabsList>
 
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Nouvelle demande
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Créer une demande</DialogTitle>
-            </DialogHeader>
-            <CreateRequestDialog onClose={() => setDialogOpen(false)} />
-          </DialogContent>
-        </Dialog>
-      </div>
+          {activeTab === 'active' && (
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nouvelle demande
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Créer une demande</DialogTitle>
+                </DialogHeader>
+                <CreateRequestDialog onClose={() => setDialogOpen(false)} />
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
+      </Tabs>
 
       {/* Requests List */}
-      {!requests || requests.length === 0 ? (
+      {requests.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <FileText className="w-12 h-12 text-muted-foreground mb-4" />
-            <h3 className="font-medium text-lg mb-2">Aucune demande</h3>
-            <p className="text-muted-foreground text-sm mb-4">
-              Créez votre première demande RH.
-            </p>
-            <Button onClick={() => setDialogOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Créer une demande
-            </Button>
+            {activeTab === 'active' ? (
+              <>
+                <FileText className="w-12 h-12 text-muted-foreground mb-4" />
+                <h3 className="font-medium text-lg mb-2">Aucune demande en cours</h3>
+                <p className="text-muted-foreground text-sm mb-4">
+                  Créez votre première demande RH.
+                </p>
+                <Button onClick={() => setDialogOpen(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Créer une demande
+                </Button>
+              </>
+            ) : (
+              <>
+                <Archive className="w-12 h-12 text-muted-foreground mb-4" />
+                <h3 className="font-medium text-lg mb-2">Aucune demande archivée</h3>
+                <p className="text-muted-foreground text-sm">
+                  Les demandes terminées peuvent être archivées.
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -315,7 +326,7 @@ export default function MesDemandesPage() {
                     </div>
                   )}
 
-                  {req.status === "SUBMITTED" && (
+                  {req.status === "SUBMITTED" && activeTab === 'active' && (
                     <div className="pt-2 border-t">
                       <Button
                         variant="ghost"
@@ -326,6 +337,25 @@ export default function MesDemandesPage() {
                       >
                         <Trash2 className="w-4 h-4 mr-2" />
                         Annuler la demande
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Archive button for completed requests */}
+                  {activeTab === 'active' && canArchiveRequest(req.status) && (
+                    <div className="pt-2 border-t">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => archiveRequest.mutate(req.id)}
+                        disabled={archiveRequest.isPending}
+                      >
+                        {archiveRequest.isPending ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Archive className="w-4 h-4 mr-2" />
+                        )}
+                        Archiver
                       </Button>
                     </div>
                   )}

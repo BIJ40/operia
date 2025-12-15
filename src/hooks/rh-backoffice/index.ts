@@ -8,6 +8,7 @@ export {
   useAddLetterToVault,
   useMarkRequestAsSeen,
   useMarkRequestAsProcessed,
+  useArchiveRequest,
   isVehicleOrEquipmentRequest,
   type RHRequestWithEmployee,
   type RequestType,

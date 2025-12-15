@@ -26,6 +26,8 @@ export interface RHRequestWithEmployee {
   processing_info: Record<string, unknown> | null;
   seen_at: string | null;
   seen_by: string | null;
+  archived_at: string | null;
+  archived_by: string | null;
   created_at: string;
   updated_at: string;
   // Joined data
@@ -50,6 +52,7 @@ export function isVehicleOrEquipmentRequest(request: RHRequestWithEmployee): boo
 export function useAgencyRequests(filters?: {
   status?: RequestStatus[];
   request_type?: RequestType[];
+  archived?: boolean;
 }) {
   const { agencyId } = useAuth();
 
@@ -69,6 +72,13 @@ export function useAgencyRequests(filters?: {
       }
       if (filters?.request_type?.length) {
         query = query.in("request_type", filters.request_type);
+      }
+      
+      // Filter by archived status
+      if (filters?.archived === true) {
+        query = query.not("archived_at", "is", null);
+      } else if (filters?.archived === false) {
+        query = query.is("archived_at", null);
       }
 
       const { data, error } = await query;
@@ -536,6 +546,43 @@ export function useMarkRequestAsProcessed() {
       queryClient.invalidateQueries({ queryKey: ["rh-notifications"] });
       queryClient.invalidateQueries({ queryKey: ["rh-notifications-count"] });
       toast.success("Demande traitée");
+    },
+    onError: (error) => {
+      toast.error(`Erreur: ${error.message}`);
+    },
+  });
+}
+
+/**
+ * Hook pour archiver une demande terminée (PROCESSED, APPROVED, REJECTED)
+ */
+export function useArchiveRequest() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (requestId: string) => {
+      if (!user?.id) throw new Error("Non authentifié");
+
+      const { error } = await supabase
+        .from("rh_requests")
+        .update({
+          archived_at: new Date().toISOString(),
+          archived_by: user.id,
+        })
+        .eq("id", requestId);
+
+      if (error) {
+        logError("Erreur archivage demande:", error);
+        throw error;
+      }
+
+      logInfo(`Demande ${requestId} archivée`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["agency-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["my-requests"] });
+      toast.success("Demande archivée");
     },
     onError: (error) => {
       toast.error(`Erreur: ${error.message}`);

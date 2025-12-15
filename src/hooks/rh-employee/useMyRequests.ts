@@ -26,6 +26,8 @@ export interface RHRequest {
   reviewed_by: string | null;
   reviewed_at: string | null;
   decision_comment: string | null;
+  archived_at: string | null;
+  archived_by: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -35,7 +37,12 @@ export interface CreateRequestPayload {
   payload: Record<string, unknown>;
 }
 
-export function useMyRequests() {
+// Helper to check if request can be archived
+export function canArchiveRequest(status: RequestStatus): boolean {
+  return ['PROCESSED', 'APPROVED', 'REJECTED'].includes(status);
+}
+
+export function useMyRequests(filters?: { archived?: boolean }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -65,15 +72,24 @@ export function useMyRequests() {
   }, [user?.id, queryClient]);
 
   return useQuery({
-    queryKey: ["my-requests", user?.id],
+    queryKey: ["my-requests", user?.id, filters?.archived],
     queryFn: async (): Promise<RHRequest[]> => {
       if (!user?.id) return [];
 
-      const { data, error } = await supabase
+      let query = supabase
         .from("rh_requests")
         .select("*")
         .eq("employee_user_id", user.id)
         .order("created_at", { ascending: false });
+
+      // Filter by archived status
+      if (filters?.archived === true) {
+        query = query.not("archived_at", "is", null);
+      } else if (filters?.archived === false) {
+        query = query.is("archived_at", null);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         logError("Erreur récupération demandes:", error);
@@ -257,6 +273,43 @@ export function useDownloadMyLetter() {
       } else {
         throw new Error("URL de téléchargement non disponible");
       }
+    },
+    onError: (error) => {
+      toast.error(`Erreur: ${error.message}`);
+    },
+  });
+}
+
+/**
+ * Hook pour archiver une de ses demandes terminées (N1)
+ */
+export function useArchiveMyRequest() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (requestId: string) => {
+      if (!user?.id) throw new Error("Non authentifié");
+
+      const { error } = await supabase
+        .from("rh_requests")
+        .update({
+          archived_at: new Date().toISOString(),
+          archived_by: user.id,
+        })
+        .eq("id", requestId)
+        .eq("employee_user_id", user.id);
+
+      if (error) {
+        logError("Erreur archivage demande:", error);
+        throw error;
+      }
+
+      logInfo(`Demande ${requestId} archivée`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-requests"] });
+      toast.success("Demande archivée");
     },
     onError: (error) => {
       toast.error(`Erreur: ${error.message}`);

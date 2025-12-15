@@ -8,6 +8,8 @@ export {
   useCreateRequest, 
   useCancelRequest,
   useDownloadMyLetter,
+  useArchiveMyRequest,
+  canArchiveRequest,
   type RHRequest, 
   type RequestType, 
   type RequestStatus, 
