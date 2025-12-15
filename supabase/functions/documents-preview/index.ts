@@ -267,7 +267,12 @@ serve(async (req) => {
     if (gotenbergUrl) {
       // Convert DOCX to PDF via Gotenberg
       const gotenbergBaseUrl = gotenbergUrl.replace(/\/+$/, "");
-      const convertUrl = `${gotenbergBaseUrl}/forms/libreoffice/convert`;
+      // Accept both formats:
+      // - GOTENBERG_URL = https://host (base)
+      // - GOTENBERG_URL = https://host/forms/libreoffice/convert (full endpoint)
+      const convertUrl = gotenbergBaseUrl.includes("/forms/")
+        ? gotenbergBaseUrl
+        : `${gotenbergBaseUrl}/forms/libreoffice/convert`;
 
       const formData = new FormData();
       formData.append(
@@ -279,14 +284,20 @@ serve(async (req) => {
       );
 
       const gotenbergHeaders: Record<string, string> = {};
-      const apiKey = gotenbergApiKey?.trim();
-      if (apiKey) {
-        // Some deployments expect Authorization: Bearer, others expect X-API-Key (nginx may return 403 otherwise)
-        gotenbergHeaders["Authorization"] = apiKey.toLowerCase().startsWith("bearer ")
-          ? apiKey
-          : `Bearer ${apiKey}`;
-        gotenbergHeaders["X-API-Key"] = apiKey;
-        gotenbergHeaders["X-Api-Key"] = apiKey;
+      const rawKey = gotenbergApiKey?.trim();
+      if (rawKey) {
+        // Allow the secret to be either a raw token (preferred) or a full Authorization value
+        // (e.g. "Bearer ..." or "Basic ...").
+        const tokenKey = rawKey.replace(/^(bearer|basic)\s+/i, "");
+
+        if (/^(bearer|basic)\s/i.test(rawKey)) {
+          gotenbergHeaders["Authorization"] = rawKey;
+        }
+
+        // Common reverse-proxy API key headers
+        gotenbergHeaders["X-API-Key"] = tokenKey;
+        gotenbergHeaders["X-Api-Key"] = tokenKey;
+        gotenbergHeaders["X-Gotenberg-Api-Key"] = tokenKey;
       }
 
       const convertResponse = await fetch(convertUrl, {

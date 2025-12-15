@@ -263,28 +263,37 @@ serve(async (req) => {
     let finalFormat: string;
 
     if (gotenbergUrl) {
-      // Convert to PDF
-      const gotenbergBaseUrl = gotenbergUrl.replace(/\/+$/, "");
-      const convertUrl = `${gotenbergBaseUrl}/forms/libreoffice/convert`;
+       // Convert to PDF
+       const gotenbergBaseUrl = gotenbergUrl.replace(/\/+$/, "");
+       // Accept both formats:
+       // - GOTENBERG_URL = https://host (base)
+       // - GOTENBERG_URL = https://host/forms/libreoffice/convert (full endpoint)
+       const convertUrl = gotenbergBaseUrl.includes("/forms/")
+         ? gotenbergBaseUrl
+         : `${gotenbergBaseUrl}/forms/libreoffice/convert`;
 
-      const formData = new FormData();
-      formData.append(
-        "files",
-        new Blob([modifiedDocx], {
-          type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        }),
-        "document.docx"
-      );
+       const formData = new FormData();
+       formData.append(
+         "files",
+         new Blob([modifiedDocx], {
+           type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+         }),
+         "document.docx"
+       );
 
-      const gotenbergHeaders: Record<string, string> = {};
-      const apiKey = gotenbergApiKey?.trim();
-      if (apiKey) {
-        gotenbergHeaders["Authorization"] = apiKey.toLowerCase().startsWith("bearer ")
-          ? apiKey
-          : `Bearer ${apiKey}`;
-        gotenbergHeaders["X-API-Key"] = apiKey;
-        gotenbergHeaders["X-Api-Key"] = apiKey;
-      }
+       const gotenbergHeaders: Record<string, string> = {};
+       const rawKey = gotenbergApiKey?.trim();
+       if (rawKey) {
+         const tokenKey = rawKey.replace(/^(bearer|basic)\s+/i, "");
+
+         if (/^(bearer|basic)\s/i.test(rawKey)) {
+           gotenbergHeaders["Authorization"] = rawKey;
+         }
+
+         gotenbergHeaders["X-API-Key"] = tokenKey;
+         gotenbergHeaders["X-Api-Key"] = tokenKey;
+         gotenbergHeaders["X-Gotenberg-Api-Key"] = tokenKey;
+       }
 
       const convertResponse = await fetch(convertUrl, {
         method: "POST",
