@@ -354,7 +354,14 @@ export function TabHeader() {
                 className="flex items-center justify-center gap-2 pb-3 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               >
                 {subTabs.map((link) => {
-                  const isLinkActive = location.pathname === link.href || location.pathname.startsWith(link.href + '/');
+                  // Trouver le lien le plus spécifique qui match pour éviter les doubles surlignages
+                  const matchingLinks = subTabs.filter(l => 
+                    location.pathname === l.href || location.pathname.startsWith(l.href + '/')
+                  );
+                  const mostSpecificMatch = matchingLinks.reduce((best, current) => 
+                    current.href.length > best.href.length ? current : best
+                  , matchingLinks[0]);
+                  const isLinkActive = mostSpecificMatch?.href === link.href;
                   
                   if (link.isDisabled) {
                     return (
