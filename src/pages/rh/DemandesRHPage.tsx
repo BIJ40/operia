@@ -44,6 +44,8 @@ const STATUS_CONFIG: Record<RequestStatus, { label: string; variant: "default" |
   APPROVED: { label: "Approuvée", variant: "default" },
   REJECTED: { label: "Refusée", variant: "destructive" },
   CANCELLED: { label: "Annulée", variant: "outline" },
+  SEEN: { label: "Vu", variant: "secondary" },
+  PROCESSED: { label: "Traitée", variant: "default" },
 };
 
 const TYPE_LABELS: Record<string, string> = {

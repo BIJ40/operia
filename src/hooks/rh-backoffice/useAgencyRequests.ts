@@ -8,7 +8,7 @@ import { logError, logInfo } from "@/lib/logger";
 import { toast } from "sonner";
 
 export type RequestType = "EPI_RENEWAL" | "LEAVE" | "DOCUMENT" | "OTHER";
-export type RequestStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "CANCELLED";
+export type RequestStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "CANCELLED" | "SEEN" | "PROCESSED";
 
 export interface RHRequestWithEmployee {
   id: string;
@@ -23,6 +23,9 @@ export interface RHRequestWithEmployee {
   reviewed_by: string | null;
   reviewed_at: string | null;
   decision_comment: string | null;
+  processing_info: Record<string, unknown> | null;
+  seen_at: string | null;
+  seen_by: string | null;
   created_at: string;
   updated_at: string;
   // Joined data
@@ -36,6 +39,12 @@ export interface RHRequestWithEmployee {
     first_name: string | null;
     last_name: string | null;
   } | null;
+}
+
+// Helper to check if request is vehicle/equipment related (uses different workflow)
+export function isVehicleOrEquipmentRequest(request: RHRequestWithEmployee): boolean {
+  const payload = request.payload || {};
+  return !!(payload.is_vehicle_request || payload.is_equipment_request);
 }
 
 export function useAgencyRequests(filters?: {
@@ -379,6 +388,154 @@ export function useAddLetterToVault() {
       queryClient.invalidateQueries({ queryKey: ["agency-requests"] });
       queryClient.invalidateQueries({ queryKey: ["collaborator-documents"] });
       toast.success("Lettre ajoutée au coffre du salarié");
+    },
+    onError: (error) => {
+      toast.error(`Erreur: ${error.message}`);
+    },
+  });
+}
+
+/**
+ * Hook pour marquer une demande véhicule/matériel comme VUE (N2 a pris connaissance)
+ */
+export function useMarkRequestAsSeen() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (requestId: string) => {
+      if (!user?.id) throw new Error("Non authentifié");
+
+      const { error } = await supabase
+        .from("rh_requests")
+        .update({
+          status: "SEEN",
+          seen_at: new Date().toISOString(),
+          seen_by: user.id,
+        })
+        .eq("id", requestId);
+
+      if (error) {
+        logError("Erreur marquage VU:", error);
+        throw error;
+      }
+
+      logInfo(`Demande ${requestId} marquée comme vue`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["agency-requests"] });
+      toast.success("Demande marquée comme vue");
+    },
+    onError: (error) => {
+      toast.error(`Erreur: ${error.message}`);
+    },
+  });
+}
+
+/**
+ * Hook pour marquer une demande véhicule/matériel comme TRAITÉE avec infos optionnelles
+ */
+export function useMarkRequestAsProcessed() {
+  const { user, agencyId } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      requestId, 
+      processingInfo 
+    }: { 
+      requestId: string; 
+      processingInfo?: {
+        garage_date?: string;
+        notes?: string;
+        action_taken?: string;
+      };
+    }) => {
+      if (!user?.id) throw new Error("Non authentifié");
+
+      // Get request details first to find the employee
+      const { data: request, error: fetchError } = await supabase
+        .from("rh_requests")
+        .select("employee_user_id, request_type, agency_id, payload")
+        .eq("id", requestId)
+        .single();
+
+      if (fetchError) {
+        logError("Erreur récupération demande:", fetchError);
+        throw fetchError;
+      }
+
+      // Update the request status
+      const { error } = await supabase
+        .from("rh_requests")
+        .update({
+          status: "PROCESSED",
+          reviewed_by: user.id,
+          reviewed_at: new Date().toISOString(),
+          processing_info: processingInfo || null,
+        })
+        .eq("id", requestId);
+
+      if (error) {
+        logError("Erreur traitement demande:", error);
+        throw error;
+      }
+
+      // Get collaborator_id for the employee (optional)
+      const { data: collaborator } = await supabase
+        .from("collaborators")
+        .select("id")
+        .eq("user_id", request.employee_user_id)
+        .maybeSingle();
+
+      // Create notification for the employee (N2→N1)
+      const payloadObj = (request.payload && typeof request.payload === 'object') ? request.payload as Record<string, unknown> : {};
+      const isVehicle = payloadObj?.is_vehicle_request;
+      const isAnomaly = payloadObj?.is_anomaly;
+      
+      let notificationTitle = "Demande traitée";
+      let notificationMessage = "Votre demande a été traitée";
+      
+      if (isVehicle) {
+        notificationTitle = isAnomaly ? "Signalement véhicule traité" : "Demande véhicule traitée";
+        notificationMessage = isAnomaly 
+          ? "Votre signalement véhicule a été pris en charge"
+          : "Votre demande concernant le véhicule a été traitée";
+        
+        if (processingInfo?.garage_date) {
+          notificationMessage += `. RDV garage : ${processingInfo.garage_date}`;
+        }
+        if (processingInfo?.notes) {
+          notificationMessage += `. Info : ${processingInfo.notes}`;
+        }
+      } else {
+        notificationTitle = "Demande matériel traitée";
+        notificationMessage = "Votre demande concernant le matériel a été traitée";
+        if (processingInfo?.notes) {
+          notificationMessage += `. Info : ${processingInfo.notes}`;
+        }
+      }
+
+      const { error: notifErr } = await supabase.from("rh_notifications").insert({
+        collaborator_id: collaborator?.id ?? null,
+        recipient_id: request.employee_user_id,
+        sender_id: user.id,
+        agency_id: request.agency_id,
+        notification_type: "REQUEST_COMPLETED",
+        title: notificationTitle,
+        message: notificationMessage,
+        related_request_id: requestId,
+      });
+
+      if (notifErr) logError("Erreur notification N2→N1 (processed):", notifErr);
+
+      logInfo(`Demande ${requestId} traitée`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["agency-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["rh-notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["rh-notifications-count"] });
+      toast.success("Demande traitée");
     },
     onError: (error) => {
       toast.error(`Erreur: ${error.message}`);

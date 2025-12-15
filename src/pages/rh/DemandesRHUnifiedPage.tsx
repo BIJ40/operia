@@ -1,12 +1,19 @@
 /**
- * Page N2 unifiée pour traiter TOUTES les demandes RH (EPI, congés, documents)
+ * Page N2 unifiée pour traiter TOUTES les demandes RH (EPI, congés, documents, véhicules, matériel)
  * Source de vérité: table rh_requests
+ * 
+ * WORKFLOW:
+ * - Demandes RH classiques (congés, EPI, documents): SUBMITTED → APPROVED/REJECTED
+ * - Demandes véhicules/matériel: SUBMITTED → SEEN → PROCESSED (avec popup infos optionnelles)
  */
 import { useState, useMemo } from 'react';
 import { 
   useAgencyRequests, 
   useApproveRequest, 
   useRejectRequest,
+  useMarkRequestAsSeen,
+  useMarkRequestAsProcessed,
+  isVehicleOrEquipmentRequest,
   type RHRequestWithEmployee,
   type RequestStatus,
   type RequestType,
@@ -22,8 +29,17 @@ import {
   SelectItem,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Inbox, Check, X, User, Calendar, FileText, HardHat } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Loader2, Inbox, Check, X, User, Calendar, FileText, HardHat, Eye, CheckCircle, Car, Wrench } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ROUTES } from '@/config/routes';
 import { format } from 'date-fns';
@@ -44,6 +60,8 @@ const STATUS_BADGE_VARIANTS: Record<RequestStatus, 'outline' | 'default' | 'seco
   APPROVED: 'secondary',
   REJECTED: 'destructive',
   CANCELLED: 'outline',
+  SEEN: 'secondary',
+  PROCESSED: 'secondary',
 };
 
 const STATUS_LABELS: Record<RequestStatus, string> = {
@@ -52,13 +70,23 @@ const STATUS_LABELS: Record<RequestStatus, string> = {
   APPROVED: 'Approuvé',
   REJECTED: 'Refusé',
   CANCELLED: 'Annulée',
+  SEEN: 'Vu',
+  PROCESSED: 'Traitée',
 };
 
 export default function DemandesRHUnifiedPage() {
-  const [statusFilter, setStatusFilter] = useState<RequestStatus | 'ALL'>('SUBMITTED');
+  const [statusFilter, setStatusFilter] = useState<RequestStatus | 'ALL'>('ALL');
   const [typeFilter, setTypeFilter] = useState<RequestType | 'ALL'>('ALL');
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [rejectComment, setRejectComment] = useState('');
+  
+  // Dialog for processing vehicle/equipment requests
+  const [processDialogOpen, setProcessDialogOpen] = useState(false);
+  const [processingInfo, setProcessingInfo] = useState({
+    garage_date: '',
+    notes: '',
+    action_taken: '',
+  });
 
   // Fetch requests from rh_requests table
   const { data: requests = [], isLoading, error } = useAgencyRequests({
@@ -68,6 +96,8 @@ export default function DemandesRHUnifiedPage() {
 
   const approveMutation = useApproveRequest();
   const rejectMutation = useRejectRequest();
+  const markSeenMutation = useMarkRequestAsSeen();
+  const markProcessedMutation = useMarkRequestAsProcessed();
 
   // Fetch collaborator names
   const employeeIds = useMemo(() => [...new Set(requests.map(r => r.employee_user_id))], [requests]);
@@ -95,6 +125,7 @@ export default function DemandesRHUnifiedPage() {
   });
 
   const currentRequest = requests.find(r => r.id === selectedRequestId);
+  const isVehicleRequest = currentRequest ? isVehicleOrEquipmentRequest(currentRequest) : false;
 
   const formatDate = (date: string) => {
     return format(new Date(date), "dd MMM yyyy 'à' HH:mm", { locale: fr });
@@ -117,6 +148,25 @@ export default function DemandesRHUnifiedPage() {
     return payload.description as string || '-';
   };
 
+  const getRequestTypeDisplay = (request: RHRequestWithEmployee) => {
+    const payload = request.payload || {};
+    if (payload.is_vehicle_request) {
+      return payload.is_anomaly ? 'Signalement véhicule' : 'Demande véhicule';
+    }
+    if (payload.is_equipment_request) {
+      return 'Demande matériel';
+    }
+    return REQUEST_TYPE_LABELS[request.request_type].label;
+  };
+
+  const getRequestIcon = (request: RHRequestWithEmployee) => {
+    const payload = request.payload || {};
+    if (payload.is_vehicle_request) return Car;
+    if (payload.is_equipment_request) return Wrench;
+    return REQUEST_TYPE_LABELS[request.request_type].icon;
+  };
+
+  // REGULAR RH WORKFLOW (approve/reject)
   const handleApprove = async () => {
     if (!currentRequest) return;
     await approveMutation.mutateAsync({ requestId: currentRequest.id });
@@ -128,6 +178,30 @@ export default function DemandesRHUnifiedPage() {
     await rejectMutation.mutateAsync({ requestId: currentRequest.id, comment: rejectComment });
     setSelectedRequestId(null);
     setRejectComment('');
+  };
+
+  // VEHICLE/EQUIPMENT WORKFLOW (seen → processed)
+  const handleMarkAsSeen = async () => {
+    if (!currentRequest) return;
+    await markSeenMutation.mutateAsync(currentRequest.id);
+  };
+
+  const handleOpenProcessDialog = () => {
+    setProcessingInfo({ garage_date: '', notes: '', action_taken: '' });
+    setProcessDialogOpen(true);
+  };
+
+  const handleMarkAsProcessed = async () => {
+    if (!currentRequest) return;
+    await markProcessedMutation.mutateAsync({
+      requestId: currentRequest.id,
+      processingInfo: processingInfo.garage_date || processingInfo.notes || processingInfo.action_taken 
+        ? processingInfo 
+        : undefined,
+    });
+    setProcessDialogOpen(false);
+    setSelectedRequestId(null);
+    setProcessingInfo({ garage_date: '', notes: '', action_taken: '' });
   };
 
   if (isLoading) {
@@ -142,7 +216,7 @@ export default function DemandesRHUnifiedPage() {
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       <PageHeader
         title="Demandes RH"
-        subtitle="Gérez toutes les demandes de vos collaborateurs (congés, EPI, documents)"
+        subtitle="Gérez toutes les demandes de vos collaborateurs (congés, EPI, véhicules, matériel)"
         backTo={ROUTES.rh.index}
         backLabel="Espace RH"
       />
@@ -151,7 +225,7 @@ export default function DemandesRHUnifiedPage() {
         <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-4">
           <CardTitle className="flex items-center gap-2">
             <Inbox className="h-5 w-5" />
-            Demandes en cours ({requests.length})
+            Demandes ({requests.length})
           </CardTitle>
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
@@ -165,7 +239,7 @@ export default function DemandesRHUnifiedPage() {
                   <SelectItem value="LEAVE">Congés</SelectItem>
                   <SelectItem value="EPI_RENEWAL">EPI</SelectItem>
                   <SelectItem value="DOCUMENT">Documents</SelectItem>
-                  <SelectItem value="OTHER">Autre</SelectItem>
+                  <SelectItem value="OTHER">Véhicules/Matériel</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -178,7 +252,9 @@ export default function DemandesRHUnifiedPage() {
                 <SelectContent className="bg-background">
                   <SelectItem value="ALL">Tous</SelectItem>
                   <SelectItem value="SUBMITTED">En attente</SelectItem>
+                  <SelectItem value="SEEN">Vu</SelectItem>
                   <SelectItem value="APPROVED">Approuvés</SelectItem>
+                  <SelectItem value="PROCESSED">Traités</SelectItem>
                   <SelectItem value="REJECTED">Refusés</SelectItem>
                 </SelectContent>
               </Select>
@@ -202,9 +278,9 @@ export default function DemandesRHUnifiedPage() {
                 </div>
               ) : (
                 requests.map((req) => {
-                  const typeInfo = REQUEST_TYPE_LABELS[req.request_type];
-                  const TypeIcon = typeInfo.icon;
+                  const TypeIcon = getRequestIcon(req);
                   const employeeName = collaborators[req.employee_user_id] || 'Collaborateur';
+                  const reqIsVehicle = isVehicleOrEquipmentRequest(req);
 
                   return (
                     <button
@@ -225,7 +301,12 @@ export default function DemandesRHUnifiedPage() {
                           </div>
                           <div className="text-xs text-muted-foreground flex items-center gap-2">
                             <TypeIcon className="h-3 w-3" />
-                            {typeInfo.label}
+                            {getRequestTypeDisplay(req)}
+                            {reqIsVehicle && (
+                              <Badge variant="outline" className="text-[10px] px-1 py-0">
+                                Véhicule/Matériel
+                              </Badge>
+                            )}
                           </div>
                           <div className="text-xs text-muted-foreground">
                             {formatPayload(req)}
@@ -263,8 +344,13 @@ export default function DemandesRHUnifiedPage() {
 
                     <div>
                       <div className="text-xs font-semibold text-muted-foreground">Type de demande</div>
-                      <div className="text-sm font-medium mt-1">
-                        {REQUEST_TYPE_LABELS[currentRequest.request_type].label}
+                      <div className="text-sm font-medium mt-1 flex items-center gap-2">
+                        {getRequestTypeDisplay(currentRequest)}
+                        {isVehicleRequest && (
+                          <Badge variant="outline" className="text-xs">
+                            Workflow simplifié
+                          </Badge>
+                        )}
                       </div>
                     </div>
 
@@ -293,9 +379,72 @@ export default function DemandesRHUnifiedPage() {
                         {STATUS_LABELS[currentRequest.status]}
                       </Badge>
                     </div>
+
+                    {/* Processing info if exists */}
+                    {currentRequest.processing_info && (
+                      <div className="p-3 bg-muted rounded-md space-y-2">
+                        <div className="text-xs font-semibold">Informations de traitement</div>
+                        {(currentRequest.processing_info as any)?.garage_date && (
+                          <div className="text-xs">
+                            <span className="text-muted-foreground">RDV Garage:</span>{' '}
+                            {(currentRequest.processing_info as any).garage_date}
+                          </div>
+                        )}
+                        {(currentRequest.processing_info as any)?.notes && (
+                          <div className="text-xs">
+                            <span className="text-muted-foreground">Notes:</span>{' '}
+                            {(currentRequest.processing_info as any).notes}
+                          </div>
+                        )}
+                        {(currentRequest.processing_info as any)?.action_taken && (
+                          <div className="text-xs">
+                            <span className="text-muted-foreground">Action:</span>{' '}
+                            {(currentRequest.processing_info as any).action_taken}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
-                  {currentRequest.status === 'SUBMITTED' && (
+                  {/* Actions for VEHICLE/EQUIPMENT requests */}
+                  {isVehicleRequest && currentRequest.status === 'SUBMITTED' && (
+                    <div className="pt-4 border-t">
+                      <Button
+                        onClick={handleMarkAsSeen}
+                        disabled={markSeenMutation.isPending}
+                        className="w-full"
+                        variant="secondary"
+                      >
+                        {markSeenMutation.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          <Eye className="h-4 w-4 mr-2" />
+                        )}
+                        Marquer comme VU
+                      </Button>
+                      <p className="text-xs text-muted-foreground mt-2 text-center">
+                        Vous indiquez avoir pris connaissance de la demande
+                      </p>
+                    </div>
+                  )}
+
+                  {isVehicleRequest && currentRequest.status === 'SEEN' && (
+                    <div className="pt-4 border-t">
+                      <Button
+                        onClick={handleOpenProcessDialog}
+                        className="w-full"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Marquer comme TRAITÉ
+                      </Button>
+                      <p className="text-xs text-muted-foreground mt-2 text-center">
+                        Le collaborateur sera informé que sa demande est traitée
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Actions for REGULAR RH requests (approve/reject) */}
+                  {!isVehicleRequest && currentRequest.status === 'SUBMITTED' && (
                     <div className="pt-4 border-t space-y-4">
                       <div className="flex gap-2">
                         <Button
@@ -337,7 +486,7 @@ export default function DemandesRHUnifiedPage() {
                     </div>
                   )}
 
-                  {currentRequest.status !== 'SUBMITTED' && currentRequest.decision_comment && (
+                  {currentRequest.status !== 'SUBMITTED' && currentRequest.status !== 'SEEN' && currentRequest.decision_comment && (
                     <div className="pt-4 border-t">
                       <div className="text-xs font-semibold text-muted-foreground">Commentaire de décision</div>
                       <div className="text-sm mt-1">{currentRequest.decision_comment}</div>
@@ -349,6 +498,65 @@ export default function DemandesRHUnifiedPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Dialog for processing vehicle/equipment requests */}
+      <Dialog open={processDialogOpen} onOpenChange={setProcessDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Marquer la demande comme traitée</DialogTitle>
+            <DialogDescription>
+              Vous pouvez ajouter des informations optionnelles qui seront transmises au collaborateur.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="garage_date">Date RDV garage (optionnel)</Label>
+              <Input
+                id="garage_date"
+                type="date"
+                value={processingInfo.garage_date}
+                onChange={(e) => setProcessingInfo(prev => ({ ...prev, garage_date: e.target.value }))}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="action_taken">Action effectuée (optionnel)</Label>
+              <Input
+                id="action_taken"
+                placeholder="Ex: Pièce commandée, RDV pris..."
+                value={processingInfo.action_taken}
+                onChange={(e) => setProcessingInfo(prev => ({ ...prev, action_taken: e.target.value }))}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes supplémentaires (optionnel)</Label>
+              <Textarea
+                id="notes"
+                placeholder="Informations complémentaires..."
+                value={processingInfo.notes}
+                onChange={(e) => setProcessingInfo(prev => ({ ...prev, notes: e.target.value }))}
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setProcessDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={handleMarkAsProcessed} disabled={markProcessedMutation.isPending}>
+              {markProcessedMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <CheckCircle className="h-4 w-4 mr-2" />
+              )}
+              Confirmer traitement
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
