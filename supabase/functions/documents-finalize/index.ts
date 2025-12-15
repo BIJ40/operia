@@ -263,48 +263,46 @@ serve(async (req) => {
     let finalFormat: string;
 
     if (gotenbergUrl) {
-       // Convert to PDF
-       const gotenbergBaseUrl = gotenbergUrl.replace(/\/+$/, "");
-       // Accept both formats:
-       // - GOTENBERG_URL = https://host (base)
-       // - GOTENBERG_URL = https://host/forms/libreoffice/convert (full endpoint)
-       const convertUrl = gotenbergBaseUrl.includes("/forms/")
-         ? gotenbergBaseUrl
-         : `${gotenbergBaseUrl}/forms/libreoffice/convert`;
+      // Convert to PDF
+      const gotenbergBaseUrl = gotenbergUrl.replace(/\/+$/, "");
+      // Accept both formats:
+      // - GOTENBERG_URL = https://host (base)
+      // - GOTENBERG_URL = https://host/forms/libreoffice/convert (full endpoint)
+      const convertUrl = gotenbergBaseUrl.includes("/forms/")
+        ? gotenbergBaseUrl
+        : `${gotenbergBaseUrl}/forms/libreoffice/convert`;
 
-       const formData = new FormData();
-       formData.append(
-         "files",
-         new Blob([modifiedDocx], {
-           type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-         }),
-         "document.docx"
-       );
+      const formData = new FormData();
+      formData.append(
+        "files",
+        new Blob([modifiedDocx], {
+          type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        }),
+        "document.docx"
+      );
 
-        const gotenbergHeaders: Record<string, string> = {};
-        const rawKey = gotenbergApiKey?.trim();
-        if (rawKey) {
-          const tokenKey = rawKey.replace(/^(bearer|basic)\s+/i, "");
+      const gotenbergHeaders: Record<string, string> = {};
+      const rawKey = gotenbergApiKey?.trim();
+      if (rawKey) {
+        // Accept either:
+        // - raw token (we will send as Bearer by default)
+        // - full Authorization value ("Bearer ..." or "Basic ...")
+        const tokenKey = rawKey.replace(/^(bearer|basic)\s+/i, "");
 
-          if (/^(bearer|basic)\s/i.test(rawKey)) {
-            // User provided full Authorization value
-            gotenbergHeaders["Authorization"] = rawKey;
-          } else {
-            // Default: send token as-is (some nginx setups expect a raw token in Authorization)
-            gotenbergHeaders["Authorization"] = tokenKey;
-            // Also provide a Bearer variant via alternate header for reverse proxies that look elsewhere
-            gotenbergHeaders["X-Authorization"] = `Bearer ${tokenKey}`;
-          }
+        const authorizationValue = /^(bearer|basic)\s/i.test(rawKey)
+          ? rawKey
+          : `Bearer ${tokenKey}`;
 
-          gotenbergHeaders["X-API-Key"] = tokenKey;
-          gotenbergHeaders["X-Api-Key"] = tokenKey;
-          gotenbergHeaders["X-Gotenberg-Api-Key"] = tokenKey;
-        }
+        gotenbergHeaders["Authorization"] = authorizationValue;
+        gotenbergHeaders["X-API-Key"] = tokenKey;
+        gotenbergHeaders["X-Api-Key"] = tokenKey;
+        gotenbergHeaders["X-Gotenberg-Api-Key"] = tokenKey;
+      }
 
-        gotenbergHeaders["Accept"] = "application/pdf";
+      gotenbergHeaders["Accept"] = "application/pdf";
 
-        console.log("Gotenberg convertUrl:", convertUrl);
-        console.log("Gotenberg headers:", Object.keys(gotenbergHeaders));
+      console.log("Gotenberg convertUrl:", convertUrl);
+      console.log("Gotenberg headers:", Object.keys(gotenbergHeaders));
 
       const convertResponse = await fetch(convertUrl, {
         method: "POST",
@@ -316,34 +314,68 @@ serve(async (req) => {
       if (!convertResponse.ok) {
         const errorText = await convertResponse.text();
         console.error(`Gotenberg error (${convertResponse.status}):`, errorText);
-        return new Response(
-          JSON.stringify({
-            error: "PDF conversion failed",
-            details: `[${convertResponse.status}] ${errorText}`,
-          }),
-          {
-            status: 500,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+
+        // Graceful degradation: if PDF service is forbidden/unauthorized, store DOCX as the final output.
+        if (convertResponse.status === 401 || convertResponse.status === 403) {
+          finalPath = `finals/${instance.agency_id}/${instanceId}/${safeName}_${timestamp}.docx`;
+          finalFormat = "docx";
+
+          const { error: uploadDocxError } = await supabase.storage
+            .from("doc-generated")
+            .upload(finalPath, modifiedDocx, {
+              contentType:
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+              upsert: false,
+            });
+
+          if (uploadDocxError) {
+            return new Response(
+              JSON.stringify({
+                error: "Failed to upload final document",
+                details: uploadDocxError.message,
+              }),
+              {
+                status: 500,
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+              }
+            );
           }
-        );
-      }
+        } else {
+          return new Response(
+            JSON.stringify({
+              error: "PDF conversion failed",
+              details: `[${convertResponse.status}] ${errorText}`,
+            }),
+            {
+              status: 500,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            }
+          );
+        }
+      } else {
+        const finalPdf = await convertResponse.arrayBuffer();
+        finalPath = `finals/${instance.agency_id}/${instanceId}/${safeName}_${timestamp}.pdf`;
+        finalFormat = "pdf";
 
-      const finalPdf = await convertResponse.arrayBuffer();
-      finalPath = `finals/${instance.agency_id}/${instanceId}/${safeName}_${timestamp}.pdf`;
-      finalFormat = "pdf";
+        const { error: uploadError } = await supabase.storage
+          .from("doc-generated")
+          .upload(finalPath, finalPdf, {
+            contentType: "application/pdf",
+            upsert: false,
+          });
 
-      const { error: uploadError } = await supabase.storage
-        .from("doc-generated")
-        .upload(finalPath, finalPdf, {
-          contentType: "application/pdf",
-          upsert: false,
-        });
-
-      if (uploadError) {
-        return new Response(JSON.stringify({ error: "Failed to upload final document", details: uploadError.message }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        if (uploadError) {
+          return new Response(
+            JSON.stringify({
+              error: "Failed to upload final document",
+              details: uploadError.message,
+            }),
+            {
+              status: 500,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            }
+          );
+        }
       }
     } else {
       // Store as DOCX
@@ -358,10 +390,16 @@ serve(async (req) => {
         });
 
       if (uploadError) {
-        return new Response(JSON.stringify({ error: "Failed to upload final document", details: uploadError.message }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({
+            error: "Failed to upload final document",
+            details: uploadError.message,
+          }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
       }
     }
 
