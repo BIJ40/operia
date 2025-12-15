@@ -63,7 +63,6 @@ const MonPlanningPage = lazy(() => import("./pages/rh-employee/MonPlanningPage")
 const MonVehiculePage = lazy(() => import("./pages/rh-employee/MonVehiculePage"));
 const MonMaterielPage = lazy(() => import("./pages/rh-employee/MonMaterielPage"));
 const MaSignaturePage = lazy(() => import("./pages/rh-employee/MaSignaturePage"));
-const GestionConges = lazy(() => import("./pages/GestionConges"));
 const DemandesRHPage = lazy(() => import("./pages/rh/DemandesRHUnifiedPage"));
 
 const RHIndex = lazy(() => import("./pages/RHIndex"));
