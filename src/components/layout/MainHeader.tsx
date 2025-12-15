@@ -132,11 +132,11 @@ export function MainHeader() {
         <div className="container px-4">
           <div className="flex">
             {/* Logo sur 2 lignes */}
-            <div className="flex flex-col items-center justify-center mr-6 shrink-0 py-2">
+            <div className="flex flex-col items-center justify-start mr-6 shrink-0 pt-1">
               <img 
                 src={operiaLogo} 
                 alt="OPERIA" 
-                className="h-16 w-auto"
+                className="h-14 w-auto"
               />
               <Link 
                 to="/changelog" 
