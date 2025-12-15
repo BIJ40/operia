@@ -132,18 +132,12 @@ export function MainHeader() {
         <div className="container px-4">
           <div className="flex">
             {/* Logo sur 2 lignes */}
-            <div className="flex flex-col items-center justify-start mr-6 shrink-0">
+            <div className="flex items-center mr-6 shrink-0">
               <img 
                 src={operiaLogo} 
                 alt="OPERIA" 
                 className="h-28 w-auto"
               />
-              <Link 
-                to="/changelog" 
-                className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground -mt-1 hover:bg-primary/10 hover:text-primary transition-colors"
-              >
-                v{APP_VERSION}
-              </Link>
             </div>
 
             {/* Colonne droite : Menu + Recherche */}
@@ -310,6 +304,12 @@ export function MainHeader() {
                         <LogOut className="w-4 h-4" />
                         Déconnexion
                       </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <Link to="/changelog" className="block px-2 py-1.5 text-center">
+                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors">
+                          v{APP_VERSION}
+                        </span>
+                      </Link>
                     </DropdownMenuContent>
                   </DropdownMenu>
 
