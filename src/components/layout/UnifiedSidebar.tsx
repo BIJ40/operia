@@ -251,7 +251,7 @@ export function UnifiedSidebar() {
         { title: 'Mon planning', url: ROUTES.rh.monPlanning, icon: Calendar, description: 'Mon planning hebdomadaire' },
         { title: 'Ma signature', url: ROUTES.rh.signature, icon: FileText, description: 'Gérer ma signature personnelle' },
       ],
-      accessKey: 'canAccessPilotageAgence',
+      // Pas d'accessKey - le labelKey='rh' gère l'accès via canAccessModule('rh')
     },
     {
       label: 'Espace Technicien',
