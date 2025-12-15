@@ -165,14 +165,14 @@ export default function DocGenPage() {
               <div className="space-y-2">
                 <Label htmlFor="collaborator">Collaborateur (optionnel)</Label>
                 <Select
-                  value={newDoc.collaborator_id}
-                  onValueChange={(v) => setNewDoc({ ...newDoc, collaborator_id: v })}
+                  value={newDoc.collaborator_id || "__NONE__"}
+                  onValueChange={(v) => setNewDoc({ ...newDoc, collaborator_id: v === "__NONE__" ? "" : v })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner un collaborateur" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Aucun</SelectItem>
+                    <SelectItem value="__NONE__">Aucun</SelectItem>
                     {collaborators.map((c) => (
                       <SelectItem key={c.id} value={c.id}>
                         {c.first_name} {c.last_name}
