@@ -309,7 +309,7 @@ export function UnifiedSidebar() {
       indexUrl: ROUTES.admin.index,
       icon: Settings,
       items: [
-        { title: 'Utilisateurs', url: ROUTES.admin.users, icon: Users, description: 'Gérer les comptes utilisateurs' },
+        { title: 'Gestion globale', url: ROUTES.admin.users, icon: Users, description: 'Droits, accès et souscriptions' },
         { title: 'Agences', url: ROUTES.admin.agencies, icon: Building2 },
         { title: 'Annonces', url: ROUTES.admin.announcements, icon: MessageCircle, description: 'Annonces prioritaires' },
         { title: 'FAQ', url: ROUTES.admin.faq, icon: HelpCircle, description: 'Gérer les questions fréquentes' },

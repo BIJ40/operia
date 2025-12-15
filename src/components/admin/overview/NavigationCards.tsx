@@ -106,14 +106,14 @@ interface Section {
 export function NavigationCards() {
   const sections: Section[] = [
     {
-      title: 'Utilisateurs & Équipes',
-      description: 'Gestion des comptes et agences',
+      title: 'Gestion Globale',
+      description: 'Droits, accès et souscriptions',
       cards: [
         { 
           to: ROUTES.admin.users, 
           icon: Users, 
-          title: 'Utilisateurs', 
-          description: 'Créer et gérer les comptes',
+          title: 'Gestion globale', 
+          description: 'Droits, accès et souscriptions',
           children: [
             { to: ROUTES.admin.userActivity, icon: TrendingUp, title: 'Activité connexions' },
           ]
