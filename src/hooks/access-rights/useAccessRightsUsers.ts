@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { EnabledModules, ModuleKey } from '@/types/modules';
 import { getUserManagementCapabilities, UserManagementCapabilities } from '@/config/roleMatrix';
-import { enabledModulesToRows } from '@/lib/userModulesUtils';
+import { enabledModulesToRows, userModulesToEnabledModules } from '@/lib/userModulesUtils';
 import { logAuth } from '@/lib/logger';
 import { toast } from 'sonner';
 import { USER_QUERY_KEYS, ALL_USER_QUERY_PATTERNS } from '@/lib/queryKeys';
@@ -68,13 +68,28 @@ export function useAccessRightsUsers() {
         .from('profiles')
         .select(`
           id, email, first_name, last_name, global_role, agency_id, agence, role_agence,
-          is_active, enabled_modules, created_at, deactivated_at, deactivated_by,
+          is_active, created_at, deactivated_at, deactivated_by,
           must_change_password, apogee_user_id,
           agency:apogee_agencies(id, label, slug)
         `)
         .order('last_name');
       
       if (profilesError) throw profilesError;
+      
+      // Fetch user_modules for all users (source of truth for modules)
+      const userIds = profilesData?.map(p => p.id) ?? [];
+      const { data: modulesData } = await supabase
+        .from('user_modules')
+        .select('user_id, module_key, options')
+        .in('user_id', userIds);
+      
+      // Group modules by user_id
+      const modulesByUser = new Map<string, { module_key: string; options: unknown }[]>();
+      modulesData?.forEach(row => {
+        const existing = modulesByUser.get(row.user_id) || [];
+        existing.push({ module_key: row.module_key, options: row.options });
+        modulesByUser.set(row.user_id, existing);
+      });
       
       // Fetch all agencies to resolve by slug when agency_id is null
       const { data: allAgencies } = await supabase
@@ -83,15 +98,20 @@ export function useAccessRightsUsers() {
       
       const agencyBySlug = new Map(allAgencies?.map(a => [a.slug?.toLowerCase(), a]) ?? []);
       
-      // Enrich users: if agency is null but agence (slug) exists, resolve it
+      // Enrich users with modules from user_modules table
       const enrichedUsers = profilesData?.map(user => {
+        const userModules = modulesByUser.get(user.id);
+        const enabled_modules = userModulesToEnabledModules(userModules ?? []);
+        
+        let enrichedUser = { ...user, enabled_modules };
+        
         if (!user.agency && user.agence) {
           const resolvedAgency = agencyBySlug.get(user.agence.toLowerCase());
           if (resolvedAgency) {
-            return { ...user, agency: resolvedAgency };
+            enrichedUser = { ...enrichedUser, agency: resolvedAgency };
           }
         }
-        return user;
+        return enrichedUser;
       }) ?? [];
       
       return enrichedUsers as UserRow[];
