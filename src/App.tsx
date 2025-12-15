@@ -121,6 +121,8 @@ const StatiaValidatorPage = lazy(() => import("./statia/pages/StatiaValidatorPag
 const AccessRightsConsole = lazy(() => import("./components/admin/access-rights/AccessRightsConsole"));
 const AdminApogeeReport = lazy(() => import("./pages/admin/AdminApogeeReport"));
 const AdminFlow = lazy(() => import("./pages/admin/AdminFlow"));
+const DocTemplatesPage = lazy(() => import("./pages/admin/DocTemplatesPage"));
+const DocGenPage = lazy(() => import("./pages/rh/DocGenPage"));
 
 // Lazy loaded pages - Gestion de Projet (ex Apogée Tickets)
 const ProjectsIndex = lazy(() => import("./pages/ProjectsIndex"));
