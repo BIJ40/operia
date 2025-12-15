@@ -212,24 +212,24 @@ export function TabHeader() {
 
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="relative mx-auto max-w-[1600px] px-4">
-          {/* Logo - position absolue à gauche, plus grand */}
-          <Link to="/" className="absolute left-4 top-1/2 -translate-y-1/2 z-10 flex items-center">
+          {/* Logo - position absolue à gauche, remplit toute la hauteur du header */}
+          <Link to="/" className="absolute left-4 top-2 bottom-2 z-10 flex items-center">
             <img 
               src={operiaLogo} 
               alt="OPERIA" 
-              className="h-20 w-auto"
+              className="h-full w-auto max-h-32"
             />
           </Link>
 
           {/* Ligne 1 : Search + Actions */}
-          <div className="flex items-center justify-center h-14 gap-4">
+          <div className="relative flex items-center justify-center h-14 gap-4">
             {/* Search pill centré */}
             <div className="flex justify-center">
               <UnifiedSearchFloatingBar />
             </div>
 
-            {/* Actions droite - position absolue */}
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            {/* Actions droite - position absolue dans ligne 1 */}
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1">
               <RHNotificationBadge />
 
               {canAccessSupportConsoleUI && (
