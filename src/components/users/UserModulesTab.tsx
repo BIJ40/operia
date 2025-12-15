@@ -240,7 +240,7 @@ const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     targetUsers: 'Équipe développement et projet',
     icon: <Kanban className="w-5 h-5" />,
     color: 'text-indigo-500',
-    minRole: 'franchisee_user', // N1+ peut recevoir ce module
+    minRole: 'base_user', // N0+ peut recevoir ce module
     category: 'projet',
   },
 
