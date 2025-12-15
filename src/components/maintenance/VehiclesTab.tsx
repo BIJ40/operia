@@ -26,10 +26,11 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, AlertTriangle, Clock, QrCode, Save } from 'lucide-react';
+import { Plus, AlertTriangle, Clock, QrCode, Save, Eye } from 'lucide-react';
 import { VehicleFormDialog } from './VehicleFormDialog';
 import { QrCodeModal } from './QrCodeModal';
 import { VehicleEditableCell } from './VehicleEditableCell';
+import { VehicleDetailDialog } from './VehicleDetailDialog';
 
 export function VehiclesTab() {
   const [filters, setFilters] = useState<FleetVehiclesFilters>({
@@ -42,6 +43,7 @@ export function VehiclesTab() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<FleetVehicle | undefined>(undefined);
   const [qrVehicle, setQrVehicle] = useState<FleetVehicle | null>(null);
+  const [detailVehicle, setDetailVehicle] = useState<FleetVehicle | null>(null);
 
   const { data: vehicles = [], isLoading } = useFleetVehicles(undefined, filters);
   const { handleValueChange, getLocalValue, saveChanges, hasPendingChanges } = useVehicleInlineEdit();
@@ -156,6 +158,7 @@ export function VehiclesTab() {
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/40 text-xs uppercase text-muted-foreground">
+                  <th className="py-2 pr-2 text-center font-medium w-10"></th>
                   <th className="py-2 pr-4 text-left font-medium">Nom</th>
                   <th className="px-4 py-2 text-left font-medium">Immat.</th>
                   <th className="px-4 py-2 text-left font-medium">Marque</th>
@@ -176,6 +179,7 @@ export function VehiclesTab() {
                     getLocalValue={getLocalValue}
                     onValueChange={handleValueChange}
                     onShowQr={(v) => setQrVehicle(v)}
+                    onShowDetail={(v) => setDetailVehicle(v)}
                   />
                 ))}
               </tbody>
@@ -199,6 +203,12 @@ export function VehiclesTab() {
           qrToken={qrVehicle.qr_token}
         />
       )}
+
+      <VehicleDetailDialog
+        open={!!detailVehicle}
+        onOpenChange={(open) => !open && setDetailVehicle(null)}
+        vehicle={detailVehicle}
+      />
     </Card>
   );
 }
@@ -225,11 +235,23 @@ interface VehicleRowProps {
   getLocalValue: (vehicleId: string, field: keyof FleetVehicleFormData, originalValue: unknown) => unknown;
   onValueChange: (vehicleId: string, field: keyof FleetVehicleFormData, value: unknown) => void;
   onShowQr: (vehicle: FleetVehicle) => void;
+  onShowDetail: (vehicle: FleetVehicle) => void;
 }
 
-function VehicleRow({ vehicle, getLocalValue, onValueChange, onShowQr }: VehicleRowProps) {
+function VehicleRow({ vehicle, getLocalValue, onValueChange, onShowQr, onShowDetail }: VehicleRowProps) {
   return (
     <tr className="border-b hover:bg-muted/20">
+      <td className="py-1 pr-2 align-middle text-center">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          onClick={() => onShowDetail(vehicle)}
+          title="Voir les détails"
+        >
+          <Eye className="h-4 w-4 text-helpconfort-blue" />
+        </Button>
+      </td>
       <td className="py-1 pr-4 align-middle">
         <VehicleEditableCell
           value={getLocalValue(vehicle.id, 'name', vehicle.name)}
