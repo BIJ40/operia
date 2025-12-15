@@ -250,6 +250,7 @@ export function UnifiedSidebar() {
         { title: 'Mes demandes', url: ROUTES.rh.demande, icon: FileText, description: 'Créer et suivre mes demandes' },
         { title: 'Mon planning', url: ROUTES.rh.monPlanning, icon: Calendar, description: 'Mon planning hebdomadaire' },
         { title: 'Mon véhicule', url: ROUTES.rh.monVehicule, icon: Car, description: 'Mon véhicule de service' },
+        { title: 'Mon matériel', url: ROUTES.rh.monMateriel, icon: Wrench, description: 'Mon matériel et équipements' },
         { title: 'Ma signature', url: ROUTES.rh.signature, icon: FileText, description: 'Gérer ma signature personnelle' },
       ],
       // Pas d'accessKey - le labelKey='rh' gère l'accès via canAccessModule('rh')

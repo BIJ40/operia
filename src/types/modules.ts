@@ -67,6 +67,8 @@ export const MODULE_OPTIONS = {
   rh: {
     coffre: 'rh.coffre',           // Coffre-fort salarié (accès perso uniquement)
     mon_planning: 'rh.mon_planning', // Accès à son planning personnel
+    mon_vehicule: 'rh.mon_vehicule', // Accès à son véhicule assigné
+    mon_materiel: 'rh.mon_materiel', // Accès à son matériel assigné
     rh_viewer: 'rh.rh_viewer',     // Gestion RH opérationnelle (sans paie)
     rh_admin: 'rh.rh_admin',       // Administration RH complète (paie incluse)
   },
@@ -209,6 +211,8 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     options: [
       { key: 'coffre', path: 'rh.coffre', label: 'Mon Coffre RH', description: 'Accès à ses propres documents RH', defaultEnabled: false, routes: ['/rh/coffre'] },
       { key: 'mon_planning', path: 'rh.mon_planning', label: 'Mon Planning', description: 'Accès à son planning personnel', defaultEnabled: false, routes: ['/rh/mon-planning'] },
+      { key: 'mon_vehicule', path: 'rh.mon_vehicule', label: 'Mon Véhicule', description: 'Accès à son véhicule assigné', defaultEnabled: false, routes: ['/rh/mon-vehicule'] },
+      { key: 'mon_materiel', path: 'rh.mon_materiel', label: 'Mon Matériel', description: 'Accès à son matériel assigné', defaultEnabled: false, routes: ['/rh/mon-materiel'] },
       { key: 'rh_viewer', path: 'rh.rh_viewer', label: 'Gestionnaire RH', description: 'Documents et demandes équipe', defaultEnabled: false, routes: ['/rh/equipe'] },
       { key: 'rh_admin', path: 'rh.rh_admin', label: 'Admin RH', description: 'Gestion complète : salaires, contrats', defaultEnabled: false, routes: ['/rh/suivi'] },
     ],

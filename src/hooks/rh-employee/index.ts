@@ -15,3 +15,4 @@ export {
 } from "./useMyRequests";
 export { useMySignature, useSaveSignature, useDeleteSignature, type UserSignature } from "./useMySignature";
 export { useMyVehicle } from "./useMyVehicle";
+export { useMyEquipment, type MyEquipmentItem } from "./useMyEquipment";

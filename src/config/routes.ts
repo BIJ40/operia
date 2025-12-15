@@ -81,6 +81,7 @@ export const ROUTES = {
     demande: '/rh/demande',
     monPlanning: '/rh/mon-planning',
     monVehicule: '/rh/mon-vehicule',
+    monMateriel: '/rh/mon-materiel',
     signature: '/rh/signature',
     // Vue Dirigeant/RH (N2)
     equipe: '/rh/equipe',
