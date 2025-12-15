@@ -292,9 +292,13 @@ serve(async (req) => {
 
         // Always send Authorization (common nginx auth setups) + key headers (common reverse-proxy setups)
         if (/^(bearer|basic)\s/i.test(rawKey)) {
+          // User provided full Authorization value
           gotenbergHeaders["Authorization"] = rawKey;
         } else {
-          gotenbergHeaders["Authorization"] = `Bearer ${tokenKey}`;
+          // Default: send token as-is (some nginx setups expect a raw token in Authorization)
+          gotenbergHeaders["Authorization"] = tokenKey;
+          // Also provide a Bearer variant via alternate header for reverse proxies that look elsewhere
+          gotenbergHeaders["X-Authorization"] = `Bearer ${tokenKey}`;
         }
 
         gotenbergHeaders["X-API-Key"] = tokenKey;
