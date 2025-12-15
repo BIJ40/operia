@@ -119,6 +119,8 @@ const StatiaBuilderAdminPage = lazy(() => import("./statia/pages/StatiaBuilderAd
 const PermissionsCenterPage = lazy(() => import("./components/admin/permissions-center/PermissionsCenterPage"));
 const StatiaValidatorPage = lazy(() => import("./statia/pages/StatiaValidatorPage"));
 const AccessRightsConsole = lazy(() => import("./components/admin/access-rights/AccessRightsConsole"));
+const AdminApogeeReport = lazy(() => import("./pages/admin/AdminApogeeReport"));
+const AdminFlow = lazy(() => import("./pages/admin/AdminFlow"));
 
 // Lazy loaded pages - Gestion de Projet (ex Apogée Tickets)
 const ProjectsIndex = lazy(() => import("./pages/ProjectsIndex"));
@@ -390,6 +392,8 @@ function AppContent() {
           <Route path="/admin/permissions-center" element={<Navigate to="/admin/gestion" replace />} />
           <Route path="/admin/droits" element={<Navigate to="/admin/gestion" replace />} />
           <Route path="/admin/gestion" element={<MainLayout><RoleGuard minRole="franchisee_admin"><UnifiedManagementPage /></RoleGuard></MainLayout>} />
+          <Route path="/admin/apogee-report" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminApogeeReport /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/admin/flow" element={<MainLayout><RoleGuard minRole="franchisor_admin"><AdminFlow /></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* GESTION DE PROJET (ex Apogée Tickets) */}
