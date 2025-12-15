@@ -217,7 +217,7 @@ export function TabHeader() {
             <img 
               src={operiaLogo} 
               alt="OPERIA" 
-              className="h-16 w-auto"
+              className="h-20 w-auto"
             />
           </Link>
 
