@@ -114,22 +114,19 @@ serve(async (req) => {
         // Don't throw - continue with SMS only
       } else {
         // Filter users who should receive support notifications:
-        // 1. Must be a support agent (support.agent flag) OR admin (N5/N6)
-        // 2. For admins: receive by default unless explicitly opted out (email_notifications_enabled === false)
-        // 3. For agents: must have email_notifications_enabled = true (explicit opt-in)
+        // 1. Must be a support agent (support.options.agent flag) OR admin (N5/N6)
+        // 2. Receive by default unless explicitly opted out (email_notifications_enabled === false)
         const supportAgents = profiles?.filter(p => {
           const isAdmin = p.global_role === 'platform_admin' || p.global_role === 'superadmin';
-          const isSupportAgent = p.enabled_modules?.support?.agent === true;
+          // Check both old and new structure for support agent flag
+          const isSupportAgent = p.enabled_modules?.support?.agent === true || 
+                                 p.enabled_modules?.support?.options?.agent === true;
           
           if (!isAdmin && !isSupportAgent) return false;
           
-          // P1 FIX: Admins receive notifications by default (unless explicitly disabled)
-          // Agents must explicitly enable notifications
-          if (isAdmin) {
-            return p.email_notifications_enabled !== false;
-          } else {
-            return p.email_notifications_enabled === true;
-          }
+          // All support agents and admins receive notifications by default
+          // Only skip if explicitly disabled (email_notifications_enabled === false)
+          return p.email_notifications_enabled !== false;
         }) || [];
 
         console.log(`Found ${supportAgents.length} support agents for email notifications`);
