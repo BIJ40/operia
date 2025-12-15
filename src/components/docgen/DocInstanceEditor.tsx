@@ -1,13 +1,13 @@
-import { useState } from "react";
-import { ArrowLeft, Eye, Download, CheckCircle, Loader2, Sparkles } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Download, CheckCircle, Loader2, Sparkles } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { DocInstance, useGeneratePreview, useFinalizeDocument } from "@/hooks/docgen/useDocInstances";
+import { Progress } from "@/components/ui/progress";
+import { DocInstance, useGeneratePreview, useFinalizeDocument, useUpdateDocInstance } from "@/hooks/docgen/useDocInstances";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { categorizeTokens, SMART_TOKENS, SmartTokenKey } from "@/lib/docgen/smartTokens";
@@ -19,38 +19,88 @@ interface DocInstanceEditorProps {
 
 export default function DocInstanceEditor({ instance, onBack }: DocInstanceEditorProps) {
   const [tokenValues, setTokenValues] = useState<Record<string, string>>(instance.token_values || {});
-  const [previewPath, setPreviewPath] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
 
   const generatePreview = useGeneratePreview();
   const finalizeDocument = useFinalizeDocument();
+  const updateInstance = useUpdateDocInstance();
 
   const tokens = instance.template?.tokens || [];
   const { smartTokens, manualTokens } = categorizeTokens(tokens);
+
+  // Steps: intro (smart tokens) + each manual token + final validation
+  const totalSteps = manualTokens.length + 1; // +1 for final step
+  const isIntroStep = currentStep === 0 && smartTokens.length > 0;
+  const isFinalStep = currentStep === (smartTokens.length > 0 ? manualTokens.length : manualTokens.length - 1);
+  
+  // Get current manual token index
+  const currentTokenIndex = smartTokens.length > 0 ? currentStep - 1 : currentStep;
+  const currentToken = manualTokens[currentTokenIndex];
+
+  // Progress percentage
+  const progressPercent = useMemo(() => {
+    if (manualTokens.length === 0) return 100;
+    const filledCount = manualTokens.filter(t => tokenValues[t]?.trim()).length;
+    return Math.round((filledCount / manualTokens.length) * 100);
+  }, [manualTokens, tokenValues]);
+
+  // Generate preview with debounce
+  const generateLivePreview = useCallback(async () => {
+    if (isGeneratingPreview) return;
+    
+    setIsGeneratingPreview(true);
+    try {
+      const result = await generatePreview.mutateAsync({
+        instanceId: instance.id,
+        tokenValues,
+      });
+
+      if (result.previewPath) {
+        const { data } = await supabase.storage
+          .from("doc-generated")
+          .createSignedUrl(result.previewPath, 300);
+        
+        if (data?.signedUrl) {
+          setPreviewUrl(data.signedUrl);
+        }
+      }
+    } catch (error) {
+      console.error("Preview generation error:", error);
+    } finally {
+      setIsGeneratingPreview(false);
+    }
+  }, [instance.id, tokenValues, generatePreview, isGeneratingPreview]);
+
+  // Auto-generate preview on mount and when tokens change (debounced)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      generateLivePreview();
+    }, 1000); // 1 second debounce
+
+    return () => clearTimeout(timer);
+  }, [tokenValues]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Initial preview on mount
+  useEffect(() => {
+    generateLivePreview();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleTokenChange = (token: string, value: string) => {
     setTokenValues(prev => ({ ...prev, [token]: value }));
   };
 
-  const handlePreview = async () => {
-    const result = await generatePreview.mutateAsync({
-      instanceId: instance.id,
-      tokenValues,
-    });
+  const handleNext = () => {
+    const maxStep = smartTokens.length > 0 ? manualTokens.length : manualTokens.length - 1;
+    if (currentStep < maxStep) {
+      setCurrentStep(prev => prev + 1);
+    }
+  };
 
-    if (result.previewPath) {
-      setPreviewPath(result.previewPath);
-      
-      // Get signed URL for preview
-      const { data } = await supabase.storage
-        .from("doc-generated")
-        .createSignedUrl(result.previewPath, 300);
-      
-      if (data?.signedUrl) {
-        setPreviewUrl(data.signedUrl);
-      }
-
-      toast.success("Aperçu généré");
+  const handlePrevious = () => {
+    if (currentStep > 0) {
+      setCurrentStep(prev => prev - 1);
     }
   };
 
@@ -72,22 +122,35 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
     }
   };
 
-  // Get label for smart token
-  const getSmartTokenLabel = (token: string): string => {
-    const info = SMART_TOKENS[token as SmartTokenKey];
-    return info?.label || token;
-  };
-
-  // Auto-fill token hints for manual tokens
   const getTokenHint = (token: string): string => {
     const hints: Record<string, string> = {
-      salaire: "Salaire mensuel brut",
-      motif: "Motif du document",
-      duree: "Durée du contrat",
-      periode_essai: "Durée période d'essai",
-      convention: "Convention collective applicable",
+      salaire: "Ex: 2500 €",
+      motif: "Ex: Réorganisation du service",
+      duree: "Ex: 12 mois",
+      periode_essai: "Ex: 2 mois",
+      convention: "Ex: Bâtiment et travaux publics",
+      poste: "Ex: Technicien plombier",
+      date_debut: "Ex: 01/01/2025",
+      date_fin: "Ex: 31/12/2025",
     };
-    return hints[token.toLowerCase()] || `Valeur pour ${token}`;
+    return hints[token.toLowerCase()] || `Saisissez la valeur...`;
+  };
+
+  const getTokenLabel = (token: string): string => {
+    const labels: Record<string, string> = {
+      salaire: "Salaire mensuel brut",
+      motif: "Motif",
+      duree: "Durée",
+      periode_essai: "Période d'essai",
+      convention: "Convention collective",
+      poste: "Poste occupé",
+      date_debut: "Date de début",
+      date_fin: "Date de fin",
+      description: "Description",
+      commentaire: "Commentaire",
+      observations: "Observations",
+    };
+    return labels[token.toLowerCase()] || token.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
   };
 
   const isLongToken = (token: string): boolean => {
@@ -95,8 +158,26 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
     return longTokens.some(lt => token.toLowerCase().includes(lt));
   };
 
+  // Calculate step info for display
+  const getStepInfo = () => {
+    if (smartTokens.length > 0 && currentStep === 0) {
+      return { current: 1, total: manualTokens.length + 1, label: "Champs automatiques" };
+    }
+    const tokenIdx = smartTokens.length > 0 ? currentStep : currentStep + 1;
+    return { 
+      current: tokenIdx + (smartTokens.length > 0 ? 1 : 0), 
+      total: manualTokens.length + (smartTokens.length > 0 ? 1 : 0),
+      label: currentToken ? getTokenLabel(currentToken) : "Validation"
+    };
+  };
+
+  const stepInfo = getStepInfo();
+  const canGoNext = currentStep === 0 || (currentToken && tokenValues[currentToken]?.trim());
+  const isLastManualToken = currentTokenIndex === manualTokens.length - 1;
+
   return (
     <div className="container mx-auto py-6 space-y-6">
+      {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={onBack}>
           <ArrowLeft className="h-4 w-4" />
@@ -114,117 +195,176 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
         </Badge>
       </div>
 
+      {/* Progress Bar */}
+      <div className="space-y-2">
+        <div className="flex justify-between text-sm">
+          <span className="text-muted-foreground">
+            Étape {stepInfo.current} / {stepInfo.total} — {stepInfo.label}
+          </span>
+          <span className="font-medium">{progressPercent}% complété</span>
+        </div>
+        <Progress value={progressPercent} className="h-2" />
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Token Form */}
-        <Card>
+        {/* Step Form */}
+        <Card className="flex flex-col">
           <CardHeader>
-            <CardTitle>Informations du document</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              {currentStep === 0 && smartTokens.length > 0 && (
+                <>
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  Champs automatiques
+                </>
+              )}
+              {(currentStep > 0 || smartTokens.length === 0) && currentToken && (
+                getTokenLabel(currentToken)
+              )}
+              {isLastManualToken && currentStep > 0 && !currentToken && (
+                <>
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  Validation finale
+                </>
+              )}
+            </CardTitle>
             <CardDescription>
-              Remplissez les champs pour personnaliser le document
+              {currentStep === 0 && smartTokens.length > 0 && 
+                "Ces informations seront remplies automatiquement"
+              }
+              {(currentStep > 0 || smartTokens.length === 0) && currentToken &&
+                `Renseignez ${getTokenLabel(currentToken).toLowerCase()}`
+              }
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Smart tokens (auto-filled) */}
-            {smartTokens.length > 0 && (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-sm font-medium text-primary">
-                  <Sparkles className="h-4 w-4" />
-                  Champs pré-remplis automatiquement
-                </div>
+
+          <CardContent className="flex-1 flex flex-col">
+            {/* Intro Step - Smart Tokens */}
+            {currentStep === 0 && smartTokens.length > 0 && (
+              <div className="space-y-3 flex-1">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Les champs suivants seront pré-remplis avec les données de votre agence et du collaborateur :
+                </p>
                 <div className="grid gap-2">
                   {smartTokens.map(({ token, label }) => (
-                    <div key={token} className="flex items-center justify-between p-2 rounded-md bg-primary/5 border border-primary/10">
+                    <div 
+                      key={token} 
+                      className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/10"
+                    >
                       <span className="text-sm font-medium">{label}</span>
-                      <Badge variant="outline" className="font-mono text-xs">
-                        {`{{${token}}}`}
+                      <Badge variant="outline" className="font-mono text-xs bg-background">
+                        Auto
                       </Badge>
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Ces champs seront remplis automatiquement avec les données de l'agence, du collaborateur, etc.
-                </p>
-                <Separator />
               </div>
             )}
 
-            {/* Manual tokens */}
-            {manualTokens.length > 0 ? (
-              <div className="space-y-4">
-                <div className="text-sm font-medium">Champs à remplir manuellement</div>
-                {manualTokens.map((token) => (
-                  <div key={token} className="space-y-2">
-                    <Label htmlFor={token} className="capitalize">
-                      {token.replace(/_/g, " ")}
-                    </Label>
-                    {isLongToken(token) ? (
-                      <Textarea
-                        id={token}
-                        value={tokenValues[token] || ""}
-                        onChange={(e) => handleTokenChange(token, e.target.value)}
-                        placeholder={getTokenHint(token)}
-                        rows={3}
-                      />
-                    ) : (
-                      <Input
-                        id={token}
-                        value={tokenValues[token] || ""}
-                        onChange={(e) => handleTokenChange(token, e.target.value)}
-                        placeholder={getTokenHint(token)}
-                      />
-                    )}
-                  </div>
-                ))}
+            {/* Manual Token Input */}
+            {(currentStep > 0 || smartTokens.length === 0) && currentToken && (
+              <div className="space-y-4 flex-1">
+                <Label htmlFor={currentToken} className="text-lg font-medium">
+                  {getTokenLabel(currentToken)}
+                </Label>
+                {isLongToken(currentToken) ? (
+                  <Textarea
+                    id={currentToken}
+                    value={tokenValues[currentToken] || ""}
+                    onChange={(e) => handleTokenChange(currentToken, e.target.value)}
+                    placeholder={getTokenHint(currentToken)}
+                    rows={6}
+                    className="text-lg"
+                    autoFocus
+                  />
+                ) : (
+                  <Input
+                    id={currentToken}
+                    value={tokenValues[currentToken] || ""}
+                    onChange={(e) => handleTokenChange(currentToken, e.target.value)}
+                    placeholder={getTokenHint(currentToken)}
+                    className="text-lg h-14"
+                    autoFocus
+                  />
+                )}
+                <p className="text-sm text-muted-foreground">
+                  Ce champ sera inséré dans le document à l'emplacement <code className="bg-muted px-1 rounded">{`{{${currentToken}}}`}</code>
+                </p>
               </div>
-            ) : smartTokens.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">
-                Aucun champ à remplir
-              </p>
-            ) : null}
+            )}
 
-            <Separator className="my-4" />
+            {/* Final Validation Step */}
+            {isLastManualToken && currentStep > 0 && !currentToken && (
+              <div className="space-y-4 flex-1 flex flex-col items-center justify-center text-center">
+                <CheckCircle className="h-16 w-16 text-green-500" />
+                <div>
+                  <h3 className="text-xl font-semibold">Prêt à finaliser</h3>
+                  <p className="text-muted-foreground mt-2">
+                    Tous les champs ont été remplis. Vérifiez l'aperçu et cliquez sur "Valider" pour générer le document final.
+                  </p>
+                </div>
+              </div>
+            )}
 
-            <div className="flex gap-2">
+            {/* Navigation Buttons */}
+            <div className="flex gap-3 mt-6 pt-4 border-t">
               <Button
                 variant="outline"
-                onClick={handlePreview}
-                disabled={generatePreview.isPending}
+                onClick={handlePrevious}
+                disabled={currentStep === 0}
                 className="flex-1"
               >
-                {generatePreview.isPending ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Eye className="h-4 w-4 mr-2" />
-                )}
-                Aperçu
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Précédent
               </Button>
-              <Button
-                onClick={handleFinalize}
-                disabled={finalizeDocument.isPending || instance.status === "finalized"}
-                className="flex-1"
-              >
-                {finalizeDocument.isPending ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                )}
-                Finaliser
-              </Button>
+              
+              {!isLastManualToken ? (
+                <Button
+                  onClick={handleNext}
+                  disabled={!canGoNext}
+                  className="flex-1"
+                >
+                  Suivant
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleFinalize}
+                  disabled={finalizeDocument.isPending || instance.status === "finalized" || progressPercent < 100}
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                >
+                  {finalizeDocument.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                  )}
+                  Valider et finaliser
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Preview Panel */}
+        {/* Live Preview Panel */}
         <Card>
-          <CardHeader>
-            <CardTitle>Aperçu du document</CardTitle>
-            <CardDescription>
-              Visualisez le document avant de le finaliser
-            </CardDescription>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base">Aperçu en direct</CardTitle>
+                <CardDescription>
+                  Se met à jour automatiquement
+                </CardDescription>
+              </div>
+              {isGeneratingPreview && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Mise à jour...
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {previewUrl ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="border rounded-lg overflow-hidden bg-muted/50 aspect-[3/4]">
                   <iframe
                     src={previewUrl}
@@ -236,17 +376,26 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
                   variant="outline"
                   onClick={handleDownloadPreview}
                   className="w-full"
+                  size="sm"
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  Télécharger l'aperçu
+                  Télécharger
                 </Button>
               </div>
             ) : (
               <div className="border rounded-lg bg-muted/50 aspect-[3/4] flex items-center justify-center">
                 <div className="text-center text-muted-foreground">
-                  <Eye className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Cliquez sur "Aperçu" pour visualiser</p>
-                  <p className="text-sm">le document avec vos données</p>
+                  {isGeneratingPreview ? (
+                    <>
+                      <Loader2 className="h-12 w-12 mx-auto mb-4 animate-spin opacity-50" />
+                      <p>Génération de l'aperçu...</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="h-12 w-12 mx-auto mb-4 opacity-50 border-2 border-dashed rounded-lg" />
+                      <p>L'aperçu apparaîtra ici</p>
+                    </>
+                  )}
                 </div>
               </div>
             )}
