@@ -66,7 +66,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
   // ============================================
   {
     id: 'rh',
-    title: 'RH & PARC',
+    title: 'RH & Parc',
     description: 'Ressources humaines & matériel',
     icon: 'Briefcase',
     href: '/rh',
