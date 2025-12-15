@@ -318,7 +318,7 @@ export function TabHeader() {
                       "relative flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-all duration-200",
                       isActive 
                         ? "text-white" 
-                        : "text-muted-foreground hover:text-foreground hover:bg-accent hover:shadow-md hover:scale-105"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted hover:shadow-md hover:scale-105"
                     )}
                   >
                     {/* Indicateur morphing rapide */}
@@ -387,7 +387,7 @@ export function TabHeader() {
                           "px-4 py-1.5 text-xs font-medium rounded-full border transition-all duration-200",
                           isLinkActive
                             ? "bg-primary/15 text-primary border-primary/30 shadow-sm"
-                            : "text-muted-foreground border-border/50 hover:text-foreground hover:bg-accent hover:border-primary/40 hover:shadow-md hover:scale-105 active:scale-95"
+                            : "text-muted-foreground border-border/50 hover:text-foreground hover:bg-muted hover:border-primary/40 hover:shadow-md hover:scale-105 active:scale-95"
                         )}
                       >
                         {link.label}
