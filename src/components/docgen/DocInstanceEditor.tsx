@@ -21,6 +21,7 @@ interface DocInstanceEditorProps {
 export default function DocInstanceEditor({ instance, onBack }: DocInstanceEditorProps) {
   const [tokenValues, setTokenValues] = useState<Record<string, string>>(instance.token_values || {});
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewFormat, setPreviewFormat] = useState<"pdf" | "docx">("pdf");
   const [currentStep, setCurrentStep] = useState(0);
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
 
@@ -59,6 +60,9 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
       });
 
       if (result.previewPath) {
+        // Track the format (pdf or docx)
+        setPreviewFormat(result.format === "docx" ? "docx" : "pdf");
+        
         const { data } = await supabase.storage
           .from("doc-generated")
           .createSignedUrl(result.previewPath, 300);
@@ -361,22 +365,42 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
           <CardContent>
             {previewUrl ? (
               <div className="space-y-3">
-                <div className="border rounded-lg overflow-hidden bg-muted/50 aspect-[3/4]">
-                  <iframe
-                    src={previewUrl}
-                    className="w-full h-full"
-                    title="Aperçu du document"
-                  />
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={handleDownloadPreview}
-                  className="w-full"
-                  size="sm"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Télécharger
-                </Button>
+                {previewFormat === "pdf" ? (
+                  <div className="border rounded-lg overflow-hidden bg-muted/50 aspect-[3/4]">
+                    <iframe
+                      src={previewUrl}
+                      className="w-full h-full"
+                      title="Aperçu du document"
+                    />
+                  </div>
+                ) : (
+                  <div className="border rounded-lg bg-muted/50 aspect-[3/4] flex items-center justify-center">
+                    <div className="text-center p-6">
+                      <div className="h-16 w-16 mx-auto mb-4 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Download className="h-8 w-8 text-primary" />
+                      </div>
+                      <p className="font-medium mb-2">Document DOCX généré</p>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        L'aperçu PDF n'est pas disponible. Téléchargez le document pour le visualiser.
+                      </p>
+                      <Button onClick={handleDownloadPreview}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Télécharger le document
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                {previewFormat === "pdf" && (
+                  <Button
+                    variant="outline"
+                    onClick={handleDownloadPreview}
+                    className="w-full"
+                    size="sm"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Télécharger
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="border rounded-lg bg-muted/50 aspect-[3/4] flex items-center justify-center">
