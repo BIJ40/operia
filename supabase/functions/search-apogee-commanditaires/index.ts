@@ -95,35 +95,69 @@ Deno.serve(async (req) => {
     // 5. Appeler l'API Apogée directement (pas via proxy pour éviter le masquage)
     const apiKey = Deno.env.get('APOGEE_API_KEY');
     if (!apiKey) {
+      console.error('[SEARCH-COMMANDITAIRES] APOGEE_API_KEY not configured');
       return withCors(req, new Response(
         JSON.stringify({ success: false, error: 'Configuration serveur manquante' }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
       ));
     }
 
-    const apiUrl = `https://${profile.agence}.hc-apogee.fr/api/apiGetClients`;
+    const baseUrl = `https://${profile.agence}.hc-apogee.fr/api`;
+    console.log(`[SEARCH-COMMANDITAIRES] Using base URL: ${baseUrl}`);
+
+    // 5a. D'abord récupérer les projets pour identifier les commanditaireIds utilisés
+    const usedCommanditaireIds = new Set<number>();
     
-    const apiResponse = await fetch(apiUrl, {
+    try {
+      const projectsResponse = await fetch(`${baseUrl}/apiGetProjects`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ API_KEY: apiKey }),
+      });
+
+      if (projectsResponse.ok) {
+        const projects = await projectsResponse.json();
+        console.log(`[SEARCH-COMMANDITAIRES] Fetched ${Array.isArray(projects) ? projects.length : 0} projects`);
+        
+        if (Array.isArray(projects)) {
+          for (const project of projects) {
+            const cmdId = project?.data?.commanditaireId;
+            if (cmdId && typeof cmdId === 'number') {
+              usedCommanditaireIds.add(cmdId);
+            }
+          }
+        }
+        console.log(`[SEARCH-COMMANDITAIRES] Found ${usedCommanditaireIds.size} unique commanditaire IDs in projects`);
+      } else {
+        console.warn(`[SEARCH-COMMANDITAIRES] Projects API returned ${projectsResponse.status}`);
+      }
+    } catch (err) {
+      console.warn('[SEARCH-COMMANDITAIRES] Failed to fetch projects:', err);
+    }
+
+    // 5b. Récupérer les clients
+    const clientsResponse = await fetch(`${baseUrl}/apiGetClients`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ API_KEY: apiKey }),
     });
 
-    if (!apiResponse.ok) {
-      console.error(`[SEARCH-COMMANDITAIRES] API error: ${apiResponse.status}`);
+    if (!clientsResponse.ok) {
+      console.error(`[SEARCH-COMMANDITAIRES] Clients API error: ${clientsResponse.status}`);
       return withCors(req, new Response(
         JSON.stringify({ success: false, error: 'Erreur API Apogée' }),
         { status: 502, headers: { 'Content-Type': 'application/json' } }
       ));
     }
 
-    const clients = await apiResponse.json();
+    const clients = await clientsResponse.json();
+    console.log(`[SEARCH-COMMANDITAIRES] Fetched ${Array.isArray(clients) ? clients.length : 0} clients`);
 
     // 6. Filtrer les commanditaires
     // Un commanditaire est identifié par:
     // - isCommanditaire === true (si le champ existe)
-    // - OU type dans ['assurance', 'agence_immo', 'syndic', 'courtier', 'bailleur', 'gestionnaire']
-    // - OU typeClient indiquant un apporteur professionnel
+    // - OU type dans les types commanditaires connus
+    // - OU (FALLBACK) l'ID est utilisé comme commanditaireId dans un projet
     const commanditaireTypes = [
       'assurance', 'assureur', 
       'agence', 'agence_immo', 'agence immobiliere', 'agence immobilière',
@@ -136,27 +170,34 @@ Deno.serve(async (req) => {
     ];
 
     const isCommanditaire = (client: Record<string, unknown>): boolean => {
+      const clientId = Number(client.id);
+      
+      // FALLBACK ROBUSTE: Si ce client est utilisé comme commanditaire dans un projet
+      if (usedCommanditaireIds.has(clientId)) {
+        return true;
+      }
+      
       // Flag explicite
-      if (client.isCommanditaire === true) return true;
+      if (client.isCommanditaire === true || client.is_commanditaire === true) {
+        return true;
+      }
       
       // Type client
       const type = String(client.type || '').toLowerCase();
       const typeClient = String(client.typeClient || '').toLowerCase();
-      const raisonSociale = String(client.raisonSociale || '').toLowerCase();
       
       // Vérifier si le type correspond
       if (commanditaireTypes.some(ct => type.includes(ct) || typeClient.includes(ct))) {
         return true;
       }
       
-      // Exclure les particuliers (prénom + nom sans raison sociale)
-      if (!client.raisonSociale && client.nom && client.prenom) {
-        return false;
-      }
-      
-      // Si raisonSociale existe, c'est probablement un pro
-      if (raisonSociale && raisonSociale.length > 2) {
-        return true;
+      // Si raisonSociale existe et non vide, c'est probablement un pro
+      const raisonSociale = String(client.raisonSociale || '').trim();
+      if (raisonSociale.length > 2) {
+        // Exclure si c'est clairement un particulier avec prénom
+        if (!client.prenom || String(client.prenom).trim().length === 0) {
+          return true;
+        }
       }
       
       return false;
@@ -165,23 +206,27 @@ Deno.serve(async (req) => {
     // 7. Filtrer et rechercher
     const results: CommanditaireResult[] = [];
     
-    for (const client of clients) {
-      if (!isCommanditaire(client)) continue;
-      
-      const id = Number(client.id);
-      const name = client.raisonSociale || `${client.nom || ''} ${client.prenom || ''}`.trim();
-      const type = String(client.type || client.typeClient || 'autre');
-      
-      // Recherche sur nom ou ID
-      const nameMatch = name.toLowerCase().includes(searchQuery);
-      const idMatch = String(id).includes(searchQuery);
-      
-      if (nameMatch || idMatch) {
-        results.push({ id, name, type });
+    if (Array.isArray(clients)) {
+      for (const client of clients) {
+        if (!isCommanditaire(client)) continue;
+        
+        const id = Number(client.id);
+        const name = client.raisonSociale || client.name || `${client.nom || ''} ${client.prenom || ''}`.trim();
+        const type = String(client.type || client.typeClient || 'autre');
+        
+        if (!name || name.length < 2) continue;
+        
+        // Recherche sur nom ou ID
+        const nameMatch = name.toLowerCase().includes(searchQuery);
+        const idMatch = String(id).includes(searchQuery);
+        
+        if (nameMatch || idMatch) {
+          results.push({ id, name, type });
+        }
+        
+        // Limiter à 25 résultats
+        if (results.length >= 25) break;
       }
-      
-      // Limiter à 25 résultats
-      if (results.length >= 25) break;
     }
 
     // Trier par nom
