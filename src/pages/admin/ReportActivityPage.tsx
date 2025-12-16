@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -75,6 +75,18 @@ export default function ReportActivityPage() {
   const [selectedAgency, setSelectedAgency] = useState<string>('global');
   const [activeTab, setActiveTab] = useState('settings');
 
+  // Form state for settings
+  const [formSettings, setFormSettings] = useState<Partial<ReportSettings>>({
+    generation_day: 10,
+    generation_hour: '08:00',
+    enabled_sections: DEFAULT_SECTIONS,
+    comparison_period: 'both',
+    auto_email: true,
+    extra_emails: [],
+    custom_note: '',
+    ca_format: 'euro',
+  });
+
   // Fetch agencies
   const { data: agencies = [] } = useQuery({
     queryKey: ['agencies-for-reports'],
@@ -104,6 +116,34 @@ export default function ReportActivityPage() {
     },
     enabled: selectedAgency !== 'global',
   });
+
+  // Update form when settings load (FIXED: useEffect instead of useState callback)
+  useEffect(() => {
+    if (settings) {
+      setFormSettings({
+        generation_day: settings.generation_day,
+        generation_hour: settings.generation_hour,
+        enabled_sections: settings.enabled_sections as Record<string, boolean>,
+        comparison_period: settings.comparison_period as 'month' | 'year' | 'both',
+        auto_email: settings.auto_email,
+        extra_emails: settings.extra_emails || [],
+        custom_note: settings.custom_note || '',
+        ca_format: settings.ca_format as 'euro' | 'kilo',
+      });
+    } else {
+      // Reset to defaults when no settings exist
+      setFormSettings({
+        generation_day: 10,
+        generation_hour: '08:00',
+        enabled_sections: DEFAULT_SECTIONS,
+        comparison_period: 'both',
+        auto_email: true,
+        extra_emails: [],
+        custom_note: '',
+        ca_format: 'euro',
+      });
+    }
+  }, [settings]);
 
   // Fetch reports history
   const { data: reports = [], isLoading: loadingReports } = useQuery({
@@ -155,7 +195,7 @@ export default function ReportActivityPage() {
     },
   });
 
-  // Generate report mutation
+  // Generate report mutation (FIXED: handle previewUrl from response)
   const generateMutation = useMutation({
     mutationFn: async ({ agencySlug, month, year, preview }: { agencySlug: string; month: number; year: number; preview?: boolean }) => {
       const { data, error } = await supabase.functions.invoke('generate-monthly-report', {
@@ -166,10 +206,12 @@ export default function ReportActivityPage() {
     },
     onSuccess: (data, variables) => {
       if (variables.preview) {
-        // Open preview in new tab
-        const blob = new Blob([data], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
+        // FIXED: Open signed URL from response instead of creating blob
+        if (data?.data?.previewUrl) {
+          window.open(data.data.previewUrl, '_blank');
+        } else {
+          toast.error('Preview indisponible');
+        }
       } else {
         toast.success('Rapport généré avec succès');
         queryClient.invalidateQueries({ queryKey: ['monthly-reports'] });
@@ -199,34 +241,6 @@ export default function ReportActivityPage() {
 
     window.open(data.signedUrl, '_blank');
   };
-
-  // Form state for settings
-  const [formSettings, setFormSettings] = useState<Partial<ReportSettings>>({
-    generation_day: 10,
-    generation_hour: '08:00',
-    enabled_sections: DEFAULT_SECTIONS,
-    comparison_period: 'both',
-    auto_email: true,
-    extra_emails: [],
-    custom_note: '',
-    ca_format: 'euro',
-  });
-
-  // Update form when settings load
-  useState(() => {
-    if (settings) {
-      setFormSettings({
-        generation_day: settings.generation_day,
-        generation_hour: settings.generation_hour,
-        enabled_sections: settings.enabled_sections as Record<string, boolean>,
-        comparison_period: settings.comparison_period as 'month' | 'year' | 'both',
-        auto_email: settings.auto_email,
-        extra_emails: settings.extra_emails || [],
-        custom_note: settings.custom_note || '',
-        ca_format: settings.ca_format as 'euro' | 'kilo',
-      });
-    }
-  });
 
   const currentMonth = new Date().getMonth() + 1;
   const currentYear = new Date().getFullYear();

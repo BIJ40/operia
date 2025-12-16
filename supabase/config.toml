@@ -169,4 +169,10 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.generate-monthly-report]
-verify_jwt = true
+verify_jwt = false
+
+[functions.purge-old-reports]
+verify_jwt = false
+
+[functions.trigger-monthly-reports]
+verify_jwt = false
