@@ -1232,6 +1232,57 @@ export type Database = {
         }
         Relationships: []
       }
+      apporteur_access_logs: {
+        Row: {
+          action: string
+          agency_id: string
+          apporteur_user_id: string
+          created_at: string
+          id: string
+          ip_address: unknown
+          metadata: Json
+          resource_id: string | null
+          resource_type: string
+        }
+        Insert: {
+          action: string
+          agency_id: string
+          apporteur_user_id: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          metadata?: Json
+          resource_id?: string | null
+          resource_type: string
+        }
+        Update: {
+          action?: string
+          agency_id?: string
+          apporteur_user_id?: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          metadata?: Json
+          resource_id?: string | null
+          resource_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apporteur_access_logs_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apporteur_access_logs_apporteur_user_id_fkey"
+            columns: ["apporteur_user_id"]
+            isOneToOne: false
+            referencedRelation: "apporteur_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       apporteur_blocks: {
         Row: {
           attachments: Json | null
@@ -1309,6 +1360,256 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      apporteur_intervention_requests: {
+        Row: {
+          address: string
+          agency_id: string
+          apogee_project_id: number | null
+          apporteur_id: string
+          apporteur_user_id: string
+          availability: string | null
+          city: string | null
+          comments: string | null
+          created_at: string
+          description: string
+          id: string
+          internal_ticket_id: string | null
+          owner_name: string | null
+          postal_code: string | null
+          request_type: string
+          status: string
+          tenant_email: string | null
+          tenant_name: string
+          tenant_phone: string | null
+          updated_at: string
+          urgency: string
+        }
+        Insert: {
+          address: string
+          agency_id: string
+          apogee_project_id?: number | null
+          apporteur_id: string
+          apporteur_user_id: string
+          availability?: string | null
+          city?: string | null
+          comments?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          internal_ticket_id?: string | null
+          owner_name?: string | null
+          postal_code?: string | null
+          request_type: string
+          status?: string
+          tenant_email?: string | null
+          tenant_name: string
+          tenant_phone?: string | null
+          updated_at?: string
+          urgency?: string
+        }
+        Update: {
+          address?: string
+          agency_id?: string
+          apogee_project_id?: number | null
+          apporteur_id?: string
+          apporteur_user_id?: string
+          availability?: string | null
+          city?: string | null
+          comments?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          internal_ticket_id?: string | null
+          owner_name?: string | null
+          postal_code?: string | null
+          request_type?: string
+          status?: string
+          tenant_email?: string | null
+          tenant_name?: string
+          tenant_phone?: string | null
+          updated_at?: string
+          urgency?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apporteur_intervention_requests_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apporteur_intervention_requests_apporteur_id_fkey"
+            columns: ["apporteur_id"]
+            isOneToOne: false
+            referencedRelation: "apporteurs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apporteur_intervention_requests_apporteur_user_id_fkey"
+            columns: ["apporteur_user_id"]
+            isOneToOne: false
+            referencedRelation: "apporteur_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apporteur_project_links: {
+        Row: {
+          agency_id: string
+          apogee_project_id: number
+          apporteur_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          agency_id: string
+          apogee_project_id: number
+          apporteur_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          agency_id?: string
+          apogee_project_id?: number
+          apporteur_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apporteur_project_links_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apporteur_project_links_apporteur_id_fkey"
+            columns: ["apporteur_id"]
+            isOneToOne: false
+            referencedRelation: "apporteurs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apporteur_users: {
+        Row: {
+          activated_at: string | null
+          agency_id: string
+          apporteur_id: string
+          created_at: string
+          email: string | null
+          first_name: string | null
+          id: string
+          invited_at: string | null
+          invited_by: string | null
+          is_active: boolean
+          last_name: string | null
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activated_at?: string | null
+          agency_id: string
+          apporteur_id: string
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          invited_at?: string | null
+          invited_by?: string | null
+          is_active?: boolean
+          last_name?: string | null
+          role?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activated_at?: string | null
+          agency_id?: string
+          apporteur_id?: string
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          invited_at?: string | null
+          invited_by?: string | null
+          is_active?: boolean
+          last_name?: string | null
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apporteur_users_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apporteur_users_apporteur_id_fkey"
+            columns: ["apporteur_id"]
+            isOneToOne: false
+            referencedRelation: "apporteurs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apporteur_users_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apporteurs: {
+        Row: {
+          agency_id: string
+          apogee_client_id: number | null
+          created_at: string
+          id: string
+          is_active: boolean
+          logo_url: string | null
+          name: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          apogee_client_id?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          name: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          apogee_client_id?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          name?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apporteurs_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       blocks: {
         Row: {
@@ -6481,6 +6782,9 @@ export type Database = {
         Args: { _module_key: string; _user_id: string }
         Returns: Json
       }
+      get_my_apporteur_agency_id: { Args: never; Returns: string }
+      get_my_apporteur_id: { Args: never; Returns: string }
+      get_my_apporteur_user_id: { Args: never; Returns: string }
       get_unread_rh_notifications_count: { Args: never; Returns: number }
       get_user_agency: { Args: { _user_id: string }; Returns: string }
       get_user_agency_id: { Args: { _user_id: string }; Returns: string }
@@ -6565,6 +6869,7 @@ export type Database = {
         Args: { _agency_id: string; _user_id: string }
         Returns: boolean
       }
+      is_apporteur_user: { Args: never; Returns: boolean }
       is_conversation_member: {
         Args: { conv_id: string; uid: string }
         Returns: boolean
