@@ -141,6 +141,7 @@ export default function AdminIndex() {
             <AdminLink to={ROUTES.admin.helpconfortBackup} icon={FileStack} title="HelpConfort Backup" description="Sauvegarde spécifique" />
             <AdminLink to={ROUTES.admin.cacheBackup} icon={Archive} title="Cache Backup" description="Gestion du cache" />
             <AdminLink to={ROUTES.admin.storageQuota} icon={HardDrive} title="Stockage" description="Quotas et espace" />
+            <AdminLink to="/admin/rapportactivite" icon={FileText} title="Rapports d'Activité" description="Rapports mensuels agences" />
           </div>
           {/* Export Rapide */}
           <div className="flex items-center gap-4 p-4 rounded-lg border border-border/50 bg-card/50">
@@ -164,7 +165,6 @@ export default function AdminIndex() {
             <AdminLink to={ROUTES.admin.announcements} icon={Bell} title="Annonces Prioritaires" description="Diffusion messages" />
             <AdminLink to="/admin/apogee-report" icon={FileJson} title="Rapport Apogée API" description="Analyse endpoints & champs" />
             <AdminLink to="/admin/templates" icon={FileEdit} title="Templates DocGen" description="Modèles de documents" />
-            <AdminLink to="/admin/rapportactivite" icon={FileText} title="Rapports d'Activité" description="Config rapports mensuels" />
           </div>
         </TabsContent>
       </Tabs>
