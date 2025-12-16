@@ -164,6 +164,7 @@ export default function AdminIndex() {
             <AdminLink to={ROUTES.admin.announcements} icon={Bell} title="Annonces Prioritaires" description="Diffusion messages" />
             <AdminLink to="/admin/apogee-report" icon={FileJson} title="Rapport Apogée API" description="Analyse endpoints & champs" />
             <AdminLink to="/admin/templates" icon={FileEdit} title="Templates DocGen" description="Modèles de documents" />
+            <AdminLink to="/admin/rapportactivite" icon={FileText} title="Rapports d'Activité" description="Config rapports mensuels" />
           </div>
         </TabsContent>
       </Tabs>

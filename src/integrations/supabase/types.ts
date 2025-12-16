@@ -4030,6 +4030,69 @@ export type Database = {
         }
         Relationships: []
       }
+      monthly_reports: {
+        Row: {
+          agency_id: string
+          created_at: string | null
+          error_message: string | null
+          file_name: string | null
+          file_path: string | null
+          file_size: number | null
+          generated_at: string | null
+          generated_by: string | null
+          id: string
+          metrics_snapshot: Json | null
+          month: number
+          status: string | null
+          year: number
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string | null
+          error_message?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          generated_at?: string | null
+          generated_by?: string | null
+          id?: string
+          metrics_snapshot?: Json | null
+          month: number
+          status?: string | null
+          year: number
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string | null
+          error_message?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          generated_at?: string | null
+          generated_by?: string | null
+          id?: string
+          metrics_snapshot?: Json | null
+          month?: number
+          status?: string | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_reports_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "monthly_reports_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       page_metadata: {
         Row: {
           created_at: string
@@ -4658,6 +4721,59 @@ export type Database = {
           key?: string
         }
         Relationships: []
+      }
+      report_settings: {
+        Row: {
+          agency_id: string | null
+          auto_email: boolean | null
+          ca_format: string | null
+          comparison_period: string | null
+          created_at: string | null
+          custom_note: string | null
+          enabled_sections: Json | null
+          extra_emails: string[] | null
+          generation_day: number | null
+          generation_hour: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          agency_id?: string | null
+          auto_email?: boolean | null
+          ca_format?: string | null
+          comparison_period?: string | null
+          created_at?: string | null
+          custom_note?: string | null
+          enabled_sections?: Json | null
+          extra_emails?: string[] | null
+          generation_day?: number | null
+          generation_hour?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          agency_id?: string | null
+          auto_email?: boolean | null
+          ca_format?: string | null
+          comparison_period?: string | null
+          created_at?: string | null
+          custom_note?: string | null
+          enabled_sections?: Json | null
+          extra_emails?: string[] | null
+          generation_day?: number | null
+          generation_hour?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_settings_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: true
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rh_assets: {
         Row: {
