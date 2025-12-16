@@ -212,31 +212,116 @@ Deno.serve(async (req) => {
     const devisAcceptes = devisEnvoyes.filter((d: any) => (d.state || '').toLowerCase() === 'invoice');
     const conversionRate = devisEnvoyes.length > 0 ? (devisAcceptes.length / devisEnvoyes.length) * 100 : 0;
 
-    // Technicians stats
-    const techStats: Record<string, { name: string; ca: number; interventions: number }> = {};
-    intervPeriod.forEach((interv: any) => {
-      const projectInvoices = facturesPeriod.filter((f: any) => f.projectId === interv.projectId);
-      const projectCA = projectInvoices.reduce((sum: number, f: any) => sum + getInvoiceTotal(f), 0);
-      
-      const techIds: string[] = [];
-      if (interv.userId) techIds.push(String(interv.userId));
-      if (interv.data?.visites?.[0]?.usersIds) {
-        techIds.push(...interv.data.visites[0].usersIds.map(String));
-      }
-      const unique = [...new Set(techIds)];
-      const caPerTech = unique.length > 0 ? projectCA / unique.length : 0;
+    // ========================================
+    // TECHNICIANS STATS - LOGIQUE STATIA CORRIGÉE
+    // Attribution CA proportionnelle au temps passé
+    // ========================================
+    
+    // Helper: vérifier si intervention est RT (non-productive)
+    const isRTIntervention = (interv: any): boolean => {
+      return (
+        interv.data?.biRt?.isValidated === true ||
+        interv.data?.type2 === 'RT' ||
+        (interv.type2 || '').toUpperCase() === 'RT'
+      );
+    };
 
-      unique.forEach(id => {
-        if (!techStats[id]) {
-          const u = userMap.get(parseInt(id)) || userMap.get(id);
-          techStats[id] = {
-            name: u?.label || u?.name || `Tech ${id}`,
-            ca: 0,
-            interventions: 0,
-          };
+    // Helper: vérifier si intervention est productive (dépannage ou travaux)
+    const isProductiveIntervention = (interv: any): boolean => {
+      if (isRTIntervention(interv)) return false;
+      return !!(interv.data?.biDepan || interv.data?.biTvx);
+    };
+
+    // Étape 1: Calculer le temps par technicien par projet (visites validées uniquement)
+    const dureeTechParProjet: Record<string, Record<string, number>> = {};
+    const dureeTotaleParProjet: Record<string, number> = {};
+    
+    interventions.forEach((interv: any) => {
+      const projectId = interv.projectId || interv.refProjectId;
+      if (!projectId) return;
+      
+      // Exclure RT et non-productives
+      if (!isProductiveIntervention(interv)) return;
+      
+      // Initialiser le projet
+      if (!dureeTechParProjet[projectId]) {
+        dureeTechParProjet[projectId] = {};
+        dureeTotaleParProjet[projectId] = 0;
+      }
+      
+      // Parcourir les visites validées uniquement
+      const visites = interv.data?.visites || [];
+      visites.forEach((visite: any) => {
+        if (visite.state !== 'validated') return;
+        
+        const duree = Number(visite.duree) || 0;
+        const usersIds = visite.usersIds || [];
+        
+        usersIds.forEach((techId: string) => {
+          const tid = String(techId);
+          if (!dureeTechParProjet[projectId][tid]) {
+            dureeTechParProjet[projectId][tid] = 0;
+          }
+          dureeTechParProjet[projectId][tid] += duree;
+          dureeTotaleParProjet[projectId] += duree;
+        });
+      });
+    });
+
+    // Étape 2: Calculer CA par projet (factures de la période)
+    const caParProjet: Record<string, number> = {};
+    facturesPeriod.forEach((f: any) => {
+      const pid = f.projectId;
+      if (!pid) return;
+      const montant = getInvoiceTotal(f);
+      caParProjet[pid] = (caParProjet[pid] || 0) + montant;
+    });
+
+    // Étape 3: Attribuer le CA aux techniciens proportionnellement au temps
+    const techStats: Record<string, { name: string; ca: number; interventions: number; heures: number }> = {};
+    const projectsParTech: Record<string, Set<string>> = {};
+    
+    Object.keys(caParProjet).forEach((projectId) => {
+      const ca = caParProjet[projectId];
+      const dureeTotale = dureeTotaleParProjet[projectId] || 0;
+      const dureesTechs = dureeTechParProjet[projectId] || {};
+      
+      // Si pas de temps tracké, ignorer (pas de CA attribué)
+      if (dureeTotale === 0) return;
+      
+      Object.keys(dureesTechs).forEach((techId) => {
+        const dureeTech = dureesTechs[techId];
+        const partTech = dureeTech / dureeTotale;
+        const caTech = ca * partTech;
+        
+        if (!techStats[techId]) {
+          const u = userMap.get(parseInt(techId)) || userMap.get(techId);
+          const nom = u?.label || u?.name || 
+                     (u?.firstname && u?.lastname ? `${u.firstname} ${u.lastname}` : `Tech ${techId}`);
+          techStats[techId] = { name: nom, ca: 0, interventions: 0, heures: 0 };
+          projectsParTech[techId] = new Set();
         }
-        techStats[id].ca += caPerTech;
-        techStats[id].interventions += 1;
+        
+        techStats[techId].ca += caTech;
+        techStats[techId].heures += dureeTech / 60; // Convertir minutes en heures
+        projectsParTech[techId].add(projectId);
+      });
+    });
+
+    // Compter les interventions productives par tech
+    intervPeriod.forEach((interv: any) => {
+      if (!isProductiveIntervention(interv)) return;
+      const visites = interv.data?.visites || [];
+      const techIds = new Set<string>();
+      visites.forEach((v: any) => {
+        if (v.state === 'validated' && v.usersIds) {
+          v.usersIds.forEach((id: string) => techIds.add(String(id)));
+        }
+      });
+      techIds.forEach((tid) => {
+        if (techStats[tid]) {
+          techStats[tid].interventions += 1;
+        }
       });
     });
 
@@ -250,6 +335,74 @@ Deno.serve(async (req) => {
       if (isSAV) projectsAvecSAV.add(i.projectId);
     });
     const savRate = projectsFactures.size > 0 ? (projectsAvecSAV.size / projectsFactures.size) * 100 : 0;
+
+    // ========================================
+    // UNIVERS STATS
+    // ========================================
+    const universStats: Record<string, { ca: number; factures: number; projets: Set<string> }> = {};
+    facturesPeriod.forEach((f: any) => {
+      const project = projectMap.get(f.projectId);
+      const universes = project?.data?.universes || [];
+      const ca = getInvoiceTotal(f);
+      
+      if (universes.length === 0) {
+        // Sans univers = "Non classé"
+        if (!universStats['Non classé']) {
+          universStats['Non classé'] = { ca: 0, factures: 0, projets: new Set() };
+        }
+        universStats['Non classé'].ca += ca;
+        universStats['Non classé'].factures += 1;
+        if (f.projectId) universStats['Non classé'].projets.add(f.projectId);
+      } else {
+        const caPerUnivers = ca / universes.length;
+        universes.forEach((u: string) => {
+          const univers = u.charAt(0).toUpperCase() + u.slice(1).toLowerCase();
+          if (!universStats[univers]) {
+            universStats[univers] = { ca: 0, factures: 0, projets: new Set() };
+          }
+          universStats[univers].ca += caPerUnivers;
+          universStats[univers].factures += 1;
+          if (f.projectId) universStats[univers].projets.add(f.projectId);
+        });
+      }
+    });
+
+    // ========================================
+    // APPORTEURS STATS
+    // ========================================
+    const apporteurStats: Record<string, { name: string; ca: number; projets: Set<string> }> = {};
+    facturesPeriod.forEach((f: any) => {
+      const project = projectMap.get(f.projectId);
+      const commanditaireId = project?.data?.commanditaireId;
+      const ca = getInvoiceTotal(f);
+      
+      if (!commanditaireId) {
+        // Direct/Particulier
+        if (!apporteurStats['Direct']) {
+          apporteurStats['Direct'] = { name: 'Direct (Particuliers)', ca: 0, projets: new Set() };
+        }
+        apporteurStats['Direct'].ca += ca;
+        if (f.projectId) apporteurStats['Direct'].projets.add(f.projectId);
+      } else {
+        const client = clientMap.get(commanditaireId);
+        const name = client?.name || client?.nom || `Apporteur ${commanditaireId}`;
+        const key = String(commanditaireId);
+        if (!apporteurStats[key]) {
+          apporteurStats[key] = { name, ca: 0, projets: new Set() };
+        }
+        apporteurStats[key].ca += ca;
+        if (f.projectId) apporteurStats[key].projets.add(f.projectId);
+      }
+    });
+
+    // ========================================
+    // PROJETS créés ce mois
+    // ========================================
+    const projectsPeriod = projects.filter((p: any) => {
+      const d = parseDate(p.date || p.created_at);
+      return isInPeriod(d, startDate, endDate);
+    });
+    const nbDossiersCrees = projectsPeriod.length;
 
     // Format month name
     const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
@@ -343,21 +496,133 @@ Deno.serve(async (req) => {
           <tr>
             <th>Technicien</th>
             <th class="text-right">CA Attribué</th>
+            <th class="text-right">Heures</th>
             <th class="text-right">Interventions</th>
-            <th class="text-right">Ticket Moyen</th>
+            <th class="text-right">CA/Heure</th>
           </tr>
         </thead>
         <tbody>
-          ${Object.values(techStats).sort((a, b) => b.ca - a.ca).map(t => `
+          ${Object.values(techStats).sort((a, b) => b.ca - a.ca).map((t: any) => `
           <tr>
             <td>${t.name}</td>
             <td class="text-right">${formatCurr(t.ca)}</td>
+            <td class="text-right">${t.heures.toFixed(1)}h</td>
             <td class="text-right">${t.interventions}</td>
-            <td class="text-right">${formatCurr(t.interventions > 0 ? t.ca / t.interventions : 0)}</td>
+            <td class="text-right">${formatCurr(t.heures > 0 ? t.ca / t.heures : 0)}/h</td>
           </tr>
           `).join('')}
         </tbody>
       </table>
+    </div>
+  </div>
+  ` : ''}
+
+  ${sections.univers !== false && Object.keys(universStats).length > 0 ? `
+  <div class="page">
+    <div class="section">
+      <h2 class="section-title">🏠 Répartition par Univers</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Univers</th>
+            <th class="text-right">CA HT</th>
+            <th class="text-right">Nb Factures</th>
+            <th class="text-right">Nb Dossiers</th>
+            <th class="text-right">% du CA</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${Object.entries(universStats).sort((a, b) => b[1].ca - a[1].ca).map(([name, data]: [string, any]) => `
+          <tr>
+            <td>${name}</td>
+            <td class="text-right">${formatCurr(data.ca)}</td>
+            <td class="text-right">${data.factures}</td>
+            <td class="text-right">${data.projets.size}</td>
+            <td class="text-right">${caPeriod > 0 ? formatPct((data.ca / caPeriod) * 100) : '0%'}</td>
+          </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  ` : ''}
+
+  ${sections.apporteurs !== false && Object.keys(apporteurStats).length > 0 ? `
+  <div class="page">
+    <div class="section">
+      <h2 class="section-title">🤝 CA par Apporteur</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Apporteur</th>
+            <th class="text-right">CA HT</th>
+            <th class="text-right">Nb Dossiers</th>
+            <th class="text-right">% du CA</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${Object.values(apporteurStats).sort((a, b) => b.ca - a.ca).slice(0, 15).map((data: any) => `
+          <tr>
+            <td>${data.name}</td>
+            <td class="text-right">${formatCurr(data.ca)}</td>
+            <td class="text-right">${data.projets.size}</td>
+            <td class="text-right">${caPeriod > 0 ? formatPct((data.ca / caPeriod) * 100) : '0%'}</td>
+          </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  ` : ''}
+
+  ${sections.devis !== false ? `
+  <div class="page">
+    <div class="section">
+      <h2 class="section-title">📝 Activité Devis</h2>
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-value">${devisPeriod.length}</div>
+          <div class="kpi-label">Devis Émis</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value">${devisEnvoyes.length}</div>
+          <div class="kpi-label">Devis Envoyés</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value">${devisAcceptes.length}</div>
+          <div class="kpi-label">Devis Acceptés</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value">${formatPct(conversionRate)}</div>
+          <div class="kpi-label">Taux de Conversion</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  ` : ''}
+
+  ${sections.interventions !== false ? `
+  <div class="page">
+    <div class="section">
+      <h2 class="section-title">🔧 Activité Interventions</h2>
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-value">${intervPeriod.length}</div>
+          <div class="kpi-label">Total Interventions</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value">${nbDossiersCrees}</div>
+          <div class="kpi-label">Dossiers Créés</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value">${facturesPeriod.length}</div>
+          <div class="kpi-label">Factures Émises</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value">${formatPct(savRate)}</div>
+          <div class="kpi-label">Taux SAV</div>
+        </div>
+      </div>
     </div>
   </div>
   ` : ''}
