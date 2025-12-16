@@ -172,7 +172,26 @@ Deno.serve(async (req) => {
         if (!text) return [];
         
         try {
-          return JSON.parse(text) || [];
+          const parsed = JSON.parse(text);
+          if (Array.isArray(parsed)) return parsed;
+
+          if (parsed && typeof parsed === 'object') {
+            const obj = parsed as AnyRecord;
+
+            const data = obj.data;
+            if (Array.isArray(data)) return data;
+            if (data && typeof data === 'object') {
+              const dataObj = data as AnyRecord;
+              if (Array.isArray(dataObj.items)) return dataObj.items;
+              if (Array.isArray(dataObj.Items)) return dataObj.Items;
+              if (Array.isArray(dataObj.clients)) return dataObj.clients;
+            }
+
+            if (Array.isArray(obj.items)) return obj.items;
+            if (Array.isArray(obj.Items)) return obj.Items;
+          }
+
+          return [];
         } catch {
           console.warn(`[GET-APPORTEUR-PLANNING] ${endpoint} invalid JSON`);
           return [];
@@ -230,9 +249,20 @@ Deno.serve(async (req) => {
 
       const project = projectsMap[projectId];
       const clientData = project?.data || {};
-      // Use final client name from apiGetClients via project.clientId
+      // Nom du client final : privilégier les champs "terrain" (locataire/clientName)
+      // puis fallback sur projet/clientId.
       const finalClientId = project?.clientId ? Number(project.clientId) : null;
-      const clientName = finalClientId ? (clientsMap[finalClientId] || clientData.locataireName || clientData.clientName || 'Client inconnu') : (clientData.locataireName || clientData.clientName || 'Client inconnu');
+      const candidateNames = [
+        clientData.locataireName,
+        clientData.clientName,
+        project?.client?.name,
+        finalClientId ? clientsMap[finalClientId] : null,
+        project?.client?.id ? clientsMap[Number(project.client.id)] : null,
+      ]
+        .map((v) => (typeof v === 'string' ? v.trim() : ''))
+        .filter((v) => v && v.toLowerCase() !== 'client');
+
+      const clientName = candidateNames[0] || 'Client inconnu';
       const city = clientData.ville || '';
 
       const type = String(i.type || i.type2 || 'intervention').toLowerCase();
