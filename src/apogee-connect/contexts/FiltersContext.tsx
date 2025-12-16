@@ -41,9 +41,18 @@ interface FiltersContextType {
   resetFilters: () => void;
 }
 
+// Liste complète des périodes valides
+const ALL_VALID_PERIODS: PeriodType[] = [
+  'today', 'yesterday', 'week', 'month', 'month-1', 'year', 'year-1', 'custom',
+  // Périodes futures / Prévisionnel
+  'tomorrow', 'week+1', 'month-remaining', 'month+1', 'quarter+1', 'year-full'
+];
+
 // Fonction pour calculer les dates d'une période
 function computePeriodDates(period: PeriodType, customStart?: Date, customEnd?: Date): { start: Date; end: Date; label: string } {
   const now = new Date();
+  const nextMonth = addMonths(now, 1);
+  const nextMonthName = format(nextMonth, "MMMM", { locale: fr });
   
   switch (period) {
     case 'today':
@@ -51,8 +60,8 @@ function computePeriodDates(period: PeriodType, customStart?: Date, customEnd?: 
     case 'yesterday': {
       const yesterday = subDays(now, 1);
       return { 
-        start: new Date(yesterday.setHours(0, 0, 0, 0)), 
-        end: new Date(new Date(yesterday).setHours(23, 59, 59, 999)), 
+        start: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 0, 0, 0), 
+        end: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 23, 59, 59), 
         label: "hier" 
       };
     }
@@ -70,6 +79,49 @@ function computePeriodDates(period: PeriodType, customStart?: Date, customEnd?: 
       const lastYear = subYears(now, 1);
       return { start: startOfYear(lastYear), end: endOfYear(lastYear), label: `en ${lastYear.getFullYear()}` };
     }
+    // Périodes futures / Prévisionnel
+    case 'tomorrow': {
+      const tomorrow = addDays(now, 1);
+      return {
+        start: new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 0, 0, 0),
+        end: new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 23, 59, 59),
+        label: 'demain'
+      };
+    }
+    case 'week+1': {
+      const nextWeek = addWeeks(now, 1);
+      return {
+        start: startOfWeek(nextWeek, { weekStartsOn: 1 }),
+        end: endOfWeek(nextWeek, { weekStartsOn: 1 }),
+        label: 'semaine prochaine'
+      };
+    }
+    case 'month-remaining':
+      return {
+        start: startOfToday(),
+        end: endOfMonth(now),
+        label: 'fin du mois'
+      };
+    case 'month+1':
+      return {
+        start: startOfMonth(nextMonth),
+        end: endOfMonth(nextMonth),
+        label: `en ${nextMonthName}`
+      };
+    case 'quarter+1': {
+      const nextQuarter = addQuarters(now, 1);
+      return {
+        start: startOfQuarter(nextQuarter),
+        end: endOfQuarter(nextQuarter),
+        label: 'trimestre à venir'
+      };
+    }
+    case 'year-full':
+      return {
+        start: startOfYear(now),
+        end: endOfYear(now),
+        label: `année ${now.getFullYear()}`
+      };
     case 'custom':
       if (customStart && customEnd) {
         return { start: customStart, end: customEnd, label: `${format(customStart, "dd/MM")} - ${format(customEnd, "dd/MM")}` };
@@ -91,8 +143,7 @@ export const FiltersProvider = ({ children }: { children: ReactNode }) => {
   const customStartFromUrl = searchParams.get('customStart');
   const customEndFromUrl = searchParams.get('customEnd');
   
-  const validPeriods: PeriodType[] = ['today', 'yesterday', 'week', 'month', 'month-1', 'year', 'year-1', 'custom'];
-  const initialPeriod = periodFromUrl && validPeriods.includes(periodFromUrl) ? periodFromUrl : 'month';
+  const initialPeriod = periodFromUrl && ALL_VALID_PERIODS.includes(periodFromUrl) ? periodFromUrl : 'month';
   
   const customStart = customStartFromUrl ? parseISO(customStartFromUrl) : undefined;
   const customEnd = customEndFromUrl ? parseISO(customEndFromUrl) : undefined;
@@ -127,7 +178,7 @@ export const FiltersProvider = ({ children }: { children: ReactNode }) => {
   }, [setSearchParams]);
 
   const setDateRange = useCallback((start: Date, end: Date, label?: string, periodType?: PeriodType | string) => {
-    const validPeriodType = periodType && validPeriods.includes(periodType as PeriodType) 
+    const validPeriodType = periodType && ALL_VALID_PERIODS.includes(periodType as PeriodType) 
       ? periodType as PeriodType 
       : 'custom';
     
