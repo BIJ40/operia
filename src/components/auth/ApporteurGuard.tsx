@@ -1,12 +1,13 @@
 /**
  * ApporteurGuard - Protection des routes Apporteur
  * Redirige vers la landing apporteur si non authentifié comme apporteur
+ * Affiche message si organisation désactivée
  */
 
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useApporteurAuth } from '@/contexts/ApporteurAuthContext';
-import { Loader2, ShieldX } from 'lucide-react';
+import { Loader2, ShieldX, Building2 } from 'lucide-react';
 
 interface ApporteurGuardProps {
   /** Requiert le rôle manager */
@@ -22,7 +23,7 @@ export function ApporteurGuard({
   children, 
   redirectTo = '/apporteur'
 }: ApporteurGuardProps) {
-  const { isApporteurAuthenticated, isApporteurLoading, isApporteurManager } = useApporteurAuth();
+  const { isApporteurAuthenticated, isApporteurLoading, isApporteurManager, isOrgDisabled, apporteurUser } = useApporteurAuth();
 
   // Afficher un loader pendant le chargement
   if (isApporteurLoading) {
@@ -30,6 +31,23 @@ export function ApporteurGuard({
       <div className="flex items-center justify-center min-h-[50vh]">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
         <span className="ml-2 text-muted-foreground">Chargement...</span>
+      </div>
+    );
+  }
+
+  // Organisation désactivée
+  if (apporteurUser && isOrgDisabled) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-8">
+        <div className="flex items-center justify-center w-20 h-20 rounded-full bg-muted mb-6">
+          <Building2 className="w-10 h-10 text-muted-foreground" />
+        </div>
+        <h1 className="text-2xl font-bold text-foreground mb-3">
+          Organisation désactivée
+        </h1>
+        <p className="text-muted-foreground text-center max-w-md">
+          L'accès à cet espace est temporairement suspendu. Veuillez contacter votre administrateur.
+        </p>
       </div>
     );
   }
