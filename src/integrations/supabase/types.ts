@@ -6542,6 +6542,10 @@ export type Database = {
         Args: { _agency_id: string; _user_id: string }
         Returns: boolean
       }
+      has_apogee_tickets_access: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       has_franchiseur_access: { Args: { _user_id: string }; Returns: boolean }
       has_min_global_role: {
         Args: { _min_level: number; _user_id: string }
