@@ -14,6 +14,7 @@ import { usePersistedTab } from '@/hooks/usePersistedState';
 // Colonnes visibles par défaut par onglet
 const DEFAULT_VISIBLE_COLUMNS: Record<RHTabId, string[]> = {
   general: ['email', 'phone', 'emergency_contact', 'emergency_phone', 'social_security_number', 'permis', 'cni', 'notes', 'hiring_date', 'leaving_date'],
+  infos_perso: ['birth_date', 'birth_place', 'street', 'postal_code', 'city'],
   securite: ['taille_haut', 'taille_bas', 'pointure', 'statut_epi', 'date_renouvellement'],
   competences: ['hab_elec_statut', 'hab_elec_date', 'caces_count'],
   parc: ['vehicule_attribue', 'carte_carburant', 'carte_bancaire', 'carte_autre', 'materiels_liste'],

@@ -18,6 +18,11 @@ export interface RHCollaborator {
   notes: string | null;
   permis?: string | null;
   cni?: string | null;
+  // Personal info fields
+  street?: string | null;
+  postal_code?: string | null;
+  city?: string | null;
+  birth_place?: string | null;
   created_at: string;
   updated_at: string;
   // Relations
@@ -25,6 +30,11 @@ export interface RHCollaborator {
   competencies?: RHCompetencies | null;
   assets?: RHAssets | null;
   it_access?: RHItAccess | null;
+  sensitive_data?: RHSensitiveData | null;
+}
+
+export interface RHSensitiveData {
+  birth_date_encrypted?: string | null;
 }
 
 export interface RHEpiProfile {
@@ -150,14 +160,14 @@ export interface UserSignature {
 export interface RHColumnDef {
   id: string;
   label: string;
-  category: 'general' | 'securite' | 'competences' | 'parc' | 'idmdp' | 'documents';
+  category: 'general' | 'infos_perso' | 'securite' | 'competences' | 'parc' | 'idmdp' | 'documents';
   accessor: (row: RHCollaborator) => string | number | boolean | null | undefined;
   sensitive?: boolean; // N2 strict fields
   defaultVisible?: boolean;
 }
 
 // Tab definitions
-export type RHTabId = 'general' | 'securite' | 'competences' | 'parc' | 'idmdp' | 'documents';
+export type RHTabId = 'general' | 'infos_perso' | 'securite' | 'competences' | 'parc' | 'idmdp' | 'documents';
 
 export interface RHTab {
   id: RHTabId;
@@ -167,6 +177,7 @@ export interface RHTab {
 
 export const RH_TABS: RHTab[] = [
   { id: 'general', label: 'Général', icon: 'User' },
+  { id: 'infos_perso', label: 'Infos perso', icon: 'UserCircle' },
   { id: 'securite', label: 'Sécurité & EPI', icon: 'Shield' },
   { id: 'competences', label: 'Compétences', icon: 'Award' },
   { id: 'parc', label: 'Parc & Matériel', icon: 'Car' },

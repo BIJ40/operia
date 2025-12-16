@@ -12,7 +12,7 @@ interface PendingChange {
 }
 
 // Date columns that need ISO format conversion
-const DATE_COLUMNS = ['hiring_date', 'leaving_date', 'hab_elec_date', 'date_renouvellement'];
+const DATE_COLUMNS = ['hiring_date', 'leaving_date', 'hab_elec_date', 'date_renouvellement', 'birth_date'];
 
 // Convert DD/MM/YYYY to YYYY-MM-DD (ISO format)
 function convertToISODate(dateStr: string): string | null {
@@ -50,10 +50,16 @@ const COLUMN_TO_FIELD_MAP: Record<string, { table: string; field: string }> = {
   leaving_date: { table: 'collaborators', field: 'leaving_date' },
   permis: { table: 'collaborators', field: 'permis' },
   cni: { table: 'collaborators', field: 'cni' },
-  // Sensitive data (ICE + RH info)
+  // Personal info (address)
+  street: { table: 'collaborators', field: 'street' },
+  postal_code: { table: 'collaborators', field: 'postal_code' },
+  city: { table: 'collaborators', field: 'city' },
+  birth_place: { table: 'collaborators', field: 'birth_place' },
+  // Sensitive data (ICE + RH info + birth date)
   emergency_contact: { table: 'collaborator_sensitive_data', field: 'emergency_contact_encrypted' },
   emergency_phone: { table: 'collaborator_sensitive_data', field: 'emergency_phone_encrypted' },
   social_security_number: { table: 'collaborator_sensitive_data', field: 'social_security_number_encrypted' },
+  birth_date: { table: 'collaborator_sensitive_data', field: 'birth_date_encrypted' },
   // EPI profile
   taille_haut: { table: 'rh_epi_profiles', field: 'taille_haut' },
   taille_bas: { table: 'rh_epi_profiles', field: 'taille_bas' },

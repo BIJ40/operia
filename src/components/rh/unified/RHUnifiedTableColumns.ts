@@ -5,7 +5,7 @@
 
 import { RHCollaborator } from '@/types/rh-suivi';
 
-export type RHTabId = 'general' | 'securite' | 'competences' | 'parc' | 'idmdp' | 'documents';
+export type RHTabId = 'general' | 'infos_perso' | 'securite' | 'competences' | 'parc' | 'idmdp' | 'documents';
 
 export interface ColumnGroup {
   id: string;
@@ -74,6 +74,27 @@ export const TAB_COLUMNS: Record<RHTabId, ColumnGroup[]> = {
       columns: [
         { id: 'hiring_date', label: 'Entrée', accessor: (row) => row.hiring_date },
         { id: 'leaving_date', label: 'Sortie', accessor: (row) => row.leaving_date },
+      ],
+    },
+  ],
+  infos_perso: [
+    {
+      id: 'naissance',
+      label: '🎂 Naissance',
+      className: 'bg-pink-50 dark:bg-pink-950/30',
+      columns: [
+        { id: 'birth_date', label: 'Date naiss.', accessor: () => null, sensitive: true },
+        { id: 'birth_place', label: 'Lieu naiss.', accessor: (row) => row.birth_place },
+      ],
+    },
+    {
+      id: 'adresse',
+      label: '🏠 Adresse',
+      className: 'bg-indigo-50 dark:bg-indigo-950/30',
+      columns: [
+        { id: 'street', label: 'Rue', accessor: (row) => row.street },
+        { id: 'postal_code', label: 'CP', accessor: (row) => row.postal_code },
+        { id: 'city', label: 'Ville', accessor: (row) => row.city },
       ],
     },
   ],
@@ -179,6 +200,7 @@ export const TAB_COLUMNS: Record<RHTabId, ColumnGroup[]> = {
 
 export const TAB_CONFIG: { id: RHTabId; label: string; icon: string }[] = [
   { id: 'general', label: 'Général', icon: 'User' },
+  { id: 'infos_perso', label: 'Infos perso', icon: 'UserCircle' },
   { id: 'securite', label: 'Sécurité & EPI', icon: 'Shield' },
   { id: 'competences', label: 'Compétences', icon: 'Award' },
   { id: 'parc', label: 'Parc & Matériel', icon: 'Car' },
