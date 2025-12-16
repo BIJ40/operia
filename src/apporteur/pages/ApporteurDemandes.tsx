@@ -28,8 +28,8 @@ import {
   AlertTriangle,
   ChevronLeft,
   ChevronRight,
-  Loader2,
-  AlertCircle
+  AlertCircle,
+  ExternalLink
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { 
@@ -201,10 +201,11 @@ export default function ApporteurDemandes() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[100px]">Date</TableHead>
+                  <TableHead className="w-[100px]">Réf.</TableHead>
                   <TableHead className="w-[140px]">Type</TableHead>
                   <TableHead>Locataire</TableHead>
                   <TableHead className="hidden md:table-cell">Adresse</TableHead>
-                  <TableHead className="w-[100px]">Statut</TableHead>
+                  <TableHead className="w-[120px]">Statut</TableHead>
                   <TableHead className="w-[80px]">Urgence</TableHead>
                 </TableRow>
               </TableHeader>
@@ -212,6 +213,7 @@ export default function ApporteurDemandes() {
                 {paginatedDemandes.map((demande) => {
                   const statusInfo = STATUS_LABELS[demande.status] || STATUS_LABELS.pending;
                   const urgencyInfo = URGENCY_LABELS[demande.urgency] || URGENCY_LABELS.normal;
+                  const hasLinkedDossier = !!demande.apogee_project_id;
                   
                   return (
                     <TableRow 
@@ -222,6 +224,9 @@ export default function ApporteurDemandes() {
                       <TableCell className="text-sm text-muted-foreground">
                         {format(new Date(demande.created_at), 'dd/MM/yy', { locale: fr })}
                       </TableCell>
+                      <TableCell className="text-xs font-mono text-muted-foreground">
+                        {demande.reference || '-'}
+                      </TableCell>
                       <TableCell className="font-medium">
                         {REQUEST_TYPE_LABELS[demande.request_type] || demande.request_type}
                       </TableCell>
@@ -230,7 +235,11 @@ export default function ApporteurDemandes() {
                         {demande.city ? `${demande.address}, ${demande.city}` : demande.address}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={cn('text-xs', statusInfo.color)}>
+                        <Badge 
+                          variant="outline" 
+                          className={cn('text-xs gap-1', statusInfo.color)}
+                        >
+                          {hasLinkedDossier && <ExternalLink className="w-3 h-3" />}
                           {statusInfo.label}
                         </Badge>
                       </TableCell>
