@@ -30,7 +30,7 @@ const CATEGORY_CONFIG = {
     icon: User,
     color: "text-green-600",
     bgColor: "bg-green-50",
-    editPath: "/rh/suivi",
+    editPath: "/rh/equipe",
   },
   dirigeant: {
     label: "Dirigeant",
@@ -110,11 +110,8 @@ export default function SmartTokensCompletenessCheck({
           const categoryMissing = categoryTokens.filter(t => !t.value && t.category !== "date");
           const hasCategoryMissing = categoryMissing.length > 0;
 
-          // Build edit path with collaborator ID if needed
+          // Build edit path - always use team page for collaborator editing
           let editPath = config.editPath;
-          if (category === "collaborateur" && collaboratorId) {
-            editPath = `/rh/suivi/${collaboratorId}`;
-          }
 
           return (
             <Card key={category} className={cn(
