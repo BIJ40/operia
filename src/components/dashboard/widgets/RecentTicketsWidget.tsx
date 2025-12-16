@@ -21,6 +21,7 @@ export function RecentTicketsWidget() {
       const { data } = await supabase
         .from('support_tickets')
         .select('id, subject, status, priority, created_at')
+        .eq('user_id', user!.id)
         .order('created_at', { ascending: false })
         .limit(5);
       return data || [];
