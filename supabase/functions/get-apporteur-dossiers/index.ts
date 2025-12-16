@@ -168,6 +168,19 @@ Deno.serve(async (req) => {
       ));
     }
 
+    // Fetch pending requests to auto-link with dossiers
+    const supabaseService = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    const { data: pendingRequests } = await supabaseService
+      .from('apporteur_intervention_requests')
+      .select('id, reference')
+      .eq('apporteur_id', apporteur.id)
+      .is('apogee_project_id', null)
+      .not('reference', 'is', null);
+
     const { data: agency } = await supabase
       .from('apogee_agencies')
       .select('slug')
@@ -471,6 +484,55 @@ Deno.serve(async (req) => {
     });
 
     console.log(`[GET-APPORTEUR-DOSSIERS] ${dossiers.length} dossiers for commanditaireId ${commanditaireId}`);
+
+    // Auto-link: match dossiers to pending requests by reference
+    if (pendingRequests && pendingRequests.length > 0) {
+      const requestRefMap: Record<string, string> = {};
+      for (const req of pendingRequests) {
+        if (req.reference) {
+          // Normalize: remove leading zeros, spaces, etc.
+          const normalized = req.reference.trim().toUpperCase();
+          requestRefMap[normalized] = req.id;
+        }
+      }
+
+      const updates: Array<{ requestId: string; projectId: number }> = [];
+      
+      for (const dossier of dossiers) {
+        if (dossier.ref) {
+          // Check if dossier ref contains a request reference
+          const normalizedRef = dossier.ref.trim().toUpperCase();
+          
+          // Direct match
+          if (requestRefMap[normalizedRef]) {
+            updates.push({ requestId: requestRefMap[normalizedRef], projectId: dossier.id });
+            continue;
+          }
+          
+          // Check if any request reference is contained in the dossier ref
+          for (const [refKey, reqId] of Object.entries(requestRefMap)) {
+            if (normalizedRef.includes(refKey) || refKey.includes(normalizedRef)) {
+              updates.push({ requestId: reqId, projectId: dossier.id });
+              break;
+            }
+          }
+        }
+      }
+
+      // Update matched requests
+      if (updates.length > 0) {
+        console.log(`[GET-APPORTEUR-DOSSIERS] Auto-linking ${updates.length} request(s) to dossiers`);
+        for (const upd of updates) {
+          await supabaseService
+            .from('apporteur_intervention_requests')
+            .update({ 
+              apogee_project_id: upd.projectId,
+              status: 'in_progress'
+            })
+            .eq('id', upd.requestId);
+        }
+      }
+    }
 
     return withCors(req, new Response(
       JSON.stringify({ 

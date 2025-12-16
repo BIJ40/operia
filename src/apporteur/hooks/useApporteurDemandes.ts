@@ -9,6 +9,7 @@ import { useApporteurAuth } from '@/contexts/ApporteurAuthContext';
 
 export interface ApporteurDemande {
   id: string;
+  reference: string | null;
   request_type: string;
   tenant_name: string;
   tenant_phone: string | null;
@@ -22,6 +23,7 @@ export interface ApporteurDemande {
   availability: string | null;
   comments: string | null;
   status: 'pending' | 'received' | 'assigned' | 'completed';
+  apogee_project_id: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -63,6 +65,7 @@ export const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   pending: { label: 'En attente', color: 'bg-amber-500/10 text-amber-600 border-amber-200' },
   received: { label: 'Reçue', color: 'bg-blue-500/10 text-blue-600 border-blue-200' },
   assigned: { label: 'Assignée', color: 'bg-purple-500/10 text-purple-600 border-purple-200' },
+  in_progress: { label: 'Dossier créé', color: 'bg-indigo-500/10 text-indigo-600 border-indigo-200' },
   completed: { label: 'Terminée', color: 'bg-green-500/10 text-green-600 border-green-200' },
 };
 
