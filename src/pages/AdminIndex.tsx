@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { 
   Settings, Users, Building2, Activity, TrendingUp, Headset, BarChart3, 
   History, Bot, BookOpen, FlaskConical, Sparkles, Database, FileStack, 
@@ -48,7 +48,22 @@ function AdminLink({ to, icon: Icon, title, description }: AdminLinkProps) {
 export default function AdminIndex() {
   const { hasGlobalRole } = useAuth();
   const isSuperadmin = hasGlobalRole('superadmin');
-  const [activeTab, setActiveTab] = useState('gestion');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get('tab') || 'gestion';
+  const [activeTab, setActiveTab] = useState(tabFromUrl);
+
+  // Sync tab with URL
+  useEffect(() => {
+    const urlTab = searchParams.get('tab');
+    if (urlTab && urlTab !== activeTab) {
+      setActiveTab(urlTab);
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setSearchParams({ tab: value });
+  };
 
   return (
     <div className="container max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
@@ -70,7 +85,7 @@ export default function AdminIndex() {
       <StatsOverview />
 
       {/* Tabs Navigation */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="gestion" className="gap-2">
             <Shield className="w-4 h-4" />
