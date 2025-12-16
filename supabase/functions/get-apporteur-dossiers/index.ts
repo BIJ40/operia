@@ -57,6 +57,17 @@ function formatDateISO(date: Date | null): string | null {
 function getStatusFromProject(project: AnyRecord, facture: AnyRecord | null, devis: AnyRecord | null): { status: string; label: string } {
   const state = String(project.state || '').toLowerCase();
   
+  // PRIORITÉ 1: Statut du dossier cancelled/annulé prime sur tout
+  if (['cancelled', 'annulé', 'annule', 'abandon', 'abandonné'].some(s => state.includes(s))) {
+    return { status: 'annule', label: 'Annulé' };
+  }
+  
+  // PRIORITÉ 2: Dossier clos
+  if (['clos', 'closed', 'terminé', 'done'].some(s => state.includes(s))) {
+    return { status: 'clos', label: 'Clos' };
+  }
+  
+  // PRIORITÉ 3: Facture existante
   if (facture) {
     const resteDu = Number(facture.data?.calcReglementsReste || facture.calcReglementsReste || 0);
     if (resteDu <= 0) {
@@ -69,6 +80,7 @@ function getStatusFromProject(project: AnyRecord, facture: AnyRecord | null, dev
     return { status: 'facture', label: 'Facturé' };
   }
   
+  // PRIORITÉ 4: Devis
   if (devis) {
     const devisState = String(devis.state || '').toLowerCase();
     if (['validated', 'signed', 'order', 'accepted', 'validé', 'signé'].some(s => devisState.includes(s))) {
@@ -80,16 +92,13 @@ function getStatusFromProject(project: AnyRecord, facture: AnyRecord | null, dev
     return { status: 'devis_en_cours', label: 'Devis en cours' };
   }
   
+  // PRIORITÉ 5: États intermédiaires
   if (['rdv_tvx', 'rdv travaux', 'travaux planifié'].some(s => state.includes(s))) {
     return { status: 'rdv_travaux', label: 'RDV Travaux' };
   }
   
   if (['planifié', 'planned', 'programmé'].some(s => state.includes(s))) {
     return { status: 'programme', label: 'Programmé 1er RDV' };
-  }
-  
-  if (['clos', 'closed', 'terminé', 'done'].some(s => state.includes(s))) {
-    return { status: 'clos', label: 'Clos' };
   }
   
   return { status: 'en_cours', label: 'En cours' };

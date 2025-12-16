@@ -67,6 +67,7 @@ export const STATUS_CONFIG: Record<string, { color: string; bgColor: string }> =
   regle: { color: 'text-green-700', bgColor: 'bg-green-100 dark:bg-green-900/30' },
   clos: { color: 'text-gray-600', bgColor: 'bg-gray-100 dark:bg-gray-800' },
   en_cours: { color: 'text-cyan-700', bgColor: 'bg-cyan-100 dark:bg-cyan-900/30' },
+  annule: { color: 'text-red-700', bgColor: 'bg-red-100 dark:bg-red-900/30' },
 };
 
 export function formatCurrency(amount: number): string {
