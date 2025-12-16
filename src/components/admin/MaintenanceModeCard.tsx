@@ -22,7 +22,11 @@ interface UserInfo {
   last_name: string | null;
 }
 
-export function MaintenanceModeCard() {
+interface MaintenanceModeCardProps {
+  compact?: boolean;
+}
+
+export function MaintenanceModeCard({ compact = false }: MaintenanceModeCardProps) {
   const { settings, isLoading, updateSettings, isUpdating } = useMaintenanceAdmin();
   const { user } = useAuth();
   const [message, setMessage] = useState('');
@@ -143,11 +147,43 @@ export function MaintenanceModeCard() {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-8">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
+      <div className={cn(
+        "flex items-center justify-center",
+        compact ? "p-3 rounded-lg border border-border/50 bg-card/50" : ""
+      )}>
+        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Compact mode - simple inline toggle
+  if (compact) {
+    return (
+      <div className={cn(
+        "flex items-center justify-between p-3 rounded-lg border",
+        settings?.is_enabled 
+          ? "border-amber-500/50 bg-amber-500/5" 
+          : "border-border/50 bg-card/50"
+      )}>
+        <div className="flex items-center gap-3">
+          {settings?.is_enabled ? (
+            <ShieldAlert className="w-4 h-4 text-amber-500" />
+          ) : (
+            <Shield className="w-4 h-4 text-muted-foreground" />
+          )}
+          <div>
+            <span className="font-medium text-sm">Mode Maintenance</span>
+            {settings?.is_enabled && (
+              <Badge variant="destructive" className="ml-2 text-xs">ACTIF</Badge>
+            )}
+          </div>
+        </div>
+        <Switch
+          checked={settings?.is_enabled ?? false}
+          onCheckedChange={handleToggleMaintenance}
+          disabled={isUpdating}
+        />
+      </div>
     );
   }
 
