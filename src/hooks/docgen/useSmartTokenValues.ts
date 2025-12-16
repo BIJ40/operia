@@ -172,7 +172,7 @@ export function resolveSmartTokens(
           break;
         case "collaborator":
           categoryLabel = "collaborateur";
-          editPath = data.collaborator ? `/rh/suivi` : undefined;
+          editPath = "/rh/equipe";
           break;
         case "dirigeant":
           categoryLabel = "dirigeant";
