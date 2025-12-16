@@ -458,9 +458,15 @@ export default function AdminSupportTickets() {
                                   <div className="flex items-start justify-between gap-2 mb-2">
                                     <div className="flex-1 min-w-0">
                                       <p className="font-semibold truncate">{ticket.subject || 'Sans sujet'}</p>
+                                      {/* Afficher l'utilisateur à l'origine du ticket */}
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        👤 {ticket.user_profile?.first_name && ticket.user_profile?.last_name 
+                                          ? `${ticket.user_profile.first_name} ${ticket.user_profile.last_name}`
+                                          : ticket.user_profile?.email || 'Utilisateur inconnu'}
+                                      </p>
                                       {ticket.assigned_to && (
                                         <p className="text-xs text-primary font-medium mt-1">
-                                          👤 {formattedSupportUsers.find(u => u.id === ticket.assigned_to)?.name || 'Assigné'}
+                                          🎯 Assigné: {formattedSupportUsers.find(u => u.id === ticket.assigned_to)?.name || 'Agent'}
                                         </p>
                                       )}
                                     </div>
@@ -515,6 +521,11 @@ export default function AdminSupportTickets() {
                                   <div className="flex items-start justify-between gap-2 mb-2">
                                     <div className="flex-1 min-w-0">
                                       <p className="font-semibold truncate">{ticket.subject || 'Sans sujet'}</p>
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        👤 {ticket.user_profile?.first_name && ticket.user_profile?.last_name 
+                                          ? `${ticket.user_profile.first_name} ${ticket.user_profile.last_name}`
+                                          : ticket.user_profile?.email || 'Utilisateur inconnu'}
+                                      </p>
                                     </div>
                                     {getStatusBadge(ticket.status)}
                                   </div>
