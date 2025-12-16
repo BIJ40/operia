@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, CheckCircle, Loader2, Sparkles, RotateCcw, Save } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, CheckCircle, Loader2, Sparkles, RotateCcw, Save, ClipboardCheck } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,21 +10,32 @@ import { Progress } from "@/components/ui/progress";
 import { DocInstance, useFinalizeDocument, useUpdateDocInstance } from "@/hooks/docgen/useDocInstances";
 import { toast } from "sonner";
 import { categorizeTokens } from "@/lib/docgen/smartTokens";
-import { TokenConfig, getTokenConfig, formatTokenLabel } from "@/lib/docgen/tokenConfig";
+import { TokenConfig, getTokenConfig, formatTokenLabel, getTokenName } from "@/lib/docgen/tokenConfig";
+import { useSmartTokenValues, resolveSmartTokens, getCompletenessStats } from "@/hooks/docgen/useSmartTokenValues";
+import SmartTokensCompletenessCheck from "./SmartTokensCompletenessCheck";
 
 interface DocInstanceEditorProps {
   instance: DocInstance;
   onBack: () => void;
 }
 
+type EditorPhase = "completeness-check" | "form-filling";
+
 export default function DocInstanceEditor({ instance, onBack }: DocInstanceEditorProps) {
   const [tokenValues, setTokenValues] = useState<Record<string, string>>(instance.token_values || {});
   const [currentStep, setCurrentStep] = useState(0);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [localStatus, setLocalStatus] = useState(instance.status);
+  const [phase, setPhase] = useState<EditorPhase>("completeness-check");
 
   const finalizeDocument = useFinalizeDocument();
   const updateInstance = useUpdateDocInstance();
+  
+  // Fetch smart token values for completeness check
+  const { data: smartTokenData, isLoading: isLoadingSmartData } = useSmartTokenValues(
+    instance.agency_id,
+    instance.collaborator_id
+  );
   
   // Sync local status when instance changes
   useEffect(() => {
@@ -33,6 +44,16 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
 
   const tokens = instance.template?.tokens || [];
   const { smartTokens, manualTokens } = categorizeTokens(tokens);
+
+  // Resolve smart tokens with their actual values
+  const resolvedSmartTokens = useMemo(() => {
+    const tokenNames = smartTokens.map(st => st.token);
+    return resolveSmartTokens(tokenNames, smartTokenData);
+  }, [smartTokens, smartTokenData]);
+
+  const smartTokenStats = useMemo(() => {
+    return getCompletenessStats(resolvedSmartTokens);
+  }, [resolvedSmartTokens]);
 
   // Build a map of token configs for quick lookup
   const tokenConfigsMap = useMemo(() => {
@@ -46,18 +67,15 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
 
   const hasSmartIntro = smartTokens.length > 0;
 
-  // Get current manual token index
+  // Get current manual token index (now step 0 is after completeness check)
   const currentTokenIndex = hasSmartIntro ? currentStep - 1 : currentStep;
   const currentToken = manualTokens[currentTokenIndex];
-
-  // Get current token config
-  const currentTokenConfig = currentToken ? tokenConfigsMap.get(currentToken) : undefined;
 
   const isLastManualToken = manualTokens.length === 0
     ? true
     : currentTokenIndex === manualTokens.length - 1;
 
-  // Progress percentage
+  // Progress percentage for manual tokens
   const progressPercent = useMemo(() => {
     if (manualTokens.length === 0) return 100;
     const filledCount = manualTokens.filter(t => tokenValues[t]?.trim()).length;
@@ -90,7 +108,6 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
   useEffect(() => {
     return () => {
       if (hasUnsavedChanges) {
-        // Fire and forget save on unmount
         updateInstance.mutate({
           id: instance.id,
           token_values: tokenValues,
@@ -105,7 +122,6 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
   };
 
   const handleNext = async () => {
-    // Save current values before going next
     if (hasUnsavedChanges) {
       await saveTokenValues();
     }
@@ -123,6 +139,9 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
     
     if (currentStep > 0) {
       setCurrentStep(prev => prev - 1);
+    } else if (currentStep === 0 && phase === "form-filling") {
+      // Go back to completeness check
+      setPhase("completeness-check");
     }
   };
 
@@ -138,7 +157,6 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
     }
   };
 
-  // Re-open a finalized document for editing
   const handleReopen = async () => {
     await updateInstance.mutateAsync({
       id: instance.id,
@@ -146,17 +164,22 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
       final_path: null,
     });
     setLocalStatus("draft");
+    setPhase("completeness-check");
+    setCurrentStep(0);
     toast.success("Document ré-ouvert pour modification");
   };
 
-  // Get title for a token (from config or fallback)
+  const handleContinueFromCompletenessCheck = () => {
+    setPhase("form-filling");
+    setCurrentStep(0);
+  };
+
   const getTokenTitle = (token: string): string => {
     const config = tokenConfigsMap.get(token);
     if (config?.title) return config.title;
     return formatTokenLabel(token);
   };
 
-  // Get description for a token (from config)
   const getTokenDescription = (token: string): string => {
     const config = tokenConfigsMap.get(token);
     return config?.description || "";
@@ -167,11 +190,9 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
     return longTokens.some(lt => token.toLowerCase().includes(lt));
   };
 
-  // Step info for display
   const getStepInfo = () => {
     const total = Math.max(1, manualTokens.length + (hasSmartIntro ? 1 : 0));
 
-    // No manual tokens: single step (auto-filled or empty)
     if (manualTokens.length === 0) {
       return {
         current: 1,
@@ -194,13 +215,12 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
 
     const current = Math.min(currentStep + 1, total);
     const tokenNumber = currentTokenIndex + 1;
-    const tokenTitle = currentToken ? getTokenTitle(currentToken) : "Finalisation";
     
     return {
       current,
       total,
       title: `Champ ${tokenNumber}/${manualTokens.length}`,
-      description: tokenTitle,
+      description: currentToken ? getTokenTitle(currentToken) : "Finalisation",
     };
   };
 
@@ -208,6 +228,18 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
   const canGoNext = hasSmartIntro && currentStep === 0
     ? true
     : !!(currentToken && tokenValues[currentToken]?.trim());
+
+  // Show loading state while fetching smart token data
+  if (isLoadingSmartData) {
+    return (
+      <div className="container mx-auto py-6 flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <p className="text-muted-foreground">Chargement des données...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -248,136 +280,167 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
         </div>
       </div>
 
-      {/* Progress Bar */}
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">
-            Étape {stepInfo.current}/{stepInfo.total} — {stepInfo.title}
-          </span>
-          <span className="font-medium">{progressPercent}%</span>
-        </div>
-        <Progress value={progressPercent} className="h-2" />
-      </div>
+      {/* Phase: Completeness Check */}
+      {phase === "completeness-check" && smartTokens.length > 0 && (
+        <SmartTokensCompletenessCheck
+          tokens={resolvedSmartTokens}
+          onContinue={handleContinueFromCompletenessCheck}
+          collaboratorId={instance.collaborator_id}
+        />
+      )}
 
-      {/* Step Form */}
-      <Card className="flex flex-col max-w-2xl">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            {currentStep === 0 && smartTokens.length > 0 && (
-              <>
-                <Sparkles className="h-5 w-5 text-primary" />
-                {stepInfo.title}
-              </>
-            )}
-            {(currentStep > 0 || smartTokens.length === 0) && currentToken && (
-              getTokenTitle(currentToken)
-            )}
-          </CardTitle>
-          <CardDescription>
-            {currentStep === 0 && smartTokens.length > 0 && 
-              stepInfo.description
-            }
-            {(currentStep > 0 || smartTokens.length === 0) && currentToken && (
-              getTokenDescription(currentToken) || "Saisissez la valeur pour ce champ du document"
-            )}
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className="flex-1 flex flex-col">
-          {/* Intro Step - Smart Tokens */}
-          {currentStep === 0 && smartTokens.length > 0 && (
-            <div className="space-y-3 flex-1">
-              <p className="text-sm text-muted-foreground mb-4">
-                Les champs suivants seront pré-remplis avec les données de votre agence et du collaborateur :
-              </p>
-              <div className="grid gap-2">
-                {smartTokens.map(({ token, label }) => (
-                  <div 
-                    key={token} 
-                    className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/10"
-                  >
-                    <span className="text-sm font-medium">{label}</span>
-                    <Badge variant="outline" className="font-mono text-xs bg-background">
-                      Auto
-                    </Badge>
-                  </div>
-                ))}
-              </div>
+      {/* Phase: Form Filling (or no smart tokens) */}
+      {(phase === "form-filling" || smartTokens.length === 0) && (
+        <>
+          {/* Progress Bar */}
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">
+                Étape {stepInfo.current}/{stepInfo.total} — {stepInfo.title}
+              </span>
+              <span className="font-medium">{progressPercent}%</span>
             </div>
-          )}
-
-          {/* Manual Token Input */}
-          {(currentStep > 0 || smartTokens.length === 0) && currentToken && (
-            <div className="space-y-4 flex-1">
-              <Label htmlFor={currentToken} className="text-lg font-medium">
-                {getTokenTitle(currentToken)}
-              </Label>
-              {isLongToken(currentToken) ? (
-                <Textarea
-                  id={currentToken}
-                  value={tokenValues[currentToken] || ""}
-                  onChange={(e) => handleTokenChange(currentToken, e.target.value)}
-                  placeholder="Saisissez la valeur..."
-                  rows={6}
-                  className="text-lg"
-                  autoFocus
-                />
-              ) : (
-                <Input
-                  id={currentToken}
-                  value={tokenValues[currentToken] || ""}
-                  onChange={(e) => handleTokenChange(currentToken, e.target.value)}
-                  placeholder="Saisissez la valeur..."
-                  className="text-lg h-14"
-                  autoFocus
-                />
-              )}
-              {getTokenDescription(currentToken) && (
-                <p className="text-sm text-muted-foreground">
-                  {getTokenDescription(currentToken)}
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Navigation Buttons */}
-          <div className="flex gap-3 mt-6 pt-4 border-t">
-            <Button
-              variant="outline"
-              onClick={handlePrevious}
-              disabled={currentStep === 0}
-              className="flex-1"
-            >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Précédent
-            </Button>
-            
-            {!isLastManualToken ? (
-              <Button
-                onClick={handleNext}
-                disabled={!canGoNext}
-                className="flex-1"
-              >
-                Suivant
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            ) : (
-              <Button
-                onClick={handleFinalize}
-                disabled={finalizeDocument.isPending || localStatus === "finalized" || progressPercent < 100}
-                className="flex-1"
-              >
-                {finalizeDocument.isPending ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                )}
-                Valider et finaliser
-              </Button>
-            )}
+            <Progress value={progressPercent} className="h-2" />
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Step Form */}
+          <Card className="flex flex-col max-w-2xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                {currentStep === 0 && smartTokens.length > 0 && (
+                  <>
+                    <Sparkles className="h-5 w-5 text-primary" />
+                    {stepInfo.title}
+                  </>
+                )}
+                {(currentStep > 0 || smartTokens.length === 0) && currentToken && (
+                  getTokenTitle(currentToken)
+                )}
+              </CardTitle>
+              <CardDescription>
+                {currentStep === 0 && smartTokens.length > 0 && 
+                  stepInfo.description
+                }
+                {(currentStep > 0 || smartTokens.length === 0) && currentToken && (
+                  getTokenDescription(currentToken) || "Saisissez la valeur pour ce champ du document"
+                )}
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="flex-1 flex flex-col">
+              {/* Intro Step - Smart Tokens with values */}
+              {currentStep === 0 && smartTokens.length > 0 && (
+                <div className="space-y-3 flex-1">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Les champs suivants seront pré-remplis avec les données existantes :
+                  </p>
+                  <div className="grid gap-2">
+                    {resolvedSmartTokens.map((resolved) => (
+                      <div 
+                        key={resolved.token} 
+                        className={`flex items-center justify-between p-3 rounded-lg border ${
+                          resolved.value 
+                            ? "bg-primary/5 border-primary/10" 
+                            : "bg-yellow-50 border-yellow-200"
+                        }`}
+                      >
+                        <span className="text-sm font-medium">{resolved.label}</span>
+                        {resolved.value ? (
+                          <span className="text-sm text-muted-foreground truncate max-w-[200px]">
+                            {resolved.value}
+                          </span>
+                        ) : (
+                          <Badge variant="outline" className="text-yellow-600 border-yellow-300 text-xs">
+                            Vide
+                          </Badge>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {smartTokenStats.missing > 0 && (
+                    <p className="text-sm text-yellow-600 mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                      ⚠️ {smartTokenStats.missing} champ(s) vide(s) apparaîtront sans valeur dans le document final.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Manual Token Input */}
+              {(currentStep > 0 || smartTokens.length === 0) && currentToken && (
+                <div className="space-y-4 flex-1">
+                  <Label htmlFor={currentToken} className="text-lg font-medium">
+                    {getTokenTitle(currentToken)}
+                  </Label>
+                  {isLongToken(currentToken) ? (
+                    <Textarea
+                      id={currentToken}
+                      value={tokenValues[currentToken] || ""}
+                      onChange={(e) => handleTokenChange(currentToken, e.target.value)}
+                      placeholder="Saisissez la valeur..."
+                      rows={6}
+                      className="text-lg"
+                      autoFocus
+                    />
+                  ) : (
+                    <Input
+                      id={currentToken}
+                      value={tokenValues[currentToken] || ""}
+                      onChange={(e) => handleTokenChange(currentToken, e.target.value)}
+                      placeholder="Saisissez la valeur..."
+                      className="text-lg h-14"
+                      autoFocus
+                    />
+                  )}
+                  {getTokenDescription(currentToken) && (
+                    <p className="text-sm text-muted-foreground">
+                      {getTokenDescription(currentToken)}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Navigation Buttons */}
+              <div className="flex gap-3 mt-6 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={handlePrevious}
+                  disabled={currentStep === 0 && phase === "form-filling" && smartTokens.length === 0}
+                  className="flex-1"
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  {currentStep === 0 && phase === "form-filling" && smartTokens.length > 0 
+                    ? "Vérification" 
+                    : "Précédent"}
+                </Button>
+                
+                {!isLastManualToken ? (
+                  <Button
+                    onClick={handleNext}
+                    disabled={!canGoNext}
+                    className="flex-1"
+                  >
+                    Suivant
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleFinalize}
+                    disabled={finalizeDocument.isPending || localStatus === "finalized" || progressPercent < 100}
+                    className="flex-1"
+                  >
+                    {finalizeDocument.isPending ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                    )}
+                    Valider et finaliser
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 }
