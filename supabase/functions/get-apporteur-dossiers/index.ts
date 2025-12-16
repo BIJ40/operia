@@ -221,8 +221,12 @@ Deno.serve(async (req) => {
     // Build clients map for final client name
     const clientsMap: Record<number, string> = {};
     for (const c of (allClients || []) as AnyRecord[]) {
-      clientsMap[c.id] = c.name || 'Client';
+      const clientId = Number(c.id);
+      if (clientId && c.name) {
+        clientsMap[clientId] = String(c.name);
+      }
     }
+    console.log(`[GET-APPORTEUR-DOSSIERS] Built clientsMap with ${Object.keys(clientsMap).length} entries`);
 
     const projects = (allProjects || []).filter((p: AnyRecord) => {
       const cmdId = p.data?.commanditaireId;
