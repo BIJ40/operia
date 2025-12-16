@@ -18,6 +18,7 @@ interface ApporteurUser {
   lastName: string | null;
   role: 'reader' | 'manager';
   isActive: boolean;
+  orgIsActive: boolean; // Organisation apporteur active
 }
 
 interface ApporteurAuthContextType {
@@ -31,6 +32,7 @@ interface ApporteurAuthContextType {
   isApporteurManager: boolean;
   apporteurId: string | null;
   agencyId: string | null;
+  isOrgDisabled: boolean; // Organisation désactivée
   
   // Actions
   logout: () => Promise<void>;
@@ -58,7 +60,8 @@ export function ApporteurAuthProvider({ children }: { children: ReactNode }) {
           role,
           is_active,
           apporteurs:apporteur_id (
-            name
+            name,
+            is_active
           )
         `)
         .eq('user_id', authUser.id)
@@ -71,7 +74,7 @@ export function ApporteurAuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const apporteurData = data.apporteurs as unknown as { name: string } | null;
+      const apporteurData = data.apporteurs as unknown as { name: string; is_active: boolean } | null;
 
       setApporteurUser({
         id: data.id,
@@ -83,6 +86,7 @@ export function ApporteurAuthProvider({ children }: { children: ReactNode }) {
         lastName: data.last_name,
         role: data.role as 'reader' | 'manager',
         isActive: data.is_active,
+        orgIsActive: apporteurData?.is_active ?? true,
       });
     } catch (err) {
       console.error('Error loading apporteur data:', err);
@@ -133,13 +137,14 @@ export function ApporteurAuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value: ApporteurAuthContextType = {
-    isApporteurAuthenticated: !!apporteurUser,
+    isApporteurAuthenticated: !!apporteurUser && apporteurUser.orgIsActive,
     isApporteurLoading,
     user,
     apporteurUser,
     isApporteurManager: apporteurUser?.role === 'manager',
     apporteurId: apporteurUser?.apporteurId || null,
     agencyId: apporteurUser?.agencyId || null,
+    isOrgDisabled: apporteurUser ? !apporteurUser.orgIsActive : false,
     logout,
   };
 

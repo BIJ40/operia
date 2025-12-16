@@ -123,6 +123,7 @@ const AdminApogeeReport = lazy(() => import("./pages/admin/AdminApogeeReport"));
 const AdminFlow = lazy(() => import("./pages/admin/AdminFlow"));
 const DocTemplatesPage = lazy(() => import("./pages/admin/DocTemplatesPage"));
 const DocGenPage = lazy(() => import("./pages/rh/DocGenPage"));
+const AdminApporteurs = lazy(() => import("./pages/admin/AdminApporteurs"));
 
 // Lazy loaded pages - Gestion de Projet (ex Apogée Tickets)
 const ProjectsIndex = lazy(() => import("./pages/ProjectsIndex"));
@@ -407,6 +408,7 @@ function AppContent() {
           <Route path="/admin/apogee-report" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminApogeeReport /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/flow" element={<MainLayout><RoleGuard minRole="franchisor_admin"><AdminFlow /></RoleGuard></MainLayout>} />
           <Route path="/admin/templates" element={<MainLayout><RoleGuard minRole="franchisor_admin"><ModuleGuard moduleKey="admin_plateforme"><DocTemplatesPage /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/admin/apporteurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><AdminApporteurs /></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* GESTION DE PROJET (ex Apogée Tickets) */}

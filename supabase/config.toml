@@ -140,3 +140,6 @@ verify_jwt = true
 
 [functions.documents-finalize]
 verify_jwt = true
+
+[functions.invite-apporteur-user]
+verify_jwt = true
