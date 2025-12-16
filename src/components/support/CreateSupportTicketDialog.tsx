@@ -37,7 +37,7 @@ const SERVICES = [
   { value: 'helpconfort', label: '🏠 HelpConfort' },
   { value: 'apporteurs', label: '🤝 Apporteurs' },
   { value: 'conseil', label: '💡 Conseil' },
-  { value: 'bug_app', label: '🐛 Bug App', isRed: true },
+  { value: 'bug_app', label: '🐛 Bug Opéria', isRed: true },
   { value: 'autre', label: '❓ Autre' },
 ];
 
