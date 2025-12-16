@@ -30,7 +30,7 @@ export function useApporteurDemandes() {
   const { isApporteurAuthenticated, apporteurId } = useApporteurAuth();
 
   return useQuery({
-    queryKey: ['apporteur-demandes', apporteurId],
+    queryKey: ['apporteur-demandes'],
     queryFn: async (): Promise<ApporteurDemande[]> => {
       // RLS filtre automatiquement par apporteur_id via get_my_apporteur_id()
       const { data, error } = await supabase
