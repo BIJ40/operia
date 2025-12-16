@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search, X, Snowflake, Flame, Tag, Filter, MessageSquare } from 'lucide-react';
+import { Search, X, Snowflake, Flame, Tag, Filter, MessageSquare, RotateCcw } from 'lucide-react';
 import type { ApogeeModule, ApogeePriority, ApogeeOwnerSide, TicketFilters as Filters, ReportedBy, MissingFieldFilter } from '../types';
 import { cn } from '@/lib/utils';
 import { useTicketTags } from '../hooks/useTicketTags';
@@ -56,6 +56,9 @@ interface TicketFiltersProps {
   blinkingTicketsCount?: number;
   filterBlinkingOnly?: boolean;
   onToggleBlinkingFilter?: () => void;
+  // Reset all filters + UI state
+  onResetAll?: () => void;
+  hasActiveUIState?: boolean;
 }
 
 export function TicketFilters({ 
@@ -70,6 +73,8 @@ export function TicketFilters({
   blinkingTicketsCount = 0,
   filterBlinkingOnly = false,
   onToggleBlinkingFilter,
+  onResetAll,
+  hasActiveUIState = false,
 }: TicketFiltersProps) {
   const { tags, getTagColor } = useTicketTags();
 
@@ -321,16 +326,17 @@ export function TicketFilters({
           </button>
         )}
 
-        {/* Reset filters - highly visible when active */}
-        {hasActiveFilters && (
+        {/* R.A.Z. tous les filtres */}
+        {onResetAll && (
           <Button 
             variant="destructive" 
             size="sm" 
-            onClick={clearFilters}
-            className="animate-pulse hover:animate-none"
+            onClick={onResetAll}
+            disabled={!hasActiveFilters && !hasActiveUIState}
+            className="gap-1.5"
           >
-            <X className="h-4 w-4 mr-1" />
-            Réinitialiser
+            <RotateCcw className="h-3.5 w-3.5" />
+            R.A.Z.
           </Button>
         )}
       </div>
