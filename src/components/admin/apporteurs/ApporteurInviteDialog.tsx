@@ -91,30 +91,39 @@ export function ApporteurInviteDialog({
     toast.success('Lien copié dans le presse-papier');
   };
 
+  // Prevent closing by clicking outside when showing results
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen && inviteResult?.success) {
+      // User is trying to close while showing results - allow it but call handleClose
+      handleClose();
+    } else if (!newOpen) {
+      handleClose();
+    }
+  };
+
   // Success view with action link
   if (inviteResult?.success) {
     return (
-      <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogContent className="sm:max-w-lg" onInteractOutside={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-green-600">
               <CheckCircle className="h-5 w-5" />
               Invitation envoyée
             </DialogTitle>
+            <DialogDescription>
+              {inviteResult.is_new_user 
+                ? "Un nouvel utilisateur a été créé."
+                : "L'utilisateur existant a été lié à cet apporteur."
+              }
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
-            <p className="text-sm text-muted-foreground">
-              {inviteResult.is_new_user 
-                ? "Un nouvel utilisateur a été créé. Il doit définir son mot de passe pour accéder à l'espace apporteur."
-                : "L'utilisateur existant a été lié à cet apporteur."
-              }
-            </p>
-
-            {inviteResult.action_link && (
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">
-                  {inviteResult.is_new_user 
+            {inviteResult.action_link ? (
+              <div className="space-y-3 p-4 bg-muted/50 rounded-lg border">
+                <Label className="text-sm font-semibold flex items-center gap-2">
+                  🔗 {inviteResult.is_new_user 
                     ? "Lien de définition du mot de passe"
                     : "Lien de connexion (magic link)"
                   }
@@ -123,7 +132,7 @@ export function ApporteurInviteDialog({
                   <Input 
                     value={inviteResult.action_link}
                     readOnly
-                    className="text-xs font-mono"
+                    className="text-xs font-mono bg-background"
                   />
                   <Button
                     type="button"
@@ -146,16 +155,20 @@ export function ApporteurInviteDialog({
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {inviteResult.is_new_user 
-                    ? "Transmettez ce lien à l'utilisateur pour qu'il définisse son mot de passe."
+                    ? "⚠️ Copiez ce lien et transmettez-le à l'utilisateur pour qu'il définisse son mot de passe."
                     : "Ce lien permet à l'utilisateur de se connecter directement."
                   }
                 </p>
               </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                L'utilisateur peut se connecter avec ses identifiants existants.
+              </p>
             )}
           </div>
 
           <DialogFooter>
-            <Button onClick={handleClose}>Fermer</Button>
+            <Button onClick={handleClose} className="w-full">Fermer</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
