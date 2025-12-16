@@ -286,3 +286,29 @@ export function useInviteApporteurUser() {
     },
   });
 }
+
+/**
+ * Supprimer complètement un utilisateur apporteur
+ */
+export function useDeleteApporteurUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('apporteur_users')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['apporteur-users'] });
+      queryClient.invalidateQueries({ queryKey: ['apporteurs'] });
+      toast.success('Utilisateur supprimé');
+    },
+    onError: () => {
+      toast.error('Erreur lors de la suppression');
+    },
+  });
+}
