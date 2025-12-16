@@ -8,7 +8,8 @@ import {
   FolderOpen,
   Calendar,
   ClipboardList,
-  Wrench
+  Wrench,
+  FileEdit
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ROUTES } from "@/config/routes";
@@ -92,6 +93,13 @@ const RH_MODULES: RHModule[] = [
     description: 'Traiter les demandes',
     icon: FileText,
     href: ROUTES.rh.demandes,
+  },
+  {
+    id: 'docgen',
+    title: 'DocGen',
+    description: 'Génération de documents',
+    icon: FileEdit,
+    href: ROUTES.rh.docgen,
   },
 ];
 

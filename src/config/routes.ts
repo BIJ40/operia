@@ -93,6 +93,9 @@ export const ROUTES = {
     // Parc & Matériel
     parc: '/rh/parc',
     epi: '/rh/epi',
+    // DocGen
+    docgen: '/rh/docgen',
+    docgenInstance: (instanceId: string) => `/rh/docgen/${instanceId}`,
   },
 
   // ============================================
