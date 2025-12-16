@@ -34,7 +34,8 @@ export function useRHCollaborators() {
           rh_epi_profiles(*),
           rh_competencies(*),
           rh_assets(*),
-          rh_it_access(*)
+          rh_it_access(*),
+          collaborator_sensitive_data(birth_date_encrypted)
         `)
         .eq('agency_id', agencyId)
         .is('leaving_date', null) // Exclure les collaborateurs ayant quitté l'agence
@@ -49,6 +50,7 @@ export function useRHCollaborators() {
         competencies: (c as any).rh_competencies || null,
         assets: (c as any).rh_assets || null,
         it_access: (c as any).rh_it_access || null,
+        sensitive_data: (c as any).collaborator_sensitive_data || null,
       })) as RHCollaborator[];
     },
     enabled: !!agencyId,
@@ -72,7 +74,8 @@ export function useRHCollaborator(collaboratorId: string | undefined) {
           rh_epi_profiles(*),
           rh_competencies(*),
           rh_assets(*),
-          rh_it_access(*)
+          rh_it_access(*),
+          collaborator_sensitive_data(birth_date_encrypted)
         `)
         .eq('id', collaboratorId)
         .single();
@@ -85,6 +88,7 @@ export function useRHCollaborator(collaboratorId: string | undefined) {
         competencies: (data as any).rh_competencies || null,
         assets: (data as any).rh_assets || null,
         it_access: (data as any).rh_it_access || null,
+        sensitive_data: (data as any).collaborator_sensitive_data || null,
       } as RHCollaborator;
     },
     enabled: !!collaboratorId,
