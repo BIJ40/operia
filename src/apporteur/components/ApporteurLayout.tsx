@@ -38,7 +38,6 @@ const NAV_ITEMS = [
   { path: '/apporteur/dashboard', label: 'Tableau de bord', icon: Home },
   { path: '/apporteur/dossiers', label: 'Mes dossiers', icon: FolderOpen },
   { path: '/apporteur/demandes', label: 'Demandes', icon: FileText },
-  { path: '/apporteur/nouvelle-demande', label: 'Nouvelle demande', icon: PlusCircle },
 ];
 
 export function ApporteurLayout({ children }: ApporteurLayoutProps) {
