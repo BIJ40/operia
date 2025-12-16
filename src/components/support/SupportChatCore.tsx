@@ -433,13 +433,13 @@ export function SupportChatCore({
     <div className={`flex flex-col h-full ${className}`}>
       {/* Context selector (if multiple contexts available) */}
       {allowedContexts.length > 1 && !compact && (
-        <div className="flex items-center gap-2 p-2 border-b bg-muted/30">
-          <span className="text-xs text-muted-foreground">Contexte:</span>
+        <div className="flex flex-wrap items-center gap-1.5 p-2 border-b bg-muted/30">
+          <span className="text-xs text-muted-foreground shrink-0">Contexte:</span>
           {allowedContexts.map((ctx) => (
             <Badge
               key={ctx}
               variant={selectedContext === ctx ? 'default' : 'outline'}
-              className="cursor-pointer text-xs"
+              className="cursor-pointer text-xs px-2 py-0.5"
               onClick={() => setSelectedContext(ctx)}
             >
               {ctx}
