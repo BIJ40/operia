@@ -65,7 +65,10 @@ serve(async (req) => {
     // Use array to preserve order of first appearance
     const tokensOrdered: string[] = [];
     const tokensSeen = new Set<string>();
-    const tokenRegex = /\{\{([^}]+)\}\}/g;
+    
+    // Support both {{token}} and {token} formats
+    const doublebraceRegex = /\{\{([^}]+)\}\}/g;
+    const singlebraceRegex = /\{([A-Z][A-Z0-9_]+)\}/g; // Single brace: uppercase tokens only (e.g., {JOKER})
 
     const normalizeToken = (raw: string): string | null => {
       const cleaned = raw
@@ -118,7 +121,17 @@ serve(async (req) => {
         .replace(/&apos;/g, "'");
 
       let match;
-      while ((match = tokenRegex.exec(plainText)) !== null) {
+      // Extract double-brace tokens {{token}}
+      while ((match = doublebraceRegex.exec(plainText)) !== null) {
+        const tokenName = normalizeToken(match[1] ?? "");
+        if (tokenName && !tokensSeen.has(tokenName)) {
+          tokensSeen.add(tokenName);
+          tokensOrdered.push(tokenName);
+        }
+      }
+      
+      // Extract single-brace tokens {TOKEN} (uppercase only to avoid false positives)
+      while ((match = singlebraceRegex.exec(plainText)) !== null) {
         const tokenName = normalizeToken(match[1] ?? "");
         if (tokenName && !tokensSeen.has(tokenName)) {
           tokensSeen.add(tokenName);
