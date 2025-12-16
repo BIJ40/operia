@@ -54,19 +54,25 @@ function formatDateISO(date: Date | null): string | null {
   return date.toISOString().split('T')[0];
 }
 
+function isCancelledLike(stateRaw: unknown): boolean {
+  const s = String(stateRaw ?? '').toLowerCase();
+  return ['cancelled', 'canceled', 'cancel', 'annul', 'abandon', 'refus', 'refuse', 'refused'].some((k) => s.includes(k));
+}
+
 function getStatusFromProject(project: AnyRecord, facture: AnyRecord | null, devis: AnyRecord | null): { status: string; label: string } {
-  const state = String(project.state || '').toLowerCase();
-  
-  // PRIORITÉ 1: Statut du dossier cancelled/annulé prime sur tout
-  if (['cancelled', 'annulé', 'annule', 'abandon', 'abandonné'].some(s => state.includes(s))) {
+  const rawProjectState = project.state ?? project.data?.state;
+  const state = String(rawProjectState || '').toLowerCase();
+
+  // PRIORITÉ 1: Statut du dossier annulé prime sur tout
+  if (isCancelledLike(state)) {
     return { status: 'annule', label: 'Annulé' };
   }
-  
+
   // PRIORITÉ 2: Dossier clos
-  if (['clos', 'closed', 'terminé', 'done'].some(s => state.includes(s))) {
+  if (['clos', 'closed', 'terminé', 'done'].some((s) => state.includes(s))) {
     return { status: 'clos', label: 'Clos' };
   }
-  
+
   // PRIORITÉ 3: Facture existante
   if (facture) {
     const resteDu = Number(facture.data?.calcReglementsReste || facture.calcReglementsReste || 0);
@@ -75,32 +81,36 @@ function getStatusFromProject(project: AnyRecord, facture: AnyRecord | null, dev
     }
     return { status: 'attente_paiement', label: 'Attente paiement' };
   }
-  
-  if (['invoiced', 'facturé', 'facture'].some(s => state.includes(s))) {
+
+  if (['invoiced', 'facturé', 'facture'].some((s) => state.includes(s))) {
     return { status: 'facture', label: 'Facturé' };
   }
-  
-  // PRIORITÉ 4: Devis
+
+  // PRIORITÉ 4: Devis (on ignore les devis annulés/refusés)
   if (devis) {
-    const devisState = String(devis.state || '').toLowerCase();
-    if (['validated', 'signed', 'order', 'accepted', 'validé', 'signé'].some(s => devisState.includes(s))) {
-      return { status: 'devis_valide', label: 'Devis validé' };
+    const rawDevisState = devis.state ?? devis.data?.state ?? devis.status;
+    const devisState = String(rawDevisState || '').toLowerCase();
+
+    if (!isCancelledLike(devisState)) {
+      if (['validated', 'signed', 'order', 'accepted', 'validé', 'signé'].some((s) => devisState.includes(s))) {
+        return { status: 'devis_valide', label: 'Devis validé' };
+      }
+      if (['sent', 'envoyé', 'envoye'].some((s) => devisState.includes(s))) {
+        return { status: 'devis_envoye', label: 'Devis envoyé' };
+      }
+      return { status: 'devis_en_cours', label: 'Devis en cours' };
     }
-    if (['sent', 'envoyé', 'envoye'].some(s => devisState.includes(s))) {
-      return { status: 'devis_envoye', label: 'Devis envoyé' };
-    }
-    return { status: 'devis_en_cours', label: 'Devis en cours' };
   }
-  
+
   // PRIORITÉ 5: États intermédiaires
-  if (['rdv_tvx', 'rdv travaux', 'travaux planifié'].some(s => state.includes(s))) {
+  if (['rdv_tvx', 'rdv travaux', 'travaux planifié'].some((s) => state.includes(s))) {
     return { status: 'rdv_travaux', label: 'RDV Travaux' };
   }
-  
-  if (['planifié', 'planned', 'programmé'].some(s => state.includes(s))) {
+
+  if (['planifié', 'planned', 'programmé'].some((s) => state.includes(s))) {
     return { status: 'programme', label: 'Programmé 1er RDV' };
   }
-  
+
   return { status: 'en_cours', label: 'En cours' };
 }
 
@@ -334,10 +344,14 @@ Deno.serve(async (req) => {
 
     for (const d of (allDevis || []) as AnyRecord[]) {
       if (d.projectId) {
+        const rawDevisState = d.state ?? d.data?.state ?? d.status;
+        // Ne jamais prendre un devis annulé/refusé pour déterminer l'avancement
+        if (isCancelledLike(rawDevisState)) continue;
+
         const existing = devisByProject[d.projectId];
         const newDate = parseDate(d.dateReelle || d.date);
         const existingDate = existing ? parseDate(existing.dateReelle || existing.date) : null;
-        if (!existing || (newDate && existingDate && newDate > existingDate)) {
+        if (!existing || (newDate && (!existingDate || newDate > existingDate))) {
           devisByProject[d.projectId] = d;
         }
       }
@@ -394,9 +408,11 @@ Deno.serve(async (req) => {
         }
       }
 
-      const devisDate = devis ? parseDate(devis.dateReelle || devis.date) : null;
-      const devisState = devis ? String(devis.state || '').toLowerCase() : '';
-      const devisValide = ['validated', 'signed', 'order', 'accepted'].some(s => devisState.includes(s));
+      const rawDevisState = devis ? (devis.state ?? devis.data?.state ?? devis.status) : '';
+      const devisState = String(rawDevisState || '').toLowerCase();
+      const devisIsCancelled = devis ? isCancelledLike(devisState) : false;
+      const devisDate = devis && !devisIsCancelled ? parseDate(devis.dateReelle || devis.date) : null;
+      const devisValide = !devisIsCancelled && ['validated', 'signed', 'order', 'accepted'].some(s => devisState.includes(s));
 
       const factureDate = facture ? parseDate(facture.dateReelle || facture.date) : null;
       
@@ -408,7 +424,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      const devisHT = devis ? Number(devis.totalHT || devis.data?.totalHT || 0) : 0;
+      const devisHT = devis && !devisIsCancelled ? Number(devis.totalHT || devis.data?.totalHT || 0) : 0;
       const factureHT = facture ? Number(facture.data?.totalHT || facture.totalHT || 0) : 0;
       const resteDuTTC = facture ? Number(facture.data?.calcReglementsReste || facture.calcReglementsReste || 0) : 0;
       const totalTTC = facture ? Number(facture.data?.totalTTC || facture.totalTTC || 0) : 0;
@@ -433,7 +449,7 @@ Deno.serve(async (req) => {
         statusLabel: label,
         dateCreation: formatDateISO(projectDate),
         datePremierRdv: formatDateISO(premierRdv),
-        dateDevisEnvoye: devis && !devisValide ? formatDateISO(devisDate) : null,
+        dateDevisEnvoye: devis && !devisValide && !devisIsCancelled ? formatDateISO(devisDate) : null,
         dateDevisValide: devisValide ? formatDateISO(devisDate) : null,
         dateRdvTravaux: formatDateISO(rdvTravaux),
         dateFacture: formatDateISO(factureDate),
@@ -442,7 +458,7 @@ Deno.serve(async (req) => {
         devisHT: Math.round(devisHT * 100) / 100,
         factureHT: Math.round(factureHT * 100) / 100,
         restedu: Math.round(Math.max(0, resteDuHT) * 100) / 100,
-        devisId: devis ? Number(devis.id) : null,
+        devisId: devis && !devisIsCancelled ? Number(devis.id) : null,
         factureId: facture ? Number(facture.id) : null,
       });
     }
