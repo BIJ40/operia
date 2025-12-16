@@ -4,6 +4,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useApporteurAuth } from '@/contexts/ApporteurAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,6 +32,7 @@ const REQUEST_TYPES = [
 export default function ApporteurNouvelleDemande() {
   const { apporteurUser, apporteurId, agencyId } = useApporteurAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
 
   // Form state
@@ -92,10 +94,12 @@ export default function ApporteurNouvelleDemande() {
 
       if (error) throw error;
 
+      // Invalider le cache pour rafraîchir la liste
+      await queryClient.invalidateQueries({ queryKey: ['apporteur-demandes'] });
+      
       toast.success('Demande envoyée avec succès');
       navigate('/apporteur/demandes');
     } catch (err) {
-      console.error('Error creating request:', err);
       toast.error('Erreur lors de la création de la demande');
     } finally {
       setLoading(false);
