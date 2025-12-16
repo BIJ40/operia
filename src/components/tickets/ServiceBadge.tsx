@@ -27,7 +27,7 @@ export function ServiceBadge({ service }: ServiceBadgeProps) {
       className: 'bg-purple-100 text-purple-800 border-purple-300',
     },
     bug_app: {
-      label: 'Bug Application',
+      label: 'Bug Opéria',
       emoji: '🐛',
       className: 'bg-red-100 text-red-800 border-red-300',
     },
