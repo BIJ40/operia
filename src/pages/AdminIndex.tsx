@@ -78,9 +78,6 @@ export default function AdminIndex() {
         </div>
       </div>
 
-      {/* Mode Maintenance - Visible uniquement pour N6 */}
-      {isSuperadmin && <MaintenanceModeCard />}
-
       {/* Stats Overview */}
       <StatsOverview />
 
@@ -158,6 +155,9 @@ export default function AdminIndex() {
 
         {/* Système */}
         <TabsContent value="systeme" className="space-y-4">
+          {/* Mode Maintenance - Visible uniquement pour N6 */}
+          {isSuperadmin && <MaintenanceModeCard compact />}
+          
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <AdminLink to={ROUTES.admin.systemHealth} icon={Activity} title="Santé Système" description="Surveillance services" />
             <AdminLink to={ROUTES.admin.pageMetadata} icon={FileText} title="Métadonnées Pages" description="Titres et labels" />
