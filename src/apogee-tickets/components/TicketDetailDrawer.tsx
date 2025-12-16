@@ -45,7 +45,9 @@ import {
   GitBranch,
   Pencil,
   X,
-  Check
+  Check,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -128,6 +130,7 @@ export function TicketDetailDrawer({
   const [showAllComments, setShowAllComments] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentBody, setEditingCommentBody] = useState('');
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // Auto-déterminer le type d'auteur selon le rôle
   // Developer = APOGEE, Tester/Franchiseur = HC
@@ -149,6 +152,7 @@ export function TicketDetailDrawer({
       setNewComment('');
       setEditingCommentId(null);
       setEditingCommentBody('');
+      setIsExpanded(false);
     }
   }, [draftKey, open]);
 
@@ -307,10 +311,21 @@ export function TicketDetailDrawer({
 
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="w-full sm:max-w-3xl overflow-hidden flex flex-col p-0">
+      <SheetContent className={`w-full overflow-hidden flex flex-col p-0 transition-all duration-300 ${isExpanded ? 'sm:max-w-6xl' : 'sm:max-w-3xl'}`}>
         {/* Header fixe */}
         <SheetHeader className="p-6 pb-4 border-b">
           <div className="flex items-start justify-between gap-4">
+            {/* Bouton agrandir en haut à gauche */}
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+              onClick={() => setIsExpanded(!isExpanded)}
+              title={isExpanded ? "Réduire le panneau" : "Agrandir le panneau"}
+            >
+              {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </Button>
+            
             <div className="flex-1 space-y-2">
               {/* Référence ticket */}
               <div className="flex items-center gap-2">
