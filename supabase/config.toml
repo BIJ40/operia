@@ -146,3 +146,9 @@ verify_jwt = true
 
 [functions.notify-apporteur-request]
 verify_jwt = true
+
+[functions.search-apogee-commanditaires]
+verify_jwt = true
+
+[functions.get-apporteur-stats]
+verify_jwt = true

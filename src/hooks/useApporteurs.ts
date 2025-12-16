@@ -312,3 +312,33 @@ export function useDeleteApporteurUser() {
     },
   });
 }
+
+/**
+ * Mettre à jour l'apogee_client_id d'un apporteur (liaison Apogée)
+ */
+export function useUpdateApporteurApogeeId() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, apogee_client_id }: { id: string; apogee_client_id: number | null }) => {
+      const { error } = await supabase
+        .from('apporteurs')
+        .update({ apogee_client_id })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['apporteurs'] });
+      queryClient.invalidateQueries({ queryKey: ['apporteur', variables.id] });
+      toast.success(
+        variables.apogee_client_id 
+          ? 'Apporteur lié à Apogée' 
+          : 'Liaison Apogée supprimée'
+      );
+    },
+    onError: () => {
+      toast.error('Erreur lors de la mise à jour');
+    },
+  });
+}
