@@ -5,8 +5,7 @@
  */
 
 import { useState } from 'react';
-import { MainLayout } from '@/components/layout';
-import { RoleGuard } from '@/components/auth/RoleGuard';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,28 +54,22 @@ export default function AdminApporteurs() {
 
   if (error) {
     return (
-      <MainLayout>
-        <RoleGuard minRole="franchisee_admin">
-          <div className="container mx-auto py-8">
-            <Card className="border-destructive">
-              <CardContent className="pt-6 text-center text-destructive">
-                Erreur lors du chargement des apporteurs
-              </CardContent>
-            </Card>
-          </div>
-        </RoleGuard>
-      </MainLayout>
+      <div className="container mx-auto py-8">
+        <Card className="border-destructive">
+          <CardContent className="pt-6 text-center text-destructive">
+            Erreur lors du chargement des apporteurs
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <MainLayout>
-      <RoleGuard minRole="franchisee_admin">
-        <div className="container mx-auto py-8 space-y-6">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Building2 className="h-8 w-8 text-primary" />
+    <div className="container mx-auto py-8 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Building2 className="h-8 w-8 text-primary" />
               <div>
                 <h1 className="text-2xl font-bold">Apporteurs</h1>
                 <p className="text-muted-foreground">
@@ -222,25 +215,23 @@ export default function AdminApporteurs() {
                 </>
               )}
             </CardContent>
-          </Card>
-        </div>
+      </Card>
 
-        {/* Dialogs */}
-        <ApporteurCreateDialog
-          open={showCreateDialog}
-          onOpenChange={setShowCreateDialog}
-          onSuccess={() => {
-            setShowCreateDialog(false);
-            refetch();
-          }}
-        />
+      {/* Dialogs */}
+      <ApporteurCreateDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onSuccess={() => {
+          setShowCreateDialog(false);
+          refetch();
+        }}
+      />
 
-        <ApporteurDetailDrawer
-          apporteurId={selectedApporteurId}
-          onClose={() => setSelectedApporteurId(null)}
-          onRefresh={refetch}
-        />
-      </RoleGuard>
-    </MainLayout>
+      <ApporteurDetailDrawer
+        apporteurId={selectedApporteurId}
+        onClose={() => setSelectedApporteurId(null)}
+        onRefresh={refetch}
+      />
+    </div>
   );
 }
