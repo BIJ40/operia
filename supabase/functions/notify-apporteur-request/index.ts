@@ -1,12 +1,319 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { PDFDocument, StandardFonts, rgb } from "https://esm.sh/pdf-lib@1.17.1";
 import { handleCorsPreflightOrReject, withCors } from "../_shared/cors.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 interface NotifyRequest {
   request_id: string;
+}
+
+// Generate PDF recap
+async function generatePdfRecap(request: any, apporteurName: string, agencyName: string): Promise<Uint8Array> {
+  const pdfDoc = await PDFDocument.create();
+  const page = pdfDoc.addPage([595, 842]); // A4
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  
+  const { height } = page.getSize();
+  let y = height - 50;
+  const margin = 50;
+  const lineHeight = 20;
+  
+  // Header
+  page.drawRectangle({
+    x: 0,
+    y: height - 80,
+    width: 595,
+    height: 80,
+    color: rgb(0, 0.4, 0.8),
+  });
+  
+  page.drawText("DEMANDE D'INTERVENTION", {
+    x: margin,
+    y: height - 45,
+    size: 20,
+    font: fontBold,
+    color: rgb(1, 1, 1),
+  });
+  
+  page.drawText(`Référence: ${request.reference || 'N/A'}`, {
+    x: margin,
+    y: height - 68,
+    size: 12,
+    font: font,
+    color: rgb(1, 1, 1),
+  });
+  
+  y = height - 120;
+  
+  // Date
+  const dateStr = new Date().toLocaleDateString('fr-FR', { 
+    day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' 
+  });
+  page.drawText(`Date: ${dateStr}`, {
+    x: margin,
+    y,
+    size: 10,
+    font: font,
+    color: rgb(0.5, 0.5, 0.5),
+  });
+  y -= lineHeight * 2;
+  
+  // Apporteur section
+  page.drawText("APPORTEUR", {
+    x: margin,
+    y,
+    size: 12,
+    font: fontBold,
+    color: rgb(0, 0.4, 0.8),
+  });
+  y -= lineHeight;
+  
+  page.drawText(apporteurName, {
+    x: margin,
+    y,
+    size: 11,
+    font: font,
+    color: rgb(0, 0, 0),
+  });
+  y -= lineHeight * 2;
+  
+  // Type & Urgence
+  const urgencyLabels: Record<string, string> = {
+    normal: "Normal",
+    urgent: "Urgent",
+    tres_urgent: "Très urgent"
+  };
+  const typeLabels: Record<string, string> = {
+    depannage: "Dépannage",
+    travaux: "Travaux",
+    maintenance: "Maintenance",
+    diagnostic: "Diagnostic"
+  };
+  
+  page.drawText("TYPE DE DEMANDE", {
+    x: margin,
+    y,
+    size: 12,
+    font: fontBold,
+    color: rgb(0, 0.4, 0.8),
+  });
+  y -= lineHeight;
+  
+  page.drawText(`Type: ${typeLabels[request.request_type] || request.request_type}`, {
+    x: margin,
+    y,
+    size: 11,
+    font: font,
+    color: rgb(0, 0, 0),
+  });
+  y -= lineHeight;
+  
+  page.drawText(`Urgence: ${urgencyLabels[request.urgency] || request.urgency}`, {
+    x: margin,
+    y,
+    size: 11,
+    font: font,
+    color: request.urgency === 'urgent' || request.urgency === 'tres_urgent' ? rgb(0.8, 0.2, 0.2) : rgb(0, 0, 0),
+  });
+  y -= lineHeight * 2;
+  
+  // Locataire section
+  page.drawText("LOCATAIRE / OCCUPANT", {
+    x: margin,
+    y,
+    size: 12,
+    font: fontBold,
+    color: rgb(0, 0.4, 0.8),
+  });
+  y -= lineHeight;
+  
+  page.drawText(`Nom: ${request.tenant_name}`, {
+    x: margin,
+    y,
+    size: 11,
+    font: font,
+    color: rgb(0, 0, 0),
+  });
+  y -= lineHeight;
+  
+  if (request.tenant_phone) {
+    page.drawText(`Téléphone: ${request.tenant_phone}`, {
+      x: margin,
+      y,
+      size: 11,
+      font: font,
+      color: rgb(0, 0, 0),
+    });
+    y -= lineHeight;
+  }
+  
+  if (request.tenant_email) {
+    page.drawText(`Email: ${request.tenant_email}`, {
+      x: margin,
+      y,
+      size: 11,
+      font: font,
+      color: rgb(0, 0, 0),
+    });
+    y -= lineHeight;
+  }
+  
+  if (request.owner_name) {
+    y -= lineHeight;
+    page.drawText("PROPRIÉTAIRE", {
+      x: margin,
+      y,
+      size: 12,
+      font: fontBold,
+      color: rgb(0, 0.4, 0.8),
+    });
+    y -= lineHeight;
+    
+    page.drawText(request.owner_name, {
+      x: margin,
+      y,
+      size: 11,
+      font: font,
+      color: rgb(0, 0, 0),
+    });
+    y -= lineHeight;
+  }
+  
+  y -= lineHeight;
+  
+  // Adresse section
+  page.drawText("ADRESSE D'INTERVENTION", {
+    x: margin,
+    y,
+    size: 12,
+    font: fontBold,
+    color: rgb(0, 0.4, 0.8),
+  });
+  y -= lineHeight;
+  
+  page.drawText(request.address, {
+    x: margin,
+    y,
+    size: 11,
+    font: font,
+    color: rgb(0, 0, 0),
+  });
+  y -= lineHeight;
+  
+  if (request.postal_code || request.city) {
+    page.drawText(`${request.postal_code || ''} ${request.city || ''}`.trim(), {
+      x: margin,
+      y,
+      size: 11,
+      font: font,
+      color: rgb(0, 0, 0),
+    });
+    y -= lineHeight;
+  }
+  y -= lineHeight;
+  
+  // Description section
+  page.drawText("DESCRIPTION DU PROBLÈME", {
+    x: margin,
+    y,
+    size: 12,
+    font: fontBold,
+    color: rgb(0, 0.4, 0.8),
+  });
+  y -= lineHeight;
+  
+  // Word wrap description
+  const maxWidth = 495;
+  const words = (request.description || '').split(' ');
+  let line = '';
+  
+  for (const word of words) {
+    const testLine = line + (line ? ' ' : '') + word;
+    const textWidth = font.widthOfTextAtSize(testLine, 11);
+    
+    if (textWidth > maxWidth && line) {
+      page.drawText(line, {
+        x: margin,
+        y,
+        size: 11,
+        font: font,
+        color: rgb(0, 0, 0),
+      });
+      y -= lineHeight;
+      line = word;
+    } else {
+      line = testLine;
+    }
+  }
+  
+  if (line) {
+    page.drawText(line, {
+      x: margin,
+      y,
+      size: 11,
+      font: font,
+      color: rgb(0, 0, 0),
+    });
+    y -= lineHeight;
+  }
+  
+  // Disponibilités
+  if (request.availability) {
+    y -= lineHeight;
+    page.drawText("DISPONIBILITÉS", {
+      x: margin,
+      y,
+      size: 12,
+      font: fontBold,
+      color: rgb(0, 0.4, 0.8),
+    });
+    y -= lineHeight;
+    
+    page.drawText(request.availability, {
+      x: margin,
+      y,
+      size: 11,
+      font: font,
+      color: rgb(0, 0, 0),
+    });
+    y -= lineHeight;
+  }
+  
+  // Commentaires
+  if (request.comments) {
+    y -= lineHeight;
+    page.drawText("COMMENTAIRES", {
+      x: margin,
+      y,
+      size: 12,
+      font: fontBold,
+      color: rgb(0, 0.4, 0.8),
+    });
+    y -= lineHeight;
+    
+    page.drawText(request.comments, {
+      x: margin,
+      y,
+      size: 11,
+      font: font,
+      color: rgb(0, 0, 0),
+    });
+  }
+  
+  // Footer
+  page.drawText(`Document généré le ${dateStr} - HelpConfort`, {
+    x: margin,
+    y: 30,
+    size: 8,
+    font: font,
+    color: rgb(0.5, 0.5, 0.5),
+  });
+  
+  return await pdfDoc.save();
 }
 
 serve(async (req) => {
@@ -64,6 +371,12 @@ serve(async (req) => {
       ));
     }
 
+    // Generate PDF
+    console.log("Generating PDF recap...");
+    const pdfBytes = await generatePdfRecap(request, apporteurName, agencyName);
+    const pdfBase64 = btoa(String.fromCharCode(...pdfBytes));
+    console.log("PDF generated, size:", pdfBytes.length, "bytes");
+
     // Build urgency label
     const urgencyLabels: Record<string, string> = {
       normal: "Normal",
@@ -111,6 +424,9 @@ serve(async (req) => {
               </p>
               <p style="color: #333333; font-size: 17px; line-height: 1.6; margin: 0 0 20px 0;">
                 Une nouvelle demande d'intervention a été soumise par <strong>${apporteurName}</strong>.
+              </p>
+              <p style="color: #333333; font-size: 17px; line-height: 1.6; margin: 0 0 20px 0;">
+                📎 <strong>Un récapitulatif PDF est joint à cet email.</strong>
               </p>
               
               <!-- Request Details Box -->
@@ -173,15 +489,21 @@ serve(async (req) => {
 </html>
     `;
 
-    // Send email
+    // Send email with PDF attachment
     const emailResponse = await resend.emails.send({
       from: "HelpConfort <noreply@helpconfort.services>",
       to: [agencyEmail],
       subject: `[${requestReference}] Nouvelle demande - ${apporteurName} - ${request.tenant_name}`,
       html: emailHtml,
+      attachments: [
+        {
+          filename: `Demande-${requestReference}.pdf`,
+          content: pdfBase64,
+        }
+      ],
     });
 
-    console.log("Email sent successfully:", emailResponse);
+    console.log("Email sent successfully with PDF attachment:", emailResponse);
 
     return withCors(req, new Response(
       JSON.stringify({ success: true, response: emailResponse }),
