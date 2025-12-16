@@ -118,7 +118,17 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
     setHiddenColumns,
     columnWidth,
     setColumnWidth,
+    resetUIState,
   } = usePersistedFilters();
+
+  // Vérifie si un état UI est actif (PEC, blinking, colonnes cachées)
+  const hasActiveUIState = selectedPEC.size > 0 || filterBlinkingOnly || hiddenColumns.size > 0;
+  
+  // Reset ALL - filtres + UI state
+  const handleResetAll = () => {
+    resetFilters();
+    resetUIState();
+  };
   
   const [selectedTicket, setSelectedTicket] = useState<ApogeeTicket | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -466,8 +476,28 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
         onToggleBlinkingFilter={() => setFilterBlinkingOnly(prev => !prev)}
       />
 
-      {/* Contrôles colonnes */}
+      {/* Contrôles colonnes + Reset All */}
       <div className="flex items-center gap-4 flex-wrap">
+          {/* R.A.Z. tous les filtres */}
+          {(hasActiveFilters || hasActiveUIState) && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="destructive" 
+                  size="sm" 
+                  onClick={handleResetAll}
+                  className="gap-2"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  R.A.Z.
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                Réinitialiser tous les filtres et paramètres d'affichage
+              </TooltipContent>
+            </Tooltip>
+          )}
+
           {/* Visibilité colonnes */}
           <Popover>
             <PopoverTrigger asChild>
