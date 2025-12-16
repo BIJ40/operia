@@ -22,7 +22,7 @@ export interface ApporteurDemande {
   urgency: 'normal' | 'urgent';
   availability: string | null;
   comments: string | null;
-  status: 'pending' | 'received' | 'assigned' | 'completed';
+  status: 'pending' | 'received' | 'assigned' | 'in_progress' | 'completed' | 'cancelled';
   apogee_project_id: number | null;
   created_at: string;
   updated_at: string;
@@ -67,6 +67,7 @@ export const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   assigned: { label: 'Assignée', color: 'bg-purple-500/10 text-purple-600 border-purple-200' },
   in_progress: { label: 'Dossier créé', color: 'bg-indigo-500/10 text-indigo-600 border-indigo-200' },
   completed: { label: 'Terminée', color: 'bg-green-500/10 text-green-600 border-green-200' },
+  cancelled: { label: 'Annulée', color: 'bg-red-500/10 text-red-600 border-red-200' },
 };
 
 // Labels pour l'urgence
