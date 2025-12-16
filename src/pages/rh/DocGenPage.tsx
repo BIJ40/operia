@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Plus, FileText, Eye, Download, Trash2, Pencil } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -109,22 +110,24 @@ export default function DocGenPage() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Génération de Documents</h1>
-          <p className="text-muted-foreground">
-            Créez des documents personnalisés à partir de templates
-          </p>
-        </div>
+      <PageHeader
+        title="Génération de Documents"
+        subtitle="Créez des documents personnalisés à partir de templates"
+        backTo="/rh"
+        backLabel="Retour RH"
+        rightElement={
+          <Button 
+            disabled={publishedTemplates.length === 0}
+            onClick={() => setShowCreateDialog(true)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Nouveau document
+          </Button>
+        }
+      />
 
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogTrigger asChild>
-            <Button disabled={publishedTemplates.length === 0}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nouveau document
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent>
             <DialogHeader>
               <DialogTitle>Créer un nouveau document</DialogTitle>
               <DialogDescription>
@@ -192,8 +195,7 @@ export default function DocGenPage() {
               </Button>
             </div>
           </DialogContent>
-        </Dialog>
-      </div>
+      </Dialog>
 
       {publishedTemplates.length === 0 && (
         <Card>
