@@ -624,7 +624,7 @@ export default function AdminSupportTickets() {
                             
                             if (projectTicketId) {
                               toast.success('Ticket transféré en développement');
-                              navigate(`/projects/tickets?ticketId=${projectTicketId}`);
+                              navigate(`/projects/kanban?ticketId=${projectTicketId}`);
                             }
                           }}
                           disabled={isTransforming}
