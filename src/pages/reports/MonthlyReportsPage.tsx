@@ -52,21 +52,33 @@ export default function MonthlyReportsPage() {
     enabled: !!agencyId,
   });
 
-  // Generate report manually
+  // Generate report manually for current agency
   const handleGenerateReport = async () => {
+    if (!agencyId) {
+      toast.error('Aucune agence sélectionnée');
+      return;
+    }
+
     setIsGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke('trigger-monthly-reports', {
         headers: {
           'X-CRON-SECRET': '9f3c8a1d6e4b52a0c7f9d81e6b4a2f0c5e9d3a7b8c1f4e2a6d0b9c5f7e1a4'
-        }
+        },
+        body: { agency_id: agencyId }
       });
 
       if (error) throw error;
 
-      toast.success('Génération des rapports lancée', {
-        description: `${data?.generated || 0} rapport(s) généré(s)`
-      });
+      if (data?.generated > 0) {
+        toast.success('Rapport généré avec succès');
+      } else if (data?.failed > 0) {
+        toast.error('Échec de la génération', {
+          description: data?.errors?.[0]?.error || 'Erreur inconnue'
+        });
+      } else {
+        toast.warning('Aucun rapport généré');
+      }
 
       // Refresh reports list after a delay
       setTimeout(() => {

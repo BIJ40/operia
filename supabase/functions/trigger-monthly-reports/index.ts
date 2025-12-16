@@ -33,6 +33,19 @@ Deno.serve(async (req) => {
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Parse request body for optional agency_id override
+    let requestBody: { agency_id?: string } = {};
+    try {
+      if (req.method === "POST") {
+        const text = await req.text();
+        if (text) {
+          requestBody = JSON.parse(text);
+        }
+      }
+    } catch {
+      // Ignore JSON parse errors, use defaults
+    }
+
     // Calculate previous month
     const now = new Date();
     const month = now.getMonth() === 0 ? 12 : now.getMonth();
@@ -40,20 +53,44 @@ Deno.serve(async (req) => {
 
     console.log(`[trigger-monthly-reports] Generating reports for ${month}/${year}...`);
 
-    // Get all agencies with report_settings configured (presence = enabled)
-    const { data: enabledSettings, error: settingsErr } = await supabaseAdmin
-      .from("report_settings")
-      .select("agency_id, agency:apogee_agencies!inner(id, slug, label, is_active)");
+    let eligible: Array<{ agency_id: string; agency: { id: string; slug: string; label: string; is_active: boolean } }> = [];
 
-    if (settingsErr) {
-      console.error("[trigger-monthly-reports] Failed to fetch settings:", settingsErr);
-      return jsonResponse(500, { error: "SETTINGS_FETCH_FAILED", detail: settingsErr.message });
+    // If specific agency_id provided, generate for that agency only
+    if (requestBody.agency_id) {
+      console.log(`[trigger-monthly-reports] Specific agency requested: ${requestBody.agency_id}`);
+      
+      const { data: agency, error: agencyErr } = await supabaseAdmin
+        .from("apogee_agencies")
+        .select("id, slug, label, is_active")
+        .eq("id", requestBody.agency_id)
+        .single();
+
+      if (agencyErr || !agency) {
+        console.error("[trigger-monthly-reports] Agency not found:", agencyErr);
+        return jsonResponse(404, { error: "AGENCY_NOT_FOUND", detail: "Agency not found" });
+      }
+
+      if (!agency.is_active) {
+        return jsonResponse(400, { error: "AGENCY_INACTIVE", detail: "Agency is not active" });
+      }
+
+      eligible = [{ agency_id: agency.id, agency }];
+    } else {
+      // Get all agencies with report_settings configured (presence = enabled)
+      const { data: enabledSettings, error: settingsErr } = await supabaseAdmin
+        .from("report_settings")
+        .select("agency_id, agency:apogee_agencies!inner(id, slug, label, is_active)");
+
+      if (settingsErr) {
+        console.error("[trigger-monthly-reports] Failed to fetch settings:", settingsErr);
+        return jsonResponse(500, { error: "SETTINGS_FETCH_FAILED", detail: settingsErr.message });
+      }
+
+      // Filter to active agencies
+      eligible = (enabledSettings ?? []).filter(
+        (s) => s.agency && (s.agency as any).is_active === true
+      ) as any;
     }
-
-    // Filter to active agencies
-    const eligible = (enabledSettings ?? []).filter(
-      (s) => s.agency && (s.agency as any).is_active === true
-    );
 
     console.log(`[trigger-monthly-reports] Found ${eligible.length} eligible agencies`);
 
