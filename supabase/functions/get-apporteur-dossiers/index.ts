@@ -173,11 +173,74 @@ Deno.serve(async (req) => {
     const baseUrl = `https://${agency.slug}.hc-apogee.fr/api`;
     const commanditaireId = apporteur.apogee_client_id;
 
+    function extractApogeeList(endpoint: string, parsed: unknown): AnyRecord[] {
+      if (Array.isArray(parsed)) return parsed as AnyRecord[];
+      if (!parsed || typeof parsed !== 'object') return [];
+
+      const obj = parsed as AnyRecord;
+
+      const tryPick = (val: unknown): AnyRecord[] | null => {
+        if (Array.isArray(val)) return val as AnyRecord[];
+        if (!val || typeof val !== 'object') return null;
+
+        const vobj = val as AnyRecord;
+        const candidates = [
+          vobj.items,
+          vobj.Items,
+          vobj.clients,
+          vobj.Clients,
+          vobj.projects,
+          vobj.Projects,
+          vobj.factures,
+          vobj.Factures,
+          vobj.devis,
+          vobj.Devis,
+          vobj.interventions,
+          vobj.Interventions,
+          vobj.users,
+          vobj.Users,
+          vobj.results,
+          vobj.rows,
+          vobj.list,
+          vobj.value,
+        ];
+
+        for (const c of candidates) {
+          if (Array.isArray(c)) return c as AnyRecord[];
+        }
+
+        // fallback: first array-valued property with objects
+        for (const v of Object.values(vobj)) {
+          if (Array.isArray(v) && v.length > 0 && typeof v[0] === 'object') return v as AnyRecord[];
+        }
+
+        return null;
+      };
+
+      // common wrappers
+      const picked =
+        tryPick(obj.data) ||
+        tryPick(obj.Data) ||
+        tryPick(obj.result) ||
+        tryPick(obj.results) ||
+        tryPick(obj);
+
+      if (!picked) {
+        console.warn(`[GET-APPORTEUR-DOSSIERS] ${endpoint} unexpected response shape`, {
+          keys: Object.keys(obj),
+          dataKeys: obj.data && typeof obj.data === 'object' ? Object.keys(obj.data) : null,
+        });
+        return [];
+      }
+
+      return picked;
+    }
+
     // Helper function for API calls with timeout and error handling
     async function fetchApogee(endpoint: string): Promise<AnyRecord[]> {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
-      
+
       try {
         const res = await fetch(`${baseUrl}/${endpoint}`, {
           method: 'POST',
@@ -185,39 +248,20 @@ Deno.serve(async (req) => {
           body: JSON.stringify({ API_KEY: apiKey }),
           signal: controller.signal,
         });
-        
+
         clearTimeout(timeoutId);
-        
+
         if (!res.ok) {
           console.warn(`[GET-APPORTEUR-DOSSIERS] ${endpoint} returned ${res.status}`);
           return [];
         }
-        
-        // Read body as text first to handle connection drops gracefully
+
         const text = await res.text();
         if (!text) return [];
-        
+
         try {
           const parsed = JSON.parse(text);
-          if (Array.isArray(parsed)) return parsed;
-
-          if (parsed && typeof parsed === 'object') {
-            const obj = parsed as AnyRecord;
-
-            const data = obj.data;
-            if (Array.isArray(data)) return data;
-            if (data && typeof data === 'object') {
-              const dataObj = data as AnyRecord;
-              if (Array.isArray(dataObj.items)) return dataObj.items;
-              if (Array.isArray(dataObj.Items)) return dataObj.Items;
-              if (Array.isArray(dataObj.clients)) return dataObj.clients;
-            }
-
-            if (Array.isArray(obj.items)) return obj.items;
-            if (Array.isArray(obj.Items)) return obj.Items;
-          }
-
-          return [];
+          return extractApogeeList(endpoint, parsed);
         } catch {
           console.warn(`[GET-APPORTEUR-DOSSIERS] ${endpoint} invalid JSON`);
           return [];
@@ -237,13 +281,15 @@ Deno.serve(async (req) => {
       fetchApogee('apiGetClients'),
     ]);
 
-    // Build clients map for final client name
-    const clientsMap: Record<number, string> = {};
+    // Build clients map (project.clientId -> apiGetClients.*name)
+    const clientsMap: Record<string, string> = {};
     for (const c of (allClients || []) as AnyRecord[]) {
-      const clientId = Number(c.id);
-      if (clientId && c.name) {
-        clientsMap[clientId] = String(c.name);
-      }
+      const clientIdRaw = c.id ?? c.ID ?? c.clientId ?? c.client_id;
+      const clientId = clientIdRaw != null ? String(clientIdRaw) : '';
+      const nameRaw = c.name ?? c.nom ?? c.Nom ?? c.libelle ?? c.label;
+      const name = typeof nameRaw === 'string' ? nameRaw.trim() : '';
+
+      if (clientId && name) clientsMap[clientId] = name;
     }
     console.log(`[GET-APPORTEUR-DOSSIERS] Built clientsMap with ${Object.keys(clientsMap).length} entries`);
 
@@ -297,15 +343,10 @@ Deno.serve(async (req) => {
       const interventions = interventionsByProject[projectId] || [];
 
       const clientData = p.data || {};
-      // Nom du client final : privilégier les champs "terrain" (locataire/clientName)
-      // puis fallback sur projet/clientId.
-      const finalClientId = p.clientId ? Number(p.clientId) : null;
+      // Nom du client final : project.clientId -> apiGetClients
+      const finalClientId = p.clientId != null ? String(p.clientId) : null;
       const candidateNames = [
-        clientData.locataireName,
-        clientData.clientName,
-        p.client?.name,
         finalClientId ? clientsMap[finalClientId] : null,
-        p.client?.id ? clientsMap[Number(p.client.id)] : null,
       ]
         .map((v) => (typeof v === 'string' ? v.trim() : ''))
         .filter((v) => v && v.toLowerCase() !== 'client');
