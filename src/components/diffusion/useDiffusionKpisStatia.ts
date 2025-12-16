@@ -57,7 +57,7 @@ export function useDiffusionKpisStatia(currentMonthIndex: number) {
       const topTechData = ranking[0];
       const topTechnicien = topTechData ? {
         nom: topTechData.name || `Tech ${topTechData.id}`,
-        caHT: (topTechResult.value as Record<string, number>)?.[topTechData.id] || 0,
+        caHT: topTechData.ca || topTechData.totalCA || (topTechResult.value as Record<string, number>)?.[topTechData.id] || 0,
       } : null;
       
       // Nombre de techniciens actifs depuis le breakdown de caMoyen
