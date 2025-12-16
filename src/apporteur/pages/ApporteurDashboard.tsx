@@ -39,6 +39,7 @@ export default function ApporteurDashboard() {
 
   const stats = statsResponse?.data;
   const isNotLinked = statsResponse?.error === 'non_raccorde';
+  const isNotApporteurUser = statsResponse?.error === 'Utilisateur apporteur non trouvé' || error?.message?.includes('403');
 
   return (
     <div className="space-y-6">
@@ -70,8 +71,27 @@ export default function ApporteurDashboard() {
         </div>
       </div>
 
+      {/* Not an apporteur user Warning */}
+      {isNotApporteurUser && (
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-destructive mt-0.5" />
+              <div>
+                <p className="font-medium text-destructive">
+                  Accès réservé aux apporteurs
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Ce tableau de bord est réservé aux utilisateurs apporteurs. Votre compte n'est pas configuré comme apporteur.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Non raccordé Warning */}
-      {isNotLinked && (
+      {!isNotApporteurUser && isNotLinked && (
         <Card className="border-amber-300 bg-amber-50 dark:bg-amber-900/20">
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">
@@ -96,8 +116,8 @@ export default function ApporteurDashboard() {
         </div>
       )}
 
-      {/* Stats Cards - Only show if linked */}
-      {!isLoading && !isNotLinked && stats && (
+      {/* Stats Cards - Only show if linked and is apporteur user */}
+      {!isLoading && !isNotLinked && !isNotApporteurUser && stats && (
         <>
           {/* Financial Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -160,8 +180,8 @@ export default function ApporteurDashboard() {
         </>
       )}
 
-      {/* Fallback stats when not linked */}
-      {!isLoading && isNotLinked && (
+      {/* Fallback stats when not linked or not apporteur user */}
+      {!isLoading && (isNotLinked || isNotApporteurUser) && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatsCard icon={FolderOpen} label="Dossiers" value="--" color="primary" />
           <StatsCard icon={Clock} label="En attente" value="--" color="orange" />
