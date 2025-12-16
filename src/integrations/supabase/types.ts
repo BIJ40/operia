@@ -1377,6 +1377,7 @@ export type Database = {
           internal_ticket_id: string | null
           owner_name: string | null
           postal_code: string | null
+          reference: string | null
           request_type: string
           status: string
           tenant_email: string | null
@@ -1400,6 +1401,7 @@ export type Database = {
           internal_ticket_id?: string | null
           owner_name?: string | null
           postal_code?: string | null
+          reference?: string | null
           request_type: string
           status?: string
           tenant_email?: string | null
@@ -1423,6 +1425,7 @@ export type Database = {
           internal_ticket_id?: string | null
           owner_name?: string | null
           postal_code?: string | null
+          reference?: string | null
           request_type?: string
           status?: string
           tenant_email?: string | null
