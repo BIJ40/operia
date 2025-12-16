@@ -13,7 +13,7 @@ const periodValueMap: Record<NetworkPeriod, PeriodValue> = {
   'custom': 'custom'
 };
 
-const reversePeriodMap: Record<PeriodValue, NetworkPeriod> = {
+const reversePeriodMap: Partial<Record<PeriodValue, NetworkPeriod>> = {
   'today': 'day',
   'yesterday': 'day-1',
   'week': 'week',
@@ -33,7 +33,9 @@ export function NetworkPeriodSelector() {
     // Mettre à jour le period dans le contexte
     if (periodValue) {
       const networkPeriod = reversePeriodMap[periodValue];
-      setPeriod(networkPeriod);
+      if (networkPeriod) {
+        setPeriod(networkPeriod);
+      }
     }
     
     // Mettre à jour les dates pour le mode custom
