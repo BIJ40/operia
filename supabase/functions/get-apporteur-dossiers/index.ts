@@ -275,8 +275,8 @@ Deno.serve(async (req) => {
 
       const clientData = p.data || {};
       // Use final client name from apiGetClients via project.clientId
-      const finalClientId = p.clientId;
-      const clientName = finalClientId ? (clientsMap[finalClientId] || 'Client') : (clientData.locataireName || 'Client');
+      const finalClientId = p.clientId ? Number(p.clientId) : null;
+      const clientName = finalClientId ? (clientsMap[finalClientId] || clientData.locataireName || clientData.clientName || 'Client inconnu') : (clientData.locataireName || clientData.clientName || 'Client inconnu');
       const city = clientData.ville || '';
 
       const projectDate = parseDate(p.dateReelle || p.date);
