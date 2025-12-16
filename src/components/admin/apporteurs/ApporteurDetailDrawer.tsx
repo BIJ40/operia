@@ -28,7 +28,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Loader2, UserPlus, ToggleLeft, ToggleRight, Building2, Trash2, Link2, Unlink } from 'lucide-react';
+import { Loader2, UserPlus, ToggleLeft, ToggleRight, Building2, Trash2, Link2, Unlink, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { 
   useApporteur, 
   useApporteurUsers,
@@ -37,6 +37,7 @@ import {
   useDeleteApporteurUser,
   useUpdateApporteurApogeeId,
 } from '@/hooks/useApporteurs';
+import { useValidateApogeeCommanditaire } from '@/hooks/useValidateApogeeCommanditaire';
 import { ApporteurUserCreateDialog } from './ApporteurUserCreateDialog';
 import { ApogeeCommanditaireSelector } from './ApogeeCommanditaireSelector';
 import {
@@ -77,6 +78,9 @@ export function ApporteurDetailDrawer({
 
   const { data: apporteur, isLoading: loadingApporteur, refetch: refetchApporteur } = useApporteur(apporteurId);
   const { data: users, isLoading: loadingUsers, refetch: refetchUsers } = useApporteurUsers(apporteurId);
+  
+  // Validation du commanditaire Apogée - compte les projets associés
+  const { data: validationData, isLoading: validatingCommanditaire } = useValidateApogeeCommanditaire(apporteur?.apogee_client_id);
   
   const toggleUserStatus = useToggleApporteurUserStatus();
   const updateUserRole = useUpdateApporteurUserRole();
@@ -201,6 +205,31 @@ export function ApporteurDetailDrawer({
                           Délier
                         </Button>
                       </div>
+                      
+                      {/* Preuve de liaison - compteur de projets */}
+                      <div className="p-3 rounded-lg border">
+                        {validatingCommanditaire ? (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span className="text-sm">Vérification des dossiers...</span>
+                          </div>
+                        ) : validationData && validationData.projects_count > 0 ? (
+                          <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                            <CheckCircle2 className="h-5 w-5" />
+                            <span className="text-sm font-medium">
+                              {validationData.projects_count} dossier{validationData.projects_count > 1 ? 's' : ''} détecté{validationData.projects_count > 1 ? 's' : ''} dans Apogée
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                            <AlertTriangle className="h-5 w-5" />
+                            <span className="text-sm">
+                              0 dossier trouvé — vérifier l'ID ou l'agence
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      
                       <Button
                         variant="outline"
                         size="sm"
