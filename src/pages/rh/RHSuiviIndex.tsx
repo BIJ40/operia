@@ -8,7 +8,7 @@ import { useRHCollaborators, useRHTablePrefs, useUpdateRHTablePrefs } from '@/ho
 import { RHUnifiedTable } from '@/components/rh/unified/RHUnifiedTable';
 import { TAB_COLUMNS, RHTabId } from '@/components/rh/unified/RHUnifiedTableColumns';
 import { CompetencesMatrixPrint } from '@/components/rh/CompetencesMatrixPrint';
-import { Users } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { usePersistedTab } from '@/hooks/usePersistedState';
 
 // Colonnes visibles par défaut par onglet
@@ -80,19 +80,12 @@ export default function RHSuiviIndex() {
 
   return (
     <div className="container py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Users className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Suivi RH</h1>
-            <p className="text-muted-foreground">
-              Vue complète de tous les collaborateurs et leurs informations
-            </p>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Suivi RH"
+        subtitle="Vue complète de tous les collaborateurs et leurs informations"
+        backTo="/rh"
+        backLabel="Retour RH"
+      />
 
       <RHUnifiedTable
         collaborators={collaborators}
