@@ -478,7 +478,7 @@ Deno.serve(async (req) => {
         file_path: pdfBuffer ? filePath : null,
         file_name: pdfBuffer ? fileName : null,
         file_size: pdfBuffer ? pdfBuffer.byteLength : null,
-        metrics,
+        metrics_snapshot: metrics,
         generated_at: new Date().toISOString(),
       }, {
         onConflict: "agency_id,year,month",
