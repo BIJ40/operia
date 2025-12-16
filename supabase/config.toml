@@ -143,3 +143,6 @@ verify_jwt = true
 
 [functions.invite-apporteur-user]
 verify_jwt = true
+
+[functions.notify-apporteur-request]
+verify_jwt = true
