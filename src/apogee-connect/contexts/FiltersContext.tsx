@@ -1,9 +1,24 @@
 import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
-import { startOfToday, endOfToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subDays, subMonths, subYears, format, parseISO } from "date-fns";
+import { startOfToday, endOfToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfQuarter, endOfQuarter, subDays, subMonths, subYears, addDays, addWeeks, addMonths, addQuarters, format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 
-export type PeriodType = 'today' | 'yesterday' | 'week' | 'month' | 'month-1' | 'year' | 'year-1' | 'custom';
+export type PeriodType =
+  | 'today'
+  | 'yesterday'
+  | 'week'
+  | 'month'
+  | 'month-1'
+  | 'year'
+  | 'year-1'
+  | 'custom'
+  // Périodes futures / Prévisionnel
+  | 'tomorrow'
+  | 'week+1'
+  | 'month-remaining'
+  | 'month+1'
+  | 'quarter+1'
+  | 'year-full';
 
 export interface GlobalFilters {
   dateRange: {
