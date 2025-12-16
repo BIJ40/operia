@@ -28,7 +28,7 @@ import { MegaMenu } from './MegaMenu';
 import { MobileNav } from './MobileNav';
 import { MEGA_MENU_CONFIG, SUPPORT_MENU } from '@/config/megaMenuConfig';
 import { getRoleCapabilities } from '@/config/roleMatrix';
-import operiaLogo from '@/assets/operia-logo.png';
+// Logo temporairement retiré
 import { RHNotificationBadge } from '@/components/rh/RHNotificationBadge';
 import { isModuleEnabled, ModuleKey } from '@/types/modules';
 import { UnifiedSearchFloatingBar } from '@/components/unified-search';
@@ -131,15 +131,6 @@ export function MainHeader() {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container px-4">
           <div className="flex">
-            {/* Logo sur 2 lignes */}
-            <Link to="/" className="flex items-center mr-6 shrink-0">
-              <img 
-                src={operiaLogo} 
-                alt="OPERIA" 
-                className="h-28 w-auto"
-                data-no-modal
-              />
-            </Link>
 
             {/* Colonne droite : Menu + Recherche */}
             <div className="flex-1 flex flex-col">

@@ -29,7 +29,7 @@ import { APP_VERSION } from '@/config/version';
 import { cn } from '@/lib/utils';
 import { MEGA_MENU_CONFIG, SUPPORT_MENU, MegaMenuLink, MegaMenuSection } from '@/config/megaMenuConfig';
 import { getRoleCapabilities } from '@/config/roleMatrix';
-import operiaLogo from '@/assets/operia-logo.png';
+// Logo temporairement retiré
 import { RHNotificationBadge } from '@/components/rh/RHNotificationBadge';
 import { ModuleKey } from '@/types/modules';
 import { UnifiedSearchFloatingBar } from '@/components/unified-search';
@@ -212,15 +212,6 @@ export function TabHeader() {
 
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="relative mx-auto max-w-[1600px] px-4">
-          {/* Logo - position absolue à gauche, remplit toute la hauteur du header */}
-          <Link to="/" className="absolute left-4 top-2 bottom-2 z-10 flex items-center">
-            <img 
-              src={operiaLogo} 
-              alt="OPERIA" 
-              className="h-full w-auto max-h-32"
-              data-no-modal
-            />
-          </Link>
 
           {/* Ligne 1 : Search + Actions */}
           <div className="relative flex items-center justify-center h-14 gap-4">
