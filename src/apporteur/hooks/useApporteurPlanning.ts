@@ -63,7 +63,8 @@ export function formatTime(time: string | null): string {
 export function getWeekDays(weekStart: string): string[] {
   const start = new Date(weekStart);
   const days: string[] = [];
-  for (let i = 0; i < 7; i++) {
+  // Only Mon-Fri (5 days)
+  for (let i = 0; i < 5; i++) {
     const day = new Date(start);
     day.setDate(start.getDate() + i);
     days.push(day.toISOString().split('T')[0]);

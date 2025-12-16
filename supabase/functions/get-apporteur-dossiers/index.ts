@@ -22,6 +22,7 @@ interface DossierRow {
   dateRdvTravaux: string | null;
   dateFacture: string | null;
   dateReglement: string | null;
+  lastModified: string | null; // Date de dernière modification (toute action)
   devisHT: number;
   factureHT: number;
   restedu: number;
@@ -209,12 +210,19 @@ Deno.serve(async (req) => {
       }
     }
 
-    const [allProjects, allFactures, allDevis, allInterventions] = await Promise.all([
+    const [allProjects, allFactures, allDevis, allInterventions, allClients] = await Promise.all([
       fetchApogee('apiGetProjects'),
       fetchApogee('apiGetFactures'),
       fetchApogee('apiGetDevis'),
       fetchApogee('apiGetInterventions'),
+      fetchApogee('apiGetClients'),
     ]);
+
+    // Build clients map for final client name
+    const clientsMap: Record<number, string> = {};
+    for (const c of (allClients || []) as AnyRecord[]) {
+      clientsMap[c.id] = c.name || 'Client';
+    }
 
     const projects = (allProjects || []).filter((p: AnyRecord) => {
       const cmdId = p.data?.commanditaireId;
@@ -266,7 +274,9 @@ Deno.serve(async (req) => {
       const interventions = interventionsByProject[projectId] || [];
 
       const clientData = p.data || {};
-      const clientName = clientData.locataireName || clientData.clientName || p.client?.name || 'Client';
+      // Use final client name from apiGetClients via project.clientId
+      const finalClientId = p.clientId;
+      const clientName = finalClientId ? (clientsMap[finalClientId] || 'Client') : (clientData.locataireName || 'Client');
       const city = clientData.ville || '';
 
       const projectDate = parseDate(p.dateReelle || p.date);
@@ -315,6 +325,10 @@ Deno.serve(async (req) => {
 
       const { status, label } = getStatusFromProject(p, facture, devis);
 
+      // Compute lastModified = most recent date across all actions
+      const allDates = [projectDate, premierRdv, devisDate, rdvTravaux, factureDate, dateReglement].filter(Boolean) as Date[];
+      const lastModified = allDates.length > 0 ? allDates.reduce((a, b) => a > b ? a : b) : projectDate;
+
       dossiers.push({
         id: projectId,
         ref: String(p.ref || ''),
@@ -330,6 +344,7 @@ Deno.serve(async (req) => {
         dateRdvTravaux: formatDateISO(rdvTravaux),
         dateFacture: formatDateISO(factureDate),
         dateReglement: formatDateISO(dateReglement),
+        lastModified: formatDateISO(lastModified),
         devisHT: Math.round(devisHT * 100) / 100,
         factureHT: Math.round(factureHT * 100) / 100,
         restedu: Math.round(Math.max(0, resteDuHT) * 100) / 100,
@@ -338,9 +353,10 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Sort by lastModified descending (most recent first)
     dossiers.sort((a, b) => {
-      const dateA = a.dateCreation ? new Date(a.dateCreation).getTime() : 0;
-      const dateB = b.dateCreation ? new Date(b.dateCreation).getTime() : 0;
+      const dateA = a.lastModified ? new Date(a.lastModified).getTime() : 0;
+      const dateB = b.lastModified ? new Date(b.lastModified).getTime() : 0;
       return dateB - dateA;
     });
 

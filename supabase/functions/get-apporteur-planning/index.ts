@@ -57,11 +57,12 @@ function getWeekBounds(weekOffset: number = 0): { start: Date; end: Date } {
   monday.setDate(now.getDate() + diff + (weekOffset * 7));
   monday.setHours(0, 0, 0, 0);
   
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-  sunday.setHours(23, 59, 59, 999);
+  // End on Friday (Lun-Ven only, no Sat/Sun)
+  const friday = new Date(monday);
+  friday.setDate(monday.getDate() + 4);
+  friday.setHours(23, 59, 59, 999);
   
-  return { start: monday, end: sunday };
+  return { start: monday, end: friday };
 }
 
 Deno.serve(async (req) => {
@@ -183,11 +184,18 @@ Deno.serve(async (req) => {
       }
     }
 
-    const [allProjects, allInterventions, allUsers] = await Promise.all([
+    const [allProjects, allInterventions, allUsers, allClients] = await Promise.all([
       fetchApogee('apiGetProjects'),
       fetchApogee('apiGetInterventions'),
       fetchApogee('apiGetUsers'),
+      fetchApogee('apiGetClients'),
     ]);
+
+    // Build clients map for final client name
+    const clientsMap: Record<number, string> = {};
+    for (const c of (allClients || []) as AnyRecord[]) {
+      clientsMap[c.id] = c.name || 'Client';
+    }
 
     // Build users map
     const usersMap: Record<number, string> = {};
@@ -219,7 +227,9 @@ Deno.serve(async (req) => {
 
       const project = projectsMap[projectId];
       const clientData = project?.data || {};
-      const clientName = clientData.locataireName || clientData.clientName || project?.client?.name || 'Client';
+      // Use final client name from apiGetClients via project.clientId
+      const finalClientId = project?.clientId;
+      const clientName = finalClientId ? (clientsMap[finalClientId] || 'Client') : (clientData.locataireName || 'Client');
       const city = clientData.ville || '';
 
       const type = String(i.type || i.type2 || 'intervention').toLowerCase();

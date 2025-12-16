@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const DAY_NAMES = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+const DAY_NAMES = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'];
 const TYPE_COLORS: Record<string, string> = {
   rt: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   travaux: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
@@ -124,7 +124,7 @@ export function ApporteurPlanningCard() {
               <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <div className="grid grid-cols-7 gap-1">
+            <div className="grid grid-cols-5 gap-1">
               {/* Day headers */}
               {DAY_NAMES.map((day, i) => (
                 <div key={day} className="text-center py-1">
