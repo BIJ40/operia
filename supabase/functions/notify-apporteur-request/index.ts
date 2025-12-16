@@ -11,6 +11,51 @@ interface NotifyRequest {
 }
 
 // Generate PDF recap
+// Helper function to wrap text and handle newlines for PDF
+function wrapText(text: string, font: any, fontSize: number, maxWidth: number): string[] {
+  if (!text) return [];
+  
+  const lines: string[] = [];
+  // First split by newlines to respect explicit line breaks
+  const paragraphs = text.replace(/\r\n/g, '\n').split('\n');
+  
+  for (const paragraph of paragraphs) {
+    if (!paragraph.trim()) {
+      lines.push(''); // Preserve empty lines
+      continue;
+    }
+    
+    const words = paragraph.split(' ');
+    let currentLine = '';
+    
+    for (const word of words) {
+      const cleanWord = word.replace(/[\x00-\x1F\x7F-\x9F]/g, ''); // Remove control characters
+      if (!cleanWord) continue;
+      
+      const testLine = currentLine + (currentLine ? ' ' : '') + cleanWord;
+      try {
+        const textWidth = font.widthOfTextAtSize(testLine, fontSize);
+        
+        if (textWidth > maxWidth && currentLine) {
+          lines.push(currentLine);
+          currentLine = cleanWord;
+        } else {
+          currentLine = testLine;
+        }
+      } catch {
+        // If measurement fails, just add word to current line
+        currentLine = testLine;
+      }
+    }
+    
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+  }
+  
+  return lines;
+}
+
 async function generatePdfRecap(request: any, apporteurName: string, agencyName: string): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create();
   const page = pdfDoc.addPage([595, 842]); // A4
@@ -21,6 +66,7 @@ async function generatePdfRecap(request: any, apporteurName: string, agencyName:
   let y = height - 50;
   const margin = 50;
   const lineHeight = 20;
+  const maxWidth = 495;
   
   // Header
   page.drawRectangle({
@@ -39,7 +85,8 @@ async function generatePdfRecap(request: any, apporteurName: string, agencyName:
     color: rgb(1, 1, 1),
   });
   
-  page.drawText(`Référence: ${request.reference || 'N/A'}`, {
+  const refText = `Référence: ${request.reference || 'N/A'}`;
+  page.drawText(refText, {
     x: margin,
     y: height - 68,
     size: 12,
@@ -72,7 +119,8 @@ async function generatePdfRecap(request: any, apporteurName: string, agencyName:
   });
   y -= lineHeight;
   
-  page.drawText(apporteurName, {
+  const cleanApporteurName = (apporteurName || '').replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+  page.drawText(cleanApporteurName, {
     x: margin,
     y,
     size: 11,
@@ -131,7 +179,8 @@ async function generatePdfRecap(request: any, apporteurName: string, agencyName:
   });
   y -= lineHeight;
   
-  page.drawText(`Nom: ${request.tenant_name}`, {
+  const cleanTenantName = (request.tenant_name || '').replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+  page.drawText(`Nom: ${cleanTenantName}`, {
     x: margin,
     y,
     size: 11,
@@ -141,7 +190,8 @@ async function generatePdfRecap(request: any, apporteurName: string, agencyName:
   y -= lineHeight;
   
   if (request.tenant_phone) {
-    page.drawText(`Téléphone: ${request.tenant_phone}`, {
+    const cleanPhone = (request.tenant_phone || '').replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+    page.drawText(`Téléphone: ${cleanPhone}`, {
       x: margin,
       y,
       size: 11,
@@ -152,7 +202,8 @@ async function generatePdfRecap(request: any, apporteurName: string, agencyName:
   }
   
   if (request.tenant_email) {
-    page.drawText(`Email: ${request.tenant_email}`, {
+    const cleanEmail = (request.tenant_email || '').replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+    page.drawText(`Email: ${cleanEmail}`, {
       x: margin,
       y,
       size: 11,
@@ -173,7 +224,8 @@ async function generatePdfRecap(request: any, apporteurName: string, agencyName:
     });
     y -= lineHeight;
     
-    page.drawText(request.owner_name, {
+    const cleanOwnerName = (request.owner_name || '').replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+    page.drawText(cleanOwnerName, {
       x: margin,
       y,
       size: 11,
@@ -195,7 +247,8 @@ async function generatePdfRecap(request: any, apporteurName: string, agencyName:
   });
   y -= lineHeight;
   
-  page.drawText(request.address, {
+  const cleanAddress = (request.address || '').replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+  page.drawText(cleanAddress, {
     x: margin,
     y,
     size: 11,
@@ -205,7 +258,9 @@ async function generatePdfRecap(request: any, apporteurName: string, agencyName:
   y -= lineHeight;
   
   if (request.postal_code || request.city) {
-    page.drawText(`${request.postal_code || ''} ${request.city || ''}`.trim(), {
+    const cleanPostal = (request.postal_code || '').replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+    const cleanCity = (request.city || '').replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+    page.drawText(`${cleanPostal} ${cleanCity}`.trim(), {
       x: margin,
       y,
       size: 11,
@@ -226,31 +281,10 @@ async function generatePdfRecap(request: any, apporteurName: string, agencyName:
   });
   y -= lineHeight;
   
-  // Word wrap description
-  const maxWidth = 495;
-  const words = (request.description || '').split(' ');
-  let line = '';
-  
-  for (const word of words) {
-    const testLine = line + (line ? ' ' : '') + word;
-    const textWidth = font.widthOfTextAtSize(testLine, 11);
-    
-    if (textWidth > maxWidth && line) {
-      page.drawText(line, {
-        x: margin,
-        y,
-        size: 11,
-        font: font,
-        color: rgb(0, 0, 0),
-      });
-      y -= lineHeight;
-      line = word;
-    } else {
-      line = testLine;
-    }
-  }
-  
-  if (line) {
+  // Use wrapText helper for description
+  const descriptionLines = wrapText(request.description || '', font, 11, maxWidth);
+  for (const line of descriptionLines) {
+    if (y < 80) break; // Don't overflow page
     page.drawText(line, {
       x: margin,
       y,
@@ -273,14 +307,18 @@ async function generatePdfRecap(request: any, apporteurName: string, agencyName:
     });
     y -= lineHeight;
     
-    page.drawText(request.availability, {
-      x: margin,
-      y,
-      size: 11,
-      font: font,
-      color: rgb(0, 0, 0),
-    });
-    y -= lineHeight;
+    const availabilityLines = wrapText(request.availability || '', font, 11, maxWidth);
+    for (const line of availabilityLines) {
+      if (y < 80) break;
+      page.drawText(line, {
+        x: margin,
+        y,
+        size: 11,
+        font: font,
+        color: rgb(0, 0, 0),
+      });
+      y -= lineHeight;
+    }
   }
   
   // Commentaires
@@ -295,13 +333,18 @@ async function generatePdfRecap(request: any, apporteurName: string, agencyName:
     });
     y -= lineHeight;
     
-    page.drawText(request.comments, {
-      x: margin,
-      y,
-      size: 11,
-      font: font,
-      color: rgb(0, 0, 0),
-    });
+    const commentLines = wrapText(request.comments || '', font, 11, maxWidth);
+    for (const line of commentLines) {
+      if (y < 80) break;
+      page.drawText(line, {
+        x: margin,
+        y,
+        size: 11,
+        font: font,
+        color: rgb(0, 0, 0),
+      });
+      y -= lineHeight;
+    }
   }
   
   // Footer
