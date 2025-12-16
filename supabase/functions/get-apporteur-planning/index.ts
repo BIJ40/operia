@@ -149,10 +149,10 @@ Deno.serve(async (req) => {
 
     // Helper function for API calls with timeout and error handling
     async function fetchApogee(endpoint: string): Promise<AnyRecord[]> {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
+      
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 25000);
-        
         const res = await fetch(`${baseUrl}/${endpoint}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -167,8 +167,17 @@ Deno.serve(async (req) => {
           return [];
         }
         
-        return await res.json() || [];
+        const text = await res.text();
+        if (!text) return [];
+        
+        try {
+          return JSON.parse(text) || [];
+        } catch {
+          console.warn(`[GET-APPORTEUR-PLANNING] ${endpoint} invalid JSON`);
+          return [];
+        }
       } catch (err) {
+        clearTimeout(timeoutId);
         console.warn(`[GET-APPORTEUR-PLANNING] ${endpoint} failed:`, err instanceof Error ? err.message : err);
         return [];
       }
