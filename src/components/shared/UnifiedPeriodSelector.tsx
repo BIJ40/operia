@@ -43,6 +43,7 @@ export type PeriodValue =
   | 'tomorrow'
   | 'week+1'
   | 'month+1'
+  | 'month-remaining'
   | 'quarter+1'
   | 'year-full';
 
@@ -180,12 +181,12 @@ export function UnifiedPeriodSelector({
     // Future periods
     tomorrow: {
       value: 'tomorrow',
-      label: 'Demain',
+      label: 'DEMAIN',
       getDates: () => {
         const tomorrow = addDays(now, 1);
         return {
-          start: new Date(tomorrow.setHours(0, 0, 0, 0)),
-          end: new Date(tomorrow.setHours(23, 59, 59, 999)),
+          start: new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 0, 0, 0),
+          end: new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 23, 59, 59),
           label: 'demain'
         };
       }
@@ -202,9 +203,18 @@ export function UnifiedPeriodSelector({
         };
       }
     },
+    'month-remaining': {
+      value: 'month-remaining',
+      label: 'FIN MOIS',
+      getDates: () => ({
+        start: startOfToday(),
+        end: endOfMonth(now),
+        label: 'fin du mois'
+      })
+    },
     'month+1': {
       value: 'month+1',
-      label: getMonthShort(nextMonth),
+      label: nextMonth.slice(0, 3).toUpperCase(),
       getDates: () => {
         const nextMonthDate = addMonths(now, 1);
         return {
@@ -216,7 +226,7 @@ export function UnifiedPeriodSelector({
     },
     'quarter+1': {
       value: 'quarter+1',
-      label: 'Trimestre',
+      label: 'TRIM.',
       getDates: () => {
         const nextQuarter = addQuarters(now, 1);
         return {
