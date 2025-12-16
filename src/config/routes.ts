@@ -174,6 +174,14 @@ export const ROUTES = {
     apogeeTicketsIncomplete: '/admin/apogee-tickets/incomplets',
     apogeeTicketsReview: '/admin/apogee-tickets/review',
     apogeeTicketsPermissions: '/admin/apogee-tickets/permissions',
+    rapportActivite: '/admin/rapportactivite',
+  },
+
+  // ============================================
+  // REPORTS
+  // ============================================
+  reports: {
+    monthly: '/reports/monthly',
   },
 
   // ============================================
