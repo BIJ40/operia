@@ -81,6 +81,8 @@ serve(async (req) => {
     };
     const typeLabel = typeLabels[request.request_type] || request.request_type;
 
+    const requestReference = request.reference || "N/A";
+
     // Build email HTML
     const emailHtml = `
 <!DOCTYPE html>
@@ -98,6 +100,7 @@ serve(async (req) => {
           <tr>
             <td style="background-color: #0066CC; padding: 30px; text-align: center;">
               <h1 style="color: #ffffff; margin: 0; font-size: 26px;">Nouvelle demande d'intervention</h1>
+              <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 18px; opacity: 0.9;">Réf. ${requestReference}</p>
             </td>
           </tr>
           <!-- Content -->
@@ -114,6 +117,9 @@ serve(async (req) => {
               <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 20px 0;">
                 <tr>
                   <td style="padding: 20px;">
+                    <p style="color: #333333; font-size: 15px; margin: 0 0 12px 0;">
+                      <strong>Référence :</strong> <span style="color: #0066CC; font-weight: bold;">${requestReference}</span>
+                    </p>
                     <p style="color: #333333; font-size: 15px; margin: 0 0 12px 0;">
                       <strong>Type :</strong> ${typeLabel}
                     </p>
@@ -171,7 +177,7 @@ serve(async (req) => {
     const emailResponse = await resend.emails.send({
       from: "HelpConfort <noreply@helpconfort.services>",
       to: [agencyEmail],
-      subject: `[${urgencyLabel}] Nouvelle demande - ${apporteurName} - ${request.tenant_name}`,
+      subject: `[${requestReference}] Nouvelle demande - ${apporteurName} - ${request.tenant_name}`,
       html: emailHtml,
     });
 
