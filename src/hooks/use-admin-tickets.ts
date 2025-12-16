@@ -49,10 +49,10 @@ export const useAdminTickets = () => {
     setIsLoading(true);
     
     // Charger d'abord tous les tickets pour les stats (sans pagination)
-    const allResult = await safeQuery<Ticket[]>(
+    const allResult = await safeQuery<any[]>(
       supabase
         .from('support_tickets')
-        .select('*')
+        .select('*, user_profile:profiles!support_tickets_user_id_fkey(first_name, last_name, email)')
         .order('created_at', { ascending: false }),
       'ADMIN_TICKETS_LOAD_ALL'
     );
@@ -71,7 +71,7 @@ export const useAdminTickets = () => {
 
     let dataQuery = supabase
       .from('support_tickets')
-      .select('*')
+      .select('*, user_profile:profiles!support_tickets_user_id_fkey(first_name, last_name, email)')
       .order('created_at', { ascending: false });
 
     // Apply filters to both queries

@@ -170,6 +170,18 @@ export function useSupportNotifications() {
           schema: 'public',
           table: 'support_tickets',
         },
+        (payload) => {
+          // Recharger les tickets sur chaque UPDATE (changement de status notamment)
+          loadTickets();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'support_tickets',
+        },
         () => {
           loadTickets();
         }
