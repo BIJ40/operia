@@ -28,17 +28,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Loader2, UserPlus, ToggleLeft, ToggleRight, RefreshCw, Building2, Trash2, Link2, Unlink } from 'lucide-react';
+import { Loader2, UserPlus, ToggleLeft, ToggleRight, Building2, Trash2, Link2, Unlink } from 'lucide-react';
 import { 
   useApporteur, 
   useApporteurUsers,
   useToggleApporteurUserStatus,
   useUpdateApporteurUserRole,
-  useInviteApporteurUser,
   useDeleteApporteurUser,
   useUpdateApporteurApogeeId,
 } from '@/hooks/useApporteurs';
-import { ApporteurInviteDialog } from './ApporteurInviteDialog';
+import { ApporteurUserCreateDialog } from './ApporteurUserCreateDialog';
 import { ApogeeCommanditaireSelector } from './ApogeeCommanditaireSelector';
 import {
   AlertDialog,
@@ -60,11 +59,6 @@ const TYPE_LABELS: Record<string, string> = {
   courtier: 'Courtier',
 };
 
-const ROLE_LABELS: Record<string, string> = {
-  reader: 'Lecteur',
-  manager: 'Gestionnaire',
-};
-
 interface ApporteurDetailDrawerProps {
   apporteurId: string | null;
   onClose: () => void;
@@ -76,7 +70,7 @@ export function ApporteurDetailDrawer({
   onClose,
   onRefresh,
 }: ApporteurDetailDrawerProps) {
-  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [selectedCommanditaire, setSelectedCommanditaire] = useState<{ id: number; name: string } | null>(null);
   const [userToDelete, setUserToDelete] = useState<{ id: string; name: string } | null>(null);
@@ -86,7 +80,6 @@ export function ApporteurDetailDrawer({
   
   const toggleUserStatus = useToggleApporteurUserStatus();
   const updateUserRole = useUpdateApporteurUserRole();
-  const inviteUser = useInviteApporteurUser();
   const deleteUser = useDeleteApporteurUser();
   const updateApogeeId = useUpdateApporteurApogeeId();
 
@@ -98,19 +91,8 @@ export function ApporteurDetailDrawer({
     await updateUserRole.mutateAsync({ id, role });
   };
 
-  const handleResendInvite = async (user: typeof users[0]) => {
-    if (!apporteurId) return;
-    await inviteUser.mutateAsync({
-      apporteur_id: apporteurId,
-      email: user.email!,
-      first_name: user.first_name || undefined,
-      last_name: user.last_name || undefined,
-      role: user.role,
-    });
-  };
-
-  const handleInviteSuccess = () => {
-    setShowInviteDialog(false);
+  const handleCreateSuccess = () => {
+    setShowCreateDialog(false);
     refetchUsers();
     onRefresh();
   };
@@ -251,9 +233,9 @@ export function ApporteurDetailDrawer({
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="text-lg">Utilisateurs</CardTitle>
-                  <Button size="sm" onClick={() => setShowInviteDialog(true)}>
+                  <Button size="sm" onClick={() => setShowCreateDialog(true)}>
                     <UserPlus className="mr-2 h-4 w-4" />
-                    Inviter
+                    Créer
                   </Button>
                 </CardHeader>
                 <CardContent>
@@ -322,16 +304,6 @@ export function ApporteurDetailDrawer({
                               <Button
                                 size="icon"
                                 variant="ghost"
-                                className="h-8 w-8"
-                                onClick={() => handleResendInvite(user)}
-                                disabled={inviteUser.isPending || !user.email}
-                                title="Renvoyer invitation"
-                              >
-                                <RefreshCw className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
                                 className="h-8 w-8 text-destructive hover:text-destructive"
                                 onClick={() => setUserToDelete({
                                   id: user.id,
@@ -359,13 +331,13 @@ export function ApporteurDetailDrawer({
         </SheetContent>
       </Sheet>
 
-      {/* Invite Dialog */}
+      {/* Create User Dialog */}
       {apporteurId && (
-        <ApporteurInviteDialog
-          open={showInviteDialog}
-          onOpenChange={setShowInviteDialog}
+        <ApporteurUserCreateDialog
+          open={showCreateDialog}
+          onOpenChange={setShowCreateDialog}
           apporteurId={apporteurId}
-          onSuccess={handleInviteSuccess}
+          onSuccess={handleCreateSuccess}
         />
       )}
 

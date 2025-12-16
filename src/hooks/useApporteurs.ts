@@ -244,7 +244,56 @@ export function useUpdateApporteurUserRole() {
 }
 
 /**
- * Inviter un utilisateur apporteur via Edge Function
+ * Créer un utilisateur apporteur avec mot de passe via Edge Function
+ */
+export function useCreateApporteurUser() {
+  const queryClient = useQueryClient();
+  const { agencyId } = useAuth();
+
+  return useMutation({
+    mutationFn: async (input: {
+      apporteur_id: string;
+      email: string;
+      password: string;
+      first_name: string;
+      last_name: string;
+      role: 'reader' | 'manager';
+      send_email: boolean;
+    }) => {
+      if (!agencyId) throw new Error('Agency ID requis');
+
+      const { data, error } = await supabase.functions.invoke('create-apporteur-user', {
+        body: {
+          agency_id: agencyId,
+          apporteur_id: input.apporteur_id,
+          email: input.email,
+          password: input.password,
+          first_name: input.first_name,
+          last_name: input.last_name,
+          role: input.role,
+          send_email: input.send_email,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['apporteur-users'] });
+      queryClient.invalidateQueries({ queryKey: ['apporteurs'] });
+      toast.success('Utilisateur créé avec succès');
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || 'Erreur lors de la création');
+    },
+  });
+}
+
+/**
+ * @deprecated Use useCreateApporteurUser instead
+ * Inviter un utilisateur apporteur via Edge Function (ancien système)
  */
 export function useInviteApporteurUser() {
   const queryClient = useQueryClient();
