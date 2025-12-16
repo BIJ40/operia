@@ -71,7 +71,7 @@ export default function ApporteurNouvelleDemande() {
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('apporteur_intervention_requests')
         .insert({
           agency_id: agencyId,
@@ -90,9 +90,18 @@ export default function ApporteurNouvelleDemande() {
           availability: formData.availability || null,
           comments: formData.comments || null,
           status: 'pending',
-        });
+        })
+        .select('id')
+        .single();
 
       if (error) throw error;
+
+      // Notification email à l'agence (non-bloquant)
+      if (data?.id) {
+        supabase.functions.invoke('notify-apporteur-request', {
+          body: { request_id: data.id }
+        }).catch(err => console.warn('Email notification failed:', err));
+      }
 
       // Invalider le cache pour rafraîchir la liste
       await queryClient.invalidateQueries({ queryKey: ['apporteur-demandes'] });
@@ -100,6 +109,7 @@ export default function ApporteurNouvelleDemande() {
       toast.success('Demande envoyée avec succès');
       navigate('/apporteur/demandes');
     } catch (err) {
+      console.error('Error creating request:', err);
       toast.error('Erreur lors de la création de la demande');
     } finally {
       setLoading(false);
