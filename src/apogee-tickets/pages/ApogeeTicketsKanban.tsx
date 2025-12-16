@@ -204,6 +204,27 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
     setSelectedTicketId(null);
   };
 
+  // Navigation entre tickets
+  const currentTicketIndex = selectedTicket 
+    ? tickets.findIndex(t => t.id === selectedTicket.id) 
+    : -1;
+  
+  const handleNavigatePrevious = () => {
+    if (currentTicketIndex > 0) {
+      const prevTicket = tickets[currentTicketIndex - 1];
+      setSelectedTicket(prevTicket);
+      setSelectedTicketId(prevTicket.id);
+    }
+  };
+
+  const handleNavigateNext = () => {
+    if (currentTicketIndex >= 0 && currentTicketIndex < tickets.length - 1) {
+      const nextTicket = tickets[currentTicketIndex + 1];
+      setSelectedTicket(nextTicket);
+      setSelectedTicketId(nextTicket.id);
+    }
+  };
+
   const handleTicketUpdate = (updates: Partial<ApogeeTicket> & { id: string }) => {
     updateTicket.mutate(updates);
     // Mettre à jour l'état local du ticket sélectionné pour refléter les changements immédiatement
@@ -534,6 +555,10 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
         statuses={statuses}
         onUpdate={handleTicketUpdate}
         onDelete={handleTicketDelete}
+        onNavigatePrevious={handleNavigatePrevious}
+        onNavigateNext={handleNavigateNext}
+        hasPrevious={currentTicketIndex > 0}
+        hasNext={currentTicketIndex >= 0 && currentTicketIndex < tickets.length - 1}
       />
 
       {/* Dialog création */}
