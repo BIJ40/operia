@@ -281,12 +281,14 @@ Deno.serve(async (req) => {
       fetchApogee('apiGetClients'),
     ]);
 
-    // Build clients map (project.clientId -> apiGetClients.*name)
+    // Build clients map (project.clientId -> apiGetClients.data.proprietaire)
     const clientsMap: Record<string, string> = {};
     for (const c of (allClients || []) as AnyRecord[]) {
       const clientIdRaw = c.id ?? c.ID ?? c.clientId ?? c.client_id;
       const clientId = clientIdRaw != null ? String(clientIdRaw) : '';
-      const nameRaw = c.name ?? c.nom ?? c.Nom ?? c.libelle ?? c.label;
+      // Priorité: data.proprietaire (propriétaire du bien)
+      const dataObj = c.data as AnyRecord | undefined;
+      const nameRaw = dataObj?.proprietaire ?? c.nom ?? c.name ?? c.Nom ?? c.libelle ?? c.label;
       const name = typeof nameRaw === 'string' ? nameRaw.trim() : '';
 
       if (clientId && name) clientsMap[clientId] = name;
