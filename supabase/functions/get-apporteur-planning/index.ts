@@ -194,7 +194,10 @@ Deno.serve(async (req) => {
     // Build clients map for final client name
     const clientsMap: Record<number, string> = {};
     for (const c of (allClients || []) as AnyRecord[]) {
-      clientsMap[c.id] = c.name || 'Client';
+      const clientId = Number(c.id);
+      if (clientId && c.name) {
+        clientsMap[clientId] = String(c.name);
+      }
     }
 
     // Build users map
