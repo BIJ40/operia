@@ -20,6 +20,7 @@ export interface DossierRow {
   dateRdvTravaux: string | null;
   dateFacture: string | null;
   dateReglement: string | null;
+  lastModified: string | null;
   devisHT: number;
   factureHT: number;
   restedu: number;
