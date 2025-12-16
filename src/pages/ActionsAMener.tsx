@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle, BellRing, AlertTriangle } from 'lucide-react';
+import { AlertCircle, BellRing } from 'lucide-react';
 import { useAgency } from '@/apogee-connect/contexts/AgencyContext';
 import { DataService } from '@/apogee-connect/services/dataService';
 import { buildActionsAMener } from '@/apogee-connect/utils/actionsAMenerCalculations';
@@ -149,20 +149,6 @@ function ActionsAMenerContent() {
             </ConditionalRender>
           </div>
 
-          {/* Bandeau en cours d'élaboration */}
-          <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-500 mt-0.5 flex-shrink-0" />
-              <div>
-                <h3 className="font-semibold text-yellow-900 dark:text-yellow-100">
-                  Page en cours d'élaboration
-                </h3>
-                <p className="text-sm text-yellow-800 dark:text-yellow-200 mt-1">
-                  Cette fonctionnalité est actuellement en développement. Certaines données ou comportements peuvent être incomplets.
-                </p>
-              </div>
-            </div>
-          </div>
 
           {/* Statistiques rapides */}
           {!isLoading && actions && (
