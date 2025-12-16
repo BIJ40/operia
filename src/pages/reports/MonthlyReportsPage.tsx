@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { FileText, Download, Loader2, Calendar, TrendingUp } from 'lucide-react';
+import { FileText, Download, Loader2, Calendar, TrendingUp, Play } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -27,6 +28,8 @@ interface MonthlyReport {
 
 export default function MonthlyReportsPage() {
   const { agencyId } = useAuth();
+  const queryClient = useQueryClient();
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Fetch reports for current agency
   const { data: reports = [], isLoading } = useQuery({
@@ -48,6 +51,34 @@ export default function MonthlyReportsPage() {
     },
     enabled: !!agencyId,
   });
+
+  // Generate report manually
+  const handleGenerateReport = async () => {
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('trigger-monthly-reports', {
+        headers: {
+          'X-CRON-SECRET': '9f3c8a1d6e4b52a0c7f9d81e6b4a2f0c5e9d3a7b8c1f4e2a6d0b9c5f7e1a4'
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success('Génération des rapports lancée', {
+        description: `${data?.generated || 0} rapport(s) généré(s)`
+      });
+
+      // Refresh reports list after a delay
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['my-monthly-reports'] });
+      }, 5000);
+    } catch (err) {
+      console.error('Error generating reports:', err);
+      toast.error('Erreur lors de la génération');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   // Download report
   const downloadReport = async (report: MonthlyReport) => {
@@ -96,14 +127,24 @@ export default function MonthlyReportsPage() {
   return (
     <div className="container max-w-5xl mx-auto p-4 sm:p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3 pb-4 border-b border-border/50">
-        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-          <FileText className="w-6 h-6 text-primary" />
+      <div className="flex items-center justify-between pb-4 border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+            <FileText className="w-6 h-6 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Rapports d'Activité</h1>
+            <p className="text-sm text-muted-foreground">Consultez vos rapports mensuels</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Rapports d'Activité</h1>
-          <p className="text-sm text-muted-foreground">Consultez vos rapports mensuels</p>
-        </div>
+        <Button onClick={handleGenerateReport} disabled={isGenerating}>
+          {isGenerating ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Play className="w-4 h-4 mr-2" />
+          )}
+          Générer maintenant
+        </Button>
       </div>
 
       {/* Last Report Summary */}
