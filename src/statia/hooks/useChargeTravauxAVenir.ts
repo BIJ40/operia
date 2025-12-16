@@ -95,16 +95,23 @@ export function useChargeTravauxAVenir() {
 
   // Calculer le CA Planifié filtré par période (côté client, pas de refetch)
   // Exclut les projets déjà facturés
+  // N'inclut que les interventions planifiées à J+0 minimum (pas de J-)
   const caPlanifieData = useMemo(() => {
     if (!globalQuery.data) return { caPlanifie: 0, caPlanifieDevisCount: 0 };
     
     const { projects, interventions, devis, factures } = globalQuery.data;
     const startMs = dateRange.start.getTime();
     const endMs = dateRange.end.getTime();
+    
+    // Date du jour à minuit pour le filtre J+0 minimum
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayMs = today.getTime();
 
-    const isInRange = (d: Date) => {
+    // Doit être dans la période ET >= aujourd'hui (prévisionnel uniquement)
+    const isInRangeAndFuture = (d: Date) => {
       const t = d.getTime();
-      return t >= startMs && t <= endMs;
+      return t >= startMs && t <= endMs && t >= todayMs;
     };
 
     // Créer un Set des projectIds déjà facturés
@@ -146,7 +153,7 @@ export function useChargeTravauxAVenir() {
       const projectInterventions = interventionsByProjectId.get(projectId) || [];
       const hasInterventionInPeriod = projectInterventions.some((itv) => {
         const planningDate = getInterventionPlanningDate(itv);
-        return planningDate && isInRange(planningDate);
+        return planningDate && isInRangeAndFuture(planningDate);
       });
 
       if (!hasInterventionInPeriod) continue;
