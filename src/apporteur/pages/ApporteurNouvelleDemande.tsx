@@ -30,10 +30,45 @@ const REQUEST_TYPES = [
 ];
 
 export default function ApporteurNouvelleDemande() {
-  const { apporteurUser, apporteurId, agencyId } = useApporteurAuth();
+  const { apporteurUser, apporteurId, agencyId, isApporteurLoading, isApporteurAuthenticated } = useApporteurAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
+
+  // Show loading while context loads
+  if (isApporteurLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Show not authorized if not an apporteur user
+  if (!isApporteurAuthenticated || !apporteurUser) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-destructive mt-0.5" />
+              <div>
+                <p className="font-medium text-destructive">
+                  Accès non autorisé
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Votre compte n'est pas configuré comme utilisateur apporteur. Veuillez contacter l'administrateur.
+                </p>
+                <Button variant="outline" size="sm" className="mt-4" onClick={() => navigate('/apporteur')}>
+                  Retour
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Form state
   const [formData, setFormData] = useState({
