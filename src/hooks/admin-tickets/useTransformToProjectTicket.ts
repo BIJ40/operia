@@ -78,13 +78,22 @@ export function useTransformToProjectTicket() {
       }
 
       // Fermer automatiquement le ticket support après transformation
-      await supabase
-        .from('support_tickets')
-        .update({
-          status: 'closed',
-          resolved_at: new Date().toISOString(),
-        })
-        .eq('id', supportTicket.id);
+      const closeResult = await safeMutation(
+        supabase
+          .from('support_tickets')
+          .update({
+            status: 'closed',
+            resolved_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', supportTicket.id),
+        'TRANSFORM_SUPPORT_CLOSE_TICKET'
+      );
+
+      if (!closeResult.success) {
+        // On ne bloque pas la création du ticket projet, mais on informe (sinon badge/notifications restent)
+        errorToast("Le ticket a été envoyé en développement, mais n'a pas pu être fermé automatiquement.");
+      }
 
       // Invalider les queries pour rafraîchir les listes
       queryClient.invalidateQueries({ queryKey: ['apogee-tickets'] });

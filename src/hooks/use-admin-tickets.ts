@@ -224,13 +224,15 @@ export const useAdminTickets = () => {
   };
 
   const updateTicketStatus = async (ticketId: string, status: string) => {
+    const shouldSetResolvedAt = ['resolved', 'closed'].includes(status);
+
     const result = await safeMutation(
       supabase
         .from('support_tickets')
         .update({ 
           status,
           updated_at: new Date().toISOString(),
-          resolved_at: status === 'resolved' ? new Date().toISOString() : null 
+          resolved_at: shouldSetResolvedAt ? new Date().toISOString() : null,
         })
         .eq('id', ticketId),
       'ADMIN_TICKETS_UPDATE_STATUS'
@@ -744,7 +746,7 @@ export const useAdminTickets = () => {
       supabase.removeChannel(ticketsChannel);
       supabase.removeChannel(messagesChannel);
     };
-  }, [canManageTickets, selectedTicket?.id]);
+  }, [canManageTickets, selectedTicket?.id, filters, page, pageSize, user?.id]);
 
   useEffect(() => {
     if (selectedTicket) {

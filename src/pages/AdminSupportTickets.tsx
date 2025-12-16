@@ -47,6 +47,7 @@ export default function AdminSupportTickets() {
     isLoading,
     filters,
     setFilters,
+    loadTickets,
     supportUsers,
     updateTicketStatus,
     updateTicketPriority,
@@ -175,8 +176,9 @@ export default function AdminSupportTickets() {
 
   // Removed getPriorityBadge - now using HeatPriorityBadge component
 
-  // V2.5: Badges basés sur le champ type unique
   const getDemandTypeBadge = (ticket: Ticket) => {
+    const isArchived = ['resolved', 'closed'].includes(ticket.status);
+
     switch (ticket.type) {
       case 'chat_ai':
         return (
@@ -186,7 +188,7 @@ export default function AdminSupportTickets() {
         );
       case 'chat_human':
         return (
-          <Badge className="bg-green-500 text-white animate-pulse">
+          <Badge className={`bg-green-500 text-white ${isArchived ? '' : 'animate-pulse'}`}>
             🟩 Chat Humain
           </Badge>
         );
@@ -624,6 +626,8 @@ export default function AdminSupportTickets() {
                             
                             if (projectTicketId) {
                               toast.success('Ticket transféré en développement');
+                              await loadTickets();
+                              setSelectedTicket(null);
                               navigate(`/projects/kanban?ticketId=${projectTicketId}`);
                             }
                           }}
