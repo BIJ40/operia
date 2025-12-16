@@ -123,10 +123,7 @@ export function ApporteurInviteDialog({
             {inviteResult.action_link ? (
               <div className="space-y-3 p-4 bg-muted/50 rounded-lg border">
                 <Label className="text-sm font-semibold flex items-center gap-2">
-                  🔗 {inviteResult.is_new_user 
-                    ? "Lien de définition du mot de passe"
-                    : "Lien de connexion (magic link)"
-                  }
+                  🔗 Lien de définition du mot de passe
                 </Label>
                 <div className="flex items-center gap-2">
                   <Input 
@@ -154,10 +151,7 @@ export function ApporteurInviteDialog({
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {inviteResult.is_new_user 
-                    ? "⚠️ Copiez ce lien et transmettez-le à l'utilisateur pour qu'il définisse son mot de passe."
-                    : "Ce lien permet à l'utilisateur de se connecter directement."
-                  }
+                  ⚠️ Copiez ce lien et transmettez-le à l'utilisateur pour qu'il définisse son mot de passe.
                 </p>
               </div>
             ) : (

@@ -152,17 +152,17 @@ serve(async (req) => {
       userId = existingUser.id;
       console.log('Existing user found:', userId);
 
-      // Generate a magic link for existing user to easily login
+      // Generate a recovery link for existing user to set/reset password for apporteur portal
       const { data: linkData, error: linkError } = await serviceClient.auth.admin.generateLink({
-        type: 'magiclink',
+        type: 'recovery',
         email: email.toLowerCase(),
       });
 
       if (!linkError && linkData?.properties?.action_link) {
         actionLink = linkData.properties.action_link;
-        console.log('Magic link generated for existing user');
+        console.log('Recovery link generated for existing user');
       } else {
-        console.warn('Could not generate magic link:', linkError);
+        console.warn('Could not generate recovery link:', linkError);
       }
     } else {
       // Create new user with random password (they will reset it)
