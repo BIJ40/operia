@@ -15,6 +15,44 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.8.0",
+    title: "Suivi RH & DocGen",
+    date: "2025-12-16",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // MODULE SUIVI RH COMPLET
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Espace salarié N1 : Mon coffre RH, Demandes RH, Mon planning, Ma signature' },
+      { type: 'feature', description: 'Back-office N2 : Suivi équipe avec 7 onglets thématiques' },
+      { type: 'feature', description: 'Demandes unifiées via rh_requests (congés, EPI, documents)' },
+      { type: 'feature', description: 'Notifications bidirectionnelles temps réel N1↔N2' },
+      { type: 'feature', description: 'Workflow VU/TRAITÉ pour demandes véhicules et équipements' },
+      { type: 'feature', description: 'Portail Mon Véhicule : signalements anomalies et demandes' },
+      { type: 'feature', description: 'Portail Mes Équipements : consultation et demandes EPI' },
+      { type: 'improvement', description: 'Séparation stricte N1/N2 avec RLS renforcées' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // MODULE DOCGEN - GÉNÉRATION DOCUMENTS
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'DocGen : génération documents DOCX avec tokens dynamiques' },
+      { type: 'feature', description: 'Smart tokens auto-remplis : AGENCE_*, COLLAB_*, DIRIGEANT_*, USER_*' },
+      { type: 'feature', description: 'Vérification complétude données avant remplissage formulaire' },
+      { type: 'feature', description: 'Prévisualisation PDF temps réel via Gotenberg' },
+      { type: 'feature', description: 'Workflow draft → finalisé avec réouverture possible' },
+      { type: 'feature', description: 'Studio templates N4+ (/admin/templates)' },
+      { type: 'feature', description: 'Assistant pas-à-pas pour remplissage tokens manuels' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // AMÉLIORATIONS UX & NAVIGATION
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'Menu RH / MATERIEL restructuré avec terminologie unifiée' },
+      { type: 'improvement', description: 'Titre page RH conditionnel : N1="Mon Espace Salarié", N2+="RH & PARC"' },
+      { type: 'improvement', description: 'Navigation cohérente et back-navigation vers /rh' },
+      { type: 'fix', description: 'Synchronisation profiles↔collaborators via triggers DB' },
+      { type: 'fix', description: 'Nettoyage collaborateurs orphelins après changement agence' },
+    ],
+  },
+  {
     version: "V0.7.13",
     title: "Sync Profils ↔ Collaborateurs",
     date: "2025-12-14",
