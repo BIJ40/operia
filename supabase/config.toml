@@ -158,3 +158,9 @@ verify_jwt = true
 
 [functions.validate-apogee-commanditaire]
 verify_jwt = true
+
+[functions.get-apporteur-dossiers]
+verify_jwt = true
+
+[functions.get-apporteur-planning]
+verify_jwt = true
