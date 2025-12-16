@@ -74,7 +74,8 @@ export default function ApporteurNouvelleDemande() {
   const [formData, setFormData] = useState({
     requestType: '',
     urgency: 'normal',
-    tenantName: '',
+    tenantLastName: '',
+    tenantFirstName: '',
     tenantPhone: '',
     tenantEmail: '',
     ownerName: '',
@@ -99,7 +100,7 @@ export default function ApporteurNouvelleDemande() {
     }
 
     // Validation
-    if (!formData.requestType || !formData.tenantName || !formData.address || !formData.description) {
+    if (!formData.requestType || !formData.tenantLastName || !formData.tenantFirstName || !formData.address || !formData.description) {
       toast.error('Veuillez remplir tous les champs obligatoires');
       return;
     }
@@ -114,7 +115,7 @@ export default function ApporteurNouvelleDemande() {
           apporteur_user_id: apporteurUser.id,
           request_type: formData.requestType,
           urgency: formData.urgency,
-          tenant_name: formData.tenantName,
+          tenant_name: `${formData.tenantFirstName} ${formData.tenantLastName}`.trim(),
           tenant_phone: formData.tenantPhone || null,
           tenant_email: formData.tenantEmail || null,
           owner_name: formData.ownerName || null,
@@ -225,15 +226,27 @@ export default function ApporteurNouvelleDemande() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="tenantName">Nom complet *</Label>
-              <Input
-                id="tenantName"
-                value={formData.tenantName}
-                onChange={(e) => handleChange('tenantName', e.target.value)}
-                placeholder="Jean Dupont"
-                required
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="tenantLastName">Nom *</Label>
+                <Input
+                  id="tenantLastName"
+                  value={formData.tenantLastName}
+                  onChange={(e) => handleChange('tenantLastName', e.target.value)}
+                  placeholder="Dupont"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tenantFirstName">Prénom *</Label>
+                <Input
+                  id="tenantFirstName"
+                  value={formData.tenantFirstName}
+                  onChange={(e) => handleChange('tenantFirstName', e.target.value)}
+                  placeholder="Jean"
+                  required
+                />
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
