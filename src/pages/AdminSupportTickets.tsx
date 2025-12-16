@@ -590,10 +590,29 @@ export default function AdminSupportTickets() {
                           </Button>
                         )}
 
-                        {/* Bouton pour transformer en ticket Gestion de Projet */}
+                        {/* Bouton pour transformer en ticket Développement */}
                         <Button
                           variant="outline"
                           onClick={async () => {
+                            // 1. Récupérer le nom de l'utilisateur
+                            const { data: profile } = await supabase
+                              .from('profiles')
+                              .select('first_name, last_name')
+                              .eq('id', selectedTicket.user_id)
+                              .maybeSingle();
+                            
+                            const userName = profile?.first_name 
+                              ? `${profile.first_name}` 
+                              : 'Utilisateur';
+                            
+                            // 2. Envoyer le message automatique
+                            await addSupportMessage(
+                              selectedTicket.id,
+                              `Bonjour ${userName}, votre demande passe en développement. Merci !`,
+                              user?.id || ''
+                            );
+                            
+                            // 3. Transformer en ticket projet
                             const projectTicketId = await transformToProjectTicket({
                               id: selectedTicket.id,
                               subject: selectedTicket.subject,
@@ -602,8 +621,9 @@ export default function AdminSupportTickets() {
                               category: selectedTicket.category,
                               chatbot_conversation: selectedTicket.chatbot_conversation,
                             });
+                            
                             if (projectTicketId) {
-                              // Optionnel: naviguer vers le ticket créé
+                              toast.success('Ticket transféré en développement');
                               navigate(`/projects/tickets?ticketId=${projectTicketId}`);
                             }
                           }}
@@ -615,7 +635,7 @@ export default function AdminSupportTickets() {
                           ) : (
                             <Kanban className="w-4 h-4" />
                           )}
-                          → Gestion Projet
+                          Développement
                         </Button>
 
                         {/* Bouton pour voir le partage d'écran - toujours visible pour chat_human */}
