@@ -21,7 +21,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Clock, GripVertical, ChevronLeft, ChevronRight, GitMerge } from 'lucide-react';
+import { MessageSquare, Clock, GripVertical, ChevronLeft, ChevronRight, GitMerge, Maximize2 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { HeatPriorityBadge } from './HeatPriorityBadge';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -167,19 +168,140 @@ function DraggableTicketCard({
               </Badge>
             )}
           </div>
-          {/* Bouton fusion - violet HelpConfort */}
-          {onMerge && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onMerge(ticket);
-              }}
-              className="p-1.5 rounded hover:bg-purple-100 transition-colors opacity-0 group-hover:opacity-100"
-              title="Fusionner avec un autre ticket"
-            >
-              <GitMerge className="w-4 h-4 text-purple-500 hover:text-purple-700" />
-            </button>
-          )}
+          
+          {/* Actions au survol */}
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            {/* Bouton déployer - popover élargi */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  onClick={(e) => e.stopPropagation()}
+                  className="p-1.5 rounded hover:bg-blue-100 transition-colors"
+                  title="Voir les détails"
+                >
+                  <Maximize2 className="w-4 h-4 text-blue-500 hover:text-blue-700" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent 
+                side="left" 
+                align="start"
+                className="w-[400px] max-h-[500px] overflow-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="space-y-3">
+                  {/* Header avec numéro et badges */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-mono font-bold text-primary">
+                      APO-{String(ticket.ticket_number || 0).padStart(3, '0')}
+                    </span>
+                    <HeatPriorityBadge priority={ticket.heat_priority} size="sm" />
+                    {ticket.module && moduleColor && (
+                      <Badge style={{ backgroundColor: moduleColor }} className="text-white">
+                        {ticket.apogee_modules?.label || ticket.module}
+                      </Badge>
+                    )}
+                    {ticket.owner_side && ownerColor && (
+                      <Badge style={{ backgroundColor: ownerColor }} className="text-white">
+                        {ownerLabel}
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  {/* Titre complet */}
+                  <div>
+                    <h4 className="font-semibold text-sm text-muted-foreground mb-1">Élément concerné</h4>
+                    <p className="text-sm font-medium">{ticket.element_concerne}</p>
+                  </div>
+                  
+                  {/* Description complète */}
+                  {ticket.description && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-1">Description</h4>
+                      <p className="text-sm whitespace-pre-wrap">{ticket.description}</p>
+                    </div>
+                  )}
+                  
+                  {/* Tags */}
+                  {ticket.impact_tags && ticket.impact_tags.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-1">Tags</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {ticket.impact_tags.map(tag => {
+                          const tagColor = tag === 'BUG' ? 'bg-red-100 text-red-800' :
+                                           tag === 'EVO' ? 'bg-blue-100 text-blue-800' :
+                                           tag === 'NTH' ? 'bg-gray-100 text-gray-800' :
+                                           'bg-purple-100 text-purple-800';
+                          return (
+                            <Badge key={tag} variant="secondary" className={tagColor}>
+                              {tag}
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Estimation */}
+                  {(ticket.h_min || ticket.h_max) && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-1">Estimation</h4>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">
+                          {ticket.h_min || '?'} - {ticket.h_max || '?'} heures
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Notes internes */}
+                  {ticket.notes_internes && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-1">Notes internes</h4>
+                      <p className="text-sm whitespace-pre-wrap text-muted-foreground italic">
+                        {ticket.notes_internes}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* Commentaires */}
+                  {ticket._count?.comments !== undefined && ticket._count.comments > 0 && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2 border-t">
+                      <MessageSquare className="h-4 w-4" />
+                      <span>{ticket._count.comments} commentaire{ticket._count.comments > 1 ? 's' : ''}</span>
+                    </div>
+                  )}
+                  
+                  {/* Bouton pour ouvrir le drawer complet */}
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full mt-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onClick();
+                    }}
+                  >
+                    Ouvrir le détail complet
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+            
+            {/* Bouton fusion - violet HelpConfort */}
+            {onMerge && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMerge(ticket);
+                }}
+                className="p-1.5 rounded hover:bg-purple-100 transition-colors"
+                title="Fusionner avec un autre ticket"
+              >
+                <GitMerge className="w-4 h-4 text-purple-500 hover:text-purple-700" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Titre */}
