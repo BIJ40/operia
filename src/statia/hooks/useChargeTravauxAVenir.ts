@@ -1,6 +1,9 @@
 /**
  * Hook pour calculer la charge de travaux à venir par univers
- * Supporte le filtrage par période via FiltersContext
+ * 
+ * Règle métier:
+ * - Les KPIs "À planifier TVX", "À commander", "En attente fournitures" sont GLOBAUX (pas de filtre période)
+ * - Seul le "CA Planifié" (devis acceptés avec intervention planifiée) est filtré par période
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -14,7 +17,7 @@ export function useChargeTravauxAVenir() {
   const { filters } = useFilters();
   const agencySlug = currentAgency?.id;
 
-  // Utiliser les dates du filtre
+  // Utiliser les dates du filtre pour le CA Planifié uniquement
   const dateRange = filters.dateRange;
 
   return useQuery({
@@ -45,11 +48,16 @@ export function useChargeTravauxAVenir() {
 
       const services = getGlobalApogeeDataServices();
 
-      // NB: le DataService charge un snapshot complet (cache). On applique le filtre période côté front.
-      const allProjects = await services.getProjects(agencySlug, dateRange);
-      const allInterventions = await services.getInterventions(agencySlug, dateRange);
-      const allDevis = await services.getDevis(agencySlug, dateRange);
+      // Charger TOUTES les données (pas de filtre période côté API)
+      const projects = await services.getProjects(agencySlug, undefined);
+      const interventions = await services.getInterventions(agencySlug, undefined);
+      const devis = await services.getDevis(agencySlug, undefined);
 
+      // Calculer les stats globales (tous les KPIs sauf CA Planifié)
+      const globalResult = computeChargeTravauxAvenirParUnivers(projects, interventions, devis);
+
+      // Maintenant calculer le CA Planifié filtré par période
+      // Le CA Planifié = devis "to order" dont l'intervention est planifiée dans la période sélectionnée
       const startMs = dateRange.start.getTime();
       const endMs = dateRange.end.getTime();
 
@@ -72,19 +80,19 @@ export function useChargeTravauxAVenir() {
         return t >= startMs && t <= endMs;
       };
 
-      const getInterventionDates = (itv: any): Date[] => {
-        const dates: Date[] = [];
-
-        const direct = toDate(itv?.dateReelle ?? itv?.date ?? itv?.createdAt ?? itv?.created_at);
-        if (direct) dates.push(direct);
+      // Extraire la date de planification d'une intervention (dateReelle ou date de visite)
+      const getInterventionPlanningDate = (itv: any): Date | null => {
+        // Priorité: dateReelle de l'intervention, puis date, puis première visite avec date
+        const direct = toDate(itv?.dateReelle ?? itv?.date);
+        if (direct) return direct;
 
         const visites = Array.isArray(itv?.visites) ? itv.visites : [];
         for (const v of visites) {
           const dv = toDate(v?.dateReelle ?? v?.date);
-          if (dv) dates.push(dv);
+          if (dv) return dv;
         }
 
-        return dates;
+        return null;
       };
 
       const getProjectId = (obj: any): number | null => {
@@ -94,30 +102,91 @@ export function useChargeTravauxAVenir() {
         return Number.isFinite(n) ? n : null;
       };
 
-      // Filtrer les interventions dont (date ou visite.date) est dans la période
-      const interventions = (allInterventions || []).filter((itv: any) => {
-        const dates = getInterventionDates(itv);
-        return dates.some(isInRange);
-      });
-
-      // Pour que le nombre de dossiers fluctue aussi : ne garder que les projets ayant au moins 1 intervention dans la période
-      const projectIdsInPeriod = new Set<number>();
+      // Indexer les interventions par projectId
+      const interventionsByProjectId = new Map<number, any[]>();
       for (const itv of interventions) {
         const pid = getProjectId(itv);
-        if (pid != null) projectIdsInPeriod.add(pid);
+        if (pid == null) continue;
+        if (!interventionsByProjectId.has(pid)) interventionsByProjectId.set(pid, []);
+        interventionsByProjectId.get(pid)!.push(itv);
       }
 
-      const projects = (allProjects || []).filter((p: any) => {
-        const pid = Number(p?.id);
-        return Number.isFinite(pid) && projectIdsInPeriod.has(pid);
-      });
-
-      const devis = (allDevis || []).filter((d: any) => {
+      // Indexer les devis par projectId
+      const devisByProjectId = new Map<number, any[]>();
+      for (const d of devis) {
         const pid = getProjectId(d);
-        return pid != null && projectIdsInPeriod.has(pid);
-      });
+        if (pid == null) continue;
+        if (!devisByProjectId.has(pid)) devisByProjectId.set(pid, []);
+        devisByProjectId.get(pid)!.push(d);
+      }
 
-      return computeChargeTravauxAvenirParUnivers(projects, interventions, devis);
+      // Calculer le CA Planifié filtré par période
+      // Un projet contribue au CA planifié de la période si:
+      // 1. Il a un devis "to order" (accepté)
+      // 2. Il a une intervention planifiée dans la période sélectionnée
+      let caPlanifiePeriode = 0;
+      let caPlanifieDevisCountPeriode = 0;
+
+      const isDevisToOrder = (d: any): boolean => {
+        const state = String(d?.state ?? d?.status ?? d?.data?.state ?? '').trim().toLowerCase();
+        return state === 'to order' || state === 'to_order' || state === 'order';
+      };
+
+      const parseNumericValue = (value: any): number => {
+        if (value == null) return 0;
+        if (typeof value === 'number') return isNaN(value) ? 0 : value;
+        if (typeof value === 'string') {
+          const cleaned = value.replace(',', '.').trim();
+          const num = parseFloat(cleaned);
+          return isNaN(num) ? 0 : num;
+        }
+        return 0;
+      };
+
+      for (const project of projects) {
+        const projectId = Number(project?.id);
+        if (!Number.isFinite(projectId)) continue;
+
+        // Vérifier si ce projet a une intervention planifiée dans la période
+        const projectInterventions = interventionsByProjectId.get(projectId) || [];
+        const hasInterventionInPeriod = projectInterventions.some((itv) => {
+          const planningDate = getInterventionPlanningDate(itv);
+          return planningDate && isInRange(planningDate);
+        });
+
+        if (!hasInterventionInPeriod) continue;
+
+        // Chercher un devis "to order" pour ce projet
+        const projectDevis = devisByProjectId.get(projectId) || [];
+        for (const d of projectDevis) {
+          if (!isDevisToOrder(d)) continue;
+
+          const montant =
+            parseNumericValue(d.data?.totalHT) ||
+            parseNumericValue(d.totalHT) ||
+            parseNumericValue(d.amount) ||
+            0;
+
+          if (montant > 0) {
+            caPlanifiePeriode += montant;
+            caPlanifieDevisCountPeriode++;
+            break; // 1 seul devis to_order par projet
+          }
+        }
+      }
+
+      // Retourner les stats globales avec le CA Planifié filtré par période
+      return {
+        ...globalResult,
+        totaux: {
+          ...globalResult.totaux,
+          caPlanifie: caPlanifiePeriode,
+        },
+        debug: {
+          ...globalResult.debug,
+          caPlanifieDevisCount: caPlanifieDevisCountPeriode,
+        },
+      };
     },
     enabled: isAgencyReady && !!agencySlug,
     staleTime: 1000 * 60 * 5, // 5 minutes
