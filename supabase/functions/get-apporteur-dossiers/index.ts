@@ -281,17 +281,25 @@ Deno.serve(async (req) => {
       fetchApogee('apiGetClients'),
     ]);
 
-    // Build clients map (project.clientId -> apiGetClients.data.proprietaire)
+    // Build clients map (project.clientId -> "CLIENT (propriétaire)")
     const clientsMap: Record<string, string> = {};
     for (const c of (allClients || []) as AnyRecord[]) {
       const clientIdRaw = c.id ?? c.ID ?? c.clientId ?? c.client_id;
       const clientId = clientIdRaw != null ? String(clientIdRaw) : '';
-      // Priorité: data.proprietaire (propriétaire du bien)
-      const dataObj = c.data as AnyRecord | undefined;
-      const nameRaw = dataObj?.proprietaire ?? c.nom ?? c.name ?? c.Nom ?? c.libelle ?? c.label;
-      const name = typeof nameRaw === 'string' ? nameRaw.trim() : '';
 
-      if (clientId && name) clientsMap[clientId] = name;
+      const dataObj = c.data as AnyRecord | undefined;
+      const clientNameRaw = c.nom ?? c.name ?? c.Nom ?? c.libelle ?? c.label;
+      const ownerNameRaw = dataObj?.proprietaire;
+
+      const clientName = typeof clientNameRaw === 'string' ? clientNameRaw.trim() : '';
+      const ownerName = typeof ownerNameRaw === 'string' ? ownerNameRaw.trim() : '';
+
+      let display = clientName || ownerName;
+      if (clientName && ownerName && ownerName.toLowerCase() !== clientName.toLowerCase()) {
+        display = `${clientName} (${ownerName})`;
+      }
+
+      if (clientId && display) clientsMap[clientId] = display;
     }
     console.log(`[GET-APPORTEUR-DOSSIERS] Built clientsMap with ${Object.keys(clientsMap).length} entries`);
 
