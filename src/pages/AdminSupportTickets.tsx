@@ -458,12 +458,6 @@ export default function AdminSupportTickets() {
                                   <div className="flex items-start justify-between gap-2 mb-2">
                                     <div className="flex-1 min-w-0">
                                       <p className="font-semibold truncate">{ticket.subject || 'Sans sujet'}</p>
-                                      {/* Afficher l'utilisateur à l'origine du ticket */}
-                                      <p className="text-xs text-muted-foreground mt-1">
-                                        👤 {ticket.user_profile?.first_name && ticket.user_profile?.last_name 
-                                          ? `${ticket.user_profile.first_name} ${ticket.user_profile.last_name}`
-                                          : ticket.user_profile?.email || 'Utilisateur inconnu'}
-                                      </p>
                                       {ticket.assigned_to && (
                                         <p className="text-xs text-primary font-medium mt-1">
                                           🎯 Assigné: {formattedSupportUsers.find(u => u.id === ticket.assigned_to)?.name || 'Agent'}
@@ -521,11 +515,6 @@ export default function AdminSupportTickets() {
                                   <div className="flex items-start justify-between gap-2 mb-2">
                                     <div className="flex-1 min-w-0">
                                       <p className="font-semibold truncate">{ticket.subject || 'Sans sujet'}</p>
-                                      <p className="text-xs text-muted-foreground mt-1">
-                                        👤 {ticket.user_profile?.first_name && ticket.user_profile?.last_name 
-                                          ? `${ticket.user_profile.first_name} ${ticket.user_profile.last_name}`
-                                          : ticket.user_profile?.email || 'Utilisateur inconnu'}
-                                      </p>
                                     </div>
                                     {getStatusBadge(ticket.status)}
                                   </div>
@@ -603,7 +592,7 @@ export default function AdminSupportTickets() {
                           </Button>
                         )}
 
-                        {/* Bouton pour transformer en ticket Développement */}
+                        {/* Bouton pour transformer en ticket Développement - grisé si déjà archivé */}
                         <Button
                           variant="outline"
                           onClick={async () => {
@@ -625,7 +614,7 @@ export default function AdminSupportTickets() {
                               user?.id || ''
                             );
                             
-                            // 3. Transformer en ticket projet
+                            // 3. Transformer en ticket projet (ferme automatiquement le ticket support)
                             const projectTicketId = await transformToProjectTicket({
                               id: selectedTicket.id,
                               subject: selectedTicket.subject,
@@ -636,21 +625,21 @@ export default function AdminSupportTickets() {
                             });
                             
                             if (projectTicketId) {
-                              toast.success('Ticket transféré en développement');
+                              toast.success('Ticket transféré en développement et fermé');
                               await loadTickets();
                               setSelectedTicket(null);
                               navigate(`/projects/kanban?ticketId=${projectTicketId}`);
                             }
                           }}
-                          disabled={isTransforming}
-                          className="gap-2 text-purple-600 border-purple-300 hover:bg-purple-50"
+                          disabled={isTransforming || ['resolved', 'closed'].includes(selectedTicket.status)}
+                          className="gap-2 text-purple-600 border-purple-300 hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {isTransforming ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
                             <Kanban className="w-4 h-4" />
                           )}
-                          Développement
+                          {['resolved', 'closed'].includes(selectedTicket.status) ? 'Déjà traité' : 'Développement'}
                         </Button>
 
                         {/* Bouton pour voir le partage d'écran - toujours visible pour chat_human */}
