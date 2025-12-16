@@ -40,11 +40,10 @@ Deno.serve(async (req) => {
 
     console.log(`[trigger-monthly-reports] Generating reports for ${month}/${year}...`);
 
-    // Get all agencies with report generation enabled (via report_settings.is_enabled)
+    // Get all agencies with report_settings configured (presence = enabled)
     const { data: enabledSettings, error: settingsErr } = await supabaseAdmin
       .from("report_settings")
-      .select("agency_id, agency:apogee_agencies!inner(id, slug, label, is_active)")
-      .eq("is_enabled", true);
+      .select("agency_id, agency:apogee_agencies!inner(id, slug, label, is_active)");
 
     if (settingsErr) {
       console.error("[trigger-monthly-reports] Failed to fetch settings:", settingsErr);
