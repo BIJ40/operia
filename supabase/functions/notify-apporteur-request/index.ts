@@ -30,13 +30,14 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Fetch the request with apporteur and agency info
+    // Fetch the request with apporteur, agency and user info
     const { data: request, error: requestError } = await supabaseAdmin
       .from("apporteur_intervention_requests")
       .select(`
         *,
         apporteur:apporteurs(name),
-        agency:apogee_agencies(label, contact_email)
+        agency:apogee_agencies(label, contact_email),
+        apporteur_user:apporteur_users(first_name, last_name, email)
       `)
       .eq("id", request_id)
       .single();
@@ -52,6 +53,8 @@ serve(async (req) => {
     const agencyEmail = request.agency?.contact_email;
     const agencyName = request.agency?.label || "Agence";
     const apporteurName = request.apporteur?.name || "Apporteur";
+    const userName = [request.apporteur_user?.first_name, request.apporteur_user?.last_name].filter(Boolean).join(' ') || "Utilisateur";
+    const userEmail = request.apporteur_user?.email || "";
 
     if (!agencyEmail) {
       console.log("No agency email configured, skipping notification");
@@ -94,16 +97,16 @@ serve(async (req) => {
           <!-- Header -->
           <tr>
             <td style="background-color: #0066CC; padding: 30px; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Nouvelle demande d'intervention</h1>
+              <h1 style="color: #ffffff; margin: 0; font-size: 26px;">Nouvelle demande d'intervention</h1>
             </td>
           </tr>
           <!-- Content -->
           <tr>
             <td style="padding: 40px 30px;">
-              <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+              <p style="color: #333333; font-size: 17px; line-height: 1.6; margin: 0 0 20px 0;">
                 Bonjour,
               </p>
-              <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+              <p style="color: #333333; font-size: 17px; line-height: 1.6; margin: 0 0 20px 0;">
                 Une nouvelle demande d'intervention a été soumise par <strong>${apporteurName}</strong>.
               </p>
               
@@ -111,33 +114,40 @@ serve(async (req) => {
               <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 20px 0;">
                 <tr>
                   <td style="padding: 20px;">
-                    <p style="color: #333333; font-size: 14px; margin: 0 0 10px 0;">
+                    <p style="color: #333333; font-size: 15px; margin: 0 0 12px 0;">
                       <strong>Type :</strong> ${typeLabel}
                     </p>
-                    <p style="color: #333333; font-size: 14px; margin: 0 0 10px 0;">
+                    <p style="color: #333333; font-size: 15px; margin: 0 0 12px 0;">
                       <strong>Urgence :</strong> <span style="color: ${request.urgency === 'tres_urgent' ? '#dc2626' : request.urgency === 'urgent' ? '#f59e0b' : '#059669'};">${urgencyLabel}</span>
                     </p>
-                    <p style="color: #333333; font-size: 14px; margin: 0 0 10px 0;">
+                    ${request.owner_name ? `<p style="color: #333333; font-size: 15px; margin: 0 0 12px 0;"><strong>Propriétaire :</strong> ${request.owner_name}</p>` : ''}
+                    <p style="color: #333333; font-size: 15px; margin: 0 0 12px 0;">
                       <strong>Locataire :</strong> ${request.tenant_name}
                     </p>
-                    ${request.tenant_phone ? `<p style="color: #333333; font-size: 14px; margin: 0 0 10px 0;"><strong>Téléphone :</strong> ${request.tenant_phone}</p>` : ''}
-                    <p style="color: #333333; font-size: 14px; margin: 0 0 10px 0;">
+                    ${request.tenant_phone ? `<p style="color: #333333; font-size: 15px; margin: 0 0 12px 0;"><strong>Téléphone :</strong> ${request.tenant_phone}</p>` : ''}
+                    <p style="color: #333333; font-size: 15px; margin: 0 0 12px 0;">
                       <strong>Adresse :</strong> ${request.address}${request.postal_code ? `, ${request.postal_code}` : ''}${request.city ? ` ${request.city}` : ''}
                     </p>
-                    <p style="color: #333333; font-size: 14px; margin: 0 0 10px 0;">
+                    <p style="color: #333333; font-size: 15px; margin: 0 0 12px 0;">
                       <strong>Description :</strong>
                     </p>
-                    <p style="color: #666666; font-size: 14px; margin: 0; padding: 10px; background-color: #ffffff; border-radius: 4px;">
+                    <p style="color: #666666; font-size: 15px; margin: 0; padding: 12px; background-color: #ffffff; border-radius: 4px;">
                       ${request.description}
                     </p>
-                    ${request.availability ? `<p style="color: #333333; font-size: 14px; margin: 10px 0 0 0;"><strong>Disponibilités :</strong> ${request.availability}</p>` : ''}
-                    ${request.comments ? `<p style="color: #333333; font-size: 14px; margin: 10px 0 0 0;"><strong>Commentaires :</strong> ${request.comments}</p>` : ''}
+                    ${request.availability ? `<p style="color: #333333; font-size: 15px; margin: 12px 0 0 0;"><strong>Disponibilités :</strong> ${request.availability}</p>` : ''}
+                    ${request.comments ? `<p style="color: #333333; font-size: 15px; margin: 12px 0 0 0;"><strong>Commentaires :</strong> ${request.comments}</p>` : ''}
                   </td>
                 </tr>
               </table>
               
-              <p style="color: #666666; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0;">
-                Connectez-vous à votre espace HelpConfort pour traiter cette demande.
+              <!-- User Signature -->
+              <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 30px 0 5px 0;">
+                Cordialement,
+              </p>
+              <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0;">
+                <strong>${userName}</strong><br/>
+                <span style="color: #666666;">${apporteurName}</span>
+                ${userEmail ? `<br/><span style="color: #666666; font-size: 14px;">${userEmail}</span>` : ''}
               </p>
             </td>
           </tr>
