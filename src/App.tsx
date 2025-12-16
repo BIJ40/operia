@@ -148,6 +148,7 @@ const UnifiedSearchAnimationPlayground = lazy(() => import("./pages/dev/UnifiedS
 
 // Providers
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { ApporteurAuthProvider } from "./contexts/ApporteurAuthContext";
 import { EditorProvider } from "./contexts/EditorContext";
 import { ApporteurEditorProvider } from "./contexts/ApporteurEditorContext";
 import { ImpersonationProvider } from "./contexts/ImpersonationContext";
@@ -156,6 +157,13 @@ import { ChangePasswordDialog } from "./components/ChangePasswordDialog";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { GlobalErrorBoundary } from "./components/system/GlobalErrorBoundary";
 import { AnnouncementGate } from "./components/announcements/AnnouncementGate";
+
+// Apporteur Module
+import { ApporteurLayout } from "./apporteur/components/ApporteurLayout";
+const ApporteurDashboard = lazy(() => import("./apporteur/pages/ApporteurDashboard"));
+const ApporteurDossiers = lazy(() => import("./apporteur/pages/ApporteurDossiers"));
+const ApporteurDemandes = lazy(() => import("./apporteur/pages/ApporteurDemandes"));
+const ApporteurNouvelleDemande = lazy(() => import("./apporteur/pages/ApporteurNouvelleDemande"));
 
 // Optimized QueryClient with caching - NO automatic refetching on tab switch
 const queryClient = new QueryClient({
@@ -428,6 +436,15 @@ function AppContent() {
           {/* DEV PAGES - Admin only (N5/N6) */}
           {/* ============================================ */}
           <Route path="/dev/unified-search-animations" element={<RoleGuard minRole="platform_admin"><UnifiedSearchAnimationPlayground /></RoleGuard>} />
+          
+          {/* ============================================ */}
+          {/* ESPACE APPORTEUR - Système isolé */}
+          {/* ============================================ */}
+          <Route path="/apporteur" element={<ApporteurAuthProvider><ApporteurLayout><ApporteurDashboard /></ApporteurLayout></ApporteurAuthProvider>} />
+          <Route path="/apporteur/dashboard" element={<ApporteurAuthProvider><ApporteurLayout><ApporteurDashboard /></ApporteurLayout></ApporteurAuthProvider>} />
+          <Route path="/apporteur/dossiers" element={<ApporteurAuthProvider><ApporteurLayout><ApporteurDossiers /></ApporteurLayout></ApporteurAuthProvider>} />
+          <Route path="/apporteur/demandes" element={<ApporteurAuthProvider><ApporteurLayout><ApporteurDemandes /></ApporteurLayout></ApporteurAuthProvider>} />
+          <Route path="/apporteur/nouvelle-demande" element={<ApporteurAuthProvider><ApporteurLayout><ApporteurNouvelleDemande /></ApporteurLayout></ApporteurAuthProvider>} />
           
           {/* ============================================ */}
           {/* PUBLIC PAGES - Pas d'auth requise */}

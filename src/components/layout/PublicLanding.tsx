@@ -1,13 +1,16 @@
 import { Button } from '@/components/ui/button';
-import { BarChart3, BookOpen, Headset, Network, LogIn } from 'lucide-react';
+import { BarChart3, BookOpen, Headset, Network, LogIn, Building2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface PublicLandingProps {
   onLoginClick: () => void;
 }
 
 export function PublicLanding({ onLoginClick }: PublicLandingProps) {
+  const navigate = useNavigate();
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
       {/* Header bandeau */}
@@ -57,6 +60,7 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 2.2 }}
+            className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center"
           >
             <Button 
               onClick={onLoginClick}
@@ -65,6 +69,15 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
             >
               <LogIn className="w-5 h-5 sm:w-6 sm:h-6" />
               Accéder à mon espace
+            </Button>
+            <Button 
+              onClick={() => navigate('/apporteur')}
+              size="lg"
+              variant="outline"
+              className="gap-2 border-primary/30 hover:bg-primary/5 hover:border-primary/50 transition-all text-base sm:text-lg px-6 py-4 sm:px-8 sm:py-6"
+            >
+              <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+              Accès Apporteur
             </Button>
           </motion.div>
         </div>
