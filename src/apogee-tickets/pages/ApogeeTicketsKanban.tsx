@@ -478,25 +478,24 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
 
       {/* Contrôles colonnes + Reset All */}
       <div className="flex items-center gap-4 flex-wrap">
-          {/* R.A.Z. tous les filtres */}
-          {(hasActiveFilters || hasActiveUIState) && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="destructive" 
-                  size="sm" 
-                  onClick={handleResetAll}
-                  className="gap-2"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  R.A.Z.
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                Réinitialiser tous les filtres et paramètres d'affichage
-              </TooltipContent>
-            </Tooltip>
-          )}
+          {/* R.A.Z. tous les filtres - toujours visible */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                onClick={handleResetAll}
+                disabled={!hasActiveFilters && !hasActiveUIState}
+                className="gap-2"
+              >
+                <RotateCcw className="h-4 w-4" />
+                R.A.Z.
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              Réinitialiser tous les filtres et paramètres d'affichage
+            </TooltipContent>
+          </Tooltip>
 
           {/* Visibilité colonnes */}
           <Popover>
