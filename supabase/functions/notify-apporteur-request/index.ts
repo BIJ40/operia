@@ -159,7 +159,7 @@ serve(async (req) => {
 
     // Send email
     const emailResponse = await resend.emails.send({
-      from: "HelpConfort <onboarding@resend.dev>",
+      from: "HelpConfort <noreply@helpconfort.services>",
       to: [agencyEmail],
       subject: `[${urgencyLabel}] Nouvelle demande - ${apporteurName} - ${request.tenant_name}`,
       html: emailHtml,
