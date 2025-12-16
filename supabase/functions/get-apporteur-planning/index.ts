@@ -228,8 +228,8 @@ Deno.serve(async (req) => {
       const project = projectsMap[projectId];
       const clientData = project?.data || {};
       // Use final client name from apiGetClients via project.clientId
-      const finalClientId = project?.clientId;
-      const clientName = finalClientId ? (clientsMap[finalClientId] || 'Client') : (clientData.locataireName || 'Client');
+      const finalClientId = project?.clientId ? Number(project.clientId) : null;
+      const clientName = finalClientId ? (clientsMap[finalClientId] || clientData.locataireName || clientData.clientName || 'Client inconnu') : (clientData.locataireName || clientData.clientName || 'Client inconnu');
       const city = clientData.ville || '';
 
       const type = String(i.type || i.type2 || 'intervention').toLowerCase();
