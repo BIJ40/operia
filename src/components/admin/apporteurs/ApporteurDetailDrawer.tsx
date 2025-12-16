@@ -20,15 +20,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, UserPlus, ToggleLeft, ToggleRight, RefreshCw, Building2 } from 'lucide-react';
+import { Loader2, UserPlus, ToggleLeft, ToggleRight, RefreshCw, Building2, Trash2 } from 'lucide-react';
 import { 
   useApporteur, 
   useApporteurUsers,
   useToggleApporteurUserStatus,
   useUpdateApporteurUserRole,
   useInviteApporteurUser,
+  useDeleteApporteurUser,
 } from '@/hooks/useApporteurs';
 import { ApporteurInviteDialog } from './ApporteurInviteDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -56,6 +67,7 @@ export function ApporteurDetailDrawer({
   onRefresh,
 }: ApporteurDetailDrawerProps) {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<{ id: string; name: string } | null>(null);
 
   const { data: apporteur, isLoading: loadingApporteur } = useApporteur(apporteurId);
   const { data: users, isLoading: loadingUsers, refetch: refetchUsers } = useApporteurUsers(apporteurId);
@@ -63,6 +75,7 @@ export function ApporteurDetailDrawer({
   const toggleUserStatus = useToggleApporteurUserStatus();
   const updateUserRole = useUpdateApporteurUserRole();
   const inviteUser = useInviteApporteurUser();
+  const deleteUser = useDeleteApporteurUser();
 
   const handleToggleUserStatus = async (id: string, currentStatus: boolean) => {
     await toggleUserStatus.mutateAsync({ id, is_active: !currentStatus });
@@ -86,6 +99,13 @@ export function ApporteurDetailDrawer({
   const handleInviteSuccess = () => {
     setShowInviteDialog(false);
     refetchUsers();
+    onRefresh();
+  };
+
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+    await deleteUser.mutateAsync(userToDelete.id);
+    setUserToDelete(null);
     onRefresh();
   };
 
@@ -219,6 +239,19 @@ export function ApporteurDetailDrawer({
                               >
                                 <RefreshCw className="h-4 w-4" />
                               </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                onClick={() => setUserToDelete({
+                                  id: user.id,
+                                  name: user.first_name || user.email || 'cet utilisateur'
+                                })}
+                                disabled={deleteUser.isPending}
+                                title="Supprimer"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -245,6 +278,27 @@ export function ApporteurDetailDrawer({
           onSuccess={handleInviteSuccess}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer l'utilisateur ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. L'utilisateur "{userToDelete?.name}" sera définitivement supprimé.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteUser}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
