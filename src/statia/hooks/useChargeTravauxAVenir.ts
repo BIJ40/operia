@@ -74,12 +74,13 @@ export function useChargeTravauxAVenir() {
     queryFn: async () => {
       if (!agencySlug) return null;
       const services = getGlobalApogeeDataServices();
-      const [projects, interventions, devis] = await Promise.all([
+      const [projects, interventions, devis, factures] = await Promise.all([
         services.getProjects(agencySlug, undefined),
         services.getInterventions(agencySlug, undefined),
         services.getDevis(agencySlug, undefined),
+        services.getFactures(agencySlug, undefined),
       ]);
-      return { projects, interventions, devis };
+      return { projects, interventions, devis, factures };
     },
     enabled: isAgencyReady && !!agencySlug,
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -93,10 +94,11 @@ export function useChargeTravauxAVenir() {
   }, [globalQuery.data]);
 
   // Calculer le CA Planifié filtré par période (côté client, pas de refetch)
+  // Exclut les projets déjà facturés
   const caPlanifieData = useMemo(() => {
     if (!globalQuery.data) return { caPlanifie: 0, caPlanifieDevisCount: 0 };
     
-    const { projects, interventions, devis } = globalQuery.data;
+    const { projects, interventions, devis, factures } = globalQuery.data;
     const startMs = dateRange.start.getTime();
     const endMs = dateRange.end.getTime();
 
@@ -104,6 +106,13 @@ export function useChargeTravauxAVenir() {
       const t = d.getTime();
       return t >= startMs && t <= endMs;
     };
+
+    // Créer un Set des projectIds déjà facturés
+    const facturedProjectIds = new Set<number>();
+    for (const f of factures) {
+      const pid = getProjectId(f);
+      if (pid != null) facturedProjectIds.add(pid);
+    }
 
     // Indexer les interventions par projectId
     const interventionsByProjectId = new Map<number, any[]>();
@@ -129,6 +138,9 @@ export function useChargeTravauxAVenir() {
     for (const project of projects) {
       const projectId = Number(project?.id);
       if (!Number.isFinite(projectId)) continue;
+
+      // Exclure les projets déjà facturés
+      if (facturedProjectIds.has(projectId)) continue;
 
       // Vérifier si ce projet a une intervention planifiée dans la période
       const projectInterventions = interventionsByProjectId.get(projectId) || [];
