@@ -5,11 +5,6 @@ import { logError, logWarn } from '@/lib/logger';
 import { safeMutation, safeQuery, safeInvoke } from '@/lib/safeQuery';
 import { errorToast, successToast } from '@/lib/toastHelpers';
 
-export interface TicketUserProfile {
-  first_name: string | null;
-  last_name: string | null;
-  email: string | null;
-}
 
 export interface Ticket {
   id: string;
@@ -38,8 +33,6 @@ export interface Ticket {
   // P3#1 SLA fields
   due_at?: string | null;
   sla_status?: string | null;
-  // User profile info
-  user_profile?: TicketUserProfile | null;
 }
 
 export interface Attachment {
