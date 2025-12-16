@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom';
 import { 
   Settings, Users, Building2, Activity, TrendingUp, Headset, BarChart3, 
   History, Bot, BookOpen, FlaskConical, Sparkles, Database, FileStack, 
-  Archive, Bell, HardDrive, HelpCircle, Shield, Brain, Cpu, FileText, FileJson
+  Archive, Bell, HardDrive, HelpCircle, Shield, Brain, Cpu, FileText, FileJson,
+  FileEdit
 } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { cn } from '@/lib/utils';
@@ -157,6 +158,7 @@ export default function AdminIndex() {
           <AdminLink to={ROUTES.admin.pageMetadata} icon={FileText} title="Métadonnées Pages" description="Titres et labels" />
           <AdminLink to={ROUTES.admin.announcements} icon={Bell} title="Annonces Prioritaires" description="Diffusion messages" />
           <AdminLink to="/admin/apogee-report" icon={FileJson} title="Rapport Apogée API" description="Analyse endpoints & champs" />
+          <AdminLink to="/admin/templates" icon={FileEdit} title="Templates DocGen" description="Modèles de documents" />
         </AdminSection>
 
       </div>
