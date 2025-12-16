@@ -1,18 +1,24 @@
 /**
  * Hook pour calculer la charge de travaux à venir par univers
+ * Supporte le filtrage par période via FiltersContext
  */
 
 import { useQuery } from '@tanstack/react-query';
 import { useAgency } from '@/apogee-connect/contexts/AgencyContext';
+import { useFilters } from '@/apogee-connect/contexts/FiltersContext';
 import { getGlobalApogeeDataServices } from '@/statia/adapters/dataServiceAdapter';
 import { computeChargeTravauxAvenirParUnivers, ChargeTravauxResult } from '../shared/chargeTravauxEngine';
 
 export function useChargeTravauxAVenir() {
   const { currentAgency, isAgencyReady } = useAgency();
+  const { filters } = useFilters();
   const agencySlug = currentAgency?.id;
+  
+  // Utiliser les dates du filtre
+  const dateRange = filters.dateRange;
 
   return useQuery({
-    queryKey: ['charge-travaux-a-venir', agencySlug],
+    queryKey: ['charge-travaux-a-venir', agencySlug, dateRange.start.toISOString(), dateRange.end.toISOString()],
     queryFn: async (): Promise<ChargeTravauxResult> => {
       if (!agencySlug) {
         return {
@@ -26,14 +32,14 @@ export function useChargeTravauxAVenir() {
 
       const services = getGlobalApogeeDataServices();
       
-      // Charger tous les projets (sans filtre de date car on veut l'état actuel)
-      const projects = await services.getProjects(agencySlug, undefined);
+      // Charger les projets avec filtre de date
+      const projects = await services.getProjects(agencySlug, dateRange);
       
-      // Charger toutes les interventions
-      const interventions = await services.getInterventions(agencySlug, undefined);
+      // Charger les interventions avec filtre de date
+      const interventions = await services.getInterventions(agencySlug, dateRange);
 
-      // Charger tous les devis
-      const devis = await services.getDevis(agencySlug, undefined);
+      // Charger les devis avec filtre de date
+      const devis = await services.getDevis(agencySlug, dateRange);
 
       return computeChargeTravauxAvenirParUnivers(projects, interventions, devis);
     },
