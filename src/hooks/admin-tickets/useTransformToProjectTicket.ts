@@ -77,10 +77,21 @@ export function useTransformToProjectTicket() {
         return null;
       }
 
+      // Fermer automatiquement le ticket support après transformation
+      await supabase
+        .from('support_tickets')
+        .update({
+          status: 'closed',
+          resolved_at: new Date().toISOString(),
+        })
+        .eq('id', supportTicket.id);
+
       // Invalider les queries pour rafraîchir les listes
       queryClient.invalidateQueries({ queryKey: ['apogee-tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-support-tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['support-tickets'] });
 
-      successToast('Ticket transformé et ajouté au BACKLOG');
+      successToast('Ticket transformé et fermé');
       return result.data.id;
     } catch (error) {
       errorToast('Erreur inattendue lors de la transformation');
