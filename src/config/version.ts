@@ -2,7 +2,7 @@ export const APP_VERSION = '0.8.0';
 export const APP_CODENAME = 'Suivi RH & DocGen';
 
 /**
- * Changelog v0.8.0 (2025-12-16)
+ * Changelog v0.8.0 (2025-12-15)
  * ==============================
  * 
  * MODULE SUIVI RH COMPLET

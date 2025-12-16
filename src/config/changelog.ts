@@ -17,7 +17,7 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     version: "V0.8.0",
     title: "Suivi RH & DocGen",
-    date: "2025-12-16",
+    date: "2025-12-15",
     changes: [
       // ═══════════════════════════════════════════════════════════════
       // MODULE SUIVI RH COMPLET
