@@ -1,5 +1,5 @@
 /**
- * ApporteurDetailDrawer - Détail d'un apporteur avec gestion utilisateurs
+ * ApporteurDetailDrawer - Détail d'un apporteur avec gestion utilisateurs + liaison Apogée
  */
 
 import { useState } from 'react';
@@ -20,7 +20,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, UserPlus, ToggleLeft, ToggleRight, RefreshCw, Building2, Trash2 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Loader2, UserPlus, ToggleLeft, ToggleRight, RefreshCw, Building2, Trash2, Link2, Unlink } from 'lucide-react';
 import { 
   useApporteur, 
   useApporteurUsers,
@@ -28,8 +36,10 @@ import {
   useUpdateApporteurUserRole,
   useInviteApporteurUser,
   useDeleteApporteurUser,
+  useUpdateApporteurApogeeId,
 } from '@/hooks/useApporteurs';
 import { ApporteurInviteDialog } from './ApporteurInviteDialog';
+import { ApogeeCommanditaireSelector } from './ApogeeCommanditaireSelector';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -67,15 +77,18 @@ export function ApporteurDetailDrawer({
   onRefresh,
 }: ApporteurDetailDrawerProps) {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [showLinkDialog, setShowLinkDialog] = useState(false);
+  const [selectedCommanditaire, setSelectedCommanditaire] = useState<{ id: number; name: string } | null>(null);
   const [userToDelete, setUserToDelete] = useState<{ id: string; name: string } | null>(null);
 
-  const { data: apporteur, isLoading: loadingApporteur } = useApporteur(apporteurId);
+  const { data: apporteur, isLoading: loadingApporteur, refetch: refetchApporteur } = useApporteur(apporteurId);
   const { data: users, isLoading: loadingUsers, refetch: refetchUsers } = useApporteurUsers(apporteurId);
   
   const toggleUserStatus = useToggleApporteurUserStatus();
   const updateUserRole = useUpdateApporteurUserRole();
   const inviteUser = useInviteApporteurUser();
   const deleteUser = useDeleteApporteurUser();
+  const updateApogeeId = useUpdateApporteurApogeeId();
 
   const handleToggleUserStatus = async (id: string, currentStatus: boolean) => {
     await toggleUserStatus.mutateAsync({ id, is_active: !currentStatus });
@@ -106,6 +119,28 @@ export function ApporteurDetailDrawer({
     if (!userToDelete) return;
     await deleteUser.mutateAsync(userToDelete.id);
     setUserToDelete(null);
+    onRefresh();
+  };
+
+  const handleLinkApogee = async () => {
+    if (!apporteurId || !selectedCommanditaire) return;
+    await updateApogeeId.mutateAsync({
+      id: apporteurId,
+      apogee_client_id: selectedCommanditaire.id,
+    });
+    setShowLinkDialog(false);
+    setSelectedCommanditaire(null);
+    refetchApporteur();
+    onRefresh();
+  };
+
+  const handleUnlinkApogee = async () => {
+    if (!apporteurId) return;
+    await updateApogeeId.mutateAsync({
+      id: apporteurId,
+      apogee_client_id: null,
+    });
+    refetchApporteur();
     onRefresh();
   };
 
@@ -144,16 +179,71 @@ export function ApporteurDetailDrawer({
                       {apporteur.is_active ? 'Actif' : 'Inactif'}
                     </Badge>
                   </div>
-                  {apporteur.apogee_client_id && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">ID Apogée</span>
-                      <span>{apporteur.apogee_client_id}</span>
-                    </div>
-                  )}
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Créé le</span>
                     <span>{format(new Date(apporteur.created_at), 'dd/MM/yyyy', { locale: fr })}</span>
                   </div>
+                </CardContent>
+              </Card>
+
+              {/* Liaison Apogée */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Link2 className="h-5 w-5" />
+                    Liaison Apogée
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {apporteur.apogee_client_id ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                        <div>
+                          <p className="font-medium text-green-700 dark:text-green-300">Raccordé à Apogée</p>
+                          <p className="text-sm text-green-600 dark:text-green-400">
+                            ID Commanditaire : <strong>{apporteur.apogee_client_id}</strong>
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleUnlinkApogee}
+                          disabled={updateApogeeId.isPending}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          {updateApogeeId.isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Unlink className="h-4 w-4 mr-1" />
+                          )}
+                          Délier
+                        </Button>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowLinkDialog(true)}
+                        className="w-full"
+                      >
+                        Changer le commanditaire
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                        <p className="text-amber-700 dark:text-amber-300 text-sm">
+                          ⚠️ Non raccordé à Apogée. Les statistiques ne seront pas disponibles pour cet apporteur.
+                        </p>
+                      </div>
+                      <Button
+                        onClick={() => setShowLinkDialog(true)}
+                        className="w-full"
+                      >
+                        <Link2 className="h-4 w-4 mr-2" />
+                        Lier à un commanditaire Apogée
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -278,6 +368,49 @@ export function ApporteurDetailDrawer({
           onSuccess={handleInviteSuccess}
         />
       )}
+
+      {/* Link Apogée Dialog */}
+      <Dialog open={showLinkDialog} onOpenChange={setShowLinkDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Lier à un commanditaire Apogée</DialogTitle>
+            <DialogDescription>
+              Recherchez et sélectionnez le commanditaire correspondant dans Apogée pour activer les statistiques.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <ApogeeCommanditaireSelector
+            currentId={apporteur?.apogee_client_id}
+            onSelect={setSelectedCommanditaire}
+          />
+
+          {selectedCommanditaire && (
+            <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
+              <p className="text-sm font-medium">Sélectionné :</p>
+              <p className="text-sm text-muted-foreground">
+                {selectedCommanditaire.name} (ID: {selectedCommanditaire.id})
+              </p>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowLinkDialog(false)}>
+              Annuler
+            </Button>
+            <Button
+              onClick={handleLinkApogee}
+              disabled={!selectedCommanditaire || updateApogeeId.isPending}
+            >
+              {updateApogeeId.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Link2 className="h-4 w-4 mr-2" />
+              )}
+              Lier
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
