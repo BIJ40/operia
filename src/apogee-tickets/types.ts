@@ -42,7 +42,7 @@ export type OwnerSide = 'HC' | 'APOGEE' | '75_25' | '50_50' | '25_75' | 'PARTAGE
 // Qui a rapporté/identifié le ticket
 export type ReportedBy = 'JEROME' | 'FLORIAN' | 'ERIC' | 'APOGEE' | 'AUTRE';
 export type Severity = 'CRITIQUE' | 'MAJEUR' | 'CONFORT';
-export type CreatedFrom = 'MANUAL' | 'IMPORT_BUGS' | 'IMPORT_EVALUATED' | 'IMPORT_TRAITE' | 'IMPORT_DYSFONCTIONNEMENTS';
+export type CreatedFrom = 'MANUAL' | 'IMPORT_BUGS' | 'IMPORT_EVALUATED' | 'IMPORT_TRAITE' | 'IMPORT_DYSFONCTIONNEMENTS' | 'support';
 // Types d'auteurs pour les commentaires (HC ou Apogée uniquement)
 export type AuthorType = 'HC' | 'APOGEE';
 
@@ -106,6 +106,9 @@ export interface ApogeeTicket {
   // Tracking des modifications (pour clignotement)
   last_modified_by_user_id: string | null;
   last_modified_at: string | null;
+  // Support ticket origin tracking
+  source_support_ticket_id: string | null;
+  support_initiator_user_id: string | null;
   // Tags
   impact_tags: string[] | null;
   // Relations

@@ -14,7 +14,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { TicketCategoryBadge } from '@/components/tickets/TicketCategoryBadge';
 import { ServiceBadge } from '@/components/tickets/ServiceBadge';
 import { HeatPriorityBadge } from '@/components/support/HeatPriorityBadge';
-import { Loader2, Send, Download, AlertCircle, Clock, CheckCircle2, User, LayoutGrid, List, TicketPlus, MessageSquare, XCircle, Trash2, Monitor, Headphones } from 'lucide-react';
+import { Loader2, Send, Download, AlertCircle, Clock, CheckCircle2, User, LayoutGrid, List, TicketPlus, MessageSquare, XCircle, Trash2, Monitor, Headphones, Kanban } from 'lucide-react';
+import { useTransformToProjectTicket } from '@/hooks/admin-tickets/useTransformToProjectTicket';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Separator } from '@/components/ui/separator';
@@ -65,6 +66,9 @@ export default function AdminSupportTickets() {
   
   // Hook pour les notifications et compteur de chat live
   const { liveChatCount } = useSupportNotifications();
+  
+  // Hook pour transformer en ticket projet
+  const { transformToProjectTicket, isTransforming } = useTransformToProjectTicket();
 
   const [newMessage, setNewMessage] = useState('');
   const [viewMode, setViewMode] = useSessionState<'list' | 'kanban'>('support-view-mode', 'list');
@@ -585,6 +589,34 @@ export default function AdminSupportTickets() {
                             Convertir en ticket
                           </Button>
                         )}
+
+                        {/* Bouton pour transformer en ticket Gestion de Projet */}
+                        <Button
+                          variant="outline"
+                          onClick={async () => {
+                            const projectTicketId = await transformToProjectTicket({
+                              id: selectedTicket.id,
+                              subject: selectedTicket.subject,
+                              user_id: selectedTicket.user_id,
+                              service: selectedTicket.service,
+                              category: selectedTicket.category,
+                              chatbot_conversation: selectedTicket.chatbot_conversation,
+                            });
+                            if (projectTicketId) {
+                              // Optionnel: naviguer vers le ticket créé
+                              navigate(`/projects/tickets?ticketId=${projectTicketId}`);
+                            }
+                          }}
+                          disabled={isTransforming}
+                          className="gap-2 text-purple-600 border-purple-300 hover:bg-purple-50"
+                        >
+                          {isTransforming ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Kanban className="w-4 h-4" />
+                          )}
+                          → Gestion Projet
+                        </Button>
 
                         {/* Bouton pour voir le partage d'écran - toujours visible pour chat_human */}
                         {selectedTicket?.type === 'chat_human' && (

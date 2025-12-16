@@ -1098,6 +1098,8 @@ export type Database = {
           severity: string | null
           source_row_index: number | null
           source_sheet: string | null
+          source_support_ticket_id: string | null
+          support_initiator_user_id: string | null
           theme: string | null
           ticket_number: number
           ticket_type: string | null
@@ -1135,6 +1137,8 @@ export type Database = {
           severity?: string | null
           source_row_index?: number | null
           source_sheet?: string | null
+          source_support_ticket_id?: string | null
+          support_initiator_user_id?: string | null
           theme?: string | null
           ticket_number?: number
           ticket_type?: string | null
@@ -1172,6 +1176,8 @@ export type Database = {
           severity?: string | null
           source_row_index?: number | null
           source_sheet?: string | null
+          source_support_ticket_id?: string | null
+          support_initiator_user_id?: string | null
           theme?: string | null
           ticket_number?: number
           ticket_type?: string | null
@@ -1204,6 +1210,13 @@ export type Database = {
             columns: ["module"]
             isOneToOne: false
             referencedRelation: "apogee_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apogee_tickets_source_support_ticket_id_fkey"
+            columns: ["source_support_ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
             referencedColumns: ["id"]
           },
         ]

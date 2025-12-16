@@ -167,6 +167,11 @@ function DraggableTicketCard({
                 {ownerLabel}
               </Badge>
             )}
+            {ticket.created_from === 'support' && (
+              <Badge className="bg-purple-100 text-purple-700 text-xs border border-purple-200">
+                📩 Support
+              </Badge>
+            )}
           </div>
           
           {/* Actions au survol */}
