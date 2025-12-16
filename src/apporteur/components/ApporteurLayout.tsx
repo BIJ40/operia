@@ -25,7 +25,8 @@ import {
   Menu,
   X,
   Building2,
-  ChevronDown
+  ChevronDown,
+  Bug,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -41,11 +42,36 @@ const NAV_ITEMS = [
 ];
 
 export function ApporteurLayout({ children }: ApporteurLayoutProps) {
-  const { isApporteurAuthenticated, isApporteurLoading, apporteurUser, logout } = useApporteurAuth();
+  const {
+    isApporteurAuthenticated,
+    isApporteurLoading,
+    apporteurUser,
+    user,
+    logout,
+  } = useApporteurAuth();
   const [loginOpen, setLoginOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+
+  const isDevMode = () => {
+    const hostname = window.location.hostname;
+    return (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname.includes('preview') ||
+      hostname.includes('lovable')
+    );
+  };
+
+  const devBypass = isDevMode() && !isApporteurAuthenticated;
+  const displayUser = devBypass
+    ? {
+        firstName: 'Mode DEV',
+        email: user?.email ?? null,
+        apporteurName: 'Accès sans authentification',
+      }
+    : apporteurUser;
 
   // Loading state
   if (isApporteurLoading) {
@@ -56,8 +82,8 @@ export function ApporteurLayout({ children }: ApporteurLayoutProps) {
     );
   }
 
-  // Landing page for unauthenticated apporteurs
-  if (!isApporteurAuthenticated) {
+  // Landing page for unauthenticated apporteurs (prod)
+  if (!isApporteurAuthenticated && !devBypass) {
     return (
       <>
         <ApporteurLanding onLoginClick={() => setLoginOpen(true)} />
@@ -67,14 +93,42 @@ export function ApporteurLayout({ children }: ApporteurLayoutProps) {
   }
 
   const handleLogout = async () => {
+    // En mode DEV, on évite de déconnecter la session interne (ça brouille le test)
+    if (devBypass) {
+      setLoginOpen(true);
+      return;
+    }
+
     await logout();
     navigate('/apporteur');
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className={cn("min-h-screen bg-background", devBypass && "pt-9")}>
+      {devBypass && (
+        <div className="fixed top-0 inset-x-0 z-[60] h-9 border-b border-border bg-accent text-accent-foreground flex items-center justify-center gap-2 px-3 text-xs">
+          <Bug className="w-4 h-4" />
+          <span className="font-medium">Mode DEV</span>
+          <span className="hidden sm:inline">— accès apporteur sans authentification</span>
+          <span className="hidden md:inline opacity-80">(UI uniquement)</span>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="h-7 px-2 ml-2"
+            onClick={() => setLoginOpen(true)}
+          >
+            Se connecter
+          </Button>
+        </div>
+      )}
+
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+      <header
+        className={cn(
+          "sticky z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60",
+          devBypass ? "top-9" : "top-0"
+        )}
+      >
         <div className="container flex h-16 items-center justify-between">
           {/* Logo */}
           <Link to="/apporteur/dashboard" className="flex items-center gap-2">
@@ -100,8 +154,8 @@ export function ApporteurLayout({ children }: ApporteurLayoutProps) {
                   to={item.path}
                   className={cn(
                     "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                    isActive 
-                      ? "bg-primary/10 text-primary" 
+                    isActive
+                      ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   )}
                 >
@@ -119,28 +173,32 @@ export function ApporteurLayout({ children }: ApporteurLayoutProps) {
                 <Button variant="ghost" className="gap-2">
                   <User className="w-4 h-4" />
                   <span className="hidden sm:inline max-w-[150px] truncate">
-                    {apporteurUser?.firstName || apporteurUser?.email || 'Mon compte'}
+                    {displayUser?.firstName || displayUser?.email || 'Mon compte'}
                   </span>
                   <ChevronDown className="w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <div className="px-2 py-1.5">
-                  <p className="text-sm font-medium">{apporteurUser?.apporteurName}</p>
-                  <p className="text-xs text-muted-foreground">{apporteurUser?.email}</p>
+                  <p className="text-sm font-medium">{displayUser?.apporteurName}</p>
+                  <p className="text-xs text-muted-foreground">{displayUser?.email}</p>
                 </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Déconnexion
-                </DropdownMenuItem>
+                {!devBypass && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Déconnexion
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
 
             {/* Mobile Menu Button */}
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               className="md:hidden"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
@@ -163,8 +221,8 @@ export function ApporteurLayout({ children }: ApporteurLayoutProps) {
                     onClick={() => setMobileMenuOpen(false)}
                     className={cn(
                       "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                      isActive 
-                        ? "bg-primary/10 text-primary" 
+                      isActive
+                        ? "bg-primary/10 text-primary"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     )}
                   >
@@ -179,9 +237,7 @@ export function ApporteurLayout({ children }: ApporteurLayoutProps) {
       </header>
 
       {/* Main Content */}
-      <main className="container py-6">
-        {children}
-      </main>
+      <main className="container py-6">{children}</main>
 
       {/* Footer */}
       <footer className="border-t bg-muted/30 py-4 mt-auto">
@@ -189,6 +245,10 @@ export function ApporteurLayout({ children }: ApporteurLayoutProps) {
           <p>© {new Date().getFullYear()} HelpConfort Services - Espace Apporteur</p>
         </div>
       </footer>
+
+      {devBypass && (
+        <ApporteurLoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
+      )}
     </div>
   );
 }
