@@ -568,7 +568,15 @@ export function TicketDetailDrawer({
                   </div>
                   <div>
                     <label className="text-xs text-muted-foreground">Origine</label>
-                    {ticket.created_from === 'MANUAL' ? (
+                    {ticket.created_from === 'support' ? (
+                      // Ticket créé depuis le support: affichage badge spécial
+                      <div className="h-9 mt-1 px-3 py-2 rounded-md border bg-purple-50 text-sm flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-xs font-medium">
+                          📩 Support
+                        </span>
+                        {ticket.reported_by && <span className="text-muted-foreground">• {ticket.reported_by}</span>}
+                      </div>
+                    ) : ticket.created_from === 'MANUAL' ? (
                       // Ticket créé manuellement: affichage en lecture seule
                       <div className="h-9 mt-1 px-3 py-2 rounded-md border bg-muted/50 text-sm">
                         {ticket.reported_by || '—'}
