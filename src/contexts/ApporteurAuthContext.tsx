@@ -95,28 +95,36 @@ export function ApporteurAuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Écouter les changements d'authentification
+  // IMPORTANT: Ne pas utiliser async dans onAuthStateChange pour éviter les deadlocks
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setIsApporteurLoading(true);
+    // 1. Set up listener FIRST (synchronous state updates only)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Synchronous updates only
+      setUser(session?.user ?? null);
       
+      // Defer Supabase calls with setTimeout to avoid deadlock
       if (session?.user) {
-        setUser(session.user);
-        await loadApporteurData(session.user);
+        setTimeout(() => {
+          loadApporteurData(session.user).finally(() => {
+            setIsApporteurLoading(false);
+          });
+        }, 0);
       } else {
-        setUser(null);
         setApporteurUser(null);
+        setIsApporteurLoading(false);
       }
-      
-      setIsApporteurLoading(false);
     });
 
-    // Charger l'état initial
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    // 2. THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
       if (session?.user) {
-        setUser(session.user);
-        await loadApporteurData(session.user);
+        loadApporteurData(session.user).finally(() => {
+          setIsApporteurLoading(false);
+        });
+      } else {
+        setIsApporteurLoading(false);
       }
-      setIsApporteurLoading(false);
     });
 
     return () => {
