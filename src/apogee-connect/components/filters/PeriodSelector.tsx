@@ -15,11 +15,14 @@ export const PeriodSelector = ({ variant = 'default' }: PeriodSelectorProps) => 
   const standardPeriods: PeriodValue[] = ['today', 'yesterday', 'week', 'month', 'month-1', 'year', 'year-1', 'custom'];
 
   const availablePeriods = variant === 'previsionnel' ? previsionnelPeriods : standardPeriods;
-  const defaultValue = variant === 'previsionnel' ? 'month-remaining' : (filters.periodType || 'month');
+  
+  // Déterminer la valeur actuelle depuis le contexte ou utiliser une valeur par défaut
+  const defaultForVariant = variant === 'previsionnel' ? 'month-remaining' : 'month';
+  const currentValue = filters.periodType || defaultForVariant;
 
   return (
     <UnifiedPeriodSelector
-      value={defaultValue}
+      value={currentValue}
       onChange={(start, end, label, periodValue) => setDateRange(start, end, label, periodValue)}
       availablePeriods={availablePeriods}
       variant="compact"
