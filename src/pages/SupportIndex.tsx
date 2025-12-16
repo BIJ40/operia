@@ -110,9 +110,9 @@ export default function SupportIndex() {
       </div>
 
       {/* 3 Column Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 items-stretch">
         {/* Column 1: Créer un ticket */}
-        <Card className="lg:col-span-1 border-l-4 border-l-helpconfort-blue">
+        <Card className="lg:col-span-1 border-l-4 border-l-helpconfort-blue flex flex-col">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
               <PlusCircle className="w-5 h-5 text-helpconfort-blue" />
@@ -122,7 +122,7 @@ export default function SupportIndex() {
               Décrivez votre problème, notre équipe vous répondra
             </p>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 flex-1">
             <p className="text-sm text-muted-foreground">
               Vous n'avez pas trouvé de réponse via le Chat IA ?
               Créez un ticket pour contacter notre équipe support.
@@ -155,30 +155,28 @@ export default function SupportIndex() {
         </Card>
 
         {/* Column 2: Chat IA */}
-        <Card className="lg:col-span-1 flex flex-col border-l-4 border-l-helpconfort-orange">
+        <Card className="lg:col-span-1 flex flex-col border-l-4 border-l-helpconfort-orange min-h-[520px]">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
               <MessageSquare className="w-5 h-5 text-helpconfort-orange" />
               Chat IA
             </CardTitle>
-            <p className="text-xs text-muted-foreground break-words whitespace-normal">
+            <p className="text-xs text-muted-foreground">
               Posez vos questions, l'IA vous répond instantanément
             </p>
           </CardHeader>
-          <CardContent className="flex-1 p-0">
-            <ScrollArea className="h-[450px]">
-              <SupportChatCore
-                initialContext={allowedContexts[0] || 'apogee'}
-                onTicketCreated={handleTicketCreated}
-                showFAQSuggestions={false}
-                className="h-full"
-              />
-            </ScrollArea>
+          <CardContent className="flex-1 p-0 overflow-hidden">
+            <SupportChatCore
+              initialContext={allowedContexts[0] || 'apogee'}
+              onTicketCreated={handleTicketCreated}
+              showFAQSuggestions={false}
+              className="h-full max-h-[420px]"
+            />
           </CardContent>
         </Card>
 
         {/* Column 3: Mes Demandes */}
-        <Card className="lg:col-span-1 border-l-4 border-l-green-500">
+        <Card className="lg:col-span-1 border-l-4 border-l-green-500 flex flex-col min-h-[520px]">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
               <FileText className="w-5 h-5 text-green-600" />
@@ -190,8 +188,8 @@ export default function SupportIndex() {
               )}
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[400px] pr-4">
+          <CardContent className="flex-1 overflow-hidden">
+            <ScrollArea className="h-full max-h-[420px] pr-4">
               {ticketsLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin text-primary" />
