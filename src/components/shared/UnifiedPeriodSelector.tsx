@@ -17,7 +17,13 @@ import {
   endOfYear,
   subWeeks,
   subMonths,
-  subYears
+  subYears,
+  addDays,
+  addWeeks,
+  addMonths,
+  startOfQuarter,
+  endOfQuarter,
+  addQuarters
 } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useState } from "react";
@@ -32,7 +38,13 @@ export type PeriodValue =
   | 'year' 
   | 'year-1'
   | 'custom'
-  | 'all';
+  | 'all'
+  // Future periods for Prévisionnel
+  | 'tomorrow'
+  | 'week+1'
+  | 'month+1'
+  | 'quarter+1'
+  | 'year-full';
 
 export interface PeriodConfig {
   value: PeriodValue;
@@ -61,10 +73,12 @@ export function UnifiedPeriodSelector({
   const [customStartDate, setCustomStartDate] = useState<Date | undefined>();
   const [customEndDate, setCustomEndDate] = useState<Date | undefined>();
 
-  const currentMonth = format(new Date(), "MMMM", { locale: fr });
-  const currentYear = new Date().getFullYear();
-  const lastMonth = format(subMonths(new Date(), 1), "MMMM", { locale: fr });
+  const now = new Date();
+  const currentMonth = format(now, "MMMM", { locale: fr });
+  const currentYear = now.getFullYear();
+  const lastMonth = format(subMonths(now, 1), "MMMM", { locale: fr });
   const lastYear = currentYear - 1;
+  const nextMonth = format(addMonths(now, 1), "MMMM", { locale: fr });
 
   // Fonction helper pour obtenir les 3 premiers caractères en majuscules
   const getMonthShort = (monthName: string) => {
@@ -104,8 +118,8 @@ export function UnifiedPeriodSelector({
       value: 'week',
       label: variant === 'compact' ? 'SEMAINE' : 'Semaine',
       getDates: () => ({
-        start: startOfWeek(new Date(), { weekStartsOn: 1 }),
-        end: endOfWeek(new Date(), { weekStartsOn: 1 }),
+        start: startOfWeek(now, { weekStartsOn: 1 }),
+        end: endOfWeek(now, { weekStartsOn: 1 }),
         label: 'cette semaine'
       })
     },
@@ -113,7 +127,7 @@ export function UnifiedPeriodSelector({
       value: 'week-1',
       label: 'S-1',
       getDates: () => {
-        const lastWeek = subWeeks(new Date(), 1);
+        const lastWeek = subWeeks(now, 1);
         return {
           start: startOfWeek(lastWeek, { weekStartsOn: 1 }),
           end: endOfWeek(lastWeek, { weekStartsOn: 1 }),
@@ -125,8 +139,8 @@ export function UnifiedPeriodSelector({
       value: 'month',
       label: variant === 'compact' ? getMonthShort(currentMonth) : currentMonth.charAt(0).toUpperCase() + currentMonth.slice(1),
       getDates: () => ({
-        start: startOfMonth(new Date()),
-        end: endOfMonth(new Date()),
+        start: startOfMonth(now),
+        end: endOfMonth(now),
         label: `en ${currentMonth}`
       })
     },
@@ -134,7 +148,7 @@ export function UnifiedPeriodSelector({
       value: 'month-1',
       label: variant === 'compact' ? getMonthShort(lastMonth) : 'M-1',
       getDates: () => {
-        const lastMonthDate = subMonths(new Date(), 1);
+        const lastMonthDate = subMonths(now, 1);
         return {
           start: startOfMonth(lastMonthDate),
           end: endOfMonth(lastMonthDate),
@@ -146,8 +160,8 @@ export function UnifiedPeriodSelector({
       value: 'year',
       label: `${currentYear}`,
       getDates: () => ({
-        start: startOfYear(new Date()),
-        end: endOfYear(new Date()),
+        start: startOfYear(now),
+        end: endOfYear(now),
         label: `en ${currentYear}`
       })
     },
@@ -155,7 +169,7 @@ export function UnifiedPeriodSelector({
       value: 'year-1',
       label: `${lastYear}`,
       getDates: () => {
-        const lastYearDate = subYears(new Date(), 1);
+        const lastYearDate = subYears(now, 1);
         return {
           start: startOfYear(lastYearDate),
           end: endOfYear(lastYearDate),
@@ -163,12 +177,70 @@ export function UnifiedPeriodSelector({
         };
       }
     },
+    // Future periods
+    tomorrow: {
+      value: 'tomorrow',
+      label: 'Demain',
+      getDates: () => {
+        const tomorrow = addDays(now, 1);
+        return {
+          start: new Date(tomorrow.setHours(0, 0, 0, 0)),
+          end: new Date(tomorrow.setHours(23, 59, 59, 999)),
+          label: 'demain'
+        };
+      }
+    },
+    'week+1': {
+      value: 'week+1',
+      label: 'S+1',
+      getDates: () => {
+        const nextWeek = addWeeks(now, 1);
+        return {
+          start: startOfWeek(nextWeek, { weekStartsOn: 1 }),
+          end: endOfWeek(nextWeek, { weekStartsOn: 1 }),
+          label: 'semaine prochaine'
+        };
+      }
+    },
+    'month+1': {
+      value: 'month+1',
+      label: getMonthShort(nextMonth),
+      getDates: () => {
+        const nextMonthDate = addMonths(now, 1);
+        return {
+          start: startOfMonth(nextMonthDate),
+          end: endOfMonth(nextMonthDate),
+          label: `en ${nextMonth}`
+        };
+      }
+    },
+    'quarter+1': {
+      value: 'quarter+1',
+      label: 'Trimestre',
+      getDates: () => {
+        const nextQuarter = addQuarters(now, 1);
+        return {
+          start: startOfQuarter(nextQuarter),
+          end: endOfQuarter(nextQuarter),
+          label: 'trimestre à venir'
+        };
+      }
+    },
+    'year-full': {
+      value: 'year-full',
+      label: `${currentYear}`,
+      getDates: () => ({
+        start: startOfYear(now),
+        end: endOfYear(now),
+        label: `année ${currentYear}`
+      })
+    },
     custom: {
       value: 'custom',
       label: 'CHOISIR',
       getDates: () => ({
-        start: new Date(),
-        end: new Date(),
+        start: now,
+        end: now,
         label: 'personnalisé'
       })
     }

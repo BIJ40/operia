@@ -34,13 +34,18 @@ function StatsHubContent() {
   const { activeTab, setActiveTab } = useStatsHub();
   const TabComponent = TAB_COMPONENTS[activeTab];
 
+  // Sélecteur de période différent pour l'onglet Prévisionnel (périodes futures)
+  const periodSelector = activeTab === 'previsionnel' 
+    ? <PeriodSelector variant="previsionnel" />
+    : <PeriodSelector />;
+
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
       <PageHeader
         title="Hub Statistiques"
         backTo={ROUTES.agency.index}
         backLabel="Mon Agence"
-        rightElement={<PeriodSelector />}
+        rightElement={periodSelector}
       />
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabId)}>
