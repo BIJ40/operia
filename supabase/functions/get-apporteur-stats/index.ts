@@ -273,13 +273,21 @@ Deno.serve(async (req) => {
       const isAvoir = invoiceType.includes('avoir') || invoiceType === 'credit_note';
       
       const totalHT = Number(f.data?.totalHT || f.totalHT || 0);
-      const resteDu = Number(f.data?.calcReglementsReste || f.calcReglementsReste || f.restePaidTTC || 0);
+      const totalTTC = Number(f.data?.totalTTC || f.totalTTC || 0);
+      
+      // calcReglementsReste est en TTC, donc on calcule le ratio HT/TTC pour convertir
+      const resteDuTTC = Number(f.data?.calcReglementsReste || f.calcReglementsReste || f.restePaidTTC || 0);
+      
+      // Calculer le ratio HT/TTC pour convertir resteDu en HT
+      const ratioHT = totalTTC > 0 ? totalHT / totalTTC : 1;
+      const resteDuHT = resteDuTTC * ratioHT;
       
       if (!isAvoir) {
         facturesTotal++;
         facturesAmountHT += totalHT;
-        facturesDueHT += resteDu;
-        facturesPaidHT += totalHT - resteDu;
+        facturesDueHT += resteDuHT;
+        // Payé = totalHT - resteDuHT, avec minimum 0
+        facturesPaidHT += Math.max(0, totalHT - resteDuHT);
       } else {
         // Avoir = montant négatif
         facturesAmountHT -= Math.abs(totalHT);
