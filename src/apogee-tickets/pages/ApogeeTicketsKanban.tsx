@@ -474,28 +474,12 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
         blinkingTicketsCount={blinkingTicketsCount}
         filterBlinkingOnly={filterBlinkingOnly}
         onToggleBlinkingFilter={() => setFilterBlinkingOnly(prev => !prev)}
+        onResetAll={handleResetAll}
+        hasActiveUIState={hasActiveUIState}
       />
 
-      {/* Contrôles colonnes + Reset All */}
+      {/* Contrôles colonnes */}
       <div className="flex items-center gap-4 flex-wrap">
-          {/* R.A.Z. tous les filtres - toujours visible */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                variant="destructive" 
-                size="sm" 
-                onClick={handleResetAll}
-                disabled={!hasActiveFilters && !hasActiveUIState}
-                className="gap-2"
-              >
-                <RotateCcw className="h-4 w-4" />
-                R.A.Z.
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              Réinitialiser tous les filtres et paramètres d'affichage
-            </TooltipContent>
-          </Tooltip>
 
           {/* Visibilité colonnes */}
           <Popover>
