@@ -2,8 +2,10 @@
  * ApporteurDemandeDetailDrawer - Affiche le détail d'une demande d'intervention
  */
 
+import { useState } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Sheet,
   SheetContent,
@@ -12,6 +14,18 @@ import {
 } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { 
   User, 
   Phone, 
@@ -22,9 +36,12 @@ import {
   Clock,
   AlertTriangle,
   MessageSquare,
-  Home
+  XCircle,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   ApporteurDemande, 
   REQUEST_TYPE_LABELS, 
@@ -43,10 +60,41 @@ export function ApporteurDemandeDetailDrawer({
   open, 
   onOpenChange 
 }: ApporteurDemandeDetailDrawerProps) {
+  const queryClient = useQueryClient();
+  const [isCancelling, setIsCancelling] = useState(false);
+
   if (!demande) return null;
 
   const statusInfo = STATUS_LABELS[demande.status] || STATUS_LABELS.pending;
   const urgencyInfo = URGENCY_LABELS[demande.urgency] || URGENCY_LABELS.normal;
+  
+  // Can only cancel if status is pending (not already cancelled or in_progress)
+  const canCancel = demande.status === 'pending' && !demande.apogee_project_id;
+
+  const handleCancel = async () => {
+    setIsCancelling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('cancel-apporteur-request', {
+        body: { request_id: demande.id }
+      });
+
+      if (error) throw error;
+
+      toast.success('Demande annulée', {
+        description: 'Un email d\'annulation a été envoyé à l\'agence.'
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['apporteur-demandes'] });
+      onOpenChange(false);
+    } catch (error: any) {
+      console.error('Error cancelling request:', error);
+      toast.error('Erreur', {
+        description: error.message || 'Impossible d\'annuler la demande'
+      });
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -149,6 +197,48 @@ export function ApporteurDemandeDetailDrawer({
                   {demande.comments}
                 </p>
               </Section>
+            </>
+          )}
+
+          {/* Cancel Button */}
+          {canCancel && (
+            <>
+              <Separator />
+              <div className="pt-2">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="destructive" 
+                      className="w-full gap-2"
+                      disabled={isCancelling}
+                    >
+                      {isCancelling ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <XCircle className="w-4 h-4" />
+                      )}
+                      Annuler cette demande
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Annuler la demande ?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Cette action est irréversible. Un email d'annulation sera envoyé à l'agence HelpConfort.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Non, conserver</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={handleCancel}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Oui, annuler
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </>
           )}
         </div>
