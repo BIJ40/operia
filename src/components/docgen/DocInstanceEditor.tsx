@@ -21,9 +21,15 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
   const [tokenValues, setTokenValues] = useState<Record<string, string>>(instance.token_values || {});
   const [currentStep, setCurrentStep] = useState(0);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [localStatus, setLocalStatus] = useState(instance.status);
 
   const finalizeDocument = useFinalizeDocument();
   const updateInstance = useUpdateDocInstance();
+  
+  // Sync local status when instance changes
+  useEffect(() => {
+    setLocalStatus(instance.status);
+  }, [instance.status]);
 
   const tokens = instance.template?.tokens || [];
   const { smartTokens, manualTokens } = categorizeTokens(tokens);
@@ -139,6 +145,7 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
       status: "draft",
       final_path: null,
     });
+    setLocalStatus("draft");
     toast.success("Document ré-ouvert pour modification");
   };
 
@@ -222,12 +229,12 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
               Non sauvegardé
             </Badge>
           )}
-          <Badge variant={instance.status === "finalized" ? "default" : "secondary"}>
-            {instance.status === "draft" && "Brouillon"}
-            {instance.status === "preview" && "Aperçu"}
-            {instance.status === "finalized" && "Finalisé"}
+          <Badge variant={localStatus === "finalized" ? "default" : "secondary"}>
+            {localStatus === "draft" && "Brouillon"}
+            {localStatus === "preview" && "Aperçu"}
+            {localStatus === "finalized" && "Finalisé"}
           </Badge>
-          {instance.status === "finalized" && (
+          {localStatus === "finalized" && (
             <Button 
               variant="outline" 
               size="sm" 
@@ -357,7 +364,7 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
             ) : (
               <Button
                 onClick={handleFinalize}
-                disabled={finalizeDocument.isPending || instance.status === "finalized" || progressPercent < 100}
+                disabled={finalizeDocument.isPending || localStatus === "finalized" || progressPercent < 100}
                 className="flex-1"
               >
                 {finalizeDocument.isPending ? (
