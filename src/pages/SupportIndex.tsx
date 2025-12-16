@@ -1,8 +1,8 @@
 /**
  * Support Index - Page unique du support pour les users
- * 2 sections: Créer un ticket (dialog) | Mes Demandes (inline)
+ * 3 sections: Créer un ticket (dialog) | Chat IA | Mes Demandes (inline)
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserTickets, Ticket } from '@/hooks/use-user-tickets';
@@ -10,12 +10,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { getFilteredContexts } from '@/lib/rag-michu';
+import { SupportChatCore } from '@/components/support/SupportChatCore';
 import { CreateSupportTicketDialog } from '@/components/support/CreateSupportTicketDialog';
 import { TicketDetailPanel } from '@/components/support/TicketDetailPanel';
 import { ServiceBadge } from '@/components/tickets/ServiceBadge';
 import { HeatPriorityBadge } from '@/components/support/HeatPriorityBadge';
 import { ROUTES } from '@/config/routes';
 import { 
+  MessageSquare, 
   FileText, 
   Headset,
   PlusCircle,
@@ -29,12 +32,15 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 export default function SupportIndex() {
-  const { canAccessSupportConsoleUI } = useAuth();
+  const { canAccessSupportConsoleUI, globalRole } = useAuth();
   const navigate = useNavigate();
   const { tickets, isLoading: ticketsLoading, loadTickets, setSelectedTicket } = useUserTickets();
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedTicketView, setSelectedTicketView] = useState<Ticket | null>(null);
+
+  // Get allowed RAG contexts based on user role
+  const allowedContexts = getFilteredContexts(globalRole || 'base_user');
 
   const hasUnreadTickets = tickets.some(t => t.unreadCount && t.unreadCount > 0);
 
@@ -103,10 +109,10 @@ export default function SupportIndex() {
         )}
       </div>
 
-      {/* 2 Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+      {/* 3 Column Layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Column 1: Créer un ticket */}
-        <Card className="border-l-4 border-l-helpconfort-blue">
+        <Card className="lg:col-span-1 border-l-4 border-l-helpconfort-blue">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
               <PlusCircle className="w-5 h-5 text-helpconfort-blue" />
@@ -118,7 +124,8 @@ export default function SupportIndex() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Besoin d'aide ? Créez un ticket pour contacter notre équipe support.
+              Vous n'avez pas trouvé de réponse via le Chat IA ?
+              Créez un ticket pour contacter notre équipe support.
             </p>
             
             <Button
@@ -147,8 +154,31 @@ export default function SupportIndex() {
           </CardContent>
         </Card>
 
-        {/* Column 2: Mes Demandes */}
-        <Card className="border-l-4 border-l-green-500">
+        {/* Column 2: Chat IA */}
+        <Card className="lg:col-span-1 flex flex-col border-l-4 border-l-helpconfort-orange">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <MessageSquare className="w-5 h-5 text-helpconfort-orange" />
+              Chat IA
+            </CardTitle>
+            <p className="text-xs text-muted-foreground break-words whitespace-normal">
+              Posez vos questions, l'IA vous répond instantanément
+            </p>
+          </CardHeader>
+          <CardContent className="flex-1 p-0">
+            <ScrollArea className="h-[450px]">
+              <SupportChatCore
+                initialContext={allowedContexts[0] || 'apogee'}
+                onTicketCreated={handleTicketCreated}
+                showFAQSuggestions={false}
+                className="h-full"
+              />
+            </ScrollArea>
+          </CardContent>
+        </Card>
+
+        {/* Column 3: Mes Demandes */}
+        <Card className="lg:col-span-1 border-l-4 border-l-green-500">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
               <FileText className="w-5 h-5 text-green-600" />
