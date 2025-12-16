@@ -147,28 +147,37 @@ Deno.serve(async (req) => {
     const commanditaireId = apporteur.apogee_client_id;
     const weekBounds = getWeekBounds(weekOffset);
 
-    const [projectsRes, interventionsRes, usersRes] = await Promise.all([
-      fetch(`${baseUrl}/apiGetProjects`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ API_KEY: apiKey }),
-      }),
-      fetch(`${baseUrl}/apiGetInterventions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ API_KEY: apiKey }),
-      }),
-      fetch(`${baseUrl}/apiGetUsers`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ API_KEY: apiKey }),
-      }),
-    ]);
+    // Helper function for API calls with timeout and error handling
+    async function fetchApogee(endpoint: string): Promise<AnyRecord[]> {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 25000);
+        
+        const res = await fetch(`${baseUrl}/${endpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ API_KEY: apiKey }),
+          signal: controller.signal,
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!res.ok) {
+          console.warn(`[GET-APPORTEUR-PLANNING] ${endpoint} returned ${res.status}`);
+          return [];
+        }
+        
+        return await res.json() || [];
+      } catch (err) {
+        console.warn(`[GET-APPORTEUR-PLANNING] ${endpoint} failed:`, err instanceof Error ? err.message : err);
+        return [];
+      }
+    }
 
     const [allProjects, allInterventions, allUsers] = await Promise.all([
-      projectsRes.ok ? projectsRes.json() : [],
-      interventionsRes.ok ? interventionsRes.json() : [],
-      usersRes.ok ? usersRes.json() : [],
+      fetchApogee('apiGetProjects'),
+      fetchApogee('apiGetInterventions'),
+      fetchApogee('apiGetUsers'),
     ]);
 
     // Build users map

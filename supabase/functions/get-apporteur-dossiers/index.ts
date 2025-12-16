@@ -172,34 +172,38 @@ Deno.serve(async (req) => {
     const baseUrl = `https://${agency.slug}.hc-apogee.fr/api`;
     const commanditaireId = apporteur.apogee_client_id;
 
-    const [projectsRes, facturesRes, devisRes, interventionsRes] = await Promise.all([
-      fetch(`${baseUrl}/apiGetProjects`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ API_KEY: apiKey }),
-      }),
-      fetch(`${baseUrl}/apiGetFactures`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ API_KEY: apiKey }),
-      }),
-      fetch(`${baseUrl}/apiGetDevis`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ API_KEY: apiKey }),
-      }),
-      fetch(`${baseUrl}/apiGetInterventions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ API_KEY: apiKey }),
-      }),
-    ]);
+    // Helper function for API calls with timeout and error handling
+    async function fetchApogee(endpoint: string): Promise<AnyRecord[]> {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s timeout
+        
+        const res = await fetch(`${baseUrl}/${endpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ API_KEY: apiKey }),
+          signal: controller.signal,
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!res.ok) {
+          console.warn(`[GET-APPORTEUR-DOSSIERS] ${endpoint} returned ${res.status}`);
+          return [];
+        }
+        
+        return await res.json() || [];
+      } catch (err) {
+        console.warn(`[GET-APPORTEUR-DOSSIERS] ${endpoint} failed:`, err instanceof Error ? err.message : err);
+        return [];
+      }
+    }
 
     const [allProjects, allFactures, allDevis, allInterventions] = await Promise.all([
-      projectsRes.ok ? projectsRes.json() : [],
-      facturesRes.ok ? facturesRes.json() : [],
-      devisRes.ok ? devisRes.json() : [],
-      interventionsRes.ok ? interventionsRes.json() : [],
+      fetchApogee('apiGetProjects'),
+      fetchApogee('apiGetFactures'),
+      fetchApogee('apiGetDevis'),
+      fetchApogee('apiGetInterventions'),
     ]);
 
     const projects = (allProjects || []).filter((p: AnyRecord) => {
@@ -347,9 +351,12 @@ Deno.serve(async (req) => {
     ));
 
   } catch (error) {
-    console.error('[GET-APPORTEUR-DOSSIERS] Exception:', error instanceof Error ? error.message : error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : '';
+    console.error('[GET-APPORTEUR-DOSSIERS] Exception:', errorMsg);
+    console.error('[GET-APPORTEUR-DOSSIERS] Stack:', errorStack);
     return withCors(req, new Response(
-      JSON.stringify({ success: false, error: 'Erreur interne' }),
+      JSON.stringify({ success: false, error: 'Erreur interne', detail: errorMsg }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     ));
   }
