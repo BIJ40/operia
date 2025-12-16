@@ -85,29 +85,48 @@ export function useMyTicketRole() {
       }
       
       try {
-        // Récupérer le profil pour vérifier enabled_modules
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('enabled_modules, global_role')
-          .eq('id', user.id)
-          .maybeSingle();
+        // Récupérer le profil pour vérifier enabled_modules ET user_modules
+        const [profileResult, userModuleResult] = await Promise.all([
+          supabase
+            .from('profiles')
+            .select('enabled_modules, global_role')
+            .eq('id', user.id)
+            .maybeSingle(),
+          supabase
+            .from('user_modules')
+            .select('module_key, options')
+            .eq('user_id', user.id)
+            .eq('module_key', 'apogee_tickets')
+            .maybeSingle()
+        ]);
         
-        if (profileError) {
-          logError('[MY-TICKET-ROLE] Error fetching profile', profileError);
+        if (profileResult.error) {
+          logError('[MY-TICKET-ROLE] Error fetching profile', profileResult.error);
           return { ...DEFAULT_TICKET_ROLE_INFO, reason: 'fetch_error' };
         }
         
+        const profile = profileResult.data;
         if (!profile) {
           return { ...DEFAULT_TICKET_ROLE_INFO, reason: 'profile_not_found' };
         }
         
-        // Vérifier si le module apogee_tickets est activé
+        // Vérifier si le module apogee_tickets est activé via enabled_modules OU user_modules
         const enabledModules = profile.enabled_modules as Record<string, { enabled?: boolean; options?: Record<string, boolean> }> | null;
-        const moduleConfig = enabledModules?.apogee_tickets;
-        const isModuleEnabled = moduleConfig?.enabled === true;
+        const profileModuleConfig = enabledModules?.apogee_tickets;
+        const isModuleEnabledViaProfile = profileModuleConfig?.enabled === true;
         
-        // Extraire les sous-options (par défaut: tout à true si module activé sans options)
-        const moduleOptions = moduleConfig?.options || {};
+        // Vérifier user_modules (activation individuelle - l'existence d'une entrée = activé)
+        const userModule = userModuleResult.data;
+        const isModuleEnabledViaUserModules = !!userModule;
+        
+        // Module activé si l'une des deux sources l'active
+        const isModuleEnabled = isModuleEnabledViaProfile || isModuleEnabledViaUserModules;
+        
+        // Extraire les sous-options (priorité: user_modules > profile.enabled_modules)
+        const userModuleOptions = (userModule?.options as Record<string, boolean>) || {};
+        const profileModuleOptions = profileModuleConfig?.options || {};
+        const moduleOptions = { ...profileModuleOptions, ...userModuleOptions };
+        
         const canViewKanban = moduleOptions.kanban !== false; // Default true if not explicitly false
         const canImport = moduleOptions.import === true; // Default false
         const canManage = moduleOptions.manage !== false; // Default true if not explicitly false
