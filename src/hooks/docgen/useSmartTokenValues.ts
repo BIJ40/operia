@@ -172,7 +172,8 @@ export function resolveSmartTokens(
           break;
         case "collaborator":
           categoryLabel = "collaborateur";
-          editPath = "/rh/equipe";
+          // /rh/suivi supports inline editing of all collaborator fields including sensitive data
+          editPath = "/rh/suivi";
           break;
         case "dirigeant":
           categoryLabel = "dirigeant";

@@ -30,7 +30,7 @@ const CATEGORY_CONFIG = {
     icon: User,
     color: "text-green-600",
     bgColor: "bg-green-50",
-    editPath: "/rh/equipe",
+    editPath: "/rh/suivi", // Supports inline editing of all collaborator fields
   },
   dirigeant: {
     label: "Dirigeant",
