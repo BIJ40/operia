@@ -21,14 +21,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, Mail } from 'lucide-react';
+import { Loader2, Mail, CheckCircle, Copy, ExternalLink } from 'lucide-react';
 import { useInviteApporteurUser } from '@/hooks/useApporteurs';
+import { toast } from 'sonner';
 
 interface ApporteurInviteDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   apporteurId: string;
   onSuccess: () => void;
+}
+
+interface InviteResult {
+  success: boolean;
+  is_new_user: boolean;
+  action_link?: string;
+  note?: string;
 }
 
 export function ApporteurInviteDialog({
@@ -41,6 +49,7 @@ export function ApporteurInviteDialog({
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [role, setRole] = useState<'reader' | 'manager'>('reader');
+  const [inviteResult, setInviteResult] = useState<InviteResult | null>(null);
 
   const inviteUser = useInviteApporteurUser();
 
@@ -50,7 +59,7 @@ export function ApporteurInviteDialog({
     if (!email.trim()) return;
 
     try {
-      await inviteUser.mutateAsync({
+      const result = await inviteUser.mutateAsync({
         apporteur_id: apporteurId,
         email: email.trim().toLowerCase(),
         first_name: firstName.trim() || undefined,
@@ -58,20 +67,97 @@ export function ApporteurInviteDialog({
         role,
       });
       
-      // Reset form
-      setEmail('');
-      setFirstName('');
-      setLastName('');
-      setRole('reader');
-      
-      onSuccess();
+      // Show result with action_link if available
+      setInviteResult(result as InviteResult);
     } catch {
       // Error handled in hook
     }
   };
 
+  const handleClose = () => {
+    setEmail('');
+    setFirstName('');
+    setLastName('');
+    setRole('reader');
+    setInviteResult(null);
+    onOpenChange(false);
+    if (inviteResult?.success) {
+      onSuccess();
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Lien copié dans le presse-papier');
+  };
+
+  // Success view with action link
+  if (inviteResult?.success) {
+    return (
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-600">
+              <CheckCircle className="h-5 w-5" />
+              Invitation envoyée
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              {inviteResult.is_new_user 
+                ? "Un nouvel utilisateur a été créé. Il doit définir son mot de passe pour accéder à l'espace apporteur."
+                : "L'utilisateur existant a été lié à cet apporteur."
+              }
+            </p>
+
+            {inviteResult.action_link && (
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  Lien de définition du mot de passe (DEV/TEST)
+                </Label>
+                <div className="flex items-center gap-2">
+                  <Input 
+                    value={inviteResult.action_link}
+                    readOnly
+                    className="text-xs font-mono"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => copyToClipboard(inviteResult.action_link!)}
+                    title="Copier le lien"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => window.open(inviteResult.action_link!, '_blank')}
+                    title="Ouvrir dans un nouvel onglet"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Ce lien est visible uniquement en mode développement/test.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button onClick={handleClose}>Fermer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -134,7 +220,7 @@ export function ApporteurInviteDialog({
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
+              onClick={handleClose}
             >
               Annuler
             </Button>
