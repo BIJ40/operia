@@ -6,6 +6,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 // Options pour les tailles
 const TAILLE_HAUT_OPTIONS = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', '5XL'];
@@ -23,6 +24,25 @@ const SIZE_DROPDOWN_COLUMNS: Record<string, string[]> = {
 
 // Colonnes avec email (affichage tronqué + tooltip)
 const EMAIL_COLUMNS = ['email'];
+
+// Colonnes de type date (format JJ/MM/AAAA obligatoire)
+const DATE_COLUMNS = ['birth_date', 'hiring_date', 'leaving_date', 'hab_elec_date', 'date_renouvellement'];
+
+// Validation format date JJ/MM/AAAA
+function isValidDateFormat(value: string): boolean {
+  if (!value || value.trim() === '') return true; // Vide autorisé
+  return /^(\d{2})\/(\d{2})\/(\d{4})$/.test(value);
+}
+
+// Convertir ISO (YYYY-MM-DD) vers JJ/MM/AAAA pour l'édition
+function isoToFrenchDate(value: string): string {
+  if (!value) return '';
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    return `${match[3]}/${match[2]}/${match[1]}`;
+  }
+  return value;
+}
 
 interface RHEditableCellProps {
   value: unknown;
@@ -68,14 +88,23 @@ export function RHEditableCell({
 }: RHEditableCellProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(String(value ?? ''));
+  const [dateError, setDateError] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const isDateColumn = DATE_COLUMNS.includes(columnId);
 
   // Sync value when props change
   useEffect(() => {
     if (!isEditing) {
-      setEditValue(String(value ?? ''));
+      // Pour les colonnes date, convertir ISO vers format français
+      if (isDateColumn && value) {
+        setEditValue(isoToFrenchDate(String(value)));
+      } else {
+        setEditValue(String(value ?? ''));
+      }
+      setDateError(false);
     }
-  }, [value, isEditing]);
+  }, [value, isEditing, isDateColumn]);
 
   // Focus input when editing starts
   useEffect(() => {
@@ -88,12 +117,28 @@ export function RHEditableCell({
   const handleDoubleClick = (e: React.MouseEvent) => {
     if (!editable) return;
     e.stopPropagation();
+    // Pour les dates, convertir ISO vers format français avant édition
+    if (isDateColumn && value) {
+      setEditValue(isoToFrenchDate(String(value)));
+    }
+    setDateError(false);
     setIsEditing(true);
   };
 
   const handleBlur = () => {
+    // Validation pour les colonnes date
+    if (isDateColumn && editValue && !isValidDateFormat(editValue)) {
+      setDateError(true);
+      toast.error('Format de date invalide. Utilisez JJ/MM/AAAA');
+      return; // Ne pas fermer l'édition si format invalide
+    }
+    
+    setDateError(false);
     setIsEditing(false);
-    if (editValue !== String(value ?? '')) {
+    
+    // Pour les dates, comparer la valeur convertie
+    const originalFormatted = isDateColumn && value ? isoToFrenchDate(String(value)) : String(value ?? '');
+    if (editValue !== originalFormatted) {
       onValueChange(collaboratorId, columnId, editValue);
     }
   };
@@ -103,7 +148,12 @@ export function RHEditableCell({
       handleBlur();
     }
     if (e.key === 'Escape') {
-      setEditValue(String(value ?? ''));
+      if (isDateColumn && value) {
+        setEditValue(isoToFrenchDate(String(value)));
+      } else {
+        setEditValue(String(value ?? ''));
+      }
+      setDateError(false);
       setIsEditing(false);
     }
   };
@@ -195,7 +245,12 @@ export function RHEditableCell({
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         onClick={(e) => e.stopPropagation()}
-        className={cn("h-7 text-sm px-1", className)}
+        placeholder={isDateColumn ? 'JJ/MM/AAAA' : undefined}
+        className={cn(
+          "h-7 text-sm px-1", 
+          dateError && "border-destructive focus-visible:ring-destructive",
+          className
+        )}
       />
     );
   }
