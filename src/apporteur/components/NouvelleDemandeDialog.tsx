@@ -199,7 +199,7 @@ export function NouvelleDemandeDialog({ open, onOpenChange }: NouvelleDemandeDia
             </p>
             <div className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor="tenantName">Nom complet *</Label>
+                <Label htmlFor="tenantName">Nom Prénom *</Label>
                 <Input
                   id="tenantName"
                   value={formData.tenantName}
