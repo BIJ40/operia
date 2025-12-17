@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { format } from 'date-fns';
+import { useState, useEffect } from 'react';
+import { format, setHours, setMinutes } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { 
   Clock, 
@@ -9,11 +9,15 @@ import {
   Coffee, 
   Loader2,
   CheckCircle2,
-  AlertCircle
+  Edit3,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,14 +64,41 @@ export default function TechPointage() {
   const createEvent = useCreateTimeEvent();
   
   const [confirmDialog, setConfirmDialog] = useState<TimeEventType | null>(null);
+  const [manualMode, setManualMode] = useState(false);
+  const [manualTime, setManualTime] = useState(format(new Date(), 'HH:mm'));
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Update current time every second
+  useEffect(() => {
+    const interval = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Reset manual time when toggling mode
+  useEffect(() => {
+    if (!manualMode) {
+      setManualTime(format(new Date(), 'HH:mm'));
+    }
+  }, [manualMode]);
 
   const timeState = deriveTimeState(events);
   const isLoading = profileLoading || eventsLoading;
 
+  const getOccurredAt = (): Date => {
+    if (!manualMode) return new Date();
+    const [hours, minutes] = manualTime.split(':').map(Number);
+    return setMinutes(setHours(new Date(), hours), minutes);
+  };
+
   const handleCreateEvent = async (eventType: TimeEventType) => {
     try {
-      await createEvent.mutateAsync({ eventType });
-      toast.success(EVENT_LABELS[eventType] + ' enregistré');
+      const occurredAt = getOccurredAt();
+      await createEvent.mutateAsync({ 
+        eventType, 
+        occurredAt,
+        source: manualMode ? 'manual' : 'mobile'
+      });
+      toast.success(EVENT_LABELS[eventType] + ' enregistré à ' + format(occurredAt, 'HH:mm'));
     } catch {
       toast.error('Erreur lors de l\'enregistrement');
     }
@@ -108,6 +139,8 @@ export default function TechPointage() {
     finished: 'Terminé',
   };
 
+  const displayTime = manualMode ? manualTime : format(currentTime, 'HH:mm');
+
   return (
     <div className="p-4 space-y-4">
       {/* Header */}
@@ -121,6 +154,36 @@ export default function TechPointage() {
         </div>
       </div>
 
+      {/* Manual mode toggle */}
+      <Card>
+        <CardContent className="p-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Edit3 className="h-4 w-4 text-muted-foreground" />
+              <Label htmlFor="manual-mode" className="text-sm">
+                Saisie manuelle
+              </Label>
+            </div>
+            <Switch
+              id="manual-mode"
+              checked={manualMode}
+              onCheckedChange={setManualMode}
+            />
+          </div>
+          {manualMode && (
+            <div className="mt-3 flex items-center gap-2">
+              <Label className="text-sm text-muted-foreground">Heure :</Label>
+              <Input
+                type="time"
+                value={manualTime}
+                onChange={(e) => setManualTime(e.target.value)}
+                className="w-32"
+              />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Status card */}
       <Card>
         <CardContent className="p-6">
@@ -129,9 +192,18 @@ export default function TechPointage() {
               {statusLabels[timeState.status]}
             </Badge>
             
-            <div className="text-4xl font-bold tabular-nums">
-              {format(new Date(), 'HH:mm')}
+            <div className={cn(
+              "text-5xl font-bold tabular-nums transition-colors",
+              manualMode && "text-primary"
+            )}>
+              {displayTime}
             </div>
+
+            {manualMode && (
+              <div className="text-xs text-muted-foreground">
+                Mode saisie manuelle
+              </div>
+            )}
 
             {timeState.status !== 'not_started' && (
               <div className="flex gap-6 text-sm">
@@ -242,6 +314,9 @@ export default function TechPointage() {
                       <span className="text-sm">
                         {EVENT_LABELS[event.event_type]}
                       </span>
+                      {event.source === 'manual' && (
+                        <Badge variant="outline" className="text-xs">Manuel</Badge>
+                      )}
                     </div>
                     <span className="text-sm font-medium tabular-nums">
                       {format(new Date(event.occurred_at), 'HH:mm')}
@@ -263,7 +338,13 @@ export default function TechPointage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmer le pointage</AlertDialogTitle>
             <AlertDialogDescription>
-              Voulez-vous enregistrer "{confirmDialog && EVENT_LABELS[confirmDialog]}" à {format(new Date(), 'HH:mm')} ?
+              Voulez-vous enregistrer "{confirmDialog && EVENT_LABELS[confirmDialog]}" à{' '}
+              <span className="font-semibold">{format(getOccurredAt(), 'HH:mm')}</span> ?
+              {manualMode && (
+                <span className="block mt-2 text-amber-600 dark:text-amber-400">
+                  (Saisie manuelle)
+                </span>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
