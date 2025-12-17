@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 const NAV_ITEMS = [
   { to: '/t/planning', icon: Calendar, label: 'Planning' },
   { to: '/t/pointage', icon: Clock, label: 'Pointage' },
-  { to: '/t/documents', icon: FileText, label: 'Documents' },
+  { to: '/t/documents', icon: FileText, label: 'RH - Parc' },
   { to: '/t/profil', icon: User, label: 'Profil' },
 ];
 
