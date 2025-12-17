@@ -8,7 +8,8 @@ import {
   Lock, Eye, ShieldCheck, Briefcase, Truck, 
   HelpCircle, CheckCircle2, ChevronDown, ChevronRight,
   FileText, Users, CreditCard, Car, Wrench, AlertTriangle,
-  BookOpen, BarChart3, Headphones, Settings, MessageSquare, Kanban
+  BookOpen, BarChart3, Headphones, Settings, MessageSquare, Kanban,
+  Network, Building2, Coins, Calendar
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -33,7 +34,7 @@ interface PermissionDefinition {
   icon: React.ReactNode;
   color: string;
   minRole?: GlobalRole;
-  category: 'rh' | 'parc' | 'academy' | 'pilotage' | 'support' | 'admin' | 'projet' | 'other';
+  category: 'rh' | 'parc' | 'academy' | 'pilotage' | 'support' | 'admin' | 'projet' | 'reseau' | 'other';
 }
 
 const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
@@ -225,6 +226,94 @@ const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     category: 'pilotage',
   },
 
+  // ===== RÉSEAU FRANCHISEUR =====
+  {
+    key: 'reseau_dashboard',
+    moduleKey: 'reseau_franchiseur',
+    optionKey: 'dashboard',
+    label: 'Dashboard Réseau',
+    shortDescription: 'Vue d\'ensemble multi-agences',
+    features: [
+      'Dashboard consolidé du réseau',
+      'Vue globale des performances',
+      'Filtres par agences',
+    ],
+    targetUsers: 'Animateurs et Directeurs réseau',
+    icon: <Network className="w-5 h-5" />,
+    color: 'text-purple-500',
+    minRole: 'franchisor_user',
+    category: 'reseau',
+  },
+  {
+    key: 'reseau_agences',
+    moduleKey: 'reseau_franchiseur',
+    optionKey: 'agences',
+    label: 'Gestion des Agences',
+    shortDescription: 'Fiches et paramètres agences',
+    features: [
+      'Liste des agences du réseau',
+      'Fiches détaillées par agence',
+      'Paramètres et configuration',
+    ],
+    targetUsers: 'Animateurs et Directeurs réseau',
+    icon: <Building2 className="w-5 h-5" />,
+    color: 'text-purple-500',
+    minRole: 'franchisor_user',
+    category: 'reseau',
+  },
+  {
+    key: 'reseau_stats',
+    moduleKey: 'reseau_franchiseur',
+    optionKey: 'stats',
+    label: 'Statistiques Réseau',
+    shortDescription: 'Comparatifs et graphiques',
+    features: [
+      'Comparatif inter-agences',
+      'Graphiques de performance',
+      'Tableaux de bord avancés',
+    ],
+    targetUsers: 'Animateurs et Directeurs réseau',
+    icon: <BarChart3 className="w-5 h-5" />,
+    color: 'text-purple-500',
+    minRole: 'franchisor_user',
+    category: 'reseau',
+  },
+  {
+    key: 'reseau_periodes',
+    moduleKey: 'reseau_franchiseur',
+    optionKey: 'periodes',
+    label: 'Gestion des Périodes',
+    shortDescription: 'Périodes comptables et exercices',
+    features: [
+      'Configuration des périodes',
+      'Clôtures mensuelles',
+      'Historique par exercice',
+    ],
+    targetUsers: 'Animateurs et Directeurs réseau',
+    icon: <Calendar className="w-5 h-5" />,
+    color: 'text-purple-500',
+    minRole: 'franchisor_user',
+    category: 'reseau',
+  },
+  {
+    key: 'reseau_redevances',
+    moduleKey: 'reseau_franchiseur',
+    optionKey: 'redevances',
+    label: 'Redevances (Royalties)',
+    shortDescription: 'Calcul et suivi des redevances',
+    features: [
+      'Configuration des tranches',
+      'Calcul automatique des royalties',
+      'Historique des redevances',
+      'Modèles de facturation',
+    ],
+    targetUsers: 'Directeur réseau uniquement',
+    icon: <Coins className="w-5 h-5" />,
+    color: 'text-amber-500',
+    minRole: 'franchisor_admin',
+    category: 'reseau',
+  },
+
   // ===== SUPPORT =====
   {
     key: 'support_user',
@@ -336,6 +425,11 @@ const CATEGORY_INFO: Record<string, { label: string; icon: React.ReactNode; desc
     icon: <Kanban className="w-5 h-5 text-indigo-500" />,
     description: 'Kanban et tickets développement'
   },
+  reseau: { 
+    label: 'Réseau Franchiseur', 
+    icon: <Network className="w-5 h-5 text-purple-500" />,
+    description: 'Pilotage multi-agences et redevances'
+  },
 };
 
 // Mapping rôle global → options RH autorisées
@@ -358,6 +452,17 @@ const PARC_OPTIONS_BY_ROLE: Record<GlobalRole, string[]> = {
   franchisor_admin: ['mon_vehicule', 'mes_equipements', 'vehicules', 'equipements'],
   platform_admin: ['mon_vehicule', 'mes_equipements', 'vehicules', 'equipements'],
   superadmin: ['mon_vehicule', 'mes_equipements', 'vehicules', 'equipements'],
+};
+
+// Mapping rôle global → options Réseau autorisées (automatique N3+, redevances N4+)
+const RESEAU_OPTIONS_BY_ROLE: Record<GlobalRole, string[]> = {
+  base_user: [],
+  franchisee_user: [],
+  franchisee_admin: [],
+  franchisor_user: ['dashboard', 'agences', 'stats', 'periodes'], // N3 - pas redevances
+  franchisor_admin: ['dashboard', 'agences', 'stats', 'periodes', 'redevances'], // N4 - tout
+  platform_admin: ['dashboard', 'agences', 'stats', 'periodes', 'redevances'],
+  superadmin: ['dashboard', 'agences', 'stats', 'periodes', 'redevances'],
 };
 
 export const UserModulesTab = memo(function UserModulesTab({
@@ -409,6 +514,13 @@ export const UserModulesTab = memo(function UserModulesTab({
     // Vérifier les contraintes spécifiques Parc
     if (perm.moduleKey === 'parc' && perm.optionKey) {
       const allowedOptions = PARC_OPTIONS_BY_ROLE[userRole];
+      if (!allowedOptions) return false;
+      return allowedOptions.includes(perm.optionKey);
+    }
+    
+    // Vérifier les contraintes spécifiques Réseau (automatique N3+, redevances N4+)
+    if (perm.moduleKey === 'reseau_franchiseur' && perm.optionKey) {
+      const allowedOptions = RESEAU_OPTIONS_BY_ROLE[userRole];
       if (!allowedOptions) return false;
       return allowedOptions.includes(perm.optionKey);
     }
