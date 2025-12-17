@@ -45,6 +45,8 @@ export const ROUTES = {
     techRtRunner: (interventionId: string) => `/hc-agency/tech-interventions/rt/${interventionId}`,
     // Hub Statistiques
     statsHub: '/hc-agency/stats-hub',
+    // Mes Apporteurs
+    mesApporteurs: '/hc-agency/mes-apporteurs',
     // Indicateurs (pages détaillées)
     indicateurs: '/hc-agency/indicateurs',
     indicateursApporteurs: '/hc-agency/indicateurs/apporteurs',

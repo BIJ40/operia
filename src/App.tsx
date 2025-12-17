@@ -50,6 +50,7 @@ const VeilleApporteursPage = lazy(() => import("./pages/VeilleApporteursPage"));
 const PlanningHebdo = lazy(() => import("./pages/PlanningTechniciensSemaine"));
 // RH Tech hub page
 const RHTech = lazy(() => import("./pages/RHTechPage"));
+const MesApporteursPage = lazy(() => import("./pages/hc-agency/MesApporteursPage"));
 const EquipePage = lazy(() => import("./pages/EquipePage"));
 const Messages = lazy(() => import("./pages/Messages"));
 
@@ -272,6 +273,9 @@ function AppContent() {
           {/* RH Tech */}
           <Route path="/hc-agency/rh-tech" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><RHTech /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/hc-agency/rh-tech/planning" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><PlanningHebdo /></ModuleGuard></RoleGuard></MainLayout>} />
+          
+          {/* Mes Apporteurs */}
+          <Route path="/hc-agency/mes-apporteurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><Suspense fallback={<PageLoader />}><MesApporteursPage /></Suspense></ModuleGuard></RoleGuard></MainLayout>} />
           
           
           {/* ============================================ */}

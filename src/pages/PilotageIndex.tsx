@@ -46,6 +46,13 @@ const pilotageModules: PilotageModule[] = [
     icon: ListTodo,
     href: ROUTES.agency.actions,
   },
+  {
+    id: 'mes_apporteurs',
+    title: 'Mes Apporteurs',
+    description: 'Créer un espace apporteur',
+    icon: Building2,
+    href: ROUTES.agency.mesApporteurs,
+  },
 ];
 
 // Custom hook for agency info collapse state
