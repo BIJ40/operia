@@ -16,7 +16,7 @@ interface ModuleSlide {
   id: string;
   title: string;
   icon: React.ElementType;
-  screenshot: string | null;
+  screenshot: string | string[] | null; // Single image, dual images, or null
   bulletPoints: string[];
   gradient: string;
 }
@@ -34,7 +34,7 @@ const MODULES: ModuleSlide[] = [
     id: 'academy',
     title: 'Academy',
     icon: BookOpen,
-    screenshot: null,
+    screenshot: ['/images/screenshots/academy.png', '/images/screenshots/academ2.png'],
     bulletPoints: ['Guides interactifs', 'FAQ & tutoriels', 'Formation continue'],
     gradient: 'from-emerald-600 to-teal-700',
   },
@@ -130,11 +130,26 @@ export function DemoCarousel() {
           >
             {/* Screenshot ou Placeholder */}
             {activeModule.screenshot ? (
-              <img
-                src={activeModule.screenshot}
-                alt={activeModule.title}
-                className="w-full h-full object-cover object-top"
-              />
+              Array.isArray(activeModule.screenshot) ? (
+                // Dual screenshots side by side
+                <div className="w-full h-full flex gap-2 p-2 bg-gradient-to-br from-slate-900 to-slate-800">
+                  {activeModule.screenshot.map((src, i) => (
+                    <img
+                      key={i}
+                      src={src}
+                      alt={`${activeModule.title} ${i + 1}`}
+                      className="flex-1 h-full object-cover object-top rounded-lg shadow-xl"
+                    />
+                  ))}
+                </div>
+              ) : (
+                // Single screenshot
+                <img
+                  src={activeModule.screenshot}
+                  alt={activeModule.title}
+                  className="w-full h-full object-cover object-top"
+                />
+              )
             ) : (
               <div className={cn(
                 "w-full h-full flex items-center justify-center",
