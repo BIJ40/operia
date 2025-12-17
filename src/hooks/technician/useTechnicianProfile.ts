@@ -10,6 +10,7 @@ export interface CollaboratorWithProfile {
   phone: string | null;
   agency_id: string;
   user_id: string;
+  apogee_user_id: number | null;
   work_profile: {
     id: string;
     weekly_contract_minutes: number;
@@ -48,6 +49,7 @@ export function useTechnicianProfile() {
         phone: collaborator.phone,
         agency_id: collaborator.agency_id,
         user_id: collaborator.user_id!,
+        apogee_user_id: collaborator.apogee_user_id,
         work_profile: workProfile ? {
           id: workProfile.id,
           weekly_contract_minutes: workProfile.weekly_contract_minutes,

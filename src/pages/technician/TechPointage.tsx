@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { format, setHours, setMinutes, startOfWeek, addWeeks, subWeeks } from 'date-fns';
+import { format, setHours, setMinutes, startOfWeek, addWeeks, subWeeks, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { 
   Clock, 
@@ -15,7 +15,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Send,
-  TableIcon
+  TableIcon,
+  FileCheck,
+  Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,6 +27,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,6 +39,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { 
   useTodayTimeEvents, 
   useCreateTimeEvent, 
@@ -47,6 +59,7 @@ import {
   useSubmitTimesheet 
 } from '@/hooks/technician/useTimesheets';
 import { useTechnicianProfile } from '@/hooks/technician/useTechnicianProfile';
+import { useMyPlanningPackages, useSignPlanning } from '@/hooks/technician/usePlanningPackages';
 import { WeeklyTimeEntry } from '@/components/technician/WeeklyTimeEntry';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -74,9 +87,11 @@ function formatMinutes(minutes: number): string {
 export default function TechPointage() {
   const { data: profile, isLoading: profileLoading } = useTechnicianProfile();
   const { data: events = [], isLoading: eventsLoading } = useTodayTimeEvents();
+  const { data: packages = [], isLoading: packagesLoading } = useMyPlanningPackages();
+  const signMutation = useSignPlanning();
   const createEvent = useCreateTimeEvent();
   
-  const [activeTab, setActiveTab] = useState<'today' | 'week'>('today');
+  const [activeTab, setActiveTab] = useState<'today' | 'week' | 'validation'>('today');
   const [confirmDialog, setConfirmDialog] = useState<TimeEventType | null>(null);
   const [manualMode, setManualMode] = useState(false);
   const [manualTime, setManualTime] = useState(format(new Date(), 'HH:mm'));
@@ -86,6 +101,12 @@ export default function TechPointage() {
   const [selectedWeek, setSelectedWeek] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
   const [weekView, setWeekView] = useState<'summary' | 'entry'>('summary');
+
+  // Planning validation state
+  const [signDialogOpen, setSignDialogOpen] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState<typeof packages[0] | null>(null);
+  const [signChecked, setSignChecked] = useState(false);
+  const [signComment, setSignComment] = useState('');
 
   const { data: timesheet, isLoading: timesheetLoading, refetch: refetchTimesheet } = useWeekTimesheet(selectedWeek);
   const { data: weekDays = [], isLoading: weekEventsLoading, refetch: refetchEvents } = useWeekTimeEvents(selectedWeek);
@@ -153,6 +174,39 @@ export default function TechPointage() {
     setWeekView('summary');
   };
 
+  // Planning validation handlers
+  const handleOpenSign = (pkg: typeof packages[0]) => {
+    setSelectedPackage(pkg);
+    setSignChecked(false);
+    setSignComment('');
+    setSignDialogOpen(true);
+  };
+
+  const handleSign = async () => {
+    if (!selectedPackage || !signChecked) return;
+
+    try {
+      await signMutation.mutateAsync({
+        recipientId: selectedPackage.recipient_id,
+        comment: signComment || undefined,
+      });
+      toast.success('Planning signé avec succès');
+      setSignDialogOpen(false);
+    } catch {
+      toast.error('Erreur lors de la signature');
+    }
+  };
+
+  // Find package for current week (validation tab)
+  const currentWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const currentPackage = packages.find(p => {
+    const pkgWeekStart = startOfWeek(parseISO(p.week_start), { weekStartsOn: 1 });
+    return pkgWeekStart.getTime() === currentWeekStart.getTime();
+  });
+
+  // Count unsigned packages
+  const unsignedPackagesCount = packages.filter(p => !p.signed_at).length;
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -213,10 +267,18 @@ export default function TechPointage() {
       </div>
 
       {/* Main tabs */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'today' | 'week')}>
-        <TabsList className="grid w-full grid-cols-2">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'today' | 'week' | 'validation')}>
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="today">Aujourd'hui</TabsTrigger>
           <TabsTrigger value="week">Ma semaine</TabsTrigger>
+          <TabsTrigger value="validation" className="relative">
+            Validation
+            {unsignedPackagesCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
+                {unsignedPackagesCount}
+              </span>
+            )}
+          </TabsTrigger>
         </TabsList>
 
         {/* Today tab */}
@@ -554,6 +616,120 @@ export default function TechPointage() {
             </Tabs>
           )}
         </TabsContent>
+
+        {/* Validation tab - Planning packages to sign */}
+        <TabsContent value="validation" className="mt-4 space-y-4">
+          {packagesLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <>
+              {/* Current week package */}
+              {currentPackage ? (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base">
+                        {currentPackage.title || 'Planning hebdomadaire'}
+                      </CardTitle>
+                      {currentPackage.signed_at ? (
+                        <Badge variant="default" className="bg-green-600">
+                          <Check className="h-3 w-3 mr-1" />
+                          Signé
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary">À signer</Badge>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="text-sm text-muted-foreground">
+                      Envoyé le {format(parseISO(currentPackage.sent_at), "d MMMM yyyy 'à' HH:mm", { locale: fr })}
+                    </div>
+
+                    {currentPackage.signed_at ? (
+                      <div className="rounded-lg bg-green-50 dark:bg-green-950/30 p-3 text-sm">
+                        <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
+                          <FileCheck className="h-4 w-4" />
+                          Signé le {format(parseISO(currentPackage.signed_at), "d MMMM yyyy 'à' HH:mm", { locale: fr })}
+                        </div>
+                        {currentPackage.signed_comment && (
+                          <div className="mt-2 text-muted-foreground">
+                            Commentaire : {currentPackage.signed_comment}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <Button 
+                        className="w-full" 
+                        onClick={() => handleOpenSign(currentPackage)}
+                      >
+                        Signer le planning
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardContent className="p-6 text-center text-muted-foreground">
+                    Aucun planning à valider cette semaine
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Historical packages */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Historique des plannings</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {packages.length === 0 ? (
+                    <div className="p-4 text-center text-sm text-muted-foreground">
+                      Aucun planning reçu
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-border">
+                      {packages.slice(0, 10).map(pkg => (
+                        <div
+                          key={pkg.id}
+                          className="flex items-center justify-between p-3"
+                        >
+                          <div>
+                            <div className="text-sm font-medium">
+                              Semaine du {format(parseISO(pkg.week_start), 'd MMM yyyy', { locale: fr })}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {pkg.title || 'Planning'}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {pkg.signed_at ? (
+                              <Badge variant="outline" className="text-green-600 border-green-600">
+                                Signé
+                              </Badge>
+                            ) : (
+                              <>
+                                <Badge variant="outline">En attente</Badge>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleOpenSign(pkg)}
+                                >
+                                  Signer
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </TabsContent>
       </Tabs>
 
       {/* Confirmation dialog */}
@@ -616,6 +792,61 @@ export default function TechPointage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Sign planning dialog */}
+      <Dialog open={signDialogOpen} onOpenChange={setSignDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Signer le planning</DialogTitle>
+            <DialogDescription>
+              En signant, vous confirmez avoir pris connaissance du planning de la semaine.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="flex items-start space-x-3">
+              <Checkbox
+                id="sign-confirm"
+                checked={signChecked}
+                onCheckedChange={(c) => setSignChecked(c === true)}
+              />
+              <label
+                htmlFor="sign-confirm"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                J'ai lu et j'approuve ce planning
+              </label>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Commentaire (optionnel)
+              </label>
+              <Textarea
+                value={signComment}
+                onChange={(e) => setSignComment(e.target.value)}
+                placeholder="Ajouter un commentaire..."
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSignDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button
+              onClick={handleSign}
+              disabled={!signChecked || signMutation.isPending}
+            >
+              {signMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              Signer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
