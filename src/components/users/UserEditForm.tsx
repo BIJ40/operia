@@ -376,7 +376,14 @@ export function UserEditForm({
           disabled={isSubmitting}
           className="w-full"
         >
-          {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : "Enregistrer les modifications"}
+          {isSubmitting ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Enregistrement en cours...
+            </>
+          ) : (
+            "Enregistrer les modifications"
+          )}
         </Button>
       </div>
     </div>
