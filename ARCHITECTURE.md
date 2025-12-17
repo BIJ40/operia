@@ -1,7 +1,7 @@
 # Architecture du Projet GLOBAL / Apogée
 
-> **Version** : 2.0  
-> **Dernière mise à jour** : Décembre 2025  
+> **Version** : 2.1  
+> **Dernière mise à jour** : 17 Décembre 2025  
 > **Branche de référence** : `dev`
 
 ---
@@ -12,9 +12,13 @@
 
 - 📚 **Documentation métier** : Guides Apogée, Apporteurs, HelpConfort
 - 🤖 **Assistant IA** : Chatbot Mme MICHU avec RAG
-- 📊 **Pilotage** : KPIs temps réel via API Apogée
+- 📊 **Pilotage** : KPIs temps réel via API Apogée + StatIA
 - 🎫 **Support** : Chat IA/humain + tickets avec SLA
 - 🏢 **Multi-agences** : Dashboard réseau pour franchiseurs
+- 👷 **RH & Parc** : Gestion collaborateurs, véhicules, EPI
+- 📄 **DocGen** : Génération documents personnalisés
+- 🏠 **Portail Apporteurs** : Espace externe pour gestionnaires/bailleurs
+- 📈 **Rapports Mensuels** : Génération automatique rapports d'activité
 - ⚙️ **Administration** : Gestion utilisateurs, contenus, système
 
 ---
@@ -29,6 +33,8 @@
 | **State** | TanStack Query, React Context |
 | **Backend** | Supabase (PostgreSQL, Auth, Storage, Edge Functions) |
 | **IA** | Lovable AI Gateway (Gemini 2.5), OpenAI (embeddings) |
+| **PDF** | Gotenberg (DOCX→PDF), pdf-lib |
+| **Email** | Resend |
 | **Monitoring** | Sentry |
 | **Déploiement** | Lovable Cloud |
 
@@ -39,6 +45,8 @@
 | API Apogée | Données CRM (clients, dossiers, factures) |
 | Lovable AI | Chat IA (streaming) |
 | OpenAI | Génération embeddings |
+| Gotenberg | Conversion DOCX → PDF |
+| Resend | Notifications email |
 
 ---
 
@@ -57,6 +65,8 @@ src/
 ├── apogee-connect/           # Module indicateurs
 ├── franchiseur/              # Module réseau
 ├── apogee-tickets/           # Module gestion projet
+├── apporteur/                # Portail apporteurs externes
+├── statia/                   # Moteur statistiques centralisé
 ├── contexts/                 # Contextes React
 ├── hooks/                    # Custom hooks
 ├── lib/                      # Utilitaires
@@ -78,6 +88,9 @@ supabase/
 | Support | `/support` | Chat et tickets |
 | Réseau | `/hc-reseau` | Multi-agences franchiseur |
 | Projets | `/projects` | Gestion tickets internes |
+| RH & Parc | `/rh` | Collaborateurs, véhicules, EPI |
+| DocGen | `/rh/docgen` | Génération documents |
+| Portail Apporteurs | `/apporteur` | Espace externe apporteurs |
 | Admin | `/admin` | Administration plateforme |
 
 ---
@@ -101,10 +114,10 @@ profiles.global_role (N0-N6)
 | Niveau | Rôle | Capacités |
 |--------|------|-----------|
 | N0 | `base_user` | Lecture guides |
-| N1 | `franchisee_user` | + Support, favoris |
-| N2 | `franchisee_admin` | + Pilotage agence |
+| N1 | `franchisee_user` | + Support, favoris, Espace salarié |
+| N2 | `franchisee_admin` | + Pilotage agence, RH, DocGen |
 | N3 | `franchisor_user` | + Réseau (animateur) |
-| N4 | `franchisor_admin` | + Redevances (directeur) |
+| N4 | `franchisor_admin` | + Redevances, Templates (directeur) |
 | N5 | `platform_admin` | + Administration |
 | N6 | `superadmin` | Accès total |
 
@@ -116,6 +129,7 @@ enabled_modules: {
   pilotage_agence: { enabled: true },
   support: { enabled: true, options: { agent: false } },
   apogee_tickets: { enabled: false, options: { kanban: true, manage: false } },
+  rh_parc: { enabled: true, options: { rh: true, parc: true } },
   // ...
 }
 ```
@@ -127,6 +141,7 @@ has_min_global_role(uid, level)  -- Vérifie rôle minimum
 has_support_access(uid)          -- Accès console support
 has_franchiseur_access(uid)      -- Accès réseau
 get_user_agency(uid)             -- Agence de l'utilisateur
+is_apporteur_user(uid)           -- Est utilisateur apporteur
 ```
 
 ---
@@ -155,6 +170,8 @@ Utilisateur → Chat IA (chat_ai)
               Chat Humain (chat_human)
                   ↓ [conversion]
               Ticket (ticket)
+                  ↓ [développement]
+              Ticket Apogée (apogee_tickets)
                   ↓
               Résolution
 ```
@@ -163,6 +180,7 @@ Utilisateur → Chat IA (chat_ai)
 - `chat_ai` → `chat_human` | `ticket` | `resolved` ✓
 - `chat_human` → `ticket` | `resolved` ✓
 - `chat_human` → `chat_ai` ✗ (interdit)
+- `ticket` → `apogee_tickets` ✓ (développement)
 - `ticket` → `chat_*` ✗ (interdit)
 
 ### 5.3 API Apogée
@@ -174,12 +192,55 @@ AgencyContext → setApiBaseUrl(agence)
                       ↓
               POST + API_KEY partagée
                       ↓
-              Calculs frontend (utils/)
+              StatIA (calculs centralisés)
                       ↓
               Indicateurs
 ```
 
 > ⚠️ **Limitation** : API Apogée rejette les appels backend (CORS/IP). Tout passe par le frontend.
+
+### 5.4 StatIA (Moteur Statistiques)
+
+```
+src/statia/
+├── api/                    # getMetric, getMetricForAgency
+├── definitions/            # Métriques core (CA, SAV, Devis...)
+├── domain/rules.ts         # STATIA_RULES (source de vérité)
+├── engine/                 # Calculs, loaders, normalizers
+└── hooks/                  # useStatia, useStatiaMetric
+```
+
+**Règles métier clés** :
+- CA source : `apiGetFactures.data.totalHT`
+- Types productifs : dépannage, travaux
+- SAV : dossier lié, CA=0, excludeFromTechStats
+- RT ne génère jamais de CA technicien
+
+### 5.5 DocGen Pipeline
+
+```
+Template DOCX → parse-docx-tokens → Token extraction
+                                         ↓
+                                  Smart tokens auto-fill
+                                         ↓
+                           User input (manual tokens)
+                                         ↓
+                      documents-preview → Gotenberg → PDF preview
+                                         ↓
+                      documents-finalize → Final DOCX/PDF
+```
+
+### 5.6 Portail Apporteurs
+
+```
+Apporteur User → ApporteurAuthContext
+                        ↓
+              get-apporteur-dossiers (via commanditaireId)
+                        ↓
+              Dossiers / Stats / Demandes
+                        ↓
+              notify-apporteur-request → Email agence
+```
 
 ---
 
@@ -195,6 +256,13 @@ AgencyContext → setApiBaseUrl(agence)
 | `reset-user-password` | Reset mot de passe | 10/min |
 | `notify-support-ticket` | Notification ticket | 10/min |
 | `support-auto-classify` | Classification IA | 20/min |
+| `parse-docx-tokens` | Extraction tokens DOCX | 10/min |
+| `documents-preview` | Génération preview PDF | 10/min |
+| `documents-finalize` | Finalisation documents | 10/min |
+| `get-apporteur-dossiers` | Dossiers apporteur | 20/min |
+| `get-apporteur-stats` | Stats apporteur | 20/min |
+| `notify-apporteur-request` | Notification demande | 10/min |
+| `generate-monthly-report` | Rapport mensuel PDF | 5/min |
 
 **Configuration** : `verify_jwt = true` sur toutes les fonctions.
 
@@ -216,6 +284,16 @@ AgencyContext → setApiBaseUrl(agence)
 | `apogee_tickets` | Tickets gestion projet |
 | `franchiseur_roles` | Rôles franchiseur |
 | `franchiseur_agency_assignments` | Associations animateur-agence |
+| `collaborators` | Collaborateurs RH |
+| `collaborator_documents` | Documents collaborateurs |
+| `rh_requests` | Demandes RH (congés, EPI, documents) |
+| `rh_notifications` | Notifications RH temps réel |
+| `doc_templates` | Templates DocGen |
+| `doc_instances` | Documents générés |
+| `apporteurs` | Organisations apporteurs |
+| `apporteur_users` | Utilisateurs apporteurs |
+| `apporteur_intervention_requests` | Demandes intervention |
+| `report_settings` | Configuration rapports mensuels |
 
 ### 7.2 Policies RLS Critiques
 
@@ -228,6 +306,9 @@ USING (agency_id = get_user_agency(auth.uid()))
 
 -- Accès support
 USING (user_id = auth.uid() OR has_support_access(auth.uid()))
+
+-- Accès apporteur
+USING (is_apporteur_user(auth.uid()))
 ```
 
 ---
@@ -244,6 +325,9 @@ USING (user_id = auth.uid() OR has_support_access(auth.uid()))
 | RLS policies | ✅ Toutes tables sensibles |
 | Input sanitization | ✅ DOMPurify |
 | Password policy | ✅ 8+ chars, mixed case, numbers, symbols |
+| Sensitive data masking | ✅ Email/tel/adresse masqués |
+| Audit logs | ✅ Accès données sensibles |
+| CRON secret validation | ✅ Jobs planifiés |
 
 ### 8.2 Origines CORS Autorisées
 
@@ -259,19 +343,24 @@ USING (user_id = auth.uid() OR has_support_access(auth.uid()))
 
 ## 9. État Actuel & Roadmap
 
-### 9.1 V2 Livrée
+### 9.1 V2.1 Livrée (Décembre 2025)
 
 ✅ Permissions V2 (global_role + enabled_modules)  
-✅ Support V2 (chat_ai/chat_human/ticket + SLA)  
+✅ Support V2 (chat_ai/chat_human/ticket + SLA + développement)  
 ✅ Routes V2 (hub pages par section)  
 ✅ RAG unifié (multi-contextes)  
 ✅ Sécurité P1 (JWT, CORS, rate limit, RLS)  
 ✅ Sentry intégré  
+✅ StatIA (moteur statistiques centralisé)  
+✅ RH & Parc (collaborateurs, documents, demandes)  
+✅ DocGen (génération documents DOCX/PDF)  
+✅ Portail Apporteurs (Phase 1-3)  
+✅ Rapports Mensuels (génération automatique)  
 
 ### 9.2 En Cours
 
-⚠️ P1#7 Lots 3+ (safeQuery migration)  
-⚠️ Support V2 timeout 60s  
+⚠️ Portail Apporteurs Phase 4 (intégration Apogée complète)  
+⚠️ Flow Builder (éditeur workflows)  
 
 ### 9.3 À Venir
 
@@ -313,6 +402,8 @@ Config:     camelCase.ts
 - `docs/manuel-information-global.md` — Manuel utilisateur
 - `docs/guide-technique-global.md` — Guide développeur
 - `docs/support-commercial-saas.md` — Support commercial
+- `docs/MODULES_DOCUMENTATION.md` — Documentation modules
+- `src/statia/README.md` — Documentation StatIA
 
 ### B. Fichiers de Configuration
 
@@ -322,8 +413,9 @@ Config:     camelCase.ts
 | `src/config/navigation.ts` | Navigation sidebar |
 | `src/config/roleMatrix.ts` | Matrice permissions |
 | `src/config/dashboardTiles.ts` | Tuiles dashboard |
+| `src/statia/domain/rules.ts` | Règles métier StatIA |
 | `supabase/config.toml` | Config Edge Functions |
 
 ---
 
-*Architecture GLOBAL / Apogée — Version 2.0*
+*Architecture GLOBAL / Apogée — Version 2.1*
