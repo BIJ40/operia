@@ -32,6 +32,8 @@ const editUserSchema = z.object({
 });
 
 export type UpdateUserPayload = {
+  /** Email (si modifié, est synchronisé aussi côté authentification) */
+  email?: string;
   first_name?: string;
   last_name?: string;
   agence?: string;
@@ -154,6 +156,7 @@ export function UserEditForm({
       : null;
 
     onSave({
+      email: formData.email,
       first_name: formData.firstName,
       last_name: formData.lastName,
       agence: formData.agence,

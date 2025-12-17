@@ -228,15 +228,15 @@ export function useAccessRightsUsers() {
   const updateEmailMutation = useMutation({
     mutationFn: async ({ userId, newEmail }: { userId: string; newEmail: string }) => {
       const { data, error } = await supabase.functions.invoke('update-user-email', {
-        body: { userId, newEmail },
+        body: { targetUserId: userId, newEmail },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       return { userId, newEmail };
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('Email mis à jour');
-      invalidateQueries();
+      await invalidateQueries();
     },
     onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
   });
