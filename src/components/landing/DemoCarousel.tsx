@@ -5,8 +5,6 @@ import {
   BookOpen, 
   Headset, 
   Users, 
-  FileText, 
-  Network, 
   UserCheck, 
   CreditCard 
 } from 'lucide-react';
@@ -16,7 +14,7 @@ interface ModuleSlide {
   id: string;
   title: string;
   icon: React.ElementType;
-  screenshot: string | string[] | null; // Single image, dual images, or null
+  screenshot: string | string[] | null;
   bulletPoints: string[];
   gradient: string;
 }
@@ -42,7 +40,7 @@ const MODULES: ModuleSlide[] = [
     id: 'support',
     title: 'Support',
     icon: Headset,
-    screenshot: null,
+    screenshot: '/images/screenshots/support.png',
     bulletPoints: ['Ticketing intelligent', 'Chat IA intégré', 'Base de connaissances'],
     gradient: 'from-violet-600 to-purple-700',
   },
@@ -55,26 +53,10 @@ const MODULES: ModuleSlide[] = [
     gradient: 'from-orange-600 to-amber-700',
   },
   {
-    id: 'docgen',
-    title: 'DocGen',
-    icon: FileText,
-    screenshot: null,
-    bulletPoints: ['Templates personnalisés', 'Tokens intelligents', 'PDF en direct'],
-    gradient: 'from-rose-600 to-pink-700',
-  },
-  {
-    id: 'reseau',
-    title: 'Réseau',
-    icon: Network,
-    screenshot: null,
-    bulletPoints: ['Vision multi-agences', 'Comparatifs réseau', 'Pilotage franchiseur'],
-    gradient: 'from-cyan-600 to-blue-700',
-  },
-  {
     id: 'suivi-client',
     title: 'Suivi Client',
     icon: UserCheck,
-    screenshot: null, // Placeholder - ajoutez /images/screenshots/client-rdv.png quand disponible
+    screenshot: null,
     bulletPoints: ['Lien sécurisé client', 'Timeline en temps réel', 'Transparence totale'],
     gradient: 'from-green-600 to-emerald-700',
   },
@@ -82,7 +64,7 @@ const MODULES: ModuleSlide[] = [
     id: 'paiements',
     title: 'Paiements',
     icon: CreditCard,
-    screenshot: null, // Placeholder - ajoutez /images/screenshots/paiement-stripe.png quand disponible
+    screenshot: null,
     bulletPoints: ['Paiement CB en ligne', 'Stripe intégré', 'Franchise & reste à charge'],
     gradient: 'from-indigo-600 to-violet-700',
   },
