@@ -202,7 +202,7 @@ export function RHUnifiedTable({
   return (
     <div className="space-y-4">
       {/* Stats rapides - compactes */}
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
         <div className="bg-gradient-to-br from-helpconfort-blue/10 via-background to-background rounded-lg px-3 py-2 border border-helpconfort-blue/15 border-l-4 border-l-helpconfort-blue">
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground">Total</span>
@@ -264,15 +264,17 @@ export function RHUnifiedTable({
           )}
         </div>
 
-        <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as RHTabId)} className="flex-1">
-          <TabsList className="grid grid-cols-7 h-auto w-full">
-            {TAB_CONFIG.map((tab) => (
-              <TabsTrigger key={tab.id} value={tab.id} className="text-sm px-4 py-2">
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+        <div className="flex-1 overflow-x-auto">
+          <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as RHTabId)}>
+            <TabsList className="inline-flex h-auto w-auto min-w-full md:w-full md:grid md:grid-cols-7">
+              {TAB_CONFIG.map((tab) => (
+                <TabsTrigger key={tab.id} value={tab.id} className="text-sm px-4 py-2 whitespace-nowrap">
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </div>
 
         <div className="flex items-center gap-2 shrink-0">
           {/* Bouton sauvegarder - icône seule avec tooltip */}
