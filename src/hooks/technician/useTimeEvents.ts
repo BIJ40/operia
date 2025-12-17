@@ -47,11 +47,13 @@ export function useCreateTimeEvent() {
     mutationFn: async ({ 
       eventType, 
       notes,
-      source = 'mobile' 
+      source = 'mobile',
+      occurredAt
     }: { 
       eventType: TimeEventType; 
       notes?: string;
       source?: 'mobile' | 'manual';
+      occurredAt?: Date;
     }) => {
       if (!profile?.id) throw new Error('No collaborator profile');
 
@@ -62,7 +64,7 @@ export function useCreateTimeEvent() {
           event_type: eventType,
           source,
           notes,
-          occurred_at: new Date().toISOString(),
+          occurred_at: (occurredAt || new Date()).toISOString(),
         })
         .select()
         .single();
@@ -72,6 +74,68 @@ export function useCreateTimeEvent() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['time-events'] });
+      queryClient.invalidateQueries({ queryKey: ['week-time-events'] });
+    },
+  });
+}
+
+// Bulk create events for weekly entry
+export function useBulkCreateTimeEvents() {
+  const queryClient = useQueryClient();
+  const { data: profile } = useTechnicianProfile();
+
+  return useMutation({
+    mutationFn: async (events: Array<{
+      eventType: TimeEventType;
+      occurredAt: Date;
+      notes?: string;
+    }>) => {
+      if (!profile?.id) throw new Error('No collaborator profile');
+
+      const inserts = events.map(e => ({
+        collaborator_id: profile.id,
+        event_type: e.eventType,
+        source: 'manual' as const,
+        notes: e.notes,
+        occurred_at: e.occurredAt.toISOString(),
+      }));
+
+      const { data, error } = await supabase
+        .from('time_events')
+        .insert(inserts)
+        .select();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['time-events'] });
+      queryClient.invalidateQueries({ queryKey: ['week-time-events'] });
+    },
+  });
+}
+
+// Delete events for a specific day (for re-entry)
+export function useDeleteDayEvents() {
+  const queryClient = useQueryClient();
+  const { data: profile } = useTechnicianProfile();
+
+  return useMutation({
+    mutationFn: async (date: Date) => {
+      if (!profile?.id) throw new Error('No collaborator profile');
+
+      const { error } = await supabase
+        .from('time_events')
+        .delete()
+        .eq('collaborator_id', profile.id)
+        .gte('occurred_at', startOfDay(date).toISOString())
+        .lte('occurred_at', endOfDay(date).toISOString());
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['time-events'] });
+      queryClient.invalidateQueries({ queryKey: ['week-time-events'] });
     },
   });
 }

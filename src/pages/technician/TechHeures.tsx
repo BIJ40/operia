@@ -9,12 +9,14 @@ import {
   Loader2,
   CheckCircle2,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  TableIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +33,7 @@ import {
   useSubmitTimesheet 
 } from '@/hooks/technician/useTimesheets';
 import { useTechnicianProfile } from '@/hooks/technician/useTechnicianProfile';
+import { WeeklyTimeEntry } from '@/components/technician/WeeklyTimeEntry';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -44,9 +47,10 @@ export default function TechHeures() {
   const { data: profile, isLoading: profileLoading } = useTechnicianProfile();
   const [selectedWeek, setSelectedWeek] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  const [activeView, setActiveView] = useState<'summary' | 'entry'>('summary');
 
-  const { data: timesheet, isLoading: timesheetLoading } = useWeekTimesheet(selectedWeek);
-  const { data: weekDays = [], isLoading: eventsLoading } = useWeekTimeEvents(selectedWeek);
+  const { data: timesheet, isLoading: timesheetLoading, refetch: refetchTimesheet } = useWeekTimesheet(selectedWeek);
+  const { data: weekDays = [], isLoading: eventsLoading, refetch: refetchEvents } = useWeekTimeEvents(selectedWeek);
   const submitMutation = useSubmitTimesheet();
 
   const isLoading = profileLoading || timesheetLoading || eventsLoading;
@@ -67,6 +71,12 @@ export default function TechHeures() {
     } catch {
       toast.error('Erreur lors de la soumission');
     }
+  };
+
+  const handleWeeklyEntrySaved = () => {
+    refetchTimesheet();
+    refetchEvents();
+    setActiveView('summary');
   };
 
   if (isLoading) {
@@ -91,9 +101,9 @@ export default function TechHeures() {
 
   const statusConfig = {
     draft: { label: 'Brouillon', color: 'bg-muted text-muted-foreground', icon: AlertCircle },
-    submitted: { label: 'Soumis', color: 'bg-blue-100 text-blue-800', icon: Clock },
-    approved: { label: 'Validé', color: 'bg-green-100 text-green-800', icon: CheckCircle2 },
-    rejected: { label: 'Rejeté', color: 'bg-red-100 text-red-800', icon: XCircle },
+    submitted: { label: 'Soumis', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400', icon: Clock },
+    approved: { label: 'Validé', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400', icon: CheckCircle2 },
+    rejected: { label: 'Rejeté', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400', icon: XCircle },
   };
 
   const status = timesheet?.status || 'draft';
@@ -141,103 +151,124 @@ export default function TechHeures() {
         </CardContent>
       </Card>
 
-      {/* Summary */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Synthèse</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Progression</span>
-              <span className="font-medium">
-                {formatMinutes(totalMinutes)} / {formatMinutes(contractMinutes)}
-              </span>
-            </div>
-            <Progress value={progress} className="h-3" />
-          </div>
+      {/* View tabs */}
+      <Tabs value={activeView} onValueChange={(v) => setActiveView(v as 'summary' | 'entry')}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="summary">Récapitulatif</TabsTrigger>
+          <TabsTrigger value="entry" className="flex items-center gap-2">
+            <TableIcon className="h-4 w-4" />
+            Saisie semaine
+          </TabsTrigger>
+        </TabsList>
 
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div className="rounded-lg bg-muted/50 p-3">
-              <div className="text-2xl font-bold">{formatMinutes(contractMinutes)}</div>
-              <div className="text-xs text-muted-foreground">Contrat</div>
-            </div>
-            <div className="rounded-lg bg-muted/50 p-3">
-              <div className="text-2xl font-bold">{formatMinutes(totalMinutes)}</div>
-              <div className="text-xs text-muted-foreground">Réalisé</div>
-            </div>
-            <div className={cn(
-              'rounded-lg p-3',
-              overtimeMinutes > 0 ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-muted/50'
-            )}>
-              <div className={cn(
-                'text-2xl font-bold',
-                overtimeMinutes > 0 && 'text-amber-700 dark:text-amber-400'
-              )}>
-                {overtimeMinutes > 0 ? '+' : ''}{formatMinutes(overtimeMinutes)}
+        <TabsContent value="summary" className="mt-4 space-y-4">
+          {/* Summary */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Synthèse</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Progression</span>
+                  <span className="font-medium">
+                    {formatMinutes(totalMinutes)} / {formatMinutes(contractMinutes)}
+                  </span>
+                </div>
+                <Progress value={progress} className="h-3" />
               </div>
-              <div className="text-xs text-muted-foreground">Heures sup.</div>
-            </div>
-          </div>
 
-          {timesheet?.rejection_comment && (
-            <div className="rounded-lg bg-red-50 dark:bg-red-950/30 p-3">
-              <div className="text-sm font-medium text-red-700 dark:text-red-400 mb-1">
-                Motif de rejet
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="rounded-lg bg-muted/50 p-3">
+                  <div className="text-2xl font-bold">{formatMinutes(contractMinutes)}</div>
+                  <div className="text-xs text-muted-foreground">Contrat</div>
+                </div>
+                <div className="rounded-lg bg-muted/50 p-3">
+                  <div className="text-2xl font-bold">{formatMinutes(totalMinutes)}</div>
+                  <div className="text-xs text-muted-foreground">Réalisé</div>
+                </div>
+                <div className={cn(
+                  'rounded-lg p-3',
+                  overtimeMinutes > 0 ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-muted/50'
+                )}>
+                  <div className={cn(
+                    'text-2xl font-bold',
+                    overtimeMinutes > 0 && 'text-amber-700 dark:text-amber-400'
+                  )}>
+                    {overtimeMinutes > 0 ? '+' : ''}{formatMinutes(overtimeMinutes)}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Heures sup.</div>
+                </div>
               </div>
-              <div className="text-sm text-red-600 dark:text-red-300">
-                {timesheet.rejection_comment}
+
+              {timesheet?.rejection_comment && (
+                <div className="rounded-lg bg-red-50 dark:bg-red-950/30 p-3">
+                  <div className="text-sm font-medium text-red-700 dark:text-red-400 mb-1">
+                    Motif de rejet
+                  </div>
+                  <div className="text-sm text-red-600 dark:text-red-300">
+                    {timesheet.rejection_comment}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Daily breakdown */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Détail par jour</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="divide-y divide-border">
+                {weekDays.map((day) => (
+                  <div
+                    key={day.date}
+                    className="flex items-center justify-between p-3"
+                  >
+                    <div>
+                      <div className="text-sm font-medium capitalize">
+                        {day.dayName}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {format(new Date(day.date), 'd MMM', { locale: fr })}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium tabular-nums">
+                        {day.totalMinutes > 0 ? formatMinutes(day.totalMinutes) : '-'}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {day.events.length} événement(s)
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
+            </CardContent>
+          </Card>
+
+          {/* Submit button */}
+          {canSubmit && (
+            <Button
+              className="w-full h-12"
+              onClick={() => setShowSubmitDialog(true)}
+              disabled={totalMinutes === 0}
+            >
+              <Send className="h-4 w-4 mr-2" />
+              Soumettre pour validation
+            </Button>
           )}
-        </CardContent>
-      </Card>
+        </TabsContent>
 
-      {/* Daily breakdown */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Détail par jour</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="divide-y divide-border">
-            {weekDays.map((day) => (
-              <div
-                key={day.date}
-                className="flex items-center justify-between p-3"
-              >
-                <div>
-                  <div className="text-sm font-medium capitalize">
-                    {day.dayName}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {format(new Date(day.date), 'd MMM', { locale: fr })}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="font-medium tabular-nums">
-                    {day.totalMinutes > 0 ? formatMinutes(day.totalMinutes) : '-'}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {day.events.length} événement(s)
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Submit button */}
-      {canSubmit && (
-        <Button
-          className="w-full h-12"
-          onClick={() => setShowSubmitDialog(true)}
-          disabled={totalMinutes === 0}
-        >
-          <Send className="h-4 w-4 mr-2" />
-          Soumettre pour validation
-        </Button>
-      )}
+        <TabsContent value="entry" className="mt-4">
+          <WeeklyTimeEntry 
+            weekStart={selectedWeek}
+            existingDays={weekDays}
+            onSaved={handleWeeklyEntrySaved}
+          />
+        </TabsContent>
+      </Tabs>
 
       {/* Submit dialog */}
       <AlertDialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
