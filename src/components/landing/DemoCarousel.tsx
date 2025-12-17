@@ -26,7 +26,7 @@ const MODULES: ModuleSlide[] = [
     id: 'statia',
     title: 'StatIA',
     icon: BarChart3,
-    screenshot: null, // Placeholder - ajoutez /images/screenshots/statia-hub.png quand disponible
+    screenshot: '/images/screenshots/statia-hub.png',
     bulletPoints: ['KPIs temps réel', 'Analyse CA & tendances', 'IA conversationnelle'],
     gradient: 'from-blue-600 to-indigo-700',
   },
@@ -50,7 +50,7 @@ const MODULES: ModuleSlide[] = [
     id: 'rh',
     title: 'RH & Parc',
     icon: Users,
-    screenshot: null, // Placeholder - ajoutez /images/screenshots/rh-suivi.png quand disponible
+    screenshot: '/images/screenshots/rh-suivi.png',
     bulletPoints: ['Gestion collaborateurs', 'Flotte véhicules', 'EPI & documents'],
     gradient: 'from-orange-600 to-amber-700',
   },
