@@ -70,7 +70,7 @@ export function ChatModal({ isOpen, onClose }: ChatModalProps) {
               ) : (
                 <>
                   <Sparkles className="w-5 h-5 text-helpconfort-blue" />
-                  Assistant IA HelpConfort
+                  Aide en Direct
                 </>
               )}
             </DialogTitle>
@@ -85,17 +85,7 @@ export function ChatModal({ isOpen, onClose }: ChatModalProps) {
                 <ArrowLeft className="w-4 h-4" />
                 Terminer le chat
               </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleTalkToHuman}
-                className="text-xs text-muted-foreground hover:text-foreground gap-1.5"
-              >
-                <MessageCircle className="w-4 h-4" />
-                Parler à un humain
-              </Button>
-            )}
+            ) : null}
           </DialogHeader>
           
           <div className="flex-1 overflow-hidden">
@@ -113,6 +103,7 @@ export function ChatModal({ isOpen, onClose }: ChatModalProps) {
                 onTicketCreated={() => {
                   onClose();
                 }}
+                onRequestHuman={handleTalkToHuman}
               />
             )}
           </div>

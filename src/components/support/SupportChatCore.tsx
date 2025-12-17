@@ -574,6 +574,17 @@ export function SupportChatCore({
           </Button>
         </div>
 
+        {/* Parler à un humain - always visible */}
+        {onRequestHuman && (
+          <button
+            type="button"
+            onClick={onRequestHuman}
+            className="w-full mt-2 text-xs text-muted-foreground hover:text-helpconfort-blue transition-colors underline underline-offset-2"
+          >
+            Parler à un humain
+          </button>
+        )}
+
         {/* Quick actions */}
         {messages.length > 0 && !compact && (
           <div className="flex gap-2 mt-2">
