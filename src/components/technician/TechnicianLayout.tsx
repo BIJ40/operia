@@ -1,11 +1,12 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { Calendar, Clock, FileText, User } from 'lucide-react';
+import { Calendar, Clock, FileText, User, Timer } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
   { to: '/t/planning', icon: Calendar, label: 'Planning' },
   { to: '/t/pointage', icon: Clock, label: 'Pointage' },
-  { to: '/t/documents', icon: FileText, label: 'Documents' },
+  { to: '/t/heures', icon: Timer, label: 'Heures' },
+  { to: '/t/documents', icon: FileText, label: 'Docs' },
   { to: '/t/profil', icon: User, label: 'Profil' },
 ];
 

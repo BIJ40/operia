@@ -9,7 +9,8 @@ import {
   Calendar,
   ClipboardList,
   Wrench,
-  FileEdit
+  FileEdit,
+  Clock
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ROUTES } from "@/config/routes";
@@ -86,6 +87,13 @@ const RH_MODULES: RHModule[] = [
     description: 'Plannings hebdomadaires',
     icon: CalendarDays,
     href: ROUTES.rh.plannings,
+  },
+  {
+    id: 'heures',
+    title: 'Heures',
+    description: 'Feuilles de temps',
+    icon: Clock,
+    href: ROUTES.rh.heures,
   },
   {
     id: 'demandes-rh',
