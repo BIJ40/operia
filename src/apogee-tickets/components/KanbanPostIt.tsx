@@ -83,7 +83,8 @@ export function KanbanPostIt() {
 
   return (
     <div 
-      className="relative group"
+      className="relative group z-50"
+      style={{ marginTop: '-80px' }}
       onDoubleClick={handleDoubleClick}
     >
       {/* Punaise */}
@@ -101,7 +102,7 @@ export function KanbanPostIt() {
       {/* Post-it */}
       <div 
         className={cn(
-          "relative w-64 min-h-[100px] pt-3 pb-4 px-3",
+          "relative w-64 min-h-[180px] pt-3 pb-4 px-3",
           "bg-gradient-to-br from-yellow-200 to-yellow-300",
           "shadow-md hover:shadow-lg transition-shadow",
           "cursor-pointer select-none",
@@ -136,7 +137,7 @@ export function KanbanPostIt() {
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
             className={cn(
-              "w-full min-h-[60px] p-0 border-none bg-transparent resize-none",
+              "w-full min-h-[140px] p-0 border-none bg-transparent resize-none",
               "text-sm text-yellow-900 placeholder:text-yellow-700/50",
               "focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0",
               "font-handwriting"
