@@ -35,6 +35,17 @@ export function useTechnicianProfile() {
 
       if (collabError || !collaborator) return null;
 
+      // Source of truth fallback: some admin screens link Apogée at user profile level.
+      // We keep collaborator as primary (RH), but fallback to profiles.apogee_user_id.
+      const { data: profileRow } = await supabase
+        .from('profiles')
+        .select('apogee_user_id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      const effectiveApogeeUserId =
+        collaborator.apogee_user_id ?? profileRow?.apogee_user_id ?? null;
+
       const { data: workProfile } = await supabase
         .from('collaborator_work_profiles')
         .select('*')
@@ -49,13 +60,15 @@ export function useTechnicianProfile() {
         phone: collaborator.phone,
         agency_id: collaborator.agency_id,
         user_id: collaborator.user_id!,
-        apogee_user_id: collaborator.apogee_user_id,
-        work_profile: workProfile ? {
-          id: workProfile.id,
-          weekly_contract_minutes: workProfile.weekly_contract_minutes,
-          break_minutes_default: workProfile.break_minutes_default,
-          work_week_starts_on: workProfile.work_week_starts_on,
-        } : null,
+        apogee_user_id: effectiveApogeeUserId,
+        work_profile: workProfile
+          ? {
+              id: workProfile.id,
+              weekly_contract_minutes: workProfile.weekly_contract_minutes,
+              break_minutes_default: workProfile.break_minutes_default,
+              work_week_starts_on: workProfile.work_week_starts_on,
+            }
+          : null,
       };
     },
     enabled: !!user?.id,
