@@ -133,16 +133,17 @@ export function useAccessRightsUsers() {
     },
   });
 
-  // ✅ SYNCHRONISATION COMPLÈTE: invalide TOUTES les query keys utilisateurs
-  const invalidateQueries = () => {
-    ALL_USER_QUERY_PATTERNS.forEach(pattern => {
-      queryClient.invalidateQueries({ queryKey: [pattern] });
-    });
+  // ✅ SYNCHRONISATION COMPLÈTE: invalide TOUTES les query keys utilisateurs et attend le refetch
+  const invalidateQueries = async () => {
+    const promises = ALL_USER_QUERY_PATTERNS.map(pattern => 
+      queryClient.invalidateQueries({ queryKey: [pattern] })
+    );
     // Invalider aussi les queries préfixées (agency-users avec slug)
-    queryClient.invalidateQueries({ predicate: (query) => 
+    promises.push(queryClient.invalidateQueries({ predicate: (query) => 
       query.queryKey[0] === 'agency-users' || 
       query.queryKey[0] === 'user-profile'
-    });
+    }));
+    await Promise.all(promises);
   };
 
   // Create user mutation
@@ -181,32 +182,44 @@ export function useAccessRightsUsers() {
     onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
   });
 
-  // Update user mutation
+  // Update user mutation - sauvegarde données + modules en une seule action
   const updateUserMutation = useMutation({
-    mutationFn: async ({ userId, data }: { 
+    mutationFn: async ({ userId, data, enabledModules }: { 
       userId: string; 
-        data: {
-          first_name?: string;
-          last_name?: string;
-          agence?: string;
-          agency_id?: string | null;
-          role_agence?: string;
-          global_role?: GlobalRole;
-          apogee_user_id?: number | null;
-          support_level?: number;
-        }
+      data: {
+        first_name?: string;
+        last_name?: string;
+        agence?: string;
+        agency_id?: string | null;
+        role_agence?: string;
+        global_role?: GlobalRole;
+        apogee_user_id?: number | null;
+        support_level?: number;
+      };
+      enabledModules?: EnabledModules | null;
     }) => {
+      // 1. Sauvegarder les données utilisateur
       const { error } = await supabase.from('profiles').update(data).eq('id', userId);
       if (error) throw error;
-      return { userId, data };
-    },
-    onSuccess: ({ userId, data }) => {
-      toast.success('Utilisateur mis à jour');
-      // Update selectedUser with new data to keep dialog in sync
-      if (selectedUser && selectedUser.id === userId) {
-        setSelectedUser(prev => prev ? { ...prev, ...data } : null);
+      
+      // 2. Sauvegarder les modules si fournis
+      if (enabledModules !== undefined) {
+        await supabase.from('user_modules').delete().eq('user_id', userId);
+        
+        if (enabledModules) {
+          const moduleRows = enabledModulesToRows(userId, enabledModules, user?.id);
+          if (moduleRows.length > 0) {
+            const { error: insertError } = await supabase.from('user_modules').insert(moduleRows);
+            if (insertError) throw insertError;
+          }
+        }
       }
-      invalidateQueries();
+      
+      return { userId, data, enabledModules };
+    },
+    onSuccess: async () => {
+      toast.success('Modifications enregistrées');
+      await invalidateQueries();
     },
     onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
   });
@@ -316,7 +329,7 @@ export function useAccessRightsUsers() {
     onError: (error: Error) => toast.error(`Erreur suppression: ${error.message}`),
   });
 
-  // Module toggle mutations
+  // Module toggle mutations (utilisé uniquement en standalone si nécessaire)
   const saveModulesMutation = useMutation({
     mutationFn: async ({ userId, enabledModules }: { 
       userId: string; 
@@ -334,9 +347,9 @@ export function useAccessRightsUsers() {
       
       return { userId, enabledModules };
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('Modules mis à jour');
-      invalidateQueries();
+      await invalidateQueries();
     },
     onError: (error) => {
       logAuth.error('Erreur sauvegarde modules:', error);

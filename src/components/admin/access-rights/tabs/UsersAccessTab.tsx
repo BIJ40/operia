@@ -207,19 +207,30 @@ export function UsersAccessTab() {
     });
   };
 
-  // Save modules when closing edit dialog
+  // Fermeture du dialog - ne sauvegarde plus rien, la sauvegarde est explicite via le bouton
   const handleCloseEditDialog = (open: boolean) => {
-    if (!open && selectedUser && localModules) {
-      // Check if modules changed
-      const modulesChanged = JSON.stringify(localModules) !== JSON.stringify(selectedUser.enabled_modules);
-      if (modulesChanged) {
-        saveModulesMutation.mutate({ userId: selectedUser.id, enabledModules: localModules });
-      }
-    }
     setEditDialogOpen(open);
     if (!open) {
       setLocalModules(null);
+      setSelectedUser(null);
     }
+  };
+
+  // Sauvegarde unifiée: données + modules en une seule action, puis ferme le dialog
+  const handleSaveUser = async (data: Parameters<typeof updateUserMutation.mutate>[0]['data']) => {
+    if (!selectedUser) return;
+    
+    updateUserMutation.mutate(
+      { userId: selectedUser.id, data, enabledModules: localModules },
+      {
+        onSuccess: () => {
+          // Fermer le dialog après succès
+          setEditDialogOpen(false);
+          setLocalModules(null);
+          setSelectedUser(null);
+        }
+      }
+    );
   };
 
   // Convert UserRow to UserProfile format for dialogs
@@ -471,11 +482,7 @@ export function UsersAccessTab() {
         user={userAsProfile}
         open={editDialogOpen}
         onOpenChange={handleCloseEditDialog}
-        onSave={(data) => {
-          if (selectedUser) {
-            updateUserMutation.mutate({ userId: selectedUser.id, data });
-          }
-        }}
+        onSave={handleSaveUser}
         onUpdateEmail={(newEmail) => {
           if (selectedUser) {
             updateEmailMutation.mutate({ userId: selectedUser.id, newEmail });

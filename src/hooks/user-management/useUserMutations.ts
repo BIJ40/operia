@@ -27,16 +27,17 @@ export function useUserMutations({
 }: UseUserMutationsOptions) {
   const queryClient = useQueryClient();
 
-  // ✅ SYNCHRONISATION COMPLÈTE: invalide TOUTES les query keys utilisateurs
-  const invalidateUserQueries = () => {
-    ALL_USER_QUERY_PATTERNS.forEach(pattern => {
-      queryClient.invalidateQueries({ queryKey: [pattern] });
-    });
+  // ✅ SYNCHRONISATION COMPLÈTE: invalide TOUTES les query keys utilisateurs et attend le refetch
+  const invalidateUserQueries = async () => {
+    const promises = ALL_USER_QUERY_PATTERNS.map(pattern => 
+      queryClient.invalidateQueries({ queryKey: [pattern] })
+    );
     // Invalider aussi les queries préfixées (agency-users avec slug, user-profile avec id)
-    queryClient.invalidateQueries({ predicate: (query) => 
+    promises.push(queryClient.invalidateQueries({ predicate: (query) => 
       query.queryKey[0] === 'agency-users' || 
       query.queryKey[0] === 'user-profile'
-    });
+    }));
+    await Promise.all(promises);
   };
 
   const saveMutation = useMutation({
@@ -67,11 +68,11 @@ export function useUserMutations({
       
       return { userId, globalRole, enabledModules };
     },
-    onSuccess: ({ userId }) => {
+    onSuccess: async ({ userId }) => {
       logAuth.info(`Permissions sauvegardées pour user ${userId}`);
       toast.success('Permissions enregistrées');
       onModificationCleared?.(userId);
-      invalidateUserQueries();
+      await invalidateUserQueries();
     },
     onError: (error) => {
       logAuth.error('Erreur sauvegarde:', error);
@@ -97,9 +98,9 @@ export function useUserMutations({
       if (data?.error) throw new Error(data.error);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('Utilisateur créé avec succès');
-      invalidateUserQueries();
+      await invalidateUserQueries();
     },
     onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
   });
@@ -121,10 +122,10 @@ export function useUserMutations({
       if (error) throw error;
       return targetUser;
     },
-    onSuccess: (targetUser) => {
+    onSuccess: async (targetUser) => {
       logAuth.info(`[USER_MGMT] Utilisateur désactivé: ${targetUser.email}`);
       toast.success(`${targetUser.email || 'Utilisateur'} a été désactivé`);
-      invalidateUserQueries();
+      await invalidateUserQueries();
     },
     onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
   });
@@ -138,10 +139,10 @@ export function useUserMutations({
       if (error) throw error;
       return targetUser;
     },
-    onSuccess: (targetUser) => {
+    onSuccess: async (targetUser) => {
       logAuth.info(`[USER_MGMT] Utilisateur réactivé: ${targetUser.email}`);
       toast.success(`${targetUser.email || 'Utilisateur'} a été réactivé`);
-      invalidateUserQueries();
+      await invalidateUserQueries();
     },
     onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
   });
@@ -157,10 +158,10 @@ export function useUserMutations({
       if (data?.error) throw new Error(data.error);
       return targetUser;
     },
-    onSuccess: (targetUser) => {
+    onSuccess: async (targetUser) => {
       logAuth.info(`[USER_MGMT] Utilisateur SUPPRIMÉ définitivement: ${targetUser.email}`);
       toast.success(`${targetUser.email || 'Utilisateur'} a été supprimé définitivement`);
-      invalidateUserQueries();
+      await invalidateUserQueries();
     },
     onError: (error: Error) => toast.error(`Erreur suppression: ${error.message}`),
   });
@@ -180,9 +181,9 @@ export function useUserMutations({
       if (error) throw error;
       return { userId, data };
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('Utilisateur mis à jour');
-      invalidateUserQueries();
+      await invalidateUserQueries();
     },
     onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
   });
