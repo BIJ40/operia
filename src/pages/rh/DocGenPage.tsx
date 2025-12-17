@@ -224,68 +224,70 @@ export default function DocGenPage() {
               Aucun document généré
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>Template</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {instances.map((instance) => (
-                  <TableRow key={instance.id}>
-                    <TableCell className="font-medium">{instance.name}</TableCell>
-                    <TableCell>{instance.template?.name || "-"}</TableCell>
-                    <TableCell>{getStatusBadge(instance.status)}</TableCell>
-                    <TableCell>
-                      {format(new Date(instance.created_at), "dd MMM yyyy", { locale: fr })}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {instance.status !== "finalized" && (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nom</TableHead>
+                    <TableHead className="hidden sm:table-cell">Template</TableHead>
+                    <TableHead>Statut</TableHead>
+                    <TableHead className="hidden sm:table-cell">Date</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {instances.map((instance) => (
+                    <TableRow key={instance.id}>
+                      <TableCell className="font-medium">{instance.name}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{instance.template?.name || "-"}</TableCell>
+                      <TableCell>{getStatusBadge(instance.status)}</TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        {format(new Date(instance.created_at), "dd MMM yyyy", { locale: fr })}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          {instance.status !== "finalized" && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setSelectedInstance(instance)}
+                              title="Modifier"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => setSelectedInstance(instance)}
-                            title="Modifier"
+                            title="Voir"
                           >
-                            <Pencil className="h-4 w-4" />
+                            <Eye className="h-4 w-4" />
                           </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setSelectedInstance(instance)}
-                          title="Voir"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        {instance.final_path && (
+                          {instance.final_path && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDownload(instance.final_path, instance.name)}
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleDownload(instance.final_path, instance.name)}
+                            onClick={() => deleteInstance.mutate(instance.id)}
+                            disabled={deleteInstance.isPending}
                           >
-                            <Download className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => deleteInstance.mutate(instance.id)}
-                          disabled={deleteInstance.isPending}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

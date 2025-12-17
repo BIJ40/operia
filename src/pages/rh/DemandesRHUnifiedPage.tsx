@@ -40,6 +40,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Inbox, Check, X, User, Calendar, FileText, HardHat, Eye, CheckCircle, Car, Wrench, Archive } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -555,6 +556,78 @@ export default function DemandesRHUnifiedPage() {
         </CardContent>
       </Card>
     </Tabs>
+
+      {/* Sheet mobile pour le détail de la demande */}
+      <Sheet open={!!currentRequest && typeof window !== 'undefined' && window.innerWidth < 1024} onOpenChange={(open) => !open && setSelectedRequestId(null)}>
+        <SheetContent side="bottom" className="h-[85vh] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              {currentRequest && (collaborators[currentRequest.employee_user_id] || 'Collaborateur')}
+            </SheetTitle>
+          </SheetHeader>
+          {currentRequest && (
+            <div className="space-y-4 mt-4">
+              <div>
+                <div className="text-xs font-semibold text-muted-foreground">Type de demande</div>
+                <div className="text-sm font-medium mt-1">{getRequestTypeDisplay(currentRequest)}</div>
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-muted-foreground">Détails</div>
+                <div className="text-sm mt-1">{formatPayload(currentRequest)}</div>
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-muted-foreground">Date de demande</div>
+                <div className="text-sm mt-1">{formatDate(currentRequest.created_at)}</div>
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-muted-foreground">Statut</div>
+                <Badge variant={STATUS_BADGE_VARIANTS[currentRequest.status]} className="mt-1">
+                  {STATUS_LABELS[currentRequest.status]}
+                </Badge>
+              </div>
+
+              {/* Actions */}
+              {isVehicleRequest && currentRequest.status === 'SUBMITTED' && (
+                <Button onClick={handleMarkAsSeen} disabled={markSeenMutation.isPending} className="w-full">
+                  <Eye className="h-4 w-4 mr-2" />
+                  Marquer comme VU
+                </Button>
+              )}
+              {isVehicleRequest && currentRequest.status === 'SEEN' && (
+                <Button onClick={handleOpenProcessDialog} className="w-full">
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Marquer comme TRAITÉ
+                </Button>
+              )}
+              {!isVehicleRequest && currentRequest.status === 'SUBMITTED' && (
+                <div className="space-y-3">
+                  <Button onClick={handleApprove} disabled={approveMutation.isPending} className="w-full">
+                    <Check className="h-4 w-4 mr-2" />
+                    Approuver
+                  </Button>
+                  <Textarea
+                    value={rejectComment}
+                    onChange={(e) => setRejectComment(e.target.value)}
+                    placeholder="Motif de refus..."
+                    rows={2}
+                  />
+                  <Button variant="destructive" onClick={handleReject} disabled={rejectMutation.isPending || !rejectComment.trim()} className="w-full">
+                    <X className="h-4 w-4 mr-2" />
+                    Refuser
+                  </Button>
+                </div>
+              )}
+              {activeTab === 'active' && canArchiveRequest(currentRequest.status) && (
+                <Button variant="outline" onClick={() => archiveMutation.mutate(currentRequest.id)} disabled={archiveMutation.isPending} className="w-full">
+                  <Archive className="h-4 w-4 mr-2" />
+                  Archiver
+                </Button>
+              )}
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
 
       {/* Dialog for processing vehicle/equipment requests */}
       <Dialog open={processDialogOpen} onOpenChange={setProcessDialogOpen}>
