@@ -97,7 +97,7 @@ interface EditUserDialogProps {
   user: UserProfile | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (data: { first_name?: string; last_name?: string; agence?: string; role_agence?: string; support_level?: number; global_role?: GlobalRole; apogee_user_id?: number | null }) => void;
+  onSave: (data: { first_name?: string; last_name?: string; agence?: string; agency_id?: string | null; role_agence?: string; support_level?: number; global_role?: GlobalRole; apogee_user_id?: number | null }) => void;
   onUpdateEmail: (newEmail: string) => void;
   onResetPassword: (newPassword: string, sendEmail?: boolean) => void;
   isPending: boolean;

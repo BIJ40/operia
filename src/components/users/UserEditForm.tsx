@@ -35,6 +35,8 @@ export type UpdateUserPayload = {
   first_name?: string;
   last_name?: string;
   agence?: string;
+  /** UUID de l'agence (source de vérité pour les jointures / plans) */
+  agency_id?: string | null;
   role_agence?: string;
   global_role?: GlobalRole;
   support_level?: number;
@@ -145,10 +147,17 @@ export function UserEditForm({
     }
 
     setErrors({});
+
+    const normalizedSlug = (formData.agence || '').toLowerCase();
+    const resolvedAgencyId = normalizedSlug
+      ? (availableAgencies.find((a) => a.slug?.toLowerCase() === normalizedSlug)?.id ?? null)
+      : null;
+
     onSave({
       first_name: formData.firstName,
       last_name: formData.lastName,
       agence: formData.agence,
+      agency_id: resolvedAgencyId,
       role_agence: formData.roleAgence,
       global_role: formData.globalRole as GlobalRole,
       support_level: isSupportAgentEnabled() ? formData.supportLevel : undefined,
