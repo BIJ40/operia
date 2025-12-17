@@ -10,17 +10,27 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Search, Users, UserPlus, MoreHorizontal, Pencil, UserX, UserCheck, Trash2 } from 'lucide-react';
-import { GLOBAL_ROLE_LABELS, GLOBAL_ROLE_COLORS, type GlobalRole } from '@/types/globalRoles';
+import { Search, Users, UserPlus, MoreHorizontal, Pencil, UserX, UserCheck, Trash2, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
+import { GLOBAL_ROLE_LABELS, GLOBAL_ROLE_COLORS, type GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAllAgencySubscriptions, useAccessRightsUsers, UserRow } from '@/hooks/access-rights';
 import { CreateUserDialog, EditUserDialog, DeactivateDialog, ReactivateDialog, DeleteDialog } from '@/components/admin/users/UserDialogs';
 import { ModuleKey, EnabledModules } from '@/types/modules';
+import { cn } from '@/lib/utils';
+
+type SortKey = 'name' | 'email' | 'poste' | 'role' | 'agence' | 'plan' | 'statut';
+type SortDirection = 'asc' | 'desc';
+
+interface SortConfig {
+  key: SortKey;
+  direction: SortDirection;
+}
 
 export function UsersAccessTab() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('active');
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'name', direction: 'asc' });
   
   // Local module state for editing
   const [localModules, setLocalModules] = useState<EnabledModules | null>(null);
@@ -69,10 +79,28 @@ export function UsersAccessTab() {
     });
     return map;
   }, [subscriptions]);
+
+  // Handle sort
+  const handleSort = (key: SortKey) => {
+    setSortConfig(prev => ({
+      key,
+      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  // Sort icon component
+  const SortIcon = ({ columnKey }: { columnKey: SortKey }) => {
+    if (sortConfig.key !== columnKey) {
+      return <ChevronsUpDown className="h-4 w-4 ml-1 opacity-50" />;
+    }
+    return sortConfig.direction === 'asc' 
+      ? <ChevronUp className="h-4 w-4 ml-1" />
+      : <ChevronDown className="h-4 w-4 ml-1" />;
+  };
   
-  // Filter users
+  // Filter and sort users
   const filteredUsers = useMemo(() => {
-    return users.filter(user => {
+    let result = users.filter(user => {
       const matchesSearch = !search || 
         user.email?.toLowerCase().includes(search.toLowerCase()) ||
         user.first_name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -87,7 +115,39 @@ export function UsersAccessTab() {
       
       return matchesSearch && matchesRole && matchesStatus;
     });
-  }, [users, search, roleFilter, statusFilter]);
+
+    // Sort
+    result.sort((a, b) => {
+      const direction = sortConfig.direction === 'asc' ? 1 : -1;
+      
+      switch (sortConfig.key) {
+        case 'name':
+          const nameA = `${a.last_name || ''} ${a.first_name || ''}`.toLowerCase();
+          const nameB = `${b.last_name || ''} ${b.first_name || ''}`.toLowerCase();
+          return nameA.localeCompare(nameB) * direction;
+        case 'email':
+          return (a.email || '').localeCompare(b.email || '') * direction;
+        case 'poste':
+          return (a.role_agence || '').localeCompare(b.role_agence || '') * direction;
+        case 'role':
+          const levelA = GLOBAL_ROLES[a.global_role as GlobalRole] ?? 0;
+          const levelB = GLOBAL_ROLES[b.global_role as GlobalRole] ?? 0;
+          return (levelA - levelB) * direction;
+        case 'agence':
+          return (a.agency?.label || '').localeCompare(b.agency?.label || '') * direction;
+        case 'plan':
+          const planA = a.agency_id ? agencyPlanMap.get(a.agency_id) || '' : '';
+          const planB = b.agency_id ? agencyPlanMap.get(b.agency_id) || '' : '';
+          return planA.localeCompare(planB) * direction;
+        case 'statut':
+          return ((a.is_active ? 1 : 0) - (b.is_active ? 1 : 0)) * direction;
+        default:
+          return 0;
+      }
+    });
+
+    return result;
+  }, [users, search, roleFilter, statusFilter, sortConfig, agencyPlanMap]);
 
   const getRoleBadgeColor = (role: GlobalRole | null) => {
     if (!role) return 'bg-muted';
@@ -169,6 +229,19 @@ export function UsersAccessTab() {
     enabled_modules: localModules ?? selectedUser.enabled_modules,
   } : null;
 
+  // Sortable header component
+  const SortableHeader = ({ columnKey, children, className }: { columnKey: SortKey; children: React.ReactNode; className?: string }) => (
+    <TableHead 
+      className={cn("cursor-pointer select-none hover:bg-muted/50 transition-colors", className)}
+      onClick={() => handleSort(columnKey)}
+    >
+      <div className="flex items-center">
+        {children}
+        <SortIcon columnKey={columnKey} />
+      </div>
+    </TableHead>
+  );
+
   return (
     <Card>
       <CardHeader>
@@ -229,15 +302,17 @@ export function UsersAccessTab() {
         </div>
         
         {/* Table */}
-        <div className="rounded-md border">
+        <div className="rounded-md border overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Utilisateur</TableHead>
-                <TableHead>Rôle</TableHead>
-                <TableHead>Agence</TableHead>
-                <TableHead>Plan</TableHead>
-                <TableHead>Statut</TableHead>
+                <SortableHeader columnKey="name">Nom</SortableHeader>
+                <SortableHeader columnKey="email" className="hidden md:table-cell">Email</SortableHeader>
+                <SortableHeader columnKey="poste" className="hidden lg:table-cell">Poste</SortableHeader>
+                <SortableHeader columnKey="role">Rôle</SortableHeader>
+                <SortableHeader columnKey="agence" className="hidden sm:table-cell">Agence</SortableHeader>
+                <SortableHeader columnKey="plan" className="hidden lg:table-cell">Plan</SortableHeader>
+                <SortableHeader columnKey="statut">Statut</SortableHeader>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -245,17 +320,19 @@ export function UsersAccessTab() {
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell><Skeleton className="h-10 w-40" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-28" /></TableCell>
+                    <TableCell className="hidden md:table-cell"><Skeleton className="h-6 w-40" /></TableCell>
+                    <TableCell className="hidden lg:table-cell"><Skeleton className="h-6 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-16" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-16" /></TableCell>
+                    <TableCell className="hidden sm:table-cell"><Skeleton className="h-6 w-24" /></TableCell>
+                    <TableCell className="hidden lg:table-cell"><Skeleton className="h-6 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-14" /></TableCell>
                     <TableCell><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
                   </TableRow>
                 ))
               ) : filteredUsers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     Aucun utilisateur trouvé
                   </TableCell>
                 </TableRow>
@@ -265,28 +342,29 @@ export function UsersAccessTab() {
                   const canEdit = canEditUser(user);
                   
                   return (
-                    <TableRow key={user.id} className={!user.is_active ? 'opacity-60' : ''}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">
-                            {user.first_name} {user.last_name}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {user.email}
-                          </div>
-                          {user.role_agence && (
-                            <div className="text-xs text-muted-foreground mt-0.5">
-                              {user.role_agence}
-                            </div>
-                          )}
-                        </div>
+                    <TableRow 
+                      key={user.id} 
+                      className={cn(
+                        !user.is_active && 'opacity-60',
+                        canEdit && 'cursor-pointer hover:bg-muted/50'
+                      )}
+                      onDoubleClick={() => canEdit && handleOpenEditDialog(user)}
+                    >
+                      <TableCell className="font-medium whitespace-nowrap">
+                        {user.first_name} {user.last_name}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-muted-foreground">
+                        {user.email}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground">
+                        {user.role_agence || '—'}
                       </TableCell>
                       <TableCell>
                         <Badge className={getRoleBadgeColor(user.global_role)}>
                           {GLOBAL_ROLE_LABELS[user.global_role as keyof typeof GLOBAL_ROLE_LABELS] || 'N/A'}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden sm:table-cell">
                         {user.role_agence?.toLowerCase().includes('tête de réseau') || 
                          user.role_agence?.toLowerCase().includes('tete de reseau') ||
                          user.role_agence?.toLowerCase().includes('tete_de_reseau') ? (
@@ -294,10 +372,10 @@ export function UsersAccessTab() {
                         ) : user.agency?.label ? (
                           user.agency.label
                         ) : (
-                          <span className="text-muted-foreground italic">Sans agence</span>
+                          <span className="text-muted-foreground italic">—</span>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden lg:table-cell">
                         {agencyPlan ? (
                           <Badge className={getPlanBadgeColor(agencyPlan)}>
                             {agencyPlan}
