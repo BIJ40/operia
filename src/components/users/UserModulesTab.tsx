@@ -254,10 +254,10 @@ const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
       'Répondre et résoudre les tickets',
       'Escalader vers le niveau supérieur',
     ],
-    targetUsers: 'Équipe support HelpConfort',
+    targetUsers: 'Équipe support (interne ou externe)',
     icon: <MessageSquare className="w-5 h-5" />,
     color: 'text-violet-500',
-    minRole: 'platform_admin',
+    minRole: 'base_user',
     category: 'support',
   },
 
