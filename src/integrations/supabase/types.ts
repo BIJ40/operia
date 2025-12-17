@@ -1374,6 +1374,69 @@ export type Database = {
         }
         Relationships: []
       }
+      apporteur_contacts: {
+        Row: {
+          agency_id: string
+          apporteur_id: string
+          created_at: string
+          email: string | null
+          first_name: string
+          fonction: string | null
+          id: string
+          is_primary: boolean
+          last_name: string
+          mobile: string | null
+          notes: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          apporteur_id: string
+          created_at?: string
+          email?: string | null
+          first_name: string
+          fonction?: string | null
+          id?: string
+          is_primary?: boolean
+          last_name: string
+          mobile?: string | null
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          apporteur_id?: string
+          created_at?: string
+          email?: string | null
+          first_name?: string
+          fonction?: string | null
+          id?: string
+          is_primary?: boolean
+          last_name?: string
+          mobile?: string | null
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apporteur_contacts_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apporteur_contacts_apporteur_id_fkey"
+            columns: ["apporteur_id"]
+            isOneToOne: false
+            referencedRelation: "apporteurs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       apporteur_intervention_requests: {
         Row: {
           address: string
