@@ -168,7 +168,6 @@ import { TechnicianLayout } from "./components/technician/TechnicianLayout";
 const TechDashboard = lazy(() => import("./pages/technician/TechDashboard"));
 const TechPlanning = lazy(() => import("./pages/technician/TechPlanning"));
 const TechPointage = lazy(() => import("./pages/technician/TechPointage"));
-const TechHeures = lazy(() => import("./pages/technician/TechHeures"));
 const TechDocuments = lazy(() => import("./pages/technician/TechDocuments"));
 const TechProfil = lazy(() => import("./pages/technician/TechProfil"));
 const ApporteurDossiers = lazy(() => import("./apporteur/pages/ApporteurDossiers"));
@@ -457,7 +456,6 @@ function AppContent() {
             <Route index element={<TechDashboard />} />
             <Route path="planning" element={<TechPlanning />} />
             <Route path="pointage" element={<TechPointage />} />
-            <Route path="heures" element={<TechHeures />} />
             <Route path="documents" element={<TechDocuments />} />
             <Route path="profil" element={<TechProfil />} />
           </Route>
