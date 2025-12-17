@@ -1,7 +1,8 @@
 # Documentation Complète des Modules HelpConfort
 
-> **Version**: 2.0 – Mise à jour : Décembre 2025  
-> **Source de vérité**: `src/types/modules.ts`
+> **Version**: 2.1 – Mise à jour : 17 Décembre 2025  
+> **Source de vérité**: `src/types/modules.ts`  
+> **Release** : v0.8.0+ "Suivi RH & DocGen"
 
 ---
 
@@ -722,5 +723,118 @@ Ces fonctionnalités sont accessibles indépendamment des modules :
 
 ---
 
-> **Document généré le** : Décembre 2025  
+## 12. DocGen (Génération Documents)
+
+| Propriété | Valeur |
+|-----------|--------|
+| **Clé technique** | `docgen` |
+| **Icône** | `FileText` |
+| **Rôle minimum** | `franchisee_admin` (N2) |
+| **Rôles par défaut** | N2, N5, N6 |
+
+### Description
+Module de génération de documents professionnels (lettres, attestations, certificats) à partir de templates DOCX avec tokens auto-remplis.
+
+### Utilisation
+- Upload de templates DOCX avec tokens `{{NOM_TOKEN}}`
+- Génération de documents avec smart tokens auto-remplis
+- Preview PDF en temps réel
+- Export DOCX ou PDF finalisé
+
+### Particularités
+- Smart tokens auto-populés (AGENCE_*, DIRIGEANT_*, COLLAB_*, DATE_*, USER_*)
+- Wizard step-by-step pour champs manuels
+- Conversion DOCX→PDF via Gotenberg
+- Versioning et publication des templates
+
+### Sous-modules
+
+#### 📄 instance
+| Propriété | Valeur |
+|-----------|--------|
+| **Description** | Créer et éditer des documents |
+| **Routes** | `/rh/docgen`, `/rh/docgen/:instanceId` |
+| **Activé par défaut** | ✅ Oui |
+| **Qui a accès** | N2+ avec module activé |
+
+Interface de création de documents avec preview PDF live et export.
+
+#### ⚙️ templates
+| Propriété | Valeur |
+|-----------|--------|
+| **Description** | Gestion des templates (Studio) |
+| **Routes** | `/admin/templates` |
+| **Activé par défaut** | ❌ Non |
+| **Qui a accès** | N4+ uniquement |
+
+Studio d'administration des templates : upload, configuration tokens, publication.
+
+---
+
+## 13. Portail Apporteur (externe)
+
+| Propriété | Valeur |
+|-----------|--------|
+| **Clé technique** | `apporteur_portal` |
+| **Icône** | `Building2` |
+| **Rôle minimum** | Authentification apporteur (hors N0-N6) |
+| **Rôles par défaut** | Utilisateurs `apporteur_users` |
+
+### Description
+Portail externe isolé pour les prescripteurs (assurances, bailleurs, etc.) permettant le suivi de leurs dossiers et la création de demandes d'intervention.
+
+### Utilisation
+- Consultation des dossiers du commanditaire
+- Création de demandes d'intervention
+- Suivi des statistiques (dossiers en cours, factures impayées)
+
+### Particularités
+- Authentification isolée (ApporteurAuthContext) hors hiérarchie N0-N6
+- Liaison automatique via `apporteurs.apogee_client_id` → commanditaire Apogée
+- Notifications email via Resend
+- Isolation totale des données entre apporteurs
+
+### Routes
+
+| Route | Page | Description |
+|-------|------|-------------|
+| `/apporteur` | Login | Authentification apporteur |
+| `/apporteur/dashboard` | Dashboard | KPIs + nouvelle demande |
+| `/apporteur/dossiers` | Dossiers | Table des dossiers commanditaire |
+
+---
+
+## 14. Rapports Mensuels
+
+| Propriété | Valeur |
+|-----------|--------|
+| **Clé technique** | `monthly_reports` |
+| **Icône** | `FileBarChart` |
+| **Rôle minimum** | `franchisor_admin` (N4) |
+| **Rôles par défaut** | N4, N5, N6 |
+
+### Description
+Génération automatique de rapports d'activité mensuels pour les dirigeants d'agence. PDF multi-sections avec KPIs, graphiques et alertes.
+
+### Utilisation
+- Configuration des sections à inclure
+- Prévisualisation des rapports
+- Génération automatique le 10 du mois
+- Historique des rapports générés
+
+### Particularités
+- CRON auto-génération (10 du mois 08:00 UTC)
+- CRON purge (rapports >12 mois)
+- Sections modulables (synthèse, CA, techniciens, univers, SAV, etc.)
+- Charts SVG intégrés (bar charts, donut charts)
+
+### Routes
+
+| Route | Page | Description |
+|-------|------|-------------|
+| `/admin/rapportactivite` | RapportActiviteAdmin | Console de configuration (N4+) |
+
+---
+
+> **Document généré le** : 17 Décembre 2025  
 > **Mainteneur** : Équipe Technique HelpConfort
