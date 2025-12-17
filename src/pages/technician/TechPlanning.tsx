@@ -2,6 +2,7 @@ import { Loader2, Calendar, AlertCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { TechWeeklyPlanningList } from '@/apogee-connect/components/TechWeeklyPlanningList';
 import { useTechnicianProfile } from '@/hooks/technician/useTechnicianProfile';
+import { AgencyProvider } from '@/apogee-connect/contexts/AgencyContext';
 
 export default function TechPlanning() {
   const { data: profile, isLoading: profileLoading } = useTechnicianProfile();
@@ -55,11 +56,13 @@ export default function TechPlanning() {
         </h1>
       </div>
 
-      {/* Planning Apogée filtré pour ce technicien */}
-      <TechWeeklyPlanningList 
-        techFilterId={profile.apogee_user_id} 
-        isN1View={true}
-      />
+      {/* Planning Apogée filtré pour ce technicien - wrappé dans AgencyProvider */}
+      <AgencyProvider>
+        <TechWeeklyPlanningList 
+          techFilterId={profile.apogee_user_id} 
+          isN1View={true}
+        />
+      </AgencyProvider>
     </div>
   );
 }
