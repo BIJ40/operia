@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LogOut, User, Settings, Headset, Loader2, Home,
   Building2, Briefcase, Kanban, GraduationCap, Network,
-  LucideIcon, Circle
+  LucideIcon, Circle, PenTool
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -259,6 +259,14 @@ export function TabHeader() {
                       Mon profil
                     </Link>
                   </DropdownMenuItem>
+                  {hasModule('rh') && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/rh/signature" className="flex items-center gap-2 cursor-pointer">
+                        <PenTool className="w-4 h-4" />
+                        Ma signature
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   {isAdmin && (
                     <DropdownMenuItem asChild>
                       <Link to="/admin" className="flex items-center gap-2 cursor-pointer">

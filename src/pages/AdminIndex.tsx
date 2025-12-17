@@ -120,6 +120,7 @@ export default function AdminIndex() {
             <AdminLink to={ROUTES.admin.helpi} icon={Bot} title="Helpi (RAG)" description="Moteur IA principal" />
             <AdminLink to={ROUTES.admin.apogeeGuides} icon={BookOpen} title="Guides Apogée" description="Base connaissances IA" />
             <AdminLink to={ROUTES.admin.statia} icon={FlaskConical} title="STATiA-BY-BIJ" description="Moteur de métriques" />
+            <AdminLink to="/admin/statia-validator" icon={FlaskConical} title="Validateur StatIA" description="Test et validation métriques" />
             <AdminLink to={ROUTES.admin.formationGenerator} icon={Sparkles} title="Générateur Formation" description="Résumés pédagogiques IA" />
           </div>
         </TabsContent>
@@ -131,6 +132,7 @@ export default function AdminIndex() {
             <AdminLink to={ROUTES.admin.supportStats} icon={BarChart3} title="Statistiques Support" description="Métriques et KPIs" />
             <AdminLink to={ROUTES.admin.escalationHistory} icon={History} title="Historique Escalades" description="Escalades chatbot" />
             <AdminLink to={ROUTES.admin.faq} icon={HelpCircle} title="FAQ" description="Questions fréquentes" />
+            <AdminLink to="/admin/support/settings" icon={Settings} title="Paramètres Support" description="Configuration module" />
           </div>
         </TabsContent>
 
