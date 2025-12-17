@@ -115,14 +115,14 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
           <DemoCarousel />
         </motion.div>
 
-        {/* 8 Modules Grid */}
+        {/* 12+ Modules Grid */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 3 }}
         >
           <h2 className="text-2xl sm:text-3xl font-bold text-center mb-8 text-foreground">
-            8 modules pour piloter votre activité
+            12+ modules pour piloter votre activité
           </h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-6xl mx-auto">
             <FeatureCard
