@@ -161,6 +161,15 @@ import { AnnouncementGate } from "./components/announcements/AnnouncementGate";
 // Apporteur Module
 import { ApporteurLayout } from "./apporteur/components/ApporteurLayout";
 const ApporteurDashboard = lazy(() => import("./apporteur/pages/ApporteurDashboard"));
+
+// Technician Module (Mobile)
+import { TechnicianLayout } from "./components/technician/TechnicianLayout";
+const TechDashboard = lazy(() => import("./pages/technician/TechDashboard"));
+const TechPlanning = lazy(() => import("./pages/technician/TechPlanning"));
+const TechPointage = lazy(() => import("./pages/technician/TechPointage"));
+const TechHeures = lazy(() => import("./pages/technician/TechHeures"));
+const TechDocuments = lazy(() => import("./pages/technician/TechDocuments"));
+const TechProfil = lazy(() => import("./pages/technician/TechProfil"));
 const ApporteurDossiers = lazy(() => import("./apporteur/pages/ApporteurDossiers"));
 const ApporteurDemandes = lazy(() => import("./apporteur/pages/ApporteurDemandes"));
 const ApporteurNouvelleDemande = lazy(() => import("./apporteur/pages/ApporteurNouvelleDemande"));
@@ -438,6 +447,18 @@ function AppContent() {
           {/* DEV PAGES - Admin only (N5/N6) */}
           {/* ============================================ */}
           <Route path="/dev/unified-search-animations" element={<RoleGuard minRole="platform_admin"><UnifiedSearchAnimationPlayground /></RoleGuard>} />
+          
+          {/* ============================================ */}
+          {/* ESPACE TECHNICIEN - Mobile-First */}
+          {/* ============================================ */}
+          <Route path="/t" element={<RoleGuard minRole="franchisee_user"><TechnicianLayout /></RoleGuard>}>
+            <Route index element={<TechDashboard />} />
+            <Route path="planning" element={<TechPlanning />} />
+            <Route path="pointage" element={<TechPointage />} />
+            <Route path="heures" element={<TechHeures />} />
+            <Route path="documents" element={<TechDocuments />} />
+            <Route path="profil" element={<TechProfil />} />
+          </Route>
           
           {/* ============================================ */}
           {/* ESPACE APPORTEUR - Système isolé */}
