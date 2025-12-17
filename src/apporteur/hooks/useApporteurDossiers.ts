@@ -4,6 +4,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { isApporteurDevMode, MOCK_DOSSIERS_RESPONSE } from '../lib/devMode';
 
 export interface DossierRow {
   id: number;
@@ -44,6 +45,25 @@ export function useApporteurDossiers() {
   return useQuery({
     queryKey: ['apporteur-dossiers'],
     queryFn: async (): Promise<DossiersResponse> => {
+      // En mode dev sans auth apporteur, retourner des données vides
+      if (isApporteurDevMode()) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          return MOCK_DOSSIERS_RESPONSE;
+        }
+        // Vérifier si l'utilisateur est un apporteur
+        const { data: apporteurUser } = await supabase
+          .from('apporteur_users')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .eq('is_active', true)
+          .maybeSingle();
+        
+        if (!apporteurUser) {
+          return MOCK_DOSSIERS_RESPONSE;
+        }
+      }
+
       const { data, error } = await supabase.functions.invoke('get-apporteur-dossiers', {
         body: {},
       });
