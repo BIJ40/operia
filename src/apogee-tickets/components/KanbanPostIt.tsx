@@ -101,7 +101,7 @@ export function KanbanPostIt() {
       {/* Post-it */}
       <div 
         className={cn(
-          "relative w-48 min-h-[80px] pt-3 pb-4 px-3",
+          "relative w-64 min-h-[100px] pt-3 pb-4 px-3",
           "bg-gradient-to-br from-yellow-200 to-yellow-300",
           "shadow-md hover:shadow-lg transition-shadow",
           "cursor-pointer select-none",
