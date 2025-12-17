@@ -87,6 +87,7 @@ export const ROUTES = {
     // Vue Dirigeant/RH (N2)
     equipe: '/rh/equipe',
     plannings: '/rh/equipe/plannings',
+    heures: '/rh/equipe/heures',
     collaborateurProfile: (id: string) => `/rh/equipe/${id}`,
     demandes: '/rh/demandes',
     conges: '/rh/conges',
