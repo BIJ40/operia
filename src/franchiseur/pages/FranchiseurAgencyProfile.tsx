@@ -110,12 +110,14 @@ function FranchiseurAgencyProfileContent() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="info">Informations</TabsTrigger>
-          <TabsTrigger value="team">Équipe</TabsTrigger>
-          <TabsTrigger value="stats">Statistiques</TabsTrigger>
-          <TabsTrigger value="royalties">Redevances</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto">
+          <TabsList className="inline-flex h-auto w-auto min-w-full md:w-full md:grid md:grid-cols-4">
+            <TabsTrigger value="info">Informations</TabsTrigger>
+            <TabsTrigger value="team">Équipe</TabsTrigger>
+            <TabsTrigger value="stats">Statistiques</TabsTrigger>
+            <TabsTrigger value="royalties">Redevances</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="info" className="space-y-4 mt-4">
           <Card className="rounded-2xl border-l-4 border-l-accent">

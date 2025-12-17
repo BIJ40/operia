@@ -24,7 +24,7 @@ export function RHUnifiedTableHeader({ activeTab, visibleColumns }: RHUnifiedTab
         {/* Colonnes fixes - COLLABORATEUR toujours visible avec largeur fixe */}
         <TableHead 
           colSpan={FIXED_COLUMNS.length + 1} 
-          className="bg-muted/50 text-center font-semibold border-r min-w-[320px] w-[320px]"
+          className="bg-muted/50 text-center font-semibold border-r min-w-[200px] md:min-w-[320px] md:w-[320px]"
         >
           👤 COLLABORATEUR
         </TableHead>

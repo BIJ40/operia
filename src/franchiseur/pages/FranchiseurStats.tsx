@@ -106,11 +106,13 @@ export default function FranchiseurStats() {
             </div>
           ) : (
             <Tabs value={techMode} onValueChange={(v) => setTechMode(v as "ca" | "heures" | "caParHeure")} className="space-y-4">
-              <TabsList className="grid w-full max-w-md grid-cols-3">
-                <TabsTrigger value="ca">CA HT</TabsTrigger>
-                <TabsTrigger value="heures">Heures</TabsTrigger>
-                <TabsTrigger value="caParHeure">CA/Heure</TabsTrigger>
-              </TabsList>
+              <div className="overflow-x-auto">
+                <TabsList className="inline-flex h-auto w-auto min-w-full sm:w-full sm:max-w-md sm:grid sm:grid-cols-3">
+                  <TabsTrigger value="ca">CA HT</TabsTrigger>
+                  <TabsTrigger value="heures">Heures</TabsTrigger>
+                  <TabsTrigger value="caParHeure">CA/Heure</TabsTrigger>
+                </TabsList>
+              </div>
 
               <TabsContent value="ca">
                 <TechnicienUniversHeatmap
