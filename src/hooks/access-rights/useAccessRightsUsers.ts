@@ -185,15 +185,16 @@ export function useAccessRightsUsers() {
   const updateUserMutation = useMutation({
     mutationFn: async ({ userId, data }: { 
       userId: string; 
-      data: {
-        first_name?: string;
-        last_name?: string;
-        agence?: string;
-        role_agence?: string;
-        global_role?: GlobalRole;
-        apogee_user_id?: number | null;
-        support_level?: number;
-      } 
+        data: {
+          first_name?: string;
+          last_name?: string;
+          agence?: string;
+          agency_id?: string | null;
+          role_agence?: string;
+          global_role?: GlobalRole;
+          apogee_user_id?: number | null;
+          support_level?: number;
+        }
     }) => {
       const { error } = await supabase.from('profiles').update(data).eq('id', userId);
       if (error) throw error;
