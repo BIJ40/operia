@@ -37,6 +37,7 @@ import { useMyRecentlyModifiedTickets } from '../hooks/useMyRecentlyModifiedTick
 import { useMyTicketViews } from '../hooks/useTicketViews';
 import { useAuth } from '@/contexts/AuthContext';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { KanbanPostIt } from '../components/KanbanPostIt';
 
 export default function ApogeeTicketsKanbanPage() {
   const { data: myTicketRole, isLoading: isLoadingRole, error: roleError } = useMyTicketRole();
@@ -362,14 +363,22 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* Post-it note */}
+          <KanbanPostIt />
         </div>
 
         <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
           <Link to={ROUTES.projects.review}>
-            <Button variant="outline" size="sm">
-              <ListChecks className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Revue en masse</span>
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <ListChecks className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Revue</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Revue en masse</TooltipContent>
+            </Tooltip>
           </Link>
           {/* Bouton complétion */}
           <Tooltip>
@@ -388,20 +397,22 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
               <p>Incomplets ({incompleteCount})</p>
             </TooltipContent>
           </Tooltip>
-          {/* Menu IA regroupé */}
-          {/* Menu IA regroupé */}
+          {/* Menu IA */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="text-purple-600 border-purple-300 hover:bg-purple-50"
-              >
-                <Sparkles className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">IA</span>
-                <ChevronDown className="h-4 w-4 sm:ml-1" />
-              </Button>
-            </DropdownMenuTrigger>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    className="h-8 w-8 text-purple-600 border-purple-300 hover:bg-purple-50"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent>Outils IA</TooltipContent>
+            </Tooltip>
             <DropdownMenuContent align="end" className="bg-background border shadow-lg z-50 w-56">
               <DropdownMenuItem 
                 onClick={qualifyAllUnqualified}
