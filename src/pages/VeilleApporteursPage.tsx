@@ -185,36 +185,38 @@ export default function VeilleApporteursPage() {
           ) : apporteurs.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground">Aucun apporteur trouvé</div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <SortableHeader label="Apporteur" sortKeyVal="nom" />
-                  <TableHead>Dernière demande</TableHead>
-                  <SortableHeader label="Inactivité" sortKeyVal="joursInactivite" />
-                  <SortableHeader label="CA Période A" sortKeyVal="CA_A_HT" />
-                  <SortableHeader label="CA Période B" sortKeyVal="CA_B_HT" />
-                  <SortableHeader label="Variation" sortKeyVal="variationPct" />
-                  <TableHead>Statut</TableHead>
-                  <SortableHeader label="Risque" sortKeyVal="scoreRisque" />
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {apporteurs.map(a => (
-                  <TableRow key={a.apporteurId} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedApporteur(a)}>
-                    <TableCell className="font-medium">{a.apporteurNom}</TableCell>
-                    <TableCell>{a.lastProjectDate ? format(new Date(a.lastProjectDate), 'dd/MM/yyyy') : '-'}</TableCell>
-                    <TableCell>{a.joursInactivite}j</TableCell>
-                    <TableCell>{formatCurrency(a.CA_A_HT)}</TableCell>
-                    <TableCell>{formatCurrency(a.CA_B_HT)}</TableCell>
-                    <TableCell className={cn((a.variationPct ?? 0) < 0 ? "text-destructive" : "text-green-600")}>{formatPercent(a.variationPct)}</TableCell>
-                    <TableCell><ApporteurBadges apporteur={a} /></TableCell>
-                    <TableCell><Badge variant={a.scoreRisque > 50 ? "destructive" : a.scoreRisque > 25 ? "outline" : "secondary"}>{a.scoreRisque}</Badge></TableCell>
-                    <TableCell><Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button></TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <SortableHeader label="Apporteur" sortKeyVal="nom" />
+                    <TableHead className="hidden md:table-cell">Dernière demande</TableHead>
+                    <SortableHeader label="Inactivité" sortKeyVal="joursInactivite" />
+                    <TableHead className="hidden lg:table-cell">CA Période A</TableHead>
+                    <TableHead className="hidden lg:table-cell">CA Période B</TableHead>
+                    <SortableHeader label="Variation" sortKeyVal="variationPct" />
+                    <TableHead>Statut</TableHead>
+                    <SortableHeader label="Risque" sortKeyVal="scoreRisque" />
+                    <TableHead></TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {apporteurs.map(a => (
+                    <TableRow key={a.apporteurId} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedApporteur(a)}>
+                      <TableCell className="font-medium">{a.apporteurNom}</TableCell>
+                      <TableCell className="hidden md:table-cell">{a.lastProjectDate ? format(new Date(a.lastProjectDate), 'dd/MM/yyyy') : '-'}</TableCell>
+                      <TableCell>{a.joursInactivite}j</TableCell>
+                      <TableCell className="hidden lg:table-cell">{formatCurrency(a.CA_A_HT)}</TableCell>
+                      <TableCell className="hidden lg:table-cell">{formatCurrency(a.CA_B_HT)}</TableCell>
+                      <TableCell className={cn((a.variationPct ?? 0) < 0 ? "text-destructive" : "text-green-600")}>{formatPercent(a.variationPct)}</TableCell>
+                      <TableCell><ApporteurBadges apporteur={a} /></TableCell>
+                      <TableCell><Badge variant={a.scoreRisque > 50 ? "destructive" : a.scoreRisque > 25 ? "outline" : "secondary"}>{a.scoreRisque}</Badge></TableCell>
+                      <TableCell><Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
