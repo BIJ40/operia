@@ -118,27 +118,6 @@ export default function Changelog() {
             })}
           </div>
 
-          {/* Liens rapport sécurité pour V0.6.2 */}
-          {currentVersion.version === 'V0.6.2' && (
-            <div className="mt-4 pt-4 border-t border-border/50">
-              <a 
-                href="/security-audit-report"
-                className="inline-flex items-center gap-2 text-sm text-helpconfort-blue hover:underline"
-              >
-                <Shield className="w-4 h-4" />
-                Voir le rapport d'audit sécurité complet
-              </a>
-              <span className="mx-2 text-muted-foreground">•</span>
-              <a 
-                href="/security-documentation"
-                className="inline-flex items-center gap-2 text-sm text-helpconfort-blue hover:underline"
-              >
-                <FileText className="w-4 h-4" />
-                Documentation sécurité
-              </a>
-            </div>
-          )}
-
           {/* Liens audits */}
           {renderAuditLinks(currentVersion)}
         </div>

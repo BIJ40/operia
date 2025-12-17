@@ -394,17 +394,6 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     requiresAdmin: true,
   },
   {
-    id: 'ADMIN_WIDGETS',
-    title: 'Widgets',
-    description: 'Configuration des widgets dashboard',
-    icon: LayoutDashboard,
-    route: ROUTES.admin.widgets,
-    scopeSlug: SCOPE_SLUGS.ADMIN_SETTINGS,
-    color: 'primary',
-    group: 'admin',
-    requiresAdmin: true,
-  },
-  {
     id: 'FRANCHISEUR_GRAPHIQUES',
     title: 'Graphiques',
     description: 'Visualisations graphiques du réseau',

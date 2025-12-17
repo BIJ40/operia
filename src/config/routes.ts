@@ -15,7 +15,6 @@ export const ROUTES = {
   // HOME / DASHBOARD (page d'accueil = dashboard)
   // ============================================
   home: '/',
-  widgets: '/widgets',
 
   // ============================================
   // HELP ACADEMY
@@ -168,7 +167,6 @@ export const ROUTES = {
     featureFlags: '/admin/feature-flags',
     statia: '/admin/statia-by-bij',
     formationGenerator: '/admin/formation-generator',
-    widgets: '/admin/widgets',
     modules: '/admin/modules',
     permissionsCenter: '/admin/permissions',
     // Legacy redirects (kept for backward compatibility)
