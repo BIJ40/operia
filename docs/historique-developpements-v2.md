@@ -1,8 +1,9 @@
 # Historique des Développements V2 — Focus sur la branche `dev`
 
-> **Document généré le** : 2025-12-01  
+> **Document généré le** : 2025-12-17  
 > **Branche de référence** : `dev`  
-> **Comparaison** : `dev` vs `main`
+> **Comparaison** : `dev` vs `main`  
+> **Version application** : v0.8.0+ "Suivi RH & DocGen"
 
 ---
 
@@ -346,4 +347,157 @@ En cas de problème :
 
 ---
 
-*Document V2 — Dernière mise à jour : 2025-12-01*
+## 9. Nouvelles Fonctionnalités V2.1+ (Décembre 2025)
+
+### 9.1 DocGen — Génération de Documents
+
+**Statut** : ✅ LIVRÉ (v0.8.0)
+
+Module complet de génération de documents professionnels (lettres, attestations, etc.).
+
+| Composant | Description |
+|-----------|-------------|
+| `/rh/docgen` | Liste des templates et instances |
+| `/rh/docgen/:instanceId` | Éditeur avec preview PDF live |
+| `/admin/templates` | Studio de gestion des templates (N4+) |
+
+**Caractéristiques** :
+- Upload de templates DOCX avec tokens `{{NOM_TOKEN}}`
+- Smart tokens auto-remplis (AGENCE_*, DIRIGEANT_*, COLLAB_*, DATE_*, USER_*)
+- Wizard step-by-step pour les champs manuels
+- Preview PDF en temps réel avec debounce
+- Conversion DOCX→PDF via Gotenberg externe
+- Versioning et publication des templates
+
+**Tables** : `doc_templates`, `doc_template_fields`, `doc_instances`
+
+**Edge Functions** : `parse-docx-tokens`, `documents-preview`, `documents-finalize`
+
+---
+
+### 9.2 Rapports Mensuels d'Activité
+
+**Statut** : ✅ LIVRÉ
+
+Génération automatique de rapports PDF pour les dirigeants d'agence.
+
+| Composant | Description |
+|-----------|-------------|
+| `/admin/rapportactivite` | Console de configuration (N4+) |
+| CRON `trigger-monthly-reports` | Génération auto le 10 du mois à 08:00 UTC |
+| CRON `purge-old-reports` | Nettoyage des rapports >12 mois |
+
+**Sections modulables** :
+- Synthèse dirigeant (4 KPIs + trends M-1)
+- CA analysis (univers, apporteurs, panier moyen)
+- Pipeline (devis, conversion rates)
+- Techniciens (CA attribué, productivité)
+- Qualité (taux SAV, retours)
+- Alertes & actions
+
+**Tables** : `monthly_report_settings`, `monthly_report_history`
+
+**Edge Functions** : `generate-monthly-report`, `trigger-monthly-reports`, `purge-old-reports`
+
+---
+
+### 9.3 Portail Apporteur
+
+**Statut** : ✅ Phase 1-3 LIVRÉES, Phase 4 (Apogée) différée
+
+Portail externe pour les prescripteurs (assurances, bailleurs, etc.).
+
+| Route | Page | Description |
+|-------|------|-------------|
+| `/apporteur` | Login | Authentification séparée |
+| `/apporteur/dashboard` | Dashboard | KPIs + bouton nouvelle demande |
+| `/apporteur/dossiers` | Dossiers | Table des dossiers commanditaire |
+| `/apporteur/demande` | Dialog | Formulaire nouvelle intervention |
+
+**Architecture** :
+- Authentification isolée via `ApporteurAuthContext` (hors N0-N6)
+- Table `apporteur_users` avec liaison `user_id` Supabase Auth
+- Liaison `apporteurs.apogee_client_id` → commanditaire Apogée
+- Demandes d'intervention → notifications email via Resend
+
+**Tables** : `apporteurs`, `apporteur_users`, `apporteur_project_links`, `apporteur_intervention_requests`, `apporteur_access_logs`
+
+**Edge Functions** : `get-apporteur-dossiers`, `get-apporteur-stats`, `notify-apporteur-request`, `create-apporteur-user`, `search-apogee-commanditaires`, `validate-apogee-commanditaire`
+
+---
+
+### 9.4 Support V2 — Améliorations
+
+**Statut** : ✅ LIVRÉ
+
+Améliorations de la console support pour les agents.
+
+| Fonctionnalité | Description |
+|----------------|-------------|
+| Affichage utilisateur | Nom/email de l'initiateur visible sur chaque ticket |
+| Bouton "Développement" | Transformation ticket support → ticket Gestion de Projet |
+| Fermeture automatique | Ticket support fermé lors de la transformation |
+| Bouton désactivé | Grisé après transformation (empêche doublons) |
+| Realtime | Notifications et statuts mis à jour instantanément |
+
+**Flow "Développement"** :
+1. Agent clique "Développement" sur un ticket support
+2. Ticket Apogée créé avec référence croisée
+3. Ticket support passé en `resolved`
+4. Bouton grisé avec texte "Déjà traité"
+5. Ticket visible dans onglet "Archivés"
+
+---
+
+### 9.5 Module RH Complet
+
+**Statut** : ✅ P0-P2 LIVRÉS
+
+| Phase | Fonctionnalité | Routes |
+|-------|----------------|--------|
+| P0 | Suivi RH back-office (N2) | `/rh/suivi`, `/rh/suivi/:id` |
+| P1 | Portail salarié (N1) | `/rh/coffre`, `/rh/demande`, `/rh/mon-planning`, `/rh/signature` |
+| P2 | Génération lettres EPI | Edge function `generate-rh-letter` |
+
+**Tables** : `collaborators`, `collaborator_documents`, `collaborator_sensitive_data`, `rh_requests`, `rh_notifications`, `rh_letter_templates`, `user_signatures`
+
+**Particularités** :
+- Données sensibles chiffrées (SSN, contact urgence)
+- Notifications bidirectionnelles (N1↔N2) en temps réel
+- Workflow demandes unifié (LEAVE, EPI, DOCUMENT_REQUEST)
+- Fusion automatique Profile ↔ Collaborator
+
+---
+
+## 10. Points Critiques V2.1+
+
+### 10.1 Modules stabilisés
+
+| Module | Version | Status |
+|--------|---------|--------|
+| Permissions V2 | 2.0 | ✅ Production |
+| Support V2 | 2.1 | ✅ Production |
+| RH | 1.0 | ✅ Production |
+| DocGen | 1.0 | ✅ Production |
+| Rapports Mensuels | 1.0 | ✅ Production |
+| Portail Apporteur | 0.9 | ⚠️ Phase 4 (Apogée) différée |
+
+### 10.2 Edge Functions critiques
+
+| Fonction | Sécurité | Rate Limit |
+|----------|----------|------------|
+| `proxy-apogee` | JWT + Masquage données sensibles | 50 req/min |
+| `get-client-contact` | JWT + Audit log | 10 req/min |
+| `generate-monthly-report` | N2+ agency check | 5 req/min |
+| `notify-apporteur-request` | Service role only | 10 req/min |
+| `documents-preview` | JWT + Agency check | 20 req/min |
+
+### 10.3 Prochaines priorités
+
+1. **Phase 4 Apporteur** : Intégration Apogée (différée jusqu'à stabilisation P2.5+P3)
+2. **Flow Builder** : `/admin/flow` - Concepteur de workflows (RT, bons intervention)
+3. **StatIA Builder** : Métriques personnalisées
+
+---
+
+*Document V2 — Dernière mise à jour : 2025-12-17*

@@ -1,9 +1,10 @@
 # Guide Technique — GLOBAL / HELP CONFORT SERVICES
 
-> **Version** : 4.0  
-> **Mise à jour** : 10 Décembre 2025  
+> **Version** : 4.1  
+> **Mise à jour** : 17 Décembre 2025  
 > **Audience** : Développeurs rejoignant le projet  
-> **Score Audit** : 90% Production-ready
+> **Score Audit** : 92% Production-ready  
+> **Release** : v0.8.0+ "Suivi RH & DocGen"
 
 ---
 
