@@ -274,12 +274,6 @@ export function MainHeader() {
                           Mon profil
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link to="/widgets" className="flex items-center gap-2 cursor-pointer">
-                          <Settings className="w-4 h-4" />
-                          Gérer mes widgets
-                        </Link>
-                      </DropdownMenuItem>
                       {isAdmin && (
                         <DropdownMenuItem asChild>
                           <Link to="/admin" className="flex items-center gap-2 cursor-pointer">
