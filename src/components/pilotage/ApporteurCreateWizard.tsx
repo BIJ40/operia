@@ -42,7 +42,7 @@ export function ApporteurCreateWizard({ open, onOpenChange }: ApporteurCreateWiz
   
   // Organization form
   const [orgName, setOrgName] = useState('');
-  const [orgType, setOrgType] = useState('gestionnaire');
+  const [orgType, setOrgType] = useState('agence_immo');
   const [contactFirstName, setContactFirstName] = useState('');
   const [contactLastName, setContactLastName] = useState('');
   const [contactPhone, setContactPhone] = useState('');
@@ -64,7 +64,7 @@ export function ApporteurCreateWizard({ open, onOpenChange }: ApporteurCreateWiz
     setSearchResults([]);
     setSelectedCommanditaire(null);
     setOrgName('');
-    setOrgType('gestionnaire');
+    setOrgType('agence_immo');
     setContactFirstName('');
     setContactLastName('');
     setContactPhone('');
@@ -107,7 +107,7 @@ export function ApporteurCreateWizard({ open, onOpenChange }: ApporteurCreateWiz
   const selectCommanditaire = (cmd: CommanditaireResult) => {
     setSelectedCommanditaire(cmd);
     setOrgName(cmd.name);
-    setOrgType(cmd.type || 'gestionnaire');
+    setOrgType(cmd.type || 'agence_immo');
     setStep('organization');
   };
 
@@ -309,11 +309,10 @@ export function ApporteurCreateWizard({ open, onOpenChange }: ApporteurCreateWiz
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="gestionnaire">Gestionnaire</SelectItem>
+                    <SelectItem value="agence_immo">Agence immobilière</SelectItem>
                     <SelectItem value="syndic">Syndic</SelectItem>
                     <SelectItem value="assurance">Assurance</SelectItem>
-                    <SelectItem value="bailleur">Bailleur</SelectItem>
-                    <SelectItem value="autre">Autre</SelectItem>
+                    <SelectItem value="courtier">Courtier</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
