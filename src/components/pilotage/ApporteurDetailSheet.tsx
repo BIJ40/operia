@@ -3,13 +3,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, Users, ExternalLink, Check, X, Info, Link2, Link2Off } from 'lucide-react';
-import { Apporteur, useToggleApporteurStatus, useApporteurUsers, useUpdateApporteurApogeeId } from '@/hooks/useApporteurs';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Building2, Users, ExternalLink, Check, X, Info, Link2, Link2Off, Archive, Trash2 } from 'lucide-react';
+import { Apporteur, useToggleApporteurStatus, useApporteurUsers, useUpdateApporteurApogeeId, useDeleteApporteur } from '@/hooks/useApporteurs';
 import { ApporteurContactsSection } from './ApporteurContactsSection';
 import { ApogeeCommanditaireSelector } from '@/components/admin/apporteurs/ApogeeCommanditaireSelector';
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ApporteurDetailSheetProps {
   apporteur: Apporteur | null;
@@ -18,10 +20,15 @@ interface ApporteurDetailSheetProps {
 }
 
 export function ApporteurDetailSheet({ apporteur, open, onOpenChange }: ApporteurDetailSheetProps) {
+  const { hasGlobalRole } = useAuth();
   const toggleStatus = useToggleApporteurStatus();
+  const deleteApporteur = useDeleteApporteur();
   const { data: users } = useApporteurUsers(apporteur?.id || null);
   const updateApogeeId = useUpdateApporteurApogeeId();
   const [showLinkSelector, setShowLinkSelector] = useState(false);
+
+  const isAdmin = hasGlobalRole('platform_admin'); // N5+ peut supprimer
+  const canArchive = hasGlobalRole('franchisee_admin'); // N2+ peut archiver
 
   if (!apporteur) return null;
 
@@ -29,6 +36,14 @@ export function ApporteurDetailSheet({ apporteur, open, onOpenChange }: Apporteu
     toggleStatus.mutate({
       id: apporteur.id,
       is_active: !apporteur.is_active,
+    });
+  };
+
+  const handleDelete = () => {
+    deleteApporteur.mutate(apporteur.id, {
+      onSuccess: () => {
+        onOpenChange(false);
+      },
     });
   };
 
@@ -86,17 +101,9 @@ export function ApporteurDetailSheet({ apporteur, open, onOpenChange }: Apporteu
                   ) : (
                     <Badge variant="secondary" className="bg-red-500/10 text-red-600 border-red-500/20">
                       <X className="h-3 w-3 mr-1" />
-                      Inactif
+                      Archivé
                     </Badge>
                   )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleToggleStatus}
-                    disabled={toggleStatus.isPending}
-                  >
-                    {apporteur.is_active ? 'Désactiver' : 'Activer'}
-                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -210,6 +217,62 @@ export function ApporteurDetailSheet({ apporteur, open, onOpenChange }: Apporteu
               </div>
             </CardContent>
           </Card>
+
+          {/* Actions */}
+          {(canArchive || isAdmin) && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base text-destructive">Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {canArchive && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={handleToggleStatus}
+                    disabled={toggleStatus.isPending}
+                  >
+                    <Archive className="h-4 w-4 mr-2" />
+                    {apporteur.is_active ? 'Archiver' : 'Réactiver'}
+                  </Button>
+                )}
+                
+                {isAdmin && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="w-full"
+                        disabled={deleteApporteur.isPending}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Supprimer définitivement
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Supprimer cet apporteur ?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Cette action est irréversible. Tous les utilisateurs, contacts et liens projets associés à "{apporteur.name}" seront également supprimés.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDelete}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Supprimer
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </SheetContent>
     </Sheet>

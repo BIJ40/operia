@@ -363,6 +363,56 @@ export function useDeleteApporteurUser() {
 }
 
 /**
+ * Supprimer complètement un apporteur (admin uniquement)
+ */
+export function useDeleteApporteur() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      // Supprimer d'abord les utilisateurs liés
+      const { error: usersError } = await supabase
+        .from('apporteur_users')
+        .delete()
+        .eq('apporteur_id', id);
+
+      if (usersError) throw usersError;
+
+      // Supprimer les contacts liés
+      const { error: contactsError } = await supabase
+        .from('apporteur_contacts')
+        .delete()
+        .eq('apporteur_id', id);
+
+      if (contactsError) throw contactsError;
+
+      // Supprimer les liens projets
+      const { error: linksError } = await supabase
+        .from('apporteur_project_links')
+        .delete()
+        .eq('apporteur_id', id);
+
+      if (linksError) throw linksError;
+
+      // Supprimer l'apporteur
+      const { error } = await supabase
+        .from('apporteurs')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['apporteurs'] });
+      toast.success('Apporteur supprimé définitivement');
+    },
+    onError: () => {
+      toast.error('Erreur lors de la suppression');
+    },
+  });
+}
+
+/**
  * Mettre à jour l'apogee_client_id d'un apporteur (liaison Apogée)
  */
 export function useUpdateApporteurApogeeId() {
