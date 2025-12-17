@@ -9,7 +9,7 @@ import {
   LogOut, User, Settings, Headset, Loader2,
   Menu, X, ChevronDown, Home, Circle,
   Building2, Briefcase, Kanban, Brain, GraduationCap, Network,
-  LucideIcon
+  LucideIcon, PenTool
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -274,6 +274,14 @@ export function MainHeader() {
                           Mon profil
                         </Link>
                       </DropdownMenuItem>
+                      {hasModule('rh') && (
+                        <DropdownMenuItem asChild>
+                          <Link to="/rh/signature" className="flex items-center gap-2 cursor-pointer">
+                            <PenTool className="w-4 h-4" />
+                            Ma signature
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
                       {isAdmin && (
                         <DropdownMenuItem asChild>
                           <Link to="/admin" className="flex items-center gap-2 cursor-pointer">
