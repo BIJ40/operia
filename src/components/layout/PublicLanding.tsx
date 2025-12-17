@@ -6,7 +6,6 @@ import {
   Network, 
   LogIn, 
   Building2, 
-  Brain,
   Users,
   FileText,
   UserCheck,
@@ -16,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DemoCarousel } from '@/components/landing/DemoCarousel';
+import operiaLogo from '@/assets/operia-logo.png';
 
 interface PublicLandingProps {
   onLoginClick: () => void;
@@ -30,7 +30,7 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
       <header className="w-full bg-gradient-to-r from-blue-900 to-indigo-800">
         <div className="container mx-auto px-4 sm:px-6 py-3 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Brain className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
+            <img src={operiaLogo} alt="OPER.IA" className="w-8 h-8 sm:w-10 sm:h-10 object-contain" />
             <span className="text-white font-bold text-lg sm:text-xl">OPER.IA</span>
             <span className="text-blue-200 text-xs sm:text-sm hidden sm:inline ml-2">Intelligence Opérationnelle</span>
           </div>
@@ -181,7 +181,7 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
       <footer className="border-t bg-gradient-to-r from-blue-900/5 to-indigo-800/5 py-8 mt-auto">
         <div className="container mx-auto px-6 text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <Brain className="w-5 h-5 text-blue-600" />
+            <img src={operiaLogo} alt="OPER.IA" className="w-6 h-6 object-contain" />
             <span className="font-bold text-foreground">OPER.IA</span>
           </div>
           <p className="text-muted-foreground text-sm">
