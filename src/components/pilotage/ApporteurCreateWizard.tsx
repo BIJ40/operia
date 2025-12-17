@@ -95,7 +95,7 @@ export function ApporteurCreateWizard({ open, onOpenChange }: ApporteurCreateWiz
       });
       
       if (error) throw error;
-      setSearchResults(data?.results || []);
+      setSearchResults(data?.data || []);
     } catch (err) {
       console.error('Search error:', err);
       toast.error('Erreur lors de la recherche');
