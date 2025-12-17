@@ -2088,6 +2088,44 @@ export type Database = {
           },
         ]
       }
+      collaborator_work_profiles: {
+        Row: {
+          break_minutes_default: number
+          collaborator_id: string
+          created_at: string
+          id: string
+          updated_at: string
+          weekly_contract_minutes: number
+          work_week_starts_on: number
+        }
+        Insert: {
+          break_minutes_default?: number
+          collaborator_id: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          weekly_contract_minutes?: number
+          work_week_starts_on?: number
+        }
+        Update: {
+          break_minutes_default?: number
+          collaborator_id?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          weekly_contract_minutes?: number
+          work_week_starts_on?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collaborator_work_profiles_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: true
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       collaborators: {
         Row: {
           address: string | null
@@ -4515,6 +4553,86 @@ export type Database = {
           },
         ]
       }
+      planning_package_recipients: {
+        Row: {
+          collaborator_id: string
+          created_at: string
+          id: string
+          package_id: string
+          signed_at: string | null
+          signed_comment: string | null
+        }
+        Insert: {
+          collaborator_id: string
+          created_at?: string
+          id?: string
+          package_id: string
+          signed_at?: string | null
+          signed_comment?: string | null
+        }
+        Update: {
+          collaborator_id?: string
+          created_at?: string
+          id?: string
+          package_id?: string
+          signed_at?: string | null
+          signed_comment?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planning_package_recipients_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "planning_package_recipients_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "planning_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      planning_packages: {
+        Row: {
+          agency_id: string
+          created_at: string
+          id: string
+          sent_at: string
+          sent_by: string
+          title: string | null
+          week_start: string
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          id?: string
+          sent_at?: string
+          sent_by: string
+          title?: string | null
+          week_start: string
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          id?: string
+          sent_at?: string
+          sent_by?: string
+          title?: string | null
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planning_packages_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       planning_signatures: {
         Row: {
           comment: string | null
@@ -6283,6 +6401,112 @@ export type Database = {
             columns: ["ticket_id"]
             isOneToOne: true
             referencedRelation: "apogee_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      time_events: {
+        Row: {
+          collaborator_id: string
+          created_at: string
+          created_by: string | null
+          event_type: string
+          id: string
+          location_lat: number | null
+          location_lng: number | null
+          notes: string | null
+          occurred_at: string
+          source: string
+        }
+        Insert: {
+          collaborator_id: string
+          created_at?: string
+          created_by?: string | null
+          event_type: string
+          id?: string
+          location_lat?: number | null
+          location_lng?: number | null
+          notes?: string | null
+          occurred_at?: string
+          source?: string
+        }
+        Update: {
+          collaborator_id?: string
+          created_at?: string
+          created_by?: string | null
+          event_type?: string
+          id?: string
+          location_lat?: number | null
+          location_lng?: number | null
+          notes?: string | null
+          occurred_at?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_events_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      timesheets: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          collaborator_id: string
+          computed: Json
+          contract_minutes: number
+          created_at: string
+          id: string
+          overtime_minutes: number
+          rejection_comment: string | null
+          status: string
+          submitted_at: string | null
+          total_minutes: number
+          updated_at: string
+          week_start: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          collaborator_id: string
+          computed?: Json
+          contract_minutes?: number
+          created_at?: string
+          id?: string
+          overtime_minutes?: number
+          rejection_comment?: string | null
+          status?: string
+          submitted_at?: string | null
+          total_minutes?: number
+          updated_at?: string
+          week_start: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          collaborator_id?: string
+          computed?: Json
+          contract_minutes?: number
+          created_at?: string
+          id?: string
+          overtime_minutes?: number
+          rejection_comment?: string | null
+          status?: string
+          submitted_at?: string | null
+          total_minutes?: number
+          updated_at?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timesheets_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
             referencedColumns: ["id"]
           },
         ]
