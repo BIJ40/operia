@@ -165,12 +165,14 @@ export function ApporteurCreateWizard({ open, onOpenChange }: ApporteurCreateWiz
       
       const { data: userData, error: userError } = await supabase.functions.invoke('create-apporteur-user', {
         body: {
-          apporteurId: apporteur.id,
+          agency_id: agencyId,
+          apporteur_id: apporteur.id,
           email: userEmail,
           password: userPassword,
-          firstName: userFirstName || undefined,
-          lastName: userLastName || undefined,
-          role: 'admin',
+          first_name: userFirstName || 'Utilisateur',
+          last_name: userLastName || 'Apporteur',
+          role: 'manager',
+          send_email: false,
         },
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
