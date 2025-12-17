@@ -15,6 +15,7 @@ import { GLOBAL_ROLE_LABELS, GLOBAL_ROLE_COLORS, type GlobalRole, GLOBAL_ROLES }
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAllAgencySubscriptions, useAccessRightsUsers, UserRow } from '@/hooks/access-rights';
 import { CreateUserDialog, EditUserDialog, DeactivateDialog, ReactivateDialog, DeleteDialog } from '@/components/admin/users/UserDialogs';
+import type { UpdateUserPayload } from '@/components/users/UserEditForm';
 import { ModuleKey, EnabledModules } from '@/types/modules';
 import { cn } from '@/lib/utils';
 
@@ -216,29 +217,47 @@ export function UsersAccessTab() {
     }
   };
 
-  // Sauvegarde unifiée: données + modules en une seule action, puis ferme le dialog
-  const handleSaveUser = async (data: Parameters<typeof updateUserMutation.mutate>[0]['data']) => {
+  // Sauvegarde unifiée: si l'email a changé, le sauvegarder aussi (via fonction backend), puis fermer le dialog
+  const handleSaveUser = async (payload: UpdateUserPayload) => {
     if (!selectedUser) return;
-    
-    updateUserMutation.mutate(
-      { userId: selectedUser.id, data, enabledModules: localModules },
-      {
-        onSuccess: () => {
-          // Fermer le dialog après succès
-          setEditDialogOpen(false);
-          setLocalModules(null);
-          setSelectedUser(null);
-        }
+
+    const nextEmail = (payload.email ?? '').trim();
+    const emailChanged = !!nextEmail && nextEmail !== (selectedUser.email ?? '');
+
+    const data = {
+      first_name: payload.first_name,
+      last_name: payload.last_name,
+      agence: payload.agence,
+      agency_id: payload.agency_id,
+      role_agence: payload.role_agence,
+      global_role: payload.global_role,
+      support_level: payload.support_level,
+      apogee_user_id: payload.apogee_user_id,
+    };
+
+    try {
+      if (emailChanged) {
+        await updateEmailMutation.mutateAsync({ userId: selectedUser.id, newEmail: nextEmail });
       }
-    );
+
+      await updateUserMutation.mutateAsync({ userId: selectedUser.id, data, enabledModules: localModules });
+
+      setEditDialogOpen(false);
+      setLocalModules(null);
+      setSelectedUser(null);
+    } catch {
+      // Les toasts d'erreur sont gérés par les mutations
+    }
   };
 
-  // Convert UserRow to UserProfile format for dialogs
-  const userAsProfile = selectedUser ? {
-    ...selectedUser,
-    global_role: selectedUser.global_role,
-    enabled_modules: localModules ?? selectedUser.enabled_modules,
-  } : null;
+  // Convert UserRow to UserProfile format for dialogs (mémoïsé pour éviter les resets de formulaire)
+  const userAsProfile = useMemo(() => {
+    if (!selectedUser) return null;
+    return {
+      ...selectedUser,
+      enabled_modules: localModules ?? selectedUser.enabled_modules,
+    };
+  }, [selectedUser, localModules]);
 
   // Sortable header component
   const SortableHeader = ({ columnKey, children, className }: { columnKey: SortKey; children: React.ReactNode; className?: string }) => (
