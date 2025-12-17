@@ -24,7 +24,6 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 import { AgencySelector } from './StatiaBuilder/AgencySelector';
-import { MetricWidgetColumn } from './MetricWidgetColumn';
 import { STAT_DEFINITIONS, listStatDefinitions } from '../definitions';
 import { getMetricForAgency } from '../api/getMetricForAgency';
 import { getGlobalApogeeDataServices } from '../adapters/dataServiceAdapter';
@@ -290,15 +289,6 @@ function MetricRow({ definition, result, isLoading, isValidated, onValidate, onU
           </TooltipTrigger>
           <TooltipContent>Copier le chemin du fichier source</TooltipContent>
         </Tooltip>
-      </div>
-      
-      {/* Widget - dernière colonne */}
-      <div className="col-span-3">
-        <MetricWidgetColumn 
-          definition={definition} 
-          value={result?.value} 
-          isLoading={isLoading} 
-        />
       </div>
     </div>
   );

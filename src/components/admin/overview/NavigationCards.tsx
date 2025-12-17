@@ -202,12 +202,6 @@ export function NavigationCards() {
           description: 'Diffuser des informations' 
         },
         { 
-          to: ROUTES.admin.widgets, 
-          icon: LayoutGrid, 
-          title: 'Gestion Widgets', 
-          description: 'Permissions des widgets dashboard' 
-        },
-        { 
           to: ROUTES.admin.systemHealth, 
           icon: Activity, 
           title: 'Santé Système', 

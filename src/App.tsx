@@ -34,8 +34,6 @@ const Category = lazy(() => import("./pages/Category"));
 const CategoryApporteur = lazy(() => import("./pages/CategoryApporteur"));
 const HelpConfort = lazy(() => import("./pages/HelpConfort"));
 const CategoryHelpConfort = lazy(() => import("./pages/CategoryHelpConfort"));
-// Documents removed - redirects to Helpi
-const FormationApogee = lazy(() => import("./pages/FormationApogee"));
 
 // Lazy loaded pages - Pilotage Agence
 const ActionsAMener = lazy(() => import("./pages/ActionsAMener"));
@@ -144,8 +142,6 @@ const Profile = lazy(() => import("./pages/Profile"));
 const Favorites = lazy(() => import("./pages/Favorites"));
 const Changelog = lazy(() => import("./pages/Changelog"));
 const Roadmap = lazy(() => import("./pages/Roadmap"));
-const SecurityAuditReport = lazy(() => import("./pages/SecurityAuditReport"));
-const SecurityDocumentation = lazy(() => import("./pages/SecurityDocumentation"));
 
 // Dev pages (Admin only)
 const UnifiedSearchAnimationPlayground = lazy(() => import("./pages/dev/UnifiedSearchAnimationPlayground"));
@@ -230,7 +226,6 @@ function AppContent() {
           {/* Guide Apogée */}
           <Route path="/academy/apogee" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><ApogeeGuide /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/academy/apogee/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><Category /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/academy/formation" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><FormationApogee /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* Guide Apporteurs */}
           <Route path="/academy/apporteurs" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><ApporteurGuide /></ModuleGuard></RoleGuard></MainLayout>} />
@@ -424,10 +419,10 @@ function AppContent() {
           <Route path="/projects/kanban" element={<MainLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsKanban /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/projects/historique" element={<MainLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsHistory /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/projects/list" element={<MainLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsList /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/projects/incomplets" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsIncomplete /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/projects/review" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsReview /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/projects/incomplets" element={<MainLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsIncomplete /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/projects/review" element={<MainLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsReview /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/projects/permissions" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsAdmin /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/projects/doublons" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsDuplicates /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/projects/doublons" element={<MainLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsDuplicates /></ModuleGuard></RoleGuard></MainLayout>} />
           
           
           {/* ============================================ */}
@@ -438,8 +433,6 @@ function AppContent() {
           <Route path="/academy/favoris" element={<MainLayout><RoleGuard><ModuleGuard moduleKey="help_academy"><Favorites /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/changelog" element={<MainLayout><Changelog /></MainLayout>} />
           <Route path="/roadmap" element={<MainLayout><Roadmap /></MainLayout>} />
-          <Route path="/security-audit-report" element={<MainLayout><RoleGuard minRole="platform_admin"><SecurityAuditReport /></RoleGuard></MainLayout>} />
-          <Route path="/security-documentation" element={<MainLayout><RoleGuard minRole="platform_admin"><SecurityDocumentation /></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* DEV PAGES - Admin only (N5/N6) */}
