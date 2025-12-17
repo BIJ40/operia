@@ -67,6 +67,7 @@ const DemandesRHPage = lazy(() => import("./pages/rh/DemandesRHUnifiedPage"));
 const RHIndex = lazy(() => import("./pages/RHIndex"));
 // Suivi RH (nouveau module N2)
 const RHSuiviIndex = lazy(() => import("./pages/rh/RHSuiviIndex"));
+const GestionHeuresPage = lazy(() => import("./pages/rh/GestionHeuresPage"));
 const RHCollaborateurPage = lazy(() => import("./pages/rh/RHCollaborateurPage"));
 const CommercialPage = lazy(() => import("./pages/CommercialPage"));
 const CommercialSupportPptx = lazy(() => import("./commercial/pages/CommercialSupportPptx"));
