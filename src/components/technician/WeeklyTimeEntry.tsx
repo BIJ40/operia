@@ -173,9 +173,12 @@ export function WeeklyTimeEntry({ weekStart, existingDays, onSaved }: WeeklyTime
           </div>
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent className="p-0 overflow-x-auto">
         {/* Header */}
-        <div className="grid grid-cols-6 gap-2 px-4 py-2 bg-muted/50 text-xs font-medium text-muted-foreground">
+        <div 
+          className="grid gap-2 px-4 py-2 bg-muted/50 text-xs font-medium text-muted-foreground min-w-[500px]"
+          style={{ gridTemplateColumns: 'minmax(70px, 1fr) repeat(4, 70px) minmax(80px, auto)' }}
+        >
           <div>Jour</div>
           <div>Début</div>
           <div>Pause</div>
@@ -185,13 +188,17 @@ export function WeeklyTimeEntry({ weekStart, existingDays, onSaved }: WeeklyTime
         </div>
 
         {/* Days */}
-        <div className="divide-y divide-border">
+        <div className="divide-y divide-border min-w-[500px]">
           {DAYS.map((day, i) => {
             const dayDate = addDays(weekStart, i);
             const minutes = dayMinutes[i];
             
             return (
-              <div key={i} className="grid grid-cols-6 gap-2 items-center px-4 py-3">
+              <div 
+                key={i} 
+                className="grid gap-2 items-center px-4 py-3"
+                style={{ gridTemplateColumns: 'minmax(70px, 1fr) repeat(4, 70px) minmax(80px, auto)' }}
+              >
                 <div>
                   <div className="text-sm font-medium">{day}</div>
                   <div className="text-xs text-muted-foreground">
@@ -202,29 +209,29 @@ export function WeeklyTimeEntry({ weekStart, existingDays, onSaved }: WeeklyTime
                   type="time"
                   value={entries[i].debut}
                   onChange={(e) => updateEntry(i, 'debut', e.target.value)}
-                  className="h-9 text-sm"
+                  className="h-8 text-xs px-2"
                 />
                 <Input
                   type="time"
                   value={entries[i].pause}
                   onChange={(e) => updateEntry(i, 'pause', e.target.value)}
-                  className="h-9 text-sm"
+                  className="h-8 text-xs px-2"
                 />
                 <Input
                   type="time"
                   value={entries[i].reprise}
                   onChange={(e) => updateEntry(i, 'reprise', e.target.value)}
-                  className="h-9 text-sm"
+                  className="h-8 text-xs px-2"
                 />
                 <Input
                   type="time"
                   value={entries[i].fin}
                   onChange={(e) => updateEntry(i, 'fin', e.target.value)}
-                  className="h-9 text-sm"
+                  className="h-8 text-xs px-2"
                 />
-                <div className="flex items-center justify-end gap-2">
+                <div className="flex items-center justify-end gap-1">
                   <span className={cn(
-                    "text-sm font-medium tabular-nums",
+                    "text-sm font-medium tabular-nums whitespace-nowrap",
                     minutes > 0 ? "text-foreground" : "text-muted-foreground"
                   )}>
                     {minutes > 0 ? formatMinutes(minutes) : '-'}
@@ -232,7 +239,7 @@ export function WeeklyTimeEntry({ weekStart, existingDays, onSaved }: WeeklyTime
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7"
+                    className="h-7 w-7 shrink-0"
                     onClick={() => resetDay(i)}
                     title="Réinitialiser"
                   >
