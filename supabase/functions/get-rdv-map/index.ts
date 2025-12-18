@@ -368,12 +368,19 @@ Deno.serve(async (req) => {
       const data = intervention?.data || {};
       const visites = Array.isArray(data.visites) ? data.visites : [];
 
-      // Techniciens: userId (si présent) + visites[].usersIds
-      const technicianIds: number[] = [];
-      if (typeof intervention?.userId === 'number') {
-        technicianIds.push(intervention.userId);
+      // IMPORTANT: Filtrer les visites du jour AVANT d'extraire les techniciens
+      const visitesDuJour = visites.filter(
+        (v: any) => typeof v?.date === 'string' && v.date.startsWith(date)
+      );
+
+      // Si aucune visite ce jour-là, on skip cette intervention
+      if (visitesDuJour.length === 0) {
+        continue;
       }
-      for (const v of visites) {
+
+      // Techniciens: UNIQUEMENT ceux des visites du jour sélectionné
+      const technicianIds: number[] = [];
+      for (const v of visitesDuJour) {
         if (Array.isArray(v?.usersIds)) {
           technicianIds.push(...v.usersIds);
         }
@@ -414,21 +421,16 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // StartAt + Durée: on prend la première visite du jour si dispo
-      const visitesDuJour = visites.filter(
-        (v: any) => typeof v?.date === 'string' && v.date.startsWith(date)
-      );
-      const visiteRef = visitesDuJour[0] ?? visites[0] ?? null;
+      // StartAt + Durée: on prend la première visite du jour
+      const visiteRef = visitesDuJour[0];
 
-      const startAt = (typeof visiteRef?.date === 'string' ? visiteRef.date : null)
-        ?? (typeof intervention?.date === 'string' ? intervention.date : null)
-        ?? date;
+      const startAt = typeof visiteRef?.date === 'string' ? visiteRef.date : date;
 
       const durationMin = typeof visiteRef?.duree === 'number'
         ? visiteRef.duree
         : (typeof intervention?.duree === 'number' ? intervention.duree : 60);
 
-      // Techniciens (nom + couleur)
+      // Techniciens du jour (nom + couleur)
       const rdvUsers: MapRdvUser[] = uniqueTechIds.slice(0, 10).map((id) => {
         const userData = usersById.get(id);
         return {
