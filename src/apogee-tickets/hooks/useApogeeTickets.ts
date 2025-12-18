@@ -438,11 +438,11 @@ export function useApogeeTicket(ticketId: string | null) {
             created_by_user_id: user?.id,
           })
           .select()
-          .single(),
+          .maybeSingle(),
         'APOGEE_TICKET_COMMENT_CREATE'
       );
       
-      if (!result.success) {
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || 'Erreur ajout commentaire');
       }
       return result.data;
@@ -481,11 +481,11 @@ export function useApogeeTicket(ticketId: string | null) {
           .eq('id', commentId)
           .eq('created_by_user_id', user?.id) // Only allow editing own comments
           .select()
-          .single(),
+          .maybeSingle(),
         'APOGEE_TICKET_COMMENT_UPDATE'
       );
       
-      if (!result.success) {
+      if (!result.success || !result.data) {
         throw new Error(result.error?.message || 'Erreur modification commentaire');
       }
       return result.data;
