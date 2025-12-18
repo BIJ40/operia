@@ -1,6 +1,6 @@
 # Documentation RLS - Sécurité Multi-tenant
 
-> Dernière mise à jour : 2025-11-30
+> Dernière mise à jour : 2025-12-18
 
 ## Vue d'ensemble
 
@@ -32,6 +32,9 @@ has_franchiseur_access(user_id uuid) → boolean
 
 -- Récupère l'agence d'un utilisateur
 get_user_agency(user_id uuid) → text
+
+-- Récupère l'ID agence pour RLS sans récursion
+get_user_agency_id() → uuid
 ```
 
 ---
@@ -182,6 +185,40 @@ get_user_agency(user_id uuid) → text
 | UPDATE | Directeur/DG OU N5+ | directeur, DG, platform_admin+ |
 | DELETE | Directeur/DG OU N5+ | directeur, DG, platform_admin+ |
 
+### 17. `timesheets` (Pointages) ✅ NOUVEAU
+
+| Opération | Règle | Rôles autorisés |
+|-----------|-------|-----------------|
+| SELECT | Propre timesheet OU N2+ même agence | Self (N1), N2+ (agence) |
+| INSERT | Propre timesheet uniquement | N1 (self) |
+| UPDATE | N1 si DRAFT/N2_MODIFIED, N2+ si autre statut | Selon workflow |
+| DELETE | Non autorisé | Aucun |
+
+**Workflow 5 états** : `DRAFT → SUBMITTED → N2_MODIFIED → COUNTERSIGNED → VALIDATED`
+
+**Règles de transition** :
+- N1 peut soumettre (DRAFT→SUBMITTED) ou contre-signer (N2_MODIFIED→COUNTERSIGNED)
+- N2+ peut valider directement, modifier (→N2_MODIFIED), ou rejeter (→DRAFT)
+- N2+ peut finaliser la validation (COUNTERSIGNED→VALIDATED)
+
+### 18. `rh_notifications` (Notifications RH)
+
+| Opération | Règle | Rôles autorisés |
+|-----------|-------|-----------------|
+| SELECT | Propre agence via get_user_agency_id() | Tous (propre agence) |
+| INSERT | Propre agence | Service role / Triggers |
+| UPDATE | Destinataire uniquement | Self (read_at) |
+| DELETE | Non autorisé | Aucun |
+
+### 19. `rh_requests` (Demandes RH)
+
+| Opération | Règle | Rôles autorisés |
+|-----------|-------|-----------------|
+| SELECT | Propre demande OU N2+ même agence | N1 (self), N2+ (agence) |
+| INSERT | Employé de l'agence | N1 (self) |
+| UPDATE | N1 si SUBMITTED (annuler), N2+ pour traitement | Selon workflow |
+| DELETE | Non autorisé | Aucun |
+
 ---
 
 ## Tables de configuration (lecture globale)
@@ -212,15 +249,25 @@ Les tables suivantes appliquent une isolation stricte par `agency_id` :
 | `agency_collaborators` | `agency_id` | N0-N2 voient leur agence, N3+ voient tout |
 | `profiles` | `agency_id` / `agence` | Via get_user_agency() |
 | `support_tickets` | `agency_slug` | Filtrage par agence pour support |
+| `timesheets` | `agency_id` | N1 propres, N2+ même agence |
+| `rh_requests` | `agency_id` | N1 propres, N2+ même agence |
+| `rh_notifications` | `agency_id` | Même agence uniquement |
 
 ---
 
 ## Vérifications de sécurité
 
+### Test N1 (franchisee_user)
+- ✅ Peut créer et voir ses propres timesheets
+- ✅ Ne peut PAS modifier les timesheets d'autres techniciens
+- ✅ Peut soumettre ses propres demandes RH
+- ✅ Ne peut PAS voir les demandes RH des autres
+
 ### Test N2 (franchisee_admin)
 - ✅ Ne peut PAS lire les données d'une autre agence
 - ✅ Ne peut PAS modifier les guides Apogée
-- ✅ Peut voir ses propres tickets support
+- ✅ Peut voir tous les timesheets de son agence
+- ✅ Peut valider/modifier les timesheets de son équipe
 - ✅ Ne peut PAS accéder aux tickets Apogée (sauf si module activé)
 
 ### Test N3 (franchisor_user)
@@ -240,6 +287,10 @@ Les tables suivantes appliquent une isolation stricte par `agency_id` :
 
 | Date | Modification |
 |------|--------------|
+| 2025-12-18 | Ajout `timesheets` - RLS workflow 5 états N1/N2 |
+| 2025-12-18 | Ajout `rh_notifications` - isolation par agence |
+| 2025-12-18 | Ajout `rh_requests` - séparation N1/N2 |
+| 2025-12-18 | Ajout fonction `get_user_agency_id()` |
 | 2025-11-30 | Correction `apogee_guides` - suppression "Temporary full access" |
 | 2025-11-30 | Correction `planning_signatures` - restriction INSERT/DELETE |
 | 2025-11-30 | Correction `support_attachments` - restriction INSERT |
