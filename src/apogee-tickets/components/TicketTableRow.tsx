@@ -33,9 +33,11 @@ interface TicketTableRowProps {
 }
 
 const OWNER_SIDES: { value: OwnerSide; label: string }[] = [
-  { value: 'HC', label: 'HC' },
   { value: 'APOGEE', label: 'Apogée' },
-  { value: 'PARTAGE', label: 'Partagé' },
+  { value: '75_25', label: '75/25' },
+  { value: '50_50', label: '50/50' },
+  { value: '25_75', label: '25/75' },
+  { value: 'HC', label: 'HC' },
 ];
 
 const REPORTED_BY_OPTIONS: { value: ReportedBy; label: string }[] = [
