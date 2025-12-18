@@ -2,11 +2,12 @@
  * useRdvMap - Hook pour charger les RDV de la carte
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
+import { useApogeeUsers } from '@/shared/api/apogee/useApogeeUsers';
 
 interface MapRdvUser {
   id: number;
@@ -42,7 +43,9 @@ interface UseRdvMapResult {
 
 export function useRdvMap({ date, techIds, agencySlug }: UseRdvMapOptions): UseRdvMapResult {
   const { agence } = useAuth();
-  const [technicians, setTechnicians] = useState<{ id: number; name: string; color: string }[]>([]);
+  
+  // Charger TOUS les techniciens de l'agence via useApogeeUsers (indépendant des RDV)
+  const { users: apogeeUsers, loading: usersLoading } = useApogeeUsers();
   
   // Déterminer l'agence cible
   const targetAgency = agencySlug || agence;
@@ -85,24 +88,24 @@ export function useRdvMap({ date, techIds, agencySlug }: UseRdvMapOptions): UseR
     refetchOnWindowFocus: false,
   });
   
-  // Extraire la liste unique des techniciens depuis les RDV
-  useEffect(() => {
-    if (data) {
-      const techMap = new Map<number, { id: number; name: string; color: string }>();
-      data.forEach(rdv => {
-        rdv.users.forEach(user => {
-          if (!techMap.has(user.id)) {
-            techMap.set(user.id, user);
-          }
-        });
-      });
-      setTechnicians(Array.from(techMap.values()).sort((a, b) => a.name.localeCompare(b.name)));
-    }
-  }, [data]);
+  // Liste complète des techniciens (type "technicien" uniquement) depuis apiGetUsers
+  const technicians = useMemo(() => {
+    if (!apogeeUsers?.length) return [];
+    
+    return apogeeUsers
+      .filter(u => u.type === 'technicien' || u.type === 'tech' || u.type === 'Technicien')
+      .map(u => ({
+        id: u.id,
+        name: u.firstname || u.name || `User ${u.id}`,
+        // Couleur depuis data.bgcolor.hex ou fallback
+        color: u.data?.bgcolor?.hex || u.data?.bgcolor?.hex8 || '#6366f1',
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [apogeeUsers]);
   
   return {
     rdvs: data || [],
-    isLoading,
+    isLoading: isLoading || usersLoading,
     error: error instanceof Error ? error.message : null,
     refetch,
     technicians,
