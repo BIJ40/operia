@@ -43,15 +43,15 @@ interface UseRdvMapResult {
 
 export function useRdvMap({ date, techIds, agencySlug }: UseRdvMapOptions): UseRdvMapResult {
   const { agence } = useAuth();
-  
-  // Charger TOUS les techniciens de l'agence via useApogeeUsers (indépendant des RDV)
-  const { users: apogeeUsers, loading: usersLoading } = useApogeeUsers();
-  
+
   // Déterminer l'agence cible
   const targetAgency = agencySlug || agence;
-  
-  // Query key basée sur date + techIds + agency
-  const queryKey = [
+
+  // Charger TOUS les techniciens de l'agence via useApogeeUsers (indépendant des RDV)
+  const { users: apogeeUsers, loading: usersLoading } = useApogeeUsers({
+    agencySlug: targetAgency,
+  });
+
     'rdv-map',
     format(date, 'yyyy-MM-dd'),
     techIds?.join(',') || 'all',

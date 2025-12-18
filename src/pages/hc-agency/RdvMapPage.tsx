@@ -387,7 +387,7 @@ export default function RdvMapPage() {
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             ) : (
-              <div ref={mapContainer} className="absolute inset-0" />
+              <div ref={mapContainer} className="h-full w-full" />
             )}
 
             {/* Erreur init Mapbox */}

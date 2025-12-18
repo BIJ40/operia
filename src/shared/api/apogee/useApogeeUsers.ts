@@ -2,13 +2,21 @@ import { useQuery } from "@tanstack/react-query";
 import { apogeeProxy } from "@/services/apogeeProxy";
 import type { ApogeeUser } from "@/shared/types/apogeePlanning";
 
-export function useApogeeUsers() {
+export interface UseApogeeUsersOptions {
+  agencySlug?: string;
+}
+
+export function useApogeeUsers(options: UseApogeeUsersOptions = {}) {
+  const { agencySlug } = options;
+
   const { data, isLoading, error } = useQuery<ApogeeUser[]>({
-    queryKey: ["apogee-users"],
+    queryKey: ["apogee-users", agencySlug ?? "none"],
     queryFn: async () => {
-      const result = await apogeeProxy.getUsers();
+      if (!agencySlug) return [];
+      const result = await apogeeProxy.getUsers({ agencySlug });
       return (result || []) as ApogeeUser[];
     },
+    enabled: !!agencySlug,
     staleTime: 5 * 60 * 1000,
   });
 
