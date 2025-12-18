@@ -326,9 +326,7 @@ export const delaiDossierPremierDevis: StatDefinition = {
   aggregation: 'avg',
   unit: 'jours',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    console.log('[StatIA] =============== DELAI 1ER DEVIS COMPUTE START ===============');
     const { projects } = data;
-    console.log('[StatIA] delai_dossier_premier_devis - projects:', projects?.length ?? 0);
     
     // Utiliser la fonction partagée - SOURCE UNIQUE DE VÉRITÉ
     const result = calculateDelaiPremierDevis(projects, {
