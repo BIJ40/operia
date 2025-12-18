@@ -122,14 +122,17 @@ export default function RdvMapPage() {
       );
 
       // Dans un layout flex/overflow, Mapbox peut nécessiter un resize explicite
-      const ro = new ResizeObserver(() => {
-        try {
-          map.current?.resize();
-        } catch {
-          // ignore
-        }
-      });
-      ro.observe(mapContainer.current);
+      let ro: ResizeObserver | null = null;
+      if (typeof ResizeObserver !== 'undefined') {
+        ro = new ResizeObserver(() => {
+          try {
+            map.current?.resize();
+          } catch {
+            // ignore
+          }
+        });
+        ro.observe(mapContainer.current);
+      }
 
       map.current.on('load', () => {
         requestAnimationFrame(() => {
@@ -148,7 +151,7 @@ export default function RdvMapPage() {
       });
 
       return () => {
-        ro.disconnect();
+        ro?.disconnect();
         map.current?.remove();
         map.current = null;
       };
@@ -236,7 +239,7 @@ export default function RdvMapPage() {
   }
   
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col">
+    <div className="h-[calc(100vh-4rem)] min-h-0 flex flex-col">
       {/* Barre de filtres */}
       <div className="flex-none p-4 border-b bg-background space-y-3">
         <div className="flex flex-wrap items-center gap-3">
@@ -245,7 +248,7 @@ export default function RdvMapPage() {
             <Button variant="outline" size="icon" onClick={goToPreviousDay}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            
+
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="min-w-[200px] justify-start">
@@ -263,16 +266,16 @@ export default function RdvMapPage() {
                 />
               </PopoverContent>
             </Popover>
-            
+
             <Button variant="outline" size="icon" onClick={goToNextDay}>
               <ChevronRight className="h-4 w-4" />
             </Button>
-            
+
             <Button variant="ghost" size="sm" onClick={goToToday}>
               Aujourd'hui
             </Button>
           </div>
-          
+
           {/* Filtre techniciens */}
           <Popover open={techFilterOpen} onOpenChange={setTechFilterOpen}>
             <PopoverTrigger asChild>
@@ -334,7 +337,7 @@ export default function RdvMapPage() {
               )}
             </PopoverContent>
           </Popover>
-          
+
           {/* Compteur RDV */}
           <div className="flex items-center gap-2 text-sm text-muted-foreground ml-auto">
             <MapPin className="h-4 w-4" />
@@ -347,12 +350,12 @@ export default function RdvMapPage() {
             </span>
           </div>
         </div>
-        
+
         {/* Badges techniciens sélectionnés */}
         {selectedTechIds.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            {selectedTechIds.map(id => {
-              const tech = technicians.find(t => t.id === id);
+            {selectedTechIds.map((id) => {
+              const tech = technicians.find((t) => t.id === id);
               if (!tech) return null;
               return (
                 <Badge
@@ -373,38 +376,50 @@ export default function RdvMapPage() {
           </div>
         )}
       </div>
-      
+
       {/* Carte */}
-      <div className="flex-1 relative bg-muted/20 p-3 sm:p-4 md:p-6">
-        <div className="relative h-full w-full overflow-hidden rounded-xl border bg-background shadow-sm">
-          {!mapboxToken ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-muted">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <div ref={mapContainer} className="absolute inset-0" />
-          )}
+      <div className="flex-1 min-h-0 bg-muted/20 p-3 sm:p-4 md:p-6">
+        <div className="mx-auto h-full w-full max-w-7xl">
+          <div className="relative h-full w-full overflow-hidden rounded-xl border bg-background shadow-sm">
+            {!mapboxToken ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <div ref={mapContainer} className="absolute inset-0" />
+            )}
 
-          {/* Loader overlay */}
-          {isLoading && mapboxToken && (
-            <div className="absolute top-4 left-4 bg-background/80 backdrop-blur rounded-lg px-4 py-2 flex items-center gap-2 shadow-lg">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="text-sm">Chargement des RDV...</span>
-            </div>
-          )}
+            {/* Erreur init Mapbox */}
+            {mapInitError && (
+              <div className="absolute inset-0 flex items-center justify-center p-4">
+                <Alert variant="destructive" className="max-w-xl">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{mapInitError}</AlertDescription>
+                </Alert>
+              </div>
+            )}
 
-          {/* Erreur */}
-          {error && (
-            <div className="absolute top-4 left-4 right-4 max-w-md">
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            </div>
-          )}
+            {/* Loader overlay */}
+            {isLoading && mapboxToken && !mapInitError && (
+              <div className="absolute top-4 left-4 bg-background/80 backdrop-blur rounded-lg px-4 py-2 flex items-center gap-2 shadow-lg">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm">Chargement des RDV...</span>
+              </div>
+            )}
+
+            {/* Erreur data */}
+            {error && !mapInitError && (
+              <div className="absolute top-4 left-4 right-4 max-w-md">
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-      
+
       {/* Drawer détail RDV */}
       <RdvDetailDrawer
         rdv={selectedRdv}
