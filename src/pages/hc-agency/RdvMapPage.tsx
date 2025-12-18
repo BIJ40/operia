@@ -92,23 +92,48 @@ export default function RdvMapPage() {
   // Initialiser la carte
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken || map.current) return;
-    
+
     mapboxgl.accessToken = mapboxToken;
-    
+
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: MAPBOX_STYLE,
       center: DEFAULT_CENTER,
       zoom: DEFAULT_ZOOM,
     });
-    
+
     // Ajouter les contrôles de navigation
     map.current.addControl(
       new mapboxgl.NavigationControl({ visualizePitch: true }),
       'top-right'
     );
-    
+
+    // Dans un layout flex/overflow, Mapbox peut nécessiter un resize explicite
+    const ro = new ResizeObserver(() => {
+      try {
+        map.current?.resize();
+      } catch {
+        // ignore
+      }
+    });
+    ro.observe(mapContainer.current);
+
+    map.current.on('load', () => {
+      requestAnimationFrame(() => {
+        try {
+          map.current?.resize();
+        } catch {
+          // ignore
+        }
+      });
+    });
+
+    map.current.on('error', (e) => {
+      console.error('[RdvMap] Mapbox error:', e?.error || e);
+    });
+
     return () => {
+      ro.disconnect();
       map.current?.remove();
       map.current = null;
     };
