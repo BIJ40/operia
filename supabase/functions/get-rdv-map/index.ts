@@ -46,39 +46,79 @@ const geoCache = new Map<string, { lat: number; lng: number } | null>();
 
 /**
  * Géocode une adresse via api-adresse.data.gouv.fr (BAN)
+ * Utilise le paramètre postcode pour éviter les homonymes (St Vincent de Paul 40 vs 35)
  */
 async function geocodeAddress(address: string, postalCode: string, city: string): Promise<{ lat: number; lng: number } | null> {
-  const fullAddress = `${address} ${postalCode} ${city}`.trim();
+  const cacheKey = `${address}|${postalCode}|${city}`.toLowerCase();
   
   // Check cache
-  if (geoCache.has(fullAddress)) {
-    return geoCache.get(fullAddress) ?? null;
+  if (geoCache.has(cacheKey)) {
+    return geoCache.get(cacheKey) ?? null;
   }
   
   try {
-    const query = encodeURIComponent(fullAddress);
-    const response = await fetch(`https://api-adresse.data.gouv.fr/search/?q=${query}&limit=1`);
+    // Construire la requête avec le code postal comme filtre obligatoire si disponible
+    const queryParts: string[] = [];
+    
+    // Requête texte: adresse + ville (sans code postal dans le texte, il sera filtré)
+    const textQuery = `${address} ${city}`.trim();
+    queryParts.push(`q=${encodeURIComponent(textQuery)}`);
+    
+    // Filtre par code postal (critique pour éviter les homonymes)
+    if (postalCode && postalCode.length >= 2) {
+      queryParts.push(`postcode=${encodeURIComponent(postalCode)}`);
+    }
+    
+    queryParts.push('limit=1');
+    
+    const url = `https://api-adresse.data.gouv.fr/search/?${queryParts.join('&')}`;
+    const response = await fetch(url);
     
     if (!response.ok) {
-      console.warn(`[GET-RDV-MAP] BAN API error: ${response.status}`);
-      geoCache.set(fullAddress, null);
+      console.warn(`[GET-RDV-MAP] BAN API error: ${response.status} for ${textQuery}`);
+      geoCache.set(cacheKey, null);
       return null;
     }
     
     const data = await response.json();
     
     if (data.features && data.features.length > 0) {
-      const [lng, lat] = data.features[0].geometry.coordinates;
+      const feature = data.features[0];
+      const [lng, lat] = feature.geometry.coordinates;
+      
+      // Vérification: le résultat doit être dans le bon département (2 premiers chiffres du CP)
+      const resultPostcode = feature.properties?.postcode || '';
+      const expectedDept = postalCode?.substring(0, 2);
+      const resultDept = resultPostcode.substring(0, 2);
+      
+      if (expectedDept && resultDept && expectedDept !== resultDept) {
+        console.warn(`[GET-RDV-MAP] Geocode mismatch: expected dept ${expectedDept}, got ${resultDept} for "${textQuery}" ${postalCode}`);
+        // Fallback: essayer avec le code postal complet dans la requête texte
+        const fallbackUrl = `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(`${address} ${postalCode} ${city}`)}&limit=1`;
+        const fallbackResponse = await fetch(fallbackUrl);
+        if (fallbackResponse.ok) {
+          const fallbackData = await fallbackResponse.json();
+          if (fallbackData.features?.length > 0) {
+            const [fbLng, fbLat] = fallbackData.features[0].geometry.coordinates;
+            const result = { lat: fbLat, lng: fbLng };
+            geoCache.set(cacheKey, result);
+            return result;
+          }
+        }
+        geoCache.set(cacheKey, null);
+        return null;
+      }
+      
       const result = { lat, lng };
-      geoCache.set(fullAddress, result);
+      geoCache.set(cacheKey, result);
       return result;
     }
     
-    geoCache.set(fullAddress, null);
+    geoCache.set(cacheKey, null);
     return null;
   } catch (error) {
     console.error('[GET-RDV-MAP] Geocoding error:', error);
-    geoCache.set(fullAddress, null);
+    geoCache.set(cacheKey, null);
     return null;
   }
 }
@@ -253,10 +293,22 @@ Deno.serve(async (req) => {
     const users = usersResponse.ok ? await usersResponse.json() : [];
     const usersById = new Map<number, { name: string; color: string }>();
     
+    // Log sample user pour debug des champs couleur
+    if (users.length > 0) {
+      const sample = users[0];
+      console.log(`[GET-RDV-MAP] Sample user keys: ${Object.keys(sample).join(', ')}`);
+      console.log(`[GET-RDV-MAP] Sample user color fields: bgcolor=${sample.bgcolor}, color=${sample.color}, bgColor=${sample.bgColor}`);
+    }
+    
     for (const u of users) {
+      // L'API Apogée peut utiliser: bgcolor, color, bgColor, colorHex, etc.
+      const rawColor = u.bgcolor || u.bgColor || u.color || u.colorHex || null;
+      // S'assurer que c'est une couleur valide (hex ou nom)
+      const color = rawColor && typeof rawColor === 'string' && rawColor.trim() ? rawColor.trim() : '#6366f1';
+      
       usersById.set(u.id, {
         name: `${u.firstname || ''} ${u.lastname || ''}`.trim() || u.name || `User ${u.id}`,
-        color: u.bgcolor || u.color || '#6366f1', // Default indigo
+        color,
       });
     }
 
