@@ -72,17 +72,21 @@ export function FlowToolbar({
           // Convert package schema format to FlowSchemaJson
           const converted: FlowSchemaJson = {
             rootNodeId: firstSchema.rootNodeId || 'start',
-            nodes: (firstSchema.nodes || []).map((node: any) => ({
-              id: node.id,
-              type: node.type === 'block' ? 'block' : node.type,
-              blockId: node.data?.blockId,
-              position: node.position || { x: 0, y: 0 },
-              data: {
-                label: node.data?.label || node.id,
-                contextKey: node.data?.answer?.key,
-                overrides: node.data?.overrides,
-              },
-            })),
+            nodes: (firstSchema.nodes || []).map((node: any) => {
+              const baseNode = {
+                id: node.id,
+                type: node.type as any,
+                blockId: node.data?.blockId,
+                position: node.position || { x: 0, y: 0 },
+                data: {
+                  label: node.data?.label || node.id,
+                  contextKey: node.data?.answer?.key,
+                  overrides: node.data?.overrides,
+                  targetSchemaId: node.data?.targetSchemaId, // for jump nodes
+                },
+              };
+              return baseNode;
+            }),
             edges: (firstSchema.edges || []).map((edge: any) => ({
               id: edge.id,
               source: edge.source,

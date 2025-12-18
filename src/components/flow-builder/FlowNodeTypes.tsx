@@ -13,6 +13,7 @@ import {
   List,
   Hash,
   Calendar,
+  ExternalLink,
   LucideIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -150,10 +151,43 @@ export const BlockNode = memo(({ data, selected }: NodeProps<ReactFlowNodeData>)
 });
 BlockNode.displayName = 'BlockNode';
 
+// Jump Node (navigate to another schema)
+export const JumpNode = memo(({ data, selected }: NodeProps<ReactFlowNodeData>) => {
+  return (
+    <div
+      className={cn(
+        'min-w-[140px] rounded-lg border-2 bg-card shadow-md overflow-hidden',
+        selected ? 'border-purple-500 ring-2 ring-purple-500 ring-offset-2' : 'border-purple-300'
+      )}
+    >
+      <Handle
+        type="target"
+        position={Position.Top}
+        className="!bg-purple-500 !w-3 !h-3"
+      />
+      
+      <div className="px-3 py-2 bg-purple-100 dark:bg-purple-900/30 border-b border-purple-200 flex items-center gap-2">
+        <ExternalLink className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+        <span className="font-medium text-sm text-purple-700 dark:text-purple-300 truncate">
+          {data.label || 'Jump'}
+        </span>
+      </div>
+      
+      {data.targetSchemaId && (
+        <div className="px-3 py-2 text-xs text-muted-foreground">
+          <span className="text-purple-600 dark:text-purple-400">→</span> {data.targetSchemaId}
+        </div>
+      )}
+    </div>
+  );
+});
+JumpNode.displayName = 'JumpNode';
+
 // Node types export for React Flow
 export const nodeTypes = {
   start: StartNode,
   terminal: TerminalNode,
   router: RouterNode,
   block: BlockNode,
+  jump: JumpNode,
 };

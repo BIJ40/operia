@@ -61,7 +61,7 @@ export interface FlowNodePosition {
   y: number;
 }
 
-export type FlowNodeType = 'block' | 'router' | 'terminal' | 'start';
+export type FlowNodeType = 'block' | 'router' | 'terminal' | 'start' | 'jump';
 
 export interface FlowNodeOverrides {
   unit?: string;
@@ -76,6 +76,7 @@ export interface FlowNodeData {
   contextKey?: string; // "vitrage", "mur", "menuiserie"...
   overrides?: FlowNodeOverrides;
   mapping?: Record<string, string>; // future: mapping vers devis
+  targetSchemaId?: string; // for jump nodes - reference to another schema
 }
 
 export interface FlowNode {
@@ -158,4 +159,5 @@ export interface ReactFlowNodeData extends FlowNodeData {
   blockId?: string;
   nodeType: FlowNodeType;
   block?: QuestionBlock;
+  targetSchemaId?: string; // for jump nodes
 }
