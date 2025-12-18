@@ -101,6 +101,8 @@ export const ROUTES = {
     // DocGen
     docgen: '/rh/docgen',
     docgenInstance: (instanceId: string) => `/rh/docgen/${instanceId}`,
+    // Réunions
+    reunions: '/rh/reunions',
   },
 
   // ============================================
