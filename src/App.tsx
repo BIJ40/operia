@@ -49,6 +49,7 @@ const PlanningHebdo = lazy(() => import("./pages/PlanningTechniciensSemaine"));
 // RH Tech hub page
 const RHTech = lazy(() => import("./pages/RHTechPage"));
 const MesApporteursPage = lazy(() => import("./pages/hc-agency/MesApporteursPage"));
+const RdvMapPage = lazy(() => import("./pages/hc-agency/RdvMapPage"));
 const EquipePage = lazy(() => import("./pages/EquipePage"));
 const Messages = lazy(() => import("./pages/Messages"));
 
@@ -282,6 +283,8 @@ function AppContent() {
           {/* Mes Apporteurs */}
           <Route path="/hc-agency/mes-apporteurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><Suspense fallback={<PageLoader />}><MesApporteursPage /></Suspense></ModuleGuard></RoleGuard></MainLayout>} />
           
+          {/* Carte des RDV (Mapbox) */}
+          <Route path="/hc-agency/map" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><Suspense fallback={<PageLoader />}><RdvMapPage /></Suspense></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* RH - Toutes les pages RH unifiées */}
