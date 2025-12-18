@@ -157,9 +157,27 @@ export default function TechPointage() {
 
   const handleSubmit = async () => {
     try {
+      // Convert weekDays to entries format
+      const entries = weekDays.map(d => ({
+        debut: d.events.find(e => e.event_type === 'start_day')
+          ? format(new Date(d.events.find(e => e.event_type === 'start_day')!.occurred_at), 'HH:mm')
+          : '',
+        pause: d.events.find(e => e.event_type === 'start_break')
+          ? format(new Date(d.events.find(e => e.event_type === 'start_break')!.occurred_at), 'HH:mm')
+          : '',
+        reprise: d.events.find(e => e.event_type === 'end_break')
+          ? format(new Date(d.events.find(e => e.event_type === 'end_break')!.occurred_at), 'HH:mm')
+          : '',
+        fin: d.events.find(e => e.event_type === 'end_day')
+          ? format(new Date(d.events.find(e => e.event_type === 'end_day')!.occurred_at), 'HH:mm')
+          : '',
+        minutes: d.totalMinutes,
+      }));
+      
       await submitMutation.mutateAsync({
         weekStart: selectedWeek,
-        days: weekDays,
+        entries,
+        totalMinutes,
       });
       toast.success('Feuille de temps soumise');
       setShowSubmitDialog(false);
@@ -241,17 +259,21 @@ export default function TechPointage() {
     finished: 'Terminé',
   };
 
-  const timesheetStatusConfig = {
+  const timesheetStatusConfig: Record<string, { label: string; color: string; icon: typeof Clock }> = {
+    DRAFT: { label: 'Brouillon', color: 'bg-muted text-muted-foreground', icon: AlertCircle },
     draft: { label: 'Brouillon', color: 'bg-muted text-muted-foreground', icon: AlertCircle },
+    SUBMITTED: { label: 'Soumis', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400', icon: Clock },
     submitted: { label: 'Soumis', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400', icon: Clock },
+    N2_MODIFIED: { label: 'Modifié par N2', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400', icon: Edit3 },
+    COUNTERSIGNED: { label: 'Contre-signé', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400', icon: FileCheck },
+    VALIDATED: { label: 'Validé', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400', icon: CheckCircle2 },
     approved: { label: 'Validé', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400', icon: CheckCircle2 },
-    rejected: { label: 'Rejeté', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400', icon: XCircle },
   };
 
   const displayTime = manualMode ? manualTime : format(currentTime, 'HH:mm');
-  const status = timesheet?.status || 'draft';
-  const StatusIcon = timesheetStatusConfig[status].icon;
-  const canSubmit = status === 'draft' || status === 'rejected';
+  const status = timesheet?.status || 'DRAFT';
+  const StatusIcon = timesheetStatusConfig[status]?.icon || AlertCircle;
+  const canSubmit = status === 'DRAFT';
 
   return (
     <div className="p-4 space-y-4">
