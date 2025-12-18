@@ -88,6 +88,7 @@ export const ROUTES = {
     equipe: '/rh/equipe',
     plannings: '/rh/equipe/plannings',
     heures: '/rh/equipe/heures',
+    timesheets: '/rh/timesheets',
     collaborateurProfile: (id: string) => `/rh/equipe/${id}`,
     demandes: '/rh/demandes',
     conges: '/rh/conges',
