@@ -22,7 +22,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { useRdvMap, calculateBounds, MapRdv } from '@/hooks/useRdvMap';
 import { createPinMarkerElement } from '@/components/map/PinMarker';
-import { RdvDetailDrawer } from '@/components/map/RdvDetailDrawer';
+import { RdvMiniPreview } from '@/components/map/RdvMiniPreview';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -42,7 +42,6 @@ export default function RdvMapPage() {
   const [selectedTechIds, setSelectedTechIds] = useState<number[]>([]);
   const [techFilterOpen, setTechFilterOpen] = useState(false);
   const [selectedRdv, setSelectedRdv] = useState<MapRdv | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [tokenError, setTokenError] = useState<string | null>(null);
   const [mapInitError, setMapInitError] = useState<string | null>(null);
@@ -182,8 +181,7 @@ export default function RdvMapPage() {
       const isSelected = selectedRdv?.rdvId === rdv.rdvId;
 
       const el = createPinMarkerElement(rdv.users, 40, isSelected, () => {
-        setSelectedRdv(rdv);
-        setDrawerOpen(true);
+        setSelectedRdv(prev => prev?.rdvId === rdv.rdvId ? null : rdv);
       });
 
       const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
@@ -408,6 +406,14 @@ export default function RdvMapPage() {
               </div>
             )}
 
+            {/* Mini preview RDV sélectionné */}
+            {selectedRdv && !isLoading && (
+              <RdvMiniPreview
+                rdv={selectedRdv}
+                onClose={() => setSelectedRdv(null)}
+              />
+            )}
+
             {/* Erreur data */}
             {error && !mapInitError && (
               <div className="absolute top-4 left-4 right-4 max-w-md">
@@ -420,14 +426,6 @@ export default function RdvMapPage() {
           </div>
         </div>
       </div>
-
-      {/* Drawer détail RDV */}
-      <RdvDetailDrawer
-        rdv={selectedRdv}
-        open={drawerOpen}
-        onOpenChange={setDrawerOpen}
-        agencySlug={agence || undefined}
-      />
     </div>
   );
 }
