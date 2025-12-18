@@ -471,7 +471,11 @@ export function useApogeeTicket(ticketId: string | null) {
 
   const updateComment = useMutation({
     mutationFn: async ({ commentId, body }: { commentId: string; body: string }) => {
-      const result = await safeMutation<ApogeeTicketComment>(
+      if (!user?.id) {
+        throw new Error('Vous devez être connecté pour modifier un commentaire');
+      }
+
+      const result = await safeMutation<unknown>(
         supabase
           .from('apogee_ticket_comments')
           .update({
@@ -479,16 +483,15 @@ export function useApogeeTicket(ticketId: string | null) {
             updated_at: new Date().toISOString(),
           })
           .eq('id', commentId)
-          .eq('created_by_user_id', user?.id) // Only allow editing own comments
-          .select()
-          .maybeSingle(),
+          .eq('created_by_user_id', user.id), // Only allow editing own comments
         'APOGEE_TICKET_COMMENT_UPDATE'
       );
-      
-      if (!result.success || !result.data) {
+
+      if (!result.success) {
         throw new Error(result.error?.message || 'Erreur modification commentaire');
       }
-      return result.data;
+
+      return true;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['apogee-ticket-comments', ticketId] });
