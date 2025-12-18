@@ -125,6 +125,7 @@ const AdminApogeeReport = lazy(() => import("./pages/admin/AdminApogeeReport"));
 const AdminFlow = lazy(() => import("./pages/admin/AdminFlow"));
 const DocTemplatesPage = lazy(() => import("./pages/admin/DocTemplatesPage"));
 const DocGenPage = lazy(() => import("./pages/rh/DocGenPage"));
+const RHMeetingsPage = lazy(() => import("./pages/rh/RHMeetingsPage"));
 const AdminApporteurs = lazy(() => import("./pages/admin/AdminApporteurs"));
 const MonthlyReportsPage = lazy(() => import("./pages/reports/MonthlyReportsPage"));
 const ReportActivityPage = lazy(() => import("./pages/admin/ReportActivityPage"));
@@ -311,6 +312,7 @@ function AppContent() {
           <Route path="/rh/parc" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh"><MaintenancePreventivePage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/rh/epi" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh"><EPIPage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/rh/docgen" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><DocGenPage /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/rh/reunions" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><RHMeetingsPage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/rh/conges" element={<Navigate to="/rh/demandes" replace />} />
           <Route path="/rh/dashboard" element={<Navigate to="/rh" replace />} />
           {/* Legacy RH redirects */}

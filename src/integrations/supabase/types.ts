@@ -5348,6 +5348,60 @@ export type Database = {
           },
         ]
       }
+      rh_meetings: {
+        Row: {
+          agency_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          meeting_date: string
+          presentation_file_path: string | null
+          presentation_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          meeting_date: string
+          presentation_file_path?: string | null
+          presentation_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          meeting_date?: string
+          presentation_file_path?: string | null
+          presentation_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rh_meetings_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rh_meetings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rh_notifications: {
         Row: {
           agency_id: string
