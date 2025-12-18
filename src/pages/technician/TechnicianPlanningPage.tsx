@@ -236,9 +236,9 @@ function TechPlanningGrid({ techId }: { techId: number }) {
     [weekDate]
   );
   
-  // Calculer les jours de la semaine (Lun-Sam)
+  // Calculer les jours de la semaine (Lun-Ven)
   const weekDays = useMemo(() => {
-    return Array.from({ length: 6 }, (_, i) => addDays(currentWeekStart, i));
+    return Array.from({ length: 5 }, (_, i) => addDays(currentWeekStart, i));
   }, [currentWeekStart]);
   
   // Extraire les slots pour ce technicien
@@ -251,7 +251,7 @@ function TechPlanningGrid({ techId }: { techId: number }) {
   
   // Filtrer les slots de la semaine courante
   const weekSlots = useMemo(() => {
-    const weekEnd = addDays(currentWeekStart, 6);
+    const weekEnd = addDays(currentWeekStart, 4); // Vendredi
     return slots.filter(s => {
       const slotDate = new Date(s.start);
       return slotDate >= currentWeekStart && slotDate <= weekEnd;
@@ -270,7 +270,7 @@ function TechPlanningGrid({ techId }: { techId: number }) {
   }, [weekSlots]);
   
   const weekLabel = `${format(currentWeekStart, "d MMM", { locale: fr })} - ${format(
-    addDays(currentWeekStart, 5),
+    addDays(currentWeekStart, 4),
     "d MMM",
     { locale: fr }
   )}`;
