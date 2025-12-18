@@ -134,6 +134,7 @@ const ReportActivityPage = lazy(() => import("./pages/admin/ReportActivityPage")
 const TechnicianPWALayout = lazy(() => import("./pages/technician/TechnicianLayout"));
 const TechnicianPlanningPage = lazy(() => import("./pages/technician/TechnicianPlanningPage"));
 const TechnicianOfflinePage = lazy(() => import("./pages/technician/TechnicianOfflinePage"));
+const TechnicianRdvPage = lazy(() => import("./pages/technician/TechnicianRdvPage"));
 
 // Lazy loaded pages - Gestion de Projet (ex Apogée Tickets)
 const ProjectsIndex = lazy(() => import("./pages/ProjectsIndex"));
@@ -462,14 +463,16 @@ function AppContent() {
           <Route path="/dev/unified-search-animations" element={<RoleGuard minRole="platform_admin"><UnifiedSearchAnimationPlayground /></RoleGuard>} />
           
           {/* ============================================ */}
-          {/* ESPACE TECHNICIEN - Mobile-First */}
+          {/* ESPACE TECHNICIEN PWA - Mobile-First + Offline */}
           {/* ============================================ */}
-          <Route path="/t" element={<RoleGuard minRole="franchisee_user"><TechnicianLayout /></RoleGuard>}>
-            <Route index element={<TechDashboard />} />
+          <Route path="/t" element={<RoleGuard minRole="franchisee_user"><TechnicianPWALayout /></RoleGuard>}>
+            <Route index element={<TechnicianPlanningPage />} />
             <Route path="planning" element={<TechPlanning />} />
             <Route path="pointage" element={<TechPointage />} />
             <Route path="documents" element={<TechDocuments />} />
             <Route path="profil" element={<TechProfil />} />
+            <Route path="offline" element={<TechnicianOfflinePage />} />
+            <Route path="rdv/:id" element={<TechnicianRdvPage />} />
           </Route>
           
           {/* ============================================ */}
