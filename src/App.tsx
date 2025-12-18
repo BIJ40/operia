@@ -68,6 +68,7 @@ const RHIndex = lazy(() => import("./pages/RHIndex"));
 // Suivi RH (nouveau module N2)
 const RHSuiviIndex = lazy(() => import("./pages/rh/RHSuiviIndex"));
 const GestionHeuresPage = lazy(() => import("./pages/rh/GestionHeuresPage"));
+const TimesheetsValidationPage = lazy(() => import("./pages/rh/TimesheetsValidationPage"));
 const RHCollaborateurPage = lazy(() => import("./pages/rh/RHCollaborateurPage"));
 const CommercialPage = lazy(() => import("./pages/CommercialPage"));
 const CommercialSupportPptx = lazy(() => import("./commercial/pages/CommercialSupportPptx"));
@@ -301,6 +302,7 @@ function AppContent() {
           <Route path="/rh/equipe" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><CollaborateursPage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/rh/equipe/plannings" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><PlanningHebdo /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/rh/equipe/heures" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><GestionHeuresPage /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/rh/timesheets" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><TimesheetsValidationPage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/rh/equipe/:id" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><CollaborateurProfilePage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/rh/demandes" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><DemandesRHPage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/rh/parc" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh"><MaintenancePreventivePage /></ModuleGuard></RoleGuard></MainLayout>} />

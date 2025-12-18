@@ -96,6 +96,13 @@ const RH_MODULES: RHModule[] = [
     href: ROUTES.rh.heures,
   },
   {
+    id: 'timesheets',
+    title: 'Pointages',
+    description: 'Validation des pointages',
+    icon: Clock,
+    href: ROUTES.rh.timesheets,
+  },
+  {
     id: 'demandes-rh',
     title: 'Demandes RH',
     description: 'Traiter les demandes',
