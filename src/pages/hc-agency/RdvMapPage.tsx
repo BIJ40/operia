@@ -46,6 +46,7 @@ export default function RdvMapPage() {
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [tokenError, setTokenError] = useState<string | null>(null);
   const [mapInitError, setMapInitError] = useState<string | null>(null);
+  const [mapReady, setMapReady] = useState(false);
 
   // Charger les RDV
   const { rdvs, isLoading, error, technicians } = useRdvMap({
@@ -104,6 +105,7 @@ export default function RdvMapPage() {
     }
 
     setMapInitError(null);
+    setMapReady(false);
 
     try {
       mapboxgl.accessToken = mapboxToken;
@@ -115,6 +117,14 @@ export default function RdvMapPage() {
         zoom: DEFAULT_ZOOM,
       });
 
+      const safeResize = () => {
+        try {
+          map.current?.resize();
+        } catch {
+          // ignore
+        }
+      };
+
       // Ajouter les contrôles de navigation
       map.current.addControl(
         new mapboxgl.NavigationControl({ visualizePitch: true }),
@@ -124,24 +134,18 @@ export default function RdvMapPage() {
       // Dans un layout flex/overflow, Mapbox peut nécessiter un resize explicite
       let ro: ResizeObserver | null = null;
       if (typeof ResizeObserver !== 'undefined') {
-        ro = new ResizeObserver(() => {
-          try {
-            map.current?.resize();
-          } catch {
-            // ignore
-          }
-        });
+        ro = new ResizeObserver(() => safeResize());
         ro.observe(mapContainer.current);
       }
 
+      // Quelques resizes pour stabiliser les dimensions (flex + transitions)
+      requestAnimationFrame(safeResize);
+      window.setTimeout(safeResize, 50);
+      window.setTimeout(safeResize, 250);
+
       map.current.on('load', () => {
-        requestAnimationFrame(() => {
-          try {
-            map.current?.resize();
-          } catch {
-            // ignore
-          }
-        });
+        setMapReady(true);
+        requestAnimationFrame(safeResize);
       });
 
       map.current.on('error', (e) => {
@@ -152,12 +156,14 @@ export default function RdvMapPage() {
 
       return () => {
         ro?.disconnect();
+        setMapReady(false);
         map.current?.remove();
         map.current = null;
       };
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Erreur lors de l\'initialisation de la carte';
       console.error('[RdvMap] Map init failed:', err);
+      setMapReady(false);
       setMapInitError(msg);
       map.current = null;
     }
@@ -165,33 +171,28 @@ export default function RdvMapPage() {
   
   // Mettre à jour les markers
   useEffect(() => {
-    if (!map.current) return;
-    
+    if (!map.current || !mapReady) return;
+
     // Supprimer les anciens markers
-    markersRef.current.forEach(marker => marker.remove());
+    markersRef.current.forEach((marker) => marker.remove());
     markersRef.current = [];
-    
+
     // Ajouter les nouveaux markers
-    rdvs.forEach(rdv => {
+    rdvs.forEach((rdv) => {
       const isSelected = selectedRdv?.rdvId === rdv.rdvId;
-      
-      const el = createPinMarkerElement(
-        rdv.users,
-        40,
-        isSelected,
-        () => {
-          setSelectedRdv(rdv);
-          setDrawerOpen(true);
-        }
-      );
-      
+
+      const el = createPinMarkerElement(rdv.users, 40, isSelected, () => {
+        setSelectedRdv(rdv);
+        setDrawerOpen(true);
+      });
+
       const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
         .setLngLat([rdv.lng, rdv.lat])
         .addTo(map.current!);
-      
+
       markersRef.current.push(marker);
     });
-    
+
     // Centrer sur les RDV si présents
     const bounds = calculateBounds(rdvs);
     if (bounds && rdvs.length > 0) {
@@ -207,7 +208,7 @@ export default function RdvMapPage() {
         duration: 1000,
       });
     }
-  }, [rdvs, selectedRdv]);
+  }, [rdvs, selectedRdv, mapReady]);
   
   // Navigation de date
   const goToPreviousDay = () => setSelectedDate(d => subDays(d, 1));
