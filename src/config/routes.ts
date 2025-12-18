@@ -67,6 +67,8 @@ export const ROUTES = {
     // Commercial
     commercial: '/hc-agency/commercial',
     commercialPptx: '/hc-agency/commercial/support-pptx',
+    // Carte RDV
+    map: '/hc-agency/map',
   },
 
   // ============================================
