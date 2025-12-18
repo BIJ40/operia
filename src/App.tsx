@@ -130,6 +130,11 @@ const AdminApporteurs = lazy(() => import("./pages/admin/AdminApporteurs"));
 const MonthlyReportsPage = lazy(() => import("./pages/reports/MonthlyReportsPage"));
 const ReportActivityPage = lazy(() => import("./pages/admin/ReportActivityPage"));
 
+// Technician PWA Pages
+const TechnicianLayout = lazy(() => import("./pages/technician/TechnicianLayout"));
+const TechnicianPlanningPage = lazy(() => import("./pages/technician/TechnicianPlanningPage"));
+const TechnicianOfflinePage = lazy(() => import("./pages/technician/TechnicianOfflinePage"));
+
 // Lazy loaded pages - Gestion de Projet (ex Apogée Tickets)
 const ProjectsIndex = lazy(() => import("./pages/ProjectsIndex"));
 const ApogeeTicketsKanban = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsKanban"));
