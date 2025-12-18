@@ -22,7 +22,7 @@ export function KanbanPostIt() {
         .from('kanban_postit')
         .select('*')
         .limit(1)
-        .single();
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
