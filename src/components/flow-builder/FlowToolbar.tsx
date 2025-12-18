@@ -59,9 +59,68 @@ export function FlowToolbar({
     reader.onload = (event) => {
       try {
         const json = JSON.parse(event.target?.result as string);
-        onImport(json);
-        toast.success('Schéma importé avec succès');
+        
+        // Check if it's a package format (with schemas array)
+        if (json.schemas && Array.isArray(json.schemas)) {
+          // It's a package - extract the first schema
+          const firstSchema = json.schemas[0];
+          if (!firstSchema) {
+            toast.error('Aucun schéma trouvé dans le package');
+            return;
+          }
+          
+          // Convert package schema format to FlowSchemaJson
+          const converted: FlowSchemaJson = {
+            rootNodeId: firstSchema.rootNodeId || 'start',
+            nodes: (firstSchema.nodes || []).map((node: any) => ({
+              id: node.id,
+              type: node.type === 'block' ? 'block' : node.type,
+              blockId: node.data?.blockId,
+              position: node.position || { x: 0, y: 0 },
+              data: {
+                label: node.data?.label || node.id,
+                contextKey: node.data?.answer?.key,
+                overrides: node.data?.overrides,
+              },
+            })),
+            edges: (firstSchema.edges || []).map((edge: any) => ({
+              id: edge.id,
+              source: edge.source,
+              target: edge.target,
+              sourceHandle: edge.sourceHandle,
+              targetHandle: edge.targetHandle,
+              data: {
+                label: edge.data?.label || '',
+                when: edge.data?.when ? {
+                  field: edge.data.when.left?.answer,
+                  operator: edge.data.when.op === 'eq' ? 'eq' : edge.data.when.op,
+                  value: edge.data.when.right,
+                } : null,
+                priority: edge.data?.priority || 0,
+                isDefault: !edge.data?.when,
+              },
+            })),
+            meta: {
+              version: firstSchema.meta?.version || 1,
+            },
+          };
+          
+          onImport(converted);
+          toast.success(`Package importé: "${json.packageName || 'Sans nom'}" (${json.schemas.length} schéma(s))`);
+          return;
+        }
+        
+        // Check if it's already a valid FlowSchemaJson
+        if (json.rootNodeId && json.nodes && json.edges) {
+          onImport(json);
+          toast.success('Schéma importé avec succès');
+          return;
+        }
+        
+        // Unknown format
+        toast.error('Format JSON non reconnu. Attendu: FlowSchemaJson ou Package avec "schemas"');
       } catch (error) {
+        console.error('Import error:', error);
         toast.error('Fichier JSON invalide');
       }
     };
