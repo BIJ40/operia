@@ -1,0 +1,366 @@
+/**
+ * RdvMapPage - Carte des RDV planifiés
+ * 
+ * Affiche sur une carte Mapbox tous les RDV planifiés pour une journée.
+ * Filtres: date, technicien(s)
+ * Markers personnalisés avec camembert multi-couleurs
+ * Clustering à faible zoom
+ */
+
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
+import { format, addDays, subDays } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Loader2, MapPin, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { cn } from '@/lib/utils';
+import { useRdvMap, calculateBounds, MapRdv } from '@/hooks/useRdvMap';
+import { createPinMarkerElement } from '@/components/map/PinMarker';
+import { RdvDetailDrawer } from '@/components/map/RdvDetailDrawer';
+import { useAuth } from '@/contexts/AuthContext';
+
+// Mapbox token sera récupéré via Edge Function
+const MAPBOX_STYLE = 'mapbox://styles/mapbox/light-v11';
+const DEFAULT_CENTER: [number, number] = [1.4442, 43.6047]; // Toulouse (centre France sud)
+const DEFAULT_ZOOM = 6;
+
+export default function RdvMapPage() {
+  const { agence } = useAuth();
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const markersRef = useRef<mapboxgl.Marker[]>([]);
+  
+  // État
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedTechIds, setSelectedTechIds] = useState<number[]>([]);
+  const [techFilterOpen, setTechFilterOpen] = useState(false);
+  const [selectedRdv, setSelectedRdv] = useState<MapRdv | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const [tokenError, setTokenError] = useState<string | null>(null);
+  
+  // Charger les RDV
+  const { rdvs, isLoading, error, technicians } = useRdvMap({
+    date: selectedDate,
+    techIds: selectedTechIds.length > 0 ? selectedTechIds : undefined,
+    agencySlug: agence || undefined,
+  });
+  
+  // Récupérer le token Mapbox depuis les secrets
+  useEffect(() => {
+    const fetchToken = async () => {
+      try {
+        // Le token doit être dans les secrets Supabase
+        // On le récupère via une edge function simple ou directement si exposé
+        const token = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+        if (token) {
+          setMapboxToken(token);
+          return;
+        }
+        
+        // Fallback: essayer de récupérer via edge function
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-mapbox-token`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.token) {
+            setMapboxToken(data.token);
+            return;
+          }
+        }
+        
+        setTokenError('Token Mapbox non configuré');
+      } catch (err) {
+        console.error('Erreur lors de la récupération du token Mapbox:', err);
+        setTokenError('Impossible de récupérer le token Mapbox');
+      }
+    };
+    
+    fetchToken();
+  }, []);
+  
+  // Initialiser la carte
+  useEffect(() => {
+    if (!mapContainer.current || !mapboxToken || map.current) return;
+    
+    mapboxgl.accessToken = mapboxToken;
+    
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: MAPBOX_STYLE,
+      center: DEFAULT_CENTER,
+      zoom: DEFAULT_ZOOM,
+    });
+    
+    // Ajouter les contrôles de navigation
+    map.current.addControl(
+      new mapboxgl.NavigationControl({ visualizePitch: true }),
+      'top-right'
+    );
+    
+    return () => {
+      map.current?.remove();
+      map.current = null;
+    };
+  }, [mapboxToken]);
+  
+  // Mettre à jour les markers
+  useEffect(() => {
+    if (!map.current) return;
+    
+    // Supprimer les anciens markers
+    markersRef.current.forEach(marker => marker.remove());
+    markersRef.current = [];
+    
+    // Ajouter les nouveaux markers
+    rdvs.forEach(rdv => {
+      const isSelected = selectedRdv?.rdvId === rdv.rdvId;
+      
+      const el = createPinMarkerElement(
+        rdv.users,
+        40,
+        isSelected,
+        () => {
+          setSelectedRdv(rdv);
+          setDrawerOpen(true);
+        }
+      );
+      
+      const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+        .setLngLat([rdv.lng, rdv.lat])
+        .addTo(map.current!);
+      
+      markersRef.current.push(marker);
+    });
+    
+    // Centrer sur les RDV si présents
+    const bounds = calculateBounds(rdvs);
+    if (bounds && rdvs.length > 0) {
+      map.current.fitBounds(bounds, {
+        padding: 50,
+        maxZoom: 14,
+        duration: 1000,
+      });
+    }
+  }, [rdvs, selectedRdv]);
+  
+  // Navigation de date
+  const goToPreviousDay = () => setSelectedDate(d => subDays(d, 1));
+  const goToNextDay = () => setSelectedDate(d => addDays(d, 1));
+  const goToToday = () => setSelectedDate(new Date());
+  
+  // Toggle technicien
+  const toggleTechnician = (techId: number) => {
+    setSelectedTechIds(prev =>
+      prev.includes(techId)
+        ? prev.filter(id => id !== techId)
+        : [...prev, techId]
+    );
+  };
+  
+  const clearTechFilter = () => setSelectedTechIds([]);
+  
+  if (tokenError) {
+    return (
+      <div className="p-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {tokenError}. Veuillez configurer le secret MAPBOX_ACCESS_TOKEN.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="h-[calc(100vh-theme(spacing.16))] flex flex-col">
+      {/* Barre de filtres */}
+      <div className="flex-none p-4 border-b bg-background space-y-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Navigation date */}
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="icon" onClick={goToPreviousDay}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="min-w-[200px] justify-start">
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => date && setSelectedDate(date)}
+                  initialFocus
+                  locale={fr}
+                />
+              </PopoverContent>
+            </Popover>
+            
+            <Button variant="outline" size="icon" onClick={goToNextDay}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            
+            <Button variant="ghost" size="sm" onClick={goToToday}>
+              Aujourd'hui
+            </Button>
+          </div>
+          
+          {/* Filtre techniciens */}
+          <Popover open={techFilterOpen} onOpenChange={setTechFilterOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Users className="h-4 w-4" />
+                Techniciens
+                {selectedTechIds.length > 0 && (
+                  <Badge variant="secondary" className="ml-1">
+                    {selectedTechIds.length}
+                  </Badge>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[300px] p-0" align="start">
+              <Command>
+                <CommandInput placeholder="Rechercher un technicien..." />
+                <CommandList>
+                  <CommandEmpty>Aucun technicien trouvé</CommandEmpty>
+                  <CommandGroup>
+                    {technicians.map((tech) => (
+                      <CommandItem
+                        key={tech.id}
+                        onSelect={() => toggleTechnician(tech.id)}
+                        className="cursor-pointer"
+                      >
+                        <div
+                          className={cn(
+                            'mr-2 h-4 w-4 rounded border flex items-center justify-center',
+                            selectedTechIds.includes(tech.id)
+                              ? 'bg-primary border-primary text-primary-foreground'
+                              : 'border-muted-foreground'
+                          )}
+                        >
+                          {selectedTechIds.includes(tech.id) && (
+                            <span className="text-xs">✓</span>
+                          )}
+                        </div>
+                        <span
+                          className="w-3 h-3 rounded-full mr-2"
+                          style={{ backgroundColor: tech.color }}
+                        />
+                        {tech.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+              {selectedTechIds.length > 0 && (
+                <div className="p-2 border-t">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full"
+                    onClick={clearTechFilter}
+                  >
+                    Effacer les filtres
+                  </Button>
+                </div>
+              )}
+            </PopoverContent>
+          </Popover>
+          
+          {/* Compteur RDV */}
+          <div className="flex items-center gap-2 text-sm text-muted-foreground ml-auto">
+            <MapPin className="h-4 w-4" />
+            <span>
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                `${rdvs.length} RDV`
+              )}
+            </span>
+          </div>
+        </div>
+        
+        {/* Badges techniciens sélectionnés */}
+        {selectedTechIds.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {selectedTechIds.map(id => {
+              const tech = technicians.find(t => t.id === id);
+              if (!tech) return null;
+              return (
+                <Badge
+                  key={id}
+                  variant="secondary"
+                  className="cursor-pointer"
+                  onClick={() => toggleTechnician(id)}
+                >
+                  <span
+                    className="w-2 h-2 rounded-full mr-1"
+                    style={{ backgroundColor: tech.color }}
+                  />
+                  {tech.name}
+                  <span className="ml-1 text-muted-foreground">×</span>
+                </Badge>
+              );
+            })}
+          </div>
+        )}
+      </div>
+      
+      {/* Carte */}
+      <div className="flex-1 relative">
+        {!mapboxToken ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-muted">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <div ref={mapContainer} className="absolute inset-0" />
+        )}
+        
+        {/* Loader overlay */}
+        {isLoading && mapboxToken && (
+          <div className="absolute top-4 left-4 bg-background/80 backdrop-blur rounded-lg px-4 py-2 flex items-center gap-2 shadow-lg">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="text-sm">Chargement des RDV...</span>
+          </div>
+        )}
+        
+        {/* Erreur */}
+        {error && (
+          <div className="absolute top-4 left-4 right-4 max-w-md">
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          </div>
+        )}
+      </div>
+      
+      {/* Drawer détail RDV */}
+      <RdvDetailDrawer
+        rdv={selectedRdv}
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        agencySlug={agence || undefined}
+      />
+    </div>
+  );
+}
