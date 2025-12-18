@@ -10,7 +10,8 @@ import {
   ClipboardList,
   Wrench,
   FileEdit,
-  Clock
+  Clock,
+  Presentation
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ROUTES } from "@/config/routes";
@@ -115,6 +116,13 @@ const RH_MODULES: RHModule[] = [
     description: 'Génération de documents',
     icon: FileEdit,
     href: ROUTES.rh.docgen,
+  },
+  {
+    id: 'reunions',
+    title: 'Réunions',
+    description: 'Historique des réunions',
+    icon: Presentation,
+    href: ROUTES.rh.reunions,
   },
 ];
 
