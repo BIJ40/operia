@@ -20,6 +20,7 @@ import {
   getLatestSchemaVersion,
   saveNewVersion,
   publishVersion,
+  importPackage,
 } from '@/lib/flow/flowApi';
 import type { 
   FlowSchema, 
@@ -134,6 +135,35 @@ export default function AdminFlow() {
     await publishMutation.mutateAsync(schemaVersion.id);
   }, [schemaVersion, publishMutation]);
 
+  // Handle package import
+  const handleImportPackage = useCallback(async (pkg: any) => {
+    try {
+      toast.loading('Import du package en cours...', { id: 'package-import' });
+      
+      const result = await importPackage(pkg);
+      
+      // Invalidate queries to refresh the list
+      await queryClient.invalidateQueries({ queryKey: ['flow-schemas'] });
+      
+      toast.success(
+        `Package "${pkg.packageName || 'Sans nom'}" importé avec succès: ${result.schemasCreated} schéma(s) créé(s)`,
+        { id: 'package-import' }
+      );
+      
+      // Select the root schema if available
+      if (result.rootSchemaId) {
+        const newSchemas = await listSchemas();
+        const rootSchema = newSchemas.find(s => s.id === result.rootSchemaId);
+        if (rootSchema) {
+          setSelectedSchema(rootSchema);
+        }
+      }
+    } catch (error) {
+      console.error('Package import error:', error);
+      toast.error('Erreur lors de l\'import du package', { id: 'package-import' });
+    }
+  }, [queryClient]);
+
   const isLoading = isLoadingBlocks || isLoadingSchemas;
 
   return (
@@ -200,6 +230,7 @@ export default function AdminFlow() {
                     initialSchema={schemaVersion?.json || null}
                     onSave={handleSave}
                     onPublish={handlePublish}
+                    onImportPackage={handleImportPackage}
                     isSaving={saveMutation.isPending}
                     isPublishing={publishMutation.isPending}
                     schemaName={selectedSchema.name}

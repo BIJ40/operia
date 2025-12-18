@@ -22,6 +22,7 @@ interface FlowToolbarProps {
   onValidate: () => FlowValidationError[];
   onExport: () => void;
   onImport: (json: FlowSchemaJson) => void;
+  onImportPackage?: (pkg: any) => Promise<void>;
   onAddTerminal: () => void;
   onAddRouter: () => void;
   onDelete: () => void;
@@ -37,6 +38,7 @@ export function FlowToolbar({
   onValidate,
   onExport,
   onImport,
+  onImportPackage,
   onAddTerminal,
   onAddRouter,
   onDelete,
@@ -62,7 +64,13 @@ export function FlowToolbar({
         
         // Check if it's a package format (with schemas array)
         if (json.schemas && Array.isArray(json.schemas)) {
-          // It's a package - extract the first schema
+          // It's a package with multiple schemas - use dedicated handler
+          if (onImportPackage) {
+            onImportPackage(json);
+            return;
+          }
+          
+          // Fallback: extract the first schema only
           const firstSchema = json.schemas[0];
           if (!firstSchema) {
             toast.error('Aucun schéma trouvé dans le package');
@@ -72,21 +80,18 @@ export function FlowToolbar({
           // Convert package schema format to FlowSchemaJson
           const converted: FlowSchemaJson = {
             rootNodeId: firstSchema.rootNodeId || 'start',
-            nodes: (firstSchema.nodes || []).map((node: any) => {
-              const baseNode = {
-                id: node.id,
-                type: node.type as any,
-                blockId: node.data?.blockId,
-                position: node.position || { x: 0, y: 0 },
-                data: {
-                  label: node.data?.label || node.id,
-                  contextKey: node.data?.answer?.key,
-                  overrides: node.data?.overrides,
-                  targetSchemaId: node.data?.targetSchemaId, // for jump nodes
-                },
-              };
-              return baseNode;
-            }),
+            nodes: (firstSchema.nodes || []).map((node: any) => ({
+              id: node.id,
+              type: node.type as any,
+              blockId: node.data?.blockId,
+              position: node.position || { x: 0, y: 0 },
+              data: {
+                label: node.data?.label || node.id,
+                contextKey: node.data?.answer?.key,
+                overrides: node.data?.overrides,
+                targetSchemaId: node.data?.targetSchemaId,
+              },
+            })),
             edges: (firstSchema.edges || []).map((edge: any) => ({
               id: edge.id,
               source: edge.source,
@@ -110,7 +115,7 @@ export function FlowToolbar({
           };
           
           onImport(converted);
-          toast.success(`Package importé: "${json.packageName || 'Sans nom'}" (${json.schemas.length} schéma(s))`);
+          toast.warning(`Package importé partiellement: seul le premier schéma a été chargé (${json.schemas.length} schémas dans le package)`);
           return;
         }
         

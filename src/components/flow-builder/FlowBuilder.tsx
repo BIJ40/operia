@@ -35,6 +35,7 @@ interface FlowBuilderProps {
   initialSchema?: FlowSchemaJson | null;
   onSave: (schema: FlowSchemaJson) => Promise<void>;
   onPublish: () => Promise<void>;
+  onImportPackage?: (pkg: any) => Promise<void>;
   isSaving?: boolean;
   isPublishing?: boolean;
   schemaName?: string;
@@ -82,6 +83,7 @@ function fromReactFlowNode(node: Node<ReactFlowNodeData>): FlowNodeType {
       contextKey: node.data.contextKey,
       overrides: node.data.overrides,
       mapping: node.data.mapping,
+      targetSchemaId: node.data.targetSchemaId,
     },
   };
 }
@@ -123,6 +125,7 @@ function FlowBuilderInner({
   initialSchema,
   onSave,
   onPublish,
+  onImportPackage,
   isSaving,
   isPublishing,
   schemaName,
@@ -379,6 +382,7 @@ function FlowBuilderInner({
         onValidate={handleValidate}
         onExport={handleExport}
         onImport={handleImport}
+        onImportPackage={onImportPackage}
         onAddTerminal={addTerminalNode}
         onAddRouter={addRouterNode}
         onDelete={handleDeleteSelected}
