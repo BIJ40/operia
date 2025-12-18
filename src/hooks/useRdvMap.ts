@@ -19,6 +19,8 @@ interface MapRdvUser {
 export interface MapRdv {
   rdvId: number;
   projectId: number;
+  projectRef: string;
+  clientName: string;
   lat: number;
   lng: number;
   startAt: string;
