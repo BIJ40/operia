@@ -306,3 +306,150 @@ export async function unpublishVersion(schemaVersionId: string): Promise<void> {
     throw error;
   }
 }
+
+// ============ PACKAGE IMPORT ============
+
+export interface PackageSchema {
+  id: string;
+  name: string;
+  domain?: string;
+  rootNodeId: string;
+  nodes: any[];
+  edges: any[];
+  meta?: any;
+}
+
+export interface FlowPackage {
+  packageVersion?: number;
+  packageName?: string;
+  blocks?: any[];
+  schemas: PackageSchema[];
+}
+
+export interface ImportPackageResult {
+  schemasCreated: number;
+  schemaIdMapping: Record<string, string>; // old id -> new uuid
+  rootSchemaId: string | null;
+}
+
+/**
+ * Import a complete flow package with multiple schemas
+ * Creates all schemas and their versions, then updates jump node references
+ */
+export async function importPackage(pkg: FlowPackage): Promise<ImportPackageResult> {
+  const { data: userData } = await supabase.auth.getUser();
+  const schemaIdMapping: Record<string, string> = {};
+  const createdSchemas: { id: string; originalId: string; json: any }[] = [];
+
+  // Step 1: Create all schemas first (to get UUIDs)
+  for (const pkgSchema of pkg.schemas) {
+    const domain = (pkgSchema.domain as FlowDomain) || 'other';
+    
+    const { data: newSchema, error } = await supabase
+      .from('flow_schemas')
+      .insert({
+        name: pkgSchema.name || pkgSchema.id,
+        domain,
+        description: `Importé depuis package "${pkg.packageName || 'Sans nom'}"`,
+        created_by: userData?.user?.id,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      logError('Failed to create schema during package import', error);
+      throw error;
+    }
+
+    schemaIdMapping[pkgSchema.id] = newSchema.id;
+    
+    // Convert nodes
+    const convertedNodes = (pkgSchema.nodes || []).map((node: any) => ({
+      id: node.id,
+      type: node.type as any,
+      blockId: node.data?.blockId,
+      position: node.position || { x: 0, y: 0 },
+      data: {
+        label: node.data?.label || node.id,
+        contextKey: node.data?.answer?.key,
+        overrides: node.data?.overrides,
+        targetSchemaId: node.data?.targetSchemaId, // Will be updated in step 2
+      },
+    }));
+
+    // Convert edges
+    const convertedEdges = (pkgSchema.edges || []).map((edge: any) => ({
+      id: edge.id,
+      source: edge.source,
+      target: edge.target,
+      sourceHandle: edge.sourceHandle,
+      targetHandle: edge.targetHandle,
+      data: {
+        label: edge.data?.label || '',
+        when: edge.data?.when ? {
+          field: edge.data.when.left?.answer,
+          operator: edge.data.when.op === 'eq' ? 'eq' : edge.data.when.op,
+          value: edge.data.when.right,
+        } : null,
+        priority: edge.data?.priority || 0,
+        isDefault: !edge.data?.when,
+      },
+    }));
+
+    createdSchemas.push({
+      id: newSchema.id,
+      originalId: pkgSchema.id,
+      json: {
+        rootNodeId: pkgSchema.rootNodeId || 'start',
+        nodes: convertedNodes,
+        edges: convertedEdges,
+        meta: { version: 1 },
+      },
+    });
+  }
+
+  // Step 2: Update targetSchemaId references in jump nodes and save versions
+  for (const created of createdSchemas) {
+    const updatedNodes = created.json.nodes.map((node: any) => {
+      if (node.type === 'jump' && node.data?.targetSchemaId) {
+        // The targetSchemaId in the package refers to the original id
+        // We need to map it to the new UUID
+        const originalTargetId = node.data.targetSchemaId;
+        const newTargetId = schemaIdMapping[originalTargetId];
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            targetSchemaId: newTargetId || originalTargetId, // Keep original if not found
+          },
+        };
+      }
+      return node;
+    });
+
+    created.json.nodes = updatedNodes;
+
+    // Save version
+    const { error } = await supabase
+      .from('flow_schema_versions')
+      .insert({
+        schema_id: created.id,
+        version: 1,
+        json: created.json as any,
+      });
+
+    if (error) {
+      logError('Failed to save schema version during package import', error);
+      throw error;
+    }
+  }
+
+  // Determine root schema (first one, or one without "jump" type nodes pointing to it)
+  const rootSchemaId = createdSchemas.length > 0 ? createdSchemas[0].id : null;
+
+  return {
+    schemasCreated: createdSchemas.length,
+    schemaIdMapping,
+    rootSchemaId,
+  };
+}
