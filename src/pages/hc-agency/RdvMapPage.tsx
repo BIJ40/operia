@@ -24,6 +24,7 @@ import { useRdvMap, calculateBounds, MapRdv } from '@/hooks/useRdvMap';
 import { createPinMarkerElement } from '@/components/map/PinMarker';
 import { RdvDetailDrawer } from '@/components/map/RdvDetailDrawer';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 // Mapbox token sera récupéré via Edge Function
 const MAPBOX_STYLE = 'mapbox://styles/mapbox/light-v11';
@@ -64,22 +65,18 @@ export default function RdvMapPage() {
           return;
         }
         
-        // Fallback: essayer de récupérer via edge function
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-mapbox-token`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          }
-        );
+        // Récupérer via edge function avec authentification
+        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
         
-        if (response.ok) {
-          const data = await response.json();
-          if (data.token) {
-            setMapboxToken(data.token);
-            return;
-          }
+        if (error) {
+          console.error('Erreur Edge Function:', error);
+          setTokenError('Impossible de récupérer le token Mapbox');
+          return;
+        }
+        
+        if (data?.token) {
+          setMapboxToken(data.token);
+          return;
         }
         
         setTokenError('Token Mapbox non configuré');
