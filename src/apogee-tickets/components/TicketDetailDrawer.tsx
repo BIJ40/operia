@@ -4,6 +4,7 @@
  */
 
 import { useState, useMemo, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { FileManager } from '@/components/files/FileManager';
 import { Sheet, SheetContent, SheetHeader } from '@/components/ui/sheet';
 import {
@@ -52,7 +53,7 @@ import {
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useApogeeTicket } from '../hooks/useApogeeTickets';
-import { useTicketAttachments } from '../hooks/useTicketAttachments';
+import { supabase } from '@/integrations/supabase/client';
 import { useTicketQualification } from '../hooks/useTicketQualification';
 import { useMarkTicketAsViewed } from '../hooks/useTicketViews';
 import { HeatPriorityBadge } from './HeatPriorityBadge';
@@ -124,7 +125,21 @@ export function TicketDetailDrawer({
   const logAction = useLogTicketAction();
   const markAsViewed = useMarkTicketAsViewed();
   const { comments, addComment, updateComment } = useApogeeTicket(ticket?.id || null);
-  const { attachments, uploadAttachment, deleteAttachment, isUploading } = useTicketAttachments(ticket?.id || null);
+  
+  // Compter les fichiers directement depuis le storage (même source que FileManager)
+  const storagePath = ticket?.id || '';
+  const { data: filesCount = 0 } = useQuery({
+    queryKey: ['files', 'apogee-ticket-attachments', storagePath],
+    queryFn: async () => {
+      if (!storagePath) return 0;
+      const { data, error } = await (supabase.storage as any)
+        .from('apogee-ticket-attachments')
+        .list(storagePath);
+      if (error) return 0;
+      return (data || []).length;
+    },
+    enabled: !!ticket?.id,
+  });
   const { qualifyOne, isQualifying } = useTicketQualification();
   const [newComment, setNewComment] = useState('');
   const [showAllComments, setShowAllComments] = useState(false);
@@ -301,13 +316,7 @@ export function TicketDetailDrawer({
   // Formater la référence ticket
   const ticketRef = `APO-${String(ticket.ticket_number || 0).padStart(3, '0')}`;
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      await uploadAttachment(file);
-      e.target.value = '';
-    }
-  };
+  // Note: handleFileUpload removed - FileManager handles uploads directly
 
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
@@ -500,7 +509,7 @@ export function TicketDetailDrawer({
             )}
             <TabsTrigger value="documents" className="flex items-center gap-1">
               <Paperclip className="h-3 w-3" />
-              Documents ({attachments.length})
+              Documents ({filesCount})
             </TabsTrigger>
           </TabsList>
 
