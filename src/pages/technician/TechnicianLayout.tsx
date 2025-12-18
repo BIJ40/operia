@@ -4,7 +4,7 @@
  */
 import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Calendar, RefreshCw, Settings, Wifi, WifiOff, Download, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, FileText, User, RefreshCw, Settings, Wifi, WifiOff, Download, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSyncEngine } from '@/hooks/useSyncEngine';
 import { cn } from '@/lib/utils';
@@ -71,6 +71,14 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+// Navigation items
+const NAV_ITEMS = [
+  { to: '/t', icon: Calendar, label: 'Planning', end: true },
+  { to: '/t/pointage', icon: Clock, label: 'Pointage' },
+  { to: '/t/documents', icon: FileText, label: 'RH - Parc' },
+  { to: '/t/profil', icon: User, label: 'Profil' },
+];
+
 // ============================================
 // Main Layout Component
 // ============================================
@@ -116,10 +124,6 @@ export default function TechnicianLayout() {
   if (!user) {
     return null;
   }
-
-  const navItems = [
-    { to: '/t', icon: Calendar, label: 'Planning', end: true },
-  ];
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -261,29 +265,30 @@ export default function TechnicianLayout() {
       </header>
 
       {/* Main content */}
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto pb-16">
         <Outlet />
       </main>
 
       {/* Bottom navigation */}
-      <nav className="sticky bottom-0 bg-background border-t safe-area-inset-bottom">
-        <div className="flex justify-around py-2">
-          {navItems.map((item) => (
+      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border safe-area-pb z-50">
+        <div className="flex items-center justify-around h-16">
+          {NAV_ITEMS.map(({ to, icon: Icon, label, end }) => (
             <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
+              key={to}
+              to={to}
+              end={end}
               className={({ isActive }) =>
                 cn(
-                  'flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors',
+                  'flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors',
+                  'min-w-[64px]',
                   isActive
-                    ? 'text-primary bg-primary/10'
+                    ? 'text-primary'
                     : 'text-muted-foreground hover:text-foreground'
                 )
               }
             >
-              <item.icon className="h-5 w-5" />
-              <span className="text-xs font-medium">{item.label}</span>
+              <Icon className="h-5 w-5" />
+              <span className="text-xs font-medium">{label}</span>
             </NavLink>
           ))}
         </div>
