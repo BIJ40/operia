@@ -192,8 +192,14 @@ export default function RdvMapPage() {
     // Centrer sur les RDV si présents
     const bounds = calculateBounds(rdvs);
     if (bounds && rdvs.length > 0) {
+      const container = map.current.getContainer();
+      const w = container.clientWidth || 800;
+      const h = container.clientHeight || 600;
+      const padX = Math.max(56, Math.round(w * 0.12));
+      const padY = Math.max(56, Math.round(h * 0.12));
+
       map.current.fitBounds(bounds, {
-        padding: 50,
+        padding: { top: padY, bottom: padY, left: padX, right: padX },
         maxZoom: 14,
         duration: 1000,
       });
@@ -369,32 +375,34 @@ export default function RdvMapPage() {
       </div>
       
       {/* Carte */}
-      <div className="flex-1 relative">
-        {!mapboxToken ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-muted">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : (
-          <div ref={mapContainer} className="absolute inset-0" />
-        )}
-        
-        {/* Loader overlay */}
-        {isLoading && mapboxToken && (
-          <div className="absolute top-4 left-4 bg-background/80 backdrop-blur rounded-lg px-4 py-2 flex items-center gap-2 shadow-lg">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span className="text-sm">Chargement des RDV...</span>
-          </div>
-        )}
-        
-        {/* Erreur */}
-        {error && (
-          <div className="absolute top-4 left-4 right-4 max-w-md">
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          </div>
-        )}
+      <div className="flex-1 relative bg-muted/20 p-3 sm:p-4 md:p-6">
+        <div className="relative h-full w-full overflow-hidden rounded-xl border bg-background shadow-sm">
+          {!mapboxToken ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-muted">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <div ref={mapContainer} className="absolute inset-0" />
+          )}
+
+          {/* Loader overlay */}
+          {isLoading && mapboxToken && (
+            <div className="absolute top-4 left-4 bg-background/80 backdrop-blur rounded-lg px-4 py-2 flex items-center gap-2 shadow-lg">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="text-sm">Chargement des RDV...</span>
+            </div>
+          )}
+
+          {/* Erreur */}
+          {error && (
+            <div className="absolute top-4 left-4 right-4 max-w-md">
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            </div>
+          )}
+        </div>
       </div>
       
       {/* Drawer détail RDV */}
