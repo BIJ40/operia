@@ -43,6 +43,11 @@ export function RdvMiniPreview({ rdv, onClose }: RdvMiniPreviewProps) {
 
       {/* Contenu */}
       <div className="p-3 space-y-2">
+        {/* Client */}
+        <div className="text-sm font-medium text-foreground">
+          {rdv.clientName}
+        </div>
+
         {/* Horaire */}
         <div className="flex items-center gap-2 text-sm">
           <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
@@ -81,9 +86,9 @@ export function RdvMiniPreview({ rdv, onClose }: RdvMiniPreviewProps) {
         </div>
       </div>
 
-      {/* Footer avec ID dossier */}
+      {/* Footer avec référence dossier Apogée */}
       <div className="px-3 py-2 border-t bg-muted/20 text-xs text-muted-foreground">
-        Dossier #{rdv.projectId}
+        Dossier {rdv.projectRef}
       </div>
     </div>
   );

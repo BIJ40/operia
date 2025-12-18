@@ -26,6 +26,8 @@ interface MapRdvUser {
 interface MapRdv {
   rdvId: number;
   projectId: number;
+  projectRef: string; // Référence dossier Apogée (2025xxxxx)
+  clientName: string; // Nom du client
   lat: number;
   lng: number;
   startAt: string;
@@ -326,13 +328,14 @@ Deno.serve(async (req) => {
     const projects = projectsResponse.ok ? await projectsResponse.json() : [];
     console.log(`[GET-RDV-MAP] Got ${projects.length} projects from Apogée`);
 
-    const projectsById = new Map<number, { univers: string; clientId?: number | null }>();
+    const projectsById = new Map<number, { univers: string; clientId?: number | null; ref: string }>();
 
     for (const p of projects) {
       const data = p.data || {};
       projectsById.set(p.id, {
         univers: Array.isArray(data.universes) ? data.universes[0] : (data.univers || 'Non classé'),
         clientId: typeof p.clientId === 'number' ? p.clientId : null,
+        ref: p.ref || `#${p.id}`, // Référence Apogée (2025xxxxx)
       });
     }
 
@@ -347,14 +350,15 @@ Deno.serve(async (req) => {
     const clients = clientsResponse.ok ? await clientsResponse.json() : [];
     console.log(`[GET-RDV-MAP] Got ${clients.length} clients from Apogée`);
 
-    const clientsById = new Map<number, { address: string; postalCode: string; city: string }>();
+    const clientsById = new Map<number, { name: string; address: string; postalCode: string; city: string }>();
 
     for (const c of clients) {
       const data = c.data || {};
+      const name = c.name || data.nom || data.name || 'Client inconnu';
       const address = data.adresse || c.adresse || c.address || '';
       const postalCode = data.codePostal || c.codePostal || c.postalCode || '';
       const city = data.ville || c.ville || c.city || '';
-      clientsById.set(c.id, { address, postalCode, city });
+      clientsById.set(c.id, { name, address, postalCode, city });
     }
 
     // 9. Transformer les interventions en MapRdv
@@ -443,6 +447,8 @@ Deno.serve(async (req) => {
       mapRdvs.push({
         rdvId: intervention.id,
         projectId: intervention.projectId,
+        projectRef: project.ref,
+        clientName: client.name,
         lat: coords.lat,
         lng: coords.lng,
         startAt,
