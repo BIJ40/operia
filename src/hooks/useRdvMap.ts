@@ -86,8 +86,10 @@ export function useRdvMap({ date, techIds, agencySlug }: UseRdvMapOptions): UseR
       return result.data as MapRdv[];
     },
     enabled: !!targetAgency,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 10 * 60 * 1000, // 10 minutes - cache plus long
+    gcTime: 30 * 60 * 1000, // Garder en cache 30 min
     refetchOnWindowFocus: false,
+    placeholderData: (previousData) => previousData, // Garder les données précédentes pendant le chargement
   });
   
   // Liste des techniciens ACTIFS (is_on=true) via buildTechMap (même logique que /stats-hub)

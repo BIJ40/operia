@@ -168,7 +168,11 @@ export default function RdvMapPage() {
     }
   }, [mapboxToken]);
   
-  // Mettre à jour les markers
+  // Ref pour tracker si on a déjà centré la carte sur les RDV actuels
+  const hasFittedBoundsRef = useRef(false);
+  const lastRdvsLengthRef = useRef(0);
+
+  // Mettre à jour les markers (sans dézoom au clic)
   useEffect(() => {
     if (!map.current || !mapReady) return;
 
@@ -191,22 +195,33 @@ export default function RdvMapPage() {
       markersRef.current.push(marker);
     });
 
-    // Centrer sur les RDV si présents
-    const bounds = calculateBounds(rdvs);
-    if (bounds && rdvs.length > 0) {
-      const container = map.current.getContainer();
-      const w = container.clientWidth || 800;
-      const h = container.clientHeight || 600;
-      const padX = Math.max(56, Math.round(w * 0.12));
-      const padY = Math.max(56, Math.round(h * 0.12));
+    // Centrer sur les RDV UNIQUEMENT si les données ont changé (pas au clic sur marker)
+    const rdvsChanged = rdvs.length !== lastRdvsLengthRef.current || !hasFittedBoundsRef.current;
+    lastRdvsLengthRef.current = rdvs.length;
 
-      map.current.fitBounds(bounds, {
-        padding: { top: padY, bottom: padY, left: padX, right: padX },
-        maxZoom: 14,
-        duration: 1000,
-      });
+    if (rdvsChanged && rdvs.length > 0) {
+      const bounds = calculateBounds(rdvs);
+      if (bounds) {
+        const container = map.current.getContainer();
+        const w = container.clientWidth || 800;
+        const h = container.clientHeight || 600;
+        const padX = Math.max(56, Math.round(w * 0.12));
+        const padY = Math.max(56, Math.round(h * 0.12));
+
+        map.current.fitBounds(bounds, {
+          padding: { top: padY, bottom: padY, left: padX, right: padX },
+          maxZoom: 14,
+          duration: 1000,
+        });
+        hasFittedBoundsRef.current = true;
+      }
     }
   }, [rdvs, selectedRdv, mapReady]);
+
+  // Reset le flag de fitBounds quand la date ou les filtres changent
+  useEffect(() => {
+    hasFittedBoundsRef.current = false;
+  }, [selectedDate, selectedTechIds]);
   
   // Navigation de date
   const goToPreviousDay = () => setSelectedDate(d => subDays(d, 1));
