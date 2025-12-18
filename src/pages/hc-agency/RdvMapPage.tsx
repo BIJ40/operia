@@ -45,14 +45,15 @@ export default function RdvMapPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [tokenError, setTokenError] = useState<string | null>(null);
-  
+  const [mapInitError, setMapInitError] = useState<string | null>(null);
+
   // Charger les RDV
   const { rdvs, isLoading, error, technicians } = useRdvMap({
     date: selectedDate,
     techIds: selectedTechIds.length > 0 ? selectedTechIds : undefined,
     agencySlug: agence || undefined,
   });
-  
+
   // Récupérer le token Mapbox depuis les secrets
   useEffect(() => {
     const fetchToken = async () => {
@@ -61,82 +62,102 @@ export default function RdvMapPage() {
         // On le récupère via une edge function simple ou directement si exposé
         const token = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
         if (token) {
+          setTokenError(null);
+          setMapInitError(null);
           setMapboxToken(token);
           return;
         }
-        
+
         // Récupérer via edge function avec authentification
         const { data, error } = await supabase.functions.invoke('get-mapbox-token');
-        
+
         if (error) {
           console.error('Erreur Edge Function:', error);
           setTokenError('Impossible de récupérer le token Mapbox');
           return;
         }
-        
+
         if (data?.token) {
+          setTokenError(null);
+          setMapInitError(null);
           setMapboxToken(data.token);
           return;
         }
-        
+
         setTokenError('Token Mapbox non configuré');
       } catch (err) {
         console.error('Erreur lors de la récupération du token Mapbox:', err);
         setTokenError('Impossible de récupérer le token Mapbox');
       }
     };
-    
+
     fetchToken();
   }, []);
-  
+
   // Initialiser la carte
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken || map.current) return;
 
-    mapboxgl.accessToken = mapboxToken;
+    if (!mapboxgl.supported()) {
+      setMapInitError('WebGL non supporté par ce navigateur/appareil.');
+      return;
+    }
 
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: MAPBOX_STYLE,
-      center: DEFAULT_CENTER,
-      zoom: DEFAULT_ZOOM,
-    });
+    setMapInitError(null);
 
-    // Ajouter les contrôles de navigation
-    map.current.addControl(
-      new mapboxgl.NavigationControl({ visualizePitch: true }),
-      'top-right'
-    );
+    try {
+      mapboxgl.accessToken = mapboxToken;
 
-    // Dans un layout flex/overflow, Mapbox peut nécessiter un resize explicite
-    const ro = new ResizeObserver(() => {
-      try {
-        map.current?.resize();
-      } catch {
-        // ignore
-      }
-    });
-    ro.observe(mapContainer.current);
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: MAPBOX_STYLE,
+        center: DEFAULT_CENTER,
+        zoom: DEFAULT_ZOOM,
+      });
 
-    map.current.on('load', () => {
-      requestAnimationFrame(() => {
+      // Ajouter les contrôles de navigation
+      map.current.addControl(
+        new mapboxgl.NavigationControl({ visualizePitch: true }),
+        'top-right'
+      );
+
+      // Dans un layout flex/overflow, Mapbox peut nécessiter un resize explicite
+      const ro = new ResizeObserver(() => {
         try {
           map.current?.resize();
         } catch {
           // ignore
         }
       });
-    });
+      ro.observe(mapContainer.current);
 
-    map.current.on('error', (e) => {
-      console.error('[RdvMap] Mapbox error:', e?.error || e);
-    });
+      map.current.on('load', () => {
+        requestAnimationFrame(() => {
+          try {
+            map.current?.resize();
+          } catch {
+            // ignore
+          }
+        });
+      });
 
-    return () => {
-      ro.disconnect();
-      map.current?.remove();
+      map.current.on('error', (e) => {
+        const msg = (e as any)?.error?.message || (e as any)?.error || 'Erreur Mapbox';
+        console.error('[RdvMap] Mapbox error:', msg);
+        setMapInitError(String(msg));
+      });
+
+      return () => {
+        ro.disconnect();
+        map.current?.remove();
+        map.current = null;
+      };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erreur lors de l\'initialisation de la carte';
+      console.error('[RdvMap] Map init failed:', err);
+      setMapInitError(msg);
       map.current = null;
-    };
+    }
   }, [mapboxToken]);
   
   // Mettre à jour les markers
