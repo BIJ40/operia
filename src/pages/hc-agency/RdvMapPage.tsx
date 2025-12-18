@@ -27,7 +27,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
 // Mapbox token sera récupéré via Edge Function
-const MAPBOX_STYLE = 'mapbox://styles/mapbox/light-v11';
+const MAPBOX_STYLE = 'mapbox://styles/bij40/cmjbi8grj000t01s3ajxo3amm';
 const DEFAULT_CENTER: [number, number] = [1.4442, 43.6047]; // Toulouse (centre France sud)
 const DEFAULT_ZOOM = 6;
 
