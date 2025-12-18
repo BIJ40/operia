@@ -7,7 +7,7 @@
 export interface BlockFieldSchema {
   key: string;
   label: string;
-  type: 'text' | 'number' | 'boolean' | 'select' | 'image' | 'signature' | 'date' | 'time';
+  type: 'text' | 'number' | 'boolean' | 'select' | 'multi_select' | 'image' | 'signature' | 'date' | 'time';
   required?: boolean;
   unit?: string;
   min?: number;

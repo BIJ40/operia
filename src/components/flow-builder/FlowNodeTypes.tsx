@@ -10,6 +10,9 @@ import {
   HelpCircle,
   Camera,
   PenTool,
+  List,
+  Hash,
+  Calendar,
   LucideIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -22,6 +25,9 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Camera,
   PenTool,
   FileText,
+  List,
+  Hash,
+  Calendar,
 };
 
 // Start Node
