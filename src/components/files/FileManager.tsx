@@ -92,9 +92,14 @@ export function FileManager({
         return [];
       }
 
+      // Filter out placeholders and invalid entries first
+      const validFiles = (data || []).filter((file: any) => 
+        file.id && file.name && !file.name.startsWith('.')
+      );
+
       // Get signed URLs for each file
       const filesWithUrls = await Promise.all(
-        (data || []).map(async (file: any) => {
+        validFiles.map(async (file: any) => {
           const filePath = `${storagePath}/${file.name}`;
           const { data: urlData } = await (supabase.storage as any)
             .from(bucketName)
