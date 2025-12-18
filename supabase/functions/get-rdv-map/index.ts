@@ -31,7 +31,7 @@ interface MapRdv {
   startAt: string;
   durationMin: number;
   univers: string;
-  address: string; // Masqué partiellement côté serveur
+  address: string; // Adresse complète pour affichage
   users: MapRdvUser[];
 }
 
@@ -124,13 +124,13 @@ async function geocodeAddress(address: string, postalCode: string, city: string)
 }
 
 /**
- * Masque partiellement une adresse pour affichage
+ * Formate une adresse complète pour affichage
  */
-function maskAddress(address: string, postalCode: string, city: string): string {
-  // Format: "12 Rue *** - 40*** Dax"
-  const maskedStreet = address ? address.split(' ').slice(0, 2).join(' ') + ' ***' : '';
-  const maskedPostal = postalCode ? postalCode.substring(0, 2) + '***' : '';
-  return `${maskedStreet} - ${maskedPostal} ${city}`.trim();
+function formatAddress(address: string, postalCode: string, city: string): string {
+  const parts: string[] = [];
+  if (address) parts.push(address);
+  if (postalCode || city) parts.push(`${postalCode} ${city}`.trim());
+  return parts.join(' - ') || 'Adresse non renseignée';
 }
 
 Deno.serve(async (req) => {
@@ -446,7 +446,7 @@ Deno.serve(async (req) => {
         startAt,
         durationMin,
         univers: project.univers,
-        address: maskAddress(client.address, client.postalCode, client.city),
+        address: formatAddress(client.address, client.postalCode, client.city),
         users: rdvUsers,
       });
     }
