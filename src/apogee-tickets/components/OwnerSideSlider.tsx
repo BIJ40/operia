@@ -17,8 +17,9 @@ interface OwnerSideSliderProps {
 
 const STEPS = [
   { value: 0, label: 'Apogée', apogee: 100, hc: 0 },
-  { value: 33, label: '50/50', apogee: 50, hc: 50 },
-  { value: 67, label: '25/75', apogee: 25, hc: 75 },
+  { value: 25, label: '75/25', apogee: 75, hc: 25 },
+  { value: 50, label: '50/50', apogee: 50, hc: 50 },
+  { value: 75, label: '25/75', apogee: 25, hc: 75 },
   { value: 100, label: 'HC', apogee: 0, hc: 100 },
 ];
 
@@ -163,15 +164,14 @@ export function ownerSideToSliderValue(ownerSide: string | null): number | null 
       return 0;
     case '75_25': 
     case '75/25': 
-      // Migration: 75/25 devient 50/50
-      return 33;
+      return 25;
     case '50_50': 
     case '50/50': 
     case 'PARTAGE': 
-      return 33;
+      return 50;
     case '25_75': 
     case '25/75': 
-      return 67;
+      return 75;
     case 'HC': 
     case 'HELPCONFORT': 
       return 100;
@@ -180,11 +180,12 @@ export function ownerSideToSliderValue(ownerSide: string | null): number | null 
   }
 }
 
-export function sliderValueToOwnerSide(value: number | null): 'APOGEE' | '50_50' | '25_75' | 'HC' | null {
+export function sliderValueToOwnerSide(value: number | null): 'APOGEE' | '75_25' | '50_50' | '25_75' | 'HC' | null {
   if (value === null) return null;
-  if (value <= 16) return 'APOGEE';
-  if (value <= 50) return '50_50';
-  if (value <= 83) return '25_75';
+  if (value <= 12) return 'APOGEE';
+  if (value <= 37) return '75_25';
+  if (value <= 62) return '50_50';
+  if (value <= 87) return '25_75';
   return 'HC';
 }
 
