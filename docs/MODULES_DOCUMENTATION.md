@@ -854,5 +854,5 @@ Génération automatique de rapports d'activité mensuels pour les dirigeants d'
 
 ---
 
-> **Document généré le** : 17 Décembre 2025  
+> **Document généré le** : 18 Décembre 2025  
 > **Mainteneur** : Équipe Technique HelpConfort
