@@ -1,35 +1,25 @@
-export const APP_VERSION = '0.8.0';
-export const APP_CODENAME = 'Suivi RH & DocGen';
+export const APP_VERSION = '0.8.1';
+export const APP_CODENAME = 'Pointages & Timesheets';
 
 /**
- * Changelog v0.8.0 (2025-12-15)
+ * Changelog v0.8.1 (2025-12-18)
  * ==============================
  * 
- * MODULE SUIVI RH COMPLET
- * -----------------------
- * - Espace salarié N1 : Mon coffre RH, Demandes RH, Mon planning, Ma signature
- * - Back-office N2 : Suivi équipe, Documents, Contrats, Compétences, EPI
- * - Demandes unifiées (congés, EPI, documents) via rh_requests
- * - Notifications bidirectionnelles temps réel N1↔N2
- * - Workflow VU/TRAITÉ pour demandes véhicules/équipements
+ * POINTAGES & TIMESHEETS
+ * ----------------------
+ * - Pointage journalier unifié (/t/pointage)
+ * - Saisie heures semaine avec workflow 5 états
+ * - Validation planning packages N1→N2
+ * - Compteur heures temps réel
  * 
- * MODULE DOCGEN (GÉNÉRATION DOCUMENTS)
- * ------------------------------------
- * - Templates DOCX avec tokens dynamiques
- * - Smart tokens auto-remplis (agence, collaborateur, dirigeant)
- * - Vérification complétude avant remplissage
- * - Prévisualisation PDF temps réel via Gotenberg
- * - Workflow draft → finalisé avec réouverture possible
- * - Studio templates N4+ (/admin/templates)
+ * NETTOYAGE CODE
+ * --------------
+ * - Suppression console.log de production
+ * - Suppression fichiers dev-only (compareWithLegacy.ts)
  * 
- * AMÉLIORATIONS UX
- * ----------------
- * - Menu RH restructuré avec terminologie claire
- * - Portails N1 simplifiés (Mon véhicule, Mes équipements)
- * - Navigation cohérente et back-navigation
- * 
- * PRÉCÉDENT (v0.7.13)
- * -------------------
- * - Sync bidirectionnel profiles ↔ collaborateurs
- * - Backfill données existantes
+ * PRÉCÉDENT (v0.8.0 - 2025-12-15)
+ * --------------------------------
+ * - Module Suivi RH complet (N1/N2)
+ * - Module DocGen (génération documents)
+ * - Demandes unifiées via rh_requests
  */
