@@ -15,6 +15,24 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.8.1",
+    title: "Pointages & Timesheets",
+    date: "2025-12-18",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // MODULE POINTAGES / TIMESHEETS
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Workflow pointages 5 états : DRAFT → SUBMITTED → N2_MODIFIED → COUNTERSIGNED → VALIDATED' },
+      { type: 'feature', description: 'Page technicien /t/pointage : saisie hebdomadaire avec jours détaillés' },
+      { type: 'feature', description: 'Page N2 /rh/timesheets : validation des pointages équipe avec 3 onglets' },
+      { type: 'feature', description: 'Affichage des modifications N2 en rouge avec calcul des différences' },
+      { type: 'feature', description: 'Contre-signature obligatoire N1 avant validation finale N2' },
+      { type: 'feature', description: 'Possibilité de rejeter un pointage vers DRAFT avec commentaire' },
+      { type: 'improvement', description: 'Séparation stricte N1/N2 via RLS policies sur table timesheets' },
+      { type: 'improvement', description: 'Conservation des entrées originales vs modifiées pour audit' },
+    ],
+  },
+  {
     version: "V0.8.0",
     title: "Suivi RH & DocGen",
     date: "2025-12-15",

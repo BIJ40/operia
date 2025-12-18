@@ -1,9 +1,9 @@
 # Historique des Développements V2 — Focus sur la branche `dev`
 
-> **Document généré le** : 2025-12-17  
+> **Document généré le** : 2025-12-18  
 > **Branche de référence** : `dev`  
 > **Comparaison** : `dev` vs `main`  
-> **Version application** : v0.8.0+ "Suivi RH & DocGen"
+> **Version application** : v0.8.1+ "Pointages & Timesheets"
 
 ---
 
@@ -497,6 +497,41 @@ Améliorations de la console support pour les agents.
 1. **Phase 4 Apporteur** : Intégration Apogée (différée jusqu'à stabilisation P2.5+P3)
 2. **Flow Builder** : `/admin/flow` - Concepteur de workflows (RT, bons intervention)
 3. **StatIA Builder** : Métriques personnalisées
+
+---
+
+### 9.6 Module Pointages / Timesheets
+
+**Statut** : ✅ LIVRÉ (v0.8.1)
+
+Système complet de gestion des pointages techniciens avec workflow de validation.
+
+| Route | Page | Description |
+|-------|------|-------------|
+| `/t/pointage` | Pointage N1 | Saisie hebdomadaire des heures |
+| `/rh/timesheets` | Validation N2 | Traitement des pointages équipe |
+
+**Workflow 5 états** :
+```
+DRAFT → SUBMITTED → N2_MODIFIED → COUNTERSIGNED → VALIDATED
+              ↓           ↓              ↓
+           VALIDATED    (N1 contre-signe)  ↓
+              ↓                          VALIDATED
+           (validation directe)
+```
+
+**Règles métier** :
+- N1 saisit et soumet ses pointages hebdomadaires
+- N2 peut valider directement, modifier, ou rejeter
+- Si N2 modifie : N1 doit contre-signer avant validation finale
+- Modifications N2 affichées en rouge avec différences calculées
+- Entrées originales conservées pour audit
+
+**Tables** : `timesheets` (user_id, agency_id, week_start, status, entries_original, entries_modified)
+
+**Hooks** :
+- `useTimesheets` : Pointages N1 (CRUD personnel)
+- `useAgencyTimesheets` : Pointages agence N2 (liste + actions)
 
 ---
 

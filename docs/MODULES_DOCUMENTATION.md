@@ -1,8 +1,8 @@
 # Documentation Complète des Modules HelpConfort
 
-> **Version**: 2.1 – Mise à jour : 17 Décembre 2025  
+> **Version**: 2.2 – Mise à jour : 18 Décembre 2025  
 > **Source de vérité**: `src/types/modules.ts`  
-> **Release** : v0.8.0+ "Suivi RH & DocGen"
+> **Release** : v0.8.1+ "Pointages & Timesheets"
 
 ---
 
@@ -498,6 +498,24 @@ Module de gestion des ressources humaines avec accès différencié selon le pro
 | **Qui a accès** | Tous les collaborateurs avec option activée |
 
 Coffre-fort numérique personnel : bulletins de paie, contrats, attestations. Possibilité de faire des demandes RH.
+
+#### ⏱️ pointages
+| Propriété | Valeur |
+|-----------|--------|
+| **Description** | Gestion des pointages / timesheets |
+| **Routes** | `/t/pointage` (N1), `/rh/timesheets` (N2) |
+| **Activé par défaut** | ✅ Oui |
+| **Qui a accès** | N1 (saisie personnelle), N2+ (validation équipe) |
+
+**Workflow 5 états** : `DRAFT → SUBMITTED → N2_MODIFIED → COUNTERSIGNED → VALIDATED`
+
+Fonctionnalités :
+- **N1** : Saisie hebdomadaire des heures (matin/après-midi par jour)
+- **N2** : Validation directe, modification avec contre-signature, ou rejet
+- Affichage des modifications N2 en rouge avec calcul des différences
+- Conservation des entrées originales pour audit
+
+Tables : `timesheets` avec `entries_original` et `entries_modified` (JSONB)
 
 #### 👁️ rh_viewer
 | Propriété | Valeur |
