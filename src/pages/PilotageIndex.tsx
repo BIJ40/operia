@@ -1,4 +1,4 @@
-import { BarChart3, ListTodo, Tv, Radar, Building2, ChevronDown } from 'lucide-react';
+import { BarChart3, ListTodo, Tv, Radar, Building2, ChevronDown, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
@@ -31,6 +31,13 @@ const pilotageModules: PilotageModule[] = [
     description: 'Suivi performance et alertes apporteurs',
     icon: Radar,
     href: ROUTES.agency.veilleApporteurs,
+  },
+  {
+    id: 'carte_rdv',
+    title: 'Carte RDV',
+    description: 'Visualisation géographique des RDV du jour',
+    icon: MapPin,
+    href: ROUTES.agency.map,
   },
   {
     id: 'diffusion',
