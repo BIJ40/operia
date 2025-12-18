@@ -132,11 +132,15 @@ export function TicketDetailDrawer({
     queryKey: ['files', 'apogee-ticket-attachments', storagePath],
     queryFn: async () => {
       if (!storagePath) return 0;
-      const { data, error } = await (supabase.storage as any)
+      const { data, error } = await supabase.storage
         .from('apogee-ticket-attachments')
         .list(storagePath);
       if (error) return 0;
-      return (data || []).length;
+      // Filtrer les placeholders et dossiers vides
+      const realFiles = (data || []).filter(f => 
+        f.name && !f.name.startsWith('.') && f.id
+      );
+      return realFiles.length;
     },
     enabled: !!ticket?.id,
   });
