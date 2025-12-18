@@ -55,6 +55,12 @@ export interface RawProject {
   ref: string;
   clientId: number;
   label?: string;
+  data?: {
+    city?: string;
+    ville?: string;
+    address?: string;
+    adresse?: string;
+  };
 }
 
 export interface RawClient {
@@ -62,6 +68,8 @@ export interface RawClient {
   firstname?: string;
   lastname?: string;
   company?: string;
+  city?: string;
+  ville?: string;
 }
 
 // ========================================
@@ -77,6 +85,7 @@ export interface TechPlanningSlot {
   projectId?: number | null;
   projectRef?: string | null;
   clientName?: string | null;
+  city?: string | null;
   type?: string | null;
   state?: string | null;
   interventionId?: number;
@@ -212,6 +221,9 @@ export function buildPlanningByTech({
       }
     }
 
+    // Récupérer la ville depuis project.data ou client
+    const city = project?.data?.city || project?.data?.ville || client?.city || client?.ville || null;
+
     visites.forEach((visite, visiteIndex) => {
       if (!visite.date || !visite.usersIds || visite.usersIds.length === 0) {
         return;
@@ -254,6 +266,7 @@ export function buildPlanningByTech({
           projectId: intervention.projectId ?? null,
           projectRef: project?.ref ?? null,
           clientName,
+          city,
           type,
           state: visite.state ?? null,
           isBreak,
@@ -337,6 +350,7 @@ export function buildPlanningByTech({
             }
           }
 
+          const city = project?.data?.city || project?.data?.ville || client?.city || client?.ville || null;
           const type = intervention.data?.type2 ?? null;
           const isBreak = type != null && type.toLowerCase().includes("pause");
 
@@ -346,6 +360,7 @@ export function buildPlanningByTech({
             projectId: intervention.projectId ?? null,
             projectRef: project?.ref ?? null,
             clientName,
+            city,
             type,
             state: visite.state ?? null,
             isBreak,

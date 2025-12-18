@@ -328,23 +328,25 @@ export const TechWeeklyPlanningList: React.FC<TechWeeklyPlanningListProps> = ({
                                 </Badge>
                               )}
                             </div>
-                            <div className="mt-1 text-muted-foreground">
+                            <div className="mt-1 space-y-0.5">
                               {isBreak ? (
                                 <span className="font-medium text-amber-600">Pause</span>
                               ) : (
                                 <>
                                   {slot.clientName && (
-                                    <span className="font-medium text-foreground">
+                                    <div className="font-medium text-foreground truncate">
                                       {slot.clientName}
-                                    </span>
+                                    </div>
                                   )}
-                                  {slot.projectRef && (
-                                    <span className="ml-1 text-muted-foreground">
-                                      ({slot.projectRef})
-                                    </span>
+                                  {slot.city && (
+                                    <div className="text-muted-foreground truncate">
+                                      {slot.city}
+                                    </div>
                                   )}
-                                  {slot.type && !slot.clientName && (
-                                    <span className="text-muted-foreground">{slot.type}</span>
+                                  {slot.type && (
+                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 mt-0.5">
+                                      {slot.type}
+                                    </Badge>
                                   )}
                                 </>
                               )}
