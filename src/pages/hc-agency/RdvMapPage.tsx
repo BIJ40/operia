@@ -184,7 +184,7 @@ export default function RdvMapPage() {
   }
   
   return (
-    <div className="h-[calc(100vh-theme(spacing.16))] flex flex-col">
+    <div className="h-[calc(100vh-4rem)] flex flex-col">
       {/* Barre de filtres */}
       <div className="flex-none p-4 border-b bg-background space-y-3">
         <div className="flex flex-wrap items-center gap-3">
