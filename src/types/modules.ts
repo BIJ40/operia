@@ -194,9 +194,9 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['platform_admin', 'superadmin'],
     minRole: 'base_user',
     options: [
-      { key: 'kanban', path: 'apogee_tickets.kanban', label: 'Kanban', description: 'Tableau Kanban des tickets', defaultEnabled: true, routes: ['/gestion-projet'] },
-      { key: 'import', path: 'apogee_tickets.import', label: 'Import', description: 'Import depuis fichiers Excel', defaultEnabled: true, routes: ['/gestion-projet/import'] },
-      { key: 'manage', path: 'apogee_tickets.manage', label: 'Gestion', description: 'Créer et gérer les tickets', defaultEnabled: true, routes: ['/gestion-projet'] },
+      { key: 'kanban', path: 'apogee_tickets.kanban', label: 'Kanban', description: 'Accès au tableau Kanban et création de tickets', defaultEnabled: true, routes: ['/gestion-projet'] },
+      { key: 'import', path: 'apogee_tickets.import', label: 'Import', description: 'Import depuis fichiers Excel', defaultEnabled: false, routes: ['/gestion-projet/import'] },
+      { key: 'manage', path: 'apogee_tickets.manage', label: 'Modifier tickets', description: 'Modifier priorité, statut, contenu des tickets existants (désactiver = lecture + création seules)', defaultEnabled: true, routes: ['/gestion-projet'] },
     ],
   },
   {
