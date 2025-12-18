@@ -2,12 +2,13 @@
  * useRdvMap - Hook pour charger les RDV de la carte
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApogeeUsers } from '@/shared/api/apogee/useApogeeUsers';
+import { buildTechMap } from '@/apogee-connect/utils/techTools';
 
 interface MapRdvUser {
   id: number;
@@ -89,17 +90,18 @@ export function useRdvMap({ date, techIds, agencySlug }: UseRdvMapOptions): UseR
     refetchOnWindowFocus: false,
   });
   
-  // Liste complète des techniciens (type "technicien" uniquement) depuis apiGetUsers
+  // Liste des techniciens ACTIFS (is_on=true) via buildTechMap (même logique que /stats-hub)
   const technicians = useMemo(() => {
     if (!apogeeUsers?.length) return [];
     
-    return apogeeUsers
-      .filter(u => u.type === 'technicien' || u.type === 'tech' || u.type === 'Technicien')
-      .map(u => ({
-        id: u.id,
-        name: u.firstname || u.name || `User ${u.id}`,
-        // Couleur depuis data.bgcolor.hex ou fallback
-        color: u.data?.bgcolor?.hex || u.data?.bgcolor?.hex8 || '#6366f1',
+    // buildTechMap filtre is_on=true + isTechnicien/type approprié
+    const techMap = buildTechMap(apogeeUsers);
+    
+    return Object.values(techMap)
+      .map(t => ({
+        id: t.id,
+        name: `${t.prenom} ${t.nom}`.trim() || `Tech ${t.id}`,
+        color: t.color,
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [apogeeUsers]);
