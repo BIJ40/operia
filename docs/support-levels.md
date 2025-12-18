@@ -399,5 +399,5 @@ WHERE
 ---
 
 **Document maintenu par** : Architecture projet guide-apogee-dev  
-**Dernière mise à jour** : 2025-01-13  
-**Version** : 1.0 (Post-audit C3)
+**Dernière mise à jour** : 2025-12-18  
+**Version** : 1.1

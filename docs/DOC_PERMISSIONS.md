@@ -213,8 +213,7 @@ $$ LANGUAGE sql SECURITY DEFINER;
 
 - [PERMISSIONS_TRUTH_TABLE.md](./PERMISSIONS_TRUTH_TABLE.md) - Table de vérité par rôle
 - [GUARDS_DOCUMENTATION.md](./GUARDS_DOCUMENTATION.md) - Documentation des guards
-- [AUDIT_PERMISSIONS_FINDINGS_SUMMARY.md](./AUDIT_PERMISSIONS_FINDINGS_SUMMARY.md) - Résumé de l'audit
 
 ---
 
-*Dernière mise à jour : 2025-12-04*
+*Dernière mise à jour : 2025-12-18*

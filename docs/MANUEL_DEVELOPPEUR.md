@@ -1,6 +1,6 @@
 # 📚 Manuel Développeur HelpConfort
 
-## Documentation Technique Exhaustive — Version 0.7.13
+## Documentation Technique Exhaustive — Version 0.8.1
 
 > **Objectif** : Ce document est la référence unique et complète pour tout développeur travaillant sur le projet HelpConfort. Il couvre l'architecture, les modules, la sécurité, les bonnes pratiques et tous les détails techniques nécessaires pour contribuer efficacement au projet.
 
