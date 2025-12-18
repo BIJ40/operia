@@ -2,7 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 import { useFilters } from '@/apogee-connect/contexts/FiltersContext';
 import { useAgency } from '@/apogee-connect/contexts/AgencyContext';
 import { DataService } from '@/apogee-connect/services/dataService';
-import { calculateRecouvrement, RecouvrementStats } from '@/apogee-connect/utils/recouvrementCalculations';
+import {
+  calculateRecouvrement,
+  calculateRecouvrementByClient,
+  calculateRecouvrementByProject,
+  type RecouvrementStats,
+} from '@/apogee-connect/utils/recouvrementCalculations';
 import { logApogee } from '@/lib/logger';
 
 import { apogeeProxy } from "@/services/apogeeProxy";
@@ -150,7 +155,6 @@ export function useRecouvrementByClient(options: { enabled?: boolean } = {}) {
         ])
       );
 
-      const { calculateRecouvrementByClient } = await import('@/apogee-connect/utils/recouvrementCalculations');
       return calculateRecouvrementByClient(allData.factures, filters, clientsMap);
     },
     enabled: isAgencyReady && !!agencySlug && (options.enabled !== false),
@@ -176,7 +180,6 @@ export function useRecouvrementByProject(options: { enabled?: boolean } = {}) {
         (allData.projects || []).map(p => [p.id, p.nom || p.id])
       );
 
-      const { calculateRecouvrementByProject } = await import('@/apogee-connect/utils/recouvrementCalculations');
       return calculateRecouvrementByProject(allData.factures, filters, projectsMap);
     },
     enabled: isAgencyReady && !!agencySlug && (options.enabled !== false),
