@@ -301,13 +301,16 @@ Deno.serve(async (req) => {
     }
     
     for (const u of users) {
-      // L'API Apogée peut utiliser: bgcolor, color, bgColor, colorHex, etc.
-      const rawColor = u.bgcolor || u.bgColor || u.color || u.colorHex || null;
-      // S'assurer que c'est une couleur valide (hex ou nom)
-      const color = rawColor && typeof rawColor === 'string' && rawColor.trim() ? rawColor.trim() : '#6366f1';
+      // L'API Apogée stocke les couleurs dans data.bgcolor.hex ou data.color.hex
+      const dataObj = u.data || {};
+      const color = dataObj.bgcolor?.hex || dataObj.bgColor?.hex || dataObj.color?.hex 
+        || u.bgcolor?.hex || u.bgColor?.hex || u.color?.hex
+        || (typeof u.bgcolor === 'string' ? u.bgcolor : null)
+        || (typeof u.color === 'string' ? u.color : null)
+        || '#6366f1';
       
       usersById.set(u.id, {
-        name: `${u.firstname || ''} ${u.lastname || ''}`.trim() || u.name || `User ${u.id}`,
+        name: `${u.firstname || ''} ${u.lastname || u.name || ''}`.trim() || `User ${u.id}`,
         color,
       });
     }
