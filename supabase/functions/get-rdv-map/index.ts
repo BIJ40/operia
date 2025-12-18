@@ -222,14 +222,25 @@ Deno.serve(async (req) => {
       ));
     }
 
-    const interventions = await interventionsResponse.json();
-    console.log(`[GET-RDV-MAP] DEBUG: Got ${interventions.length} interventions from Apogée for ${date}`);
-    
-    // Log sample intervention structure
-    if (interventions.length > 0) {
-      console.log(`[GET-RDV-MAP] DEBUG: Sample intervention keys:`, Object.keys(interventions[0]));
-      console.log(`[GET-RDV-MAP] DEBUG: Sample intervention:`, JSON.stringify(interventions[0]).slice(0, 500));
-    }
+    const interventionsAll = await interventionsResponse.json();
+
+    const interventions = Array.isArray(interventionsAll)
+      ? interventionsAll.filter((it: any) => {
+          const rawDate = typeof it?.date === 'string' ? it.date : '';
+          if (rawDate.startsWith(date)) return true;
+
+          const visites = it?.data?.visites;
+          if (Array.isArray(visites)) {
+            return visites.some((v: any) => typeof v?.date === 'string' && v.date.startsWith(date));
+          }
+
+          return false;
+        })
+      : [];
+
+    console.log(
+      `[GET-RDV-MAP] Got ${interventions.length}/${Array.isArray(interventionsAll) ? interventionsAll.length : 0} interventions for ${targetAgency} on ${date}`
+    );
 
     // 7. Fetch users pour les couleurs
     const usersUrl = `https://${targetAgency}.hc-apogee.fr/api/apiGetUsers`;
@@ -258,91 +269,112 @@ Deno.serve(async (req) => {
     });
 
     const projects = projectsResponse.ok ? await projectsResponse.json() : [];
-    console.log(`[GET-RDV-MAP] DEBUG: Got ${projects.length} projects from Apogée`);
-    
-    // Log sample project structure
-    if (projects.length > 0) {
-      console.log(`[GET-RDV-MAP] DEBUG: Sample project keys:`, Object.keys(projects[0]));
-      const sampleData = projects[0].data;
-      if (sampleData) {
-        console.log(`[GET-RDV-MAP] DEBUG: Sample project.data keys:`, Object.keys(sampleData));
-        console.log(`[GET-RDV-MAP] DEBUG: Address fields:`, {
-          adresse: sampleData.adresse,
-          codePostal: sampleData.codePostal,
-          ville: sampleData.ville,
-          address: sampleData.address,
-          postalCode: sampleData.postalCode,
-          city: sampleData.city,
-        });
-      }
-    }
-    
-    const projectsById = new Map<number, { address: string; postalCode: string; city: string; univers: string }>();
-    
+    console.log(`[GET-RDV-MAP] Got ${projects.length} projects from Apogée`);
+
+    const projectsById = new Map<number, { univers: string; clientId?: number | null }>();
+
     for (const p of projects) {
       const data = p.data || {};
       projectsById.set(p.id, {
-        address: data.adresse || p.adresse || '',
-        postalCode: data.codePostal || p.codePostal || '',
-        city: data.ville || p.ville || '',
         univers: Array.isArray(data.universes) ? data.universes[0] : (data.univers || 'Non classé'),
+        clientId: typeof p.clientId === 'number' ? p.clientId : null,
       });
+    }
+
+    // 8bis. Fetch clients (pour l'adresse / localisation)
+    const clientsUrl = `https://${targetAgency}.hc-apogee.fr/api/apiGetClients`;
+    const clientsResponse = await fetch(clientsUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ API_KEY: apiKey }),
+    });
+
+    const clients = clientsResponse.ok ? await clientsResponse.json() : [];
+    console.log(`[GET-RDV-MAP] Got ${clients.length} clients from Apogée`);
+
+    const clientsById = new Map<number, { address: string; postalCode: string; city: string }>();
+
+    for (const c of clients) {
+      const data = c.data || {};
+      const address = data.adresse || c.adresse || c.address || '';
+      const postalCode = data.codePostal || c.codePostal || c.postalCode || '';
+      const city = data.ville || c.ville || c.city || '';
+      clientsById.set(c.id, { address, postalCode, city });
     }
 
     // 9. Transformer les interventions en MapRdv
     const mapRdvs: MapRdv[] = [];
     let skippedNoProject = 0;
-    let skippedNoAddress = 0;
+    let skippedNoClientAddress = 0;
     let skippedNoGeocode = 0;
-    
-    for (const intervention of interventions) {
-      // Filtrer par technicien si demandé
+    let skippedNoTech = 0;
+
+    for (const intervention of interventions as any[]) {
+      const data = intervention?.data || {};
+      const visites = Array.isArray(data.visites) ? data.visites : [];
+
+      // Techniciens: userId (si présent) + visites[].usersIds
       const technicianIds: number[] = [];
-      
-      // Technicien principal
-      if (intervention.userId) {
+      if (typeof intervention?.userId === 'number') {
         technicianIds.push(intervention.userId);
       }
-      
-      // Techniciens des visites
-      if (Array.isArray(intervention.visites)) {
-        for (const visite of intervention.visites) {
-          if (Array.isArray(visite.usersIds)) {
-            technicianIds.push(...visite.usersIds);
-          }
+      for (const v of visites) {
+        if (Array.isArray(v?.usersIds)) {
+          technicianIds.push(...v.usersIds);
         }
       }
-      
-      const uniqueTechIds = [...new Set(technicianIds)];
-      
+
+      const uniqueTechIds = [...new Set(technicianIds)].filter((x): x is number => typeof x === 'number');
+      if (uniqueTechIds.length === 0) {
+        skippedNoTech++;
+        continue;
+      }
+
       // Appliquer le filtre technicien
       if (techIds && techIds.length > 0) {
-        const hasMatchingTech = uniqueTechIds.some(id => techIds.includes(id));
+        const hasMatchingTech = uniqueTechIds.some((id) => techIds.includes(id));
         if (!hasMatchingTech) continue;
       }
-      
-      // Récupérer les infos du projet
+
+      // Infos projet (univers)
       const project = projectsById.get(intervention.projectId);
       if (!project) {
         skippedNoProject++;
         continue;
       }
-      if (!project.address) {
-        skippedNoAddress++;
-        console.log(`[GET-RDV-MAP] DEBUG: Intervention ${intervention.id} has project ${intervention.projectId} but no address`);
+
+      // Localisation: on part du client/site (client_id intervention, sinon clientId projet)
+      const rawClientId = intervention.client_id ?? project.clientId;
+      const clientId = typeof rawClientId === 'number' ? rawClientId : null;
+      const client = clientId ? clientsById.get(clientId) : undefined;
+
+      if (!client?.address) {
+        skippedNoClientAddress++;
         continue;
       }
-      
-      // Géocoder l'adresse
-      const coords = await geocodeAddress(project.address, project.postalCode, project.city);
+
+      const coords = await geocodeAddress(client.address, client.postalCode, client.city);
       if (!coords) {
         skippedNoGeocode++;
-        console.log(`[GET-RDV-MAP] DEBUG: Geocode failed for: ${project.address} ${project.postalCode} ${project.city}`);
         continue;
       }
-      
-      // Construire la liste des techniciens avec leurs couleurs
-      const rdvUsers: MapRdvUser[] = uniqueTechIds.slice(0, 10).map(id => {
+
+      // StartAt + Durée: on prend la première visite du jour si dispo
+      const visitesDuJour = visites.filter(
+        (v: any) => typeof v?.date === 'string' && v.date.startsWith(date)
+      );
+      const visiteRef = visitesDuJour[0] ?? visites[0] ?? null;
+
+      const startAt = (typeof visiteRef?.date === 'string' ? visiteRef.date : null)
+        ?? (typeof intervention?.date === 'string' ? intervention.date : null)
+        ?? date;
+
+      const durationMin = typeof visiteRef?.duree === 'number'
+        ? visiteRef.duree
+        : (typeof intervention?.duree === 'number' ? intervention.duree : 60);
+
+      // Techniciens (nom + couleur)
+      const rdvUsers: MapRdvUser[] = uniqueTechIds.slice(0, 10).map((id) => {
         const userData = usersById.get(id);
         return {
           id,
@@ -350,29 +382,21 @@ Deno.serve(async (req) => {
           color: userData?.color || '#6366f1',
         };
       });
-      
-      // Calculer la durée (en minutes)
-      let durationMin = 60; // Default 1h
-      if (intervention.dateStart && intervention.dateEnd) {
-        const start = new Date(intervention.dateStart).getTime();
-        const end = new Date(intervention.dateEnd).getTime();
-        durationMin = Math.round((end - start) / 60000);
-      }
-      
+
       mapRdvs.push({
         rdvId: intervention.id,
         projectId: intervention.projectId,
         lat: coords.lat,
         lng: coords.lng,
-        startAt: intervention.dateStart || intervention.date || date,
+        startAt,
         durationMin,
         univers: project.univers,
-        address: maskAddress(project.address, project.postalCode, project.city),
+        address: maskAddress(client.address, client.postalCode, client.city),
         users: rdvUsers,
       });
     }
 
-    console.log(`[GET-RDV-MAP] Summary for ${targetAgency} on ${date}: ${mapRdvs.length} RDVs returned, skipped: ${skippedNoProject} no project, ${skippedNoAddress} no address, ${skippedNoGeocode} geocode failed`);
+    console.log(`[GET-RDV-MAP] Summary for ${targetAgency} on ${date}: ${mapRdvs.length} RDVs returned, skipped: ${skippedNoProject} no project, ${skippedNoClientAddress} no client address, ${skippedNoTech} no tech, ${skippedNoGeocode} geocode failed`);
 
     return withCors(req, new Response(
       JSON.stringify({
