@@ -223,6 +223,13 @@ Deno.serve(async (req) => {
     }
 
     const interventions = await interventionsResponse.json();
+    console.log(`[GET-RDV-MAP] DEBUG: Got ${interventions.length} interventions from Apogée for ${date}`);
+    
+    // Log sample intervention structure
+    if (interventions.length > 0) {
+      console.log(`[GET-RDV-MAP] DEBUG: Sample intervention keys:`, Object.keys(interventions[0]));
+      console.log(`[GET-RDV-MAP] DEBUG: Sample intervention:`, JSON.stringify(interventions[0]).slice(0, 500));
+    }
 
     // 7. Fetch users pour les couleurs
     const usersUrl = `https://${targetAgency}.hc-apogee.fr/api/apiGetUsers`;
@@ -251,6 +258,25 @@ Deno.serve(async (req) => {
     });
 
     const projects = projectsResponse.ok ? await projectsResponse.json() : [];
+    console.log(`[GET-RDV-MAP] DEBUG: Got ${projects.length} projects from Apogée`);
+    
+    // Log sample project structure
+    if (projects.length > 0) {
+      console.log(`[GET-RDV-MAP] DEBUG: Sample project keys:`, Object.keys(projects[0]));
+      const sampleData = projects[0].data;
+      if (sampleData) {
+        console.log(`[GET-RDV-MAP] DEBUG: Sample project.data keys:`, Object.keys(sampleData));
+        console.log(`[GET-RDV-MAP] DEBUG: Address fields:`, {
+          adresse: sampleData.adresse,
+          codePostal: sampleData.codePostal,
+          ville: sampleData.ville,
+          address: sampleData.address,
+          postalCode: sampleData.postalCode,
+          city: sampleData.city,
+        });
+      }
+    }
+    
     const projectsById = new Map<number, { address: string; postalCode: string; city: string; univers: string }>();
     
     for (const p of projects) {
@@ -265,6 +291,9 @@ Deno.serve(async (req) => {
 
     // 9. Transformer les interventions en MapRdv
     const mapRdvs: MapRdv[] = [];
+    let skippedNoProject = 0;
+    let skippedNoAddress = 0;
+    let skippedNoGeocode = 0;
     
     for (const intervention of interventions) {
       // Filtrer par technicien si demandé
@@ -294,11 +323,23 @@ Deno.serve(async (req) => {
       
       // Récupérer les infos du projet
       const project = projectsById.get(intervention.projectId);
-      if (!project || !project.address) continue;
+      if (!project) {
+        skippedNoProject++;
+        continue;
+      }
+      if (!project.address) {
+        skippedNoAddress++;
+        console.log(`[GET-RDV-MAP] DEBUG: Intervention ${intervention.id} has project ${intervention.projectId} but no address`);
+        continue;
+      }
       
       // Géocoder l'adresse
       const coords = await geocodeAddress(project.address, project.postalCode, project.city);
-      if (!coords) continue;
+      if (!coords) {
+        skippedNoGeocode++;
+        console.log(`[GET-RDV-MAP] DEBUG: Geocode failed for: ${project.address} ${project.postalCode} ${project.city}`);
+        continue;
+      }
       
       // Construire la liste des techniciens avec leurs couleurs
       const rdvUsers: MapRdvUser[] = uniqueTechIds.slice(0, 10).map(id => {
@@ -331,7 +372,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log(`[GET-RDV-MAP] Returned ${mapRdvs.length} RDVs for ${targetAgency} on ${date}`);
+    console.log(`[GET-RDV-MAP] Summary for ${targetAgency} on ${date}: ${mapRdvs.length} RDVs returned, skipped: ${skippedNoProject} no project, ${skippedNoAddress} no address, ${skippedNoGeocode} geocode failed`);
 
     return withCors(req, new Response(
       JSON.stringify({
