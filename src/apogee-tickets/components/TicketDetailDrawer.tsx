@@ -348,7 +348,7 @@ export function TicketDetailDrawer({
                 <Select
                   value={ticket.kanban_status}
                   onValueChange={handleStatusChange}
-                  disabled={!canManage && availableStatuses.length <= 1}
+                  disabled={!canManage}
                 >
                   <SelectTrigger 
                     className="h-9 w-auto min-w-[140px] text-sm font-medium gap-2"
