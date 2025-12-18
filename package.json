@@ -66,6 +66,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^3.6.0",
+    "dexie": "^4.2.1",
     "dompurify": "^3.3.0",
     "embla-carousel-react": "^8.6.0",
     "fabric": "^6.9.0",
@@ -98,6 +99,7 @@
     "tippy.js": "^6.3.7",
     "tsx": "^4.20.6",
     "vaul": "^0.9.9",
+    "vite-plugin-pwa": "^1.2.0",
     "vitest": "^4.0.15",
     "xlsx": "^0.18.5",
     "zod": "^4.1.13"
