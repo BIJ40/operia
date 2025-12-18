@@ -176,3 +176,6 @@ verify_jwt = false
 
 [functions.trigger-monthly-reports]
 verify_jwt = false
+
+[functions.submit-flow-result]
+verify_jwt = true

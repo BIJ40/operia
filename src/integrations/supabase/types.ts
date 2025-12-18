@@ -3215,6 +3215,60 @@ export type Database = {
         }
         Relationships: []
       }
+      flow_submissions: {
+        Row: {
+          agency_id: string | null
+          client_operation_id: string
+          created_at: string
+          flow_id: string
+          flow_version: number
+          id: string
+          rdv_id: string
+          result_json: Json
+          submitted_at: string
+          submitted_by: string | null
+        }
+        Insert: {
+          agency_id?: string | null
+          client_operation_id: string
+          created_at?: string
+          flow_id: string
+          flow_version: number
+          id?: string
+          rdv_id: string
+          result_json?: Json
+          submitted_at?: string
+          submitted_by?: string | null
+        }
+        Update: {
+          agency_id?: string | null
+          client_operation_id?: string
+          created_at?: string
+          flow_id?: string
+          flow_version?: number
+          id?: string
+          rdv_id?: string
+          result_json?: Json
+          submitted_at?: string
+          submitted_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flow_submissions_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flow_submissions_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "flow_schemas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       formation_content: {
         Row: {
           created_at: string
