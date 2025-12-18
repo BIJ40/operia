@@ -52,6 +52,7 @@ export function useRdvMap({ date, techIds, agencySlug }: UseRdvMapOptions): UseR
     agencySlug: targetAgency,
   });
 
+  const queryKey = [
     'rdv-map',
     format(date, 'yyyy-MM-dd'),
     techIds?.join(',') || 'all',
