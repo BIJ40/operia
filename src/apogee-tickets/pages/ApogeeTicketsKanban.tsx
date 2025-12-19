@@ -37,7 +37,6 @@ import { useMyRecentlyModifiedTickets } from '../hooks/useMyRecentlyModifiedTick
 import { useMyTicketViews } from '../hooks/useTicketViews';
 import { useAuth } from '@/contexts/AuthContext';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { KanbanPostIt } from '../components/KanbanPostIt';
 
 export default function ApogeeTicketsKanbanPage() {
   const { data: myTicketRole, isLoading: isLoadingRole, error: roleError } = useMyTicketRole();
@@ -363,9 +362,6 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-
-          {/* Post-it note */}
-          <KanbanPostIt />
         </div>
 
         <div className="flex items-center gap-1 sm:gap-2 flex-wrap">

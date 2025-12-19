@@ -3561,27 +3561,6 @@ export type Database = {
           },
         ]
       }
-      kanban_postit: {
-        Row: {
-          content: string | null
-          id: string
-          updated_at: string | null
-          updated_by: string | null
-        }
-        Insert: {
-          content?: string | null
-          id?: string
-          updated_at?: string | null
-          updated_by?: string | null
-        }
-        Update: {
-          content?: string | null
-          id?: string
-          updated_at?: string | null
-          updated_by?: string | null
-        }
-        Relationships: []
-      }
       knowledge_base: {
         Row: {
           category: string
