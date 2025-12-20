@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { UserCheck } from "lucide-react";
+import { UserCheck, CalendarDays } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ROUTES } from "@/config/routes";
 import { TechWeeklyPlanningList } from "@/apogee-connect/components/TechWeeklyPlanningList";
@@ -8,7 +8,7 @@ import { ApiToggleProvider } from "@/apogee-connect/contexts/ApiToggleContext";
 import { useApogeeUsers } from "@/shared/api/apogee/useApogeeUsers";
 import { buildTechMap } from "@/apogee-connect/utils/techTools";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSessionState } from "@/hooks/useSessionState";
 
@@ -76,18 +76,17 @@ function PlanningHebdoContent() {
         </CardHeader>
         <CardContent className="space-y-3">
           <Select
-            value={selectedTechId?.toString() ?? "all"}
+            value={selectedTechId?.toString() ?? ""}
             onValueChange={(value) => {
-              const newId = value === "all" ? undefined : Number(value);
+              const newId = value ? Number(value) : undefined;
               setSelectedTechId(newId);
             }}
             disabled={loadingUsers || techniciensList.length === 0}
           >
             <SelectTrigger className="w-full lg:w-[250px]">
-              <SelectValue placeholder="Sélectionner un technicien" />
+              <SelectValue placeholder="Choisir un technicien" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous les techniciens</SelectItem>
               {techniciensList.map((tech) => (
                 <SelectItem key={tech.id} value={tech.id.toString()}>
                   <div className="flex items-center gap-2">
@@ -106,8 +105,22 @@ function PlanningHebdoContent() {
         </CardContent>
       </div>
 
-      {/* Planning List */}
-      <TechWeeklyPlanningList techFilterId={selectedTechId} />
+      {/* Planning List or Empty State */}
+      {selectedTechId ? (
+        <TechWeeklyPlanningList techFilterId={selectedTechId} />
+      ) : (
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <CalendarDays className="h-12 w-12 text-muted-foreground/50 mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">
+              Aucun technicien sélectionné
+            </h3>
+            <p className="text-sm text-muted-foreground max-w-md">
+              Sélectionnez un technicien dans le menu ci-dessus pour afficher son planning hebdomadaire.
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
