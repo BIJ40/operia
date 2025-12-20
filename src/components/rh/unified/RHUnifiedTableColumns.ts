@@ -111,12 +111,30 @@ export const TAB_COLUMNS: Record<RHTabId, ColumnGroup[]> = {
       ],
     },
     {
+      id: 'epi_inventory',
+      label: '🦺 EPI Attribués',
+      className: 'bg-green-50 dark:bg-green-950/30',
+      columns: [
+        { id: 'epi_count', label: 'Nb EPI', accessor: () => null },
+        { id: 'epi_renewal', label: 'À renouveler', accessor: () => null },
+      ],
+    },
+    {
       id: 'epi_status',
-      label: 'Statut EPI',
+      label: '📋 Statut EPI',
       className: 'bg-yellow-50 dark:bg-yellow-950/30',
       columns: [
-        { id: 'statut_epi', label: 'Statut', accessor: (row) => row.epi_profile?.statut_epi },
-        { id: 'date_renouvellement', label: 'Renouvellement', accessor: (row) => row.epi_profile?.date_renouvellement },
+        { id: 'epi_requests', label: 'Demandes', accessor: () => null },
+        { id: 'epi_incidents', label: 'Incidents', accessor: () => null },
+        { id: 'epi_ack_status', label: 'Attestation', accessor: () => null },
+      ],
+    },
+    {
+      id: 'epi_global',
+      label: '✅ Synthèse',
+      className: 'bg-emerald-50 dark:bg-emerald-950/30',
+      columns: [
+        { id: 'epi_ok', label: 'EPI OK', accessor: () => null },
       ],
     },
   ],

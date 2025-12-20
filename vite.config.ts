@@ -19,6 +19,7 @@ export default defineConfig(({ mode }) => ({
       includeAssets: ["favicon.ico", "favicon.png", "logo-apogee.png"],
       manifest: false, // We use manual manifest.webmanifest
       workbox: {
+        maximumFileSizeToCacheInBytes: 25 * 1024 * 1024, // 25 MB limit
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api/, /^\/supabase/],
