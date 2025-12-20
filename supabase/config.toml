@@ -179,3 +179,9 @@ verify_jwt = false
 
 [functions.submit-flow-result]
 verify_jwt = true
+
+[functions.epi-generate-monthly-acks]
+verify_jwt = false
+
+[functions.epi-generate-ack-pdf]
+verify_jwt = true

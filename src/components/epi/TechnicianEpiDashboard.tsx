@@ -1,17 +1,18 @@
 import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { HardHat, AlertTriangle, FileCheck, Plus, ClipboardList } from "lucide-react";
 import { useMyCollaborator } from "@/hooks/rh-employee/useMyCollaborator";
 import { useMyEpiAssignments } from "@/hooks/epi/useEpiAssignments";
-import { useMyEpiRequests } from "@/hooks/epi/useEpiRequests";
-import { useMyEpiIncidents } from "@/hooks/epi/useEpiIncidents";
+import { useMyEpiRequests, EPI_REQUEST_STATUSES } from "@/hooks/epi/useEpiRequests";
+import { useMyEpiIncidents, EPI_INCIDENT_STATUSES } from "@/hooks/epi/useEpiIncidents";
 import { useMyCurrentAck } from "@/hooks/epi/useEpiAcknowledgements";
 import { EPI_CATEGORIES } from "@/hooks/epi/useEpiCatalog";
-import { EPI_REQUEST_STATUSES } from "@/hooks/epi/useEpiRequests";
-import { EPI_INCIDENT_STATUSES } from "@/hooks/epi/useEpiIncidents";
+import { RequestEpiDialog } from "./RequestEpiDialog";
+import { ReportIncidentDialog } from "./ReportIncidentDialog";
+import { SignAckDialog } from "./SignAckDialog";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,6 +23,10 @@ export function TechnicianEpiDashboard() {
   const { data: requests, isLoading: reqLoading } = useMyEpiRequests(collaborator?.id);
   const { data: incidents, isLoading: incLoading } = useMyEpiIncidents(collaborator?.id);
   const { data: currentAck, isLoading: ackLoading } = useMyCurrentAck(collaborator?.id);
+
+  const [requestDialogOpen, setRequestDialogOpen] = useState(false);
+  const [incidentDialogOpen, setIncidentDialogOpen] = useState(false);
+  const [signDialogOpen, setSignDialogOpen] = useState(false);
 
   const isLoading = collabLoading || assignLoading || reqLoading || incLoading || ackLoading;
 
@@ -47,16 +52,25 @@ export function TechnicianEpiDashboard() {
   const pendingRequests = requests?.filter(r => r.status === "pending").length || 0;
   const openIncidents = incidents?.filter(i => i.status === "open").length || 0;
   const needsSignature = currentAck?.status === "pending";
+  const collaboratorName = `${collaborator.first_name} ${collaborator.last_name}`;
 
   return (
     <div className="space-y-4">
-      {/* Quick Actions & Status */}
+      {/* Quick Actions */}
       <div className="grid grid-cols-2 gap-3">
-        <Button variant="outline" className="h-auto py-3 flex-col gap-1">
+        <Button 
+          variant="outline" 
+          className="h-auto py-3 flex-col gap-1"
+          onClick={() => setRequestDialogOpen(true)}
+        >
           <Plus className="h-5 w-5" />
           <span className="text-xs">Demander EPI</span>
         </Button>
-        <Button variant="outline" className="h-auto py-3 flex-col gap-1">
+        <Button 
+          variant="outline" 
+          className="h-auto py-3 flex-col gap-1"
+          onClick={() => setIncidentDialogOpen(true)}
+        >
           <AlertTriangle className="h-5 w-5" />
           <span className="text-xs">Signaler</span>
         </Button>
@@ -73,7 +87,9 @@ export function TechnicianEpiDashboard() {
                 <p className="text-sm text-orange-700">À signer avant fin du mois</p>
               </div>
             </div>
-            <Button size="sm" variant="default">Signer</Button>
+            <Button size="sm" variant="default" onClick={() => setSignDialogOpen(true)}>
+              Signer
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -193,7 +209,7 @@ export function TechnicianEpiDashboard() {
                       <div className="flex justify-between items-start">
                         <div>
                           <p className="font-medium">{i.catalog_item?.name || "EPI non identifié"}</p>
-                          <p className="text-sm text-muted-foreground">{i.description.slice(0, 50)}...</p>
+                          <p className="text-sm text-muted-foreground">{i.description?.slice(0, 50)}...</p>
                           <p className="text-xs text-muted-foreground">
                             {format(new Date(i.created_at), "dd/MM/yyyy", { locale: fr })}
                           </p>
@@ -216,6 +232,26 @@ export function TechnicianEpiDashboard() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Dialogs */}
+      <RequestEpiDialog
+        open={requestDialogOpen}
+        onOpenChange={setRequestDialogOpen}
+        agencyId={collaborator.agency_id}
+        collaboratorId={collaborator.id}
+      />
+      <ReportIncidentDialog
+        open={incidentDialogOpen}
+        onOpenChange={setIncidentDialogOpen}
+        agencyId={collaborator.agency_id}
+        collaboratorId={collaborator.id}
+      />
+      <SignAckDialog
+        open={signDialogOpen}
+        onOpenChange={setSignDialogOpen}
+        ack={currentAck || null}
+        collaboratorName={collaboratorName}
+      />
     </div>
   );
 }
