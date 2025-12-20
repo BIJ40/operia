@@ -6,6 +6,7 @@ import { VitePWA } from "vite-plugin-pwa";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  logLevel: "warn",
   server: {
     host: "::",
     port: 8080,
@@ -14,20 +15,20 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === "development" && componentTagger(),
     VitePWA({
-      registerType: 'prompt',
-      includeAssets: ['favicon.ico', 'favicon.png', 'logo-apogee.png'],
+      registerType: "prompt",
+      includeAssets: ["favicon.ico", "favicon.png", "logo-apogee.png"],
       manifest: false, // We use manual manifest.webmanifest
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-        navigateFallback: '/index.html',
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
+        navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api/, /^\/supabase/],
         runtimeCaching: [
           {
             // Cache-first for static assets
             urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/,
-            handler: 'CacheFirst',
+            handler: "CacheFirst",
             options: {
-              cacheName: 'images-cache',
+              cacheName: "images-cache",
               expiration: {
                 maxEntries: 100,
                 maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
@@ -37,9 +38,9 @@ export default defineConfig(({ mode }) => ({
           {
             // Cache-first for fonts
             urlPattern: /\.(?:woff|woff2|ttf|eot)$/,
-            handler: 'CacheFirst',
+            handler: "CacheFirst",
             options: {
-              cacheName: 'fonts-cache',
+              cacheName: "fonts-cache",
               expiration: {
                 maxEntries: 20,
                 maxAgeSeconds: 365 * 24 * 60 * 60, // 1 year
@@ -49,9 +50,9 @@ export default defineConfig(({ mode }) => ({
           {
             // Stale-while-revalidate for /t routes (app shell)
             urlPattern: /^\/t/,
-            handler: 'StaleWhileRevalidate',
+            handler: "StaleWhileRevalidate",
             options: {
-              cacheName: 'technician-shell',
+              cacheName: "technician-shell",
               expiration: {
                 maxEntries: 50,
                 maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
@@ -61,9 +62,9 @@ export default defineConfig(({ mode }) => ({
           {
             // Network-first for API calls with short timeout
             urlPattern: /\/rest\/v1\//,
-            handler: 'NetworkFirst',
+            handler: "NetworkFirst",
             options: {
-              cacheName: 'api-cache',
+              cacheName: "api-cache",
               networkTimeoutSeconds: 5,
               expiration: {
                 maxEntries: 50,
@@ -74,9 +75,9 @@ export default defineConfig(({ mode }) => ({
           {
             // Network-first for edge functions
             urlPattern: /\/functions\/v1\//,
-            handler: 'NetworkFirst',
+            handler: "NetworkFirst",
             options: {
-              cacheName: 'functions-cache',
+              cacheName: "functions-cache",
               networkTimeoutSeconds: 10,
               expiration: {
                 maxEntries: 20,
@@ -97,12 +98,14 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    target: 'esnext',
+    target: "esnext",
+    reportCompressedSize: false,
   },
   optimizeDeps: {
     esbuildOptions: {
-      target: 'esnext',
+      target: "esnext",
     },
-    exclude: ['pdfjs-dist'],
+    exclude: ["pdfjs-dist"],
   },
 }));
+
