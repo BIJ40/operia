@@ -16,6 +16,8 @@ import { RHIdentifiantsDynamicColumns } from './RHIdentifiantsDynamicColumns';
 import { RHDocumentCell } from './RHDocumentCell';
 import { RHMetiersMultiSelect } from './RHMetiersMultiSelect';
 import { ExternalLink, Paperclip, Package } from 'lucide-react';
+import { CollaboratorEpiSummary } from '@/hooks/epi/useCollaboratorsEpiSummary';
+import { EpiCountCell, EpiRenewalCell, EpiRequestsCell, EpiIncidentsCell, EpiAckStatusCell, EpiOkCell } from './RHEpiCells';
 
 interface RHUnifiedTableRowProps {
   collaborator: RHCollaborator;
@@ -26,6 +28,7 @@ interface RHUnifiedTableRowProps {
   onValueChange: (collaboratorId: string, columnId: string, value: string) => void;
   getLocalValue: (collaboratorId: string, columnId: string, originalValue: unknown) => unknown;
   onAssetsUpdate?: (collaboratorId: string, field: string, value: unknown) => void;
+  epiSummary?: CollaboratorEpiSummary;
 }
 
 function getStatusIndicator(collaborator: RHCollaborator) {
@@ -44,6 +47,7 @@ export function RHUnifiedTableRow({
   onValueChange,
   getLocalValue,
   onAssetsUpdate,
+  epiSummary,
 }: RHUnifiedTableRowProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -315,11 +319,36 @@ export function RHUnifiedTableRow({
 
   const POPUP_COLUMNS = ['vehicule_attribue', 'carte_carburant', 'carte_bancaire', 'carte_autre', 'informatique_liste', 'outils_liste', 'identifiants_liste', 'metiers_liste'];
   
+  // Colonnes EPI
+  const EPI_COLUMNS = ['epi_count', 'epi_renewal', 'epi_requests', 'epi_incidents', 'epi_ack_status', 'epi_ok'];
+  
   // Colonnes avec possibilité d'upload de documents
   const DOCUMENT_UPLOAD_COLUMNS = ['habilitation_electrique', 'caces', 'visite_medicale'];
   
   // Colonnes de documents (permis, cni)
   const DOCUMENT_CELL_COLUMNS = ['permis', 'cni'];
+
+  // Render EPI cell
+  const renderEpiCell = (colId: string, colIdx: number, className?: string) => {
+    const cellClass = cn(colIdx === 0 && "border-l", className, "p-1");
+    
+    switch (colId) {
+      case 'epi_count':
+        return <TableCell key={colId} className={cellClass}><EpiCountCell summary={epiSummary} /></TableCell>;
+      case 'epi_renewal':
+        return <TableCell key={colId} className={cellClass}><EpiRenewalCell summary={epiSummary} /></TableCell>;
+      case 'epi_requests':
+        return <TableCell key={colId} className={cellClass}><EpiRequestsCell summary={epiSummary} /></TableCell>;
+      case 'epi_incidents':
+        return <TableCell key={colId} className={cellClass}><EpiIncidentsCell summary={epiSummary} /></TableCell>;
+      case 'epi_ack_status':
+        return <TableCell key={colId} className={cellClass}><EpiAckStatusCell summary={epiSummary} /></TableCell>;
+      case 'epi_ok':
+        return <TableCell key={colId} className={cellClass}><EpiOkCell summary={epiSummary} /></TableCell>;
+      default:
+        return null;
+    }
+  };
 
   // Render document cell for permis/cni
   const renderDocumentCell = (colId: string, colIdx: number, className?: string) => {
@@ -418,6 +447,11 @@ export function RHUnifiedTableRow({
           // Colonnes de documents (permis, cni)
           if (DOCUMENT_CELL_COLUMNS.includes(col.id)) {
             return renderDocumentCell(col.id, colIdx, group.className);
+          }
+          
+          // Colonnes EPI
+          if (EPI_COLUMNS.includes(col.id)) {
+            return renderEpiCell(col.id, colIdx, group.className);
           }
           
           // Colonnes avec popup

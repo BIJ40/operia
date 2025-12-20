@@ -10,6 +10,8 @@ import { TAB_COLUMNS, RHTabId } from '@/components/rh/unified/RHUnifiedTableColu
 import { CompetencesMatrixPrint } from '@/components/rh/CompetencesMatrixPrint';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { usePersistedTab } from '@/hooks/usePersistedState';
+import { useCollaboratorsEpiSummary } from '@/hooks/epi/useCollaboratorsEpiSummary';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Colonnes visibles par défaut par onglet
 const DEFAULT_VISIBLE_COLUMNS: Record<RHTabId, string[]> = {
@@ -23,9 +25,11 @@ const DEFAULT_VISIBLE_COLUMNS: Record<RHTabId, string[]> = {
 };
 
 export default function RHSuiviIndex() {
+  const { agencyId } = useAuth();
   const { data: collaborators = [], isLoading, refetch } = useRHCollaborators();
   const { data: tablePrefs } = useRHTablePrefs();
   const updatePrefs = useUpdateRHTablePrefs();
+  const { data: epiSummaries = [] } = useCollaboratorsEpiSummary(agencyId || undefined);
   
   const [showCompetencesMatrix, setShowCompetencesMatrix] = useState(false);
 
@@ -96,6 +100,7 @@ export default function RHSuiviIndex() {
         onTabChange={setActiveTab}
         onRefresh={refetch}
         onPrintMatrix={() => setShowCompetencesMatrix(true)}
+        epiSummaries={epiSummaries}
       />
       
       <CompetencesMatrixPrint

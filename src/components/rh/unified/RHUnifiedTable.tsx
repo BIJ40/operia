@@ -24,6 +24,7 @@ import { useRHInlineEdit } from '@/hooks/rh/useRHInlineEdit';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { CollaboratorEpiSummary } from '@/hooks/epi/useCollaboratorsEpiSummary';
 
 interface RHUnifiedTableProps {
   collaborators: RHCollaborator[];
@@ -34,6 +35,7 @@ interface RHUnifiedTableProps {
   onTabChange: (tab: RHTabId) => void;
   onRefresh: () => void;
   onPrintMatrix: () => void;
+  epiSummaries?: CollaboratorEpiSummary[];
 }
 
 export function RHUnifiedTable({
@@ -45,6 +47,7 @@ export function RHUnifiedTable({
   onTabChange,
   onRefresh,
   onPrintMatrix,
+  epiSummaries = [],
 }: RHUnifiedTableProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [documentPopup, setDocumentPopup] = useState<{
@@ -365,6 +368,7 @@ export function RHUnifiedTable({
                       onValueChange={handleValueChange}
                       getLocalValue={getLocalValue}
                       onAssetsUpdate={handleAssetsUpdate}
+                      epiSummary={epiSummaries.find(s => s.collaborator_id === collab.id)}
                     />
                   ))}
                 </React.Fragment>
