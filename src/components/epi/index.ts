@@ -1,1 +1,10 @@
 export { TechnicianEpiDashboard } from "./TechnicianEpiDashboard";
+export { N2EpiDashboard } from "./N2EpiDashboard";
+export { RequestEpiDialog } from "./RequestEpiDialog";
+export { ReportIncidentDialog } from "./ReportIncidentDialog";
+export { SignAckDialog } from "./SignAckDialog";
+export { EpiRequestsTable } from "./EpiRequestsTable";
+export { EpiIncidentsTable } from "./EpiIncidentsTable";
+export { EpiAssignmentsTable } from "./EpiAssignmentsTable";
+export { EpiStockTable } from "./EpiStockTable";
+export { EpiAcksTable } from "./EpiAcksTable";

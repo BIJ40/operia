@@ -31,6 +31,13 @@ export interface EpiAssignment {
   };
 }
 
+export const EPI_ASSIGNMENT_STATUSES = [
+  { value: "active", label: "Actif", color: "bg-green-100 text-green-800" },
+  { value: "returned", label: "Rendu", color: "bg-slate-100 text-slate-800" },
+  { value: "replaced", label: "Remplacé", color: "bg-blue-100 text-blue-800" },
+  { value: "lost", label: "Perdu", color: "bg-red-100 text-red-800" },
+] as const;
+
 export function useEpiAssignments(options?: { 
   agencyId?: string; 
   userId?: string; 
