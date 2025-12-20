@@ -4,3 +4,4 @@ export * from "./useEpiAssignments";
 export * from "./useEpiRequests";
 export * from "./useEpiIncidents";
 export * from "./useEpiAcknowledgements";
+export * from "./useCollaboratorsEpiSummary";
