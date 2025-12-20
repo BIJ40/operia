@@ -2745,6 +2745,588 @@ export type Database = {
           },
         ]
       }
+      epi_assignments: {
+        Row: {
+          agency_id: string
+          assigned_at: string
+          assigned_by_user_id: string
+          catalog_item_id: string
+          created_at: string
+          expected_renewal_at: string | null
+          id: string
+          notes: string | null
+          returned_at: string | null
+          serial_number: string | null
+          size: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agency_id: string
+          assigned_at?: string
+          assigned_by_user_id: string
+          catalog_item_id: string
+          created_at?: string
+          expected_renewal_at?: string | null
+          id?: string
+          notes?: string | null
+          returned_at?: string | null
+          serial_number?: string | null
+          size?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agency_id?: string
+          assigned_at?: string
+          assigned_by_user_id?: string
+          catalog_item_id?: string
+          created_at?: string
+          expected_renewal_at?: string | null
+          id?: string
+          notes?: string | null
+          returned_at?: string | null
+          serial_number?: string | null
+          size?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epi_assignments_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_assignments_assigned_by_user_id_fkey"
+            columns: ["assigned_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_assignments_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "epi_catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      epi_catalog_items: {
+        Row: {
+          agency_id: string | null
+          available_sizes: string[] | null
+          category: string
+          created_at: string
+          default_renewal_days: number | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          requires_size: boolean
+          updated_at: string
+        }
+        Insert: {
+          agency_id?: string | null
+          available_sizes?: string[] | null
+          category: string
+          created_at?: string
+          default_renewal_days?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          requires_size?: boolean
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string | null
+          available_sizes?: string[] | null
+          category?: string
+          created_at?: string
+          default_renewal_days?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          requires_size?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epi_catalog_items_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      epi_documents: {
+        Row: {
+          ack_id: string | null
+          agency_id: string
+          created_at: string
+          doc_type: string
+          generated_at: string
+          id: string
+          storage_path: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          ack_id?: string | null
+          agency_id: string
+          created_at?: string
+          doc_type: string
+          generated_at?: string
+          id?: string
+          storage_path: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          ack_id?: string | null
+          agency_id?: string
+          created_at?: string
+          doc_type?: string
+          generated_at?: string
+          id?: string
+          storage_path?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epi_documents_ack_id_fkey"
+            columns: ["ack_id"]
+            isOneToOne: false
+            referencedRelation: "epi_monthly_acknowledgements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_documents_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      epi_incident_attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_size: number | null
+          id: string
+          incident_id: string
+          mime_type: string | null
+          storage_path: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_size?: number | null
+          id?: string
+          incident_id: string
+          mime_type?: string | null
+          storage_path: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_size?: number | null
+          id?: string
+          incident_id?: string
+          mime_type?: string | null
+          storage_path?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epi_incident_attachments_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "epi_incidents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_incident_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      epi_incidents: {
+        Row: {
+          agency_id: string
+          assignment_id: string | null
+          catalog_item_id: string | null
+          created_at: string
+          description: string
+          handled_by_user_id: string | null
+          id: string
+          incident_type: string
+          reporter_user_id: string
+          resolution_notes: string | null
+          resolved_at: string | null
+          severity: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          assignment_id?: string | null
+          catalog_item_id?: string | null
+          created_at?: string
+          description: string
+          handled_by_user_id?: string | null
+          id?: string
+          incident_type: string
+          reporter_user_id: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          assignment_id?: string | null
+          catalog_item_id?: string | null
+          created_at?: string
+          description?: string
+          handled_by_user_id?: string | null
+          id?: string
+          incident_type?: string
+          reporter_user_id?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epi_incidents_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_incidents_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "epi_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_incidents_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "epi_catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_incidents_handled_by_user_id_fkey"
+            columns: ["handled_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_incidents_reporter_user_id_fkey"
+            columns: ["reporter_user_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      epi_monthly_ack_items: {
+        Row: {
+          ack_id: string
+          assignment_id: string
+          catalog_item_id: string
+          created_at: string
+          id: string
+          is_confirmed_present: boolean
+          notes: string | null
+          size: string | null
+        }
+        Insert: {
+          ack_id: string
+          assignment_id: string
+          catalog_item_id: string
+          created_at?: string
+          id?: string
+          is_confirmed_present?: boolean
+          notes?: string | null
+          size?: string | null
+        }
+        Update: {
+          ack_id?: string
+          assignment_id?: string
+          catalog_item_id?: string
+          created_at?: string
+          id?: string
+          is_confirmed_present?: boolean
+          notes?: string | null
+          size?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epi_monthly_ack_items_ack_id_fkey"
+            columns: ["ack_id"]
+            isOneToOne: false
+            referencedRelation: "epi_monthly_acknowledgements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_monthly_ack_items_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "epi_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_monthly_ack_items_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "epi_catalog_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      epi_monthly_acknowledgements: {
+        Row: {
+          agency_id: string
+          created_at: string
+          generated_at: string
+          id: string
+          month: string
+          n1_signature_ip: string | null
+          n1_signature_ua: string | null
+          n2_signer_id: string | null
+          pdf_path: string | null
+          signed_by_n1_at: string | null
+          signed_by_n2_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          generated_at?: string
+          id?: string
+          month: string
+          n1_signature_ip?: string | null
+          n1_signature_ua?: string | null
+          n2_signer_id?: string | null
+          pdf_path?: string | null
+          signed_by_n1_at?: string | null
+          signed_by_n2_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          generated_at?: string
+          id?: string
+          month?: string
+          n1_signature_ip?: string | null
+          n1_signature_ua?: string | null
+          n2_signer_id?: string | null
+          pdf_path?: string | null
+          signed_by_n1_at?: string | null
+          signed_by_n2_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epi_monthly_acknowledgements_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_monthly_acknowledgements_n2_signer_id_fkey"
+            columns: ["n2_signer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_monthly_acknowledgements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      epi_requests: {
+        Row: {
+          agency_id: string
+          catalog_item_id: string
+          created_at: string
+          fulfilled_at: string | null
+          id: string
+          notes: string | null
+          priority: string
+          reason: string
+          requester_user_id: string
+          reviewed_at: string | null
+          reviewed_by_user_id: string | null
+          size: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          catalog_item_id: string
+          created_at?: string
+          fulfilled_at?: string | null
+          id?: string
+          notes?: string | null
+          priority?: string
+          reason: string
+          requester_user_id: string
+          reviewed_at?: string | null
+          reviewed_by_user_id?: string | null
+          size?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          catalog_item_id?: string
+          created_at?: string
+          fulfilled_at?: string | null
+          id?: string
+          notes?: string | null
+          priority?: string
+          reason?: string
+          requester_user_id?: string
+          reviewed_at?: string | null
+          reviewed_by_user_id?: string | null
+          size?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epi_requests_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_requests_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "epi_catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_requests_requester_user_id_fkey"
+            columns: ["requester_user_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_requests_reviewed_by_user_id_fkey"
+            columns: ["reviewed_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      epi_stock: {
+        Row: {
+          agency_id: string
+          catalog_item_id: string
+          created_at: string
+          id: string
+          location: string | null
+          quantity: number
+          reorder_threshold: number | null
+          size: string | null
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          catalog_item_id: string
+          created_at?: string
+          id?: string
+          location?: string | null
+          quantity?: number
+          reorder_threshold?: number | null
+          size?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          catalog_item_id?: string
+          created_at?: string
+          id?: string
+          location?: string | null
+          quantity?: number
+          reorder_threshold?: number | null
+          size?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epi_stock_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_stock_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "epi_catalog_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expense_requests: {
         Row: {
           amount: number
@@ -7358,6 +7940,13 @@ export type Database = {
           first_name: string
           id: string
           last_name: string
+        }[]
+      }
+      get_collaborator_for_user: {
+        Args: { p_user_id: string }
+        Returns: {
+          collaborator_agency_id: string
+          collaborator_id: string
         }[]
       }
       get_collaborator_sensitive_data: {
