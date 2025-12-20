@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { HardHat, AlertTriangle, FileCheck, Plus, ClipboardList } from "lucide-react";
-import { useMyCollaborator } from "@/hooks/collaborator/useMyCollaborator";
+import { useMyCollaborator } from "@/hooks/rh-employee/useMyCollaborator";
 import { useMyEpiAssignments } from "@/hooks/epi/useEpiAssignments";
 import { useMyEpiRequests } from "@/hooks/epi/useEpiRequests";
 import { useMyEpiIncidents } from "@/hooks/epi/useEpiIncidents";
@@ -17,7 +17,7 @@ import { fr } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function TechnicianEpiDashboard() {
-  const { collaborator, isLoading: collabLoading } = useMyCollaborator();
+  const { data: collaborator, isLoading: collabLoading } = useMyCollaborator();
   const { data: assignments, isLoading: assignLoading } = useMyEpiAssignments(collaborator?.id);
   const { data: requests, isLoading: reqLoading } = useMyEpiRequests(collaborator?.id);
   const { data: incidents, isLoading: incLoading } = useMyEpiIncidents(collaborator?.id);
