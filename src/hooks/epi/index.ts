@@ -5,3 +5,5 @@ export * from "./useEpiRequests";
 export * from "./useEpiIncidents";
 export * from "./useEpiAcknowledgements";
 export * from "./useCollaboratorsEpiSummary";
+export * from "./useEquipmentInventory";
+export * from "./useEpiNotifications";

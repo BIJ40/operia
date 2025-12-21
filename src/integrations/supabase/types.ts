@@ -2835,6 +2835,7 @@ export type Database = {
           description: string | null
           id: string
           is_active: boolean
+          item_type: string
           name: string
           requires_size: boolean
           updated_at: string
@@ -2848,6 +2849,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          item_type?: string
           name: string
           requires_size?: boolean
           updated_at?: string
@@ -2861,6 +2863,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          item_type?: string
           name?: string
           requires_size?: boolean
           updated_at?: string
@@ -3196,6 +3199,103 @@ export type Database = {
           },
         ]
       }
+      epi_notifications: {
+        Row: {
+          agency_id: string
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string | null
+          notification_type: string
+          read_at: string | null
+          recipient_id: string
+          related_ack_id: string | null
+          related_assignment_id: string | null
+          related_request_id: string | null
+          seen_at: string | null
+          seen_by_recipient: boolean
+          sender_id: string
+          title: string
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          notification_type: string
+          read_at?: string | null
+          recipient_id: string
+          related_ack_id?: string | null
+          related_assignment_id?: string | null
+          related_request_id?: string | null
+          seen_at?: string | null
+          seen_by_recipient?: boolean
+          sender_id: string
+          title: string
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          notification_type?: string
+          read_at?: string | null
+          recipient_id?: string
+          related_ack_id?: string | null
+          related_assignment_id?: string | null
+          related_request_id?: string | null
+          seen_at?: string | null
+          seen_by_recipient?: boolean
+          sender_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epi_notifications_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_notifications_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_notifications_related_ack_id_fkey"
+            columns: ["related_ack_id"]
+            isOneToOne: false
+            referencedRelation: "epi_monthly_acknowledgements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_notifications_related_assignment_id_fkey"
+            columns: ["related_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "epi_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_notifications_related_request_id_fkey"
+            columns: ["related_request_id"]
+            isOneToOne: false
+            referencedRelation: "epi_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_notifications_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       epi_requests: {
         Row: {
           agency_id: string
@@ -3209,6 +3309,8 @@ export type Database = {
           requester_user_id: string
           reviewed_at: string | null
           reviewed_by_user_id: string | null
+          seen_by_manager_at: string | null
+          seen_by_manager_id: string | null
           size: string | null
           status: string
           updated_at: string
@@ -3225,6 +3327,8 @@ export type Database = {
           requester_user_id: string
           reviewed_at?: string | null
           reviewed_by_user_id?: string | null
+          seen_by_manager_at?: string | null
+          seen_by_manager_id?: string | null
           size?: string | null
           status?: string
           updated_at?: string
@@ -3241,6 +3345,8 @@ export type Database = {
           requester_user_id?: string
           reviewed_at?: string | null
           reviewed_by_user_id?: string | null
+          seen_by_manager_at?: string | null
+          seen_by_manager_id?: string | null
           size?: string | null
           status?: string
           updated_at?: string
@@ -3270,6 +3376,13 @@ export type Database = {
           {
             foreignKeyName: "epi_requests_reviewed_by_user_id_fkey"
             columns: ["reviewed_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_requests_seen_by_manager_id_fkey"
+            columns: ["seen_by_manager_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -3323,6 +3436,82 @@ export type Database = {
             columns: ["catalog_item_id"]
             isOneToOne: false
             referencedRelation: "epi_catalog_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      equipment_inventory: {
+        Row: {
+          agency_id: string
+          assigned_to_collaborator_id: string | null
+          brand: string | null
+          category: Database["public"]["Enums"]["equipment_category"]
+          created_at: string
+          created_by: string | null
+          id: string
+          location: string | null
+          model: string | null
+          name: string
+          notes: string | null
+          purchase_date: string | null
+          serial_number: string | null
+          status: Database["public"]["Enums"]["equipment_status"]
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          assigned_to_collaborator_id?: string | null
+          brand?: string | null
+          category?: Database["public"]["Enums"]["equipment_category"]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          location?: string | null
+          model?: string | null
+          name: string
+          notes?: string | null
+          purchase_date?: string | null
+          serial_number?: string | null
+          status?: Database["public"]["Enums"]["equipment_status"]
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          assigned_to_collaborator_id?: string | null
+          brand?: string | null
+          category?: Database["public"]["Enums"]["equipment_category"]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          location?: string | null
+          model?: string | null
+          name?: string
+          notes?: string | null
+          purchase_date?: string | null
+          serial_number?: string | null
+          status?: Database["public"]["Enums"]["equipment_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_inventory_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipment_inventory_assigned_to_collaborator_id_fkey"
+            columns: ["assigned_to_collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipment_inventory_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -7891,6 +8080,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auto_generate_monthly_epi_acks: { Args: never; Returns: number }
       calculate_leave_days: {
         Args: { p_end_date: string; p_start_date: string; p_type: string }
         Returns: number
@@ -8193,6 +8383,14 @@ export type Database = {
         | "tete_de_reseau"
         | "externe"
         | "autre"
+      equipment_category:
+        | "electroportatif"
+        | "gros_outillage"
+        | "outillage_main"
+        | "mesure"
+        | "securite"
+        | "autre"
+      equipment_status: "fonctionnel" | "en_reparation" | "hs" | "perdu"
       franchiseur_role: "animateur" | "directeur" | "dg"
       global_role:
         | "base_user"
@@ -8353,6 +8551,15 @@ export const Constants = {
         "externe",
         "autre",
       ],
+      equipment_category: [
+        "electroportatif",
+        "gros_outillage",
+        "outillage_main",
+        "mesure",
+        "securite",
+        "autre",
+      ],
+      equipment_status: ["fonctionnel", "en_reparation", "hs", "perdu"],
       franchiseur_role: ["animateur", "directeur", "dg"],
       global_role: [
         "base_user",
