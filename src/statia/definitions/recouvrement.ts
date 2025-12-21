@@ -252,6 +252,7 @@ export const encoursParApporteur: StatDefinition = {
     }
     
     const result: Record<string, number> = {};
+    const facturesCountByApporteur: Record<string, number> = {};
     let totalRestant = 0;
     let factureCount = 0;
     
@@ -279,6 +280,7 @@ export const encoursParApporteur: StatDefinition = {
       const nomApporteur = clientsById.get(String(apporteurId)) || `Apporteur ${apporteurId}`;
       
       result[nomApporteur] = (result[nomApporteur] || 0) + reste;
+      facturesCountByApporteur[nomApporteur] = (facturesCountByApporteur[nomApporteur] || 0) + 1;
       totalRestant += reste;
       factureCount++;
     }
@@ -293,6 +295,7 @@ export const encoursParApporteur: StatDefinition = {
       breakdown: {
         total: totalRestant,
         apporteurCount: Object.keys(result).length,
+        facturesCountByApporteur,
       }
     };
   }
