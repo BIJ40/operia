@@ -6,6 +6,8 @@ export { SignAckDialog } from "./SignAckDialog";
 export { EpiRequestsTable } from "./EpiRequestsTable";
 export { EpiIncidentsTable } from "./EpiIncidentsTable";
 export { EpiAssignmentsTable } from "./EpiAssignmentsTable";
+export { EpiAssignmentMatrix } from "./EpiAssignmentMatrix";
+export { EpiCellEditDialog } from "./EpiCellEditDialog";
 export { EpiStockTable } from "./EpiStockTable";
 export { EpiAcksTable } from "./EpiAcksTable";
 export { AddEpiStockDialog } from "./AddEpiStockDialog";
