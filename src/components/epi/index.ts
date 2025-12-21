@@ -12,3 +12,4 @@ export { AddEpiStockDialog } from "./AddEpiStockDialog";
 export { AddEpiCatalogDialog } from "./AddEpiCatalogDialog";
 export { AddEquipmentDialog } from "./AddEquipmentDialog";
 export { EquipmentTable } from "./EquipmentTable";
+export { AssignEpiDialog } from "./AssignEpiDialog";

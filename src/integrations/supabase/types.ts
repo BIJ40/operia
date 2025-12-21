@@ -2835,6 +2835,7 @@ export type Database = {
           description: string | null
           id: string
           is_active: boolean
+          is_personal: boolean
           item_type: string
           name: string
           requires_size: boolean
@@ -2849,6 +2850,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          is_personal?: boolean
           item_type?: string
           name: string
           requires_size?: boolean
@@ -2863,6 +2865,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          is_personal?: boolean
           item_type?: string
           name?: string
           requires_size?: boolean
