@@ -60,9 +60,10 @@ export const MODULE_OPTIONS = {
     faq_admin: 'admin_plateforme.faq_admin', // Admin FAQ sans accès /admin complet
   },
   apogee_tickets: {
-    kanban: 'apogee_tickets.kanban',
-    import: 'apogee_tickets.import',
-    manage: 'apogee_tickets.manage',
+    kanban: 'apogee_tickets.kanban',     // Vue + création tickets
+    import: 'apogee_tickets.import',     // Import Excel
+    manage: 'apogee_tickets.manage',     // Modifier tickets existants
+    create: 'apogee_tickets.create',     // Créer des tickets (sans = lecture seule)
   },
   rh: {
     coffre: 'rh.coffre',           // Coffre-fort salarié (accès perso uniquement)
@@ -194,9 +195,10 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['platform_admin', 'superadmin'],
     minRole: 'base_user',
     options: [
-      { key: 'kanban', path: 'apogee_tickets.kanban', label: 'Kanban', description: 'Accès au tableau Kanban et création de tickets', defaultEnabled: true, routes: ['/gestion-projet'] },
-      { key: 'import', path: 'apogee_tickets.import', label: 'Import', description: 'Import depuis fichiers Excel', defaultEnabled: false, routes: ['/gestion-projet/import'] },
-      { key: 'manage', path: 'apogee_tickets.manage', label: 'Modifier tickets', description: 'Modifier priorité, statut, contenu des tickets existants (désactiver = lecture + création seules)', defaultEnabled: true, routes: ['/gestion-projet'] },
+      { key: 'kanban', path: 'apogee_tickets.kanban', label: 'Accès Kanban', description: 'Voir le tableau Kanban et les tickets', defaultEnabled: true, routes: ['/gestion-projet'] },
+      { key: 'create', path: 'apogee_tickets.create', label: 'Créer tickets', description: 'Créer de nouveaux tickets (sans = lecture seule)', defaultEnabled: true, routes: ['/gestion-projet'] },
+      { key: 'manage', path: 'apogee_tickets.manage', label: 'Modifier tickets', description: 'Modifier priorité, statut, contenu des tickets existants', defaultEnabled: true, routes: ['/gestion-projet'] },
+      { key: 'import', path: 'apogee_tickets.import', label: 'Import Excel', description: 'Importer des tickets depuis fichiers Excel', defaultEnabled: false, routes: ['/gestion-projet/import'] },
     ],
   },
   {
