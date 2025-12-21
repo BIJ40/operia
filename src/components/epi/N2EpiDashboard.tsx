@@ -12,6 +12,7 @@ import {
   Users,
   Calendar,
   RefreshCw,
+  UserPlus,
 } from "lucide-react";
 import { useEpiRequests } from "@/hooks/epi/useEpiRequests";
 import { useEpiIncidents } from "@/hooks/epi/useEpiIncidents";
@@ -23,6 +24,7 @@ import { EpiIncidentsTable } from "./EpiIncidentsTable";
 import { EpiAssignmentsTable } from "./EpiAssignmentsTable";
 import { EpiStockTable } from "./EpiStockTable";
 import { EpiAcksTable } from "./EpiAcksTable";
+import { AssignEpiDialog } from "./AssignEpiDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -34,6 +36,7 @@ interface N2EpiDashboardProps {
 
 export function N2EpiDashboard({ agencyId, currentUserId }: N2EpiDashboardProps) {
   const [activeTab, setActiveTab] = useState("overview");
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
 
   const currentMonth = format(new Date(), "yyyy-MM") + "-01";
 
@@ -165,8 +168,22 @@ export function N2EpiDashboard({ agencyId, currentUserId }: N2EpiDashboardProps)
         </Card>
       </div>
 
+      {/* Dialog */}
+      <AssignEpiDialog 
+        open={assignDialogOpen} 
+        onOpenChange={setAssignDialogOpen} 
+        agencyId={agencyId} 
+      />
+
       {/* Actions */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
+        <Button
+          onClick={() => setAssignDialogOpen(true)}
+          className="gap-2"
+        >
+          <UserPlus className="h-4 w-4" />
+          Attribuer un EPI
+        </Button>
         <Button
           variant="outline"
           onClick={handleGenerateMonthlyAcks}
