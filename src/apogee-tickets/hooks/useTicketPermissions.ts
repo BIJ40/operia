@@ -15,7 +15,8 @@ export interface TicketRoleInfo {
   scope: 'none' | 'agency' | 'network';
   reason?: string;
   // Granular permissions from module options
-  canViewKanban: boolean;  // View kanban + create tickets
+  canViewKanban: boolean;  // View kanban board
+  canCreate: boolean;      // Create new tickets
   canImport: boolean;      // Import from Excel
   canManage: boolean;      // Edit existing ticket fields (not comments/attachments)
 }
@@ -29,6 +30,7 @@ const DEFAULT_TICKET_ROLE_INFO: TicketRoleInfo = {
   scope: 'none',
   reason: 'not_authenticated',
   canViewKanban: false,
+  canCreate: false,
   canImport: false,
   canManage: false,
 };
@@ -128,6 +130,7 @@ export function useMyTicketRole() {
         const moduleOptions = { ...profileModuleOptions, ...userModuleOptions };
         
         const canViewKanban = moduleOptions.kanban !== false; // Default true if not explicitly false
+        const canCreate = moduleOptions.create !== false; // Default true if not explicitly false
         const canImport = moduleOptions.import === true; // Default false
         const canManage = moduleOptions.manage !== false; // Default true if not explicitly false
         
@@ -162,6 +165,7 @@ export function useMyTicketRole() {
             ticketRole,
             scope: 'network',
             canViewKanban: true,
+            canCreate: true,
             canImport: true,
             canManage: true,
           };
@@ -175,6 +179,7 @@ export function useMyTicketRole() {
           ticketRole,
           scope: 'agency',
           canViewKanban,
+          canCreate,
           canImport,
           canManage,
         };
