@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useCollaborators } from '@/hooks/useCollaborators';
+import { useAgencyTeamMembers } from '@/hooks/useAgencyTeamMembers';
 import { useUserManagement } from '@/hooks/use-user-management';
 import { useAdminAgencies } from '@/hooks/use-admin-agencies';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,11 +20,12 @@ export default function CollaborateursPage() {
   const queryClient = useQueryClient();
   const { agence, agencyId, globalRole } = useAuth();
   
+  // Use profiles as source of truth (only users with accounts)
   const {
     collaborators,
     isLoading,
     canManage,
-  } = useCollaborators();
+  } = useAgencyTeamMembers();
 
   // Hook de gestion utilisateurs pour la création via edge function
   const { createUserMutation } = useUserManagement({ scope: 'ownAgency' });

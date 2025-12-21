@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { useCollaborators } from "@/hooks/useCollaborators";
+import { useAgencyTechnicians, AgencyTechnician } from "@/hooks/useAgencyTechnicians";
 import { useEpiCatalog, EpiCatalogItem, EPI_CATEGORIES } from "@/hooks/epi/useEpiCatalog";
 import { useEpiAssignments, EpiAssignment, useCreateEpiAssignment, useUpdateEpiAssignment } from "@/hooks/epi/useEpiAssignments";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,7 +18,6 @@ import { EpiCellEditDialog } from "./EpiCellEditDialog";
 import { format } from "date-fns";
 import { addDays } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
 interface EpiAssignmentMatrixProps {
   agencyId: string;
 }
@@ -53,7 +52,8 @@ function saveNACells(cells: Set<string>) {
 
 export function EpiAssignmentMatrix({ agencyId }: EpiAssignmentMatrixProps) {
   const { user } = useAuth();
-  const { collaborators = [], isLoading: collabLoading } = useCollaborators(agencyId);
+  // Use profiles (accounts) as source of truth, not collaborators table
+  const { data: technicians = [], isLoading: techLoading } = useAgencyTechnicians({ agencyId });
   const { data: catalog = [], isLoading: catalogLoading } = useEpiCatalog(agencyId);
   const { data: assignments = [], isLoading: assignLoading } = useEpiAssignments({ agencyId, status: "active" });
 
@@ -69,11 +69,8 @@ export function EpiAssignmentMatrix({ agencyId }: EpiAssignmentMatrixProps) {
 
   const [naCells, setNACells] = useState<Set<string>>(loadNACells);
 
-  // Filter only active collaborators (no leaving_date)
-  const activeCollaborators = useMemo(() => 
-    collaborators.filter(c => !c.leaving_date),
-    [collaborators]
-  );
+  // Technicians are already filtered by is_active in the hook
+  const activeTechnicians = useMemo(() => technicians, [technicians]);
 
   // Sort EPI by category
   const sortedCatalog = useMemo(() => {
@@ -112,12 +109,12 @@ export function EpiAssignmentMatrix({ agencyId }: EpiAssignmentMatrixProps) {
   };
 
   const handleCellDoubleClick = (
-    collaborator: { id: string; first_name: string; last_name: string },
+    tech: AgencyTechnician,
     epiItem: EpiCatalogItem
   ) => {
-    const assignment = assignmentMap.get(collaborator.id)?.get(epiItem.id);
+    const assignment = assignmentMap.get(tech.id)?.get(epiItem.id);
     setSelectedCell({
-      collaborator: { id: collaborator.id, name: `${collaborator.first_name} ${collaborator.last_name}` },
+      collaborator: { id: tech.id, name: `${tech.first_name} ${tech.last_name}` },
       epiItem,
       assignment,
     });
@@ -202,7 +199,7 @@ export function EpiAssignmentMatrix({ agencyId }: EpiAssignmentMatrixProps) {
     saveNACells(newNA);
   };
 
-  const isLoading = collabLoading || catalogLoading || assignLoading;
+  const isLoading = techLoading || catalogLoading || assignLoading;
 
   if (isLoading) {
     return (
@@ -213,11 +210,11 @@ export function EpiAssignmentMatrix({ agencyId }: EpiAssignmentMatrixProps) {
     );
   }
 
-  if (activeCollaborators.length === 0) {
+  if (activeTechnicians.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
         <HardHat className="h-12 w-12 mx-auto mb-4 opacity-50" />
-        <p>Aucun collaborateur actif</p>
+        <p>Aucun utilisateur actif avec un compte</p>
       </div>
     );
   }
@@ -258,13 +255,13 @@ export function EpiAssignmentMatrix({ agencyId }: EpiAssignmentMatrixProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {activeCollaborators.map((collab) => (
-              <TableRow key={collab.id} className="hover:bg-muted/30">
+            {activeTechnicians.map((tech) => (
+              <TableRow key={tech.id} className="hover:bg-muted/30">
                 <TableCell className="font-medium sticky left-0 bg-background z-10">
-                  {collab.first_name} {collab.last_name}
+                  {tech.first_name} {tech.last_name}
                 </TableCell>
                 {sortedCatalog.map((epi) => {
-                  const cellData = getCellData(collab.id, epi.id);
+                  const cellData = getCellData(tech.id, epi.id);
                   return (
                     <TableCell
                       key={epi.id}
@@ -274,7 +271,7 @@ export function EpiAssignmentMatrix({ agencyId }: EpiAssignmentMatrixProps) {
                         cellData.status === "missing" && "bg-red-50 hover:bg-red-100",
                         cellData.status === "na" && "bg-muted hover:bg-muted/80"
                       )}
-                      onDoubleClick={() => handleCellDoubleClick(collab, epi)}
+                      onDoubleClick={() => handleCellDoubleClick(tech, epi)}
                     >
                       <Tooltip>
                         <TooltipTrigger asChild>
