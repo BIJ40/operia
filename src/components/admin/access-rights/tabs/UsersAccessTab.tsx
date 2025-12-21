@@ -208,10 +208,18 @@ export function UsersAccessTab() {
     });
   };
 
-  // Fermeture du dialog - ne sauvegarde plus rien, la sauvegarde est explicite via le bouton
+  // Fermeture du dialog : sauvegarde automatique des modules si modifiés
   const handleCloseEditDialog = (open: boolean) => {
     setEditDialogOpen(open);
-    if (!open) {
+
+    if (!open && selectedUser) {
+      const prevJson = JSON.stringify(selectedUser.enabled_modules ?? null);
+      const nextJson = JSON.stringify(localModules ?? null);
+
+      if (prevJson !== nextJson) {
+        saveModulesMutation.mutate({ userId: selectedUser.id, enabledModules: localModules ?? null });
+      }
+
       setLocalModules(null);
       setSelectedUser(null);
     }
