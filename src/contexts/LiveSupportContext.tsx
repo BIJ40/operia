@@ -5,7 +5,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { AuthContext } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { logDebug, logError, logWarn } from '@/lib/logger';
 
@@ -35,7 +35,12 @@ interface LiveSupportContextType {
 const LiveSupportContext = createContext<LiveSupportContextType | null>(null);
 
 export function LiveSupportProvider({ children }: { children: ReactNode }) {
-  const { user, firstName, lastName } = useAuth();
+  // Utiliser useContext directement pour éviter l'erreur si AuthProvider n'est pas prêt
+  const authContext = useContext(AuthContext) as { user: { id: string; email?: string } | null; firstName: string | null; lastName: string | null } | undefined;
+  const user = authContext?.user ?? null;
+  const firstName = authContext?.firstName ?? null;
+  const lastName = authContext?.lastName ?? null;
+  
   const [activeSession, setActiveSession] = useState<LiveSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showChatDialog, setShowChatDialog] = useState(false);
