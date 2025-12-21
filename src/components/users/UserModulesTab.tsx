@@ -516,6 +516,17 @@ const RESEAU_OPTIONS_BY_ROLE: Record<GlobalRole, string[]> = {
   superadmin: ['dashboard', 'agences', 'stats', 'periodes', 'redevances'],
 };
 
+// Mapping rôle global → options Projet autorisées
+const PROJET_OPTIONS_BY_ROLE: Record<GlobalRole, string[]> = {
+  base_user: ['kanban'], // Lecture seule
+  franchisee_user: ['kanban', 'create'], // Lecture + création
+  franchisee_admin: ['kanban', 'create', 'manage', 'import'], // Tout
+  franchisor_user: ['kanban', 'create', 'manage', 'import'],
+  franchisor_admin: ['kanban', 'create', 'manage', 'import'],
+  platform_admin: ['kanban', 'create', 'manage', 'import'],
+  superadmin: ['kanban', 'create', 'manage', 'import'],
+};
+
 export const UserModulesTab = memo(function UserModulesTab({
   enabledModules,
   userRole,
@@ -572,6 +583,13 @@ export const UserModulesTab = memo(function UserModulesTab({
     // Vérifier les contraintes spécifiques Réseau (automatique N3+, redevances N4+)
     if (perm.moduleKey === 'reseau_franchiseur' && perm.optionKey) {
       const allowedOptions = RESEAU_OPTIONS_BY_ROLE[userRole];
+      if (!allowedOptions) return false;
+      return allowedOptions.includes(perm.optionKey);
+    }
+    
+    // Vérifier les contraintes spécifiques Projet (apogee_tickets)
+    if (perm.moduleKey === 'apogee_tickets' && perm.optionKey) {
+      const allowedOptions = PROJET_OPTIONS_BY_ROLE[userRole];
       if (!allowedOptions) return false;
       return allowedOptions.includes(perm.optionKey);
     }
