@@ -9,3 +9,6 @@ export { EpiAssignmentsTable } from "./EpiAssignmentsTable";
 export { EpiStockTable } from "./EpiStockTable";
 export { EpiAcksTable } from "./EpiAcksTable";
 export { AddEpiStockDialog } from "./AddEpiStockDialog";
+export { AddEpiCatalogDialog } from "./AddEpiCatalogDialog";
+export { AddEquipmentDialog } from "./AddEquipmentDialog";
+export { EquipmentTable } from "./EquipmentTable";
