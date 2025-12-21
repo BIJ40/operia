@@ -8,3 +8,4 @@ export { EpiIncidentsTable } from "./EpiIncidentsTable";
 export { EpiAssignmentsTable } from "./EpiAssignmentsTable";
 export { EpiStockTable } from "./EpiStockTable";
 export { EpiAcksTable } from "./EpiAcksTable";
+export { AddEpiStockDialog } from "./AddEpiStockDialog";
