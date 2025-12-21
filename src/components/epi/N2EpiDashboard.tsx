@@ -12,7 +12,7 @@ import {
   Users,
   Calendar,
   RefreshCw,
-  UserPlus,
+  Grid3X3,
 } from "lucide-react";
 import { useEpiRequests } from "@/hooks/epi/useEpiRequests";
 import { useEpiIncidents } from "@/hooks/epi/useEpiIncidents";
@@ -24,7 +24,7 @@ import { EpiIncidentsTable } from "./EpiIncidentsTable";
 import { EpiAssignmentsTable } from "./EpiAssignmentsTable";
 import { EpiStockTable } from "./EpiStockTable";
 import { EpiAcksTable } from "./EpiAcksTable";
-import { AssignEpiDialog } from "./AssignEpiDialog";
+import { EpiAssignmentMatrix } from "./EpiAssignmentMatrix";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -35,8 +35,7 @@ interface N2EpiDashboardProps {
 }
 
 export function N2EpiDashboard({ agencyId, currentUserId }: N2EpiDashboardProps) {
-  const [activeTab, setActiveTab] = useState("overview");
-  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("matrix");
 
   const currentMonth = format(new Date(), "yyyy-MM") + "-01";
 
@@ -168,22 +167,8 @@ export function N2EpiDashboard({ agencyId, currentUserId }: N2EpiDashboardProps)
         </Card>
       </div>
 
-      {/* Dialog */}
-      <AssignEpiDialog 
-        open={assignDialogOpen} 
-        onOpenChange={setAssignDialogOpen} 
-        agencyId={agencyId} 
-      />
-
       {/* Actions */}
       <div className="flex flex-wrap gap-2">
-        <Button
-          onClick={() => setAssignDialogOpen(true)}
-          className="gap-2"
-        >
-          <UserPlus className="h-4 w-4" />
-          Attribuer un EPI
-        </Button>
         <Button
           variant="outline"
           onClick={handleGenerateMonthlyAcks}
@@ -201,6 +186,10 @@ export function N2EpiDashboard({ agencyId, currentUserId }: N2EpiDashboardProps)
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
+          <TabsTrigger value="matrix" className="gap-2">
+            <Grid3X3 className="h-4 w-4" />
+            Matrice
+          </TabsTrigger>
           <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
           <TabsTrigger value="requests" className="relative">
             Demandes
@@ -222,6 +211,24 @@ export function N2EpiDashboard({ agencyId, currentUserId }: N2EpiDashboardProps)
           <TabsTrigger value="acks">Attestations</TabsTrigger>
           <TabsTrigger value="stock">Stock</TabsTrigger>
         </TabsList>
+
+        {/* Matrix Tab (new default) */}
+        <TabsContent value="matrix" className="mt-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Grid3X3 className="h-4 w-4" />
+                Attribution EPI par technicien
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Double-cliquez sur une cellule pour attribuer ou modifier un EPI
+              </p>
+            </CardHeader>
+            <CardContent>
+              <EpiAssignmentMatrix agencyId={agencyId} />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="overview" className="mt-4">
           <div className="grid md:grid-cols-2 gap-6">
