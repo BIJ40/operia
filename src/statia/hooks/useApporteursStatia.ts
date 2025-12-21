@@ -20,6 +20,7 @@ export interface TopApporteurItem {
 export interface EncoursApporteurItem {
   name: string;
   encours: number;
+  nbFactures: number;
 }
 
 export interface TypeApporteurStats {
@@ -223,11 +224,16 @@ export function useApporteursStatia() {
       
       // Top encours par apporteur (factures impayées)
       const encoursParApporteur = (encoursParApporteurResult?.value || {}) as Record<string, number>;
+      const facturesCountByApporteur = (encoursParApporteurResult?.breakdown?.facturesCountByApporteur || {}) as Record<string, number>;
       const topEncours: EncoursApporteurItem[] = Object.entries(encoursParApporteur)
         .filter(([, encours]) => encours > 0)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5)
-        .map(([name, encours]) => ({ name, encours }));
+        .map(([name, encours]) => ({ 
+          name, 
+          encours,
+          nbFactures: facturesCountByApporteur[name] || 0,
+        }));
       
       return {
         // V2: Dû Global TTC apporteurs (exclut factures sans apporteur, reste dû TTC)

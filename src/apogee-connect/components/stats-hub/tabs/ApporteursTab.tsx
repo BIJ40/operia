@@ -71,7 +71,7 @@ export function ApporteursTab() {
       apporteurId: idx + 1,
       name: item.name,
       duTotal: item.encours,
-      nbFacturesImpayees: 1,
+      nbFacturesImpayees: item.nbFactures || 0,
     }));
   }, [statiaKpis]);
 
