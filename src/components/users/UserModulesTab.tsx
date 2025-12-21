@@ -516,11 +516,11 @@ const RESEAU_OPTIONS_BY_ROLE: Record<GlobalRole, string[]> = {
   superadmin: ['dashboard', 'agences', 'stats', 'periodes', 'redevances'],
 };
 
-// Mapping rôle global → options Projet autorisées
+// Mapping rôle global → options Projet autorisées (toutes options disponibles pour tous les rôles)
 const PROJET_OPTIONS_BY_ROLE: Record<GlobalRole, string[]> = {
-  base_user: ['kanban'], // Lecture seule
-  franchisee_user: ['kanban', 'create'], // Lecture + création
-  franchisee_admin: ['kanban', 'create', 'manage', 'import'], // Tout
+  base_user: ['kanban', 'create', 'manage', 'import'],
+  franchisee_user: ['kanban', 'create', 'manage', 'import'],
+  franchisee_admin: ['kanban', 'create', 'manage', 'import'],
   franchisor_user: ['kanban', 'create', 'manage', 'import'],
   franchisor_admin: ['kanban', 'create', 'manage', 'import'],
   platform_admin: ['kanban', 'create', 'manage', 'import'],
