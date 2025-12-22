@@ -206,8 +206,21 @@ export function TicketTable({
     }
   };
 
-  // Raccourcis clavier
+  // Raccourcis clavier - NE PAS intercepter si l'utilisateur est dans un champ de saisie
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // Ignorer si on est dans un input, textarea, select ou élément contentEditable
+    const target = e.target as HTMLElement;
+    const tagName = target.tagName.toLowerCase();
+    const isEditable = tagName === 'input' || 
+                       tagName === 'textarea' || 
+                       tagName === 'select' ||
+                       target.isContentEditable ||
+                       target.closest('[role="combobox"]') ||
+                       target.closest('[role="listbox"]') ||
+                       target.closest('[data-radix-popper-content-wrapper]');
+    
+    if (isEditable) return;
+    
     if (!selectedRowId) return;
     const ticket = paginatedTickets.find(t => t.id === selectedRowId);
     if (!ticket) return;

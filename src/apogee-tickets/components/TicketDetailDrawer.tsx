@@ -324,20 +324,34 @@ export function TicketDetailDrawer({
 
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className={`w-full overflow-hidden flex flex-col p-0 transition-all duration-300 ${isExpanded ? 'sm:max-w-6xl' : 'sm:max-w-3xl'}`}>
+      <SheetContent 
+        className={`w-full overflow-hidden flex flex-col p-0 transition-all duration-300 ${isExpanded ? 'sm:max-w-6xl' : 'sm:max-w-3xl'}`}
+        hideCloseButton
+      >
         {/* Header fixe */}
         <SheetHeader className="p-6 pb-4 border-b">
           <div className="flex items-start justify-between gap-4">
-            {/* Bouton agrandir en haut à gauche */}
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
-              onClick={() => setIsExpanded(!isExpanded)}
-              title={isExpanded ? "Réduire le panneau" : "Agrandir le panneau"}
-            >
-              {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-            </Button>
+            {/* Boutons gauche: Agrandir + Fermer */}
+            <div className="flex items-center gap-1">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                onClick={() => setIsExpanded(!isExpanded)}
+                title={isExpanded ? "Réduire le panneau" : "Agrandir le panneau"}
+              >
+                {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                onClick={onClose}
+                title="Fermer"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
             
             <div className="flex-1 space-y-2">
               {/* Référence ticket */}

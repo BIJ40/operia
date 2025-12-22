@@ -4,7 +4,17 @@ import { cn } from "@/lib/utils";
 
 export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
 
-const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(({ className, ...props }, ref) => {
+const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(({ className, onKeyDown, ...props }, ref) => {
+  // Handler pour empêcher les événements clavier de remonter et bloquer la saisie
+  const handleKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Empêcher la propagation pour toutes les touches de navigation et saisie
+    // Cela permet les sauts de ligne (Enter), la navigation (flèches), et la saisie de chiffres
+    e.stopPropagation();
+    
+    // Appeler le handler personnalisé si fourni
+    onKeyDown?.(e);
+  }, [onKeyDown]);
+
   return (
     <textarea
       className={cn(
@@ -12,6 +22,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(({ classNa
         className,
       )}
       ref={ref}
+      onKeyDown={handleKeyDown}
       {...props}
     />
   );
