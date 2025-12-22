@@ -3,7 +3,17 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
-  ({ className, type, ...props }, ref) => {
+  ({ className, type, onKeyDown, ...props }, ref) => {
+    // Handler pour empêcher les événements clavier de remonter et bloquer la saisie
+    const handleKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+      // Empêcher la propagation pour toutes les touches
+      // Cela permet la saisie de chiffres et la navigation dans les inputs
+      e.stopPropagation();
+      
+      // Appeler le handler personnalisé si fourni
+      onKeyDown?.(e);
+    }, [onKeyDown]);
+
     return (
       <input
         type={type}
@@ -12,6 +22,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
           className,
         )}
         ref={ref}
+        onKeyDown={handleKeyDown}
         {...props}
       />
     );
