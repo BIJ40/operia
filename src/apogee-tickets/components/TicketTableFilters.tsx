@@ -1,8 +1,9 @@
 /**
  * Filtres horizontaux pour la vue Liste des tickets
+ * NOTE: Les états locaux sont synchronisés avec les filtres persistés via useMemo
  */
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -45,6 +46,7 @@ export function TicketTableFilters({
   modules,
   statuses,
 }: TicketTableFiltersProps) {
+  // États locaux synchronisés avec les filtres persistés
   const [localSearch, setLocalSearch] = useState(filters.search || '');
   const [heatRange, setHeatRange] = useState<[number, number]>([
     filters.heat_priority_min ?? 0,
@@ -56,6 +58,14 @@ export function TicketTableFilters({
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});
   const [selectedTags, setSelectedTags] = useState<string[]>(filters.tags || []);
+
+  // Synchroniser les états locaux quand les filtres persistés changent (ex: rechargement page)
+  useEffect(() => {
+    setLocalSearch(filters.search || '');
+    setHeatRange([filters.heat_priority_min ?? 0, filters.heat_priority_max ?? 12]);
+    setSelectedModules(filters.module ? [filters.module] : []);
+    setSelectedTags(filters.tags || []);
+  }, [filters.search, filters.heat_priority_min, filters.heat_priority_max, filters.module, filters.tags]);
 
   const handleSearchSubmit = () => {
     onFiltersChange({ ...filters, search: localSearch || undefined });
