@@ -3,7 +3,8 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { Button } from '@/components/ui/button';
 import { CollaboratorDocument } from '@/types/collaboratorDocument';
 import { 
@@ -83,7 +84,11 @@ export function DocumentPreviewModal({
       <DialogContent 
         className="max-w-5xl w-full h-[90vh] sm:h-[90vh] max-h-[100dvh] p-0 gap-0 overflow-hidden"
         onKeyDown={handleKeyDown}
+        aria-describedby={undefined}
       >
+        <VisuallyHidden>
+          <DialogTitle>Aperçu de {displayDoc.title}</DialogTitle>
+        </VisuallyHidden>
         {/* Header - Responsive */}
         <div className="flex items-center justify-between px-2 sm:px-4 py-2 sm:py-3 border-b bg-muted/30">
           <div className="flex-1 min-w-0 mr-2">
