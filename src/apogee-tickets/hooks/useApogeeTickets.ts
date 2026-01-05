@@ -104,54 +104,68 @@ export function useApogeeTickets(filters?: TicketFilters) {
         `)
         .order('created_at', { ascending: false });
 
-      if (filters?.module) {
-        if (filters.module === '__none__') {
-          query = query.is('module', null);
-        } else {
-          query = query.eq('module', filters.module);
-        }
-      }
-      if (filters?.heat_priority_min !== undefined) {
-        query = query.gte('heat_priority', filters.heat_priority_min);
-      }
-      if (filters?.heat_priority_max !== undefined) {
-        query = query.lte('heat_priority', filters.heat_priority_max);
-      }
-      if (filters?.owner_side) {
-        query = query.eq('owner_side', filters.owner_side);
-      }
-      if (filters?.reported_by) {
-        query = query.eq('reported_by', filters.reported_by);
-      }
-      if (filters?.needs_completion) {
-        // Exclure les tickets EN_PROD (TRAITÉ/PUBLIÉ) qui sont considérés complets
-        query = query.or('needs_completion.eq.true,kanban_status.eq.IMPORT')
-                     .neq('kanban_status', 'EN_PROD');
-      }
-      if (filters?.search) {
-        // Search in title, description, and ticket reference (APO-XXX)
-        const searchTerm = filters.search.trim();
-        // Check if search is a number (for ticket_number)
-        const numericSearch = searchTerm.replace(/[^0-9]/g, '');
-        if (numericSearch && /^(apo-?)?\d+$/i.test(searchTerm)) {
-          query = query.eq('ticket_number', parseInt(numericSearch, 10));
-        } else {
-          query = query.or(`element_concerne.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
-        }
-      }
-      if (filters?.is_qualified !== undefined) {
-        query = query.eq('is_qualified', filters.is_qualified);
-      }
-      if (filters?.heat_priority_exact !== undefined) {
-        query = query.eq('heat_priority', filters.heat_priority_exact);
-      } else {
-        if (filters?.heat_priority_min !== undefined && filters.heat_priority_min > 0) {
-          query = query.gte('heat_priority', filters.heat_priority_min);
-        }
-        if (filters?.heat_priority_max !== undefined && filters.heat_priority_max < 12) {
-          query = query.lte('heat_priority', filters.heat_priority_max);
-        }
-      }
+
+       // Modules (multi pour la vue Liste, single pour compat Kanban)
+       if (filters?.modules && filters.modules.length > 0) {
+         query = query.in('module', filters.modules);
+       } else if (filters?.module) {
+         if (filters.module === '__none__') {
+           query = query.is('module', null);
+         } else {
+           query = query.eq('module', filters.module);
+         }
+       }
+
+       // Statuts (multi)
+       if (filters?.kanban_statuses && filters.kanban_statuses.length > 0) {
+         query = query.in('kanban_status', filters.kanban_statuses);
+       }
+
+       // Date de création
+       if (filters?.created_at_from) {
+         query = query.gte('created_at', filters.created_at_from);
+       }
+       if (filters?.created_at_to) {
+         query = query.lte('created_at', filters.created_at_to);
+       }
+
+       if (filters?.owner_side) {
+         query = query.eq('owner_side', filters.owner_side);
+       }
+       if (filters?.reported_by) {
+         query = query.eq('reported_by', filters.reported_by);
+       }
+       if (filters?.needs_completion) {
+         // Exclure les tickets EN_PROD (TRAITÉ/PUBLIÉ) qui sont considérés complets
+         query = query.or('needs_completion.eq.true,kanban_status.eq.IMPORT')
+                      .neq('kanban_status', 'EN_PROD');
+       }
+       if (filters?.search) {
+         // Search in title, description, and ticket reference (APO-XXX)
+         const searchTerm = filters.search.trim();
+         // Check if search is a number (for ticket_number)
+         const numericSearch = searchTerm.replace(/[^0-9]/g, '');
+         if (numericSearch && /^(apo-?)?\d+$/i.test(searchTerm)) {
+           query = query.eq('ticket_number', parseInt(numericSearch, 10));
+         } else {
+           query = query.or(`element_concerne.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+         }
+       }
+       if (filters?.is_qualified !== undefined) {
+         query = query.eq('is_qualified', filters.is_qualified);
+       }
+
+       // Priorité (exact ou range)
+       if (filters?.heat_priority_exact !== undefined) {
+         query = query.eq('heat_priority', filters.heat_priority_exact);
+       } else {
+         if (filters?.heat_priority_min !== undefined && filters.heat_priority_min > 0) {
+           query = query.gte('heat_priority', filters.heat_priority_min);
+         }
+         if (filters?.heat_priority_max !== undefined && filters.heat_priority_max < 12) {
+           query = query.lte('heat_priority', filters.heat_priority_max);
+         }
+       }
 
       const result = await safeQuery<any[]>(query, 'APOGEE_TICKETS_LOAD');
       

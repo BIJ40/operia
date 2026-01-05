@@ -37,7 +37,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { useMyTicketRole, useTicketTransitions } from '../hooks/useTicketPermissions';
 import { useTicketQualification } from '../hooks/useTicketQualification';
-import { usePersistedFilters } from '../hooks/usePersistedFilters';
+import { usePersistedListFilters } from '../hooks/usePersistedListFilters';
 import { TicketTable } from '../components/TicketTable';
 import { TicketTableFilters } from '../components/TicketTableFilters';
 import { TicketDetailDrawer } from '../components/TicketDetailDrawer';
@@ -103,8 +103,7 @@ function ApogeeTicketsListContent({ roleInfo }: { roleInfo: NonNullable<ReturnTy
     setFilters, 
     selectedTicketId, 
     setSelectedTicketId 
-  } = usePersistedFilters();
-  
+  } = usePersistedListFilters();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [qualifyingTicketId, setQualifyingTicketId] = useState<string | null>(null);
 
