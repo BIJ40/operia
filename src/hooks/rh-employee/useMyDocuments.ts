@@ -18,6 +18,8 @@ export interface MyDocument {
   period_month: number | null;
   period_year: number | null;
   created_at: string;
+  subfolder: string | null;
+  visibility: string | null;
 }
 
 export function useMyDocuments() {
@@ -28,15 +30,15 @@ export function useMyDocuments() {
     queryFn: async (): Promise<MyDocument[]> => {
       if (!collaborator?.id) return [];
 
-      // RLS va automatiquement filtrer sur employee_visible = true
+      // Filtrer sur visibility = 'EMPLOYEE_VISIBLE' (le champ utilisé par les uploads)
       const { data, error } = await supabase
         .from("collaborator_documents")
         .select(`
           id, doc_type, title, description, file_path, file_name,
-          file_size, file_type, period_month, period_year, created_at
+          file_size, file_type, period_month, period_year, created_at, subfolder, visibility
         `)
         .eq("collaborator_id", collaborator.id)
-        .eq("employee_visible", true)
+        .eq("visibility", "EMPLOYEE_VISIBLE")
         .order("created_at", { ascending: false });
 
       if (error) {
