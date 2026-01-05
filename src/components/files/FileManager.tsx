@@ -135,6 +135,7 @@ export function FileManager({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['files', bucketName, storagePath] });
+      queryClient.invalidateQueries({ queryKey: ['files-count', bucketName, storagePath] });
       toast({ title: 'Fichier téléchargé avec succès' });
     },
     onError: (error: Error) => {
@@ -158,6 +159,7 @@ export function FileManager({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['files', bucketName, storagePath] });
+      queryClient.invalidateQueries({ queryKey: ['files-count', bucketName, storagePath] });
       toast({ title: 'Fichier supprimé' });
     },
     onError: (error: Error) => {

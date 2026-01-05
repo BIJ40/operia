@@ -129,7 +129,8 @@ export function TicketDetailDrawer({
   // Compter les fichiers directement depuis le storage (même source que FileManager)
   const storagePath = ticket?.id || '';
   const { data: filesCount = 0 } = useQuery({
-    queryKey: ['files', 'apogee-ticket-attachments', storagePath],
+    // IMPORTANT: clé différente de FileManager pour éviter collision de cache (count = number vs liste = FileItem[])
+    queryKey: ['files-count', 'apogee-ticket-attachments', storagePath],
     queryFn: async () => {
       if (!storagePath) return 0;
       const { data, error } = await supabase.storage
