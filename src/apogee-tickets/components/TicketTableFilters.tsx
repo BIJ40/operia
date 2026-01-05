@@ -1,9 +1,8 @@
 /**
  * Filtres horizontaux pour la vue Liste des tickets
- * NOTE: Les états locaux sont synchronisés avec les filtres persistés via useMemo
  */
 
-import { useState, useMemo, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +12,7 @@ import { Slider } from '@/components/ui/slider';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, X, CalendarIcon, Filter, RotateCcw, Tag } from 'lucide-react';
-import { format } from 'date-fns';
+import { endOfDay, format, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { ApogeeModule, ApogeeTicketStatus, TicketFilters, OwnerSide, ReportedBy } from '../types';
 
@@ -40,6 +39,21 @@ const REPORTED_BY_OPTIONS: { value: ReportedBy; label: string }[] = [
 
 const DEFAULT_TAGS = ['BUG', 'EVO', 'NTH'];
 
+type DateRange = { from?: Date; to?: Date };
+
+function safeDate(iso?: string): Date | undefined {
+  if (!iso) return undefined;
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? undefined : d;
+}
+
+function isActiveFilterValue(v: unknown): boolean {
+  if (v === undefined || v === null) return false;
+  if (typeof v === 'string') return v.trim().length > 0;
+  if (Array.isArray(v)) return v.length > 0;
+  return true;
+}
+
 export function TicketTableFilters({
   filters,
   onFiltersChange,
@@ -52,20 +66,45 @@ export function TicketTableFilters({
     filters.heat_priority_min ?? 0,
     filters.heat_priority_max ?? 12,
   ]);
+
+  // Modules (multi)
   const [selectedModules, setSelectedModules] = useState<string[]>(
-    filters.module ? [filters.module] : []
+    filters.modules ?? (filters.module ? [filters.module] : [])
   );
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
-  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});
+
+  // Statuts (multi)
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>(filters.kanban_statuses ?? []);
+
+  // Date de création
+  const [dateRange, setDateRange] = useState<DateRange>(() => ({
+    from: safeDate(filters.created_at_from),
+    to: safeDate(filters.created_at_to),
+  }));
+
   const [selectedTags, setSelectedTags] = useState<string[]>(filters.tags || []);
 
   // Synchroniser les états locaux quand les filtres persistés changent (ex: rechargement page)
   useEffect(() => {
     setLocalSearch(filters.search || '');
     setHeatRange([filters.heat_priority_min ?? 0, filters.heat_priority_max ?? 12]);
-    setSelectedModules(filters.module ? [filters.module] : []);
+    setSelectedModules(filters.modules ?? (filters.module ? [filters.module] : []));
+    setSelectedStatuses(filters.kanban_statuses ?? []);
     setSelectedTags(filters.tags || []);
-  }, [filters.search, filters.heat_priority_min, filters.heat_priority_max, filters.module, filters.tags]);
+    setDateRange({
+      from: safeDate(filters.created_at_from),
+      to: safeDate(filters.created_at_to),
+    });
+  }, [
+    filters.search,
+    filters.heat_priority_min,
+    filters.heat_priority_max,
+    filters.module,
+    filters.modules,
+    filters.kanban_statuses,
+    filters.tags,
+    filters.created_at_from,
+    filters.created_at_to,
+  ]);
 
   const handleSearchSubmit = () => {
     onFiltersChange({ ...filters, search: localSearch || undefined });
@@ -73,10 +112,30 @@ export function TicketTableFilters({
 
   const handleModuleToggle = (moduleId: string) => {
     const newModules = selectedModules.includes(moduleId)
-      ? selectedModules.filter(m => m !== moduleId)
+      ? selectedModules.filter((m) => m !== moduleId)
       : [...selectedModules, moduleId];
+
     setSelectedModules(newModules);
-    onFiltersChange({ ...filters, module: newModules[0] || undefined });
+
+    onFiltersChange({
+      ...filters,
+      modules: newModules.length > 0 ? newModules : undefined,
+      // compat pour affichages/anciennes clés
+      module: newModules.length === 1 ? newModules[0] : undefined,
+    });
+  };
+
+  const handleStatusToggle = (statusId: string) => {
+    const newStatuses = selectedStatuses.includes(statusId)
+      ? selectedStatuses.filter((s) => s !== statusId)
+      : [...selectedStatuses, statusId];
+
+    setSelectedStatuses(newStatuses);
+
+    onFiltersChange({
+      ...filters,
+      kanban_statuses: newStatuses.length > 0 ? newStatuses : undefined,
+    });
   };
 
   const handleHeatRangeChange = (values: number[]) => {
@@ -114,10 +173,24 @@ export function TicketTableFilters({
 
   const handleTagToggle = (tag: string) => {
     const newTags = selectedTags.includes(tag)
-      ? selectedTags.filter(t => t !== tag)
+      ? selectedTags.filter((t) => t !== tag)
       : [...selectedTags, tag];
+
     setSelectedTags(newTags);
     onFiltersChange({ ...filters, tags: newTags.length > 0 ? newTags : undefined });
+  };
+
+  const handleDateChange = (range: DateRange) => {
+    setDateRange(range);
+
+    const from = range.from ? startOfDay(range.from) : undefined;
+    const to = range.to ? endOfDay(range.to) : range.from ? endOfDay(range.from) : undefined;
+
+    onFiltersChange({
+      ...filters,
+      created_at_from: from ? from.toISOString() : undefined,
+      created_at_to: to ? to.toISOString() : undefined,
+    });
   };
 
   const handleReset = () => {
@@ -133,14 +206,35 @@ export function TicketTableFilters({
   const removeFilter = (key: keyof TicketFilters) => {
     const newFilters = { ...filters };
     delete newFilters[key];
-    if (key === 'module') setSelectedModules([]);
+
+    if (key === 'modules' || key === 'module') {
+      setSelectedModules([]);
+      delete newFilters.modules;
+      delete newFilters.module;
+    }
+
+    if (key === 'kanban_statuses') {
+      setSelectedStatuses([]);
+    }
+
+    if (key === 'created_at_from' || key === 'created_at_to') {
+      setDateRange({});
+      delete newFilters.created_at_from;
+      delete newFilters.created_at_to;
+    }
+
     if (key === 'heat_priority_min' || key === 'heat_priority_max') setHeatRange([0, 12]);
     if (key === 'search') setLocalSearch('');
+
     onFiltersChange(newFilters);
   };
 
   // Active filters count
-  const activeFiltersCount = Object.keys(filters).filter(k => filters[k as keyof TicketFilters] !== undefined).length;
+  const activeFiltersCount = useMemo(() => {
+    return Object.entries(filters).filter(([, v]) => isActiveFilterValue(v)).length;
+  }, [filters]);
+
+  const shownModuleIds = filters.modules ?? (filters.module ? [filters.module] : []);
 
   return (
     <div className="space-y-3">
@@ -159,7 +253,7 @@ export function TicketTableFilters({
           />
         </div>
 
-        {/* Module multi-select */}
+        {/* Modules (multi-select) */}
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="h-9">
@@ -172,10 +266,10 @@ export function TicketTableFilters({
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-56 bg-background z-50" align="start">
+          <PopoverContent className="w-72 bg-background z-50" align="start">
             <div className="space-y-2">
               <div className="text-sm font-medium">Modules</div>
-              <div className="space-y-1 max-h-[200px] overflow-auto">
+              <div className="space-y-1 max-h-[240px] overflow-auto">
                 {modules.map((mod) => (
                   <label
                     key={mod.id}
@@ -193,7 +287,7 @@ export function TicketTableFilters({
           </PopoverContent>
         </Popover>
 
-        {/* Statut multi-select */}
+        {/* Statut (multi-select) */}
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="h-9">
@@ -205,10 +299,10 @@ export function TicketTableFilters({
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-56 bg-background z-50" align="start">
+          <PopoverContent className="w-72 bg-background z-50" align="start">
             <div className="space-y-2">
               <div className="text-sm font-medium">Statuts</div>
-              <div className="space-y-1 max-h-[200px] overflow-auto">
+              <div className="space-y-1 max-h-[240px] overflow-auto">
                 {statuses.map((status) => (
                   <label
                     key={status.id}
@@ -216,12 +310,7 @@ export function TicketTableFilters({
                   >
                     <Checkbox
                       checked={selectedStatuses.includes(status.id)}
-                      onCheckedChange={() => {
-                        const newStatuses = selectedStatuses.includes(status.id)
-                          ? selectedStatuses.filter(s => s !== status.id)
-                          : [...selectedStatuses, status.id];
-                        setSelectedStatuses(newStatuses);
-                      }}
+                      onCheckedChange={() => handleStatusToggle(status.id)}
                     />
                     <span className="text-sm">{status.label}</span>
                   </label>
@@ -289,7 +378,10 @@ export function TicketTableFilters({
         </Popover>
 
         {/* Qualifié */}
-        <Select value={filters.is_qualified === undefined ? 'all' : filters.is_qualified ? 'yes' : 'no'} onValueChange={handleQualifiedChange}>
+        <Select
+          value={filters.is_qualified === undefined ? 'all' : filters.is_qualified ? 'yes' : 'no'}
+          onValueChange={handleQualifiedChange}
+        >
           <SelectTrigger className="w-[120px] h-9">
             <SelectValue placeholder="Qualifié" />
           </SelectTrigger>
@@ -322,10 +414,7 @@ export function TicketTableFilters({
                     key={tag}
                     className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded px-2 py-1"
                   >
-                    <Checkbox
-                      checked={selectedTags.includes(tag)}
-                      onCheckedChange={() => handleTagToggle(tag)}
-                    />
+                    <Checkbox checked={selectedTags.includes(tag)} onCheckedChange={() => handleTagToggle(tag)} />
                     <span className="text-sm">{tag}</span>
                   </label>
                 ))}
@@ -347,7 +436,7 @@ export function TicketTableFilters({
             <Calendar
               mode="range"
               selected={{ from: dateRange.from, to: dateRange.to }}
-              onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
+              onSelect={(range) => handleDateChange({ from: range?.from, to: range?.to })}
               locale={fr}
             />
           </PopoverContent>
@@ -371,52 +460,87 @@ export function TicketTableFilters({
               <X className="h-3 w-3 cursor-pointer" onClick={() => removeFilter('search')} />
             </Badge>
           )}
-          {filters.module && (
+
+          {shownModuleIds.length > 0 && (
             <Badge variant="secondary" className="gap-1">
-              Module: {modules.find(m => m.id === filters.module)?.label || filters.module}
-              <X className="h-3 w-3 cursor-pointer" onClick={() => removeFilter('module')} />
+              Module{shownModuleIds.length > 1 ? 's' : ''}: {shownModuleIds
+                .map((id) => modules.find((m) => m.id === id)?.label || id)
+                .join(', ')}
+              <X className="h-3 w-3 cursor-pointer" onClick={() => removeFilter('modules')} />
             </Badge>
           )}
+
+          {(filters.kanban_statuses && filters.kanban_statuses.length > 0) && (
+            <Badge variant="secondary" className="gap-1">
+              Statut{filters.kanban_statuses.length > 1 ? 's' : ''}: {filters.kanban_statuses
+                .map((id) => statuses.find((s) => s.id === id)?.label || id)
+                .join(', ')}
+              <X className="h-3 w-3 cursor-pointer" onClick={() => removeFilter('kanban_statuses')} />
+            </Badge>
+          )}
+
           {filters.owner_side && (
             <Badge variant="secondary" className="gap-1">
               PEC: {filters.owner_side}
               <X className="h-3 w-3 cursor-pointer" onClick={() => removeFilter('owner_side')} />
             </Badge>
           )}
+
           {filters.reported_by && (
             <Badge variant="secondary" className="gap-1">
               Origine: {filters.reported_by}
               <X className="h-3 w-3 cursor-pointer" onClick={() => removeFilter('reported_by')} />
             </Badge>
           )}
+
           {(filters.heat_priority_min !== undefined || filters.heat_priority_max !== undefined) && (
             <Badge variant="secondary" className="gap-1">
               Priorité: {filters.heat_priority_min ?? 0}-{filters.heat_priority_max ?? 12}
-              <X className="h-3 w-3 cursor-pointer" onClick={() => {
-                removeFilter('heat_priority_min');
-                removeFilter('heat_priority_max');
-              }} />
+              <X
+                className="h-3 w-3 cursor-pointer"
+                onClick={() => {
+                  removeFilter('heat_priority_min');
+                  removeFilter('heat_priority_max');
+                }}
+              />
             </Badge>
           )}
+
           {filters.is_qualified !== undefined && (
             <Badge variant="secondary" className="gap-1">
               {filters.is_qualified ? 'Qualifiés' : 'Non qualifiés'}
               <X className="h-3 w-3 cursor-pointer" onClick={() => removeFilter('is_qualified')} />
             </Badge>
           )}
-          {filters.tags && filters.tags.length > 0 && filters.tags.map((tag) => (
-            <Badge key={tag} variant="secondary" className="gap-1">
-              Tag: {tag}
+
+          {(filters.created_at_from || filters.created_at_to) && (
+            <Badge variant="secondary" className="gap-1">
+              Date: {dateRange.from ? format(dateRange.from, 'dd/MM/yyyy', { locale: fr }) : '—'}
+              {dateRange.to ? ` - ${format(dateRange.to, 'dd/MM/yyyy', { locale: fr })}` : ''}
               <X
                 className="h-3 w-3 cursor-pointer"
                 onClick={() => {
-                  const newTags = selectedTags.filter(t => t !== tag);
-                  setSelectedTags(newTags);
-                  onFiltersChange({ ...filters, tags: newTags.length > 0 ? newTags : undefined });
+                  removeFilter('created_at_from');
+                  removeFilter('created_at_to');
                 }}
               />
             </Badge>
-          ))}
+          )}
+
+          {filters.tags && filters.tags.length > 0 &&
+            filters.tags.map((tag) => (
+              <Badge key={tag} variant="secondary" className="gap-1">
+                Tag: {tag}
+                <X
+                  className="h-3 w-3 cursor-pointer"
+                  onClick={() => {
+                    const newTags = selectedTags.filter((t) => t !== tag);
+                    setSelectedTags(newTags);
+                    onFiltersChange({ ...filters, tags: newTags.length > 0 ? newTags : undefined });
+                  }}
+                />
+              </Badge>
+            ))}
         </div>
       )}
     </div>

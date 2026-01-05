@@ -194,7 +194,28 @@ export interface KanbanColumn {
 export type MissingFieldFilter = 'complete' | 'incomplete' | 'no_module' | 'no_heat' | 'no_hours' | 'no_description';
 
 export interface TicketFilters {
+  /**
+   * Filtre module (compat)
+   * - Utilisé historiquement dans le Kanban
+   */
   module?: string;
+
+  /**
+   * Filtre multi-modules (principalement pour la vue Liste)
+   */
+  modules?: string[];
+
+  /**
+   * Filtre multi-statuts (kanban_status)
+   */
+  kanban_statuses?: string[];
+
+  /**
+   * Filtre date de création (ISO)
+   */
+  created_at_from?: string;
+  created_at_to?: string;
+
   priority?: string;
   owner_side?: OwnerSide;
   reported_by?: ReportedBy;
