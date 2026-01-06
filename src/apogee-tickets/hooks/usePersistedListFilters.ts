@@ -12,20 +12,18 @@ const FALLBACK_KEY = 'apogee-kanban-filters';
 
 const DEFAULT_FILTERS: TicketFilters = {};
 
-type FiltersEntry = [keyof TicketFilters, TicketFilters[keyof TicketFilters]];
-
 function normalizeFilters(input: TicketFilters): TicketFilters {
-  const out: TicketFilters = {};
+  const out: Record<string, unknown> = {};
 
-  (Object.entries(input) as FiltersEntry[]).forEach(([key, value]) => {
+  Object.entries(input).forEach(([key, value]) => {
     if (value === undefined || value === null) return;
     if (typeof value === 'string' && value.trim() === '') return;
     if (Array.isArray(value) && value.length === 0) return;
 
-    (out as Record<string, unknown>)[key] = value;
+    out[key] = value;
   });
 
-  return out;
+  return out as TicketFilters;
 }
 
 export function usePersistedListFilters() {
