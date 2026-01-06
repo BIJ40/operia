@@ -38,7 +38,57 @@ interface TicketTableProps {
 type SortColumn = 'ticket_number' | 'heat_priority' | 'element_concerne' | 'module' | 'kanban_status' | 'created_at';
 type SortDirection = 'asc' | 'desc';
 
+type PersistedTableUIState = {
+  sortColumn?: SortColumn;
+  sortDirection?: SortDirection;
+  pageSize?: number;
+  columnWidths?: number[];
+};
+
 const PAGE_SIZE_OPTIONS = [25, 50, 100];
+const TABLE_UI_STATE_KEY = 'apogee-tickets-list-table-ui:v1';
+
+const SORT_COLUMNS: SortColumn[] = [
+  'ticket_number',
+  'heat_priority',
+  'element_concerne',
+  'module',
+  'kanban_status',
+  'created_at',
+];
+
+function loadTableUIState(): PersistedTableUIState {
+  try {
+    const raw = sessionStorage.getItem(TABLE_UI_STATE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as PersistedTableUIState;
+
+    const sortColumn =
+      parsed.sortColumn && SORT_COLUMNS.includes(parsed.sortColumn)
+        ? parsed.sortColumn
+        : undefined;
+
+    const sortDirection = parsed.sortDirection === 'asc' || parsed.sortDirection === 'desc'
+      ? parsed.sortDirection
+      : undefined;
+
+    const pageSize =
+      typeof parsed.pageSize === 'number' && PAGE_SIZE_OPTIONS.includes(parsed.pageSize)
+        ? parsed.pageSize
+        : undefined;
+
+    const columnWidths =
+      Array.isArray(parsed.columnWidths) &&
+      parsed.columnWidths.length === COLUMNS.length &&
+      parsed.columnWidths.every((v) => typeof v === 'number' && Number.isFinite(v))
+        ? parsed.columnWidths
+        : undefined;
+
+    return { sortColumn, sortDirection, pageSize, columnWidths };
+  } catch {
+    return {};
+  }
+}
 
 interface ColumnDef {
   key: SortColumn | 'actions';
@@ -77,30 +127,18 @@ export function TicketTable({
 }: TicketTableProps) {
   const { user } = useAuth();
   const { data: myViews = [] } = useMyTicketViews();
-  const [sortColumn, setSortColumn] = useState<SortColumn>('created_at');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const [pageSize, setPageSize] = useState(50);
+
+  const initialUI = useMemo(() => loadTableUIState(), []);
+
+  const [sortColumn, setSortColumn] = useState<SortColumn>(() => initialUI.sortColumn ?? 'created_at');
+  const [sortDirection, setSortDirection] = useState<SortDirection>(() => initialUI.sortDirection ?? 'desc');
+  const [pageSize, setPageSize] = useState(() => initialUI.pageSize ?? 50);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
 
-  // Fonction pour déterminer si un ticket doit clignoter
-  const getTicketShouldBlink = useCallback((ticket: ApogeeTicket): boolean => {
-    if (!user?.id || !ticket.last_modified_by_user_id || !ticket.last_modified_at) {
-      return false;
-    }
-    if (ticket.last_modified_by_user_id === user.id) {
-      return false;
-    }
-    const myView = myViews.find(v => v.ticket_id === ticket.id);
-    if (!myView) {
-      return true;
-    }
-    return new Date(ticket.last_modified_at).getTime() > new Date(myView.viewed_at).getTime();
-  }, [user?.id, myViews]);
-
   // Colonnes redimensionnables
   const [columnWidths, setColumnWidths] = useState<number[]>(
-    COLUMNS.map(col => col.defaultWidth)
+    () => initialUI.columnWidths ?? COLUMNS.map(col => col.defaultWidth)
   );
   const [resizingIndex, setResizingIndex] = useState<number | null>(null);
   const startXRef = useRef<number>(0);
@@ -109,6 +147,33 @@ export function TicketTable({
   // Refs pour les raccourcis clavier
   const statusSelectRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
+  // Fonction pour déterminer si un ticket doit clignoter
+  const getTicketShouldBlink = useCallback(
+    (ticket: ApogeeTicket): boolean => {
+      if (!user?.id || !ticket.last_modified_by_user_id || !ticket.last_modified_at) {
+        return false;
+      }
+      if (ticket.last_modified_by_user_id === user.id) {
+        return false;
+      }
+      const myView = myViews.find((v) => v.ticket_id === ticket.id);
+      if (!myView) {
+        return true;
+      }
+      return new Date(ticket.last_modified_at).getTime() > new Date(myView.viewed_at).getTime();
+    },
+    [user?.id, myViews]
+  );
+
+  // Persister tri / colonnes / taille de page tant que l'onglet navigateur reste ouvert
+  useEffect(() => {
+    try {
+      const payload: PersistedTableUIState = { sortColumn, sortDirection, pageSize, columnWidths };
+      sessionStorage.setItem(TABLE_UI_STATE_KEY, JSON.stringify(payload));
+    } catch {
+      // ignore
+    }
+  }, [sortColumn, sortDirection, pageSize, columnWidths]);
   // Gestion du redimensionnement des colonnes
   const handleResizeStart = useCallback((e: React.MouseEvent, index: number) => {
     e.preventDefault();
