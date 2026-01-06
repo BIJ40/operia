@@ -22,7 +22,7 @@ function normalizeFilters(input: TicketFilters): TicketFilters {
     if (typeof value === 'string' && value.trim() === '') return;
     if (Array.isArray(value) && value.length === 0) return;
 
-    out[key] = value as any;
+    (out as Record<string, unknown>)[key] = value;
   });
 
   return out;
