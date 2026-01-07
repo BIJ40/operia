@@ -29,12 +29,12 @@ import { TechniciensProdWidget } from '@/components/dashboard/widgets/Technicien
 import { TechnicienPersonnelKPIs } from '@/components/dashboard/TechnicienPersonnelKPIs';
 import { AssistantePersonnelKPIs } from '@/components/dashboard/AssistantePersonnelKPIs';
 import { BarChart3, Star, MessageSquare, Trophy, PieChart, AlertTriangle, TrendingUp, Users, ShoppingCart, Building2, Network } from 'lucide-react';
-import { startOfYear, endOfYear, startOfQuarter, endOfQuarter, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfDay, endOfDay, subMonths, subWeeks, subDays, format } from 'date-fns';
+import { startOfYear, endOfYear, startOfQuarter, endOfQuarter, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfDay, endOfDay, subMonths, subWeeks, subDays, subYears, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { GLOBAL_ROLES } from '@/types/globalRoles';
 
 // Types pour les périodes
-type PeriodKey = 'year' | 'quarter' | 'prev_month' | 'month' | 'prev_week' | 'week' | 'prev_day' | 'day';
+type PeriodKey = 'prev_year' | 'year' | 'quarter' | 'prev_month' | 'month' | 'prev_week' | 'week' | 'prev_day' | 'day';
 
 interface PeriodOption {
   key: PeriodKey;
@@ -45,6 +45,15 @@ interface PeriodOption {
 
 // Configuration des périodes
 const PERIODS: PeriodOption[] = [
+  { 
+    key: 'prev_year', 
+    label: 'A-1', 
+    shortLabel: 'A-1',
+    getDates: () => {
+      const prev = subYears(new Date(), 1);
+      return { start: startOfYear(prev), end: endOfYear(prev) };
+    }
+  },
   { 
     key: 'year', 
     label: 'Année', 
@@ -190,6 +199,7 @@ export default function DashboardStatic() {
     // Générer le label de période lisible
     let periodLabel = '';
     switch (selectedPeriod) {
+      case 'prev_year':
       case 'year':
         periodLabel = format(dates.start, 'yyyy');
         break;
