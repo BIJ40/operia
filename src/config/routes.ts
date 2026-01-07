@@ -29,7 +29,10 @@ export const ROUTES = {
     apporteurs: '/academy/apporteurs',
     apporteursCategory: (slug: string) => `/academy/apporteurs/category/${slug}`,
     apporteursSubCategory: (slug: string, subslug: string) => `/academy/apporteurs/category/${slug}/sub/${subslug}`,
-  // Base Documentaire
+    // Guide OPERIA
+    operia: '/academy/operia',
+    operiaCategory: (slug: string) => `/academy/operia/category/${slug}`,
+    // Base Documentaire
     documents: '/academy/hc-base',
     documentsCategory: (slug: string) => `/academy/hc-base/category/${slug}`,
   },

@@ -5035,6 +5035,95 @@ export type Database = {
           },
         ]
       }
+      operia_blocks: {
+        Row: {
+          attachments: Json | null
+          color_preset: string
+          completed_at: string | null
+          content: string
+          content_type: string | null
+          content_updated_at: string | null
+          created_at: string
+          hide_from_sidebar: boolean | null
+          hide_title: boolean | null
+          icon: string | null
+          id: string
+          is_empty: boolean | null
+          is_in_progress: boolean | null
+          order: number
+          parent_id: string | null
+          show_summary: boolean | null
+          show_title_on_card: boolean | null
+          slug: string
+          summary: string | null
+          target_roles: string[] | null
+          tips_type: string | null
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json | null
+          color_preset?: string
+          completed_at?: string | null
+          content?: string
+          content_type?: string | null
+          content_updated_at?: string | null
+          created_at?: string
+          hide_from_sidebar?: boolean | null
+          hide_title?: boolean | null
+          icon?: string | null
+          id?: string
+          is_empty?: boolean | null
+          is_in_progress?: boolean | null
+          order?: number
+          parent_id?: string | null
+          show_summary?: boolean | null
+          show_title_on_card?: boolean | null
+          slug: string
+          summary?: string | null
+          target_roles?: string[] | null
+          tips_type?: string | null
+          title: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json | null
+          color_preset?: string
+          completed_at?: string | null
+          content?: string
+          content_type?: string | null
+          content_updated_at?: string | null
+          created_at?: string
+          hide_from_sidebar?: boolean | null
+          hide_title?: boolean | null
+          icon?: string | null
+          id?: string
+          is_empty?: boolean | null
+          is_in_progress?: boolean | null
+          order?: number
+          parent_id?: string | null
+          show_summary?: boolean | null
+          show_title_on_card?: boolean | null
+          slug?: string
+          summary?: string | null
+          target_roles?: string[] | null
+          tips_type?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operia_blocks_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "operia_blocks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       page_metadata: {
         Row: {
           created_at: string
