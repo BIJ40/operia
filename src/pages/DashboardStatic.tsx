@@ -14,6 +14,8 @@
 import { useState, useMemo, createContext, useContext, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ChevronDown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -34,31 +36,28 @@ import { fr } from 'date-fns/locale';
 import { GLOBAL_ROLES } from '@/types/globalRoles';
 
 // Types pour les périodes
-type PeriodKey = 'prev_year' | 'year' | 'quarter' | 'prev_month' | 'month' | 'prev_week' | 'week' | 'prev_day' | 'day';
+type PeriodKey = 'year' | 'quarter' | 'prev_month' | 'month' | 'prev_week' | 'week' | 'prev_day' | 'day';
 
 interface PeriodOption {
   key: PeriodKey;
   label: string;
   shortLabel: string;
-  getDates: () => { start: Date; end: Date };
+  getDates: (yearOffset?: number) => { start: Date; end: Date };
+  hasYearSelector?: boolean;
 }
 
 // Configuration des périodes
 const PERIODS: PeriodOption[] = [
   { 
-    key: 'prev_year', 
-    label: 'A-1', 
-    shortLabel: 'A-1',
-    getDates: () => {
-      const prev = subYears(new Date(), 1);
-      return { start: startOfYear(prev), end: endOfYear(prev) };
-    }
-  },
-  { 
     key: 'year', 
     label: 'Année', 
     shortLabel: 'Année',
-    getDates: () => ({ start: startOfYear(new Date()), end: endOfYear(new Date()) })
+    getDates: (yearOffset = 0) => {
+      const targetYear = new Date().getFullYear() + yearOffset;
+      const targetDate = new Date(targetYear, 0, 1);
+      return { start: startOfYear(targetDate), end: endOfYear(targetDate) };
+    },
+    hasYearSelector: true
   },
   { 
     key: 'quarter', 
@@ -185,21 +184,32 @@ export default function DashboardStatic() {
     return isValid ? stored! : 'month';
   });
   
+  // État pour l'année sélectionnée (offset: 0 = année actuelle, -1 = année précédente)
+  const [selectedYearOffset, setSelectedYearOffset] = useState<number>(() => {
+    if (typeof window === 'undefined') return 0;
+    const stored = window.sessionStorage.getItem('dashboard-selected-year-offset');
+    return stored ? parseInt(stored, 10) : 0;
+  });
+  
   // Sauvegarde de la période sélectionnée pour éviter la réinitialisation au changement d'onglet / reload
   useEffect(() => {
     if (typeof window === 'undefined') return;
     window.sessionStorage.setItem('dashboard-selected-period', selectedPeriod);
   }, [selectedPeriod]);
   
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.sessionStorage.setItem('dashboard-selected-year-offset', selectedYearOffset.toString());
+  }, [selectedYearOffset]);
+  
   // Calcul des dates selon la période sélectionnée
   const periodConfig = useMemo(() => {
-    const period = PERIODS.find(p => p.key === selectedPeriod) || PERIODS[3]; // fallback mois
-    const dates = period.getDates();
+    const period = PERIODS.find(p => p.key === selectedPeriod) || PERIODS.find(p => p.key === 'month')!;
+    const dates = period.getDates(period.hasYearSelector ? selectedYearOffset : undefined);
     
     // Générer le label de période lisible
     let periodLabel = '';
     switch (selectedPeriod) {
-      case 'prev_year':
       case 'year':
         periodLabel = format(dates.start, 'yyyy');
         break;
@@ -225,7 +235,7 @@ export default function DashboardStatic() {
       dateRange: dates,
       periodLabel,
     };
-  }, [selectedPeriod]);
+  }, [selectedPeriod, selectedYearOffset]);
 
   // ============================================================================
   // RENDU CONDITIONNEL PAR RÔLE
@@ -568,16 +578,53 @@ export default function DashboardStatic() {
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm text-muted-foreground mr-2">Période :</span>
                 {PERIODS.map((period) => (
-                  <Button
-                    key={period.key}
-                    variant={selectedPeriod === period.key ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setSelectedPeriod(period.key)}
-                    className="h-8 px-3 text-xs"
-                  >
-                    <span className="hidden sm:inline">{period.label}</span>
-                    <span className="sm:hidden">{period.shortLabel}</span>
-                  </Button>
+                  period.hasYearSelector ? (
+                    <Popover key={period.key}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={selectedPeriod === period.key ? 'default' : 'outline'}
+                          size="sm"
+                          className="h-8 px-3 text-xs gap-1"
+                        >
+                          <span className="hidden sm:inline">{period.label}</span>
+                          <span className="sm:hidden">{period.shortLabel}</span>
+                          <ChevronDown className="h-3 w-3" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-1" align="start">
+                        <div className="flex flex-col gap-1">
+                          {[0, -1, -2].map((offset) => {
+                            const year = new Date().getFullYear() + offset;
+                            return (
+                              <Button
+                                key={offset}
+                                variant={selectedPeriod === period.key && selectedYearOffset === offset ? 'default' : 'ghost'}
+                                size="sm"
+                                className="h-8 justify-start text-xs"
+                                onClick={() => {
+                                  setSelectedPeriod(period.key);
+                                  setSelectedYearOffset(offset);
+                                }}
+                              >
+                                {year}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  ) : (
+                    <Button
+                      key={period.key}
+                      variant={selectedPeriod === period.key ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedPeriod(period.key)}
+                      className="h-8 px-3 text-xs"
+                    >
+                      <span className="hidden sm:inline">{period.label}</span>
+                      <span className="sm:hidden">{period.shortLabel}</span>
+                    </Button>
+                  )
                 ))}
               </div>
               
