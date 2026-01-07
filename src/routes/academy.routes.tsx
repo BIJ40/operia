@@ -3,6 +3,7 @@ import { Route, Navigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { ModuleGuard } from "@/components/auth/ModuleGuard";
+import { OperiaEditorProvider } from "@/contexts/OperiaEditorContext";
 
 // Lazy loaded pages
 const AcademyIndex = lazy(() => import("@/pages/AcademyIndex"));
@@ -14,6 +15,8 @@ const CategoryApporteur = lazy(() => import("@/pages/CategoryApporteur"));
 const HelpConfort = lazy(() => import("@/pages/HelpConfort"));
 const CategoryHelpConfort = lazy(() => import("@/pages/CategoryHelpConfort"));
 const Favorites = lazy(() => import("@/pages/Favorites"));
+const OperiaGuide = lazy(() => import("@/pages/OperiaGuide"));
+const CategoryOperia = lazy(() => import("@/pages/CategoryOperia"));
 
 export function AcademyRoutes() {
   return (
@@ -29,6 +32,10 @@ export function AcademyRoutes() {
       <Route path="/academy/apporteurs" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><ApporteurGuide /></ModuleGuard></RoleGuard></MainLayout>} />
       <Route path="/academy/apporteurs/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><ApporteurSubcategories /></ModuleGuard></RoleGuard></MainLayout>} />
       <Route path="/academy/apporteurs/category/:slug/sub/:subslug" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><CategoryApporteur /></ModuleGuard></RoleGuard></MainLayout>} />
+      
+      {/* Guide OPERIA */}
+      <Route path="/academy/operia" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><OperiaEditorProvider><OperiaGuide /></OperiaEditorProvider></ModuleGuard></RoleGuard></MainLayout>} />
+      <Route path="/academy/operia/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><OperiaEditorProvider><CategoryOperia /></OperiaEditorProvider></ModuleGuard></RoleGuard></MainLayout>} />
       
       {/* Base Documentaire */}
       <Route path="/academy/hc-base" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><HelpConfort /></ModuleGuard></RoleGuard></MainLayout>} />
