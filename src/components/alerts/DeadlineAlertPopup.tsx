@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from "react";
 import { AlertTriangle, X, Calendar, Car, Shield, FileText } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -16,6 +17,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   useCriticalDeadlineAlerts,
   formatDeadlineDate,
@@ -62,52 +65,117 @@ function getTypeLabel(type: DeadlineAlert["type"]) {
 }
 
 export function DeadlineAlertPopup() {
+  const { user, agencyId } = useAuth();
   const { data: alerts = [], isLoading, hasCriticalAlerts } = useCriticalDeadlineAlerts();
   const [isOpen, setIsOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
-  // Vérifier si les alertes ont déjà été validées aujourd'hui
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const currentIds = alerts.map((a) => a.id).sort().join(",");
+  const storageKey = user?.id && agencyId ? `${STORAGE_KEY}:${user.id}:${agencyId}` : STORAGE_KEY;
+
+  // Table nouvellement ajoutée (typée côté backend, mais pas forcément dans les types TS en runtime)
+  const supabaseAny = supabase as unknown as {
+    from: (table: string) => any;
+  };
+
+  // Ack “serveur” (robuste: ne dépend pas du localStorage)
+  const { data: ackRow, isLoading: ackLoading } = useQuery({
+    queryKey: ["deadline-alert-ack", user?.id, agencyId, today],
+    queryFn: async () => {
+      if (!user?.id || !agencyId) return null;
+      const { data, error } = await supabaseAny
+        .from("deadline_alert_acknowledgements")
+        .select("alert_ids")
+        .eq("user_id", user.id)
+        .eq("agency_id", agencyId)
+        .eq("acknowledged_on", today)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data as { alert_ids: string[] } | null;
+    },
+    enabled: !!user?.id && !!agencyId && alerts.length > 0,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+  });
+
+  // Fallback localStorage + synchro avec ackRow
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        const { date, alertIds } = JSON.parse(stored);
-        const today = new Date().toDateString();
-        
-        // Si c'est un nouveau jour ou si les alertes ont changé, réafficher
-        if (date !== today) {
-          localStorage.removeItem(STORAGE_KEY);
-        } else {
-          // Vérifier si toutes les alertes actuelles ont été vues
-          const currentIds = alerts.map(a => a.id).sort().join(",");
-          if (alertIds === currentIds) {
-            setDismissed(true);
-          }
-        }
-      } catch {
-        localStorage.removeItem(STORAGE_KEY);
-      }
+    // 1) Si ack serveur correspond, on ne montre pas
+    const ackIds = (ackRow?.alert_ids ?? []).slice().sort().join(",");
+    if (!ackLoading && ackRow && ackIds === currentIds) {
+      setDismissed(true);
+      return;
     }
-  }, [alerts]);
+
+    // 2) Sinon fallback localStorage (par user+agency)
+    const stored = localStorage.getItem(storageKey);
+    if (!stored) {
+      setDismissed(false);
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(stored) as { date?: string; alertIds?: string };
+      if (parsed.date !== today) {
+        localStorage.removeItem(storageKey);
+        setDismissed(false);
+        return;
+      }
+
+      if (parsed.alertIds === currentIds) {
+        setDismissed(true);
+      } else {
+        setDismissed(false);
+      }
+    } catch {
+      localStorage.removeItem(storageKey);
+      setDismissed(false);
+    }
+  }, [ackLoading, ackRow, currentIds, storageKey, today]);
 
   // Afficher le popup quand il y a des alertes non validées
   useEffect(() => {
-    if (!isLoading && alerts.length > 0 && !dismissed) {
-      // Petit délai pour laisser l'app charger
+    if (!isLoading && !ackLoading && alerts.length > 0 && !dismissed) {
       const timer = setTimeout(() => setIsOpen(true), 1000);
       return () => clearTimeout(timer);
     }
-  }, [alerts, isLoading, dismissed]);
+  }, [alerts.length, isLoading, ackLoading, dismissed]);
 
-  const handleDismiss = () => {
-    // Sauvegarder la validation pour aujourd'hui
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        date: new Date().toDateString(),
-        alertIds: alerts.map(a => a.id).sort().join(","),
-      })
-    );
+  const handleDismiss = async () => {
+    // Toujours écrire localStorage (fallback)
+    try {
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify({
+          date: today,
+          alertIds: currentIds,
+        })
+      );
+    } catch {
+      // ignore
+    }
+
+    // Puis persistance “serveur” si possible
+    try {
+      if (user?.id && agencyId) {
+        await supabaseAny
+          .from("deadline_alert_acknowledgements")
+          .upsert(
+            {
+              user_id: user.id,
+              agency_id: agencyId,
+              acknowledged_on: today,
+              alert_ids: alerts.map((a) => a.id),
+            },
+            { onConflict: "user_id,agency_id,acknowledged_on" }
+          );
+      }
+    } catch {
+      // fallback localStorage suffit
+    }
+
     setDismissed(true);
     setIsOpen(false);
   };
