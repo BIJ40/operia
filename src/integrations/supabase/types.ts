@@ -2316,6 +2316,36 @@ export type Database = {
         }
         Relationships: []
       }
+      deadline_alert_acknowledgements: {
+        Row: {
+          acknowledged_on: string
+          agency_id: string
+          alert_ids: string[]
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          acknowledged_on?: string
+          agency_id: string
+          alert_ids?: string[]
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          acknowledged_on?: string
+          agency_id?: string
+          alert_ids?: string[]
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       diffusion_settings: {
         Row: {
           auto_rotation_enabled: boolean
