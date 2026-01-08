@@ -32,7 +32,7 @@ const OWNER_SIDES: { value: OwnerSide; label: string }[] = [
 const REPORTED_BY_OPTIONS: { value: ReportedBy; label: string }[] = [
   { value: 'JEROME', label: 'Jérôme' },
   { value: 'FLORIAN', label: 'Florian' },
-  { value: 'ERIC', label: 'Eric' },
+  { value: 'ERIC', label: 'Éric' },
   { value: 'APOGEE', label: 'Apogée' },
   { value: 'AUTRE', label: 'Autre' },
 ];
