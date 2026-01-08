@@ -102,9 +102,8 @@ export function DeadlineAlertPopup() {
 
   // Fallback localStorage + synchro avec ackRow
   useEffect(() => {
-    // 1) Si ack serveur correspond, on ne montre pas
-    const ackIds = (ackRow?.alert_ids ?? []).slice().sort().join(",");
-    if (!ackLoading && ackRow && ackIds === currentIds) {
+    // 1) Si un ack serveur existe pour aujourd'hui, on ne montre pas
+    if (!ackLoading && ackRow) {
       setDismissed(true);
       return;
     }
