@@ -1,11 +1,12 @@
 /**
  * Technician Planning Page
- * Week view with clickable day headers to show day detail
+ * Day-focused view with left/right navigation
+ * Click on day header to switch days
  */
 import { useState, useMemo } from 'react';
 import { format, startOfWeek, addDays, isSameDay, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Loader2, Calendar, AlertCircle, ChevronLeft, ChevronRight, MapPin, Clock, Building, FileText, X } from 'lucide-react';
+import { Loader2, Calendar, AlertCircle, ChevronLeft, ChevronRight, MapPin, Clock, Building, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,12 +14,14 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { useTechnicianProfile } from '@/hooks/technician/useTechnicianProfile';
 import { AgencyProvider } from '@/apogee-connect/contexts/AgencyContext';
 import { useWeeklyTechPlanning } from '@/apogee-connect/hooks/useWeeklyTechPlanning';
-import { usePlanningSignature } from '@/apogee-connect/hooks/usePlanningSignature';
-import { TechPlanningSlot, formatMinutesToHours, WeeklyTechPlanning } from '@/apogee-connect/utils/planning';
+import { TechPlanningSlot, formatMinutesToHours } from '@/apogee-connect/utils/planning';
 import { cn } from '@/lib/utils';
-import { Skeleton } from '@/components/ui/skeleton';
-import { CheckCircle, Send, Loader2 as Loader2Icon } from 'lucide-react';
-import { Link } from 'react-router-dom';
+
+// Constantes grille
+const HOUR_START = 7;
+const HOUR_END = 19;
+const HOUR_HEIGHT = 48; // px par heure (plus grand pour mobile)
+const TOTAL_HOURS = HOUR_END - HOUR_START;
 
 function getSlotColor(type: string | null | undefined): string {
   const t = type?.toLowerCase() || '';
@@ -29,7 +32,6 @@ function getSlotColor(type: string | null | undefined): string {
   return 'bg-primary/80';
 }
 
-// Card pour afficher un RDV du jour
 interface DayEventCardProps {
   slot: TechPlanningSlot;
   onClick: () => void;
@@ -73,7 +75,6 @@ function DayEventCard({ slot, onClick }: DayEventCardProps) {
   );
 }
 
-// Sheet détail d'un slot
 interface SlotDetailSheetProps {
   slot: TechPlanningSlot | null;
   open: boolean;
@@ -169,24 +170,82 @@ function SlotDetailSheet({ slot, open, onClose }: SlotDetailSheetProps) {
   );
 }
 
-// Vue jour avec navigation
-interface DayViewProps {
+interface DaySelectorProps {
   selectedDate: Date;
-  slots: TechPlanningSlot[];
-  onClose: () => void;
-  onPrevDay: () => void;
-  onNextDay: () => void;
+  weekStart: Date;
+  onSelectDay: (day: Date) => void;
 }
 
-function DayView({ selectedDate, slots, onClose, onPrevDay, onNextDay }: DayViewProps) {
+function DaySelector({ selectedDate, weekStart, onSelectDay }: DaySelectorProps) {
+  const weekDays = useMemo(() => {
+    return Array.from({ length: 5 }, (_, i) => addDays(weekStart, i));
+  }, [weekStart]);
+
+  return (
+    <div className="flex gap-1 overflow-x-auto pb-2">
+      {weekDays.map((day) => {
+        const isSelected = isSameDay(day, selectedDate);
+        const isToday = isSameDay(day, new Date());
+        
+        return (
+          <button
+            key={day.toISOString()}
+            onClick={() => onSelectDay(day)}
+            className={cn(
+              "flex-1 min-w-[56px] py-2 px-1 rounded-lg text-center transition-all",
+              isSelected
+                ? "bg-primary text-primary-foreground shadow-md"
+                : isToday
+                  ? "bg-primary/10 text-primary"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted"
+            )}
+          >
+            <div className="text-[10px] uppercase font-medium">
+              {format(day, 'EEE', { locale: fr })}
+            </div>
+            <div className="text-lg font-bold">{format(day, 'd')}</div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function TechDayPlanning({ techId }: { techId: number }) {
+  const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [selectedSlot, setSelectedSlot] = useState<TechPlanningSlot | null>(null);
   
+  const { 
+    data, 
+    isLoading, 
+    error,
+    weekDate,
+    goToPrevWeek,
+    goToNextWeek,
+    goToCurrentWeek
+  } = useWeeklyTechPlanning(techId, false);
+  
+  const currentWeekStart = useMemo(() => 
+    startOfWeek(weekDate, { weekStartsOn: 1 }),
+    [weekDate]
+  );
+  
+  // Extraire les slots pour ce technicien
+  const allSlots = useMemo(() => {
+    if (!data?.length) return [];
+    const techData = data.find(t => t.techId === techId);
+    if (!techData) return [];
+    return techData.days.flatMap(d => d.slots);
+  }, [data, techId]);
+  
+  // Filtrer les slots du jour sélectionné
   const daySlots = useMemo(() => {
-    return slots
+    return allSlots
       .filter(s => isSameDay(new Date(s.start), selectedDate))
       .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
-  }, [slots, selectedDate]);
+  }, [allSlots, selectedDate]);
   
+  // Calculer les heures du jour
   const dayMinutes = useMemo(() => {
     return daySlots
       .filter(s => !s.isBreak)
@@ -197,40 +256,99 @@ function DayView({ selectedDate, slots, onClose, onPrevDay, onNextDay }: DayView
       }, 0);
   }, [daySlots]);
   
+  // Navigation jour
+  const goToPrevDay = () => {
+    const newDate = subDays(selectedDate, 1);
+    // Si on change de semaine, mettre à jour la semaine
+    if (newDate < currentWeekStart) {
+      goToPrevWeek();
+    }
+    setSelectedDate(newDate);
+  };
+  
+  const goToNextDay = () => {
+    const newDate = addDays(selectedDate, 1);
+    const weekEnd = addDays(currentWeekStart, 6);
+    // Si on change de semaine, mettre à jour la semaine
+    if (newDate > weekEnd) {
+      goToNextWeek();
+    }
+    setSelectedDate(newDate);
+  };
+  
+  const goToToday = () => {
+    setSelectedDate(new Date());
+    goToCurrentWeek();
+  };
+  
+  const handleSelectDay = (day: Date) => {
+    setSelectedDate(day);
+  };
+  
   const dateLabel = format(selectedDate, "EEEE d MMMM", { locale: fr });
   const isToday = isSameDay(selectedDate, new Date());
   
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center text-destructive">
+          Erreur lors du chargement du planning
+        </CardContent>
+      </Card>
+    );
+  }
+  
   return (
-    <div className="fixed inset-0 z-50 bg-background">
-      {/* Header avec fermeture */}
-      <div className="sticky top-0 bg-background border-b z-10">
-        <div className="flex items-center justify-between p-3">
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-5 w-5" />
-          </Button>
-          <h2 className="font-semibold">Détail du jour</h2>
-          <div className="w-10" /> {/* Spacer */}
-        </div>
-        
-        {/* Navigation jour */}
-        <div className="flex items-center justify-between px-3 pb-3">
-          <Button variant="ghost" size="icon" onClick={onPrevDay}>
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <div className="text-center">
-            <p className="font-semibold capitalize">{dateLabel}</p>
-            <p className="text-xs text-muted-foreground">
-              {daySlots.length} RDV • {formatMinutesToHours(dayMinutes)}
-            </p>
-          </div>
-          <Button variant="ghost" size="icon" onClick={onNextDay}>
-            <ChevronRight className="h-5 w-5" />
-          </Button>
-        </div>
+    <div className="space-y-3">
+      {/* Sélecteur de semaine */}
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" size="sm" onClick={goToPrevWeek}>
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <button 
+          onClick={goToToday}
+          className="text-xs text-muted-foreground hover:text-primary transition-colors"
+        >
+          Sem. {format(currentWeekStart, "d MMM", { locale: fr })}
+        </button>
+        <Button variant="ghost" size="sm" onClick={goToNextWeek}>
+          <ChevronRight className="h-4 w-4" />
+        </Button>
       </div>
       
-      {/* Liste des RDV */}
-      <div className="p-3 space-y-2 overflow-auto" style={{ height: 'calc(100vh - 120px)' }}>
+      {/* Sélecteur de jour */}
+      <DaySelector 
+        selectedDate={selectedDate}
+        weekStart={currentWeekStart}
+        onSelectDay={handleSelectDay}
+      />
+      
+      {/* Navigation jour avec date */}
+      <div className="flex items-center justify-between bg-card rounded-lg p-3 border">
+        <Button variant="ghost" size="icon" onClick={goToPrevDay}>
+          <ChevronLeft className="h-5 w-5" />
+        </Button>
+        <div className="text-center">
+          <p className="font-semibold capitalize">{dateLabel}</p>
+          <p className="text-xs text-muted-foreground">
+            {daySlots.length} RDV • {formatMinutesToHours(dayMinutes)}
+          </p>
+        </div>
+        <Button variant="ghost" size="icon" onClick={goToNextDay}>
+          <ChevronRight className="h-5 w-5" />
+        </Button>
+      </div>
+      
+      {/* Liste des RDV du jour */}
+      <div className="space-y-2">
         {daySlots.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center text-muted-foreground">
@@ -252,380 +370,13 @@ function DayView({ selectedDate, slots, onClose, onPrevDay, onNextDay }: DayView
         )}
       </div>
       
-      {/* Sheet détail slot */}
+      {/* Sheet détail */}
       <SlotDetailSheet 
         slot={selectedSlot}
         open={!!selectedSlot}
         onClose={() => setSelectedSlot(null)}
       />
     </div>
-  );
-}
-
-// Section signature N1
-function TechSignatureSectionN1({ 
-  techId, 
-  weekDate,
-  onRequestSign,
-}: { 
-  techId: number; 
-  weekDate: Date;
-  onRequestSign: () => void;
-}) {
-  const { 
-    signature, 
-    isSent, 
-    isSignedByTech,
-    isLoading 
-  } = usePlanningSignature({ techId, weekDate });
-
-  if (isLoading) {
-    return <Skeleton className="h-8 w-48" />;
-  }
-
-  if (isSignedByTech && signature?.tech_signed_at) {
-    return (
-      <Badge variant="default" className="bg-emerald-600 text-white">
-        <CheckCircle className="w-3 h-3 mr-1" />
-        Signé le {format(new Date(signature.tech_signed_at), "dd/MM/yyyy HH:mm", { locale: fr })}
-      </Badge>
-    );
-  }
-
-  if (isSent) {
-    return (
-      <Button
-        onClick={onRequestSign}
-        size="sm"
-        className="bg-emerald-600 hover:bg-emerald-500"
-      >
-        <CheckCircle className="w-4 h-4 mr-2" />
-        Signer mon planning
-      </Button>
-    );
-  }
-
-  return (
-    <Badge variant="secondary" className="text-muted-foreground">
-      En attente de validation
-    </Badge>
-  );
-}
-
-// Modal pour signer le planning
-function PlanningSignModal({
-  techId,
-  weekDate,
-  onClose,
-}: {
-  techId: number;
-  weekDate: Date;
-  onClose: () => void;
-}) {
-  const { techSign, isTechSigning } = usePlanningSignature({ techId, weekDate });
-  const [signatureData, setSignatureData] = useState<string | null>(null);
-  const [loadingSignature, setLoadingSignature] = useState(true);
-
-  useState(() => {
-    async function loadSignature() {
-      const { supabase } = await import("@/integrations/supabase/client");
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data } = await supabase
-        .from("user_signatures")
-        .select("signature_png_base64, signature_svg")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (data?.signature_png_base64) {
-        setSignatureData(data.signature_png_base64);
-      } else if (data?.signature_svg) {
-        setSignatureData(data.signature_svg);
-      }
-      setLoadingSignature(false);
-    }
-    loadSignature();
-  });
-
-  const handleSign = async () => {
-    if (!signatureData) return;
-    await techSign(signatureData);
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <Card className="w-full max-w-md mx-4">
-        <CardHeader>
-          <CardTitle>Signer mon planning</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {loadingSignature ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : signatureData ? (
-            <div className="border rounded-lg p-4 bg-muted/30">
-              <p className="text-sm text-muted-foreground mb-2">Votre signature :</p>
-              <img 
-                src={signatureData.startsWith("data:") ? signatureData : `data:image/png;base64,${signatureData}`}
-                alt="Ma signature"
-                className="max-h-24 mx-auto"
-              />
-            </div>
-          ) : (
-            <div className="text-center py-4">
-              <p className="text-muted-foreground text-sm">Aucune signature enregistrée.</p>
-              <p className="text-sm mt-1">
-                <Link to="/rh/signature" className="text-primary hover:underline">
-                  Créer ma signature →
-                </Link>
-              </p>
-            </div>
-          )}
-
-          <p className="text-sm text-muted-foreground">
-            En signant, vous confirmez avoir pris connaissance de votre planning 
-            pour la semaine du {format(weekDate, "dd MMMM yyyy", { locale: fr })}.
-          </p>
-
-          <div className="flex gap-3 justify-end">
-            <Button variant="outline" onClick={onClose}>
-              Annuler
-            </Button>
-            <Button 
-              onClick={handleSign}
-              disabled={!signatureData || isTechSigning}
-              className="bg-emerald-600 hover:bg-emerald-500"
-            >
-              {isTechSigning ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <CheckCircle className="w-4 h-4 mr-2" />
-              )}
-              Confirmer et signer
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// Composant principal avec vue semaine + jours cliquables
-function TechWeekPlanning({ techId }: { techId: number }) {
-  const [selectedDayDate, setSelectedDayDate] = useState<Date | null>(null);
-  const [showSignModal, setShowSignModal] = useState(false);
-  
-  const {
-    data,
-    isLoading,
-    error,
-    weekDate,
-    goToPrevWeek,
-    goToNextWeek,
-    goToCurrentWeek,
-  } = useWeeklyTechPlanning(techId, false);
-
-  // Extraire tous les slots du tech
-  const allSlots = useMemo(() => {
-    if (!data?.length) return [];
-    const techData = data.find(t => t.techId === techId);
-    if (!techData) return [];
-    return techData.days.flatMap(d => d.slots);
-  }, [data, techId]);
-
-  const currentWeekStart = useMemo(() => 
-    startOfWeek(weekDate, { weekStartsOn: 1 }),
-    [weekDate]
-  );
-
-  // Handlers pour navigation jour
-  const handlePrevDay = () => {
-    if (!selectedDayDate) return;
-    const newDate = subDays(selectedDayDate, 1);
-    if (newDate < currentWeekStart) {
-      goToPrevWeek();
-    }
-    setSelectedDayDate(newDate);
-  };
-
-  const handleNextDay = () => {
-    if (!selectedDayDate) return;
-    const newDate = addDays(selectedDayDate, 1);
-    const weekEnd = addDays(currentWeekStart, 6);
-    if (newDate > weekEnd) {
-      goToNextWeek();
-    }
-    setSelectedDayDate(newDate);
-  };
-
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card className="border-destructive">
-        <CardContent className="pt-6">
-          <p className="text-destructive">Erreur lors du chargement du planning.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!data || data.length === 0) {
-    return (
-      <Card>
-        <CardContent className="pt-6">
-          <p className="text-muted-foreground">Aucun planning trouvé pour cette semaine.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const techWeek = data.find(t => t.techId === techId);
-  if (!techWeek) {
-    return (
-      <Card>
-        <CardContent className="pt-6">
-          <p className="text-muted-foreground">Aucun planning trouvé.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const weekLabel = `Semaine du ${format(weekDate, "dd MMMM", { locale: fr })}`;
-
-  return (
-    <>
-      <div className="space-y-4">
-        {/* Navigation semaine */}
-        <div className="flex items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={goToPrevWeek}>
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <button 
-            onClick={goToCurrentWeek}
-            className="text-sm font-medium hover:text-primary transition-colors"
-          >
-            {weekLabel}
-          </button>
-          <Button variant="ghost" size="sm" onClick={goToNextWeek}>
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        </div>
-
-        {/* Header avec total et signature */}
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <Badge variant="secondary" className="font-mono">
-            <Clock className="w-3 h-3 mr-1" />
-            {formatMinutesToHours(techWeek.weeklyTotalMinutes)}
-          </Badge>
-          
-          <TechSignatureSectionN1 
-            techId={techWeek.techId} 
-            weekDate={weekDate}
-            onRequestSign={() => setShowSignModal(true)}
-          />
-        </div>
-
-        {/* Grille des jours - CLIQUABLES */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-          {techWeek.days.map((day) => {
-            const dayDate = new Date(day.date);
-            const isToday = isSameDay(dayDate, new Date());
-            
-            return (
-              <button
-                key={day.date}
-                onClick={() => setSelectedDayDate(dayDate)}
-                className={cn(
-                  "rounded-lg border bg-card p-3 space-y-2 text-left transition-all hover:border-primary hover:shadow-md active:scale-[0.98]",
-                  isToday && "ring-2 ring-primary/50"
-                )}
-              >
-                {/* En-tête du jour - CLIQUABLE */}
-                <div className="flex items-center justify-between border-b pb-2">
-                  <span className={cn(
-                    "font-medium text-sm capitalize",
-                    isToday && "text-primary"
-                  )}>
-                    {day.label}
-                  </span>
-                  <Badge variant="outline" className="text-xs font-mono">
-                    {formatMinutesToHours(day.totalMinutes)}
-                  </Badge>
-                </div>
-
-                {/* Aperçu des RDV */}
-                {day.slots.length === 0 ? (
-                  <p className="text-xs text-muted-foreground py-2">Aucun RDV</p>
-                ) : (
-                  <div className="space-y-1">
-                    {day.slots.slice(0, 3).map((slot, idx) => {
-                      const start = format(new Date(slot.start), "HH:mm");
-                      const isBreak = slot.isBreak === true;
-                      
-                      return (
-                        <div
-                          key={`${slot.slotId}-${idx}`}
-                          className={cn(
-                            "rounded px-2 py-1 text-xs",
-                            isBreak
-                              ? "bg-amber-500/10 text-amber-600"
-                              : "bg-muted/50"
-                          )}
-                        >
-                          <span className="font-medium">{start}</span>
-                          {!isBreak && slot.clientName && (
-                            <span className="ml-1 text-muted-foreground truncate">
-                              - {slot.clientName.slice(0, 10)}...
-                            </span>
-                          )}
-                          {isBreak && <span className="ml-1">Pause</span>}
-                        </div>
-                      );
-                    })}
-                    {day.slots.length > 3 && (
-                      <p className="text-xs text-muted-foreground text-center">
-                        +{day.slots.length - 3} autres
-                      </p>
-                    )}
-                  </div>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Vue jour en plein écran */}
-      {selectedDayDate && (
-        <DayView
-          selectedDate={selectedDayDate}
-          slots={allSlots}
-          onClose={() => setSelectedDayDate(null)}
-          onPrevDay={handlePrevDay}
-          onNextDay={handleNextDay}
-        />
-      )}
-
-      {/* Modal signature */}
-      {showSignModal && (
-        <PlanningSignModal
-          techId={techId}
-          weekDate={weekDate}
-          onClose={() => setShowSignModal(false)}
-        />
-      )}
-    </>
   );
 }
 
@@ -679,9 +430,9 @@ export default function TechnicianPlanningPage() {
         <h1 className="text-lg font-semibold">Mon Planning</h1>
       </div>
 
-      {/* Planning semaine avec jours cliquables */}
+      {/* Planning du jour */}
       <AgencyProvider>
-        <TechWeekPlanning techId={profile.apogee_user_id} />
+        <TechDayPlanning techId={profile.apogee_user_id} />
       </AgencyProvider>
     </div>
   );
