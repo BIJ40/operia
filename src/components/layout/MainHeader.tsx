@@ -32,6 +32,7 @@ import { getRoleCapabilities } from '@/config/roleMatrix';
 import { RHNotificationBadge } from '@/components/rh/RHNotificationBadge';
 import { isModuleEnabled, ModuleKey } from '@/types/modules';
 import { UnifiedSearchFloatingBar } from '@/components/unified-search';
+import { ViewModeToggle } from './ViewModeToggle';
 
 
 // Map d'icônes pour les sections
@@ -234,6 +235,9 @@ export function MainHeader() {
 
                 {/* Actions droite */}
                 <div className="flex items-center gap-1 ml-auto">
+                  {/* Toggle mode mobile/desktop */}
+                  <ViewModeToggle />
+                  
                   {/* RH Notifications - seule cloche */}
                   <RHNotificationBadge />
 

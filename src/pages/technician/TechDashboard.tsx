@@ -3,8 +3,9 @@
  * Version mobile du dashboard avec les statistiques personnelles du technicien
  */
 
-import { useState, createContext, useContext } from 'react';
-import { Euro, Wrench, FolderCheck, LinkIcon, Calendar, TrendingUp } from 'lucide-react';
+import { useState } from 'react';
+import { Euro, Wrench, FolderCheck, LinkIcon, Calendar, TrendingUp, Monitor } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -194,10 +195,19 @@ function TechKPIsGrid() {
 export default function TechDashboard() {
   return (
     <div className="p-4 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold">Mes statistiques</h1>
-        <p className="text-sm text-muted-foreground">Vue d'ensemble de votre activité</p>
+      {/* Header avec toggle mode bureau */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-xl font-bold">Mes statistiques</h1>
+          <p className="text-sm text-muted-foreground">Vue d'ensemble de votre activité</p>
+        </div>
+        <Link 
+          to="/" 
+          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
+        >
+          <Monitor className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Bureau</span>
+        </Link>
       </div>
 
       {/* KPIs */}
