@@ -70,8 +70,9 @@ export function DeadlineAlertPopup() {
   const [isOpen, setIsOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
-  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-  const currentIds = alerts.map((a) => a.id).sort().join(",");
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
+  const currentAlertIds = alerts.map((a) => a.id);
+  const currentIdsKey = [...currentAlertIds].sort().join(",");
   const storageKey = user?.id && agencyId ? `${STORAGE_KEY}:${user.id}:${agencyId}` : STORAGE_KEY;
 
   // Table nouvellement ajoutée (typée côté backend, mais pas forcément dans les types TS en runtime)
@@ -80,30 +81,40 @@ export function DeadlineAlertPopup() {
   };
 
   // Ack “serveur” (robuste: ne dépend pas du localStorage)
+  // On récupère le dernier acquittement pour l'utilisateur+agence,
+  // puis on considère l'alerte “vue” tant que le set d'alertes n'a pas changé.
   const { data: ackRow, isLoading: ackLoading } = useQuery({
-    queryKey: ["deadline-alert-ack", user?.id, agencyId, today],
+    queryKey: ["deadline-alert-ack", user?.id, agencyId],
     queryFn: async () => {
       if (!user?.id || !agencyId) return null;
       const { data, error } = await supabaseAny
         .from("deadline_alert_acknowledgements")
-        .select("alert_ids")
+        .select("alert_ids, acknowledged_on")
         .eq("user_id", user.id)
         .eq("agency_id", agencyId)
-        .eq("acknowledged_on", today)
+        .order("acknowledged_on", { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (error) throw error;
-      return data as { alert_ids: string[] } | null;
+      return data as { alert_ids: string[]; acknowledged_on: string } | null;
     },
     enabled: !!user?.id && !!agencyId && alerts.length > 0,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
   });
 
+  const isCoveredByAck = (ackedIds: string[] | null | undefined) => {
+    if (!ackedIds || ackedIds.length === 0) return false;
+    if (currentAlertIds.length === 0) return true;
+    const ackSet = new Set(ackedIds);
+    return currentAlertIds.every((id) => ackSet.has(id));
+  };
+
   // Fallback localStorage + synchro avec ackRow
   useEffect(() => {
-    // 1) Si un ack serveur existe pour aujourd'hui, on ne montre pas
-    if (!ackLoading && ackRow) {
+    // 1) Si un ack serveur existe et couvre les alertes actuelles, on ne montre pas
+    if (!ackLoading && ackRow && isCoveredByAck(ackRow.alert_ids)) {
       setDismissed(true);
       return;
     }
@@ -116,23 +127,21 @@ export function DeadlineAlertPopup() {
     }
 
     try {
-      const parsed = JSON.parse(stored) as { date?: string; alertIds?: string };
-      if (parsed.date !== today) {
-        localStorage.removeItem(storageKey);
-        setDismissed(false);
-        return;
-      }
+      const parsed = JSON.parse(stored) as { alertIds?: string[] | string };
+      const storedIds = Array.isArray(parsed.alertIds)
+        ? parsed.alertIds
+        : typeof parsed.alertIds === "string"
+          ? parsed.alertIds.split(",").filter(Boolean)
+          : [];
 
-      if (parsed.alertIds === currentIds) {
-        setDismissed(true);
-      } else {
-        setDismissed(false);
-      }
+      const storeSet = new Set(storedIds);
+      const covered = currentAlertIds.every((id) => storeSet.has(id));
+      setDismissed(covered);
     } catch {
       localStorage.removeItem(storageKey);
       setDismissed(false);
     }
-  }, [ackLoading, ackRow, currentIds, storageKey, today]);
+  }, [ackLoading, ackRow, currentIdsKey, storageKey]);
 
   // Afficher le popup quand il y a des alertes non validées
   useEffect(() => {
@@ -148,8 +157,7 @@ export function DeadlineAlertPopup() {
       localStorage.setItem(
         storageKey,
         JSON.stringify({
-          date: today,
-          alertIds: currentIds,
+          alertIds: [...currentAlertIds].sort(),
         })
       );
     } catch {
@@ -166,7 +174,7 @@ export function DeadlineAlertPopup() {
               user_id: user.id,
               agency_id: agencyId,
               acknowledged_on: today,
-              alert_ids: alerts.map((a) => a.id),
+              alert_ids: [...currentAlertIds].sort(),
             },
             { onConflict: "user_id,agency_id,acknowledged_on" }
           );
