@@ -350,6 +350,24 @@ export function UserEditForm({
           <Button 
             variant="default" 
             onClick={() => { 
+              // Validation côté client
+              const hasLower = /[a-z]/.test(newPassword);
+              const hasUpper = /[A-Z]/.test(newPassword);
+              const hasDigit = /\d/.test(newPassword);
+              const hasSymbol = /[!@#$%&*_+\-]/.test(newPassword);
+              const validLength = newPassword.length >= 8;
+              
+              if (!validLength || !hasLower || !hasUpper || !hasDigit || !hasSymbol) {
+                const missing: string[] = [];
+                if (!validLength) missing.push('8 caractères minimum');
+                if (!hasLower) missing.push('une minuscule');
+                if (!hasUpper) missing.push('une majuscule');
+                if (!hasDigit) missing.push('un chiffre');
+                if (!hasSymbol) missing.push('un symbole (!@#$%&*_+-)');
+                alert(`Mot de passe invalide. Il manque : ${missing.join(', ')}`);
+                return;
+              }
+              
               onResetPassword(newPassword, sendEmail); 
               setNewPassword(''); 
             }} 
@@ -360,6 +378,9 @@ export function UserEditForm({
             Appliquer
           </Button>
         </div>
+        <p className="text-xs text-muted-foreground">
+          Exigences : 8 caractères min. avec majuscule, minuscule, chiffre et symbole (!@#$%&*_+-)
+        </p>
         <div className="flex items-center space-x-2">
           <Checkbox 
             id="sendResetEmail" 
