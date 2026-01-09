@@ -1,12 +1,12 @@
 /**
  * Technician Planning Page
- * Grid-based weekly planning view similar to /rh/equipe/plannings
- * Clicking on a slot opens the intervention detail
+ * Day-focused view with left/right navigation
+ * Click on day header to switch days
  */
 import { useState, useMemo } from 'react';
-import { format, startOfWeek, addDays, isSameDay, addWeeks, subWeeks } from 'date-fns';
+import { format, startOfWeek, addDays, isSameDay, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Loader2, Calendar, AlertCircle, ChevronLeft, ChevronRight, MapPin, Phone, Clock, Building, FileText } from 'lucide-react';
+import { Loader2, Calendar, AlertCircle, ChevronLeft, ChevronRight, MapPin, Clock, Building, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,11 +15,12 @@ import { useTechnicianProfile } from '@/hooks/technician/useTechnicianProfile';
 import { AgencyProvider } from '@/apogee-connect/contexts/AgencyContext';
 import { useWeeklyTechPlanning } from '@/apogee-connect/hooks/useWeeklyTechPlanning';
 import { TechPlanningSlot, formatMinutesToHours } from '@/apogee-connect/utils/planning';
+import { cn } from '@/lib/utils';
 
 // Constantes grille
 const HOUR_START = 7;
 const HOUR_END = 19;
-const HOUR_HEIGHT = 40; // px par heure (adapté mobile)
+const HOUR_HEIGHT = 48; // px par heure (plus grand pour mobile)
 const TOTAL_HOURS = HOUR_END - HOUR_START;
 
 function getSlotColor(type: string | null | undefined): string {
@@ -31,89 +32,46 @@ function getSlotColor(type: string | null | undefined): string {
   return 'bg-primary/80';
 }
 
-interface EventBlockProps {
+interface DayEventCardProps {
   slot: TechPlanningSlot;
   onClick: () => void;
 }
 
-function EventBlock({ slot, onClick }: EventBlockProps) {
+function DayEventCard({ slot, onClick }: DayEventCardProps) {
   const startDate = new Date(slot.start);
   const endDate = new Date(slot.end);
-  const startMinutes = (startDate.getHours() - HOUR_START) * 60 + startDate.getMinutes();
-  const durationMinutes = Math.round((endDate.getTime() - startDate.getTime()) / 60_000);
-  
-  const top = (startMinutes / 60) * HOUR_HEIGHT;
-  const height = Math.max((durationMinutes / 60) * HOUR_HEIGHT, 24);
-  
-  if (startMinutes < 0 || startMinutes >= TOTAL_HOURS * 60) return null;
-  
   const timeStr = `${format(startDate, "HH:mm")} - ${format(endDate, "HH:mm")}`;
   const isBreak = slot.isBreak === true;
-  
+
   return (
     <button
       onClick={onClick}
-      className={`absolute left-0.5 right-0.5 rounded px-1.5 py-0.5 text-[10px] overflow-hidden shadow-sm text-white text-left transition-transform active:scale-95 ${getSlotColor(slot.type)}`}
-      style={{
-        top: `${top}px`,
-        height: `${height}px`,
-      }}
-    >
-      <div className="font-semibold truncate">{isBreak ? 'Pause' : slot.clientName || slot.type || 'RDV'}</div>
-      {!isBreak && height > 28 && slot.city && (
-        <div className="opacity-90 truncate">{slot.city}</div>
+      className={cn(
+        "w-full text-left rounded-lg p-3 shadow-sm transition-all active:scale-[0.98]",
+        getSlotColor(slot.type),
+        "text-white"
       )}
-      {height > 40 && <div className="opacity-80 truncate">{timeStr}</div>}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold truncate">
+            {isBreak ? 'Pause' : slot.clientName || slot.type || 'RDV'}
+          </p>
+          {!isBreak && slot.city && (
+            <p className="text-sm opacity-90 truncate flex items-center gap-1">
+              <MapPin className="h-3 w-3 flex-shrink-0" />
+              {slot.city}
+            </p>
+          )}
+        </div>
+        <Badge variant="secondary" className="flex-shrink-0 bg-white/20 text-white border-0 text-xs">
+          {timeStr}
+        </Badge>
+      </div>
+      {slot.projectRef && (
+        <p className="text-xs opacity-80 mt-1">Dossier: {slot.projectRef}</p>
+      )}
     </button>
-  );
-}
-
-interface DayColumnProps {
-  day: Date;
-  slots: TechPlanningSlot[];
-  onSlotClick: (slot: TechPlanningSlot) => void;
-}
-
-function DayColumn({ day, slots, onSlotClick }: DayColumnProps) {
-  const daySlots = slots.filter((s) => isSameDay(new Date(s.start), day));
-  const isToday = isSameDay(day, new Date());
-  
-  return (
-    <div className="flex-1 min-w-[60px]">
-      {/* Header jour */}
-      <div
-        className={`text-center py-1.5 border-b font-medium text-xs ${
-          isToday ? 'bg-primary/20 text-primary' : 'bg-muted/30'
-        }`}
-      >
-        <div className="capitalize">{format(day, 'EEE', { locale: fr })}</div>
-        <div className="text-base font-bold">{format(day, 'd')}</div>
-      </div>
-      
-      {/* Grille horaire */}
-      <div
-        className="relative border-r border-border/50"
-        style={{ height: `${TOTAL_HOURS * HOUR_HEIGHT}px` }}
-      >
-        {/* Lignes horaires */}
-        {Array.from({ length: TOTAL_HOURS }, (_, i) => (
-          <div
-            key={i}
-            className="absolute left-0 right-0 border-t border-border/20"
-            style={{ top: `${i * HOUR_HEIGHT}px`, height: `${HOUR_HEIGHT}px` }}
-          />
-        ))}
-        
-        {/* Événements */}
-        {daySlots.map((slot, idx) => (
-          <EventBlock 
-            key={`${slot.slotId}-${idx}`} 
-            slot={slot} 
-            onClick={() => onSlotClick(slot)}
-          />
-        ))}
-      </div>
-    </div>
   );
 }
 
@@ -131,7 +89,6 @@ function SlotDetailSheet({ slot, open, onClose }: SlotDetailSheetProps) {
   const timeStr = `${format(startDate, "HH:mm")} - ${format(endDate, "HH:mm")}`;
   const dateStr = format(startDate, "EEEE d MMMM", { locale: fr });
   
-  // Construire l'URL Google Maps si on a une adresse
   const googleMapsUrl = slot.city 
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(slot.city)}`
     : null;
@@ -147,7 +104,6 @@ function SlotDetailSheet({ slot, open, onClose }: SlotDetailSheetProps) {
         </SheetHeader>
         
         <div className="py-4 space-y-4 overflow-auto">
-          {/* Horaire */}
           <Card>
             <CardContent className="p-4 flex items-center gap-3">
               <Clock className="h-5 w-5 text-muted-foreground" />
@@ -158,7 +114,6 @@ function SlotDetailSheet({ slot, open, onClose }: SlotDetailSheetProps) {
             </CardContent>
           </Card>
           
-          {/* Client */}
           {slot.clientName && (
             <Card>
               <CardHeader className="pb-2">
@@ -176,7 +131,6 @@ function SlotDetailSheet({ slot, open, onClose }: SlotDetailSheetProps) {
             </Card>
           )}
           
-          {/* Ville / Adresse */}
           {slot.city && (
             <Button 
               variant="outline" 
@@ -188,7 +142,6 @@ function SlotDetailSheet({ slot, open, onClose }: SlotDetailSheetProps) {
             </Button>
           )}
           
-          {/* Type d'intervention */}
           {slot.type && (
             <Card>
               <CardHeader className="pb-2">
@@ -205,7 +158,6 @@ function SlotDetailSheet({ slot, open, onClose }: SlotDetailSheetProps) {
             </Card>
           )}
           
-          {/* État */}
           {slot.state && (
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">État :</span>
@@ -218,7 +170,49 @@ function SlotDetailSheet({ slot, open, onClose }: SlotDetailSheetProps) {
   );
 }
 
-function TechPlanningGrid({ techId }: { techId: number }) {
+interface DaySelectorProps {
+  selectedDate: Date;
+  weekStart: Date;
+  onSelectDay: (day: Date) => void;
+}
+
+function DaySelector({ selectedDate, weekStart, onSelectDay }: DaySelectorProps) {
+  const weekDays = useMemo(() => {
+    return Array.from({ length: 5 }, (_, i) => addDays(weekStart, i));
+  }, [weekStart]);
+
+  return (
+    <div className="flex gap-1 overflow-x-auto pb-2">
+      {weekDays.map((day) => {
+        const isSelected = isSameDay(day, selectedDate);
+        const isToday = isSameDay(day, new Date());
+        
+        return (
+          <button
+            key={day.toISOString()}
+            onClick={() => onSelectDay(day)}
+            className={cn(
+              "flex-1 min-w-[56px] py-2 px-1 rounded-lg text-center transition-all",
+              isSelected
+                ? "bg-primary text-primary-foreground shadow-md"
+                : isToday
+                  ? "bg-primary/10 text-primary"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted"
+            )}
+          >
+            <div className="text-[10px] uppercase font-medium">
+              {format(day, 'EEE', { locale: fr })}
+            </div>
+            <div className="text-lg font-bold">{format(day, 'd')}</div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function TechDayPlanning({ techId }: { techId: number }) {
+  const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [selectedSlot, setSelectedSlot] = useState<TechPlanningSlot | null>(null);
   
   const { 
@@ -236,44 +230,63 @@ function TechPlanningGrid({ techId }: { techId: number }) {
     [weekDate]
   );
   
-  // Calculer les jours de la semaine (Lun-Ven)
-  const weekDays = useMemo(() => {
-    return Array.from({ length: 5 }, (_, i) => addDays(currentWeekStart, i));
-  }, [currentWeekStart]);
-  
   // Extraire les slots pour ce technicien
-  const slots = useMemo(() => {
+  const allSlots = useMemo(() => {
     if (!data?.length) return [];
     const techData = data.find(t => t.techId === techId);
     if (!techData) return [];
     return techData.days.flatMap(d => d.slots);
   }, [data, techId]);
   
-  // Filtrer les slots de la semaine courante
-  const weekSlots = useMemo(() => {
-    const weekEnd = addDays(currentWeekStart, 4); // Vendredi
-    return slots.filter(s => {
-      const slotDate = new Date(s.start);
-      return slotDate >= currentWeekStart && slotDate <= weekEnd;
-    });
-  }, [slots, currentWeekStart]);
+  // Filtrer les slots du jour sélectionné
+  const daySlots = useMemo(() => {
+    return allSlots
+      .filter(s => isSameDay(new Date(s.start), selectedDate))
+      .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+  }, [allSlots, selectedDate]);
   
-  // Calculer les heures totales
-  const totalMinutes = useMemo(() => {
-    return weekSlots
+  // Calculer les heures du jour
+  const dayMinutes = useMemo(() => {
+    return daySlots
       .filter(s => !s.isBreak)
       .reduce((acc, s) => {
         const start = new Date(s.start);
         const end = new Date(s.end);
         return acc + Math.round((end.getTime() - start.getTime()) / 60_000);
       }, 0);
-  }, [weekSlots]);
+  }, [daySlots]);
   
-  const weekLabel = `${format(currentWeekStart, "d MMM", { locale: fr })} - ${format(
-    addDays(currentWeekStart, 4),
-    "d MMM",
-    { locale: fr }
-  )}`;
+  // Navigation jour
+  const goToPrevDay = () => {
+    const newDate = subDays(selectedDate, 1);
+    // Si on change de semaine, mettre à jour la semaine
+    if (newDate < currentWeekStart) {
+      goToPrevWeek();
+    }
+    setSelectedDate(newDate);
+  };
+  
+  const goToNextDay = () => {
+    const newDate = addDays(selectedDate, 1);
+    const weekEnd = addDays(currentWeekStart, 6);
+    // Si on change de semaine, mettre à jour la semaine
+    if (newDate > weekEnd) {
+      goToNextWeek();
+    }
+    setSelectedDate(newDate);
+  };
+  
+  const goToToday = () => {
+    setSelectedDate(new Date());
+    goToCurrentWeek();
+  };
+  
+  const handleSelectDay = (day: Date) => {
+    setSelectedDate(day);
+  };
+  
+  const dateLabel = format(selectedDate, "EEEE d MMMM", { locale: fr });
+  const isToday = isSameDay(selectedDate, new Date());
   
   if (isLoading) {
     return (
@@ -295,59 +308,67 @@ function TechPlanningGrid({ techId }: { techId: number }) {
   
   return (
     <div className="space-y-3">
-      {/* Navigation semaine */}
-      <div className="flex items-center justify-between bg-card rounded-lg p-2 border">
-        <Button variant="ghost" size="icon" onClick={goToPrevWeek}>
+      {/* Sélecteur de semaine */}
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" size="sm" onClick={goToPrevWeek}>
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <button 
+          onClick={goToToday}
+          className="text-xs text-muted-foreground hover:text-primary transition-colors"
+        >
+          Sem. {format(currentWeekStart, "d MMM", { locale: fr })}
+        </button>
+        <Button variant="ghost" size="sm" onClick={goToNextWeek}>
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+      
+      {/* Sélecteur de jour */}
+      <DaySelector 
+        selectedDate={selectedDate}
+        weekStart={currentWeekStart}
+        onSelectDay={handleSelectDay}
+      />
+      
+      {/* Navigation jour avec date */}
+      <div className="flex items-center justify-between bg-card rounded-lg p-3 border">
+        <Button variant="ghost" size="icon" onClick={goToPrevDay}>
           <ChevronLeft className="h-5 w-5" />
         </Button>
         <div className="text-center">
-          <button 
-            onClick={goToCurrentWeek}
-            className="text-sm font-semibold hover:text-primary transition-colors"
-          >
-            {weekLabel}
-          </button>
+          <p className="font-semibold capitalize">{dateLabel}</p>
           <p className="text-xs text-muted-foreground">
-            {formatMinutesToHours(totalMinutes)} planifiées
+            {daySlots.length} RDV • {formatMinutesToHours(dayMinutes)}
           </p>
         </div>
-        <Button variant="ghost" size="icon" onClick={goToNextWeek}>
+        <Button variant="ghost" size="icon" onClick={goToNextDay}>
           <ChevronRight className="h-5 w-5" />
         </Button>
       </div>
       
-      {/* Grille planning */}
-      <Card className="overflow-hidden">
-        <CardContent className="p-0">
-          <div className="flex overflow-x-auto">
-            {/* Colonne heures */}
-            <div className="flex-shrink-0 w-10 bg-muted/30 border-r">
-              <div className="h-[52px] border-b" /> {/* Header spacer */}
-              <div style={{ height: `${TOTAL_HOURS * HOUR_HEIGHT}px` }}>
-                {Array.from({ length: TOTAL_HOURS }, (_, i) => (
-                  <div
-                    key={i}
-                    className="text-[10px] text-muted-foreground text-right pr-1 border-t border-border/20"
-                    style={{ height: `${HOUR_HEIGHT}px` }}
-                  >
-                    {HOUR_START + i}h
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            {/* Colonnes jours */}
-            {weekDays.map((day) => (
-              <DayColumn
-                key={day.toISOString()}
-                day={day}
-                slots={weekSlots}
-                onSlotClick={setSelectedSlot}
-              />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Liste des RDV du jour */}
+      <div className="space-y-2">
+        {daySlots.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center text-muted-foreground">
+              <Calendar className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <p className="font-medium">Aucun RDV prévu</p>
+              <p className="text-sm">
+                {isToday ? "Votre journée est libre" : "Pas d'intervention ce jour"}
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          daySlots.map((slot, idx) => (
+            <DayEventCard
+              key={`${slot.slotId}-${idx}`}
+              slot={slot}
+              onClick={() => setSelectedSlot(slot)}
+            />
+          ))
+        )}
+      </div>
       
       {/* Sheet détail */}
       <SlotDetailSheet 
@@ -409,9 +430,9 @@ export default function TechnicianPlanningPage() {
         <h1 className="text-lg font-semibold">Mon Planning</h1>
       </div>
 
-      {/* Planning Grid */}
+      {/* Planning du jour */}
       <AgencyProvider>
-        <TechPlanningGrid techId={profile.apogee_user_id} />
+        <TechDayPlanning techId={profile.apogee_user_id} />
       </AgencyProvider>
     </div>
   );
