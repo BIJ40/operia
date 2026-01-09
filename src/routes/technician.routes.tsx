@@ -4,6 +4,7 @@ import { RoleGuard } from "@/components/auth/RoleGuard";
 
 // Lazy loaded pages
 const TechnicianPWALayout = lazy(() => import("@/pages/technician/TechnicianLayout"));
+const TechHomePage = lazy(() => import("@/pages/technician/TechHomePage"));
 const TechnicianPlanningPage = lazy(() => import("@/pages/technician/TechnicianPlanningPage"));
 const TechnicianOfflinePage = lazy(() => import("@/pages/technician/TechnicianOfflinePage"));
 const TechnicianRdvPage = lazy(() => import("@/pages/technician/TechnicianRdvPage"));
@@ -16,8 +17,9 @@ export function TechnicianRoutes() {
   return (
     <>
       <Route path="/t" element={<RoleGuard minRole="franchisee_user"><TechnicianPWALayout /></RoleGuard>}>
-        <Route index element={<TechnicianPlanningPage />} />
-        <Route path="planning" element={<TechPlanning />} />
+        <Route index element={<TechHomePage />} />
+        <Route path="planning" element={<TechnicianPlanningPage />} />
+        <Route path="planning-list" element={<TechPlanning />} />
         <Route path="pointage" element={<TechPointage />} />
         <Route path="documents" element={<TechDocuments />} />
         <Route path="profil" element={<TechProfil />} />

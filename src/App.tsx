@@ -36,6 +36,7 @@ import { ChangePasswordDialog } from "./components/ChangePasswordDialog";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { GlobalErrorBoundary } from "./components/system/GlobalErrorBoundary";
 import { AnnouncementGate } from "./components/announcements/AnnouncementGate";
+import { N1Redirect } from "./components/auth/N1Redirect";
 
 // Route modules
 import {
@@ -100,7 +101,7 @@ function AppContent() {
           {/* ============================================ */}
           {/* CORE ROUTES */}
           {/* ============================================ */}
-          <Route path="/" element={<MainLayout><RoleGuard minRole="franchisee_user"><Dashboard /></RoleGuard></MainLayout>} />
+          <Route path="/" element={<MainLayout><RoleGuard minRole="franchisee_user"><N1Redirect><Dashboard /></N1Redirect></RoleGuard></MainLayout>} />
           <Route path="/messages" element={<MainLayout><RoleGuard minRole="franchisee_user"><Messages /></RoleGuard></MainLayout>} />
           <Route path="/profile" element={<MainLayout><RoleGuard><Profile /></RoleGuard></MainLayout>} />
           <Route path="/changelog" element={<MainLayout><Changelog /></MainLayout>} />
