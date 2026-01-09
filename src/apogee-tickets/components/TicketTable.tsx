@@ -46,7 +46,7 @@ type PersistedTableUIState = {
 };
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100];
-const TABLE_UI_STATE_KEY = 'apogee-tickets-list-table-ui:v1';
+const TABLE_UI_STATE_KEY = 'apogee-tickets-list-table-ui:v2'; // v2: force reset to fix column width issues
 
 const SORT_COLUMNS: SortColumn[] = [
   'ticket_number',
@@ -77,12 +77,23 @@ function loadTableUIState(): PersistedTableUIState {
         ? parsed.pageSize
         : undefined;
 
-    const columnWidths =
+    // Reset column widths if the count doesn't match (schema changed)
+    // Also ensure each width is at least the minimum for that column
+    let columnWidths: number[] | undefined;
+    if (
       Array.isArray(parsed.columnWidths) &&
       parsed.columnWidths.length === COLUMNS.length &&
-      parsed.columnWidths.every((v) => typeof v === 'number' && Number.isFinite(v))
-        ? parsed.columnWidths
-        : undefined;
+      parsed.columnWidths.every((v) => typeof v === 'number' && Number.isFinite(v) && v > 0)
+    ) {
+      // Validate and fix each column width to be at least the minimum
+      columnWidths = parsed.columnWidths.map((w, idx) => 
+        Math.max(w, COLUMNS[idx].minWidth)
+      );
+    } else {
+      // If mismatch, clear stored widths to force reset
+      sessionStorage.removeItem(TABLE_UI_STATE_KEY);
+      columnWidths = undefined;
+    }
 
     return { sortColumn, sortDirection, pageSize, columnWidths };
   } catch {
