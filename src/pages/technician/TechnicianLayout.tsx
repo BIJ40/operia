@@ -4,7 +4,7 @@
  */
 import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Calendar, Clock, FileText, User, RefreshCw, Settings, Wifi, WifiOff, Download, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, FileText, Home, User, RefreshCw, Settings, Wifi, WifiOff, Download, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSyncEngine } from '@/hooks/useSyncEngine';
 import { cn } from '@/lib/utils';
@@ -73,6 +73,7 @@ interface BeforeInstallPromptEvent extends Event {
 
 // Navigation items
 const NAV_ITEMS = [
+  { to: '/t', icon: Home, label: 'Accueil', exact: true },
   { to: '/t/planning', icon: Calendar, label: 'Planning' },
   { to: '/t/pointage', icon: Clock, label: 'Pointage' },
   { to: '/t/rh-parc', icon: FileText, label: 'RH - Parc' },
@@ -272,25 +273,28 @@ export default function TechnicianLayout() {
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border safe-area-pb z-50">
         <div className="flex items-center justify-around h-16">
-          {NAV_ITEMS.map(({ to, icon: Icon, label }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === '/t/planning'}
-              className={({ isActive }) =>
-                cn(
-                  'flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors',
-                  'min-w-[64px]',
-                  isActive
-                    ? 'text-primary'
-                    : 'text-muted-foreground hover:text-foreground'
-                )
-              }
-            >
-              <Icon className="h-5 w-5" />
-              <span className="text-xs font-medium">{label}</span>
-            </NavLink>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const { to, icon: Icon, label } = item;
+            return (
+              <NavLink
+                key={to}
+                to={to}
+                end={!!item.exact}
+                className={({ isActive }) =>
+                  cn(
+                    'flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors',
+                    'min-w-[64px]',
+                    isActive
+                      ? 'text-primary'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )
+                }
+              >
+                <Icon className="h-5 w-5" />
+                <span className="text-xs font-medium">{label}</span>
+              </NavLink>
+            );
+          })}
         </div>
       </nav>
     </div>
