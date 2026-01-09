@@ -202,7 +202,7 @@ export default function TechDashboard() {
           <p className="text-sm text-muted-foreground">Vue d'ensemble de votre activité</p>
         </div>
         <Link 
-          to="/" 
+          to="/?desktop=1" 
           className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
         >
           <Monitor className="h-3.5 w-3.5" />
