@@ -235,29 +235,36 @@ export function TicketTableRow({
 
       {/* Origine */}
       <TableCell className={cn("overflow-hidden", !canEditReportedBy && disabledCellClass)} style={cellStyle(7)}>
-        {canEditReportedBy ? (
-          <Select
-            value={ticket.reported_by || 'none'}
-            onValueChange={(value) => onUpdate({ reported_by: value === 'none' ? null : value as ReportedBy })}
-          >
-            <SelectTrigger 
-              className="h-7 text-xs w-full max-w-[90px]"
-              onClick={(e) => e.stopPropagation()}
+        {(() => {
+          // Normaliser reported_by en majuscules pour matcher les options
+          const normalizedReportedBy = ticket.reported_by?.toUpperCase() || null;
+          const matchingOption = REPORTED_BY_OPTIONS.find(rb => rb.value === normalizedReportedBy);
+          const displayLabel = matchingOption?.label || ticket.reported_by || '—';
+          
+          return canEditReportedBy ? (
+            <Select
+              value={normalizedReportedBy || 'none'}
+              onValueChange={(value) => onUpdate({ reported_by: value === 'none' ? null : value as ReportedBy })}
             >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-background z-50">
-              <SelectItem value="none">—</SelectItem>
-              {REPORTED_BY_OPTIONS.map((rb) => (
-                <SelectItem key={rb.value} value={rb.value}>
-                  {rb.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
-          <span className="text-xs text-muted-foreground truncate">{ticket.reported_by || '—'}</span>
-        )}
+              <SelectTrigger 
+                className="h-7 text-xs w-full max-w-[90px]"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-background z-50">
+                <SelectItem value="none">—</SelectItem>
+                {REPORTED_BY_OPTIONS.map((rb) => (
+                  <SelectItem key={rb.value} value={rb.value}>
+                    {rb.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <span className="text-xs text-muted-foreground truncate">{displayLabel}</span>
+          );
+        })()}
       </TableCell>
 
       {/* Estimation */}
