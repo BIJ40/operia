@@ -73,7 +73,8 @@ interface BeforeInstallPromptEvent extends Event {
 
 // Navigation items
 const NAV_ITEMS = [
-  { to: '/t', icon: Calendar, label: 'Planning', end: true },
+  { to: '/t', icon: Calendar, label: 'Accueil', end: true },
+  { to: '/t/planning', icon: Calendar, label: 'Planning' },
   { to: '/t/pointage', icon: Clock, label: 'Pointage' },
   { to: '/t/documents', icon: FileText, label: 'RH - Parc' },
   { to: '/t/profil', icon: User, label: 'Profil' },
