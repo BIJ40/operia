@@ -1,11 +1,15 @@
 /**
  * Popup d'alerte rouge clignotante pour les échéances critiques
  * Affiché à la connexion pour les N2+
+ * 
+ * Logique d'acquittement : une fois que l'utilisateur clique "J'ai pris connaissance",
+ * l'alerte ne réapparaîtra PAS tant que la liste d'alertes ne change pas (nouvelle alerte ajoutée).
+ * L'acquittement est persisté côté serveur (table deadline_alert_acknowledgements) + localStorage fallback.
  */
 
 import { useState, useEffect } from "react";
 import { AlertTriangle, X, Calendar, Car, Shield, FileText } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -66,54 +70,53 @@ function getTypeLabel(type: DeadlineAlert["type"]) {
 
 export function DeadlineAlertPopup() {
   const { user, agencyId } = useAuth();
+  const queryClient = useQueryClient();
   const { data: alerts = [], isLoading, hasCriticalAlerts } = useCriticalDeadlineAlerts();
   const [isOpen, setIsOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
-  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
   const currentAlertIds = alerts.map((a) => a.id);
   const currentIdsKey = [...currentAlertIds].sort().join(",");
   const storageKey = user?.id && agencyId ? `${STORAGE_KEY}:${user.id}:${agencyId}` : STORAGE_KEY;
 
-  // Table nouvellement ajoutée (typée côté backend, mais pas forcément dans les types TS en runtime)
+  // Table deadline_alert_acknowledgements (typée côté backend)
   const supabaseAny = supabase as unknown as {
-    from: (table: string) => any;
+    from: (table: string) => ReturnType<typeof supabase.from>;
   };
 
-  // Ack “serveur” (robuste: ne dépend pas du localStorage)
-  // On récupère le dernier acquittement pour l'utilisateur+agence,
-  // puis on considère l'alerte “vue” tant que le set d'alertes n'a pas changé.
+  // Récupérer l'acquittement serveur pour user+agency
+  // Un seul enregistrement par combo user_id+agency_id grâce à la contrainte unique
   const { data: ackRow, isLoading: ackLoading } = useQuery({
     queryKey: ["deadline-alert-ack", user?.id, agencyId],
     queryFn: async () => {
       if (!user?.id || !agencyId) return null;
       const { data, error } = await supabaseAny
         .from("deadline_alert_acknowledgements")
-        .select("alert_ids, acknowledged_on")
+        .select("alert_ids, acknowledged_on, updated_at")
         .eq("user_id", user.id)
         .eq("agency_id", agencyId)
-        .order("acknowledged_on", { ascending: false })
-        .limit(1)
         .maybeSingle();
 
       if (error) throw error;
-      return data as { alert_ids: string[]; acknowledged_on: string } | null;
+      return data as { alert_ids: string[]; acknowledged_on: string; updated_at: string } | null;
     },
     enabled: !!user?.id && !!agencyId && alerts.length > 0,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
   });
 
+  // Vérifie si toutes les alertes actuelles sont couvertes par l'acquittement
   const isCoveredByAck = (ackedIds: string[] | null | undefined) => {
     if (!ackedIds || ackedIds.length === 0) return false;
     if (currentAlertIds.length === 0) return true;
     const ackSet = new Set(ackedIds);
+    // Toutes les alertes actuelles doivent être dans les alertes acquittées
     return currentAlertIds.every((id) => ackSet.has(id));
   };
 
-  // Fallback localStorage + synchro avec ackRow
+  // Logique de dismissed basée sur serveur puis localStorage fallback
   useEffect(() => {
-    // 1) Si un ack serveur existe et couvre les alertes actuelles, on ne montre pas
+    // 1) Si un ack serveur existe et couvre toutes les alertes actuelles, on ne montre pas
     if (!ackLoading && ackRow && isCoveredByAck(ackRow.alert_ids)) {
       setDismissed(true);
       return;
@@ -152,19 +155,23 @@ export function DeadlineAlertPopup() {
   }, [alerts.length, isLoading, ackLoading, dismissed]);
 
   const handleDismiss = async () => {
-    // Toujours écrire localStorage (fallback)
+    const sortedAlertIds = [...currentAlertIds].sort();
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
+    // 1) Toujours écrire localStorage (fallback robuste)
     try {
       localStorage.setItem(
         storageKey,
         JSON.stringify({
-          alertIds: [...currentAlertIds].sort(),
+          alertIds: sortedAlertIds,
         })
       );
     } catch {
-      // ignore
+      // ignore localStorage errors
     }
 
-    // Puis persistance “serveur” si possible
+    // 2) Persistance serveur avec UPSERT sur contrainte unique (user_id, agency_id)
+    // Cela met à jour l'enregistrement existant au lieu d'en créer un nouveau chaque jour
     try {
       if (user?.id && agencyId) {
         await supabaseAny
@@ -174,13 +181,17 @@ export function DeadlineAlertPopup() {
               user_id: user.id,
               agency_id: agencyId,
               acknowledged_on: today,
-              alert_ids: [...currentAlertIds].sort(),
+              alert_ids: sortedAlertIds,
+              updated_at: new Date().toISOString(),
             },
-            { onConflict: "user_id,agency_id,acknowledged_on" }
+            { onConflict: "user_id,agency_id" }
           );
+        
+        // Invalider le cache pour que la prochaine requête récupère les données à jour
+        queryClient.invalidateQueries({ queryKey: ["deadline-alert-ack", user.id, agencyId] });
       }
     } catch {
-      // fallback localStorage suffit
+      // fallback localStorage suffit, on ne bloque pas l'UX
     }
 
     setDismissed(true);
