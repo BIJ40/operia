@@ -1,11 +1,12 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { Calendar, Clock, FileText, User } from 'lucide-react';
+import { Calendar, Clock, FileText, Home, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
+  { to: '/t', icon: Home, label: 'Accueil', exact: true },
   { to: '/t/planning', icon: Calendar, label: 'Planning' },
   { to: '/t/pointage', icon: Clock, label: 'Pointage' },
-  { to: '/t/documents', icon: FileText, label: 'RH - Parc' },
+  { to: '/t/rh-parc', icon: FileText, label: 'RH - Parc' },
   { to: '/t/profil', icon: User, label: 'Profil' },
 ];
 
@@ -22,8 +23,11 @@ export function TechnicianLayout() {
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border safe-area-pb">
         <div className="flex items-center justify-around h-16">
-          {NAV_ITEMS.map(({ to, icon: Icon, label }) => {
-            const isActive = location.pathname.startsWith(to);
+          {NAV_ITEMS.map((item) => {
+            const { to, icon: Icon, label } = item;
+            const isActive = item.exact 
+              ? location.pathname === to
+              : location.pathname.startsWith(to);
             return (
               <NavLink
                 key={to}
