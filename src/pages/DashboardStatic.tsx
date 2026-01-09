@@ -13,9 +13,10 @@
 
 import { useState, useMemo, createContext, useContext, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, FolderOpen, CalendarDays, Car, Wrench, Calendar } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,10 +31,51 @@ import { PanierMoyenWidget } from '@/components/dashboard/widgets/PanierMoyenWid
 import { TechniciensProdWidget } from '@/components/dashboard/widgets/TechniciensProdWidget';
 import { TechnicienPersonnelKPIs } from '@/components/dashboard/TechnicienPersonnelKPIs';
 import { AssistantePersonnelKPIs } from '@/components/dashboard/AssistantePersonnelKPIs';
+import { IndexTile } from '@/components/ui/index-tile';
+import { ROUTES } from '@/config/routes';
 import { BarChart3, Star, MessageSquare, Trophy, PieChart, AlertTriangle, TrendingUp, Users, ShoppingCart, Building2, Network } from 'lucide-react';
 import { startOfYear, endOfYear, startOfQuarter, endOfQuarter, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfDay, endOfDay, subMonths, subWeeks, subDays, subYears, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { GLOBAL_ROLES } from '@/types/globalRoles';
+
+// Modules Mon Espace Salarié pour N1 desktop
+const MON_ESPACE_MODULES = [
+  {
+    id: 'mon-coffre-rh',
+    title: 'Mon Coffre RH',
+    description: 'Mes documents personnels',
+    icon: FolderOpen,
+    href: ROUTES.rh.coffre,
+  },
+  {
+    id: 'mon-planning',
+    title: 'Mon Planning',
+    description: 'Mon planning hebdomadaire',
+    icon: CalendarDays,
+    href: ROUTES.rh.monPlanning,
+  },
+  {
+    id: 'mon-vehicule',
+    title: 'Mon Véhicule',
+    description: 'Mon véhicule de service',
+    icon: Car,
+    href: ROUTES.rh.monVehicule,
+  },
+  {
+    id: 'mon-materiel',
+    title: 'Mon Matériel',
+    description: 'Mon matériel et équipements',
+    icon: Wrench,
+    href: ROUTES.rh.monMateriel,
+  },
+  {
+    id: 'demande-rh',
+    title: 'Demande RH',
+    description: 'Poser une demande',
+    icon: Calendar,
+    href: ROUTES.rh.demande,
+  },
+];
 
 // Types pour les périodes
 type PeriodKey = 'year' | 'quarter' | 'prev_month' | 'month' | 'prev_week' | 'week' | 'prev_day' | 'day';
@@ -273,11 +315,12 @@ export default function DashboardStatic() {
       );
     }
     
-    // N1 Technicien - KPIs personnels + Tickets + Favoris
+    // N1 Technicien - KPIs personnels + Mon Espace Salarié
     if (isN1 && isTechnicien) {
       return (
-        <div className="grid grid-cols-12 gap-4">
-          <Card className="col-span-12">
+        <div className="space-y-6">
+          {/* KPIs personnels */}
+          <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <BarChart3 className="h-4 w-4 text-primary" />
@@ -289,38 +332,34 @@ export default function DashboardStatic() {
             </CardContent>
           </Card>
 
-          <Card className="col-span-12 md:col-span-6">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-primary" />
-                Mes tickets
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RecentTicketsWidget />
-            </CardContent>
-          </Card>
-
-          <Card className="col-span-12 md:col-span-6">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Star className="h-4 w-4 text-yellow-500" />
-                Mes favoris
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="min-h-[150px]">
-              <FavorisWidget />
-            </CardContent>
-          </Card>
+          {/* Mon Espace Salarié - Tuiles d'accès */}
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+              <FolderOpen className="h-5 w-5 text-primary" />
+              Mon Espace Salarié
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              {MON_ESPACE_MODULES.map(module => (
+                <IndexTile
+                  key={module.id}
+                  title={module.title}
+                  description={module.description}
+                  icon={module.icon}
+                  href={module.href}
+                />
+              ))}
+            </div>
+          </section>
         </div>
       );
     }
     
-    // N1 Assistante - KPIs personnels + Tickets + Favoris
+    // N1 Assistante - KPIs personnels + Mon Espace Salarié
     if (isN1 && isAssistante) {
       return (
-        <div className="grid grid-cols-12 gap-4">
-          <Card className="col-span-12">
+        <div className="space-y-6">
+          {/* KPIs personnels */}
+          <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <BarChart3 className="h-4 w-4 text-primary" />
@@ -332,60 +371,50 @@ export default function DashboardStatic() {
             </CardContent>
           </Card>
 
-          <Card className="col-span-12 md:col-span-6">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-primary" />
-                Mes tickets
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RecentTicketsWidget />
-            </CardContent>
-          </Card>
-
-          <Card className="col-span-12 md:col-span-6">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Star className="h-4 w-4 text-yellow-500" />
-                Mes favoris
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="min-h-[150px]">
-              <FavorisWidget />
-            </CardContent>
-          </Card>
+          {/* Mon Espace Salarié - Tuiles d'accès */}
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+              <FolderOpen className="h-5 w-5 text-primary" />
+              Mon Espace Salarié
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              {MON_ESPACE_MODULES.map(module => (
+                <IndexTile
+                  key={module.id}
+                  title={module.title}
+                  description={module.description}
+                  icon={module.icon}
+                  href={module.href}
+                />
+              ))}
+            </div>
+          </section>
         </div>
       );
     }
     
-    // N1 Autre (ni technicien ni assistante) - Tickets + Favoris
+    // N1 Autre (ni technicien ni assistante) - Mon Espace Salarié uniquement
     if (isN1) {
       return (
-        <div className="grid grid-cols-12 gap-4">
-          <Card className="col-span-12 md:col-span-6">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-primary" />
-                Mes tickets
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RecentTicketsWidget />
-            </CardContent>
-          </Card>
-
-          <Card className="col-span-12 md:col-span-6">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Star className="h-4 w-4 text-yellow-500" />
-                Mes favoris
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="min-h-[150px]">
-              <FavorisWidget />
-            </CardContent>
-          </Card>
+        <div className="space-y-6">
+          {/* Mon Espace Salarié - Tuiles d'accès */}
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+              <FolderOpen className="h-5 w-5 text-primary" />
+              Mon Espace Salarié
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              {MON_ESPACE_MODULES.map(module => (
+                <IndexTile
+                  key={module.id}
+                  title={module.title}
+                  description={module.description}
+                  icon={module.icon}
+                  href={module.href}
+                />
+              ))}
+            </div>
+          </section>
         </div>
       );
     }
