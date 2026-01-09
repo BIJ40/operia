@@ -36,7 +36,7 @@ const TILES = [
   },
 ];
 
-export default function TechRHParcHub() {
+function TechRHParcHub() {
   return (
     <div className="p-4 space-y-6">
       <div>
@@ -65,3 +65,5 @@ export default function TechRHParcHub() {
     </div>
   );
 }
+
+export default TechRHParcHub;
