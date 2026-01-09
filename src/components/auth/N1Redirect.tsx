@@ -5,7 +5,7 @@
  * 
  * Le paramètre ?desktop=1 permet de forcer l'affichage du dashboard desktop
  */
-import { Navigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
@@ -15,11 +15,18 @@ interface N1RedirectProps {
 
 export function N1Redirect({ children }: N1RedirectProps) {
   const { globalRole, isAuthLoading } = useAuth();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
-  
+
   // Si ?desktop=1, on force l'affichage desktop
   const forceDesktop = searchParams.get('desktop') === '1';
-  
+
+  // Redirection N1 → /t uniquement quand on arrive sur le dashboard (/) depuis un device mobile/tablette.
+  // IMPORTANT: ne jamais rediriger depuis /rh/* sinon les tuiles desktop deviennent inutilisables.
+  const isMobileOrTablet =
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 1023px)').matches;
+  const isDashboardRoute = location.pathname === '/' || location.pathname === '/dashboard';
+
   // En cours de chargement auth, on affiche un loader
   if (isAuthLoading) {
     return (
@@ -28,9 +35,9 @@ export function N1Redirect({ children }: N1RedirectProps) {
       </div>
     );
   }
-  
+
   // Si N1 (franchisee_user) et pas de force desktop, rediriger vers l'interface mobile /t
-  if (globalRole === 'franchisee_user' && !forceDesktop) {
+  if (globalRole === 'franchisee_user' && !forceDesktop && isDashboardRoute && isMobileOrTablet) {
     return <Navigate to="/t" replace />;
   }
   
