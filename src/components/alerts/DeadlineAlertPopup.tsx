@@ -75,32 +75,53 @@ export function DeadlineAlertPopup() {
   const { data: alerts = [], isLoading, hasCriticalAlerts } = useCriticalDeadlineAlerts();
   const [isOpen, setIsOpen] = useState(false);
 
-  const storageKey = user?.id && agencyId ? `${STORAGE_KEY}:${user.id}:${agencyId}` : STORAGE_KEY;
+  // IMPORTANT: la clé peut évoluer quand agencyId arrive après le 1er rendu.
+  // On garde une clé "user" stable (évite les ré-affichages), et une clé "user+agency" quand dispo.
+  const userStorageKey = user?.id ? `${STORAGE_KEY}:${user.id}` : STORAGE_KEY;
+  const agencyStorageKey = user?.id && agencyId ? `${STORAGE_KEY}:${user.id}:${agencyId}` : userStorageKey;
+  const storageKeys = Array.from(new Set([STORAGE_KEY, userStorageKey, agencyStorageKey]));
 
   // Vérification IMMEDIATE du localStorage pour éviter tout flash
-  const checkLocalStorageForeverDismiss = (key: string): boolean => {
-    try {
-      const stored = localStorage.getItem(key);
-      if (!stored) return false;
-      const parsed = JSON.parse(stored) as { alertIds?: string[] | string };
-      const storedIds = Array.isArray(parsed.alertIds)
-        ? parsed.alertIds
-        : typeof parsed.alertIds === "string"
-          ? parsed.alertIds.split(",").filter(Boolean)
-          : [];
-      return storedIds.includes(DISMISS_FOREVER_TOKEN);
-    } catch {
-      return false;
+  const checkLocalStorageForeverDismiss = (keys: string[]): boolean => {
+    for (const key of keys) {
+      try {
+        const stored = localStorage.getItem(key);
+        if (!stored) continue;
+
+        // Support anciens formats: JSON objet / JSON array / string brute
+        let storedIds: string[] = [];
+        try {
+          const parsed = JSON.parse(stored) as unknown;
+          if (Array.isArray(parsed)) {
+            storedIds = parsed.filter((x): x is string => typeof x === "string");
+          } else if (parsed && typeof parsed === "object" && "alertIds" in (parsed as any)) {
+            const alertIds = (parsed as any).alertIds as string[] | string | undefined;
+            storedIds = Array.isArray(alertIds)
+              ? alertIds
+              : typeof alertIds === "string"
+                ? alertIds.split(",").filter(Boolean)
+                : [];
+          }
+        } catch {
+          storedIds = stored.split(",").filter(Boolean);
+        }
+
+        if (storedIds.includes(DISMISS_FOREVER_TOKEN)) return true;
+      } catch {
+        // ignore
+      }
     }
+
+    return false;
   };
 
   // État dismissed initialisé avec vérification localStorage immédiate
-  const [dismissed, setDismissed] = useState(() => checkLocalStorageForeverDismiss(storageKey));
+  const [dismissed, setDismissed] = useState(() => checkLocalStorageForeverDismiss(storageKeys));
 
-  // IMPORTANT: si user/agency arrive après le premier rendu, recalculer depuis le bon storageKey
+  // IMPORTANT: si agencyId arrive après le premier rendu, on ne doit PAS ré-afficher
   useEffect(() => {
-    setDismissed(checkLocalStorageForeverDismiss(storageKey));
-  }, [storageKey]);
+    setDismissed(checkLocalStorageForeverDismiss(storageKeys));
+  }, [userStorageKey, agencyStorageKey]);
 
   // Table deadline_alert_acknowledgements (typée côté backend)
   const supabaseAny = supabase as unknown as {
@@ -145,15 +166,17 @@ export function DeadlineAlertPopup() {
     // Vérifier le serveur pour le token DISMISS_FOREVER
     if (ackRow && hasForeverDismissToken(ackRow.alert_ids)) {
       setDismissed(true);
-      // Synchroniser localStorage si pas encore fait
-      try {
-        localStorage.setItem(storageKey, JSON.stringify({ alertIds: [DISMISS_FOREVER_TOKEN] }));
-      } catch {
-        // ignore
+      // Synchroniser localStorage si pas encore fait (sur toutes les variantes de clés)
+      for (const key of storageKeys) {
+        try {
+          localStorage.setItem(key, JSON.stringify({ alertIds: [DISMISS_FOREVER_TOKEN] }));
+        } catch {
+          // ignore
+        }
       }
       return;
     }
-  }, [ackLoading, ackRow, dismissed, storageKey]);
+  }, [ackLoading, ackRow, dismissed, userStorageKey, agencyStorageKey]);
 
   // Afficher le popup quand il y a des alertes non validées
   useEffect(() => {
@@ -170,21 +193,27 @@ export function DeadlineAlertPopup() {
   }, [alerts.length, isLoading, ackLoading, dismissed]);
 
   const handleDismiss = async () => {
+    // Fermer immédiatement (évite tout ré-affichage pendant la persistance)
+    setDismissed(true);
+    setIsOpen(false);
+
     const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 
     // IMPORTANT : demande utilisateur => désactiver DEFINITIVEMENT cette popup après clic
     const persistedAlertIds = [DISMISS_FOREVER_TOKEN];
 
-    // 1) Toujours écrire localStorage (fallback robuste)
-    try {
-      localStorage.setItem(
-        storageKey,
-        JSON.stringify({
-          alertIds: persistedAlertIds,
-        })
-      );
-    } catch {
-      // ignore localStorage errors
+    // 1) Toujours écrire localStorage (fallback robuste) sur toutes les variantes de clés
+    for (const key of storageKeys) {
+      try {
+        localStorage.setItem(
+          key,
+          JSON.stringify({
+            alertIds: persistedAlertIds,
+          })
+        );
+      } catch {
+        // ignore localStorage errors
+      }
     }
 
     // 2) Persistance serveur avec UPSERT sur contrainte unique (user_id, agency_id)
@@ -208,9 +237,6 @@ export function DeadlineAlertPopup() {
     } catch {
       // fallback localStorage suffit, on ne bloque pas l'UX
     }
-
-    setDismissed(true);
-    setIsOpen(false);
   };
 
   if (alerts.length === 0 || dismissed) return null;
