@@ -78,9 +78,9 @@ export function DeadlineAlertPopup() {
   const storageKey = user?.id && agencyId ? `${STORAGE_KEY}:${user.id}:${agencyId}` : STORAGE_KEY;
 
   // Vérification IMMEDIATE du localStorage pour éviter tout flash
-  const checkLocalStorageForeverDismiss = (): boolean => {
+  const checkLocalStorageForeverDismiss = (key: string): boolean => {
     try {
-      const stored = localStorage.getItem(storageKey);
+      const stored = localStorage.getItem(key);
       if (!stored) return false;
       const parsed = JSON.parse(stored) as { alertIds?: string[] | string };
       const storedIds = Array.isArray(parsed.alertIds)
@@ -95,7 +95,12 @@ export function DeadlineAlertPopup() {
   };
 
   // État dismissed initialisé avec vérification localStorage immédiate
-  const [dismissed, setDismissed] = useState(() => checkLocalStorageForeverDismiss());
+  const [dismissed, setDismissed] = useState(() => checkLocalStorageForeverDismiss(storageKey));
+
+  // IMPORTANT: si user/agency arrive après le premier rendu, recalculer depuis le bon storageKey
+  useEffect(() => {
+    setDismissed(checkLocalStorageForeverDismiss(storageKey));
+  }, [storageKey]);
 
   // Table deadline_alert_acknowledgements (typée côté backend)
   const supabaseAny = supabase as unknown as {
@@ -208,7 +213,7 @@ export function DeadlineAlertPopup() {
     setIsOpen(false);
   };
 
-  if (alerts.length === 0) return null;
+  if (alerts.length === 0 || dismissed) return null;
 
   const criticalCount = alerts.filter(a => a.severity === "critical").length;
   const warningCount = alerts.filter(a => a.severity === "warning").length;
