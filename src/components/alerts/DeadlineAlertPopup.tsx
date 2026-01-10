@@ -32,6 +32,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "deadline_alerts_dismissed";
+const DISMISS_FOREVER_TOKEN = "__DISMISS_FOREVER__";
 
 function getAlertIcon(type: DeadlineAlert["type"]) {
   switch (type) {
@@ -105,18 +106,20 @@ export function DeadlineAlertPopup() {
     refetchOnWindowFocus: false,
   });
 
-  // Vérifie si toutes les alertes actuelles sont couvertes par l'acquittement
+  // Vérifie si les alertes doivent être considérées comme acquittées
+  // - si token "DISMISS_FOREVER" est présent => popup désactivée définitivement
+  // - sinon : toutes les alertes actuelles doivent être dans les alertes acquittées
   const isCoveredByAck = (ackedIds: string[] | null | undefined) => {
     if (!ackedIds || ackedIds.length === 0) return false;
+    if (ackedIds.includes(DISMISS_FOREVER_TOKEN)) return true;
     if (currentAlertIds.length === 0) return true;
     const ackSet = new Set(ackedIds);
-    // Toutes les alertes actuelles doivent être dans les alertes acquittées
     return currentAlertIds.every((id) => ackSet.has(id));
   };
 
   // Logique de dismissed basée sur serveur puis localStorage fallback
   useEffect(() => {
-    // 1) Si un ack serveur existe et couvre toutes les alertes actuelles, on ne montre pas
+    // 1) Si un ack serveur existe et couvre les alertes, on ne montre pas
     if (!ackLoading && ackRow && isCoveredByAck(ackRow.alert_ids)) {
       setDismissed(true);
       return;
@@ -137,6 +140,12 @@ export function DeadlineAlertPopup() {
           ? parsed.alertIds.split(",").filter(Boolean)
           : [];
 
+      // Si token présent, on désactive définitivement la popup
+      if (storedIds.includes(DISMISS_FOREVER_TOKEN)) {
+        setDismissed(true);
+        return;
+      }
+
       const storeSet = new Set(storedIds);
       const covered = currentAlertIds.every((id) => storeSet.has(id));
       setDismissed(covered);
@@ -155,15 +164,17 @@ export function DeadlineAlertPopup() {
   }, [alerts.length, isLoading, ackLoading, dismissed]);
 
   const handleDismiss = async () => {
-    const sortedAlertIds = [...currentAlertIds].sort();
     const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
+    // IMPORTANT : demande utilisateur => désactiver DEFINITIVEMENT cette popup après clic
+    const persistedAlertIds = [DISMISS_FOREVER_TOKEN];
 
     // 1) Toujours écrire localStorage (fallback robuste)
     try {
       localStorage.setItem(
         storageKey,
         JSON.stringify({
-          alertIds: sortedAlertIds,
+          alertIds: persistedAlertIds,
         })
       );
     } catch {
@@ -171,7 +182,6 @@ export function DeadlineAlertPopup() {
     }
 
     // 2) Persistance serveur avec UPSERT sur contrainte unique (user_id, agency_id)
-    // Cela met à jour l'enregistrement existant au lieu d'en créer un nouveau chaque jour
     try {
       if (user?.id && agencyId) {
         await supabaseAny
@@ -181,13 +191,12 @@ export function DeadlineAlertPopup() {
               user_id: user.id,
               agency_id: agencyId,
               acknowledged_on: today,
-              alert_ids: sortedAlertIds,
+              alert_ids: persistedAlertIds,
               updated_at: new Date().toISOString(),
             },
             { onConflict: "user_id,agency_id" }
           );
-        
-        // Invalider le cache pour que la prochaine requête récupère les données à jour
+
         queryClient.invalidateQueries({ queryKey: ["deadline-alert-ack", user.id, agencyId] });
       }
     } catch {
