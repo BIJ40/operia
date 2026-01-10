@@ -74,11 +74,28 @@ export function DeadlineAlertPopup() {
   const queryClient = useQueryClient();
   const { data: alerts = [], isLoading, hasCriticalAlerts } = useCriticalDeadlineAlerts();
   const [isOpen, setIsOpen] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
 
-  const currentAlertIds = alerts.map((a) => a.id);
-  const currentIdsKey = [...currentAlertIds].sort().join(",");
   const storageKey = user?.id && agencyId ? `${STORAGE_KEY}:${user.id}:${agencyId}` : STORAGE_KEY;
+
+  // Vérification IMMEDIATE du localStorage pour éviter tout flash
+  const checkLocalStorageForeverDismiss = (): boolean => {
+    try {
+      const stored = localStorage.getItem(storageKey);
+      if (!stored) return false;
+      const parsed = JSON.parse(stored) as { alertIds?: string[] | string };
+      const storedIds = Array.isArray(parsed.alertIds)
+        ? parsed.alertIds
+        : typeof parsed.alertIds === "string"
+          ? parsed.alertIds.split(",").filter(Boolean)
+          : [];
+      return storedIds.includes(DISMISS_FOREVER_TOKEN);
+    } catch {
+      return false;
+    }
+  };
+
+  // État dismissed initialisé avec vérification localStorage immédiate
+  const [dismissed, setDismissed] = useState(() => checkLocalStorageForeverDismiss());
 
   // Table deadline_alert_acknowledgements (typée côté backend)
   const supabaseAny = supabase as unknown as {
@@ -101,63 +118,47 @@ export function DeadlineAlertPopup() {
       if (error) throw error;
       return data as { alert_ids: string[]; acknowledged_on: string; updated_at: string } | null;
     },
-    enabled: !!user?.id && !!agencyId && alerts.length > 0,
-    staleTime: 1000 * 60 * 5,
+    enabled: !!user?.id && !!agencyId && !dismissed, // Ne pas fetch si déjà dismissed
+    staleTime: 1000 * 60 * 60, // 1h - plus long car dismiss est permanent
     refetchOnWindowFocus: false,
   });
 
-  // Vérifie si les alertes doivent être considérées comme acquittées
-  // - si token "DISMISS_FOREVER" est présent => popup désactivée définitivement
-  // - sinon : toutes les alertes actuelles doivent être dans les alertes acquittées
-  const isCoveredByAck = (ackedIds: string[] | null | undefined) => {
+  // Vérifie si le token DISMISS_FOREVER est présent dans les alert_ids
+  const hasForeverDismissToken = (ackedIds: string[] | null | undefined): boolean => {
     if (!ackedIds || ackedIds.length === 0) return false;
-    if (ackedIds.includes(DISMISS_FOREVER_TOKEN)) return true;
-    if (currentAlertIds.length === 0) return true;
-    const ackSet = new Set(ackedIds);
-    return currentAlertIds.every((id) => ackSet.has(id));
+    return ackedIds.includes(DISMISS_FOREVER_TOKEN);
   };
 
-  // Logique de dismissed basée sur serveur puis localStorage fallback
+  // Logique de dismissed basée sur serveur (vérification unique au chargement)
   useEffect(() => {
-    // 1) Si un ack serveur existe et couvre les alertes, on ne montre pas
-    if (!ackLoading && ackRow && isCoveredByAck(ackRow.alert_ids)) {
+    // Si déjà dismissed via localStorage, ne rien faire
+    if (dismissed) return;
+
+    // Attendre que le serveur réponde
+    if (ackLoading) return;
+
+    // Vérifier le serveur pour le token DISMISS_FOREVER
+    if (ackRow && hasForeverDismissToken(ackRow.alert_ids)) {
       setDismissed(true);
-      return;
-    }
-
-    // 2) Sinon fallback localStorage (par user+agency)
-    const stored = localStorage.getItem(storageKey);
-    if (!stored) {
-      setDismissed(false);
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(stored) as { alertIds?: string[] | string };
-      const storedIds = Array.isArray(parsed.alertIds)
-        ? parsed.alertIds
-        : typeof parsed.alertIds === "string"
-          ? parsed.alertIds.split(",").filter(Boolean)
-          : [];
-
-      // Si token présent, on désactive définitivement la popup
-      if (storedIds.includes(DISMISS_FOREVER_TOKEN)) {
-        setDismissed(true);
-        return;
+      // Synchroniser localStorage si pas encore fait
+      try {
+        localStorage.setItem(storageKey, JSON.stringify({ alertIds: [DISMISS_FOREVER_TOKEN] }));
+      } catch {
+        // ignore
       }
-
-      const storeSet = new Set(storedIds);
-      const covered = currentAlertIds.every((id) => storeSet.has(id));
-      setDismissed(covered);
-    } catch {
-      localStorage.removeItem(storageKey);
-      setDismissed(false);
+      return;
     }
-  }, [ackLoading, ackRow, currentIdsKey, storageKey]);
+  }, [ackLoading, ackRow, dismissed, storageKey]);
 
   // Afficher le popup quand il y a des alertes non validées
   useEffect(() => {
-    if (!isLoading && !ackLoading && alerts.length > 0 && !dismissed) {
+    // Ne jamais ouvrir si dismissed
+    if (dismissed) {
+      setIsOpen(false);
+      return;
+    }
+
+    if (!isLoading && !ackLoading && alerts.length > 0) {
       const timer = setTimeout(() => setIsOpen(true), 1000);
       return () => clearTimeout(timer);
     }
