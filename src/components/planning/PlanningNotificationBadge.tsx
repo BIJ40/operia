@@ -96,7 +96,7 @@ export function PlanningNotificationBadge() {
       navigate('/rh/mon-planning');
     } else {
       // N2 : aller aux plannings tech
-      navigate('/rh/equipe/plannings');
+      navigate('/rh/suivi/plannings');
     }
   };
 

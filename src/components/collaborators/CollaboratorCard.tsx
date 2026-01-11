@@ -35,7 +35,7 @@ export function CollaboratorCard({ collaborator }: CollaboratorCardProps) {
   const isActive = !collaborator.leaving_date;
 
   return (
-    <Link to={`/rh/equipe/${collaborator.id}`}>
+    <Link to={`/rh/suivi/${collaborator.id}`}>
       <Card className={`
         p-3 hover:shadow-md transition-all cursor-pointer
         hover:border-helpconfort-blue/30 hover:-translate-y-0.5

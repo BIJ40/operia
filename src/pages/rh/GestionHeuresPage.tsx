@@ -219,8 +219,8 @@ export default function GestionHeuresPage() {
       <PageHeader
         title="Gestion des Heures"
         subtitle="Validation des feuilles de temps des techniciens"
-        backTo="/rh/equipe"
-        backLabel="Mon équipe"
+        backTo="/rh/suivi"
+        backLabel="Suivi RH"
       />
 
       {/* Week navigation */}

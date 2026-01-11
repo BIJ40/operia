@@ -89,12 +89,12 @@ export const ROUTES = {
     monVehicule: '/rh/mon-vehicule',
     monMateriel: '/rh/mon-materiel',
     signature: '/rh/signature',
-    // Vue Dirigeant/RH (N2)
-    equipe: '/rh/equipe',
-    plannings: '/rh/equipe/plannings',
-    heures: '/rh/equipe/heures',
+    // Vue Dirigeant/RH (N2) - Legacy (redirige vers /suivi)
+    equipe: '/rh/equipe', // DEPRECATED - redirige vers /rh/suivi
+    plannings: '/rh/suivi/plannings',
+    heures: '/rh/suivi/heures',
     timesheets: '/rh/timesheets',
-    collaborateurProfile: (id: string) => `/rh/equipe/${id}`,
+    collaborateurProfile: (id: string) => `/rh/suivi/${id}`,
     demandes: '/rh/demandes',
     conges: '/rh/conges',
     dashboard: '/rh/dashboard',
