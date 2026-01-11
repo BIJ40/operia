@@ -82,20 +82,22 @@ const RH_MODULES: RHModule[] = [
     icon: CalendarDays,
     href: ROUTES.rh.plannings,
   },
-  {
-    id: 'heures',
-    title: 'Heures',
-    description: 'Feuilles de temps',
-    icon: Clock,
-    href: ROUTES.rh.heures,
-  },
-  {
-    id: 'timesheets',
-    title: 'Pointages',
-    description: 'Validation des pointages',
-    icon: Clock,
-    href: ROUTES.rh.timesheets,
-  },
+  // MASQUÉ: heures - dépend du pointage (voir /admin/hidden-features)
+  // {
+  //   id: 'heures',
+  //   title: 'Heures',
+  //   description: 'Feuilles de temps',
+  //   icon: Clock,
+  //   href: ROUTES.rh.heures,
+  // },
+  // MASQUÉ: timesheets - dépend du pointage (voir /admin/hidden-features)
+  // {
+  //   id: 'timesheets',
+  //   title: 'Pointages',
+  //   description: 'Validation des pointages',
+  //   icon: Clock,
+  //   href: ROUTES.rh.timesheets,
+  // },
   {
     id: 'demandes-rh',
     title: 'Demandes RH',

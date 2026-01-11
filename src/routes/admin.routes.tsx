@@ -36,6 +36,7 @@ const AdminApporteurs = lazy(() => import("@/pages/admin/AdminApporteurs"));
 const ReportActivityPage = lazy(() => import("@/pages/admin/ReportActivityPage"));
 const FranchiseurLayout = lazy(() => import("@/franchiseur/components/layout/FranchiseurLayout"));
 const FranchiseurAgencyProfile = lazy(() => import("@/franchiseur/pages/FranchiseurAgencyProfile"));
+const HiddenFeaturesPage = lazy(() => import("@/pages/admin/HiddenFeaturesPage"));
 
 export function AdminRoutes() {
   return (
@@ -101,6 +102,9 @@ export function AdminRoutes() {
       <Route path="/admin/templates" element={<MainLayout><RoleGuard minRole="franchisor_admin"><ModuleGuard moduleKey="admin_plateforme"><DocTemplatesPage /></ModuleGuard></RoleGuard></MainLayout>} />
       <Route path="/admin/apporteurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><AdminApporteurs /></RoleGuard></MainLayout>} />
       <Route path="/admin/rapportactivite" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ReportActivityPage /></RoleGuard></MainLayout>} />
+      
+      {/* Fonctionnalités masquées */}
+      <Route path="/admin/hidden-features" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><HiddenFeaturesPage /></ModuleGuard></RoleGuard></MainLayout>} />
     </>
   );
 }

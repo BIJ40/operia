@@ -71,11 +71,11 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-// Navigation items
+// Navigation items - MASQUÉ: pointage (voir /admin/hidden-features)
 const NAV_ITEMS = [
   { to: '/t', icon: Home, label: 'Accueil', exact: true },
   { to: '/t/planning', icon: Calendar, label: 'Planning' },
-  { to: '/t/pointage', icon: Clock, label: 'Pointage' },
+  // { to: '/t/pointage', icon: Clock, label: 'Pointage' }, // MASQUÉ
   { to: '/t/rh-parc', icon: FileText, label: 'RH - Parc' },
   { to: '/t/profil', icon: User, label: 'Profil' },
 ];
