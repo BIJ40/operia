@@ -19,7 +19,7 @@ export default function MaintenancePreventivePage() {
         title="Parc Véhicules"
         subtitle="Gestion des véhicules, CT, entretiens et assurances"
         backTo={ROUTES.rh.index}
-        backLabel="RH & PARC"
+        backLabel="RH & Maintenance"
         rightElement={
           alertsCount > 0 ? (
             <Badge variant="destructive" className="gap-1.5 px-3 py-1.5 text-sm">

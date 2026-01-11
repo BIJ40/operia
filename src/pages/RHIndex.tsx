@@ -193,8 +193,8 @@ export default function RHIndex() {
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
       <PageHeader
-        title={showN1View ? "Mon Espace Salarié" : "RH & PARC"}
-        subtitle={showN1View ? "Mon espace personnel" : "Gestion des ressources humaines et du matériel"}
+        title={showN1View ? "Mon Espace Salarié" : "RH & Maintenance"}
+        subtitle={showN1View ? "Mon espace personnel" : "Gestion des ressources humaines et maintenance"}
         backTo="/"
         backLabel="Accueil"
       />
@@ -219,7 +219,7 @@ export default function RHIndex() {
       <section className="space-y-4">
         <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
           <FolderOpen className="h-5 w-5 text-helpconfort-blue" />
-          Mon Espace {showN1View ? "Salarié" : ""}
+          Mon Espace
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {MON_ESPACE_MODULES
@@ -257,12 +257,12 @@ export default function RHIndex() {
         </section>
       )}
 
-      {/* Section Maintenance Matériel - N2 view only */}
+      {/* Section Maintenance - N2 view only */}
       {showN2View && (
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
             <HardHat className="h-5 w-5 text-helpconfort-blue" />
-            Maintenance Matériel
+            Maintenance
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {MAINTENANCE_MODULES.map(module => (

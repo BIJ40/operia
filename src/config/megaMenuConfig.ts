@@ -22,7 +22,7 @@ export interface MegaMenuLink {
     option: string;
   };
   /** Section (pour regroupement dans le menu RH) */
-  section?: 'salarie' | 'dirigeant';
+  section?: 'salarie' | 'dirigeant' | 'maintenance';
   /** Groupe (pour regroupement dans le menu Admin) */
   group?: 'users' | 'content' | 'ai' | 'system' | 'support' | 'monitoring';
 }
@@ -66,13 +66,13 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
   // ============================================
   {
     id: 'rh',
-    title: 'RH & Parc',
-    description: 'Ressources humaines & matériel',
+    title: 'RH & Maintenance',
+    description: 'Ressources humaines & maintenance',
     icon: 'Briefcase',
     href: '/rh',
     moduleKey: 'rh',
     links: [
-      // === Vue Salarié (N1 ou N2 avec is_salaried_manager) ===
+      // === Mon espace (N1 ou N2 avec is_salaried_manager) ===
       { 
         label: 'Mon Coffre RH', 
         href: ROUTES.rh.coffre, 
@@ -113,7 +113,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
         section: 'salarie',
         requiresOption: { module: 'rh', option: 'coffre' },
       },
-      // === Vue Dirigeant (N2+) - RH ===
+      // === Gestion RH (N2+) ===
       { 
         label: 'Suivi RH', 
         href: ROUTES.rh.suivi, 
@@ -159,13 +159,13 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
         minRole: 'franchisee_admin',
         requiresOption: { module: 'rh', option: 'rh_viewer' },
       },
-      // === Vue Dirigeant (N2+) - Maintenance ===
+      // === Maintenance (N2+) ===
       { 
         label: 'Parc Véhicules', 
         href: ROUTES.rh.parc, 
         icon: 'Car', 
         description: 'Gestion de flotte',
-        section: 'dirigeant',
+        section: 'maintenance',
         minRole: 'franchisee_admin',
         requiresOption: { module: 'rh', option: 'rh_viewer' },
       },
@@ -174,7 +174,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
         href: ROUTES.rh.epi, 
         icon: 'HardHat', 
         description: 'Équipements de protection',
-        section: 'dirigeant',
+        section: 'maintenance',
         minRole: 'franchisee_admin',
         requiresOption: { module: 'rh', option: 'rh_viewer' },
       },

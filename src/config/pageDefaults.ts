@@ -156,9 +156,9 @@ export const PAGE_HEADER_MATCHERS: PageHeaderConfig[] = [
   { match: (path) => path === '/rh/equipe/plannings', pageKey: 'rh_plannings', defaultTitle: 'Plannings Techniciens', defaultSubtitle: 'Visualisez les plannings hebdomadaires', icon: 'Calendar', parentRoute: '/rh/equipe', parentLabel: 'Mon équipe' },
   { match: (path) => path === '/rh/equipe/heures', pageKey: 'rh_heures', defaultTitle: 'Gestion des Heures', defaultSubtitle: 'Validation des feuilles de temps', icon: 'Clock', parentRoute: '/rh/equipe', parentLabel: 'Mon équipe' },
   { match: (path) => path.startsWith('/rh/equipe/'), pageKey: 'rh_collaborateur_profile', defaultTitle: 'Fiche collaborateur', defaultSubtitle: 'Profil 360°', icon: 'User', parentRoute: '/rh/equipe', parentLabel: 'Mon équipe' },
-  { match: (path) => path === '/rh/dashboard', pageKey: 'rh_dashboard', defaultTitle: 'Dashboard RH', defaultSubtitle: 'Statistiques et indicateurs RH', icon: 'BarChart3', parentRoute: '/rh', parentLabel: 'RH & Parc' },
-  { match: (path) => path === '/rh/parc', pageKey: 'rh_parc', defaultTitle: 'Parc & Véhicules', defaultSubtitle: 'Gestion des véhicules et équipements', icon: 'Car', parentRoute: '/rh', parentLabel: 'RH & Parc' },
-  { match: (path) => path === '/rh', pageKey: 'rh_index', defaultTitle: 'RH & Parc', defaultSubtitle: 'Ressources Humaines & Matériel', icon: 'Users', parentRoute: '/', parentLabel: 'Accueil' },
+  { match: (path) => path === '/rh/dashboard', pageKey: 'rh_dashboard', defaultTitle: 'Dashboard RH', defaultSubtitle: 'Statistiques et indicateurs RH', icon: 'BarChart3', parentRoute: '/rh', parentLabel: 'RH & Maintenance' },
+  { match: (path) => path === '/rh/parc', pageKey: 'rh_parc', defaultTitle: 'Parc & Véhicules', defaultSubtitle: 'Gestion des véhicules et équipements', icon: 'Car', parentRoute: '/rh', parentLabel: 'RH & Maintenance' },
+  { match: (path) => path === '/rh', pageKey: 'rh_index', defaultTitle: 'RH & Maintenance', defaultSubtitle: 'Ressources Humaines & Maintenance', icon: 'Users', parentRoute: '/', parentLabel: 'Accueil' },
   { match: (path) => path === '/hc-agency', pageKey: 'pilotage_index', defaultTitle: 'Mon Agence', defaultSubtitle: 'Gérez votre activité au quotidien', icon: 'Gauge', parentRoute: '/', parentLabel: 'Accueil' },
   
   // ============================================
