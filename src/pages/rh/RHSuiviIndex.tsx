@@ -37,7 +37,11 @@ const DEFAULT_VISIBLE_COLUMNS: Record<RHTabId, string[]> = {
 export default function RHSuiviIndex() {
   const queryClient = useQueryClient();
   const { agencyId, agence, globalRole } = useAuth();
-  const { data: collaborators = [], isLoading, refetch } = useRHCollaborators();
+  
+  // Toggle pour afficher les anciens collaborateurs (partis)
+  const [showFormer, setShowFormer] = useState(false);
+  
+  const { data: collaborators = [], isLoading, refetch } = useRHCollaborators({ includeFormer: showFormer });
   const { data: tablePrefs } = useRHTablePrefs();
   const updatePrefs = useUpdateRHTablePrefs();
   const { data: epiSummaries = [] } = useCollaboratorsEpiSummary(agencyId || undefined);
@@ -155,6 +159,8 @@ export default function RHSuiviIndex() {
         onRefresh={refetch}
         onPrintMatrix={() => setShowCompetencesMatrix(true)}
         epiSummaries={epiSummaries}
+        showFormer={showFormer}
+        onToggleShowFormer={() => setShowFormer(!showFormer)}
       />
       
       <CompetencesMatrixPrint

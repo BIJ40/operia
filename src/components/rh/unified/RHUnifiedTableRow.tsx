@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { RHCollaborator } from '@/types/rh-suivi';
 import { FIXED_COLUMNS, TAB_COLUMNS, RHTabId } from './RHUnifiedTableColumns';
@@ -403,9 +404,13 @@ export function RHUnifiedTableRow({
 
       {/* Colonnes fixes */}
       <TableCell className="font-medium min-w-[100px] w-[100px] bg-muted/10">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           <span className="truncate">{collaborator.last_name}</span>
-          {/* Bouton fiche détail supprimé - doublon avec le tableau */}
+          {collaborator.leaving_date && (
+            <Badge variant="outline" className="text-[10px] px-1 py-0 text-muted-foreground border-muted-foreground/50">
+              Parti
+            </Badge>
+          )}
         </div>
       </TableCell>
       <TableCell className="min-w-[100px] w-[100px] bg-muted/10">{collaborator.first_name}</TableCell>
