@@ -19,15 +19,16 @@ import type {
 // Collaborators List
 // ============================================================================
 
-export function useRHCollaborators() {
+export function useRHCollaborators(options?: { includeFormer?: boolean }) {
   const { agencyId } = useAuth();
+  const includeFormer = options?.includeFormer ?? false;
   
   return useQuery({
-    queryKey: ['rh-collaborators', agencyId],
+    queryKey: ['rh-collaborators', agencyId, { includeFormer }],
     queryFn: async (): Promise<RHCollaborator[]> => {
       if (!agencyId) return [];
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('collaborators')
         .select(`
           *,
@@ -37,9 +38,14 @@ export function useRHCollaborators() {
           rh_it_access(*),
           collaborator_sensitive_data(birth_date_encrypted)
         `)
-        .eq('agency_id', agencyId)
-        .is('leaving_date', null) // Exclure les collaborateurs ayant quitté l'agence
-        .order('last_name', { ascending: true });
+        .eq('agency_id', agencyId);
+      
+      // Par défaut, exclure les collaborateurs ayant quitté l'agence
+      if (!includeFormer) {
+        query = query.is('leaving_date', null);
+      }
+      
+      const { data, error } = await query.order('last_name', { ascending: true });
       
       if (error) throw error;
       

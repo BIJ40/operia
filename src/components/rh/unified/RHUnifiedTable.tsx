@@ -4,9 +4,11 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Search, Settings2, Users, Save, Loader2, Printer } from 'lucide-react';
+import { Search, Settings2, Users, Save, Loader2, Printer, UserX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RHCollaborator } from '@/types/rh-suivi';
 import { RHUnifiedTableHeader } from './RHUnifiedTableHeader';
@@ -36,6 +38,8 @@ interface RHUnifiedTableProps {
   onRefresh: () => void;
   onPrintMatrix: () => void;
   epiSummaries?: CollaboratorEpiSummary[];
+  showFormer?: boolean;
+  onToggleShowFormer?: () => void;
 }
 
 export function RHUnifiedTable({
@@ -48,6 +52,8 @@ export function RHUnifiedTable({
   onRefresh,
   onPrintMatrix,
   epiSummaries = [],
+  showFormer = false,
+  onToggleShowFormer,
 }: RHUnifiedTableProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [documentPopup, setDocumentPopup] = useState<{
@@ -169,6 +175,7 @@ export function RHUnifiedTable({
   const stats = useMemo(() => ({
     total: collaborators.length,
     active: collaborators.filter(c => !c.leaving_date).length,
+    former: collaborators.filter(c => !!c.leaving_date).length,
     administratif: groupedCollaborators.ADMINISTRATIF.length,
     terrain: groupedCollaborators.TERRAIN.length,
   }), [collaborators, groupedCollaborators]);
@@ -246,9 +253,9 @@ export function RHUnifiedTable({
         </button>
       </div>
 
-      {/* Barre de recherche + onglets + toggle colonnes */}
+      {/* Barre de recherche + toggle anciens + onglets + toggle colonnes */}
       <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <div className="relative w-full lg:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -258,6 +265,26 @@ export function RHUnifiedTable({
               className="pl-10"
             />
           </div>
+          
+          {/* Toggle pour afficher les anciens collaborateurs */}
+          {onToggleShowFormer && (
+            <div className="flex items-center gap-2">
+              <Switch
+                id="show-former"
+                checked={showFormer}
+                onCheckedChange={onToggleShowFormer}
+              />
+              <Label htmlFor="show-former" className="text-sm text-muted-foreground cursor-pointer flex items-center gap-1.5">
+                <UserX className="h-3.5 w-3.5" />
+                Anciens
+                {showFormer && stats.former > 0 && (
+                  <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                    {stats.former}
+                  </Badge>
+                )}
+              </Label>
+            </div>
+          )}
           
           {/* Indicateur de modifications en attente */}
           {hasPendingChanges && (
