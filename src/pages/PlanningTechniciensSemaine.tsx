@@ -430,8 +430,8 @@ function PlanningTechniciensSemaineContent() {
         <PageHeader
           title="Planning Techniciens"
           subtitle="Vue hebdomadaire des interventions"
-          backTo="/rh/equipe"
-          backLabel="Mon équipe"
+          backTo="/rh/suivi"
+          backLabel="Suivi RH"
         />
         <PlanningNotificationBadge />
       </div>

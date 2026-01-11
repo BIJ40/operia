@@ -1,9 +1,11 @@
 /**
  * Page principale du module Suivi RH - Vue unifiée avec tableau complet
  * Accessible N2+ uniquement
+ * Remplace l'ancienne page /equipe (fusionnée ici)
  */
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useRHCollaborators, useRHTablePrefs, useUpdateRHTablePrefs } from '@/hooks/useRHSuivi';
 import { RHUnifiedTable } from '@/components/rh/unified/RHUnifiedTable';
 import { TAB_COLUMNS, RHTabId } from '@/components/rh/unified/RHUnifiedTableColumns';
@@ -12,6 +14,14 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { usePersistedTab } from '@/hooks/usePersistedState';
 import { useCollaboratorsEpiSummary } from '@/hooks/epi/useCollaboratorsEpiSummary';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserManagement } from '@/hooks/use-user-management';
+import { useAdminAgencies } from '@/hooks/use-admin-agencies';
+import { CreateUserDialog } from '@/components/admin/users';
+import { GlobalRole, getRoleLevel } from '@/types/globalRoles';
+import { getUserManagementCapabilities } from '@/config/roleMatrix';
+import { Button } from '@/components/ui/button';
+import { UserPlus } from 'lucide-react';
+import { ALL_USER_QUERY_PATTERNS } from '@/lib/queryKeys';
 
 // Colonnes visibles par défaut par onglet
 const DEFAULT_VISIBLE_COLUMNS: Record<RHTabId, string[]> = {
@@ -25,13 +35,51 @@ const DEFAULT_VISIBLE_COLUMNS: Record<RHTabId, string[]> = {
 };
 
 export default function RHSuiviIndex() {
-  const { agencyId } = useAuth();
+  const queryClient = useQueryClient();
+  const { agencyId, agence, globalRole } = useAuth();
   const { data: collaborators = [], isLoading, refetch } = useRHCollaborators();
   const { data: tablePrefs } = useRHTablePrefs();
   const updatePrefs = useUpdateRHTablePrefs();
   const { data: epiSummaries = [] } = useCollaboratorsEpiSummary(agencyId || undefined);
   
   const [showCompetencesMatrix, setShowCompetencesMatrix] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+
+  // Hook de gestion utilisateurs pour la création
+  const { createUserMutation } = useUserManagement({ scope: 'ownAgency' });
+  const { data: agencies = [] } = useAdminAgencies();
+
+  // Calcul des rôles assignables
+  const currentUserLevel = getRoleLevel(globalRole);
+  const capabilities = getUserManagementCapabilities(globalRole);
+  const assignableRoles = capabilities.canCreateRoles;
+
+  // Handler de création qui invalide TOUTES les queries utilisateurs
+  const handleCreate = async (data: { 
+    email: string; 
+    password: string; 
+    firstName: string; 
+    lastName: string; 
+    agence: string; 
+    roleAgence: string;
+    globalRole: GlobalRole; 
+    sendEmail: boolean;
+  }) => {
+    await createUserMutation.mutateAsync(data, {
+      onSuccess: () => {
+        setShowCreateDialog(false);
+        // Invalider toutes les queries utilisateurs pour synchro complète
+        setTimeout(() => {
+          ALL_USER_QUERY_PATTERNS.forEach(pattern => {
+            queryClient.invalidateQueries({ queryKey: [pattern] });
+          });
+          queryClient.invalidateQueries({ queryKey: ['rh-collaborators'] });
+          queryClient.invalidateQueries({ queryKey: ['collaborators'] });
+          refetch();
+        }, 500);
+      },
+    });
+  };
 
   // Onglet actif - persiste en sessionStorage via hook
   const [activeTab, setActiveTab] = usePersistedTab<RHTabId>('rh_suivi_active_tab', 'general');
@@ -89,6 +137,12 @@ export default function RHSuiviIndex() {
         subtitle="Vue complète de tous les collaborateurs et leurs informations"
         backTo="/rh"
         backLabel="Retour RH"
+        rightElement={
+          <Button onClick={() => setShowCreateDialog(true)} size="sm">
+            <UserPlus className="h-4 w-4 mr-2" />
+            Nouveau collaborateur
+          </Button>
+        }
       />
 
       <RHUnifiedTable
@@ -106,6 +160,20 @@ export default function RHSuiviIndex() {
       <CompetencesMatrixPrint
         open={showCompetencesMatrix}
         onOpenChange={setShowCompetencesMatrix}
+      />
+
+      {/* Dialog de création utilisateur - synchro avec toutes les vues */}
+      <CreateUserDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onSubmit={handleCreate}
+        isPending={createUserMutation.isPending}
+        assignableRoles={assignableRoles}
+        agencies={agencies}
+        currentUserLevel={currentUserLevel}
+        currentUserAgency={agence}
+        forceOwnAgency={true}
+        agencyMode={true}
       />
     </div>
   );

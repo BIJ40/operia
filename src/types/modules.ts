@@ -215,7 +215,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'mon_planning', path: 'rh.mon_planning', label: 'Mon Planning', description: 'Accès à son planning personnel', defaultEnabled: false, routes: ['/rh/mon-planning'] },
       { key: 'mon_vehicule', path: 'rh.mon_vehicule', label: 'Mon Véhicule', description: 'Accès à son véhicule assigné', defaultEnabled: false, routes: ['/rh/mon-vehicule'] },
       { key: 'mon_materiel', path: 'rh.mon_materiel', label: 'Mon Matériel', description: 'Accès à son matériel assigné', defaultEnabled: false, routes: ['/rh/mon-materiel'] },
-      { key: 'rh_viewer', path: 'rh.rh_viewer', label: 'Gestionnaire RH', description: 'Documents et demandes équipe', defaultEnabled: false, routes: ['/rh/equipe'] },
+      { key: 'rh_viewer', path: 'rh.rh_viewer', label: 'Gestionnaire RH', description: 'Documents et demandes équipe', defaultEnabled: false, routes: ['/rh/suivi'] },
       { key: 'rh_admin', path: 'rh.rh_admin', label: 'Admin RH', description: 'Gestion complète : salaires, contrats', defaultEnabled: false, routes: ['/rh/suivi'] },
     ],
   },
