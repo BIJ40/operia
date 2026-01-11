@@ -32,8 +32,7 @@ export default function RHMeetingsPage() {
   const [formData, setFormData] = useState({
     title: '',
     meeting_date: '',
-    description: '',
-    presentation_url: ''
+    description: ''
   });
   const [uploadingFile, setUploadingFile] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -75,7 +74,6 @@ export default function RHMeetingsPage() {
         title: data.title,
         meeting_date: data.meeting_date,
         description: data.description || null,
-        presentation_url: data.presentation_url || null,
         presentation_file_path: filePath,
         created_by: user.id
       });
@@ -84,7 +82,7 @@ export default function RHMeetingsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rh-meetings', agencyId] });
       setIsDialogOpen(false);
-      setFormData({ title: '', meeting_date: '', description: '', presentation_url: '' });
+      setFormData({ title: '', meeting_date: '', description: '' });
       setSelectedFile(null);
       toast({ title: 'Réunion ajoutée' });
     },
@@ -174,17 +172,7 @@ export default function RHMeetingsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="url">Lien présentation (URL)</Label>
-                <Input
-                  id="url"
-                  type="url"
-                  value={formData.presentation_url}
-                  onChange={(e) => setFormData({ ...formData, presentation_url: e.target.value })}
-                  placeholder="https://..."
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Ou fichier présentation</Label>
+                <Label>Fichier présentation</Label>
                 <div className="flex items-center gap-2">
                   <Input
                     type="file"
@@ -251,31 +239,18 @@ export default function RHMeetingsPage() {
                       {meeting.description || '-'}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        {meeting.presentation_url && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => window.open(meeting.presentation_url!, '_blank')}
-                          >
-                            <ExternalLink className="h-4 w-4 mr-1" />
-                            Lien
-                          </Button>
-                        )}
-                        {meeting.presentation_file_path && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => getFileUrl(meeting.presentation_file_path!)}
-                          >
-                            <FileText className="h-4 w-4 mr-1" />
-                            Fichier
-                          </Button>
-                        )}
-                        {!meeting.presentation_url && !meeting.presentation_file_path && (
-                          <span className="text-muted-foreground text-sm">-</span>
-                        )}
-                      </div>
+                      {meeting.presentation_file_path ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => getFileUrl(meeting.presentation_file_path!)}
+                        >
+                          <FileText className="h-4 w-4 mr-1" />
+                          Fichier
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">-</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Button
