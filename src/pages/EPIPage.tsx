@@ -90,7 +90,7 @@ export default function EPIPage() {
         title="Matériel & EPI"
         subtitle="Gestion du matériel et des équipements de protection individuelle"
         backTo={ROUTES.rh.index}
-        backLabel="RH & PARC"
+        backLabel="RH & Maintenance"
       />
 
       {/* Dialogs */}

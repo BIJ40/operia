@@ -111,6 +111,7 @@ export function MegaMenu({ section, onClose }: MegaMenuProps) {
   // Séparer les liens par section pour le menu RH
   const salarieLinks = filteredLinks.filter(l => l.section === 'salarie');
   const dirigeantLinks = filteredLinks.filter(l => l.section === 'dirigeant');
+  const maintenanceLinks = filteredLinks.filter(l => l.section === 'maintenance');
   
   // Séparer les liens par groupe pour le menu Admin
   const ADMIN_GROUPS = {
@@ -125,7 +126,7 @@ export function MegaMenu({ section, onClose }: MegaMenuProps) {
   const groupedAdminLinks = filteredLinks.filter(l => l.group);
   const otherLinks = filteredLinks.filter(l => !l.section && !l.group);
 
-  const hasRHSections = salarieLinks.length > 0 && dirigeantLinks.length > 0;
+  const hasRHSections = salarieLinks.length > 0 || dirigeantLinks.length > 0 || maintenanceLinks.length > 0;
   const hasAdminGroups = groupedAdminLinks.length > 0;
   
   // Organiser les liens admin par groupe
@@ -210,6 +211,16 @@ export function MegaMenu({ section, onClose }: MegaMenuProps) {
                   </div>
                 </div>
               )}
+              {maintenanceLinks.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                    Maintenance
+                  </p>
+                  <div className="space-y-1">
+                    {maintenanceLinks.map(renderLink)}
+                  </div>
+                </div>
+              )}
             </div>
           ) : hasAdminGroups ? (
             /* Liens regroupés par groupe (pour Admin) */
@@ -228,7 +239,7 @@ export function MegaMenu({ section, onClose }: MegaMenuProps) {
           ) : (
             /* Liste simple (autres menus) */
             <div className="space-y-1">
-              {[...salarieLinks, ...dirigeantLinks, ...otherLinks].map(renderLink)}
+              {[...salarieLinks, ...dirigeantLinks, ...maintenanceLinks, ...otherLinks].map(renderLink)}
             </div>
           )}
         </div>
