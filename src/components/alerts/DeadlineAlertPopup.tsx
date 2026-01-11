@@ -250,7 +250,7 @@ export function DeadlineAlertPopup() {
         className={cn(
           "max-w-lg border-2",
           hasCriticalAlerts 
-            ? "border-destructive bg-destructive/5 animate-pulse-slow" 
+            ? "border-destructive bg-destructive/5" 
             : "border-orange-500 bg-orange-50 dark:bg-orange-950/20"
         )}
       >
@@ -260,7 +260,7 @@ export function DeadlineAlertPopup() {
               className={cn(
                 "p-2 rounded-full",
                 hasCriticalAlerts 
-                  ? "bg-destructive text-destructive-foreground animate-bounce-slow" 
+                  ? "bg-destructive text-destructive-foreground" 
                   : "bg-orange-500 text-white"
               )}
             >
@@ -275,7 +275,7 @@ export function DeadlineAlertPopup() {
               </AlertDialogTitle>
               <AlertDialogDescription className="mt-1">
                 {criticalCount > 0 && (
-                  <Badge variant="destructive" className="mr-2 animate-pulse">
+                  <Badge variant="destructive" className="mr-2">
                     {criticalCount} critique{criticalCount > 1 ? "s" : ""}
                   </Badge>
                 )}
@@ -356,6 +356,7 @@ export function DeadlineAlertPopup() {
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
+
     </AlertDialog>
   );
 }
