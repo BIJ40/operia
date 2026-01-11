@@ -71,16 +71,9 @@ const RH_MODULES: RHModule[] = [
   {
     id: 'suivi-rh',
     title: 'Suivi RH',
-    description: 'Vue complète des collaborateurs',
+    description: 'Gestion des collaborateurs',
     icon: ClipboardList,
     href: ROUTES.rh.suivi,
-  },
-  {
-    id: 'mon-equipe',
-    title: 'Mon équipe',
-    description: 'Collaborateurs et RH',
-    icon: Users,
-    href: ROUTES.rh.equipe,
   },
   {
     id: 'plannings',
