@@ -132,6 +132,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
         minRole: 'franchisee_admin',
         requiresOption: { module: 'rh', option: 'rh_viewer' },
       },
+      // MASQUÉ: Heures et Timesheets - voir /admin/hidden-features
       { 
         label: 'Demandes RH', 
         href: ROUTES.rh.demandes, 

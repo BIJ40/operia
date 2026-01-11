@@ -4,7 +4,7 @@ import {
   Settings, Users, Building2, Activity, TrendingUp, Headset, BarChart3, 
   History, Bot, BookOpen, FlaskConical, Sparkles, Database, FileStack, 
   Archive, Bell, HardDrive, HelpCircle, Shield, Brain, Cpu, FileText, FileJson,
-  FileEdit
+  FileEdit, EyeOff
 } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { cn } from '@/lib/utils';
@@ -167,6 +167,7 @@ export default function AdminIndex() {
             <AdminLink to={ROUTES.admin.announcements} icon={Bell} title="Annonces Prioritaires" description="Diffusion messages" />
             <AdminLink to="/admin/apogee-report" icon={FileJson} title="Rapport Apogée API" description="Analyse endpoints & champs" />
             <AdminLink to="/admin/templates" icon={FileEdit} title="Templates DocGen" description="Modèles de documents" />
+            <AdminLink to="/admin/hidden-features" icon={EyeOff} title="Fonctionnalités masquées" description="Pages et fonctions désactivées" />
           </div>
         </TabsContent>
       </Tabs>
