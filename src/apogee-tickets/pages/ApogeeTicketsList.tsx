@@ -295,7 +295,10 @@ function ApogeeTicketsListContent({ roleInfo }: { roleInfo: NonNullable<ReturnTy
         open={showCreateDialog}
         onClose={() => setShowCreateDialog(false)}
         modules={modules}
-        onCreate={(ticket) => createTicket.mutate(ticket)}
+        onCreate={async (ticket) => {
+          const result = await createTicket.mutateAsync(ticket);
+          return result?.id;
+        }}
         isCreating={createTicket.isPending}
         userTicketRole={ticketRole}
       />
