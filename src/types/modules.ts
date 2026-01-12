@@ -18,6 +18,8 @@ export const MODULES = {
   rh: 'rh',     // Module RH séparé
   parc: 'parc', // Module Parc séparé
   unified_search: 'unified_search', // Barre de recherche unifiée (Stats + Docs)
+  carte_rdv: 'carte_rdv', // Carte interactive des RDV
+  apporteur_portal: 'apporteur_portal', // Portail externe apporteurs
 } as const;
 
 export type ModuleKey = keyof typeof MODULES;
@@ -80,6 +82,13 @@ export const MODULE_OPTIONS = {
   unified_search: {
     stats: 'unified_search.stats',  // Recherche statistiques
     docs: 'unified_search.docs',    // Recherche documentaire
+  },
+  carte_rdv: {
+    view: 'carte_rdv.view',  // Accès lecture carte
+  },
+  apporteur_portal: {
+    access: 'apporteur_portal.access',  // Accès au portail apporteurs
+    manage: 'apporteur_portal.manage',  // Gestion des apporteurs
   },
 } as const;
 
@@ -240,6 +249,29 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'docs', path: 'unified_search.docs', label: 'Recherche Docs', description: 'Recherche documentation', defaultEnabled: true, routes: [] },
     ],
   },
+  {
+    key: 'carte_rdv',
+    label: 'Carte RDV',
+    description: 'Carte interactive des interventions et rendez-vous',
+    icon: 'MapPin',
+    defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
+    minRole: 'franchisee_user',
+    options: [
+      { key: 'view', path: 'carte_rdv.view', label: 'Accès carte', description: 'Visualiser la carte des interventions', defaultEnabled: true, routes: ['/hc-agency/map'] },
+    ],
+  },
+  {
+    key: 'apporteur_portal',
+    label: 'Portail Apporteurs',
+    description: 'Gestion des apporteurs et accès portail externe',
+    icon: 'Building2',
+    defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
+    minRole: 'franchisee_admin',
+    options: [
+      { key: 'access', path: 'apporteur_portal.access', label: 'Accès portail', description: 'Accès au portail de gestion des apporteurs', defaultEnabled: true, routes: ['/hc-agency/mes-apporteurs'] },
+      { key: 'manage', path: 'apporteur_portal.manage', label: 'Gestion apporteurs', description: 'Créer/modifier des comptes apporteurs', defaultEnabled: true, routes: ['/hc-agency/mes-apporteurs'] },
+    ],
+  },
 ];
 
 // Structure de stockage des modules activés (JSONB dans profiles)
@@ -253,6 +285,8 @@ export interface EnabledModules {
   rh?: boolean | ModuleOptionsState;
   parc?: boolean | ModuleOptionsState;
   unified_search?: boolean | ModuleOptionsState;
+  carte_rdv?: boolean | ModuleOptionsState;
+  apporteur_portal?: boolean | ModuleOptionsState;
 }
 
 export interface ModuleOptionsState {
