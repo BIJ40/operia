@@ -17,7 +17,6 @@ export const MODULES = {
   apogee_tickets: 'apogee_tickets',
   rh: 'rh',     // Module RH séparé
   parc: 'parc', // Module Parc séparé
-  messaging: 'messaging', // Chat interne
   unified_search: 'unified_search', // Barre de recherche unifiée (Stats + Docs)
 } as const;
 
@@ -77,10 +76,6 @@ export const MODULE_OPTIONS = {
     vehicules: 'parc.vehicules',     // Gestion flotte véhicules
     epi: 'parc.epi',                 // Gestion EPI
     equipements: 'parc.equipements', // Autres équipements
-  },
-  messaging: {
-    dm: 'messaging.dm',       // Messages directs
-    groups: 'messaging.groups', // Groupes de discussion
   },
   unified_search: {
     stats: 'unified_search.stats',  // Recherche statistiques
@@ -234,18 +229,6 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     ],
   },
   {
-    key: 'messaging',
-    label: 'Messagerie interne',
-    description: 'Chat interne entre utilisateurs',
-    icon: 'MessageCircle',
-    defaultForRoles: ['franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
-    minRole: 'franchisee_user',
-    options: [
-      { key: 'dm', path: 'messaging.dm', label: 'Messages directs', description: 'Conversations privées', defaultEnabled: true, routes: ['/messages'] },
-      { key: 'groups', path: 'messaging.groups', label: 'Groupes', description: 'Groupes de discussion', defaultEnabled: true, routes: ['/messages/groups'] },
-    ],
-  },
-  {
     key: 'unified_search',
     label: 'Recherche unifiée',
     description: 'Barre de recherche intelligente (stats + docs)',
@@ -269,7 +252,6 @@ export interface EnabledModules {
   apogee_tickets?: boolean | ModuleOptionsState;
   rh?: boolean | ModuleOptionsState;
   parc?: boolean | ModuleOptionsState;
-  messaging?: boolean | ModuleOptionsState;
   unified_search?: boolean | ModuleOptionsState;
 }
 

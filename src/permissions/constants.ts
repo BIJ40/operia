@@ -69,7 +69,6 @@ export const MODULE_MIN_ROLES: Record<ModuleKey, GlobalRole> = {
   apogee_tickets: 'base_user', // Module individuel - N0+ peut y accéder si activé
   rh: 'base_user',  // Module accessible N0+ mais options différenciées
   parc: 'franchisee_user',
-  messaging: 'franchisee_user',
   unified_search: 'franchisee_user',
 };
 
@@ -126,6 +125,5 @@ export const MODULE_LABELS: Record<ModuleKey, string> = {
   apogee_tickets: 'Gestion de Projet',
   rh: 'RH',
   parc: 'Parc',
-  messaging: 'Messagerie interne',
   unified_search: 'Recherche unifiée',
 };

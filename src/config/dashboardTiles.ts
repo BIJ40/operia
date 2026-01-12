@@ -3,7 +3,7 @@ import {
   MessageSquare, Network, Users, Database, Settings, LucideIcon,
   PieChart, Coins, Headphones, GraduationCap, Kanban, Activity,
   HelpCircle, Calendar, UserCog, Briefcase, Inbox, Building2, GitCompare,
-  MessagesSquare, Wrench, Brain, Car, Radar, ToggleLeft, LayoutDashboard, LineChart
+  Wrench, Brain, Car, ToggleLeft, LineChart
 } from 'lucide-react';
 import { ROUTES } from './routes';
 import { ModuleKey } from '@/types/modules';
@@ -197,17 +197,6 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     color: 'accent',
     group: 'support',
     // F-NAV-1: requiresSupport supprimé - filtrage via canAccessSupportConsoleUI uniquement
-  },
-  // Communication / Messagerie
-  {
-    id: 'MESSAGING',
-    title: 'Messages',
-    description: 'Discussions internes et groupes',
-    icon: MessagesSquare,
-    route: ROUTES.messages,
-    scopeSlug: SCOPE_SLUGS.MESSAGING,
-    color: 'primary',
-    group: 'communication',
   },
   // Gestion de Projet
   {
@@ -419,12 +408,6 @@ export const DASHBOARD_GROUPS = {
     icon: Headphones,
     colorClass: 'text-primary',
     indexUrl: ROUTES.support.index,
-  },
-  communication: {
-    title: 'Communication',
-    icon: MessagesSquare,
-    colorClass: 'text-helpconfort-blue',
-    indexUrl: ROUTES.messages,
   },
   projects: {
     title: 'Gestion de Projet',

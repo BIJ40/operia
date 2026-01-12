@@ -2229,93 +2229,6 @@ export type Database = {
           },
         ]
       }
-      conversation_members: {
-        Row: {
-          conversation_id: string
-          deleted_at: string | null
-          id: string
-          is_muted: boolean
-          joined_at: string
-          last_read_at: string | null
-          role: string
-          user_id: string
-        }
-        Insert: {
-          conversation_id: string
-          deleted_at?: string | null
-          id?: string
-          is_muted?: boolean
-          joined_at?: string
-          last_read_at?: string | null
-          role?: string
-          user_id: string
-        }
-        Update: {
-          conversation_id?: string
-          deleted_at?: string | null
-          id?: string
-          is_muted?: boolean
-          joined_at?: string
-          last_read_at?: string | null
-          role?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "conversation_members_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "conversation_members_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      conversations: {
-        Row: {
-          avatar_url: string | null
-          created_at: string
-          created_by: string | null
-          id: string
-          is_archived: boolean
-          is_pinned: boolean
-          last_message_at: string | null
-          name: string | null
-          type: string
-          updated_at: string
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          is_archived?: boolean
-          is_pinned?: boolean
-          last_message_at?: string | null
-          name?: string | null
-          type?: string
-          updated_at?: string
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          is_archived?: boolean
-          is_pinned?: boolean
-          last_message_at?: string | null
-          name?: string | null
-          type?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       deadline_alert_acknowledgements: {
         Row: {
           acknowledged_on: string
@@ -4870,51 +4783,6 @@ export type Database = {
           whitelisted_user_ids?: string[]
         }
         Relationships: []
-      }
-      messages: {
-        Row: {
-          content: string
-          conversation_id: string
-          created_at: string
-          id: string
-          is_deleted: boolean
-          sender_id: string
-          updated_at: string | null
-        }
-        Insert: {
-          content: string
-          conversation_id: string
-          created_at?: string
-          id?: string
-          is_deleted?: boolean
-          sender_id: string
-          updated_at?: string | null
-        }
-        Update: {
-          content?: string
-          conversation_id?: string
-          created_at?: string
-          id?: string
-          is_deleted?: boolean
-          sender_id?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "messages_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "messages_sender_id_fkey"
-            columns: ["sender_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       metrics_cache: {
         Row: {
@@ -7625,42 +7493,6 @@ export type Database = {
             columns: ["default_plan_template_id"]
             isOneToOne: false
             referencedRelation: "maintenance_plan_templates"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      typing_status: {
-        Row: {
-          conversation_id: string
-          is_typing: boolean
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          conversation_id: string
-          is_typing?: boolean
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          conversation_id?: string
-          is_typing?: boolean
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "typing_status_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "typing_status_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

@@ -17,7 +17,6 @@ import Error500 from "./pages/Error500";
 
 // Dashboard & core pages
 const Dashboard = lazy(() => import("./pages/DashboardStatic"));
-const Messages = lazy(() => import("./pages/Messages"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Changelog = lazy(() => import("./pages/Changelog"));
 const Roadmap = lazy(() => import("./pages/Roadmap"));
@@ -102,7 +101,6 @@ function AppContent() {
           {/* CORE ROUTES */}
           {/* ============================================ */}
           <Route path="/" element={<MainLayout><RoleGuard minRole="franchisee_user"><N1Redirect><Dashboard /></N1Redirect></RoleGuard></MainLayout>} />
-          <Route path="/messages" element={<MainLayout><RoleGuard minRole="franchisee_user"><Messages /></RoleGuard></MainLayout>} />
           <Route path="/profile" element={<MainLayout><RoleGuard><Profile /></RoleGuard></MainLayout>} />
           <Route path="/changelog" element={<MainLayout><Changelog /></MainLayout>} />
           <Route path="/roadmap" element={<MainLayout><Roadmap /></MainLayout>} />
