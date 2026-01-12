@@ -145,7 +145,7 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
             />
             <FeatureCard
               icon={Users}
-              title="RH & Parc"
+              title="RH & Maintenance"
               description="Collaborateurs, véhicules, EPI, documents RH automatisés."
               gradient="from-orange-600 to-amber-700"
             />

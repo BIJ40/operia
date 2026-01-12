@@ -46,7 +46,7 @@ const MODULES: ModuleSlide[] = [
   },
   {
     id: 'rh',
-    title: 'RH & Parc',
+    title: 'RH & Maintenance',
     icon: Users,
     screenshot: '/images/screenshots/rh-suivi.png',
     bulletPoints: ['Gestion collaborateurs', 'Flotte véhicules', 'EPI & documents'],

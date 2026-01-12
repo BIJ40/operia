@@ -235,7 +235,7 @@ export function CollaboratorProfile({
           <PlaceholderTab
             icon={Wrench}
             title="Matériel & EPI"
-            description="Cette section sera disponible dans la Phase 3 du module RH & Parc."
+            description="Cette section sera disponible dans la Phase 3 du module RH & Maintenance."
           />
         </TabsContent>
 
@@ -243,7 +243,7 @@ export function CollaboratorProfile({
           <PlaceholderTab
             icon={Car}
             title="Véhicule"
-            description="Cette section sera disponible dans la Phase 4 du module RH & Parc."
+            description="Cette section sera disponible dans la Phase 4 du module RH & Maintenance."
           />
         </TabsContent>
 
@@ -251,7 +251,7 @@ export function CollaboratorProfile({
           <PlaceholderTab
             icon={Bell}
             title="Alertes"
-            description="Cette section sera disponible dans la Phase 5 du module RH & Parc."
+            description="Cette section sera disponible dans la Phase 5 du module RH & Maintenance."
           />
         </TabsContent>
       </Tabs>

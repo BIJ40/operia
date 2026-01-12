@@ -1,5 +1,5 @@
 /**
- * Hook pour la gestion des collaborateurs (Module RH & Parc)
+ * Hook pour la gestion des collaborateurs (Module RH & Maintenance)
  * RGPD: Les données sensibles sont stockées séparément dans collaborator_sensitive_data
  */
 

@@ -1,5 +1,5 @@
 /**
- * Hub RH & Parc - Navigation par tiles ludique
+ * Hub RH & Maintenance - Navigation par tiles ludique
  */
 import { Link } from 'react-router-dom';
 import { FileText, Car, Wrench, Inbox } from 'lucide-react';

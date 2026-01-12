@@ -31,7 +31,7 @@ export const PAGE_DEFAULTS: PageDefaultConfig[] = [
   { pageKey: 'pilotage_actions', defaultTitle: 'Actions à Mener', defaultSubtitle: 'Suivi des actions et tâches en cours', route: ROUTES.agency.actions },
   { pageKey: 'pilotage_diffusion', defaultTitle: 'Mode Diffusion', defaultSubtitle: 'Affichage TV pour l\'agence', route: ROUTES.agency.diffusion },
   { pageKey: 'pilotage_rh_tech', defaultTitle: 'RH Tech', defaultSubtitle: 'Planning hebdomadaire des techniciens', route: ROUTES.agency.rhTech },
-  { pageKey: 'rh_equipe', defaultTitle: 'Mon équipe', defaultSubtitle: 'Collaborateurs, documents RH et bulletins de salaire', route: ROUTES.rh.equipe },
+  // rh_equipe supprimé - redirige vers /rh/suivi
   { pageKey: 'rh_coffre', defaultTitle: 'Mon Coffre RH', defaultSubtitle: 'Mes documents personnels et demandes', route: ROUTES.rh.coffre },
   { pageKey: 'rh_demandes', defaultTitle: 'Demandes RH', defaultSubtitle: 'Traitement des demandes de documents', route: ROUTES.rh.demandes },
   { pageKey: 'rh_dashboard', defaultTitle: 'Dashboard RH', defaultSubtitle: 'Statistiques et indicateurs RH', route: ROUTES.rh.dashboard },
