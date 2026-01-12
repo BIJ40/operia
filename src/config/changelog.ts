@@ -507,14 +507,12 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     version: 'V0.6.7',
     date: '2025-12-05',
-    title: 'Partage d\'écran Support & Messagerie améliorée',
+    title: 'Partage d\'écran Support',
     changes: [
       { type: 'feature', description: 'Partage d\'écran temps réel entre utilisateur et agent support via WebRTC' },
       { type: 'feature', description: 'Bouton "Voir l\'écran" dans console support pour chat humain' },
       { type: 'feature', description: 'Signaling WebRTC via Supabase Realtime (offres/réponses SDP, candidats ICE)' },
-      { type: 'feature', description: 'Suppression de conversation messagerie (soft delete côté utilisateur uniquement)' },
       { type: 'improvement', description: 'Interface de consentement utilisateur avant partage d\'écran' },
-      { type: 'improvement', description: 'Menu contextuel sur conversations avec option supprimer' },
     ]
   },
   {
@@ -566,7 +564,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       { type: 'audit', description: '📋 AUDIT MODULE PILOTAGE FRANCHISEUR - Score 95%' },
       { type: 'audit', description: '📋 AUDIT MODULE PILOTAGE AGENCE - Règles métier validées' },
       { type: 'audit', description: '📋 AUDIT MODULE HELP ACADEMY - RAG et permissions validés' },
-      { type: 'audit', description: '📋 AUDIT MODULE CHAT INTERNE - RLS et Realtime validés' },
+      
       { type: 'audit', description: '📋 AUDIT MODULE ANNONCES RÉSEAU - Ciblage par rôle corrigé' },
       { type: 'audit', description: '📋 AUDIT MODULE ALERTES RÉSEAU - SLA auto implémenté' },
       { type: 'audit', description: '📋 AUDIT ADMIN/CONFIGURATION - Proxy API sécurisé' },
@@ -618,7 +616,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       { label: 'Audit Module RH', path: '/docs/AUDIT_MODULE_PILOTAGE_AGENCE.md' },
       { label: 'Audit Gestion Projet', path: '/docs/AUDIT_MODULE_GESTION_PROJET.md' },
       { label: 'Audit Pilotage Franchiseur', path: '/docs/AUDIT_MODULE_PILOTAGE_FRANCHISEUR.md' },
-      { label: 'Audit Chat Interne', path: '/docs/AUDIT_MODULE_CHAT_INTERNE.md' },
+      
       { label: 'Audit Annonces Réseau', path: '/docs/AUDIT_MODULE_ANNONCES_RESEAU.md' },
       { label: 'Audit Permissions', path: '/docs/AUDIT_PERMISSIONS_FINDINGS_SUMMARY.md' },
       { label: 'Audit Admin/Config', path: '/docs/AUDIT_MODULE_ADMIN_CONFIGURATION.md' },
@@ -628,15 +626,10 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     version: 'V0.6.3',
     date: '2025-12-04',
-    title: 'Messagerie interne intra-agence',
+    title: 'Widget Chatbot Aide en direct',
     changes: [
-      { type: 'feature', description: 'Système de messagerie instantanée interne entre collaborateurs d\'une même agence' },
-      { type: 'feature', description: 'Widget messagerie intégré au header avec badge notifications non-lues' },
-      { type: 'feature', description: 'Conversations privées (1:1) et groupes de discussion' },
       { type: 'feature', description: 'Widget chatbot "Aide en direct" intégré au header avec sélection de thèmes' },
-      { type: 'improvement', description: 'Interface unifiée header : AIDE EN DIRECT (gauche) et MESSAGERIE INTERNE (droite)' },
       { type: 'improvement', description: 'Suppression de la bulle flottante chatbot au profit du widget header' },
-      { type: 'improvement', description: 'Indicateurs temps réel de présence et messages non-lus' },
     ]
   },
   {
