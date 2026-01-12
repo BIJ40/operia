@@ -72,7 +72,6 @@ export function isFeatureFlagEnabled(
     'apogee_tickets': ['apogee_tickets', 'projects'],
     'rh': ['rh'],
     'parc': ['parc'],
-    'messaging': ['messaging', 'communication'],
     'unified_search': ['unified_search', 'search'],
   };
   

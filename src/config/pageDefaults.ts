@@ -239,7 +239,7 @@ export const PAGE_HEADER_MATCHERS: PageHeaderConfig[] = [
   // ============================================
   // USER PAGES
   // ============================================
-  { match: (path) => path === '/messages', pageKey: 'messages', defaultTitle: 'Messages', defaultSubtitle: 'Discussions internes et groupes', icon: 'MessagesSquare', parentRoute: '/', parentLabel: 'Accueil' },
+  
   { match: (path) => path === '/profile', pageKey: 'profile', defaultTitle: 'Mon Compte', defaultSubtitle: 'Gérez vos informations personnelles', icon: 'User', parentRoute: '/', parentLabel: 'Accueil' },
   { match: (path) => path === '/favorites', pageKey: 'favorites', defaultTitle: 'Mes Favoris', defaultSubtitle: 'Accès rapide à vos contenus favoris', icon: 'Star', parentRoute: '/', parentLabel: 'Accueil' },
   { match: (path) => path === '/changelog', pageKey: 'changelog', defaultTitle: 'Historique des versions', defaultSubtitle: 'Nouveautés et améliorations de l\'application', icon: 'History', parentRoute: '/', parentLabel: 'Accueil' },

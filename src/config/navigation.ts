@@ -11,8 +11,7 @@
 import {
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv, Calendar,
   Headset, Network, Building2, PieChart, GitCompare,
-  Coins, Settings, Users, Database, Activity, LifeBuoy, Kanban, HelpCircle,
-  MessagesSquare
+  Coins, Settings, Users, Database, Activity, LifeBuoy, Kanban, HelpCircle
 } from 'lucide-react';
 import { ROUTES } from './routes';
 
@@ -147,19 +146,6 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: Headset, 
         scope: 'support_tickets', 
         description: 'Traiter les demandes de support' 
-      },
-    ],
-  },
-  {
-    label: 'Communication',
-    labelKey: 'communication',
-    items: [
-      { 
-        title: 'Messages', 
-        url: ROUTES.messages, 
-        icon: MessagesSquare, 
-        scope: 'messaging', 
-        description: 'Discussions internes et groupes' 
       },
     ],
   },
@@ -367,9 +353,6 @@ export const PAGE_TITLES: Record<string, string> = {
   // User
   [ROUTES.profile]: 'Mon Profil',
   [ROUTES.favorites]: 'Mes Favoris',
-  
-  // Communication
-  [ROUTES.messages]: 'Messages',
   
   // Legacy routes (backward compatibility)
   [ROUTES.legacy.apogee]: 'Guide Apogée',
