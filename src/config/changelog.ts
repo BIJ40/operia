@@ -64,7 +64,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       // AMÉLIORATIONS UX & NAVIGATION
       // ═══════════════════════════════════════════════════════════════
       { type: 'improvement', description: 'Menu RH / MATERIEL restructuré avec terminologie unifiée' },
-      { type: 'improvement', description: 'Titre page RH conditionnel : N1="Mon Espace Salarié", N2+="RH & PARC"' },
+      { type: 'improvement', description: 'Titre page RH conditionnel : N1="Mon Espace Salarié", N2+="RH & Maintenance"' },
       { type: 'improvement', description: 'Navigation cohérente et back-navigation vers /rh' },
       { type: 'fix', description: 'Synchronisation profiles↔collaborators via triggers DB' },
       { type: 'fix', description: 'Nettoyage collaborateurs orphelins après changement agence' },

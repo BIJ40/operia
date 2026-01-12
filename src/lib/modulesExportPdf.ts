@@ -76,7 +76,7 @@ export async function exportModulesDocumentationPdf(): Promise<Blob> {
     '3. Pilotage Agence',
     '4. Apogee Tickets',
     '5. Support',
-    '6. RH & Parc',
+    '6. RH & Maintenance',
     '7. Réseau Franchiseur',
     '8. Admin Plateforme',
     '9. Commercial',
@@ -214,9 +214,9 @@ export async function exportModulesDocumentationPdf(): Promise<Blob> {
   addTitle('Routes', 12);
   addParagraph('/support/*, /admin/support');
 
-  // Module 6: RH & Parc
+  // Module 6: RH & Maintenance
   addPage();
-  addTitle('6. RH & PARC', 16, [20, 184, 166]);
+  addTitle('6. RH & MAINTENANCE', 16, [20, 184, 166]);
   addParagraph('Clé technique: rh_parc');
   y += 3;
   addTitle('Description', 12);

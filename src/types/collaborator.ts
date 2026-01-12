@@ -1,5 +1,5 @@
 /**
- * Types pour le module RH & Parc - Collaborateurs
+ * Types pour le module RH & Maintenance - Collaborateurs
  * RGPD: Les données sensibles (birth_date, SSN, contacts urgence) sont dans collaborator_sensitive_data
  */
 

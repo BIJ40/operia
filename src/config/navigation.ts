@@ -303,7 +303,7 @@ export const PAGE_TITLES: Record<string, string> = {
   [ROUTES.agency.actions]: 'Actions à Mener',
   [ROUTES.agency.diffusion]: 'Mode Diffusion',
   [ROUTES.agency.rhTech]: 'RH Tech - Planning',
-  [ROUTES.rh.equipe]: 'Mon équipe',
+  // ROUTES.rh.equipe supprimé - redirige vers /rh/suivi
   
   // Support (V2 routes)
   [ROUTES.support.index]: 'Support',

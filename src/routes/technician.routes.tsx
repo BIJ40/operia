@@ -12,7 +12,7 @@ const TechPlanning = lazy(() => import("@/pages/technician/TechPlanning"));
 const TechPointage = lazy(() => import("@/pages/technician/TechPointage"));
 const TechProfil = lazy(() => import("@/pages/technician/TechProfil"));
 
-// RH & Parc pages
+// RH & Maintenance pages
 const TechRHParcHub = lazy(() => import("@/pages/technician/TechRHParcHub"));
 const TechDocumentsPage = lazy(() => import("@/pages/technician/TechDocumentsPage"));
 const TechVehiculePage = lazy(() => import("@/pages/technician/TechVehiculePage"));
@@ -27,7 +27,7 @@ export function TechnicianRoutes() {
         <Route path="planning" element={<TechnicianPlanningPage />} />
         <Route path="planning-list" element={<TechPlanning />} />
         <Route path="pointage" element={<TechPointage />} />
-        {/* Hub RH & Parc avec 4 sous-pages */}
+        {/* Hub RH & Maintenance avec 4 sous-pages */}
         <Route path="rh-parc" element={<TechRHParcHub />} />
         <Route path="documents" element={<TechDocumentsPage />} />
         <Route path="vehicule" element={<TechVehiculePage />} />

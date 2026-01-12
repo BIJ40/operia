@@ -127,18 +127,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     badge: 'Bientôt',
     isDisabled: true,
   },
-  {
-    id: 'MON_EQUIPE',
-    title: 'Mon équipe',
-    description: 'Collaborateurs, documents RH et bulletins de salaire',
-    icon: UserCog,
-    route: ROUTES.rh.equipe,
-    scopeSlug: SCOPE_SLUGS.MON_EQUIPE,
-    color: 'accent',
-    group: 'rh',
-    requiresModule: 'rh',
-    requiresModuleOptions: ['rh_viewer', 'rh_admin'],
-  },
+  // Tuile MON_EQUIPE supprimée - remplacée par Suivi RH dans /rh/suivi
   {
     id: 'MON_COFFRE_RH',
     title: 'Mon Coffre RH',
