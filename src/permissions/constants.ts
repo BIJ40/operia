@@ -70,6 +70,8 @@ export const MODULE_MIN_ROLES: Record<ModuleKey, GlobalRole> = {
   rh: 'base_user',  // Module accessible N0+ mais options différenciées
   parc: 'franchisee_user',
   unified_search: 'franchisee_user',
+  carte_rdv: 'franchisee_user',
+  apporteur_portal: 'franchisee_admin',
 };
 
 // ============================================================================
@@ -126,4 +128,6 @@ export const MODULE_LABELS: Record<ModuleKey, string> = {
   rh: 'RH',
   parc: 'Parc',
   unified_search: 'Recherche unifiée',
+  carte_rdv: 'Carte RDV',
+  apporteur_portal: 'Portail Apporteurs',
 };
