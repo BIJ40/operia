@@ -171,14 +171,14 @@ export function RHTabCompetences({ collaborator }: Props) {
           <div className="space-y-2">
             <Label>Niveau d'habilitation</Label>
             <Select 
-              value={form.habilitation_electrique_statut} 
-              onValueChange={(v) => setForm(f => ({ ...f, habilitation_electrique_statut: v }))}
+              value={form.habilitation_electrique_statut || 'none'} 
+              onValueChange={(v) => setForm(f => ({ ...f, habilitation_electrique_statut: v === 'none' ? '' : v }))}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Sélectionner..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Aucune</SelectItem>
+                <SelectItem value="none">Aucune</SelectItem>
                 {HAB_ELEC_STATUTS.map(s => (
                   <SelectItem key={s} value={s}>{s}</SelectItem>
                 ))}
