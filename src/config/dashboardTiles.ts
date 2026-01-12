@@ -87,17 +87,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     requiresModule: 'pilotage_agence',
     featureFlagKey: 'pilotage.actions-mener',
   },
-  {
-    id: 'VEILLE_APPORTEURS',
-    title: 'Veille Apporteurs',
-    description: 'Suivi performance et alertes apporteurs',
-    icon: Radar,
-    route: ROUTES.agency.veilleApporteurs,
-    scopeSlug: SCOPE_SLUGS.MES_INDICATEURS,
-    color: 'accent',
-    group: 'pilotage',
-    requiresModule: 'pilotage_agence',
-  },
+  // HIDDEN: Veille Apporteurs - temporairement désactivé (voir /admin/hidden-features)
   {
     id: 'MAINTENANCE_PREVENTIVE',
     title: 'Parc Véhicules',
