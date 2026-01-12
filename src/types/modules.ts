@@ -8,6 +8,7 @@
 import { GlobalRole, GLOBAL_ROLES } from './globalRoles';
 
 // Définition des modules principaux
+// ATTENTION: carte_rdv et apporteur_portal sont des sous-options de pilotage_agence, pas des modules racines
 export const MODULES = {
   help_academy: 'help_academy',
   pilotage_agence: 'pilotage_agence',
@@ -18,8 +19,6 @@ export const MODULES = {
   rh: 'rh',     // Module RH séparé
   parc: 'parc', // Module Parc séparé
   unified_search: 'unified_search', // Barre de recherche unifiée (Stats + Docs)
-  carte_rdv: 'carte_rdv', // Carte interactive des RDV
-  apporteur_portal: 'apporteur_portal', // Portail externe apporteurs
 } as const;
 
 export type ModuleKey = keyof typeof MODULES;
@@ -39,6 +38,10 @@ export const MODULE_OPTIONS = {
     diffusion: 'pilotage_agence.diffusion',
     exports: 'pilotage_agence.exports',
     veille_apporteurs: 'pilotage_agence.veille_apporteurs',
+    // Nouvelles options intégrées (ex-modules racines)
+    carte_rdv: 'pilotage_agence.carte_rdv',
+    mes_apporteurs: 'pilotage_agence.mes_apporteurs',
+    gestion_apporteurs: 'pilotage_agence.gestion_apporteurs',
   },
   reseau_franchiseur: {
     dashboard: 'reseau_franchiseur.dashboard',
@@ -82,13 +85,6 @@ export const MODULE_OPTIONS = {
   unified_search: {
     stats: 'unified_search.stats',  // Recherche statistiques
     docs: 'unified_search.docs',    // Recherche documentaire
-  },
-  carte_rdv: {
-    view: 'carte_rdv.view',  // Accès lecture carte
-  },
-  apporteur_portal: {
-    access: 'apporteur_portal.access',  // Accès au portail apporteurs
-    manage: 'apporteur_portal.manage',  // Gestion des apporteurs
   },
 } as const;
 
@@ -145,6 +141,10 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'actions_a_mener', path: 'pilotage_agence.actions_a_mener', label: 'Actions à mener', description: 'Liste des actions prioritaires', defaultEnabled: true, routes: ['/hc-agency/actions'] },
       { key: 'diffusion', path: 'pilotage_agence.diffusion', label: 'Écran diffusion', description: 'Affichage sur écran TV', defaultEnabled: true, routes: ['/hc-agency/diffusion'] },
       { key: 'exports', path: 'pilotage_agence.exports', label: 'Exports', description: 'Export des données', defaultEnabled: false, routes: ['/hc-agency/exports'] },
+      // Ex-modules racines intégrés comme sous-options
+      { key: 'carte_rdv', path: 'pilotage_agence.carte_rdv', label: 'Carte RDV', description: 'Carte interactive des interventions', defaultEnabled: false, routes: ['/hc-agency/map'] },
+      { key: 'mes_apporteurs', path: 'pilotage_agence.mes_apporteurs', label: 'Mes Apporteurs', description: 'Consultation des apporteurs', defaultEnabled: false, routes: ['/hc-agency/mes-apporteurs'] },
+      { key: 'gestion_apporteurs', path: 'pilotage_agence.gestion_apporteurs', label: 'Gestion Apporteurs', description: 'Créer et gérer les comptes apporteurs', defaultEnabled: false, routes: ['/hc-agency/mes-apporteurs'] },
     ],
   },
   {
@@ -249,32 +249,13 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'docs', path: 'unified_search.docs', label: 'Recherche Docs', description: 'Recherche documentation', defaultEnabled: true, routes: [] },
     ],
   },
-  {
-    key: 'carte_rdv',
-    label: 'Carte RDV',
-    description: 'Carte interactive des interventions et rendez-vous',
-    icon: 'MapPin',
-    defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
-    minRole: 'franchisee_user',
-    options: [
-      { key: 'view', path: 'carte_rdv.view', label: 'Accès carte', description: 'Visualiser la carte des interventions', defaultEnabled: true, routes: ['/hc-agency/map'] },
-    ],
-  },
-  {
-    key: 'apporteur_portal',
-    label: 'Portail Apporteurs',
-    description: 'Gestion des apporteurs et accès portail externe',
-    icon: 'Building2',
-    defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
-    minRole: 'franchisee_admin',
-    options: [
-      { key: 'access', path: 'apporteur_portal.access', label: 'Accès portail', description: 'Accès au portail de gestion des apporteurs', defaultEnabled: true, routes: ['/hc-agency/mes-apporteurs'] },
-      { key: 'manage', path: 'apporteur_portal.manage', label: 'Gestion apporteurs', description: 'Créer/modifier des comptes apporteurs', defaultEnabled: true, routes: ['/hc-agency/mes-apporteurs'] },
-    ],
-  },
 ];
 
+// NOTE: carte_rdv et apporteur_portal ont été intégrés comme sous-options de pilotage_agence
+// Voir pilotage_agence.carte_rdv, pilotage_agence.mes_apporteurs, pilotage_agence.gestion_apporteurs
+
 // Structure de stockage des modules activés (JSONB dans profiles)
+// NOTE: carte_rdv et apporteur_portal ne sont plus des modules racines
 export interface EnabledModules {
   help_academy?: boolean | ModuleOptionsState;
   pilotage_agence?: boolean | ModuleOptionsState;
@@ -285,8 +266,6 @@ export interface EnabledModules {
   rh?: boolean | ModuleOptionsState;
   parc?: boolean | ModuleOptionsState;
   unified_search?: boolean | ModuleOptionsState;
-  carte_rdv?: boolean | ModuleOptionsState;
-  apporteur_portal?: boolean | ModuleOptionsState;
 }
 
 export interface ModuleOptionsState {

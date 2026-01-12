@@ -115,10 +115,11 @@ const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     category: 'rh',
   },
 
-  // ===== PARC =====
+  // ===== RH - Self-service (Mon Véhicule / Mon Matériel) =====
+  // CORRECTION: Ces options sont sous 'rh', pas 'parc' (alignement avec MODULE_DEFINITIONS)
   {
-    key: 'parc_mon_vehicule',
-    moduleKey: 'parc',
+    key: 'rh_mon_vehicule',
+    moduleKey: 'rh',
     optionKey: 'mon_vehicule',
     label: 'Mon Véhicule',
     shortDescription: 'Voir son véhicule de service assigné',
@@ -131,13 +132,13 @@ const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     targetUsers: 'Techniciens avec véhicule attribué',
     icon: <Car className="w-5 h-5" />,
     color: 'text-helpconfort-orange',
-    category: 'parc',
+    category: 'rh',
   },
   {
-    key: 'parc_mes_equipements',
-    moduleKey: 'parc',
-    optionKey: 'mes_equipements',
-    label: 'Mes Équipements',
+    key: 'rh_mon_materiel',
+    moduleKey: 'rh',
+    optionKey: 'mon_materiel',
+    label: 'Mon Matériel',
     shortDescription: 'Voir son matériel et équipements assignés',
     features: [
       'Consulter le matériel attribué',
@@ -147,8 +148,10 @@ const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     targetUsers: 'Techniciens et collaborateurs terrain',
     icon: <Wrench className="w-5 h-5" />,
     color: 'text-helpconfort-orange',
-    category: 'parc',
+    category: 'rh',
   },
+
+  // ===== PARC - Gestion admin =====
   {
     key: 'parc_vehicules',
     moduleKey: 'parc',
@@ -221,6 +224,74 @@ const PERMISSION_DEFINITIONS: PermissionDefinition[] = [
     ],
     targetUsers: 'Dirigeant, Responsable d\'agence',
     icon: <BarChart3 className="w-5 h-5" />,
+    color: 'text-emerald-500',
+    minRole: 'franchisee_admin',
+    category: 'pilotage',
+  },
+  {
+    key: 'pilotage_stats_hub',
+    moduleKey: 'pilotage_agence',
+    optionKey: 'stats_hub',
+    label: 'Stats Hub',
+    shortDescription: 'Tableaux de bord avancés',
+    features: [
+      'Analyses détaillées par technicien',
+      'Suivi CA par apporteur',
+      'Répartition par univers métier',
+    ],
+    targetUsers: 'Dirigeant, Responsable d\'agence',
+    icon: <BarChart3 className="w-5 h-5" />,
+    color: 'text-emerald-500',
+    minRole: 'franchisee_admin',
+    category: 'pilotage',
+  },
+  {
+    key: 'pilotage_carte_rdv',
+    moduleKey: 'pilotage_agence',
+    optionKey: 'carte_rdv',
+    label: 'Carte RDV',
+    shortDescription: 'Carte interactive des interventions',
+    features: [
+      'Visualiser les RDV sur une carte',
+      'Filtrer par technicien / date',
+      'Optimiser les tournées',
+    ],
+    targetUsers: 'Dirigeant, Responsable planning',
+    icon: <BarChart3 className="w-5 h-5" />,
+    color: 'text-emerald-500',
+    minRole: 'franchisee_user',
+    category: 'pilotage',
+  },
+  {
+    key: 'pilotage_mes_apporteurs',
+    moduleKey: 'pilotage_agence',
+    optionKey: 'mes_apporteurs',
+    label: 'Mes Apporteurs',
+    shortDescription: 'Consultation des apporteurs',
+    features: [
+      'Liste des apporteurs de l\'agence',
+      'Statistiques par apporteur',
+      'Contacts et coordonnées',
+    ],
+    targetUsers: 'Dirigeant, Commercial',
+    icon: <Building2 className="w-5 h-5" />,
+    color: 'text-emerald-500',
+    minRole: 'franchisee_admin',
+    category: 'pilotage',
+  },
+  {
+    key: 'pilotage_gestion_apporteurs',
+    moduleKey: 'pilotage_agence',
+    optionKey: 'gestion_apporteurs',
+    label: 'Gestion Apporteurs',
+    shortDescription: 'Créer et gérer les comptes apporteurs',
+    features: [
+      'Créer des comptes apporteurs',
+      'Modifier les informations',
+      'Gérer les accès portail',
+    ],
+    targetUsers: 'Dirigeant uniquement',
+    icon: <Building2 className="w-5 h-5" />,
     color: 'text-emerald-500',
     minRole: 'franchisee_admin',
     category: 'pilotage',
@@ -484,25 +555,26 @@ const CATEGORY_INFO: Record<string, { label: string; icon: React.ReactNode; desc
 };
 
 // Mapping rôle global → options RH autorisées
+// CORRECTION: mon_vehicule et mon_materiel sont sous rh (self-service)
 const RH_OPTIONS_BY_ROLE: Record<GlobalRole, string[]> = {
-  base_user: ['coffre', 'mon_planning'],
-  franchisee_user: ['coffre', 'mon_planning'],
-  franchisee_admin: ['coffre', 'mon_planning', 'rh_viewer', 'rh_admin'],
-  franchisor_user: ['coffre', 'mon_planning', 'rh_viewer', 'rh_admin'],
-  franchisor_admin: ['coffre', 'mon_planning', 'rh_viewer', 'rh_admin'],
-  platform_admin: ['coffre', 'mon_planning', 'rh_viewer', 'rh_admin'],
-  superadmin: ['coffre', 'mon_planning', 'rh_viewer', 'rh_admin'],
+  base_user: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel'],
+  franchisee_user: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel'],
+  franchisee_admin: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel', 'rh_viewer', 'rh_admin'],
+  franchisor_user: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel', 'rh_viewer', 'rh_admin'],
+  franchisor_admin: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel', 'rh_viewer', 'rh_admin'],
+  platform_admin: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel', 'rh_viewer', 'rh_admin'],
+  superadmin: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel', 'rh_viewer', 'rh_admin'],
 };
 
-// Mapping rôle global → options Parc autorisées
+// Mapping rôle global → options Parc autorisées (gestion admin seulement)
 const PARC_OPTIONS_BY_ROLE: Record<GlobalRole, string[]> = {
-  base_user: ['mon_vehicule', 'mes_equipements'],
-  franchisee_user: ['mon_vehicule', 'mes_equipements'],
-  franchisee_admin: ['mon_vehicule', 'mes_equipements', 'vehicules', 'equipements'],
-  franchisor_user: ['mon_vehicule', 'mes_equipements', 'vehicules', 'equipements'],
-  franchisor_admin: ['mon_vehicule', 'mes_equipements', 'vehicules', 'equipements'],
-  platform_admin: ['mon_vehicule', 'mes_equipements', 'vehicules', 'equipements'],
-  superadmin: ['mon_vehicule', 'mes_equipements', 'vehicules', 'equipements'],
+  base_user: [],
+  franchisee_user: [],
+  franchisee_admin: ['vehicules', 'equipements', 'epi'],
+  franchisor_user: ['vehicules', 'equipements', 'epi'],
+  franchisor_admin: ['vehicules', 'equipements', 'epi'],
+  platform_admin: ['vehicules', 'equipements', 'epi'],
+  superadmin: ['vehicules', 'equipements', 'epi'],
 };
 
 // Mapping rôle global → options Réseau autorisées (automatique N3+, redevances N4+)

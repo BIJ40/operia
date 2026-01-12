@@ -60,6 +60,7 @@ export const ROLE_HIERARCHY: Record<GlobalRole, number> = {
 // ============================================================================
 
 /** Rôle minimum requis pour activer chaque module */
+// NOTE: carte_rdv et apporteur_portal sont maintenant des sous-options de pilotage_agence
 export const MODULE_MIN_ROLES: Record<ModuleKey, GlobalRole> = {
   help_academy: 'base_user',
   pilotage_agence: 'franchisee_user',
@@ -70,8 +71,6 @@ export const MODULE_MIN_ROLES: Record<ModuleKey, GlobalRole> = {
   rh: 'base_user',  // Module accessible N0+ mais options différenciées
   parc: 'franchisee_user',
   unified_search: 'franchisee_user',
-  carte_rdv: 'franchisee_user',
-  apporteur_portal: 'franchisee_admin',
 };
 
 // ============================================================================
@@ -107,7 +106,16 @@ export const MODULE_OPTION_MIN_ROLES: Record<string, GlobalRole> = {
   
   // Pilotage Agence
   'pilotage_agence.kpis': 'franchisee_user',
+  'pilotage_agence.indicateurs': 'franchisee_user',
+  'pilotage_agence.stats_hub': 'franchisee_user',
+  'pilotage_agence.actions_a_mener': 'franchisee_user',
   'pilotage_agence.diffusion': 'franchisee_user',
+  'pilotage_agence.exports': 'franchisee_user',
+  'pilotage_agence.veille_apporteurs': 'franchisee_user',
+  // Ex-modules racines intégrés comme sous-options de pilotage
+  'pilotage_agence.carte_rdv': 'franchisee_user',
+  'pilotage_agence.mes_apporteurs': 'franchisee_admin',
+  'pilotage_agence.gestion_apporteurs': 'franchisee_admin',
   
   // Admin
   'admin_plateforme.users': 'platform_admin',
@@ -118,6 +126,7 @@ export const MODULE_OPTION_MIN_ROLES: Record<string, GlobalRole> = {
 // RÈGLE 7: LABELS POUR L'UI
 // ============================================================================
 
+// NOTE: carte_rdv et apporteur_portal sont maintenant des sous-options de pilotage_agence
 export const MODULE_LABELS: Record<ModuleKey, string> = {
   help_academy: 'Help! Academy',
   pilotage_agence: 'Pilotage Agence',
@@ -128,6 +137,4 @@ export const MODULE_LABELS: Record<ModuleKey, string> = {
   rh: 'RH',
   parc: 'Parc',
   unified_search: 'Recherche unifiée',
-  carte_rdv: 'Carte RDV',
-  apporteur_portal: 'Portail Apporteurs',
 };
