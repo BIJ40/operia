@@ -24,6 +24,15 @@ interface HiddenFeature {
 // Liste centralisée des fonctionnalités masquées
 const HIDDEN_FEATURES: HiddenFeature[] = [
   {
+    id: 'veille-apporteurs',
+    name: 'Veille Apporteurs',
+    description: 'Radar de surveillance des apporteurs d\'affaires : dormants, en déclin, sous-seuil CA.',
+    module: 'Pilotage Agence',
+    hiddenRoutes: ['/hc-agency/veille-apporteurs'],
+    reason: 'Fonctionnalité en cours de finalisation - engine StatIA opérationnel mais UI non stabilisée.',
+    priority: 'medium',
+  },
+  {
     id: 'pointage-technicien',
     name: 'Pointage Technicien',
     description: 'Système de pointage quotidien pour les techniciens (début/fin de journée, pauses)',
