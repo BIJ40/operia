@@ -25,13 +25,14 @@ const pilotageModules: PilotageModule[] = [
     icon: BarChart3,
     href: ROUTES.agency.statsHub,
   },
-  {
-    id: 'veille_apporteurs',
-    title: 'Veille Apporteurs',
-    description: 'Suivi performance et alertes apporteurs',
-    icon: Radar,
-    href: ROUTES.agency.veilleApporteurs,
-  },
+  // HIDDEN: Veille Apporteurs - temporairement désactivé (voir /admin/hidden-features)
+  // {
+  //   id: 'veille_apporteurs',
+  //   title: 'Veille Apporteurs',
+  //   description: 'Suivi performance et alertes apporteurs',
+  //   icon: Radar,
+  //   href: ROUTES.agency.veilleApporteurs,
+  // },
   {
     id: 'carte_rdv',
     title: 'Carte RDV',
