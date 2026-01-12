@@ -1,12 +1,13 @@
-import { BarChart3, ListTodo, Tv, Radar, Building2, ChevronDown, MapPin } from 'lucide-react';
+import { BarChart3, ListTodo, Tv, Radar, Building2, ChevronDown, MapPin, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { AgencyInfoTile } from '@/components/pilotage/AgencyInfoTile';
 import { useAuth } from '@/contexts/AuthContext';
 import { memo, useState, useEffect } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { AnimatedTileIcon } from '@/components/pilotage/AnimatedTileIcon';
+import { AnimatedInfoIcon } from '@/components/pilotage/animated-icons';
 
 interface PilotageModule {
   id: string;
@@ -110,72 +111,10 @@ export default function PilotageIndex() {
       </div>
 
       {/* Informations de l'agence - section collapsible */}
-      <section className="group/section">
-        <div
-          onClick={() => setIsAgencyInfoOpen(!isAgencyInfoOpen)}
-          className={cn(
-            "w-full flex items-center justify-between cursor-pointer",
-            "min-h-[72px] py-4 px-5 -mx-1 rounded-2xl",
-            "border border-transparent",
-            "bg-gradient-to-r from-muted/50 via-background to-muted/30",
-            "hover:border-border hover:from-muted/80 hover:via-background hover:to-muted/50",
-            "hover:shadow-md",
-            "transition-all duration-300"
-          )}
-        >
-          <div className="flex items-center gap-4">
-            <div className={cn(
-              "w-14 h-14 rounded-xl flex items-center justify-center",
-              "bg-gradient-to-br from-helpconfort-blue/15 to-helpconfort-blue/5",
-              "border border-helpconfort-blue/20",
-              "transition-all duration-300"
-            )}>
-              <Building2 className="w-7 h-7 text-helpconfort-blue" />
-            </div>
-            <h2 className="text-xl font-bold text-foreground tracking-tight">
-              Informations de l'agence
-            </h2>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className={cn(
-              "hidden sm:block w-16 h-1 rounded-full",
-              "bg-gradient-to-r from-helpconfort-blue/40 to-helpconfort-blue/10",
-              "group-hover/section:from-helpconfort-blue/60 group-hover/section:to-helpconfort-blue/20",
-              "transition-all duration-300"
-            )} />
-            <div className={cn(
-              "w-10 h-10 rounded-xl flex items-center justify-center",
-              "bg-muted/80 border border-border/50",
-              "transition-all duration-300"
-            )}>
-              <ChevronDown 
-                className={cn(
-                  "w-5 h-5 text-muted-foreground",
-                  "transition-all duration-300",
-                  isAgencyInfoOpen && "rotate-180"
-                )} 
-              />
-            </div>
-          </div>
-        </div>
-        
-        <div
-          className={cn(
-            "grid transition-all duration-300 ease-out",
-            isAgencyInfoOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-          )}
-        >
-          <div className="overflow-hidden">
-            <div className={cn(
-              "pt-5 pb-2",
-              "transition-transform duration-300 ease-out",
-              isAgencyInfoOpen ? "translate-y-0" : "-translate-y-2"
-            )}>
-              <AgencyInfoTile hideHeader />
-            </div>
-          </div>
-        </div>
-      </section>
+      <AgencyInfoSection 
+        isOpen={isAgencyInfoOpen} 
+        onToggle={() => setIsAgencyInfoOpen(!isAgencyInfoOpen)} 
+      />
     </div>
   );
 }
@@ -193,19 +132,27 @@ const PilotageTileCard = memo(function PilotageTileCard({
   isAdmin,
   isClickable = true 
 }: PilotageTileCardProps) {
+  const [isHovered, setIsHovered] = useState(false);
   const Icon = module.icon;
   const isDisabled = module.badge === 'Bientôt' && !isAdmin;
+  
+  // Check if this module has an animated icon
+  const hasAnimatedIcon = ['stats_hub', 'carte_rdv', 'diffusion', 'actions', 'mes_apporteurs'].includes(module.id);
 
   const content = (
-    <div className={`
-      group relative rounded-xl border border-helpconfort-blue/15 p-4
-      bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-background to-background
-      shadow-sm transition-all duration-300 border-l-4 border-l-helpconfort-blue
-      ${isDisabled 
-        ? 'opacity-50 cursor-not-allowed' 
-        : 'cursor-pointer hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5'
-      }
-    `}>
+    <div 
+      className={`
+        group relative rounded-xl border border-helpconfort-blue/15 p-4
+        bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-background to-background
+        shadow-sm transition-all duration-300 border-l-4 border-l-helpconfort-blue
+        ${isDisabled 
+          ? 'opacity-50 cursor-not-allowed' 
+          : 'cursor-pointer hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5'
+        }
+      `}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {badge && (
         <span className={`absolute top-2 right-2 text-xs font-bold px-2 py-0.5 rounded-full z-10 ${
           typeof badge === 'number' 
@@ -216,9 +163,18 @@ const PilotageTileCard = memo(function PilotageTileCard({
         </span>
       )}
       <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-full border-2 border-helpconfort-blue/30 flex-shrink-0 flex items-center justify-center bg-helpconfort-blue/10
+        <div className={`w-10 h-10 rounded-full border-2 border-helpconfort-blue/30 flex-shrink-0 flex items-center justify-center bg-helpconfort-blue/10 overflow-visible
           ${!isDisabled && 'group-hover:border-helpconfort-blue'} transition-all`}>
-          <Icon className="w-5 h-5 text-helpconfort-blue" />
+          {hasAnimatedIcon ? (
+            <AnimatedTileIcon 
+              iconId={module.id} 
+              isHovered={isHovered} 
+              size={20} 
+              className="text-helpconfort-blue"
+            />
+          ) : (
+            <Icon className="w-5 h-5 text-helpconfort-blue" />
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-base font-semibold text-foreground truncate">{module.title}</p>
@@ -234,4 +190,85 @@ const PilotageTileCard = memo(function PilotageTileCard({
   }
 
   return <Link to={module.href}>{content}</Link>;
+});
+
+// Agency Info Section with animated icon
+interface AgencyInfoSectionProps {
+  isOpen: boolean;
+  onToggle: () => void;
+}
+
+const AgencyInfoSection = memo(function AgencyInfoSection({ isOpen, onToggle }: AgencyInfoSectionProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <section className="group/section">
+      <div
+        onClick={onToggle}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className={cn(
+          "w-full flex items-center justify-between cursor-pointer",
+          "min-h-[72px] py-4 px-5 -mx-1 rounded-2xl",
+          "border border-transparent",
+          "bg-gradient-to-r from-muted/50 via-background to-muted/30",
+          "hover:border-border hover:from-muted/80 hover:via-background hover:to-muted/50",
+          "hover:shadow-md",
+          "transition-all duration-300"
+        )}
+      >
+        <div className="flex items-center gap-4">
+          <div className={cn(
+            "w-14 h-14 rounded-xl flex items-center justify-center",
+            "bg-gradient-to-br from-helpconfort-blue/15 to-helpconfort-blue/5",
+            "border border-helpconfort-blue/20",
+            "transition-all duration-300"
+          )}>
+            <AnimatedInfoIcon isHovered={isHovered} size={28} />
+          </div>
+          <h2 className="text-xl font-bold text-foreground tracking-tight">
+            Informations de l'agence
+          </h2>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className={cn(
+            "hidden sm:block w-16 h-1 rounded-full",
+            "bg-gradient-to-r from-helpconfort-blue/40 to-helpconfort-blue/10",
+            "group-hover/section:from-helpconfort-blue/60 group-hover/section:to-helpconfort-blue/20",
+            "transition-all duration-300"
+          )} />
+          <div className={cn(
+            "w-10 h-10 rounded-xl flex items-center justify-center",
+            "bg-muted/80 border border-border/50",
+            "transition-all duration-300"
+          )}>
+            <ChevronDown 
+              className={cn(
+                "w-5 h-5 text-muted-foreground",
+                "transition-all duration-300",
+                isOpen && "rotate-180"
+              )} 
+            />
+          </div>
+        </div>
+      </div>
+      
+      <div
+        className={cn(
+          "grid transition-all duration-300 ease-out",
+          isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+        )}
+      >
+        <div className="overflow-hidden">
+          <div className={cn(
+            "pt-5 pb-2",
+            "transition-transform duration-300 ease-out",
+            isOpen ? "translate-y-0" : "-translate-y-2"
+          )}>
+            <AgencyInfoTile hideHeader />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 });
