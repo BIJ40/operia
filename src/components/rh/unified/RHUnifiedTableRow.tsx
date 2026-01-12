@@ -402,10 +402,16 @@ export function RHUnifiedTableRow({
         />
       </TableCell>
 
-      {/* Colonnes fixes */}
+      {/* Colonnes fixes - Nom cliquable pour accéder au profil */}
       <TableCell className="font-medium min-w-[100px] w-[100px] bg-muted/10">
         <div className="flex items-center gap-1.5">
-          <span className="truncate">{collaborator.last_name}</span>
+          <button
+            onClick={() => navigate(`/rh/suivi/${collaborator.id}`)}
+            className="truncate text-left hover:text-primary hover:underline transition-colors font-medium"
+            title="Voir le profil complet"
+          >
+            {collaborator.last_name}
+          </button>
           {collaborator.leaving_date && (
             <Badge variant="outline" className="text-[10px] px-1 py-0 text-muted-foreground border-muted-foreground/50">
               Parti
@@ -413,7 +419,15 @@ export function RHUnifiedTableRow({
           )}
         </div>
       </TableCell>
-      <TableCell className="min-w-[100px] w-[100px] bg-muted/10">{collaborator.first_name}</TableCell>
+      <TableCell className="min-w-[100px] w-[100px] bg-muted/10">
+        <button
+          onClick={() => navigate(`/rh/suivi/${collaborator.id}`)}
+          className="truncate text-left hover:text-primary hover:underline transition-colors"
+          title="Voir le profil complet"
+        >
+          {collaborator.first_name}
+        </button>
+      </TableCell>
 
       {/* Colonnes de l'onglet actif - ÉDITABLES */}
       {visibleGroups.map((group) => (
