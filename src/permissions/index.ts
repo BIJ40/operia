@@ -50,3 +50,27 @@ export {
   isModuleEnabled,
   isModuleOptionEnabled,
 } from './permissionsEngine';
+
+// Module Registry (Canon unique - COMMIT 2)
+export {
+  getAllModules,
+  getModule,
+  getModuleOptions,
+  isValidOptionPath,
+  isValidModuleKey,
+  getValidModuleKeys,
+  getValidOptionKeys,
+  validateModuleDefinitions,
+  logValidationIssues,
+  // Protection apogee_tickets (COMMIT 1)
+  PROTECTED_MODULES,
+  isProtectedModule,
+  hasProjectManagementAccess,
+  hasKanbanAccess,
+  // Compat mode (COMMIT 5)
+  COMPAT_MODE_OPTIONS,
+  hasAccessWithCompat,
+} from './moduleRegistry';
+
+// Dev Validator (COMMIT 2)
+export { runDevValidation } from './devValidator';
