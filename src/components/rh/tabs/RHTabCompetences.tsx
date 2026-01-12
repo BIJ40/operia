@@ -55,9 +55,20 @@ export function RHTabCompetences({ collaborator }: Props) {
   const [newCompetenceLabel, setNewCompetenceLabel] = useState('');
 
   const handleSave = () => {
+    // Convert empty strings to null for date fields
+    const sanitizedData = {
+      ...form,
+      habilitation_electrique_date: form.habilitation_electrique_date || null,
+      caces: form.caces.map(c => ({
+        ...c,
+        date: c.date || null,
+        expiration: c.expiration || null,
+      })),
+    };
+    
     updateComp.mutate({
       collaboratorId: collaborator.id,
-      data: form,
+      data: sanitizedData,
     });
   };
 
