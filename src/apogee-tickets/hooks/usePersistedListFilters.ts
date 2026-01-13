@@ -29,10 +29,10 @@ function normalizeFilters(input: TicketFilters): TicketFilters {
 export function usePersistedListFilters() {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Initialize filters from localStorage (fallback to old key for backward compat)
+  // Initialize filters from localStorage (only use own key, no fallback to avoid restoring cleared filters)
   const [filters, setFilters] = useState<TicketFilters>(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(FALLBACK_KEY);
+      const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
         return { ...DEFAULT_FILTERS, ...parsed };
