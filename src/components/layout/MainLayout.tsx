@@ -5,7 +5,7 @@ import { PublicLanding } from './PublicLanding';
 import { LoginDialog } from '@/components/LoginDialog';
 import { ImageModal } from '@/components/ImageModal';
 import { AiUnifiedProvider } from '@/components/ai';
-import { RHLoginNotificationPopup } from '@/components/rh/RHLoginNotificationPopup';
+// REMOVED: RHLoginNotificationPopup - No auto-popup policy (see NO_POPUP_POLICY.md)
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useStorageQuota } from '@/hooks/use-storage-quota';
@@ -75,7 +75,7 @@ export function MainLayout({
 
       <ImageModal />
       <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
-      <RHLoginNotificationPopup />
+      {/* REMOVED: RHLoginNotificationPopup - No auto-popup policy */}
     </AiUnifiedProvider>
   );
 }

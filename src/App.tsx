@@ -34,7 +34,7 @@ import { LiveSupportProvider } from "./contexts/LiveSupportContext";
 import { ChangePasswordDialog } from "./components/ChangePasswordDialog";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { GlobalErrorBoundary } from "./components/system/GlobalErrorBoundary";
-import { AnnouncementGate } from "./components/announcements/AnnouncementGate";
+// REMOVED: AnnouncementGate - No auto-popup policy (see NO_POPUP_POLICY.md)
 import { N1Redirect } from "./components/auth/N1Redirect";
 
 // Route modules
@@ -92,8 +92,7 @@ function AppContent() {
 
   return (
     <>
-      {/* Annonces prioritaires */}
-      {!isAuthLoading && user && <AnnouncementGate userId={user.id} />}
+      {/* REMOVED: AnnouncementGate - No auto-popup policy */}
       
       <Suspense fallback={<PageLoader />}>
         <Routes>
