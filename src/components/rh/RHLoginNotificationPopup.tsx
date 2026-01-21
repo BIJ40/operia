@@ -89,17 +89,10 @@ export function RHLoginNotificationPopup() {
             (newNotif.notification_type === 'REQUEST_COMPLETED' || newNotif.notification_type === 'REQUEST_REJECTED');
 
           if (isForRH || isForEmployee) {
-            // Invalider la query et afficher immédiatement la popup
+            // DISABLED: No auto-popup policy - just invalidate queries for badge update
             queryClient.invalidateQueries({ queryKey: ['rh-login-notifications'] });
-            setNotification({
-              id: newNotif.id,
-              notification_type: newNotif.notification_type,
-              title: newNotif.title,
-              message: newNotif.message,
-              related_request_id: newNotif.related_request_id ?? null,
-              created_at: newNotif.created_at,
-            });
-            setOpen(true);
+            queryClient.invalidateQueries({ queryKey: ['rh-notifications-count'] });
+            // Auto-open disabled - see docs/NO_POPUP_POLICY.md
           }
         }
       )
@@ -127,13 +120,14 @@ export function RHLoginNotificationPopup() {
     },
   });
 
-  // Show popup when unread notification found (au login / refresh)
-  useEffect(() => {
-    if (unreadNotifications && unreadNotifications.length > 0) {
-      setNotification(unreadNotifications[0]);
-      setOpen(true);
-    }
-  }, [unreadNotifications]);
+  // DISABLED: No auto-popup policy - see docs/NO_POPUP_POLICY.md
+  // Notifications are available via RHNotificationBadge in header instead
+  // useEffect(() => {
+  //   if (unreadNotifications && unreadNotifications.length > 0) {
+  //     setNotification(unreadNotifications[0]);
+  //     setOpen(true);
+  //   }
+  // }, [unreadNotifications]);
 
   const handleView = async () => {
     if (notification) {
