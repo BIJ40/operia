@@ -10,8 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { getFilteredContexts } from '@/lib/rag-michu';
-import { SupportChatCore } from '@/components/support/SupportChatCore';
+import { SimplifiedSupportChat } from '@/components/support/SimplifiedSupportChat';
 import { CreateSupportTicketDialog } from '@/components/support/CreateSupportTicketDialog';
 import { TicketDetailPanel } from '@/components/support/TicketDetailPanel';
 import { ServiceBadge } from '@/components/tickets/ServiceBadge';
@@ -32,16 +31,13 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 export default function SupportIndex() {
-  const { canAccessSupportConsoleUI, globalRole } = useAuth();
+  const { canAccessSupportConsoleUI } = useAuth();
   const navigate = useNavigate();
   const { tickets, isLoading: ticketsLoading, loadTickets, setSelectedTicket } = useUserTickets();
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedTicketView, setSelectedTicketView] = useState<Ticket | null>(null);
-
-  // Get allowed RAG contexts based on user role
-  const allowedContexts = getFilteredContexts(globalRole || 'base_user');
-
+  
   const hasUnreadTickets = tickets.some(t => t.unreadCount && t.unreadCount > 0);
 
   const handleTicketCreated = (ticketId: string) => {
@@ -154,7 +150,7 @@ export default function SupportIndex() {
           </CardContent>
         </Card>
 
-        {/* Column 2: Chat IA */}
+        {/* Column 2: Chat IA V3 */}
         <Card className="lg:col-span-1 flex flex-col border-l-4 border-l-helpconfort-orange min-h-[520px]">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -162,14 +158,13 @@ export default function SupportIndex() {
               Chat IA
             </CardTitle>
             <p className="text-xs text-muted-foreground">
-              Posez vos questions, l'IA vous répond instantanément
+              Répondez aux questions, puis posez votre question
             </p>
           </CardHeader>
           <CardContent className="flex-1 p-0 overflow-hidden">
-            <SupportChatCore
-              initialContext={allowedContexts[0] || 'apogee'}
+            <SimplifiedSupportChat
               onTicketCreated={handleTicketCreated}
-              showFAQSuggestions={false}
+              onChatClosed={() => {}}
               className="h-full max-h-[420px]"
             />
           </CardContent>
