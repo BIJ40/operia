@@ -84,8 +84,8 @@ export function CreateTicketDialog({
     roadmap_year: undefined,
   });
   
-  // État local pour le slider owner_side (valeur numérique 0-5)
-  const [ownerSliderValue, setOwnerSliderValue] = useState(0);
+  // État local pour le slider owner_side (valeur numérique 0-5, undefined = pas de porteur défini)
+  const [ownerSliderValue, setOwnerSliderValue] = useState<number | undefined>(undefined);
 
   // Charger le prénom de l'utilisateur
   useEffect(() => {
@@ -203,7 +203,7 @@ export function CreateTicketDialog({
         roadmap_month: undefined,
         roadmap_year: undefined,
       });
-      setOwnerSliderValue(0);
+      setOwnerSliderValue(undefined);
       setPendingFiles([]);
       onClose();
     } catch (error) {
@@ -353,9 +353,9 @@ export function CreateTicketDialog({
             <Label>Porteur du projet</Label>
             <div className="p-3 bg-muted/30 rounded-lg">
               <OwnerSideSlider
-                value={ownerSliderValue}
+                value={ownerSliderValue ?? null}
                 onChange={(v) => {
-                  setOwnerSliderValue(v);
+                  setOwnerSliderValue(v ?? undefined);
                   // Convertir la valeur slider en OwnerSide pour le form
                   const ownerSide = sliderValueToOwnerSide(v);
                   setForm(prev => ({ ...prev, owner_side: ownerSide as OwnerSide | undefined }));
