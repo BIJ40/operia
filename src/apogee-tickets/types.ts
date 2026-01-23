@@ -111,6 +111,10 @@ export interface ApogeeTicket {
   support_initiator_user_id: string | null;
   // Tags
   impact_tags: string[] | null;
+  // Roadmap
+  roadmap_enabled: boolean | null;
+  roadmap_month: number | null;
+  roadmap_year: number | null;
   // Relations
   apogee_modules?: ApogeeModule;
   apogee_priorities?: ApogeePriority;
@@ -159,6 +163,10 @@ export interface ApogeeTicketInsert {
   reported_by?: string | null;
   is_qualified?: boolean;
   impact_tags?: string[] | null;
+  // Roadmap
+  roadmap_enabled?: boolean;
+  roadmap_month?: number | null;
+  roadmap_year?: number | null;
 }
 
 export interface ApogeeTicketCommentInsert {
@@ -228,6 +236,9 @@ export interface TicketFilters {
   missing_field?: MissingFieldFilter; // Filtre sur complétude des champs
   tags?: string[]; // Filtre par tags
   origins?: ReportedBy[]; // Filtre multi-origines
+  
+  // Filtres Roadmap
+  roadmap_only?: boolean; // Afficher uniquement les tickets roadmap
 }
 
 // Duplicate detection types

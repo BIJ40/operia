@@ -65,6 +65,7 @@ import { TicketTimelineTab } from './TicketTimelineTab';
 import { errorToast } from '@/lib/toastHelpers';
 import { TagSelector } from './TagSelector';
 import { TicketDuplicatesSection } from './TicketDuplicatesSection';
+import { RoadmapEditor } from './RoadmapEditor';
 import type { ApogeeTicket, ApogeeModule, ApogeePriority, ApogeeTicketStatus, AuthorType, ReportedBy } from '../types';
 
 interface TicketDetailDrawerProps {
@@ -740,6 +741,29 @@ export function TicketDetailDrawer({
                     <TagSelector
                       selectedTags={ticket.impact_tags || []}
                       onTagsChange={(tags) => handleFieldUpdate('impact_tags', tags)}
+                      disabled={!canManage}
+                    />
+                  </div>
+                </div>
+
+                {/* ROADMAP */}
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Roadmap
+                  </label>
+                  <div className="mt-2">
+                    <RoadmapEditor
+                      enabled={ticket.roadmap_enabled}
+                      month={ticket.roadmap_month}
+                      year={ticket.roadmap_year}
+                      onChange={(enabled, month, year) => {
+                        onUpdate({
+                          id: ticket.id,
+                          roadmap_enabled: enabled,
+                          roadmap_month: month,
+                          roadmap_year: year,
+                        });
+                      }}
                       disabled={!canManage}
                     />
                   </div>

@@ -82,6 +82,7 @@ export const COLUMNS: ColumnDef[] = [
   { key: 'actions', label: 'Origine', sortable: false, minWidth: 80, defaultWidth: 100, id: 'origine' },
   { key: 'actions', label: 'Est.', sortable: false, minWidth: 50, defaultWidth: 60, id: 'estimation' },
   { key: 'actions', label: 'Qualif.', sortable: false, minWidth: 60, defaultWidth: 70, id: 'qualif' },
+  { key: 'actions', label: 'Roadmap', sortable: false, minWidth: 70, defaultWidth: 90, id: 'roadmap' },
   { key: 'created_at', label: 'Créé', sortable: true, minWidth: 70, defaultWidth: 80, id: 'created' },
   { key: 'last_modified_at', label: 'Modifié', sortable: true, minWidth: 70, defaultWidth: 85, id: 'modified' },
   { key: 'actions', label: 'Actions', sortable: false, minWidth: 70, defaultWidth: 80, id: 'actions' },

@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { HeatPriorityBadge } from './HeatPriorityBadge';
+import { RoadmapBadge } from './RoadmapEditor';
 import type { ApogeeTicket, ApogeeModule, ApogeeTicketStatus, OwnerSide, ReportedBy } from '../types';
 import type { TicketRoleInfo } from '../hooks/useTicketPermissions';
 
@@ -324,25 +325,39 @@ export function TicketTableRow({
         </TableCell>
       )}
 
-      {/* Créé le - Index 10 */}
+      {/* Roadmap - Index 10 */}
       {isVisible(10) && (
-        <TableCell className="text-xs text-muted-foreground whitespace-nowrap overflow-hidden" style={cellStyle(10)}>
+        <TableCell className="text-center overflow-hidden" style={cellStyle(10)}>
+          <RoadmapBadge
+            enabled={ticket.roadmap_enabled}
+            month={ticket.roadmap_month}
+            year={ticket.roadmap_year}
+          />
+          {!ticket.roadmap_enabled && (
+            <span className="text-xs text-muted-foreground">—</span>
+          )}
+        </TableCell>
+      )}
+
+      {/* Créé le - Index 11 */}
+      {isVisible(11) && (
+        <TableCell className="text-xs text-muted-foreground whitespace-nowrap overflow-hidden" style={cellStyle(11)}>
           {format(new Date(ticket.created_at), 'dd/MM/yy', { locale: fr })}
         </TableCell>
       )}
 
-      {/* Modifié le - Index 11 */}
-      {isVisible(11) && (
-        <TableCell className="text-xs text-muted-foreground whitespace-nowrap overflow-hidden" style={cellStyle(11)}>
+      {/* Modifié le - Index 12 */}
+      {isVisible(12) && (
+        <TableCell className="text-xs text-muted-foreground whitespace-nowrap overflow-hidden" style={cellStyle(12)}>
           {ticket.last_modified_at 
             ? format(new Date(ticket.last_modified_at), 'dd/MM/yy', { locale: fr })
             : '—'}
         </TableCell>
       )}
 
-      {/* Actions - Index 12 */}
-      {isVisible(12) && (
-        <TableCell style={cellStyle(12)}>
+      {/* Actions - Index 13 */}
+      {isVisible(13) && (
+        <TableCell style={cellStyle(13)}>
           <div className="flex items-center gap-1">
             <Tooltip>
               <TooltipTrigger asChild>

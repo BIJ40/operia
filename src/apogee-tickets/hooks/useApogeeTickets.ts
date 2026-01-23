@@ -263,6 +263,11 @@ export function useApogeeTickets(filters?: TicketFilters) {
          query = query.eq('is_qualified', filters.is_qualified);
        }
 
+       // Filtre Roadmap
+       if (filters?.roadmap_only) {
+         query = query.eq('roadmap_enabled', true);
+       }
+
        // Priorité (exact ou range)
        if (filters?.heat_priority_exact !== undefined) {
          query = query.eq('heat_priority', filters.heat_priority_exact);
