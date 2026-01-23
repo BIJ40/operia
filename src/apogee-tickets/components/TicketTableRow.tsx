@@ -68,6 +68,16 @@ export function TicketTableRow({
 }: TicketTableRowProps) {
   const { canManage, ticketRole, isPlatformAdmin } = roleInfo;
   
+  // Vérifier si le ticket est un BUG créé il y a plus de 48h
+  const isBugOver48h = (() => {
+    const hasBugTag = ticket.impact_tags?.includes('BUG');
+    if (!hasBugTag) return false;
+    const createdAt = new Date(ticket.created_at);
+    const now = new Date();
+    const hoursDiff = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+    return hoursDiff > 48;
+  })();
+  
   // Permissions spécifiques - canManage requis pour toute modification
   const canEditStatus = canManage && (allowedTransitions.length > 0 || isPlatformAdmin);
   const canEditModule = canManage;
@@ -115,7 +125,9 @@ export function TicketTableRow({
       {/* Priorité - Index 1 */}
       {isVisible(1) && (
         <TableCell className={cn("overflow-hidden", !canEditPriority && disabledCellClass)} style={cellStyle(1)}>
-          <HeatPriorityBadge priority={ticket.heat_priority} size="sm" showLabel={false} />
+          <div className={cn(isBugOver48h && "animate-pulse-subtle")}>
+            <HeatPriorityBadge priority={ticket.heat_priority} size="sm" showLabel={false} />
+          </div>
         </TableCell>
       )}
 
