@@ -84,22 +84,6 @@ export function TicketFilters({
     <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
       {/* Ligne 1: Filtres principaux + PEC + Nouveaux messages */}
       <div className="flex flex-wrap items-center gap-3">
-        {/* Recherche */}
-        <div className="relative w-[180px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher..."
-            value={filters.search || ''}
-            onChange={(e) => updateFilter('search', e.target.value)}
-            className="pl-9"
-          />
-          {hasSearchAndFilters && (
-            <p className="absolute -bottom-5 left-0 text-[11px] text-destructive">
-              ⚠ {filterWarningText}
-            </p>
-          )}
-        </div>
-
         {/* Module - multi-select avec checkboxes */}
         <Popover>
           <PopoverTrigger asChild>
