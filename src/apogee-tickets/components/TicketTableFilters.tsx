@@ -138,6 +138,16 @@ export function TicketTableFilters({
     });
   };
 
+  const handleSelectAllStatuses = () => {
+    const allSelected = selectedStatuses.length === statuses.length;
+    const newStatuses = allSelected ? [] : statuses.map((s) => s.id);
+    setSelectedStatuses(newStatuses);
+    onFiltersChange({
+      ...filters,
+      kanban_statuses: newStatuses.length > 0 ? newStatuses : undefined,
+    });
+  };
+
   const handleHeatRangeChange = (values: number[]) => {
     setHeatRange([values[0], values[1]]);
   };
@@ -301,7 +311,17 @@ export function TicketTableFilters({
           </PopoverTrigger>
           <PopoverContent className="w-72 bg-background z-50" align="start">
             <div className="space-y-2">
-              <div className="text-sm font-medium">Statuts</div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Statuts</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 text-xs px-2"
+                  onClick={handleSelectAllStatuses}
+                >
+                  {selectedStatuses.length === statuses.length ? 'Tout décocher' : 'Tout cocher'}
+                </Button>
+              </div>
               <div className="space-y-1 max-h-[240px] overflow-auto">
                 {statuses.map((status) => (
                   <label
