@@ -11,7 +11,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, ArrowRight, MessageSquare, Edit, Plus, Clock } from 'lucide-react';
+import { Loader2, ArrowRight, MessageSquare, Edit, Plus, Clock, User } from 'lucide-react';
 import type { ApogeeTicket, ApogeeTicketStatus, ApogeeModule } from '../types';
 
 interface RecentChangesSheetProps {
@@ -59,6 +59,11 @@ const ACTION_CONFIG: Record<string, { icon: React.ReactNode; label: string; colo
     icon: <Plus className="h-3 w-3" />, 
     label: 'Création',
     color: 'bg-purple-100 text-purple-700'
+  },
+  viewed_by_support: { 
+    icon: <User className="h-3 w-3" />, 
+    label: 'Vu par le support',
+    color: 'bg-cyan-100 text-cyan-700'
   },
 };
 
