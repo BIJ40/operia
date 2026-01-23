@@ -92,7 +92,8 @@ const REQUIRED_COLUMN_IDS = ['ref', 'title', 'actions'];
 
 function loadTableUIState(): PersistedTableUIState {
   try {
-    const raw = sessionStorage.getItem(TABLE_UI_STATE_KEY);
+    // Utiliser localStorage pour persister durablement les préférences utilisateur
+    const raw = localStorage.getItem(TABLE_UI_STATE_KEY);
     if (!raw) return {};
     const parsed = JSON.parse(raw) as PersistedTableUIState;
 
@@ -121,7 +122,7 @@ function loadTableUIState(): PersistedTableUIState {
         Math.max(w, COLUMNS[idx].minWidth)
       );
     } else {
-      sessionStorage.removeItem(TABLE_UI_STATE_KEY);
+      localStorage.removeItem(TABLE_UI_STATE_KEY);
       columnWidths = undefined;
     }
 
@@ -212,11 +213,11 @@ export function TicketTable({
     );
   }, []);
 
-  // Persister tri / colonnes / taille de page tant que l'onglet navigateur reste ouvert
+  // Persister tri / colonnes / taille de page durablement via localStorage
   useEffect(() => {
     try {
       const payload: PersistedTableUIState = { sortColumn, sortDirection, pageSize, columnWidths, hiddenColumns };
-      sessionStorage.setItem(TABLE_UI_STATE_KEY, JSON.stringify(payload));
+      localStorage.setItem(TABLE_UI_STATE_KEY, JSON.stringify(payload));
     } catch {
       // ignore
     }
@@ -488,9 +489,9 @@ export function TicketTable({
         </div>
       </div>
 
-      {/* Table avec colonnes redimensionnables */}
-      <div className="rounded-md border overflow-auto">
-        <Table style={{ tableLayout: 'fixed', width: visibleColumnIndices.reduce((sum, idx) => sum + columnWidths[idx], 0) }}>
+      {/* Table avec colonnes redimensionnables et scroll horizontal */}
+      <div className="rounded-md border overflow-x-auto">
+        <Table style={{ tableLayout: 'fixed', minWidth: visibleColumnIndices.reduce((sum, idx) => sum + columnWidths[idx], 0) }}>
           <TableHeader>
             <TableRow className="bg-muted/50">
               {visibleColumnIndices.map((colIdx) => {
