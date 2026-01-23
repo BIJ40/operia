@@ -26,6 +26,7 @@ import { InlineFile } from '@/extensions/InlineFile';
 import { getAllMentionSuggestions, navigateToMention, MentionSuggestion } from '@/lib/mentions';
 import { useEditor as useEditorContext } from '@/contexts/EditorContext';
 import { logError } from '@/lib/logger';
+import { toast } from 'sonner';
 import 'tippy.js/dist/tippy.css';
 
 interface RichTextEditorProps {
@@ -151,7 +152,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
     try {
       // Vérifier la longueur de l'URL
       if (imageUrl.length > 10000000) { // 10MB en base64
-        alert("L'image est trop volumineuse pour être insérée. Veuillez choisir une image plus petite.");
+        toast.error("L'image est trop volumineuse pour être insérée. Veuillez choisir une image plus petite.");
         return;
       }
 
@@ -172,7 +173,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
       setShowImageDialog(false);
     } catch (error) {
       logError('RICH_TEXT_EDITOR', 'Erreur insertion image', { error });
-      alert("Erreur lors de l'insertion de l'image. L'image est peut-être trop volumineuse.");
+      toast.error("Erreur lors de l'insertion de l'image. L'image est peut-être trop volumineuse.");
     }
   };
 
@@ -183,7 +184,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
     // Vérifier la taille (limite à 5MB)
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      alert('Image trop volumineuse. Veuillez choisir une image de moins de 5 MB.');
+      toast.error('Image trop volumineuse. Veuillez choisir une image de moins de 5 MB.');
       e.target.value = '';
       return;
     }
@@ -215,7 +216,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         if (!ctx) {
-          alert('Erreur lors du traitement de l\'image');
+          toast.error('Erreur lors du traitement de l\'image');
           return;
         }
         
@@ -227,7 +228,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
         
         // Vérifier la taille du data URL final (limite à 2MB en base64)
         if (compressedDataUrl.length > 2000000) {
-          alert('Image trop volumineuse même après compression. Veuillez réduire la résolution ou choisir une autre image.');
+          toast.error('Image trop volumineuse même après compression. Veuillez réduire la résolution ou choisir une autre image.');
           return;
         }
         
@@ -235,7 +236,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
       };
       
       img.onerror = () => {
-        alert('Erreur lors du chargement de l\'image');
+        toast.error('Erreur lors du chargement de l\'image');
       };
       
       img.src = dataUrl;

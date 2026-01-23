@@ -3,6 +3,7 @@
  * Renders flow block fields based on their type
  */
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -200,7 +201,7 @@ function ImageFieldRenderer({
 
     // Check size limit
     if (field.maxSize && file.size > field.maxSize * 1024 * 1024) {
-      alert(`Fichier trop volumineux (max ${field.maxSize} MB)`);
+      toast.error(`Fichier trop volumineux (max ${field.maxSize} MB)`);
       return;
     }
 

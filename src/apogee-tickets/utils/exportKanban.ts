@@ -177,7 +177,7 @@ export function exportToCSV(options: ExportOptions): void {
   const rows = tickets.map(t => ticketToRow(t, statuses, modules, priorities, ownerSides));
   
   if (rows.length === 0) {
-    alert('Aucun ticket à exporter');
+    console.warn('Aucun ticket à exporter');
     return;
   }
   

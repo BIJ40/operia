@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { z } from 'zod';
 import { GlobalRole, GLOBAL_ROLE_LABELS } from '@/types/globalRoles';
 import { Input } from '@/components/ui/input';
@@ -364,7 +365,7 @@ export function UserEditForm({
                 if (!hasUpper) missing.push('une majuscule');
                 if (!hasDigit) missing.push('un chiffre');
                 if (!hasSymbol) missing.push('un symbole (!@#$%&*_+-)');
-                alert(`Mot de passe invalide. Il manque : ${missing.join(', ')}`);
+                toast.error(`Mot de passe invalide. Il manque : ${missing.join(', ')}`);
                 return;
               }
               
