@@ -17,7 +17,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns, Eye, Shield, Loader2, ShieldAlert, Download, FileText, Sheet, FileDown, LayoutGrid, List, FileCheck, AlertTriangle, Copy, RotateCcw, Clock } from 'lucide-react';
+import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns, Eye, Shield, Loader2, ShieldAlert, Download, FileText, Sheet, FileDown, LayoutGrid, List, FileCheck, AlertTriangle, Copy, RotateCcw, Clock, Mail } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { usePersistedFilters } from '../hooks/usePersistedFilters';
@@ -284,6 +284,27 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
               <span className="hidden sm:inline">Nouveau ticket</span>
             </Button>
           )}
+          {/* Bouton Nouveaux (messages non lus) */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className={`h-8 text-xs gap-1.5 ${blinkingTicketsCount > 0 ? 'text-blue-600 border-blue-300 hover:bg-blue-50' : ''}`}
+                onClick={() => setFilterBlinkingOnly(prev => !prev)}
+              >
+                <Mail className="h-4 w-4" />
+                Nouveaux
+                {blinkingTicketsCount > 0 && (
+                  <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
+                    {blinkingTicketsCount}
+                  </Badge>
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Tickets modifiés non vus</TooltipContent>
+          </Tooltip>
+          
           {/* Bouton dernières modifications */}
           <Button 
             variant="outline" 
