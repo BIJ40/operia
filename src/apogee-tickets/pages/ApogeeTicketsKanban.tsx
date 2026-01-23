@@ -326,9 +326,6 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
         </div>
 
         <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-          {/* Slider priorité inline */}
-          <HeatPrioritySlider filters={filters} onFiltersChange={setFilters} />
-          
           <Link to={ROUTES.projects.review}>
             <Tooltip>
               <TooltipTrigger asChild>

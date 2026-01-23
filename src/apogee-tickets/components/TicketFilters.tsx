@@ -1,6 +1,6 @@
 /**
  * Filtres pour les tickets Apogée
- * Inclut: recherche, module, origine, qualification IA, PEC et nouveaux messages
+ * Inclut: recherche, module, origine, qualification IA, PEC, priorité et nouveaux messages
  */
 
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Search, Tag, Filter, MessageSquare, RotateCcw, LayoutGrid, ClipboardCheck, Users } from 'lucide-react';
 import type { ApogeeModule, ApogeePriority, ApogeeOwnerSide, TicketFilters as Filters, ReportedBy, MissingFieldFilter } from '../types';
 import { useTicketTags } from '../hooks/useTicketTags';
+import { HeatPrioritySlider } from './HeatPrioritySlider';
 
 // Options pour Origine (ReportedBy) - triées alphabétiquement
 // Note: HUGO est regroupé sous APOGEE, MARIE et MATHILDE sous FLORIAN
@@ -364,6 +365,9 @@ export function TicketFilters({
             </PopoverContent>
           </Popover>
         )}
+
+        {/* Slider priorité */}
+        <HeatPrioritySlider filters={filters} onFiltersChange={onFiltersChange} />
 
         {/* Nouveaux messages */}
         {onToggleBlinkingFilter && (
