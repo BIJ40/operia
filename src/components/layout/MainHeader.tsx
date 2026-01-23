@@ -28,8 +28,6 @@ import { MegaMenu } from './MegaMenu';
 import { MobileNav } from './MobileNav';
 import { MEGA_MENU_CONFIG, SUPPORT_MENU } from '@/config/megaMenuConfig';
 import { getRoleCapabilities } from '@/config/roleMatrix';
-// Logo temporairement retiré
-import { RHNotificationBadge } from '@/components/rh/RHNotificationBadge';
 import { isModuleEnabled, ModuleKey } from '@/types/modules';
 import { UnifiedSearchFloatingBar } from '@/components/unified-search';
 import { ViewModeToggle } from './ViewModeToggle';
@@ -238,9 +236,6 @@ export function MainHeader() {
                   {/* Toggle mode mobile/desktop */}
                   <ViewModeToggle />
                   
-                  {/* RH Notifications - seule cloche */}
-                  <RHNotificationBadge />
-
                   {/* Console support pour agents */}
                   {canAccessSupportConsoleUI && (
                     <Link to={ROUTES.support.console}>
