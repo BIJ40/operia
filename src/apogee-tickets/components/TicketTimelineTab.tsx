@@ -120,7 +120,10 @@ export function TicketTimelineTab({ ticketId, statuses }: TicketTimelineTabProps
                           <div className="flex items-start justify-between gap-2">
                             <div>
                               <p className="font-medium text-sm">
-                                {config.label}
+                                {entry.action_type === 'field_update' && entry.metadata
+                                  ? `${(entry.metadata as { fieldLabel?: string }).fieldLabel || (entry.metadata as { field?: string }).field || 'Champ'} modifié`
+                                  : config.label
+                                }
                               </p>
                               
                               {/* Détails de l'action */}
@@ -136,10 +139,20 @@ export function TicketTimelineTab({ ticketId, statuses }: TicketTimelineTabProps
                                 </div>
                               )}
                               
-                              {entry.action_type === 'field_update' && entry.metadata && (
-                                <p className="text-sm text-muted-foreground mt-1">
-                                  {(entry.metadata as { field?: string }).field || 'Champ'} modifié
-                                </p>
+                              {entry.action_type === 'field_update' && (entry.old_value || entry.new_value) && (
+                                <div className="flex items-center gap-2 mt-1 text-sm flex-wrap">
+                                  {entry.old_value && (
+                                    <>
+                                      <Badge variant="outline" className="font-normal text-xs">
+                                        {entry.old_value}
+                                      </Badge>
+                                      <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                                    </>
+                                  )}
+                                  <Badge variant="secondary" className="font-semibold text-xs">
+                                    {entry.new_value || '(vide)'}
+                                  </Badge>
+                                </div>
                               )}
                               
                               {entry.action_type === 'comment_added' && entry.new_value && (
