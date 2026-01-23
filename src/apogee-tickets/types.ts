@@ -109,6 +109,15 @@ export interface ApogeeTicket {
   // Support ticket origin tracking
   source_support_ticket_id: string | null;
   support_initiator_user_id: string | null;
+  // Support urgence (clignotement rouge)
+  initiator_profile: {
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    phone?: string;
+    agence?: string;
+  } | null;
+  is_urgent_support: boolean | null;
   // Tags
   impact_tags: string[] | null;
   // Roadmap

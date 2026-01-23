@@ -130,13 +130,17 @@ function DraggableTicketCard({
     return owner?.label || ticket.owner_side;
   }, [ticket.owner_side, ownerSides]);
 
+  // Clignotement rouge pour tickets support urgents non résolus
+  const isUrgentSupport = ticket.is_urgent_support === true;
+
   return (
     <Card
       ref={setNodeRef}
       style={style}
       className={cn(
         "hover:shadow-md transition-shadow mb-2 border-l-4 group cursor-pointer",
-        shouldBlink && "animate-pulse ring-2 ring-green-500 ring-offset-1"
+        shouldBlink && "animate-pulse ring-2 ring-green-500 ring-offset-1",
+        isUrgentSupport && "animate-pulse ring-2 ring-destructive ring-offset-1 border-l-destructive"
       )}
       onClick={onClick}
     >
@@ -170,6 +174,11 @@ function DraggableTicketCard({
             {ticket.created_from === 'support' && (
               <Badge className="bg-purple-100 text-purple-700 text-xs border border-purple-200">
                 📩 Support
+              </Badge>
+            )}
+            {isUrgentSupport && (
+              <Badge variant="destructive" className="text-xs gap-1">
+                🔥 Urgent
               </Badge>
             )}
           </div>
