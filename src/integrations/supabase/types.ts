@@ -1095,6 +1095,9 @@ export type Database = {
           qualified_at: string | null
           qualified_by: string | null
           reported_by: string | null
+          roadmap_enabled: boolean | null
+          roadmap_month: number | null
+          roadmap_year: number | null
           severity: string | null
           source_row_index: number | null
           source_sheet: string | null
@@ -1134,6 +1137,9 @@ export type Database = {
           qualified_at?: string | null
           qualified_by?: string | null
           reported_by?: string | null
+          roadmap_enabled?: boolean | null
+          roadmap_month?: number | null
+          roadmap_year?: number | null
           severity?: string | null
           source_row_index?: number | null
           source_sheet?: string | null
@@ -1173,6 +1179,9 @@ export type Database = {
           qualified_at?: string | null
           qualified_by?: string | null
           reported_by?: string | null
+          roadmap_enabled?: boolean | null
+          roadmap_month?: number | null
+          roadmap_year?: number | null
           severity?: string | null
           source_row_index?: number | null
           source_sheet?: string | null

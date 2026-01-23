@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, X, CalendarIcon, Filter, RotateCcw, Tag } from 'lucide-react';
+import { Search, X, CalendarIcon, Filter, RotateCcw, Tag, MapIcon } from 'lucide-react';
 import { endOfDay, format, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { ApogeeModule, ApogeeTicketStatus, TicketFilters, OwnerSide, ReportedBy } from '../types';
@@ -443,6 +443,17 @@ export function TicketTableFilters({
           </PopoverContent>
         </Popover>
 
+        {/* Roadmap */}
+        <Button
+          variant={filters.roadmap_only ? 'default' : 'outline'}
+          size="sm"
+          className="h-9"
+          onClick={() => onFiltersChange({ ...filters, roadmap_only: !filters.roadmap_only })}
+        >
+          <MapIcon className="h-4 w-4 mr-2" />
+          Roadmap
+        </Button>
+
         {/* Date */}
         <Popover>
           <PopoverTrigger asChild>
@@ -561,6 +572,14 @@ export function TicketTableFilters({
                 />
               </Badge>
             ))}
+
+          {filters.roadmap_only && (
+            <Badge variant="secondary" className="gap-1">
+              <MapIcon className="h-3 w-3" />
+              Roadmap
+              <X className="h-3 w-3 cursor-pointer" onClick={() => onFiltersChange({ ...filters, roadmap_only: undefined })} />
+            </Badge>
+          )}
         </div>
       )}
     </div>
