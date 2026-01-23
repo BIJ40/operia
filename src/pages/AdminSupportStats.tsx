@@ -8,7 +8,23 @@ import { BarChart3, Clock, MessageSquare, Star, TrendingUp, Users, CheckCircle, 
 import { useSupportStats } from '@/hooks/use-support-stats';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis } from 'recharts';
-import { TICKET_STATUS_LABELS, TICKET_PRIORITY_LABELS } from '@/services/supportService';
+
+// Labels locaux (ex-supportService)
+const TICKET_STATUS_LABELS: Record<string, string> = {
+  new: 'Nouveau',
+  in_progress: 'En cours',
+  waiting_user: 'Attente client',
+  resolved: 'Résolu',
+  closed: 'Fermé',
+};
+
+const TICKET_PRIORITY_LABELS: Record<string, string> = {
+  mineur: 'Mineur',
+  normal: 'Normal',
+  important: 'Important',
+  urgent: 'Urgent',
+  bloquant: 'Bloquant',
+};
 
 const STATUS_COLORS: Record<string, string> = {
   new: 'hsl(var(--chart-1))',
