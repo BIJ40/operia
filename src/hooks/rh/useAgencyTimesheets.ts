@@ -2,7 +2,22 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, startOfWeek } from 'date-fns';
-import type { TimesheetStatus, DayEntry, TimesheetDay } from '@/hooks/technician/useTimesheets';
+
+// Types timesheets (ex hooks/technician/useTimesheets.ts)
+export type TimesheetStatus = 'DRAFT' | 'SUBMITTED' | 'N2_MODIFIED' | 'COUNTERSIGNED' | 'VALIDATED';
+
+export interface DayEntry {
+  debut: string;
+  pause: string;
+  reprise: string;
+  fin: string;
+  minutes: number;
+}
+
+export interface TimesheetDay extends DayEntry {
+  original?: DayEntry;
+  modified?: DayEntry;
+}
 
 export interface AgencyTimesheet {
   id: string;

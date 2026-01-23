@@ -26,8 +26,9 @@ import {
   useFinalizeTimesheet,
   useRejectTimesheet,
   type AgencyTimesheet,
+  type DayEntry,
+  type TimesheetStatus,
 } from '@/hooks/rh/useAgencyTimesheets';
-import type { DayEntry, TimesheetStatus } from '@/hooks/technician/useTimesheets';
 import { cn } from '@/lib/utils';
 
 const STATUS_CONFIG: Record<TimesheetStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; color: string }> = {
