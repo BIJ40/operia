@@ -284,19 +284,14 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
             </Button>
           )}
           {/* Bouton dernières modifications */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="icon" 
-                className="h-8 w-8"
-                onClick={() => setShowRecentChanges(true)}
-              >
-                <Clock className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Dernières modifications</TooltipContent>
-          </Tooltip>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-8 text-xs"
+            onClick={() => setShowRecentChanges(true)}
+          >
+            dernières modif
+          </Button>
           
           {/* Export dropdown */}
           <DropdownMenu>
