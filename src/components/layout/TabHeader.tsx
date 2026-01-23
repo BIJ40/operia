@@ -58,7 +58,7 @@ const stripSearch = (href: string) => href.split('?')[0] || href;
  * Détermine l'onglet actif en se basant sur les href réellement rendus.
  * => évite les incohérences “sous-statut de la page précédente” lors des navigations.
  */
-const resolveActiveTopTab = <T extends { href: string виж; id: string }>(
+const resolveActiveTopTab = <T extends { href: string; id: string }>(
   tabs: T[],
   pathname: string
 ): T | null => {
