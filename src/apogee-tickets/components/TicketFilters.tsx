@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search, Tag, Filter, MessageSquare, RotateCcw, LayoutGrid, ClipboardCheck } from 'lucide-react';
+import { Search, Tag, Filter, MessageSquare, RotateCcw, LayoutGrid, ClipboardCheck, Users } from 'lucide-react';
 import type { ApogeeModule, ApogeePriority, ApogeeOwnerSide, TicketFilters as Filters, ReportedBy, MissingFieldFilter } from '../types';
 import { useTicketTags } from '../hooks/useTicketTags';
 
@@ -156,23 +156,63 @@ export function TicketFilters({
           </PopoverContent>
         </Popover>
 
-        {/* Origine */}
-        <Select
-          value={filters.reported_by || 'all'}
-          onValueChange={(v) => updateFilter('reported_by', v === 'all' ? undefined : v as ReportedBy)}
-        >
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Origine" />
-          </SelectTrigger>
-          <SelectContent className="bg-background z-50">
-            <SelectItem value="all">Toutes origines</SelectItem>
-            {ORIGINE_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Origine - multi-select avec checkboxes */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="w-[160px] justify-between">
+              <span className="flex items-center gap-1.5 truncate">
+                <Users className="h-4 w-4 shrink-0" />
+                {filters.origins && filters.origins.length > 0 
+                  ? filters.origins.length === 1
+                    ? ORIGINE_OPTIONS.find(o => o.value === filters.origins![0])?.label || 'Origine'
+                    : `${filters.origins.length} origines`
+                  : 'Origine'}
+              </span>
+              {filters.origins && filters.origins.length > 0 && (
+                <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
+                  {filters.origins.length}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-56 bg-background z-50" align="start">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Origines</span>
+                {filters.origins && filters.origins.length > 0 && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-6 px-2 text-xs"
+                    onClick={() => updateFilter('origins', undefined)}
+                  >
+                    Réinitialiser
+                  </Button>
+                )}
+              </div>
+              <div className="space-y-1 max-h-48 overflow-y-auto">
+                {ORIGINE_OPTIONS.map((opt) => (
+                  <label
+                    key={opt.value}
+                    className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded px-2 py-1"
+                  >
+                    <Checkbox
+                      checked={filters.origins?.includes(opt.value) || false}
+                      onCheckedChange={(checked) => {
+                        const currentOrigins = filters.origins || [];
+                        const newOrigins = checked
+                          ? [...currentOrigins, opt.value]
+                          : currentOrigins.filter((o) => o !== opt.value);
+                        updateFilter('origins', newOrigins.length > 0 ? newOrigins : undefined);
+                      }}
+                    />
+                    <span className="text-sm">{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
 
         {/* Tags Filter */}
         <Popover>

@@ -231,6 +231,11 @@ export function useApogeeTickets(filters?: TicketFilters) {
           // On utilise ilike (case-insensitive) pour éviter de "perdre" des tickets en liste.
           query = query.ilike('reported_by', filters.reported_by);
         }
+        if (filters?.origins && filters.origins.length > 0) {
+          // Filtre multi-origines avec OR case-insensitive
+          const originsFilter = filters.origins.map(o => `reported_by.ilike.${o}`).join(',');
+          query = query.or(originsFilter);
+        }
        if (filters?.needs_completion) {
          // Exclure les tickets EN_PROD (TRAITÉ/PUBLIÉ) qui sont considérés complets
          query = query.or('needs_completion.eq.true,kanban_status.eq.IMPORT')
