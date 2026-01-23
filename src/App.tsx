@@ -35,7 +35,7 @@ import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { GlobalErrorBoundary } from "./components/system/GlobalErrorBoundary";
 // REMOVED: AnnouncementGate - No auto-popup policy (see NO_POPUP_POLICY.md)
 // REMOVED: LiveSupportProvider - Simplifié en V3 (plus de live chat)
-import { N1Redirect } from "./components/auth/N1Redirect";
+// REMOVED: N1Redirect - Module technicien /t supprimé
 
 // Route modules
 import {
@@ -46,7 +46,6 @@ import {
   FranchiseurRoutes,
   SupportRoutes,
   ProjectsRoutes,
-  TechnicianRoutes,
   ApporteurRoutes,
 } from "./routes";
 
@@ -99,7 +98,7 @@ function AppContent() {
           {/* ============================================ */}
           {/* CORE ROUTES */}
           {/* ============================================ */}
-          <Route path="/" element={<MainLayout><RoleGuard minRole="franchisee_user"><N1Redirect><Dashboard /></N1Redirect></RoleGuard></MainLayout>} />
+          <Route path="/" element={<MainLayout><RoleGuard minRole="franchisee_user"><Dashboard /></RoleGuard></MainLayout>} />
           <Route path="/profile" element={<MainLayout><RoleGuard><Profile /></RoleGuard></MainLayout>} />
           <Route path="/changelog" element={<MainLayout><Changelog /></MainLayout>} />
           <Route path="/roadmap" element={<MainLayout><Roadmap /></MainLayout>} />
@@ -114,7 +113,6 @@ function AppContent() {
           {FranchiseurRoutes()}
           {SupportRoutes()}
           {ProjectsRoutes()}
-          {TechnicianRoutes()}
           {ApporteurRoutes()}
           
           {/* ============================================ */}

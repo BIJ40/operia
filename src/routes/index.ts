@@ -6,5 +6,4 @@ export { AdminRoutes } from './admin.routes';
 export { FranchiseurRoutes } from './franchiseur.routes';
 export { SupportRoutes } from './support.routes';
 export { ProjectsRoutes } from './projects.routes';
-export { TechnicianRoutes } from './technician.routes';
 export { ApporteurRoutes } from './apporteur.routes';
