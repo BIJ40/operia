@@ -941,6 +941,44 @@ export type Database = {
         }
         Relationships: []
       }
+      apogee_ticket_support_exchanges: {
+        Row: {
+          created_at: string
+          id: string
+          is_from_support: boolean
+          message: string
+          read_at: string | null
+          sender_user_id: string
+          ticket_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_from_support?: boolean
+          message: string
+          read_at?: string | null
+          sender_user_id: string
+          ticket_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_from_support?: boolean
+          message?: string
+          read_at?: string | null
+          sender_user_id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apogee_ticket_support_exchanges_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       apogee_ticket_tags: {
         Row: {
           color: string | null
@@ -1080,7 +1118,9 @@ export type Database = {
           heat_priority: number
           id: string
           impact_tags: string[] | null
+          initiator_profile: Json | null
           is_qualified: boolean | null
+          is_urgent_support: boolean | null
           kanban_status: string
           last_modified_at: string | null
           last_modified_by_user_id: string | null
@@ -1122,7 +1162,9 @@ export type Database = {
           heat_priority?: number
           id?: string
           impact_tags?: string[] | null
+          initiator_profile?: Json | null
           is_qualified?: boolean | null
+          is_urgent_support?: boolean | null
           kanban_status?: string
           last_modified_at?: string | null
           last_modified_by_user_id?: string | null
@@ -1164,7 +1206,9 @@ export type Database = {
           heat_priority?: number
           id?: string
           impact_tags?: string[] | null
+          initiator_profile?: Json | null
           is_qualified?: boolean | null
+          is_urgent_support?: boolean | null
           kanban_status?: string
           last_modified_at?: string | null
           last_modified_by_user_id?: string | null

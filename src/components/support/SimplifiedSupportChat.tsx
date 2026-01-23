@@ -1,11 +1,13 @@
 /**
  * SimplifiedSupportChat.tsx
- * Chatbox simplifié V3 : Questions d'orientation → RAG → Proposition ticket
+ * Chatbox simplifié V3 : Questions d'orientation → RAG → Création ticket projet
  * 
- * Flux:
- * 1. Questions d'orientation (2-3 questions)
- * 2. Recherche RAG et réponse IA
- * 3. Proposition: Clore le chat OU Créer un ticket
+ * Flux BUG:
+ * 1. Question d'orientation (type de demande)
+ * 2. Description du problème
+ * 3. Réponse IA via RAG
+ * 4. Boutons: "Problème résolu" → ticket SUPPORT_RESOLU
+ *            "Toujours bloqué" → ticket USER (urgent, clignotement rouge)
  */
 
 import { useState, useEffect, useRef } from 'react';
@@ -27,14 +29,14 @@ import {
   Loader2, 
   Bot, 
   User as UserIcon,
-  MessageSquarePlus,
   CheckCircle2,
   HelpCircle,
-  Wrench,
   Sparkles,
-  X
+  X,
+  AlertTriangle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useQueryClient } from '@tanstack/react-query';
 
 // Types pour les messages
 interface ChatMessage {
@@ -81,6 +83,7 @@ export function SimplifiedSupportChat({
 }: SimplifiedSupportChatProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // State orientation
@@ -94,6 +97,7 @@ export function SimplifiedSupportChat({
   const [isLoading, setIsLoading] = useState(false);
   const [aiHasResponded, setAiHasResponded] = useState(false);
   const [isCreatingTicket, setIsCreatingTicket] = useState(false);
+  const [ticketCreated, setTicketCreated] = useState(false);
   
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -124,6 +128,108 @@ export function SimplifiedSupportChat({
         timestamp: new Date(),
       }]);
     }
+  };
+
+  // Get user profile for ticket creation
+  const getUserProfile = async () => {
+    if (!user) return null;
+    
+    const { data } = await supabase
+      .from('profiles')
+      .select('first_name, last_name, email, phone, agence')
+      .eq('id', user.id)
+      .single();
+    
+    return data;
+  };
+
+  // Create project ticket (apogee_tickets)
+  const createProjectTicket = async (isResolved: boolean) => {
+    if (!user || isCreatingTicket) return;
+
+    setIsCreatingTicket(true);
+
+    try {
+      const profile = await getUserProfile();
+      
+      // Build title from first user message
+      const firstUserMessage = messages.find(m => m.role === 'user');
+      const title = firstUserMessage?.content.slice(0, 150) || 'Demande support';
+      
+      // Build full description from conversation
+      const conversationText = messages
+        .filter(m => m.role !== 'system')
+        .map(m => `[${m.role === 'user' ? 'Utilisateur' : 'IA'}] ${m.content}`)
+        .join('\n\n');
+      
+      const problemType = orientationAnswers[0] || 'question';
+      
+      // Determine status and priority based on resolution
+      const kanbanStatus = isResolved ? 'SUPPORT_RESOLU' : 'USER';
+      const heatPriority = isResolved ? 3 : 10; // Low if resolved, Critical if not
+      
+      // Build initiator profile
+      const initiatorProfile = {
+        first_name: profile?.first_name || '',
+        last_name: profile?.last_name || '',
+        email: profile?.email || user.email || '',
+        phone: profile?.phone || '',
+        agence: profile?.agence || '',
+      };
+
+      // Insert into apogee_tickets
+      const ticketData = {
+        element_concerne: `[${problemType.toUpperCase()}] ${title}`,
+        description: conversationText,
+        kanban_status: kanbanStatus,
+        created_from: 'support',
+        created_by_user_id: user.id,
+        support_initiator_user_id: user.id,
+        initiator_profile: initiatorProfile,
+        heat_priority: heatPriority,
+        is_urgent_support: !isResolved,
+        impact_tags: problemType === 'bug' ? ['BUG'] : [],
+        reported_by: 'AGENCE',
+      };
+
+      const { data: ticket, error } = await supabase
+        .from('apogee_tickets')
+        .insert(ticketData)
+        .select('id, ticket_number')
+        .single();
+
+      if (error) throw error;
+
+      // Invalidate queries to refresh Kanban and user tickets
+      queryClient.invalidateQueries({ queryKey: ['apogee-tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['user-project-tickets'] });
+
+      setTicketCreated(true);
+
+      if (isResolved) {
+        successToast('Merci ! Votre retour a été enregistré.');
+      } else {
+        successToast('Votre demande a été transmise à l\'équipe. Vous pouvez la suivre dans "Mes demandes".');
+      }
+
+      onTicketCreated?.(ticket.id);
+
+    } catch (error) {
+      logError('simplified-chat', 'Create project ticket error', error);
+      errorToast('Erreur lors de l\'envoi de la demande');
+    } finally {
+      setIsCreatingTicket(false);
+    }
+  };
+
+  // Handle "Problem resolved" click
+  const handleProblemResolved = () => {
+    createProjectTicket(true);
+  };
+
+  // Handle "Still blocked" click
+  const handleStillBlocked = () => {
+    createProjectTicket(false);
   };
 
   // Send message to AI
@@ -283,7 +389,7 @@ export function SimplifiedSupportChat({
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: "Une erreur est survenue. Vous pouvez créer un ticket pour obtenir de l'aide.",
+        content: "Une erreur est survenue. Vous pouvez tout de même transmettre votre demande.",
         timestamp: new Date(),
         isIncomplete: true,
       }]);
@@ -293,96 +399,15 @@ export function SimplifiedSupportChat({
     }
   };
 
-  // Create ticket from chat
-  const handleCreateTicket = async () => {
-    if (!user || isCreatingTicket) return;
-
-    setIsCreatingTicket(true);
-
-    try {
-      // Extract subject from first user message
-      const firstUserMessage = messages.find(m => m.role === 'user');
-      const subject = firstUserMessage?.content.slice(0, 100) || 'Demande depuis le chat';
-
-      // Build conversation for storage (Apogée context)
-      const chatbotConversation = [
-        // Include orientation context
-        { role: 'system', content: `Domaine: apogee, Type: ${orientationAnswers[0] || 'non spécifié'}` },
-        ...messages.map(m => ({
-          role: m.role,
-          content: m.content,
-          timestamp: m.timestamp?.toISOString(),
-        })),
-      ];
-
-      // Determine priority based on problem type (now in orientationAnswers[0])
-      const problemType = orientationAnswers[0];
-      let heatPriority = 6; // Normal by default
-      if (problemType === 'bug') heatPriority = 8; // Important
-      if (problemType === 'blocking') heatPriority = 10; // Critical
-      
-      // Determine category
-      let category = 'other';
-      if (problemType === 'bug') category = 'bug';
-      if (problemType === 'question') category = 'question';
-      if (problemType === 'improvement') category = 'improvement';
-
-      const result = await safeMutation<{ id: string }>(
-        supabase.from('support_tickets').insert({
-          user_id: user.id,
-          subject,
-          status: 'new',
-          heat_priority: heatPriority,
-          chatbot_conversation: chatbotConversation,
-          type: 'ticket',
-          source: 'chat',
-          ai_category: category,
-        } as any).select().single(),
-        'SIMPLIFIED_CHAT_CREATE_TICKET'
-      );
-
-      if (result.success && result.data) {
-        // Auto-classify the ticket
-        await safeInvoke(
-          supabase.functions.invoke('support-auto-classify', {
-            body: { ticket_id: result.data.id },
-          }),
-          'SIMPLIFIED_CHAT_AUTO_CLASSIFY'
-        );
-
-        // Notify support agents
-        await safeInvoke(
-          supabase.functions.invoke('notify-support-ticket', {
-            body: { 
-              ticketId: result.data.id,
-              isUrgent: heatPriority >= 8,
-              message: subject,
-            },
-          }),
-          'SIMPLIFIED_CHAT_NOTIFY'
-        );
-
-        successToast('Ticket créé avec succès ! Un agent vous répondra rapidement.');
-        onTicketCreated?.(result.data.id);
-        
-        // Navigate if no callback
-        if (!onTicketCreated) {
-          navigate(ROUTES.support.index);
-        }
-      } else {
-        errorToast('Erreur lors de la création du ticket');
-      }
-    } catch (error) {
-      logError('simplified-chat', 'Create ticket error', error);
-      errorToast('Erreur lors de la création du ticket');
-    } finally {
-      setIsCreatingTicket(false);
-    }
-  };
-
-  // Close chat (resolved)
-  const handleCloseChatResolved = () => {
-    successToast('Merci ! N\'hésitez pas si vous avez d\'autres questions.');
+  // Reset chat
+  const handleNewChat = () => {
+    setOrientationStep(0);
+    setOrientationAnswers({});
+    setOrientationComplete(false);
+    setMessages([]);
+    setInput('');
+    setAiHasResponded(false);
+    setTicketCreated(false);
     onChatClosed?.();
   };
 
@@ -434,6 +459,31 @@ export function SimplifiedSupportChat({
             </div>
           </div>
         </ScrollArea>
+      </div>
+    );
+  }
+
+  // Ticket created - show confirmation
+  if (ticketCreated) {
+    return (
+      <div className={cn("flex flex-col h-full items-center justify-center p-6", className)}>
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 mx-auto rounded-full bg-green-100 flex items-center justify-center">
+            <CheckCircle2 className="w-8 h-8 text-green-600" />
+          </div>
+          <h3 className="font-semibold text-lg">Demande transmise</h3>
+          <p className="text-sm text-muted-foreground max-w-xs">
+            Votre demande a été enregistrée. Vous pouvez suivre son avancement dans "Mes demandes".
+          </p>
+          <div className="flex gap-2 justify-center pt-2">
+            <Button variant="outline" onClick={handleNewChat}>
+              Nouvelle question
+            </Button>
+            <Button onClick={() => navigate(ROUTES.support.index)}>
+              Mes demandes
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -492,39 +542,44 @@ export function SimplifiedSupportChat({
         </div>
       </ScrollArea>
 
-      {/* Action buttons after AI response */}
+      {/* Action buttons after AI response - NEW FLOW */}
       {aiHasResponded && !isLoading && (
         <div className="p-4 border-t bg-muted/30">
           <p className="text-sm text-muted-foreground mb-3 text-center">
-            Cette réponse vous a-t-elle aidé ?
+            Cette réponse a-t-elle résolu votre problème ?
           </p>
           <div className="flex gap-2">
             <Button
               variant="outline"
               className="flex-1 gap-2"
-              onClick={handleCloseChatResolved}
-            >
-              <CheckCircle2 className="w-4 h-4 text-green-500" />
-              Oui, c'est résolu
-            </Button>
-            <Button
-              variant="default"
-              className="flex-1 gap-2"
-              onClick={handleCreateTicket}
+              onClick={handleProblemResolved}
               disabled={isCreatingTicket}
             >
               {isCreatingTicket ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <MessageSquarePlus className="w-4 h-4" />
+                <CheckCircle2 className="w-4 h-4 text-green-600" />
               )}
-              Créer un ticket
+              Problème résolu
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex-1 gap-2"
+              onClick={handleStillBlocked}
+              disabled={isCreatingTicket}
+            >
+              {isCreatingTicket ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <AlertTriangle className="w-4 h-4" />
+              )}
+              Toujours bloqué
             </Button>
           </div>
         </div>
       )}
 
-      {/* Input - only show before AI has responded or to continue conversation */}
+      {/* Input - only show before AI has responded */}
       {!aiHasResponded && (
         <div className="p-4 border-t">
           <div className="flex gap-2">
