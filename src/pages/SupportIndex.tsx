@@ -1,11 +1,10 @@
 /**
  * Support Index - Page unique du support pour les users
  * 3 sections: Créer un ticket (dialog) | Chat IA | Mes Demandes (inline)
- * Inclut tickets support classiques + tickets projet initiés par l'utilisateur
+ * V3: Utilise uniquement apogee_tickets via useCombinedUserTickets
  */
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useUserTickets, Ticket } from '@/hooks/use-user-tickets';
 import { useCombinedUserTickets } from '@/hooks/use-user-project-tickets';
 import { useUserProjectUnreadCount } from '@/hooks/use-project-ticket-notifications';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,8 +13,6 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SimplifiedSupportChat } from '@/components/support/SimplifiedSupportChat';
 import { CreateProjectTicketDialog } from '@/components/support/CreateProjectTicketDialog';
-import { TicketDetailPanel } from '@/components/support/TicketDetailPanel';
-import { ServiceBadge } from '@/components/tickets/ServiceBadge';
 import { HeatPriorityBadge } from '@/components/support/HeatPriorityBadge';
 import { ProjectTicketDetailPanel } from '@/components/support/ProjectTicketDetailPanel';
 import { 
@@ -24,7 +21,6 @@ import {
   PlusCircle,
   Clock,
   CheckCircle2,
-  AlertCircle,
   Plus,
   Loader2,
   MessageCircle
@@ -32,46 +28,21 @@ import {
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function SupportIndex() {
   const { user } = useAuth();
-  const { tickets: supportTickets, isLoading: supportLoading, loadTickets, setSelectedTicket } = useUserTickets();
+  const queryClient = useQueryClient();
   const { tickets: combinedTickets, isLoading: combinedLoading } = useCombinedUserTickets();
   const { unreadCount: totalUnreadCount } = useUserProjectUnreadCount();
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [selectedTicketView, setSelectedTicketView] = useState<Ticket | null>(null);
   const [selectedProjectTicketId, setSelectedProjectTicketId] = useState<string | null>(null);
-  
-  const ticketsLoading = supportLoading || combinedLoading;
-  const hasUnreadTickets = combinedTickets.some(t => t.unread_exchanges_count && t.unread_exchanges_count > 0);
 
   const handleTicketCreated = (_ticketId: string) => {
-    // Reload combined tickets (includes project tickets)
-    loadTickets();
-  };
-
-  const handleSelectTicket = (ticket: Ticket) => {
-    setSelectedTicket(ticket);
-    setSelectedTicketView(ticket);
-  };
-
-  const getStatusBadge = (status: string) => {
-    const normalized = status === 'waiting' ? 'waiting_user' : status;
-    const config: Record<string, { label: string; icon: typeof Clock; className: string }> = {
-      new: { label: 'Nouveau', icon: Clock, className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' },
-      in_progress: { label: 'En cours', icon: AlertCircle, className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' },
-      waiting_user: { label: 'Attente réponse', icon: Clock, className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400' },
-      resolved: { label: 'Résolu', icon: CheckCircle2, className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
-      closed: { label: 'Fermé', icon: CheckCircle2, className: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400' },
-    };
-    const { label, icon: Icon, className } = config[normalized] || config.new;
-    return (
-      <Badge variant="outline" className={`${className} flex items-center gap-1`}>
-        <Icon className="w-3 h-3" />
-        {label}
-      </Badge>
-    );
+    // Refresh combined tickets
+    queryClient.invalidateQueries({ queryKey: ['user-project-tickets'] });
+    queryClient.invalidateQueries({ queryKey: ['combined-user-tickets'] });
   };
 
   // Si un ticket projet est sélectionné
@@ -81,21 +52,6 @@ export default function SupportIndex() {
         <ProjectTicketDetailPanel
           ticketId={selectedProjectTicketId}
           onBack={() => setSelectedProjectTicketId(null)}
-        />
-      </div>
-    );
-  }
-
-  // Si un ticket support classique est sélectionné
-  if (selectedTicketView) {
-    return (
-      <div className="container mx-auto py-4 sm:py-6 px-3 sm:px-4">
-        <TicketDetailPanel
-          ticket={selectedTicketView}
-          onBack={() => {
-            setSelectedTicketView(null);
-            setSelectedTicket(null);
-          }}
         />
       </div>
     );
@@ -194,7 +150,7 @@ export default function SupportIndex() {
           </CardHeader>
           <CardContent className="flex-1 overflow-hidden">
             <ScrollArea className="h-full max-h-[420px] pr-4">
-              {ticketsLoading ? (
+              {combinedLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 </div>
@@ -220,18 +176,7 @@ export default function SupportIndex() {
                     return (
                     <button
                       key={`${ticket.ticketType}-${ticket.id}`}
-                      onClick={() => {
-                        if (ticket.ticketType === 'project') {
-                          setSelectedProjectTicketId(ticket.id);
-                        } else {
-                          // Pour les tickets support, récupérer le ticket complet
-                          const fullTicket = supportTickets.find(t => t.id === ticket.id);
-                          if (fullTicket) {
-                            setSelectedTicket(fullTicket);
-                            setSelectedTicketView(fullTicket);
-                          }
-                        }
-                      }}
+                      onClick={() => setSelectedProjectTicketId(ticket.id)}
                       className={cn(
                         "w-full text-left p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-muted/50 transition-all",
                         hasUnread && "animate-pulse ring-2 ring-destructive ring-offset-1 bg-destructive/5"
@@ -247,24 +192,17 @@ export default function SupportIndex() {
                             </Badge>
                           )}
                         </p>
-                        {ticket.ticketType === 'project' ? (
-                          <Badge 
-                            style={{ 
-                              backgroundColor: ticket.statusColor ? `${ticket.statusColor}20` : undefined,
-                              color: ticket.statusColor || undefined
-                            }}
-                            variant="secondary"
-                          >
-                            {ticket.statusLabel || ticket.status}
-                          </Badge>
-                        ) : (
-                          getStatusBadge(ticket.status)
-                        )}
+                        <Badge 
+                          style={{ 
+                            backgroundColor: ticket.statusColor ? `${ticket.statusColor}20` : undefined,
+                            color: ticket.statusColor || undefined
+                          }}
+                          variant="secondary"
+                        >
+                          {ticket.statusLabel || ticket.status}
+                        </Badge>
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <Badge variant="outline" className="text-xs">
-                          {ticket.ticketType === 'project' ? 'Projet' : 'Support'}
-                        </Badge>
                         <HeatPriorityBadge priority={ticket.heat_priority} size="sm" />
                         <span className="text-xs text-muted-foreground ml-auto">
                           {format(new Date(ticket.created_at), 'dd MMM', { locale: fr })}

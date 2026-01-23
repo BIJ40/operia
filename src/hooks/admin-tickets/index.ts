@@ -1,8 +1,6 @@
 /**
  * Admin Tickets Hooks - Re-exports
- * P1 Refactoring: Extraction des sous-modules
+ * V3 Consolidation: Support tickets legacy supprimés
  */
 export * from './types';
-export { useTicketOperations } from './useTicketOperations';
-export { useTicketMessages } from './useTicketMessages';
 export { useSupportUsers } from './useSupportUsers';

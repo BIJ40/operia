@@ -33,7 +33,9 @@ export function useAdminStats() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // Récupérer toutes les stats en parallèle
+        // V3: Utilise apogee_tickets au lieu de support_tickets
+        const waitingStatuses = ['BACKLOG', 'TODO', 'IN_PROGRESS', 'SUPPORT_EN_COURS'];
+        
         const [
           usersResult,
           blocksResult,
@@ -46,8 +48,8 @@ export function useAdminStats() {
           supabase.from('profiles').select('*', { count: 'exact', head: true }),
           supabase.from('blocks').select('*', { count: 'exact', head: true }),
           supabase.from('documents').select('*', { count: 'exact', head: true }),
-          supabase.from('support_tickets').select('*', { count: 'exact', head: true }),
-          supabase.from('support_tickets').select('*', { count: 'exact', head: true }).in('status', ['new', 'waiting', 'waiting_user']),
+          supabase.from('apogee_tickets').select('*', { count: 'exact', head: true }),
+          supabase.from('apogee_tickets').select('*', { count: 'exact', head: true }).in('kanban_status', waitingStatuses),
           supabase.from('chatbot_queries').select('*', { count: 'exact', head: true }),
           supabase.from('apogee_agencies').select('*', { count: 'exact', head: true }),
         ]);

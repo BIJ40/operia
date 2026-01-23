@@ -1,6 +1,6 @@
 /**
  * Hook pour récupérer les tickets projet initiés par l'utilisateur via le support
- * Ces tickets sont créés quand un utilisateur signale un bug non résolu par l'IA
+ * V3: Utilise uniquement apogee_tickets (support_tickets supprimé)
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -119,71 +119,30 @@ export function useUserProjectTickets() {
 }
 
 /**
- * Combine support tickets + project tickets pour la vue "Mes demandes"
+ * V3: Récupère uniquement les tickets projet (support_tickets supprimé)
  */
 export function useCombinedUserTickets() {
-  const { user } = useAuth();
   const { data: projectTickets = [], isLoading: projectLoading } = useUserProjectTickets();
 
-  const { data: supportTickets = [], isLoading: supportLoading } = useQuery({
-    queryKey: ['user-support-tickets-combined', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-
-      const { data, error } = await supabase
-        .from('support_tickets')
-        .select('id, subject, status, heat_priority, created_at, source, type')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        logError('useCombinedUserTickets', 'Failed to fetch support tickets', error);
-        throw error;
-      }
-
-      return (data || []).map(t => ({
-        ...t,
-        ticketType: 'support' as const,
-      }));
-    },
-    enabled: !!user,
-    staleTime: 30 * 1000,
-  });
-
-  // Combine and sort
-  const combinedTickets = [
-    ...projectTickets.map(t => ({
-      id: t.id,
-      subject: t.element_concerne,
-      status: t.kanban_status,
-      heat_priority: t.heat_priority,
-      created_at: t.created_at,
-      ticketType: 'project' as const,
-      unread_exchanges_count: t.unread_exchanges_count,
-      has_active_exchange: t.has_active_exchange,
-      statusLabel: t.apogee_ticket_statuses?.label,
-      statusColor: t.apogee_ticket_statuses?.color,
-      isFinal: t.apogee_ticket_statuses?.is_final,
-    })),
-    ...supportTickets.map(t => ({
-      id: t.id,
-      subject: t.subject,
-      status: t.status,
-      heat_priority: t.heat_priority,
-      created_at: t.created_at,
-      ticketType: 'support' as const,
-      unread_exchanges_count: 0,
-      has_active_exchange: false,
-      statusLabel: undefined,
-      statusColor: undefined,
-      isFinal: ['resolved', 'closed'].includes(t.status),
-    })),
-  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  // V3: Plus de support_tickets - uniquement apogee_tickets
+  const combinedTickets = projectTickets.map(t => ({
+    id: t.id,
+    subject: t.element_concerne,
+    status: t.kanban_status,
+    heat_priority: t.heat_priority,
+    created_at: t.created_at,
+    ticketType: 'project' as const,
+    unread_exchanges_count: t.unread_exchanges_count || 0,
+    has_active_exchange: t.has_active_exchange || false,
+    statusLabel: t.apogee_ticket_statuses?.label,
+    statusColor: t.apogee_ticket_statuses?.color,
+    isFinal: t.apogee_ticket_statuses?.is_final,
+  }));
 
   return {
     tickets: combinedTickets,
-    isLoading: projectLoading || supportLoading,
+    isLoading: projectLoading,
     projectTicketsCount: projectTickets.length,
-    supportTicketsCount: supportTickets.length,
+    supportTicketsCount: 0, // Legacy - toujours 0
   };
 }

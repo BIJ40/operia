@@ -13,11 +13,9 @@ interface SupportStats {
   totalRatings: number;
   ticketsByStatus: Record<string, number>;
   ticketsByPriority: Record<string, number>;
-  // SLA removed in V2 - keeping empty object for backward compatibility
   ticketsBySLA: Record<string, number>;
   slaComplianceRate: number;
   monthlyEvolution: { month: string; count: number }[];
-  // P3#2 AI Classification stats
   autoClassifiedCount: number;
   autoClassifiedRate: number;
   incompleteCount: number;
@@ -28,8 +26,11 @@ interface SupportStats {
   isLoading: boolean;
 }
 
+// Statuts finaux dans apogee_tickets
+const FINAL_STATUSES = ['DONE', 'CLOS', 'SUPPORT_RESOLU'];
+
 export function useSupportStats(): SupportStats {
-const [stats, setStats] = useState<SupportStats>({
+  const [stats, setStats] = useState<SupportStats>({
     ticketsThisMonth: 0,
     ticketsLastMonth: 0,
     avgResolutionTimeHours: 0,
@@ -42,7 +43,6 @@ const [stats, setStats] = useState<SupportStats>({
     ticketsBySLA: {},
     slaComplianceRate: 0,
     monthlyEvolution: [],
-    // P3#2 AI stats
     autoClassifiedCount: 0,
     autoClassifiedRate: 0,
     incompleteCount: 0,
@@ -62,9 +62,9 @@ const [stats, setStats] = useState<SupportStats>({
         const lastMonthStart = startOfMonth(subMonths(now, 1));
         const lastMonthEnd = endOfMonth(subMonths(now, 1));
 
-        // Fetch all tickets
+        // V3: Utilise apogee_tickets avec is_urgent_support ou tous les tickets projet
         const { data: allTickets, error: ticketsError } = await supabase
-          .from('support_tickets')
+          .from('apogee_tickets')
           .select('*');
 
         if (ticketsError) throw ticketsError;
@@ -83,37 +83,32 @@ const [stats, setStats] = useState<SupportStats>({
           return created >= lastMonthStart && created <= lastMonthEnd;
         }).length;
 
-        // Resolution time (only resolved tickets)
-        const resolvedTickets = tickets.filter(t => t.resolved_at && t.created_at);
+        // Resolution time (tickets with final status)
+        const resolvedTickets = tickets.filter(t => 
+          FINAL_STATUSES.includes(t.kanban_status) && t.created_at && t.updated_at
+        );
         let avgResolutionTimeHours = 0;
         if (resolvedTickets.length > 0) {
           const totalHours = resolvedTickets.reduce((sum, t) => {
-            return sum + differenceInHours(parseISO(t.resolved_at!), parseISO(t.created_at));
+            return sum + differenceInHours(parseISO(t.updated_at), parseISO(t.created_at));
           }, 0);
           avgResolutionTimeHours = Math.round(totalHours / resolvedTickets.length);
         }
 
         // Resolution rate
-        const closedStatuses = ['resolved', 'closed'];
-        const closedTickets = tickets.filter(t => closedStatuses.includes(t.status));
+        const closedTickets = tickets.filter(t => FINAL_STATUSES.includes(t.kanban_status));
         const resolutionRate = tickets.length > 0 
           ? Math.round((closedTickets.length / tickets.length) * 100) 
           : 0;
 
-        // Active agents (unique assigned_to values)
-        const uniqueAgents = new Set(tickets.filter(t => t.assigned_to).map(t => t.assigned_to));
+        // Active agents (unique created_by_user_id values)
+        const uniqueAgents = new Set(tickets.filter(t => t.created_by_user_id).map(t => t.created_by_user_id));
         const activeAgents = uniqueAgents.size;
 
-        // Rating stats
-        const ratedTickets = tickets.filter(t => t.rating !== null && t.rating !== undefined);
-        const avgRating = ratedTickets.length > 0
-          ? ratedTickets.reduce((sum, t) => sum + (t.rating || 0), 0) / ratedTickets.length
-          : 0;
-
-        // Tickets by status
+        // Tickets by status (kanban_status)
         const ticketsByStatus: Record<string, number> = {};
         tickets.forEach(t => {
-          ticketsByStatus[t.status] = (ticketsByStatus[t.status] || 0) + 1;
+          ticketsByStatus[t.kanban_status] = (ticketsByStatus[t.kanban_status] || 0) + 1;
         });
 
         // Tickets by heat priority (grouped by ranges)
@@ -131,44 +126,6 @@ const [stats, setStats] = useState<SupportStats>({
           else ticketsByPriority['Critique (11-12)']++;
         });
 
-        // SLA removed in V2 - priority-based instead
-        const ticketsBySLA: Record<string, number> = { ok: 0, warning: 0, late: 0 };
-        const slaComplianceRate = 100; // Deprecated
-
-        // P3#2 AI Classification stats
-        const autoClassifiedTickets = tickets.filter(t => t.auto_classified === true);
-        const autoClassifiedCount = autoClassifiedTickets.length;
-        const autoClassifiedRate = tickets.length > 0
-          ? Math.round((autoClassifiedCount / tickets.length) * 100)
-          : 0;
-
-        const incompleteTickets = tickets.filter(t => t.ai_is_incomplete === true);
-        const incompleteCount = incompleteTickets.length;
-        const incompleteRate = tickets.length > 0
-          ? Math.round((incompleteCount / tickets.length) * 100)
-          : 0;
-
-        // Tickets by AI category
-        const ticketsByAICategory: Record<string, number> = {};
-        autoClassifiedTickets.forEach(t => {
-          const cat = t.ai_category || 'autre';
-          ticketsByAICategory[cat] = (ticketsByAICategory[cat] || 0) + 1;
-        });
-
-        // Average AI confidence
-        const ticketsWithConfidence = autoClassifiedTickets.filter(t => t.ai_confidence != null);
-        const avgAIConfidence = ticketsWithConfidence.length > 0
-          ? ticketsWithConfidence.reduce((sum, t) => sum + (t.ai_confidence || 0), 0) / ticketsWithConfidence.length
-          : 0;
-
-        // AI correction rate (tickets where manual category differs from AI category)
-        const ticketsWithBothCategories = autoClassifiedTickets.filter(t => 
-          t.ai_category && t.category && t.ai_category !== t.category
-        );
-        const aiCorrectionRate = autoClassifiedCount > 0
-          ? Math.round((ticketsWithBothCategories.length / autoClassifiedCount) * 100)
-          : 0;
-
         // Monthly evolution (last 6 months)
         const monthlyEvolution: { month: string; count: number }[] = [];
         for (let i = 5; i >= 0; i--) {
@@ -185,27 +142,40 @@ const [stats, setStats] = useState<SupportStats>({
           });
         }
 
+        // AI stats - tickets created from support with needs_completion
+        const incompleteTickets = tickets.filter(t => t.needs_completion === true);
+        const incompleteCount = incompleteTickets.length;
+        const incompleteRate = tickets.length > 0
+          ? Math.round((incompleteCount / tickets.length) * 100)
+          : 0;
+
+        // Tickets by module (instead of AI category)
+        const ticketsByAICategory: Record<string, number> = {};
+        tickets.forEach(t => {
+          const cat = t.module || 'non_classé';
+          ticketsByAICategory[cat] = (ticketsByAICategory[cat] || 0) + 1;
+        });
+
         setStats({
           ticketsThisMonth,
           ticketsLastMonth,
           avgResolutionTimeHours,
           resolutionRate,
           activeAgents,
-          avgRating: Math.round(avgRating * 10) / 10,
-          totalRatings: ratedTickets.length,
+          avgRating: 0, // Not applicable in V3
+          totalRatings: 0,
           ticketsByStatus,
           ticketsByPriority,
-          ticketsBySLA,
-          slaComplianceRate,
+          ticketsBySLA: { ok: 0, warning: 0, late: 0 },
+          slaComplianceRate: 100,
           monthlyEvolution,
-          // P3#2 AI stats
-          autoClassifiedCount,
-          autoClassifiedRate,
+          autoClassifiedCount: 0, // Not applicable in V3
+          autoClassifiedRate: 0,
           incompleteCount,
           incompleteRate,
           ticketsByAICategory,
-          avgAIConfidence: Math.round(avgAIConfidence * 100),
-          aiCorrectionRate,
+          avgAIConfidence: 0,
+          aiCorrectionRate: 0,
           isLoading: false,
         });
       } catch (error) {
