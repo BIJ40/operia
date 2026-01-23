@@ -7,12 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Sparkles, Check, AlertCircle } from 'lucide-react';
+import { AlertCircle, CalendarClock } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { HeatPriorityBadge } from './HeatPriorityBadge';
-import { RoadmapBadge } from './RoadmapEditor';
 import type { ApogeeTicket, ApogeeModule, ApogeeTicketStatus, OwnerSide, ReportedBy } from '../types';
 import type { TicketRoleInfo } from '../hooks/useTicketPermissions';
 
@@ -124,6 +123,17 @@ export function TicketTableRow({
       {isVisible(2) && (
         <TableCell className="truncate overflow-hidden" title={ticket.element_concerne} style={cellStyle(2)}>
           <div className="flex items-center gap-2 overflow-hidden">
+            {/* Icône Roadmap */}
+            {ticket.roadmap_enabled && (
+              <Tooltip>
+                <TooltipTrigger>
+                  <CalendarClock className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  Roadmap: {ticket.roadmap_month}/{ticket.roadmap_year}
+                </TooltipContent>
+              </Tooltip>
+            )}
             {ticket.needs_completion && (
               <Tooltip>
                 <TooltipTrigger>
@@ -302,102 +312,19 @@ export function TicketTableRow({
         </TableCell>
       )}
 
-      {/* Qualifié - Index 9 */}
+      {/* Créé le - Index 9 */}
       {isVisible(9) && (
-        <TableCell className="text-center overflow-hidden" style={cellStyle(9)}>
-          {ticket.is_qualified ? (
-            <Tooltip>
-              <TooltipTrigger>
-                <Check className="h-4 w-4 text-green-600 mx-auto" />
-              </TooltipTrigger>
-              <TooltipContent>
-                Qualifié {ticket.qualified_at && `le ${format(new Date(ticket.qualified_at), 'dd/MM/yyyy', { locale: fr })}`}
-              </TooltipContent>
-            </Tooltip>
-          ) : (
-            <Tooltip>
-              <TooltipTrigger>
-                <Sparkles className="h-4 w-4 text-amber-500 mx-auto" />
-              </TooltipTrigger>
-              <TooltipContent>Non qualifié</TooltipContent>
-            </Tooltip>
-          )}
-        </TableCell>
-      )}
-
-      {/* Roadmap - Index 10 */}
-      {isVisible(10) && (
-        <TableCell className="text-center overflow-hidden" style={cellStyle(10)}>
-          <RoadmapBadge
-            enabled={ticket.roadmap_enabled}
-            month={ticket.roadmap_month}
-            year={ticket.roadmap_year}
-          />
-          {!ticket.roadmap_enabled && (
-            <span className="text-xs text-muted-foreground">—</span>
-          )}
-        </TableCell>
-      )}
-
-      {/* Créé le - Index 11 */}
-      {isVisible(11) && (
-        <TableCell className="text-xs text-muted-foreground whitespace-nowrap overflow-hidden" style={cellStyle(11)}>
+        <TableCell className="text-xs text-muted-foreground whitespace-nowrap overflow-hidden" style={cellStyle(9)}>
           {format(new Date(ticket.created_at), 'dd/MM/yy', { locale: fr })}
         </TableCell>
       )}
 
-      {/* Modifié le - Index 12 */}
-      {isVisible(12) && (
-        <TableCell className="text-xs text-muted-foreground whitespace-nowrap overflow-hidden" style={cellStyle(12)}>
+      {/* Modifié le - Index 10 */}
+      {isVisible(10) && (
+        <TableCell className="text-xs text-muted-foreground whitespace-nowrap overflow-hidden" style={cellStyle(10)}>
           {ticket.last_modified_at 
             ? format(new Date(ticket.last_modified_at), 'dd/MM/yy', { locale: fr })
             : '—'}
-        </TableCell>
-      )}
-
-      {/* Actions - Index 13 */}
-      {isVisible(13) && (
-        <TableCell style={cellStyle(13)}>
-          <div className="flex items-center gap-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOpenDetail();
-                  }}
-                  aria-label="Voir détail"
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Voir détail (1)</TooltipContent>
-            </Tooltip>
-            
-            {canManage && !ticket.is_qualified && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onQualify();
-                    }}
-                    disabled={isQualifying}
-                    aria-label="Qualifier le ticket"
-                  >
-                    <Sparkles className={cn("h-4 w-4", isQualifying && "animate-pulse")} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Qualifier IA (4)</TooltipContent>
-              </Tooltip>
-            )}
-          </div>
         </TableCell>
       )}
     </TableRow>

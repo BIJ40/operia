@@ -50,7 +50,7 @@ type PersistedTableUIState = {
 };
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100];
-const TABLE_UI_STATE_KEY = 'apogee-tickets-list-table-ui:v4'; // v4: added column visibility
+const TABLE_UI_STATE_KEY = 'apogee-tickets-list-table-ui:v5'; // v5: removed qualif/roadmap/actions columns
 
 const SORT_COLUMNS: SortColumn[] = [
   'ticket_number',
@@ -74,22 +74,19 @@ export interface ColumnDef {
 export const COLUMNS: ColumnDef[] = [
   { key: 'ticket_number', label: 'Réf', sortable: true, minWidth: 50, defaultWidth: 70, id: 'ref' },
   { key: 'heat_priority', label: 'Priorité', sortable: true, minWidth: 60, defaultWidth: 80, id: 'priority' },
-  { key: 'element_concerne', label: 'Titre', sortable: true, minWidth: 150, defaultWidth: 250, id: 'title' },
+  { key: 'element_concerne', label: 'Titre', sortable: true, minWidth: 150, defaultWidth: 280, id: 'title' },
   { key: 'actions', label: 'Tags', sortable: false, minWidth: 80, defaultWidth: 120, id: 'tags' },
   { key: 'module', label: 'Module', sortable: true, minWidth: 80, defaultWidth: 110, id: 'module' },
   { key: 'kanban_status', label: 'Statut', sortable: true, minWidth: 100, defaultWidth: 120, id: 'status' },
   { key: 'actions', label: 'PEC', sortable: false, minWidth: 60, defaultWidth: 90, id: 'pec' },
   { key: 'actions', label: 'Origine', sortable: false, minWidth: 80, defaultWidth: 100, id: 'origine' },
   { key: 'actions', label: 'Est.', sortable: false, minWidth: 50, defaultWidth: 60, id: 'estimation' },
-  { key: 'actions', label: 'Qualif.', sortable: false, minWidth: 60, defaultWidth: 70, id: 'qualif' },
-  { key: 'actions', label: 'Roadmap', sortable: false, minWidth: 70, defaultWidth: 90, id: 'roadmap' },
   { key: 'created_at', label: 'Créé', sortable: true, minWidth: 70, defaultWidth: 80, id: 'created' },
   { key: 'last_modified_at', label: 'Modifié', sortable: true, minWidth: 70, defaultWidth: 85, id: 'modified' },
-  { key: 'actions', label: 'Actions', sortable: false, minWidth: 70, defaultWidth: 80, id: 'actions' },
 ];
 
 // Colonnes obligatoires (toujours visibles)
-const REQUIRED_COLUMN_IDS = ['ref', 'title', 'actions'];
+const REQUIRED_COLUMN_IDS = ['ref', 'title'];
 
 function loadTableUIState(): PersistedTableUIState {
   try {
