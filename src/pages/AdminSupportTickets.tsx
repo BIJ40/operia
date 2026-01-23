@@ -29,8 +29,6 @@ import { KanbanView } from '@/components/admin/support/KanbanView';
 import { SupportLevelBadge } from '@/components/SupportLevelBadge';
 import { ROUTES } from '@/config/routes';
 import { ScreenShareSession } from '@/components/support/ScreenShareSession';
-import { AgentUnifiedChat } from '@/components/admin/support/AgentUnifiedChat';
-import { useSupportNotifications } from '@/hooks/use-support-notifications';
 import { Link } from 'react-router-dom';
 import { Settings } from 'lucide-react';
 
@@ -64,9 +62,6 @@ export default function AdminSupportTickets() {
   } = useAdminTickets();
 
   const canDelete = globalRole === 'platform_admin' || globalRole === 'superadmin';
-  
-  // Hook pour les notifications et compteur de chat live
-  const { liveChatCount } = useSupportNotifications();
   
   // Hook pour transformer en ticket projet
   const { transformToProjectTicket, isTransforming } = useTransformToProjectTicket();
@@ -377,17 +372,8 @@ export default function AdminSupportTickets() {
             {/* Tickets List */}
             <Card className="md:col-span-2">
               <CardHeader className="pb-2">
-              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'actifs' | 'archives' | 'live')} className="w-full">
-                  <TabsList className="grid w-full grid-cols-3 mb-2">
-                    <TabsTrigger value="live" className="gap-2 relative">
-                      <Headphones className="w-4 h-4" />
-                      <span className="hidden sm:inline">Live</span>
-                      {liveChatCount > 0 && (
-                        <Badge variant="destructive" className="ml-1 animate-pulse">
-                          {liveChatCount}
-                        </Badge>
-                      )}
-                    </TabsTrigger>
+              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'actifs' | 'archives')} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-2">
                     <TabsTrigger value="actifs" className="gap-2">
                       🔥 <span className="hidden sm:inline">Actifs</span>
                       <Badge variant="secondary" className="ml-1">
@@ -401,11 +387,6 @@ export default function AdminSupportTickets() {
                       </Badge>
                     </TabsTrigger>
                   </TabsList>
-
-                  {/* Onglet Chat Live - Vue unifiée */}
-                  <TabsContent value="live" className="mt-2">
-                    <AgentUnifiedChat />
-                  </TabsContent>
 
                   <TabsContent value="actifs" className="mt-2">
                     <ScrollArea className="h-[550px]">

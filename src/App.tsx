@@ -30,11 +30,11 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { EditorProvider } from "./contexts/EditorContext";
 import { ApporteurEditorProvider } from "./contexts/ApporteurEditorContext";
 import { ImpersonationProvider } from "./contexts/ImpersonationContext";
-import { LiveSupportProvider } from "./contexts/LiveSupportContext";
 import { ChangePasswordDialog } from "./components/ChangePasswordDialog";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { GlobalErrorBoundary } from "./components/system/GlobalErrorBoundary";
 // REMOVED: AnnouncementGate - No auto-popup policy (see NO_POPUP_POLICY.md)
+// REMOVED: LiveSupportProvider - Simplifié en V3 (plus de live chat)
 import { N1Redirect } from "./components/auth/N1Redirect";
 
 // Route modules
@@ -159,17 +159,15 @@ function App() {
         <BrowserRouter>
           <AuthProvider>
             <ImpersonationProvider>
-              <LiveSupportProvider>
-                <EditorProvider>
-                  <ApporteurEditorProvider>
-                    <GlobalErrorBoundary>
-                      <AppContent />
-                    </GlobalErrorBoundary>
-                    <Toaster />
-                    <Sonner />
-                  </ApporteurEditorProvider>
-                </EditorProvider>
-              </LiveSupportProvider>
+              <EditorProvider>
+                <ApporteurEditorProvider>
+                  <GlobalErrorBoundary>
+                    <AppContent />
+                  </GlobalErrorBoundary>
+                  <Toaster />
+                  <Sonner />
+                </ApporteurEditorProvider>
+              </EditorProvider>
             </ImpersonationProvider>
           </AuthProvider>
         </BrowserRouter>
