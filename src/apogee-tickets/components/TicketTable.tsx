@@ -35,7 +35,7 @@ interface TicketTableProps {
   qualifyingTicketId?: string | null;
 }
 
-type SortColumn = 'ticket_number' | 'heat_priority' | 'element_concerne' | 'module' | 'kanban_status' | 'created_at';
+type SortColumn = 'ticket_number' | 'heat_priority' | 'element_concerne' | 'module' | 'kanban_status' | 'created_at' | 'last_modified_at';
 type SortDirection = 'asc' | 'desc';
 
 type PersistedTableUIState = {
@@ -46,7 +46,7 @@ type PersistedTableUIState = {
 };
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100];
-const TABLE_UI_STATE_KEY = 'apogee-tickets-list-table-ui:v2'; // v2: force reset to fix column width issues
+const TABLE_UI_STATE_KEY = 'apogee-tickets-list-table-ui:v3'; // v3: added last_modified_at column
 
 const SORT_COLUMNS: SortColumn[] = [
   'ticket_number',
@@ -55,6 +55,7 @@ const SORT_COLUMNS: SortColumn[] = [
   'module',
   'kanban_status',
   'created_at',
+  'last_modified_at',
 ];
 
 function loadTableUIState(): PersistedTableUIState {
@@ -121,6 +122,7 @@ const COLUMNS: ColumnDef[] = [
   { key: 'actions', label: 'Est.', sortable: false, minWidth: 50, defaultWidth: 60 },
   { key: 'actions', label: 'Qualif.', sortable: false, minWidth: 60, defaultWidth: 70 },
   { key: 'created_at', label: 'Créé', sortable: true, minWidth: 70, defaultWidth: 80 },
+  { key: 'last_modified_at', label: 'Modifié', sortable: true, minWidth: 70, defaultWidth: 85 },
   { key: 'actions', label: 'Actions', sortable: false, minWidth: 70, defaultWidth: 80 },
 ];
 
@@ -252,6 +254,11 @@ export function TicketTable({
           break;
         case 'created_at':
           comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          break;
+        case 'last_modified_at':
+          const dateA = a.last_modified_at ? new Date(a.last_modified_at).getTime() : 0;
+          const dateB = b.last_modified_at ? new Date(b.last_modified_at).getTime() : 0;
+          comparison = dateA - dateB;
           break;
       }
       
