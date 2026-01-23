@@ -2,10 +2,10 @@
  * Dialog de création d'un ticket Gestion de Projet - Wizard interactif
  * Crée directement dans apogee_tickets (et non support_tickets)
  */
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { safeMutation } from '@/lib/safeQuery';
 import { successToast, errorToast } from '@/lib/toastHelpers';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Dialog,
   DialogContent,
@@ -20,7 +21,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Plus, Loader2, ArrowLeft, ArrowRight, Check, Paperclip, Bug, HelpCircle, Lightbulb } from 'lucide-react';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { Plus, Loader2, ArrowLeft, ArrowRight, Check, Paperclip, Bug, HelpCircle, Lightbulb, Search } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface CreateProjectTicketDialogProps {
   open: boolean;
@@ -61,14 +71,6 @@ const TICKET_TYPES = [
   },
 ];
 
-const MODULES = [
-  { value: 'apogee', label: 'Apogée (ERP)' },
-  { value: 'operia', label: 'Opéria (App)' },
-  { value: 'helpconfort', label: 'Portail HelpConfort' },
-  { value: 'apporteurs', label: 'Module Apporteurs' },
-  { value: 'autre', label: 'Autre / Je ne sais pas' },
-];
-
 const URGENCIES = [
   { value: 1, label: '🟢 Mineur', description: 'Peut attendre, faible impact' },
   { value: 3, label: '⚪ Normal', description: 'À traiter dans la semaine' },
@@ -88,19 +90,46 @@ export function CreateProjectTicketDialog({
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({
     ticketType: '',
-    module: '',
+    module: 'AUTRE',
     heatPriority: 0,
     subject: '',
     description: '',
   });
   const [files, setFiles] = useState<File[]>([]);
+  const [moduleSearch, setModuleSearch] = useState('');
+
+  // Charger les modules depuis la table apogee_modules
+  const { data: modules = [] } = useQuery({
+    queryKey: ['apogee-modules-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('apogee_modules')
+        .select('id, label')
+        .order('display_order');
+      
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 60 * 1000,
+  });
+
+  // Filtrer les modules selon la recherche
+  const filteredModules = useMemo(() => {
+    if (!moduleSearch.trim()) return modules;
+    const search = moduleSearch.toLowerCase();
+    return modules.filter(m => 
+      m.label.toLowerCase().includes(search) ||
+      m.id.toLowerCase().includes(search)
+    );
+  }, [modules, moduleSearch]);
 
   const progress = ((currentStep + 1) / STEPS.length) * 100;
 
   const resetForm = () => {
     setCurrentStep(0);
-    setFormData({ ticketType: '', module: '', heatPriority: 0, subject: '', description: '' });
+    setFormData({ ticketType: '', module: 'AUTRE', heatPriority: 0, subject: '', description: '' });
     setFiles([]);
+    setModuleSearch('');
   };
 
   const handleClose = (isOpen: boolean) => {
@@ -140,7 +169,7 @@ export function CreateProjectTicketDialog({
             created_from: 'support',
             created_by_user_id: user.id,
             support_initiator_user_id: user.id,
-            module: formData.module === 'autre' ? null : formData.module || null,
+            module: formData.module || null,
             heat_priority: formData.heatPriority || 6,
             ticket_type: formData.ticketType || 'bug',
             needs_completion: true,
@@ -218,6 +247,12 @@ export function CreateProjectTicketDialog({
     setTimeout(() => goNext(), 150);
   };
 
+  const handleModuleSelect = (moduleId: string) => {
+    setFormData({ ...formData, module: moduleId });
+    setModuleSearch('');
+    setTimeout(() => goNext(), 150);
+  };
+
   const canProceed = () => {
     switch (STEPS[currentStep].id) {
       case 'type':
@@ -237,6 +272,11 @@ export function CreateProjectTicketDialog({
     }
   };
 
+  const getModuleLabel = (moduleId: string) => {
+    const mod = modules.find(m => m.id === moduleId);
+    return mod?.label || moduleId;
+  };
+
   const renderStepContent = () => {
     switch (STEPS[currentStep].id) {
       case 'type':
@@ -252,16 +292,17 @@ export function CreateProjectTicketDialog({
                     type="button"
                     variant="outline"
                     onClick={() => handleOptionSelect('ticketType', type.value)}
-                    className={`h-auto py-4 px-4 rounded-xl border-l-4 transition-all justify-start text-left ${
+                    className={cn(
+                      "h-auto py-4 px-4 rounded-xl border-l-4 transition-all justify-start text-left",
                       formData.ticketType === type.value
                         ? 'border-l-primary bg-primary text-primary-foreground shadow-lg'
                         : 'border-l-border hover:border-l-primary hover:shadow-md'
-                    }`}
+                    )}
                   >
-                    <Icon className={`w-5 h-5 mr-3 ${formData.ticketType === type.value ? 'text-primary-foreground' : type.color}`} />
+                    <Icon className={cn("w-5 h-5 mr-3", formData.ticketType === type.value ? 'text-primary-foreground' : type.color)} />
                     <div>
                       <p className="font-medium">{type.label}</p>
-                      <p className={`text-xs ${formData.ticketType === type.value ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
+                      <p className={cn("text-xs", formData.ticketType === type.value ? 'text-primary-foreground/70' : 'text-muted-foreground')}>
                         {type.description}
                       </p>
                     </div>
@@ -283,15 +324,16 @@ export function CreateProjectTicketDialog({
                   type="button"
                   variant="outline"
                   onClick={() => handleOptionSelect('heatPriority', urg.value)}
-                  className={`h-auto py-3 px-4 rounded-xl border-l-4 transition-all justify-start ${
+                  className={cn(
+                    "h-auto py-3 px-4 rounded-xl border-l-4 transition-all justify-start",
                     formData.heatPriority === urg.value
                       ? urg.isRed
-                        ? 'border-l-red-600 bg-gradient-to-r from-red-600 to-red-800 text-white shadow-lg'
+                        ? 'border-l-destructive bg-destructive text-destructive-foreground shadow-lg'
                         : urg.isOrange
-                        ? 'border-l-orange-500 bg-gradient-to-r from-orange-500 to-orange-700 text-white shadow-lg'
+                        ? 'border-l-accent bg-accent text-accent-foreground shadow-lg'
                         : 'border-l-primary bg-primary text-primary-foreground shadow-lg'
                       : 'border-l-border hover:border-l-primary hover:shadow-md'
-                  }`}
+                  )}
                 >
                   <span className="font-medium">{urg.label}</span>
                   <span className="ml-auto text-xs opacity-70">{urg.description}</span>
@@ -305,23 +347,47 @@ export function CreateProjectTicketDialog({
         return (
           <div className="space-y-4">
             <Label className="text-base font-medium">Quel module est concerné ?</Label>
-            <div className="grid grid-cols-1 gap-2">
-              {MODULES.map((mod) => (
-                <Button
-                  key={mod.value}
-                  type="button"
-                  variant="outline"
-                  onClick={() => handleOptionSelect('module', mod.value)}
-                  className={`h-auto py-3 px-4 rounded-xl border-l-4 transition-all justify-start ${
-                    formData.module === mod.value
-                      ? 'border-l-primary bg-primary text-primary-foreground shadow-lg'
-                      : 'border-l-border hover:border-l-primary hover:shadow-md'
-                  }`}
-                >
-                  {mod.label}
-                </Button>
-              ))}
-            </div>
+            <p className="text-sm text-muted-foreground">
+              Sélectionné : <span className="font-medium">{getModuleLabel(formData.module)}</span>
+            </p>
+            
+            <Command className="rounded-lg border">
+              <CommandInput 
+                placeholder="Rechercher un module..." 
+                value={moduleSearch}
+                onValueChange={setModuleSearch}
+              />
+              <CommandList>
+                <CommandEmpty>Aucun module trouvé</CommandEmpty>
+                <CommandGroup>
+                  <ScrollArea className="h-[200px]">
+                    {filteredModules.map((mod) => (
+                      <CommandItem
+                        key={mod.id}
+                        value={mod.label}
+                        onSelect={() => handleModuleSelect(mod.id)}
+                        className={cn(
+                          "cursor-pointer",
+                          formData.module === mod.id && "bg-primary/10 text-primary font-medium"
+                        )}
+                      >
+                        <Check className={cn(
+                          "mr-2 h-4 w-4",
+                          formData.module === mod.id ? "opacity-100" : "opacity-0"
+                        )} />
+                        {mod.label}
+                      </CommandItem>
+                    ))}
+                  </ScrollArea>
+                </CommandGroup>
+              </CommandList>
+            </Command>
+            
+            {canProceed() && (
+              <Button onClick={goNext} className="w-full">
+                Continuer <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            )}
           </div>
         );
 

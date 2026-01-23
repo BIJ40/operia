@@ -112,6 +112,12 @@ export function useTicketExchanges({ ticketId, enabled = true }: UseTicketExchan
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ticket-exchanges', ticketId] });
       queryClient.invalidateQueries({ queryKey: ['user-project-tickets'] });
+      // Invalider les compteurs de notifications pour que les badges disparaissent
+      queryClient.invalidateQueries({ queryKey: ['user-project-unread-count'] });
+      queryClient.invalidateQueries({ queryKey: ['support-project-unread-count'] });
+      queryClient.invalidateQueries({ queryKey: ['user-project-unread-tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['support-project-unread-tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['combined-user-tickets'] });
     },
   });
 
