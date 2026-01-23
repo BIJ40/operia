@@ -375,32 +375,48 @@ export function useTicketHistory(ticketId?: string) {
   return useQuery({
     queryKey: ['ticket-history', ticketId],
     queryFn: async () => {
-      let query = supabase
-        .from('apogee_ticket_history')
-        .select('*')
-        .order('created_at', { ascending: false });
+      if (!ticketId) return [];
       
-      if (ticketId) {
-        query = query.eq('ticket_id', ticketId);
+      // Fetch ticket info for creation date
+      const [historyResult, ticketResult] = await Promise.all([
+        supabase
+          .from('apogee_ticket_history')
+          .select('*')
+          .eq('ticket_id', ticketId)
+          .order('created_at', { ascending: false })
+          .limit(100),
+        supabase
+          .from('apogee_tickets')
+          .select('created_at, created_by_user_id')
+          .eq('id', ticketId)
+          .maybeSingle()
+      ]);
+      
+      if (historyResult.error) throw historyResult.error;
+      
+      const history = historyResult.data || [];
+      const ticket = ticketResult.data;
+      
+      // Get unique user ids (including ticket creator)
+      const userIds = [...new Set([
+        ...history.map(h => h.user_id),
+        ...(ticket?.created_by_user_id ? [ticket.created_by_user_id] : [])
+      ])];
+      
+      let profilesMap = new Map<string, { id: string; email: string | null; first_name: string | null; last_name: string | null }>();
+      
+      if (userIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, email, first_name, last_name')
+          .in('id', userIds);
+        
+        if (profilesError) throw profilesError;
+        profilesMap = new Map((profiles || []).map(p => [p.id, p]));
       }
       
-      const { data: history, error: historyError } = await query.limit(100);
-      
-      if (historyError) throw historyError;
-      if (!history || history.length === 0) return [];
-      
-      // Get unique user ids and fetch profiles
-      const userIds = [...new Set(history.map(h => h.user_id))];
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, email, first_name, last_name')
-        .in('id', userIds);
-      
-      if (profilesError) throw profilesError;
-      
-      const profilesMap = new Map((profiles || []).map(p => [p.id, p]));
-      
-      return history.map((item) => {
+      // Map history entries with user info
+      const historyWithUsers = history.map((item) => {
         const profile = profilesMap.get(item.user_id);
         return {
           ...item,
@@ -408,6 +424,38 @@ export function useTicketHistory(ticketId?: string) {
           user_name: profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : '',
         };
       }) as TicketHistoryEntry[];
+      
+      // Add synthetic "created" event if ticket exists and not already in history
+      if (ticket?.created_at) {
+        const hasCreatedEvent = historyWithUsers.some(h => h.action_type === 'created');
+        if (!hasCreatedEvent) {
+          const creatorProfile = ticket.created_by_user_id 
+            ? profilesMap.get(ticket.created_by_user_id) 
+            : null;
+          
+          historyWithUsers.push({
+            id: `created-${ticketId}`,
+            ticket_id: ticketId,
+            user_id: ticket.created_by_user_id || 'system',
+            action_type: 'created',
+            old_value: null,
+            new_value: null,
+            metadata: {},
+            created_at: ticket.created_at,
+            user_email: creatorProfile?.email,
+            user_name: creatorProfile 
+              ? `${creatorProfile.first_name || ''} ${creatorProfile.last_name || ''}`.trim() 
+              : 'Système',
+          });
+          
+          // Re-sort by date descending
+          historyWithUsers.sort((a, b) => 
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
+        }
+      }
+      
+      return historyWithUsers;
     },
     enabled: ticketId !== undefined,
   });
