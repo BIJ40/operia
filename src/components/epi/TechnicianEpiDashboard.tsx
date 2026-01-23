@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { HardHat, AlertTriangle, FileCheck, Plus, ClipboardList } from "lucide-react";
-import { useMyCollaborator } from "@/hooks/rh-employee/useMyCollaborator";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { useMyEpiAssignments } from "@/hooks/epi/useEpiAssignments";
 import { useMyEpiRequests, EPI_REQUEST_STATUSES } from "@/hooks/epi/useEpiRequests";
 import { useMyEpiIncidents, EPI_INCIDENT_STATUSES } from "@/hooks/epi/useEpiIncidents";
@@ -17,8 +19,28 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// Hook inline pour récupérer le collaborateur (remplace useMyCollaborator supprimé)
+function useCollaboratorForEpi() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["epi-collaborator", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("collaborators")
+        .select("id, agency_id, first_name, last_name")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 export function TechnicianEpiDashboard() {
-  const { data: collaborator, isLoading: collabLoading } = useMyCollaborator();
+  const { data: collaborator, isLoading: collabLoading } = useCollaboratorForEpi();
   const { data: assignments, isLoading: assignLoading } = useMyEpiAssignments(collaborator?.id);
   const { data: requests, isLoading: reqLoading } = useMyEpiRequests(collaborator?.id);
   const { data: incidents, isLoading: incLoading } = useMyEpiIncidents(collaborator?.id);

@@ -128,42 +128,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     isDisabled: true,
   },
   // Tuile MON_EQUIPE supprimée - remplacée par Suivi RH dans /rh/suivi
-  {
-    id: 'MON_COFFRE_RH',
-    title: 'Mon Coffre RH',
-    description: 'Mes documents RH personnels',
-    icon: Briefcase,
-    route: ROUTES.rh.coffre,
-    scopeSlug: SCOPE_SLUGS.MON_COFFRE_RH,
-    color: 'accent',
-    group: 'rh',
-    requiresModule: 'rh',
-    requiresModuleOptions: ['coffre', 'rh_viewer', 'rh_admin'],
-  },
-  {
-    id: 'DEMANDE_RH',
-    title: 'Demande RH',
-    description: 'Soumettre une demande RH',
-    icon: Inbox,
-    route: ROUTES.rh.demande,
-    scopeSlug: SCOPE_SLUGS.MON_COFFRE_RH,
-    color: 'accent',
-    group: 'rh',
-    requiresModule: 'rh',
-    requiresModuleOptions: ['coffre', 'rh_viewer', 'rh_admin'],
-  },
-  {
-    id: 'DEMANDES_RH',
-    title: 'Demandes RH',
-    description: 'Traitement des demandes de documents',
-    icon: Inbox,
-    route: ROUTES.rh.demandes,
-    scopeSlug: SCOPE_SLUGS.DEMANDES_RH,
-    color: 'accent',
-    group: 'rh', // Groupe dédié RH, indépendant de pilotage
-    requiresModule: 'rh',
-    requiresModuleOptions: ['rh_viewer', 'rh_admin'], // OR logic - l'une ou l'autre
-  },
+  // Tuiles MON_COFFRE_RH, DEMANDE_RH, DEMANDES_RH supprimées - portail salarié abandonné
   // Support
   {
     id: 'SUPPORT',

@@ -38,44 +38,7 @@ import { startOfYear, endOfYear, startOfQuarter, endOfQuarter, startOfMonth, end
 import { fr } from 'date-fns/locale';
 import { GLOBAL_ROLES } from '@/types/globalRoles';
 
-// Modules Mon Espace Salarié pour N1 desktop
-const MON_ESPACE_MODULES = [
-  {
-    id: 'mon-coffre-rh',
-    title: 'Mon Coffre RH',
-    description: 'Mes documents personnels',
-    icon: FolderOpen,
-    href: ROUTES.rh.coffre,
-  },
-  {
-    id: 'mon-planning',
-    title: 'Mon Planning',
-    description: 'Mon planning hebdomadaire',
-    icon: CalendarDays,
-    href: ROUTES.rh.monPlanning,
-  },
-  {
-    id: 'mon-vehicule',
-    title: 'Mon Véhicule',
-    description: 'Mon véhicule de service',
-    icon: Car,
-    href: ROUTES.rh.monVehicule,
-  },
-  {
-    id: 'mon-materiel',
-    title: 'Mon Matériel',
-    description: 'Mon matériel et équipements',
-    icon: Wrench,
-    href: ROUTES.rh.monMateriel,
-  },
-  {
-    id: 'demande-rh',
-    title: 'Demande RH',
-    description: 'Poser une demande',
-    icon: Calendar,
-    href: ROUTES.rh.demande,
-  },
-];
+// MON_ESPACE_MODULES supprimé - portail salarié N1 abandonné
 
 // Types pour les périodes
 type PeriodKey = 'year' | 'quarter' | 'prev_month' | 'month' | 'prev_week' | 'week' | 'prev_day' | 'day';
@@ -315,106 +278,62 @@ export default function DashboardStatic() {
       );
     }
     
-    // N1 Technicien - KPIs personnels + Mon Espace Salarié
-    if (isN1 && isTechnicien) {
-      return (
-        <div className="space-y-6">
-          {/* KPIs personnels */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <BarChart3 className="h-4 w-4 text-primary" />
-                Mes performances
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <TechnicienPersonnelKPIs />
-            </CardContent>
-          </Card>
-
-          {/* Mon Espace Salarié - Tuiles d'accès */}
-          <section className="space-y-4">
-            <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
-              <FolderOpen className="h-5 w-5 text-primary" />
-              Mon Espace Salarié
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-              {MON_ESPACE_MODULES.map(module => (
-                <IndexTile
-                  key={module.id}
-                  title={module.title}
-                  description={module.description}
-                  icon={module.icon}
-                  href={module.href}
-                />
-              ))}
-            </div>
-          </section>
-        </div>
-      );
-    }
-    
-    // N1 Assistante - KPIs personnels + Mon Espace Salarié
-    if (isN1 && isAssistante) {
-      return (
-        <div className="space-y-6">
-          {/* KPIs personnels */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <BarChart3 className="h-4 w-4 text-primary" />
-                Mon activité
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <AssistantePersonnelKPIs />
-            </CardContent>
-          </Card>
-
-          {/* Mon Espace Salarié - Tuiles d'accès */}
-          <section className="space-y-4">
-            <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
-              <FolderOpen className="h-5 w-5 text-primary" />
-              Mon Espace Salarié
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-              {MON_ESPACE_MODULES.map(module => (
-                <IndexTile
-                  key={module.id}
-                  title={module.title}
-                  description={module.description}
-                  icon={module.icon}
-                  href={module.href}
-                />
-              ))}
-            </div>
-          </section>
-        </div>
-      );
-    }
-    
-    // N1 Autre (ni technicien ni assistante) - Mon Espace Salarié uniquement
+    // N1 - Affiche uniquement Tickets + Favoris (portail salarié supprimé)
     if (isN1) {
       return (
-        <div className="space-y-6">
-          {/* Mon Espace Salarié - Tuiles d'accès */}
-          <section className="space-y-4">
-            <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
-              <FolderOpen className="h-5 w-5 text-primary" />
-              Mon Espace Salarié
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-              {MON_ESPACE_MODULES.map(module => (
-                <IndexTile
-                  key={module.id}
-                  title={module.title}
-                  description={module.description}
-                  icon={module.icon}
-                  href={module.href}
-                />
-              ))}
-            </div>
-          </section>
+        <div className="grid grid-cols-12 gap-4">
+          {/* KPIs personnels si technicien */}
+          {isTechnicien && (
+            <Card className="col-span-12">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-primary" />
+                  Mes performances
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <TechnicienPersonnelKPIs />
+              </CardContent>
+            </Card>
+          )}
+          {/* KPIs personnels si assistante */}
+          {isAssistante && (
+            <Card className="col-span-12">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-primary" />
+                  Mon activité
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AssistantePersonnelKPIs />
+              </CardContent>
+            </Card>
+          )}
+
+          <Card className="col-span-12 md:col-span-6">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-primary" />
+                Mes tickets
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <RecentTicketsWidget />
+            </CardContent>
+          </Card>
+
+          <Card className="col-span-12 md:col-span-6">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Star className="h-4 w-4 text-amber-500" />
+                Mes favoris
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="min-h-[150px]">
+              <FavorisWidget />
+            </CardContent>
+          </Card>
         </div>
       );
     }
