@@ -1,5 +1,6 @@
 /**
- * Tableau des tickets avec tri, pagination, raccourcis clavier et colonnes redimensionnables
+ * Tableau des tickets avec tri, pagination, raccourcis clavier, colonnes redimensionnables
+ * et sélecteur de colonnes visibles
  */
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -14,7 +15,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ChevronUp, ChevronDown, ChevronsUpDown, Columns3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TicketTableRow } from './TicketTableRow';
 import { useMyTicketViews } from '../hooks/useTicketViews';
@@ -43,10 +46,11 @@ type PersistedTableUIState = {
   sortDirection?: SortDirection;
   pageSize?: number;
   columnWidths?: number[];
+  hiddenColumns?: number[]; // indices des colonnes masquées
 };
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100];
-const TABLE_UI_STATE_KEY = 'apogee-tickets-list-table-ui:v3'; // v3: added last_modified_at column
+const TABLE_UI_STATE_KEY = 'apogee-tickets-list-table-ui:v4'; // v4: added column visibility
 
 const SORT_COLUMNS: SortColumn[] = [
   'ticket_number',
@@ -57,6 +61,34 @@ const SORT_COLUMNS: SortColumn[] = [
   'created_at',
   'last_modified_at',
 ];
+
+export interface ColumnDef {
+  key: SortColumn | 'actions';
+  label: string;
+  sortable: boolean;
+  minWidth: number;
+  defaultWidth: number;
+  id: string; // identifiant unique pour la visibilité
+}
+
+export const COLUMNS: ColumnDef[] = [
+  { key: 'ticket_number', label: 'Réf', sortable: true, minWidth: 50, defaultWidth: 70, id: 'ref' },
+  { key: 'heat_priority', label: 'Priorité', sortable: true, minWidth: 60, defaultWidth: 80, id: 'priority' },
+  { key: 'element_concerne', label: 'Titre', sortable: true, minWidth: 150, defaultWidth: 250, id: 'title' },
+  { key: 'actions', label: 'Tags', sortable: false, minWidth: 80, defaultWidth: 120, id: 'tags' },
+  { key: 'module', label: 'Module', sortable: true, minWidth: 80, defaultWidth: 110, id: 'module' },
+  { key: 'kanban_status', label: 'Statut', sortable: true, minWidth: 100, defaultWidth: 120, id: 'status' },
+  { key: 'actions', label: 'PEC', sortable: false, minWidth: 60, defaultWidth: 90, id: 'pec' },
+  { key: 'actions', label: 'Origine', sortable: false, minWidth: 80, defaultWidth: 100, id: 'origine' },
+  { key: 'actions', label: 'Est.', sortable: false, minWidth: 50, defaultWidth: 60, id: 'estimation' },
+  { key: 'actions', label: 'Qualif.', sortable: false, minWidth: 60, defaultWidth: 70, id: 'qualif' },
+  { key: 'created_at', label: 'Créé', sortable: true, minWidth: 70, defaultWidth: 80, id: 'created' },
+  { key: 'last_modified_at', label: 'Modifié', sortable: true, minWidth: 70, defaultWidth: 85, id: 'modified' },
+  { key: 'actions', label: 'Actions', sortable: false, minWidth: 70, defaultWidth: 80, id: 'actions' },
+];
+
+// Colonnes obligatoires (toujours visibles)
+const REQUIRED_COLUMN_IDS = ['ref', 'title', 'actions'];
 
 function loadTableUIState(): PersistedTableUIState {
   try {
@@ -79,52 +111,33 @@ function loadTableUIState(): PersistedTableUIState {
         : undefined;
 
     // Reset column widths if the count doesn't match (schema changed)
-    // Also ensure each width is at least the minimum for that column
     let columnWidths: number[] | undefined;
     if (
       Array.isArray(parsed.columnWidths) &&
       parsed.columnWidths.length === COLUMNS.length &&
       parsed.columnWidths.every((v) => typeof v === 'number' && Number.isFinite(v) && v > 0)
     ) {
-      // Validate and fix each column width to be at least the minimum
       columnWidths = parsed.columnWidths.map((w, idx) => 
         Math.max(w, COLUMNS[idx].minWidth)
       );
     } else {
-      // If mismatch, clear stored widths to force reset
       sessionStorage.removeItem(TABLE_UI_STATE_KEY);
       columnWidths = undefined;
     }
 
-    return { sortColumn, sortDirection, pageSize, columnWidths };
+    // Colonnes masquées
+    let hiddenColumns: number[] | undefined;
+    if (Array.isArray(parsed.hiddenColumns)) {
+      hiddenColumns = parsed.hiddenColumns.filter(
+        (idx) => typeof idx === 'number' && idx >= 0 && idx < COLUMNS.length
+      );
+    }
+
+    return { sortColumn, sortDirection, pageSize, columnWidths, hiddenColumns };
   } catch {
     return {};
   }
 }
-
-interface ColumnDef {
-  key: SortColumn | 'actions';
-  label: string;
-  sortable: boolean;
-  minWidth: number;
-  defaultWidth: number;
-}
-
-const COLUMNS: ColumnDef[] = [
-  { key: 'ticket_number', label: 'Réf', sortable: true, minWidth: 50, defaultWidth: 70 },
-  { key: 'heat_priority', label: 'Priorité', sortable: true, minWidth: 60, defaultWidth: 80 },
-  { key: 'element_concerne', label: 'Titre', sortable: true, minWidth: 150, defaultWidth: 250 },
-  { key: 'actions', label: 'Tags', sortable: false, minWidth: 80, defaultWidth: 120 },
-  { key: 'module', label: 'Module', sortable: true, minWidth: 80, defaultWidth: 110 },
-  { key: 'kanban_status', label: 'Statut', sortable: true, minWidth: 100, defaultWidth: 120 },
-  { key: 'actions', label: 'PEC', sortable: false, minWidth: 60, defaultWidth: 90 },
-  { key: 'actions', label: 'Origine', sortable: false, minWidth: 80, defaultWidth: 100 },
-  { key: 'actions', label: 'Est.', sortable: false, minWidth: 50, defaultWidth: 60 },
-  { key: 'actions', label: 'Qualif.', sortable: false, minWidth: 60, defaultWidth: 70 },
-  { key: 'created_at', label: 'Créé', sortable: true, minWidth: 70, defaultWidth: 80 },
-  { key: 'last_modified_at', label: 'Modifié', sortable: true, minWidth: 70, defaultWidth: 85 },
-  { key: 'actions', label: 'Actions', sortable: false, minWidth: 70, defaultWidth: 80 },
-];
 
 export function TicketTable({
   tickets,
@@ -148,6 +161,9 @@ export function TicketTable({
   const [pageSize, setPageSize] = useState(() => initialUI.pageSize ?? 50);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
+
+  // Colonnes masquées (indices)
+  const [hiddenColumns, setHiddenColumns] = useState<number[]>(() => initialUI.hiddenColumns ?? []);
 
   // Colonnes redimensionnables
   const [columnWidths, setColumnWidths] = useState<number[]>(
@@ -178,15 +194,33 @@ export function TicketTable({
     [user?.id, myViews]
   );
 
+  // Colonnes visibles
+  const visibleColumnIndices = useMemo(() => {
+    return COLUMNS.map((_, idx) => idx).filter(idx => !hiddenColumns.includes(idx));
+  }, [hiddenColumns]);
+
+  // Toggle visibilité d'une colonne
+  const toggleColumnVisibility = useCallback((colIndex: number) => {
+    const col = COLUMNS[colIndex];
+    // Ne pas masquer les colonnes obligatoires
+    if (REQUIRED_COLUMN_IDS.includes(col.id)) return;
+    
+    setHiddenColumns(prev => 
+      prev.includes(colIndex) 
+        ? prev.filter(i => i !== colIndex)
+        : [...prev, colIndex]
+    );
+  }, []);
+
   // Persister tri / colonnes / taille de page tant que l'onglet navigateur reste ouvert
   useEffect(() => {
     try {
-      const payload: PersistedTableUIState = { sortColumn, sortDirection, pageSize, columnWidths };
+      const payload: PersistedTableUIState = { sortColumn, sortDirection, pageSize, columnWidths, hiddenColumns };
       sessionStorage.setItem(TABLE_UI_STATE_KEY, JSON.stringify(payload));
     } catch {
       // ignore
     }
-  }, [sortColumn, sortDirection, pageSize, columnWidths]);
+  }, [sortColumn, sortDirection, pageSize, columnWidths, hiddenColumns]);
   // Gestion du redimensionnement des colonnes
   const handleResizeStart = useCallback((e: React.MouseEvent, index: number) => {
     e.preventDefault();
@@ -383,7 +417,60 @@ export function TicketTable({
           )}
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {/* Sélecteur de colonnes */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 gap-2">
+                <Columns3 className="h-4 w-4" />
+                <span className="hidden sm:inline">Colonnes</span>
+                {hiddenColumns.length > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                    {COLUMNS.length - hiddenColumns.length}/{COLUMNS.length}
+                  </Badge>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-56 p-3 bg-background z-50" align="end">
+              <div className="space-y-1">
+                <p className="text-sm font-medium mb-2">Colonnes visibles</p>
+                {COLUMNS.map((col, idx) => {
+                  const isRequired = REQUIRED_COLUMN_IDS.includes(col.id);
+                  const isVisible = !hiddenColumns.includes(idx);
+                  return (
+                    <label
+                      key={col.id}
+                      className={cn(
+                        "flex items-center gap-2 py-1 px-1 rounded hover:bg-muted cursor-pointer",
+                        isRequired && "opacity-60 cursor-not-allowed"
+                      )}
+                    >
+                      <Checkbox
+                        checked={isVisible}
+                        onCheckedChange={() => toggleColumnVisibility(idx)}
+                        disabled={isRequired}
+                      />
+                      <span className="text-sm">{col.label}</span>
+                      {isRequired && (
+                        <span className="text-xs text-muted-foreground ml-auto">(requis)</span>
+                      )}
+                    </label>
+                  );
+                })}
+                {hiddenColumns.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full mt-2 text-xs"
+                    onClick={() => setHiddenColumns([])}
+                  >
+                    Réinitialiser
+                  </Button>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+
           <span className="text-sm text-muted-foreground">Afficher</span>
           <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
             <SelectTrigger className="w-[70px] h-8">
@@ -403,41 +490,44 @@ export function TicketTable({
 
       {/* Table avec colonnes redimensionnables */}
       <div className="rounded-md border overflow-auto">
-        <Table style={{ tableLayout: 'fixed', width: columnWidths.reduce((a, b) => a + b, 0) }}>
+        <Table style={{ tableLayout: 'fixed', width: visibleColumnIndices.reduce((sum, idx) => sum + columnWidths[idx], 0) }}>
           <TableHeader>
             <TableRow className="bg-muted/50">
-              {COLUMNS.map((col, idx) => (
-                <TableHead
-                  key={`${col.key}-${idx}`}
-                  style={{ width: columnWidths[idx], minWidth: col.minWidth }}
-                  className={cn(
-                    "relative select-none",
-                    col.sortable && "cursor-pointer hover:bg-muted"
-                  )}
-                  onClick={col.sortable ? () => handleSort(col.key as SortColumn) : undefined}
-                >
-                  <div className="flex items-center gap-1 pr-2 overflow-hidden">
-                    <span className="truncate">{col.label}</span>
-                    {col.sortable && renderSortIcon(col.key as SortColumn)}
-                  </div>
-                  
-                  {/* Poignée de redimensionnement */}
-                  <div
+              {visibleColumnIndices.map((colIdx) => {
+                const col = COLUMNS[colIdx];
+                return (
+                  <TableHead
+                    key={`${col.key}-${colIdx}`}
+                    style={{ width: columnWidths[colIdx], minWidth: col.minWidth }}
                     className={cn(
-                      "absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-helpconfort-blue/50 transition-colors",
-                      resizingIndex === idx && "bg-helpconfort-blue"
+                      "relative select-none",
+                      col.sortable && "cursor-pointer hover:bg-muted"
                     )}
-                    onMouseDown={(e) => handleResizeStart(e, idx)}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </TableHead>
-              ))}
+                    onClick={col.sortable ? () => handleSort(col.key as SortColumn) : undefined}
+                  >
+                    <div className="flex items-center gap-1 pr-2 overflow-hidden">
+                      <span className="truncate">{col.label}</span>
+                      {col.sortable && renderSortIcon(col.key as SortColumn)}
+                    </div>
+                    
+                    {/* Poignée de redimensionnement */}
+                    <div
+                      className={cn(
+                        "absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-helpconfort-blue/50 transition-colors",
+                        resizingIndex === colIdx && "bg-helpconfort-blue"
+                      )}
+                      onMouseDown={(e) => handleResizeStart(e, colIdx)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </TableHead>
+                );
+              })}
             </TableRow>
           </TableHeader>
           <TableBody>
             {paginatedTickets.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={COLUMNS.length} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={visibleColumnIndices.length} className="text-center py-8 text-muted-foreground">
                   Aucun ticket trouvé
                 </TableCell>
               </TableRow>
@@ -460,6 +550,7 @@ export function TicketTable({
                     current: statusSelectRefs.current.get(ticket.id) || null,
                   } as React.RefObject<HTMLButtonElement>}
                   columnWidths={columnWidths}
+                  visibleColumnIndices={visibleColumnIndices}
                   shouldBlink={getTicketShouldBlink(ticket)}
                 />
               ))
