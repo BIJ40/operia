@@ -30,6 +30,8 @@ export default function ApogeeTicketsHistoryPage() {
       case 'priority_change': return 'Changement de priorité';
       case 'module_change': return 'Changement de module';
       case 'merged': return 'Fusion de tickets';
+      case 'viewed_by_support': return 'Vu par le support';
+      case 'field_update': return 'Modification';
       default: return action;
     }
   };
@@ -125,6 +127,11 @@ export default function ApogeeTicketsHistoryPage() {
                         {entry.action_type === 'priority_change' && entry.old_value && entry.new_value && (
                           <span>
                             Priorité {entry.old_value} → {entry.new_value}
+                          </span>
+                        )}
+                        {entry.action_type === 'viewed_by_support' && entry.new_value && (
+                          <span className="text-cyan-700">
+                            Vu par {entry.new_value}
                           </span>
                         )}
                       </TableCell>

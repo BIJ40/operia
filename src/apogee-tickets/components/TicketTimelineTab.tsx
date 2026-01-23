@@ -54,6 +54,11 @@ const ACTION_TYPE_CONFIG: Record<string, {
     label: 'Qualification IA',
     color: 'bg-violet-100 text-violet-700 border-violet-200'
   },
+  viewed_by_support: { 
+    icon: <User className="h-4 w-4" />, 
+    label: 'Vu par le support',
+    color: 'bg-cyan-100 text-cyan-700 border-cyan-200'
+  },
 };
 
 export function TicketTimelineTab({ ticketId, statuses }: TicketTimelineTabProps) {
@@ -158,6 +163,12 @@ export function TicketTimelineTab({ ticketId, statuses }: TicketTimelineTabProps
                               {entry.action_type === 'comment_added' && entry.new_value && (
                                 <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                                   "{entry.new_value}"
+                                </p>
+                              )}
+                              
+                              {entry.action_type === 'viewed_by_support' && entry.new_value && (
+                                <p className="text-sm text-cyan-700 mt-1">
+                                  Vu par {entry.new_value}
                                 </p>
                               )}
                             </div>

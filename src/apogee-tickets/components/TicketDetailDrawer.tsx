@@ -197,21 +197,44 @@ export function TicketDetailDrawer({
     if (open && ticket?.id) {
       markAsViewed.mutate(ticket.id);
       
-      // Si agent support ouvre un ticket urgent, désactiver le clignotement rouge
-      if ((isSupport || isAdmin) && ticket.is_urgent_support === true) {
+      // Si agent support ouvre un ticket urgent, désactiver le clignotement rouge et logger l'action
+      if ((isSupport || isAdmin) && ticket.is_urgent_support === true && user?.id) {
         supabase
           .from('apogee_tickets')
           .update({ is_urgent_support: false })
           .eq('id', ticket.id)
-          .then(({ error }) => {
+          .then(async ({ error }) => {
             if (!error) {
               // Mettre à jour le ticket localement pour éviter le clignotement persistant
               onUpdate({ id: ticket.id, is_urgent_support: false });
+              
+              // Récupérer le nom de l'agent depuis le profil
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('first_name, last_name')
+                .eq('id', user.id)
+                .single();
+              
+              const agentName = profile?.first_name && profile?.last_name 
+                ? `${profile.first_name} ${profile.last_name}` 
+                : (user.email || 'Agent support');
+              
+              // Logger dans l'historique que le ticket a été vu par un agent support
+              await supabase
+                .from('apogee_ticket_history')
+                .insert({
+                  ticket_id: ticket.id,
+                  user_id: user.id,
+                  action_type: 'viewed_by_support',
+                  old_value: null,
+                  new_value: agentName,
+                  metadata: { agent_id: user.id, agent_email: user.email },
+                });
             }
           });
       }
     }
-  }, [open, ticket?.id, ticket?.is_urgent_support, isSupport, isAdmin]);
+  }, [open, ticket?.id, ticket?.is_urgent_support, isSupport, isAdmin, user?.id]);
 
   // États locaux pour les champs éditables (évite les re-render à chaque frappe)
   const [localTitle, setLocalTitle] = useState(ticket?.element_concerne || '');
