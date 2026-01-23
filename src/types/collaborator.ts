@@ -75,6 +75,7 @@ export interface CollaboratorFormData {
   emergency_contact?: string;
   emergency_phone?: string;
   apogee_user_id?: number;
+  competences?: string[];
 }
 
 // Tabs for 360° profile
