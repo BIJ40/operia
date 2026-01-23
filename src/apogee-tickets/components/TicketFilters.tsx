@@ -102,8 +102,8 @@ export function TicketFilters({
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" className="w-[160px] justify-between">
-              <LayoutGrid className="h-4 w-4 shrink-0" />
-              <span className="truncate">
+              <span className="flex items-center gap-1.5 truncate">
+                <LayoutGrid className="h-4 w-4 shrink-0" />
                 {filters.modules && filters.modules.length > 0 
                   ? filters.modules.length === 1
                     ? modules.find(m => m.id === filters.modules![0])?.label || 'Module'
