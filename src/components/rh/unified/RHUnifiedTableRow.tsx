@@ -16,7 +16,7 @@ import { RHMaterielPopup } from './RHMaterielPopup';
 import { RHIdentifiantsDynamicColumns } from './RHIdentifiantsDynamicColumns';
 import { RHDocumentCell } from './RHDocumentCell';
 import { RHMetiersMultiSelect } from './RHMetiersMultiSelect';
-import { ExternalLink, Paperclip, Package } from 'lucide-react';
+import { ExternalLink, Paperclip, Package, Pencil } from 'lucide-react';
 import { CollaboratorEpiSummary } from '@/hooks/epi/useCollaboratorsEpiSummary';
 import { EpiCountCell, EpiRenewalCell, EpiRequestsCell, EpiIncidentsCell, EpiAckStatusCell, EpiOkCell } from './RHEpiCells';
 
@@ -30,6 +30,8 @@ interface RHUnifiedTableRowProps {
   getLocalValue: (collaboratorId: string, columnId: string, originalValue: unknown) => unknown;
   onAssetsUpdate?: (collaboratorId: string, field: string, value: unknown) => void;
   epiSummary?: CollaboratorEpiSummary;
+  /** Callback pour éditer le collaborateur via le wizard */
+  onEditCollaborator?: (collaboratorId: string) => void;
 }
 
 function getStatusIndicator(collaborator: RHCollaborator) {
@@ -49,6 +51,7 @@ export function RHUnifiedTableRow({
   getLocalValue,
   onAssetsUpdate,
   epiSummary,
+  onEditCollaborator,
 }: RHUnifiedTableRowProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -394,12 +397,25 @@ export function RHUnifiedTableRow({
         collaborator.leaving_date && "opacity-60"
       )}
     >
-      {/* Indicateur de statut */}
-      <TableCell className="w-10 min-w-[40px] px-2 bg-muted/10">
-        <div 
-          className={cn("w-2 h-2 rounded-full", status.color)}
-          title={status.label}
-        />
+      {/* Indicateur de statut + bouton édition */}
+      <TableCell className="w-16 min-w-[64px] px-2 bg-muted/10">
+        <div className="flex items-center gap-2">
+          <div 
+            className={cn("w-2 h-2 rounded-full shrink-0", status.color)}
+            title={status.label}
+          />
+          {onEditCollaborator && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-muted-foreground hover:text-primary"
+              onClick={() => onEditCollaborator(collaborator.id)}
+              title="Modifier la fiche"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
       </TableCell>
 
       {/* Colonnes fixes - Nom cliquable pour accéder au profil */}
