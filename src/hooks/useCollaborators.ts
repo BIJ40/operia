@@ -35,53 +35,20 @@ export function useCollaborators(agencyId?: string) {
     enabled: !!effectiveAgencyId,
   });
 
-  // Create collaborator - CRÉE AUSSI UN COMPTE UTILISATEUR AUTOMATIQUEMENT
+  // Create collaborator - Simple fiche RH sans compte utilisateur
   const createMutation = useMutation({
     mutationFn: async (formData: CollaboratorFormData) => {
       if (!effectiveAgencyId) throw new Error('Agency ID required');
-      if (!formData.email) throw new Error('Email obligatoire pour créer un compte utilisateur');
 
-      // 1. Créer le compte utilisateur via edge function
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.access_token) {
-        throw new Error('Session expirée, veuillez vous reconnecter');
-      }
-
-      // Déterminer le rôle système selon le type de collaborateur
-      const globalRole = formData.type === 'TECHNICIEN' ? 'franchisee_user' : 'franchisee_user';
-
-      const userResponse = await supabase.functions.invoke('create-user', {
-        body: {
-          email: formData.email,
-          firstName: formData.first_name,
-          lastName: formData.last_name,
-          agency_id: effectiveAgencyId,
-          globalRole: globalRole,
-          role_agence: formData.role || formData.type || 'Collaborateur',
-          sendEmail: true,
-        },
-      });
-
-      if (userResponse.error) {
-        throw new Error(userResponse.error.message || 'Erreur création compte utilisateur');
-      }
-
-      const userData = userResponse.data;
-      if (!userData?.success || !userData?.user?.id) {
-        throw new Error(userData?.error || 'Erreur lors de la création du compte');
-      }
-
-      const userId = userData.user.id;
-
-      // 2. Créer le collaborateur lié au compte utilisateur
+      // Créer le collaborateur (fiche RH uniquement, pas de compte système)
       const { data, error } = await supabase
         .from('collaborators')
         .insert({
           agency_id: effectiveAgencyId,
-          user_id: userId,
+          user_id: null, // Pas de lien avec un compte utilisateur
           first_name: formData.first_name,
           last_name: formData.last_name,
-          email: formData.email,
+          email: formData.email || null,
           phone: formData.phone || null,
           type: formData.type,
           role: formData.role,
@@ -93,14 +60,14 @@ export function useCollaborators(agencyId?: string) {
           city: formData.city || null,
           birth_place: formData.birth_place || null,
           apogee_user_id: formData.apogee_user_id || null,
-          is_registered_user: true,
+          is_registered_user: false, // Pas un utilisateur du système
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      // 3. Sauvegarder les données sensibles séparément (RGPD)
+      // Sauvegarder les données sensibles séparément (RGPD)
       if (data?.id) {
         await saveSensitiveData(data.id, {
           birth_date: formData.birth_date,
@@ -114,9 +81,7 @@ export function useCollaborators(agencyId?: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['collaborators', effectiveAgencyId] });
-      queryClient.invalidateQueries({ queryKey: ['user-management'] });
-      queryClient.invalidateQueries({ queryKey: ['agency-users'] });
-      toast.success('Collaborateur et compte utilisateur créés avec succès');
+      toast.success('Collaborateur créé avec succès');
     },
     onError: (error: Error) => {
       toast.error(`Erreur: ${error.message}`);
