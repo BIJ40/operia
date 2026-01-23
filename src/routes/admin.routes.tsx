@@ -3,12 +3,10 @@ import { Route, Navigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { ModuleGuard } from "@/components/auth/ModuleGuard";
-import { SupportConsoleGuard } from "@/components/auth/SupportConsoleGuard";
 import { FaqAdminGuard } from "@/components/auth/FaqAdminGuard";
 
 // Lazy loaded pages
 const AdminIndex = lazy(() => import("@/pages/AdminIndex"));
-const AdminSupportTickets = lazy(() => import("@/pages/AdminSupportTickets"));
 const SupportSettings = lazy(() => import("@/pages/admin/SupportSettings"));
 const AdminSupportStats = lazy(() => import("@/pages/AdminSupportStats"));
 const AdminEscalationHistory = lazy(() => import("@/pages/AdminEscalationHistory"));
@@ -48,11 +46,11 @@ export function AdminRoutes() {
       <Route path="/admin/documents" element={<Navigate to="/admin/helpi" replace />} />
       <Route path="/admin/chatbot-rag" element={<Navigate to="/admin/helpi" replace />} />
       
-      {/* Support */}
-      <Route path="/admin/support-tickets" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminSupportTickets /></ModuleGuard></RoleGuard></MainLayout>} />
+      {/* Support - Redirected to projects */}
+      <Route path="/admin/support-tickets" element={<Navigate to="/projects/kanban" replace />} />
       <Route path="/admin/support-stats" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminSupportStats /></ModuleGuard></RoleGuard></MainLayout>} />
       <Route path="/admin/escalation-history" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminEscalationHistory /></ModuleGuard></RoleGuard></MainLayout>} />
-      <Route path="/admin/support/settings" element={<MainLayout><SupportConsoleGuard><SupportSettings /></SupportConsoleGuard></MainLayout>} />
+      <Route path="/admin/support/settings" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><SupportSettings /></ModuleGuard></RoleGuard></MainLayout>} />
       
       {/* Backup & Storage */}
       <Route path="/admin/backup" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminBackup /></ModuleGuard></RoleGuard></MainLayout>} />

@@ -4,7 +4,6 @@
  * Inclut tickets support classiques + tickets projet initiés par l'utilisateur
  */
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserTickets, Ticket } from '@/hooks/use-user-tickets';
 import { useCombinedUserTickets } from '@/hooks/use-user-project-tickets';
@@ -14,16 +13,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SimplifiedSupportChat } from '@/components/support/SimplifiedSupportChat';
-import { CreateSupportTicketDialog } from '@/components/support/CreateSupportTicketDialog';
+import { CreateProjectTicketDialog } from '@/components/support/CreateProjectTicketDialog';
 import { TicketDetailPanel } from '@/components/support/TicketDetailPanel';
 import { ServiceBadge } from '@/components/tickets/ServiceBadge';
 import { HeatPriorityBadge } from '@/components/support/HeatPriorityBadge';
 import { ProjectTicketDetailPanel } from '@/components/support/ProjectTicketDetailPanel';
-import { ROUTES } from '@/config/routes';
 import { 
   MessageSquare, 
   FileText, 
-  Headset,
   PlusCircle,
   Clock,
   CheckCircle2,
@@ -37,8 +34,7 @@ import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
 export default function SupportIndex() {
-  const { canAccessSupportConsoleUI } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const { tickets: supportTickets, isLoading: supportLoading, loadTickets, setSelectedTicket } = useUserTickets();
   const { tickets: combinedTickets, isLoading: combinedLoading } = useCombinedUserTickets();
   const { unreadCount: totalUnreadCount } = useUserProjectUnreadCount();
@@ -50,7 +46,8 @@ export default function SupportIndex() {
   const ticketsLoading = supportLoading || combinedLoading;
   const hasUnreadTickets = combinedTickets.some(t => t.unread_exchanges_count && t.unread_exchanges_count > 0);
 
-  const handleTicketCreated = (ticketId: string) => {
+  const handleTicketCreated = (_ticketId: string) => {
+    // Reload combined tickets (includes project tickets)
     loadTickets();
   };
 
@@ -115,16 +112,6 @@ export default function SupportIndex() {
             Besoin d'aide ? Trouvez des réponses ou contactez notre équipe
           </p>
         </div>
-        {canAccessSupportConsoleUI && (
-          <Button
-            variant="outline"
-            onClick={() => navigate(ROUTES.support.console)}
-            className="gap-2"
-          >
-            <Headset className="w-4 h-4" />
-            <span className="hidden sm:inline">Console Support</span>
-          </Button>
-        )}
       </div>
 
       {/* 3 Column Layout */}
@@ -293,8 +280,8 @@ export default function SupportIndex() {
         </Card>
       </div>
 
-      {/* Dialog création ticket */}
-      <CreateSupportTicketDialog
+      {/* Dialog création ticket projet */}
+      <CreateProjectTicketDialog
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
         onTicketCreated={handleTicketCreated}
