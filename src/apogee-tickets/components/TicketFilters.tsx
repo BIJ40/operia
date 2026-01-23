@@ -1,38 +1,17 @@
 /**
  * Filtres pour les tickets Apogée
- * Inclut: recherche, module, origine, qualification IA, slider priorité avec pastilles, PEC et nouveaux messages
+ * Inclut: recherche, module, origine, qualification IA, PEC et nouveaux messages
  */
 
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Slider } from '@/components/ui/slider';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search, X, Snowflake, Flame, Tag, Filter, MessageSquare, RotateCcw } from 'lucide-react';
+import { Search, Tag, Filter, MessageSquare, RotateCcw } from 'lucide-react';
 import type { ApogeeModule, ApogeePriority, ApogeeOwnerSide, TicketFilters as Filters, ReportedBy, MissingFieldFilter } from '../types';
-import { cn } from '@/lib/utils';
 import { useTicketTags } from '../hooks/useTicketTags';
-
-// Couleurs pour le gradient du slider (bleu glacé -> rouge feu)
-const getHeatColor = (priority: number): string => {
-  const p = Math.max(0, Math.min(12, priority));
-  if (p <= 6) {
-    // Bleu glacé (200) -> Jaune/Orange (40)
-    const hue = 200 - (p * 26.67);
-    const sat = 80 + (p * 1.67);
-    const light = 70 - (p * 3.33);
-    return `hsl(${hue}, ${sat}%, ${light}%)`;
-  } else {
-    // Jaune/Orange -> Rouge feu
-    const t = p - 6;
-    const hue = 40 - (t * 6.67);
-    const sat = 90;
-    const light = 50 - (t * 3.33);
-    return `hsl(${hue}, ${sat}%, ${light}%)`;
-  }
-};
 
 // Options pour Origine (ReportedBy) - triées alphabétiquement
 const ORIGINE_OPTIONS: { value: ReportedBy; label: string }[] = [
@@ -42,6 +21,7 @@ const ORIGINE_OPTIONS: { value: ReportedBy; label: string }[] = [
   { value: 'FLORIAN', label: 'Florian' },
   { value: 'JEROME', label: 'Jérôme' },
 ];
+
 
 interface TicketFiltersProps {
   filters: Filters;
@@ -97,51 +77,6 @@ export function TicketFilters({
   const filterWarningText = activeFiltersCount === 1 
     ? "Attention, un filtre est activé" 
     : `Attention, ${activeFiltersCount} filtres sont activés`;
-
-  // Valeurs du slider range (min et max)
-  const heatMin = filters.heat_priority_min ?? 0;
-  const heatMax = filters.heat_priority_max ?? 12;
-  const exactPriority = filters.heat_priority_exact;
-  
-  // Vérifie si on a un filtre de priorité actif
-  const hasPriorityFilter = exactPriority !== undefined || heatMin > 0 || heatMax < 12;
-
-  const handleRangeChange = (values: number[]) => {
-    const [min, max] = values;
-    onFiltersChange({
-      ...filters,
-      heat_priority_min: min,
-      heat_priority_max: max,
-      heat_priority_exact: undefined, // Clear exact when using range
-    });
-  };
-
-  const handleDotClick = (level: number) => {
-    if (exactPriority === level) {
-      // Si on clique sur la même pastille, on désactive le filtre exact
-      onFiltersChange({
-        ...filters,
-        heat_priority_exact: undefined,
-      });
-    } else {
-      // Filtre sur cette priorité exacte
-      onFiltersChange({
-        ...filters,
-        heat_priority_exact: level,
-        heat_priority_min: 0,
-        heat_priority_max: 12,
-      });
-    }
-  };
-
-  const clearPriorityFilter = () => {
-    onFiltersChange({
-      ...filters,
-      heat_priority_min: undefined,
-      heat_priority_max: undefined,
-      heat_priority_exact: undefined,
-    });
-  };
 
   return (
     <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
@@ -341,79 +276,6 @@ export function TicketFilters({
         )}
       </div>
 
-      {/* Ligne 2: Filtre priorité compact */}
-      <div className="space-y-1">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-muted-foreground">Priorité</span>
-          {hasPriorityFilter && (
-            <Button variant="ghost" size="sm" className="h-5 px-1.5 text-xs" onClick={clearPriorityFilter}>
-              <X className="h-3 w-3" />
-            </Button>
-          )}
-        </div>
-        
-        {/* Double slider compact */}
-        <div className="flex items-center gap-3 max-w-[560px]">
-          <Snowflake className="h-3 w-3 shrink-0" style={{ color: getHeatColor(0) }} />
-          
-          <div className="flex-1 px-1">
-            <Slider
-              min={0}
-              max={12}
-              step={1}
-              value={exactPriority !== undefined ? [exactPriority, exactPriority] : [heatMin, heatMax]}
-              onValueChange={handleRangeChange}
-              className="w-full"
-              trackClassName="bg-gradient-to-r from-blue-400 via-yellow-400 to-red-500"
-              rangeClassName="bg-white/30"
-            />
-          </div>
-          
-          <Flame 
-            className={cn(
-              "h-3 w-3 shrink-0 transition-all",
-              (heatMax >= 10 || exactPriority !== undefined && exactPriority >= 10) && 'animate-pulse'
-            )} 
-            style={{ color: getHeatColor(12) }} 
-          />
-        </div>
-
-        {/* Pastilles de priorité compactes (0-12) */}
-        <div className="flex items-center justify-between max-w-[560px] px-6">
-          {Array.from({ length: 13 }, (_, i) => {
-            const isSelected = exactPriority === i;
-            const isInRange = exactPriority === undefined && i >= heatMin && i <= heatMax;
-            
-            return (
-              <button
-                key={i}
-                onClick={() => handleDotClick(i)}
-                className={cn(
-                  "w-3.5 h-3.5 rounded-full transition-all duration-200 border",
-                  "hover:scale-125 hover:shadow-lg cursor-pointer",
-                  isSelected && "ring-1 ring-offset-1 ring-foreground scale-110",
-                  !isSelected && !isInRange && "opacity-30"
-                )}
-                style={{
-                  backgroundColor: getHeatColor(i),
-                  borderColor: isSelected ? 'hsl(var(--foreground))' : 'transparent',
-                }}
-                title={`Priorité ${i}`}
-              />
-            );
-          })}
-        </div>
-        
-        {/* Indicateur de sélection */}
-        {hasPriorityFilter && (
-          <div className="text-center text-xs text-muted-foreground">
-            {exactPriority !== undefined 
-              ? `Priorité exacte: ${exactPriority}`
-              : `Plage: ${heatMin} - ${heatMax}`
-            }
-          </div>
-        )}
-      </div>
     </div>
   );
 }

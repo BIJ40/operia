@@ -27,6 +27,7 @@ import { TicketDetailDrawer } from '../components/TicketDetailDrawer';
 import { CreateTicketDialog } from '../components/CreateTicketDialog';
 import { ActionsConfigDialog } from '../components/ActionsConfigDialog';
 import { RecentChangesSheet } from '../components/RecentChangesSheet';
+import { HeatPrioritySlider } from '../components/HeatPrioritySlider';
 import { useTicketQualification } from '../hooks/useTicketQualification';
 import { exportToCSV, exportToExcel, exportToPDF } from '../utils/exportKanban';
 
@@ -324,6 +325,9 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
         </div>
 
         <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+          {/* Slider priorité inline */}
+          <HeatPrioritySlider filters={filters} onFiltersChange={setFilters} />
+          
           <Link to={ROUTES.projects.review}>
             <Tooltip>
               <TooltipTrigger asChild>
