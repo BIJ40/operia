@@ -8104,6 +8104,10 @@ export type Database = {
         Args: { _agency_id: string; _user_id: string }
         Returns: boolean
       }
+      can_insert_exchange_for_ticket: {
+        Args: { p_ticket_id: string; p_user_id: string }
+        Returns: boolean
+      }
       can_manage_user_db: {
         Args: { p_editor_id: string; p_target_id: string }
         Returns: boolean
