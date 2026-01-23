@@ -4416,51 +4416,43 @@ export type Database = {
           },
         ]
       }
-      live_support_messages: {
+      live_support_messages_archive: {
         Row: {
           attachment_type: string | null
           attachment_url: string | null
-          content: string
-          created_at: string
-          id: string
-          is_from_support: boolean
-          sender_id: string
-          sender_name: string
-          session_id: string
+          content: string | null
+          created_at: string | null
+          id: string | null
+          is_from_support: boolean | null
+          sender_id: string | null
+          sender_name: string | null
+          session_id: string | null
         }
         Insert: {
           attachment_type?: string | null
           attachment_url?: string | null
-          content: string
-          created_at?: string
-          id?: string
-          is_from_support?: boolean
-          sender_id: string
-          sender_name: string
-          session_id: string
+          content?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_from_support?: boolean | null
+          sender_id?: string | null
+          sender_name?: string | null
+          session_id?: string | null
         }
         Update: {
           attachment_type?: string | null
           attachment_url?: string | null
-          content?: string
-          created_at?: string
-          id?: string
-          is_from_support?: boolean
-          sender_id?: string
-          sender_name?: string
-          session_id?: string
+          content?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_from_support?: boolean | null
+          sender_id?: string | null
+          sender_name?: string | null
+          session_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "live_support_messages_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "live_support_sessions"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
-      live_support_sessions: {
+      live_support_sessions_archive: {
         Row: {
           agency_slug: string | null
           agent_id: string | null
@@ -4468,13 +4460,13 @@ export type Database = {
           closed_at: string | null
           closed_by: string | null
           closed_reason: string | null
-          created_at: string
-          id: string
+          created_at: string | null
+          id: string | null
           notified_at: string | null
-          status: string
-          updated_at: string
-          user_id: string
-          user_name: string
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+          user_name: string | null
         }
         Insert: {
           agency_slug?: string | null
@@ -4483,13 +4475,13 @@ export type Database = {
           closed_at?: string | null
           closed_by?: string | null
           closed_reason?: string | null
-          created_at?: string
-          id?: string
+          created_at?: string | null
+          id?: string | null
           notified_at?: string | null
-          status?: string
-          updated_at?: string
-          user_id: string
-          user_name: string
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          user_name?: string | null
         }
         Update: {
           agency_slug?: string | null
@@ -4498,13 +4490,13 @@ export type Database = {
           closed_at?: string | null
           closed_by?: string | null
           closed_reason?: string | null
-          created_at?: string
-          id?: string
+          created_at?: string | null
+          id?: string | null
           notified_at?: string | null
-          status?: string
-          updated_at?: string
-          user_id?: string
-          user_name?: string
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          user_name?: string | null
         }
         Relationships: []
       }

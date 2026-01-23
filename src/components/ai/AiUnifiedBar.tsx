@@ -1,16 +1,16 @@
 /**
  * AI Unified Bar - Single floating search bar for documentation
  * Always visible, fixed position, results shown inline below
+ * V3: Simplified without Live Support
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, X, Loader2, MessageCircle } from 'lucide-react';
+import { Sparkles, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAiUnified } from './AiUnifiedContext';
 import { AiInlineResult } from './AiInlineResult';
-import { useLiveSupportSession } from '@/hooks/useLiveSupportSession';
 import { cn } from '@/lib/utils';
 
 const QUICK_EXAMPLES = [
@@ -29,15 +29,6 @@ export function AiUnifiedBar() {
     closeResult,
     clearMessages,
   } = useAiUnified();
-  
-  const { 
-    hasActiveSession, 
-    isConnected, 
-    isWaiting,
-    hasNewMessage,
-    openChat,
-    startNewSession, 
-  } = useLiveSupportSession();
   
   const [localQuery, setLocalQuery] = useState('');
   const [isBarOpen, setIsBarOpen] = useState(false);
@@ -122,17 +113,6 @@ export function AiUnifiedBar() {
     setLocalQuery(example);
     inputRef.current?.focus();
   };
-
-  const handleLiveSupportClick = useCallback(async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (hasActiveSession) {
-      openChat();
-    } else {
-      await startNewSession();
-    }
-  }, [hasActiveSession, openChat, startNewSession]);
 
   const hasResults = messages.length > 0;
   const showResultsZone = isBarOpen || localQuery.length > 0 || hasResults || isLoading;
@@ -231,52 +211,6 @@ export function AiUnifiedBar() {
         </motion.div>
 
         <AnimatePresence>
-          {hasActiveSession && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8, x: 20 }}
-              animate={{ opacity: 1, scale: 1, x: 0 }}
-              exit={{ opacity: 0, scale: 0.8, x: 20 }}
-            >
-              <Button
-                type="button"
-                onClick={handleLiveSupportClick}
-                size="sm"
-                className={cn(
-                  "relative gap-2 rounded-full px-4 shadow-lg transition-all shrink-0",
-                  isConnected 
-                    ? "bg-green-500 hover:bg-green-600 text-white" 
-                    : "bg-amber-500 hover:bg-amber-600 text-white animate-pulse"
-                )}
-              >
-                <span className="relative flex h-2 w-2">
-                  <span className={cn(
-                    "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75",
-                    isConnected ? "bg-green-300" : "bg-amber-300"
-                  )} />
-                  <span className={cn(
-                    "relative inline-flex rounded-full h-2 w-2",
-                    isConnected ? "bg-green-200" : "bg-amber-200"
-                  )} />
-                </span>
-                
-                <MessageCircle className={cn("w-4 h-4", hasNewMessage && "animate-bounce")} />
-                
-                <span className="text-xs font-medium hidden sm:inline">
-                  {isConnected ? 'Support en direct' : 'En attente...'}
-                </span>
-
-                {hasNewMessage && (
-                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
-                  </span>
-                )}
-              </Button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
           {showResultsZone && (
             <motion.div 
               initial={{ opacity: 0, y: -10 }}
@@ -295,7 +229,6 @@ export function AiUnifiedBar() {
                     closeResult();
                     clearMessages();
                   }}
-                  onOpenLiveChat={hasActiveSession ? openChat : startNewSession}
                 />
               </div>
             </motion.div>

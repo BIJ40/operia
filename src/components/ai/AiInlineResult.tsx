@@ -1,6 +1,7 @@
 /**
  * AI Inline Result - Displays results directly under the search bar
  * Documentation search only - no statistics
+ * V3: Simplified without LiveSupportChat
  */
 
 import React, { useState } from 'react';
@@ -18,7 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { LiveSupportChat } from '@/components/support/LiveSupportChat';
+import { SimplifiedSupportChat } from '@/components/support/SimplifiedSupportChat';
 
 interface AiInlineResultProps {
   messages: AiMessage[];
@@ -301,15 +302,18 @@ export function AiInlineResult({ messages, isLoading, onClose, onContactSupport,
           <DialogHeader className="px-4 py-3 border-b flex-shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <MessageCircle className="w-5 h-5 text-primary" />
-              Chat Support en direct
+              Chat Support
             </DialogTitle>
             <DialogDescription className="sr-only">
-              Conversation en direct avec le support HelpConfort
+              Conversation avec le support HelpConfort
             </DialogDescription>
           </DialogHeader>
           
           <div className="flex-1 overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <LiveSupportChat onClose={() => setShowSupportChat(false)} />
+            <SimplifiedSupportChat 
+              onChatClosed={() => setShowSupportChat(false)}
+              onTicketCreated={() => setShowSupportChat(false)}
+            />
           </div>
         </DialogContent>
       </Dialog>
