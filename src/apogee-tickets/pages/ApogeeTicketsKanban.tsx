@@ -26,6 +26,7 @@ import { TicketFilters } from '../components/TicketFilters';
 import { TicketDetailDrawer } from '../components/TicketDetailDrawer';
 import { CreateTicketDialog } from '../components/CreateTicketDialog';
 import { ActionsConfigDialog } from '../components/ActionsConfigDialog';
+import { RecentChangesSheet } from '../components/RecentChangesSheet';
 import { useTicketQualification } from '../hooks/useTicketQualification';
 import { exportToCSV, exportToExcel, exportToPDF } from '../utils/exportKanban';
 
@@ -133,6 +134,7 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
   const [selectedTicket, setSelectedTicket] = useState<ApogeeTicket | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showConfigDialog, setShowConfigDialog] = useState(false);
+  const [showRecentChanges, setShowRecentChanges] = useState(false);
 
   const togglePECFilter = (pecId: string) => {
     setSelectedPEC(prev => {
@@ -281,58 +283,20 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
               <span className="hidden sm:inline">Nouveau ticket</span>
             </Button>
           )}
-          {/* Menu dernières modifications */}
-          <DropdownMenu>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" className="h-8 w-8">
-                    <Clock className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-              </TooltipTrigger>
-              <TooltipContent>Dernières modifications</TooltipContent>
-            </Tooltip>
-            <DropdownMenuContent align="start" className="bg-background border shadow-lg z-50 w-80">
-              {recentTickets.length === 0 ? (
-                <div className="px-3 py-2 text-sm text-muted-foreground">
-                  Aucune modification récente
-                </div>
-              ) : (
-                recentTickets.map((ticket) => (
-                  <DropdownMenuItem 
-                    key={ticket.id}
-                    onClick={() => {
-                      const fullTicket = tickets.find(t => t.id === ticket.id);
-                      if (fullTicket) {
-                        handleTicketClick(fullTicket);
-                      }
-                    }}
-                    className="cursor-pointer flex flex-col items-start gap-1"
-                  >
-                    <div className="flex items-center gap-2 w-full">
-                      <Badge variant="outline" className="text-xs shrink-0">
-                        #{ticket.ticket_number}
-                      </Badge>
-                      <span className="truncate text-sm font-medium flex-1">
-                        {ticket.element_concerne}
-                      </span>
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      {ticket.last_modified_at 
-                        ? new Date(ticket.last_modified_at).toLocaleString('fr-FR', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })
-                        : '—'}
-                    </span>
-                  </DropdownMenuItem>
-                ))
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Bouton dernières modifications */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="h-8 w-8"
+                onClick={() => setShowRecentChanges(true)}
+              >
+                <Clock className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Dernières modifications</TooltipContent>
+          </Tooltip>
           
           {/* Export dropdown */}
           <DropdownMenu>
@@ -598,6 +562,16 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
       <ActionsConfigDialog
         open={showConfigDialog}
         onClose={() => setShowConfigDialog(false)}
+      />
+
+      {/* Sheet dernières modifications */}
+      <RecentChangesSheet
+        open={showRecentChanges}
+        onOpenChange={setShowRecentChanges}
+        tickets={tickets}
+        statuses={statuses}
+        modules={modules}
+        onTicketClick={handleTicketClick}
       />
     </div>
   );
