@@ -6,7 +6,7 @@
  * Ligne 3: Sous-onglets contextuels avec animation slide
  */
 
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -52,17 +52,29 @@ const getIcon = (name: string): LucideIcon => {
   return SECTION_ICONS[name] || Circle;
 };
 
-// Déterminer l'onglet actif selon la route
-const getActiveTabId = (pathname: string): string | null => {
-  if (pathname === '/') return 'home';
-  if (pathname.startsWith('/hc-agency')) return 'mon-agence';
-  if (pathname.startsWith('/rh')) return 'rh';
-  if (pathname.startsWith('/academy') || pathname.startsWith('/guides')) return 'academy';
-  if (pathname.startsWith('/projects')) return 'tickets';
-  if (pathname.startsWith('/hc-reseau') || pathname.startsWith('/franchiseur')) return 'franchiseur';
-  if (pathname.startsWith('/admin')) return 'admin';
-  if (pathname.startsWith('/support')) return 'support';
-  return null;
+const stripSearch = (href: string) => href.split('?')[0] || href;
+
+/**
+ * Détermine l'onglet actif en se basant sur les href réellement rendus.
+ * => évite les incohérences “sous-statut de la page précédente” lors des navigations.
+ */
+const resolveActiveTopTab = <T extends { href: string виж; id: string }>(
+  tabs: T[],
+  pathname: string
+): T | null => {
+  const candidates = tabs.filter((t) => {
+    const base = stripSearch(t.href);
+    if (base === '/') return pathname === '/';
+    return pathname === base || pathname.startsWith(base + '/');
+  });
+
+  if (candidates.length === 0) return null;
+  // “Longest prefix wins”
+  return candidates.reduce((best, cur) => {
+    const bestLen = stripSearch(best.href).length;
+    const curLen = stripSearch(cur.href).length;
+    return curLen > bestLen ? cur : best;
+  }, candidates[0]);
 };
 
 export function TabHeader() {
@@ -82,6 +94,45 @@ export function TabHeader() {
   
   const caps = getRoleCapabilities(globalRole);
   const userLevel = globalRole ? GLOBAL_ROLES[globalRole] : 0;
+
+  const canAccessLink = useCallback(
+    (link: MegaMenuLink): boolean => {
+      if (link.requiresSupportConsoleUI && !canAccessSupportConsoleUI) {
+        return false;
+      }
+      if (link.minRole) {
+        const requiredLevel = GLOBAL_ROLES[link.minRole as keyof typeof GLOBAL_ROLES] || 0;
+        if (userLevel < requiredLevel) {
+          return false;
+        }
+      }
+      if (link.requiresOption) {
+        const { module, option } = link.requiresOption;
+        const moduleConfig = enabledModules?.[module];
+        const isModuleActive =
+          typeof moduleConfig === 'boolean' ? moduleConfig : moduleConfig?.enabled;
+
+        if (!isModuleActive) return false;
+
+        const optionEnabled = typeof moduleConfig === 'object' ? moduleConfig.options?.[option] === true : true;
+
+        if (link.section === 'salarie' && option === 'coffre') {
+          if (optionEnabled) return true;
+          if (userLevel >= GLOBAL_ROLES.franchisee_admin && isSalariedManager) return true;
+          return false;
+        }
+
+        if (!optionEnabled) return false;
+      }
+      return true;
+    },
+    [
+      canAccessSupportConsoleUI,
+      enabledModules,
+      isSalariedManager,
+      userLevel,
+    ]
+  );
 
   // Filtrer les sections de menu selon les permissions
   const filteredMenus = useMemo(() => {
@@ -127,85 +178,19 @@ export function TabHeader() {
     return tabs;
   }, [filteredMenus, showSupport]);
 
-  // Onglet actif basé sur la route
-  const activeTabId = getActiveTabId(location.pathname);
-  const activeTab = topTabs.find(t => t.id === activeTabId);
+  // Onglet actif basé sur la route (résolution via href réellement rendus)
+  const activeTopTab = useMemo(() => {
+    return resolveActiveTopTab(topTabs, location.pathname);
+  }, [topTabs, location.pathname]);
 
-  // Filtre un lien selon les permissions
-  const canAccessLink = (link: MegaMenuLink): boolean => {
-    if (link.requiresSupportConsoleUI && !canAccessSupportConsoleUI) {
-      return false;
-    }
-    if (link.minRole) {
-      const requiredLevel = GLOBAL_ROLES[link.minRole as keyof typeof GLOBAL_ROLES] || 0;
-      if (userLevel < requiredLevel) {
-        return false;
-      }
-    }
-    if (link.requiresOption) {
-      const { module, option } = link.requiresOption;
-      const moduleConfig = enabledModules?.[module];
-      const isModuleActive = typeof moduleConfig === 'boolean' 
-        ? moduleConfig 
-        : moduleConfig?.enabled;
-      
-      if (!isModuleActive) return false;
-      
-      const optionEnabled = typeof moduleConfig === 'object' 
-        ? moduleConfig.options?.[option] === true 
-        : true;
-      
-      if (link.section === 'salarie' && option === 'coffre') {
-        if (optionEnabled) return true;
-        if (userLevel >= GLOBAL_ROLES.franchisee_admin && isSalariedManager) return true;
-        return false;
-      }
-      
-      if (!optionEnabled) return false;
-    }
-    return true;
-  };
+  const activeTabId = activeTopTab?.id ?? null;
 
-  // Sous-onglets de l'onglet actif - dépendances explicites incluant pathname et topTabs
+  // Sous-onglets de l'onglet actif
   const subTabs = useMemo(() => {
-    // Recalculer quand la route change ou quand les tabs sont mis à jour
-    const currentActiveTab = topTabs.find(t => t.id === getActiveTabId(location.pathname));
-    if (!currentActiveTab?.section?.links) return [];
-    
-    return currentActiveTab.section.links.filter((link) => {
-      if (link.requiresSupportConsoleUI && !canAccessSupportConsoleUI) {
-        return false;
-      }
-      if (link.minRole) {
-        const requiredLevel = GLOBAL_ROLES[link.minRole as keyof typeof GLOBAL_ROLES] || 0;
-        if (userLevel < requiredLevel) {
-          return false;
-        }
-      }
-      if (link.requiresOption) {
-        const { module, option } = link.requiresOption;
-        const moduleConfig = enabledModules?.[module];
-        const isModuleActive = typeof moduleConfig === 'boolean' 
-          ? moduleConfig 
-          : moduleConfig?.enabled;
-        
-        if (!isModuleActive) return false;
-        
-        const optionEnabled = typeof moduleConfig === 'object' 
-          ? moduleConfig.options?.[option] === true 
-          : true;
-        
-        if (link.section === 'salarie' && option === 'coffre') {
-          if (optionEnabled) return true;
-          if (userLevel >= GLOBAL_ROLES.franchisee_admin && isSalariedManager) return true;
-          return false;
-        }
-        
-        if (!optionEnabled) return false;
-      }
-      return true;
-    });
-  }, [location.pathname, topTabs, userLevel, canAccessSupportConsoleUI, enabledModules, isSalariedManager]);
+    const links = activeTopTab?.section?.links;
+    if (!links) return [];
+    return links.filter(canAccessLink);
+  }, [activeTopTab, canAccessLink]);
 
   // Animation fluide pour le morphing - la navigation est instantanée, l'animation suit
   const morphTransition = {
@@ -372,11 +357,11 @@ export function TabHeader() {
           </nav>
 
           {/* Ligne 3 : Sous-onglets contextuels avec pills arrondis */}
-          {/* Clé basée sur le pathname pour forcer le remount complet lors du changement de route */}
+          {/* Clé basée sur l'onglet actif pour éviter la persistance de sous-menus entre sections */}
           <AnimatePresence mode="wait">
             {activeTabId && subTabs.length > 0 ? (
               <motion.div
-                key={`subtabs-${location.pathname}`}
+                key={`subtabs-${activeTabId}`}
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
