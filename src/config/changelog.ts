@@ -15,9 +15,36 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.8.3",
+    title: "Recentrage N2 Franchisé",
+    date: "2026-01-23",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // SUPPRESSION PORTAIL EMPLOYÉ N1
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'Suppression complète du portail salarié N1 (Mon véhicule, Mon planning, Mon matériel, Mon coffre RH, Mes demandes)' },
+      { type: 'improvement', description: 'Recentrage application sur les fonctionnalités Franchisé N2+' },
+      { type: 'improvement', description: 'Suppression du module PWA Technicien (/t)' },
+      { type: 'improvement', description: 'N1 conserve accès : Tickets, Favoris et KPIs personnels sur dashboard' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // SIMPLIFICATION COLLABORATEURS
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'Création collaborateur sans compte utilisateur système associé' },
+      { type: 'improvement', description: 'Email optionnel lors de la création d\'une fiche RH' },
+      { type: 'improvement', description: 'Suppression workflow signature digitale planning technicien' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // PLANNINGS N2
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'Suppression bouton "Envoyer au technicien" sur page plannings' },
+      { type: 'improvement', description: 'Bouton "Imprimer le planning" avec libellé explicite' },
+    ],
+  },
+  {
     version: "V0.8.2",
     title: "UX Tickets & Persistance",
-    date: "2026-01-23",
+    date: "2026-01-22",
     changes: [
       // ═══════════════════════════════════════════════════════════════
       // LISTE TICKETS - OPTIMISATION COLONNES
