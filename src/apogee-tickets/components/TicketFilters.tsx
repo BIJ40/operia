@@ -98,23 +98,62 @@ export function TicketFilters({
           )}
         </div>
 
-        {/* Module */}
-        <Select
-          value={filters.module || 'all'}
-          onValueChange={(v) => updateFilter('module', v === 'all' ? undefined : v)}
-        >
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Module" />
-          </SelectTrigger>
-          <SelectContent className="bg-background z-50">
-            <SelectItem value="all">Tous modules</SelectItem>
-            {[...modules].filter(m => m.id).sort((a, b) => a.label.localeCompare(b.label, 'fr')).map((m) => (
-              <SelectItem key={m.id} value={m.id}>
-                {m.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Module - multi-select avec checkboxes */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="w-[150px] justify-between">
+              <span className="truncate">
+                {filters.modules && filters.modules.length > 0 
+                  ? filters.modules.length === 1
+                    ? modules.find(m => m.id === filters.modules![0])?.label || 'Module'
+                    : `${filters.modules.length} modules`
+                  : 'Module'}
+              </span>
+              {filters.modules && filters.modules.length > 0 && (
+                <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
+                  {filters.modules.length}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-56 bg-background z-50" align="start">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Modules</span>
+                {filters.modules && filters.modules.length > 0 && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-6 px-2 text-xs"
+                    onClick={() => updateFilter('modules', undefined)}
+                  >
+                    Réinitialiser
+                  </Button>
+                )}
+              </div>
+              <div className="space-y-1 max-h-48 overflow-y-auto">
+                {[...modules].filter(m => m.id).sort((a, b) => a.label.localeCompare(b.label, 'fr')).map((m) => (
+                  <label
+                    key={m.id}
+                    className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded px-2 py-1"
+                  >
+                    <Checkbox
+                      checked={filters.modules?.includes(m.id) || false}
+                      onCheckedChange={(checked) => {
+                        const currentModules = filters.modules || [];
+                        const newModules = checked
+                          ? [...currentModules, m.id]
+                          : currentModules.filter((mod) => mod !== m.id);
+                        updateFilter('modules', newModules.length > 0 ? newModules : undefined);
+                      }}
+                    />
+                    <span className="text-sm">{m.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
 
         {/* Origine */}
         <Select
