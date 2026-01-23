@@ -1,11 +1,13 @@
 /**
  * Support Index - Page unique du support pour les users
  * 3 sections: Créer un ticket (dialog) | Chat IA | Mes Demandes (inline)
+ * Inclut tickets support classiques + tickets projet initiés par l'utilisateur
  */
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserTickets, Ticket } from '@/hooks/use-user-tickets';
+import { useCombinedUserTickets } from '@/hooks/use-user-project-tickets';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +17,7 @@ import { CreateSupportTicketDialog } from '@/components/support/CreateSupportTic
 import { TicketDetailPanel } from '@/components/support/TicketDetailPanel';
 import { ServiceBadge } from '@/components/tickets/ServiceBadge';
 import { HeatPriorityBadge } from '@/components/support/HeatPriorityBadge';
+import { ProjectTicketDetailPanel } from '@/components/support/ProjectTicketDetailPanel';
 import { ROUTES } from '@/config/routes';
 import { 
   MessageSquare, 
@@ -25,20 +28,25 @@ import {
   CheckCircle2,
   AlertCircle,
   Plus,
-  Loader2
+  Loader2,
+  MessageCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 export default function SupportIndex() {
   const { canAccessSupportConsoleUI } = useAuth();
   const navigate = useNavigate();
-  const { tickets, isLoading: ticketsLoading, loadTickets, setSelectedTicket } = useUserTickets();
+  const { tickets: supportTickets, isLoading: supportLoading, loadTickets, setSelectedTicket } = useUserTickets();
+  const { tickets: combinedTickets, isLoading: combinedLoading } = useCombinedUserTickets();
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedTicketView, setSelectedTicketView] = useState<Ticket | null>(null);
+  const [selectedProjectTicketId, setSelectedProjectTicketId] = useState<string | null>(null);
   
-  const hasUnreadTickets = tickets.some(t => t.unreadCount && t.unreadCount > 0);
+  const ticketsLoading = supportLoading || combinedLoading;
+  const hasUnreadTickets = combinedTickets.some(t => t.unread_exchanges_count && t.unread_exchanges_count > 0);
 
   const handleTicketCreated = (ticketId: string) => {
     loadTickets();
@@ -67,7 +75,19 @@ export default function SupportIndex() {
     );
   };
 
-  // Si un ticket est sélectionné, afficher le détail
+  // Si un ticket projet est sélectionné
+  if (selectedProjectTicketId) {
+    return (
+      <div className="container mx-auto py-4 sm:py-6 px-3 sm:px-4">
+        <ProjectTicketDetailPanel
+          ticketId={selectedProjectTicketId}
+          onBack={() => setSelectedProjectTicketId(null)}
+        />
+      </div>
+    );
+  }
+
+  // Si un ticket support classique est sélectionné
   if (selectedTicketView) {
     return (
       <div className="container mx-auto py-4 sm:py-6 px-3 sm:px-4">
@@ -171,13 +191,13 @@ export default function SupportIndex() {
         </Card>
 
         {/* Column 3: Mes Demandes */}
-        <Card className="lg:col-span-1 border-l-4 border-l-green-500 flex flex-col min-h-[520px]">
+        <Card className="lg:col-span-1 border-l-4 border-l-primary flex flex-col min-h-[520px]">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <FileText className="w-5 h-5 text-green-600" />
+              <FileText className="w-5 h-5 text-primary" />
               Mes Demandes
               {hasUnreadTickets && (
-                <Badge className="bg-red-500 text-white text-xs">
+                <Badge variant="destructive" className="text-xs">
                   Nouveau
                 </Badge>
               )}
@@ -189,7 +209,7 @@ export default function SupportIndex() {
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 </div>
-              ) : tickets.length === 0 ? (
+              ) : combinedTickets.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">
                   <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
                   <p className="text-sm">Aucune demande en cours</p>
@@ -205,30 +225,59 @@ export default function SupportIndex() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {tickets.map((ticket) => (
+                  {combinedTickets.map((ticket) => (
                     <button
-                      key={ticket.id}
-                      onClick={() => handleSelectTicket(ticket)}
-                      className="w-full text-left p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-muted/50 transition-all"
+                      key={`${ticket.ticketType}-${ticket.id}`}
+                      onClick={() => {
+                        if (ticket.ticketType === 'project') {
+                          setSelectedProjectTicketId(ticket.id);
+                        } else {
+                          // Pour les tickets support, récupérer le ticket complet
+                          const fullTicket = supportTickets.find(t => t.id === ticket.id);
+                          if (fullTicket) {
+                            setSelectedTicket(fullTicket);
+                            setSelectedTicketView(fullTicket);
+                          }
+                        }
+                      }}
+                      className={cn(
+                        "w-full text-left p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-muted/50 transition-all",
+                        ticket.has_active_exchange && "animate-pulse ring-1 ring-primary ring-offset-1"
+                      )}
                     >
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <p className="font-medium text-sm truncate flex-1">
+                        <p className="font-medium text-sm truncate flex-1 flex items-center gap-1">
                           {ticket.subject}
+                          {ticket.unread_exchanges_count > 0 && (
+                            <Badge variant="secondary" className="text-xs gap-0.5 ml-1">
+                              <MessageCircle className="h-3 w-3" />
+                              {ticket.unread_exchanges_count}
+                            </Badge>
+                          )}
                         </p>
-                        {getStatusBadge(ticket.status)}
+                        {ticket.ticketType === 'project' ? (
+                          <Badge 
+                            style={{ 
+                              backgroundColor: ticket.statusColor ? `${ticket.statusColor}20` : undefined,
+                              color: ticket.statusColor || undefined
+                            }}
+                            variant="secondary"
+                          >
+                            {ticket.statusLabel || ticket.status}
+                          </Badge>
+                        ) : (
+                          getStatusBadge(ticket.status)
+                        )}
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <ServiceBadge service={ticket.service} />
+                        <Badge variant="outline" className="text-xs">
+                          {ticket.ticketType === 'project' ? 'Projet' : 'Support'}
+                        </Badge>
                         <HeatPriorityBadge priority={ticket.heat_priority} size="sm" />
                         <span className="text-xs text-muted-foreground ml-auto">
                           {format(new Date(ticket.created_at), 'dd MMM', { locale: fr })}
                         </span>
                       </div>
-                      {ticket.unreadCount && ticket.unreadCount > 0 && (
-                        <Badge className="mt-2 bg-red-500 text-white text-xs">
-                          {ticket.unreadCount} nouveau{ticket.unreadCount > 1 ? 'x' : ''}
-                        </Badge>
-                      )}
                     </button>
                   ))}
                 </div>

@@ -158,14 +158,14 @@ export function RecentTicketsWidget() {
           }
           className={cn(
             "flex items-center gap-2 p-2 rounded-lg hover:bg-accent/50 transition-colors relative",
-            ticket.has_active_exchange && "animate-pulse ring-1 ring-green-500 ring-offset-1"
+            ticket.has_active_exchange && "animate-pulse ring-1 ring-primary ring-offset-1"
           )}
         >
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1">
               <p className="text-sm font-medium truncate">{ticket.subject}</p>
               {ticket.unread_exchanges_count > 0 && (
-                <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs gap-0.5">
+                <Badge variant="secondary" className="text-xs gap-0.5">
                   <MessageCircle className="h-3 w-3" />
                   {ticket.unread_exchanges_count}
                 </Badge>
