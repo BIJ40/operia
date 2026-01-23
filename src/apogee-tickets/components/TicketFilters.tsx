@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search, Tag, Filter, MessageSquare, RotateCcw } from 'lucide-react';
+import { Search, Tag, Filter, MessageSquare, RotateCcw, LayoutGrid } from 'lucide-react';
 import type { ApogeeModule, ApogeePriority, ApogeeOwnerSide, TicketFilters as Filters, ReportedBy, MissingFieldFilter } from '../types';
 import { useTicketTags } from '../hooks/useTicketTags';
 
@@ -101,7 +101,8 @@ export function TicketFilters({
         {/* Module - multi-select avec checkboxes */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="w-[150px] justify-between">
+            <Button variant="outline" className="w-[160px] justify-between">
+              <LayoutGrid className="h-4 w-4 mr-1.5 shrink-0" />
               <span className="truncate">
                 {filters.modules && filters.modules.length > 0 
                   ? filters.modules.length === 1
