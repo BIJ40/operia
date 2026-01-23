@@ -372,11 +372,11 @@ export function TabHeader() {
           </nav>
 
           {/* Ligne 3 : Sous-onglets contextuels avec pills arrondis */}
-          {/* Clé composite pour forcer le remount complet lors du changement d'onglet */}
+          {/* Clé basée sur le pathname pour forcer le remount complet lors du changement de route */}
           <AnimatePresence mode="wait">
             {activeTabId && subTabs.length > 0 ? (
               <motion.div
-                key={`subtabs-${activeTabId}`}
+                key={`subtabs-${location.pathname}`}
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
@@ -384,13 +384,19 @@ export function TabHeader() {
                 className="flex items-center justify-center gap-2 pb-3 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               >
                 {subTabs.map((link) => {
-                  // Trouver le lien le plus spécifique qui match pour éviter les doubles surlignages
+                  // Comparer directement avec le pathname courant
+                  const isExactMatch = location.pathname === link.href;
+                  const isNestedMatch = location.pathname.startsWith(link.href + '/');
+                  
+                  // Trouver le lien le plus spécifique qui match
                   const matchingLinks = subTabs.filter(l => 
                     location.pathname === l.href || location.pathname.startsWith(l.href + '/')
                   );
-                  const mostSpecificMatch = matchingLinks.reduce((best, current) => 
-                    current.href.length > best.href.length ? current : best
-                  , matchingLinks[0]);
+                  const mostSpecificMatch = matchingLinks.length > 0 
+                    ? matchingLinks.reduce((best, current) => 
+                        current.href.length > best.href.length ? current : best
+                      , matchingLinks[0])
+                    : null;
                   const isLinkActive = mostSpecificMatch?.href === link.href;
                   
                   if (link.isDisabled) {
