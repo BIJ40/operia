@@ -25,7 +25,8 @@ import {
   Save,
   Eye,
   Flame,
-  Tag
+  Tag,
+  ListChecks
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
@@ -58,6 +59,7 @@ export default function ApogeeTicketsReview() {
   // États locaux pour les filtres (synchro avec filters)
   const [heatRange, setHeatRange] = useState<[number, number]>([0, 12]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [hasChanges, setHasChanges] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -191,10 +193,29 @@ export default function ApogeeTicketsReview() {
     filtersRef.current = '';
   };
 
+  // Handler pour les statuts
+  const handleStatusToggle = (statusId: string) => {
+    const newStatuses = selectedStatuses.includes(statusId)
+      ? selectedStatuses.filter(s => s !== statusId)
+      : [...selectedStatuses, statusId];
+    setSelectedStatuses(newStatuses);
+    
+    const newFilters = { ...filters };
+    if (newStatuses.length > 0) {
+      newFilters.kanban_statuses = newStatuses;
+    } else {
+      delete newFilters.kanban_statuses;
+    }
+    setFilters(newFilters);
+    setCurrentIndex(0);
+    filtersRef.current = '';
+  };
+
   const clearFilters = () => {
     setFilters({});
     setHeatRange([0, 12]);
     setSelectedTags([]);
+    setSelectedStatuses([]);
     setCurrentIndex(0);
     filtersRef.current = '';
   };
@@ -314,8 +335,8 @@ export default function ApogeeTicketsReview() {
             />
           </div>
 
-          {/* Ligne 2: Priorité Heat + Tags */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Ligne 2: Priorité Heat + Tags + Statuts */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Filtre Priorité Heat (slider range) */}
             <div className="space-y-2 p-3 border rounded-lg bg-muted/30">
               <div className="flex items-center justify-between">
@@ -345,8 +366,8 @@ export default function ApogeeTicketsReview() {
                   <Tag className="h-4 w-4 mr-2 shrink-0" />
                   <span className="text-sm">
                     {selectedTags.length > 0 
-                      ? `${selectedTags.length} tag${selectedTags.length > 1 ? 's' : ''} sélectionné${selectedTags.length > 1 ? 's' : ''}`
-                      : 'Filtrer par tag'}
+                      ? `${selectedTags.length} tag${selectedTags.length > 1 ? 's' : ''}`
+                      : 'Tags'}
                   </span>
                   {selectedTags.length > 0 && (
                     <Badge variant="secondary" className="ml-auto">
@@ -374,6 +395,55 @@ export default function ApogeeTicketsReview() {
                           />
                           <Badge variant="outline" className="text-xs">
                             {tag.label}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            {/* Filtre Statuts (multi-select popover) */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="h-auto min-h-[42px] justify-start px-3 py-2">
+                  <ListChecks className="h-4 w-4 mr-2 shrink-0" />
+                  <span className="text-sm">
+                    {selectedStatuses.length > 0 
+                      ? `${selectedStatuses.length} statut${selectedStatuses.length > 1 ? 's' : ''}`
+                      : 'Statuts'}
+                  </span>
+                  {selectedStatuses.length > 0 && (
+                    <Badge variant="secondary" className="ml-auto">
+                      {selectedStatuses.length}
+                    </Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-2" align="start">
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground px-2">Sélectionner des statuts</p>
+                  {statuses.length === 0 ? (
+                    <p className="text-xs text-muted-foreground px-2 py-2">Aucun statut disponible</p>
+                  ) : (
+                    <div className="max-h-48 overflow-y-auto space-y-1">
+                      {statuses.map((status) => (
+                        <div
+                          key={status.id}
+                          className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer"
+                          onClick={() => handleStatusToggle(status.id)}
+                        >
+                          <Checkbox
+                            checked={selectedStatuses.includes(status.id)}
+                            onCheckedChange={() => handleStatusToggle(status.id)}
+                          />
+                          <Badge 
+                            variant="outline" 
+                            className="text-xs"
+                            style={{ borderColor: status.color || undefined }}
+                          >
+                            {status.label}
                           </Badge>
                         </div>
                       ))}
@@ -454,7 +524,19 @@ export default function ApogeeTicketsReview() {
                   onClick={() => handleTagToggle(tag)}
                 >
                   <Tag className="h-3 w-3 mr-1" />
-                  {tag}
+                  {availableTags.find(t => t.id === tag)?.label || tag}
+                  <X className="h-3 w-3 ml-1" />
+                </Badge>
+              ))}
+              {filters.kanban_statuses && filters.kanban_statuses.length > 0 && filters.kanban_statuses.map((statusId) => (
+                <Badge 
+                  key={statusId}
+                  variant="secondary" 
+                  className="cursor-pointer hover:bg-destructive/20"
+                  onClick={() => handleStatusToggle(statusId)}
+                >
+                  <ListChecks className="h-3 w-3 mr-1" />
+                  {statuses.find(s => s.id === statusId)?.label || statusId}
                   <X className="h-3 w-3 ml-1" />
                 </Badge>
               ))}
