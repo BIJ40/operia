@@ -759,19 +759,6 @@ export default function ApogeeTicketsReview() {
               </div>
             </div>
 
-            {/* Notes internes */}
-            <div>
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Notes internes
-              </label>
-              <Textarea
-                value={formValues.notes_internes || ''}
-                onChange={(e) => updateField('notes_internes', e.target.value || null)}
-                rows={3}
-                placeholder="Notes privées..."
-                className="mt-1 resize-none"
-              />
-            </div>
 
             <Separator />
 
