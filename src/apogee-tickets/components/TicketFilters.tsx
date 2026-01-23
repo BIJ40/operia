@@ -14,15 +14,13 @@ import type { ApogeeModule, ApogeePriority, ApogeeOwnerSide, TicketFilters as Fi
 import { useTicketTags } from '../hooks/useTicketTags';
 
 // Options pour Origine (ReportedBy) - triées alphabétiquement
-// Note: HUGO est regroupé sous APOGEE dans la logique de filtrage
+// Note: HUGO est regroupé sous APOGEE, MARIE et MATHILDE sous FLORIAN
 const ORIGINE_OPTIONS: { value: ReportedBy; label: string }[] = [
   { value: 'APOGEE', label: 'Apogée (+ Hugo)' },
   { value: 'AUTRE', label: 'Autre' },
   { value: 'ERIC', label: 'Éric' },
-  { value: 'FLORIAN', label: 'Florian' },
+  { value: 'FLORIAN', label: 'Florian (+ Marie, Mathilde)' },
   { value: 'JEROME', label: 'Jérôme' },
-  { value: 'MARIE', label: 'Marie' },
-  { value: 'MATHILDE', label: 'Mathilde' },
 ];
 
 
