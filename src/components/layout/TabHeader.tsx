@@ -337,14 +337,15 @@ export function TabHeader() {
           </nav>
 
           {/* Ligne 3 : Sous-onglets contextuels avec pills arrondis */}
+          {/* Clé composite pour forcer le remount complet lors du changement d'onglet */}
           <AnimatePresence mode="wait">
-            {subTabs.length > 0 && (
+            {activeTabId && subTabs.length > 0 ? (
               <motion.div
-                key={activeTabId}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.1 }}
+                key={`subtabs-${activeTabId}`}
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.15 }}
                 className="flex items-center justify-center gap-2 pb-3 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               >
                 {subTabs.map((link) => {
@@ -393,7 +394,7 @@ export function TabHeader() {
                   );
                 })}
               </motion.div>
-            )}
+            ) : null}
           </AnimatePresence>
         </div>
       </header>
