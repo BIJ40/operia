@@ -12,6 +12,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -21,13 +23,17 @@ import {
   Filter,
   X,
   Save,
-  Eye
+  Eye,
+  Flame,
+  Tag
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { HeatPriorityBadge, HEAT_PRIORITY_OPTIONS } from '../components/HeatPriorityBadge';
 import { OwnerSideSlider, ownerSideToSliderValue, sliderValueToOwnerSide } from '../components/OwnerSideSlider';
 import { TicketDetailDrawer } from '../components/TicketDetailDrawer';
+import { useTicketTags } from '../hooks/useTicketTags';
+import { getHeatPriorityConfig } from '@/utils/heatPriority';
 import type { ApogeeTicket, TicketFilters, MissingFieldFilter } from '../types';
 import { ROUTES } from '@/config/routes';
 
@@ -47,6 +53,11 @@ const getMissingFieldLabel = (field: MissingFieldFilter): string => {
 export default function ApogeeTicketsReview() {
   const [filters, setFilters] = useState<TicketFilters>({});
   const { tickets: liveTickets, modules, priorities, statuses, updateTicket, isLoading } = useApogeeTickets(filters);
+  const { tags: availableTags } = useTicketTags();
+  
+  // États locaux pour les filtres (synchro avec filters)
+  const [heatRange, setHeatRange] = useState<[number, number]>([0, 12]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [hasChanges, setHasChanges] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -143,13 +154,54 @@ export default function ApogeeTicketsReview() {
     filtersRef.current = '';
   };
 
-  const clearFilters = () => {
-    setFilters({});
+  // Handler pour le slider de priorité heat
+  const handleHeatRangeChange = (values: number[]) => {
+    setHeatRange([values[0], values[1]]);
+  };
+
+  const applyHeatFilter = () => {
+    const newFilters = { ...filters };
+    if (heatRange[0] > 0 || heatRange[1] < 12) {
+      newFilters.heat_priority_min = heatRange[0];
+      newFilters.heat_priority_max = heatRange[1];
+    } else {
+      delete newFilters.heat_priority_min;
+      delete newFilters.heat_priority_max;
+    }
+    setFilters(newFilters);
     setCurrentIndex(0);
     filtersRef.current = '';
   };
 
-  const hasActiveFilters = Object.values(filters).some(v => v !== undefined && v !== '');
+  // Handler pour les tags
+  const handleTagToggle = (tagId: string) => {
+    const newTags = selectedTags.includes(tagId)
+      ? selectedTags.filter(t => t !== tagId)
+      : [...selectedTags, tagId];
+    setSelectedTags(newTags);
+    
+    const newFilters = { ...filters };
+    if (newTags.length > 0) {
+      newFilters.tags = newTags;
+    } else {
+      delete newFilters.tags;
+    }
+    setFilters(newFilters);
+    setCurrentIndex(0);
+    filtersRef.current = '';
+  };
+
+  const clearFilters = () => {
+    setFilters({});
+    setHeatRange([0, 12]);
+    setSelectedTags([]);
+    setCurrentIndex(0);
+    filtersRef.current = '';
+  };
+
+  const hasActiveFilters = Object.values(filters).some(v => 
+    v !== undefined && v !== '' && (Array.isArray(v) ? v.length > 0 : true)
+  );
 
   if (isLoading) {
     return (
@@ -197,7 +249,8 @@ export default function ApogeeTicketsReview() {
             )}
           </div>
         </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 space-y-4">
+          {/* Ligne 1: Filtres principaux */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {/* Filtre Module avec "Tous" et "Sans module" */}
             <Select
@@ -261,9 +314,79 @@ export default function ApogeeTicketsReview() {
             />
           </div>
 
+          {/* Ligne 2: Priorité Heat + Tags */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Filtre Priorité Heat (slider range) */}
+            <div className="space-y-2 p-3 border rounded-lg bg-muted/30">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <Flame className="h-3.5 w-3.5" />
+                  Priorité Heat
+                </label>
+                <span className="text-xs font-medium">
+                  {getHeatPriorityConfig(heatRange[0]).emoji} {heatRange[0]} - {heatRange[1]} {getHeatPriorityConfig(heatRange[1]).emoji}
+                </span>
+              </div>
+              <Slider
+                min={0}
+                max={12}
+                step={1}
+                value={heatRange}
+                onValueChange={handleHeatRangeChange}
+                onValueCommit={applyHeatFilter}
+                className="w-full"
+              />
+            </div>
+
+            {/* Filtre Tags (multi-select popover) */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="h-auto min-h-[42px] justify-start px-3 py-2">
+                  <Tag className="h-4 w-4 mr-2 shrink-0" />
+                  <span className="text-sm">
+                    {selectedTags.length > 0 
+                      ? `${selectedTags.length} tag${selectedTags.length > 1 ? 's' : ''} sélectionné${selectedTags.length > 1 ? 's' : ''}`
+                      : 'Filtrer par tag'}
+                  </span>
+                  {selectedTags.length > 0 && (
+                    <Badge variant="secondary" className="ml-auto">
+                      {selectedTags.length}
+                    </Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-2" align="start">
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground px-2">Sélectionner des tags</p>
+                  {availableTags.length === 0 ? (
+                    <p className="text-xs text-muted-foreground px-2 py-2">Aucun tag disponible</p>
+                  ) : (
+                    <div className="max-h-48 overflow-y-auto space-y-1">
+                      {availableTags.map((tag) => (
+                        <div
+                          key={tag.id}
+                          className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer"
+                          onClick={() => handleTagToggle(tag.id)}
+                        >
+                          <Checkbox
+                            checked={selectedTags.includes(tag.id)}
+                            onCheckedChange={() => handleTagToggle(tag.id)}
+                          />
+                          <Badge variant="outline" className="text-xs">
+                            {tag.label}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+
           {/* Filtres actifs affichés comme badges */}
           {hasActiveFilters && (
-            <div className="flex flex-wrap gap-2 mt-3">
+            <div className="flex flex-wrap gap-2 pt-2 border-t">
               {filters.module && (
                 <Badge 
                   variant="secondary" 
@@ -304,6 +427,37 @@ export default function ApogeeTicketsReview() {
                   <X className="h-3 w-3 ml-1" />
                 </Badge>
               )}
+              {(filters.heat_priority_min !== undefined || filters.heat_priority_max !== undefined) && (
+                <Badge 
+                  variant="secondary" 
+                  className="cursor-pointer hover:bg-destructive/20"
+                  onClick={() => {
+                    setHeatRange([0, 12]);
+                    const newFilters = { ...filters };
+                    delete newFilters.heat_priority_min;
+                    delete newFilters.heat_priority_max;
+                    setFilters(newFilters);
+                    setCurrentIndex(0);
+                    filtersRef.current = '';
+                  }}
+                >
+                  <Flame className="h-3 w-3 mr-1" />
+                  Priorité: {filters.heat_priority_min ?? 0} - {filters.heat_priority_max ?? 12}
+                  <X className="h-3 w-3 ml-1" />
+                </Badge>
+              )}
+              {filters.tags && filters.tags.length > 0 && filters.tags.map((tag) => (
+                <Badge 
+                  key={tag}
+                  variant="secondary" 
+                  className="cursor-pointer hover:bg-destructive/20"
+                  onClick={() => handleTagToggle(tag)}
+                >
+                  <Tag className="h-3 w-3 mr-1" />
+                  {tag}
+                  <X className="h-3 w-3 ml-1" />
+                </Badge>
+              ))}
             </div>
           )}
         </CardContent>
