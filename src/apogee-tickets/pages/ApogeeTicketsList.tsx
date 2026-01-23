@@ -3,7 +3,7 @@
  * Utilise usePersistedFilters pour persister les filtres et le ticket sélectionné
  */
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import {
@@ -104,7 +104,15 @@ function ApogeeTicketsListContent({ roleInfo }: { roleInfo: NonNullable<ReturnTy
     selectedTicketId, 
     setSelectedTicketId 
   } = usePersistedListFilters();
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(() => {
+    // Restaurer l'état du dialog depuis sessionStorage au montage
+    try {
+      const saved = sessionStorage.getItem('create-ticket-dialog-open');
+      return saved === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [qualifyingTicketId, setQualifyingTicketId] = useState<string | null>(null);
 
   const {
