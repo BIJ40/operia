@@ -229,6 +229,10 @@ serve(async (req) => {
     
     // 29. Conversation members et typing status
     await supabaseAdmin.from('typing_status').delete().eq('user_id', userId)
+    
+    // 30. rh_requests (archived_by, processed_by → profiles)
+    await supabaseAdmin.from('rh_requests').update({ archived_by: null }).eq('archived_by', userId)
+    await supabaseAdmin.from('rh_requests').update({ processed_by: null }).eq('processed_by', userId)
     await supabaseAdmin.from('conversation_members').delete().eq('user_id', userId)
     
     // 15. Supprimer le profil
