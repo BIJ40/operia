@@ -174,7 +174,18 @@ export function CollaboratorWizard({
     }
   };
 
-  const handleSubmit = (values: FormValues) => {
+  // Soumission finale avec validation de toutes les étapes
+  const handleFinalSubmit = async () => {
+    // Valider l'étape courante d'abord
+    const isCurrentStepValid = await validateCurrentStep();
+    if (!isCurrentStepValid) return;
+
+    // Valider tout le formulaire
+    const isFormValid = await form.trigger();
+    if (!isFormValid) return;
+
+    // Récupérer et soumettre les valeurs
+    const values = form.getValues();
     onSubmit({
       ...values,
       type: values.type as CollaboratorFormData['type'],
@@ -268,7 +279,7 @@ export function CollaboratorWizard({
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
             {/* Étape 1 - Identité */}
             {currentStep === 1 && (
               <div className="space-y-4 animate-in fade-in-50 duration-300">
@@ -688,7 +699,7 @@ export function CollaboratorWizard({
                   <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               ) : (
-                <Button type="submit" disabled={isPending}>
+                <Button type="button" onClick={handleFinalSubmit} disabled={isPending}>
                   {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   <Check className="h-4 w-4 mr-1" />
                   Créer le collaborateur
