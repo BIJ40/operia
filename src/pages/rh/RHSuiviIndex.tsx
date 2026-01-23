@@ -16,7 +16,7 @@ import { useCollaboratorsEpiSummary } from '@/hooks/epi/useCollaboratorsEpiSumma
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserManagement } from '@/hooks/use-user-management';
 import { useAdminAgencies } from '@/hooks/use-admin-agencies';
-import { CollaboratorForm } from '@/components/collaborators';
+import { CollaboratorWizard } from '@/components/collaborators';
 import { useCollaborators } from '@/hooks/useCollaborators';
 import { CollaboratorFormData } from '@/types/collaborator';
 import { Button } from '@/components/ui/button';
@@ -146,13 +146,12 @@ export default function RHSuiviIndex() {
         onOpenChange={setShowCompetencesMatrix}
       />
 
-      {/* Dialog création fiche collaborateur RH (sans compte utilisateur) */}
-      <CollaboratorForm
+      {/* Wizard création fiche collaborateur RH (sans compte utilisateur) */}
+      <CollaboratorWizard
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
         onSubmit={handleCreateCollaborator}
         isPending={createMutation.isPending}
-        mode="create"
       />
     </div>
   );
