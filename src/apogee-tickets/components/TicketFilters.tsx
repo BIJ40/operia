@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search, Tag, Filter, MessageSquare, RotateCcw, LayoutGrid } from 'lucide-react';
+import { Search, Tag, Filter, MessageSquare, RotateCcw, LayoutGrid, ClipboardCheck } from 'lucide-react';
 import type { ApogeeModule, ApogeePriority, ApogeeOwnerSide, TicketFilters as Filters, ReportedBy, MissingFieldFilter } from '../types';
 import { useTicketTags } from '../hooks/useTicketTags';
 
@@ -214,24 +214,69 @@ export function TicketFilters({
           </PopoverContent>
         </Popover>
 
-        {/* Complétude - champs manquants */}
-        <Select
-          value={filters.missing_field || 'all'}
-          onValueChange={(v) => updateFilter('missing_field', v === 'all' ? undefined : v as MissingFieldFilter)}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Complétude" />
-          </SelectTrigger>
-          <SelectContent className="bg-background z-50">
-            <SelectItem value="all">Toute complétude</SelectItem>
-            <SelectItem value="complete">✓ Complets</SelectItem>
-            <SelectItem value="incomplete">⚠ Incomplets (tous)</SelectItem>
-            <SelectItem value="no_module">Module manquant</SelectItem>
-            <SelectItem value="no_heat">Priorité manquante</SelectItem>
-            <SelectItem value="no_hours">Heures manquantes</SelectItem>
-            <SelectItem value="no_description">Description manquante</SelectItem>
-          </SelectContent>
-        </Select>
+        {/* Complétude - champs manquants avec checkboxes */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="w-[170px] justify-between">
+              <span className="flex items-center gap-1.5 truncate">
+                <ClipboardCheck className="h-4 w-4 shrink-0" />
+                {filters.missing_field 
+                  ? filters.missing_field === 'complete' ? 'Complets'
+                    : filters.missing_field === 'incomplete' ? 'Incomplets'
+                    : filters.missing_field === 'no_module' ? 'Sans module'
+                    : filters.missing_field === 'no_heat' ? 'Sans priorité'
+                    : filters.missing_field === 'no_hours' ? 'Sans heures'
+                    : filters.missing_field === 'no_description' ? 'Sans description'
+                    : 'Complétude'
+                  : 'Complétude'}
+              </span>
+              {filters.missing_field && (
+                <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">1</Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-56 bg-background z-50" align="start">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Filtrer par complétude</span>
+                {filters.missing_field && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs"
+                    onClick={() => updateFilter('missing_field', undefined)}
+                  >
+                    <RotateCcw className="h-3 w-3 mr-1" />
+                    Réinitialiser
+                  </Button>
+                )}
+              </div>
+              <div className="space-y-1 max-h-48 overflow-y-auto">
+                {[
+                  { value: 'complete', label: '✓ Complets' },
+                  { value: 'incomplete', label: '⚠ Incomplets (tous)' },
+                  { value: 'no_module', label: 'Module manquant' },
+                  { value: 'no_heat', label: 'Priorité manquante' },
+                  { value: 'no_hours', label: 'Heures manquantes' },
+                  { value: 'no_description', label: 'Description manquante' },
+                ].map((opt) => (
+                  <label
+                    key={opt.value}
+                    className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded px-2 py-1"
+                  >
+                    <Checkbox
+                      checked={filters.missing_field === opt.value}
+                      onCheckedChange={(checked) => {
+                        updateFilter('missing_field', checked ? opt.value as MissingFieldFilter : undefined);
+                      }}
+                    />
+                    <span className="text-sm">{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
 
         {/* Separator visual */}
         <div className="h-6 w-px bg-border hidden sm:block" />
