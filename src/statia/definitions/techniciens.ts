@@ -41,22 +41,33 @@ interface TechnicianStats {
 
 /**
  * Vérifie si une intervention est de type RT (Relevé Technique) - NON PRODUCTIF
- * Logique alignée sur DataService.calculateCAByTechnician
+ * Logique RENFORCÉE alignée sur rules.ts RT_generates_NO_CA: true
  */
 function isRTIntervention(intervention: any): boolean {
-  const type2 = (intervention.type2 || intervention.data?.type2 || '').toLowerCase();
-  const type = (intervention.type || intervention.data?.type || '').toLowerCase();
+  const type2 = (intervention.type2 || intervention.data?.type2 || '').toLowerCase().trim();
+  const type = (intervention.type || intervention.data?.type || '').toLowerCase().trim();
   
   // RT explicite via type2
-  if (type2.includes('relevé') || type2.includes('releve') || type2.includes('technique')) return true;
   if (type2 === 'rt') return true;
+  if (type2.includes('relevé technique') || type2.includes('releve technique')) return true;
+  if (type2.includes('rdv technique')) return true;
   
   // RT explicite via type
-  if (type.includes('rt')) return true;
+  if (type === 'rt') return true;
+  if (type.includes('relevé technique') || type.includes('releve technique')) return true;
   
-  // RT via flags bi (biRt seul = RT)
-  if (intervention.data?.biRt && !intervention.data?.biDepan && !intervention.data?.biTvx && !intervention.data?.biV3) return true;
-  if (intervention.data?.isRT) return true;
+  // RT via flags bi (biRt SEUL = RT, sans travaux associés)
+  const hasBiRt = intervention.data?.biRt?.isValidated === true || intervention.data?.isRT === true;
+  const hasBiDepan = intervention.data?.biDepan?.isValidated === true || 
+                     intervention.data?.biDepan?.isWorkDone === true ||
+                     intervention.data?.biDepan?.items?.length > 0;
+  const hasBiTvx = intervention.data?.biTvx?.isValidated === true || 
+                   intervention.data?.biTvx?.isWorkDone === true ||
+                   intervention.data?.biTvx?.items?.length > 0;
+  const hasBiV3 = intervention.data?.biV3?.items?.length > 0;
+  
+  // RT si biRt actif ET aucun travail productif
+  if (hasBiRt && !hasBiDepan && !hasBiTvx && !hasBiV3) return true;
   
   return false;
 }
@@ -93,7 +104,8 @@ function hasProductiveWorkDone(intervention: any): boolean {
 
 /**
  * Vérifie si une intervention est productive pour le calcul CA technicien
- * Logique alignée sur DataService.calculateCAByTechnician (FONCTIONNEL)
+ * RÈGLE MÉTIER STRICTE : seules biDepan ou biTvx génèrent du CA
+ * Logique alignée sur technicienUniversEngine.ts (source de vérité)
  */
 function isProductiveIntervention(intervention: any): boolean {
   // Exclure les RT, SAV, diagnostics
@@ -108,7 +120,16 @@ function isProductiveIntervention(intervention: any): boolean {
     return hasProductiveWorkDone(intervention);
   }
   
-  // Par défaut : inclure (dépannages, travaux, etc.)
+  // RÈGLE STRICTE: Doit avoir biDepan ou biTvx pour être productif
+  // (aligné sur technicienUniversEngine.ts ligne 156)
+  const hasBiDepan = intervention.data?.biDepan;
+  const hasBiTvx = intervention.data?.biTvx;
+  const hasBiV3 = intervention.data?.biV3?.items?.length > 0;
+  
+  if (!hasBiDepan && !hasBiTvx && !hasBiV3) {
+    return false;
+  }
+  
   return true;
 }
 
