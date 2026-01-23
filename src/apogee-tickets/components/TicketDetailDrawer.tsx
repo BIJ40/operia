@@ -118,7 +118,7 @@ export function TicketDetailDrawer({
   hasPrevious = false,
   hasNext = false,
 }: TicketDetailDrawerProps) {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isSupport } = useAuth();
   const { data: roleInfo } = useMyTicketRole();
   const canManage = roleInfo?.canManage ?? false;
   const isDeveloper = roleInfo?.ticketRole === 'developer';
@@ -192,12 +192,26 @@ export function TicketDetailDrawer({
     }
   }, [newComment, draftKey, open]);
 
-  // Marquer le ticket comme vu à l'ouverture
+  // Marquer le ticket comme vu à l'ouverture + désactiver l'urgence support si agent
   useEffect(() => {
     if (open && ticket?.id) {
       markAsViewed.mutate(ticket.id);
+      
+      // Si agent support ouvre un ticket urgent, désactiver le clignotement rouge
+      if ((isSupport || isAdmin) && ticket.is_urgent_support === true) {
+        supabase
+          .from('apogee_tickets')
+          .update({ is_urgent_support: false })
+          .eq('id', ticket.id)
+          .then(({ error }) => {
+            if (!error) {
+              // Mettre à jour le ticket localement pour éviter le clignotement persistant
+              onUpdate({ id: ticket.id, is_urgent_support: false });
+            }
+          });
+      }
     }
-  }, [open, ticket?.id]);
+  }, [open, ticket?.id, ticket?.is_urgent_support, isSupport, isAdmin]);
 
   // États locaux pour les champs éditables (évite les re-render à chaque frappe)
   const [localTitle, setLocalTitle] = useState(ticket?.element_concerne || '');
