@@ -102,6 +102,10 @@ interface CollaboratorWizardProps {
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: CollaboratorFormData) => void;
   isPending: boolean;
+  /** Mode édition - données initiales du collaborateur */
+  initialData?: Partial<CollaboratorFormData> & { id?: string };
+  /** Mode édition ou création */
+  mode?: 'create' | 'edit';
 }
 
 export function CollaboratorWizard({
@@ -109,6 +113,8 @@ export function CollaboratorWizard({
   onOpenChange,
   onSubmit,
   isPending,
+  initialData,
+  mode = 'create',
 }: CollaboratorWizardProps) {
   const [currentStep, setCurrentStep] = useState(1);
 
@@ -117,38 +123,43 @@ export function CollaboratorWizard({
   const { data: catalogueCompetences = [] } = useCompetencesCatalogue();
   const addCompetenceMutation = useAddCompetenceCatalogue();
 
+  const defaultValues: FormValues = {
+    first_name: initialData?.first_name || '',
+    last_name: initialData?.last_name || '',
+    email: initialData?.email || '',
+    phone: initialData?.phone || '',
+    type: initialData?.type || 'AUTRE',
+    role: initialData?.role || '',
+    notes: initialData?.notes || '',
+    hiring_date: initialData?.hiring_date || '',
+    leaving_date: initialData?.leaving_date || '',
+    birth_date: initialData?.birth_date || '',
+    street: initialData?.street || '',
+    postal_code: initialData?.postal_code || '',
+    city: initialData?.city || '',
+    social_security_number: initialData?.social_security_number || '',
+    birth_place: initialData?.birth_place || '',
+    emergency_contact: initialData?.emergency_contact || '',
+    emergency_phone: initialData?.emergency_phone || '',
+    apogee_user_id: initialData?.apogee_user_id,
+    competences: initialData?.competences || [],
+  };
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      first_name: '',
-      last_name: '',
-      email: '',
-      phone: '',
-      type: 'AUTRE',
-      role: '',
-      notes: '',
-      hiring_date: '',
-      leaving_date: '',
-      birth_date: '',
-      street: '',
-      postal_code: '',
-      city: '',
-      social_security_number: '',
-      birth_place: '',
-      emergency_contact: '',
-      emergency_phone: '',
-      apogee_user_id: undefined,
-      competences: [],
-    },
+    defaultValues,
   });
 
-  // Reset quand le dialog se ferme
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
+  // Reset quand le dialog se ferme ou s'ouvre avec de nouvelles données
+  const handleOpenChange = (openState: boolean) => {
+    if (!openState) {
       setCurrentStep(1);
-      form.reset();
+      form.reset(defaultValues);
+    } else if (initialData) {
+      // Recharger les données initiales quand on ouvre en mode édition
+      form.reset(defaultValues);
     }
-    onOpenChange(open);
+    onOpenChange(openState);
   };
 
   // Validation des champs de l'étape courante
@@ -233,7 +244,7 @@ export function CollaboratorWizard({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            Nouveau collaborateur
+            {mode === 'edit' ? 'Modifier le collaborateur' : 'Nouveau collaborateur'}
           </DialogTitle>
         </DialogHeader>
 
@@ -702,7 +713,7 @@ export function CollaboratorWizard({
                 <Button type="button" onClick={handleFinalSubmit} disabled={isPending}>
                   {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   <Check className="h-4 w-4 mr-1" />
-                  Créer le collaborateur
+                  {mode === 'edit' ? 'Enregistrer' : 'Créer le collaborateur'}
                 </Button>
               )}
             </div>

@@ -40,6 +40,8 @@ interface RHUnifiedTableProps {
   epiSummaries?: CollaboratorEpiSummary[];
   showFormer?: boolean;
   onToggleShowFormer?: () => void;
+  /** Callback pour éditer un collaborateur */
+  onEditCollaborator?: (collaboratorId: string) => void;
 }
 
 export function RHUnifiedTable({
@@ -54,6 +56,7 @@ export function RHUnifiedTable({
   epiSummaries = [],
   showFormer = false,
   onToggleShowFormer,
+  onEditCollaborator,
 }: RHUnifiedTableProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [documentPopup, setDocumentPopup] = useState<{
@@ -396,6 +399,7 @@ export function RHUnifiedTable({
                       getLocalValue={getLocalValue}
                       onAssetsUpdate={handleAssetsUpdate}
                       epiSummary={epiSummaries.find(s => s.collaborator_id === collab.id)}
+                      onEditCollaborator={onEditCollaborator}
                     />
                   ))}
                 </React.Fragment>

@@ -14,10 +14,9 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { usePersistedTab } from '@/hooks/usePersistedState';
 import { useCollaboratorsEpiSummary } from '@/hooks/epi/useCollaboratorsEpiSummary';
 import { useAuth } from '@/contexts/AuthContext';
-import { useUserManagement } from '@/hooks/use-user-management';
-import { useAdminAgencies } from '@/hooks/use-admin-agencies';
 import { CollaboratorWizard } from '@/components/collaborators';
 import { useCollaborators } from '@/hooks/useCollaborators';
+import { useSensitiveData } from '@/hooks/useSensitiveData';
 import { CollaboratorFormData } from '@/types/collaborator';
 import { Button } from '@/components/ui/button';
 import { UserPlus } from 'lucide-react';
@@ -35,7 +34,7 @@ const DEFAULT_VISIBLE_COLUMNS: Record<RHTabId, string[]> = {
 
 export default function RHSuiviIndex() {
   const queryClient = useQueryClient();
-  const { agencyId, agence, globalRole } = useAuth();
+  const { agencyId } = useAuth();
   
   // Toggle pour afficher les anciens collaborateurs (partis)
   const [showFormer, setShowFormer] = useState(false);
@@ -46,21 +45,97 @@ export default function RHSuiviIndex() {
   const { data: epiSummaries = [] } = useCollaboratorsEpiSummary(agencyId || undefined);
   
   const [showCompetencesMatrix, setShowCompetencesMatrix] = useState(false);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
+  const [wizardMode, setWizardMode] = useState<'create' | 'edit'>('create');
+  const [editingCollaboratorId, setEditingCollaboratorId] = useState<string | null>(null);
 
-  // Hook collaborateurs pour création fiche RH (sans compte utilisateur)
-  const { createMutation } = useCollaborators();
+  // Hook collaborateurs pour création/update fiche RH
+  const { createMutation, updateMutation, collaborators: allCollaborators } = useCollaborators();
+  
+  // Récupérer les données sensibles du collaborateur en cours d'édition
+  const { sensitiveData } = useSensitiveData(editingCollaboratorId || undefined);
+  
+  // Trouver le collaborateur à éditer
+  const editingCollaborator = useMemo(() => {
+    if (!editingCollaboratorId) return null;
+    return allCollaborators.find(c => c.id === editingCollaboratorId) || null;
+  }, [editingCollaboratorId, allCollaborators]);
+  
+  // Construire les données initiales pour le wizard en mode édition
+  const wizardInitialData = useMemo(() => {
+    if (!editingCollaborator) return undefined;
+    return {
+      id: editingCollaborator.id,
+      first_name: editingCollaborator.first_name,
+      last_name: editingCollaborator.last_name,
+      email: editingCollaborator.email || '',
+      phone: editingCollaborator.phone || '',
+      type: editingCollaborator.type || 'AUTRE',
+      role: editingCollaborator.role,
+      notes: editingCollaborator.notes || '',
+      hiring_date: editingCollaborator.hiring_date || '',
+      leaving_date: editingCollaborator.leaving_date || '',
+      street: editingCollaborator.street || '',
+      postal_code: editingCollaborator.postal_code || '',
+      city: editingCollaborator.city || '',
+      birth_place: editingCollaborator.birth_place || '',
+      apogee_user_id: editingCollaborator.apogee_user_id || undefined,
+      // Données sensibles
+      birth_date: sensitiveData?.birth_date || '',
+      social_security_number: sensitiveData?.social_security_number || '',
+      emergency_contact: sensitiveData?.emergency_contact || '',
+      emergency_phone: sensitiveData?.emergency_phone || '',
+      competences: [],
+    };
+  }, [editingCollaborator, sensitiveData]);
 
-  // Handler de création collaborateur (fiche RH simple, pas de compte)
+  // Handler de création collaborateur
   const handleCreateCollaborator = (data: CollaboratorFormData) => {
     createMutation.mutate(data, {
       onSuccess: () => {
-        setShowCreateDialog(false);
+        setShowWizard(false);
+        setEditingCollaboratorId(null);
         queryClient.invalidateQueries({ queryKey: ['rh-collaborators'] });
         queryClient.invalidateQueries({ queryKey: ['collaborators'] });
         refetch();
       },
     });
+  };
+  
+  // Handler d'update collaborateur
+  const handleUpdateCollaborator = (data: CollaboratorFormData) => {
+    if (!editingCollaboratorId) return;
+    updateMutation.mutate({ id: editingCollaboratorId, data }, {
+      onSuccess: () => {
+        setShowWizard(false);
+        setEditingCollaboratorId(null);
+        queryClient.invalidateQueries({ queryKey: ['rh-collaborators'] });
+        queryClient.invalidateQueries({ queryKey: ['collaborators'] });
+        refetch();
+      },
+    });
+  };
+  
+  // Ouvrir le wizard en mode création
+  const handleOpenCreate = () => {
+    setWizardMode('create');
+    setEditingCollaboratorId(null);
+    setShowWizard(true);
+  };
+  
+  // Ouvrir le wizard en mode édition
+  const handleOpenEdit = (collaboratorId: string) => {
+    setWizardMode('edit');
+    setEditingCollaboratorId(collaboratorId);
+    setShowWizard(true);
+  };
+  
+  // Fermer le wizard
+  const handleCloseWizard = (open: boolean) => {
+    if (!open) {
+      setShowWizard(false);
+      setEditingCollaboratorId(null);
+    }
   };
 
   // Onglet actif - persiste en sessionStorage via hook
@@ -120,7 +195,7 @@ export default function RHSuiviIndex() {
         backTo="/rh"
         backLabel="Retour RH"
         rightElement={
-          <Button onClick={() => setShowCreateDialog(true)} size="sm">
+          <Button onClick={handleOpenCreate} size="sm">
             <UserPlus className="h-4 w-4 mr-2" />
             Nouveau collaborateur
           </Button>
@@ -139,6 +214,7 @@ export default function RHSuiviIndex() {
         epiSummaries={epiSummaries}
         showFormer={showFormer}
         onToggleShowFormer={() => setShowFormer(!showFormer)}
+        onEditCollaborator={handleOpenEdit}
       />
       
       <CompetencesMatrixPrint
@@ -146,12 +222,14 @@ export default function RHSuiviIndex() {
         onOpenChange={setShowCompetencesMatrix}
       />
 
-      {/* Wizard création fiche collaborateur RH (sans compte utilisateur) */}
+      {/* Wizard création/édition fiche collaborateur RH */}
       <CollaboratorWizard
-        open={showCreateDialog}
-        onOpenChange={setShowCreateDialog}
-        onSubmit={handleCreateCollaborator}
-        isPending={createMutation.isPending}
+        open={showWizard}
+        onOpenChange={handleCloseWizard}
+        onSubmit={wizardMode === 'edit' ? handleUpdateCollaborator : handleCreateCollaborator}
+        isPending={wizardMode === 'edit' ? updateMutation.isPending : createMutation.isPending}
+        mode={wizardMode}
+        initialData={wizardInitialData}
       />
     </div>
   );
