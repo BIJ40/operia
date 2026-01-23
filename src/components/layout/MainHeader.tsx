@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useSupportNotifications } from '@/hooks/use-support-notifications';
+import { useUserProjectUnreadCount, useSupportProjectUnreadCount } from '@/hooks/use-project-ticket-notifications';
 import { ROUTES } from '@/config/routes';
 import { APP_VERSION } from '@/config/version';
 import { cn } from '@/lib/utils';
@@ -53,7 +54,8 @@ const getIcon = (name: string): LucideIcon => {
 export function MainHeader() {
   const location = useLocation();
   const { 
-    isAdmin, 
+    isAdmin,
+    isSupport, 
     canAccessSupportConsoleUI, 
     isLoggingOut, 
     logout, 
@@ -63,6 +65,8 @@ export function MainHeader() {
     user,
   } = useAuth();
   const { hasNewTickets, newTicketsCount } = useSupportNotifications();
+  const { unreadCount: userProjectUnreadCount } = useUserProjectUnreadCount();
+  const { unreadCount: supportProjectUnreadCount } = useSupportProjectUnreadCount();
   
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -159,6 +163,10 @@ export function MainHeader() {
                       location.pathname === link.href || location.pathname.startsWith(link.href + '/')
                     );
 
+                    // Badge pour Gestion de Projet (côté support) - affiche le count des messages non lus des users
+                    const isTicketsSection = section.id === 'tickets';
+                    const ticketsBadge = isTicketsSection && (isSupport || isAdmin) && supportProjectUnreadCount > 0;
+
                     return (
                       <div
                         key={section.id}
@@ -168,7 +176,7 @@ export function MainHeader() {
                       >
                         <button
                           className={cn(
-                            "flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                            "flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-colors relative",
                             isCurrentSection
                               ? "bg-primary/10 text-primary"
                               : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -180,6 +188,12 @@ export function MainHeader() {
                             "w-3 h-3 transition-transform",
                             isActive && "rotate-180"
                           )} />
+                          {/* Badge pastille rouge pour Gestion de Projet (support) */}
+                          {ticketsBadge && (
+                            <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                              {supportProjectUnreadCount}
+                            </span>
+                          )}
                         </button>
 
                         {/* Méga-menu */}
@@ -214,9 +228,10 @@ export function MainHeader() {
                           "w-3 h-3 transition-transform",
                           activeMenu === 'support' && "rotate-180"
                         )} />
-                        {hasNewTickets && (
-                          <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                            {newTicketsCount}
+                        {/* Badge pour support agents OU badge pour utilisateurs avec messages non lus */}
+                        {(hasNewTickets || userProjectUnreadCount > 0) && (
+                          <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                            {hasNewTickets ? newTicketsCount : userProjectUnreadCount}
                           </span>
                         )}
                       </button>
