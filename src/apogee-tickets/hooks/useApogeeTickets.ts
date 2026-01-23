@@ -233,10 +233,12 @@ export function useApogeeTickets(filters?: TicketFilters) {
         }
         if (filters?.origins && filters.origins.length > 0) {
           // Filtre multi-origines avec OR case-insensitive
-          // Si APOGEE est sélectionné, on inclut aussi HUGO (car HUGO = Apogée)
-          const expandedOrigins = filters.origins.flatMap(o => 
-            o === 'APOGEE' ? ['APOGEE', 'HUGO'] : [o]
-          );
+          // APOGEE inclut HUGO, FLORIAN inclut MARIE et MATHILDE
+          const expandedOrigins = filters.origins.flatMap(o => {
+            if (o === 'APOGEE') return ['APOGEE', 'HUGO'];
+            if (o === 'FLORIAN') return ['FLORIAN', 'MARIE', 'MATHILDE'];
+            return [o];
+          });
           // Inclure aussi les variantes avec préfixes (ex: "HUGO (VIA FLORIAN)")
           const originsFilter = expandedOrigins.map(o => `reported_by.ilike.${o}%`).join(',');
           query = query.or(originsFilter);
