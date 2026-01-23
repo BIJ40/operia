@@ -166,11 +166,46 @@ export function TabHeader() {
     return true;
   };
 
-  // Sous-onglets de l'onglet actif
+  // Sous-onglets de l'onglet actif - dépendances explicites incluant pathname et topTabs
   const subTabs = useMemo(() => {
-    if (!activeTab?.section?.links) return [];
-    return activeTab.section.links.filter(canAccessLink);
-  }, [activeTab, userLevel, canAccessSupportConsoleUI, enabledModules, isSalariedManager]);
+    // Recalculer quand la route change ou quand les tabs sont mis à jour
+    const currentActiveTab = topTabs.find(t => t.id === getActiveTabId(location.pathname));
+    if (!currentActiveTab?.section?.links) return [];
+    
+    return currentActiveTab.section.links.filter((link) => {
+      if (link.requiresSupportConsoleUI && !canAccessSupportConsoleUI) {
+        return false;
+      }
+      if (link.minRole) {
+        const requiredLevel = GLOBAL_ROLES[link.minRole as keyof typeof GLOBAL_ROLES] || 0;
+        if (userLevel < requiredLevel) {
+          return false;
+        }
+      }
+      if (link.requiresOption) {
+        const { module, option } = link.requiresOption;
+        const moduleConfig = enabledModules?.[module];
+        const isModuleActive = typeof moduleConfig === 'boolean' 
+          ? moduleConfig 
+          : moduleConfig?.enabled;
+        
+        if (!isModuleActive) return false;
+        
+        const optionEnabled = typeof moduleConfig === 'object' 
+          ? moduleConfig.options?.[option] === true 
+          : true;
+        
+        if (link.section === 'salarie' && option === 'coffre') {
+          if (optionEnabled) return true;
+          if (userLevel >= GLOBAL_ROLES.franchisee_admin && isSalariedManager) return true;
+          return false;
+        }
+        
+        if (!optionEnabled) return false;
+      }
+      return true;
+    });
+  }, [location.pathname, topTabs, userLevel, canAccessSupportConsoleUI, enabledModules, isSalariedManager]);
 
   // Animation fluide pour le morphing - la navigation est instantanée, l'animation suit
   const morphTransition = {
