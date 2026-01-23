@@ -51,17 +51,12 @@ interface OrientationStep {
   options: { label: string; value: string; icon?: React.ReactNode }[];
 }
 
+// Contexte fixé sur Apogée uniquement pour cette version
+const FIXED_CONTEXT = 'apogee';
+
 const ORIENTATION_STEPS: OrientationStep[] = [
   {
-    question: "Quel est le domaine de votre question ?",
-    options: [
-      { label: "Apogée (logiciel)", value: "apogee", icon: <Wrench className="w-4 h-4" /> },
-      { label: "HelpConfort (réseau)", value: "helpconfort", icon: <HelpCircle className="w-4 h-4" /> },
-      { label: "Autre", value: "autre", icon: <Sparkles className="w-4 h-4" /> },
-    ],
-  },
-  {
-    question: "Quel type de problème rencontrez-vous ?",
+    question: "Quel type de demande souhaitez-vous faire ?",
     options: [
       { label: "Bug ou dysfonctionnement", value: "bug", icon: <X className="w-4 h-4" /> },
       { label: "Question d'utilisation", value: "question", icon: <HelpCircle className="w-4 h-4" /> },
@@ -119,14 +114,13 @@ export function SimplifiedSupportChat({
       // Orientation complete, add system context
       setOrientationComplete(true);
       
-      // Add a welcome message based on orientation
-      const domainLabel = ORIENTATION_STEPS[0].options.find(o => o.value === newAnswers[0])?.label || 'Support';
-      const typeLabel = ORIENTATION_STEPS[1].options.find(o => o.value === newAnswers[1])?.label || 'demande';
+      // Add a welcome message based on orientation (Apogée only for now)
+      const typeLabel = ORIENTATION_STEPS[0].options.find(o => o.value === newAnswers[0])?.label || 'demande';
       
       setMessages([{
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: `Je suis là pour vous aider avec votre ${typeLabel.toLowerCase()} concernant ${domainLabel}. Décrivez-moi votre problème ou votre question.`,
+        content: `Je suis là pour vous aider avec votre ${typeLabel.toLowerCase()} concernant Apogée. Décrivez-moi votre problème ou votre question.`,
         timestamp: new Date(),
       }]);
     }
@@ -189,9 +183,9 @@ export function SimplifiedSupportChat({
         }
       }
 
-      // Build context from orientation
-      const contextType = orientationAnswers[0] || 'apogee';
-      const problemType = orientationAnswers[1] || 'question';
+      // Context is always Apogée for now
+      const contextType = FIXED_CONTEXT;
+      const problemType = orientationAnswers[0] || 'question';
 
       // Format messages for API
       const apiMessages = messages.concat(userMessage).map(m => ({
@@ -310,10 +304,10 @@ export function SimplifiedSupportChat({
       const firstUserMessage = messages.find(m => m.role === 'user');
       const subject = firstUserMessage?.content.slice(0, 100) || 'Demande depuis le chat';
 
-      // Build conversation for storage
+      // Build conversation for storage (Apogée context)
       const chatbotConversation = [
         // Include orientation context
-        { role: 'system', content: `Domaine: ${orientationAnswers[0] || 'non spécifié'}, Type: ${orientationAnswers[1] || 'non spécifié'}` },
+        { role: 'system', content: `Domaine: apogee, Type: ${orientationAnswers[0] || 'non spécifié'}` },
         ...messages.map(m => ({
           role: m.role,
           content: m.content,
@@ -321,8 +315,8 @@ export function SimplifiedSupportChat({
         })),
       ];
 
-      // Determine priority based on problem type
-      const problemType = orientationAnswers[1];
+      // Determine priority based on problem type (now in orientationAnswers[0])
+      const problemType = orientationAnswers[0];
       let heatPriority = 6; // Normal by default
       if (problemType === 'bug') heatPriority = 8; // Important
       if (problemType === 'blocking') heatPriority = 10; // Critical
