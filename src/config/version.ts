@@ -1,24 +1,23 @@
-export const APP_VERSION = '0.8.2';
-export const APP_CODENAME = 'UX Tickets & Persistance';
+export const APP_VERSION = '0.8.3';
+export const APP_CODENAME = 'Recentrage N2 Franchisé';
 
 /**
- * Changelog v0.8.2 (2026-01-23)
+ * Changelog v0.8.3 (2026-01-23)
  * ==============================
  * 
- * LISTE TICKETS - OPTIMISATION COLONNES
- * --------------------------------------
- * - Suppression colonnes Qualif., Roadmap et Actions
- * - Icône Roadmap intégrée au titre (calendrier bleu)
- * - Animation pulse sur priorité pour tickets BUG > 48h
+ * SUPPRESSION PORTAIL EMPLOYÉ N1
+ * ------------------------------
+ * - Suppression complète portail salarié N1
+ * - Recentrage sur fonctionnalités Franchisé N2+
+ * - N1 conserve : Tickets, Favoris, KPIs dashboard
  * 
- * CRÉATION TICKET - PERSISTANCE
+ * SIMPLIFICATION COLLABORATEURS
  * -----------------------------
- * - Sauvegarde formulaire en sessionStorage
- * - Récupération état après changement onglet
- * - Nettoyage après création réussie
+ * - Création collaborateur sans compte utilisateur
+ * - Suppression workflow signature digitale planning
+ * - Bouton "Envoyer au technicien" supprimé
  * 
- * PRÉCÉDENT (v0.8.1 - 2025-12-18)
+ * PRÉCÉDENT (v0.8.2 - 2026-01-22)
  * --------------------------------
- * - Pointages & Timesheets workflow 5 états
- * - Module DocGen (génération documents)
+ * - UX Tickets & Persistance formulaire
  */
