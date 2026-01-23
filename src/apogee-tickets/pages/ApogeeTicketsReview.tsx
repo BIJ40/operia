@@ -193,16 +193,20 @@ export default function ApogeeTicketsReview() {
     filtersRef.current = '';
   };
 
-  // Handler pour les statuts
+  // Handler pour les statuts (sélection locale uniquement)
   const handleStatusToggle = (statusId: string) => {
-    const newStatuses = selectedStatuses.includes(statusId)
-      ? selectedStatuses.filter(s => s !== statusId)
-      : [...selectedStatuses, statusId];
-    setSelectedStatuses(newStatuses);
-    
+    setSelectedStatuses(prev => 
+      prev.includes(statusId)
+        ? prev.filter(s => s !== statusId)
+        : [...prev, statusId]
+    );
+  };
+
+  // Appliquer le filtre statuts
+  const applyStatusFilter = () => {
     const newFilters = { ...filters };
-    if (newStatuses.length > 0) {
-      newFilters.kanban_statuses = newStatuses;
+    if (selectedStatuses.length > 0) {
+      newFilters.kanban_statuses = selectedStatuses;
     } else {
       delete newFilters.kanban_statuses;
     }
@@ -404,19 +408,19 @@ export default function ApogeeTicketsReview() {
               </PopoverContent>
             </Popover>
 
-            {/* Filtre Statuts (multi-select popover) */}
+            {/* Filtre Statuts (multi-select popover avec apply) */}
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="h-auto min-h-[42px] justify-start px-3 py-2">
                   <ListChecks className="h-4 w-4 mr-2 shrink-0" />
                   <span className="text-sm">
-                    {selectedStatuses.length > 0 
-                      ? `${selectedStatuses.length} statut${selectedStatuses.length > 1 ? 's' : ''}`
+                    {(filters.kanban_statuses?.length || 0) > 0 
+                      ? `${filters.kanban_statuses?.length} statut${(filters.kanban_statuses?.length || 0) > 1 ? 's' : ''}`
                       : 'Statuts'}
                   </span>
-                  {selectedStatuses.length > 0 && (
+                  {(filters.kanban_statuses?.length || 0) > 0 && (
                     <Badge variant="secondary" className="ml-auto">
-                      {selectedStatuses.length}
+                      {filters.kanban_statuses?.length}
                     </Badge>
                   )}
                 </Button>
@@ -427,27 +431,36 @@ export default function ApogeeTicketsReview() {
                   {statuses.length === 0 ? (
                     <p className="text-xs text-muted-foreground px-2 py-2">Aucun statut disponible</p>
                   ) : (
-                    <div className="max-h-48 overflow-y-auto space-y-1">
-                      {statuses.map((status) => (
-                        <div
-                          key={status.id}
-                          className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer"
-                          onClick={() => handleStatusToggle(status.id)}
-                        >
-                          <Checkbox
-                            checked={selectedStatuses.includes(status.id)}
-                            onCheckedChange={() => handleStatusToggle(status.id)}
-                          />
-                          <Badge 
-                            variant="outline" 
-                            className="text-xs"
-                            style={{ borderColor: status.color || undefined }}
+                    <>
+                      <div className="max-h-48 overflow-y-auto space-y-1">
+                        {statuses.map((status) => (
+                          <div
+                            key={status.id}
+                            className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer"
+                            onClick={() => handleStatusToggle(status.id)}
                           >
-                            {status.label}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
+                            <Checkbox
+                              checked={selectedStatuses.includes(status.id)}
+                              onCheckedChange={() => handleStatusToggle(status.id)}
+                            />
+                            <Badge 
+                              variant="outline" 
+                              className="text-xs"
+                              style={{ borderColor: status.color || undefined }}
+                            >
+                              {status.label}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                      <Button 
+                        size="sm" 
+                        className="w-full mt-2"
+                        onClick={applyStatusFilter}
+                      >
+                        Appliquer
+                      </Button>
+                    </>
                   )}
                 </div>
               </PopoverContent>
