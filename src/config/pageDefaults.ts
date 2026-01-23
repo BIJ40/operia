@@ -31,11 +31,7 @@ export const PAGE_DEFAULTS: PageDefaultConfig[] = [
   { pageKey: 'pilotage_actions', defaultTitle: 'Actions à Mener', defaultSubtitle: 'Suivi des actions et tâches en cours', route: ROUTES.agency.actions },
   { pageKey: 'pilotage_diffusion', defaultTitle: 'Mode Diffusion', defaultSubtitle: 'Affichage TV pour l\'agence', route: ROUTES.agency.diffusion },
   { pageKey: 'pilotage_rh_tech', defaultTitle: 'RH Tech', defaultSubtitle: 'Planning hebdomadaire des techniciens', route: ROUTES.agency.rhTech },
-  // rh_equipe supprimé - redirige vers /rh/suivi
-  { pageKey: 'rh_coffre', defaultTitle: 'Mon Coffre RH', defaultSubtitle: 'Mes documents personnels et demandes', route: ROUTES.rh.coffre },
-  { pageKey: 'rh_demandes', defaultTitle: 'Demandes RH', defaultSubtitle: 'Traitement des demandes de documents', route: ROUTES.rh.demandes },
-  { pageKey: 'rh_dashboard', defaultTitle: 'Dashboard RH', defaultSubtitle: 'Statistiques et indicateurs RH', route: ROUTES.rh.dashboard },
-  { pageKey: 'rh_conges', defaultTitle: 'Gestion des congés', defaultSubtitle: 'Valider les demandes de congés et absences', route: ROUTES.rh.conges },
+  // Portail salarié supprimé - lignes rh_coffre, rh_demandes, rh_dashboard, rh_conges retirées
   
   // Support
   { pageKey: 'support_index', defaultTitle: 'Support', defaultSubtitle: 'Assistance et demandes', route: ROUTES.support.index },

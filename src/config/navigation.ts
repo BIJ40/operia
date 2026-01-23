@@ -347,8 +347,7 @@ export const PAGE_TITLES: Record<string, string> = {
   // Legacy admin apogee-tickets (redirects)
   [ROUTES.admin.apogeeTickets]: 'Gestion de Projet',
   
-  // RH
-  [ROUTES.rh.demande]: 'Demande de congé',
+  // RH (portail salarié supprimé)
   
   // User
   [ROUTES.profile]: 'Mon Profil',

@@ -75,29 +75,19 @@ export const ROUTES = {
   },
 
   // ============================================
-  // RH (Ressources Humaines) - Toutes les pages RH unifiées
+  // RH (Ressources Humaines) - Back-office N2 uniquement
+  // NOTE: Portail salarié N1 supprimé
   // ============================================
   rh: {
     index: '/rh',
     // Suivi RH (N2 back-office)
     suivi: '/rh/suivi',
     suiviCollaborateur: (id: string) => `/rh/suivi/${id}`,
-    // Portail Salarié P1 (N1+)
-    coffre: '/rh/coffre',
-    demande: '/rh/demande',
-    monPlanning: '/rh/mon-planning',
-    monVehicule: '/rh/mon-vehicule',
-    monMateriel: '/rh/mon-materiel',
-    signature: '/rh/signature',
-    // Vue Dirigeant/RH (N2) - Legacy (redirige vers /suivi)
-    equipe: '/rh/equipe', // DEPRECATED - redirige vers /rh/suivi
+    // Vue Dirigeant/RH (N2)
     plannings: '/rh/suivi/plannings',
     heures: '/rh/suivi/heures',
     timesheets: '/rh/timesheets',
     collaborateurProfile: (id: string) => `/rh/suivi/${id}`,
-    demandes: '/rh/demandes',
-    conges: '/rh/conges',
-    dashboard: '/rh/dashboard',
     // Parc & Matériel
     parc: '/rh/parc',
     epi: '/rh/epi',

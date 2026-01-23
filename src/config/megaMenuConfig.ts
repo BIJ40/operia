@@ -60,9 +60,9 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
   },
 
   // ============================================
-  // RH (Ressources Humaines)
+  // RH (Ressources Humaines) - Back-office N2 uniquement
   // Module: rh
-  // Scindé en 2 vues: Salarié (N1) et Dirigeant (N2)
+  // NOTE: Portail salarié N1 supprimé
   // ============================================
   {
     id: 'rh',
@@ -72,47 +72,6 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
     href: '/rh',
     moduleKey: 'rh',
     links: [
-      // === Mon espace (N1 ou N2 avec is_salaried_manager) ===
-      { 
-        label: 'Mon Coffre RH', 
-        href: ROUTES.rh.coffre, 
-        icon: 'FolderOpen', 
-        description: 'Mes documents personnels',
-        section: 'salarie',
-        requiresOption: { module: 'rh', option: 'coffre' },
-      },
-      { 
-        label: 'Mon Planning', 
-        href: ROUTES.rh.monPlanning, 
-        icon: 'CalendarDays', 
-        description: 'Mon planning hebdomadaire',
-        section: 'salarie',
-        requiresOption: { module: 'rh', option: 'mon_planning' },
-      },
-      { 
-        label: 'Mon Véhicule', 
-        href: ROUTES.rh.monVehicule, 
-        icon: 'Car', 
-        description: 'Mon véhicule de service',
-        section: 'salarie',
-        requiresOption: { module: 'rh', option: 'mon_vehicule' },
-      },
-      { 
-        label: 'Mes Équipements', 
-        href: ROUTES.rh.monMateriel, 
-        icon: 'Wrench', 
-        description: 'Mon matériel et EPI',
-        section: 'salarie',
-        requiresOption: { module: 'rh', option: 'mon_materiel' },
-      },
-      { 
-        label: 'Demande RH', 
-        href: ROUTES.rh.demande, 
-        icon: 'FileText', 
-        description: 'Poser une demande',
-        section: 'salarie',
-        requiresOption: { module: 'rh', option: 'coffre' },
-      },
       // === Gestion RH (N2+) ===
       { 
         label: 'Suivi RH', 
@@ -131,16 +90,6 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
         section: 'dirigeant',
         minRole: 'franchisee_admin',
         requiresOption: { module: 'rh', option: 'rh_viewer' },
-      },
-      // MASQUÉ: Heures et Timesheets - voir /admin/hidden-features
-      { 
-        label: 'Demandes RH', 
-        href: ROUTES.rh.demandes, 
-        icon: 'FileText', 
-        description: 'Traiter les demandes',
-        section: 'dirigeant',
-        minRole: 'franchisee_admin',
-        requiresOption: { module: 'rh', option: 'rh_admin' },
       },
       { 
         label: 'DocGen', 
