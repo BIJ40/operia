@@ -227,6 +227,7 @@ export interface TicketFilters {
   heat_priority_exact?: number; // For clicking on a specific dot
   missing_field?: MissingFieldFilter; // Filtre sur complétude des champs
   tags?: string[]; // Filtre par tags
+  origins?: ReportedBy[]; // Filtre multi-origines
 }
 
 // Duplicate detection types
