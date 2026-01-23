@@ -15,6 +15,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.8.2",
+    title: "UX Tickets & Persistance",
+    date: "2026-01-23",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // LISTE TICKETS - OPTIMISATION COLONNES
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'Suppression colonnes Qualif., Roadmap et Actions du tableau tickets' },
+      { type: 'improvement', description: 'Icône Roadmap intégrée directement au début du titre (calendrier bleu)' },
+      { type: 'feature', description: 'Animation pulse sur priorité pour tickets BUG > 48h non résolus' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // CRÉATION TICKET - PERSISTANCE FORMULAIRE
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Sauvegarde automatique du formulaire de création ticket en sessionStorage' },
+      { type: 'feature', description: 'Récupération état formulaire après changement d\'onglet navigateur' },
+      { type: 'improvement', description: 'Nettoyage sessionStorage après création ticket réussie' },
+    ],
+  },
+  {
     version: "V0.8.1",
     title: "Pointages & Timesheets",
     date: "2025-12-18",
