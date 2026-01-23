@@ -16,12 +16,11 @@ import { useCollaboratorsEpiSummary } from '@/hooks/epi/useCollaboratorsEpiSumma
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserManagement } from '@/hooks/use-user-management';
 import { useAdminAgencies } from '@/hooks/use-admin-agencies';
-import { CreateUserDialog } from '@/components/admin/users';
-import { GlobalRole, getRoleLevel } from '@/types/globalRoles';
-import { getUserManagementCapabilities } from '@/config/roleMatrix';
+import { CollaboratorForm } from '@/components/collaborators';
+import { useCollaborators } from '@/hooks/useCollaborators';
+import { CollaboratorFormData } from '@/types/collaborator';
 import { Button } from '@/components/ui/button';
 import { UserPlus } from 'lucide-react';
-import { ALL_USER_QUERY_PATTERNS } from '@/lib/queryKeys';
 
 // Colonnes visibles par défaut par onglet
 const DEFAULT_VISIBLE_COLUMNS: Record<RHTabId, string[]> = {
@@ -49,38 +48,17 @@ export default function RHSuiviIndex() {
   const [showCompetencesMatrix, setShowCompetencesMatrix] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
-  // Hook de gestion utilisateurs pour la création
-  const { createUserMutation } = useUserManagement({ scope: 'ownAgency' });
-  const { data: agencies = [] } = useAdminAgencies();
+  // Hook collaborateurs pour création fiche RH (sans compte utilisateur)
+  const { createMutation } = useCollaborators();
 
-  // Calcul des rôles assignables
-  const currentUserLevel = getRoleLevel(globalRole);
-  const capabilities = getUserManagementCapabilities(globalRole);
-  const assignableRoles = capabilities.canCreateRoles;
-
-  // Handler de création qui invalide TOUTES les queries utilisateurs
-  const handleCreate = async (data: { 
-    email: string; 
-    password: string; 
-    firstName: string; 
-    lastName: string; 
-    agence: string; 
-    roleAgence: string;
-    globalRole: GlobalRole; 
-    sendEmail: boolean;
-  }) => {
-    await createUserMutation.mutateAsync(data, {
+  // Handler de création collaborateur (fiche RH simple, pas de compte)
+  const handleCreateCollaborator = (data: CollaboratorFormData) => {
+    createMutation.mutate(data, {
       onSuccess: () => {
         setShowCreateDialog(false);
-        // Invalider toutes les queries utilisateurs pour synchro complète
-        setTimeout(() => {
-          ALL_USER_QUERY_PATTERNS.forEach(pattern => {
-            queryClient.invalidateQueries({ queryKey: [pattern] });
-          });
-          queryClient.invalidateQueries({ queryKey: ['rh-collaborators'] });
-          queryClient.invalidateQueries({ queryKey: ['collaborators'] });
-          refetch();
-        }, 500);
+        queryClient.invalidateQueries({ queryKey: ['rh-collaborators'] });
+        queryClient.invalidateQueries({ queryKey: ['collaborators'] });
+        refetch();
       },
     });
   };
@@ -168,18 +146,13 @@ export default function RHSuiviIndex() {
         onOpenChange={setShowCompetencesMatrix}
       />
 
-      {/* Dialog de création utilisateur - synchro avec toutes les vues */}
-      <CreateUserDialog
+      {/* Dialog création fiche collaborateur RH (sans compte utilisateur) */}
+      <CollaboratorForm
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
-        onSubmit={handleCreate}
-        isPending={createUserMutation.isPending}
-        assignableRoles={assignableRoles}
-        agencies={agencies}
-        currentUserLevel={currentUserLevel}
-        currentUserAgency={agence}
-        forceOwnAgency={true}
-        agencyMode={true}
+        onSubmit={handleCreateCollaborator}
+        isPending={createMutation.isPending}
+        mode="create"
       />
     </div>
   );
