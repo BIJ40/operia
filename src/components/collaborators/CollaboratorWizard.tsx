@@ -1,12 +1,13 @@
 /**
- * Wizard de création de collaborateur en 4 étapes
+ * Wizard de création de collaborateur en 5 étapes
  * Étape 1: Identité (nom, prénom, type, poste)
  * Étape 2: Coordonnées (email, téléphone, adresse)
  * Étape 3: Informations personnelles (naissance, sécu, urgence)
- * Étape 4: Emploi (dates, liaison Apogée, notes)
+ * Étape 4: Compétences (métiers, habilitations)
+ * Étape 5: Emploi (dates, liaison Apogée, notes)
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -35,19 +36,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Loader2, 
   User, 
   Phone, 
   Shield, 
   Briefcase,
+  Award,
   ChevronLeft,
   ChevronRight,
-  Check
+  Check,
+  Plus,
+  X
 } from 'lucide-react';
 import { CollaboratorFormData, COLLABORATOR_TYPES } from '@/types/collaborator';
 import { ApogeeUserSelect } from './ApogeeUserSelect';
+import { useCompetencesCatalogue, useAddCompetenceCatalogue } from '@/hooks/useRHCompetencesCatalogue';
 import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
@@ -68,7 +76,9 @@ const formSchema = z.object({
   social_security_number: z.string().optional(),
   emergency_contact: z.string().optional(),
   emergency_phone: z.string().optional(),
-  // Étape 4 - Emploi
+  // Étape 4 - Compétences
+  competences: z.array(z.string()).optional(),
+  // Étape 5 - Emploi
   hiring_date: z.string().optional(),
   leaving_date: z.string().optional(),
   apogee_user_id: z.number().optional(),
@@ -77,11 +87,14 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+const TOTAL_STEPS = 5;
+
 const STEPS = [
   { id: 1, title: 'Identité', icon: User, fields: ['first_name', 'last_name', 'type', 'role'] as const },
   { id: 2, title: 'Coordonnées', icon: Phone, fields: ['email', 'phone', 'street', 'postal_code', 'city'] as const },
-  { id: 3, title: 'Infos personnelles', icon: Shield, fields: ['birth_date', 'birth_place', 'social_security_number', 'emergency_contact', 'emergency_phone'] as const },
-  { id: 4, title: 'Emploi', icon: Briefcase, fields: ['hiring_date', 'leaving_date', 'apogee_user_id', 'notes'] as const },
+  { id: 3, title: 'Infos perso', icon: Shield, fields: ['birth_date', 'birth_place', 'social_security_number', 'emergency_contact', 'emergency_phone'] as const },
+  { id: 4, title: 'Compétences', icon: Award, fields: ['competences'] as const },
+  { id: 5, title: 'Emploi', icon: Briefcase, fields: ['hiring_date', 'leaving_date', 'apogee_user_id', 'notes'] as const },
 ];
 
 interface CollaboratorWizardProps {
@@ -98,6 +111,11 @@ export function CollaboratorWizard({
   isPending,
 }: CollaboratorWizardProps) {
   const [currentStep, setCurrentStep] = useState(1);
+
+  const [newCompetence, setNewCompetence] = useState('');
+  
+  const { data: catalogueCompetences = [] } = useCompetencesCatalogue();
+  const addCompetenceMutation = useAddCompetenceCatalogue();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -120,6 +138,7 @@ export function CollaboratorWizard({
       emergency_contact: '',
       emergency_phone: '',
       apogee_user_id: undefined,
+      competences: [],
     },
   });
 
@@ -144,7 +163,7 @@ export function CollaboratorWizard({
 
   const handleNext = async () => {
     const isValid = await validateCurrentStep();
-    if (isValid && currentStep < 4) {
+    if (isValid && currentStep < TOTAL_STEPS) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -172,10 +191,30 @@ export function CollaboratorWizard({
       birth_place: values.birth_place || undefined,
       emergency_contact: values.emergency_contact || undefined,
       emergency_phone: values.emergency_phone || undefined,
+      competences: values.competences || [],
     });
   };
 
-  const progress = (currentStep / 4) * 100;
+  const handleAddCompetence = async () => {
+    if (!newCompetence.trim()) return;
+    await addCompetenceMutation.mutateAsync(newCompetence.trim());
+    const currentCompetences = form.getValues('competences') || [];
+    form.setValue('competences', [...currentCompetences, newCompetence.trim()]);
+    setNewCompetence('');
+  };
+
+  const toggleCompetence = (label: string) => {
+    const current = form.getValues('competences') || [];
+    if (current.includes(label)) {
+      form.setValue('competences', current.filter(c => c !== label));
+    } else {
+      form.setValue('competences', [...current, label]);
+    }
+  };
+
+  const selectedCompetences = form.watch('competences') || [];
+
+  const progress = (currentStep / TOTAL_STEPS) * 100;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -476,8 +515,90 @@ export function CollaboratorWizard({
               </div>
             )}
 
-            {/* Étape 4 - Emploi */}
+            {/* Étape 4 - Compétences */}
             {currentStep === 4 && (
+              <div className="space-y-4 animate-in fade-in-50 duration-300">
+                <h3 className="font-semibold text-lg flex items-center gap-2">
+                  <Award className="h-5 w-5 text-primary" />
+                  Compétences & Métiers
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Sélectionnez les compétences et métiers maîtrisés par ce collaborateur.
+                </p>
+
+                {/* Selected competences */}
+                {selectedCompetences.length > 0 && (
+                  <div className="flex flex-wrap gap-2 p-3 bg-muted/50 rounded-lg">
+                    {selectedCompetences.map((comp) => (
+                      <Badge key={comp} variant="secondary" className="gap-1">
+                        {comp}
+                        <button
+                          type="button"
+                          onClick={() => toggleCompetence(comp)}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add new competence */}
+                <div className="flex gap-2">
+                  <Input
+                    value={newCompetence}
+                    onChange={(e) => setNewCompetence(e.target.value)}
+                    placeholder="Ajouter un nouveau métier..."
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddCompetence();
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAddCompetence}
+                    disabled={!newCompetence.trim() || addCompetenceMutation.isPending}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Ajouter
+                  </Button>
+                </div>
+
+                {/* Catalogue list */}
+                <ScrollArea className="h-[200px] border rounded-lg p-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    {catalogueCompetences.map((comp) => (
+                      <div
+                        key={comp.id}
+                        className={cn(
+                          "flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-accent transition-colors",
+                          selectedCompetences.includes(comp.label) && "bg-primary/10"
+                        )}
+                        onClick={() => toggleCompetence(comp.label)}
+                      >
+                        <Checkbox
+                          checked={selectedCompetences.includes(comp.label)}
+                          onCheckedChange={() => toggleCompetence(comp.label)}
+                        />
+                        <span className="text-sm">{comp.label}</span>
+                        {comp.is_default && (
+                          <Badge variant="outline" className="text-xs ml-auto">
+                            Par défaut
+                          </Badge>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            )}
+
+            {/* Étape 5 - Emploi */}
+            {currentStep === 5 && (
               <div className="space-y-4 animate-in fade-in-50 duration-300">
                 <h3 className="font-semibold text-lg flex items-center gap-2">
                   <Briefcase className="h-5 w-5 text-primary" />
@@ -561,7 +682,7 @@ export function CollaboratorWizard({
                 {currentStep === 1 ? 'Annuler' : 'Précédent'}
               </Button>
 
-              {currentStep < 4 ? (
+              {currentStep < TOTAL_STEPS ? (
                 <Button type="button" onClick={handleNext}>
                   Suivant
                   <ChevronRight className="h-4 w-4 ml-1" />
