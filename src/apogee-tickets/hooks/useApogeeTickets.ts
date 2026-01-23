@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { logError } from '@/lib/logger';
 import { safeMutation, safeQuery } from '@/lib/safeQuery';
 import { errorToast, successToast } from '@/lib/toastHelpers';
+import type { Json } from '@/integrations/supabase/types';
 import type {
   ApogeeTicket,
   ApogeeTicketStatus,
@@ -21,6 +22,99 @@ import type {
   ApogeeTicketCommentInsert,
   TicketFilters,
 } from '../types';
+
+// Field labels for history display
+const FIELD_LABELS: Record<string, string> = {
+  element_concerne: 'Titre',
+  description: 'Description',
+  module: 'Module',
+  kanban_status: 'Statut',
+  heat_priority: 'Priorité Heat',
+  owner_side: 'Porté par',
+  h_min: 'Temps min (h)',
+  h_max: 'Temps max (h)',
+  severity: 'Sévérité',
+  ticket_type: 'Type',
+  action_type: 'Type d\'action',
+  theme: 'Thème',
+  module_area: 'Zone module',
+  notes_internes: 'Notes internes',
+  impact_tags: 'Tags d\'impact',
+  hca_code: 'Code HCA',
+  reported_by: 'Rapporté par',
+  is_qualified: 'Qualifié',
+  needs_completion: 'À compléter',
+};
+
+// Fields to ignore in history logging
+const IGNORED_HISTORY_FIELDS = [
+  'id', 'created_at', 'updated_at', 'last_modified_at', 'last_modified_by_user_id',
+  'created_by_user_id', 'created_from', 'source_row_index', 'source_sheet',
+  'source_support_ticket_id', 'support_initiator_user_id', 'external_key',
+  'ticket_number', 'original_title', 'original_description', 'merged_into_ticket_id',
+  'qualified_at', 'qualified_by', 'apogee_modules', 'apogee_ticket_statuses',
+];
+
+// Format value for display
+function formatHistoryValue(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  if (Array.isArray(value)) return value.length > 0 ? value.join(', ') : null;
+  if (typeof value === 'boolean') return value ? 'Oui' : 'Non';
+  if (typeof value === 'number') return String(value);
+  return String(value);
+}
+
+// Log ticket changes to history
+async function logTicketChanges(
+  ticketId: string,
+  userId: string,
+  oldTicket: ApogeeTicket,
+  newValues: Partial<ApogeeTicket>
+) {
+  const entries: Array<{
+    ticket_id: string;
+    user_id: string;
+    action_type: string;
+    old_value: string | null;
+    new_value: string | null;
+    metadata: Json;
+  }> = [];
+
+  for (const [field, newValue] of Object.entries(newValues)) {
+    if (IGNORED_HISTORY_FIELDS.includes(field)) continue;
+
+    const oldValue = oldTicket[field as keyof ApogeeTicket];
+    const oldFormatted = formatHistoryValue(oldValue);
+    const newFormatted = formatHistoryValue(newValue);
+
+    if (oldFormatted !== newFormatted) {
+      const fieldLabel = FIELD_LABELS[field] || field;
+      
+      // Determine action type based on field
+      let actionType = 'field_update';
+      if (field === 'kanban_status') actionType = 'status_change';
+
+      entries.push({
+        ticket_id: ticketId,
+        user_id: userId,
+        action_type: actionType,
+        old_value: oldFormatted,
+        new_value: newFormatted,
+        metadata: { field, fieldLabel } as Json,
+      });
+    }
+  }
+
+  if (entries.length > 0) {
+    const { error } = await supabase
+      .from('apogee_ticket_history')
+      .insert(entries);
+
+    if (error) {
+      logError('ticket-history', 'Error logging history', error);
+    }
+  }
+}
 
 export function useApogeeTickets(filters?: TicketFilters) {
   const { user } = useAuth();
@@ -282,28 +376,29 @@ export function useApogeeTickets(filters?: TicketFilters) {
     },
   });
 
-  // Update ticket
+  // Update ticket with automatic history logging
   const updateTicket = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<ApogeeTicket> & { id: string }) => {
+      // Fetch current ticket state for history comparison
+      const currentTicketResult = await safeQuery<ApogeeTicket>(
+        supabase
+          .from('apogee_tickets')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle(),
+        'APOGEE_TICKET_FETCH_FOR_HISTORY'
+      );
+      
+      const oldTicket = currentTicketResult.success ? currentTicketResult.data : null;
+      
       const updatePayload: Record<string, any> = { ...updates };
       
       const hasCompletionFields = 'module' in updates || 'heat_priority' in updates || 'owner_side' in updates;
       
-      if (hasCompletionFields) {
-        const currentResult = await safeQuery<{ module: string | null; heat_priority: number | null }>(
-          supabase
-            .from('apogee_tickets')
-            .select('module, heat_priority')
-            .eq('id', id)
-            .maybeSingle(),
-          'APOGEE_TICKET_CHECK_COMPLETION'
-        );
-        
-        if (currentResult.success && currentResult.data) {
-          const finalModule = 'module' in updates ? updates.module : currentResult.data.module;
-          const finalHeatPriority = 'heat_priority' in updates ? updates.heat_priority : currentResult.data.heat_priority;
-          updatePayload.needs_completion = !finalModule || finalHeatPriority === null || finalHeatPriority === undefined;
-        }
+      if (hasCompletionFields && oldTicket) {
+        const finalModule = 'module' in updates ? updates.module : oldTicket.module;
+        const finalHeatPriority = 'heat_priority' in updates ? updates.heat_priority : oldTicket.heat_priority;
+        updatePayload.needs_completion = !finalModule || finalHeatPriority === null || finalHeatPriority === undefined;
       }
 
       const result = await safeMutation<ApogeeTicket>(
@@ -319,19 +414,37 @@ export function useApogeeTickets(filters?: TicketFilters) {
       if (!result.success) {
         throw new Error(result.error?.message || 'Erreur mise à jour ticket');
       }
+      
+      // Log changes to history
+      if (user?.id && oldTicket) {
+        await logTicketChanges(id, user.id, oldTicket, updates);
+      }
+      
       return result.data;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['apogee-tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['ticket-history', variables.id] });
     },
     onError: (error: Error) => {
       errorToast(error.message);
     },
   });
 
-  // Update kanban status (drag & drop)
+  // Update kanban status (drag & drop) with history logging
   const updateKanbanStatus = useMutation({
-    mutationFn: async ({ ticketId, newStatus }: { ticketId: string; newStatus: string }) => {
+    mutationFn: async ({ ticketId, newStatus, oldStatus }: { ticketId: string; newStatus: string; oldStatus?: string }) => {
+      // Get current status if not provided
+      let previousStatus = oldStatus;
+      if (!previousStatus) {
+        const { data: currentTicket } = await supabase
+          .from('apogee_tickets')
+          .select('kanban_status')
+          .eq('id', ticketId)
+          .maybeSingle();
+        previousStatus = currentTicket?.kanban_status;
+      }
+      
       const result = await safeMutation<ApogeeTicket>(
         supabase
           .from('apogee_tickets')
@@ -345,10 +458,26 @@ export function useApogeeTickets(filters?: TicketFilters) {
       if (!result.success) {
         throw new Error(result.error?.message || 'Erreur mise à jour statut');
       }
+      
+      // Log status change to history
+      if (user?.id && previousStatus && previousStatus !== newStatus) {
+        await supabase
+          .from('apogee_ticket_history')
+          .insert({
+            ticket_id: ticketId,
+            user_id: user.id,
+            action_type: 'status_change',
+            old_value: previousStatus,
+            new_value: newStatus,
+            metadata: { field: 'kanban_status', fieldLabel: 'Statut' } as Json,
+          });
+      }
+      
       return result.data;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['apogee-tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['ticket-history', variables.ticketId] });
     },
     onError: (error: Error) => {
       errorToast(error.message);
@@ -461,10 +590,30 @@ export function useApogeeTicket(ticketId: string | null) {
       if (!result.success || !result.data) {
         throw new Error(result.error?.message || 'Erreur ajout commentaire');
       }
+      
+      // Log comment added to history
+      if (user?.id && comment.ticket_id) {
+        const preview = comment.body.length > 100 
+          ? comment.body.substring(0, 100) + '...' 
+          : comment.body;
+        
+        await supabase
+          .from('apogee_ticket_history')
+          .insert({
+            ticket_id: comment.ticket_id,
+            user_id: user.id,
+            action_type: 'comment_added',
+            old_value: null,
+            new_value: preview,
+            metadata: {} as Json,
+          });
+      }
+      
       return result.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['apogee-ticket-comments', ticketId] });
+      queryClient.invalidateQueries({ queryKey: ['ticket-history', ticketId] });
       // Update ticket's last_modified to trigger notification for others
       if (ticketId) {
         supabase
