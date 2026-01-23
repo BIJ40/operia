@@ -233,7 +233,12 @@ export function useApogeeTickets(filters?: TicketFilters) {
         }
         if (filters?.origins && filters.origins.length > 0) {
           // Filtre multi-origines avec OR case-insensitive
-          const originsFilter = filters.origins.map(o => `reported_by.ilike.${o}`).join(',');
+          // Si APOGEE est sélectionné, on inclut aussi HUGO (car HUGO = Apogée)
+          const expandedOrigins = filters.origins.flatMap(o => 
+            o === 'APOGEE' ? ['APOGEE', 'HUGO'] : [o]
+          );
+          // Inclure aussi les variantes avec préfixes (ex: "HUGO (VIA FLORIAN)")
+          const originsFilter = expandedOrigins.map(o => `reported_by.ilike.${o}%`).join(',');
           query = query.or(originsFilter);
         }
        if (filters?.needs_completion) {

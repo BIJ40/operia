@@ -93,7 +93,10 @@ const ORIGINE_OPTIONS: { value: ReportedBy; label: string }[] = [
   { value: 'JEROME', label: 'Jérôme' },
   { value: 'FLORIAN', label: 'Florian' },
   { value: 'ERIC', label: 'Éric' },
+  { value: 'MARIE', label: 'Marie' },
+  { value: 'MATHILDE', label: 'Mathilde' },
   { value: 'APOGEE', label: 'Apogée' },
+  { value: 'HUGO', label: 'Hugo (Apogée)' },
   { value: 'AUTRE', label: 'Autre' },
 ];
 
