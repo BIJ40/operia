@@ -1,5 +1,6 @@
 /**
- * Widget Derniers Tickets Support
+ * Widget Derniers Tickets Support + Tickets Projet
+ * Inclut clignotement vert si échange en cours
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -8,23 +9,99 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
-import { MessageSquare, ChevronRight } from 'lucide-react';
+import { MessageSquare, ChevronRight, MessageCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
+
+interface CombinedTicket {
+  id: string;
+  subject: string;
+  status: string;
+  created_at: string;
+  ticketType: 'support' | 'project';
+  unread_exchanges_count?: number;
+  has_active_exchange?: boolean;
+  statusLabel?: string;
+  statusColor?: string | null;
+}
 
 export function RecentTicketsWidget() {
   const { user } = useAuth();
 
   const { data: tickets, isLoading } = useQuery({
-    queryKey: ['widget-recent-tickets', user?.id],
+    queryKey: ['widget-recent-tickets-combined', user?.id],
     queryFn: async () => {
-      const { data } = await supabase
+      if (!user) return [];
+
+      // Fetch support tickets
+      const { data: supportTickets } = await supabase
         .from('support_tickets')
-        .select('id, subject, status, priority, created_at')
-        .eq('user_id', user!.id)
+        .select('id, subject, status, created_at')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(5);
-      return data || [];
+
+      // Fetch project tickets where user is initiator
+      const { data: projectTickets } = await supabase
+        .from('apogee_tickets')
+        .select(`
+          id, 
+          element_concerne, 
+          kanban_status, 
+          created_at,
+          support_initiator_user_id,
+          apogee_ticket_statuses(id, label, color)
+        `)
+        .eq('support_initiator_user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      // Get unread exchanges for project tickets
+      const projectTicketIds = (projectTickets || []).map(t => t.id);
+      let exchangeCounts: Record<string, number> = {};
+      
+      if (projectTicketIds.length > 0) {
+        const { data: exchanges } = await supabase
+          .from('apogee_ticket_support_exchanges')
+          .select('ticket_id')
+          .in('ticket_id', projectTicketIds)
+          .neq('sender_user_id', user.id)
+          .is('read_at', null);
+        
+        for (const ex of exchanges || []) {
+          exchangeCounts[ex.ticket_id] = (exchangeCounts[ex.ticket_id] || 0) + 1;
+        }
+      }
+
+      // Combine and format
+      const combined: CombinedTicket[] = [
+        ...(supportTickets || []).map(t => ({
+          id: t.id,
+          subject: t.subject,
+          status: t.status,
+          created_at: t.created_at,
+          ticketType: 'support' as const,
+          unread_exchanges_count: 0,
+          has_active_exchange: false,
+        })),
+        ...(projectTickets || []).map(t => ({
+          id: t.id,
+          subject: t.element_concerne,
+          status: t.kanban_status,
+          created_at: t.created_at,
+          ticketType: 'project' as const,
+          unread_exchanges_count: exchangeCounts[t.id] || 0,
+          has_active_exchange: (exchangeCounts[t.id] || 0) > 0,
+          statusLabel: t.apogee_ticket_statuses?.label,
+          statusColor: t.apogee_ticket_statuses?.color,
+        })),
+      ];
+
+      // Sort by date and take 5 most recent
+      return combined
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 5);
     },
     enabled: !!user?.id,
     staleTime: 60 * 1000,
@@ -49,37 +126,62 @@ export function RecentTicketsWidget() {
     );
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'open': return 'bg-blue-100 text-blue-700';
-      case 'in_progress': return 'bg-yellow-100 text-yellow-700';
-      case 'resolved': return 'bg-green-100 text-green-700';
-      case 'closed': return 'bg-gray-100 text-gray-700';
-      default: return 'bg-gray-100 text-gray-700';
+  const getStatusColor = (ticket: CombinedTicket) => {
+    if (ticket.ticketType === 'project' && ticket.statusColor) {
+      return { backgroundColor: `${ticket.statusColor}20`, color: ticket.statusColor };
     }
+    switch (ticket.status) {
+      case 'open': return { backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' };
+      case 'in_progress': return { backgroundColor: 'hsl(var(--warning) / 0.2)', color: 'hsl(var(--warning))' };
+      case 'resolved': 
+      case 'SUPPORT_RESOLU': return { backgroundColor: 'hsl(var(--success) / 0.2)', color: 'hsl(142 71% 45%)' };
+      case 'closed': return { backgroundColor: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' };
+      default: return { backgroundColor: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' };
+    }
+  };
+
+  const getStatusLabel = (ticket: CombinedTicket) => {
+    if (ticket.ticketType === 'project' && ticket.statusLabel) {
+      return ticket.statusLabel;
+    }
+    return ticket.status;
   };
 
   return (
     <div className="space-y-2">
       {tickets.map((ticket) => (
         <Link
-          key={ticket.id}
-          to={`/support/mes-demandes/${ticket.id}`}
-          className="flex items-center gap-2 p-2 rounded-lg hover:bg-accent/50 transition-colors"
+          key={`${ticket.ticketType}-${ticket.id}`}
+          to={ticket.ticketType === 'support' 
+            ? `/support/mes-demandes/${ticket.id}` 
+            : `/support`
+          }
+          className={cn(
+            "flex items-center gap-2 p-2 rounded-lg hover:bg-accent/50 transition-colors relative",
+            ticket.has_active_exchange && "animate-pulse ring-1 ring-green-500 ring-offset-1"
+          )}
         >
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{ticket.subject}</p>
+            <div className="flex items-center gap-1">
+              <p className="text-sm font-medium truncate">{ticket.subject}</p>
+              {ticket.unread_exchanges_count > 0 && (
+                <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs gap-0.5">
+                  <MessageCircle className="h-3 w-3" />
+                  {ticket.unread_exchanges_count}
+                </Badge>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground">
               {formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true, locale: fr })}
             </p>
           </div>
-          <Badge className={getStatusColor(ticket.status)} variant="secondary">
-            {ticket.status}
+          <Badge style={getStatusColor(ticket)} variant="secondary">
+            {getStatusLabel(ticket)}
           </Badge>
         </Link>
       ))}
       <Link
-        to="/support/mes-demandes"
+        to="/support"
         className="flex items-center justify-center gap-1 text-sm text-primary hover:underline pt-2"
       >
         Voir tous les tickets

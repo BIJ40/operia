@@ -66,6 +66,7 @@ import { errorToast } from '@/lib/toastHelpers';
 import { TagSelector } from './TagSelector';
 import { TicketDuplicatesSection } from './TicketDuplicatesSection';
 import { RoadmapEditor } from './RoadmapEditor';
+import { TicketSupportExchanges } from './TicketSupportExchanges';
 import type { ApogeeTicket, ApogeeModule, ApogeePriority, ApogeeTicketStatus, AuthorType, ReportedBy } from '../types';
 
 interface TicketDetailDrawerProps {
@@ -534,6 +535,12 @@ export function TicketDetailDrawer({
               <Paperclip className="h-3 w-3" />
               Documents ({filesCount})
             </TabsTrigger>
+            {ticket.support_initiator_user_id && (
+              <TabsTrigger value="support-exchanges" className="flex items-center gap-1">
+                <Send className="h-3 w-3" />
+                Échanges Support
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* Onglet Principal */}
@@ -1026,6 +1033,20 @@ export function TicketDetailDrawer({
               </div>
             </ScrollArea>
           </TabsContent>
+
+          {/* Onglet Échanges Support */}
+          {ticket.support_initiator_user_id && (
+            <TabsContent value="support-exchanges" className="flex-1 overflow-hidden m-0">
+              <div className="h-full p-4">
+                <TicketSupportExchanges
+                  ticketId={ticket.id}
+                  initiatorUserId={ticket.support_initiator_user_id}
+                  initiatorProfile={ticket.initiator_profile}
+                  isSupport={true}
+                />
+              </div>
+            </TabsContent>
+          )}
         </Tabs>
       </SheetContent>
     </Sheet>
