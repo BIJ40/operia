@@ -139,21 +139,35 @@ export function calculateTechTimeByProject(
     const projectId = intervention.projectId || intervention.refProjectId;
     if (!projectId) return;
 
-    // RÈGLE: Exclure les RT (relevés techniques)
-    const isRT =
-      intervention.data?.biRt?.isValidated === true ||
-      intervention.data?.type2 === "RT" ||
-      (intervention.type2 || "").toUpperCase() === "RT";
-    if (isRT) return;
+    // RÈGLE RENFORCÉE: Exclure les RT (relevés techniques)
+    const type2Raw = (intervention.type2 || intervention.data?.type2 || "");
+    const type2Lower = type2Raw.toLowerCase().trim();
+    const typeRaw = (intervention.type || intervention.data?.type || "").toLowerCase().trim();
+    
+    // RT explicite via type2 ou type
+    const isRTExplicit = 
+      type2Lower === "rt" ||
+      type2Lower.includes("relevé technique") ||
+      type2Lower.includes("releve technique") ||
+      type2Lower.includes("rdv technique") ||
+      typeRaw === "rt" ||
+      typeRaw.includes("relevé technique");
+    
+    // RT via biRt seul (sans travaux)
+    const hasBiRt = intervention.data?.biRt?.isValidated === true || intervention.data?.isRT === true;
+    const hasBiDepan = intervention.data?.biDepan;
+    const hasBiTvx = intervention.data?.biTvx;
+    
+    const isRTViaBi = hasBiRt && !hasBiDepan && !hasBiTvx;
+    
+    if (isRTExplicit || isRTViaBi) return;
 
-    // RÈGLE: Exclure les SAV
-    const type2Lower = (intervention.data?.type2 || intervention.type2 || "").toLowerCase();
-    const typeRaw = (intervention.data?.type || intervention.type || "").toLowerCase();
-    const isSAV = type2Lower.includes("sav") || typeRaw.includes("sav");
+    // RÈGLE: Exclure les SAV (égalité stricte)
+    const isSAV = type2Lower === "sav" || typeRaw === "sav";
     if (isSAV) return;
 
-    // RÈGLE: Types productifs uniquement (biDepan ou biTvx)
-    const isProductive = intervention.data?.biDepan || intervention.data?.biTvx;
+    // RÈGLE STRICTE: Types productifs uniquement (biDepan ou biTvx requis)
+    const isProductive = hasBiDepan || hasBiTvx;
     if (!isProductive) return;
 
     // Initialiser le projet si nécessaire
