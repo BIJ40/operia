@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { useSessionState } from '@/hooks/useSessionState';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -68,7 +69,8 @@ export function CreateTicketDialog({
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   
-  const [form, setForm] = useState<ApogeeTicketInsert>({
+  // Persister le formulaire dans sessionStorage pour survivre aux changements d'onglets
+  const [form, setForm] = useSessionState<ApogeeTicketInsert>('create-ticket-form', {
     element_concerne: '',
     description: '',
     module: undefined,
@@ -85,7 +87,16 @@ export function CreateTicketDialog({
   });
   
   // État local pour le slider owner_side (valeur numérique 0-5, undefined = pas de porteur défini)
-  const [ownerSliderValue, setOwnerSliderValue] = useState<number | undefined>(undefined);
+  // Également persisté
+  const [ownerSliderValue, setOwnerSliderValue] = useSessionState<number | undefined>('create-ticket-owner-slider', undefined);
+  
+  // Persister l'état d'ouverture du dialog
+  const [dialogWasOpen, setDialogWasOpen] = useSessionState<boolean>('create-ticket-dialog-open', false);
+  
+  // Synchroniser l'état d'ouverture
+  useEffect(() => {
+    setDialogWasOpen(open);
+  }, [open, setDialogWasOpen]);
 
   // Charger le prénom de l'utilisateur
   useEffect(() => {
@@ -187,24 +198,30 @@ export function CreateTicketDialog({
         toast.success(`${pendingFiles.length} document(s) ajouté(s)`);
       }
 
-      // Reset form
-      setForm({
+      // Reset form et nettoyer le sessionStorage
+      const defaultForm = {
         element_concerne: '',
         description: '',
         module: undefined,
         h_min: undefined,
         h_max: undefined,
-        kanban_status: 'BACKLOG',
-        created_from: 'MANUAL',
+        kanban_status: 'BACKLOG' as const,
+        created_from: 'MANUAL' as const,
         reported_by: userFirstName,
         impact_tags: [],
         heat_priority: DEFAULT_HEAT_PRIORITY,
         roadmap_enabled: false,
         roadmap_month: undefined,
         roadmap_year: undefined,
-      });
+      };
+      setForm(defaultForm);
       setOwnerSliderValue(undefined);
+      setDialogWasOpen(false);
       setPendingFiles([]);
+      // Nettoyer explicitement le sessionStorage
+      sessionStorage.removeItem('create-ticket-form');
+      sessionStorage.removeItem('create-ticket-owner-slider');
+      sessionStorage.removeItem('create-ticket-dialog-open');
       onClose();
     } catch (error) {
       // Erreur gérée par le parent
