@@ -304,8 +304,15 @@ export function TicketTableRow({
         {format(new Date(ticket.created_at), 'dd/MM/yy', { locale: fr })}
       </TableCell>
 
+      {/* Modifié le */}
+      <TableCell className="text-xs text-muted-foreground whitespace-nowrap overflow-hidden" style={cellStyle(11)}>
+        {ticket.last_modified_at 
+          ? format(new Date(ticket.last_modified_at), 'dd/MM/yy', { locale: fr })
+          : '—'}
+      </TableCell>
+
       {/* Actions */}
-      <TableCell style={cellStyle(11)}>
+      <TableCell style={cellStyle(12)}>
         <div className="flex items-center gap-1">
           <Tooltip>
             <TooltipTrigger asChild>
