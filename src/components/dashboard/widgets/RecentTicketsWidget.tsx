@@ -1,6 +1,7 @@
 /**
- * Widget Derniers Tickets Support + Tickets Projet
- * Inclut clignotement vert si échange en cours
+ * Widget Derniers Tickets - V3
+ * Affiche uniquement les tickets projet (apogee_tickets)
+ * support_tickets supprimé
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -14,14 +15,13 @@ import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
-interface CombinedTicket {
+interface TicketItem {
   id: string;
   subject: string;
   status: string;
   created_at: string;
-  ticketType: 'support' | 'project';
-  unread_exchanges_count?: number;
-  has_active_exchange?: boolean;
+  unread_exchanges_count: number;
+  has_active_exchange: boolean;
   statusLabel?: string;
   statusColor?: string | null;
 }
@@ -30,19 +30,11 @@ export function RecentTicketsWidget() {
   const { user } = useAuth();
 
   const { data: tickets, isLoading } = useQuery({
-    queryKey: ['widget-recent-tickets-combined', user?.id],
+    queryKey: ['widget-recent-tickets-v3', user?.id],
     queryFn: async () => {
       if (!user) return [];
 
-      // Fetch support tickets
-      const { data: supportTickets } = await supabase
-        .from('support_tickets')
-        .select('id, subject, status, created_at')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      // Fetch project tickets where user is initiator
+      // V3: Fetch only project tickets where user is initiator
       const { data: projectTickets } = await supabase
         .from('apogee_tickets')
         .select(`
@@ -57,51 +49,34 @@ export function RecentTicketsWidget() {
         .order('created_at', { ascending: false })
         .limit(5);
 
+      if (!projectTickets?.length) return [];
+
       // Get unread exchanges for project tickets
-      const projectTicketIds = (projectTickets || []).map(t => t.id);
+      const projectTicketIds = projectTickets.map(t => t.id);
       let exchangeCounts: Record<string, number> = {};
       
-      if (projectTicketIds.length > 0) {
-        const { data: exchanges } = await supabase
-          .from('apogee_ticket_support_exchanges')
-          .select('ticket_id')
-          .in('ticket_id', projectTicketIds)
-          .neq('sender_user_id', user.id)
-          .is('read_at', null);
-        
-        for (const ex of exchanges || []) {
-          exchangeCounts[ex.ticket_id] = (exchangeCounts[ex.ticket_id] || 0) + 1;
-        }
+      const { data: exchanges } = await supabase
+        .from('apogee_ticket_support_exchanges')
+        .select('ticket_id')
+        .in('ticket_id', projectTicketIds)
+        .neq('sender_user_id', user.id)
+        .is('read_at', null);
+      
+      for (const ex of exchanges || []) {
+        exchangeCounts[ex.ticket_id] = (exchangeCounts[ex.ticket_id] || 0) + 1;
       }
 
-      // Combine and format
-      const combined: CombinedTicket[] = [
-        ...(supportTickets || []).map(t => ({
-          id: t.id,
-          subject: t.subject,
-          status: t.status,
-          created_at: t.created_at,
-          ticketType: 'support' as const,
-          unread_exchanges_count: 0,
-          has_active_exchange: false,
-        })),
-        ...(projectTickets || []).map(t => ({
-          id: t.id,
-          subject: t.element_concerne,
-          status: t.kanban_status,
-          created_at: t.created_at,
-          ticketType: 'project' as const,
-          unread_exchanges_count: exchangeCounts[t.id] || 0,
-          has_active_exchange: (exchangeCounts[t.id] || 0) > 0,
-          statusLabel: t.apogee_ticket_statuses?.label,
-          statusColor: t.apogee_ticket_statuses?.color,
-        })),
-      ];
-
-      // Sort by date and take 5 most recent
-      return combined
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        .slice(0, 5);
+      // Format tickets
+      return projectTickets.map(t => ({
+        id: t.id,
+        subject: t.element_concerne,
+        status: t.kanban_status,
+        created_at: t.created_at,
+        unread_exchanges_count: exchangeCounts[t.id] || 0,
+        has_active_exchange: (exchangeCounts[t.id] || 0) > 0,
+        statusLabel: t.apogee_ticket_statuses?.label,
+        statusColor: t.apogee_ticket_statuses?.color,
+      })) as TicketItem[];
     },
     enabled: !!user?.id,
     staleTime: 60 * 1000,
@@ -126,36 +101,19 @@ export function RecentTicketsWidget() {
     );
   }
 
-  const getStatusColor = (ticket: CombinedTicket) => {
-    if (ticket.ticketType === 'project' && ticket.statusColor) {
+  const getStatusColor = (ticket: TicketItem) => {
+    if (ticket.statusColor) {
       return { backgroundColor: `${ticket.statusColor}20`, color: ticket.statusColor };
     }
-    switch (ticket.status) {
-      case 'open': return { backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' };
-      case 'in_progress': return { backgroundColor: 'hsl(var(--warning) / 0.2)', color: 'hsl(var(--warning))' };
-      case 'resolved': 
-      case 'SUPPORT_RESOLU': return { backgroundColor: 'hsl(var(--success) / 0.2)', color: 'hsl(142 71% 45%)' };
-      case 'closed': return { backgroundColor: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' };
-      default: return { backgroundColor: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' };
-    }
-  };
-
-  const getStatusLabel = (ticket: CombinedTicket) => {
-    if (ticket.ticketType === 'project' && ticket.statusLabel) {
-      return ticket.statusLabel;
-    }
-    return ticket.status;
+    return { backgroundColor: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' };
   };
 
   return (
     <div className="space-y-2">
       {tickets.map((ticket) => (
         <Link
-          key={`${ticket.ticketType}-${ticket.id}`}
-          to={ticket.ticketType === 'support' 
-            ? `/support/mes-demandes/${ticket.id}` 
-            : `/support`
-          }
+          key={ticket.id}
+          to="/support"
           className={cn(
             "flex items-center gap-2 p-2 rounded-lg hover:bg-accent/50 transition-colors relative",
             ticket.has_active_exchange && "animate-pulse ring-1 ring-primary ring-offset-1"
@@ -176,7 +134,7 @@ export function RecentTicketsWidget() {
             </p>
           </div>
           <Badge style={getStatusColor(ticket)} variant="secondary">
-            {getStatusLabel(ticket)}
+            {ticket.statusLabel || ticket.status}
           </Badge>
         </Link>
       ))}
