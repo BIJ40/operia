@@ -259,10 +259,12 @@ export function CollaboratorWizard({
               const isCompleted = currentStep > step.id;
               
               return (
-                <div
+                <button
+                  type="button"
                   key={step.id}
+                  onClick={() => setCurrentStep(step.id)}
                   className={cn(
-                    "flex flex-col items-center gap-1 flex-1",
+                    "flex flex-col items-center gap-1 flex-1 cursor-pointer transition-all hover:opacity-80",
                     isActive && "text-primary",
                     isCompleted && "text-primary",
                     !isActive && !isCompleted && "text-muted-foreground"
@@ -273,7 +275,7 @@ export function CollaboratorWizard({
                       "w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors",
                       isActive && "border-primary bg-primary/10",
                       isCompleted && "border-primary bg-primary text-primary-foreground",
-                      !isActive && !isCompleted && "border-muted-foreground/30"
+                      !isActive && !isCompleted && "border-muted-foreground/30 hover:border-muted-foreground/50"
                     )}
                   >
                     {isCompleted ? (
@@ -283,7 +285,7 @@ export function CollaboratorWizard({
                     )}
                   </div>
                   <span className="text-xs font-medium hidden sm:block">{step.title}</span>
-                </div>
+                </button>
               );
             })}
           </div>
