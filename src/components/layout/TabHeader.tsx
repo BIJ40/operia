@@ -30,7 +30,6 @@ import { cn } from '@/lib/utils';
 import { MEGA_MENU_CONFIG, SUPPORT_MENU, MegaMenuLink, MegaMenuSection } from '@/config/megaMenuConfig';
 import { getRoleCapabilities } from '@/config/roleMatrix';
 // Logo temporairement retiré
-import { RHNotificationBadge } from '@/components/rh/RHNotificationBadge';
 import { ModuleKey } from '@/types/modules';
 import { UnifiedSearchFloatingBar } from '@/components/unified-search';
 import { GLOBAL_ROLES } from '@/types/globalRoles';
@@ -222,7 +221,6 @@ export function TabHeader() {
 
             {/* Actions droite - position absolue dans ligne 1 */}
             <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1">
-              <RHNotificationBadge />
 
               {canAccessSupportConsoleUI && (
                 <Link to={ROUTES.support.console}>

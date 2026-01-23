@@ -130,50 +130,12 @@ export function useApproveRequest() {
         throw error;
       }
 
-      // Get collaborator_id for the employee (optional)
-      const { data: collaborator } = await supabase
-        .from("collaborators")
-        .select("id")
-        .eq("user_id", request.employee_user_id)
-        .maybeSingle();
-
-      // Create notification for the employee (N2→N1)
-      const payloadObj = (request.payload && typeof request.payload === 'object') ? request.payload as Record<string, unknown> : {};
-      const isVehicle = payloadObj?.is_vehicle_request;
-      const isAnomaly = payloadObj?.is_anomaly;
-      
-      let notificationTitle = "Demande approuvée";
-      let notificationMessage = "Votre demande a été acceptée";
-      
-      if (request.request_type === "LEAVE") {
-        notificationTitle = "Demande de congé approuvée";
-        notificationMessage = "Votre demande de congé a été acceptée";
-      } else if (isVehicle) {
-        notificationTitle = isAnomaly ? "Signalement véhicule traité" : "Demande véhicule acceptée";
-        notificationMessage = isAnomaly 
-          ? "Votre signalement véhicule a été pris en compte"
-          : "Votre demande concernant le véhicule a été acceptée";
-      }
-
-      const { error: notifErr } = await supabase.from("rh_notifications").insert({
-        collaborator_id: collaborator?.id ?? null,
-        recipient_id: request.employee_user_id,
-        sender_id: user.id,
-        agency_id: request.agency_id,
-        notification_type: "REQUEST_COMPLETED",
-        title: notificationTitle,
-        message: notificationMessage,
-        related_request_id: requestId,
-      });
-
-      if (notifErr) logError("Erreur notification N2→N1 (approve):", notifErr);
+      // Notifications supprimées - plus de popups
 
       logInfo(`Demande ${requestId} approuvée`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["agency-requests"] });
-      queryClient.invalidateQueries({ queryKey: ["rh-notifications"] });
-      queryClient.invalidateQueries({ queryKey: ["rh-notifications-count"] });
       toast.success("Demande approuvée");
     },
     onError: (error) => {
@@ -219,50 +181,12 @@ export function useRejectRequest() {
         throw error;
       }
 
-      // Get collaborator_id for the employee (optional)
-      const { data: collaborator } = await supabase
-        .from("collaborators")
-        .select("id")
-        .eq("user_id", request.employee_user_id)
-        .maybeSingle();
-
-      // Create notification for the employee (N2→N1)
-      const payloadObj = (request.payload && typeof request.payload === 'object') ? request.payload as Record<string, unknown> : {};
-      const isVehicle = payloadObj?.is_vehicle_request;
-      const isAnomaly = payloadObj?.is_anomaly;
-      
-      let notificationTitle = "Demande refusée";
-      let notificationMessage = `Votre demande a été refusée. Motif : ${comment}`;
-      
-      if (request.request_type === "LEAVE") {
-        notificationTitle = "Demande de congé refusée";
-        notificationMessage = `Votre demande de congé a été refusée. Motif : ${comment}`;
-      } else if (isVehicle) {
-        notificationTitle = isAnomaly ? "Signalement véhicule refusé" : "Demande véhicule refusée";
-        notificationMessage = isAnomaly 
-          ? `Votre signalement véhicule a été refusé. Motif : ${comment}`
-          : `Votre demande concernant le véhicule a été refusée. Motif : ${comment}`;
-      }
-
-      const { error: notifErr } = await supabase.from("rh_notifications").insert({
-        collaborator_id: collaborator?.id ?? null,
-        recipient_id: request.employee_user_id,
-        sender_id: user.id,
-        agency_id: request.agency_id,
-        notification_type: "REQUEST_REJECTED",
-        title: notificationTitle,
-        message: notificationMessage,
-        related_request_id: requestId,
-      });
-
-      if (notifErr) logError("Erreur notification N2→N1 (reject):", notifErr);
+      // Notifications supprimées - plus de popups
 
       logInfo(`Demande ${requestId} refusée`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["agency-requests"] });
-      queryClient.invalidateQueries({ queryKey: ["rh-notifications"] });
-      queryClient.invalidateQueries({ queryKey: ["rh-notifications-count"] });
       toast.success("Demande refusée");
     },
     onError: (error) => {
@@ -491,60 +415,12 @@ export function useMarkRequestAsProcessed() {
         throw error;
       }
 
-      // Get collaborator_id for the employee (optional)
-      const { data: collaborator } = await supabase
-        .from("collaborators")
-        .select("id")
-        .eq("user_id", request.employee_user_id)
-        .maybeSingle();
-
-      // Create notification for the employee (N2→N1)
-      const payloadObj = (request.payload && typeof request.payload === 'object') ? request.payload as Record<string, unknown> : {};
-      const isVehicle = payloadObj?.is_vehicle_request;
-      const isAnomaly = payloadObj?.is_anomaly;
-      
-      let notificationTitle = "Demande traitée";
-      let notificationMessage = "Votre demande a été traitée";
-      
-      if (isVehicle) {
-        notificationTitle = isAnomaly ? "Signalement véhicule traité" : "Demande véhicule traitée";
-        notificationMessage = isAnomaly 
-          ? "Votre signalement véhicule a été pris en charge"
-          : "Votre demande concernant le véhicule a été traitée";
-        
-        if (processingInfo?.garage_date) {
-          notificationMessage += `. RDV garage : ${processingInfo.garage_date}`;
-        }
-        if (processingInfo?.notes) {
-          notificationMessage += `. Info : ${processingInfo.notes}`;
-        }
-      } else {
-        notificationTitle = "Demande matériel traitée";
-        notificationMessage = "Votre demande concernant le matériel a été traitée";
-        if (processingInfo?.notes) {
-          notificationMessage += `. Info : ${processingInfo.notes}`;
-        }
-      }
-
-      const { error: notifErr } = await supabase.from("rh_notifications").insert({
-        collaborator_id: collaborator?.id ?? null,
-        recipient_id: request.employee_user_id,
-        sender_id: user.id,
-        agency_id: request.agency_id,
-        notification_type: "REQUEST_COMPLETED",
-        title: notificationTitle,
-        message: notificationMessage,
-        related_request_id: requestId,
-      });
-
-      if (notifErr) logError("Erreur notification N2→N1 (processed):", notifErr);
+      // Notifications supprimées - plus de popups
 
       logInfo(`Demande ${requestId} traitée`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["agency-requests"] });
-      queryClient.invalidateQueries({ queryKey: ["rh-notifications"] });
-      queryClient.invalidateQueries({ queryKey: ["rh-notifications-count"] });
       toast.success("Demande traitée");
     },
     onError: (error) => {

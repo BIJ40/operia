@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { Plus, Trash2, Save, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -126,15 +127,15 @@ export function RoyaltyConfigSection({ agencyId }: RoyaltyConfigSectionProps) {
     for (let i = 0; i < tiers.length; i++) {
       const tier = tiers[i];
       if (tier.percentage <= 0 || tier.percentage > 100) {
-        alert(`Tranche ${i + 1}: Le pourcentage doit être entre 0 et 100`);
+        toast.error(`Tranche ${i + 1}: Le pourcentage doit être entre 0 et 100`);
         return;
       }
       if (tier.from_amount < 0) {
-        alert(`Tranche ${i + 1}: Le montant de départ doit être positif`);
+        toast.error(`Tranche ${i + 1}: Le montant de départ doit être positif`);
         return;
       }
       if (tier.to_amount !== null && tier.to_amount <= tier.from_amount) {
-        alert(`Tranche ${i + 1}: Le montant de fin doit être supérieur au montant de départ`);
+        toast.error(`Tranche ${i + 1}: Le montant de fin doit être supérieur au montant de départ`);
         return;
       }
     }
