@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserTickets, Ticket } from '@/hooks/use-user-tickets';
 import { useCombinedUserTickets } from '@/hooks/use-user-project-tickets';
+import { useUserProjectUnreadCount } from '@/hooks/use-project-ticket-notifications';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +41,7 @@ export default function SupportIndex() {
   const navigate = useNavigate();
   const { tickets: supportTickets, isLoading: supportLoading, loadTickets, setSelectedTicket } = useUserTickets();
   const { tickets: combinedTickets, isLoading: combinedLoading } = useCombinedUserTickets();
+  const { unreadCount: totalUnreadCount } = useUserProjectUnreadCount();
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedTicketView, setSelectedTicketView] = useState<Ticket | null>(null);
@@ -196,9 +198,9 @@ export default function SupportIndex() {
             <CardTitle className="flex items-center gap-2 text-lg">
               <FileText className="w-5 h-5 text-primary" />
               Mes Demandes
-              {hasUnreadTickets && (
-                <Badge variant="destructive" className="text-xs">
-                  Nouveau
+              {totalUnreadCount > 0 && (
+                <Badge variant="destructive" className="text-xs animate-pulse">
+                  {totalUnreadCount} nouveau{totalUnreadCount > 1 ? 'x' : ''}
                 </Badge>
               )}
             </CardTitle>
@@ -225,7 +227,10 @@ export default function SupportIndex() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {combinedTickets.map((ticket) => (
+                  {combinedTickets.map((ticket) => {
+                    const hasUnread = ticket.unread_exchanges_count > 0;
+                    
+                    return (
                     <button
                       key={`${ticket.ticketType}-${ticket.id}`}
                       onClick={() => {
@@ -242,7 +247,7 @@ export default function SupportIndex() {
                       }}
                       className={cn(
                         "w-full text-left p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-muted/50 transition-all",
-                        ticket.has_active_exchange && "animate-pulse ring-1 ring-primary ring-offset-1"
+                        hasUnread && "animate-pulse ring-2 ring-destructive ring-offset-1 bg-destructive/5"
                       )}
                     >
                       <div className="flex items-start justify-between gap-2 mb-2">
@@ -279,7 +284,8 @@ export default function SupportIndex() {
                         </span>
                       </div>
                     </button>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </ScrollArea>
