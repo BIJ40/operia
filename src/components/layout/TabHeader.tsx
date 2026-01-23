@@ -6,7 +6,7 @@
  * Ligne 3: Sous-onglets contextuels avec animation slide
  */
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -149,6 +149,18 @@ export function TabHeader() {
 
   const showSupport = caps.canAccessSupport;
 
+  /**
+   * React Router peut différer l'update de location pendant le chargement (navigation en transition).
+   * Pour éviter de garder les sous-statuts de l'ancienne section pendant ce temps,
+   * on applique un “optimistic tab id” dès le clic sur un onglet principal.
+   */
+  const [optimisticTopTabId, setOptimisticTopTabId] = useState<string | null>(null);
+
+  // Dès que la navigation est effectivement commit (location change), on reset l'optimistic.
+  useEffect(() => {
+    setOptimisticTopTabId(null);
+  }, [location.key]);
+
   // Construire la liste des onglets principaux
   const topTabs = useMemo(() => {
     const tabs: { id: string; label: string; href: string; icon: LucideIcon; section?: MegaMenuSection }[] = [
@@ -185,12 +197,19 @@ export function TabHeader() {
 
   const activeTabId = activeTopTab?.id ?? null;
 
+  const effectiveTopTab = useMemo(() => {
+    if (!optimisticTopTabId) return activeTopTab;
+    return topTabs.find((t) => t.id === optimisticTopTabId) ?? activeTopTab;
+  }, [activeTopTab, optimisticTopTabId, topTabs]);
+
+  const effectiveTabId = effectiveTopTab?.id ?? activeTabId;
+
   // Sous-onglets de l'onglet actif
   const subTabs = useMemo(() => {
-    const links = activeTopTab?.section?.links;
+    const links = effectiveTopTab?.section?.links;
     if (!links) return [];
     return links.filter(canAccessLink);
-  }, [activeTopTab, canAccessLink]);
+  }, [effectiveTopTab, canAccessLink]);
 
   // Animation fluide pour le morphing - la navigation est instantanée, l'animation suit
   const morphTransition = {
@@ -315,7 +334,7 @@ export function TabHeader() {
           {/* Ligne 2 : Onglets principaux avec morphing */}
           <nav className="flex items-center justify-center gap-1 py-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {topTabs.map((tab) => {
-              const isActive = tab.id === activeTabId;
+              const isActive = tab.id === effectiveTabId;
               const IconComponent = tab.icon;
 
               return (
@@ -324,6 +343,12 @@ export function TabHeader() {
                   to={tab.href}
                   className="relative shrink-0"
                   style={{ WebkitTapHighlightColor: 'transparent' }}
+                  onPointerDown={() => {
+                    // Optimistic uniquement si on change réellement d'onglet principal
+                    if (tab.id !== activeTabId) {
+                      setOptimisticTopTabId(tab.id);
+                    }
+                  }}
                 >
                   <div
                     className={cn(
@@ -359,9 +384,9 @@ export function TabHeader() {
           {/* Ligne 3 : Sous-onglets contextuels avec pills arrondis */}
           {/* Clé basée sur l'onglet actif pour éviter la persistance de sous-menus entre sections */}
           <AnimatePresence mode="wait">
-            {activeTabId && subTabs.length > 0 ? (
+            {effectiveTabId && subTabs.length > 0 ? (
               <motion.div
-                key={`subtabs-${activeTabId}`}
+                key={`subtabs-${effectiveTabId}`}
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
