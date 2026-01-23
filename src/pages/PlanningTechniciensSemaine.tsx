@@ -208,7 +208,7 @@ function PrintSignatureBox({
   );
 }
 
-// Composant signature N2 pour le planning
+// Composant signature N2 pour le planning (lecture seule - plus d'envoi aux techniciens)
 function PlanningSignatureN2Section({ 
   techId, 
   weekDate,
@@ -218,12 +218,7 @@ function PlanningSignatureN2Section({
 }) {
   const { 
     signature, 
-    isSent, 
     isSignedByTech, 
-    sendToTech, 
-    cancelSend,
-    isSending,
-    isCancelling,
     isLoading 
   } = usePlanningSignature({ techId, weekDate });
 
@@ -231,7 +226,7 @@ function PlanningSignatureN2Section({
     return <div className="h-8 w-40 bg-muted animate-pulse rounded" />;
   }
 
-  // État 3: Signé par le tech
+  // Afficher le statut de signature si existant
   if (isSignedByTech && signature?.tech_signed_at) {
     return (
       <Badge variant="default" className="bg-emerald-600 text-white">
@@ -241,44 +236,8 @@ function PlanningSignatureN2Section({
     );
   }
 
-  // État 2: Envoyé, en attente signature tech
-  if (isSent && signature?.sent_at) {
-    return (
-      <div className="flex items-center gap-2">
-        <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
-          <Clock className="w-3 h-3 mr-1" />
-          En attente signature
-        </Badge>
-        <Button 
-          variant="ghost" 
-          size="sm"
-          onClick={() => cancelSend()}
-          disabled={isCancelling}
-          className="text-xs text-muted-foreground hover:text-destructive"
-        >
-          {isCancelling ? <Loader2 className="w-3 h-3 animate-spin" /> : "Annuler"}
-        </Button>
-      </div>
-    );
-  }
-
-  // État 1: Non envoyé
-  return (
-    <Button
-      onClick={() => sendToTech()}
-      disabled={isSending}
-      size="sm"
-      variant="outline"
-      className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-    >
-      {isSending ? (
-        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-      ) : (
-        <Send className="w-4 h-4 mr-2" />
-      )}
-      Envoyer au technicien
-    </Button>
-  );
+  // Pas de statut particulier - le portail salarié n'existe plus
+  return null;
 }
 
 function PlanningTechniciensSemaineContent() {
@@ -490,11 +449,10 @@ function PlanningTechniciensSemaineContent() {
             {/* Bouton imprimer */}
             <Button
               variant="outline"
-              size="icon"
               onClick={() => window.print()}
-              title="Imprimer"
             >
-              <Printer className="h-4 w-4" />
+              <Printer className="h-4 w-4 mr-2" />
+              Imprimer le planning
             </Button>
           </div>
         </CardContent>
