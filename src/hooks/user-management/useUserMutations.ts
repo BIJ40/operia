@@ -11,6 +11,7 @@ import { logAuth } from '@/lib/logger';
 import { toast } from 'sonner';
 import { UserProfile, CreateUserData, UpdateUserData } from './types';
 import { ALL_USER_QUERY_PATTERNS } from '@/lib/queryKeys';
+import { enforceAgencyRoleFloor } from '@/lib/agencyRoleEnforcement';
 
 interface UseUserMutationsOptions {
   capabilities: UserManagementCapabilities;
@@ -83,9 +84,14 @@ export function useUserMutations({
   const createUserMutation = useMutation({
     mutationFn: async (userData: CreateUserData) => {
       let effectiveGlobalRole = userData.globalRole;
+      
+      // Règle dirigeant legacy
       if (userData.roleAgence?.toLowerCase() === 'dirigeant') {
         effectiveGlobalRole = 'franchisee_admin';
       }
+      
+      // V3.0 PHASE 5: Appliquer la règle du plancher agence >= N2
+      effectiveGlobalRole = enforceAgencyRoleFloor(userData.agence, effectiveGlobalRole) ?? effectiveGlobalRole;
       
       if (!capabilities.canCreateRoles.includes(effectiveGlobalRole)) {
         throw new Error('Vous ne pouvez pas créer un utilisateur avec ce rôle');
