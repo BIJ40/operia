@@ -10,8 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Search, Users, UserPlus, MoreHorizontal, Pencil, UserX, UserCheck, Trash2, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
+import { Search, Users, UserPlus, MoreHorizontal, Pencil, UserX, UserCheck, Trash2, ChevronUp, ChevronDown, ChevronsUpDown, Lock } from 'lucide-react';
 import { GLOBAL_ROLE_LABELS, GLOBAL_ROLE_COLORS, type GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
+import { isHardcodedProtectedUser } from '@/hooks/access-rights/useProtectedAccess';
+import { getVisibleRoleLabel, getVisibleRoleColor } from '@/lib/visibleRoleLabels';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAllAgencySubscriptions, useAccessRightsUsers, UserRow } from '@/hooks/access-rights';
 import { CreateUserDialog, EditUserDialog, DeactivateDialog, ReactivateDialog, DeleteDialog } from '@/components/admin/users/UserDialogs';
@@ -389,7 +391,12 @@ export function UsersAccessTab() {
                       onDoubleClick={() => canEdit && handleOpenEditDialog(user)}
                     >
                       <TableCell className="font-medium whitespace-nowrap">
-                        {user.first_name} {user.last_name}
+                        <span className="flex items-center gap-1.5">
+                          {isHardcodedProtectedUser(user.id) && (
+                            <Lock className="h-3 w-3 text-amber-500" />
+                          )}
+                          {user.first_name} {user.last_name}
+                        </span>
                       </TableCell>
                       <TableCell className="hidden md:table-cell text-muted-foreground">
                         {user.email}
@@ -398,8 +405,8 @@ export function UsersAccessTab() {
                         {user.role_agence || '—'}
                       </TableCell>
                       <TableCell>
-                        <Badge className={getRoleBadgeColor(user.global_role)}>
-                          {GLOBAL_ROLE_LABELS[user.global_role as keyof typeof GLOBAL_ROLE_LABELS] || 'N/A'}
+                        <Badge className={getVisibleRoleColor(user.global_role)}>
+                          {getVisibleRoleLabel(user.global_role)}
                         </Badge>
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">

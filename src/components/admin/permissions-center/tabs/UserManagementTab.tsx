@@ -24,6 +24,8 @@ import { GLOBAL_ROLE_LABELS, GlobalRole } from '@/types/globalRoles';
 import { validateUserPermissions, ROLE_HIERARCHY, PermissionIssue } from '@/permissions';
 import { UserEditDialog } from '../components/UserEditDialog';
 import { UserExportCSV } from '../components/UserExportCSV';
+import { getVisibleRoleLabel, getVisibleRoleColor } from '@/lib/visibleRoleLabels';
+import { isHardcodedProtectedUser } from '@/hooks/access-rights/useProtectedAccess';
 
 interface UserWithIssues {
   id: string;
@@ -132,15 +134,22 @@ function UserRow({
       
       {/* Badges compacts */}
       <div className="flex items-center gap-2 flex-shrink-0">
+        {/* Badge protégé */}
+        {isHardcodedProtectedUser(user.id) && (
+          <Badge variant="outline" className="text-xs border-amber-400 text-amber-600">
+            🔒
+          </Badge>
+        )}
+        
         {user.global_role && (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger>
-                <Badge variant="outline" className="font-mono text-xs">
-                  N{ROLE_HIERARCHY[user.global_role]}
+                <Badge className={`text-xs ${getVisibleRoleColor(user.global_role)}`}>
+                  {getVisibleRoleLabel(user.global_role)}
                 </Badge>
               </TooltipTrigger>
-              <TooltipContent>{GLOBAL_ROLE_LABELS[user.global_role]}</TooltipContent>
+              <TooltipContent>Niveau N{ROLE_HIERARCHY[user.global_role]}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         )}
