@@ -107,8 +107,7 @@ export function RHUnifiedTable({
           file_size: file.size,
           file_type: file.type,
           uploaded_by: user?.id,
-          visibility: 'rh_only',
-          employee_visible: false,
+          visibility: 'ADMIN_ONLY',
         });
 
       if (insertError) throw insertError;
