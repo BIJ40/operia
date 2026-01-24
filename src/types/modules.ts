@@ -70,10 +70,6 @@ export const MODULE_OPTIONS = {
     create: 'apogee_tickets.create',     // Créer des tickets (sans = lecture seule)
   },
   rh: {
-    coffre: 'rh.coffre',           // Coffre-fort salarié (accès perso uniquement)
-    mon_planning: 'rh.mon_planning', // Accès à son planning personnel
-    mon_vehicule: 'rh.mon_vehicule', // Accès à son véhicule assigné
-    mon_materiel: 'rh.mon_materiel', // Accès à son matériel assigné
     rh_viewer: 'rh.rh_viewer',     // Gestion RH opérationnelle (sans paie)
     rh_admin: 'rh.rh_admin',       // Administration RH complète (paie incluse)
   },
@@ -210,15 +206,10 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'RH',
     description: 'Gestion des ressources humaines',
     icon: 'Briefcase',
-    // N3/N4 exclus : ils ne gèrent pas de collaborateurs, c'est un module agence
-    // N1 inclus pour l'option coffre (accès perso uniquement)
-    defaultForRoles: ['franchisee_user', 'franchisee_admin', 'platform_admin', 'superadmin'],
-    minRole: 'base_user',
+    // N2+ uniquement (le portail salarié N1 a été supprimé en v0.8.3)
+    defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
+    minRole: 'franchisee_admin',
     options: [
-      { key: 'coffre', path: 'rh.coffre', label: 'Mon Coffre RH', description: 'Accès à ses propres documents RH', defaultEnabled: false, routes: ['/rh/coffre'] },
-      { key: 'mon_planning', path: 'rh.mon_planning', label: 'Mon Planning', description: 'Accès à son planning personnel', defaultEnabled: false, routes: ['/rh/mon-planning'] },
-      { key: 'mon_vehicule', path: 'rh.mon_vehicule', label: 'Mon Véhicule', description: 'Accès à son véhicule assigné', defaultEnabled: false, routes: ['/rh/mon-vehicule'] },
-      { key: 'mon_materiel', path: 'rh.mon_materiel', label: 'Mon Matériel', description: 'Accès à son matériel assigné', defaultEnabled: false, routes: ['/rh/mon-materiel'] },
       { key: 'rh_viewer', path: 'rh.rh_viewer', label: 'Gestionnaire RH', description: 'Documents et demandes équipe', defaultEnabled: false, routes: ['/rh/suivi'] },
       { key: 'rh_admin', path: 'rh.rh_admin', label: 'Admin RH', description: 'Gestion complète : salaires, contrats', defaultEnabled: false, routes: ['/rh/suivi'] },
     ],
@@ -317,25 +308,13 @@ export function isModuleOptionEnabled(
  */
 export function getDefaultModulesForRole(role: GlobalRole): EnabledModules {
   const modules: EnabledModules = {};
-  const roleLevel = GLOBAL_ROLES[role];
   
   for (const moduleDef of MODULE_DEFINITIONS) {
     if (moduleDef.defaultForRoles.includes(role)) {
       // Activer le module avec ses options par défaut
       const options: Record<string, boolean> = {};
       for (const opt of moduleDef.options) {
-        // Cas spécial pour le module RH
-        if (moduleDef.key === 'rh') {
-          // N2+ (franchisee_admin+): rh_viewer et rh_admin activés, mais PAS coffre
-          if (roleLevel >= GLOBAL_ROLES.franchisee_admin) {
-            options[opt.key] = opt.key === 'coffre' ? false : true;
-          } else {
-            // N0/N1: coffre activé, rh_viewer/rh_admin désactivés
-            options[opt.key] = opt.key === 'coffre' ? true : false;
-          }
-        } else {
-          options[opt.key] = opt.defaultEnabled;
-        }
+        options[opt.key] = opt.defaultEnabled;
       }
       modules[moduleDef.key] = { enabled: true, options };
     }
