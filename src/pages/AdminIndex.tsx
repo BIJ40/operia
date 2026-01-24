@@ -4,7 +4,7 @@ import {
   Settings, Users, Building2, Activity, TrendingUp, Headset, BarChart3, 
   History, Bot, BookOpen, FlaskConical, Sparkles, Database, FileStack, 
   Archive, Bell, HardDrive, HelpCircle, Shield, Brain, Cpu, FileText, FileJson,
-  FileEdit, EyeOff
+  FileEdit, EyeOff, ToggleRight
 } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { cn } from '@/lib/utils';
@@ -111,6 +111,8 @@ export default function AdminIndex() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <AdminLink to="/admin/gestion" icon={Shield} title="Gestion Globale" description="Utilisateurs, agences, plans et permissions" />
             <AdminLink to={ROUTES.admin.userActivity} icon={TrendingUp} title="Activité" description="Connexions utilisateurs" />
+            <AdminLink to={ROUTES.admin.featureFlags} icon={ToggleRight} title="Feature Flags" description="Activer/désactiver les modules" />
+            <AdminLink to="/admin/hidden-features" icon={EyeOff} title="Fonctionnalités masquées" description="Pages et fonctions désactivées" />
           </div>
         </TabsContent>
 
