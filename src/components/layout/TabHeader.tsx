@@ -88,7 +88,6 @@ export function TabHeader() {
     enabledModules,
     hasModule,
     user,
-    isSalariedManager,
   } = useAuth();
   const { hasNewTickets, newTicketsCount } = useSupportNotifications();
   
@@ -116,12 +115,6 @@ export function TabHeader() {
 
         const optionEnabled = typeof moduleConfig === 'object' ? moduleConfig.options?.[option] === true : true;
 
-        if (link.section === 'salarie' && option === 'coffre') {
-          if (optionEnabled) return true;
-          if (userLevel >= GLOBAL_ROLES.franchisee_admin && isSalariedManager) return true;
-          return false;
-        }
-
         if (!optionEnabled) return false;
       }
       return true;
@@ -129,7 +122,6 @@ export function TabHeader() {
     [
       canAccessSupportConsoleUI,
       enabledModules,
-      isSalariedManager,
       userLevel,
     ]
   );
