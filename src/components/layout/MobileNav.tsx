@@ -5,7 +5,6 @@
  * - Rôle global (minRole)
  * - Module activé (moduleKey)
  * - Option de module (requiresOption)
- * - is_salaried_manager pour les N2 qui veulent accéder au coffre RH
  */
 
 import { useState } from 'react';
@@ -50,7 +49,7 @@ const getIcon = (name?: string): LucideIcon => {
 
 export function MobileNav({ sections, supportSection, onClose }: MobileNavProps) {
   const location = useLocation();
-  const { globalRole, canAccessSupportConsoleUI, enabledModules, isSalariedManager } = useAuth();
+  const { globalRole, canAccessSupportConsoleUI, enabledModules } = useAuth();
   const userLevel = globalRole ? GLOBAL_ROLES[globalRole] : 0;
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
 
@@ -101,14 +100,6 @@ export function MobileNav({ sections, supportSection, onClose }: MobileNavProps)
       const optionEnabled = typeof moduleConfig === 'object' 
         ? moduleConfig.options?.[option] === true 
         : true; // Si module = boolean true, toutes options considérées actives
-      
-      // Exception: si c'est une option "coffre" pour la section salarié,
-      // un N2 avec is_salaried_manager peut y accéder
-      if (link.section === 'salarie' && option === 'coffre') {
-        if (optionEnabled) return true;
-        if (userLevel >= GLOBAL_ROLES.franchisee_admin && isSalariedManager) return true;
-        return false;
-      }
       
       if (!optionEnabled) {
         return false;
