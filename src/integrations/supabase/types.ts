@@ -5651,6 +5651,39 @@ export type Database = {
           },
         ]
       }
+      protected_user_access: {
+        Row: {
+          access_type: string
+          created_by: string | null
+          id: string
+          is_locked: boolean | null
+          notes: string | null
+          original_modules: Json | null
+          snapshot_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_type: string
+          created_by?: string | null
+          id?: string
+          is_locked?: boolean | null
+          notes?: string | null
+          original_modules?: Json | null
+          snapshot_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_type?: string
+          created_by?: string | null
+          id?: string
+          is_locked?: boolean | null
+          notes?: string | null
+          original_modules?: Json | null
+          snapshot_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       rag_index_documents: {
         Row: {
           apporteur_code: string | null

@@ -20,6 +20,9 @@ import { getRoleCapabilities } from '@/config/roleMatrix';
 import { hasAccess, hasMinRole, getUserManagementCapabilities, isModuleEnabled, isModuleOptionEnabled } from '@/permissions';
 import { userModulesToEnabledModules } from '@/lib/userModulesUtils';
 
+// PHASE 0 - Protection des accès spéciaux (whitelist /projects)
+import { checkProtectedAccess, isHardcodedProtectedUser } from '@/hooks/access-rights/useProtectedAccess';
+
 // Types pour le module Support
 interface SupportModuleOptions {
   user?: boolean;   // Portail Mes Demandes
@@ -285,6 +288,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         resolvedModules = {};
         if (import.meta.env.DEV) {
           logAuth.info('[AUTH] No effective modules returned from RPC');
+        }
+      }
+
+      // ========================================================================
+      // PHASE 0 - FORÇAGE ACCÈS /projects POUR UTILISATEURS PROTÉGÉS
+      // ========================================================================
+      // Vérifier d'abord le hardcode (filet de sécurité), puis la table
+      let isProjectsProtected = isHardcodedProtectedUser(userId);
+      if (!isProjectsProtected) {
+        isProjectsProtected = await checkProtectedAccess(userId, 'projects');
+      }
+      
+      if (isProjectsProtected) {
+        // Forcer l'accès au module apogee_tickets avec toutes les options
+        resolvedModules.apogee_tickets = {
+          enabled: true,
+          options: { kanban: true, create: true, history: true },
+        } as any;
+        
+        if (import.meta.env.DEV) {
+          logAuth.info('[AUTH][PROTECTED] User has protected /projects access:', userId);
         }
       }
 
