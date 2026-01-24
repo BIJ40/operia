@@ -1,12 +1,19 @@
 /**
- * Wizard de bienvenue multi-étapes (4 steps)
- * Étape 1: Profil (nom, prénom, téléphone, notifications)
- * Étape 2: Préférences (page d'accueil)
- * Étape 3: Orientation (adaptatif selon le rôle)
- * Étape 4: Terminé (résumé)
+ * Wizard de bienvenue multi-étapes
+ * Adaptatif selon le rôle utilisateur (N2+ = 4 étapes, autres = 2 étapes)
+ * 
+ * N2+ (franchisés/admins):
+ * - Étape 1: Profil (nom, prénom, téléphone)
+ * - Étape 2: Agence (nom long, adresse, téléphone)
+ * - Étape 3: Équipe (création collaborateurs)
+ * - Étape 4: Terminé
+ * 
+ * Autres utilisateurs:
+ * - Étape 1: Profil
+ * - Étape 2: Terminé
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -27,76 +34,76 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { 
   Loader2, 
   User, 
-  Home, 
-  Compass,
+  Building2, 
+  Users,
   CheckCircle,
   ChevronLeft,
   ChevronRight,
   Check,
   Clock,
   Sparkles,
-  BarChart3,
-  Users,
-  HeadphonesIcon,
-  GraduationCap,
+  Plus,
+  UserPlus,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GLOBAL_ROLES, GlobalRole } from '@/types/globalRoles';
 import { OnboardingState, OnboardingPayload, OnboardingUpdateData } from '@/hooks/useOnboardingState';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+import { CollaboratorWizard } from '@/components/collaborators';
+import { useCollaborators } from '@/hooks/useCollaborators';
+import { CollaboratorFormData } from '@/types/collaborator';
 
-const formSchema = z.object({
+// Schema pour N2+ (avec infos agence)
+const managerFormSchema = z.object({
   // Étape 1 - Profil
   first_name: z.string().min(1, 'Prénom requis'),
   last_name: z.string().min(1, 'Nom requis'),
   phone: z.string().optional(),
-  email_notifications_enabled: z.boolean(),
-  // Étape 2 - Préférences
-  preferred_home_route: z.string().min(1, 'Veuillez choisir une page d\'accueil'),
-  // Étape 3 - Orientation (stored in payload)
-  priorities: z.array(z.string()).optional(),
-  orientation_acknowledged: z.boolean().optional(),
+  // Étape 2 - Agence
+  agence_nom_long: z.string().optional(),
+  agence_adresse: z.string().optional(),
+  agence_ville: z.string().optional(),
+  agence_code_postal: z.string().optional(),
+  agence_telephone: z.string().optional(),
+  agence_email: z.string().email('Email invalide').optional().or(z.literal('')),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+// Schema pour utilisateurs standard
+const standardFormSchema = z.object({
+  first_name: z.string().min(1, 'Prénom requis'),
+  last_name: z.string().min(1, 'Nom requis'),
+  phone: z.string().optional(),
+});
 
-const TOTAL_STEPS = 4;
+type ManagerFormValues = z.infer<typeof managerFormSchema>;
+type StandardFormValues = z.infer<typeof standardFormSchema>;
 
-const STEPS = [
+interface StepConfig {
+  id: number;
+  title: string;
+  icon: React.ElementType;
+}
+
+// Steps pour N2+
+const MANAGER_STEPS: StepConfig[] = [
   { id: 1, title: 'Profil', icon: User },
-  { id: 2, title: 'Préférences', icon: Home },
-  { id: 3, title: 'Orientation', icon: Compass },
+  { id: 2, title: 'Agence', icon: Building2 },
+  { id: 3, title: 'Équipe', icon: Users },
   { id: 4, title: 'Terminé', icon: CheckCircle },
 ];
 
-// Routes disponibles selon le rôle
-const HOME_ROUTES = [
-  { value: '/', label: 'Tableau de bord', description: 'Vue globale de votre activité', minRole: 'base_user' as GlobalRole },
-  { value: '/hc-agency', label: 'Mon Agence', description: 'Pilotage de votre agence', minRole: 'franchisee_admin' as GlobalRole },
-  { value: '/rh', label: 'RH & Équipe', description: 'Gestion des collaborateurs', minRole: 'franchisee_admin' as GlobalRole },
-  { value: '/academy', label: 'Help! Academy', description: 'Formations et ressources', minRole: 'base_user' as GlobalRole },
-  { value: '/support', label: 'Support', description: 'Aide et accompagnement', minRole: 'base_user' as GlobalRole },
-  { value: '/hc-reseau', label: 'Espace Franchiseur', description: 'Gestion du réseau', minRole: 'franchisor_user' as GlobalRole },
-];
-
-// Priorités pour les managers (N2+)
-const PRIORITY_OPTIONS = [
-  { id: 'pilotage', label: 'Pilotage & KPI', icon: BarChart3, description: 'Suivi de performance et tableaux de bord' },
-  { id: 'rh', label: 'RH & Équipe', icon: Users, description: 'Gestion des collaborateurs et plannings' },
-  { id: 'support', label: 'Support & Accompagnement', icon: HeadphonesIcon, description: 'Aide et ressources du réseau' },
+// Steps pour utilisateurs standard
+const STANDARD_STEPS: StepConfig[] = [
+  { id: 1, title: 'Profil', icon: User },
+  { id: 2, title: 'Terminé', icon: CheckCircle },
 ];
 
 interface WelcomeWizardProps {
@@ -116,8 +123,22 @@ export function WelcomeWizard({
   isMutating,
   initialData,
 }: WelcomeWizardProps) {
+  const { agencyId } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
-  const [selectedPriorities, setSelectedPriorities] = useState<string[]>([]);
+  const [showCollaboratorWizard, setShowCollaboratorWizard] = useState(false);
+  const [agencyInfo, setAgencyInfo] = useState<{
+    agence_nom_long?: string;
+    adresse?: string;
+    ville?: string;
+    code_postal?: string;
+    contact_phone?: string;
+    contact_email?: string;
+  }>({});
+  
+  // Fetch collaborators pour afficher le nombre créé
+  const { collaborators, createMutation } = useCollaborators();
+  const createdCollaboratorsCount = collaborators?.length ?? 0;
+  const isCreatingCollaborator = createMutation.isPending;
 
   // Determine user level for adaptive content
   const userRoleLevel = initialData.global_role 
@@ -125,42 +146,70 @@ export function WelcomeWizard({
     : 0;
   const isManager = userRoleLevel >= GLOBAL_ROLES.franchisee_admin; // N2+
 
-  // Filter routes based on user role
-  const availableRoutes = useMemo(() => {
-    return HOME_ROUTES.filter(route => {
-      const routeLevel = GLOBAL_ROLES[route.minRole] ?? 0;
-      return userRoleLevel >= routeLevel;
-    });
-  }, [userRoleLevel]);
+  // Sélection des steps selon le rôle
+  const STEPS = isManager ? MANAGER_STEPS : STANDARD_STEPS;
+  const TOTAL_STEPS = STEPS.length;
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<ManagerFormValues>({
+    resolver: zodResolver(isManager ? managerFormSchema : standardFormSchema),
     defaultValues: {
       first_name: initialData.first_name || '',
       last_name: initialData.last_name || '',
       phone: initialData.phone || '',
-      email_notifications_enabled: initialData.email_notifications_enabled ?? true,
-      preferred_home_route: initialData.preferred_home_route || '/',
-      priorities: [],
-      orientation_acknowledged: false,
+      agence_nom_long: '',
+      agence_adresse: '',
+      agence_ville: '',
+      agence_code_postal: '',
+      agence_telephone: '',
+      agence_email: '',
     },
   });
 
+  // Fetch agency info on mount
+  useMemo(() => {
+    if (isManager && agencyId) {
+      // Fetch from apogee_agencies
+      supabase
+        .from('apogee_agencies')
+        .select('label, adresse, ville, code_postal, contact_phone, contact_email')
+        .eq('id', agencyId)
+        .single()
+        .then(({ data }) => {
+          if (data) {
+            setAgencyInfo({
+              agence_nom_long: data.label || '',
+              adresse: data.adresse || '',
+              ville: data.ville || '',
+              code_postal: data.code_postal || '',
+              contact_phone: data.contact_phone || '',
+              contact_email: data.contact_email || '',
+            });
+            form.setValue('agence_nom_long', data.label || '');
+            form.setValue('agence_adresse', data.adresse || '');
+            form.setValue('agence_ville', data.ville || '');
+            form.setValue('agence_code_postal', data.code_postal || '');
+            form.setValue('agence_telephone', data.contact_phone || '');
+            form.setValue('agence_email', data.contact_email || '');
+          }
+        });
+    }
+  }, [isManager, agencyId]);
+
   // Prevent accidental close (only via buttons)
-  const handleOpenChange = (openState: boolean) => {
-    // Only allow programmatic close, not click outside
+  const handleOpenChange = useCallback((openState: boolean) => {
+    // Only allow programmatic close, not click outside or X button
     if (!openState) return;
     onOpenChange(openState);
-  };
+  }, [onOpenChange]);
 
   const handleNext = async () => {
     // Validate current step fields
     if (currentStep === 1) {
-      const valid = await form.trigger(['first_name', 'last_name', 'phone', 'email_notifications_enabled']);
+      const valid = await form.trigger(['first_name', 'last_name', 'phone']);
       if (!valid) return;
-    } else if (currentStep === 2) {
-      const valid = await form.trigger(['preferred_home_route']);
-      if (!valid) return;
+    } else if (currentStep === 2 && isManager) {
+      // Agency step - optional validation
+      await form.trigger(['agence_nom_long', 'agence_email']);
     }
     
     if (currentStep < TOTAL_STEPS) {
@@ -184,19 +233,33 @@ export function WelcomeWizard({
   const handleComplete = async () => {
     const values = form.getValues();
     
-    const payload: OnboardingPayload = {};
-    if (isManager) {
-      payload.priorities = selectedPriorities;
-    } else {
-      payload.orientation_acknowledged = true;
+    // Save agency info if manager
+    if (isManager && agencyId) {
+      try {
+        await supabase
+          .from('apogee_agencies')
+          .update({
+            adresse: values.agence_adresse || null,
+            ville: values.agence_ville || null,
+            code_postal: values.agence_code_postal || null,
+            contact_phone: values.agence_telephone || null,
+            contact_email: values.agence_email || null,
+          })
+          .eq('id', agencyId);
+      } catch (err) {
+        console.error('[Onboarding] Error saving agency info:', err);
+      }
     }
+
+    const payload: OnboardingPayload = {
+      orientation_acknowledged: true,
+    };
 
     const result = await onComplete({
       first_name: values.first_name,
       last_name: values.last_name,
       phone: values.phone || undefined,
-      email_notifications_enabled: values.email_notifications_enabled,
-      preferred_home_route: values.preferred_home_route,
+      email_notifications_enabled: true, // Activé par défaut
       onboarding_payload: payload,
     });
 
@@ -205,424 +268,430 @@ export function WelcomeWizard({
     }
   };
 
-  const togglePriority = (priorityId: string) => {
-    setSelectedPriorities(prev => {
-      if (prev.includes(priorityId)) {
-        return prev.filter(p => p !== priorityId);
-      }
-      // Max 3 priorities
-      if (prev.length >= 3) return prev;
-      return [...prev, priorityId];
+  const handleCollaboratorCreated = (data: CollaboratorFormData) => {
+    createMutation.mutate(data, {
+      onSuccess: () => {
+        setShowCollaboratorWizard(false);
+      },
     });
   };
 
   const progress = (currentStep / TOTAL_STEPS) * 100;
 
-  return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            Bienvenue sur Help! Connect
-          </DialogTitle>
-        </DialogHeader>
+  // Déterminer si on est sur la dernière étape
+  const isLastStep = currentStep === TOTAL_STEPS;
+  const isTeamStep = isManager && currentStep === 3;
 
-        {/* Progress bar et étapes */}
-        <div className="space-y-4">
-          <Progress value={progress} className="h-2" />
-          
-          <div className="flex justify-between">
-            {STEPS.map((step) => {
-              const Icon = step.icon;
-              const isActive = currentStep === step.id;
-              const isCompleted = currentStep > step.id;
-              
-              return (
-                <button
-                  type="button"
-                  key={step.id}
-                  onClick={() => {
-                    // Allow going back but not forward
-                    if (step.id < currentStep) {
-                      setCurrentStep(step.id);
-                    }
-                  }}
-                  className={cn(
-                    "flex flex-col items-center gap-1 flex-1 transition-all",
-                    step.id < currentStep && "cursor-pointer hover:opacity-80",
-                    step.id >= currentStep && "cursor-default",
-                    isActive && "text-primary",
-                    isCompleted && "text-primary",
-                    !isActive && !isCompleted && "text-muted-foreground"
-                  )}
-                >
-                  <div
+  return (
+    <>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogContent 
+          className="max-w-2xl max-h-[90vh] overflow-y-auto"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+          hideCloseButton
+        >
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Bienvenue sur Help! Connect
+            </DialogTitle>
+          </DialogHeader>
+
+          {/* Progress bar et étapes */}
+          <div className="space-y-4">
+            <Progress value={progress} className="h-2" />
+            
+            <div className="flex justify-between">
+              {STEPS.map((step) => {
+                const Icon = step.icon;
+                const isActive = currentStep === step.id;
+                const isCompleted = currentStep > step.id;
+                
+                return (
+                  <button
+                    type="button"
+                    key={step.id}
+                    onClick={() => {
+                      // Allow going back but not forward
+                      if (step.id < currentStep) {
+                        setCurrentStep(step.id);
+                      }
+                    }}
                     className={cn(
-                      "w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors",
-                      isActive && "border-primary bg-primary/10",
-                      isCompleted && "border-primary bg-primary text-primary-foreground",
-                      !isActive && !isCompleted && "border-muted-foreground/30"
+                      "flex flex-col items-center gap-1 flex-1 transition-all",
+                      step.id < currentStep && "cursor-pointer hover:opacity-80",
+                      step.id >= currentStep && "cursor-default",
+                      isActive && "text-primary",
+                      isCompleted && "text-primary",
+                      !isActive && !isCompleted && "text-muted-foreground"
                     )}
                   >
-                    {isCompleted ? (
-                      <Check className="h-5 w-5" />
-                    ) : (
-                      <Icon className="h-5 w-5" />
-                    )}
-                  </div>
-                  <span className="text-xs font-medium hidden sm:block">{step.title}</span>
-                </button>
-              );
-            })}
+                    <div
+                      className={cn(
+                        "w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors",
+                        isActive && "border-primary bg-primary/10",
+                        isCompleted && "border-primary bg-primary text-primary-foreground",
+                        !isActive && !isCompleted && "border-muted-foreground/30"
+                      )}
+                    >
+                      {isCompleted ? (
+                        <Check className="h-5 w-5" />
+                      ) : (
+                        <Icon className="h-5 w-5" />
+                      )}
+                    </div>
+                    <span className="text-xs font-medium hidden sm:block">{step.title}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
 
-        <Form {...form}>
-          <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
-            {/* Étape 1 - Profil */}
-            {currentStep === 1 && (
-              <div className="space-y-4 animate-in fade-in-50 duration-300">
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-lg flex items-center gap-2">
-                    <User className="h-5 w-5 text-primary" />
-                    Vos informations
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Vérifions que vos informations de base sont à jour.
-                  </p>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
+          <Form {...form}>
+            <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+              {/* Étape 1 - Profil */}
+              {currentStep === 1 && (
+                <div className="space-y-4 animate-in fade-in-50 duration-300">
+                  <div className="space-y-2">
+                    <h3 className="font-semibold text-lg flex items-center gap-2">
+                      <User className="h-5 w-5 text-primary" />
+                      Vos informations
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Vérifions que vos informations de base sont à jour.
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="first_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Prénom *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Jean" {...field} autoFocus />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="last_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nom *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Dupont" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
                   <FormField
                     control={form.control}
-                    name="first_name"
+                    name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Prénom *</FormLabel>
+                        <FormLabel>Téléphone</FormLabel>
                         <FormControl>
-                          <Input placeholder="Jean" {...field} autoFocus />
+                          <Input placeholder="06 12 34 56 78" {...field} />
                         </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="last_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nom *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Dupont" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Téléphone</FormLabel>
-                      <FormControl>
-                        <Input placeholder="06 12 34 56 78" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        Pour vous contacter en cas de besoin urgent
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <Separator />
-
-                <FormField
-                  control={form.control}
-                  name="email_notifications_enabled"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">Notifications par email</FormLabel>
                         <FormDescription>
-                          Recevoir les alertes importantes par email
+                          Pour vous contacter en cas de besoin urgent
                         </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
-
-            {/* Étape 2 - Préférences */}
-            {currentStep === 2 && (
-              <div className="space-y-4 animate-in fade-in-50 duration-300">
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-lg flex items-center gap-2">
-                    <Home className="h-5 w-5 text-primary" />
-                    Votre page d'accueil
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Choisissez la page qui s'affichera après votre connexion.
-                  </p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
+              )}
 
-                <FormField
-                  control={form.control}
-                  name="preferred_home_route"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Page d'accueil préférée *</FormLabel>
-                      <div className="grid gap-3">
-                        {availableRoutes.map((route) => (
-                          <label
-                            key={route.value}
-                            className={cn(
-                              "flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors",
-                              field.value === route.value 
-                                ? "border-primary bg-primary/5" 
-                                : "border-border hover:border-primary/50"
-                            )}
-                          >
-                            <input
-                              type="radio"
-                              className="mt-1"
-                              checked={field.value === route.value}
-                              onChange={() => field.onChange(route.value)}
-                            />
-                            <div className="space-y-1">
-                              <div className="font-medium">{route.label}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {route.description}
-                              </div>
-                            </div>
-                          </label>
-                        ))}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
-
-            {/* Étape 3 - Orientation (adaptatif) */}
-            {currentStep === 3 && (
-              <div className="space-y-4 animate-in fade-in-50 duration-300">
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-lg flex items-center gap-2">
-                    <Compass className="h-5 w-5 text-primary" />
-                    {isManager ? 'Vos priorités' : 'Vos ressources'}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {isManager 
-                      ? 'Indiquez vos domaines de focus pour personnaliser votre expérience.'
-                      : 'Voici les ressources essentielles pour bien démarrer.'}
-                  </p>
-                </div>
-
-                {isManager ? (
-                  // Manager view - Priority selection
-                  <div className="grid gap-3">
-                    {PRIORITY_OPTIONS.map((priority) => {
-                      const Icon = priority.icon;
-                      const isSelected = selectedPriorities.includes(priority.id);
-                      const order = selectedPriorities.indexOf(priority.id) + 1;
-                      
-                      return (
-                        <button
-                          key={priority.id}
-                          type="button"
-                          onClick={() => togglePriority(priority.id)}
-                          className={cn(
-                            "flex items-start gap-3 p-4 rounded-lg border text-left transition-colors",
-                            isSelected 
-                              ? "border-primary bg-primary/5" 
-                              : "border-border hover:border-primary/50"
-                          )}
-                        >
-                          <div className={cn(
-                            "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
-                            isSelected ? "bg-primary text-primary-foreground" : "bg-muted"
-                          )}>
-                            {isSelected ? order : <Icon className="h-4 w-4" />}
-                          </div>
-                          <div className="space-y-1">
-                            <div className="font-medium">{priority.label}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {priority.description}
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                    <p className="text-xs text-muted-foreground">
-                      Sélectionnez jusqu'à 3 priorités dans l'ordre d'importance.
+              {/* Étape 2 - Agence (N2+ uniquement) */}
+              {currentStep === 2 && isManager && (
+                <div className="space-y-4 animate-in fade-in-50 duration-300">
+                  <div className="space-y-2">
+                    <h3 className="font-semibold text-lg flex items-center gap-2">
+                      <Building2 className="h-5 w-5 text-primary" />
+                      Informations de l'agence
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Complétez les informations de votre agence pour faciliter le suivi.
                     </p>
                   </div>
-                ) : (
-                  // Standard user view - Quick orientation
-                  <div className="space-y-4">
-                    <div className="grid gap-3">
-                      <a
-                        href="/academy"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-4 rounded-lg border border-border hover:border-primary/50 transition-colors"
-                      >
-                        <GraduationCap className="h-6 w-6 text-primary" />
-                        <div>
-                          <div className="font-medium">Help! Academy</div>
-                          <div className="text-sm text-muted-foreground">
-                            Formations et ressources pour progresser
-                          </div>
-                        </div>
-                      </a>
-                      <a
-                        href="/support"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-4 rounded-lg border border-border hover:border-primary/50 transition-colors"
-                      >
-                        <HeadphonesIcon className="h-6 w-6 text-primary" />
-                        <div>
-                          <div className="font-medium">Support</div>
-                          <div className="text-sm text-muted-foreground">
-                            Besoin d'aide ? On est là pour vous
-                          </div>
-                        </div>
-                      </a>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Vous pourrez toujours accéder à ces ressources depuis le menu principal.
+
+                  <FormField
+                    control={form.control}
+                    name="agence_nom_long"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nom de l'agence</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Help Confort Lyon" {...field} disabled />
+                        </FormControl>
+                        <FormDescription>
+                          Le nom de l'agence ne peut pas être modifié ici
+                        </FormDescription>
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="agence_adresse"
+                      render={({ field }) => (
+                        <FormItem className="col-span-2">
+                          <FormLabel>Adresse</FormLabel>
+                          <FormControl>
+                            <Input placeholder="12 rue du Commerce" {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="agence_code_postal"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Code postal</FormLabel>
+                          <FormControl>
+                            <Input placeholder="69000" {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="agence_ville"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Ville</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Lyon" {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <Separator />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="agence_telephone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Téléphone agence</FormLabel>
+                          <FormControl>
+                            <Input placeholder="04 78 00 00 00" {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="agence_email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email agence</FormLabel>
+                          <FormControl>
+                            <Input placeholder="contact@helpconfort-lyon.fr" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Étape 3 - Équipe (N2+ uniquement) */}
+              {isTeamStep && (
+                <div className="space-y-4 animate-in fade-in-50 duration-300">
+                  <div className="space-y-2">
+                    <h3 className="font-semibold text-lg flex items-center gap-2">
+                      <Users className="h-5 w-5 text-primary" />
+                      Votre équipe
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Ajoutez vos collaborateurs pour bénéficier de toutes les fonctionnalités RH.
+                      Vous pourrez toujours en ajouter plus tard.
                     </p>
                   </div>
-                )}
-              </div>
-            )}
 
-            {/* Étape 4 - Terminé */}
-            {currentStep === 4 && (
-              <div className="space-y-4 animate-in fade-in-50 duration-300">
-                <div className="space-y-2 text-center">
-                  <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                    <CheckCircle className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="font-semibold text-lg">Tout est prêt !</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Voici un récapitulatif de vos préférences.
-                  </p>
-                </div>
-
-                <div className="space-y-3 p-4 rounded-lg bg-muted/50">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Nom</span>
-                    <span className="font-medium">
-                      {form.getValues('first_name')} {form.getValues('last_name')}
-                    </span>
-                  </div>
-                  {form.getValues('phone') && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Téléphone</span>
-                      <span className="font-medium">{form.getValues('phone')}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Page d'accueil</span>
-                    <span className="font-medium">
-                      {availableRoutes.find(r => r.value === form.getValues('preferred_home_route'))?.label || 'Tableau de bord'}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Notifications email</span>
-                    <Badge variant={form.getValues('email_notifications_enabled') ? 'default' : 'secondary'}>
-                      {form.getValues('email_notifications_enabled') ? 'Activées' : 'Désactivées'}
-                    </Badge>
-                  </div>
-                  {isManager && selectedPriorities.length > 0 && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Priorités</span>
-                      <div className="flex gap-1">
-                        {selectedPriorities.map((p, i) => (
-                          <Badge key={p} variant="outline" className="text-xs">
-                            {i + 1}. {PRIORITY_OPTIONS.find(o => o.id === p)?.label}
-                          </Badge>
-                        ))}
+                  {/* Liste des collaborateurs créés */}
+                  {createdCollaboratorsCount > 0 && (
+                    <div className="p-4 rounded-lg bg-muted/50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-medium">
+                            {createdCollaboratorsCount} collaborateur{createdCollaboratorsCount > 1 ? 's' : ''} déjà enregistré{createdCollaboratorsCount > 1 ? 's' : ''}
+                          </span>
+                        </div>
+                        <Badge variant="secondary">
+                          <Check className="h-3 w-3 mr-1" />
+                          Équipe créée
+                        </Badge>
                       </div>
                     </div>
                   )}
-                </div>
 
-                <p className="text-xs text-muted-foreground text-center">
-                  Vous pourrez modifier ces paramètres à tout moment depuis votre profil.
-                </p>
-              </div>
-            )}
-
-            {/* Navigation */}
-            <div className="flex items-center justify-between pt-4 border-t">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={handleDismiss}
-                disabled={isMutating}
-                className="text-muted-foreground"
-              >
-                <Clock className="h-4 w-4 mr-2" />
-                Faire plus tard
-              </Button>
-
-              <div className="flex gap-2">
-                {currentStep > 1 && (
+                  {/* Bouton ajouter collaborateur */}
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={handlePrevious}
-                    disabled={isMutating}
+                    className="w-full h-auto py-6"
+                    onClick={() => setShowCollaboratorWizard(true)}
                   >
-                    <ChevronLeft className="h-4 w-4 mr-1" />
-                    Précédent
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                        <UserPlus className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="text-center">
+                        <div className="font-medium">Ajouter un collaborateur</div>
+                        <div className="text-sm text-muted-foreground">
+                          Technicien, assistante, commercial...
+                        </div>
+                      </div>
+                    </div>
                   </Button>
-                )}
-                
-                {currentStep < TOTAL_STEPS ? (
-                  <Button
-                    type="button"
-                    onClick={handleNext}
-                    disabled={isMutating}
-                  >
-                    Suivant
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    onClick={handleComplete}
-                    disabled={isMutating}
-                  >
-                    {isMutating ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Check className="h-4 w-4 mr-2" />
+
+                  <p className="text-xs text-muted-foreground text-center">
+                    Vous pourrez ajouter d'autres collaborateurs depuis le module RH à tout moment.
+                  </p>
+                </div>
+              )}
+
+              {/* Étape Terminé */}
+              {isLastStep && (
+                <div className="space-y-4 animate-in fade-in-50 duration-300">
+                  <div className="space-y-2 text-center">
+                    <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                      <CheckCircle className="h-8 w-8 text-primary" />
+                    </div>
+                    <h3 className="font-semibold text-lg">Tout est prêt !</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Voici un récapitulatif de vos informations.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3 p-4 rounded-lg bg-muted/50">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Nom</span>
+                      <span className="font-medium">
+                        {form.getValues('first_name')} {form.getValues('last_name')}
+                      </span>
+                    </div>
+                    {form.getValues('phone') && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Téléphone</span>
+                        <span className="font-medium">{form.getValues('phone')}</span>
+                      </div>
                     )}
-                    Terminer
-                  </Button>
-                )}
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Notifications email</span>
+                      <Badge variant="default">Activées</Badge>
+                    </div>
+                    {isManager && (
+                      <>
+                        <Separator />
+                        {form.getValues('agence_ville') && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-muted-foreground">Agence</span>
+                            <span className="font-medium">
+                              {form.getValues('agence_ville')}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Équipe</span>
+                          <Badge variant={createdCollaboratorsCount > 0 ? 'default' : 'secondary'}>
+                            {createdCollaboratorsCount} collaborateur{createdCollaboratorsCount !== 1 ? 's' : ''}
+                          </Badge>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <p className="text-xs text-muted-foreground text-center">
+                    Vous pourrez modifier ces informations à tout moment depuis votre profil.
+                  </p>
+                </div>
+              )}
+
+              {/* Navigation */}
+              <div className="flex items-center justify-between pt-4 border-t">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={handleDismiss}
+                  disabled={isMutating}
+                  className="text-muted-foreground"
+                >
+                  <Clock className="h-4 w-4 mr-2" />
+                  Faire plus tard
+                </Button>
+
+                <div className="flex gap-2">
+                  {currentStep > 1 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handlePrevious}
+                      disabled={isMutating}
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" />
+                      Précédent
+                    </Button>
+                  )}
+                  
+                  {!isLastStep ? (
+                    <Button
+                      type="button"
+                      onClick={handleNext}
+                      disabled={isMutating}
+                    >
+                      Suivant
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      onClick={handleComplete}
+                      disabled={isMutating}
+                    >
+                      {isMutating ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Check className="h-4 w-4 mr-2" />
+                      )}
+                      Terminer
+                    </Button>
+                  )}
+                </div>
               </div>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Wizard création collaborateur */}
+      {showCollaboratorWizard && (
+        <CollaboratorWizard
+          open={showCollaboratorWizard}
+          onOpenChange={setShowCollaboratorWizard}
+          onSubmit={handleCollaboratorCreated}
+          isPending={isCreatingCollaborator}
+          mode="create"
+        />
+      )}
+    </>
   );
 }
