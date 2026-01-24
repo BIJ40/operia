@@ -12,7 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Search, X, Filter } from "lucide-react";
 import { SECTION_LABELS, type SitemapSection } from "@/config/sitemapData";
 import { GLOBAL_ROLE_LABELS, type GlobalRole } from "@/types/globalRoles";
-import { MODULE_LABELS, type ModuleKey } from "@/types/modules";
+import { MODULE_DEFINITIONS, type ModuleKey } from "@/types/modules";
+import { MODULE_LABELS } from "@/permissions/constants";
 import {
   Popover,
   PopoverContent,
@@ -40,22 +41,11 @@ const ALL_ROLES: GlobalRole[] = [
   'franchisee_admin',
   'franchisor_user',
   'franchisor_admin',
-  'support_agent',
-  'support_admin',
   'platform_admin',
   'superadmin',
 ];
 
-const ALL_MODULES: ModuleKey[] = [
-  'help_academy',
-  'pilotage_agence',
-  'rh',
-  'support',
-  'reseau_franchiseur',
-  'apogee_tickets',
-  'admin_plateforme',
-  'portail_apporteur',
-];
+const ALL_MODULES: ModuleKey[] = MODULE_DEFINITIONS.map(m => m.key);
 
 export function SitemapFilters({ filters, onChange }: SitemapFiltersProps) {
   const activeFiltersCount = [

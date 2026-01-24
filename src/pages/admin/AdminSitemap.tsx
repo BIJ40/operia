@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Map } from "lucide-react";
+import { Map as MapIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -89,7 +89,7 @@ export default function AdminSitemap() {
   }, [filters]);
 
   // Group routes by section
-  const groupedBySection = useMemo(() => {
+  const groupedBySection = useMemo((): Map<SitemapSection, RouteMetadata[]> => {
     const grouped: Map<SitemapSection, RouteMetadata[]> = new Map();
     
     filteredRoutes.forEach((route) => {
@@ -105,7 +105,7 @@ export default function AdminSitemap() {
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-lg bg-primary/10">
-          <Map className="w-6 h-6 text-primary" />
+          <MapIcon className="w-6 h-6 text-primary" />
         </div>
         <div>
           <h1 className="text-2xl font-bold">Sitemap Routes</h1>
