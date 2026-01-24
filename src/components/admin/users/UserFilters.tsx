@@ -1,4 +1,5 @@
-import { GlobalRole, GLOBAL_ROLE_LABELS, getAllRolesSorted } from '@/types/globalRoles';
+import { GlobalRole, getAllRolesSorted } from '@/types/globalRoles';
+import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 import { MODULE_DEFINITIONS } from '@/types/modules';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -113,7 +114,7 @@ export function UserFilters({
           <SelectContent className="bg-background z-50">
             <SelectItem value="all">Tous rôles</SelectItem>
             {getAllRolesSorted().map(role => (
-              <SelectItem key={role} value={role}>{GLOBAL_ROLE_LABELS[role]}</SelectItem>
+              <SelectItem key={role} value={role}>{VISIBLE_ROLE_LABELS[role]}</SelectItem>
             ))}
           </SelectContent>
         </Select>

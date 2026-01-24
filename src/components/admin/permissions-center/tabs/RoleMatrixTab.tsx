@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Check, X, Minus, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { GLOBAL_ROLE_LABELS, GlobalRole } from '@/types/globalRoles';
+import { GlobalRole } from '@/types/globalRoles';
+import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 import { ROLE_HIERARCHY, AGENCY_ROLES, BYPASS_ROLES } from '@/permissions';
 
 // Définition des capacités à afficher dans la matrice
@@ -227,10 +228,10 @@ export function RoleMatrixTab() {
                           variant={BYPASS_ROLES.includes(role) ? 'default' : 'outline'}
                           className="text-xs"
                         >
-                          N{ROLE_HIERARCHY[role]}
+                          {VISIBLE_ROLE_LABELS[role]?.charAt(0) || 'U'}
                         </Badge>
                         <span className="text-xs text-muted-foreground">
-                          {GLOBAL_ROLE_LABELS[role]}
+                          {VISIBLE_ROLE_LABELS[role]}
                         </span>
                       </div>
                     </th>

@@ -1,5 +1,6 @@
 import { memo } from 'react';
-import { GlobalRole, GLOBAL_ROLES, GLOBAL_ROLE_LABELS, GLOBAL_ROLE_COLORS, getAllRolesSorted } from '@/types/globalRoles';
+import { GlobalRole, GLOBAL_ROLES, getAllRolesSorted } from '@/types/globalRoles';
+import { VISIBLE_ROLE_LABELS, VISIBLE_ROLE_COLORS } from '@/lib/visibleRoleLabels';
 import { MODULE_DEFINITIONS, EnabledModules, ModuleKey, canAccessModule } from '@/types/modules';
 import { UserProfile } from '@/hooks/use-user-management';
 import { Badge } from '@/components/ui/badge';
@@ -134,8 +135,8 @@ export const UserAccordionItem = memo(function UserAccordionItem({
           {/* Global Role - fixed width */}
           <div className="w-44 shrink-0">
             {effectiveRole ? (
-              <Badge className={`${GLOBAL_ROLE_COLORS[effectiveRole] || 'bg-muted'} text-xs`}>
-                N{GLOBAL_ROLES[effectiveRole]} – {GLOBAL_ROLE_LABELS[effectiveRole]}
+              <Badge className={`${VISIBLE_ROLE_COLORS[effectiveRole] || 'bg-muted'} text-xs`}>
+                {VISIBLE_ROLE_LABELS[effectiveRole]}
               </Badge>
             ) : (
               <Badge variant="outline" className="text-muted-foreground text-xs">Non défini</Badge>
@@ -249,7 +250,7 @@ export const UserAccordionItem = memo(function UserAccordionItem({
               <SelectContent className="bg-background z-50">
                 {getAllRolesSorted().filter(role => assignableRoles.includes(role)).map(role => (
                   <SelectItem key={role} value={role}>
-                    N{GLOBAL_ROLES[role]} – {GLOBAL_ROLE_LABELS[role]}
+                    {VISIBLE_ROLE_LABELS[role]}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -332,7 +333,7 @@ export const UserAccordionItem = memo(function UserAccordionItem({
                           </div>
                           {!canUserAccessModule && (
                             <Badge variant="outline" className="text-xs shrink-0">
-                              N{GLOBAL_ROLES[moduleDef.minRole]}+
+                              {VISIBLE_ROLE_LABELS[moduleDef.minRole]}+
                             </Badge>
                           )}
                         </div>

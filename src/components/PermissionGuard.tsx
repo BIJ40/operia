@@ -1,7 +1,8 @@
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { GlobalRole, hasMinimumRole, GLOBAL_ROLE_LABELS } from '@/types/globalRoles';
+import { GlobalRole, hasMinimumRole } from '@/types/globalRoles';
+import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 import { Shield, Lock } from 'lucide-react';
 
 interface PermissionGuardProps {
@@ -50,7 +51,7 @@ export function PermissionGuard({
         </p>
         {minRole && (
           <p className="text-sm text-muted-foreground mt-2">
-            Niveau requis : <span className="font-medium">{GLOBAL_ROLE_LABELS[minRole]}</span>
+            Niveau requis : <span className="font-medium">{VISIBLE_ROLE_LABELS[minRole]}</span>
           </p>
         )}
       </div>
@@ -96,7 +97,7 @@ export function RoleBadge({ role }: { role: GlobalRole }) {
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">
       <Shield className="w-3 h-3" />
-      {GLOBAL_ROLE_LABELS[role] || role}
+      {VISIBLE_ROLE_LABELS[role] || role}
     </span>
   );
 }

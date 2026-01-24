@@ -30,7 +30,8 @@ import {
   type RouteMetadata, 
   type SitemapSection 
 } from "@/config/sitemapData";
-import { GLOBAL_ROLE_LABELS, type GlobalRole } from "@/types/globalRoles";
+import { type GlobalRole } from "@/types/globalRoles";
+import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 import { MODULE_LABELS } from "@/permissions/constants";
 import { toast } from "sonner";
 
@@ -152,11 +153,11 @@ function RouteItem({ route }: { route: RouteMetadata }) {
             <TooltipTrigger>
               <Badge variant="outline" className={cn("gap-1", getRoleBadgeVariant(roleGuard.minRole))}>
                 <Shield className="w-3 h-3" />
-                {GLOBAL_ROLE_LABELS[roleGuard.minRole]?.replace('Utilisateur ', '').replace('Administrateur ', 'Admin ')}
+                {VISIBLE_ROLE_LABELS[roleGuard.minRole]?.replace('Utilisateur ', '').replace('Administrateur ', 'Admin ')}
               </Badge>
             </TooltipTrigger>
             <TooltipContent>
-              Rôle minimum: {GLOBAL_ROLE_LABELS[roleGuard.minRole]}
+              Rôle minimum: {VISIBLE_ROLE_LABELS[roleGuard.minRole]}
             </TooltipContent>
           </Tooltip>
         )}

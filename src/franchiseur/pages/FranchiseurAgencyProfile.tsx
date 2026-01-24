@@ -16,7 +16,7 @@ import { AgencyProfileDialog } from "../components/AgencyProfileDialog";
 import { AgencyRoyaltyModelSelector } from "../components/AgencyRoyaltyModelSelector";
 import { AgencyMonthlyRoyaltiesTable } from "../components/AgencyMonthlyRoyaltiesTable";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { GLOBAL_ROLE_LABELS } from "@/types/globalRoles";
+import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 import { AgencyStatsTab } from "../components/AgencyStatsTab";
 import { ApiToggleProvider } from "@/apogee-connect/contexts/ApiToggleContext";
 import { AgencyProvider } from "@/apogee-connect/contexts/AgencyContext";
@@ -282,7 +282,7 @@ function FranchiseurAgencyProfileContent() {
                         </Badge>
                         {member.globalRole && (
                           <Badge variant="secondary">
-                            {GLOBAL_ROLE_LABELS[member.globalRole as keyof typeof GLOBAL_ROLE_LABELS] || member.globalRole}
+                            {VISIBLE_ROLE_LABELS[member.globalRole as keyof typeof VISIBLE_ROLE_LABELS] || member.globalRole}
                           </Badge>
                         )}
                         {member.isActive === false && (
