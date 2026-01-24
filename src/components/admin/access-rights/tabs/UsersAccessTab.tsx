@@ -11,12 +11,13 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Search, Users, UserPlus, MoreHorizontal, Pencil, UserX, UserCheck, Trash2, ChevronUp, ChevronDown, ChevronsUpDown, Lock, Eye } from 'lucide-react';
+import { Search, Users, UserPlus, MoreHorizontal, Pencil, UserX, UserCheck, Trash2, ChevronUp, ChevronDown, ChevronsUpDown, Lock } from 'lucide-react';
 import { GLOBAL_ROLE_LABELS, GLOBAL_ROLE_COLORS, type GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { isHardcodedProtectedUser } from '@/hooks/access-rights/useProtectedAccess';
 import { getVisibleRoleLabel, getVisibleRoleColor } from '@/lib/visibleRoleLabels';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAllAgencySubscriptions, useAccessRightsUsers, useUpdateAgencySubscription, UserRow } from '@/hooks/access-rights';
+import { useAllPageOverrides, usePageOverrideMutation } from '@/hooks/access-rights/useUserPageOverrides';
 import { CreateUserDialog, EditUserDialog, DeactivateDialog, ReactivateDialog, DeleteDialog } from '@/components/admin/users/UserDialogs';
 import { InlineModuleBadges } from '@/components/admin/users/InlineModuleBadges';
 import { UserAccessDialog } from '@/components/admin/users/UserAccessDialog';
@@ -77,11 +78,24 @@ export function UsersAccessTab() {
   } = useAccessRightsUsers();
   
   const { data: subscriptions } = useAllAgencySubscriptions();
+  const { data: allPageOverrides } = useAllPageOverrides();
+  const pageOverrideMutation = usePageOverrideMutation();
   const updateSubscription = useUpdateAgencySubscription();
   const { hasGlobalRole } = useAuth();
   
   // Admin N4+ can edit agency plans
   const canEditPlan = hasGlobalRole('franchisor_admin');
+  
+  // Create user page overrides map
+  const userPageOverridesMap = useMemo(() => {
+    const map = new Map<string, string[]>();
+    allPageOverrides?.forEach(override => {
+      const existing = map.get(override.user_id) || [];
+      existing.push(override.page_path);
+      map.set(override.user_id, existing);
+    });
+    return map;
+  }, [allPageOverrides]);
   
   // Create agency plan map
   const agencyPlanMap = useMemo(() => {
@@ -465,6 +479,7 @@ export function UsersAccessTab() {
                             planKey={user.agency_id ? agencyPlanMap.get(user.agency_id) : undefined}
                             planLabel={user.agency_id ? agencyPlanMap.get(user.agency_id) : undefined}
                             canEdit={canEditPlan || canEdit}
+                            pageOverrides={userPageOverridesMap.get(user.id) || []}
                             onPlanChange={(newPlanKey) => {
                               if (user.agency_id) {
                                 updateSubscription.mutate({ agencyId: user.agency_id, tierKey: newPlanKey });
@@ -472,6 +487,9 @@ export function UsersAccessTab() {
                             }}
                             onModuleToggle={(moduleKey, enabled, optionKey) => {
                               handleInlineModuleToggle(user, moduleKey, enabled, optionKey);
+                            }}
+                            onPageOverrideToggle={(pagePath, enabled) => {
+                              pageOverrideMutation.mutate({ userId: user.id, pagePath, enabled });
                             }}
                           />
                           <DropdownMenu>

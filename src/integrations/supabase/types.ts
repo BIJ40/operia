@@ -7889,6 +7889,30 @@ export type Database = {
           },
         ]
       }
+      user_page_overrides: {
+        Row: {
+          granted_at: string
+          granted_by: string | null
+          id: string
+          page_path: string
+          user_id: string
+        }
+        Insert: {
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          page_path: string
+          user_id: string
+        }
+        Update: {
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          page_path?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_presence: {
         Row: {
           last_seen: string

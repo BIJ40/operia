@@ -2,7 +2,7 @@
  * Dialog complet récapitulatif et édition des accès d'un utilisateur
  * - Affiche le rôle, l'agence, le plan (éditable pour admins)
  * - Liste les sections/modules avec pages détaillées
- * - Permet les surcharges individuelles (overrides)
+ * - Permet les surcharges individuelles (overrides) de pages
  */
 
 import { useState, useMemo } from 'react';
@@ -14,12 +14,14 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { 
   Eye, Shield, Building2, Lock, LockOpen, Check, X, ChevronDown, 
-  Zap, Plus, Minus, AlertCircle
+  Zap, Plus, AlertCircle, PlusCircle
 } from 'lucide-react';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
-import { EnabledModules, MODULE_DEFINITIONS, ModuleKey, isModuleEnabled, isModuleOptionEnabled } from '@/types/modules';
+import { EnabledModules, ModuleKey, isModuleEnabled, isModuleOptionEnabled } from '@/types/modules';
 import { SITEMAP_ROUTES, SECTION_LABELS, SitemapSection } from '@/config/sitemapData';
 import { getVisibleRoleLabel, getVisibleRoleColor } from '@/lib/visibleRoleLabels';
 import { isHardcodedProtectedUser } from '@/hooks/access-rights/useProtectedAccess';
@@ -36,8 +38,11 @@ interface UserAccessDialogProps {
   planKey?: string | null;
   planLabel?: string | null;
   canEdit?: boolean;
+  /** Pages individuelles octroyées en override */
+  pageOverrides?: string[];
   onPlanChange?: (newPlanKey: string) => void;
   onModuleToggle?: (moduleKey: ModuleKey, enabled: boolean, optionKey?: string) => void;
+  onPageOverrideToggle?: (pagePath: string, enabled: boolean) => void;
 }
 
 /**
@@ -64,12 +69,15 @@ export function UserAccessDialog({
   planKey,
   planLabel,
   canEdit = false,
+  pageOverrides = [],
   onPlanChange,
   onModuleToggle,
+  onPageOverrideToggle,
 }: UserAccessDialogProps) {
   const [open, setOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [expandedSections, setExpandedSections] = useState<SitemapSection[]>([]);
+  const [addAccessOpen, setAddAccessOpen] = useState(false);
   
   const { data: planTiers } = usePlanTiers();
   
@@ -97,10 +105,16 @@ export function UserAccessDialog({
   
   // Calculer l'accès pour chaque route
   const accessBySection = useMemo(() => {
-    const result: Partial<Record<SitemapSection, { route: typeof SITEMAP_ROUTES[0]; hasAccess: boolean }[]>> = {};
+    const result: Partial<Record<SitemapSection, { route: typeof SITEMAP_ROUTES[0]; hasAccess: boolean; hasOverride: boolean }[]>> = {};
     
     for (const [section, routes] of Object.entries(routesBySection)) {
       result[section as SitemapSection] = routes!.map(route => {
+        // Override individuel = accès garanti
+        const hasOverride = pageOverrides.includes(route.path);
+        if (hasOverride) {
+          return { route, hasAccess: true, hasOverride: true };
+        }
+        
         // Vérifier le rôle minimum
         const minRole = route.guards?.roleGuard?.minRole;
         const minLevel = minRole ? GLOBAL_ROLES[minRole] ?? 0 : 0;
@@ -125,12 +139,32 @@ export function UserAccessDialog({
         return {
           route,
           hasAccess: hasRoleLevel && hasModuleAccess,
+          hasOverride: false,
         };
       });
     }
     
     return result;
-  }, [routesBySection, userLevel, enabledModules, isN5Plus]);
+  }, [routesBySection, userLevel, enabledModules, isN5Plus, pageOverrides]);
+  
+  // Pages inaccessibles (pour le sélecteur "Ajouter un accès")
+  const inaccessiblePages = useMemo(() => {
+    const pages: { path: string; label: string; section: SitemapSection }[] = [];
+    
+    for (const [section, routes] of Object.entries(accessBySection)) {
+      for (const { route, hasAccess } of routes!) {
+        if (!hasAccess) {
+          pages.push({
+            path: route.path,
+            label: route.label,
+            section: section as SitemapSection,
+          });
+        }
+      }
+    }
+    
+    return pages;
+  }, [accessBySection]);
   
   // Compter les accès par section
   const sectionStats = useMemo(() => {
@@ -184,6 +218,17 @@ export function UserAccessDialog({
     
     onModuleToggle(moduleKey, !currentlyEnabled, optionKey);
   };
+  
+  const handleAddPageAccess = (pagePath: string) => {
+    if (!onPageOverrideToggle) return;
+    onPageOverrideToggle(pagePath, true);
+    setAddAccessOpen(false);
+  };
+  
+  const handleRemovePageAccess = (pagePath: string) => {
+    if (!onPageOverrideToggle) return;
+    onPageOverrideToggle(pagePath, false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -197,7 +242,7 @@ export function UserAccessDialog({
           <Eye className="h-4 w-4 text-muted-foreground" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg max-h-[85vh] p-0 flex flex-col">
+      <DialogContent className="max-w-xl max-h-[90vh] p-0 flex flex-col">
         {/* Header fixe */}
         <DialogHeader className="p-4 pb-0">
           <div className="flex items-center justify-between">
@@ -321,10 +366,76 @@ export function UserAccessDialog({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Pages accessibles</span>
-                <Badge variant="outline" className="text-xs">
-                  {totalStats.accessible}/{totalStats.total}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs">
+                    {totalStats.accessible}/{totalStats.total}
+                  </Badge>
+                  
+                  {/* Bouton Ajouter accès */}
+                  {editMode && onPageOverrideToggle && inaccessiblePages.length > 0 && (
+                    <Popover open={addAccessOpen} onOpenChange={setAddAccessOpen}>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-6 gap-1 text-xs">
+                          <PlusCircle className="h-3 w-3" />
+                          Ajouter
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-72 p-0" align="end">
+                        <Command>
+                          <CommandInput placeholder="Rechercher une page..." />
+                          <CommandList>
+                            <CommandEmpty>Aucune page trouvée</CommandEmpty>
+                            <CommandGroup>
+                              {inaccessiblePages.map(page => (
+                                <CommandItem
+                                  key={page.path}
+                                  value={`${page.label} ${page.path}`}
+                                  onSelect={() => handleAddPageAccess(page.path)}
+                                  className="text-sm"
+                                >
+                                  <div className="flex flex-col">
+                                    <span>{page.label}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      {SECTION_LABELS[page.section]}
+                                    </span>
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                </div>
               </div>
+              
+              {/* Overrides actifs */}
+              {pageOverrides.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {pageOverrides.map(path => {
+                    const route = SITEMAP_ROUTES.find(r => r.path === path);
+                    return (
+                      <Badge 
+                        key={path} 
+                        variant="default" 
+                        className="text-xs gap-1 bg-success/80 hover:bg-success"
+                      >
+                        <Plus className="h-3 w-3" />
+                        {route?.label || path}
+                        {editMode && onPageOverrideToggle && (
+                          <button 
+                            onClick={() => handleRemovePageAccess(path)}
+                            className="ml-1 hover:text-destructive-foreground"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                      </Badge>
+                    );
+                  })}
+                </div>
+              )}
               
               <div className="space-y-1">
                 {VISIBLE_SECTIONS.map(section => {
@@ -367,22 +478,44 @@ export function UserAccessDialog({
                       </CollapsibleTrigger>
                       <CollapsibleContent>
                         <div className="ml-6 mt-1 space-y-0.5 border-l pl-3 pb-2">
-                          {routes.map(({ route, hasAccess }) => (
+                          {routes.map(({ route, hasAccess, hasOverride }) => (
                             <div 
                               key={route.path}
                               className={cn(
                                 "flex items-center justify-between text-xs py-1 px-2 rounded",
                                 hasAccess 
                                   ? "text-foreground" 
-                                  : "text-muted-foreground opacity-60"
+                                  : "text-muted-foreground opacity-60",
+                                hasOverride && "bg-success/10"
                               )}
                             >
-                              <span className="truncate">{route.label}</span>
-                              {hasAccess ? (
-                                <Check className="h-3 w-3 text-success shrink-0" />
-                              ) : (
-                                <X className="h-3 w-3 text-muted-foreground shrink-0" />
-                              )}
+                              <div className="flex items-center gap-1.5 truncate">
+                                <span className="truncate">{route.label}</span>
+                                {hasOverride && (
+                                  <Badge variant="outline" className="text-[10px] h-4 px-1 border-success text-success">
+                                    +
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0">
+                                {hasAccess ? (
+                                  <Check className="h-3 w-3 text-success" />
+                                ) : editMode && onPageOverrideToggle ? (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-5 w-5"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAddPageAccess(route.path);
+                                    }}
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                  </Button>
+                                ) : (
+                                  <X className="h-3 w-3 text-muted-foreground" />
+                                )}
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -398,7 +531,8 @@ export function UserAccessDialog({
               <div className="flex items-start gap-2 p-2 bg-muted/30 rounded-md text-xs text-muted-foreground">
                 <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                 <span>
-                  Modifier le plan affecte <strong>tous les utilisateurs</strong> de cette agence.
+                  Modifier le plan affecte <strong>tous les utilisateurs</strong> de cette agence. 
+                  Les accès individuels (+) s'appliquent uniquement à cet utilisateur.
                 </span>
               </div>
             )}
