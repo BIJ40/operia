@@ -39,13 +39,14 @@ const RH_MODULES: RHModule[] = [
     icon: CalendarDays,
     href: ROUTES.rh.plannings,
   },
-  {
-    id: 'docgen',
-    title: 'DocGen',
-    description: 'Génération de documents',
-    icon: FileEdit,
-    href: ROUTES.rh.docgen,
-  },
+  // DocGen masqué pour le moment - accessible via /admin/hidden-features
+  // {
+  //   id: 'docgen',
+  //   title: 'DocGen',
+  //   description: 'Génération de documents',
+  //   icon: FileEdit,
+  //   href: ROUTES.rh.docgen,
+  // },
   {
     id: 'reunions',
     title: 'Réunions',
