@@ -21,6 +21,7 @@ import {
 } from '@/hooks/access-rights';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { getPlanColorClass } from '@/config/planTiers';
 
 interface AgencyRow {
   id: string;
@@ -84,12 +85,8 @@ export function SubscriptionsTab() {
   };
   
   const getPlanBadgeStyle = (plan: string | undefined) => {
-    switch (plan) {
-      case 'PRO': return 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0';
-      case 'STARTER': return 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0';
-      case 'FREE': return 'bg-muted text-muted-foreground';
-      default: return 'bg-destructive/10 text-destructive';
-    }
+    if (!plan) return 'bg-destructive/10 text-destructive';
+    return getPlanColorClass(plan);
   };
   
   const isLoading = loadingAgencies || loadingSubscriptions;
@@ -102,7 +99,7 @@ export function SubscriptionsTab() {
           Souscriptions par Agence
         </CardTitle>
         <CardDescription className="flex flex-col gap-1">
-          <span>Gérez le plan de chaque agence (FREE, STARTER, PRO).</span>
+          <span>Gérez le plan de chaque agence (Gratuit, Basique, Pro).</span>
           <span className="text-blue-600 font-medium">
             Le plan définit les modules de base pour tous les utilisateurs de l'agence (Priorité 4/4).
             Les modules utilisateur et overrides agence s'y ajoutent.
