@@ -1,5 +1,6 @@
 /**
- * Onglet Utilisateurs - Gestion complète des accès par utilisateur
+ * Onglet Utilisateurs - Gestion simplifiée des accès
+ * Les modules sont gérés inline via badges cliquables
  */
 
 import { useState, useMemo } from 'react';
@@ -17,8 +18,9 @@ import { getVisibleRoleLabel, getVisibleRoleColor } from '@/lib/visibleRoleLabel
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAllAgencySubscriptions, useAccessRightsUsers, UserRow } from '@/hooks/access-rights';
 import { CreateUserDialog, EditUserDialog, DeactivateDialog, ReactivateDialog, DeleteDialog } from '@/components/admin/users/UserDialogs';
+import { InlineModuleBadges } from '@/components/admin/users/InlineModuleBadges';
 import type { UpdateUserPayload } from '@/components/users/UserEditForm';
-import { ModuleKey, EnabledModules } from '@/types/modules';
+import type { ModuleKey, EnabledModules } from '@/types/modules';
 import { cn } from '@/lib/utils';
 
 type SortKey = 'name' | 'email' | 'poste' | 'role' | 'agence' | 'plan' | 'statut';
@@ -172,7 +174,34 @@ export function UsersAccessTab() {
     openEditDialog(user);
   };
 
-  // Module toggle handler
+  // Inline module toggle - sauvegarde immédiate
+  const handleInlineModuleToggle = (user: UserRow, moduleKey: ModuleKey, enabled: boolean, optionKey?: string) => {
+    const currentModules = user.enabled_modules || {};
+    const currentModule = currentModules[moduleKey];
+    const currentOptions = typeof currentModule === 'object' ? currentModule?.options || {} : {};
+    
+    let newModules: EnabledModules;
+    
+    if (optionKey) {
+      // Toggle d'une option
+      const newOptions = { ...currentOptions, [optionKey]: enabled };
+      const hasAnyOption = Object.values(newOptions).some(v => v === true);
+      newModules = {
+        ...currentModules,
+        [moduleKey]: { enabled: hasAnyOption || enabled, options: newOptions }
+      };
+    } else {
+      // Toggle du module entier
+      newModules = {
+        ...currentModules,
+        [moduleKey]: { enabled, options: currentOptions }
+      };
+    }
+    
+    saveModulesMutation.mutate({ userId: user.id, enabledModules: newModules });
+  };
+
+  // Module toggle handler (for edit dialog)
   const handleModuleToggle = (moduleKey: ModuleKey, enabled: boolean) => {
     setLocalModules(prev => {
       const currentModule = prev?.[moduleKey];
@@ -184,28 +213,20 @@ export function UsersAccessTab() {
     });
   };
 
-  // Module option toggle handler
+  // Module option toggle handler (for edit dialog)
   const handleModuleOptionToggle = (moduleKey: ModuleKey, optionKey: string, enabled: boolean) => {
     setLocalModules(prev => {
       const currentModule = prev?.[moduleKey];
       const wasEnabled = typeof currentModule === 'object' ? currentModule?.enabled ?? false : !!currentModule;
       const currentOptions = typeof currentModule === 'object' ? currentModule?.options || {} : {};
       
-      // Si on active une option, le module doit aussi être activé
-      // Si on désactive une option, on garde le module actif seulement s'il reste des options actives
-      const newOptions = {
-        ...currentOptions,
-        [optionKey]: enabled
-      };
+      const newOptions = { ...currentOptions, [optionKey]: enabled };
       const hasAnyOptionEnabled = Object.values(newOptions).some(v => v === true);
       const shouldBeEnabled = enabled ? true : (wasEnabled || hasAnyOptionEnabled);
       
       return {
         ...prev,
-        [moduleKey]: {
-          enabled: shouldBeEnabled,
-          options: newOptions
-        }
+        [moduleKey]: { enabled: shouldBeEnabled, options: newOptions }
       };
     });
   };
@@ -284,24 +305,21 @@ export function UsersAccessTab() {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-lg">
               <Users className="h-5 w-5" />
-              Utilisateurs et Accès
+              Utilisateurs
             </CardTitle>
-            <CardDescription className="flex items-center gap-2">
-              Gérez les utilisateurs, leurs rôles et leurs accès modules.
-              <span className="text-green-600 font-medium">
-                Les modules ici s'ajoutent au plan agence (Priorité 2/4).
-              </span>
+            <CardDescription>
+              Gérez les utilisateurs et leurs accès spéciaux
             </CardDescription>
           </div>
           {capabilities.canCreateRoles.length > 0 && (
-            <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
+            <Button onClick={() => setCreateDialogOpen(true)} size="sm" className="gap-2">
               <UserPlus className="h-4 w-4" />
-              Nouvel utilisateur
+              Nouveau
             </Button>
           )}
         </div>
@@ -341,19 +359,18 @@ export function UsersAccessTab() {
           </Select>
         </div>
         
-        {/* Table */}
+        {/* Table simplifiée */}
         <div className="rounded-md border overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <SortableHeader columnKey="name">Nom</SortableHeader>
-                <SortableHeader columnKey="email" className="hidden md:table-cell">Email</SortableHeader>
-                <SortableHeader columnKey="poste" className="hidden lg:table-cell">Poste</SortableHeader>
+                <SortableHeader columnKey="email" className="hidden lg:table-cell">Email</SortableHeader>
                 <SortableHeader columnKey="role">Rôle</SortableHeader>
-                <SortableHeader columnKey="agence" className="hidden sm:table-cell">Agence</SortableHeader>
-                <SortableHeader columnKey="plan" className="hidden lg:table-cell">Plan</SortableHeader>
-                <SortableHeader columnKey="statut">Statut</SortableHeader>
-                <TableHead className="text-right">Actions</TableHead>
+                <SortableHeader columnKey="agence" className="hidden md:table-cell">Agence</SortableHeader>
+                <TableHead className="hidden sm:table-cell">Accès spéciaux</TableHead>
+                <SortableHeader columnKey="statut" className="hidden sm:table-cell">Statut</SortableHeader>
+                <TableHead className="text-right w-[50px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -361,24 +378,22 @@ export function UsersAccessTab() {
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
                     <TableCell><Skeleton className="h-6 w-28" /></TableCell>
-                    <TableCell className="hidden md:table-cell"><Skeleton className="h-6 w-40" /></TableCell>
-                    <TableCell className="hidden lg:table-cell"><Skeleton className="h-6 w-24" /></TableCell>
+                    <TableCell className="hidden lg:table-cell"><Skeleton className="h-6 w-40" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-16" /></TableCell>
-                    <TableCell className="hidden sm:table-cell"><Skeleton className="h-6 w-24" /></TableCell>
-                    <TableCell className="hidden lg:table-cell"><Skeleton className="h-6 w-16" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-14" /></TableCell>
+                    <TableCell className="hidden md:table-cell"><Skeleton className="h-6 w-24" /></TableCell>
+                    <TableCell className="hidden sm:table-cell"><Skeleton className="h-6 w-32" /></TableCell>
+                    <TableCell className="hidden sm:table-cell"><Skeleton className="h-6 w-14" /></TableCell>
                     <TableCell><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
                   </TableRow>
                 ))
               ) : filteredUsers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                     Aucun utilisateur trouvé
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredUsers.map((user) => {
-                  const agencyPlan = user.agency_id ? agencyPlanMap.get(user.agency_id) : undefined;
                   const canEdit = canEditUser(user);
                   
                   return (
@@ -386,30 +401,26 @@ export function UsersAccessTab() {
                       key={user.id} 
                       className={cn(
                         !user.is_active && 'opacity-60',
-                        canEdit && 'cursor-pointer hover:bg-muted/50'
+                        canEdit && 'hover:bg-muted/50'
                       )}
-                      onDoubleClick={() => canEdit && handleOpenEditDialog(user)}
                     >
                       <TableCell className="font-medium whitespace-nowrap">
                         <span className="flex items-center gap-1.5">
                           {isHardcodedProtectedUser(user.id) && (
-                            <Lock className="h-3 w-3 text-amber-500" />
+                            <Lock className="h-3 w-3 text-warning" />
                           )}
                           {user.first_name} {user.last_name}
                         </span>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell text-muted-foreground">
+                      <TableCell className="hidden lg:table-cell text-muted-foreground text-sm">
                         {user.email}
                       </TableCell>
-                      <TableCell className="hidden lg:table-cell text-muted-foreground">
-                        {user.role_agence || '—'}
-                      </TableCell>
                       <TableCell>
-                        <Badge className={getVisibleRoleColor(user.global_role)}>
+                        <Badge className={getVisibleRoleColor(user.global_role)} variant="secondary">
                           {getVisibleRoleLabel(user.global_role)}
                         </Badge>
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell">
+                      <TableCell className="hidden md:table-cell text-sm">
                         {user.role_agence?.toLowerCase().includes('tête de réseau') || 
                          user.role_agence?.toLowerCase().includes('tete de reseau') ||
                          user.role_agence?.toLowerCase().includes('tete_de_reseau') ? (
@@ -417,20 +428,21 @@ export function UsersAccessTab() {
                         ) : user.agency?.label ? (
                           user.agency.label
                         ) : (
-                          <span className="text-muted-foreground italic">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell">
-                        {agencyPlan ? (
-                          <Badge className={getPlanBadgeColor(agencyPlan)}>
-                            {agencyPlan}
-                          </Badge>
-                        ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
                       </TableCell>
-                      <TableCell>
-                        <Badge variant={user.is_active ? 'default' : 'secondary'}>
+                      <TableCell className="hidden sm:table-cell">
+                        <InlineModuleBadges
+                          userId={user.id}
+                          enabledModules={user.enabled_modules}
+                          canEdit={canEdit}
+                          onToggle={(moduleKey, enabled, optionKey) => {
+                            handleInlineModuleToggle(user, moduleKey, enabled, optionKey);
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <Badge variant={user.is_active ? 'default' : 'secondary'} className="text-xs">
                           {user.is_active ? 'Actif' : 'Inactif'}
                         </Badge>
                       </TableCell>
@@ -533,9 +545,6 @@ export function UsersAccessTab() {
         agencies={agencies}
         assignableRoles={capabilities.canEditRoles}
         canEditRoleAgence={true}
-        onModuleToggle={handleModuleToggle}
-        onModuleOptionToggle={handleModuleOptionToggle}
-        canEdit={selectedUser ? canEditUser(selectedUser) : false}
       />
       
       <DeactivateDialog
