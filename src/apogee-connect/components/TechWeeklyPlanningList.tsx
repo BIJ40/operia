@@ -1,10 +1,8 @@
-import React, { useRef } from "react";
-import { Link } from "react-router-dom";
+import React from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Calendar, Clock, CheckCircle, Send, Loader2, Printer } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, Clock, Printer } from "lucide-react";
 import { useWeeklyTechPlanning } from "@/apogee-connect/hooks/useWeeklyTechPlanning";
-import { usePlanningSignature } from "@/apogee-connect/hooks/usePlanningSignature";
 import { formatMinutesToHours, WeeklyTechPlanning } from "@/apogee-connect/utils/planning";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,123 +10,16 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
-
 interface TechWeeklyPlanningListProps {
   techFilterId?: number;
   showInactiveTechs?: boolean;
-  isN1View?: boolean; // true = vue technicien, false = vue N2
 }
 
-// Sub-component for N2 signature section (lecture seule - plus d'envoi aux techniciens)
-function TechSignatureSectionN2({ 
-  techId, 
-  weekDate,
-  techName,
-}: { 
-  techId: number; 
-  weekDate: Date;
-  techName: string;
-}) {
-  const { 
-    signature, 
-    isSignedByTech, 
-    isLoading 
-  } = usePlanningSignature({ techId, weekDate });
-
-  if (isLoading) {
-    return <Skeleton className="h-8 w-48" />;
-  }
-
-  // Afficher le statut de signature si existant
-  if (isSignedByTech && signature?.tech_signed_at) {
-    return (
-      <div className="flex items-center gap-3">
-        <Badge variant="default" className="bg-emerald-600 text-white">
-          <CheckCircle className="w-3 h-3 mr-1" />
-          Signé le {format(new Date(signature.tech_signed_at), "dd/MM/yyyy HH:mm", { locale: fr })}
-        </Badge>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => window.print()}
-        >
-          <Printer className="w-4 h-4 mr-2" />
-          Imprimer le planning
-        </Button>
-      </div>
-    );
-  }
-
-  // Pas de statut particulier - le portail salarié n'existe plus
-  return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={() => window.print()}
-    >
-      <Printer className="w-4 h-4 mr-2" />
-      Imprimer le planning
-    </Button>
-  );
-}
-
-// Sub-component for N1 signature section (technicien)
-function TechSignatureSectionN1({ 
-  techId, 
-  weekDate,
-  onRequestSign,
-}: { 
-  techId: number; 
-  weekDate: Date;
-  onRequestSign: () => void;
-}) {
-  const { 
-    signature, 
-    isSent, 
-    isSignedByTech,
-    isLoading 
-  } = usePlanningSignature({ techId, weekDate });
-
-  if (isLoading) {
-    return <Skeleton className="h-8 w-48" />;
-  }
-
-  // Déjà signé
-  if (isSignedByTech && signature?.tech_signed_at) {
-    return (
-      <Badge variant="default" className="bg-emerald-600 text-white">
-        <CheckCircle className="w-3 h-3 mr-1" />
-        Signé le {format(new Date(signature.tech_signed_at), "dd/MM/yyyy HH:mm", { locale: fr })}
-      </Badge>
-    );
-  }
-
-  // Planning envoyé, prêt à signer
-  if (isSent) {
-    return (
-      <Button
-        onClick={onRequestSign}
-        size="sm"
-        className="bg-emerald-600 hover:bg-emerald-500"
-      >
-        <CheckCircle className="w-4 h-4 mr-2" />
-        Signer mon planning
-      </Button>
-    );
-  }
-
-  // Pas encore envoyé par N2
-  return (
-    <Badge variant="secondary" className="text-muted-foreground">
-      En attente de validation
-    </Badge>
-  );
-}
+// NOTE: Composants de signature N1 supprimés (portail salarié supprimé en v0.8.3)
 
 export const TechWeeklyPlanningList: React.FC<TechWeeklyPlanningListProps> = ({
   techFilterId,
   showInactiveTechs = false,
-  isN1View = false,
 }) => {
   const {
     data,
@@ -139,15 +30,6 @@ export const TechWeeklyPlanningList: React.FC<TechWeeklyPlanningListProps> = ({
     goToNextWeek,
     goToCurrentWeek,
   } = useWeeklyTechPlanning(techFilterId, showInactiveTechs);
-
-  // Pour le modal de signature N1
-  const [showSignModal, setShowSignModal] = React.useState(false);
-  const [signingTechId, setSigningTechId] = React.useState<number | null>(null);
-
-  const handleRequestSign = (techId: number) => {
-    setSigningTechId(techId);
-    setShowSignModal(true);
-  };
 
   if (isLoading) {
     return (
@@ -232,19 +114,14 @@ export const TechWeeklyPlanningList: React.FC<TechWeeklyPlanningListProps> = ({
                 </Badge>
               </div>
               
-              {isN1View ? (
-                <TechSignatureSectionN1 
-                  techId={techWeek.techId} 
-                  weekDate={weekDate}
-                  onRequestSign={() => handleRequestSign(techWeek.techId)}
-                />
-              ) : (
-                <TechSignatureSectionN2 
-                  techId={techWeek.techId} 
-                  weekDate={weekDate}
-                  techName={techWeek.techName}
-                />
-              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.print()}
+              >
+                <Printer className="w-4 h-4 mr-2" />
+                Imprimer
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -327,121 +204,6 @@ export const TechWeeklyPlanningList: React.FC<TechWeeklyPlanningListProps> = ({
           </CardContent>
         </Card>
       ))}
-
-      {/* Modal de signature N1 */}
-      {showSignModal && signingTechId && (
-        <PlanningSignModal
-          techId={signingTechId}
-          weekDate={weekDate}
-          onClose={() => {
-            setShowSignModal(false);
-            setSigningTechId(null);
-          }}
-        />
-      )}
     </div>
   );
 };
-
-// Modal pour signer le planning (N1)
-function PlanningSignModal({
-  techId,
-  weekDate,
-  onClose,
-}: {
-  techId: number;
-  weekDate: Date;
-  onClose: () => void;
-}) {
-  const { techSign, isTechSigning } = usePlanningSignature({ techId, weekDate });
-  const [signatureData, setSignatureData] = React.useState<string | null>(null);
-  const [loadingSignature, setLoadingSignature] = React.useState(true);
-
-  // Charger la signature personnelle depuis user_signatures
-  React.useEffect(() => {
-    async function loadSignature() {
-      const { supabase } = await import("@/integrations/supabase/client");
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data } = await supabase
-        .from("user_signatures")
-        .select("signature_png_base64, signature_svg")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (data?.signature_png_base64) {
-        setSignatureData(data.signature_png_base64);
-      } else if (data?.signature_svg) {
-        // Fallback sur SVG (sera converti en PNG côté serveur si besoin)
-        setSignatureData(data.signature_svg);
-      }
-      setLoadingSignature(false);
-    }
-    loadSignature();
-  }, []);
-
-  const handleSign = async () => {
-    if (!signatureData) return;
-    await techSign(signatureData);
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <Card className="w-full max-w-md mx-4">
-        <CardHeader>
-          <CardTitle>Signer mon planning</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {loadingSignature ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : signatureData ? (
-            <div className="border rounded-lg p-4 bg-muted/30">
-              <p className="text-sm text-muted-foreground mb-2">Votre signature :</p>
-              <img 
-                src={signatureData.startsWith("data:") ? signatureData : `data:image/png;base64,${signatureData}`}
-                alt="Ma signature"
-                className="max-h-24 mx-auto"
-              />
-            </div>
-          ) : (
-            <div className="text-center py-4">
-              <p className="text-muted-foreground text-sm">Aucune signature enregistrée.</p>
-              <p className="text-sm mt-1">
-                <Link to="/rh/signature" className="text-primary hover:underline">
-                  Créer ma signature →
-                </Link>
-              </p>
-            </div>
-          )}
-
-          <p className="text-sm text-muted-foreground">
-            En signant, vous confirmez avoir pris connaissance de votre planning 
-            pour la semaine du {format(weekDate, "dd MMMM yyyy", { locale: fr })}.
-          </p>
-
-          <div className="flex gap-3 justify-end">
-            <Button variant="outline" onClick={onClose}>
-              Annuler
-            </Button>
-            <Button 
-              onClick={handleSign}
-              disabled={!signatureData || isTechSigning}
-              className="bg-emerald-600 hover:bg-emerald-500"
-            >
-              {isTechSigning ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <CheckCircle className="w-4 h-4 mr-2" />
-              )}
-              Confirmer et signer
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}

@@ -68,12 +68,8 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 // Mapping icônes spécifiques par option (override le module)
 const OPTION_ICONS: Record<string, React.ReactNode> = {
-  'rh.coffre': <Lock className="w-5 h-5" />,
   'rh.rh_viewer': <Eye className="w-5 h-5" />,
   'rh.rh_admin': <ShieldCheck className="w-5 h-5" />,
-  'rh.mon_vehicule': <Car className="w-5 h-5" />,
-  'rh.mon_materiel': <Wrench className="w-5 h-5" />,
-  'rh.mon_planning': <Calendar className="w-5 h-5" />,
   'parc.vehicules': <Car className="w-5 h-5" />,
   'parc.equipements': <Wrench className="w-5 h-5" />,
   'support.agent': <MessageSquare className="w-5 h-5" />,
@@ -86,28 +82,8 @@ const OPTION_ICONS: Record<string, React.ReactNode> = {
 };
 
 // Features détaillées par option (pour l'UI explicative)
+// NOTE: Options N1 (coffre, mon_planning, etc.) supprimées en v0.8.3
 const OPTION_FEATURES: Record<string, string[]> = {
-  'rh.coffre': [
-    'Consulter ses bulletins de paie',
-    'Voir ses contrats et avenants',
-    'Télécharger ses attestations',
-    'Faire des demandes de documents',
-  ],
-  'rh.mon_planning': [
-    'Consulter son planning hebdomadaire',
-    'Voir ses RDV et interventions',
-    'Signer et valider son planning',
-  ],
-  'rh.mon_vehicule': [
-    'Consulter les informations de son véhicule',
-    'Voir les dates de CT et révision',
-    'Signaler une anomalie ou panne',
-  ],
-  'rh.mon_materiel': [
-    'Consulter le matériel attribué',
-    'Voir ses EPI et équipements',
-    'Signaler un besoin ou problème',
-  ],
   'rh.rh_viewer': [
     'Voir les fiches des collaborateurs',
     'Uploader des documents',
@@ -207,11 +183,8 @@ const OPTION_FEATURES: Record<string, string[]> = {
 };
 
 // Target users par option
+// NOTE: Options N1 (coffre, mon_planning, etc.) supprimées en v0.8.3
 const OPTION_TARGET_USERS: Record<string, string> = {
-  'rh.coffre': 'Tous les collaborateurs',
-  'rh.mon_planning': 'Techniciens terrain',
-  'rh.mon_vehicule': 'Techniciens avec véhicule',
-  'rh.mon_materiel': 'Techniciens terrain',
   'rh.rh_viewer': 'Assistante RH, Manager',
   'rh.rh_admin': 'Dirigeant, Responsable Paie',
   'parc.vehicules': 'Dirigeant, Responsable logistique',
@@ -344,15 +317,16 @@ const CATEGORY_INFO: Record<string, { label: string; icon: React.ReactNode; desc
 // ============================================================================
 
 // Options autorisées par rôle pour chaque module
+// NOTE: Options N1 supprimées en v0.8.3
 const OPTIONS_BY_ROLE: Record<ModuleKey, Record<GlobalRole, string[]>> = {
   rh: {
-    base_user: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel'],
-    franchisee_user: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel'],
-    franchisee_admin: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel', 'rh_viewer', 'rh_admin'],
-    franchisor_user: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel', 'rh_viewer', 'rh_admin'],
-    franchisor_admin: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel', 'rh_viewer', 'rh_admin'],
-    platform_admin: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel', 'rh_viewer', 'rh_admin'],
-    superadmin: ['coffre', 'mon_planning', 'mon_vehicule', 'mon_materiel', 'rh_viewer', 'rh_admin'],
+    base_user: [],
+    franchisee_user: [],
+    franchisee_admin: ['rh_viewer', 'rh_admin'],
+    franchisor_user: ['rh_viewer', 'rh_admin'],
+    franchisor_admin: ['rh_viewer', 'rh_admin'],
+    platform_admin: ['rh_viewer', 'rh_admin'],
+    superadmin: ['rh_viewer', 'rh_admin'],
   },
   parc: {
     base_user: [],

@@ -1,11 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
 import { startOfWeek, addDays, format, addWeeks, subWeeks, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Clock, AlertCircle, Printer, Send, CheckCircle, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, AlertCircle, Printer } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { usePlanningSignature } from "@/apogee-connect/hooks/usePlanningSignature";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -17,7 +17,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { PlanningNotificationBadge } from "@/components/planning/PlanningNotificationBadge";
+
 
 import { usePlanningData, useApogeeUsersNormalized } from "@/shared/api/apogee/usePlanningData";
 import { buildTechOptions, buildEvents, type PlanningEvent } from "@/shared/planning/events";
@@ -173,72 +173,8 @@ function DayColumn({ day, events, showLunch }: DayColumnProps) {
   );
 }
 
-// Composant pour afficher uniquement le cadre de signature dans le header d'impression
-function PrintSignatureBox({ 
-  techId, 
-  weekDate,
-}: { 
-  techId: number; 
-  weekDate: Date;
-}) {
-  const { signature, isSignedByTech } = usePlanningSignature({ techId, weekDate });
-  
-  // Affichage uniquement à l'impression, en ligne avec le reste
-  if (isSignedByTech && signature?.tech_signature_png) {
-    return (
-      <span className="hidden print:inline-flex items-center ml-2">
-        <span className="border border-black w-28 h-8 inline-flex items-center justify-center">
-          <img 
-            src={signature.tech_signature_png.startsWith("data:") 
-              ? signature.tech_signature_png 
-              : `data:image/png;base64,${signature.tech_signature_png}`}
-            alt="Signature"
-            className="max-h-7 max-w-24 object-contain"
-          />
-        </span>
-      </span>
-    );
-  }
-  
-  // Pas de signature : cadre vide
-  return (
-    <span className="hidden print:inline-flex items-center ml-2">
-      <span className="border border-black w-28 h-8 inline-block align-middle" />
-    </span>
-  );
-}
+// NOTE: Composants de signature N1 supprimés (portail salarié supprimé en v0.8.3)
 
-// Composant signature N2 pour le planning (lecture seule - plus d'envoi aux techniciens)
-function PlanningSignatureN2Section({ 
-  techId, 
-  weekDate,
-}: { 
-  techId: number; 
-  weekDate: Date;
-}) {
-  const { 
-    signature, 
-    isSignedByTech, 
-    isLoading 
-  } = usePlanningSignature({ techId, weekDate });
-
-  if (isLoading) {
-    return <div className="h-8 w-40 bg-muted animate-pulse rounded" />;
-  }
-
-  // Afficher le statut de signature si existant
-  if (isSignedByTech && signature?.tech_signed_at) {
-    return (
-      <Badge variant="default" className="bg-emerald-600 text-white">
-        <CheckCircle className="w-3 h-3 mr-1" />
-        Signé le {format(new Date(signature.tech_signed_at), "dd/MM/yyyy HH:mm", { locale: fr })}
-      </Badge>
-    );
-  }
-
-  // Pas de statut particulier - le portail salarié n'existe plus
-  return null;
-}
 
 function PlanningTechniciensSemaineContent() {
   const [selectedTechId, setSelectedTechId] = useState<number | null>(() => {
@@ -392,7 +328,6 @@ function PlanningTechniciensSemaineContent() {
           backTo="/rh/suivi"
           backLabel="Suivi RH"
         />
-        <PlanningNotificationBadge />
       </div>
       
       {/* Contrôles */}
@@ -458,7 +393,7 @@ function PlanningTechniciensSemaineContent() {
         </CardContent>
       </Card>
       
-      {/* Bandeau nom technicien + heures + signature N2 */}
+      {/* Bandeau nom technicien + heures */}
       {selectedTechId && selectedTechLabel && (
         <div className="bg-muted/50 border rounded-lg px-4 py-3 print:bg-white print:border-2 print:py-2" id="print-header">
           <div className="flex items-center justify-between flex-wrap gap-3">
@@ -470,23 +405,14 @@ function PlanningTechniciensSemaineContent() {
                 />
               )}
               <span className="font-semibold text-lg">{selectedTechLabel}</span>
-              {/* Bouton vert (signature N2) + cadre de signature + badge heures sur une seule ligne */}
-              <div className="flex items-center gap-3 flex-wrap">
-                <PlanningSignatureN2Section 
-                  techId={selectedTechId} 
-                  weekDate={currentWeekStart} 
-                />
-                <PrintSignatureBox techId={selectedTechId} weekDate={currentWeekStart} />
-                <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-lg">
-                  <Clock className="h-4 w-4 text-primary" />
-                  <span className="font-semibold text-primary">
-                    {formatMinutes(workMinutes)}
-                  </span>
-                  <span className="text-sm text-muted-foreground">travaillées</span>
-                </div>
+              <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-lg">
+                <Clock className="h-4 w-4 text-primary" />
+                <span className="font-semibold text-primary">
+                  {formatMinutes(workMinutes)}
+                </span>
+                <span className="text-sm text-muted-foreground">travaillées</span>
               </div>
             </div>
-            
           </div>
         </div>
       )}
