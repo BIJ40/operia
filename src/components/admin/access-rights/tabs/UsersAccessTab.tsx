@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Search, Users, UserPlus, MoreHorizontal, Pencil, UserX, UserCheck, Trash2, ChevronUp, ChevronDown, ChevronsUpDown, Lock } from 'lucide-react';
+import { Search, Users, UserPlus, MoreHorizontal, Pencil, UserX, UserCheck, Trash2, ChevronUp, ChevronDown, ChevronsUpDown, Lock, Eye } from 'lucide-react';
 import { GLOBAL_ROLE_LABELS, GLOBAL_ROLE_COLORS, type GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { isHardcodedProtectedUser } from '@/hooks/access-rights/useProtectedAccess';
 import { getVisibleRoleLabel, getVisibleRoleColor } from '@/lib/visibleRoleLabels';
@@ -19,6 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useAllAgencySubscriptions, useAccessRightsUsers, UserRow } from '@/hooks/access-rights';
 import { CreateUserDialog, EditUserDialog, DeactivateDialog, ReactivateDialog, DeleteDialog } from '@/components/admin/users/UserDialogs';
 import { InlineModuleBadges } from '@/components/admin/users/InlineModuleBadges';
+import { UserAccessSummaryPopover } from '@/components/admin/users/UserAccessSummaryPopover';
 import type { UpdateUserPayload } from '@/components/users/UserEditForm';
 import type { ModuleKey, EnabledModules } from '@/types/modules';
 import { cn } from '@/lib/utils';
@@ -447,11 +448,20 @@ export function UsersAccessTab() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <UserAccessSummaryPopover
+                            userId={user.id}
+                            userName={`${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email || 'Utilisateur'}
+                            globalRole={user.global_role as GlobalRole}
+                            agencyLabel={user.agency?.label}
+                            enabledModules={user.enabled_modules}
+                            planLabel={user.agency_id ? agencyPlanMap.get(user.agency_id) : undefined}
+                          />
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem 
@@ -498,6 +508,7 @@ export function UsersAccessTab() {
                             )}
                           </DropdownMenuContent>
                         </DropdownMenu>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
