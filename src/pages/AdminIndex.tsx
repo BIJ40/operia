@@ -168,6 +168,7 @@ export default function AdminIndex() {
             <AdminLink to="/admin/apogee-report" icon={FileJson} title="Rapport Apogée API" description="Analyse endpoints & champs" />
             <AdminLink to="/admin/templates" icon={FileEdit} title="Templates DocGen" description="Modèles de documents" />
             <AdminLink to="/admin/hidden-features" icon={EyeOff} title="Fonctionnalités masquées" description="Pages et fonctions désactivées" />
+            <AdminLink to="/admin/sitemap" icon={Activity} title="Sitemap Routes" description="Arborescence des routes et guards" />
           </div>
         </TabsContent>
       </Tabs>

@@ -35,6 +35,7 @@ const ReportActivityPage = lazy(() => import("@/pages/admin/ReportActivityPage")
 const FranchiseurLayout = lazy(() => import("@/franchiseur/components/layout/FranchiseurLayout"));
 const FranchiseurAgencyProfile = lazy(() => import("@/franchiseur/pages/FranchiseurAgencyProfile"));
 const HiddenFeaturesPage = lazy(() => import("@/pages/admin/HiddenFeaturesPage"));
+const AdminSitemap = lazy(() => import("@/pages/admin/AdminSitemap"));
 
 export function AdminRoutes() {
   return (
@@ -103,6 +104,9 @@ export function AdminRoutes() {
       
       {/* Fonctionnalités masquées */}
       <Route path="/admin/hidden-features" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><HiddenFeaturesPage /></ModuleGuard></RoleGuard></MainLayout>} />
+      
+      {/* Sitemap - Visualisation des routes */}
+      <Route path="/admin/sitemap" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminSitemap /></ModuleGuard></RoleGuard></MainLayout>} />
     </>
   );
 }
