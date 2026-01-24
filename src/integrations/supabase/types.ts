@@ -5298,7 +5298,6 @@ export type Database = {
           onboarding_payload: Json
           onboarding_version: number
           phone: string | null
-          preferred_home_route: string | null
           role_agence: string | null
           support_level: number | null
           support_role: Database["public"]["Enums"]["support_role"] | null
@@ -5327,7 +5326,6 @@ export type Database = {
           onboarding_payload?: Json
           onboarding_version?: number
           phone?: string | null
-          preferred_home_route?: string | null
           role_agence?: string | null
           support_level?: number | null
           support_role?: Database["public"]["Enums"]["support_role"] | null
@@ -5356,7 +5354,6 @@ export type Database = {
           onboarding_payload?: Json
           onboarding_version?: number
           phone?: string | null
-          preferred_home_route?: string | null
           role_agence?: string | null
           support_level?: number | null
           support_role?: Database["public"]["Enums"]["support_role"] | null
@@ -7004,139 +7001,6 @@ export type Database = {
             columns: ["collaborator_id"]
             isOneToOne: false
             referencedRelation: "collaborators"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      timesheets: {
-        Row: {
-          agency_id: string
-          approved_at: string | null
-          approved_by: string | null
-          collaborator_id: string
-          computed: Json
-          contract_minutes: number
-          countersign_comment: string | null
-          countersigned_at: string | null
-          countersigned_by: string | null
-          created_at: string
-          entries_modified: Json | null
-          entries_original: Json
-          finalized_at: string | null
-          finalized_by: string | null
-          id: string
-          overtime_minutes: number
-          rejection_comment: string | null
-          status: string
-          submitted_at: string | null
-          submitted_by: string | null
-          total_minutes: number
-          total_minutes_modified: number | null
-          updated_at: string
-          validated_at: string | null
-          validated_by: string | null
-          validation_comment: string | null
-          week_start: string
-        }
-        Insert: {
-          agency_id: string
-          approved_at?: string | null
-          approved_by?: string | null
-          collaborator_id: string
-          computed?: Json
-          contract_minutes?: number
-          countersign_comment?: string | null
-          countersigned_at?: string | null
-          countersigned_by?: string | null
-          created_at?: string
-          entries_modified?: Json | null
-          entries_original?: Json
-          finalized_at?: string | null
-          finalized_by?: string | null
-          id?: string
-          overtime_minutes?: number
-          rejection_comment?: string | null
-          status?: string
-          submitted_at?: string | null
-          submitted_by?: string | null
-          total_minutes?: number
-          total_minutes_modified?: number | null
-          updated_at?: string
-          validated_at?: string | null
-          validated_by?: string | null
-          validation_comment?: string | null
-          week_start: string
-        }
-        Update: {
-          agency_id?: string
-          approved_at?: string | null
-          approved_by?: string | null
-          collaborator_id?: string
-          computed?: Json
-          contract_minutes?: number
-          countersign_comment?: string | null
-          countersigned_at?: string | null
-          countersigned_by?: string | null
-          created_at?: string
-          entries_modified?: Json | null
-          entries_original?: Json
-          finalized_at?: string | null
-          finalized_by?: string | null
-          id?: string
-          overtime_minutes?: number
-          rejection_comment?: string | null
-          status?: string
-          submitted_at?: string | null
-          submitted_by?: string | null
-          total_minutes?: number
-          total_minutes_modified?: number | null
-          updated_at?: string
-          validated_at?: string | null
-          validated_by?: string | null
-          validation_comment?: string | null
-          week_start?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "timesheets_agency_id_fkey"
-            columns: ["agency_id"]
-            isOneToOne: false
-            referencedRelation: "apogee_agencies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "timesheets_collaborator_id_fkey"
-            columns: ["collaborator_id"]
-            isOneToOne: false
-            referencedRelation: "collaborators"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "timesheets_countersigned_by_fkey"
-            columns: ["countersigned_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "timesheets_finalized_by_fkey"
-            columns: ["finalized_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "timesheets_submitted_by_fkey"
-            columns: ["submitted_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "timesheets_validated_by_fkey"
-            columns: ["validated_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

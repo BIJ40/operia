@@ -237,9 +237,8 @@ export async function exportModulesDocumentationPdf(): Promise<Blob> {
   addBullet('parc - Véhicules, EPI, équipements');
   addTitle('Accès', 12);
   addBullet('RH: N2+ avec option rh activée');
-  addBullet('Mon coffre: Collaborateurs (leurs propres documents)');
   addTitle('Routes', 12);
-  addParagraph('/hc-agency/equipe, /mon-coffre-rh');
+  addParagraph('/rh, /rh/suivi');
 
   // Module 7: Réseau Franchiseur
   addPage();

@@ -20,7 +20,6 @@ export interface OnboardingState {
   onboarding_dismissed_until: string | null;
   onboarding_version: number;
   onboarding_payload: OnboardingPayload;
-  preferred_home_route: string | null;
   // Profile data for pre-fill
   first_name: string | null;
   last_name: string | null;
@@ -59,7 +58,6 @@ export function useOnboardingState() {
           onboarding_dismissed_until,
           onboarding_version,
           onboarding_payload,
-          preferred_home_route,
           first_name,
           last_name,
           phone,
@@ -80,7 +78,6 @@ export function useOnboardingState() {
         onboarding_dismissed_until: data.onboarding_dismissed_until,
         onboarding_version: data.onboarding_version ?? 1,
         onboarding_payload: (data.onboarding_payload as OnboardingPayload) ?? {},
-        preferred_home_route: data.preferred_home_route,
         first_name: data.first_name,
         last_name: data.last_name,
         phone: data.phone,
@@ -183,7 +180,6 @@ export function useOnboardingState() {
         last_name: data.last_name ?? prev.last_name,
         phone: data.phone ?? prev.phone,
         email_notifications_enabled: data.email_notifications_enabled ?? prev.email_notifications_enabled,
-        preferred_home_route: data.preferred_home_route ?? prev.preferred_home_route,
         onboarding_payload: data.onboarding_payload ?? prev.onboarding_payload,
       } : null);
 

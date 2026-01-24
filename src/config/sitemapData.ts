@@ -555,33 +555,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     isRedirect: true,
     redirectTo: '/rh/suivi',
   },
-  {
-    path: '/rh/coffre',
-    label: 'Redirect Coffre',
-    component: 'Navigate',
-    section: 'rh',
-    guards: {},
-    isRedirect: true,
-    redirectTo: '/rh/suivi',
-  },
-  {
-    path: '/rh/demandes',
-    label: 'Redirect Demandes',
-    component: 'Navigate',
-    section: 'rh',
-    guards: {},
-    isRedirect: true,
-    redirectTo: '/rh/suivi',
-  },
-  {
-    path: '/pilotage/mon-coffre-rh',
-    label: 'Redirect Coffre RH',
-    component: 'Navigate',
-    section: 'rh',
-    guards: {},
-    isRedirect: true,
-    redirectTo: '/rh/suivi',
-  },
+  // Legacy N1 redirects supprimés - portail salarié N1 désactivé (v0.8.3)
 
   // ==================== SUPPORT ====================
   {

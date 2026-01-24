@@ -87,8 +87,7 @@ export const MODULE_MIN_ROLES: Record<ModuleKey, GlobalRole> = {
  * - rh_admin: N2+ (gestion complète RH/paie)
  */
 export const MODULE_OPTION_MIN_ROLES: Record<string, GlobalRole> = {
-  // RH - Module à 2 facettes
-  'rh.coffre': 'base_user',           // N0 - Salarié consulte son coffre
+  // RH - Module N2+ uniquement (portail salarié N1 supprimé v0.8.3)
   'rh.rh_viewer': 'franchisee_admin', // N2 - Dirigeant voit l'équipe
   'rh.rh_admin': 'franchisee_admin',  // N2 - Dirigeant gère RH complet
   

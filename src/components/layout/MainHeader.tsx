@@ -286,14 +286,6 @@ export function MainHeader() {
                           Mon profil
                         </Link>
                       </DropdownMenuItem>
-                      {hasModule('rh') && (
-                        <DropdownMenuItem asChild>
-                          <Link to="/rh/signature" className="flex items-center gap-2 cursor-pointer">
-                            <PenTool className="w-4 h-4" />
-                            Ma signature
-                          </Link>
-                        </DropdownMenuItem>
-                      )}
                       {isAdmin && (
                         <DropdownMenuItem asChild>
                           <Link to="/admin" className="flex items-center gap-2 cursor-pointer">
