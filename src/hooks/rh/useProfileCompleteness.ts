@@ -80,67 +80,75 @@ const COMPLETENESS_CRITERIA = {
   },
 };
 
-export function useProfileCompleteness(collaborator: RHCollaborator | undefined): ProfileCompletenessResult {
-  return useMemo(() => {
-    if (!collaborator) {
-      return {
-        percent: 0,
-        missing: [],
-        status: 'minimal' as const,
-        categories: [],
-      };
-    }
+/**
+ * Fonction pure pour calculer la complétude (utilisable hors composant React)
+ */
+export function calculateProfileCompleteness(collaborator: RHCollaborator | undefined): ProfileCompletenessResult {
+  if (!collaborator) {
+    return {
+      percent: 0,
+      missing: [],
+      status: 'minimal' as const,
+      categories: [],
+    };
+  }
 
-    const categories: ProfileCompletenessResult['categories'] = [];
-    let totalWeightedScore = 0;
-    const allMissing: string[] = [];
+  const categories: ProfileCompletenessResult['categories'] = [];
+  let totalWeightedScore = 0;
+  const allMissing: string[] = [];
 
-    // Calculer pour chaque catégorie
-    Object.entries(COMPLETENESS_CRITERIA).forEach(([catId, category]) => {
-      const catMissing: string[] = [];
-      let catFilled = 0;
+  // Calculer pour chaque catégorie
+  Object.entries(COMPLETENESS_CRITERIA).forEach(([catId, category]) => {
+    const catMissing: string[] = [];
+    let catFilled = 0;
 
-      category.fields.forEach((field) => {
-        if (field.check(collaborator)) {
-          catFilled++;
-        } else {
-          catMissing.push(field.label);
-          allMissing.push(field.label);
-        }
-      });
-
-      const catPercent = category.fields.length > 0
-        ? Math.round((catFilled / category.fields.length) * 100)
-        : 100;
-
-      categories.push({
-        id: catId,
-        label: category.label,
-        percent: catPercent,
-        missing: catMissing,
-      });
-
-      // Score pondéré
-      totalWeightedScore += (catFilled / category.fields.length) * category.weight;
+    category.fields.forEach((field) => {
+      if (field.check(collaborator)) {
+        catFilled++;
+      } else {
+        catMissing.push(field.label);
+        allMissing.push(field.label);
+      }
     });
 
-    const percent = Math.round(totalWeightedScore * 100);
+    const catPercent = category.fields.length > 0
+      ? Math.round((catFilled / category.fields.length) * 100)
+      : 100;
 
-    // Déterminer le statut
-    let status: ProfileCompletenessResult['status'] = 'minimal';
-    if (percent >= 90) {
-      status = 'complete';
-    } else if (percent >= 50) {
-      status = 'partial';
-    }
+    categories.push({
+      id: catId,
+      label: category.label,
+      percent: catPercent,
+      missing: catMissing,
+    });
 
-    return {
-      percent,
-      missing: allMissing,
-      status,
-      categories,
-    };
-  }, [collaborator]);
+    // Score pondéré
+    totalWeightedScore += (catFilled / category.fields.length) * category.weight;
+  });
+
+  const percent = Math.round(totalWeightedScore * 100);
+
+  // Déterminer le statut
+  let status: ProfileCompletenessResult['status'] = 'minimal';
+  if (percent >= 90) {
+    status = 'complete';
+  } else if (percent >= 50) {
+    status = 'partial';
+  }
+
+  return {
+    percent,
+    missing: allMissing,
+    status,
+    categories,
+  };
+}
+
+/**
+ * Hook React qui utilise useMemo pour la performance
+ */
+export function useProfileCompleteness(collaborator: RHCollaborator | undefined): ProfileCompletenessResult {
+  return useMemo(() => calculateProfileCompleteness(collaborator), [collaborator]);
 }
 
 // Fonction utilitaire pour obtenir la couleur du statut

@@ -7,12 +7,13 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Search, Settings2, Users, Save, Loader2, Printer, UserX, TrendingUp } from 'lucide-react';
+import { Search, Settings2, Save, Loader2, UserX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RHCollaborator } from '@/types/rh-suivi';
 import { RHUnifiedTableHeader } from './RHUnifiedTableHeader';
 import { RHUnifiedTableRow } from './RHUnifiedTableRow';
 import { RHUnifiedTabs } from './RHUnifiedTabs';
+import { RHStatsHeader } from './RHStatsHeader';
 import { RHDocumentPopup, DocumentType, DOCUMENT_TYPES } from './RHDocumentPopup';
 import { 
   TAB_COLUMNS, 
@@ -26,7 +27,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { CollaboratorEpiSummary } from '@/hooks/epi/useCollaboratorsEpiSummary';
-import { useProfileCompleteness } from '@/hooks/rh/useProfileCompleteness';
+import { calculateProfileCompleteness } from '@/hooks/rh/useProfileCompleteness';
 
 interface RHUnifiedTableProps {
   collaborators: RHCollaborator[];
@@ -177,12 +178,20 @@ export function RHUnifiedTable({
   // Stats avec progression moyenne
   const stats = useMemo(() => {
     const active = collaborators.filter(c => !c.leaving_date);
+    
+    // Calcul de la complétude moyenne
+    const completenessValues = collaborators.map(c => calculateProfileCompleteness(c).percent);
+    const averageCompleteness = completenessValues.length > 0 
+      ? completenessValues.reduce((a, b) => a + b, 0) / completenessValues.length 
+      : 0;
+    
     return {
       total: collaborators.length,
       active: active.length,
       former: collaborators.filter(c => !!c.leaving_date).length,
       administratif: groupedCollaborators.ADMINISTRATIF.length,
       terrain: groupedCollaborators.TERRAIN.length,
+      averageCompleteness,
     };
   }, [collaborators, groupedCollaborators]);
 
@@ -199,6 +208,11 @@ export function RHUnifiedTable({
     if (epiAlerts > 0) counts.securite = epiAlerts;
     return counts;
   }, [epiSummaries]);
+
+  // Total des alertes
+  const totalAlerts = useMemo(() => {
+    return Object.values(alertCounts).reduce((sum, count) => sum + (count || 0), 0);
+  }, [alertCounts]);
 
   const handleDocumentClick = (collaboratorId: string, docType: DocumentType) => {
     const collab = collaborators.find(c => c.id === collaboratorId);
@@ -226,40 +240,17 @@ export function RHUnifiedTable({
 
   return (
     <div className="space-y-3">
-      {/* Stats rapides - Version ultra compacte en ligne */}
-      <div className="flex flex-wrap items-center gap-2 p-2 bg-muted/20 rounded-lg border">
-        <div className="flex items-center gap-1.5 px-2 py-1 bg-background rounded-md border">
-          <Users className="h-3.5 w-3.5 text-primary" />
-          <span className="text-xs text-muted-foreground">Total</span>
-          <span className="text-sm font-bold">{stats.total}</span>
-        </div>
-        <div className="flex items-center gap-1.5 px-2 py-1 bg-background rounded-md border">
-          <div className="w-2 h-2 rounded-full bg-green-500" />
-          <span className="text-xs text-muted-foreground">Actifs</span>
-          <span className="text-sm font-bold text-green-600">{stats.active}</span>
-        </div>
-        <div className="flex items-center gap-1.5 px-2 py-1 bg-background rounded-md border">
-          <span className="text-xs">🏢</span>
-          <span className="text-xs text-muted-foreground">Admin</span>
-          <span className="text-sm font-bold text-blue-600">{stats.administratif}</span>
-        </div>
-        <div className="flex items-center gap-1.5 px-2 py-1 bg-background rounded-md border">
-          <span className="text-xs">🔧</span>
-          <span className="text-xs text-muted-foreground">Terrain</span>
-          <span className="text-sm font-bold text-orange-600">{stats.terrain}</span>
-        </div>
-        <div className="flex-1" />
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onPrintMatrix}
-          className="h-7 px-2 gap-1 text-xs"
-        >
-          <Printer className="h-3 w-3" />
-          <span className="hidden sm:inline">Matrice compétences</span>
-          <span className="sm:hidden">Imprimer</span>
-        </Button>
-      </div>
+      {/* Stats Header amélioré */}
+      <RHStatsHeader
+        collaborators={collaborators}
+        activeCount={stats.active}
+        formerCount={stats.former}
+        adminCount={stats.administratif}
+        terrainCount={stats.terrain}
+        alertsCount={totalAlerts}
+        averageCompleteness={stats.averageCompleteness}
+        onPrintMatrix={onPrintMatrix}
+      />
 
       {/* Barre de recherche + toggle anciens + onglets + toggle colonnes */}
       <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
