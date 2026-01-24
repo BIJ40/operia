@@ -32,7 +32,7 @@ interface RHUnifiedTabsProps {
 export function RHUnifiedTabs({ activeTab, onTabChange, alertCounts = {} }: RHUnifiedTabsProps) {
   return (
     <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as RHTabId)} className="w-full">
-      <TabsList className="inline-flex h-auto w-full justify-start gap-1 bg-muted/30 p-1 rounded-lg overflow-x-auto">
+      <TabsList className="flex h-10 w-full justify-start gap-0.5 bg-muted/40 p-1 rounded-lg">
         {TAB_CONFIG.map((tab) => {
           const IconComponent = ICON_MAP[tab.icon];
           const alertCount = alertCounts[tab.id] || 0;
@@ -42,12 +42,12 @@ export function RHUnifiedTabs({ activeTab, onTabChange, alertCounts = {} }: RHUn
               key={tab.id} 
               value={tab.id} 
               className={cn(
-                "relative flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-md",
+                "relative flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-medium rounded-md",
                 "transition-all duration-200",
                 "data-[state=active]:bg-background data-[state=active]:shadow-sm",
                 "data-[state=active]:text-primary",
                 "hover:bg-background/50",
-                "whitespace-nowrap"
+                "min-w-0"
               )}
             >
               {IconComponent && (
@@ -57,9 +57,7 @@ export function RHUnifiedTabs({ activeTab, onTabChange, alertCounts = {} }: RHUn
                 )} />
               )}
               
-              {/* Label court sur mobile, complet sur desktop */}
-              <span className="hidden sm:inline">{tab.label}</span>
-              <span className="sm:hidden">{tab.shortLabel || tab.label}</span>
+              <span className="truncate">{tab.label}</span>
               
               {/* Badge d'alerte */}
               {alertCount > 0 && (
