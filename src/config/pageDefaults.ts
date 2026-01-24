@@ -144,13 +144,10 @@ export const PAGE_HEADER_MATCHERS: PageHeaderConfig[] = [
   { match: (path) => path === '/hc-agency/collaborateurs', pageKey: 'pilotage_collaborateurs', defaultTitle: 'Collaborateurs', defaultSubtitle: 'Gestion RH de l\'équipe', icon: 'Users', parentRoute: '/hc-agency', parentLabel: 'Mon Agence' },
   { match: (path) => path.startsWith('/hc-agency/collaborateurs/'), pageKey: 'pilotage_collaborateur_profile', defaultTitle: 'Fiche collaborateur', defaultSubtitle: 'Profil 360°', icon: 'User', parentRoute: '/hc-agency/collaborateurs', parentLabel: 'Collaborateurs' },
   // RH Routes (toutes sous /rh/)
-  { match: (path) => path === '/rh/coffre', pageKey: 'rh_coffre', defaultTitle: 'Mon Coffre-fort RH', defaultSubtitle: 'Vos documents RH disponibles', icon: 'FolderOpen', parentRoute: '/rh', parentLabel: 'RH' },
-  { match: (path) => path === '/rh/demande', pageKey: 'rh_demande', defaultTitle: 'Demande de congé', defaultSubtitle: 'Soumettre une demande de congé', icon: 'Calendar', parentRoute: '/rh', parentLabel: 'RH' },
-  { match: (path) => path === '/rh/demandes', pageKey: 'rh_demandes', defaultTitle: 'Demandes RH', defaultSubtitle: 'Demandes de documents des collaborateurs', icon: 'Inbox', parentRoute: '/rh', parentLabel: 'RH' },
-  { match: (path) => path === '/rh/conges', pageKey: 'rh_conges', defaultTitle: 'Gestion des congés', defaultSubtitle: 'Valider les demandes de congés et absences', icon: 'Calendar', parentRoute: '/rh', parentLabel: 'RH' },
+  // Legacy N1 pageDefaults supprimés (coffre, demande, demandes, conges) - portail salarié désactivé v0.8.3
   { match: (path) => path === '/rh/equipe', pageKey: 'rh_equipe_redirect', defaultTitle: 'Suivi RH', defaultSubtitle: 'Redirection vers Suivi RH', icon: 'Users', parentRoute: '/rh', parentLabel: 'RH' },
   { match: (path) => path === '/rh/suivi/plannings', pageKey: 'rh_plannings', defaultTitle: 'Plannings Techniciens', defaultSubtitle: 'Visualisez les plannings hebdomadaires', icon: 'Calendar', parentRoute: '/rh/suivi', parentLabel: 'Suivi RH' },
-  { match: (path) => path === '/rh/suivi/heures', pageKey: 'rh_heures', defaultTitle: 'Gestion des Heures', defaultSubtitle: 'Validation des feuilles de temps', icon: 'Clock', parentRoute: '/rh/suivi', parentLabel: 'Suivi RH' },
+  // Legacy N1 /rh/suivi/heures supprimé - timesheets désactivés v0.8.3
   { match: (path) => path.startsWith('/rh/suivi/') && path !== '/rh/suivi/plannings' && path !== '/rh/suivi/heures', pageKey: 'rh_collaborateur_profile', defaultTitle: 'Fiche collaborateur', defaultSubtitle: 'Profil 360°', icon: 'User', parentRoute: '/rh/suivi', parentLabel: 'Suivi RH' },
   { match: (path) => path === '/rh/dashboard', pageKey: 'rh_dashboard', defaultTitle: 'Dashboard RH', defaultSubtitle: 'Statistiques et indicateurs RH', icon: 'BarChart3', parentRoute: '/rh', parentLabel: 'RH & Maintenance' },
   { match: (path) => path === '/rh/parc', pageKey: 'rh_parc', defaultTitle: 'Parc & Véhicules', defaultSubtitle: 'Gestion des véhicules et équipements', icon: 'Car', parentRoute: '/rh', parentLabel: 'RH & Maintenance' },

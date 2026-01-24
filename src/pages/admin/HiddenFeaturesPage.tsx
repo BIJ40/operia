@@ -32,36 +32,7 @@ const HIDDEN_FEATURES: HiddenFeature[] = [
     reason: 'Fonctionnalité en cours de finalisation - engine StatIA opérationnel mais UI non stabilisée.',
     priority: 'medium',
   },
-  {
-    id: 'pointage-technicien',
-    name: 'Pointage Technicien',
-    description: 'Système de pointage quotidien pour les techniciens (début/fin de journée, pauses)',
-    module: 'RH & Maintenance',
-    hiddenRoutes: ['/t/pointage', 'Onglet Pointage dans /t'],
-    reason: 'En attente de validation du workflow complet avec les feuilles de temps',
-    hiddenSince: '2025-01-11',
-    priority: 'medium',
-  },
-  {
-    id: 'gestion-heures',
-    name: 'Gestion des Heures',
-    description: 'Feuilles de temps hebdomadaires basées sur le pointage technicien',
-    module: 'RH & Maintenance',
-    hiddenRoutes: ['/rh/suivi/heures', '/rh/heures'],
-    reason: 'Dépend du module pointage - fonctionnalité en cours de développement',
-    hiddenSince: '2025-01-11',
-    priority: 'medium',
-  },
-  {
-    id: 'validation-pointages',
-    name: 'Validation des Pointages',
-    description: 'Interface N2 pour valider/corriger les pointages des techniciens',
-    module: 'RH & Maintenance',
-    hiddenRoutes: ['/rh/timesheets'],
-    reason: 'Dépend du module pointage et gestion heures',
-    hiddenSince: '2025-01-11',
-    priority: 'medium',
-  },
+  // Legacy N1 (pointage-technicien, gestion-heures, validation-pointages) supprimés v0.8.3
 ];
 
 function getPriorityColor(priority: HiddenFeature['priority']) {

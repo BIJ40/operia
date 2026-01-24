@@ -61,40 +61,18 @@ export const CHANGELOG: ChangelogEntry[] = [
       { type: 'improvement', description: 'Nettoyage sessionStorage après création ticket réussie' },
     ],
   },
-  {
-    version: "V0.8.1",
-    title: "Pointages & Timesheets",
-    date: "2025-12-18",
-    changes: [
-      // ═══════════════════════════════════════════════════════════════
-      // MODULE POINTAGES / TIMESHEETS
-      // ═══════════════════════════════════════════════════════════════
-      { type: 'feature', description: 'Workflow pointages 5 états : DRAFT → SUBMITTED → N2_MODIFIED → COUNTERSIGNED → VALIDATED' },
-      { type: 'feature', description: 'Page technicien /t/pointage : saisie hebdomadaire avec jours détaillés' },
-      { type: 'feature', description: 'Page N2 /rh/timesheets : validation des pointages équipe avec 3 onglets' },
-      { type: 'feature', description: 'Affichage des modifications N2 en rouge avec calcul des différences' },
-      { type: 'feature', description: 'Contre-signature obligatoire N1 avant validation finale N2' },
-      { type: 'feature', description: 'Possibilité de rejeter un pointage vers DRAFT avec commentaire' },
-      { type: 'improvement', description: 'Séparation stricte N1/N2 via RLS policies sur table timesheets' },
-      { type: 'improvement', description: 'Conservation des entrées originales vs modifiées pour audit' },
-    ],
-  },
+  // V0.8.1 legacy N1 (pointages, timesheets) supprimé - fonctionnalités désactivées v0.8.3
   {
     version: "V0.8.0",
     title: "Suivi RH & DocGen",
     date: "2025-12-15",
     changes: [
       // ═══════════════════════════════════════════════════════════════
-      // MODULE SUIVI RH COMPLET
+      // MODULE SUIVI RH COMPLET (recentré N2+)
       // ═══════════════════════════════════════════════════════════════
-      { type: 'feature', description: 'Espace salarié N1 : Mon coffre RH, Demandes RH, Mon planning, Ma signature' },
       { type: 'feature', description: 'Back-office N2 : Suivi équipe avec 7 onglets thématiques' },
-      { type: 'feature', description: 'Demandes unifiées via rh_requests (congés, EPI, documents)' },
-      { type: 'feature', description: 'Notifications bidirectionnelles temps réel N1↔N2' },
       { type: 'feature', description: 'Workflow VU/TRAITÉ pour demandes véhicules et équipements' },
-      { type: 'feature', description: 'Portail Mon Véhicule : signalements anomalies et demandes' },
-      { type: 'feature', description: 'Portail Mes Équipements : consultation et demandes EPI' },
-      { type: 'improvement', description: 'Séparation stricte N1/N2 avec RLS renforcées' },
+      { type: 'improvement', description: 'Séparation stricte N2+ avec RLS renforcées' },
       
       // ═══════════════════════════════════════════════════════════════
       // MODULE DOCGEN - GÉNÉRATION DOCUMENTS

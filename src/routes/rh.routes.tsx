@@ -15,8 +15,7 @@ const RHIndex = lazy(() => import("@/pages/RHIndex"));
 const RHSuiviIndex = lazy(() => import("@/pages/rh/RHSuiviIndex"));
 const RHCollaborateurPage = lazy(() => import("@/pages/rh/RHCollaborateurPage"));
 const CollaborateurProfilePage = lazy(() => import("@/pages/CollaborateurProfilePage"));
-const GestionHeuresPage = lazy(() => import("@/pages/rh/GestionHeuresPage"));
-const TimesheetsValidationPage = lazy(() => import("@/pages/rh/TimesheetsValidationPage"));
+// GestionHeuresPage et TimesheetsValidationPage supprimés (legacy N1 v0.8.3)
 const MaintenancePreventivePage = lazy(() => import("@/pages/MaintenancePreventivePage"));
 const EPIPage = lazy(() => import("@/pages/EPIPage"));
 const DocGenPage = lazy(() => import("@/pages/rh/DocGenPage"));
@@ -77,34 +76,7 @@ export function RHRoutes() {
           </MainLayout>
         } 
       />
-      <Route 
-        path="/rh/suivi/heures" 
-        element={
-          <MainLayout>
-            <RoleGuard minRole="franchisee_admin">
-              <ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}>
-                <GestionHeuresPage />
-              </ModuleGuard>
-            </RoleGuard>
-          </MainLayout>
-        } 
-      />
-
-      {/* ============================================ */}
-      {/* TIMESHEETS (N2) */}
-      {/* ============================================ */}
-      <Route 
-        path="/rh/timesheets" 
-        element={
-          <MainLayout>
-            <RoleGuard minRole="franchisee_admin">
-              <ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}>
-                <TimesheetsValidationPage />
-              </ModuleGuard>
-            </RoleGuard>
-          </MainLayout>
-        } 
-      />
+      {/* Routes GestionHeuresPage et TimesheetsValidationPage supprimées (legacy N1 v0.8.3) */}
 
       {/* ============================================ */}
       {/* MAINTENANCE (N2) */}
@@ -180,21 +152,7 @@ export function RHRoutes() {
         } 
       />
       
-      {/* Anciennes routes portail salarié → index RH */}
-      <Route path="/rh/coffre" element={<Navigate to="/rh" replace />} />
-      <Route path="/rh/demande" element={<Navigate to="/rh" replace />} />
-      <Route path="/rh/demandes" element={<Navigate to="/rh" replace />} />
-      <Route path="/rh/mon-planning" element={<Navigate to="/rh" replace />} />
-      <Route path="/rh/mon-vehicule" element={<Navigate to="/rh" replace />} />
-      <Route path="/rh/mon-materiel" element={<Navigate to="/rh" replace />} />
-      <Route path="/rh/signature" element={<Navigate to="/rh" replace />} />
-      <Route path="/rh/conges" element={<Navigate to="/rh" replace />} />
-      <Route path="/rh/dashboard" element={<Navigate to="/rh" replace />} />
-      
-      {/* Très anciennes routes */}
-      <Route path="/pilotage/mon-coffre-rh" element={<Navigate to="/rh" replace />} />
-      <Route path="/mon-coffre-rh" element={<Navigate to="/rh" replace />} />
-      <Route path="/faire-une-demande" element={<Navigate to="/rh" replace />} />
+      {/* Legacy redirects maintenus pour bookmarks existants */}
       <Route path="/hc-agency/equipe" element={<Navigate to="/rh/suivi" replace />} />
       <Route path="/hc-agency/collaborateurs" element={<Navigate to="/rh/suivi" replace />} />
       <Route 
