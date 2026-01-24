@@ -33,6 +33,7 @@ import { ImpersonationProvider } from "./contexts/ImpersonationContext";
 import { ChangePasswordDialog } from "./components/ChangePasswordDialog";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { GlobalErrorBoundary } from "./components/system/GlobalErrorBoundary";
+import { WelcomeWizardGate } from "./components/onboarding";
 // REMOVED: AnnouncementGate - No auto-popup policy (see NO_POPUP_POLICY.md)
 // REMOVED: LiveSupportProvider - Simplifié en V3 (plus de live chat)
 // REMOVED: N1Redirect - Module technicien /t supprimé
@@ -92,6 +93,9 @@ function AppContent() {
   return (
     <>
       {/* REMOVED: AnnouncementGate - No auto-popup policy */}
+      
+      {/* Welcome Wizard - First-login onboarding (exception to NO_POPUP_POLICY) */}
+      {!isAuthLoading && user && <WelcomeWizardGate />}
       
       <Suspense fallback={<PageLoader />}>
         <Routes>

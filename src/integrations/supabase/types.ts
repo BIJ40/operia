@@ -5293,7 +5293,12 @@ export type Database = {
           is_salaried_manager: boolean | null
           last_name: string | null
           must_change_password: boolean | null
+          onboarding_completed_at: string | null
+          onboarding_dismissed_until: string | null
+          onboarding_payload: Json
+          onboarding_version: number
           phone: string | null
+          preferred_home_route: string | null
           role_agence: string | null
           support_level: number | null
           support_role: Database["public"]["Enums"]["support_role"] | null
@@ -5317,7 +5322,12 @@ export type Database = {
           is_salaried_manager?: boolean | null
           last_name?: string | null
           must_change_password?: boolean | null
+          onboarding_completed_at?: string | null
+          onboarding_dismissed_until?: string | null
+          onboarding_payload?: Json
+          onboarding_version?: number
           phone?: string | null
+          preferred_home_route?: string | null
           role_agence?: string | null
           support_level?: number | null
           support_role?: Database["public"]["Enums"]["support_role"] | null
@@ -5341,7 +5351,12 @@ export type Database = {
           is_salaried_manager?: boolean | null
           last_name?: string | null
           must_change_password?: boolean | null
+          onboarding_completed_at?: string | null
+          onboarding_dismissed_until?: string | null
+          onboarding_payload?: Json
+          onboarding_version?: number
           phone?: string | null
+          preferred_home_route?: string | null
           role_agence?: string | null
           support_level?: number | null
           support_role?: Database["public"]["Enums"]["support_role"] | null
