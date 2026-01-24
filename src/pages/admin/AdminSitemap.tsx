@@ -166,6 +166,10 @@ export default function AdminSitemap() {
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-amber-500" />
+              <span>Plan agence requis</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-orange-500" />
               <span>Guard spécial</span>
             </div>
             <div className="flex items-center gap-2">
