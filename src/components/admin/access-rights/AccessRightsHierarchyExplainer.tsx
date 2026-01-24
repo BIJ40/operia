@@ -138,7 +138,7 @@ export function HierarchyDiagram() {
           <div>
             <div className="font-semibold text-blue-800 dark:text-blue-200">Plan agence (plan_tier_modules)</div>
             <div className="text-sm text-blue-700 dark:text-blue-300">
-              Le plan souscrit par l'agence (FREE, STARTER, PRO) définit les modules de base.
+              Le plan souscrit par l'agence (Gratuit, Basique, Pro) définit les modules de base.
               <br />
               <em className="text-xs">→ C'est la base, qui peut être enrichie par les niveaux supérieurs.</em>
             </div>
@@ -156,7 +156,7 @@ export function HierarchyDiagram() {
           <li className="flex gap-2">
             <span className="font-mono text-xs bg-amber-200 dark:bg-amber-800 px-1 rounded">Ex 1</span>
             <span>
-              Agence en <strong>STARTER</strong> sans module "StatIA". 
+              Agence en <strong>Basique</strong> sans module "StatIA". 
               Vous activez "StatIA" sur le profil utilisateur → <strong>L'utilisateur a accès à StatIA</strong>.
             </span>
           </li>
