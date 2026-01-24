@@ -36,7 +36,6 @@ const FranchiseurLayout = lazy(() => import("@/franchiseur/components/layout/Fra
 const FranchiseurAgencyProfile = lazy(() => import("@/franchiseur/pages/FranchiseurAgencyProfile"));
 const HiddenFeaturesPage = lazy(() => import("@/pages/admin/HiddenFeaturesPage"));
 const AdminSitemap = lazy(() => import("@/pages/admin/AdminSitemap"));
-const AdminGestionV2 = lazy(() => import("@/pages/admin/AdminGestionV2"));
 
 export function AdminRoutes() {
   return (
@@ -109,8 +108,8 @@ export function AdminRoutes() {
       {/* Sitemap - Visualisation des routes */}
       <Route path="/admin/sitemap" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminSitemap /></ModuleGuard></RoleGuard></MainLayout>} />
       
-      {/* Gestion V2 - Prototype */}
-      <Route path="/admin/gestionV2" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminGestionV2 /></ModuleGuard></RoleGuard></MainLayout>} />
+      {/* gestionV2 supprimée - redirige vers gestion */}
+      <Route path="/admin/gestionV2" element={<Navigate to="/admin/gestion" replace />} />
     </>
   );
 }
