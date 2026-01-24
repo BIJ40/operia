@@ -93,42 +93,18 @@ export function SubscriptionsTab() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-2 text-lg">
           <Building2 className="h-5 w-5" />
-          Souscriptions par Agence
+          Plans Agences
         </CardTitle>
-        <CardDescription className="flex flex-col gap-1">
-          <span>Gérez le plan de chaque agence (Gratuit, Basique, Pro).</span>
-          <span className="text-blue-600 font-medium">
-            Le plan définit les modules de base pour tous les utilisateurs de l'agence (Priorité 4/4).
-            Les modules utilisateur et overrides agence s'y ajoutent.
-          </span>
+        <CardDescription>
+          Définissez le plan de chaque agence. Les utilisateurs héritent des modules du plan.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
-          {planTiers?.map(tier => {
-            const count = subscriptions?.filter(s => s.tier_key === tier.key).length || 0;
-            return (
-              <Card key={tier.key} className="bg-muted/30">
-                <CardContent className="pt-4">
-                  <div className="flex items-center justify-between">
-                    <Badge className={getPlanBadgeStyle(tier.key)}>{tier.label}</Badge>
-                    <span className="text-2xl font-bold">{count}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {tier.description}
-                  </p>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-        
-        {/* Filtres */}
-        <div className="flex flex-col sm:flex-row gap-4">
+        {/* Filtres simplifiés */}
+        <div className="flex gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -139,11 +115,11 @@ export function SubscriptionsTab() {
             />
           </div>
           <Select value={planFilter} onValueChange={setPlanFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filtrer par plan" />
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Plan" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous les plans</SelectItem>
+              <SelectItem value="all">Tous</SelectItem>
               {planTiers?.map(tier => (
                 <SelectItem key={tier.key} value={tier.key}>{tier.label}</SelectItem>
               ))}
@@ -151,34 +127,28 @@ export function SubscriptionsTab() {
           </Select>
         </div>
         
-        {/* Table */}
+        {/* Table simplifiée */}
         <div className="rounded-md border">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Agence</TableHead>
-                <TableHead>Ville</TableHead>
-                <TableHead>Plan actuel</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead>Depuis</TableHead>
-                <TableHead className="text-right">Changer</TableHead>
+                <TableHead>Plan</TableHead>
+                <TableHead className="text-right w-[140px]">Modifier</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell><Skeleton className="h-6 w-32" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-40" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-20" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-16" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-24 ml-auto" /></TableCell>
+                    <TableCell><Skeleton className="h-8 w-28 ml-auto" /></TableCell>
                   </TableRow>
                 ))
               ) : filteredAgencies.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
                     Aucune agence trouvée
                   </TableCell>
                 </TableRow>
@@ -190,9 +160,10 @@ export function SubscriptionsTab() {
                     <TableRow key={agency.id}>
                       <TableCell>
                         <div className="font-medium">{agency.label}</div>
-                        <div className="text-sm text-muted-foreground">{agency.slug}</div>
+                        {agency.ville && (
+                          <div className="text-sm text-muted-foreground">{agency.ville}</div>
+                        )}
                       </TableCell>
-                      <TableCell>{agency.ville || '—'}</TableCell>
                       <TableCell>
                         {sub ? (
                           <Badge className={getPlanBadgeStyle(sub.tier_key)}>
@@ -205,31 +176,13 @@ export function SubscriptionsTab() {
                           </Badge>
                         )}
                       </TableCell>
-                      <TableCell>
-                        {sub?.status === 'active' ? (
-                          <Badge variant="outline" className="text-green-600 border-green-600">
-                            <Check className="h-3 w-3 mr-1" />
-                            Actif
-                          </Badge>
-                        ) : sub?.status === 'suspended' ? (
-                          <Badge variant="secondary">Suspendu</Badge>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {sub?.valid_from 
-                          ? format(new Date(sub.valid_from), 'dd MMM yyyy', { locale: fr })
-                          : '—'
-                        }
-                      </TableCell>
                       <TableCell className="text-right">
                         <Select 
                           value={sub?.tier_key || ''} 
                           onValueChange={(value) => handlePlanChange(agency.id, value)}
                         >
                           <SelectTrigger className="w-[120px]">
-                            <SelectValue placeholder="Plan" />
+                            <SelectValue placeholder="Choisir" />
                           </SelectTrigger>
                           <SelectContent>
                             {planTiers?.map(tier => (
@@ -248,8 +201,8 @@ export function SubscriptionsTab() {
           </Table>
         </div>
         
-        <div className="text-sm text-muted-foreground">
-          {filteredAgencies.length} agence(s) affichée(s)
+        <div className="text-xs text-muted-foreground">
+          {filteredAgencies.length} agence(s)
         </div>
       </CardContent>
     </Card>
