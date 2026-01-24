@@ -11,17 +11,16 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Search, Users, UserPlus, MoreHorizontal, Pencil, UserX, UserCheck, Trash2, ChevronUp, ChevronDown, ChevronsUpDown, Lock } from 'lucide-react';
-import { GLOBAL_ROLE_LABELS, GLOBAL_ROLE_COLORS, type GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
+import { Search, Users, UserPlus, MoreHorizontal, UserX, UserCheck, Trash2, ChevronUp, ChevronDown, ChevronsUpDown, Lock } from 'lucide-react';
+import { GLOBAL_ROLE_LABELS, type GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { isHardcodedProtectedUser } from '@/hooks/access-rights/useProtectedAccess';
 import { getVisibleRoleLabel, getVisibleRoleColor } from '@/lib/visibleRoleLabels';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAllAgencySubscriptions, useAccessRightsUsers, useUpdateAgencySubscription, UserRow } from '@/hooks/access-rights';
 import { useAllPageOverrides, usePageOverrideMutation } from '@/hooks/access-rights/useUserPageOverrides';
-import { CreateUserDialog, EditUserDialog, DeactivateDialog, ReactivateDialog, DeleteDialog } from '@/components/admin/users/UserDialogs';
+import { CreateUserDialog, DeactivateDialog, ReactivateDialog, DeleteDialog } from '@/components/admin/users/UserDialogs';
 import { InlineModuleBadges } from '@/components/admin/users/InlineModuleBadges';
-import { UserAccessDialog } from '@/components/admin/users/UserAccessDialog';
-import type { UpdateUserPayload } from '@/components/users/UserEditForm';
+import { UserFullDialog } from '@/components/admin/users/UserFullDialog';
 import type { ModuleKey, EnabledModules } from '@/types/modules';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -40,9 +39,6 @@ export function UsersAccessTab() {
   const [statusFilter, setStatusFilter] = useState<string>('active');
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'name', direction: 'asc' });
   
-  // Local module state for editing
-  const [localModules, setLocalModules] = useState<EnabledModules | null>(null);
-  
   const {
     users,
     agencies,
@@ -52,8 +48,6 @@ export function UsersAccessTab() {
     currentUserAgency,
     selectedUser,
     setSelectedUser,
-    editDialogOpen,
-    setEditDialogOpen,
     createDialogOpen,
     setCreateDialogOpen,
     deactivateDialogOpen,
@@ -70,7 +64,6 @@ export function UsersAccessTab() {
     reactivateMutation,
     hardDeleteMutation,
     saveModulesMutation,
-    openEditDialog,
     openDeactivateDialog,
     openReactivateDialog,
     openDeleteDialog,
@@ -175,26 +168,6 @@ export function UsersAccessTab() {
     return result;
   }, [users, search, roleFilter, statusFilter, sortConfig, agencyPlanMap]);
 
-  const getRoleBadgeColor = (role: GlobalRole | null) => {
-    if (!role) return 'bg-muted';
-    return GLOBAL_ROLE_COLORS[role] || 'bg-muted';
-  };
-  
-  const getPlanBadgeColor = (plan: string | undefined) => {
-    switch (plan) {
-      case 'PRO': return 'bg-gradient-to-r from-purple-500 to-pink-500 text-white';
-      case 'STARTER': return 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white';
-      case 'FREE': return 'bg-muted text-muted-foreground';
-      default: return 'bg-muted/50';
-    }
-  };
-
-  // Handle edit dialog open - initialize local modules state
-  const handleOpenEditDialog = (user: UserRow) => {
-    setLocalModules(user.enabled_modules);
-    openEditDialog(user);
-  };
-
   // Inline module toggle - sauvegarde immédiate
   const handleInlineModuleToggle = (user: UserRow, moduleKey: ModuleKey, enabled: boolean, optionKey?: string) => {
     const currentModules = user.enabled_modules || {};
@@ -204,7 +177,6 @@ export function UsersAccessTab() {
     let newModules: EnabledModules;
     
     if (optionKey) {
-      // Toggle d'une option
       const newOptions = { ...currentOptions, [optionKey]: enabled };
       const hasAnyOption = Object.values(newOptions).some(v => v === true);
       newModules = {
@@ -212,7 +184,6 @@ export function UsersAccessTab() {
         [moduleKey]: { enabled: hasAnyOption || enabled, options: newOptions }
       };
     } else {
-      // Toggle du module entier
       newModules = {
         ...currentModules,
         [moduleKey]: { enabled, options: currentOptions }
@@ -222,94 +193,48 @@ export function UsersAccessTab() {
     saveModulesMutation.mutate({ userId: user.id, enabledModules: newModules });
   };
 
-  // Module toggle handler (for edit dialog)
-  const handleModuleToggle = (moduleKey: ModuleKey, enabled: boolean) => {
-    setLocalModules(prev => {
-      const currentModule = prev?.[moduleKey];
-      const currentOptions = typeof currentModule === 'object' ? currentModule?.options || {} : {};
-      return {
-        ...prev,
-        [moduleKey]: { enabled, options: currentOptions }
-      };
-    });
-  };
-
-  // Module option toggle handler (for edit dialog)
-  const handleModuleOptionToggle = (moduleKey: ModuleKey, optionKey: string, enabled: boolean) => {
-    setLocalModules(prev => {
-      const currentModule = prev?.[moduleKey];
-      const wasEnabled = typeof currentModule === 'object' ? currentModule?.enabled ?? false : !!currentModule;
-      const currentOptions = typeof currentModule === 'object' ? currentModule?.options || {} : {};
-      
-      const newOptions = { ...currentOptions, [optionKey]: enabled };
-      const hasAnyOptionEnabled = Object.values(newOptions).some(v => v === true);
-      const shouldBeEnabled = enabled ? true : (wasEnabled || hasAnyOptionEnabled);
-      
-      return {
-        ...prev,
-        [moduleKey]: { enabled: shouldBeEnabled, options: newOptions }
-      };
-    });
-  };
-
-  // Fermeture du dialog : sauvegarde automatique des modules si modifiés
-  const handleCloseEditDialog = (open: boolean) => {
-    setEditDialogOpen(open);
-
-    if (!open && selectedUser) {
-      const prevJson = JSON.stringify(selectedUser.enabled_modules ?? null);
-      const nextJson = JSON.stringify(localModules ?? null);
-
-      if (prevJson !== nextJson) {
-        saveModulesMutation.mutate({ userId: selectedUser.id, enabledModules: localModules ?? null });
-      }
-
-      setLocalModules(null);
-      setSelectedUser(null);
-    }
-  };
-
-  // Sauvegarde unifiée: si l'email a changé, le sauvegarder aussi (via fonction backend), puis fermer le dialog
-  const handleSaveUser = async (payload: UpdateUserPayload) => {
-    if (!selectedUser) return;
-
-    const nextEmail = (payload.email ?? '').trim();
-    const emailChanged = !!nextEmail && nextEmail !== (selectedUser.email ?? '');
-
-    const data = {
-      first_name: payload.first_name,
-      last_name: payload.last_name,
-      agence: payload.agence,
-      agency_id: payload.agency_id,
-      role_agence: payload.role_agence,
-      global_role: payload.global_role,
-      support_level: payload.support_level,
-      apogee_user_id: payload.apogee_user_id,
-    };
-
+  // Save user from dialog
+  const handleSaveUser = async (user: UserRow, data: {
+    first_name: string;
+    last_name: string;
+    email: string;
+    agence: string;
+    agency_id: string | null;
+    role_agence: string;
+    global_role: GlobalRole;
+    apogee_user_id: number | null;
+  }) => {
+    // Check if email changed
+    const emailChanged = data.email !== user.email;
+    
     try {
-      if (emailChanged) {
-        await updateEmailMutation.mutateAsync({ userId: selectedUser.id, newEmail: nextEmail });
+      if (emailChanged && data.email) {
+        await updateEmailMutation.mutateAsync({ userId: user.id, newEmail: data.email });
       }
-
-      await updateUserMutation.mutateAsync({ userId: selectedUser.id, data, enabledModules: localModules });
-
-      setEditDialogOpen(false);
-      setLocalModules(null);
-      setSelectedUser(null);
+      
+      await updateUserMutation.mutateAsync({
+        userId: user.id,
+        data: {
+          first_name: data.first_name,
+          last_name: data.last_name,
+          agence: data.agence,
+          agency_id: data.agency_id,
+          role_agence: data.role_agence,
+          global_role: data.global_role,
+          apogee_user_id: data.apogee_user_id,
+        },
+        enabledModules: user.enabled_modules,
+      });
     } catch {
-      // Les toasts d'erreur sont gérés par les mutations
+      // Errors handled by mutations
     }
   };
 
-  // Convert UserRow to UserProfile format for dialogs (mémoïsé pour éviter les resets de formulaire)
+  // Convert UserRow to profile for dialogs
   const userAsProfile = useMemo(() => {
     if (!selectedUser) return null;
-    return {
-      ...selectedUser,
-      enabled_modules: localModules ?? selectedUser.enabled_modules,
-    };
-  }, [selectedUser, localModules]);
+    return selectedUser;
+  }, [selectedUser]);
 
   // Sortable header component
   const SortableHeader = ({ columnKey, children, className }: { columnKey: SortKey; children: React.ReactNode; className?: string }) => (
@@ -334,7 +259,7 @@ export function UsersAccessTab() {
               Utilisateurs
             </CardTitle>
             <CardDescription>
-              Gérez les utilisateurs et leurs accès spéciaux
+              Gérez les utilisateurs et leurs accès
             </CardDescription>
           </div>
           {capabilities.canCreateRoles.length > 0 && (
@@ -391,7 +316,7 @@ export function UsersAccessTab() {
                 <SortableHeader columnKey="agence" className="hidden md:table-cell">Agence</SortableHeader>
                 <TableHead className="hidden sm:table-cell">Accès spéciaux</TableHead>
                 <SortableHeader columnKey="statut" className="hidden sm:table-cell">Statut</SortableHeader>
-                <TableHead className="text-right w-[50px]"></TableHead>
+                <TableHead className="text-right w-[80px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -469,17 +394,27 @@ export function UsersAccessTab() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <UserAccessDialog
+                          <UserFullDialog
                             userId={user.id}
                             userName={`${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email || 'Utilisateur'}
+                            userEmail={user.email || ''}
+                            firstName={user.first_name || ''}
+                            lastName={user.last_name || ''}
                             globalRole={user.global_role as GlobalRole}
                             agencyId={user.agency_id}
+                            agencySlug={user.agence}
                             agencyLabel={user.agency?.label}
+                            roleAgence={user.role_agence}
+                            isActive={user.is_active ?? true}
+                            mustChangePassword={user.must_change_password ?? false}
+                            apogeeUserId={user.apogee_user_id}
                             enabledModules={user.enabled_modules}
                             planKey={user.agency_id ? agencyPlanMap.get(user.agency_id) : undefined}
                             planLabel={user.agency_id ? agencyPlanMap.get(user.agency_id) : undefined}
                             canEdit={canEditPlan || canEdit}
                             pageOverrides={userPageOverridesMap.get(user.id) || []}
+                            agencies={agencies}
+                            assignableRoles={capabilities.canEditRoles}
                             onPlanChange={(newPlanKey) => {
                               if (user.agency_id) {
                                 updateSubscription.mutate({ agencyId: user.agency_id, tierKey: newPlanKey });
@@ -491,6 +426,16 @@ export function UsersAccessTab() {
                             onPageOverrideToggle={(pagePath, enabled) => {
                               pageOverrideMutation.mutate({ userId: user.id, pagePath, enabled });
                             }}
+                            onSaveUser={(data) => handleSaveUser(user, data)}
+                            onUpdateEmail={(newEmail) => {
+                              updateEmailMutation.mutate({ userId: user.id, newEmail });
+                            }}
+                            onResetPassword={(newPassword) => {
+                              resetPasswordMutation.mutate({ userId: user.id, newPassword });
+                            }}
+                            isSaving={updateUserMutation.isPending}
+                            isEmailPending={updateEmailMutation.isPending}
+                            isPasswordPending={resetPasswordMutation.isPending}
                           />
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -499,16 +444,6 @@ export function UsersAccessTab() {
                               </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem 
-                              onClick={() => handleOpenEditDialog(user)}
-                              disabled={!canEdit}
-                            >
-                              <Pencil className="h-4 w-4 mr-2" />
-                              Modifier
-                            </DropdownMenuItem>
-                            
-                            <DropdownMenuSeparator />
-                            
                             {user.is_active ? (
                               <DropdownMenuItem 
                                 onClick={() => openDeactivateDialog(user)}
@@ -568,29 +503,6 @@ export function UsersAccessTab() {
         agencies={agencies}
         currentUserLevel={currentUserLevel}
         currentUserAgency={currentUserAgency}
-      />
-      
-      <EditUserDialog
-        user={userAsProfile}
-        open={editDialogOpen}
-        onOpenChange={handleCloseEditDialog}
-        onSave={handleSaveUser}
-        onUpdateEmail={(newEmail) => {
-          if (selectedUser) {
-            updateEmailMutation.mutate({ userId: selectedUser.id, newEmail });
-          }
-        }}
-        onResetPassword={(newPassword) => {
-          if (selectedUser) {
-            resetPasswordMutation.mutate({ userId: selectedUser.id, newPassword });
-          }
-        }}
-        isPending={updateUserMutation.isPending}
-        isEmailPending={updateEmailMutation.isPending}
-        isPasswordPending={resetPasswordMutation.isPending}
-        agencies={agencies}
-        assignableRoles={capabilities.canEditRoles}
-        canEditRoleAgence={true}
       />
       
       <DeactivateDialog
