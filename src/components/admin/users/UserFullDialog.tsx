@@ -325,7 +325,7 @@ export function UserFullDialog({
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] p-0 rounded-2xl overflow-hidden">
         {/* Header */}
-        <DialogHeader className="px-6 pt-5 pb-4 bg-gradient-to-r from-primary/5 to-primary/10 border-b">
+        <DialogHeader className="px-6 pt-5 pb-4 pr-14 bg-gradient-to-r from-primary/5 to-primary/10 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
