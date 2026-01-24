@@ -1,34 +1,29 @@
 /**
  * Gestion - Page unifiée simplifiée
- * 3 onglets : Utilisateurs, Plans Agences, Journal
+ * 2 onglets : Utilisateurs, Journal
+ * (Plans Agences maintenant géré inline depuis le dialog utilisateur)
  */
 
 import { useState } from 'react';
-import { Users, Layers, History } from 'lucide-react';
+import { Users, History } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { UsersAccessTab } from '@/components/admin/access-rights/tabs/UsersAccessTab';
-import { SubscriptionsTab } from '@/components/admin/access-rights/tabs/SubscriptionsTab';
 import { AuditHistoryTab } from '@/components/admin/access-rights/tabs/AuditHistoryTab';
-import { useAuth } from '@/contexts/AuthContext';
 
 export default function UnifiedManagementPage() {
   const [activeTab, setActiveTab] = useState('users');
-  const { hasGlobalRole } = useAuth();
-  
-  const isN4Plus = hasGlobalRole('franchisor_admin');
 
   const tabs = [
-    { id: 'users', label: 'Utilisateurs', icon: Users, visible: true },
-    { id: 'plans', label: 'Plans Agences', icon: Layers, visible: isN4Plus },
-    { id: 'journal', label: 'Journal', icon: History, visible: true },
-  ].filter(t => t.visible);
+    { id: 'users', label: 'Utilisateurs', icon: Users },
+    { id: 'journal', label: 'Journal', icon: History },
+  ];
 
   return (
     <div className="container py-6 space-y-6">
       <PageHeader
         title="Gestion"
-        subtitle="Utilisateurs, plans et historique"
+        subtitle="Utilisateurs et historique"
         backTo="/admin"
         backLabel="Administration"
       />
@@ -54,12 +49,6 @@ export default function UnifiedManagementPage() {
         <TabsContent value="users" className="mt-6">
           <UsersAccessTab />
         </TabsContent>
-        
-        {isN4Plus && (
-          <TabsContent value="plans" className="mt-6">
-            <SubscriptionsTab />
-          </TabsContent>
-        )}
         
         <TabsContent value="journal" className="mt-6">
           <AuditHistoryTab />

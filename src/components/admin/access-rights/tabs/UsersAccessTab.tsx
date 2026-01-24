@@ -16,13 +16,14 @@ import { GLOBAL_ROLE_LABELS, GLOBAL_ROLE_COLORS, type GlobalRole, GLOBAL_ROLES }
 import { isHardcodedProtectedUser } from '@/hooks/access-rights/useProtectedAccess';
 import { getVisibleRoleLabel, getVisibleRoleColor } from '@/lib/visibleRoleLabels';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAllAgencySubscriptions, useAccessRightsUsers, UserRow } from '@/hooks/access-rights';
+import { useAllAgencySubscriptions, useAccessRightsUsers, useUpdateAgencySubscription, UserRow } from '@/hooks/access-rights';
 import { CreateUserDialog, EditUserDialog, DeactivateDialog, ReactivateDialog, DeleteDialog } from '@/components/admin/users/UserDialogs';
 import { InlineModuleBadges } from '@/components/admin/users/InlineModuleBadges';
-import { UserAccessSummaryPopover } from '@/components/admin/users/UserAccessSummaryPopover';
+import { UserAccessDialog } from '@/components/admin/users/UserAccessDialog';
 import type { UpdateUserPayload } from '@/components/users/UserEditForm';
 import type { ModuleKey, EnabledModules } from '@/types/modules';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 type SortKey = 'name' | 'email' | 'poste' | 'role' | 'agence' | 'plan' | 'statut';
 type SortDirection = 'asc' | 'desc';
@@ -76,6 +77,11 @@ export function UsersAccessTab() {
   } = useAccessRightsUsers();
   
   const { data: subscriptions } = useAllAgencySubscriptions();
+  const updateSubscription = useUpdateAgencySubscription();
+  const { hasGlobalRole } = useAuth();
+  
+  // Admin N4+ can edit agency plans
+  const canEditPlan = hasGlobalRole('franchisor_admin');
   
   // Create agency plan map
   const agencyPlanMap = useMemo(() => {
@@ -449,13 +455,24 @@ export function UsersAccessTab() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <UserAccessSummaryPopover
+                          <UserAccessDialog
                             userId={user.id}
                             userName={`${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email || 'Utilisateur'}
                             globalRole={user.global_role as GlobalRole}
+                            agencyId={user.agency_id}
                             agencyLabel={user.agency?.label}
                             enabledModules={user.enabled_modules}
+                            planKey={user.agency_id ? agencyPlanMap.get(user.agency_id) : undefined}
                             planLabel={user.agency_id ? agencyPlanMap.get(user.agency_id) : undefined}
+                            canEdit={canEditPlan || canEdit}
+                            onPlanChange={(newPlanKey) => {
+                              if (user.agency_id) {
+                                updateSubscription.mutate({ agencyId: user.agency_id, tierKey: newPlanKey });
+                              }
+                            }}
+                            onModuleToggle={(moduleKey, enabled, optionKey) => {
+                              handleInlineModuleToggle(user, moduleKey, enabled, optionKey);
+                            }}
                           />
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
