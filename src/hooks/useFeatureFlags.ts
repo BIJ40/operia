@@ -170,8 +170,10 @@ export const MODULE_GROUP_LABELS: Record<string, string> = {
   support: 'Support',
   academy: 'Academy',
   reseau: 'Réseau Franchiseur',
-  commercial: 'Commercial',
   admin: 'Administration',
+  parc: 'Parc & Équipements',
+  projects: 'Gestion de Projet',
+  search: 'Recherche',
 };
 
 /**
