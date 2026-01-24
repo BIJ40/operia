@@ -31,13 +31,13 @@ import {
   type SitemapSection 
 } from "@/config/sitemapData";
 import { GLOBAL_ROLE_LABELS, type GlobalRole } from "@/types/globalRoles";
-import { MODULE_DEFINITIONS } from "@/types/modules";
+import { MODULE_LABELS } from "@/permissions/constants";
+import { toast } from "sonner";
 
-// Build MODULE_LABELS from definitions
-const MODULE_LABELS = MODULE_DEFINITIONS.reduce((acc, def) => {
-  acc[def.key] = def.label;
-  return acc;
-}, {} as Record<string, string>);
+export interface SitemapTreeProps {
+  routes: RouteMetadata[];
+  groupedBySection: Map<SitemapSection, RouteMetadata[]>;
+}
 
 // Role level for ordering badges
 const ROLE_LEVELS: Record<GlobalRole, number> = {
@@ -265,7 +265,7 @@ function SectionGroup({
 }
 
 export function SitemapTree({ routes, groupedBySection }: SitemapTreeProps) {
-  const sections = Array.from(groupedBySection.keys());
+  const sections = Array.from(groupedBySection.keys()) as SitemapSection[];
 
   if (routes.length === 0) {
     return (
