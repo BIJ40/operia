@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,14 +7,14 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Search, Settings2, Users, Save, Loader2, Printer, UserX } from 'lucide-react';
+import { Search, Settings2, Users, Save, Loader2, Printer, UserX, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RHCollaborator } from '@/types/rh-suivi';
 import { RHUnifiedTableHeader } from './RHUnifiedTableHeader';
 import { RHUnifiedTableRow } from './RHUnifiedTableRow';
+import { RHUnifiedTabs } from './RHUnifiedTabs';
 import { RHDocumentPopup, DocumentType, DOCUMENT_TYPES } from './RHDocumentPopup';
 import { 
-  TAB_CONFIG, 
   TAB_COLUMNS, 
   COLLABORATOR_CATEGORIES, 
   CollaboratorCategory,
@@ -27,6 +26,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { CollaboratorEpiSummary } from '@/hooks/epi/useCollaboratorsEpiSummary';
+import { useProfileCompleteness } from '@/hooks/rh/useProfileCompleteness';
 
 interface RHUnifiedTableProps {
   collaborators: RHCollaborator[];
@@ -174,19 +174,31 @@ export function RHUnifiedTable({
     return groups;
   }, [filteredCollaborators]);
 
-  // Stats
-  const stats = useMemo(() => ({
-    total: collaborators.length,
-    active: collaborators.filter(c => !c.leaving_date).length,
-    former: collaborators.filter(c => !!c.leaving_date).length,
-    administratif: groupedCollaborators.ADMINISTRATIF.length,
-    terrain: groupedCollaborators.TERRAIN.length,
-  }), [collaborators, groupedCollaborators]);
+  // Stats avec progression moyenne
+  const stats = useMemo(() => {
+    const active = collaborators.filter(c => !c.leaving_date);
+    return {
+      total: collaborators.length,
+      active: active.length,
+      former: collaborators.filter(c => !!c.leaving_date).length,
+      administratif: groupedCollaborators.ADMINISTRATIF.length,
+      terrain: groupedCollaborators.TERRAIN.length,
+    };
+  }, [collaborators, groupedCollaborators]);
 
   // Colonnes disponibles pour l'onglet actif
   const availableColumns = useMemo(() => {
     return TAB_COLUMNS[activeTab].flatMap(group => group.columns);
   }, [activeTab]);
+
+  // Compteurs d'alertes par onglet
+  const alertCounts = useMemo(() => {
+    const counts: Partial<Record<RHTabId, number>> = {};
+    // Alertes sécurité (EPI à renouveler)
+    const epiAlerts = epiSummaries.filter(s => (s.renewal_due_count || 0) > 0).length;
+    if (epiAlerts > 0) counts.securite = epiAlerts;
+    return counts;
+  }, [epiSummaries]);
 
   const handleDocumentClick = (collaboratorId: string, docType: DocumentType) => {
     const collab = collaborators.find(c => c.id === collaboratorId);
@@ -213,47 +225,40 @@ export function RHUnifiedTable({
   }
 
   return (
-    <div className="space-y-4">
-      {/* Stats rapides - compactes */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-        <div className="bg-gradient-to-br from-helpconfort-blue/10 via-background to-background rounded-lg px-3 py-2 border border-helpconfort-blue/15 border-l-4 border-l-helpconfort-blue">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Total</span>
-            <Users className="h-3.5 w-3.5 text-helpconfort-blue" />
-          </div>
-          <p className="text-lg font-bold">{stats.total}</p>
+    <div className="space-y-3">
+      {/* Stats rapides - Version ultra compacte en ligne */}
+      <div className="flex flex-wrap items-center gap-2 p-2 bg-muted/20 rounded-lg border">
+        <div className="flex items-center gap-1.5 px-2 py-1 bg-background rounded-md border">
+          <Users className="h-3.5 w-3.5 text-primary" />
+          <span className="text-xs text-muted-foreground">Total</span>
+          <span className="text-sm font-bold">{stats.total}</span>
         </div>
-        <div className="bg-gradient-to-br from-green-500/10 via-background to-background rounded-lg px-3 py-2 border border-green-500/15 border-l-4 border-l-green-500">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Actifs</span>
-            <div className="w-2 h-2 rounded-full bg-green-500" />
-          </div>
-          <p className="text-lg font-bold text-green-600">{stats.active}</p>
+        <div className="flex items-center gap-1.5 px-2 py-1 bg-background rounded-md border">
+          <div className="w-2 h-2 rounded-full bg-green-500" />
+          <span className="text-xs text-muted-foreground">Actifs</span>
+          <span className="text-sm font-bold text-green-600">{stats.active}</span>
         </div>
-        <div className="bg-gradient-to-br from-blue-500/10 via-background to-background rounded-lg px-3 py-2 border border-blue-500/15 border-l-4 border-l-blue-500">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Administratif</span>
-            <span className="text-xs">🏢</span>
-          </div>
-          <p className="text-lg font-bold text-blue-600">{stats.administratif}</p>
+        <div className="flex items-center gap-1.5 px-2 py-1 bg-background rounded-md border">
+          <span className="text-xs">🏢</span>
+          <span className="text-xs text-muted-foreground">Admin</span>
+          <span className="text-sm font-bold text-blue-600">{stats.administratif}</span>
         </div>
-        <div className="bg-gradient-to-br from-orange-500/10 via-background to-background rounded-lg px-3 py-2 border border-orange-500/15 border-l-4 border-l-orange-500">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Terrain</span>
-            <span className="text-xs">🔧</span>
-          </div>
-          <p className="text-lg font-bold text-orange-600">{stats.terrain}</p>
+        <div className="flex items-center gap-1.5 px-2 py-1 bg-background rounded-md border">
+          <span className="text-xs">🔧</span>
+          <span className="text-xs text-muted-foreground">Terrain</span>
+          <span className="text-sm font-bold text-orange-600">{stats.terrain}</span>
         </div>
-        <button
+        <div className="flex-1" />
+        <Button
+          variant="outline"
+          size="sm"
           onClick={onPrintMatrix}
-          className="bg-gradient-to-br from-purple-500/10 via-background to-background rounded-lg px-3 py-2 border border-purple-500/15 border-l-4 border-l-purple-500 hover:shadow-md transition-all cursor-pointer text-left"
+          className="h-7 px-2 gap-1 text-xs"
         >
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Compétences</span>
-            <Printer className="h-3.5 w-3.5 text-purple-500" />
-          </div>
-          <p className="text-sm font-semibold text-purple-600">Imprimer</p>
-        </button>
+          <Printer className="h-3 w-3" />
+          <span className="hidden sm:inline">Matrice compétences</span>
+          <span className="sm:hidden">Imprimer</span>
+        </Button>
       </div>
 
       {/* Barre de recherche + toggle anciens + onglets + toggle colonnes */}
@@ -298,15 +303,11 @@ export function RHUnifiedTable({
         </div>
 
         <div className="flex-1 overflow-x-auto">
-          <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as RHTabId)}>
-            <TabsList className="inline-flex h-auto w-auto min-w-full md:w-full md:grid md:grid-cols-7">
-              {TAB_CONFIG.map((tab) => (
-                <TabsTrigger key={tab.id} value={tab.id} className="text-sm px-4 py-2 whitespace-nowrap">
-                  {tab.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+          <RHUnifiedTabs 
+            activeTab={activeTab} 
+            onTabChange={onTabChange}
+            alertCounts={alertCounts}
+          />
         </div>
 
         <div className="flex items-center gap-2 shrink-0">

@@ -18,24 +18,33 @@ export function RHUnifiedTableHeader({ activeTab, visibleColumns }: RHUnifiedTab
   })).filter(group => group.columns.length > 0);
 
   return (
-    <TableHeader className="sticky top-0 z-10 bg-background">
-      {/* Ligne 1 : Headers groupés - TOUJOURS afficher la partie COLLABORATEUR */}
-      <TableRow className="border-b-0">
-        {/* Colonnes fixes - COLLABORATEUR toujours visible avec largeur fixe */}
+    <TableHeader className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm">
+      {/* Ligne 1 : Headers groupés avec design épuré */}
+      <TableRow className="border-b border-border/50 h-9">
+        {/* Colonne avatar/statut */}
         <TableHead 
-          colSpan={FIXED_COLUMNS.length + 1} 
-          className="bg-muted/50 text-center font-semibold border-r min-w-[200px] md:min-w-[320px] md:w-[320px]"
+          rowSpan={2} 
+          className="w-20 min-w-[80px] px-2 bg-muted/30 text-center text-xs font-semibold border-r"
         >
-          👤 COLLABORATEUR
+          👤
         </TableHead>
         
-        {/* Headers groupés des colonnes de l'onglet */}
-        {visibleGroups.map((group) => (
+        {/* Colonnes fixes - Nom/Prénom */}
+        <TableHead 
+          colSpan={FIXED_COLUMNS.length} 
+          className="bg-muted/30 text-center text-xs font-semibold border-r px-2"
+        >
+          Collaborateur
+        </TableHead>
+        
+        {/* Headers groupés des colonnes de l'onglet - Plus compacts */}
+        {visibleGroups.map((group, idx) => (
           <TableHead
             key={group.id}
             colSpan={group.columns.length}
             className={cn(
-              "text-center font-semibold border-r last:border-r-0",
+              "text-center text-xs font-semibold px-2",
+              idx < visibleGroups.length - 1 && "border-r",
               group.className
             )}
           >
@@ -44,34 +53,32 @@ export function RHUnifiedTableHeader({ activeTab, visibleColumns }: RHUnifiedTab
         ))}
       </TableRow>
       
-      {/* Ligne 2 : Colonnes détaillées */}
-      <TableRow>
-        {/* Colonne statut (indicateur visuel) - largeur fixe */}
-        <TableHead className="w-10 min-w-[40px] px-2 bg-muted/30"></TableHead>
-        
-        {/* Colonnes fixes avec largeurs fixes */}
+      {/* Ligne 2 : Colonnes détaillées - Plus compactes */}
+      <TableRow className="h-8">
+        {/* Colonnes fixes avec largeurs réduites */}
         {FIXED_COLUMNS.map((col, idx) => (
           <TableHead 
             key={col.id} 
             className={cn(
-              "font-medium whitespace-nowrap bg-muted/30",
-              col.id === 'last_name' && "min-w-[100px] w-[100px]",
-              col.id === 'first_name' && "min-w-[100px] w-[100px]",
-              col.id === 'type' && "min-w-[80px] w-[80px]"
+              "text-xs font-medium whitespace-nowrap bg-muted/20 px-2",
+              col.width,
+              idx === FIXED_COLUMNS.length - 1 && "border-r"
             )}
           >
             {col.label}
           </TableHead>
         ))}
         
-        {/* Colonnes de l'onglet actif */}
-        {visibleGroups.map((group) => (
+        {/* Colonnes de l'onglet actif - Avec largeurs définies */}
+        {visibleGroups.map((group, groupIdx) => (
           group.columns.map((col, colIdx) => (
             <TableHead 
               key={col.id}
               className={cn(
-                "font-medium whitespace-nowrap",
-                colIdx === 0 && "border-l",
+                "text-xs font-medium whitespace-nowrap px-2",
+                col.width,
+                colIdx === 0 && groupIdx > 0 && "border-l",
+                colIdx === group.columns.length - 1 && groupIdx < visibleGroups.length - 1 && "border-r",
                 group.className
               )}
             >
