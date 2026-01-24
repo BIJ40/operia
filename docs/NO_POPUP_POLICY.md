@@ -19,6 +19,7 @@ This policy prohibits any component from automatically opening a Dialog, AlertDi
 | Component | Location | Justification |
 |-----------|----------|---------------|
 | `ChangePasswordDialog` | `src/App.tsx` | Security requirement - forces password change when `must_change_password=true` |
+| `WelcomeWizardGate` | `src/App.tsx` | First-login onboarding - business requirement to collect essential user preferences |
 
 ## Future Reactivation
 
