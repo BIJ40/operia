@@ -7,7 +7,8 @@ import {
   Variable, 
   Globe,
   Layers,
-  Lock
+  Lock,
+  Crown
 } from "lucide-react";
 import { getSitemapStats } from "@/config/sitemapData";
 
@@ -44,11 +45,18 @@ export function SitemapStats() {
       bgColor: "bg-violet-100 dark:bg-violet-900/30",
     },
     {
+      label: "Plan requis",
+      value: stats.routesWithPlanRequired,
+      icon: Crown,
+      color: "text-amber-600",
+      bgColor: "bg-amber-100 dark:bg-amber-900/30",
+    },
+    {
       label: "Guards spéciaux",
       value: stats.routesWithSpecialGuard,
       icon: Lock,
-      color: "text-amber-600",
-      bgColor: "bg-amber-100 dark:bg-amber-900/30",
+      color: "text-orange-600",
+      bgColor: "bg-orange-100 dark:bg-orange-900/30",
     },
     {
       label: "Redirections",
@@ -56,13 +64,6 @@ export function SitemapStats() {
       icon: ArrowRight,
       color: "text-muted-foreground",
       bgColor: "bg-muted",
-    },
-    {
-      label: "Routes dynamiques",
-      value: stats.dynamicRoutes,
-      icon: Variable,
-      color: "text-cyan-600",
-      bgColor: "bg-cyan-100 dark:bg-cyan-900/30",
     },
     {
       label: "Routes publiques",

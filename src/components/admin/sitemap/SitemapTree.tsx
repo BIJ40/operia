@@ -33,6 +33,7 @@ import {
 import { type GlobalRole } from "@/types/globalRoles";
 import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 import { MODULE_LABELS } from "@/permissions/constants";
+import { getPlanLabel } from "@/config/planTiers";
 import { toast } from "sonner";
 
 export interface SitemapTreeProps {
@@ -184,8 +185,23 @@ function RouteItem({ route }: { route: RouteMetadata }) {
           </Tooltip>
         )}
 
+        {/* Plan Required */}
+        {route.planRequired && (
+          <Tooltip>
+            <TooltipTrigger>
+              <Badge variant="outline" className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border-amber-300 gap-1">
+                <Lock className="w-3 h-3" />
+                {getPlanLabel(route.planRequired)}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              Plan agence minimum: {getPlanLabel(route.planRequired)}
+            </TooltipContent>
+          </Tooltip>
+        )}
+
         {/* Public route indicator */}
-        {!roleGuard && !moduleGuard && !specialGuard && !route.isRedirect && (
+        {!roleGuard && !moduleGuard && !specialGuard && !route.isRedirect && !route.planRequired && (
           <Tooltip>
             <TooltipTrigger>
               <Badge variant="outline" className="bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 gap-1">

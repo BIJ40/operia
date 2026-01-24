@@ -1,5 +1,6 @@
 import type { GlobalRole } from '@/types/globalRoles';
 import type { ModuleKey } from '@/types/modules';
+import type { PlanKey } from '@/config/planTiers';
 
 export type GuardType = 'RoleGuard' | 'ModuleGuard' | 'FaqAdminGuard' | 'ApporteurGuard' | 'SupportConsoleGuard';
 
@@ -15,6 +16,8 @@ export interface RouteMetadata {
   component: string;
   section: SitemapSection;
   guards: RouteGuards;
+  /** Plan agence minimum requis (STARTER, PRO, etc.) */
+  planRequired?: PlanKey;
   isRedirect?: boolean;
   redirectTo?: string;
   isDynamic?: boolean;
@@ -244,6 +247,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     label: 'Hub Statistiques',
     component: 'StatsHub',
     section: 'pilotage',
+    planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
       moduleGuard: { moduleKey: 'pilotage_agence', requiredOption: 'stats_hub' },
@@ -264,6 +268,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     label: 'Veille Apporteurs',
     component: 'VeilleApporteursPage',
     section: 'pilotage',
+    planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
       moduleGuard: { moduleKey: 'pilotage_agence', requiredOption: 'veille_apporteurs' },
@@ -295,6 +300,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     label: 'Dashboard Diffusion',
     component: 'DiffusionDashboard',
     section: 'pilotage',
+    planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
       moduleGuard: { moduleKey: 'pilotage_agence', requiredOption: 'diffusion' },
@@ -325,6 +331,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     label: 'Mes Apporteurs',
     component: 'MesApporteursPage',
     section: 'pilotage',
+    planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
       moduleGuard: { moduleKey: 'pilotage_agence', requiredOption: 'mes_apporteurs' },
@@ -335,6 +342,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     label: 'Carte des RDV',
     component: 'RdvMapPage',
     section: 'pilotage',
+    planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
       moduleGuard: { moduleKey: 'pilotage_agence', requiredOption: 'carte_rdv' },
@@ -431,6 +439,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     label: 'RH Index',
     component: 'RHIndex',
     section: 'rh',
+    planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
       moduleGuard: { moduleKey: 'rh' },
@@ -441,6 +450,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     label: 'Suivi Collaborateurs',
     component: 'RHSuiviIndex',
     section: 'rh',
+    planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
       moduleGuard: { moduleKey: 'rh', requiredOptions: ['rh_viewer', 'rh_admin'] },
@@ -451,6 +461,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     label: 'Fiche Collaborateur',
     component: 'RHCollaborateurPage',
     section: 'rh',
+    planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
       moduleGuard: { moduleKey: 'rh', requiredOptions: ['rh_viewer', 'rh_admin'] },
@@ -462,6 +473,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     label: 'Plannings Techniciens',
     component: 'PlanningTechniciensSemaine',
     section: 'rh',
+    planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
       moduleGuard: { moduleKey: 'rh' },
@@ -1172,8 +1184,29 @@ export function getSitemapStats() {
     routesWithRoleGuard: getRoutesWithRoleGuard().length,
     routesWithModuleGuard: getRoutesWithModuleGuard().length,
     routesWithSpecialGuard: getRoutesWithSpecialGuard().length,
+    routesWithPlanRequired: getRoutesWithPlanRequired().length,
     publicRoutes: getPublicRoutes().length,
     modulesUsed: getAllModulesUsed().length,
     sections: getAllSections().length,
   };
+}
+
+/**
+ * Retourne les routes nécessitant un plan agence spécifique
+ */
+export function getRoutesWithPlanRequired(): RouteMetadata[] {
+  return SITEMAP_ROUTES.filter(route => route.planRequired);
+}
+
+/**
+ * Retourne les plans utilisés dans les routes
+ */
+export function getAllPlansUsed(): string[] {
+  const plans = new Set<string>();
+  SITEMAP_ROUTES.forEach(route => {
+    if (route.planRequired) {
+      plans.add(route.planRequired);
+    }
+  });
+  return [...plans];
 }
