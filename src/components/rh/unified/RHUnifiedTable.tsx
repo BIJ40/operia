@@ -252,16 +252,23 @@ export function RHUnifiedTable({
         onPrintMatrix={onPrintMatrix}
       />
 
-      {/* Barre de recherche + toggle anciens + onglets + toggle colonnes */}
-      <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="relative w-full lg:w-80">
+      {/* Onglets sur toute la largeur */}
+      <RHUnifiedTabs 
+        activeTab={activeTab} 
+        onTabChange={onTabChange}
+        alertCounts={alertCounts}
+      />
+
+      {/* Barre de recherche + toggle anciens + actions */}
+      <div className="flex flex-wrap gap-3 items-center justify-between">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="relative w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Rechercher un collaborateur..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 h-9"
             />
           </div>
           
@@ -293,15 +300,7 @@ export function RHUnifiedTable({
           )}
         </div>
 
-        <div className="flex-1 overflow-x-auto">
-          <RHUnifiedTabs 
-            activeTab={activeTab} 
-            onTabChange={onTabChange}
-            alertCounts={alertCounts}
-          />
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2">
           {/* Bouton sauvegarder - icône seule avec tooltip */}
           <TooltipProvider>
             <Tooltip>
