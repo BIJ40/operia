@@ -7,7 +7,8 @@ import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { hasMinRole } from '@/permissions';
-import { GlobalRole, GLOBAL_ROLE_LABELS } from '@/types/globalRoles';
+import { GlobalRole } from '@/types/globalRoles';
+import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 import { Loader2, ShieldX } from 'lucide-react';
 
 interface RoleGuardProps {
@@ -98,7 +99,7 @@ function AccessDeniedPage({
       </p>
       <p className="text-sm text-muted-foreground">
         Niveau requis : <span className="font-semibold text-foreground">
-          {GLOBAL_ROLE_LABELS[requiredRole]}
+          {VISIBLE_ROLE_LABELS[requiredRole]}
         </span>
       </p>
     </div>

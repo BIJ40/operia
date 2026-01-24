@@ -11,7 +11,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Search, X, Filter } from "lucide-react";
 import { SECTION_LABELS, type SitemapSection } from "@/config/sitemapData";
-import { GLOBAL_ROLE_LABELS, type GlobalRole } from "@/types/globalRoles";
+import { type GlobalRole } from "@/types/globalRoles";
+import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 import { MODULE_DEFINITIONS, type ModuleKey } from "@/types/modules";
 import { MODULE_LABELS } from "@/permissions/constants";
 import {
@@ -139,7 +140,7 @@ export function SitemapFilters({ filters, onChange }: SitemapFiltersProps) {
                   <SelectItem value="all">Tous les rôles</SelectItem>
                   {ALL_ROLES.map((role) => (
                     <SelectItem key={role} value={role}>
-                      {GLOBAL_ROLE_LABELS[role]}
+                      {VISIBLE_ROLE_LABELS[role]}
                     </SelectItem>
                   ))}
                 </SelectContent>

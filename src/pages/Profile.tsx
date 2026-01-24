@@ -22,7 +22,8 @@ import {
   Upload
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { GLOBAL_ROLE_LABELS, GLOBAL_ROLE_COLORS, GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
+import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
+import { VISIBLE_ROLE_LABELS, VISIBLE_ROLE_COLORS } from '@/lib/visibleRoleLabels';
 import { MODULE_DEFINITIONS, EnabledModules } from '@/types/modules';
 import { ALL_USER_QUERY_PATTERNS } from '@/lib/queryKeys';
 
@@ -285,8 +286,8 @@ export default function Profile() {
                   {profile?.email || 'Pas d\'email'}
                 </CardDescription>
                 {effectiveRole && (
-                  <Badge className={`mt-2 ${GLOBAL_ROLE_COLORS[effectiveRole] || ''}`}>
-                    N{GLOBAL_ROLES[effectiveRole]} – {GLOBAL_ROLE_LABELS[effectiveRole]}
+                  <Badge className={`mt-2 ${VISIBLE_ROLE_COLORS[effectiveRole] || ''}`}>
+                    {VISIBLE_ROLE_LABELS[effectiveRole]}
                   </Badge>
                 )}
               </div>

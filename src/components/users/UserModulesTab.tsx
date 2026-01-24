@@ -1,5 +1,6 @@
 import { memo, useState, useMemo } from 'react';
-import { GlobalRole, GLOBAL_ROLES, GLOBAL_ROLE_LABELS } from '@/types/globalRoles';
+import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
+import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 import { MODULE_DEFINITIONS, EnabledModules, ModuleKey, canAccessModule } from '@/types/modules';
 import { MODULE_OPTION_MIN_ROLES } from '@/permissions/constants';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -659,7 +660,7 @@ export const UserModulesTab = memo(function UserModulesTab({
                                 <div className="mt-3 flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 p-2 rounded">
                                   <AlertTriangle className="w-4 h-4 shrink-0" />
                                   <span>
-                                    Cette permission nécessite un rôle {perm.minRole ? GLOBAL_ROLE_LABELS[perm.minRole] : 'supérieur'}
+                                    Cette permission nécessite un rôle {perm.minRole ? VISIBLE_ROLE_LABELS[perm.minRole] : 'supérieur'}
                                   </span>
                                 </div>
                               )}

@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Check, Lock, X } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { GLOBAL_ROLE_LABELS, GlobalRole } from '@/types/globalRoles';
+import { GlobalRole } from '@/types/globalRoles';
+import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 import { MODULE_DEFINITIONS } from '@/types/modules';
 import { DEFAULT_MODULES_BY_ROLE } from '@/config/modulesByRole';
 import { ROLE_HIERARCHY, MODULE_OPTION_MIN_ROLES, MODULE_MIN_ROLES } from '@/permissions';
@@ -45,9 +46,9 @@ function RoleTemplateCard({ role }: { role: GlobalRole }) {
         <div className="flex items-center justify-between w-full pr-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className={`font-mono text-xs px-1.5 py-0 ${getRoleBadgeColor(role)}`}>
-              N{roleLevel}
+              {VISIBLE_ROLE_LABELS[role]?.charAt(0) || 'U'}
             </Badge>
-            <span className="font-medium">{GLOBAL_ROLE_LABELS[role]}</span>
+            <span className="font-medium">{VISIBLE_ROLE_LABELS[role]}</span>
           </div>
           <span className="text-xs text-muted-foreground">{enabledModules.length} modules</span>
         </div>

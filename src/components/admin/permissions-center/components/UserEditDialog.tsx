@@ -25,7 +25,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { Crown, Layers, Wand2, Save, Loader2, ChevronRight, History } from 'lucide-react';
-import { GlobalRole, GLOBAL_ROLE_LABELS, GLOBAL_ROLES } from '@/types/globalRoles';
+import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
+import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 import { MODULE_DEFINITIONS, ModuleKey, EnabledModules, getDefaultModulesForRole, ModuleOptionsState } from '@/types/modules';
 import { getUserManagementCapabilities } from '@/config/roleMatrix';
 import { useAuth } from '@/contexts/AuthContext';
@@ -170,7 +171,7 @@ export function UserEditDialog({ user, open, onOpenChange }: UserEditDialogProps
     if (!selectedRole) return;
     const template = getDefaultModulesForRole(selectedRole);
     setModules(template);
-    toast.success(`Template ${GLOBAL_ROLE_LABELS[selectedRole]} appliqué`);
+    toast.success(`Template ${VISIBLE_ROLE_LABELS[selectedRole]} appliqué`);
   };
   
   // Helper: vérifier si un module est activé
@@ -241,16 +242,13 @@ export function UserEditDialog({ user, open, onOpenChange }: UserEditDialogProps
                   <SelectValue placeholder="Sélectionner un rôle" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(GLOBAL_ROLE_LABELS).map(([role, label]) => {
+                  {Object.entries(VISIBLE_ROLE_LABELS).map(([role, label]) => {
                     const canAssign = assignableRoles.includes(role as GlobalRole) || 
                       (currentUserRole === 'superadmin' && role !== 'superadmin');
                     return (
                       <SelectItem key={role} value={role} disabled={!canAssign}>
                         <span className="flex items-center gap-2">
-                          <Badge variant="outline" className="font-mono text-xs">
-                            N{GLOBAL_ROLES[role as GlobalRole]}
-                          </Badge>
-                          {label}
+                          {label as string}
                         </span>
                       </SelectItem>
                     );
@@ -318,7 +316,7 @@ export function UserEditDialog({ user, open, onOpenChange }: UserEditDialogProps
             </div>
             
             <div className="grid gap-2">
-              {Object.entries(GLOBAL_ROLE_LABELS).map(([role, label]) => (
+              {Object.entries(VISIBLE_ROLE_LABELS).map(([role, label]) => (
                 <Button
                   key={role}
                   variant={role === selectedRole ? 'default' : 'outline'}
@@ -330,10 +328,7 @@ export function UserEditDialog({ user, open, onOpenChange }: UserEditDialogProps
                     toast.success(`Template ${label} appliqué`);
                   }}
                 >
-                  <Badge variant="outline" className="mr-2 font-mono">
-                    N{GLOBAL_ROLES[role as GlobalRole]}
-                  </Badge>
-                  {label}
+                  {label as string}
                   <ChevronRight className="ml-auto h-4 w-4" />
                 </Button>
               ))}

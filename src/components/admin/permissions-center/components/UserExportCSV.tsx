@@ -5,7 +5,8 @@
 import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { GlobalRole, GLOBAL_ROLE_LABELS } from '@/types/globalRoles';
+import { GlobalRole } from '@/types/globalRoles';
+import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 
 interface UserForExport {
   id: string;
@@ -66,8 +67,8 @@ export function UserExportCSV({ users }: UserExportCSVProps) {
         user.email,
         user.first_name || '',
         user.last_name || '',
-        user.global_role ? GLOBAL_ROLE_LABELS[user.global_role] : '',
-        user.global_role ? `N${['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].indexOf(user.global_role)}` : '',
+        user.global_role ? VISIBLE_ROLE_LABELS[user.global_role] : '',
+        '', // Suppression de la colonne N (code technique)
         user.agency_label || '',
         countActiveModules(user.enabled_modules),
         getActiveModulesList(user.enabled_modules),

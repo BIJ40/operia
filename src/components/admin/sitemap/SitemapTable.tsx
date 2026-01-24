@@ -31,7 +31,7 @@ import {
   SECTION_LABELS, 
   type RouteMetadata,
 } from "@/config/sitemapData";
-import { GLOBAL_ROLE_LABELS } from "@/types/globalRoles";
+import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 import { MODULE_DEFINITIONS } from "@/types/modules";
 
 // Build MODULE_LABELS from definitions
@@ -198,7 +198,7 @@ export function SitemapTable({ routes }: SitemapTableProps) {
                       {route.guards.roleGuard && (
                         <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 gap-1">
                           <Shield className="w-3 h-3" />
-                          {GLOBAL_ROLE_LABELS[route.guards.roleGuard.minRole]?.split(' ')[0]}
+                          {VISIBLE_ROLE_LABELS[route.guards.roleGuard.minRole]?.split(' ')[0]}
                         </Badge>
                       )}
                       {route.guards.moduleGuard && (

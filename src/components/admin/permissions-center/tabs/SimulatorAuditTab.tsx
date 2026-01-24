@@ -12,7 +12,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { CheckCircle, XCircle, ArrowRight, FlaskConical, FileSearch } from 'lucide-react';
-import { GLOBAL_ROLE_LABELS, GlobalRole } from '@/types/globalRoles';
+import { GlobalRole } from '@/types/globalRoles';
+import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 import { MODULE_DEFINITIONS, ModuleKey } from '@/types/modules';
 import { hasAccess, explainAccess, getDefaultModulesForRole, ROLE_HIERARCHY, AccessTrace } from '@/permissions';
 
@@ -125,7 +126,7 @@ function PermissionSimulator() {
               <SelectContent>
                 {ROLES_ORDER.map(role => (
                   <SelectItem key={role} value={role}>
-                    N{ROLE_HIERARCHY[role]} - {GLOBAL_ROLE_LABELS[role]}
+                    {VISIBLE_ROLE_LABELS[role]}
                   </SelectItem>
                 ))}
               </SelectContent>

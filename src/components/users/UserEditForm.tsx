@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { GlobalRole, GLOBAL_ROLE_LABELS } from '@/types/globalRoles';
+import { GlobalRole } from '@/types/globalRoles';
+import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -296,7 +297,7 @@ export function UserEditForm({
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent className="bg-background z-50">
             {assignableRoles.map(role => (
-              <SelectItem key={role} value={role}>{GLOBAL_ROLE_LABELS[role]}</SelectItem>
+              <SelectItem key={role} value={role}>{VISIBLE_ROLE_LABELS[role]}</SelectItem>
             ))}
           </SelectContent>
         </Select>
