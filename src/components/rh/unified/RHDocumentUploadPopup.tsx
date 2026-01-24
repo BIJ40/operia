@@ -55,7 +55,6 @@ interface RHDocumentUploadPopupProps {
 interface FileToUpload {
   file: File;
   title: string;
-  employeeVisible: boolean;
 }
 
 export function RHDocumentUploadPopup({
@@ -92,7 +91,6 @@ export function RHDocumentUploadPopup({
         validFiles.push({
           file,
           title: file.name.replace(/\.[^/.]+$/, ''), // Remove extension
-          employeeVisible: false,
         });
       } else {
         toast.error(`${file.name}: ${validation.error}`);
@@ -120,10 +118,6 @@ export function RHDocumentUploadPopup({
     setFiles(prev => prev.map((f, i) => i === index ? { ...f, title } : f));
   };
 
-  const updateFileVisibility = (index: number, visible: boolean) => {
-    setFiles(prev => prev.map((f, i) => i === index ? { ...f, employeeVisible: visible } : f));
-  };
-
   const handleUpload = async () => {
     if (files.length === 0) return;
     
@@ -135,7 +129,7 @@ export function RHDocumentUploadPopup({
           doc_type: fieldConfig.docType,
           title: fileData.title,
           description: `Document associé: ${fieldLabel}`,
-          visibility: fileData.employeeVisible ? 'EMPLOYEE_VISIBLE' : 'ADMIN_ONLY',
+          visibility: 'ADMIN_ONLY',
           subfolder: fieldKey,
           file: fileData.file,
         });
@@ -236,14 +230,6 @@ export function RHDocumentUploadPopup({
                       onChange={(e) => updateFileTitle(index, e.target.value)}
                       className="h-8 text-sm"
                       placeholder="Titre..."
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs">Visible par le salarié</Label>
-                    <Switch
-                      checked={fileData.employeeVisible}
-                      onCheckedChange={(checked) => updateFileVisibility(index, checked)}
                     />
                   </div>
                 </div>

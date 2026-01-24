@@ -1,5 +1,6 @@
 /**
- * Types pour le coffre-fort RH - Phase 2.1
+ * Types pour les documents RH collaborateurs
+ * NOTE: Portail salarié désactivé v0.8.3 - documents stockés en interne uniquement
  */
 
 export type DocumentType =
@@ -23,12 +24,8 @@ export const DOCUMENT_TYPES: { value: DocumentType; label: string }[] = [
   { value: 'OTHER', label: 'Autre' },
 ];
 
+// Legacy: conservé pour compatibilité DB, mais seul ADMIN_ONLY est utilisé
 export type DocumentVisibility = 'ADMIN_ONLY' | 'EMPLOYEE_VISIBLE';
-
-export const DOCUMENT_VISIBILITY: { value: DocumentVisibility; label: string }[] = [
-  { value: 'ADMIN_ONLY', label: 'Dirigeant/RH uniquement' },
-  { value: 'EMPLOYEE_VISIBLE', label: 'Visible par le salarié' },
-];
 
 export interface CollaboratorDocument {
   id: string;

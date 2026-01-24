@@ -12,7 +12,6 @@ import {
   Upload, 
   FileText, 
   Eye,
-  EyeOff,
   Calendar
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -33,7 +32,6 @@ interface CollaboratorDocument {
   file_name: string;
   file_path: string;
   file_type: string | null;
-  employee_visible: boolean;
   created_at: string;
   period_year: number | null;
   period_month: number | null;
@@ -122,17 +120,6 @@ export function RHTabDocuments({ collaborator }: Props) {
                       <Badge variant="outline" className="shrink-0">
                         {getDocTypeLabel(doc.doc_type)}
                       </Badge>
-                      {doc.employee_visible ? (
-                        <Badge variant="secondary" className="gap-1 shrink-0">
-                          <Eye className="h-3 w-3" />
-                          Visible salarié
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="gap-1 shrink-0 text-muted-foreground">
-                          <EyeOff className="h-3 w-3" />
-                          RH uniquement
-                        </Badge>
-                      )}
                     </div>
                     <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
                       <span className="flex items-center gap-1">

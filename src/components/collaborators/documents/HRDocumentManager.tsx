@@ -39,7 +39,7 @@ import { useCollaboratorDocuments } from '@/hooks/useCollaboratorDocuments';
 import { useSubfolders } from '@/hooks/useSubfolders';
 import { useDocumentSearch } from '@/hooks/useDocumentSearch';
 import { useRHExport } from '@/hooks/useRHExport';
-import { CollaboratorDocument, DocumentType, DocumentVisibility, DOCUMENT_TYPES, DOCUMENT_VISIBILITY } from '@/types/collaboratorDocument';
+import { CollaboratorDocument, DocumentType, DocumentVisibility, DOCUMENT_TYPES } from '@/types/collaboratorDocument';
 import { DocumentCategoryTabs } from './DocumentCategoryTabs';
 import { DocumentGrid } from './DocumentGrid';
 import { DocumentDropzone } from './DocumentDropzone';
@@ -590,25 +590,7 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
                 </Select>
               </div>
 
-              {/* Visibility */}
-              <div className="space-y-2">
-                <Label>Visibilité</Label>
-                <Select
-                  value={currentUpload.visibility}
-                  onValueChange={(v) => updatePendingUpload('visibility', v as DocumentVisibility)}
-                >
-                  <SelectTrigger className="bg-background">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background z-50">
-                    {DOCUMENT_VISIBILITY.map((v) => (
-                      <SelectItem key={v.value} value={v.value}>
-                        {v.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Visibility - supprimé: tous les documents sont maintenant RH uniquement */}
             </div>
           )}
 
@@ -727,25 +709,7 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
               </Select>
             </div>
 
-            {/* Visibility */}
-            <div className="space-y-2">
-              <Label>Visibilité</Label>
-              <Select
-                value={editForm.visibility}
-                onValueChange={(v) => setEditForm((prev) => ({ ...prev, visibility: v as DocumentVisibility }))}
-              >
-                <SelectTrigger className="bg-background">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-background z-50">
-                  {DOCUMENT_VISIBILITY.map((v) => (
-                    <SelectItem key={v.value} value={v.value}>
-                      {v.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Visibility - supprimé: tous les documents sont maintenant RH uniquement */}
           </div>
 
           <DialogFooter>
