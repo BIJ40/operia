@@ -36,6 +36,7 @@ export default function AdminSitemap() {
     section: 'all',
     minRole: 'all',
     moduleKey: 'all',
+    planRequired: 'all',
     showRedirects: true,
     showDynamic: true,
   });
@@ -70,6 +71,13 @@ export default function AdminSitemap() {
       // Module filter
       if (filters.moduleKey !== 'all') {
         if (route.guards.moduleGuard?.moduleKey !== filters.moduleKey) {
+          return false;
+        }
+      }
+
+      // Plan required filter
+      if (filters.planRequired !== 'all') {
+        if (route.planRequired !== filters.planRequired) {
           return false;
         }
       }

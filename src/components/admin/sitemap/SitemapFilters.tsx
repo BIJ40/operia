@@ -15,6 +15,7 @@ import { type GlobalRole } from "@/types/globalRoles";
 import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 import { MODULE_DEFINITIONS, type ModuleKey } from "@/types/modules";
 import { MODULE_LABELS } from "@/permissions/constants";
+import { PlanKey, PLAN_LABELS } from "@/config/planTiers";
 import {
   Popover,
   PopoverContent,
@@ -27,6 +28,7 @@ export interface SitemapFiltersState {
   section: SitemapSection | 'all';
   minRole: GlobalRole | 'all';
   moduleKey: ModuleKey | 'all';
+  planRequired: PlanKey | 'all';
   showRedirects: boolean;
   showDynamic: boolean;
 }
@@ -48,11 +50,14 @@ const ALL_ROLES: GlobalRole[] = [
 
 const ALL_MODULES: ModuleKey[] = MODULE_DEFINITIONS.map(m => m.key);
 
+const ALL_PLANS: PlanKey[] = Object.keys(PLAN_LABELS) as PlanKey[];
+
 export function SitemapFilters({ filters, onChange }: SitemapFiltersProps) {
   const activeFiltersCount = [
     filters.section !== 'all',
     filters.minRole !== 'all',
     filters.moduleKey !== 'all',
+    filters.planRequired !== 'all',
     !filters.showRedirects,
     !filters.showDynamic,
   ].filter(Boolean).length;
@@ -63,6 +68,7 @@ export function SitemapFilters({ filters, onChange }: SitemapFiltersProps) {
       section: 'all',
       minRole: 'all',
       moduleKey: 'all',
+      planRequired: 'all',
       showRedirects: true,
       showDynamic: true,
     });
@@ -162,6 +168,27 @@ export function SitemapFilters({ filters, onChange }: SitemapFiltersProps) {
                   {ALL_MODULES.map((module) => (
                     <SelectItem key={module} value={module}>
                       {MODULE_LABELS[module] || module}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Plan Required Filter */}
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground">Plan requis</Label>
+              <Select
+                value={filters.planRequired}
+                onValueChange={(value) => onChange({ ...filters, planRequired: value as PlanKey | 'all' })}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les plans</SelectItem>
+                  {ALL_PLANS.map((plan) => (
+                    <SelectItem key={plan} value={plan}>
+                      {PLAN_LABELS[plan]}
                     </SelectItem>
                   ))}
                 </SelectContent>

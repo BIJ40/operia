@@ -484,6 +484,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     label: 'Gestion Heures',
     component: 'GestionHeuresPage',
     section: 'rh',
+    planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
       moduleGuard: { moduleKey: 'rh' },
@@ -494,6 +495,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     label: 'Validation Timesheets',
     component: 'TimesheetsValidationPage',
     section: 'rh',
+    planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
       moduleGuard: { moduleKey: 'rh' },
@@ -504,6 +506,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     label: 'Maintenance Préventive',
     component: 'MaintenancePreventivePage',
     section: 'rh',
+    planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
       moduleGuard: { moduleKey: 'rh' },
@@ -514,6 +517,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     label: 'Gestion EPI',
     component: 'EPIPage',
     section: 'rh',
+    planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
       moduleGuard: { moduleKey: 'rh' },
@@ -524,6 +528,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     label: 'Génération Documents',
     component: 'DocGenPage',
     section: 'rh',
+    planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
       moduleGuard: { moduleKey: 'rh' },
@@ -534,6 +539,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     label: 'Réunions RH',
     component: 'RHMeetingsPage',
     section: 'rh',
+    planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
       moduleGuard: { moduleKey: 'rh' },

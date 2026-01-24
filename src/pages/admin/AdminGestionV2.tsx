@@ -21,6 +21,7 @@ export default function AdminGestionV2() {
     section: 'all',
     minRole: 'all',
     moduleKey: 'all',
+    planRequired: 'all',
     showRedirects: true,
     showDynamic: true,
   });
@@ -45,6 +46,9 @@ export default function AdminGestionV2() {
 
       // Filtre module
       if (filters.moduleKey !== 'all' && route.guards.moduleGuard?.moduleKey !== filters.moduleKey) return false;
+
+      // Filtre plan requis
+      if (filters.planRequired !== 'all' && route.planRequired !== filters.planRequired) return false;
 
       // Filtre redirections
       if (!filters.showRedirects && route.isRedirect) return false;
