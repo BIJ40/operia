@@ -19,7 +19,9 @@ import { RHMetiersMultiSelect } from './RHMetiersMultiSelect';
 import { ExternalLink, Paperclip, Package, Pencil } from 'lucide-react';
 import { CollaboratorEpiSummary } from '@/hooks/epi/useCollaboratorsEpiSummary';
 import { EpiCountCell, EpiRenewalCell, EpiRequestsCell, EpiIncidentsCell, EpiAckStatusCell, EpiOkCell } from './RHEpiCells';
-
+import { RHCollaboratorAvatarCompact } from './RHCollaboratorAvatar';
+import { RHGlobalStatusIndicator } from './RHStatusBadges';
+import { CollaboratorHoverPreview } from './CollaboratorHoverPreview';
 interface RHUnifiedTableRowProps {
   collaborator: RHCollaborator;
   activeTab: RHTabId;
@@ -393,22 +395,24 @@ export function RHUnifiedTableRow({
     
     <TableRow 
       className={cn(
-        "hover:bg-muted/30 transition-colors",
-        collaborator.leaving_date && "opacity-60"
+        "hover:bg-accent/50 transition-all duration-200 group",
+        collaborator.leaving_date && "opacity-60",
+        "hover:shadow-sm"
       )}
     >
-      {/* Indicateur de statut + bouton édition */}
-      <TableCell className="w-16 min-w-[64px] px-2 bg-muted/10">
-        <div className="flex items-center gap-2">
-          <div 
-            className={cn("w-2 h-2 rounded-full shrink-0", status.color)}
-            title={status.label}
+      {/* Avatar + indicateur global + bouton édition */}
+      <TableCell className="w-20 min-w-[80px] px-2 bg-muted/10">
+        <div className="flex items-center gap-1.5">
+          <RHCollaboratorAvatarCompact collaborator={collaborator} />
+          <RHGlobalStatusIndicator 
+            collaborator={collaborator} 
+            epiSummary={epiSummary} 
           />
           {onEditCollaborator && (
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-muted-foreground hover:text-primary"
+              className="h-6 w-6 text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
               onClick={() => onEditCollaborator(collaborator.id)}
               title="Modifier la fiche"
             >
@@ -418,16 +422,22 @@ export function RHUnifiedTableRow({
         </div>
       </TableCell>
 
-      {/* Colonnes fixes - Nom cliquable pour accéder au profil */}
+      {/* Colonnes fixes - Nom avec HoverCard preview */}
       <TableCell className="font-medium min-w-[100px] w-[100px] bg-muted/10">
         <div className="flex items-center gap-1.5">
-          <button
-            onClick={() => navigate(`/rh/suivi/${collaborator.id}`)}
-            className="truncate text-left hover:text-primary hover:underline transition-colors font-medium"
-            title="Voir le profil complet"
+          <CollaboratorHoverPreview
+            collaborator={collaborator}
+            epiSummary={epiSummary}
+            onOpenProfile={() => navigate(`/rh/suivi/${collaborator.id}`)}
           >
-            {collaborator.last_name}
-          </button>
+            <button
+              onClick={() => navigate(`/rh/suivi/${collaborator.id}`)}
+              className="truncate text-left hover:text-primary hover:underline transition-colors font-medium"
+              title="Voir le profil complet"
+            >
+              {collaborator.last_name}
+            </button>
+          </CollaboratorHoverPreview>
           {collaborator.leaving_date && (
             <Badge variant="outline" className="text-[10px] px-1 py-0 text-muted-foreground border-muted-foreground/50">
               Parti
