@@ -395,14 +395,14 @@ export function RHUnifiedTableRow({
     
     <TableRow 
       className={cn(
-        "hover:bg-accent/50 transition-all duration-200 group",
-        collaborator.leaving_date && "opacity-60",
+        "hover:bg-accent/50 transition-all duration-150 group",
+        collaborator.leaving_date && "opacity-50",
         "hover:shadow-sm"
       )}
     >
-      {/* Avatar + indicateur global + bouton édition */}
-      <TableCell className="w-20 min-w-[80px] px-2 bg-muted/10">
-        <div className="flex items-center gap-1.5">
+      {/* Avatar + indicateur global + bouton édition - COMPACT */}
+      <TableCell className="w-20 min-w-[80px] px-1.5 bg-muted/10">
+        <div className="flex items-center gap-1">
           <RHCollaboratorAvatarCompact collaborator={collaborator} />
           <RHGlobalStatusIndicator 
             collaborator={collaborator} 
@@ -412,19 +412,19 @@ export function RHUnifiedTableRow({
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+              className="h-5 w-5 text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
               onClick={() => onEditCollaborator(collaborator.id)}
               title="Modifier la fiche"
             >
-              <Pencil className="h-3.5 w-3.5" />
+              <Pencil className="h-3 w-3" />
             </Button>
           )}
         </div>
       </TableCell>
 
-      {/* Colonnes fixes - Nom avec HoverCard preview */}
-      <TableCell className="font-medium min-w-[100px] w-[100px] bg-muted/10">
-        <div className="flex items-center gap-1.5">
+      {/* Colonnes fixes - Nom avec HoverCard preview - COMPACT */}
+      <TableCell className="font-medium w-24 min-w-[96px] px-1.5 bg-muted/10">
+        <div className="flex items-center gap-1">
           <CollaboratorHoverPreview
             collaborator={collaborator}
             epiSummary={epiSummary}
@@ -432,36 +432,36 @@ export function RHUnifiedTableRow({
           >
             <button
               onClick={() => navigate(`/rh/suivi/${collaborator.id}`)}
-              className="truncate text-left hover:text-primary hover:underline transition-colors font-medium"
-              title="Voir le profil complet"
+              className="truncate text-left hover:text-primary hover:underline transition-colors text-xs font-medium max-w-[80px]"
+              title={collaborator.last_name}
             >
               {collaborator.last_name}
             </button>
           </CollaboratorHoverPreview>
           {collaborator.leaving_date && (
-            <Badge variant="outline" className="text-[10px] px-1 py-0 text-muted-foreground border-muted-foreground/50">
-              Parti
+            <Badge variant="outline" className="text-[9px] px-0.5 py-0 text-muted-foreground border-muted-foreground/50 shrink-0">
+              Ex
             </Badge>
           )}
         </div>
       </TableCell>
-      <TableCell className="min-w-[100px] w-[100px] bg-muted/10">
+      <TableCell className="w-24 min-w-[96px] px-1.5 bg-muted/10">
         <button
           onClick={() => navigate(`/rh/suivi/${collaborator.id}`)}
-          className="truncate text-left hover:text-primary hover:underline transition-colors"
-          title="Voir le profil complet"
+          className="truncate text-left hover:text-primary hover:underline transition-colors text-xs max-w-[80px]"
+          title={collaborator.first_name}
         >
           {collaborator.first_name}
         </button>
       </TableCell>
 
-      {/* Colonnes de l'onglet actif - ÉDITABLES */}
+      {/* Colonnes de l'onglet actif - COMPACTES */}
       {visibleGroups.map((group) => (
         group.columns.map((col, colIdx) => {
           // Cas spécial pour les icônes de documents (plus grandes)
           if (col.id === 'docs_icons') {
             return (
-              <TableCell key={col.id} className={cn(colIdx === 0 && "border-l", group.className)}>
+              <TableCell key={col.id} className={cn(colIdx === 0 && "border-l", group.className, "px-1.5")}>
                 <DocumentIcons
                   collaboratorId={collaborator.id}
                   onDocumentClick={(docType) => onDocumentClick(collaborator.id, docType)}
@@ -474,16 +474,16 @@ export function RHUnifiedTableRow({
           // Cas spécial pour l'accès coffre
           if (col.id === 'docs_coffre') {
             return (
-              <TableCell key={col.id} className={cn(colIdx === 0 && "border-l", group.className)}>
+              <TableCell key={col.id} className={cn(colIdx === 0 && "border-l", group.className, "px-1.5")}>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-7 px-3 text-xs gap-1.5"
+                  className="h-6 px-2 text-[10px] gap-1"
                   onClick={() => navigate(`/rh/suivi/${collaborator.id}?tab=documents`)}
                   title="Gérer les documents et leur visibilité coffre"
                 >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  Gérer coffre
+                  <ExternalLink className="h-3 w-3" />
+                  Coffre
                 </Button>
               </TableCell>
             );
@@ -517,11 +517,12 @@ export function RHUnifiedTableRow({
               className={cn(
                 colIdx === 0 && "border-l",
                 group.className,
-                "p-1"
+                "px-1.5 py-0.5",
+                col.width
               )}
             >
-              <div className="flex items-center gap-1">
-                <div className="flex-1">
+              <div className="flex items-center gap-0.5">
+                <div className="flex-1 min-w-0">
                   <RHEditableCell
                     value={displayValue}
                     columnId={col.id}
