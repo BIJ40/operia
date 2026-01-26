@@ -114,14 +114,18 @@ interface SidebarItemProps {
 }
 
 function SidebarItem({ icon: Icon, customIcon, label, isActive, onClick, badges }: SidebarItemProps) {
+  const isDisabled = badges?.isEmpty;
+  
   return (
     <button
-      onClick={onClick}
+      onClick={isDisabled ? undefined : onClick}
+      disabled={isDisabled}
       className={cn(
         'w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-sm transition-colors',
-        'hover:bg-accent hover:text-accent-foreground',
-        isActive && 'bg-primary/10 text-primary font-medium',
-        badges?.isEmpty && 'opacity-50'
+        isDisabled 
+          ? 'opacity-40 cursor-not-allowed' 
+          : 'hover:bg-accent hover:text-accent-foreground cursor-pointer',
+        isActive && !isDisabled && 'bg-primary/10 text-primary font-medium'
       )}
     >
       {customIcon ? (
@@ -133,15 +137,15 @@ function SidebarItem({ icon: Icon, customIcon, label, isActive, onClick, badges 
       <span className="truncate flex-1">{label}</span>
       
       {/* Badges */}
-      {badges?.isEmpty && (
+      {isDisabled && (
         <Ban className="w-3 h-3 text-muted-foreground shrink-0" />
       )}
-      {badges?.hasNew && !badges.isEmpty && (
+      {badges?.hasNew && !isDisabled && (
         <span className="px-1.5 py-0.5 text-[10px] font-bold bg-primary text-primary-foreground rounded shrink-0">
           NEW
         </span>
       )}
-      {badges?.hasInProgress && !badges.isEmpty && (
+      {badges?.hasInProgress && !isDisabled && (
         <Clock className="w-3 h-3 text-primary shrink-0" />
       )}
     </button>
