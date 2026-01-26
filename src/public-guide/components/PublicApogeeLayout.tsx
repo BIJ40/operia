@@ -1,52 +1,57 @@
 /**
- * PublicApogeeLayout - Layout minimaliste pour le Guide Apogée public
- * Sans header applicatif, sans bouton retour vers l'application interne
+ * PublicApogeeLayout - Layout avec sidebar et onglets pour le Guide Apogée public
+ * Interface navigateur similaire au module Franchiseur
  */
 
 import { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
-import { BookOpen } from 'lucide-react';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+import { PublicGuideTabsProvider } from '../contexts/PublicGuideTabsContext';
+import { PublicGuideHeader } from './PublicGuideHeader';
+import { PublicGuideFooter } from './PublicGuideFooter';
+import { PublicCategorySidebar } from './PublicCategorySidebar';
+import { PublicGuideTabsBar } from './PublicGuideTabsBar';
+import { PublicGuideTabsContent } from './PublicGuideTabsContent';
 
 interface PublicApogeeLayoutProps {
-  children: ReactNode;
+  children?: ReactNode;
 }
 
 export function PublicApogeeLayout({ children }: PublicApogeeLayoutProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex flex-col">
-      {/* Header minimaliste */}
-      <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-        <div className="container flex h-16 items-center">
-          <Link 
-            to="/guide-apogee" 
-            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-          >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/80 flex items-center justify-center shadow-lg">
-              <BookOpen className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-bold text-lg leading-tight">
-                <span className="text-primary">Guide Apogée</span>
-              </span>
-              <span className="text-xs text-muted-foreground leading-tight">
-                HelpConfort Services
-              </span>
-            </div>
-          </Link>
-        </div>
-      </header>
+    <PublicGuideTabsProvider>
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex flex-col">
+        {/* Header minimaliste */}
+        <PublicGuideHeader />
 
-      {/* Contenu principal */}
-      <main className="flex-1 container py-6">
-        {children}
-      </main>
-
-      {/* Footer simple */}
-      <footer className="border-t bg-muted/30 py-4 mt-auto">
-        <div className="container text-center text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} HelpConfort Services - Guide Apogée</p>
+        {/* Corps principal avec sidebar et contenu */}
+        <div className="flex-1 flex overflow-hidden">
+          <ResizablePanelGroup direction="horizontal" className="flex-1">
+            {/* Sidebar des catégories */}
+            <ResizablePanel 
+              defaultSize={20} 
+              minSize={15} 
+              maxSize={30} 
+              collapsible
+              className="hidden md:block"
+            >
+              <PublicCategorySidebar />
+            </ResizablePanel>
+            
+            <ResizableHandle withHandle className="hidden md:flex" />
+            
+            {/* Zone principale avec onglets */}
+            <ResizablePanel defaultSize={80}>
+              <div className="flex flex-col h-full">
+                <PublicGuideTabsBar />
+                <PublicGuideTabsContent />
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
         </div>
-      </footer>
-    </div>
+
+        {/* Footer */}
+        <PublicGuideFooter />
+      </div>
+    </PublicGuideTabsProvider>
   );
 }
