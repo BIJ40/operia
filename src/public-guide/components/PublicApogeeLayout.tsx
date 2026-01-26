@@ -37,7 +37,10 @@ export function PublicApogeeLayout({ children }: PublicApogeeLayoutProps) {
               <PublicCategorySidebar />
             </ResizablePanel>
             
-            <ResizableHandle withHandle className="hidden md:flex" />
+            <ResizableHandle 
+              withHandle 
+              className="hidden md:flex [&>div]:h-16 [&>div]:w-4 [&>div]:translate-x-2 [&>div]:bg-primary/20 [&>div]:hover:bg-primary/40 [&>div]:border [&>div]:border-border [&>div]:rounded-r-md [&>div]:shadow-sm" 
+            />
             
             {/* Zone principale avec onglets */}
             <ResizablePanel defaultSize={80}>
