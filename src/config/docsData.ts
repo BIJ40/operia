@@ -95,12 +95,12 @@ export const MODULES_DOCS: ModuleDoc[] = [
   {
     id: 'rh',
     name: 'Ressources Humaines',
-    description: 'Gestion des collaborateurs, contrats, documents RH',
-    routes: ['/hc-agency/equipe', '/mon-coffre-rh', '/hc-agency/demandes-rh'],
-    permissions: 'N1+ (coffre), N2+ (admin)',
+    description: 'Gestion des collaborateurs, contrats, documents RH (back-office N2+)',
+    routes: ['/rh/suivi', '/rh/plannings', '/rh/reunions'],
+    permissions: 'N2+ (franchisee_admin)',
     icon: 'Users',
-    tables: ['collaborators', 'collaborator_documents', 'employment_contracts', 'document_requests'],
-    edgeFunctions: ['analyze-payslip'],
+    tables: ['collaborators', 'collaborator_documents', 'employment_contracts'],
+    edgeFunctions: [],
   },
   {
     id: 'parc',
