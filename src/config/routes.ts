@@ -85,8 +85,6 @@ export const ROUTES = {
     suiviCollaborateur: (id: string) => `/rh/suivi/${id}`,
     // Vue Dirigeant/RH (N2)
     plannings: '/rh/suivi/plannings',
-    heures: '/rh/suivi/heures',
-    timesheets: '/rh/timesheets',
     collaborateurProfile: (id: string) => `/rh/suivi/${id}`,
     // Parc & Matériel
     parc: '/rh/parc',

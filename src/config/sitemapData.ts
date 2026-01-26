@@ -479,28 +479,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
       moduleGuard: { moduleKey: 'rh' },
     },
   },
-  {
-    path: '/rh/suivi/heures',
-    label: 'Gestion Heures',
-    component: 'GestionHeuresPage',
-    section: 'rh',
-    planRequired: 'PRO',
-    guards: {
-      roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'rh' },
-    },
-  },
-  {
-    path: '/rh/timesheets',
-    label: 'Validation Timesheets',
-    component: 'TimesheetsValidationPage',
-    section: 'rh',
-    planRequired: 'PRO',
-    guards: {
-      roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'rh' },
-    },
-  },
+  // Legacy N1 routes supprimées (heures, timesheets) - portail salarié N1 désactivé v0.8.3
   {
     path: '/rh/parc',
     label: 'Maintenance Préventive',
