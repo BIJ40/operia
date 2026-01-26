@@ -4,6 +4,7 @@ import { ArrowRight } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { AgencyInfoTile } from '@/components/pilotage/AgencyInfoTile';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
 import { memo, useState, useEffect } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -15,6 +16,7 @@ interface PilotageModule {
   icon: LucideIcon;
   href: string;
   badge?: string | number;
+  requiredOption?: string;
 }
 
 const pilotageModules: PilotageModule[] = [
@@ -24,6 +26,7 @@ const pilotageModules: PilotageModule[] = [
     description: 'Centre statistiques unifié de l\'agence',
     icon: BarChart3,
     href: ROUTES.agency.statsHub,
+    requiredOption: 'stats_hub',
   },
   // HIDDEN: Veille Apporteurs - temporairement désactivé (voir /admin/hidden-features)
   // {
@@ -32,6 +35,7 @@ const pilotageModules: PilotageModule[] = [
   //   description: 'Suivi performance et alertes apporteurs',
   //   icon: Radar,
   //   href: ROUTES.agency.veilleApporteurs,
+  //   requiredOption: 'veille_apporteurs',
   // },
   {
     id: 'carte_rdv',
@@ -39,6 +43,7 @@ const pilotageModules: PilotageModule[] = [
     description: 'Visualisation géographique des RDV du jour',
     icon: MapPin,
     href: ROUTES.agency.map,
+    requiredOption: 'carte_rdv',
   },
   {
     id: 'diffusion',
@@ -46,6 +51,7 @@ const pilotageModules: PilotageModule[] = [
     description: 'Mode TV agence avec statistiques',
     icon: Tv,
     href: ROUTES.agency.diffusion,
+    requiredOption: 'diffusion',
   },
   {
     id: 'actions',
@@ -53,6 +59,7 @@ const pilotageModules: PilotageModule[] = [
     description: 'Suivi des actions et tâches en cours',
     icon: ListTodo,
     href: ROUTES.agency.actions,
+    requiredOption: 'actions_a_mener',
   },
   {
     id: 'mes_apporteurs',
@@ -60,6 +67,7 @@ const pilotageModules: PilotageModule[] = [
     description: 'Créer un espace apporteur',
     icon: Building2,
     href: ROUTES.agency.mesApporteurs,
+    requiredOption: 'mes_apporteurs',
   },
 ];
 
@@ -68,6 +76,7 @@ const AGENCY_INFO_STORAGE_KEY = 'pilotage-agency-info-open';
 
 export default function PilotageIndex() {
   const { globalRole } = useAuth();
+  const { hasModuleOption } = useEffectiveModules();
   
   const [isAgencyInfoOpen, setIsAgencyInfoOpen] = useState(() => {
     try {
@@ -84,6 +93,13 @@ export default function PilotageIndex() {
 
   const isPlatformAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';
 
+  // Filtrer les modules selon les permissions
+  const visibleModules = pilotageModules.filter(module => {
+    if (isPlatformAdmin) return true;
+    if (!module.requiredOption) return true;
+    return hasModuleOption('pilotage_agence', module.requiredOption);
+  });
+
   return (
     <div className="container mx-auto py-8 px-4 space-y-6">
       {/* Header Mon Agence */}
@@ -97,9 +113,9 @@ export default function PilotageIndex() {
         </div>
       </div>
       
-      {/* Tuiles principales - 4 en ligne */}
+      {/* Tuiles principales - filtrées par permissions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {pilotageModules.map(module => (
+        {visibleModules.map(module => (
           <PilotageTileCard
             key={module.id}
             module={module}
