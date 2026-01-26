@@ -5,25 +5,20 @@ import { startOfMonth, endOfMonth, subMonths, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { computeTechUniversStatsForAgency } from '@/shared/utils/technicienUniversEngine';
 import { formatEuros } from '@/apogee-connect/utils/formatters';
-import { apogeeProxy } from '@/services/apogeeProxy';
+import { useAuth } from '@/contexts/AuthContext';
+import { DataService } from '@/apogee-connect/services/dataService';
 
 interface SlideCATechniciensProps {
   currentMonthIndex: number;
 }
 
 export const SlideCATechniciens = ({ currentMonthIndex }: SlideCATechniciensProps) => {
+  const { agence } = useAuth();
+  
   const { data: apiData, isLoading } = useQuery({
-    queryKey: ['apogee-data-techniciens'],
-    queryFn: async () => {
-      const [projects, interventions, factures, users] = await Promise.all([
-        apogeeProxy.getProjects(),
-        apogeeProxy.getInterventions(),
-        apogeeProxy.getFactures(),
-        apogeeProxy.getUsers(),
-      ]);
-
-      return { projects, interventions, factures, users };
-    },
+    queryKey: ['diffusion-ca-techniciens', agence, currentMonthIndex],
+    queryFn: async () => await DataService.loadAllData(true, false, agence),
+    enabled: !!agence,
     staleTime: 5 * 60 * 1000,
   });
 
