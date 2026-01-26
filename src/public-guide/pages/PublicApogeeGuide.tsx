@@ -82,16 +82,26 @@ export default function PublicApogeeGuide() {
   return (
     <div className="max-w-6xl mx-auto">
       {/* Header */}
-      <div className="text-center mb-8">
+      <div className="text-center mb-6">
         <div className="flex items-center justify-center gap-3 mb-4">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/80 flex items-center justify-center shadow-lg">
             <BookOpen className="w-6 h-6 text-white" />
           </div>
         </div>
         <h1 className="text-3xl font-bold text-foreground mb-2">Guide Apogée</h1>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground mb-4">
           Toutes les informations pour maîtriser le logiciel Apogée
         </p>
+        
+        {/* Avertissement version préliminaire */}
+        <div className="max-w-2xl mx-auto bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 text-left">
+          <p className="text-sm text-amber-800 dark:text-amber-200 leading-relaxed">
+            <span className="font-semibold">⚠️ Version préliminaire</span> — Ce manuel d'utilisation d'Apogée est en cours de réalisation et mis à jour au fur et à mesure de l'évolution du logiciel. Si une information est manquante, erronée ou obsolète, merci de <span className="font-medium">prévenir le franchiseur</span>.
+          </p>
+          <p className="text-sm text-amber-700 dark:text-amber-300 mt-2">
+            📬 Prochainement, vous aurez la possibilité de créer un ticket, poser des questions et proposer des améliorations via un support interne.
+          </p>
+        </div>
       </div>
 
       {/* Recherche */}
