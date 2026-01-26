@@ -27,7 +27,9 @@ export function PublicCategorySidebar() {
         !b.slug.startsWith('helpconfort-') &&
         !b.title.toLowerCase().includes('support de formation') &&
         !b.title.toLowerCase().includes('recap fiches rapides') &&
-        !b.title.toLowerCase().includes('récap fiches rapides')
+        !b.title.toLowerCase().includes('récap fiches rapides') &&
+        !b.title.toLowerCase().includes('recap - fiches') &&
+        !b.title.toLowerCase().includes('récap - fiches')
       )
       .sort((a, b) => a.order - b.order),
     [blocks]
