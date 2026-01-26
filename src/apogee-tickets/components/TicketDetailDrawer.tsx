@@ -64,7 +64,6 @@ import { useMyTicketRole, useAllowedTransitions, useLogTicketAction, useTicketHi
 import { TicketTimelineTab } from './TicketTimelineTab';
 import { errorToast } from '@/lib/toastHelpers';
 import { TagSelector } from './TagSelector';
-import { TicketDuplicatesSection } from './TicketDuplicatesSection';
 import { RoadmapEditor } from './RoadmapEditor';
 import { TicketSupportExchanges } from './TicketSupportExchanges';
 import type { ApogeeTicket, ApogeeModule, ApogeePriority, ApogeeTicketStatus, AuthorType, ReportedBy } from '../types';
@@ -973,9 +972,6 @@ export function TicketDetailDrawer({
                     )}
                   </div>
                 </div>
-
-                {/* Section Doublons IA */}
-                <TicketDuplicatesSection ticket={ticket} onViewTicket={(id) => console.log('View ticket', id)} />
 
                 {/* Infos source Excel (collapsible) */}
                 {ticket.source_sheet && (

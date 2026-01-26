@@ -773,16 +773,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
       moduleGuard: { moduleKey: 'apogee_tickets' },
     },
   },
-  {
-    path: '/projects/doublons',
-    label: 'Doublons Tickets',
-    component: 'ApogeeTicketsDuplicates',
-    section: 'projects',
-    guards: {
-      roleGuard: { minRole: 'base_user' },
-      moduleGuard: { moduleKey: 'apogee_tickets' },
-    },
-  },
+  // Duplicate scan feature removed v0.8.3
 
   // ==================== ADMIN ====================
   {
