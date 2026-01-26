@@ -23,10 +23,19 @@ export default function PublicGuideHome() {
       <div className="mb-8 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
         <div className="flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-          <div>
+          <div className="space-y-2">
             <p className="text-sm text-amber-800 dark:text-amber-200 leading-relaxed">
-              <span className="font-semibold">En cours de rédaction</span> — Ce manuel est mis à jour au fur et à mesure de l'évolution du logiciel.
+              <span className="font-semibold">Version simplifiée</span> — Ce guide est actuellement en version allégée et sera enrichi progressivement.
             </p>
+            <p className="text-sm text-amber-700 dark:text-amber-300 leading-relaxed">
+              La <span className="font-medium">version complète</span> sera livrée prochainement avec :
+            </p>
+            <ul className="text-sm text-amber-700 dark:text-amber-300 list-disc list-inside space-y-1 ml-1">
+              <li>Un support d'utilisation détaillé</li>
+              <li>Un suivi des tickets ouverts</li>
+              <li>Des tutoriels vidéo</li>
+              <li>Une FAQ interactive</li>
+            </ul>
           </div>
         </div>
       </div>
