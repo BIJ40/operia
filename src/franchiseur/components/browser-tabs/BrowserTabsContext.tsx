@@ -1,11 +1,13 @@
 import React, { createContext, useContext, useCallback, useMemo } from 'react';
 import { useSessionState } from '@/hooks/useSessionState';
 import { useSearchParams } from 'react-router-dom';
-import { BrowserTabData, BrowserTabsState, ModuleDefinition } from './types';
+import { StoredTabData, BrowserTabData, BrowserTabsState, ModuleDefinition } from './types';
 import { 
   Network, PieChart, GitCompare, BarChart3, AreaChart, 
   Building2, UserCog, Coins, Users, Bell 
 } from 'lucide-react';
+import { FranchiseurProvider } from '@/franchiseur/contexts/FranchiseurContext';
+import { NetworkFiltersProvider } from '@/franchiseur/contexts/NetworkFiltersContext';
 
 // Définition de tous les modules disponibles
 export const AVAILABLE_MODULES: ModuleDefinition[] = [
@@ -21,8 +23,29 @@ export const AVAILABLE_MODULES: ModuleDefinition[] = [
   { id: 'annonces', label: 'Annonces', icon: Bell, closable: true },
 ];
 
+// Helper to get module definition by ID
+function getModuleById(id: string): ModuleDefinition | undefined {
+  return AVAILABLE_MODULES.find(m => m.id === id);
+}
+
+// Resolve stored tabs to runtime tabs with icons
+function resolveTabsWithIcons(storedTabs: StoredTabData[]): BrowserTabData[] {
+  return storedTabs
+    .map(tab => {
+      const module = getModuleById(tab.id);
+      if (!module) return null;
+      return {
+        id: tab.id,
+        label: tab.label,
+        icon: module.icon,
+        closable: tab.closable,
+      };
+    })
+    .filter((tab): tab is BrowserTabData => tab !== null);
+}
+
 const DEFAULT_STATE: BrowserTabsState = {
-  tabs: [{ id: 'dashboard', label: 'Dashboard', icon: Network, closable: false }],
+  tabs: [{ id: 'dashboard', label: 'Dashboard', closable: false }],
   activeTabId: 'dashboard',
 };
 
@@ -43,11 +66,14 @@ export function BrowserTabsProvider({ children }: { children: React.ReactNode })
   const [searchParams, setSearchParams] = useSearchParams();
   const [state, setState] = useSessionState<BrowserTabsState>('reseau_browser_tabs', DEFAULT_STATE);
 
+  // Resolve stored tabs to runtime tabs with icons
+  const resolvedTabs = useMemo(() => resolveTabsWithIcons(state.tabs), [state.tabs]);
+
   // Sync active tab with URL
   const activeTabId = searchParams.get('tab') || state.activeTabId || 'dashboard';
 
   const openTab = useCallback((moduleId: string) => {
-    const module = AVAILABLE_MODULES.find(m => m.id === moduleId);
+    const module = getModuleById(moduleId);
     if (!module) return;
 
     setState(prev => {
@@ -57,10 +83,9 @@ export function BrowserTabsProvider({ children }: { children: React.ReactNode })
         return prev;
       }
 
-      const newTab: BrowserTabData = {
+      const newTab: StoredTabData = {
         id: module.id,
         label: module.label,
-        icon: module.icon,
         closable: module.closable,
       };
 
@@ -123,7 +148,7 @@ export function BrowserTabsProvider({ children }: { children: React.ReactNode })
     setState(prev => {
       const reorderedTabs = newOrder
         .map(id => prev.tabs.find(t => t.id === id))
-        .filter((t): t is BrowserTabData => t !== undefined);
+        .filter((t): t is StoredTabData => t !== undefined);
       
       return {
         ...prev,
@@ -141,7 +166,7 @@ export function BrowserTabsProvider({ children }: { children: React.ReactNode })
   }, [state.tabs]);
 
   const value = useMemo(() => ({
-    tabs: state.tabs,
+    tabs: resolvedTabs,
     activeTabId,
     openTab,
     closeTab,
@@ -149,12 +174,16 @@ export function BrowserTabsProvider({ children }: { children: React.ReactNode })
     reorderTabs,
     getAvailableModules,
     isTabOpen,
-  }), [state.tabs, activeTabId, openTab, closeTab, setActiveTab, reorderTabs, getAvailableModules, isTabOpen]);
+  }), [resolvedTabs, activeTabId, openTab, closeTab, setActiveTab, reorderTabs, getAvailableModules, isTabOpen]);
 
   return (
-    <BrowserTabsContext.Provider value={value}>
-      {children}
-    </BrowserTabsContext.Provider>
+    <FranchiseurProvider>
+      <NetworkFiltersProvider>
+        <BrowserTabsContext.Provider value={value}>
+          {children}
+        </BrowserTabsContext.Provider>
+      </NetworkFiltersProvider>
+    </FranchiseurProvider>
   );
 }
 
