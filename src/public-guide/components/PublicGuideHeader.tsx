@@ -4,15 +4,11 @@
 
 import { Link } from 'react-router-dom';
 import { BookOpen } from 'lucide-react';
-import { OperiaLogo } from './OperiaLogo';
 
 export function PublicGuideHeader() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-      <div className="container flex h-14 items-center gap-4">
-        {/* Logo OPERIA à gauche */}
-        <OperiaLogo size={36} />
-        
+      <div className="container flex h-14 items-center">
         <Link 
           to="/guide-apogee" 
           className="flex items-center gap-3 hover:opacity-80 transition-opacity"

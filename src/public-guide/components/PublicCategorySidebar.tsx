@@ -27,9 +27,7 @@ export function PublicCategorySidebar() {
         !b.slug.startsWith('helpconfort-') &&
         !b.title.toLowerCase().includes('support de formation') &&
         !b.title.toLowerCase().includes('recap fiches rapides') &&
-        !b.title.toLowerCase().includes('récap fiches rapides') &&
-        !b.title.toLowerCase().includes('recap - fiches') &&
-        !b.title.toLowerCase().includes('récap - fiches')
+        !b.title.toLowerCase().includes('récap fiches rapides')
       )
       .sort((a, b) => a.order - b.order),
     [blocks]
@@ -114,18 +112,14 @@ interface SidebarItemProps {
 }
 
 function SidebarItem({ icon: Icon, customIcon, label, isActive, onClick, badges }: SidebarItemProps) {
-  const isDisabled = badges?.isEmpty;
-  
   return (
     <button
-      onClick={isDisabled ? undefined : onClick}
-      disabled={isDisabled}
+      onClick={onClick}
       className={cn(
         'w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-sm transition-colors',
-        isDisabled 
-          ? 'opacity-40 cursor-not-allowed' 
-          : 'hover:bg-accent hover:text-accent-foreground cursor-pointer',
-        isActive && !isDisabled && 'bg-primary/10 text-primary font-medium'
+        'hover:bg-accent hover:text-accent-foreground',
+        isActive && 'bg-primary/10 text-primary font-medium',
+        badges?.isEmpty && 'opacity-50'
       )}
     >
       {customIcon ? (
@@ -137,15 +131,15 @@ function SidebarItem({ icon: Icon, customIcon, label, isActive, onClick, badges 
       <span className="truncate flex-1">{label}</span>
       
       {/* Badges */}
-      {isDisabled && (
+      {badges?.isEmpty && (
         <Ban className="w-3 h-3 text-muted-foreground shrink-0" />
       )}
-      {badges?.hasNew && !isDisabled && (
+      {badges?.hasNew && !badges.isEmpty && (
         <span className="px-1.5 py-0.5 text-[10px] font-bold bg-primary text-primary-foreground rounded shrink-0">
           NEW
         </span>
       )}
-      {badges?.hasInProgress && !isDisabled && (
+      {badges?.hasInProgress && !badges.isEmpty && (
         <Clock className="w-3 h-3 text-primary shrink-0" />
       )}
     </button>
