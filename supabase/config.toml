@@ -54,15 +54,6 @@ verify_jwt = true
 [functions.test-sms]
 verify_jwt = true
 
-[functions.generate-ticket-embedding]
-verify_jwt = true
-
-[functions.scan-ticket-duplicates]
-verify_jwt = true
-
-[functions.merge-tickets]
-verify_jwt = true
-
 [functions.compute-metric]
 verify_jwt = true
 

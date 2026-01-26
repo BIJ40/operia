@@ -12,7 +12,6 @@ const ApogeeTicketsList = lazy(() => import("@/apogee-tickets/pages/ApogeeTicket
 const ApogeeTicketsIncomplete = lazy(() => import("@/apogee-tickets/pages/ApogeeTicketsIncomplete"));
 const ApogeeTicketsReview = lazy(() => import("@/apogee-tickets/pages/ApogeeTicketsReview"));
 const ApogeeTicketsAdmin = lazy(() => import("@/apogee-tickets/pages/ApogeeTicketsAdmin"));
-const ApogeeTicketsDuplicates = lazy(() => import("@/apogee-tickets/pages/ApogeeTicketsDuplicates"));
 
 export function ProjectsRoutes() {
   return (
@@ -24,7 +23,6 @@ export function ProjectsRoutes() {
       <Route path="/projects/incomplets" element={<MainLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsIncomplete /></ModuleGuard></RoleGuard></MainLayout>} />
       <Route path="/projects/review" element={<MainLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsReview /></ModuleGuard></RoleGuard></MainLayout>} />
       <Route path="/projects/permissions" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsAdmin /></ModuleGuard></RoleGuard></MainLayout>} />
-      <Route path="/projects/doublons" element={<MainLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsDuplicates /></ModuleGuard></RoleGuard></MainLayout>} />
     </>
   );
 }
