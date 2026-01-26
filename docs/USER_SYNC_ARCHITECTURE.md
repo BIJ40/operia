@@ -1,5 +1,7 @@
 # Architecture de synchronisation des utilisateurs
 
+> **Dernière mise à jour** : 26 Janvier 2026
+
 ## Principe fondamental
 
 **Toute modification d'un utilisateur, quel que soit le point d'entrée, doit être visible instantanément partout.**
