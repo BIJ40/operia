@@ -14,7 +14,6 @@ import {
   horizontalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -88,39 +87,43 @@ export function BrowserTabsBar() {
               ))}
             </SortableContext>
           </DndContext>
+
+          {/* Bouton + stylisé comme un onglet, juste après les tabs */}
+          {availableToOpen.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={cn(
+                    'flex items-center gap-1 px-3 py-2 rounded-t-lg cursor-pointer',
+                    'border border-b-0 bg-muted/50 border-transparent',
+                    'text-muted-foreground hover:bg-muted hover:text-foreground',
+                    'min-w-[40px] justify-center transition-colors'
+                  )}
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="sr-only">Ouvrir un module</span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48 bg-popover">
+                {availableToOpen.map(module => {
+                  const Icon = module.icon;
+                  return (
+                    <DropdownMenuItem
+                      key={module.id}
+                      onClick={() => openTab(module.id)}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{module.label}</span>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
-
-      {availableToOpen.length > 0 && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 mr-2 mb-1 shrink-0"
-            >
-              <Plus className="h-4 w-4" />
-              <span className="sr-only">Ouvrir un module</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 bg-popover">
-            {availableToOpen.map(module => {
-              const Icon = module.icon;
-              return (
-                <DropdownMenuItem
-                  key={module.id}
-                  onClick={() => openTab(module.id)}
-                  className="flex items-center gap-2 cursor-pointer"
-                >
-                  <Icon className="h-4 w-4" />
-                  <span>{module.label}</span>
-                </DropdownMenuItem>
-              );
-            })}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
     </div>
   );
 }
