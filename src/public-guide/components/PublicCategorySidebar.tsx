@@ -17,14 +17,17 @@ export function PublicCategorySidebar() {
   const { blocks } = usePublicEditor();
   const { openTab, activeTabId } = usePublicGuideTabs();
 
-  // Filtrer les catégories Apogée
+  // Filtrer les catégories Apogée (exclure FAQ, HelpConfort, support de formation, recap fiches rapides)
   const categories = useMemo(() => 
     blocks
       .filter(b => 
         b.type === 'category' && 
         b.slug !== 'faq' && 
         !b.title.toLowerCase().includes('faq') && 
-        !b.slug.startsWith('helpconfort-')
+        !b.slug.startsWith('helpconfort-') &&
+        !b.title.toLowerCase().includes('support de formation') &&
+        !b.title.toLowerCase().includes('recap fiches rapides') &&
+        !b.title.toLowerCase().includes('récap fiches rapides')
       )
       .sort((a, b) => a.order - b.order),
     [blocks]
