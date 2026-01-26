@@ -135,7 +135,6 @@ export const ROUTES = {
     incomplete: '/projects/incomplets',
     review: '/projects/review',
     permissions: '/projects/permissions',
-    duplicates: '/projects/doublons',
   },
 
   // ============================================
