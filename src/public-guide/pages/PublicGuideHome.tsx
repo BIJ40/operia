@@ -33,7 +33,6 @@ export default function PublicGuideHome() {
             <ul className="text-sm text-amber-700 dark:text-amber-300 list-disc list-inside space-y-1 ml-1">
               <li>Un support d'utilisation détaillé</li>
               <li>Un suivi des tickets ouverts</li>
-              <li>Des tutoriels vidéo</li>
               <li>Une FAQ interactive</li>
             </ul>
           </div>
