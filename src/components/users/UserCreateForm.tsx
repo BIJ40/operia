@@ -10,17 +10,15 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RefreshCw } from 'lucide-react';
 import { generateSecurePassword } from '@/lib/passwordUtils';
 
+// Postes disponibles (N1 supprimé - plus de technicien/assistante comme comptes utilisateurs)
 const ROLE_AGENCE_LABELS: Record<string, string> = {
   'dirigeant': 'Dirigeant(e)',
-  'assistante': 'Assistante',
   'commercial': 'Commercial',
-  'technicien': 'Technicien',
   'tete_de_reseau': 'Tête de réseau',
-  'externe': 'Externe',
 };
 
-// Postes disponibles uniquement en mode agence (pas tete_de_reseau ni externe)
-const AGENCY_MODE_ROLES = ['dirigeant', 'assistante', 'commercial', 'technicien'];
+// Postes disponibles en mode agence (pas tete_de_reseau)
+const AGENCY_MODE_ROLES = ['dirigeant', 'commercial'];
 
 // Validation schema
 const createUserSchema = z.object({
@@ -82,24 +80,14 @@ export function UserCreateForm({
     lastName: '',
     agence: defaultAgency || '',
     roleAgence: '',
-    globalRole: isN2Creator ? 'franchisee_user' : defaultRole,
+    globalRole: defaultRole,
     sendEmail: true,
   });
   const [errors, setErrors] = useState<Partial<Record<keyof CreateUserPayload, string>>>({});
 
-  // Logique automatique : technicien/assistante → franchisee_user (N1)
   const handleRoleAgenceChange = (newRoleAgence: string) => {
-    setFormData(prev => {
-      const shouldAutoAssignN1 = ['technicien', 'assistante'].includes(newRoleAgence);
-      return {
-        ...prev,
-        roleAgence: newRoleAgence,
-        globalRole: shouldAutoAssignN1 ? 'franchisee_user' : prev.globalRole,
-      };
-    });
+    setFormData(prev => ({ ...prev, roleAgence: newRoleAgence }));
   };
-
-  const isGlobalRoleAutoAssigned = ['technicien', 'assistante'].includes(formData.roleAgence);
 
   const handleGeneratePassword = () => {
     setFormData(prev => ({ ...prev, password: generateSecurePassword() }));
@@ -215,16 +203,11 @@ export function UserCreateForm({
             ))}
           </SelectContent>
         </Select>
-        {isGlobalRoleAutoAssigned && (
-          <p className="text-xs text-muted-foreground">
-            ℹ️ Rôle système attribué automatiquement : Utilisateur franchisé (N1)
-          </p>
-        )}
         {errors.roleAgence && <p className="text-xs text-destructive">{errors.roleAgence}</p>}
       </div>
 
-      {/* Rôle système - masqué si N2 ou technicien/assistante */}
-      {!isN2Creator && !isGlobalRoleAutoAssigned && (
+      {/* Rôle système */}
+      {!isN2Creator && (
         <div className="space-y-2">
           <Label>Rôle système</Label>
           <Select 
