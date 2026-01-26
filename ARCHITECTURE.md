@@ -1,8 +1,8 @@
 # Architecture du Projet GLOBAL / Apogée
 
-> **Version** : 2.1  
-> **Dernière mise à jour** : 17 Décembre 2025  
-> **Branche de référence** : `dev`
+> **Version** : 2.2  
+> **Dernière mise à jour** : 26 Janvier 2026  
+> **Branche de référence** : `main`
 
 ---
 
@@ -343,28 +343,27 @@ USING (is_apporteur_user(auth.uid()))
 
 ## 9. État Actuel & Roadmap
 
-### 9.1 V2.1 Livrée (Décembre 2025)
+### 9.1 V2.2 Livrée (Janvier 2026)
 
+✅ Guide Apogée Public (/guide-apogee)  
+✅ Interface multi-onglets navigateur  
+✅ Suppression portail salarié N1  
+✅ Simplification gestion collaborateurs  
 ✅ Permissions V2 (global_role + enabled_modules)  
-✅ Support V2 (chat_ai/chat_human/ticket + SLA + développement)  
-✅ Routes V2 (hub pages par section)  
-✅ RAG unifié (multi-contextes)  
-✅ Sécurité P1 (JWT, CORS, rate limit, RLS)  
-✅ Sentry intégré  
+✅ Support unifié (apogee_tickets)  
 ✅ StatIA (moteur statistiques centralisé)  
-✅ RH & Parc (collaborateurs, documents, demandes)  
+✅ RH & Parc (collaborateurs, documents)  
 ✅ DocGen (génération documents DOCX/PDF)  
-✅ Portail Apporteurs (Phase 1-3)  
-✅ Rapports Mensuels (génération automatique)  
+✅ Portail Apporteurs  
+✅ Rapports Mensuels  
 
 ### 9.2 En Cours
 
-⚠️ Portail Apporteurs Phase 4 (intégration Apogée complète)  
+⚠️ Guide public version complète (tickets, FAQ)  
 ⚠️ Flow Builder (éditeur workflows)  
 
 ### 9.3 À Venir
 
-📅 Thématisation support  
 📅 Notifications push  
 📅 Application mobile  
 
@@ -395,14 +394,12 @@ Config:     camelCase.ts
 
 ## Annexes
 
-### A. Documentation Complète
+### A. Documentation
 
-- `docs/historique-developpements.md` — Historique complet
-- `docs/historique-developpements-v2.md` — Focus V2
-- `docs/manuel-information-global.md` — Manuel utilisateur
-- `docs/guide-technique-global.md` — Guide développeur
+- `DOC_PERMISSIONS.md` — Système de permissions V2
+- `DOC_LOGS.md` — Système de logging
+- `docs/support-levels.md` — Niveaux support SA1-SA3
 - `docs/support-commercial-saas.md` — Support commercial
-- `docs/MODULES_DOCUMENTATION.md` — Documentation modules
 - `src/statia/README.md` — Documentation StatIA
 
 ### B. Fichiers de Configuration
@@ -418,4 +415,4 @@ Config:     camelCase.ts
 
 ---
 
-*Architecture GLOBAL / Apogée — Version 2.1*
+*Architecture GLOBAL / Apogée — Version 2.2*

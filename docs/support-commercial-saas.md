@@ -1,7 +1,8 @@
 # Présentation du SaaS GLOBAL / Apogée — Support Commercial Officiel
 
 > **Audience** : Prospects, franchisés, dirigeants, décideurs  
-> **Version** : 2.0 — Décembre 2025
+> **Version** : 2.1 — Janvier 2026  
+> **Dernière mise à jour** : 26 Janvier 2026
 
 ---
 

@@ -1,7 +1,8 @@
 # NO AUTO-POPUP POLICY
 
-**Date:** 2026-01-16  
-**Status:** ACTIVE - Zero popup tolerance
+**Date de création** : 16 Janvier 2026  
+**Dernière mise à jour** : 26 Janvier 2026  
+**Status** : ACTIVE - Zero popup tolerance
 
 ## Summary
 

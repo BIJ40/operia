@@ -1,5 +1,7 @@
 # Documentation Système de Logs
 
+> **Dernière mise à jour** : 26 Janvier 2026
+
 ## Vue d'ensemble
 
 Le projet utilise un système de logs centralisé défini dans `src/lib/logger.ts`. Ce système permet de contrôler le niveau de verbosité des logs entre environnement de développement et production.

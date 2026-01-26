@@ -398,6 +398,6 @@ WHERE
 
 ---
 
-**Document maintenu par** : Architecture projet guide-apogee-dev  
-**Dernière mise à jour** : 2025-12-18  
-**Version** : 1.1
+**Document maintenu par** : Architecture projet GLOBAL / Apogée  
+**Dernière mise à jour** : 26 Janvier 2026  
+**Version** : 1.2

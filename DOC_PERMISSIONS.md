@@ -1,5 +1,7 @@
 # Système de Permissions V2.0
 
+> **Dernière mise à jour** : 26 Janvier 2026
+
 ## Vue d'ensemble
 
 Le système V2.0 simplifie radicalement la gestion des accès en remplaçant l'ancien modèle complexe (groupes + scopes + capabilities + overrides) par une architecture claire et extensible.

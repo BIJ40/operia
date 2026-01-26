@@ -1,23 +1,26 @@
-export const APP_VERSION = '0.8.3';
-export const APP_CODENAME = 'Recentrage N2 Franchisé';
+export const APP_VERSION = '0.8.4';
+export const APP_CODENAME = 'Guide Apogée Public';
 
 /**
- * Changelog v0.8.3 (2026-01-23)
+ * Changelog v0.8.4 (2026-01-26)
  * ==============================
  * 
- * SUPPRESSION PORTAIL EMPLOYÉ N1
- * ------------------------------
- * - Suppression complète portail salarié N1
- * - Recentrage sur fonctionnalités Franchisé N2+
- * - N1 conserve : Tickets, Favoris, KPIs dashboard
+ * GUIDE APOGÉE PUBLIC
+ * -------------------
+ * - Nouvelle interface /guide-apogee accessible sans authentification
+ * - Navigation multi-onglets type navigateur (drag & drop)
+ * - Sidebar catégories avec redimensionnement
+ * - Filtrage des catégories obsolètes (support formation, recap fiches)
+ * - Page d'accueil avec instructions d'utilisation
+ * - Message "version simplifiée" avec roadmap (support, tickets, FAQ)
  * 
- * SIMPLIFICATION COLLABORATEURS
- * -----------------------------
- * - Création collaborateur sans compte utilisateur
- * - Suppression workflow signature digitale planning
- * - Bouton "Envoyer au technicien" supprimé
+ * DOCUMENTATION
+ * -------------
+ * - Nettoyage documentation legacy (audits 2025)
+ * - Mise à jour horodatée des fichiers de doc
  * 
- * PRÉCÉDENT (v0.8.2 - 2026-01-22)
+ * PRÉCÉDENT (v0.8.3 - 2026-01-23)
  * --------------------------------
- * - UX Tickets & Persistance formulaire
+ * - Suppression portail salarié N1
+ * - Simplification collaborateurs
  */
