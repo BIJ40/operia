@@ -196,7 +196,6 @@ export const PAGE_HEADER_MATCHERS: PageHeaderConfig[] = [
   // ============================================
   // GESTION DE PROJET
   // ============================================
-  { match: (path) => path === '/projects/doublons', pageKey: 'projects_duplicates', defaultTitle: 'Doublons IA', defaultSubtitle: 'Revue des doublons potentiels détectés par l\'IA', icon: 'Copy', parentRoute: '/projects', parentLabel: 'Projet' },
   { match: (path) => path === '/projects/import', pageKey: 'projects_import', defaultTitle: 'Import Tickets', defaultSubtitle: 'Importer des tickets depuis Excel', icon: 'Upload', parentRoute: '/projects', parentLabel: 'Projet' },
   { match: (path) => path === '/projects/import-priorities', pageKey: 'projects_import_priorities', defaultTitle: 'Import Priorités', defaultSubtitle: 'Importer les priorités', icon: 'Upload', parentRoute: '/projects', parentLabel: 'Projet' },
   { match: (path) => path === '/projects/import-evaluated', pageKey: 'projects_import_evaluated', defaultTitle: 'Import Évalué', defaultSubtitle: 'Importer tickets évalués', icon: 'Upload', parentRoute: '/projects', parentLabel: 'Projet' },

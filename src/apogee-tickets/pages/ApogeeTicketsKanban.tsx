@@ -18,7 +18,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns, Eye, Shield, Loader2, ShieldAlert, Download, FileText, Sheet, FileDown, LayoutGrid, List, FileCheck, AlertTriangle, Copy, RotateCcw, Clock, Mail, Search } from 'lucide-react';
+import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns, Eye, Shield, Loader2, ShieldAlert, Download, FileText, Sheet, FileDown, LayoutGrid, List, FileCheck, AlertTriangle, RotateCcw, Clock, Mail, Search } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { usePersistedFilters } from '../hooks/usePersistedFilters';
@@ -458,18 +458,6 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
                     {unqualifiedCount}
                   </Badge>
                 )}
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => navigate(ROUTES.projects.duplicates)}
-                className="cursor-pointer"
-              >
-                <Copy className="h-4 w-4 mr-2 text-indigo-600" />
-                <div className="flex-1">
-                  <span>IA-IA</span>
-                  <span className="text-xs text-muted-foreground ml-1">
-                    (Doublons)
-                  </span>
-                </div>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
