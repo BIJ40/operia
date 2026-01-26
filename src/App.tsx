@@ -48,6 +48,7 @@ import {
   SupportRoutes,
   ProjectsRoutes,
   ApporteurRoutes,
+  PublicRoutes,
 } from "./routes";
 
 // Optimized QueryClient with caching
@@ -99,6 +100,11 @@ function AppContent() {
       
       <Suspense fallback={<PageLoader />}>
         <Routes>
+          {/* ============================================ */}
+          {/* PUBLIC ROUTES - No auth required */}
+          {/* ============================================ */}
+          {PublicRoutes()}
+          
           {/* ============================================ */}
           {/* CORE ROUTES */}
           {/* ============================================ */}

@@ -7,3 +7,4 @@ export { FranchiseurRoutes } from './franchiseur.routes';
 export { SupportRoutes } from './support.routes';
 export { ProjectsRoutes } from './projects.routes';
 export { ApporteurRoutes } from './apporteur.routes';
+export { PublicRoutes } from './public.routes';
