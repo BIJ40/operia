@@ -457,49 +457,51 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
       </AlertDialog>
 
       {/* Sections en grille - 3 sections maintenant */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="space-y-4">
+        {/* Row 1: Compétences (gauche) + Sécurité (droite) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Compétences - gauche */}
+          <CollapsibleSection 
+            title="Compétences" 
+            icon={<Award className="h-4 w-4" />}
+            defaultOpen={true}
+            badge={collaborator.competencies?.competences_techniques?.length ? (
+              <Badge variant="secondary" className="text-xs">
+                {collaborator.competencies.competences_techniques.length}
+              </Badge>
+            ) : undefined}
+          >
+            <RHSectionCompetences collaborator={collaborator} />
+          </CollapsibleSection>
 
-        {/* Compétences */}
-        <CollapsibleSection 
-          title="Compétences" 
-          icon={<Award className="h-4 w-4" />}
-          defaultOpen={true}
-          badge={collaborator.competencies?.competences_techniques?.length ? (
-            <Badge variant="secondary" className="text-xs">
-              {collaborator.competencies.competences_techniques.length}
-            </Badge>
-          ) : undefined}
-        >
-          <RHSectionCompetences collaborator={collaborator} />
-        </CollapsibleSection>
+          {/* Sécurité - droite */}
+          <CollapsibleSection 
+            title="Sécurité" 
+            icon={<Shield className="h-4 w-4" />}
+            badge={collaborator.epi_profile?.statut_epi ? (
+              <Badge 
+                variant="secondary" 
+                className={cn(
+                  "text-xs",
+                  collaborator.epi_profile.statut_epi === 'OK' && 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+                  collaborator.epi_profile.statut_epi === 'TO_RENEW' && 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+                  collaborator.epi_profile.statut_epi === 'MISSING' && 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                )}
+              >
+                {collaborator.epi_profile.statut_epi === 'OK' ? '✓' : collaborator.epi_profile.statut_epi === 'TO_RENEW' ? '⏰' : '⚠'}
+              </Badge>
+            ) : undefined}
+          >
+            <RHSectionSecurite collaborator={collaborator} />
+          </CollapsibleSection>
+        </div>
 
-        {/* Documents - sous Compétences */}
+        {/* Row 2: Documents (pleine largeur) */}
         <CollapsibleSection 
           title="Documents" 
           icon={<FolderOpen className="h-4 w-4" />}
         >
           <RHSectionDocuments collaborator={collaborator} />
-        </CollapsibleSection>
-
-        {/* Sécurité - en dernier */}
-        <CollapsibleSection 
-          title="Sécurité" 
-          icon={<Shield className="h-4 w-4" />}
-          badge={collaborator.epi_profile?.statut_epi ? (
-            <Badge 
-              variant="secondary" 
-              className={cn(
-                "text-xs",
-                collaborator.epi_profile.statut_epi === 'OK' && 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-                collaborator.epi_profile.statut_epi === 'TO_RENEW' && 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-                collaborator.epi_profile.statut_epi === 'MISSING' && 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-              )}
-            >
-              {collaborator.epi_profile.statut_epi === 'OK' ? '✓' : collaborator.epi_profile.statut_epi === 'TO_RENEW' ? '⏰' : '⚠'}
-            </Badge>
-          ) : undefined}
-        >
-          <RHSectionSecurite collaborator={collaborator} />
         </CollapsibleSection>
       </div>
     </div>
