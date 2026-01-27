@@ -1,127 +1,262 @@
 
-# Plan de simplification de l'interface du tableau RH Suivi
+# Refonte UX Cockpit Suivi RH - Style LUCCA
 
-## Problèmes identifiés
+## Vision Produit
 
-Sur la base de la capture d'écran et de l'analyse du code :
-
-1. **Survol (HoverCard) passe dessous** : Le z-index du HoverCard (z-50) est inférieur à celui des éléments parents ou entre en conflit avec le contexte de stacking des colonnes sticky
-2. **Icônes inutiles** : Le stylo (Pencil) et les 3 points (MoreVertical) encombrent l'espace entre l'avatar et le nom
-3. **UX complexe** : L'accès au wizard d'édition et à la fiche complète n'est pas intuitif
+Transformer le tableau RH actuel (6 onglets techniques) en un **cockpit de gestion humain** inspiré de LUCCA : lisible en 2 secondes, actionnable sans formation, centré sur la personne et ses statuts.
 
 ---
 
-## Solution proposée
+## Architecture actuelle vs Cible
 
-### 1. Supprimer les icônes (Pencil et MoreVertical)
-
-**Fichier :** `src/components/rh/unified/RHUnifiedTableRow.tsx`
-
-- Retirer le bouton Pencil (lignes 483-493)
-- Retirer le DropdownMenu avec les 3 points (lignes 494-535)
-- Garder uniquement : Avatar + indicateur de statut global
-
-**Avant :**
-```
-[Avatar] [●] [✏️] [⋮] | BOUHI | AMANDINE
-```
-
-**Après :**
-```
-[Avatar] [●] | BOUHI | AMANDINE
+```text
+AVANT (complexe)                         APRÈS (cockpit)
+┌─────────────────────────┐             ┌─────────────────────────┐
+│ 6 onglets techniques    │             │ Vue unique synthétique  │
+│ - Général               │             │                         │
+│ - Infos perso           │ ────────>   │ Colonnes = statuts      │
+│ - Sécurité              │             │ ✓/⚠️/❌ = langage visuel │
+│ - Compétences           │             │                         │
+│ - Parc                  │             │ Clic cellule = drawer   │
+│ - Documents             │             │                         │
+└─────────────────────────┘             └─────────────────────────┘
 ```
 
 ---
 
-### 2. Corriger le z-index du HoverCard
+## Structure du nouveau tableau
 
-**Fichier :** `src/components/rh/unified/CollaboratorHoverPreview.tsx`
+### Colonnes cockpit (ordre figé)
 
-- Ajouter un z-index plus élevé (z-[100]) au `HoverCardContent` pour qu'il passe au-dessus des colonnes sticky (z-10)
+| # | Colonne | Affichage | Cliquable | Drawer |
+|---|---------|-----------|-----------|--------|
+| 1 | **Collaborateur** | Avatar + Nom + Badge statut | Survol = preview | Non |
+| 2 | **Contact** | ✓ ou ⚠️ | Oui | Contact |
+| 3 | **ICE** | 0, 1 ou 2 (couleur) | Oui | ICE |
+| 4 | **RH** | ✓ ou ⚠️ | Oui | Dates RH |
+| 5 | **EPI & Tailles** | ✓ ou ⚠️ ou ⚫ | Oui | EPI |
+| 6 | **Parc** | 🚐 ou — | Oui | Parc |
+| 7 | **Documents** | x/y ratio | Oui | Documents |
+| 8 | **Compétences** | Nombre | Oui | Compétences |
+| 9 | **Complétude** | Progress bar douce | Non | — |
+| 10 | **Actions** | 👁 Voir | Oui | Fiche complète |
+
+### Indicateurs visuels (design LUCCA)
+
+```text
+Couleurs douces, jamais agressives :
+  ✓  → vert doux (#10b981)     = OK
+  ⚠️ → ambre doux (#f59e0b)    = Attention
+  ❌ → corail (#f87171)         = Critique
+  ⚫ → gris (#9ca3af)           = N/A
+  —  → tiret discret           = Non défini
+```
 
 ---
 
-### 3. Simplifier l'UX : accès Wizard + Fiche complète
+## Drawer latéral universel
 
-**Approche :** Utiliser le clic droit (Context Menu) sur la ligne du collaborateur pour afficher les actions
+### Principe
 
-**Fichier :** `src/components/rh/unified/RHUnifiedTableRow.tsx`
+Un seul composant `RHCockpitDrawer` réutilisé pour tous les domaines. Le contenu change dynamiquement selon la cellule cliquée.
 
-Ajouter un `ContextMenu` enveloppant la `TableRow` avec les options :
-- **Ouvrir la fiche** → Appelle `onOpenProfile(collaborator)`
-- **Modifier (Wizard)** → Appelle `onEditCollaborator(collaborator.id)`
-- **Changer classification** → Sous-menu existant
-- **Supprimer** → Option existante
+### Structure drawer
 
-En plus, le **clic simple** sur le nom/prénom ouvre la fiche complète (comportement actuel préservé).
+```text
+┌────────────────────────────────────────────┐
+│ [×]  Titre contextuel                     │
+├────────────────────────────────────────────┤
+│ 💡 Message pédagogique                    │
+│ "Il manque 1 information pour compléter"  │
+├────────────────────────────────────────────┤
+│                                            │
+│   [Champs simples avec auto-save]          │
+│                                            │
+│   📧 Email    _____________________ ✓      │
+│   📱 Tél      _____________________ ⚠️     │
+│                                            │
+└────────────────────────────────────────────┘
+```
+
+### Domaines du drawer
+
+| Domaine | Contenu | Source existante |
+|---------|---------|------------------|
+| Contact | email, téléphone | Inline edit |
+| ICE | 2 contacts urgence | useSensitiveData |
+| RH | hiring_date, leaving_date | Inline edit |
+| EPI & Tailles | Fusion popups existantes | RHEpiPopup + RHTaillesPopup |
+| Parc | Véhicule + matériel | RHVehiculePopup + RHMaterielPopup |
+| Documents | Finder documents | RHDocumentPopup |
+| Compétences | Habilitations, CACES | RHMetiersMultiSelect |
 
 ---
 
-## Résumé des modifications
+## Filtres rapides (quick-access chips)
+
+Barre de filtres cliquables sous les stats :
+
+```text
+[❗ À corriger] [🆕 Nouveaux] [🦺 EPI incomplets] [📄 Docs manquants] [🚗 Sans véhicule] [🎓 Compétences]
+```
+
+| Filtre | Logique |
+|--------|---------|
+| À corriger | Complétude < 80% |
+| Nouveaux | hiring_date < 30 jours |
+| EPI incomplets | statut_epi = 'MISSING' OR 'TO_RENEW' |
+| Docs manquants | permis OR cni null |
+| Sans véhicule | type=TECHNICIEN AND vehicule null |
+| Compétences manquantes | competences_techniques empty |
+
+---
+
+## Hook de calcul des indicateurs
+
+### `useRHCockpitIndicators`
+
+```typescript
+interface CockpitIndicators {
+  contact: 'ok' | 'warning';           // email AND phone
+  ice: 0 | 1 | 2;                      // contacts urgence
+  rh: 'ok' | 'warning';                // hiring_date présent
+  epiTailles: 'ok' | 'warning' | 'na'; // synthèse EPI+tailles
+  parc: 'vehicle' | 'none';            // véhicule attribué
+  documents: { filled: number; total: number };
+  competences: number;                  // count
+  completeness: number;                 // 0-100
+  globalStatus: 'ok' | 'warning' | 'critical';
+}
+```
+
+---
+
+## Fichiers à créer
+
+| Fichier | Description |
+|---------|-------------|
+| `src/components/rh/cockpit/RHCockpitTable.tsx` | Tableau principal cockpit |
+| `src/components/rh/cockpit/RHCockpitRow.tsx` | Ligne avec cellules compactes |
+| `src/components/rh/cockpit/RHCockpitColumns.ts` | Configuration des colonnes |
+| `src/components/rh/cockpit/RHCockpitDrawer.tsx` | Drawer latéral universel |
+| `src/components/rh/cockpit/RHCockpitDrawerContact.tsx` | Contenu drawer Contact |
+| `src/components/rh/cockpit/RHCockpitDrawerICE.tsx` | Contenu drawer ICE |
+| `src/components/rh/cockpit/RHCockpitDrawerRH.tsx` | Contenu drawer dates RH |
+| `src/components/rh/cockpit/RHCockpitDrawerEPI.tsx` | Fusion EPI + Tailles |
+| `src/components/rh/cockpit/RHCockpitDrawerParc.tsx` | Véhicule + Matériel |
+| `src/components/rh/cockpit/RHCockpitDrawerDocs.tsx` | Documents Finder |
+| `src/components/rh/cockpit/RHCockpitDrawerCompetences.tsx` | Compétences |
+| `src/components/rh/cockpit/RHCockpitFilters.tsx` | Barre filtres chips |
+| `src/components/rh/cockpit/RHCockpitCell.tsx` | Cellule indicateur générique |
+| `src/hooks/rh/useRHCockpitIndicators.ts` | Calcul indicateurs |
+| `src/components/rh/cockpit/index.ts` | Exports |
+
+## Fichiers à modifier
 
 | Fichier | Modification |
 |---------|--------------|
-| `RHUnifiedTableRow.tsx` | Supprimer Pencil + MoreVertical, ajouter ContextMenu sur la ligne |
-| `CollaboratorHoverPreview.tsx` | Augmenter z-index à z-[100] |
+| `src/pages/rh/RHSuiviIndex.tsx` | Remplacer RHUnifiedTable par RHCockpitTable |
+| `src/components/rh/unified/RHStatsHeader.tsx` | Intégrer RHCockpitFilters |
+
+## Fichiers conservés (réutilisation)
+
+- `CollaboratorHoverPreview.tsx` - Preview au survol
+- `RHProfileProgressBar.tsx` - Barre de progression
+- `RHStatusBadges.tsx` - Logique de statut
+- Browser tabs system - Fiches complètes
+- Tous les hooks existants (useRHInlineEdit, useProfileCompleteness, etc.)
 
 ---
 
-## Récapitulatif UX simplifié
+## Interactions UX
 
 | Action | Résultat |
 |--------|----------|
-| Clic sur nom/prénom | Ouvre la fiche complète dans un onglet |
-| Survol sur nom | Affiche l'aperçu HoverCard |
-| Clic droit sur la ligne | Menu contextuel (Fiche, Wizard, Classification, Supprimer) |
-| Double-clic sur cellule | Édition inline (comportement existant) |
+| Clic cellule statut | Ouvre drawer latéral droit |
+| Survol nom | Affiche HoverCard preview existant |
+| Double-clic ligne | Ouvre fiche complète (browser tab) |
+| Clic droit ligne | Menu contextuel existant |
+| Édition dans drawer | Auto-save + feedback ✓ |
+| Clic filtre | Toggle on/off, combinables |
 
 ---
 
-## Détails techniques
+## Design LUCCA - Principes appliqués
 
-### Modification du z-index (CollaboratorHoverPreview.tsx)
-```tsx
-<HoverCardContent 
-  side="right" 
-  align="start" 
-  className="w-80 p-0 overflow-hidden z-[100]"  // Ajout de z-[100]
-  sideOffset={8}
->
+1. **La personne avant la donnée** : Avatar toujours visible, nom en premier
+2. **Tout est un état** : Chaque colonne = indicateur visuel, pas champ texte
+3. **Progression visible** : Barre de complétude douce, jamais agressive
+4. **Zéro friction** : Drawer non bloquant, tableau reste visible, auto-save
+5. **Peu de texte** : Icônes + couleurs comme langage principal
+6. **Design sobre** : Couleurs douces, ombres légères, espacement aéré
+
+---
+
+## Plan d'implémentation
+
+### Phase 1 - Fondations
+1. Créer le hook `useRHCockpitIndicators` avec logique de calcul
+2. Créer le composant `RHCockpitCell` générique pour les indicateurs
+3. Créer la structure du drawer `RHCockpitDrawer` (Sheet wrapper)
+
+### Phase 2 - Contenus drawer
+4. Implémenter `RHCockpitDrawerContact` (email, téléphone)
+5. Implémenter `RHCockpitDrawerICE` (contacts urgence)
+6. Implémenter `RHCockpitDrawerEPI` (fusion EPI + Tailles existants)
+7. Implémenter `RHCockpitDrawerParc` (véhicule + matériel)
+8. Implémenter `RHCockpitDrawerDocs` (Finder documents)
+9. Implémenter `RHCockpitDrawerCompetences`
+
+### Phase 3 - Tableau cockpit
+10. Créer `RHCockpitRow` avec toutes les cellules indicateurs
+11. Créer `RHCockpitTable` assemblant le tout
+12. Créer `RHCockpitFilters` (chips filtres)
+
+### Phase 4 - Intégration
+13. Modifier `RHSuiviIndex.tsx` pour utiliser le cockpit
+14. Intégrer les filtres dans le header
+15. Tests et ajustements visuels
+
+---
+
+## Section technique
+
+### Composant RHCockpitCell (pattern générique)
+
+```typescript
+interface RHCockpitCellProps {
+  status: 'ok' | 'warning' | 'error' | 'na';
+  label?: string | number;
+  icon?: LucideIcon;
+  onClick: () => void;
+  tooltip?: string;
+}
 ```
 
-### Structure du Context Menu (RHUnifiedTableRow.tsx)
-```tsx
-<ContextMenu>
-  <ContextMenuTrigger asChild>
-    <TableRow ...>
-      {/* Contenu de la ligne */}
-    </TableRow>
-  </ContextMenuTrigger>
-  <ContextMenuContent className="w-56">
-    <ContextMenuItem onClick={() => onOpenProfile?.(collaborator)}>
-      <ExternalLink className="h-4 w-4 mr-2" />
-      Ouvrir la fiche complète
-    </ContextMenuItem>
-    <ContextMenuItem onClick={() => onEditCollaborator?.(collaborator.id)}>
-      <Pencil className="h-4 w-4 mr-2" />
-      Modifier (Wizard)
-    </ContextMenuItem>
-    <ContextMenuSeparator />
-    <ContextMenuSub>
-      <ContextMenuSubTrigger>
-        <UserCog className="h-4 w-4 mr-2" />
-        Changer classification
-      </ContextMenuSubTrigger>
-      <ContextMenuSubContent>
-        {/* Options de classification */}
-      </ContextMenuSubContent>
-    </ContextMenuSub>
-    <ContextMenuSeparator />
-    <ContextMenuItem onClick={() => setShowDeleteDialog(true)} className="text-destructive">
-      <Trash2 className="h-4 w-4 mr-2" />
-      Supprimer
-    </ContextMenuItem>
-  </ContextMenuContent>
-</ContextMenu>
+### Drawer state management
+
+```typescript
+const [drawer, setDrawer] = useState<{
+  open: boolean;
+  domain: 'contact' | 'ice' | 'rh' | 'epi' | 'parc' | 'docs' | 'competences';
+  collaboratorId: string;
+} | null>(null);
 ```
 
+### Auto-save pattern (existant réutilisé)
+
+```typescript
+const { handleValueChange, getLocalValue } = useRHInlineEdit(collaborators, onRefresh);
+// Debounce 2s, sauvegarde automatique
+```
+
+---
+
+## Résultat attendu
+
+Une interface qui :
+- Se lit en 2 secondes
+- Guide sans parler
+- Valorise la personne
+- Donne le controle sans complexité
+- Ressemble à un produit SaaS premium type LUCCA
