@@ -10,7 +10,6 @@ import {
 } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Plus, Search, Check, Wrench, User, Briefcase, UserCog } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { RHCollaborator } from '@/types/rh-suivi';
@@ -110,7 +109,7 @@ export function RHCollaboratorPicker({
           </div>
         )}
         
-        <ScrollArea className="max-h-[300px]">
+        <div className="max-h-[300px] overflow-y-auto">
           {groupedCollaborators.length === 0 ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
               Aucun collaborateur trouvé
@@ -151,7 +150,7 @@ export function RHCollaboratorPicker({
               })}
             </div>
           )}
-        </ScrollArea>
+        </div>
       </PopoverContent>
     </Popover>
   );
