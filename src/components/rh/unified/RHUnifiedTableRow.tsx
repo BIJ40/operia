@@ -472,9 +472,9 @@ export function RHUnifiedTableRow({
         "hover:shadow-sm"
       )}
     >
-      {/* Avatar + indicateur global + actions - COMPACT */}
-      <TableCell className="w-24 min-w-[96px] px-1.5 bg-muted/10">
-        <div className="flex items-center gap-1">
+      {/* Avatar + indicateur global + actions - FIXE ET COMPACT */}
+      <TableCell className="w-[52px] min-w-[52px] max-w-[52px] px-1 bg-muted/10">
+        <div className="flex items-center gap-0.5">
           <RHCollaboratorAvatarCompact collaborator={collaborator} />
           <RHGlobalStatusIndicator 
             collaborator={collaborator} 
@@ -572,9 +572,9 @@ export function RHUnifiedTableRow({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Colonnes fixes - Nom avec HoverCard preview - COMPACT */}
-      <TableCell className="font-medium w-24 min-w-[96px] px-1.5 bg-muted/10">
-        <div className="flex items-center gap-1">
+      {/* Colonnes fixes - Nom avec HoverCard preview - FIXE ET COMPACT */}
+      <TableCell className="font-medium w-[90px] min-w-[90px] max-w-[90px] px-1 bg-muted/10">
+        <div className="flex items-center gap-0.5">
           <CollaboratorHoverPreview
             collaborator={collaborator}
             epiSummary={epiSummary}
@@ -582,23 +582,23 @@ export function RHUnifiedTableRow({
           >
             <button
               onClick={() => onOpenProfile?.(collaborator)}
-              className="truncate text-left hover:text-primary hover:underline transition-colors text-xs font-medium max-w-[80px]"
+              className="truncate text-left hover:text-primary hover:underline transition-colors text-xs font-medium max-w-[70px]"
               title={collaborator.last_name}
             >
               {collaborator.last_name}
             </button>
           </CollaboratorHoverPreview>
           {collaborator.leaving_date && (
-            <Badge variant="outline" className="text-[9px] px-0.5 py-0 text-muted-foreground border-muted-foreground/50 shrink-0">
+            <Badge variant="outline" className="text-[8px] px-0.5 py-0 text-muted-foreground border-muted-foreground/50 shrink-0">
               Ex
             </Badge>
           )}
         </div>
       </TableCell>
-      <TableCell className="w-24 min-w-[96px] px-1.5 bg-muted/10">
+      <TableCell className="w-[80px] min-w-[80px] max-w-[80px] px-1 bg-muted/10">
         <button
           onClick={() => onOpenProfile?.(collaborator)}
-          className="truncate text-left hover:text-primary hover:underline transition-colors text-xs max-w-[80px]"
+          className="truncate text-left hover:text-primary hover:underline transition-colors text-xs max-w-[70px]"
           title={collaborator.first_name}
         >
           {collaborator.first_name}
