@@ -31,7 +31,6 @@ import {
   FolderOpen,
   Mail,
   Phone,
-  Calendar,
   UserCheck,
   UserX,
   Clock,
@@ -47,8 +46,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useRHCollaborator, useDeleteCollaborator } from '@/hooks/useRHSuivi';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { updateCollaboratorField } from '@/hooks/useAutoSaveCollaborator';
+import { InlineEditCompact } from '@/components/ui/inline-edit';
 import type { RHCollaborator } from '@/types/rh-suivi';
 import { useRHTabs } from './RHTabsContext';
 import { cn } from '@/lib/utils';
@@ -95,22 +94,22 @@ function CollapsibleSection({ title, icon, defaultOpen = false, children, badge 
   const [isOpen, setIsOpen] = useState(defaultOpen);
   
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="border rounded-lg overflow-hidden bg-card">
-      <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors">
-        <div className="flex items-center gap-3">
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="border rounded-lg overflow-hidden bg-card h-fit">
+      <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-muted/50 transition-colors">
+        <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-md bg-primary/10 text-primary">
             {icon}
           </div>
-          <h3 className="font-semibold text-base">{title}</h3>
+          <h3 className="font-medium text-sm">{title}</h3>
           {badge}
         </div>
         <ChevronDown className={cn(
-          "h-5 w-5 text-muted-foreground transition-transform duration-200",
+          "h-4 w-4 text-muted-foreground transition-transform duration-200",
           isOpen && "rotate-180"
         )} />
       </CollapsibleTrigger>
-      <CollapsibleContent className="border-t">
-        <div className="p-4">
+      <CollapsibleContent forceMount className={cn("border-t", !isOpen && "hidden")}>
+        <div className="p-3">
           {children}
         </div>
       </CollapsibleContent>
@@ -159,50 +158,53 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
   const status = getCollaboratorStatus(collaborator);
 
   return (
-    <div className="p-4 space-y-4 max-w-4xl mx-auto">
-      {/* Header compact */}
+    <div className="p-4 space-y-3">
+      {/* Header enrichi avec infos de contact */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-12 w-12">
+        <CardContent className="p-3">
+          <div className="flex items-start gap-3">
+            <Avatar className="h-10 w-10 shrink-0">
               <AvatarFallback className="bg-primary/10 text-primary text-sm">
                 {initials}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 space-y-1">
+              {/* Ligne 1: Nom + Status + Type */}
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-lg font-semibold truncate">{fullName}</h2>
+                <h2 className="text-base font-semibold">{fullName}</h2>
                 <StatusBadge status={status} />
                 {collaborator.type && (
                   <Badge variant="outline" className="text-xs">{collaborator.type}</Badge>
                 )}
               </div>
-              <div className="flex flex-wrap gap-3 text-sm text-muted-foreground mt-1">
-                {collaborator.email && (
-                  <span className="flex items-center gap-1">
-                    <Mail className="h-3.5 w-3.5" />
-                    <span className="truncate max-w-[180px]">{collaborator.email}</span>
-                  </span>
-                )}
-                {collaborator.phone && (
-                  <span className="flex items-center gap-1">
-                    <Phone className="h-3.5 w-3.5" />
-                    {collaborator.phone}
-                  </span>
-                )}
-                {collaborator.hiring_date && (
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-3.5 w-3.5" />
-                    Depuis {format(new Date(collaborator.hiring_date), 'MMM yyyy', { locale: fr })}
-                  </span>
-                )}
+              
+              {/* Ligne 2: Email & Téléphone éditables inline */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                <span className="flex items-center gap-1.5 text-muted-foreground">
+                  <Mail className="h-3.5 w-3.5 shrink-0" />
+                  <InlineEditCompact
+                    value={collaborator.email || ''}
+                    onSave={(v) => updateCollaboratorField(collaborator.id, 'email', v)}
+                    placeholder="email@..."
+                    type="email"
+                  />
+                </span>
+                <span className="flex items-center gap-1.5 text-muted-foreground">
+                  <Phone className="h-3.5 w-3.5 shrink-0" />
+                  <InlineEditCompact
+                    value={collaborator.phone || ''}
+                    onSave={(v) => updateCollaboratorField(collaborator.id, 'phone', v)}
+                    placeholder="Téléphone..."
+                    type="tel"
+                  />
+                </span>
               </div>
             </div>
             
             {/* Actions dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="shrink-0">
+                <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8">
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>

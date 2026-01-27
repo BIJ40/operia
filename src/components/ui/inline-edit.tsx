@@ -263,3 +263,123 @@ export function InlineSelect({
     </div>
   );
 }
+
+// Compact inline edit for headers (no label, minimal styling)
+interface InlineEditCompactProps {
+  value: string;
+  onSave: (value: string) => Promise<void> | void;
+  placeholder?: string;
+  type?: 'text' | 'email' | 'tel';
+  className?: string;
+}
+
+export function InlineEditCompact({
+  value,
+  onSave,
+  placeholder = '-',
+  type = 'text',
+  className,
+}: InlineEditCompactProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [localValue, setLocalValue] = useState(value || '');
+  const [isSaving, setIsSaving] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout>();
+
+  useEffect(() => {
+    if (!isEditing) {
+      setLocalValue(value || '');
+    }
+  }, [value, isEditing]);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select?.();
+    }
+  }, [isEditing]);
+
+  const handleSave = useCallback(async (newValue: string) => {
+    if (newValue === (value || '')) return;
+    
+    setIsSaving(true);
+    try {
+      await onSave(newValue);
+    } catch (error) {
+      console.error('Save error:', error);
+      setLocalValue(value || '');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [onSave, value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setLocalValue(newValue);
+    
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    saveTimeoutRef.current = setTimeout(() => {
+      handleSave(newValue);
+    }, 800);
+  };
+
+  const handleBlur = () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    handleSave(localValue);
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      setLocalValue(value || '');
+      setIsEditing(false);
+    } else if (e.key === 'Enter') {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      handleSave(localValue);
+      setIsEditing(false);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  if (!isEditing) {
+    return (
+      <span
+        className={cn(
+          "cursor-pointer hover:underline decoration-dashed underline-offset-2 inline-flex items-center gap-1",
+          !value && "italic opacity-60",
+          className
+        )}
+        onClick={() => setIsEditing(true)}
+      >
+        {value || placeholder}
+        {isSaving && <Loader2 className="h-3 w-3 animate-spin" />}
+      </span>
+    );
+  }
+
+  return (
+    <Input
+      ref={inputRef}
+      type={type}
+      value={localValue}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
+      placeholder={placeholder}
+      className={cn("h-6 w-36 text-sm px-1 py-0", className)}
+    />
+  );
+}
