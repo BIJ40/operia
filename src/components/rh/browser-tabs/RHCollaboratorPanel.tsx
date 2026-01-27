@@ -252,8 +252,9 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Sections repliables */}
-      <div className="space-y-3">
+      {/* Sections en grille 2x2 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {/* Ligne 1 */}
         <CollapsibleSection 
           title="Essentiel" 
           icon={<User className="h-4 w-4" />}
@@ -274,8 +275,9 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
           <RHSectionCompetences collaborator={collaborator} />
         </CollapsibleSection>
 
+        {/* Ligne 2 */}
         <CollapsibleSection 
-          title="Sécurité & EPI" 
+          title="Sécurité" 
           icon={<Shield className="h-4 w-4" />}
           badge={collaborator.epi_profile?.statut_epi ? (
             <Badge 
