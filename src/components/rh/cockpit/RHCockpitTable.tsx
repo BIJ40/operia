@@ -237,13 +237,14 @@ export function RHCockpitTable({
   }
 
   return (
-    <div className={cn('flex flex-col gap-4', className)}>
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm text-muted-foreground">
-          Collaborateurs : <span className="font-medium text-foreground">{filteredCollaborators.length}</span>
-          {' '} / {collaborators.length}
-        </p>
-
+    <div className={cn('flex flex-col gap-2 h-full', className)}>
+      {/* Filtres rapides + bouton reset */}
+      <div className="flex items-center justify-between gap-2 flex-shrink-0">
+        <RHCockpitFilters
+          activeFilters={activeFilters}
+          onFilterToggle={handleFilterToggle}
+          counts={filterCounts}
+        />
         {activeFilters.length > 0 && (
           <Button
             type="button"
@@ -256,16 +257,9 @@ export function RHCockpitTable({
         )}
       </div>
 
-      {/* Filtres rapides */}
-      <RHCockpitFilters
-        activeFilters={activeFilters}
-        onFilterToggle={handleFilterToggle}
-        counts={filterCounts}
-      />
-
-      {/* Tableau */}
-      <Card className="flex-1 overflow-hidden flex flex-col">
-        <ScrollArea className="flex-1">
+      {/* Tableau avec scroll */}
+      <Card className="flex-1 overflow-hidden min-h-0">
+        <ScrollArea className="h-full">
           <Table>
             <TableHeader className="sticky top-0 bg-background z-20">
               <TableRow className="hover:bg-transparent">
@@ -293,7 +287,6 @@ export function RHCockpitTable({
                 </TableRow>
               ) : (
                 filteredCollaborators.map((collab) => {
-                  // Toujours afficher le collaborateur, même sans indicateurs (fallback)
                   const indicators = indicatorsMap.get(collab.id) ?? calculateCockpitIndicators(collab);
 
                   return (

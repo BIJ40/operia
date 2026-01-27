@@ -16,8 +16,7 @@ import { useCollaborators } from '@/hooks/useCollaborators';
 import { useSensitiveData } from '@/hooks/useSensitiveData';
 import { CollaboratorFormData } from '@/types/collaborator';
 import { Button } from '@/components/ui/button';
-import { UserPlus, Users, UserX } from 'lucide-react';
-import { Toggle } from '@/components/ui/toggle';
+import { UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Système d'onglets navigateur
@@ -30,10 +29,7 @@ function RHSuiviContent() {
   const { agencyId, agence } = useAuth();
   const { openCollaborator } = useRHTabs();
   
-  // Toggle pour afficher les anciens collaborateurs (partis)
-  const [showFormer, setShowFormer] = useState(false);
-  
-  const { data: collaborators = [], isLoading, refetch } = useRHCollaborators({ includeFormer: showFormer });
+  const { data: collaborators = [], isLoading, refetch } = useRHCollaborators({ includeFormer: false });
   const { data: epiSummaries = [] } = useCollaboratorsEpiSummary(agencyId || undefined);
   
   const [showCompetencesMatrix, setShowCompetencesMatrix] = useState(false);
@@ -130,27 +126,7 @@ function RHSuiviContent() {
 
   // Contenu de l'onglet "Vue d'ensemble" - maintenant le cockpit
   const overviewContent = (
-    <div className="flex-1 flex flex-col min-h-0 px-1">
-      {/* Toggle anciens collaborateurs */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Toggle
-            pressed={showFormer}
-            onPressedChange={setShowFormer}
-            size="sm"
-            className={cn(
-              'gap-2 px-3',
-              showFormer && 'bg-muted'
-            )}
-          >
-            {showFormer ? <UserX className="h-4 w-4" /> : <Users className="h-4 w-4" />}
-            <span className="text-sm">
-              {showFormer ? 'Masquer les anciens' : 'Voir les anciens'}
-            </span>
-          </Toggle>
-        </div>
-      </div>
-
+    <div className="flex-1 flex flex-col min-h-0">
       {/* Tableau cockpit */}
       <RHCockpitTable
         collaborators={collaborators}
