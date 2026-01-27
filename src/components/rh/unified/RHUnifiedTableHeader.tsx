@@ -21,18 +21,19 @@ export function RHUnifiedTableHeader({ activeTab, visibleColumns }: RHUnifiedTab
     <TableHeader className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm">
       {/* Ligne 1 : Headers groupés avec design épuré */}
       <TableRow className="border-b border-border/50 h-9">
-        {/* Colonne avatar/statut - fixe et compacte */}
+        {/* Colonne avatar/statut - sticky à gauche */}
         <TableHead 
           rowSpan={2} 
-          className="w-[52px] min-w-[52px] max-w-[52px] px-1 bg-muted/30 text-center text-xs font-semibold border-r"
+          className="w-[52px] min-w-[52px] px-1 bg-muted/80 text-center text-xs font-semibold border-r sticky left-0 z-20"
         >
           👤
         </TableHead>
         
-        {/* Colonnes fixes - Nom/Prénom */}
+        {/* Colonnes fixes Nom/Prénom - sticky à gauche après avatar */}
         <TableHead 
           colSpan={FIXED_COLUMNS.length} 
-          className="bg-muted/30 text-center text-xs font-semibold border-r px-2"
+          className="bg-muted/80 text-center text-xs font-semibold border-r px-2 sticky left-[52px] z-20"
+          style={{ minWidth: '170px' }}
         >
           Collaborateur
         </TableHead>
@@ -55,19 +56,24 @@ export function RHUnifiedTableHeader({ activeTab, visibleColumns }: RHUnifiedTab
       
       {/* Ligne 2 : Colonnes détaillées - Plus compactes */}
       <TableRow className="h-8">
-        {/* Colonnes fixes avec largeurs réduites */}
-        {FIXED_COLUMNS.map((col, idx) => (
-          <TableHead 
-            key={col.id} 
-            className={cn(
-              "text-xs font-medium whitespace-nowrap bg-muted/20 px-2",
-              col.width,
-              idx === FIXED_COLUMNS.length - 1 && "border-r"
-            )}
-          >
-            {col.label}
-          </TableHead>
-        ))}
+        {/* Colonnes fixes Nom/Prénom - sticky */}
+        {FIXED_COLUMNS.map((col, idx) => {
+          // Position sticky cumulative : avatar = 52px, puis on empile
+          const leftOffset = 52 + idx * 85; // 85px par colonne fixe environ
+          return (
+            <TableHead 
+              key={col.id} 
+              className={cn(
+                "text-xs font-medium whitespace-nowrap bg-muted/80 px-2 sticky z-20",
+                col.width,
+                idx === FIXED_COLUMNS.length - 1 && "border-r"
+              )}
+              style={{ left: `${leftOffset}px`, minWidth: idx === 0 ? '90px' : '80px' }}
+            >
+              {col.label}
+            </TableHead>
+          );
+        })}
         
         {/* Colonnes de l'onglet actif - Avec largeurs définies */}
         {visibleGroups.map((group, groupIdx) => (
