@@ -5,7 +5,7 @@
 
 import { RHCollaborator } from '@/types/rh-suivi';
 
-export type RHTabId = 'general' | 'infos_perso' | 'securite' | 'competences' | 'parc' | 'idmdp' | 'documents';
+export type RHTabId = 'general' | 'infos_perso' | 'securite' | 'competences' | 'parc' | 'documents';
 
 export interface ColumnGroup {
   id: string;
@@ -196,16 +196,6 @@ export const TAB_COLUMNS: Record<RHTabId, ColumnGroup[]> = {
       ],
     },
   ],
-  idmdp: [
-    {
-      id: 'identifiants',
-      label: '🔐 Identifiants',
-      className: 'bg-amber-50/50 dark:bg-amber-950/20',
-      columns: [
-        { id: 'identifiants_liste', label: 'ID / MDP', accessor: () => null, sensitive: true, width: 'w-64' },
-      ],
-    },
-  ],
   documents: [
     {
       id: 'documents',
@@ -223,10 +213,9 @@ export const TAB_COLUMNS: Record<RHTabId, ColumnGroup[]> = {
 export const TAB_CONFIG: { id: RHTabId; label: string; icon: string; shortLabel?: string }[] = [
   { id: 'general', label: 'Général', icon: 'User', shortLabel: 'Gén.' },
   { id: 'infos_perso', label: 'Infos perso', icon: 'UserCircle', shortLabel: 'Perso' },
-  { id: 'securite', label: 'Sécurité & EPI', icon: 'Shield', shortLabel: 'EPI' },
+  { id: 'securite', label: 'Sécurité', icon: 'Shield', shortLabel: 'Sécu' },
   { id: 'competences', label: 'Compétences', icon: 'Award', shortLabel: 'Comp.' },
   { id: 'parc', label: 'Parc & Matériel', icon: 'Car', shortLabel: 'Parc' },
-  { id: 'idmdp', label: 'ID / MDP', icon: 'Key', shortLabel: 'ID' },
   { id: 'documents', label: 'Documents', icon: 'FolderOpen', shortLabel: 'Docs' },
 ];
 

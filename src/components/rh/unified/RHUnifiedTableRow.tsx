@@ -57,6 +57,8 @@ interface RHUnifiedTableRowProps {
   onEditCollaborator?: (collaboratorId: string) => void;
   /** Callback pour ouvrir le profil dans un onglet */
   onOpenProfile?: (collaborator: RHCollaborator) => void;
+  /** Callback pour ouvrir les documents (coffre) du collaborateur */
+  onOpenDocuments?: (collaborator: RHCollaborator) => void;
 }
 
 function getStatusIndicator(collaborator: RHCollaborator) {
@@ -78,6 +80,7 @@ export function RHUnifiedTableRow({
   epiSummary,
   onEditCollaborator,
   onOpenProfile,
+  onOpenDocuments,
 }: RHUnifiedTableRowProps) {
   const queryClient = useQueryClient();
   const tabGroups = TAB_COLUMNS[activeTab];
@@ -585,7 +588,7 @@ export function RHUnifiedTableRow({
                   variant="outline"
                   size="sm"
                   className="h-6 px-2 text-[10px] gap-1"
-                  onClick={() => onOpenProfile?.(collaborator)}
+                  onClick={() => onOpenDocuments?.(collaborator)}
                   title="Gérer les documents"
                 >
                   <ExternalLink className="h-3 w-3" />

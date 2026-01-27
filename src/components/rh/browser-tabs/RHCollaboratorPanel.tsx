@@ -58,7 +58,6 @@ import { RHTabRH } from '@/components/rh/tabs/RHTabRH';
 import { RHTabSecurite } from '@/components/rh/tabs/RHTabSecurite';
 import { RHTabCompetences } from '@/components/rh/tabs/RHTabCompetences';
 import { RHTabParc } from '@/components/rh/tabs/RHTabParc';
-import { RHTabIT } from '@/components/rh/tabs/RHTabIT';
 import { RHTabDocuments } from '@/components/rh/tabs/RHTabDocuments';
 
 function getCollaboratorStatus(c: RHCollaborator): 'active' | 'inactive' | 'exited' {
@@ -239,14 +238,6 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
             <Award className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Compétences</span>
           </TabsTrigger>
-          <TabsTrigger value="parc" className="gap-1.5 text-xs">
-            <Car className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Parc</span>
-          </TabsTrigger>
-          <TabsTrigger value="it" className="gap-1.5 text-xs">
-            <Laptop className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">IT</span>
-          </TabsTrigger>
           <TabsTrigger value="documents" className="gap-1.5 text-xs">
             <FolderOpen className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Documents</span>
@@ -267,9 +258,6 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
         </TabsContent>
         <TabsContent value="parc" className="mt-4">
           <RHTabParc collaborator={collaborator} />
-        </TabsContent>
-        <TabsContent value="it" className="mt-4">
-          <RHTabIT collaborator={collaborator} />
         </TabsContent>
         <TabsContent value="documents" className="mt-4">
           <RHTabDocuments collaborator={collaborator} />

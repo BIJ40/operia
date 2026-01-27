@@ -32,7 +32,6 @@ const DEFAULT_VISIBLE_COLUMNS: Record<RHTabId, string[]> = {
   securite: ['taille_haut', 'taille_bas', 'pointure', 'statut_epi', 'date_renouvellement'],
   competences: ['hab_elec_statut', 'hab_elec_date', 'caces_count'],
   parc: ['vehicule_attribue', 'carte_carburant', 'carte_bancaire', 'carte_autre', 'materiels_liste'],
-  idmdp: ['identifiants_liste'],
   documents: ['docs_icons'],
 };
 
@@ -194,6 +193,13 @@ function RHSuiviContent() {
     openCollaborator(collaborator);
   };
 
+  // Handler pour ouvrir les documents (coffre) d'un collaborateur
+  const handleOpenDocuments = (collaborator: RHCollaborator) => {
+    // Force l'onglet documents via sessionStorage avant d'ouvrir
+    sessionStorage.setItem(`rh-panel-${collaborator.id}-tab`, JSON.stringify('documents'));
+    openCollaborator(collaborator);
+  };
+
   // Contenu de l'onglet "Vue d'ensemble"
   const overviewContent = (
     <RHUnifiedTable
@@ -210,6 +216,7 @@ function RHSuiviContent() {
       onToggleShowFormer={() => setShowFormer(!showFormer)}
       onEditCollaborator={handleOpenEdit}
       onOpenProfile={handleOpenProfile}
+      onOpenDocuments={handleOpenDocuments}
     />
   );
 
