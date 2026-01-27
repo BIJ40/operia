@@ -14,3 +14,6 @@ export { DroppableFolder, DroppableRoot } from './DroppableFolder';
 export { SubfolderButtons } from './SubfolderButtons';
 export { ReadOnlySubfolderButtons } from './ReadOnlySubfolderButtons';
 export { DocumentSearchBar } from './DocumentSearchBar';
+export { FolderNavigationBar } from './FolderNavigationBar';
+export { FolderGridView } from './FolderGridView';
+export { DocumentListView } from './DocumentListView';
