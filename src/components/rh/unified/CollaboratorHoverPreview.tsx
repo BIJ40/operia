@@ -49,7 +49,7 @@ export function CollaboratorHoverPreview({
       <HoverCardContent 
         side="right" 
         align="start" 
-        className="w-80 p-0 overflow-hidden"
+        className="w-80 p-0 overflow-hidden z-[100]"
         sideOffset={8}
       >
         {/* Header avec avatar et infos principales */}
