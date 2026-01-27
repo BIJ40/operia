@@ -91,8 +91,8 @@ export function useCollaborators(agencyId?: string) {
   // Update collaborator - données sensibles mises à jour séparément
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<CollaboratorFormData> }) => {
-      // Extraire les données sensibles
-      const { birth_date, social_security_number, emergency_contact, emergency_phone, ...safeData } = data;
+      // Extraire les données sensibles et les champs non-DB (competences stocké dans rh_competencies)
+      const { birth_date, social_security_number, emergency_contact, emergency_phone, competences, ...safeData } = data;
 
       // Update collaborateur (sans données sensibles)
       // Forcer null si apogee_user_id est undefined (pour pouvoir "désélectionner")
