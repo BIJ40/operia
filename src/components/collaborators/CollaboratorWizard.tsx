@@ -650,27 +650,29 @@ const getDefaultValues = useMemo((): FormValues => ({
                 {/* Catalogue list */}
                 <ScrollArea className="h-[200px] border rounded-lg p-3">
                   <div className="grid grid-cols-2 gap-2">
-                    {catalogueCompetences.map((comp) => (
-                      <div
-                        key={comp.id}
-                        className={cn(
-                          "flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-accent transition-colors",
-                          selectedCompetences.includes(comp.label) && "bg-primary/10"
-                        )}
-                        onClick={() => toggleCompetence(comp.label)}
-                      >
-                        <Checkbox
-                          checked={selectedCompetences.includes(comp.label)}
-                          onCheckedChange={() => toggleCompetence(comp.label)}
-                        />
-                        <span className="text-sm">{comp.label}</span>
-                        {comp.is_default && (
-                          <Badge variant="outline" className="text-xs ml-auto">
-                            Par défaut
-                          </Badge>
-                        )}
-                      </div>
-                    ))}
+                    {catalogueCompetences.map((comp) => {
+                      const isSelected = selectedCompetences.includes(comp.label);
+                      return (
+                        <label
+                          key={comp.id}
+                          className={cn(
+                            "flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-accent transition-colors",
+                            isSelected && "bg-primary/10"
+                          )}
+                        >
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleCompetence(comp.label)}
+                          />
+                          <span className="text-sm">{comp.label}</span>
+                          {comp.is_default && (
+                            <Badge variant="outline" className="text-xs ml-auto">
+                              Par défaut
+                            </Badge>
+                          )}
+                        </label>
+                      );
+                    })}
                   </div>
                 </ScrollArea>
               </div>
