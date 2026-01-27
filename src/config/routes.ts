@@ -88,7 +88,7 @@ export const ROUTES = {
     collaborateurProfile: (id: string) => `/rh/suivi/${id}`,
     // Parc & Matériel
     parc: '/rh/parc',
-    epi: '/rh/epi',
+    // epi: supprimé - intégré dans parc
     // DocGen
     docgen: '/rh/docgen',
     docgenInstance: (instanceId: string) => `/rh/docgen/${instanceId}`,

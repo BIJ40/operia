@@ -6,9 +6,7 @@ import {
   Users, 
   CalendarDays,
   Car,
-  HardHat,
   ClipboardList,
-  FileEdit,
   Presentation
 } from "lucide-react";
 import { ROUTES } from "@/config/routes";
@@ -59,17 +57,10 @@ const RH_MODULES: RHModule[] = [
 const MAINTENANCE_MODULES: RHModule[] = [
   {
     id: 'parc-vehicules',
-    title: 'Parc Véhicules',
-    description: 'Gérez les véhicules, CT, entretiens et assurances',
+    title: 'Parc & Matériel',
+    description: 'Véhicules, EPI et équipements',
     icon: Car,
     href: ROUTES.rh.parc,
-  },
-  {
-    id: 'materiel-epi',
-    title: 'Matériel & EPI',
-    description: 'Gérez le matériel et les équipements de protection',
-    icon: HardHat,
-    href: ROUTES.rh.epi,
   },
 ];
 
@@ -105,7 +96,7 @@ export default function RHIndex() {
       {/* Section Maintenance */}
       <section className="space-y-4">
         <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
-          <HardHat className="h-5 w-5 text-helpconfort-blue" />
+          <Car className="h-5 w-5 text-helpconfort-blue" />
           Maintenance
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
