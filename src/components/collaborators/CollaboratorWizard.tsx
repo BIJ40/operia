@@ -7,7 +7,7 @@
  * Étape 5: Emploi (dates, liaison Apogée, notes)
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -123,7 +123,7 @@ export function CollaboratorWizard({
   const { data: catalogueCompetences = [] } = useCompetencesCatalogue();
   const addCompetenceMutation = useAddCompetenceCatalogue();
 
-  const defaultValues: FormValues = {
+const getDefaultValues = useMemo((): FormValues => ({
     first_name: initialData?.first_name || '',
     last_name: initialData?.last_name || '',
     email: initialData?.email || '',
@@ -143,21 +143,23 @@ export function CollaboratorWizard({
     emergency_phone: initialData?.emergency_phone || '',
     apogee_user_id: initialData?.apogee_user_id,
     competences: initialData?.competences || [],
-  };
+  }), [initialData]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues,
+    defaultValues: getDefaultValues,
   });
+
+  // Reset form when initialData changes (e.g., switching between edit and create mode)
+  useEffect(() => {
+    form.reset(getDefaultValues);
+    setCurrentStep(1);
+  }, [initialData?.id, mode, getDefaultValues, form]);
 
   // Reset quand le dialog se ferme ou s'ouvre avec de nouvelles données
   const handleOpenChange = (openState: boolean) => {
     if (!openState) {
       setCurrentStep(1);
-      form.reset(defaultValues);
-    } else if (initialData) {
-      // Recharger les données initiales quand on ouvre en mode édition
-      form.reset(defaultValues);
     }
     onOpenChange(openState);
   };

@@ -156,7 +156,7 @@ export function CollaboratorHoverPreview({
                 onOpenProfile();
               }}
             >
-              Voir le profil complet
+              Ouvrir dans un onglet
               <ExternalLink className="h-3.5 w-3.5" />
             </Button>
           </div>

@@ -43,6 +43,8 @@ interface RHUnifiedTableProps {
   onToggleShowFormer?: () => void;
   /** Callback pour éditer un collaborateur */
   onEditCollaborator?: (collaboratorId: string) => void;
+  /** Callback pour ouvrir un profil dans un onglet */
+  onOpenProfile?: (collaborator: RHCollaborator) => void;
 }
 
 export function RHUnifiedTable({
@@ -58,6 +60,7 @@ export function RHUnifiedTable({
   showFormer = false,
   onToggleShowFormer,
   onEditCollaborator,
+  onOpenProfile,
 }: RHUnifiedTableProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [documentPopup, setDocumentPopup] = useState<{
@@ -390,6 +393,7 @@ export function RHUnifiedTable({
                       onAssetsUpdate={handleAssetsUpdate}
                       epiSummary={epiSummaries.find(s => s.collaborator_id === collab.id)}
                       onEditCollaborator={onEditCollaborator}
+                      onOpenProfile={onOpenProfile}
                     />
                   ))}
                 </React.Fragment>
