@@ -65,10 +65,8 @@ const formSchema = z.object({
   type: z.string().min(1, 'Type requis'),
   role: z.string().min(1, 'Poste requis'),
   // Étape 2 - Coordonnées
-  email: z.union([
-    z.string().email('Email invalide'),
-    z.literal(''),
-  ]).optional(),
+  // En édition, l'email peut être invalide (legacy). On accepte tout ou chaîne vide.
+  email: z.string().optional(),
   phone: z.string().optional(),
   street: z.string().optional(),
   postal_code: z.string().optional(),
@@ -151,31 +149,32 @@ const getDefaultValues = useMemo((): FormValues => ({
   }), [initialData]);
 
   const form = useForm<FormValues>({
-    // IMPORTANT: react-hook-form peut demander une validation partielle (trigger(["a","b"]))
-    // mais zodResolver valide tout le schéma.
-    // Si des champs d'une autre étape sont invalides (ex: email legacy), cela bloquait le bouton "Suivant"
-    // à l'étape 1 alors que le champ n'est pas affiché.
-    // On filtre donc les erreurs au strict ensemble des champs demandés (options.names) lors des validations partielles.
+    // IMPORTANT: on utilise un resolver Zod "safe" (safeParse) pour éviter les rejets de promesse
+    // (UNHANDLED_PROMISE_REJECTION) qui rendaient le bouton "Suivant" inopérant.
+    // On filtre ensuite les erreurs aux champs demandés par trigger([...fields]) (options.names)
+    // pour ne pas bloquer une étape à cause d'un champ d'une autre étape.
     resolver: useMemo(() => {
-      const base = zodResolver(formSchema);
-      return async (values, context, options) => {
-        const result = await base(values, context, options);
+      return async (values, _context, options) => {
+        const parsed = await formSchema.safeParseAsync(values);
+
+        if (parsed.success) {
+          return { values: parsed.data, errors: {} };
+        }
 
         const names = (options as unknown as { names?: string[] })?.names;
-        if (!names?.length) return result;
+        const allowed = names?.length ? new Set(names) : null;
 
-        const allowed = new Set(names);
-        const filteredErrors: typeof result.errors = {};
-        for (const key of Object.keys(result.errors)) {
-          if (allowed.has(key)) {
-            (filteredErrors as any)[key] = (result.errors as any)[key];
+        const errors: Record<string, { type: string; message?: string }> = {};
+        for (const issue of parsed.error.issues) {
+          const key = issue.path?.[0];
+          if (typeof key !== 'string' || !key) continue;
+          if (allowed && !allowed.has(key)) continue;
+          if (!errors[key]) {
+            errors[key] = { type: issue.code, message: issue.message };
           }
         }
 
-        return {
-          values: result.values,
-          errors: filteredErrors,
-        };
+        return { values: {}, errors };
       };
     }, []),
     defaultValues: getDefaultValues,
