@@ -3,7 +3,7 @@
  * Remplace les 6 onglets par une vue unique avec indicateurs visuels
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+ import React, { useState, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { RHCollaborator } from '@/types/rh-suivi';
 import { CollaboratorEpiSummary } from '@/hooks/epi/useCollaboratorsEpiSummary';
@@ -25,6 +25,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableHeader, TableBody, TableHead, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
 import { differenceInDays, parseISO } from 'date-fns';
 
 interface RHCockpitTableProps {
@@ -237,6 +238,24 @@ export function RHCockpitTable({
 
   return (
     <div className={cn('flex flex-col gap-4', className)}>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground">
+          Collaborateurs : <span className="font-medium text-foreground">{filteredCollaborators.length}</span>
+          {' '} / {collaborators.length}
+        </p>
+
+        {activeFilters.length > 0 && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setActiveFilters([])}
+          >
+            Tout afficher
+          </Button>
+        )}
+      </div>
+
       {/* Filtres rapides */}
       <RHCockpitFilters
         activeFilters={activeFilters}
@@ -245,8 +264,8 @@ export function RHCockpitTable({
       />
 
       {/* Tableau */}
-      <Card className="flex-1 overflow-hidden">
-        <ScrollArea className="h-full">
+      <Card className="flex-1 overflow-hidden flex flex-col">
+        <ScrollArea className="flex-1">
           <Table>
             <TableHeader className="sticky top-0 bg-background z-20">
               <TableRow className="hover:bg-transparent">
