@@ -108,9 +108,9 @@ serve(async (req) => {
       ));
     }
 
-    // P0: Rate limiting (10 req/min pour données sensibles)
+    // P0: Rate limiting (100 req/min pour données sensibles - augmenté pour hover cards)
     const rateLimitKey = `sensitive-data:${user.id}`;
-    const rateCheck = await checkRateLimit(rateLimitKey, { limit: 10, windowMs: 60 * 1000 });
+    const rateCheck = await checkRateLimit(rateLimitKey, { limit: 100, windowMs: 60 * 1000 });
     if (!rateCheck.allowed) {
       console.log(`[SENSITIVE-DATA] Rate limit exceeded for user ${user.id}`);
       return rateLimitResponse(rateCheck.retryAfter!, corsHeaders);
