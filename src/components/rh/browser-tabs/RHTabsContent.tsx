@@ -16,9 +16,11 @@ export function RHTabsContent({ overviewContent }: RHTabsContentProps) {
   const { tabs, activeTabId } = useRHTabs();
   
   return (
-    <div className="flex-1 overflow-auto">
+    <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
       {/* Vue d'ensemble */}
-      <div className={cn(activeTabId === 'overview' ? 'block' : 'hidden')}>
+      <div className={cn(
+        activeTabId === 'overview' ? 'flex flex-col flex-1 min-h-0' : 'hidden'
+      )}>
         {overviewContent}
       </div>
       
@@ -28,7 +30,9 @@ export function RHTabsContent({ overviewContent }: RHTabsContentProps) {
         .map(tab => (
           <div
             key={tab.id}
-            className={cn(activeTabId === tab.id ? 'block' : 'hidden')}
+            className={cn(
+              activeTabId === tab.id ? 'flex flex-col flex-1 min-h-0 overflow-auto' : 'hidden'
+            )}
           >
             <RHCollaboratorPanel collaboratorId={tab.collaboratorId!} />
           </div>

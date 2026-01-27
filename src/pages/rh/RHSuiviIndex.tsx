@@ -206,7 +206,7 @@ function RHSuiviContent() {
   );
 
   return (
-    <div className="flex flex-col h-[calc(100vh-12rem)]">
+    <div className="flex flex-col min-h-0 flex-1">
       <PageHeader
         title="Suivi RH"
         subtitle="Vue complète de tous les collaborateurs et leurs informations"
@@ -254,7 +254,7 @@ export default function RHSuiviIndex() {
   const { data: collaborators = [] } = useRHCollaborators({ includeFormer: false });
   
   return (
-    <div className="container py-6">
+    <div className="container py-4 flex flex-col h-[calc(100vh-4rem)] overflow-hidden">
       <RHTabsProvider collaborators={collaborators}>
         <RHSuiviContent />
       </RHTabsProvider>
