@@ -1,205 +1,127 @@
 
-# Interface Multi-Onglets RH + Synchronisation Apogée
+# Plan de simplification de l'interface du tableau RH Suivi
 
-## Vue d'ensemble
+## Problèmes identifiés
 
-Ce plan implémente deux fonctionnalités majeures :
-1. **Interface multi-onglets** style navigateur pour le Suivi RH
-2. **Synchronisation automatique** des collaborateurs depuis l'API Apogée
+Sur la base de la capture d'écran et de l'analyse du code :
 
----
-
-## Partie 1 : Synchronisation Apogée → Collaborateurs
-
-### Règle de détection Actif/Inactif
-
-Le champ `is_on` dans la réponse API détermine le statut :
-- `is_on: true` → Collaborateur actif
-- `is_on: false` → Collaborateur désactivé (ex: ZIMMER, FACON, SOTTOM)
-
-### Mapping des champs
-
-| Champ Apogée | Champ Collaborator | Notes |
-|--------------|-------------------|-------|
-| `id` | `apogee_user_id` | Clé de liaison |
-| `firstname` | `first_name` | |
-| `name` | `last_name` | |
-| `email` | `email` | |
-| `numtel` | `phone` | |
-| `type` | `type` | Mapping: technicien→TECHNICIEN, admin→DIRIGEANT, utilisateur→ASSISTANTE, commercial→COMMERCIAL |
-| `is_on: false` | `leaving_date` | Date du jour si désactivé |
-| `adresse` | `street` | |
-| `ville` | `city` | |
-| `cp` | `postal_code` | |
-| `created_at` | `hiring_date` | Date de création Apogée |
-| `data.universes` | → `rh_competencies.competences_techniques` | Array de compétences |
-| `data.skills` | → `rh_competencies.competences_techniques` | Fusionné avec universes |
-| `data.bgcolor.hex` | Couleur affichage | Non stocké, utilisé runtime |
-
-### Logique de synchronisation
-
-```text
-Pour chaque utilisateur Apogée :
-  1. Chercher collaborateur existant par apogee_user_id
-  2. Si trouvé :
-     - Mettre à jour les champs modifiés
-     - Si is_on=false ET leaving_date null → marquer comme parti
-  3. Si non trouvé ET is_on=true :
-     - Créer nouveau collaborateur avec toutes les données
-  4. Les collaborateurs sans apogee_user_id ne sont pas affectés
-```
-
-### Fichiers à créer
-
-**`src/hooks/useApogeeSync.ts`** - Hook de synchronisation
-- Récupère les utilisateurs Apogée via `useApogeeUsers`
-- Compare avec les collaborateurs existants
-- Propose les actions : créer / mettre à jour / marquer comme parti
-- Mutation pour exécuter la sync
-
-**`src/components/rh/ApogeeSync/ApogeeSyncButton.tsx`** - Bouton de sync
-- Bouton "Synchroniser Apogée" dans le header RH
-- Affiche un badge avec le nombre de changements détectés
-- Ouvre un dialogue de confirmation avec aperçu des modifications
-
-**`src/components/rh/ApogeeSync/ApogeeSyncDialog.tsx`** - Dialogue de confirmation
-- Liste les collaborateurs à créer (nouveaux)
-- Liste les collaborateurs à mettre à jour (modifications)
-- Liste les collaborateurs à marquer comme partis (is_on: false)
-- Bouton "Appliquer" pour exécuter
+1. **Survol (HoverCard) passe dessous** : Le z-index du HoverCard (z-50) est inférieur à celui des éléments parents ou entre en conflit avec le contexte de stacking des colonnes sticky
+2. **Icônes inutiles** : Le stylo (Pencil) et les 3 points (MoreVertical) encombrent l'espace entre l'avatar et le nom
+3. **UX complexe** : L'accès au wizard d'édition et à la fiche complète n'est pas intuitif
 
 ---
 
-## Partie 2 : Interface Multi-Onglets
+## Solution proposée
 
-### Architecture visuelle
+### 1. Supprimer les icônes (Pencil et MoreVertical)
 
-```text
-┌─────────────────────────────────────────────────────────────────────────┐
-│  📋 Suivi RH                    [🔄 Sync Apogée] [+ Nouveau]           │
-├─────────────────────────────────────────────────────────────────────────┤
-│ Stats: 👥 5 actifs │ 🔧 3 terrain │ 📁 2 admin │ ⚠️ 1 alerte │ 78%     │
-├─────────────────────────────────────────────────────────────────────────┤
-│ [Vue d'ensemble ▼] [🔧 Jean D. ×] [📁 Marie M. ×] [+👤 Ouvrir...]      │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│                    CONTENU DE L'ONGLET ACTIF                            │
-│   • "Vue d'ensemble" : Tableau compact avec tous les collaborateurs     │
-│   • Onglet collaborateur : Fiche détaillée avec sous-onglets            │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
+**Fichier :** `src/components/rh/unified/RHUnifiedTableRow.tsx`
+
+- Retirer le bouton Pencil (lignes 483-493)
+- Retirer le DropdownMenu avec les 3 points (lignes 494-535)
+- Garder uniquement : Avatar + indicateur de statut global
+
+**Avant :**
+```
+[Avatar] [●] [✏️] [⋮] | BOUHI | AMANDINE
 ```
 
-### Fichiers à créer
-
-**`src/components/rh/browser-tabs/types.ts`**
-```typescript
-interface RHStoredTabData {
-  id: string;           // 'overview' | collaboratorId (UUID)
-  label: string;        // 'Vue d'ensemble' | 'Jean Dupont'
-  closable: boolean;
-}
-
-interface RHTabData extends RHStoredTabData {
-  type: 'overview' | 'collaborator';
-  collaboratorId?: string;
-  collaboratorType?: CollaboratorType;
-  icon: LucideIcon;
-}
+**Après :**
 ```
-
-**`src/components/rh/browser-tabs/RHTabsContext.tsx`**
-- Pattern identique à `BrowserTabsContext` du module Franchiseur
-- Gère l'état des onglets avec persistance sessionStorage
-- Synchronisation URL via `?tab=uuid`
-- Actions : `openCollaborator`, `closeTab`, `setActiveTab`, `reorderTabs`
-- Onglet "overview" permanent et non fermable
-
-**`src/components/rh/browser-tabs/RHTabsBar.tsx`**
-- Barre d'onglets avec drag & drop (@dnd-kit)
-- Onglet "Vue d'ensemble" avec icône LayoutGrid
-- Onglets collaborateurs avec avatar miniature + nom
-- Bouton "+" avec dropdown pour ouvrir un collaborateur
-
-**`src/components/rh/browser-tabs/RHTab.tsx`**
-- Composant onglet individuel (réutilise le pattern BrowserTab)
-- Affiche icône type (🔧 technicien, 📁 admin) + nom
-- Bouton × pour fermer (sauf overview)
-
-**`src/components/rh/browser-tabs/RHCollaboratorPicker.tsx`**
-- Dropdown du bouton "+"
-- Liste tous les collaborateurs groupés par type
-- Recherche intégrée
-- Indicateur "déjà ouvert" pour ceux en onglet
-
-**`src/components/rh/browser-tabs/RHTabsContent.tsx`**
-- Zone de contenu avec switch sur onglet actif
-- Si "overview" : affiche `RHUnifiedTable` (le tableau actuel)
-- Si collaborateur : affiche `RHCollaboratorPanel`
-- Onglets inactifs restent montés mais hidden (préserve l'état)
-
-**`src/components/rh/browser-tabs/RHCollaboratorPanel.tsx`**
-- Fiche collaborateur en panneau (pas de navigation page)
-- Reprend la structure de `RHCollaborateurPage`
-- Header compact avec avatar, nom, statut, progression
-- Sous-onglets internes (Essentiel, RH, Sécurité, Compétences, Parc, IT, Documents)
-
-**`src/components/rh/browser-tabs/index.ts`**
-- Exports du module
-
-### Fichiers à modifier
-
-**`src/pages/rh/RHSuiviIndex.tsx`**
-- Wrap dans `RHTabsProvider`
-- Header avec stats + bouton Sync Apogée + bouton Nouveau
-- Remplacer le tableau direct par `RHTabsContent`
-- Supprimer la logique d'onglet de colonnes (déplacée dans overview)
+[Avatar] [●] | BOUHI | AMANDINE
+```
 
 ---
 
-## Flux utilisateur complet
+### 2. Corriger le z-index du HoverCard
+
+**Fichier :** `src/components/rh/unified/CollaboratorHoverPreview.tsx`
+
+- Ajouter un z-index plus élevé (z-[100]) au `HoverCardContent` pour qu'il passe au-dessus des colonnes sticky (z-10)
+
+---
+
+### 3. Simplifier l'UX : accès Wizard + Fiche complète
+
+**Approche :** Utiliser le clic droit (Context Menu) sur la ligne du collaborateur pour afficher les actions
+
+**Fichier :** `src/components/rh/unified/RHUnifiedTableRow.tsx`
+
+Ajouter un `ContextMenu` enveloppant la `TableRow` avec les options :
+- **Ouvrir la fiche** → Appelle `onOpenProfile(collaborator)`
+- **Modifier (Wizard)** → Appelle `onEditCollaborator(collaborator.id)`
+- **Changer classification** → Sous-menu existant
+- **Supprimer** → Option existante
+
+En plus, le **clic simple** sur le nom/prénom ouvre la fiche complète (comportement actuel préservé).
+
+---
+
+## Résumé des modifications
+
+| Fichier | Modification |
+|---------|--------------|
+| `RHUnifiedTableRow.tsx` | Supprimer Pencil + MoreVertical, ajouter ContextMenu sur la ligne |
+| `CollaboratorHoverPreview.tsx` | Augmenter z-index à z-[100] |
+
+---
+
+## Récapitulatif UX simplifié
 
 | Action | Résultat |
 |--------|----------|
-| Arrivée sur `/rh/suivi` | Onglet "Vue d'ensemble" actif, tableau global |
-| Clic "Sync Apogée" | Dialogue avec aperçu des 5 nouveaux collaborateurs à créer |
-| Clic "Appliquer" | Collaborateurs créés automatiquement avec toutes leurs données |
-| Clic sur ligne tableau | Ouvre onglet fiche du collaborateur |
-| Clic "+" puis collaborateur | Ouvre onglet fiche (ou active si déjà ouvert) |
-| Clic × sur onglet | Ferme et revient au précédent |
-| Drag onglet | Réordonne les onglets |
-| Refresh page | État restauré depuis sessionStorage |
+| Clic sur nom/prénom | Ouvre la fiche complète dans un onglet |
+| Survol sur nom | Affiche l'aperçu HoverCard |
+| Clic droit sur la ligne | Menu contextuel (Fiche, Wizard, Classification, Supprimer) |
+| Double-clic sur cellule | Édition inline (comportement existant) |
 
 ---
 
-## Section Technique
+## Détails techniques
 
-### Persistance
-- Clé sessionStorage : `rh_suivi_tabs`
-- Format : `{ tabs: StoredTabData[], activeTabId: string }`
-- URL sync : `/rh/suivi?tab=uuid`
+### Modification du z-index (CollaboratorHoverPreview.tsx)
+```tsx
+<HoverCardContent 
+  side="right" 
+  align="start" 
+  className="w-80 p-0 overflow-hidden z-[100]"  // Ajout de z-[100]
+  sideOffset={8}
+>
+```
 
-### Intégration avec l'existant
-- Réutilise `RHUnifiedTable` pour l'onglet Vue d'ensemble
-- Réutilise les composants RHTab* de `RHCollaborateurPage`
-- Conserve tous les hooks existants (useRHCollaborators, useRHSuivi, etc.)
-- Pattern browser-tabs copié depuis le module Franchiseur
+### Structure du Context Menu (RHUnifiedTableRow.tsx)
+```tsx
+<ContextMenu>
+  <ContextMenuTrigger asChild>
+    <TableRow ...>
+      {/* Contenu de la ligne */}
+    </TableRow>
+  </ContextMenuTrigger>
+  <ContextMenuContent className="w-56">
+    <ContextMenuItem onClick={() => onOpenProfile?.(collaborator)}>
+      <ExternalLink className="h-4 w-4 mr-2" />
+      Ouvrir la fiche complète
+    </ContextMenuItem>
+    <ContextMenuItem onClick={() => onEditCollaborator?.(collaborator.id)}>
+      <Pencil className="h-4 w-4 mr-2" />
+      Modifier (Wizard)
+    </ContextMenuItem>
+    <ContextMenuSeparator />
+    <ContextMenuSub>
+      <ContextMenuSubTrigger>
+        <UserCog className="h-4 w-4 mr-2" />
+        Changer classification
+      </ContextMenuSubTrigger>
+      <ContextMenuSubContent>
+        {/* Options de classification */}
+      </ContextMenuSubContent>
+    </ContextMenuSub>
+    <ContextMenuSeparator />
+    <ContextMenuItem onClick={() => setShowDeleteDialog(true)} className="text-destructive">
+      <Trash2 className="h-4 w-4 mr-2" />
+      Supprimer
+    </ContextMenuItem>
+  </ContextMenuContent>
+</ContextMenu>
+```
 
-### Récapitulatif des fichiers
-
-| Action | Fichier |
-|--------|---------|
-| Créer | `src/hooks/useApogeeSync.ts` |
-| Créer | `src/components/rh/ApogeeSync/ApogeeSyncButton.tsx` |
-| Créer | `src/components/rh/ApogeeSync/ApogeeSyncDialog.tsx` |
-| Créer | `src/components/rh/ApogeeSync/index.ts` |
-| Créer | `src/components/rh/browser-tabs/types.ts` |
-| Créer | `src/components/rh/browser-tabs/RHTabsContext.tsx` |
-| Créer | `src/components/rh/browser-tabs/RHTabsBar.tsx` |
-| Créer | `src/components/rh/browser-tabs/RHTab.tsx` |
-| Créer | `src/components/rh/browser-tabs/RHCollaboratorPicker.tsx` |
-| Créer | `src/components/rh/browser-tabs/RHTabsContent.tsx` |
-| Créer | `src/components/rh/browser-tabs/RHCollaboratorPanel.tsx` |
-| Créer | `src/components/rh/browser-tabs/index.ts` |
-| Modifier | `src/pages/rh/RHSuiviIndex.tsx` |
-| Modifier | `src/shared/types/apogeePlanning.ts` (enrichir ApogeeUser) |
