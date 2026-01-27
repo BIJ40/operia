@@ -487,69 +487,67 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Sections en grille - 3 sections maintenant */}
-      <div className="space-y-4">
-        {/* Row 1: Compétences (gauche) + Sécurité (droite) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Compétences - gauche */}
-          <CollapsibleSection 
-            title="Compétences" 
-            icon={<Award className="h-4 w-4" />}
-            defaultOpen={true}
-            badge={collaborator.competencies?.competences_techniques?.length ? (
-              <Badge variant="secondary" className="text-xs">
-                {collaborator.competencies.competences_techniques.length}
+      {/* Sections en grille - 3 colonnes: Compétences, Sécurité, Documents */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Compétences - colonne 1 */}
+        <CollapsibleSection 
+          title="Compétences" 
+          icon={<Award className="h-4 w-4" />}
+          defaultOpen={true}
+          badge={collaborator.competencies?.competences_techniques?.length ? (
+            <Badge variant="secondary" className="text-xs">
+              {collaborator.competencies.competences_techniques.length}
+            </Badge>
+          ) : undefined}
+        >
+          <RHSectionCompetences collaborator={collaborator} />
+        </CollapsibleSection>
+
+        {/* Sécurité - colonne 2 */}
+        <CollapsibleSection 
+          title="Sécurité" 
+          icon={<Shield className="h-4 w-4" />}
+          badge={(() => {
+            // Calculer le pourcentage d'EPI remis
+            const epiRequis = collaborator.epi_profile?.epi_requis || [];
+            const epiRemis = collaborator.epi_profile?.epi_remis || [];
+            
+            if (epiRequis.length === 0) {
+              return undefined;
+            }
+            
+            const completedCount = epiRequis.filter(epi => epiRemis.includes(epi)).length;
+            const percentage = (completedCount / epiRequis.length) * 100;
+            
+            // Couleur basée sur le pourcentage : vert UNIQUEMENT à 100%
+            const iconColor = percentage === 100 
+              ? 'text-green-600' 
+              : percentage >= 50 
+                ? 'text-orange-500' 
+                : 'text-red-500';
+            
+            const badgeClass = percentage === 100
+              ? 'bg-green-100 dark:bg-green-900/30'
+              : percentage >= 50
+                ? 'bg-orange-100 dark:bg-orange-900/30'
+                : 'bg-red-100 dark:bg-red-900/30';
+            
+            return (
+              <Badge variant="outline" className={cn("gap-1.5 text-xs", badgeClass)}>
+                <CheckIcon className={cn("h-3 w-3", iconColor)} />
+                <span className="text-muted-foreground">{completedCount}/{epiRequis.length}</span>
               </Badge>
-            ) : undefined}
-          >
-            <RHSectionCompetences collaborator={collaborator} />
-          </CollapsibleSection>
+            );
+          })()}
+        >
+          <RHSectionSecurite collaborator={collaborator} />
+        </CollapsibleSection>
 
-          {/* Sécurité - droite */}
-          <CollapsibleSection 
-            title="Sécurité" 
-            icon={<Shield className="h-4 w-4" />}
-            badge={(() => {
-              // Calculer le pourcentage d'EPI remis
-              const epiRequis = collaborator.epi_profile?.epi_requis || [];
-              const epiRemis = collaborator.epi_profile?.epi_remis || [];
-              
-              if (epiRequis.length === 0) {
-                return undefined;
-              }
-              
-              const completedCount = epiRequis.filter(epi => epiRemis.includes(epi)).length;
-              const percentage = (completedCount / epiRequis.length) * 100;
-              
-              // Couleur basée sur le pourcentage : vert UNIQUEMENT à 100%
-              const iconColor = percentage === 100 
-                ? 'text-green-600' 
-                : percentage >= 50 
-                  ? 'text-orange-500' 
-                  : 'text-red-500';
-              
-              const badgeClass = percentage === 100
-                ? 'bg-green-100 dark:bg-green-900/30'
-                : percentage >= 50
-                  ? 'bg-orange-100 dark:bg-orange-900/30'
-                  : 'bg-red-100 dark:bg-red-900/30';
-              
-              return (
-                <Badge variant="outline" className={cn("gap-1.5 text-xs", badgeClass)}>
-                  <CheckIcon className={cn("h-3 w-3", iconColor)} />
-                  <span className="text-muted-foreground">{completedCount}/{epiRequis.length}</span>
-                </Badge>
-              );
-            })()}
-          >
-            <RHSectionSecurite collaborator={collaborator} />
-          </CollapsibleSection>
-        </div>
-
-        {/* Row 2: Documents (pleine largeur) */}
+        {/* Documents - colonne 3 */}
         <CollapsibleSection 
           title="Documents" 
           icon={<FolderOpen className="h-4 w-4" />}
+          defaultOpen={true}
         >
           <RHSectionDocuments collaborator={collaborator} />
         </CollapsibleSection>

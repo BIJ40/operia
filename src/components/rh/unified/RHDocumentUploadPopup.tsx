@@ -50,6 +50,8 @@ interface RHDocumentUploadPopupProps {
   collaboratorName: string;
   fieldKey: string;
   fieldLabel: string;
+  subfolder?: string | null;
+  onSuccess?: () => void;
 }
 
 interface FileToUpload {
@@ -64,6 +66,8 @@ export function RHDocumentUploadPopup({
   collaboratorName,
   fieldKey,
   fieldLabel,
+  subfolder,
+  onSuccess,
 }: RHDocumentUploadPopupProps) {
   const [files, setFiles] = useState<FileToUpload[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -130,13 +134,14 @@ export function RHDocumentUploadPopup({
           title: fileData.title,
           description: `Document associé: ${fieldLabel}`,
           visibility: 'ADMIN_ONLY',
-          subfolder: fieldKey,
+          subfolder: subfolder !== undefined ? subfolder : fieldKey,
           file: fileData.file,
         });
       }
       
       setFiles([]);
       onOpenChange(false);
+      onSuccess?.();
     } catch (error) {
       // Error handled by mutation
     } finally {
