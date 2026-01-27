@@ -472,8 +472,8 @@ export function RHUnifiedTableRow({
         "hover:shadow-sm"
       )}
     >
-      {/* Avatar + indicateur global + actions - FIXE ET COMPACT */}
-      <TableCell className="w-[52px] min-w-[52px] max-w-[52px] px-1 bg-muted/10">
+      {/* Avatar + indicateur global + actions - STICKY à gauche */}
+      <TableCell className="w-[52px] min-w-[52px] px-1 bg-background sticky left-0 z-10">
         <div className="flex items-center gap-0.5">
           <RHCollaboratorAvatarCompact collaborator={collaborator} />
           <RHGlobalStatusIndicator 
@@ -572,8 +572,8 @@ export function RHUnifiedTableRow({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Colonnes fixes - Nom avec HoverCard preview - FIXE ET COMPACT */}
-      <TableCell className="font-medium w-[90px] min-w-[90px] max-w-[90px] px-1 bg-muted/10">
+      {/* Colonnes fixes - Nom avec HoverCard preview - STICKY */}
+      <TableCell className="font-medium w-[90px] min-w-[90px] px-1 bg-background sticky left-[52px] z-10">
         <div className="flex items-center gap-0.5">
           <CollaboratorHoverPreview
             collaborator={collaborator}
@@ -595,7 +595,7 @@ export function RHUnifiedTableRow({
           )}
         </div>
       </TableCell>
-      <TableCell className="w-[80px] min-w-[80px] max-w-[80px] px-1 bg-muted/10">
+      <TableCell className="w-[80px] min-w-[80px] px-1 bg-background sticky left-[142px] z-10 border-r">
         <button
           onClick={() => onOpenProfile?.(collaborator)}
           className="truncate text-left hover:text-primary hover:underline transition-colors text-xs max-w-[70px]"

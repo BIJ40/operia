@@ -355,9 +355,9 @@ export function RHUnifiedTable({
         </div>
       </div>
 
-      {/* Tableau avec layout fixe pour colonnes stables */}
+      {/* Tableau avec colonnes identité sticky */}
       <div className="border rounded-lg overflow-auto flex-1 min-h-0">
-        <Table className="table-fixed">
+        <Table>
           <RHUnifiedTableHeader activeTab={activeTab} visibleColumns={visibleColumns} />
           <TableBody>
             {Object.entries(COLLABORATOR_CATEGORIES).map(([categoryKey, categoryConfig]) => {
