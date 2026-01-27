@@ -345,7 +345,9 @@ const getDefaultValues = useMemo((): FormValues => ({
         </div>
 
         <Form {...form}>
-          <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+          <form onSubmit={(e) => e.preventDefault()} className="flex flex-col">
+            {/* Zone contenu avec hauteur fixe pour stabiliser le bouton Suivant */}
+            <div className="h-[420px] overflow-y-auto space-y-4 pr-1">
             {/* Étape 1 - Identité */}
             {currentStep === 1 && (
               <div className="space-y-4 animate-in fade-in-50 duration-300">
@@ -747,9 +749,10 @@ const getDefaultValues = useMemo((): FormValues => ({
                 />
               </div>
             )}
+            </div>
 
-            {/* Navigation */}
-            <div className="flex justify-between pt-4 border-t">
+            {/* Navigation - toujours au même endroit */}
+            <div className="flex justify-between pt-4 mt-4 border-t flex-shrink-0">
               <Button
                 type="button"
                 variant="outline"
