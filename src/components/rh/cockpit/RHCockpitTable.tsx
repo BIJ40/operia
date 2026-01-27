@@ -279,7 +279,7 @@ export function RHCockpitTable({
                 <TableHead className="w-[60px] text-center">Parc</TableHead>
                 <TableHead className="w-[70px] text-center">Docs</TableHead>
                 <TableHead className="w-[80px] text-center">Compét.</TableHead>
-                <TableHead className="w-[120px]">Complétude</TableHead>
+                <TableHead className="w-[50px] text-center">%</TableHead>
                 <TableHead className="w-[60px] text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
