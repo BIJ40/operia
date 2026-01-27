@@ -21,6 +21,8 @@ export function useCompetencesCatalogue() {
   return useQuery({
     queryKey: ['rh-competences-catalogue', agencyId],
     queryFn: async (): Promise<CompetenceCatalogue[]> => {
+      if (!agencyId) return [];
+      
       const { data, error } = await supabase
         .from('rh_competences_catalogue')
         .select('*')
