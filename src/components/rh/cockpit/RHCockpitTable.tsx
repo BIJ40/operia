@@ -275,8 +275,8 @@ export function RHCockpitTable({
                 </TableRow>
               ) : (
                 filteredCollaborators.map((collab) => {
-                  const indicators = indicatorsMap.get(collab.id);
-                  if (!indicators) return null;
+                  // Toujours afficher le collaborateur, même sans indicateurs (fallback)
+                  const indicators = indicatorsMap.get(collab.id) ?? calculateCockpitIndicators(collab);
 
                   return (
                     <RHCockpitRow
