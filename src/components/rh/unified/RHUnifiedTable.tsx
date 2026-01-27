@@ -252,6 +252,8 @@ export function RHUnifiedTable({
         alertsCount={totalAlerts}
         averageCompleteness={stats.averageCompleteness}
         onPrintMatrix={onPrintMatrix}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
       />
 
       {/* Onglets sur toute la largeur */}
@@ -261,27 +263,14 @@ export function RHUnifiedTable({
         alertCounts={alertCounts}
       />
 
-      {/* Barre de recherche + toggle anciens + actions */}
-      <div className="flex flex-wrap gap-3 items-center justify-between">
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher un collaborateur..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-9"
-            />
-          </div>
-          
-          
-          {/* Indicateur de modifications en attente */}
-          {hasPendingChanges && (
-            <Badge variant="secondary" className="animate-pulse">
-              Modifications en attente
-            </Badge>
-          )}
-        </div>
+      {/* Actions */}
+      <div className="flex flex-wrap gap-3 items-center justify-end">
+        {/* Indicateur de modifications en attente */}
+        {hasPendingChanges && (
+          <Badge variant="secondary" className="animate-pulse">
+            Modifications en attente
+          </Badge>
+        )}
 
         <div className="flex items-center gap-2">
           {/* Bouton sauvegarder - icône seule avec tooltip */}

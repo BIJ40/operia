@@ -4,11 +4,12 @@
  */
 
 import React from 'react';
-import { Users, UserCheck, UserX, Briefcase, Wrench, AlertTriangle, TrendingUp, Printer } from 'lucide-react';
+import { Users, UserCheck, UserX, Briefcase, Wrench, AlertTriangle, TrendingUp, Printer, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { RHCollaborator } from '@/types/rh-suivi';
 import { useProfileCompleteness } from '@/hooks/rh/useProfileCompleteness';
@@ -22,6 +23,8 @@ interface RHStatsHeaderProps {
   alertsCount?: number;
   averageCompleteness?: number;
   onPrintMatrix: () => void;
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
 }
 
 export function RHStatsHeader({
@@ -33,6 +36,8 @@ export function RHStatsHeader({
   alertsCount = 0,
   averageCompleteness = 0,
   onPrintMatrix,
+  searchQuery,
+  onSearchChange,
 }: RHStatsHeaderProps) {
   // Couleur de la progression
   const getProgressColor = (percent: number) => {
@@ -167,6 +172,17 @@ export function RHStatsHeader({
 
       {/* Spacer */}
       <div className="flex-1" />
+
+      {/* Barre de recherche */}
+      <div className="relative w-56">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+        <Input
+          placeholder="Rechercher..."
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="pl-8 h-8 text-xs"
+        />
+      </div>
 
       {/* Actions */}
       <Button
