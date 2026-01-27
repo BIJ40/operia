@@ -98,9 +98,24 @@ export function DocumentQuickLook({
   if (!currentDoc) return null;
 
   const displayDoc = documents[currentIndex] || currentDoc;
-  const isImage = displayDoc.file_type?.startsWith('image/');
-  const isPDF = displayDoc.file_type === 'application/pdf';
+  
+  // Détection robuste du type de fichier (par MIME type OU extension)
+  const fileName = displayDoc.file_name?.toLowerCase() || '';
+  const fileType = displayDoc.file_type?.toLowerCase() || '';
+  
+  const isImage = fileType.startsWith('image/') || 
+    /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/.test(fileName);
+  const isPDF = fileType === 'application/pdf' || fileName.endsWith('.pdf');
   const canPreview = isImage || isPDF;
+  
+  console.log('[QuickLook] Debug:', { 
+    fileName, 
+    fileType, 
+    isImage, 
+    isPDF, 
+    canPreview, 
+    signedUrl: signedUrl ? 'loaded' : 'null' 
+  });
 
   return (
     <Dialog open={!!document} onOpenChange={(open) => !open && onClose()}>
