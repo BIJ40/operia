@@ -1,12 +1,10 @@
 /**
  * Panneau fiche collaborateur dans un onglet
- * Reprend la structure de RHCollaborateurPage mais sans navigation
+ * Une seule fiche avec sections repliables (plus d'onglets internes)
  */
 
 import React, { useState } from 'react';
-import { usePersistedTab } from '@/hooks/usePersistedState';
 import { Card, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -20,15 +18,16 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { 
   User, 
-  FileText, 
   Shield, 
   Award, 
-  Car, 
-  Laptop, 
   FolderOpen,
   Mail,
   Phone,
@@ -38,7 +37,8 @@ import {
   Clock,
   Trash2,
   Loader2,
-  MoreVertical
+  MoreVertical,
+  ChevronDown
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -51,14 +51,13 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { RHCollaborator } from '@/types/rh-suivi';
 import { useRHTabs } from './RHTabsContext';
+import { cn } from '@/lib/utils';
 
-// Tab components
-import { RHTabEssentiel } from '@/components/rh/tabs/RHTabEssentiel';
-import { RHTabRH } from '@/components/rh/tabs/RHTabRH';
-import { RHTabSecurite } from '@/components/rh/tabs/RHTabSecurite';
-import { RHTabCompetences } from '@/components/rh/tabs/RHTabCompetences';
-import { RHTabParc } from '@/components/rh/tabs/RHTabParc';
-import { RHTabDocuments } from '@/components/rh/tabs/RHTabDocuments';
+// Section components
+import { RHSectionEssentiel } from '@/components/rh/sections/RHSectionEssentiel';
+import { RHSectionSecurite } from '@/components/rh/sections/RHSectionSecurite';
+import { RHSectionCompetences } from '@/components/rh/sections/RHSectionCompetences';
+import { RHSectionDocuments } from '@/components/rh/sections/RHSectionDocuments';
 
 function getCollaboratorStatus(c: RHCollaborator): 'active' | 'inactive' | 'exited' {
   if (c.leaving_date) {
@@ -84,6 +83,41 @@ function StatusBadge({ status }: { status: 'active' | 'inactive' | 'exited' }) {
   );
 }
 
+interface CollapsibleSectionProps {
+  title: string;
+  icon: React.ReactNode;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+  badge?: React.ReactNode;
+}
+
+function CollapsibleSection({ title, icon, defaultOpen = false, children, badge }: CollapsibleSectionProps) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="border rounded-lg overflow-hidden bg-card">
+      <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors">
+        <div className="flex items-center gap-3">
+          <div className="p-1.5 rounded-md bg-primary/10 text-primary">
+            {icon}
+          </div>
+          <h3 className="font-semibold text-base">{title}</h3>
+          {badge}
+        </div>
+        <ChevronDown className={cn(
+          "h-5 w-5 text-muted-foreground transition-transform duration-200",
+          isOpen && "rotate-180"
+        )} />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="border-t">
+        <div className="p-4">
+          {children}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
 interface RHCollaboratorPanelProps {
   collaboratorId: string;
 }
@@ -92,7 +126,6 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
   const { data: collaborator, isLoading } = useRHCollaborator(collaboratorId);
   const deleteCollaborator = useDeleteCollaborator();
   const { closeTab } = useRHTabs();
-  const [activeTab, setActiveTab] = usePersistedTab<string>(`rh-panel-${collaboratorId}-tab`, 'essentiel');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleDelete = () => {
@@ -126,7 +159,7 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
   const status = getCollaboratorStatus(collaborator);
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-4 space-y-4 max-w-4xl mx-auto">
       {/* Header compact */}
       <Card>
         <CardContent className="p-4">
@@ -219,50 +252,55 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Onglets internes */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full flex-wrap h-auto gap-1 bg-muted/50 p-1">
-          <TabsTrigger value="essentiel" className="gap-1.5 text-xs">
-            <User className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Essentiel</span>
-          </TabsTrigger>
-          <TabsTrigger value="rh" className="gap-1.5 text-xs">
-            <FileText className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">RH</span>
-          </TabsTrigger>
-          <TabsTrigger value="securite" className="gap-1.5 text-xs">
-            <Shield className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Sécurité</span>
-          </TabsTrigger>
-          <TabsTrigger value="competences" className="gap-1.5 text-xs">
-            <Award className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Compétences</span>
-          </TabsTrigger>
-          <TabsTrigger value="documents" className="gap-1.5 text-xs">
-            <FolderOpen className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Documents</span>
-          </TabsTrigger>
-        </TabsList>
+      {/* Sections repliables */}
+      <div className="space-y-3">
+        <CollapsibleSection 
+          title="Essentiel" 
+          icon={<User className="h-4 w-4" />}
+          defaultOpen={true}
+        >
+          <RHSectionEssentiel collaborator={collaborator} />
+        </CollapsibleSection>
 
-        <TabsContent value="essentiel" className="mt-4">
-          <RHTabEssentiel collaborator={collaborator} />
-        </TabsContent>
-        <TabsContent value="rh" className="mt-4">
-          <RHTabRH collaborator={collaborator} />
-        </TabsContent>
-        <TabsContent value="securite" className="mt-4">
-          <RHTabSecurite collaborator={collaborator} />
-        </TabsContent>
-        <TabsContent value="competences" className="mt-4">
-          <RHTabCompetences collaborator={collaborator} />
-        </TabsContent>
-        <TabsContent value="parc" className="mt-4">
-          <RHTabParc collaborator={collaborator} />
-        </TabsContent>
-        <TabsContent value="documents" className="mt-4">
-          <RHTabDocuments collaborator={collaborator} />
-        </TabsContent>
-      </Tabs>
+        <CollapsibleSection 
+          title="Compétences" 
+          icon={<Award className="h-4 w-4" />}
+          badge={collaborator.competencies?.competences_techniques?.length ? (
+            <Badge variant="secondary" className="text-xs">
+              {collaborator.competencies.competences_techniques.length}
+            </Badge>
+          ) : undefined}
+        >
+          <RHSectionCompetences collaborator={collaborator} />
+        </CollapsibleSection>
+
+        <CollapsibleSection 
+          title="Sécurité & EPI" 
+          icon={<Shield className="h-4 w-4" />}
+          badge={collaborator.epi_profile?.statut_epi ? (
+            <Badge 
+              variant="secondary" 
+              className={cn(
+                "text-xs",
+                collaborator.epi_profile.statut_epi === 'OK' && 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+                collaborator.epi_profile.statut_epi === 'TO_RENEW' && 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+                collaborator.epi_profile.statut_epi === 'MISSING' && 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+              )}
+            >
+              {collaborator.epi_profile.statut_epi === 'OK' ? '✓' : collaborator.epi_profile.statut_epi === 'TO_RENEW' ? '⏰' : '⚠'}
+            </Badge>
+          ) : undefined}
+        >
+          <RHSectionSecurite collaborator={collaborator} />
+        </CollapsibleSection>
+
+        <CollapsibleSection 
+          title="Documents" 
+          icon={<FolderOpen className="h-4 w-4" />}
+        >
+          <RHSectionDocuments collaborator={collaborator} />
+        </CollapsibleSection>
+      </div>
     </div>
   );
 }
