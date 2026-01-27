@@ -141,21 +141,36 @@ export function RHCockpitRow({
         />
       </td>
 
-      {/* Complétude - Progress bar custom */}
-      <td className="px-3 py-2.5 min-w-[100px]">
-        <div className="flex items-center gap-2">
-          <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-secondary">
-            <div 
-              className={cn('h-full transition-all', getProgressColor(indicators.completeness))}
-              style={{ width: `${indicators.completeness}%` }}
+      {/* Complétude - Pie chart compact */}
+      <td className="px-2 py-2.5 text-center">
+        <div 
+          className="inline-flex items-center justify-center"
+          title={`${indicators.completeness}% complété`}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" className="transform -rotate-90">
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              className="text-secondary"
             />
-          </div>
-          <span className={cn(
-            'text-xs font-medium tabular-nums',
-            INDICATOR_COLORS[indicators.completenessStatus].text
-          )}>
-            {indicators.completeness}%
-          </span>
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeDasharray={`${indicators.completeness * 0.628} 62.8`}
+              className={cn(
+                indicators.completeness >= 80 ? 'text-emerald-500' :
+                indicators.completeness >= 50 ? 'text-amber-500' : 'text-red-500'
+              )}
+            />
+          </svg>
         </div>
       </td>
 
