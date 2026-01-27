@@ -1,26 +1,24 @@
 /**
- * Onglet Documents
+ * Onglet Documents - Interface Finder avec prévisualisation directe
  */
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   FolderOpen, 
   Upload, 
-  FileText, 
-  Eye,
-  Calendar
+  LayoutGrid,
+  List,
 } from 'lucide-react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import type { RHCollaborator } from '@/types/rh-suivi';
-import { RHDocumentPreviewPopup } from '@/components/rh/unified/RHDocumentPreviewPopup';
 import { RHDocumentUploadPopup } from '@/components/rh/unified/RHDocumentUploadPopup';
+import { DocumentFinderItem } from './components/DocumentFinderItem';
+import { DocumentQuickLook } from './components/DocumentQuickLook';
+import { cn } from '@/lib/utils';
 
 interface Props {
   collaborator: RHCollaborator;
@@ -33,16 +31,21 @@ interface CollaboratorDocument {
   file_name: string;
   file_path: string;
   file_type: string | null;
+  file_size: number | null;
   created_at: string;
   period_year: number | null;
   period_month: number | null;
 }
 
+type ViewMode = 'grid' | 'list';
+
 export function RHTabDocuments({ collaborator }: Props) {
   const [previewDoc, setPreviewDoc] = React.useState<CollaboratorDocument | null>(null);
   const [showUploadDialog, setShowUploadDialog] = React.useState(false);
+  const [viewMode, setViewMode] = React.useState<ViewMode>('grid');
+  const [selectedDocId, setSelectedDocId] = React.useState<string | null>(null);
 
-  const { data: documents, isLoading } = useQuery({
+  const { data: documents = [], isLoading } = useQuery({
     queryKey: ['collaborator-documents', collaborator.id],
     queryFn: async (): Promise<CollaboratorDocument[]> => {
       const { data, error } = await supabase
@@ -56,111 +59,163 @@ export function RHTabDocuments({ collaborator }: Props) {
     },
   });
 
-  const getDocTypeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      payslip: 'Bulletin de paie',
-      contract: 'Contrat',
-      certificate: 'Attestation',
-      medical: 'Médical',
-      training: 'Formation',
-      other: 'Autre',
-    };
-    return labels[type] || type;
+  const handleDownload = async (doc: CollaboratorDocument) => {
+    const { data } = await supabase.storage
+      .from('rh-documents')
+      .createSignedUrl(doc.file_path, 3600);
+    
+    if (data?.signedUrl) {
+      const a = document.createElement('a');
+      a.href = data.signedUrl;
+      a.download = doc.file_name;
+      a.click();
+    }
+  };
+
+  const handleOpenExternal = async (doc: CollaboratorDocument) => {
+    const { data } = await supabase.storage
+      .from('rh-documents')
+      .createSignedUrl(doc.file_path, 3600);
+    
+    if (data?.signedUrl) {
+      window.open(data.signedUrl, '_blank');
+    }
+  };
+
+  const handleSelect = (docId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedDocId(docId === selectedDocId ? null : docId);
+  };
+
+  // Clear selection on background click
+  const handleBackgroundClick = () => {
+    setSelectedDocId(null);
   };
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <Skeleton key={i} className="h-20 w-full" />
+      <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4 p-4">
+        {[...Array(8)].map((_, i) => (
+          <Skeleton key={i} className="h-32 w-full rounded-xl" />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4" onClick={handleBackgroundClick}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium flex items-center gap-2">
-          <FolderOpen className="h-5 w-5" />
-          Documents ({documents?.length || 0})
+          <FolderOpen className="h-5 w-5 text-helpconfort-blue" />
+          Documents ({documents.length})
         </h3>
-        <Button variant="outline" className="gap-2" onClick={() => setShowUploadDialog(true)}>
-          <Upload className="h-4 w-4" />
-          Ajouter un document
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* View mode toggle */}
+          <div className="flex items-center border rounded-lg p-0.5 bg-muted/50">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                'h-7 w-7 rounded',
+                viewMode === 'grid' && 'bg-background shadow-sm'
+              )}
+              onClick={(e) => { e.stopPropagation(); setViewMode('grid'); }}
+              title="Vue grille"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                'h-7 w-7 rounded',
+                viewMode === 'list' && 'bg-background shadow-sm'
+              )}
+              onClick={(e) => { e.stopPropagation(); setViewMode('list'); }}
+              title="Vue liste"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
+          <Button 
+            variant="outline" 
+            className="gap-2" 
+            onClick={(e) => { e.stopPropagation(); setShowUploadDialog(true); }}
+          >
+            <Upload className="h-4 w-4" />
+            Ajouter
+          </Button>
+        </div>
       </div>
 
-      {/* Documents list */}
-      {documents?.length === 0 ? (
+      {/* Documents Finder Grid */}
+      {documents.length === 0 ? (
         <Card>
-          <CardContent className="p-8 text-center text-muted-foreground">
-            <FolderOpen className="h-12 w-12 mx-auto mb-4 opacity-20" />
-            <p>Aucun document pour ce collaborateur</p>
+          <CardContent className="p-12 text-center text-muted-foreground">
+            <FolderOpen className="h-16 w-16 mx-auto mb-4 opacity-20" />
+            <p className="text-lg font-medium">Aucun document</p>
+            <p className="text-sm mt-1">Cliquez sur "Ajouter" pour importer des fichiers</p>
           </CardContent>
         </Card>
-      ) : (
-        <>
-          <div className="space-y-3">
-            {documents?.map(doc => (
-              <Card key={doc.id}>
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <FileText className="h-5 w-5 text-primary" />
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        className="font-medium truncate text-left hover:underline"
-                        onClick={() => setPreviewDoc(doc)}
-                      >
-                        {doc.title}
-                      </button>
-                      <Badge variant="outline" className="shrink-0">
-                        {getDocTypeLabel(doc.doc_type)}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {format(new Date(doc.created_at), 'dd MMM yyyy', { locale: fr })}
-                      </span>
-                      {doc.period_year && doc.period_month && (
-                        <span>
-                          P&eacute;riode: {format(new Date(doc.period_year, doc.period_month - 1), 'MMMM yyyy', { locale: fr })}
-                        </span>
-                      )}
-                      <span className="text-xs truncate max-w-[200px]">{doc.file_name}</span>
-                    </div>
-                  </div>
-
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => setPreviewDoc(doc)}
-                    title="Prévisualiser le document"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {previewDoc && (
-            <RHDocumentPreviewPopup
-              open={!!previewDoc}
-              onOpenChange={(open) => !open && setPreviewDoc(null)}
-              title={previewDoc.title}
-              filePath={previewDoc.file_path}
-              fileName={previewDoc.file_name}
+      ) : viewMode === 'grid' ? (
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-2 p-2 bg-muted/20 rounded-xl border">
+          {documents.map(doc => (
+            <DocumentFinderItem
+              key={doc.id}
+              document={doc}
+              onPreview={() => setPreviewDoc(doc)}
+              onDownload={() => handleDownload(doc)}
+              onOpenExternal={() => handleOpenExternal(doc)}
+              canManage
+              isSelected={selectedDocId === doc.id}
+              onSelect={(e) => handleSelect(doc.id, e)}
             />
-          )}
-        </>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-1 p-2 bg-muted/20 rounded-xl border">
+          {documents.map(doc => (
+            <div
+              key={doc.id}
+              className={cn(
+                'flex items-center gap-3 p-2 rounded-lg hover:bg-muted/60 cursor-pointer transition-colors',
+                selectedDocId === doc.id && 'bg-helpconfort-blue/10 ring-1 ring-helpconfort-blue'
+              )}
+              onClick={(e) => handleSelect(doc.id, e)}
+              onDoubleClick={() => setPreviewDoc(doc)}
+              onContextMenu={(e) => {
+                // Trigger context menu
+                e.preventDefault();
+              }}
+            >
+              <div className="w-8 h-8 rounded bg-muted flex items-center justify-center shrink-0">
+                {doc.file_type?.startsWith('image/') ? (
+                  <span className="text-[8px] font-bold text-helpconfort-blue">IMG</span>
+                ) : doc.file_type === 'application/pdf' ? (
+                  <span className="text-[8px] font-bold text-destructive">PDF</span>
+                ) : (
+                  <span className="text-[8px] font-bold text-muted-foreground">DOC</span>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{doc.title}</p>
+              </div>
+              <span className="text-xs text-muted-foreground shrink-0">
+                {new Date(doc.created_at).toLocaleDateString('fr-FR')}
+              </span>
+            </div>
+          ))}
+        </div>
       )}
+
+      {/* Quick Look Modal */}
+      <DocumentQuickLook
+        document={previewDoc}
+        documents={documents}
+        onClose={() => setPreviewDoc(null)}
+        onDownload={handleDownload}
+      />
       
       {/* Upload Dialog */}
       <RHDocumentUploadPopup
