@@ -21,6 +21,8 @@ import { EpiCountCell, EpiRenewalCell, EpiRequestsCell, EpiIncidentsCell, EpiAck
 import { RHCollaboratorAvatarCompact } from './RHCollaboratorAvatar';
 import { RHGlobalStatusIndicator } from './RHStatusBadges';
 import { CollaboratorHoverPreview } from './CollaboratorHoverPreview';
+import { RHTaillesIndicator, RHTaillesPopup } from './RHTaillesPopup';
+import { RHEpiIndicator, RHEpiPopup } from './RHEpiPopup';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -92,6 +94,8 @@ export function RHUnifiedTableRow({
   const [carteAutrePopupOpen, setCarteAutrePopupOpen] = useState(false);
   const [materielPopupOpen, setMaterielPopupOpen] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [taillesPopupOpen, setTaillesPopupOpen] = useState(false);
+  const [epiPopupOpen, setEpiPopupOpen] = useState(false);
   
   // Delete mutation
   const deleteCollaborator = useDeleteCollaborator();
@@ -351,12 +355,36 @@ export function RHUnifiedTableRow({
       );
     }
     
+    // Tailles compactes
+    if (colId === 'tailles_all') {
+      return (
+        <TableCell key={colId} className={cellClass}>
+          <RHTaillesIndicator 
+            collaborator={collaborator} 
+            onClick={() => setTaillesPopupOpen(true)} 
+          />
+        </TableCell>
+      );
+    }
+    
+    // EPI indicator
+    if (colId === 'epi_indicator') {
+      return (
+        <TableCell key={colId} className={cellClass}>
+          <RHEpiIndicator 
+            collaborator={collaborator} 
+            onClick={() => setEpiPopupOpen(true)} 
+          />
+        </TableCell>
+      );
+    }
+    
     return null;
   };
 
-  const POPUP_COLUMNS = ['vehicule_attribue', 'carte_carburant', 'carte_bancaire', 'carte_autre', 'informatique_liste', 'outils_liste', 'identifiants_liste', 'metiers_liste'];
+  const POPUP_COLUMNS = ['vehicule_attribue', 'carte_carburant', 'carte_bancaire', 'carte_autre', 'informatique_liste', 'outils_liste', 'identifiants_liste', 'metiers_liste', 'tailles_all', 'epi_indicator'];
   
-  // Colonnes EPI
+  // Colonnes EPI (anciennes - pour compatibilité)
   const EPI_COLUMNS = ['epi_count', 'epi_renewal', 'epi_requests', 'epi_incidents', 'epi_ack_status', 'epi_ok'];
   
   // Colonnes avec possibilité d'upload de documents
@@ -423,6 +451,19 @@ export function RHUnifiedTableRow({
       collaboratorName={collaboratorName}
     />
     
+    {/* Tailles Popup */}
+    <RHTaillesPopup
+      open={taillesPopupOpen}
+      onOpenChange={setTaillesPopupOpen}
+      collaborator={collaborator}
+    />
+    
+    {/* EPI Popup */}
+    <RHEpiPopup
+      open={epiPopupOpen}
+      onOpenChange={setEpiPopupOpen}
+      collaborator={collaborator}
+    />
     
     <TableRow 
       className={cn(
