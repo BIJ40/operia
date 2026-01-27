@@ -109,7 +109,7 @@ export function AdminRoutes() {
       {/* Sitemap - Visualisation des routes */}
       <Route path="/admin/sitemap" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminSitemap /></ModuleGuard></RoleGuard></MainLayout>} />
       
-      {/* Envoi de notifications */}
+      {/* Envoi de notifications admin */}
       <Route path="/admin/notifications" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminNotificationSender /></ModuleGuard></RoleGuard></MainLayout>} />
       
       {/* gestionV2 supprimée - redirige vers gestion */}
