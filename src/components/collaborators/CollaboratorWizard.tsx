@@ -7,7 +7,7 @@
  * Étape 5: Emploi (dates, liaison Apogée, notes)
  */
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -120,6 +120,8 @@ export function CollaboratorWizard({
   mode = 'create',
 }: CollaboratorWizardProps) {
   const [currentStep, setCurrentStep] = useState(1);
+  const lastInitIdRef = useRef<string | undefined>(undefined);
+  const lastModeRef = useRef<'create' | 'edit'>(mode);
 
   const [newCompetence, setNewCompetence] = useState('');
   
@@ -179,11 +181,32 @@ const getDefaultValues = useMemo((): FormValues => ({
     defaultValues: getDefaultValues,
   });
 
-  // Reset form when initialData changes (e.g., switching between edit and create mode)
+  // IMPORTANT: en mode édition, initialData peut évoluer après l'ouverture (ex: données sensibles chargées async).
+  // Un reset + retour étape 1 à chaque évolution rend le bouton "Suivant" inutilisable (on revient à Identité).
+  // => On ne force le retour à l'étape 1 QUE quand on change réellement de collaborateur ou de mode.
+  // => Sinon, on synchronise les valeurs sans casser la navigation (et sans écraser les champs déjà modifiés).
   useEffect(() => {
-    form.reset(getDefaultValues);
-    setCurrentStep(1);
-  }, [initialData?.id, mode, getDefaultValues, form]);
+    if (!open) return;
+
+    const initId = initialData?.id;
+    const isNewEntity = initId !== lastInitIdRef.current || mode !== lastModeRef.current;
+
+    lastInitIdRef.current = initId;
+    lastModeRef.current = mode;
+
+    if (isNewEntity) {
+      form.reset(getDefaultValues);
+      setCurrentStep(1);
+      return;
+    }
+
+    // Même collaborateur : sync douce (utile quand birth_date/SSN/etc arrivent plus tard)
+    form.reset(getDefaultValues, {
+      keepDirtyValues: true,
+      keepTouched: true,
+      keepErrors: true,
+    });
+  }, [open, initialData, mode, getDefaultValues, form]);
 
   // Reset quand le dialog se ferme ou s'ouvre avec de nouvelles données
   const handleOpenChange = (openState: boolean) => {
