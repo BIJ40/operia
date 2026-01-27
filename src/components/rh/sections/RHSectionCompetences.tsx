@@ -1,20 +1,13 @@
 /**
- * Section Compétences & Habilitations - Version compacte
+ * Section Compétences & Habilitations - Édition inline avec auto-save
  */
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -22,9 +15,10 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Save, Zap, Plus, X, Clock, Loader2 } from 'lucide-react';
-import { useUpdateCompetencies } from '@/hooks/useRHSuivi';
+import { Zap, Plus, X, Clock, Check, Loader2 } from 'lucide-react';
+import { useAutoSaveCompetencies } from '@/hooks/useAutoSaveCollaborator';
 import { useCompetencesCatalogue, useAddCompetenceCatalogue } from '@/hooks/useRHCompetencesCatalogue';
+import { InlineEdit, InlineSelect } from '@/components/ui/inline-edit';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { RHCollaborator, CACESEntry } from '@/types/rh-suivi';
@@ -34,78 +28,65 @@ interface Props {
 }
 
 const CACES_TYPES = ['CACES 1', 'CACES 2', 'CACES 3', 'CACES 4', 'CACES 5', 'CACES 6', 'NACELLE'];
-const HAB_ELEC_STATUTS = ['B0', 'B1', 'B1V', 'B2', 'B2V', 'BR', 'BC', 'H0', 'H1', 'H1V', 'H2', 'H2V'];
+const HAB_ELEC_OPTIONS = [
+  { value: '', label: 'Aucune' },
+  { value: 'B0', label: 'B0' },
+  { value: 'B1', label: 'B1' },
+  { value: 'B1V', label: 'B1V' },
+  { value: 'B2', label: 'B2' },
+  { value: 'B2V', label: 'B2V' },
+  { value: 'BR', label: 'BR' },
+  { value: 'BC', label: 'BC' },
+  { value: 'H0', label: 'H0' },
+  { value: 'H1', label: 'H1' },
+  { value: 'H1V', label: 'H1V' },
+  { value: 'H2', label: 'H2' },
+  { value: 'H2V', label: 'H2V' },
+];
 
 export function RHSectionCompetences({ collaborator }: Props) {
   const comp = collaborator.competencies;
-  const updateComp = useUpdateCompetencies();
+  const { saveField, saveMultiple, isSaving } = useAutoSaveCompetencies(collaborator.id);
   const { data: catalogueCompetences = [] } = useCompetencesCatalogue();
   const addCompetence = useAddCompetenceCatalogue();
   
-  const [form, setForm] = useState({
-    habilitation_electrique_statut: comp?.habilitation_electrique_statut || '',
-    habilitation_electrique_date: comp?.habilitation_electrique_date || '',
-    caces: (comp?.caces || []) as CACESEntry[],
-    competences_techniques: (comp?.competences_techniques || []) as string[],
-  });
-
+  const [caces, setCaces] = useState<CACESEntry[]>((comp?.caces || []) as CACESEntry[]);
+  const [competencesTech, setCompetencesTech] = useState<string[]>((comp?.competences_techniques || []) as string[]);
   const [newCaces, setNewCaces] = useState({ type: '', date: '', expiration: '' });
   const [showAddCompetence, setShowAddCompetence] = useState(false);
   const [newCompetenceLabel, setNewCompetenceLabel] = useState('');
 
-  const handleSave = () => {
-    const sanitizedData = {
-      ...form,
-      habilitation_electrique_date: form.habilitation_electrique_date || null,
-      caces: form.caces.map(c => ({
-        ...c,
-        date: c.date || null,
-        expiration: c.expiration || null,
-      })),
-    };
+  const toggleCompetence = useCallback(async (label: string) => {
+    const has = competencesTech.includes(label);
+    const newList = has
+      ? competencesTech.filter(c => c !== label)
+      : [...competencesTech, label];
     
-    updateComp.mutate({
-      collaboratorId: collaborator.id,
-      data: sanitizedData,
-    });
-  };
+    setCompetencesTech(newList);
+    await saveField('competences_techniques', newList);
+  }, [competencesTech, saveField]);
 
-  const addCaces = () => {
+  const addCacesEntry = async () => {
     if (!newCaces.type || !newCaces.date) return;
-    setForm(f => ({
-      ...f,
-      caces: [...f.caces, newCaces],
-    }));
+    const newList = [...caces, newCaces];
+    setCaces(newList);
     setNewCaces({ type: '', date: '', expiration: '' });
+    await saveField('caces', newList);
   };
 
-  const removeCaces = (index: number) => {
-    setForm(f => ({
-      ...f,
-      caces: f.caces.filter((_, i) => i !== index),
-    }));
-  };
-
-  const toggleCompetence = (label: string) => {
-    setForm(f => {
-      const has = f.competences_techniques.includes(label);
-      return {
-        ...f,
-        competences_techniques: has
-          ? f.competences_techniques.filter(c => c !== label)
-          : [...f.competences_techniques, label],
-      };
-    });
+  const removeCaces = async (index: number) => {
+    const newList = caces.filter((_, i) => i !== index);
+    setCaces(newList);
+    await saveField('caces', newList);
   };
 
   const handleAddNewCompetence = () => {
     if (!newCompetenceLabel.trim()) return;
     addCompetence.mutate(newCompetenceLabel.trim(), {
-      onSuccess: () => {
-        setForm(f => ({
-          ...f,
-          competences_techniques: [...f.competences_techniques, newCompetenceLabel.trim()],
-        }));
+      onSuccess: async () => {
+        const newList = [...competencesTech, newCompetenceLabel.trim()];
+        setCompetencesTech(newList);
+        await saveField('competences_techniques', newList);
         setNewCompetenceLabel('');
         setShowAddCompetence(false);
       },
@@ -114,16 +95,19 @@ export function RHSectionCompetences({ collaborator }: Props) {
 
   const allCompetences = React.useMemo(() => {
     const base = catalogueCompetences.map(c => c.label);
-    const extras = form.competences_techniques.filter(c => !base.some(b => b.toLowerCase() === c.toLowerCase()));
+    const extras = competencesTech.filter(c => !base.some(b => b.toLowerCase() === c.toLowerCase()));
     return [...base, ...extras];
-  }, [catalogueCompetences, form.competences_techniques]);
+  }, [catalogueCompetences, competencesTech]);
 
   return (
     <div className="space-y-6">
       {/* Compétences techniques */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <h4 className="text-sm font-medium">Compétences techniques</h4>
+          <h4 className="text-sm font-medium flex items-center gap-2">
+            Compétences techniques
+            {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+          </h4>
           <Button
             variant="ghost"
             size="sm"
@@ -136,25 +120,25 @@ export function RHSectionCompetences({ collaborator }: Props) {
         </div>
         
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5 max-h-[180px] overflow-y-auto">
-          {allCompetences.map((comp) => (
+          {allCompetences.map((compLabel) => (
             <label
-              key={comp}
+              key={compLabel}
               className="flex items-center gap-1.5 p-1.5 rounded border cursor-pointer hover:bg-muted/50 transition-colors text-xs"
             >
               <Checkbox
-                checked={form.competences_techniques.includes(comp)}
-                onCheckedChange={() => toggleCompetence(comp)}
+                checked={competencesTech.includes(compLabel)}
+                onCheckedChange={() => toggleCompetence(compLabel)}
                 className="h-3.5 w-3.5"
               />
-              <span className="truncate" title={comp}>{comp}</span>
+              <span className="truncate" title={compLabel}>{compLabel}</span>
             </label>
           ))}
         </div>
         
-        {form.competences_techniques.length > 0 && (
+        {competencesTech.length > 0 && (
           <div className="flex flex-wrap gap-1 pt-2 mt-2 border-t">
-            {form.competences_techniques.map((c) => (
-              <Badge key={c} variant="secondary" className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
+            {competencesTech.map((c) => (
+              <Badge key={c} variant="secondary" className="text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-100">
                 {c}
               </Badge>
             ))}
@@ -168,33 +152,20 @@ export function RHSectionCompetences({ collaborator }: Props) {
           <Zap className="h-4 w-4 text-yellow-500" />
           Habilitation électrique
         </h4>
-        <div className="grid sm:grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <Label className="text-xs">Niveau</Label>
-            <Select 
-              value={form.habilitation_electrique_statut || 'none'} 
-              onValueChange={(v) => setForm(f => ({ ...f, habilitation_electrique_statut: v === 'none' ? '' : v }))}
-            >
-              <SelectTrigger className="h-8 text-sm">
-                <SelectValue placeholder="Sélectionner..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Aucune</SelectItem>
-                {HAB_ELEC_STATUTS.map(s => (
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">Date obtention</Label>
-            <Input
-              type="date"
-              value={form.habilitation_electrique_date}
-              onChange={(e) => setForm(f => ({ ...f, habilitation_electrique_date: e.target.value }))}
-              className="h-8 text-sm"
-            />
-          </div>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <InlineSelect
+            label="Niveau"
+            value={comp?.habilitation_electrique_statut || ''}
+            options={HAB_ELEC_OPTIONS}
+            onSave={(v) => saveField('habilitation_electrique_statut', v)}
+            placeholder="Sélectionner..."
+          />
+          <InlineEdit
+            label="Date obtention"
+            value={comp?.habilitation_electrique_date || ''}
+            onSave={(v) => saveField('habilitation_electrique_date', v)}
+            type="date"
+          />
         </div>
       </div>
 
@@ -202,14 +173,14 @@ export function RHSectionCompetences({ collaborator }: Props) {
       <div className="border-t pt-4">
         <h4 className="text-sm font-medium mb-3">CACES & Autorisations</h4>
         
-        {form.caces.length > 0 && (
+        {caces.length > 0 && (
           <div className="space-y-1.5 mb-3">
-            {form.caces.map((c, i) => (
+            {caces.map((c, i) => (
               <div key={i} className="flex items-center gap-2 p-1.5 bg-muted rounded text-xs">
                 <Badge variant="secondary" className="text-xs">{c.type}</Badge>
                 <span className="text-muted-foreground flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  {format(new Date(c.date), 'dd/MM/yy', { locale: fr })}
+                  {c.date && format(new Date(c.date), 'dd/MM/yy', { locale: fr })}
                   {c.expiration && ` → ${format(new Date(c.expiration), 'dd/MM/yy', { locale: fr })}`}
                 </span>
                 <Button 
@@ -228,19 +199,16 @@ export function RHSectionCompetences({ collaborator }: Props) {
         <div className="grid grid-cols-4 gap-2 items-end">
           <div className="space-y-1">
             <Label className="text-xs">Type</Label>
-            <Select 
-              value={newCaces.type} 
-              onValueChange={(v) => setNewCaces(c => ({ ...c, type: v }))}
+            <select
+              value={newCaces.type}
+              onChange={(e) => setNewCaces(c => ({ ...c, type: e.target.value }))}
+              className="w-full h-8 text-xs rounded-md border border-input bg-background px-2"
             >
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="..." />
-              </SelectTrigger>
-              <SelectContent>
-                {CACES_TYPES.map(t => (
-                  <SelectItem key={t} value={t}>{t}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <option value="">...</option>
+              {CACES_TYPES.map(t => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Obtention</Label>
@@ -263,30 +231,13 @@ export function RHSectionCompetences({ collaborator }: Props) {
           <Button 
             variant="outline" 
             size="sm"
-            onClick={addCaces}
+            onClick={addCacesEntry}
             disabled={!newCaces.type || !newCaces.date}
             className="h-8 gap-1"
           >
             <Plus className="h-3.5 w-3.5" />
           </Button>
         </div>
-      </div>
-
-      {/* Save */}
-      <div className="flex justify-end pt-2">
-        <Button 
-          size="sm"
-          onClick={handleSave}
-          disabled={updateComp.isPending}
-          className="gap-1.5"
-        >
-          {updateComp.isPending ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Save className="h-3.5 w-3.5" />
-          )}
-          Enregistrer
-        </Button>
       </div>
 
       {/* Dialog ajouter compétence */}
