@@ -7,8 +7,9 @@ import React from 'react';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { RHCollaborator } from '@/types/rh-suivi';
 import { CockpitIndicators } from '@/hooks/rh/useRHCockpitIndicators';
-import { Phone, Mail, User, Shield, Car, FileText, Award, AlertTriangle } from 'lucide-react';
+import { Phone, Mail, User, Shield, Car, FileText, Award, Heart, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useSensitiveData } from '@/hooks/useSensitiveData';
 
 interface HoverCardWrapperProps {
   children: React.ReactNode;
@@ -71,7 +72,7 @@ export function ContactHoverCard({
   );
 }
 
-/** ICE HoverCard - Contact d'urgence */
+/** ICE HoverCard - Contact d'urgence avec données déchiffrées */
 export function ICEHoverCard({ 
   collaborator, 
   children 
@@ -79,31 +80,36 @@ export function ICEHoverCard({
   collaborator: RHCollaborator; 
   children: React.ReactNode;
 }) {
-  const hasContact = !!collaborator.sensitive_data?.emergency_contact_encrypted;
-  const hasPhone = !!collaborator.sensitive_data?.emergency_phone_encrypted;
+  const { sensitiveData, isLoading } = useSensitiveData(collaborator.id);
   
-  // On ne peut pas afficher le contenu chiffré, on indique juste la présence
+  const hasContact = !!sensitiveData?.emergency_contact;
+  const hasPhone = !!sensitiveData?.emergency_phone;
+  
   return (
     <HoverCardWrapper
       content={
         <div className="space-y-2">
           <p className="font-medium text-foreground flex items-center gap-2">
-            <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+            <Heart className="h-3.5 w-3.5 text-rose-500" />
             Contact d'urgence (ICE)
           </p>
-          <div className="space-y-1.5 text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <User className={cn("h-3.5 w-3.5", hasContact ? "text-emerald-500" : "text-rose-400")} />
-              <span>{hasContact ? '✓ Nom renseigné' : '✗ Nom manquant'}</span>
+          {isLoading ? (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <span>Chargement...</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Phone className={cn("h-3.5 w-3.5", hasPhone ? "text-emerald-500" : "text-rose-400")} />
-              <span>{hasPhone ? '✓ Téléphone renseigné' : '✗ Téléphone manquant'}</span>
+          ) : (
+            <div className="space-y-1.5 text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <User className={cn("h-3.5 w-3.5", hasContact ? "text-emerald-500" : "text-rose-400")} />
+                <span>{sensitiveData?.emergency_contact || 'Non renseigné'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Phone className={cn("h-3.5 w-3.5", hasPhone ? "text-emerald-500" : "text-rose-400")} />
+                <span>{sensitiveData?.emergency_phone || 'Non renseigné'}</span>
+              </div>
             </div>
-          </div>
-          <p className="text-xs text-muted-foreground/70 italic">
-            Données chiffrées - cliquer pour voir/modifier
-          </p>
+          )}
         </div>
       }
     >
