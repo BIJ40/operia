@@ -76,6 +76,7 @@ function PageLoader() {
 
 import { useMaintenanceMode } from "./hooks/useMaintenanceMode";
 import { MaintenanceBlock } from "./components/maintenance/MaintenanceBlock";
+import { PWAInstallPrompt } from "./components/pwa/PWAInstallPrompt";
 
 function AppContent() {
   const { mustChangePassword, user, isAuthLoading } = useAuth();
@@ -156,6 +157,7 @@ function AppContent() {
         onSuccess={() => setShowPasswordDialog(false)}
       />
       <ImpersonationBanner />
+      <PWAInstallPrompt />
     </>
   );
 }
