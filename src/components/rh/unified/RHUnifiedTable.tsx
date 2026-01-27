@@ -272,57 +272,6 @@ export function RHUnifiedTable({
           </Badge>
         )}
 
-        <div className="flex items-center gap-2">
-          {/* Bouton sauvegarder - icône seule avec tooltip */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant={hasPendingChanges ? "default" : "outline"} 
-                  size="icon"
-                  onClick={() => saveChanges()}
-                  disabled={!hasPendingChanges || isSaving}
-                  className="h-9 w-9"
-                >
-                  {isSaving ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Save className="h-4 w-4" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Enregistrer</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <DropdownMenu>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="icon" className="h-9 w-9">
-                      <Settings2 className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                </TooltipTrigger>
-                <TooltipContent>Colonnes</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Colonnes visibles</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {availableColumns.map((col) => (
-                <DropdownMenuCheckboxItem
-                  key={col.id}
-                  checked={visibleColumns.includes(col.id)}
-                  onCheckedChange={() => onToggleColumn(col.id)}
-                >
-                  {col.label}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
       </div>
 
       {/* Tableau avec colonnes identité sticky */}
