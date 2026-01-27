@@ -110,15 +110,7 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
         minRole: 'franchisee_admin',
         requiresOption: { module: 'rh', option: 'rh_viewer' },
       },
-      { 
-        label: 'Matériel & EPI', 
-        href: ROUTES.rh.epi, 
-        icon: 'HardHat', 
-        description: 'Équipements de protection',
-        section: 'maintenance',
-        minRole: 'franchisee_admin',
-        requiresOption: { module: 'rh', option: 'rh_viewer' },
-      },
+      // Matériel & EPI supprimé - intégré dans Parc
     ],
   },
 

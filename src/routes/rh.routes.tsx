@@ -17,7 +17,7 @@ const RHCollaborateurPage = lazy(() => import("@/pages/rh/RHCollaborateurPage"))
 const CollaborateurProfilePage = lazy(() => import("@/pages/CollaborateurProfilePage"));
 // GestionHeuresPage et TimesheetsValidationPage supprimés (legacy N1 v0.8.3)
 const MaintenancePreventivePage = lazy(() => import("@/pages/MaintenancePreventivePage"));
-const EPIPage = lazy(() => import("@/pages/EPIPage"));
+// EPIPage supprimée - fonctionnalités intégrées dans le Parc
 const DocGenPage = lazy(() => import("@/pages/rh/DocGenPage"));
 const RHMeetingsPage = lazy(() => import("@/pages/rh/RHMeetingsPage"));
 const PlanningHebdo = lazy(() => import("@/pages/PlanningTechniciensSemaine"));
@@ -93,18 +93,8 @@ export function RHRoutes() {
           </MainLayout>
         } 
       />
-      <Route 
-        path="/rh/epi" 
-        element={
-          <MainLayout>
-            <RoleGuard minRole="franchisee_admin">
-              <ModuleGuard moduleKey="rh">
-                <EPIPage />
-              </ModuleGuard>
-            </RoleGuard>
-          </MainLayout>
-        } 
-      />
+      {/* Route /rh/epi supprimée - redirection vers /rh/parc */}
+      <Route path="/rh/epi" element={<Navigate to="/rh/parc" replace />} />
 
       {/* ============================================ */}
       {/* OUTILS RH (N2) */}
