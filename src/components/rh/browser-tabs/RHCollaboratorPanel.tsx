@@ -24,6 +24,13 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { 
   User, 
   Shield, 
@@ -37,7 +44,8 @@ import {
   Trash2,
   Loader2,
   MoreVertical,
-  ChevronDown
+  ChevronDown,
+  Briefcase
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -57,6 +65,25 @@ import { RHSectionEssentiel } from '@/components/rh/sections/RHSectionEssentiel'
 import { RHSectionSecurite } from '@/components/rh/sections/RHSectionSecurite';
 import { RHSectionCompetences } from '@/components/rh/sections/RHSectionCompetences';
 import { RHSectionDocuments } from '@/components/rh/sections/RHSectionDocuments';
+
+const TYPE_OPTIONS = [
+  { value: 'TECHNICIEN', label: 'Technicien' },
+  { value: 'ASSISTANTE', label: 'Assistante' },
+  { value: 'DIRIGEANT', label: 'Dirigeant' },
+  { value: 'COMMERCIAL', label: 'Commercial' },
+  { value: 'APPRENTI', label: 'Apprenti' },
+  { value: 'STAGIAIRE', label: 'Stagiaire' },
+  { value: 'AUTRE', label: 'Autre' },
+];
+
+const ROLE_OPTIONS = [
+  { value: 'Plombier', label: 'Plombier' },
+  { value: 'Electricien', label: 'Électricien' },
+  { value: 'Menuisier', label: 'Menuisier' },
+  { value: 'Peintre', label: 'Peintre' },
+  { value: 'Plaquiste', label: 'Plaquiste' },
+  { value: 'Polyvalent', label: 'Polyvalent' },
+];
 
 function getCollaboratorStatus(c: RHCollaborator): 'active' | 'inactive' | 'exited' {
   if (c.leaving_date) {
@@ -168,14 +195,46 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
                 {initials}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1 min-w-0 space-y-1">
-              {/* Ligne 1: Nom + Status + Type */}
+            <div className="flex-1 min-w-0 space-y-1.5">
+              {/* Ligne 1: Nom + Status + Type (dropdown) + Rôle (dropdown) */}
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-base font-semibold">{fullName}</h2>
                 <StatusBadge status={status} />
-                {collaborator.type && (
-                  <Badge variant="outline" className="text-xs">{collaborator.type}</Badge>
-                )}
+                
+                {/* Type sélectionnable */}
+                <Select
+                  value={collaborator.type || ''}
+                  onValueChange={(v) => updateCollaboratorField(collaborator.id, 'type', v)}
+                >
+                  <SelectTrigger className="h-6 w-auto min-w-[90px] text-xs border-dashed px-2 gap-1">
+                    <SelectValue placeholder="Type..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    {TYPE_OPTIONS.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {/* Rôle/Poste sélectionnable */}
+                <Select
+                  value={collaborator.role || ''}
+                  onValueChange={(v) => updateCollaboratorField(collaborator.id, 'role', v)}
+                >
+                  <SelectTrigger className="h-6 w-auto min-w-[100px] text-xs border-dashed px-2 gap-1">
+                    <Briefcase className="h-3 w-3 shrink-0 text-muted-foreground" />
+                    <SelectValue placeholder="Rôle..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    {ROLE_OPTIONS.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               {/* Ligne 2: Email & Téléphone éditables inline */}
