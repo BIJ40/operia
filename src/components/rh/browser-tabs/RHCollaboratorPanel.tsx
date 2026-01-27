@@ -3,7 +3,7 @@
  * Une seule fiche avec sections repliables (plus d'onglets internes)
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -45,7 +45,8 @@ import {
   Loader2,
   MoreVertical,
   ChevronDown,
-  Briefcase
+  Briefcase,
+  AlertTriangle
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -55,6 +56,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useRHCollaborator, useDeleteCollaborator } from '@/hooks/useRHSuivi';
 import { updateCollaboratorField } from '@/hooks/useAutoSaveCollaborator';
+import { useSensitiveData } from '@/hooks/useSensitiveData';
 import { InlineEditCompact } from '@/components/ui/inline-edit';
 import type { RHCollaborator } from '@/types/rh-suivi';
 import { useRHTabs } from './RHTabsContext';
@@ -153,6 +155,48 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
   const deleteCollaborator = useDeleteCollaborator();
   const { closeTab } = useRHTabs();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  
+  // ICE data
+  const { 
+    sensitiveData, 
+    isLoading: loadingICE, 
+    updateSensitiveData,
+    isUpdating: updatingICE 
+  } = useSensitiveData(collaboratorId);
+  
+  const [iceContact, setIceContact] = useState('');
+  const [icePhone, setIcePhone] = useState('');
+  
+  useEffect(() => {
+    if (sensitiveData) {
+      setIceContact(sensitiveData.emergency_contact || '');
+      setIcePhone(sensitiveData.emergency_phone || '');
+    }
+  }, [sensitiveData]);
+  
+  const handleSaveIceContact = (value: string) => {
+    setIceContact(value);
+    updateSensitiveData({
+      collaboratorId,
+      data: {
+        emergency_contact: value || null,
+        emergency_phone: icePhone || null,
+      },
+    });
+  };
+  
+  const handleSaveIcePhone = (value: string) => {
+    setIcePhone(value);
+    updateSensitiveData({
+      collaboratorId,
+      data: {
+        emergency_contact: iceContact || null,
+        emergency_phone: value || null,
+      },
+    });
+  };
+  
+  const hasIce = !!(iceContact || icePhone);
 
   const handleDelete = () => {
     deleteCollaborator.mutate(collaboratorId, {
@@ -262,6 +306,39 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
                     type="tel"
                   />
                 </span>
+              </div>
+              
+              {/* Ligne 3: ICE (Contact d'urgence) */}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm border-t pt-1.5 mt-1">
+                <span className={cn(
+                  "flex items-center gap-1.5",
+                  hasIce ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"
+                )}>
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                  <span className="text-xs font-medium">ICE:</span>
+                </span>
+                {loadingICE ? (
+                  <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                ) : (
+                  <>
+                    <InlineEditCompact
+                      value={iceContact}
+                      onSave={handleSaveIceContact}
+                      placeholder="Contact urgence..."
+                    />
+                    <span className="text-muted-foreground">|</span>
+                    <span className="flex items-center gap-1 text-muted-foreground">
+                      <Phone className="h-3 w-3" />
+                      <InlineEditCompact
+                        value={icePhone}
+                        onSave={handleSaveIcePhone}
+                        placeholder="Tél urgence..."
+                        type="tel"
+                      />
+                    </span>
+                    {updatingICE && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+                  </>
+                )}
               </div>
             </div>
             
