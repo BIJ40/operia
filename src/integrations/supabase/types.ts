@@ -5402,6 +5402,45 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          is_active: boolean
+          last_used_at: string | null
+          p256dh: string
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          p256dh: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          p256dh?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       rag_index_documents: {
         Row: {
           apporteur_code: string | null
@@ -7069,6 +7108,77 @@ export type Database = {
           },
         ]
       }
+      unified_notifications: {
+        Row: {
+          action_url: string | null
+          agency_id: string | null
+          category: string
+          created_at: string
+          expires_at: string | null
+          icon: string | null
+          id: string
+          is_pushed: boolean
+          is_read: boolean
+          message: string | null
+          metadata: Json | null
+          notification_type: string
+          pushed_at: string | null
+          read_at: string | null
+          related_entity_id: string | null
+          related_entity_type: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          agency_id?: string | null
+          category: string
+          created_at?: string
+          expires_at?: string | null
+          icon?: string | null
+          id?: string
+          is_pushed?: boolean
+          is_read?: boolean
+          message?: string | null
+          metadata?: Json | null
+          notification_type: string
+          pushed_at?: string | null
+          read_at?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          agency_id?: string | null
+          category?: string
+          created_at?: string
+          expires_at?: string | null
+          icon?: string | null
+          id?: string
+          is_pushed?: boolean
+          is_read?: boolean
+          message?: string | null
+          metadata?: Json | null
+          notification_type?: string
+          pushed_at?: string | null
+          read_at?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unified_notifications_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_actions_config: {
         Row: {
           created_at: string
@@ -7670,6 +7780,21 @@ export type Database = {
       can_user_login: { Args: { p_user_id: string }; Returns: boolean }
       cleanup_ai_search_cache: { Args: never; Returns: number }
       cleanup_expired_request_locks: { Args: never; Returns: number }
+      create_notification: {
+        Args: {
+          p_action_url?: string
+          p_category: string
+          p_icon?: string
+          p_message?: string
+          p_metadata?: Json
+          p_notification_type: string
+          p_related_entity_id?: string
+          p_related_entity_type?: string
+          p_title: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       get_agency_enabled_modules: {
         Args: { p_agency_id: string }
         Returns: {
@@ -7719,6 +7844,10 @@ export type Database = {
       get_my_apporteur_agency_id: { Args: never; Returns: string }
       get_my_apporteur_id: { Args: never; Returns: string }
       get_my_apporteur_user_id: { Args: never; Returns: string }
+      get_unread_notifications_count: {
+        Args: { p_user_id?: string }
+        Returns: number
+      }
       get_unread_rh_notifications_count: { Args: never; Returns: number }
       get_user_agency: { Args: { _user_id: string }; Returns: string }
       get_user_agency_id: { Args: { _user_id: string }; Returns: string }
@@ -7851,6 +7980,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      mark_notifications_read: {
+        Args: { p_notification_ids: string[] }
+        Returns: number
       }
       mark_rh_notifications_read: {
         Args: { p_notification_ids: string[] }

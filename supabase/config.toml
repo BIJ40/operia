@@ -176,3 +176,6 @@ verify_jwt = false
 
 [functions.epi-generate-ack-pdf]
 verify_jwt = true
+
+[functions.send-push]
+verify_jwt = true
