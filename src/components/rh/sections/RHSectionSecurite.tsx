@@ -118,28 +118,30 @@ export function RHSectionSecurite({ collaborator }: Props) {
       }, { onConflict: 'collaborator_id' });
   };
 
-  // Status badge configuration
+  // Status badge configuration - icon color changes based on status, count always visible
   const completedCount = epiRequis.filter(r => epiRemis.includes(r)).length;
-  const statusConfig: Record<EpiStatus, { label: string; icon: React.ReactNode; className: string }> = {
+  const countLabel = epiRequis.length > 0 ? `${completedCount}/${epiRequis.length}` : '';
+  
+  const statusConfig: Record<EpiStatus, { icon: React.ReactNode; iconClassName: string; badgeClassName: string }> = {
     complete: {
-      label: 'Complet',
       icon: <Check className="h-3 w-3" />,
-      className: 'bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700',
+      iconClassName: 'text-green-600 dark:text-green-400',
+      badgeClassName: 'bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700',
     },
     partial: {
-      label: `${completedCount}/${epiRequis.length}`,
-      icon: <AlertTriangle className="h-3 w-3" />,
-      className: 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700',
+      icon: <Check className="h-3 w-3" />,
+      iconClassName: 'text-amber-600 dark:text-amber-400',
+      badgeClassName: 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700',
     },
     critical: {
-      label: `${completedCount}/${epiRequis.length}`,
-      icon: <AlertTriangle className="h-3 w-3" />,
-      className: 'bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700',
+      icon: <Check className="h-3 w-3" />,
+      iconClassName: 'text-red-600 dark:text-red-400',
+      badgeClassName: 'bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700',
     },
     none: {
-      label: 'Non défini',
       icon: null,
-      className: 'bg-muted text-muted-foreground border-border',
+      iconClassName: '',
+      badgeClassName: 'bg-muted text-muted-foreground border-border',
     },
   };
 
@@ -153,9 +155,11 @@ export function RHSectionSecurite({ collaborator }: Props) {
           <HardHat className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium">Équipements de protection</span>
         </div>
-        <Badge variant="outline" className={cn("gap-1 text-xs", currentStatus.className)}>
-          {currentStatus.icon}
-          {currentStatus.label}
+        <Badge variant="outline" className={cn("gap-1.5 text-xs", currentStatus.badgeClassName)}>
+          {currentStatus.icon && (
+            <span className={currentStatus.iconClassName}>{currentStatus.icon}</span>
+          )}
+          {countLabel || 'Non défini'}
         </Badge>
       </div>
 
