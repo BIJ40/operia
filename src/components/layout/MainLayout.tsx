@@ -1,7 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { MainHeader } from './MainHeader';
 import { TabHeader } from './TabHeader';
-import { PublicLanding } from './PublicLanding';
+import { LoginFormCard } from '@/components/LoginFormCard';
 import { LoginDialog } from '@/components/LoginDialog';
 import { ImageModal } from '@/components/ImageModal';
 import { AiUnifiedProvider } from '@/components/ai';
@@ -41,13 +41,12 @@ export function MainLayout({
     );
   }
 
-  // Show public landing for unauthenticated users when auth is required
+  // Show login form for unauthenticated users when auth is required
   if (requireAuth && !isAuthenticated) {
     return (
-      <>
-        <PublicLanding onLoginClick={() => setLoginOpen(true)} />
-        <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
-      </>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-950/10 via-background to-indigo-950/10 p-4">
+        <LoginFormCard />
+      </div>
     );
   }
 
