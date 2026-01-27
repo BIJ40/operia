@@ -31,8 +31,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Label } from '@/components/ui/label';
 import { 
-  User, 
   Shield, 
   Award, 
   FolderOpen,
@@ -41,12 +47,13 @@ import {
   UserCheck,
   UserX,
   Clock,
-  Trash2,
   Loader2,
   MoreVertical,
   ChevronDown,
   Briefcase,
-  AlertTriangle
+  AlertTriangle,
+  Calendar as CalendarIcon,
+  Archive
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -61,9 +68,8 @@ import { InlineEditCompact } from '@/components/ui/inline-edit';
 import type { RHCollaborator } from '@/types/rh-suivi';
 import { useRHTabs } from './RHTabsContext';
 import { cn } from '@/lib/utils';
-
-// Section components
-import { RHSectionEssentiel } from '@/components/rh/sections/RHSectionEssentiel';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { RHSectionSecurite } from '@/components/rh/sections/RHSectionSecurite';
 import { RHSectionCompetences } from '@/components/rh/sections/RHSectionCompetences';
 import { RHSectionDocuments } from '@/components/rh/sections/RHSectionDocuments';
@@ -154,7 +160,9 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
   const { data: collaborator, isLoading } = useRHCollaborator(collaboratorId);
   const deleteCollaborator = useDeleteCollaborator();
   const { closeTab } = useRHTabs();
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showArchiveDialog, setShowArchiveDialog] = useState(false);
+  const [archiveDate, setArchiveDate] = useState<Date | undefined>(new Date());
+  const [isArchiving, setIsArchiving] = useState(false);
   
   // ICE data
   const { 
@@ -198,13 +206,19 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
   
   const hasIce = !!(iceContact || icePhone);
 
-  const handleDelete = () => {
-    deleteCollaborator.mutate(collaboratorId, {
-      onSuccess: () => {
-        closeTab(collaboratorId);
-        setShowDeleteDialog(false);
-      },
-    });
+  const handleArchive = async () => {
+    if (!archiveDate) return;
+    setIsArchiving(true);
+    try {
+      await updateCollaboratorField(
+        collaboratorId, 
+        'leaving_date', 
+        format(archiveDate, 'yyyy-MM-dd')
+      );
+      setShowArchiveDialog(false);
+    } finally {
+      setIsArchiving(false);
+    }
   };
 
   if (isLoading) {
@@ -342,52 +356,99 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
               </div>
             </div>
             
-            {/* Actions dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-background z-50">
-                <DropdownMenuItem 
-                  onClick={() => setShowDeleteDialog(true)}
-                  className="text-destructive focus:text-destructive cursor-pointer"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Supprimer définitivement
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Right side: Entry date + Actions */}
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              {/* Entry date */}
+              {collaborator.hiring_date && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <CalendarIcon className="h-3.5 w-3.5" />
+                  <span>Entrée: {format(new Date(collaborator.hiring_date), 'dd/MM/yyyy')}</span>
+                </div>
+              )}
+              
+              {/* Exit date - only shown when employee has left */}
+              {status === 'exited' && collaborator.leaving_date && (
+                <div className="flex items-center gap-1.5 text-xs text-destructive">
+                  <UserX className="h-3.5 w-3.5" />
+                  <span>Sortie: {format(new Date(collaborator.leaving_date), 'dd/MM/yyyy')}</span>
+                </div>
+              )}
+              
+              {/* Actions dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 bg-background z-50">
+                  <DropdownMenuItem 
+                    onClick={() => setShowArchiveDialog(true)}
+                    className="cursor-pointer"
+                    disabled={status === 'exited'}
+                  >
+                    <Archive className="h-4 w-4 mr-2" />
+                    Archiver le collaborateur
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </CardContent>
       </Card>
       
-      {/* Delete confirmation dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      {/* Archive confirmation dialog */}
+      <AlertDialog open={showArchiveDialog} onOpenChange={setShowArchiveDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer définitivement ce collaborateur ?</AlertDialogTitle>
+            <AlertDialogTitle>Archiver ce collaborateur ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. Toutes les données liées à <strong>{fullName}</strong> seront supprimées : profil EPI, compétences, matériel, accès IT et documents.
+              <strong>{fullName}</strong> sera marqué comme sorti à la date sélectionnée. Cette action peut être annulée en modifiant la date de sortie.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          
+          <div className="py-4">
+            <Label className="text-sm font-medium mb-2 block">Date de sortie</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !archiveDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {archiveDate ? format(archiveDate, 'PPP', { locale: fr }) : 'Sélectionner une date'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 z-50" align="start">
+                <Calendar
+                  mode="single"
+                  selected={archiveDate}
+                  onSelect={setArchiveDate}
+                  initialFocus
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteCollaborator.isPending}>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={isArchiving}>Annuler</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDelete}
-              disabled={deleteCollaborator.isPending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleArchive}
+              disabled={isArchiving || !archiveDate}
             >
-              {deleteCollaborator.isPending ? (
+              {isArchiving ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Suppression...
+                  Archivage...
                 </>
               ) : (
                 <>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Supprimer
+                  <Archive className="h-4 w-4 mr-2" />
+                  Archiver
                 </>
               )}
             </AlertDialogAction>
@@ -395,20 +456,14 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Sections en grille 2x2 */}
+      {/* Sections en grille - 3 sections maintenant */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {/* Ligne 1 */}
-        <CollapsibleSection 
-          title="Essentiel" 
-          icon={<User className="h-4 w-4" />}
-          defaultOpen={true}
-        >
-          <RHSectionEssentiel collaborator={collaborator} />
-        </CollapsibleSection>
 
+        {/* Compétences */}
         <CollapsibleSection 
           title="Compétences" 
           icon={<Award className="h-4 w-4" />}
+          defaultOpen={true}
           badge={collaborator.competencies?.competences_techniques?.length ? (
             <Badge variant="secondary" className="text-xs">
               {collaborator.competencies.competences_techniques.length}
@@ -418,7 +473,7 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
           <RHSectionCompetences collaborator={collaborator} />
         </CollapsibleSection>
 
-        {/* Ligne 2 */}
+        {/* Sécurité */}
         <CollapsibleSection 
           title="Sécurité" 
           icon={<Shield className="h-4 w-4" />}
