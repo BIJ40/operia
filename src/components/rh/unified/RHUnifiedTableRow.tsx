@@ -16,12 +16,30 @@ import { RHMaterielPopup } from './RHMaterielPopup';
 import { RHIdentifiantsDynamicColumns } from './RHIdentifiantsDynamicColumns';
 import { RHDocumentCell } from './RHDocumentCell';
 import { RHMetiersMultiSelect } from './RHMetiersMultiSelect';
-import { ExternalLink, Paperclip, Package, Pencil } from 'lucide-react';
+import { ExternalLink, Paperclip, Package, Pencil, MoreVertical, Trash2, Loader2 } from 'lucide-react';
 import { CollaboratorEpiSummary } from '@/hooks/epi/useCollaboratorsEpiSummary';
 import { EpiCountCell, EpiRenewalCell, EpiRequestsCell, EpiIncidentsCell, EpiAckStatusCell, EpiOkCell } from './RHEpiCells';
 import { RHCollaboratorAvatarCompact } from './RHCollaboratorAvatar';
 import { RHGlobalStatusIndicator } from './RHStatusBadges';
 import { CollaboratorHoverPreview } from './CollaboratorHoverPreview';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { useDeleteCollaborator } from '@/hooks/useRHSuivi';
+
 interface RHUnifiedTableRowProps {
   collaborator: RHCollaborator;
   activeTab: RHTabId;
@@ -65,6 +83,10 @@ export function RHUnifiedTableRow({
   const [carteBancairePopupOpen, setCarteBancairePopupOpen] = useState(false);
   const [carteAutrePopupOpen, setCarteAutrePopupOpen] = useState(false);
   const [materielPopupOpen, setMaterielPopupOpen] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  
+  // Delete mutation
+  const deleteCollaborator = useDeleteCollaborator();
   
   // Callback pour rafraîchir les identifiants
   const handleIdentifiantsRefresh = useCallback(() => {
@@ -400,8 +422,8 @@ export function RHUnifiedTableRow({
         "hover:shadow-sm"
       )}
     >
-      {/* Avatar + indicateur global + bouton édition - COMPACT */}
-      <TableCell className="w-20 min-w-[80px] px-1.5 bg-muted/10">
+      {/* Avatar + indicateur global + actions - COMPACT */}
+      <TableCell className="w-24 min-w-[96px] px-1.5 bg-muted/10">
         <div className="flex items-center gap-1">
           <RHCollaboratorAvatarCompact collaborator={collaborator} />
           <RHGlobalStatusIndicator 
@@ -419,8 +441,65 @@ export function RHUnifiedTableRow({
               <Pencil className="h-3 w-3" />
             </Button>
           )}
+          {/* Menu actions avec suppression */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <MoreVertical className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 bg-background z-50">
+              <DropdownMenuItem 
+                onClick={() => setShowDeleteDialog(true)}
+                className="text-destructive focus:text-destructive cursor-pointer"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Supprimer définitivement
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </TableCell>
+      
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer définitivement ce collaborateur ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. Toutes les données liées à <strong>{collaborator.first_name} {collaborator.last_name}</strong> seront supprimées : profil EPI, compétences, matériel, accès IT et documents.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteCollaborator.isPending}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                deleteCollaborator.mutate(collaborator.id, {
+                  onSuccess: () => setShowDeleteDialog(false),
+                });
+              }}
+              disabled={deleteCollaborator.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteCollaborator.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Suppression...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Supprimer
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Colonnes fixes - Nom avec HoverCard preview - COMPACT */}
       <TableCell className="font-medium w-24 min-w-[96px] px-1.5 bg-muted/10">
