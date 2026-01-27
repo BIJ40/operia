@@ -238,7 +238,7 @@ export function RHUnifiedTable({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3 min-h-0 flex-1">
       {/* Stats Header amélioré */}
       <RHStatsHeader
         collaborators={collaborators}
@@ -353,7 +353,7 @@ export function RHUnifiedTable({
       </div>
 
       {/* Tableau */}
-      <div className="border rounded-lg overflow-auto max-h-[calc(100vh-350px)]">
+      <div className="border rounded-lg overflow-auto flex-1 min-h-0">
         <Table>
           <RHUnifiedTableHeader activeTab={activeTab} visibleColumns={visibleColumns} />
           <TableBody>
