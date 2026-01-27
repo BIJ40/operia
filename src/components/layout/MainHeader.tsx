@@ -31,6 +31,7 @@ import { MEGA_MENU_CONFIG, SUPPORT_MENU } from '@/config/megaMenuConfig';
 import { getRoleCapabilities } from '@/config/roleMatrix';
 import { isModuleEnabled, ModuleKey } from '@/types/modules';
 import { UnifiedSearchFloatingBar } from '@/components/unified-search';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 
 
 
@@ -248,6 +249,9 @@ export function MainHeader() {
 
                 {/* Actions droite */}
                 <div className="flex items-center gap-1 ml-auto">
+                  
+                  {/* Centre de notifications */}
+                  <NotificationCenter />
                   
                   {/* Console support pour agents */}
                   {canAccessSupportConsoleUI && (
