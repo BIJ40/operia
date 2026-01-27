@@ -1,16 +1,14 @@
 /**
- * Page principale du module Suivi RH - Vue unifiée avec système d'onglets
+ * Page principale du module Suivi RH - Vue cockpit unifiée style LUCCA
  * Accessible N2+ uniquement
  */
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useRHCollaborators, useRHTablePrefs, useUpdateRHTablePrefs } from '@/hooks/useRHSuivi';
-import { RHUnifiedTable } from '@/components/rh/unified/RHUnifiedTable';
-import { TAB_COLUMNS, RHTabId } from '@/components/rh/unified/RHUnifiedTableColumns';
+import { useRHCollaborators } from '@/hooks/useRHSuivi';
+import { RHCockpitTable } from '@/components/rh/cockpit';
 import { CompetencesMatrixPrint } from '@/components/rh/CompetencesMatrixPrint';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { usePersistedTab } from '@/hooks/usePersistedState';
 import { useCollaboratorsEpiSummary } from '@/hooks/epi/useCollaboratorsEpiSummary';
 import { useAuth } from '@/contexts/AuthContext';
 import { CollaboratorWizard } from '@/components/collaborators';
@@ -18,22 +16,14 @@ import { useCollaborators } from '@/hooks/useCollaborators';
 import { useSensitiveData } from '@/hooks/useSensitiveData';
 import { CollaboratorFormData } from '@/types/collaborator';
 import { Button } from '@/components/ui/button';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Users, UserX } from 'lucide-react';
+import { Toggle } from '@/components/ui/toggle';
+import { cn } from '@/lib/utils';
 
-// Système d'onglets
+// Système d'onglets navigateur
 import { RHTabsProvider, RHTabsBar, RHTabsContent, useRHTabs } from '@/components/rh/browser-tabs';
 import { ApogeeSyncButton } from '@/components/rh/ApogeeSync';
 import { RHCollaborator } from '@/types/rh-suivi';
-
-// Colonnes visibles par défaut par onglet
-const DEFAULT_VISIBLE_COLUMNS: Record<RHTabId, string[]> = {
-  general: ['email', 'phone', 'emergency_contact', 'emergency_phone', 'social_security_number', 'permis', 'cni', 'notes', 'hiring_date', 'leaving_date'],
-  infos_perso: ['birth_date', 'birth_place', 'street', 'postal_code', 'city'],
-  securite: ['taille_haut', 'taille_bas', 'pointure', 'statut_epi', 'date_renouvellement'],
-  competences: ['hab_elec_statut', 'hab_elec_date', 'caces_count'],
-  parc: ['vehicule_attribue', 'carte_carburant', 'carte_bancaire', 'carte_autre', 'materiels_liste'],
-  documents: ['docs_icons'],
-};
 
 function RHSuiviContent() {
   const queryClient = useQueryClient();
@@ -44,8 +34,6 @@ function RHSuiviContent() {
   const [showFormer, setShowFormer] = useState(false);
   
   const { data: collaborators = [], isLoading, refetch } = useRHCollaborators({ includeFormer: showFormer });
-  const { data: tablePrefs } = useRHTablePrefs();
-  const updatePrefs = useUpdateRHTablePrefs();
   const { data: epiSummaries = [] } = useCollaboratorsEpiSummary(agencyId || undefined);
   
   const [showCompetencesMatrix, setShowCompetencesMatrix] = useState(false);
@@ -127,13 +115,6 @@ function RHSuiviContent() {
     setShowWizard(true);
   };
   
-  // Ouvrir le wizard en mode édition
-  const handleOpenEdit = (collaboratorId: string) => {
-    setWizardMode('edit');
-    setEditingCollaboratorId(collaboratorId);
-    setShowWizard(true);
-  };
-  
   // Fermer le wizard
   const handleCloseWizard = (open: boolean) => {
     if (!open) {
@@ -142,90 +123,51 @@ function RHSuiviContent() {
     }
   };
 
-  // Onglet actif pour le tableau - persiste en sessionStorage via hook
-  const [activeTab, setActiveTab] = usePersistedTab<RHTabId>('rh_suivi_table_tab', 'general');
-
-  // Colonnes visibles - initialisées depuis les prefs utilisateur ou par défaut
-  const [visibleColumnsByTab, setVisibleColumnsByTab] = useState<Record<RHTabId, string[]>>(DEFAULT_VISIBLE_COLUMNS);
-
-  // Charger les préférences utilisateur
-  useEffect(() => {
-    if (tablePrefs?.hidden_columns) {
-      const allColumns: Record<RHTabId, string[]> = { ...DEFAULT_VISIBLE_COLUMNS };
-      
-      Object.keys(TAB_COLUMNS).forEach((tab) => {
-        const tabKey = tab as RHTabId;
-        const tabColumns = TAB_COLUMNS[tabKey].flatMap(g => g.columns.map(c => c.id));
-        const hidden = tablePrefs.hidden_columns || [];
-        allColumns[tabKey] = tabColumns.filter(col => !hidden.includes(col));
-      });
-      
-      setVisibleColumnsByTab(allColumns);
-    }
-  }, [tablePrefs]);
-
-  // Toggle une colonne
-  const handleToggleColumn = (columnId: string) => {
-    setVisibleColumnsByTab(prev => {
-      const currentVisible = prev[activeTab] || [];
-      const newVisible = currentVisible.includes(columnId)
-        ? currentVisible.filter(id => id !== columnId)
-        : [...currentVisible, columnId];
-      
-      const updated = { ...prev, [activeTab]: newVisible };
-      
-      const allTabColumns = Object.keys(TAB_COLUMNS).flatMap(tab => 
-        TAB_COLUMNS[tab as RHTabId].flatMap(g => g.columns.map(c => c.id))
-      );
-      const allVisible = Object.values(updated).flat();
-      const hiddenColumns = allTabColumns.filter(col => !allVisible.includes(col));
-      
-      updatePrefs.mutate({ hidden_columns: hiddenColumns });
-      
-      return updated;
-    });
-  };
-
-  const visibleColumns = visibleColumnsByTab[activeTab] || DEFAULT_VISIBLE_COLUMNS[activeTab];
-
-  // Handler pour ouvrir un profil dans un onglet
+  // Handler pour ouvrir un profil dans un onglet navigateur
   const handleOpenProfile = (collaborator: RHCollaborator) => {
     openCollaborator(collaborator);
   };
 
-  // Handler pour ouvrir les documents (coffre) d'un collaborateur
-  const handleOpenDocuments = (collaborator: RHCollaborator) => {
-    // Force l'onglet documents via sessionStorage avant d'ouvrir
-    // usePersistedTab stocke la valeur directement (sans JSON.stringify)
-    sessionStorage.setItem(`rh-panel-${collaborator.id}-tab`, 'documents');
-    openCollaborator(collaborator);
-  };
-
-  // Contenu de l'onglet "Vue d'ensemble"
+  // Contenu de l'onglet "Vue d'ensemble" - maintenant le cockpit
   const overviewContent = (
-    <RHUnifiedTable
-      collaborators={collaborators}
-      isLoading={isLoading}
-      visibleColumns={visibleColumns}
-      onToggleColumn={handleToggleColumn}
-      activeTab={activeTab}
-      onTabChange={setActiveTab}
-      onRefresh={refetch}
-      onPrintMatrix={() => setShowCompetencesMatrix(true)}
-      epiSummaries={epiSummaries}
-      showFormer={showFormer}
-      onToggleShowFormer={() => setShowFormer(!showFormer)}
-      onEditCollaborator={handleOpenEdit}
-      onOpenProfile={handleOpenProfile}
-      onOpenDocuments={handleOpenDocuments}
-    />
+    <div className="flex-1 flex flex-col min-h-0 px-1">
+      {/* Toggle anciens collaborateurs */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Toggle
+            pressed={showFormer}
+            onPressedChange={setShowFormer}
+            size="sm"
+            className={cn(
+              'gap-2 px-3',
+              showFormer && 'bg-muted'
+            )}
+          >
+            {showFormer ? <UserX className="h-4 w-4" /> : <Users className="h-4 w-4" />}
+            <span className="text-sm">
+              {showFormer ? 'Masquer les anciens' : 'Voir les anciens'}
+            </span>
+          </Toggle>
+        </div>
+      </div>
+
+      {/* Tableau cockpit */}
+      <RHCockpitTable
+        collaborators={collaborators}
+        epiSummaries={epiSummaries}
+        isLoading={isLoading}
+        onRefresh={refetch}
+        onOpenProfile={handleOpenProfile}
+        className="flex-1"
+      />
+    </div>
   );
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
       <PageHeader
         title="Suivi RH"
-        subtitle="Vue complète de tous les collaborateurs et leurs informations"
+        subtitle="Vue cockpit de tous les collaborateurs"
         backTo="/rh"
         backLabel="Retour RH"
         rightElement={
@@ -242,7 +184,7 @@ function RHSuiviContent() {
         }
       />
 
-      {/* Barre d'onglets */}
+      {/* Barre d'onglets navigateur (conservée) */}
       <RHTabsBar collaborators={collaborators} />
       
       {/* Contenu des onglets */}
