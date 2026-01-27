@@ -137,12 +137,13 @@ export function useNestedFolders(collaboratorId: string) {
     },
   });
 
-  // Create folder
+  // Create folder - explicitly requires parentFolderId to avoid confusion
   const createFolder = useCallback((
     category: DocumentType, 
     folderName: string, 
-    parentFolderId: string | null = null
+    parentFolderId: string | null
   ) => {
+    console.log('[useNestedFolders] Creating folder:', { category, folderName, parentFolderId });
     addFolderMutation.mutate({ category, folderName, parentFolderId });
   }, [addFolderMutation]);
 
