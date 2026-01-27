@@ -106,8 +106,8 @@ export function RHCockpitTable({
     if (activeFilters.length === 0) return collaborators;
 
     return collaborators.filter((collab) => {
-      const ind = indicatorsMap.get(collab.id);
-      if (!ind) return false;
+      // Toujours calculer les indicateurs, même si pas encore dans la map
+      const ind = indicatorsMap.get(collab.id) ?? calculateCockpitIndicators(collab);
 
       // OR logic entre les filtres actifs
       for (const filter of activeFilters) {
