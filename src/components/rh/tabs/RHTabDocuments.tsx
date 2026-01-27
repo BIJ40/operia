@@ -14,12 +14,13 @@ import {
   Eye,
   Calendar
 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { RHCollaborator } from '@/types/rh-suivi';
 import { RHDocumentPreviewPopup } from '@/components/rh/unified/RHDocumentPreviewPopup';
+import { RHDocumentUploadPopup } from '@/components/rh/unified/RHDocumentUploadPopup';
 
 interface Props {
   collaborator: RHCollaborator;
@@ -39,6 +40,7 @@ interface CollaboratorDocument {
 
 export function RHTabDocuments({ collaborator }: Props) {
   const [previewDoc, setPreviewDoc] = React.useState<CollaboratorDocument | null>(null);
+  const [showUploadDialog, setShowUploadDialog] = React.useState(false);
 
   const { data: documents, isLoading } = useQuery({
     queryKey: ['collaborator-documents', collaborator.id],
@@ -84,7 +86,7 @@ export function RHTabDocuments({ collaborator }: Props) {
           <FolderOpen className="h-5 w-5" />
           Documents ({documents?.length || 0})
         </h3>
-        <Button variant="outline" className="gap-2" disabled>
+        <Button variant="outline" className="gap-2" onClick={() => setShowUploadDialog(true)}>
           <Upload className="h-4 w-4" />
           Ajouter un document
         </Button>
@@ -159,6 +161,16 @@ export function RHTabDocuments({ collaborator }: Props) {
           )}
         </>
       )}
+      
+      {/* Upload Dialog */}
+      <RHDocumentUploadPopup
+        open={showUploadDialog}
+        onOpenChange={setShowUploadDialog}
+        collaboratorId={collaborator.id}
+        collaboratorName={`${collaborator.first_name} ${collaborator.last_name}`}
+        fieldKey="general"
+        fieldLabel="Document"
+      />
     </div>
   );
 }

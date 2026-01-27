@@ -160,14 +160,14 @@ export interface UserSignature {
 export interface RHColumnDef {
   id: string;
   label: string;
-  category: 'general' | 'infos_perso' | 'securite' | 'competences' | 'parc' | 'idmdp' | 'documents';
+  category: 'general' | 'infos_perso' | 'securite' | 'competences' | 'parc' | 'documents';
   accessor: (row: RHCollaborator) => string | number | boolean | null | undefined;
   sensitive?: boolean; // N2 strict fields
   defaultVisible?: boolean;
 }
 
 // Tab definitions
-export type RHTabId = 'general' | 'infos_perso' | 'securite' | 'competences' | 'parc' | 'idmdp' | 'documents';
+export type RHTabId = 'general' | 'infos_perso' | 'securite' | 'competences' | 'parc' | 'documents';
 
 export interface RHTab {
   id: RHTabId;
@@ -178,9 +178,8 @@ export interface RHTab {
 export const RH_TABS: RHTab[] = [
   { id: 'general', label: 'Général', icon: 'User' },
   { id: 'infos_perso', label: 'Infos perso', icon: 'UserCircle' },
-  { id: 'securite', label: 'Sécurité & EPI', icon: 'Shield' },
+  { id: 'securite', label: 'Sécurité', icon: 'Shield' },
   { id: 'competences', label: 'Compétences', icon: 'Award' },
   { id: 'parc', label: 'Parc & Matériel', icon: 'Car' },
-  { id: 'idmdp', label: 'ID / MDP', icon: 'Key' },
   { id: 'documents', label: 'Documents', icon: 'FolderOpen' },
 ];
