@@ -3,13 +3,25 @@
  * Reprend la structure de RHCollaborateurPage mais sans navigation
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { usePersistedTab } from '@/hooks/usePersistedState';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { 
   User, 
   FileText, 
@@ -23,12 +35,22 @@ import {
   Calendar,
   UserCheck,
   UserX,
-  Clock
+  Clock,
+  Trash2,
+  Loader2,
+  MoreVertical
 } from 'lucide-react';
-import { useRHCollaborator } from '@/hooks/useRHSuivi';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useRHCollaborator, useDeleteCollaborator } from '@/hooks/useRHSuivi';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { RHCollaborator } from '@/types/rh-suivi';
+import { useRHTabs } from './RHTabsContext';
 
 // Tab components
 import { RHTabEssentiel } from '@/components/rh/tabs/RHTabEssentiel';
@@ -50,8 +72,8 @@ function getCollaboratorStatus(c: RHCollaborator): 'active' | 'inactive' | 'exit
 function StatusBadge({ status }: { status: 'active' | 'inactive' | 'exited' }) {
   const variants = {
     active: { label: 'Actif', className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400', icon: UserCheck },
-    inactive: { label: 'Inactif', className: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400', icon: Clock },
-    exited: { label: 'Sorti', className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', icon: UserX },
+    inactive: { label: 'Inactif', className: 'bg-muted text-muted-foreground', icon: Clock },
+    exited: { label: 'Sorti', className: 'bg-destructive/10 text-destructive', icon: UserX },
   };
   const { label, className, icon: Icon } = variants[status];
   
@@ -69,7 +91,19 @@ interface RHCollaboratorPanelProps {
 
 export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps) {
   const { data: collaborator, isLoading } = useRHCollaborator(collaboratorId);
+  const deleteCollaborator = useDeleteCollaborator();
+  const { closeTab } = useRHTabs();
   const [activeTab, setActiveTab] = usePersistedTab<string>(`rh-panel-${collaboratorId}-tab`, 'essentiel');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const handleDelete = () => {
+    deleteCollaborator.mutate(collaboratorId, {
+      onSuccess: () => {
+        closeTab(collaboratorId);
+        setShowDeleteDialog(false);
+      },
+    });
+  };
 
   if (isLoading) {
     return (
@@ -132,9 +166,59 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
                 )}
               </div>
             </div>
+            
+            {/* Actions dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="shrink-0">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 bg-background z-50">
+                <DropdownMenuItem 
+                  onClick={() => setShowDeleteDialog(true)}
+                  className="text-destructive focus:text-destructive cursor-pointer"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Supprimer définitivement
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </CardContent>
       </Card>
+      
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer définitivement ce collaborateur ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. Toutes les données liées à <strong>{fullName}</strong> seront supprimées : profil EPI, compétences, matériel, accès IT et documents.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteCollaborator.isPending}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleteCollaborator.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteCollaborator.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Suppression...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Supprimer
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Onglets internes */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
