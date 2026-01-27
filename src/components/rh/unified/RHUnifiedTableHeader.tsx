@@ -21,10 +21,10 @@ export function RHUnifiedTableHeader({ activeTab, visibleColumns }: RHUnifiedTab
     <TableHeader className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm">
       {/* Ligne 1 : Headers groupés avec design épuré */}
       <TableRow className="border-b border-border/50 h-9">
-        {/* Colonne avatar/statut */}
+        {/* Colonne avatar/statut - fixe et compacte */}
         <TableHead 
           rowSpan={2} 
-          className="w-20 min-w-[80px] px-2 bg-muted/30 text-center text-xs font-semibold border-r"
+          className="w-[52px] min-w-[52px] max-w-[52px] px-1 bg-muted/30 text-center text-xs font-semibold border-r"
         >
           👤
         </TableHead>

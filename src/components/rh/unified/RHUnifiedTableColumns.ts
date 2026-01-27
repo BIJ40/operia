@@ -24,19 +24,19 @@ export interface ColumnDef {
   sensitive?: boolean;
 }
 
-// Colonnes fixes (toujours visibles) - COMPACTES
+// Colonnes fixes (toujours visibles) - COMPACTES ET FIXES
 export const FIXED_COLUMNS: ColumnDef[] = [
   {
     id: 'last_name',
     label: 'Nom',
     accessor: (row) => row.last_name,
-    width: 'w-24',
+    width: 'w-[90px] min-w-[90px] max-w-[90px]',
   },
   {
     id: 'first_name',
     label: 'Prénom',
     accessor: (row) => row.first_name,
-    width: 'w-24',
+    width: 'w-[80px] min-w-[80px] max-w-[80px]',
   },
 ];
 
