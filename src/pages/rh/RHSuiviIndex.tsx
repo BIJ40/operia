@@ -23,6 +23,7 @@ import { UserPlus } from 'lucide-react';
 // Système d'onglets
 import { RHTabsProvider, RHTabsBar, RHTabsContent, useRHTabs } from '@/components/rh/browser-tabs';
 import { ApogeeSyncButton } from '@/components/rh/ApogeeSync';
+import { RHCollaborator } from '@/types/rh-suivi';
 
 // Colonnes visibles par défaut par onglet
 const DEFAULT_VISIBLE_COLUMNS: Record<RHTabId, string[]> = {
@@ -38,6 +39,7 @@ const DEFAULT_VISIBLE_COLUMNS: Record<RHTabId, string[]> = {
 function RHSuiviContent() {
   const queryClient = useQueryClient();
   const { agencyId, agence } = useAuth();
+  const { openCollaborator } = useRHTabs();
   
   // Toggle pour afficher les anciens collaborateurs (partis)
   const [showFormer, setShowFormer] = useState(false);
@@ -187,6 +189,11 @@ function RHSuiviContent() {
 
   const visibleColumns = visibleColumnsByTab[activeTab] || DEFAULT_VISIBLE_COLUMNS[activeTab];
 
+  // Handler pour ouvrir un profil dans un onglet
+  const handleOpenProfile = (collaborator: RHCollaborator) => {
+    openCollaborator(collaborator);
+  };
+
   // Contenu de l'onglet "Vue d'ensemble"
   const overviewContent = (
     <RHUnifiedTable
@@ -202,6 +209,7 @@ function RHSuiviContent() {
       showFormer={showFormer}
       onToggleShowFormer={() => setShowFormer(!showFormer)}
       onEditCollaborator={handleOpenEdit}
+      onOpenProfile={handleOpenProfile}
     />
   );
 

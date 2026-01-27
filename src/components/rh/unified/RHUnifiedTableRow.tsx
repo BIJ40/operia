@@ -1,5 +1,4 @@
 import React, { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -16,7 +15,7 @@ import { RHMaterielPopup } from './RHMaterielPopup';
 import { RHIdentifiantsDynamicColumns } from './RHIdentifiantsDynamicColumns';
 import { RHDocumentCell } from './RHDocumentCell';
 import { RHMetiersMultiSelect } from './RHMetiersMultiSelect';
-import { ExternalLink, Paperclip, Package, Pencil, MoreVertical, Trash2, Loader2 } from 'lucide-react';
+import { ExternalLink, Paperclip, Package, Pencil, MoreVertical, Trash2, Loader2, UserCog, Wrench, User } from 'lucide-react';
 import { CollaboratorEpiSummary } from '@/hooks/epi/useCollaboratorsEpiSummary';
 import { EpiCountCell, EpiRenewalCell, EpiRequestsCell, EpiIncidentsCell, EpiAckStatusCell, EpiOkCell } from './RHEpiCells';
 import { RHCollaboratorAvatarCompact } from './RHCollaboratorAvatar';
@@ -27,6 +26,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
@@ -38,7 +41,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useDeleteCollaborator } from '@/hooks/useRHSuivi';
+import { useDeleteCollaborator, useUpdateCollaboratorType } from '@/hooks/useRHSuivi';
 
 interface RHUnifiedTableRowProps {
   collaborator: RHCollaborator;
@@ -52,6 +55,8 @@ interface RHUnifiedTableRowProps {
   epiSummary?: CollaboratorEpiSummary;
   /** Callback pour éditer le collaborateur via le wizard */
   onEditCollaborator?: (collaboratorId: string) => void;
+  /** Callback pour ouvrir le profil dans un onglet */
+  onOpenProfile?: (collaborator: RHCollaborator) => void;
 }
 
 function getStatusIndicator(collaborator: RHCollaborator) {
@@ -72,8 +77,8 @@ export function RHUnifiedTableRow({
   onAssetsUpdate,
   epiSummary,
   onEditCollaborator,
+  onOpenProfile,
 }: RHUnifiedTableRowProps) {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const tabGroups = TAB_COLUMNS[activeTab];
   const status = getStatusIndicator(collaborator);
@@ -87,6 +92,7 @@ export function RHUnifiedTableRow({
   
   // Delete mutation
   const deleteCollaborator = useDeleteCollaborator();
+  const updateType = useUpdateCollaboratorType();
   
   // Callback pour rafraîchir les identifiants
   const handleIdentifiantsRefresh = useCallback(() => {
@@ -452,7 +458,28 @@ export function RHUnifiedTableRow({
                 <MoreVertical className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 bg-background z-50">
+            <DropdownMenuContent align="end" className="w-56 bg-background z-50">
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="cursor-pointer">
+                  <UserCog className="h-4 w-4 mr-2" />
+                  Changer classification
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="bg-background">
+                  <DropdownMenuItem onClick={() => updateType.mutate({ collaboratorId: collaborator.id, type: 'TECHNICIEN' })} disabled={collaborator.type === 'TECHNICIEN'}>
+                    <Wrench className="h-4 w-4 mr-2" /> Technicien (terrain)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => updateType.mutate({ collaboratorId: collaborator.id, type: 'ASSISTANTE' })} disabled={collaborator.type === 'ASSISTANTE'}>
+                    <User className="h-4 w-4 mr-2" /> Assistante (admin)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => updateType.mutate({ collaboratorId: collaborator.id, type: 'DIRIGEANT' })} disabled={collaborator.type === 'DIRIGEANT'}>
+                    <User className="h-4 w-4 mr-2" /> Dirigeant (admin)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => updateType.mutate({ collaboratorId: collaborator.id, type: 'COMMERCIAL' })} disabled={collaborator.type === 'COMMERCIAL'}>
+                    <User className="h-4 w-4 mr-2" /> Commercial (admin)
+                  </DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuSeparator />
               <DropdownMenuItem 
                 onClick={() => setShowDeleteDialog(true)}
                 className="text-destructive focus:text-destructive cursor-pointer"
@@ -507,10 +534,10 @@ export function RHUnifiedTableRow({
           <CollaboratorHoverPreview
             collaborator={collaborator}
             epiSummary={epiSummary}
-            onOpenProfile={() => navigate(`/rh/suivi/${collaborator.id}`)}
+            onOpenProfile={onOpenProfile ? () => onOpenProfile(collaborator) : undefined}
           >
             <button
-              onClick={() => navigate(`/rh/suivi/${collaborator.id}`)}
+              onClick={() => onOpenProfile?.(collaborator)}
               className="truncate text-left hover:text-primary hover:underline transition-colors text-xs font-medium max-w-[80px]"
               title={collaborator.last_name}
             >
@@ -526,7 +553,7 @@ export function RHUnifiedTableRow({
       </TableCell>
       <TableCell className="w-24 min-w-[96px] px-1.5 bg-muted/10">
         <button
-          onClick={() => navigate(`/rh/suivi/${collaborator.id}`)}
+          onClick={() => onOpenProfile?.(collaborator)}
           className="truncate text-left hover:text-primary hover:underline transition-colors text-xs max-w-[80px]"
           title={collaborator.first_name}
         >
@@ -558,8 +585,8 @@ export function RHUnifiedTableRow({
                   variant="outline"
                   size="sm"
                   className="h-6 px-2 text-[10px] gap-1"
-                  onClick={() => navigate(`/rh/suivi/${collaborator.id}?tab=documents`)}
-                  title="Gérer les documents et leur visibilité coffre"
+                  onClick={() => onOpenProfile?.(collaborator)}
+                  title="Gérer les documents"
                 >
                   <ExternalLink className="h-3 w-3" />
                   Coffre

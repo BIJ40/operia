@@ -95,7 +95,7 @@ export function CollaboratorDetailPopup({
               {onViewProfile && (
                 <Button variant="default" size="sm" onClick={onViewProfile}>
                   <ExternalLink className="h-4 w-4 mr-1.5" />
-                  Profil complet
+                  Ouvrir onglet
                 </Button>
               )}
             </div>

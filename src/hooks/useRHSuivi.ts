@@ -315,3 +315,31 @@ export function useDeleteCollaborator() {
     },
   });
 }
+
+// ============================================================================
+// Update Collaborator Type (Classification)
+// ============================================================================
+
+export function useUpdateCollaboratorType() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ collaboratorId, type }: { collaboratorId: string; type: string }) => {
+      const { error } = await supabase
+        .from('collaborators')
+        .update({ type, updated_at: new Date().toISOString() })
+        .eq('id', collaboratorId);
+      
+      if (error) throw error;
+      return { collaboratorId, type };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rh-collaborators'] });
+      toast.success('Classification mise à jour');
+    },
+    onError: (error) => {
+      console.error('Update type error:', error);
+      toast.error('Erreur lors de la mise à jour');
+    },
+  });
+}
