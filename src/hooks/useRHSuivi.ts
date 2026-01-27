@@ -36,7 +36,11 @@ export function useRHCollaborators(options?: { includeFormer?: boolean }) {
           rh_competencies(*),
           rh_assets(*),
           rh_it_access(*),
-          collaborator_sensitive_data(birth_date_encrypted)
+          collaborator_sensitive_data(
+            birth_date_encrypted,
+            emergency_contact_encrypted,
+            emergency_phone_encrypted
+          )
         `)
         .eq('agency_id', agencyId);
       
@@ -81,7 +85,11 @@ export function useRHCollaborator(collaboratorId: string | undefined) {
           rh_competencies(*),
           rh_assets(*),
           rh_it_access(*),
-          collaborator_sensitive_data(birth_date_encrypted)
+          collaborator_sensitive_data(
+            birth_date_encrypted,
+            emergency_contact_encrypted,
+            emergency_phone_encrypted
+          )
         `)
         .eq('id', collaboratorId)
         .single();
