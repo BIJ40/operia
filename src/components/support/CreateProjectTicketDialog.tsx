@@ -165,7 +165,7 @@ export function CreateProjectTicketDialog({
           .insert({
             element_concerne: trimmedSubject,
             description: trimmedDescription,
-            kanban_status: 'BACKLOG',
+            kanban_status: 'USER',
             created_from: 'support',
             created_by_user_id: user.id,
             support_initiator_user_id: user.id,
