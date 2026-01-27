@@ -54,7 +54,8 @@ import {
   AlertTriangle,
   Calendar as CalendarIcon,
   Archive,
-  Check as CheckIcon
+  Check as CheckIcon,
+  Shirt
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -74,6 +75,7 @@ import { fr } from 'date-fns/locale';
 import { RHSectionSecurite } from '@/components/rh/sections/RHSectionSecurite';
 import { RHSectionCompetences } from '@/components/rh/sections/RHSectionCompetences';
 import { RHSectionDocuments } from '@/components/rh/sections/RHSectionDocuments';
+import { RHTaillesPopup } from '@/components/rh/unified/RHTaillesPopup';
 
 const TYPE_OPTIONS = [
   { value: 'TECHNICIEN', label: 'Technicien' },
@@ -162,6 +164,7 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
   const deleteCollaborator = useDeleteCollaborator();
   const { closeTab } = useRHTabs();
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
+  const [showTaillesPopup, setShowTaillesPopup] = useState(false);
   const [archiveDate, setArchiveDate] = useState<Date | undefined>(new Date());
   const [isArchiving, setIsArchiving] = useState(false);
   
@@ -299,6 +302,33 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
                     ))}
                   </SelectContent>
                 </Select>
+                
+                {/* Indicateur Tailles compact cliquable */}
+                {(() => {
+                  const epi = collaborator.epi_profile;
+                  const sizes = [epi?.taille_haut, epi?.taille_bas, epi?.pointure, epi?.taille_gants].filter(Boolean);
+                  const hasSizes = sizes.length > 0;
+                  
+                  return (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={cn(
+                        "h-6 px-2 text-xs gap-1 border border-dashed",
+                        hasSizes ? "text-foreground" : "text-muted-foreground"
+                      )}
+                      onClick={() => setShowTaillesPopup(true)}
+                      title={hasSizes ? sizes.join(' / ') : 'Renseigner les tailles'}
+                    >
+                      <Shirt className="h-3 w-3" />
+                      {hasSizes ? (
+                        <span className="truncate max-w-[80px]">{sizes.join('/')}</span>
+                      ) : (
+                        <span>Tailles</span>
+                      )}
+                    </Button>
+                  );
+                })()}
               </div>
               
               {/* Ligne 2: Email & Téléphone éditables inline */}
@@ -524,6 +554,13 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
           <RHSectionDocuments collaborator={collaborator} />
         </CollapsibleSection>
       </div>
+      
+      {/* Popup Tailles */}
+      <RHTaillesPopup
+        open={showTaillesPopup}
+        onOpenChange={setShowTaillesPopup}
+        collaborator={collaborator}
+      />
     </div>
   );
 }
