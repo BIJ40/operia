@@ -23,7 +23,8 @@ import { Eye, Save, ShirtIcon, Footprints } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RHCollaborator } from '@/types/rh-suivi';
 import { useUpdateEpiProfile } from '@/hooks/useRHSuivi';
-import { Badge } from '@/components/ui/badge';
+
+const CLEAR_VALUE = '__clear__';
 
 // Options de tailles
 const TAILLE_HAUT_OPTIONS = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', '5XL'];
@@ -94,13 +95,13 @@ export function RHTaillesPopup({ open, onOpenChange, collaborator }: RHTaillesPo
             <Label className="text-right text-sm">Haut</Label>
             <Select 
               value={form.taille_haut} 
-              onValueChange={(v) => setForm(f => ({ ...f, taille_haut: v }))}
+              onValueChange={(v) => setForm(f => ({ ...f, taille_haut: v === CLEAR_VALUE ? '' : v }))}
             >
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Sélectionner..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">—</SelectItem>
+                <SelectItem value={CLEAR_VALUE}>—</SelectItem>
                 {TAILLE_HAUT_OPTIONS.map(t => (
                   <SelectItem key={t} value={t}>{t}</SelectItem>
                 ))}
@@ -113,13 +114,13 @@ export function RHTaillesPopup({ open, onOpenChange, collaborator }: RHTaillesPo
             <Label className="text-right text-sm">Bas</Label>
             <Select 
               value={form.taille_bas} 
-              onValueChange={(v) => setForm(f => ({ ...f, taille_bas: v }))}
+              onValueChange={(v) => setForm(f => ({ ...f, taille_bas: v === CLEAR_VALUE ? '' : v }))}
             >
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Sélectionner..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">—</SelectItem>
+                <SelectItem value={CLEAR_VALUE}>—</SelectItem>
                 {TAILLE_BAS_OPTIONS.map(t => (
                   <SelectItem key={t} value={t}>{t}</SelectItem>
                 ))}
@@ -135,13 +136,13 @@ export function RHTaillesPopup({ open, onOpenChange, collaborator }: RHTaillesPo
             </Label>
             <Select 
               value={form.pointure} 
-              onValueChange={(v) => setForm(f => ({ ...f, pointure: v }))}
+              onValueChange={(v) => setForm(f => ({ ...f, pointure: v === CLEAR_VALUE ? '' : v }))}
             >
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Sélectionner..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">—</SelectItem>
+                <SelectItem value={CLEAR_VALUE}>—</SelectItem>
                 {POINTURE_OPTIONS.map(t => (
                   <SelectItem key={t} value={t}>{t}</SelectItem>
                 ))}
@@ -154,13 +155,13 @@ export function RHTaillesPopup({ open, onOpenChange, collaborator }: RHTaillesPo
             <Label className="text-right text-sm">Gants</Label>
             <Select 
               value={form.taille_gants} 
-              onValueChange={(v) => setForm(f => ({ ...f, taille_gants: v }))}
+              onValueChange={(v) => setForm(f => ({ ...f, taille_gants: v === CLEAR_VALUE ? '' : v }))}
             >
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Sélectionner..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">—</SelectItem>
+                <SelectItem value={CLEAR_VALUE}>—</SelectItem>
                 {TAILLE_GANTS_OPTIONS.map(t => (
                   <SelectItem key={t} value={t}>{t}</SelectItem>
                 ))}
@@ -222,8 +223,8 @@ export function RHTaillesIndicator({ collaborator, onClick }: RHTaillesIndicator
     >
       <Eye className={cn(
         "h-3.5 w-3.5",
-        filledCount === 4 ? "text-green-600" : 
-        filledCount > 0 ? "text-orange-500" : 
+         filledCount === 4 ? "text-primary" : 
+         filledCount > 0 ? "text-accent-foreground" : 
         "text-muted-foreground"
       )} />
       {filledCount > 0 ? (
