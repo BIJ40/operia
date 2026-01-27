@@ -88,14 +88,7 @@ export function RHCockpitRow({
         />
       </td>
 
-      {/* RH (dates) */}
-      <td className="px-2 py-2.5 text-center">
-        <RHCockpitCell
-          status={indicators.rh}
-          onClick={() => onOpenDrawer('rh')}
-          tooltip={indicators.rh === 'ok' ? 'Dates RH complètes' : 'Date d\'entrée manquante'}
-        />
-      </td>
+      {/* Colonne RH masquée */}
 
       {/* EPI & Tailles */}
       <td className="px-2 py-2.5 text-center">
