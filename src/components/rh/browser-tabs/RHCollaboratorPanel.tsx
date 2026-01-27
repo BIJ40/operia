@@ -225,7 +225,12 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
                 >
                   <SelectTrigger className="h-6 w-auto min-w-[100px] text-xs border-dashed px-2 gap-1">
                     <Briefcase className="h-3 w-3 shrink-0 text-muted-foreground" />
-                    <SelectValue placeholder="Rôle..." />
+                    <span className="truncate">
+                      {collaborator.role 
+                        ? ROLE_OPTIONS.find(r => r.value === collaborator.role)?.label || collaborator.role
+                        : 'Rôle...'
+                      }
+                    </span>
                   </SelectTrigger>
                   <SelectContent className="bg-background z-50">
                     {ROLE_OPTIONS.map(opt => (
