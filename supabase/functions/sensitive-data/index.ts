@@ -210,13 +210,41 @@ serve(async (req) => {
       ));
 
     } else if (action === 'write') {
+      // D'abord, lire les données existantes pour les fusionner
+      const { data: existingData } = await supabaseClient
+        .from('collaborator_sensitive_data')
+        .select('*')
+        .eq('collaborator_id', collaboratorId)
+        .maybeSingle();
+
+      // Déchiffrer les données existantes si elles existent
+      const existingDecrypted = existingData ? {
+        birth_date: await decrypt(existingData.birth_date_encrypted || ''),
+        social_security_number: await decrypt(existingData.social_security_number_encrypted || ''),
+        emergency_contact: await decrypt(existingData.emergency_contact_encrypted || ''),
+        emergency_phone: await decrypt(existingData.emergency_phone_encrypted || ''),
+      } : {
+        birth_date: '',
+        social_security_number: '',
+        emergency_contact: '',
+        emergency_phone: '',
+      };
+
+      // Fusionner les nouvelles données avec les existantes (seuls les champs fournis sont mis à jour)
+      const mergedData = {
+        birth_date: data.birth_date !== undefined ? data.birth_date : existingDecrypted.birth_date,
+        social_security_number: data.social_security_number !== undefined ? data.social_security_number : existingDecrypted.social_security_number,
+        emergency_contact: data.emergency_contact !== undefined ? data.emergency_contact : existingDecrypted.emergency_contact,
+        emergency_phone: data.emergency_phone !== undefined ? data.emergency_phone : existingDecrypted.emergency_phone,
+      };
+
       // Encrypt and write sensitive data
       const encryptedData = {
         collaborator_id: collaboratorId,
-        birth_date_encrypted: data.birth_date ? await encrypt(data.birth_date) : null,
-        social_security_number_encrypted: data.social_security_number ? await encrypt(data.social_security_number) : null,
-        emergency_contact_encrypted: data.emergency_contact ? await encrypt(data.emergency_contact) : null,
-        emergency_phone_encrypted: data.emergency_phone ? await encrypt(data.emergency_phone) : null,
+        birth_date_encrypted: mergedData.birth_date ? await encrypt(mergedData.birth_date) : null,
+        social_security_number_encrypted: mergedData.social_security_number ? await encrypt(mergedData.social_security_number) : null,
+        emergency_contact_encrypted: mergedData.emergency_contact ? await encrypt(mergedData.emergency_contact) : null,
+        emergency_phone_encrypted: mergedData.emergency_phone ? await encrypt(mergedData.emergency_phone) : null,
         updated_at: new Date().toISOString(),
       };
 
