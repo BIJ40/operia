@@ -104,3 +104,16 @@ export function useAutoSaveCompetencies(collaboratorId: string) {
 
   return { saveField, saveMultiple, isSaving: mutation.isPending };
 }
+
+// Direct update function (for use outside of hooks)
+export async function updateCollaboratorField(collaboratorId: string, field: string, value: any) {
+  const { error } = await supabase
+    .from('collaborators')
+    .update({ [field]: value || null, updated_at: new Date().toISOString() })
+    .eq('id', collaboratorId);
+  
+  if (error) {
+    toast.error('Erreur lors de la sauvegarde');
+    throw error;
+  }
+}
