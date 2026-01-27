@@ -131,7 +131,7 @@ export function useApogeeSync({ agencySlug, collaborators }: UseApogeeSyncOption
             street: user.adresse || null,
             city: user.ville || null,
             postal_code: user.cp || null,
-            hiring_date: user.created_at ? user.created_at.split('T')[0] : null,
+            // hiring_date: NON importé - c'est la date de saisie dans Apogée, pas la date réelle du contrat
             is_registered_user: false,
           });
           

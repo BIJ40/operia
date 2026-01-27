@@ -116,28 +116,15 @@ export const TAB_COLUMNS: Record<RHTabId, ColumnGroup[]> = {
       label: '📏 Tailles',
       className: 'bg-orange-50/50 dark:bg-orange-950/20',
       columns: [
-        { id: 'taille_haut', label: 'Haut', accessor: (row) => row.epi_profile?.taille_haut, width: 'w-14' },
-        { id: 'taille_bas', label: 'Bas', accessor: (row) => row.epi_profile?.taille_bas, width: 'w-14' },
-        { id: 'pointure', label: 'Pied', accessor: (row) => row.epi_profile?.pointure, width: 'w-14' },
-        { id: 'taille_gants', label: 'Gants', accessor: (row) => row.epi_profile?.taille_gants, width: 'w-14' },
-      ],
-    },
-    {
-      id: 'epi_inventory',
-      label: '🦺 EPI',
-      className: 'bg-green-50/50 dark:bg-green-950/20',
-      columns: [
-        { id: 'epi_count', label: 'Nb', accessor: () => null, width: 'w-12' },
-        { id: 'epi_renewal', label: 'Renouv.', accessor: () => null, width: 'w-16' },
+        { id: 'tailles_all', label: 'Tailles', accessor: () => null, width: 'w-28' },
       ],
     },
     {
       id: 'epi_status',
-      label: '✅ Statut',
-      className: 'bg-emerald-50/50 dark:bg-emerald-950/20',
+      label: '🦺 EPI',
+      className: 'bg-green-50/50 dark:bg-green-950/20',
       columns: [
-        { id: 'epi_ok', label: 'OK', accessor: () => null, width: 'w-12' },
-        { id: 'epi_ack_status', label: 'Attest.', accessor: () => null, width: 'w-16' },
+        { id: 'epi_indicator', label: 'Statut', accessor: () => null, width: 'w-14' },
       ],
     },
   ],
