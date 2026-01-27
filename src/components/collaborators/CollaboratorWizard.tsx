@@ -65,7 +65,10 @@ const formSchema = z.object({
   type: z.string().min(1, 'Type requis'),
   role: z.string().min(1, 'Poste requis'),
   // Étape 2 - Coordonnées
-  email: z.string().email('Email invalide').optional().or(z.literal('')),
+  email: z.union([
+    z.string().email('Email invalide'),
+    z.literal(''),
+  ]).optional(),
   phone: z.string().optional(),
   street: z.string().optional(),
   postal_code: z.string().optional(),
