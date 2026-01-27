@@ -273,13 +273,12 @@ export function RHCockpitTable({
                 <TableHead className="w-[70px] text-center">Docs</TableHead>
                 <TableHead className="w-[80px] text-center">Compét.</TableHead>
                 <TableHead className="w-[50px] text-center">%</TableHead>
-                <TableHead className="w-[60px] text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredCollaborators.length === 0 ? (
                 <TableRow>
-                  <td colSpan={9} className="h-32 text-center text-muted-foreground">
+                  <td colSpan={8} className="h-32 text-center text-muted-foreground">
                     {activeFilters.length > 0
                       ? 'Aucun collaborateur ne correspond aux filtres'
                       : 'Aucun collaborateur'}

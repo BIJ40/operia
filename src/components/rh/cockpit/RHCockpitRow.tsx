@@ -10,8 +10,15 @@ import { CockpitIndicators, INDICATOR_COLORS } from '@/hooks/rh/useRHCockpitIndi
 import { RHCockpitCell, RHCockpitRatioCell, RHCockpitCountCell, RHCockpitICECell } from './RHCockpitCell';
 import { RHCollaboratorAvatar } from '@/components/rh/unified/RHCollaboratorAvatar';
 import { CollaboratorHoverPreview } from '@/components/rh/unified/CollaboratorHoverPreview';
-import { Car, Eye } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { 
+  ContactHoverCard, 
+  ICEHoverCard, 
+  EPIHoverCard, 
+  ParcHoverCard, 
+  DocsHoverCard, 
+  CompetencesHoverCard 
+} from './RHCockpitHoverCards';
+import { Car } from 'lucide-react';
 import { DrawerDomain } from './RHCockpitDrawer';
 
 interface RHCockpitRowProps {
@@ -32,18 +39,11 @@ export function RHCockpitRow({
   className,
 }: RHCockpitRowProps) {
   const isFormer = !!collaborator.leaving_date;
-  
-  // Couleur de la barre de progression
-  const getProgressColor = (percent: number) => {
-    if (percent >= 80) return 'bg-emerald-500';
-    if (percent >= 50) return 'bg-amber-500';
-    return 'bg-rose-500';
-  };
 
   return (
     <tr
       className={cn(
-        'group transition-colors hover:bg-muted/30',
+        'group transition-colors hover:bg-muted/30 cursor-pointer',
         isFormer && 'opacity-60',
         className
       )}
@@ -51,7 +51,7 @@ export function RHCockpitRow({
     >
       {/* Collaborateur */}
       <td className="px-3 py-2.5 sticky left-0 bg-background z-10">
-        <CollaboratorHoverPreview collaborator={collaborator}>
+        <CollaboratorHoverPreview collaborator={collaborator} onOpenProfile={onOpenProfile}>
           <div className="flex items-center gap-3 cursor-pointer">
             <RHCollaboratorAvatar collaborator={collaborator} size="sm" />
             <div className="min-w-0">
@@ -73,65 +73,78 @@ export function RHCockpitRow({
 
       {/* Contact */}
       <td className="px-2 py-2.5 text-center">
-        <RHCockpitCell
-          status={indicators.contact}
-          onClick={() => onOpenDrawer('contact')}
-          tooltip={indicators.contact === 'ok' ? 'Email et téléphone renseignés' : 'Contact incomplet'}
-        />
+        <ContactHoverCard collaborator={collaborator}>
+          <div>
+            <RHCockpitCell
+              status={indicators.contact}
+              onClick={() => onOpenDrawer('contact')}
+            />
+          </div>
+        </ContactHoverCard>
       </td>
 
       {/* ICE (contacts d'urgence) */}
       <td className="px-2 py-2.5 text-center">
-        <RHCockpitICECell
-          count={indicators.ice}
-          onClick={() => onOpenDrawer('ice')}
-        />
+        <ICEHoverCard collaborator={collaborator}>
+          <div>
+            <RHCockpitICECell
+              count={indicators.ice}
+              onClick={() => onOpenDrawer('ice')}
+            />
+          </div>
+        </ICEHoverCard>
       </td>
-
-      {/* Colonne RH masquée */}
 
       {/* EPI & Tailles */}
       <td className="px-2 py-2.5 text-center">
-        <RHCockpitCell
-          status={indicators.epiTailles}
-          onClick={() => onOpenDrawer('epi')}
-          tooltip={
-            indicators.epiTailles === 'ok' ? 'EPI et tailles OK' :
-            indicators.epiTailles === 'na' ? 'Non applicable' :
-            'EPI ou tailles manquants'
-          }
-        />
+        <EPIHoverCard collaborator={collaborator}>
+          <div>
+            <RHCockpitCell
+              status={indicators.epiTailles}
+              onClick={() => onOpenDrawer('epi')}
+            />
+          </div>
+        </EPIHoverCard>
       </td>
 
       {/* Parc */}
       <td className="px-2 py-2.5 text-center">
-        <RHCockpitCell
-          status={indicators.parc === 'vehicle' ? 'ok' : 'na'}
-          icon={Car}
-          iconOnly
-          onClick={() => onOpenDrawer('parc')}
-          tooltip={indicators.parc === 'vehicle' ? 'Véhicule attribué' : 'Aucun véhicule'}
-        />
+        <ParcHoverCard collaborator={collaborator}>
+          <div>
+            <RHCockpitCell
+              status={indicators.parc === 'vehicle' ? 'ok' : 'na'}
+              icon={Car}
+              iconOnly
+              onClick={() => onOpenDrawer('parc')}
+            />
+          </div>
+        </ParcHoverCard>
       </td>
 
       {/* Documents */}
       <td className="px-2 py-2.5 text-center">
-        <RHCockpitRatioCell
-          filled={indicators.documents.filled}
-          total={indicators.documents.total}
-          onClick={() => onOpenDrawer('docs')}
-          tooltip={`${indicators.documents.filled} document(s) sur ${indicators.documents.total}`}
-        />
+        <DocsHoverCard collaborator={collaborator} indicators={indicators}>
+          <div>
+            <RHCockpitRatioCell
+              filled={indicators.documents.filled}
+              total={indicators.documents.total}
+              onClick={() => onOpenDrawer('docs')}
+            />
+          </div>
+        </DocsHoverCard>
       </td>
 
       {/* Compétences */}
       <td className="px-2 py-2.5 text-center">
-        <RHCockpitCountCell
-          count={indicators.competences}
-          onClick={() => onOpenDrawer('competences')}
-          tooltip={`${indicators.competences} compétence(s) validée(s)`}
-          threshold={3}
-        />
+        <CompetencesHoverCard collaborator={collaborator}>
+          <div>
+            <RHCockpitCountCell
+              count={indicators.competences}
+              onClick={() => onOpenDrawer('competences')}
+              threshold={3}
+            />
+          </div>
+        </CompetencesHoverCard>
       </td>
 
       {/* Complétude - Pie chart compact */}
@@ -165,19 +178,6 @@ export function RHCockpitRow({
             />
           </svg>
         </div>
-      </td>
-
-      {/* Actions */}
-      <td className="px-2 py-2.5 text-center">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onOpenProfile}
-          className="h-8 w-8 p-0"
-        >
-          <Eye className="h-4 w-4" />
-          <span className="sr-only">Voir la fiche</span>
-        </Button>
       </td>
     </tr>
   );
