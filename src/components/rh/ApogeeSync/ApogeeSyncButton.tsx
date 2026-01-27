@@ -37,25 +37,16 @@ export function ApogeeSyncButton({ agencySlug, collaborators }: ApogeeSyncButton
   return (
     <>
       <Button
-        variant="outline"
+        variant="ghost"
         size="sm"
         onClick={() => setDialogOpen(true)}
         disabled={loading || !agencySlug}
-        className="relative"
+        className="text-muted-foreground hover:text-foreground"
       >
         {loading ? (
-          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
-          <RefreshCw className="h-4 w-4 mr-2" />
-        )}
-        Sync Apogée
-        {totalChanges > 0 && (
-          <Badge
-            variant="destructive"
-            className="absolute -top-2 -right-2 h-5 min-w-[20px] px-1 text-xs"
-          >
-            {totalChanges}
-          </Badge>
+          <RefreshCw className="h-4 w-4" />
         )}
       </Button>
       
