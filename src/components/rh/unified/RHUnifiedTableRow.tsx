@@ -15,7 +15,7 @@ import { RHMaterielPopup } from './RHMaterielPopup';
 import { RHIdentifiantsDynamicColumns } from './RHIdentifiantsDynamicColumns';
 import { RHDocumentCell } from './RHDocumentCell';
 import { RHMetiersMultiSelect } from './RHMetiersMultiSelect';
-import { ExternalLink, Paperclip, Package, Pencil, MoreVertical, Trash2, Loader2, UserCog, Wrench, User } from 'lucide-react';
+import { ExternalLink, Paperclip, Package, Pencil, Trash2, Loader2, UserCog, Wrench, User } from 'lucide-react';
 import { CollaboratorEpiSummary } from '@/hooks/epi/useCollaboratorsEpiSummary';
 import { EpiCountCell, EpiRenewalCell, EpiRequestsCell, EpiIncidentsCell, EpiAckStatusCell, EpiOkCell } from './RHEpiCells';
 import { RHCollaboratorAvatarCompact } from './RHCollaboratorAvatar';
@@ -24,15 +24,15 @@ import { CollaboratorHoverPreview } from './CollaboratorHoverPreview';
 import { RHTaillesIndicator, RHTaillesPopup } from './RHTaillesPopup';
 import { RHEpiIndicator, RHEpiPopup } from './RHEpiPopup';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
+  ContextMenuSeparator,
+} from '@/components/ui/context-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -465,14 +465,52 @@ export function RHUnifiedTableRow({
       collaborator={collaborator}
     />
     
-    <TableRow 
-      className={cn(
-        "hover:bg-accent/50 transition-all duration-150 group",
-        collaborator.leaving_date && "opacity-50",
-        "hover:shadow-sm"
-      )}
+    {/* Delete confirmation dialog */}
+    <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Supprimer définitivement ce collaborateur ?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Cette action est irréversible. Toutes les données liées à <strong>{collaborator.first_name} {collaborator.last_name}</strong> seront supprimées : profil EPI, compétences, matériel, accès IT et documents.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={deleteCollaborator.isPending}>Annuler</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => {
+              deleteCollaborator.mutate(collaborator.id, {
+                onSuccess: () => setShowDeleteDialog(false),
+              });
+            }}
+            disabled={deleteCollaborator.isPending}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {deleteCollaborator.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Suppression...
+              </>
+            ) : (
+              <>
+                <Trash2 className="h-4 w-4 mr-2" />
+                Supprimer
+              </>
+            )}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <TableRow 
+          className={cn(
+            "hover:bg-accent/50 transition-all duration-150 group",
+            collaborator.leaving_date && "opacity-50",
+            "hover:shadow-sm"
+          )}
     >
-      {/* Avatar + indicateur global + actions - STICKY à gauche */}
+      {/* Avatar + indicateur global - STICKY à gauche */}
       <TableCell className="w-[52px] min-w-[52px] px-1 bg-background sticky left-0 z-10">
         <div className="flex items-center gap-0.5">
           <RHCollaboratorAvatarCompact collaborator={collaborator} />
@@ -480,97 +518,9 @@ export function RHUnifiedTableRow({
             collaborator={collaborator} 
             epiSummary={epiSummary} 
           />
-          {onEditCollaborator && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-5 w-5 text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={() => onEditCollaborator(collaborator.id)}
-              title="Modifier la fiche"
-            >
-              <Pencil className="h-3 w-3" />
-            </Button>
-          )}
-          {/* Menu actions avec suppression */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <MoreVertical className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-background z-50">
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="cursor-pointer">
-                  <UserCog className="h-4 w-4 mr-2" />
-                  Changer classification
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent className="bg-background">
-                  <DropdownMenuItem onClick={() => updateType.mutate({ collaboratorId: collaborator.id, type: 'TECHNICIEN' })} disabled={collaborator.type === 'TECHNICIEN'}>
-                    <Wrench className="h-4 w-4 mr-2" /> Technicien (terrain)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => updateType.mutate({ collaboratorId: collaborator.id, type: 'ASSISTANTE' })} disabled={collaborator.type === 'ASSISTANTE'}>
-                    <User className="h-4 w-4 mr-2" /> Assistante (admin)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => updateType.mutate({ collaboratorId: collaborator.id, type: 'DIRIGEANT' })} disabled={collaborator.type === 'DIRIGEANT'}>
-                    <User className="h-4 w-4 mr-2" /> Dirigeant (admin)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => updateType.mutate({ collaboratorId: collaborator.id, type: 'COMMERCIAL' })} disabled={collaborator.type === 'COMMERCIAL'}>
-                    <User className="h-4 w-4 mr-2" /> Commercial (admin)
-                  </DropdownMenuItem>
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                onClick={() => setShowDeleteDialog(true)}
-                className="text-destructive focus:text-destructive cursor-pointer"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Supprimer définitivement
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </TableCell>
       
-      {/* Delete confirmation dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer définitivement ce collaborateur ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Cette action est irréversible. Toutes les données liées à <strong>{collaborator.first_name} {collaborator.last_name}</strong> seront supprimées : profil EPI, compétences, matériel, accès IT et documents.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteCollaborator.isPending}>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                deleteCollaborator.mutate(collaborator.id, {
-                  onSuccess: () => setShowDeleteDialog(false),
-                });
-              }}
-              disabled={deleteCollaborator.isPending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleteCollaborator.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Suppression...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Supprimer
-                </>
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Colonnes fixes - Nom avec HoverCard preview - STICKY */}
       <TableCell className="font-medium w-[90px] min-w-[90px] px-1 bg-background sticky left-[52px] z-10">
@@ -687,7 +637,52 @@ export function RHUnifiedTableRow({
           );
         })
       ))}
-    </TableRow>
+        </TableRow>
+      </ContextMenuTrigger>
+      <ContextMenuContent className="w-56">
+        {onOpenProfile && (
+          <ContextMenuItem onClick={() => onOpenProfile(collaborator)}>
+            <ExternalLink className="h-4 w-4 mr-2" />
+            Ouvrir la fiche complète
+          </ContextMenuItem>
+        )}
+        {onEditCollaborator && (
+          <ContextMenuItem onClick={() => onEditCollaborator(collaborator.id)}>
+            <Pencil className="h-4 w-4 mr-2" />
+            Modifier (Wizard)
+          </ContextMenuItem>
+        )}
+        <ContextMenuSeparator />
+        <ContextMenuSub>
+          <ContextMenuSubTrigger>
+            <UserCog className="h-4 w-4 mr-2" />
+            Changer classification
+          </ContextMenuSubTrigger>
+          <ContextMenuSubContent className="bg-background">
+            <ContextMenuItem onClick={() => updateType.mutate({ collaboratorId: collaborator.id, type: 'TECHNICIEN' })} disabled={collaborator.type === 'TECHNICIEN'}>
+              <Wrench className="h-4 w-4 mr-2" /> Technicien (terrain)
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => updateType.mutate({ collaboratorId: collaborator.id, type: 'ASSISTANTE' })} disabled={collaborator.type === 'ASSISTANTE'}>
+              <User className="h-4 w-4 mr-2" /> Assistante (admin)
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => updateType.mutate({ collaboratorId: collaborator.id, type: 'DIRIGEANT' })} disabled={collaborator.type === 'DIRIGEANT'}>
+              <User className="h-4 w-4 mr-2" /> Dirigeant (admin)
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => updateType.mutate({ collaboratorId: collaborator.id, type: 'COMMERCIAL' })} disabled={collaborator.type === 'COMMERCIAL'}>
+              <User className="h-4 w-4 mr-2" /> Commercial (admin)
+            </ContextMenuItem>
+          </ContextMenuSubContent>
+        </ContextMenuSub>
+        <ContextMenuSeparator />
+        <ContextMenuItem 
+          onClick={() => setShowDeleteDialog(true)}
+          className="text-destructive focus:text-destructive"
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          Supprimer définitivement
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
     </>
   );
 }
