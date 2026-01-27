@@ -54,12 +54,12 @@ export function calculateCockpitIndicators(
   const hasPhone = !!collaborator.phone;
   const contact: IndicatorStatus = hasEmail && hasPhone ? 'ok' : 'warning';
 
-  // ICE : contacts d'urgence (via sensitive_data ou données décryptées)
-  // Pour l'instant on compte si les données sensibles existent comme proxy
-  // TODO: Enrichir via useSensitiveData pour compter les contacts ICE réels
-  let iceCount: 0 | 1 | 2 = 0;
-  // Le calcul ICE sera enrichi par les données sensibles passées en paramètre
-  const iceStatus: IndicatorStatus = iceCount === 0 ? 'error' : iceCount === 1 ? 'warning' : 'ok';
+  // ICE : on ne déchiffre PAS côté client.
+  // On se base uniquement sur la présence des champs chiffrés (non-nuls) dans collaborator_sensitive_data.
+  const hasIceContact = !!collaborator.sensitive_data?.emergency_contact_encrypted;
+  const hasIcePhone = !!collaborator.sensitive_data?.emergency_phone_encrypted;
+  const iceCount = ((hasIceContact ? 1 : 0) + (hasIcePhone ? 1 : 0)) as 0 | 1 | 2;
+  const iceStatus: IndicatorStatus = iceCount === 2 ? 'ok' : iceCount === 1 ? 'warning' : 'error';
 
   // RH : hiring_date présent
   const rh: IndicatorStatus = !!collaborator.hiring_date ? 'ok' : 'warning';

@@ -35,6 +35,8 @@ export interface RHCollaborator {
 
 export interface RHSensitiveData {
   birth_date_encrypted?: string | null;
+  emergency_contact_encrypted?: string | null;
+  emergency_phone_encrypted?: string | null;
 }
 
 export interface RHEpiProfile {
