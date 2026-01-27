@@ -196,7 +196,8 @@ function RHSuiviContent() {
   // Handler pour ouvrir les documents (coffre) d'un collaborateur
   const handleOpenDocuments = (collaborator: RHCollaborator) => {
     // Force l'onglet documents via sessionStorage avant d'ouvrir
-    sessionStorage.setItem(`rh-panel-${collaborator.id}-tab`, JSON.stringify('documents'));
+    // usePersistedTab stocke la valeur directement (sans JSON.stringify)
+    sessionStorage.setItem(`rh-panel-${collaborator.id}-tab`, 'documents');
     openCollaborator(collaborator);
   };
 
