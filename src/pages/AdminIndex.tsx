@@ -164,6 +164,7 @@ export default function AdminIndex() {
           {isSuperadmin && <MaintenanceModeCard compact />}
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <AdminLink to="/admin/notifications" icon={Bell} title="Envoyer Notification" description="Notifier les utilisateurs" />
             <AdminLink to={ROUTES.admin.systemHealth} icon={Activity} title="Santé Système" description="Surveillance services" />
             <AdminLink to={ROUTES.admin.pageMetadata} icon={FileText} title="Métadonnées Pages" description="Titres et labels" />
             <AdminLink to={ROUTES.admin.announcements} icon={Bell} title="Annonces Prioritaires" description="Diffusion messages" />
