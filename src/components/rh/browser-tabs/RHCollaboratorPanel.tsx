@@ -473,7 +473,15 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
           <RHSectionCompetences collaborator={collaborator} />
         </CollapsibleSection>
 
-        {/* Sécurité */}
+        {/* Documents - sous Compétences */}
+        <CollapsibleSection 
+          title="Documents" 
+          icon={<FolderOpen className="h-4 w-4" />}
+        >
+          <RHSectionDocuments collaborator={collaborator} />
+        </CollapsibleSection>
+
+        {/* Sécurité - en dernier */}
         <CollapsibleSection 
           title="Sécurité" 
           icon={<Shield className="h-4 w-4" />}
@@ -492,13 +500,6 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
           ) : undefined}
         >
           <RHSectionSecurite collaborator={collaborator} />
-        </CollapsibleSection>
-
-        <CollapsibleSection 
-          title="Documents" 
-          icon={<FolderOpen className="h-4 w-4" />}
-        >
-          <RHSectionDocuments collaborator={collaborator} />
         </CollapsibleSection>
       </div>
     </div>
