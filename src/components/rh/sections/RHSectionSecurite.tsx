@@ -37,15 +37,16 @@ const EPI_OPTIONS = [
   'Combinaison de travail',
 ];
 
-type EpiStatus = 'complete' | 'partial' | 'missing' | 'none';
+type EpiStatus = 'complete' | 'partial' | 'critical' | 'none';
 
 function getEpiStatus(requis: string[], remis: string[]): EpiStatus {
   if (requis.length === 0) return 'none';
   const remisSet = new Set(remis);
   const completedCount = requis.filter(r => remisSet.has(r)).length;
-  if (completedCount === 0) return 'missing';
-  if (completedCount === requis.length) return 'complete';
-  return 'partial';
+  const percentage = completedCount / requis.length;
+  if (percentage === 1) return 'complete';
+  if (percentage >= 0.5) return 'partial';
+  return 'critical';
 }
 
 export function RHSectionSecurite({ collaborator }: Props) {
@@ -118,6 +119,7 @@ export function RHSectionSecurite({ collaborator }: Props) {
   };
 
   // Status badge configuration
+  const completedCount = epiRequis.filter(r => epiRemis.includes(r)).length;
   const statusConfig: Record<EpiStatus, { label: string; icon: React.ReactNode; className: string }> = {
     complete: {
       label: 'Complet',
@@ -125,12 +127,12 @@ export function RHSectionSecurite({ collaborator }: Props) {
       className: 'bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700',
     },
     partial: {
-      label: `${epiRequis.filter(r => epiRemis.includes(r)).length}/${epiRequis.length}`,
+      label: `${completedCount}/${epiRequis.length}`,
       icon: <AlertTriangle className="h-3 w-3" />,
       className: 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700',
     },
-    missing: {
-      label: 'Aucun remis',
+    critical: {
+      label: `${completedCount}/${epiRequis.length}`,
       icon: <AlertTriangle className="h-3 w-3" />,
       className: 'bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700',
     },
