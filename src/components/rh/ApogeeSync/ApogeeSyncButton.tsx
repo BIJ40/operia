@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RefreshCw, Loader2 } from 'lucide-react';
-import { useApogeeSync } from '@/hooks/useApogeeSync';
+import { useApogeeSync, SyncAction } from '@/hooks/useApogeeSync';
 import { ApogeeSyncDialog } from './ApogeeSyncDialog';
 import type { RHCollaborator } from '@/types/rh-suivi';
 
@@ -26,8 +26,8 @@ export function ApogeeSyncButton({ agencySlug, collaborators }: ApogeeSyncButton
     isSyncing,
   } = useApogeeSync({ agencySlug, collaborators });
   
-  const handleConfirm = () => {
-    executeSync(syncActions, {
+  const handleConfirm = (selectedActions: SyncAction[]) => {
+    executeSync(selectedActions, {
       onSuccess: () => {
         setDialogOpen(false);
       },

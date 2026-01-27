@@ -278,3 +278,40 @@ export function useUpdateRHTablePrefs() {
     },
   });
 }
+
+// ============================================================================
+// Delete Collaborator (Hard Delete)
+// ============================================================================
+
+export function useDeleteCollaborator() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (collaboratorId: string) => {
+      // D'abord supprimer les données liées (cascade devrait gérer ça, mais au cas où)
+      await supabase.from('rh_epi_profiles').delete().eq('collaborator_id', collaboratorId);
+      await supabase.from('rh_competencies').delete().eq('collaborator_id', collaboratorId);
+      await supabase.from('rh_assets').delete().eq('collaborator_id', collaboratorId);
+      await supabase.from('rh_it_access').delete().eq('collaborator_id', collaboratorId);
+      await supabase.from('collaborator_sensitive_data').delete().eq('collaborator_id', collaboratorId);
+      await supabase.from('collaborator_documents').delete().eq('collaborator_id', collaboratorId);
+      
+      // Supprimer le collaborateur
+      const { error } = await supabase
+        .from('collaborators')
+        .delete()
+        .eq('id', collaboratorId);
+      
+      if (error) throw error;
+      return collaboratorId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rh-collaborators'] });
+      toast.success('Collaborateur supprimé définitivement');
+    },
+    onError: (error) => {
+      console.error('Delete error:', error);
+      toast.error('Erreur lors de la suppression');
+    },
+  });
+}
