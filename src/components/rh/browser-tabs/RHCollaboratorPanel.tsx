@@ -53,7 +53,8 @@ import {
   Briefcase,
   AlertTriangle,
   Calendar as CalendarIcon,
-  Archive
+  Archive,
+  Check as CheckIcon
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -478,19 +479,38 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
           <CollapsibleSection 
             title="Sécurité" 
             icon={<Shield className="h-4 w-4" />}
-            badge={collaborator.epi_profile?.statut_epi ? (
-              <Badge 
-                variant="secondary" 
-                className={cn(
-                  "text-xs",
-                  collaborator.epi_profile.statut_epi === 'OK' && 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-                  collaborator.epi_profile.statut_epi === 'TO_RENEW' && 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-                  collaborator.epi_profile.statut_epi === 'MISSING' && 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                )}
-              >
-                {collaborator.epi_profile.statut_epi === 'OK' ? '✓' : collaborator.epi_profile.statut_epi === 'TO_RENEW' ? '⏰' : '⚠'}
-              </Badge>
-            ) : undefined}
+            badge={(() => {
+              // Calculer le pourcentage d'EPI remis
+              const epiRequis = collaborator.epi_profile?.epi_requis || [];
+              const epiRemis = collaborator.epi_profile?.epi_remis || [];
+              
+              if (epiRequis.length === 0) {
+                return undefined;
+              }
+              
+              const completedCount = epiRequis.filter(epi => epiRemis.includes(epi)).length;
+              const percentage = (completedCount / epiRequis.length) * 100;
+              
+              // Couleur basée sur le pourcentage : vert UNIQUEMENT à 100%
+              const iconColor = percentage === 100 
+                ? 'text-green-600' 
+                : percentage >= 50 
+                  ? 'text-orange-500' 
+                  : 'text-red-500';
+              
+              const badgeClass = percentage === 100
+                ? 'bg-green-100 dark:bg-green-900/30'
+                : percentage >= 50
+                  ? 'bg-orange-100 dark:bg-orange-900/30'
+                  : 'bg-red-100 dark:bg-red-900/30';
+              
+              return (
+                <Badge variant="outline" className={cn("gap-1.5 text-xs", badgeClass)}>
+                  <CheckIcon className={cn("h-3 w-3", iconColor)} />
+                  <span className="text-muted-foreground">{completedCount}/{epiRequis.length}</span>
+                </Badge>
+              );
+            })()}
           >
             <RHSectionSecurite collaborator={collaborator} />
           </CollapsibleSection>
