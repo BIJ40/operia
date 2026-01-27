@@ -149,7 +149,33 @@ const getDefaultValues = useMemo((): FormValues => ({
   }), [initialData]);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    // IMPORTANT: react-hook-form peut demander une validation partielle (trigger(["a","b"]))
+    // mais zodResolver valide tout le schéma.
+    // Si des champs d'une autre étape sont invalides (ex: email legacy), cela bloquait le bouton "Suivant"
+    // à l'étape 1 alors que le champ n'est pas affiché.
+    // On filtre donc les erreurs au strict ensemble des champs demandés (options.names) lors des validations partielles.
+    resolver: useMemo(() => {
+      const base = zodResolver(formSchema);
+      return async (values, context, options) => {
+        const result = await base(values, context, options);
+
+        const names = (options as unknown as { names?: string[] })?.names;
+        if (!names?.length) return result;
+
+        const allowed = new Set(names);
+        const filteredErrors: typeof result.errors = {};
+        for (const key of Object.keys(result.errors)) {
+          if (allowed.has(key)) {
+            (filteredErrors as any)[key] = (result.errors as any)[key];
+          }
+        }
+
+        return {
+          values: result.values,
+          errors: filteredErrors,
+        };
+      };
+    }, []),
     defaultValues: getDefaultValues,
   });
 
