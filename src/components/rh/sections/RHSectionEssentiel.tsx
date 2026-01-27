@@ -1,30 +1,19 @@
 /**
- * Section Essentiel - Réduite : Métier, Role, Dates, ICE, Observations
- * (Nom/Prénom/Email/Tel sont dans le header)
+ * Section Essentiel - Simplifiée : Dates, ICE, Observations
+ * (Nom/Prénom/Email/Tel/Type/Role sont dans le header)
  */
 
 import { useState, useEffect } from 'react';
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import { AlertTriangle, Loader2, Calendar } from 'lucide-react';
 import { useSensitiveData } from '@/hooks/useSensitiveData';
 import { useAutoSaveCollaborator } from '@/hooks/useAutoSaveCollaborator';
-import { InlineEdit, InlineSelect } from '@/components/ui/inline-edit';
-import { RHMetiersMultiSelect } from '@/components/rh/unified/RHMetiersMultiSelect';
+import { InlineEdit } from '@/components/ui/inline-edit';
 import { Label } from '@/components/ui/label';
 import type { RHCollaborator } from '@/types/rh-suivi';
 
 interface Props {
   collaborator: RHCollaborator;
 }
-
-const TYPE_OPTIONS = [
-  { value: 'TECHNICIEN', label: 'Technicien' },
-  { value: 'ASSISTANTE', label: 'Assistante' },
-  { value: 'DIRIGEANT', label: 'Dirigeant' },
-  { value: 'COMMERCIAL', label: 'Commercial' },
-  { value: 'APPRENTI', label: 'Apprenti' },
-  { value: 'STAGIAIRE', label: 'Stagiaire' },
-  { value: 'AUTRE', label: 'Autre' },
-];
 
 export function RHSectionEssentiel({ collaborator }: Props) {
   const { saveField } = useAutoSaveCollaborator(collaborator.id);
@@ -70,52 +59,34 @@ export function RHSectionEssentiel({ collaborator }: Props) {
     });
   };
 
-  // Get métiers from competences_techniques
-  const selectedMetiers = collaborator.competencies?.competences_techniques || [];
-
   return (
-    <div className="space-y-4">
-      {/* Métier & Role */}
-      <div className="grid grid-cols-2 gap-4">
+    <div className="space-y-3">
+      {/* Dates Entrée / Sortie */}
+      <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">Métier(s)</Label>
-          <RHMetiersMultiSelect
-            collaboratorId={collaborator.id}
-            selectedMetiers={selectedMetiers}
-            className="w-full"
+          <Label className="text-xs text-muted-foreground flex items-center gap-1">
+            <Calendar className="h-3 w-3" />
+            Entrée
+          </Label>
+          <InlineEdit
+            value={collaborator.hiring_date || ''}
+            onSave={(v) => saveField('hiring_date', v)}
+            type="date"
+            placeholder="--/--/----"
           />
         </div>
-        <InlineSelect
-          label="Type"
-          value={collaborator.type}
-          options={TYPE_OPTIONS}
-          onSave={(v) => saveField('type', v)}
-          placeholder="Sélectionner..."
-        />
-      </div>
-
-      {/* Role libre */}
-      <InlineEdit
-        label="Rôle / Poste"
-        value={collaborator.role}
-        onSave={(v) => saveField('role', v)}
-        placeholder="Description du poste..."
-      />
-
-      {/* Dates Entrée / Sortie */}
-      <div className="grid grid-cols-2 gap-4">
-        <InlineEdit
-          label="Entrée"
-          value={collaborator.hiring_date || ''}
-          onSave={(v) => saveField('hiring_date', v)}
-          type="date"
-        />
-        <InlineEdit
-          label="Sortie"
-          value={collaborator.leaving_date || ''}
-          onSave={(v) => saveField('leaving_date', v)}
-          type="date"
-        />
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground flex items-center gap-1">
+            <Calendar className="h-3 w-3" />
+            Sortie
+          </Label>
+          <InlineEdit
+            value={collaborator.leaving_date || ''}
+            onSave={(v) => saveField('leaving_date', v)}
+            type="date"
+            placeholder="--/--/----"
+          />
+        </div>
       </div>
 
       {/* Contact d'urgence (ICE) */}
