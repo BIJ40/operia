@@ -83,66 +83,39 @@ export function RHCockpitDrawerParc({ collaborator, onUpdate }: RHCockpitDrawerP
         )}
       </DrawerSection>
 
-      {/* Cartes */}
-      <DrawerSection title="Cartes" className="mt-6">
-        <div className="space-y-3">
-          {/* Carte carburant */}
-          <div className={cn(
-            'flex items-center justify-between p-3 rounded-lg border',
-            hasCarburant ? 'border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20 dark:border-emerald-800' : 'border-border'
-          )}>
-            <div className="flex items-center gap-3">
-              <div className={cn(
-                'p-2 rounded-full',
-                hasCarburant ? 'bg-emerald-100 dark:bg-emerald-900/50' : 'bg-muted'
-              )}>
-                <CreditCard className={cn(
-                  'h-4 w-4',
-                  hasCarburant ? 'text-emerald-600' : 'text-muted-foreground'
-                )} />
-              </div>
-              <div>
-                <p className="text-sm font-medium">Carte carburant</p>
-                {hasCarburant && assets.numero_carte_carburant && (
-                  <p className="text-xs text-muted-foreground font-mono">
-                    {assets.numero_carte_carburant}
-                  </p>
-                )}
-              </div>
+      {/* Carte carburant */}
+      <DrawerSection title="Carte carburant" className="mt-6">
+        <div className={cn(
+          'flex items-center justify-between p-3 rounded-lg border',
+          hasCarburant ? 'border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20 dark:border-emerald-800' : 'border-border'
+        )}>
+          <div className="flex items-center gap-3">
+            <div className={cn(
+              'p-2 rounded-full',
+              hasCarburant ? 'bg-emerald-100 dark:bg-emerald-900/50' : 'bg-muted'
+            )}>
+              <CreditCard className={cn(
+                'h-4 w-4',
+                hasCarburant ? 'text-emerald-600' : 'text-muted-foreground'
+              )} />
             </div>
-            <Badge variant={hasCarburant ? 'default' : 'secondary'}>
-              {hasCarburant ? 'Oui' : 'Non'}
-            </Badge>
-          </div>
-
-          {/* Carte bancaire */}
-          <div className={cn(
-            'flex items-center justify-between p-3 rounded-lg border',
-            hasBancaire ? 'border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20 dark:border-emerald-800' : 'border-border'
-          )}>
-            <div className="flex items-center gap-3">
-              <div className={cn(
-                'p-2 rounded-full',
-                hasBancaire ? 'bg-emerald-100 dark:bg-emerald-900/50' : 'bg-muted'
-              )}>
-                <CreditCard className={cn(
-                  'h-4 w-4',
-                  hasBancaire ? 'text-emerald-600' : 'text-muted-foreground'
-                )} />
-              </div>
-              <div>
-                <p className="text-sm font-medium">Carte bancaire</p>
-                {hasBancaire && assets.numero_carte_bancaire && (
-                  <p className="text-xs text-muted-foreground font-mono">
-                    {assets.numero_carte_bancaire}
-                  </p>
-                )}
-              </div>
+            <div>
+              <p className="text-sm font-medium">Carte carburant</p>
+              {hasCarburant && assets.numero_carte_carburant && (
+                <p className="text-xs text-muted-foreground font-mono">
+                  {assets.numero_carte_carburant}
+                </p>
+              )}
+              {hasCarburant && assets.fournisseur_carte_carburant && (
+                <p className="text-xs text-muted-foreground">
+                  {assets.fournisseur_carte_carburant}
+                </p>
+              )}
             </div>
-            <Badge variant={hasBancaire ? 'default' : 'secondary'}>
-              {hasBancaire ? 'Oui' : 'Non'}
-            </Badge>
           </div>
+          <Badge variant={hasCarburant ? 'default' : 'secondary'}>
+            {hasCarburant ? 'Oui' : 'Non'}
+          </Badge>
         </div>
       </DrawerSection>
 
