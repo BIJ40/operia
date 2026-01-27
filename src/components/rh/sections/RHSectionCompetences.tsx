@@ -34,7 +34,7 @@ interface Props {
 
 const CACES_TYPES = ['CACES 1', 'CACES 2', 'CACES 3', 'CACES 4', 'CACES 5', 'CACES 6', 'NACELLE'];
 const HAB_ELEC_OPTIONS = [
-  { value: '', label: 'Aucune' },
+  { value: '__NONE__', label: 'Aucune' },
   { value: 'B0', label: 'B0' },
   { value: 'B1', label: 'B1' },
   { value: 'B1V', label: 'B1V' },
@@ -163,8 +163,8 @@ export function RHSectionCompetences({ collaborator }: Props) {
         <Zap className="h-4 w-4 text-yellow-500 shrink-0" />
         <Label className="text-xs text-muted-foreground shrink-0">Hab. élec.</Label>
         <Select
-          value={comp?.habilitation_electrique_statut || ''}
-          onValueChange={(v) => saveField('habilitation_electrique_statut', v)}
+          value={comp?.habilitation_electrique_statut || '__NONE__'}
+          onValueChange={(v) => saveField('habilitation_electrique_statut', v === '__NONE__' ? null : v)}
         >
           <SelectTrigger className="h-7 w-20 text-xs">
             <SelectValue placeholder="--" />
