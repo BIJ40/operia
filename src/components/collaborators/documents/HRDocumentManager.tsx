@@ -111,6 +111,7 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
   const [currentUploadIndex, setCurrentUploadIndex] = useState(0);
   const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
+  const [newFolderParentId, setNewFolderParentId] = useState<string | null>(null);
   const [draggedDocument, setDraggedDocument] = useState<CollaboratorDocument | null>(null);
   const [selectedDocIds, setSelectedDocIds] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -240,14 +241,23 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
     }
   };
 
-  // Handle create new subfolder
+  // Open new folder dialog - capture current folder at dialog open time
+  const openNewFolderDialog = useCallback(() => {
+    setNewFolderParentId(currentFolderId); // Capture current position
+    setNewFolderName('');
+    setShowNewFolderDialog(true);
+  }, [currentFolderId]);
+
+  // Handle create new subfolder - use captured parent ID
   const handleCreateSubfolder = () => {
     if (!newFolderName.trim() || activeCategory === 'ALL') return;
     
     const folderName = newFolderName.trim();
-    createFolder(activeCategory, folderName, currentFolderId);
+    console.log('[HRDocumentManager] Creating folder:', { folderName, parentId: newFolderParentId, activeCategory });
+    createFolder(activeCategory, folderName, newFolderParentId);
     setShowNewFolderDialog(false);
     setNewFolderName('');
+    setNewFolderParentId(null);
   };
 
   // Handle rename
@@ -491,7 +501,7 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
               canManage={canManage}
               selectedIds={selectedDocIds}
               onSelect={handleDocumentSelect}
-              onCreateFolder={() => setShowNewFolderDialog(true)}
+              onCreateFolder={openNewFolderDialog}
             />
           ) : (
             <DocumentListView
@@ -508,7 +518,7 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
               canManage={canManage}
               selectedIds={selectedDocIds}
               onSelect={handleDocumentSelect}
-              onCreateFolder={() => setShowNewFolderDialog(true)}
+              onCreateFolder={openNewFolderDialog}
             />
           )}
         </CardContent>
@@ -764,9 +774,9 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
                 }
               }}
             />
-            {currentFolderId && (
+            {newFolderParentId && (
               <p className="text-xs text-muted-foreground mt-2">
-                Sera créé dans : {getFolderById(currentFolderId)?.name}
+                📁 Sera créé dans : <strong>{getFolderById(newFolderParentId)?.name}</strong>
               </p>
             )}
           </div>
