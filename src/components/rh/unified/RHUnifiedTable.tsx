@@ -274,25 +274,6 @@ export function RHUnifiedTable({
             />
           </div>
           
-          {/* Toggle pour afficher les anciens collaborateurs */}
-          {onToggleShowFormer && (
-            <div className="flex items-center gap-2">
-              <Switch
-                id="show-former"
-                checked={showFormer}
-                onCheckedChange={onToggleShowFormer}
-              />
-              <Label htmlFor="show-former" className="text-sm text-muted-foreground cursor-pointer flex items-center gap-1.5">
-                <UserX className="h-3.5 w-3.5" />
-                Anciens
-                {showFormer && stats.former > 0 && (
-                  <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                    {stats.former}
-                  </Badge>
-                )}
-              </Label>
-            </div>
-          )}
           
           {/* Indicateur de modifications en attente */}
           {hasPendingChanges && (
