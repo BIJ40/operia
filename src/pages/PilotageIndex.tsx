@@ -115,25 +115,20 @@ function PilotageContent() {
 
   return (
     <div className="container mx-auto py-4 px-4 space-y-4">
-      {/* Header avec titre et onglets sur la même ligne */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as MainTab)}>
-        <div className="flex items-center gap-6 border-b border-border pb-0">
-          {/* Titre */}
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-md">
-              <Building2 className="w-5 h-5 text-white" />
-            </div>
-            <h1 className="text-xl font-bold text-foreground tracking-tight">Mon Agence</h1>
-          </div>
-
-          {/* Onglets */}
+        <div className="border-b border-border">
           <TabsList className="h-auto p-0 bg-transparent gap-0">
+            {/* Premier onglet = Mon Agence avec le style titre */}
             <TabsTrigger 
               value="agence" 
-              className="relative rounded-none border-b-2 border-transparent data-[state=active]:border-helpconfort-blue data-[state=active]:bg-transparent bg-transparent px-4 py-2.5 text-sm font-medium transition-colors hover:text-foreground data-[state=active]:text-helpconfort-blue data-[state=active]:shadow-none"
+              className="relative rounded-none border-b-2 border-transparent data-[state=active]:border-helpconfort-blue data-[state=active]:bg-transparent bg-transparent px-4 py-2.5 transition-colors hover:text-foreground data-[state=active]:shadow-none"
             >
-              <Building2 className="h-4 w-4 mr-2" />
-              Mon agence
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-md">
+                  <Building2 className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xl font-bold text-foreground tracking-tight">Mon Agence</span>
+              </div>
             </TabsTrigger>
             {hasStatsAccess && (
               <TabsTrigger 
