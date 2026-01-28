@@ -24,7 +24,7 @@ import {
 import { AnimationPreviewButton } from '@/components/unified-search/AnimationPreviewButton';
 import { UnifiedSearchFloatingBar } from '@/components/unified-search/UnifiedSearchFloatingBar';
 import { UnifiedSearchProvider } from '@/components/unified-search/UnifiedSearchContext';
-import { MainLayout } from '@/components/layout/MainLayout';
+import { MinimalLayout } from '@/components/layout';
 
 export default function UnifiedSearchAnimationPlayground() {
   const { toast } = useToast();
@@ -90,7 +90,7 @@ export default function UnifiedSearchAnimationPlayground() {
   };
 
   return (
-    <MainLayout>
+    <MinimalLayout backTab="admin" backLabel="Retour admin">
       <div className="container mx-auto py-8 px-4 max-w-6xl">
         {/* Header */}
         <div className="mb-8">
@@ -189,7 +189,7 @@ export default function UnifiedSearchAnimationPlayground() {
           ))}
         </div>
       </div>
-    </MainLayout>
+    </MinimalLayout>
   );
 }
 

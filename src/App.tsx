@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect, lazy, Suspense } from "react";
 
-import { MainLayout } from "./components/layout";
+import { MinimalLayout } from "./components/layout";
 import { Loader2 } from "lucide-react";
 import { RoleGuard } from "./components/auth/RoleGuard";
 
@@ -112,9 +112,9 @@ function AppContent() {
           {/* CORE ROUTES */}
           {/* ============================================ */}
           <Route path="/" element={<RoleGuard minRole="franchisee_user"><UnifiedWorkspace /></RoleGuard>} />
-          <Route path="/profile" element={<MainLayout><RoleGuard><Profile /></RoleGuard></MainLayout>} />
-          <Route path="/changelog" element={<MainLayout><Changelog /></MainLayout>} />
-          <Route path="/roadmap" element={<MainLayout><Roadmap /></MainLayout>} />
+          <Route path="/profile" element={<MinimalLayout backTab="accueil" backLabel="Retour à l'accueil"><RoleGuard><Profile /></RoleGuard></MinimalLayout>} />
+          <Route path="/changelog" element={<MinimalLayout backTab="accueil" backLabel="Retour à l'accueil"><Changelog /></MinimalLayout>} />
+          <Route path="/roadmap" element={<MinimalLayout backTab="accueil" backLabel="Retour à l'accueil"><Roadmap /></MinimalLayout>} />
           
           {/* ============================================ */}
           {/* DOMAIN ROUTES - Imported from modules */}
