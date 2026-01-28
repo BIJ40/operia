@@ -60,16 +60,16 @@ export default function FranchiseurAgencies() {
         icon={
           <motion.div 
             whileHover={{ scale: 1.1 }}
-            className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg"
+            className="w-10 h-10 rounded-xl bg-gradient-to-br from-warm-teal/90 to-warm-blue/70 flex items-center justify-center shadow-sm"
           >
-            <Building2 className="h-5 w-5 text-white" />
+            <Building2 className="h-5 w-5 text-primary-foreground" />
           </motion.div>
         }
         actions={
           canManageAgencies && (
             <Button 
               onClick={() => setIsCreateDialogOpen(true)} 
-              className="gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
+              className="gap-2 rounded-xl bg-gradient-to-r from-warm-teal/90 to-warm-blue/80 hover:from-warm-teal hover:to-warm-blue text-primary-foreground"
             >
               <Plus className="h-4 w-4" />
               Nouvelle Agence
@@ -103,48 +103,48 @@ export default function FranchiseurAgencies() {
         </CardContent>
       </Card>
 
-      {/* Grille des agences */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Grille des agences - 3 colonnes compactes */}
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {filteredAgencies?.map((agency, index) => (
           <motion.div
             key={agency.id}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-            whileHover={{ scale: 1.02, y: -4 }}
+            transition={{ delay: index * 0.03 }}
+            whileHover={{ scale: 1.01, y: -2 }}
           >
             <Card
-              className="cursor-pointer rounded-2xl border-0 shadow-md hover:shadow-xl transition-all overflow-hidden group"
+              className="cursor-pointer rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-all overflow-hidden group"
               onClick={() => setSelectedAgencyId(agency.id)}
             >
-              {/* Gradient accent top */}
-              <div className="h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500" />
+              {/* Gradient accent top - couleur douce */}
+              <div className="h-1 bg-gradient-to-r from-warm-teal/80 via-warm-blue/60 to-warm-purple/50" />
               
-              <CardHeader className="pb-3">
+              <CardHeader className="pb-2 pt-3 px-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-md shrink-0">
-                      <Building2 className="h-4 w-4 text-white" />
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-warm-teal/80 to-warm-blue/60 flex items-center justify-center shadow-sm shrink-0">
+                      <Building2 className="h-3.5 w-3.5 text-primary-foreground" />
                     </div>
                     <div className="min-w-0">
-                      <CardTitle className="text-base truncate group-hover:text-emerald-600 transition-colors">
+                      <CardTitle className="text-sm truncate group-hover:text-warm-teal transition-colors">
                         {agency.label}
                       </CardTitle>
-                      <CardDescription className="font-mono text-xs">
+                      <CardDescription className="font-mono text-[10px]">
                         {agency.slug}
                       </CardDescription>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-1 shrink-0">
+                  <div className="flex flex-col gap-0.5 shrink-0">
                     {!agency.is_active && (
-                      <Badge variant="secondary" className="text-xs">Inactive</Badge>
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Inactive</Badge>
                     )}
                     {agency.animateurs && agency.animateurs.length > 0 ? (
-                      <Badge className="bg-emerald-500 hover:bg-emerald-600 text-xs">
+                      <Badge className="bg-warm-teal/80 hover:bg-warm-teal text-[10px] px-1.5 py-0">
                         {agency.animateurs.length} Anim.
                       </Badge>
                     ) : (
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
                         Sans anim.
                       </Badge>
                     )}
@@ -152,32 +152,32 @@ export default function FranchiseurAgencies() {
                 </div>
               </CardHeader>
 
-              <CardContent className="space-y-2 pt-0">
+              <CardContent className="space-y-1 pt-0 px-3 pb-3">
                 {agency.ville && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4 shrink-0 text-emerald-500" />
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <MapPin className="h-3 w-3 shrink-0 text-warm-teal" />
                     <span className="truncate">{agency.ville} {agency.code_postal && `(${agency.code_postal})`}</span>
                   </div>
                 )}
                 
                 {agency.date_ouverture && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4 shrink-0 text-blue-500" />
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Calendar className="h-3 w-3 shrink-0 text-warm-blue" />
                     <span>Depuis {new Date(agency.date_ouverture).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })}</span>
                   </div>
                 )}
                 
                 {agency.contact_email && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Mail className="h-4 w-4 shrink-0 text-violet-500" />
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Mail className="h-3 w-3 shrink-0 text-warm-purple" />
                     <span className="truncate">{agency.contact_email}</span>
                   </div>
                 )}
                 
                 {agency.animateurs && agency.animateurs.length > 0 && (
-                  <div className="flex items-center gap-2 text-sm pt-2 border-t">
-                    <Users className="h-4 w-4 text-amber-500 shrink-0" />
-                    <span className="font-medium truncate text-amber-700 dark:text-amber-400">
+                  <div className="flex items-center gap-1.5 text-xs pt-1 border-t border-border/50">
+                    <Users className="h-3 w-3 text-warm-orange shrink-0" />
+                    <span className="font-medium truncate text-warm-orange">
                       {agency.animateurs.map(a => `${a.first_name} ${a.last_name}`).join(', ')}
                     </span>
                   </div>
