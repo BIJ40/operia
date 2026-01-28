@@ -12,7 +12,8 @@ import { StatsOverview } from '@/components/admin/overview/StatsOverview';
 import { DatabaseExportButton } from '@/components/admin/DatabaseExportButton';
 import { MaintenanceModeCard } from '@/components/admin/MaintenanceModeCard';
 import { useAuth } from '@/contexts/AuthContext';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 
 interface AdminLinkProps {
   to: string;
@@ -43,6 +44,14 @@ function AdminLink({ to, icon: Icon, title, description }: AdminLinkProps) {
     </Link>
   );
 }
+
+const ADMIN_TABS: PillTabConfig[] = [
+  { id: 'gestion', label: 'Gestion', icon: Shield },
+  { id: 'ia', label: 'IA', icon: Brain },
+  { id: 'support', label: 'Support', icon: Headset },
+  { id: 'donnees', label: 'Données', icon: Database },
+  { id: 'systeme', label: 'Système', icon: Cpu },
+];
 
 // Route protégée par RoleGuard (N5+) dans App.tsx
 export default function AdminIndex() {
@@ -83,28 +92,7 @@ export default function AdminIndex() {
 
       {/* Tabs Navigation */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="gestion" className="gap-2">
-            <Shield className="w-4 h-4" />
-            <span className="hidden sm:inline">Gestion</span>
-          </TabsTrigger>
-          <TabsTrigger value="ia" className="gap-2">
-            <Brain className="w-4 h-4" />
-            <span className="hidden sm:inline">IA</span>
-          </TabsTrigger>
-          <TabsTrigger value="support" className="gap-2">
-            <Headset className="w-4 h-4" />
-            <span className="hidden sm:inline">Support</span>
-          </TabsTrigger>
-          <TabsTrigger value="donnees" className="gap-2">
-            <Database className="w-4 h-4" />
-            <span className="hidden sm:inline">Données</span>
-          </TabsTrigger>
-          <TabsTrigger value="systeme" className="gap-2">
-            <Cpu className="w-4 h-4" />
-            <span className="hidden sm:inline">Système</span>
-          </TabsTrigger>
-        </TabsList>
+        <PillTabsList tabs={ADMIN_TABS} />
 
         {/* Gestion */}
         <TabsContent value="gestion" className="space-y-4">
