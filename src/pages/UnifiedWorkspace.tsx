@@ -169,8 +169,17 @@ function UnifiedWorkspaceContent() {
     return hasModule(module as any);
   }, [isPlatformAdmin, hasModule, hasModuleOption]);
   
-  // Tous les onglets sont visibles, mais certains peuvent être désactivés
-  const visibleTabs = allTabs;
+  // Vérifier si un onglet doit être complètement masqué (pas juste désactivé)
+  const isTabHidden = useCallback((tab: TabConfig): boolean => {
+    // Admin n'est visible QUE pour les admins plateforme
+    if (tab.id === 'admin' && !isPlatformAdmin) {
+      return true;
+    }
+    return false;
+  }, [isPlatformAdmin]);
+  
+  // Filtrer les onglets masqués (Admin pour non-admins)
+  const visibleTabs = useMemo(() => allTabs.filter(tab => !isTabHidden(tab)), [allTabs, isTabHidden]);
   
   // Onglets triés selon l'ordre personnalisé (Accueil toujours premier)
   const sortedTabs = useMemo(() => {
