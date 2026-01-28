@@ -46,23 +46,8 @@ export default function AdminHubContent() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header compact */}
-      <motion.div 
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-3 pb-2"
-      >
-        <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-          <Settings className="w-5 h-5 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-xl font-bold text-foreground">Administration</h1>
-          <p className="text-xs text-muted-foreground">Centre de contrôle HC Services</p>
-        </div>
-      </motion.div>
-
-      {/* Main Tabs Navigation */}
+    <div className="space-y-4">
+      {/* Main Tabs Navigation - directement en haut */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList className="flex flex-wrap justify-start gap-1.5 bg-transparent h-auto p-0">
           {ADMIN_MAIN_TABS.map((tab, index) => {
