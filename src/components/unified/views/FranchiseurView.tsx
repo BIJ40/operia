@@ -1,0 +1,308 @@
+/**
+ * FranchiseurView - Vue dédiée pour les utilisateurs Franchiseur (N3+)
+ * Interface complètement séparée avec ses propres onglets
+ * 
+ * Onglets: Accueil / Periode / Agences / Redevances / Statistiques / Divers / Guides / Ticketing / Aide
+ */
+
+import { lazy, Suspense, useMemo, useState, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { 
+  Home, GitCompare, Building2, Coins, BarChart3,
+  MoreHorizontal, BookOpen, Ticket, HelpCircle, Loader2
+} from 'lucide-react';
+import { 
+  DndContext, 
+  closestCenter, 
+  KeyboardSensor, 
+  PointerSensor, 
+  useSensor, 
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core';
+import { 
+  arrayMove, 
+  SortableContext, 
+  sortableKeyboardCoordinates, 
+  horizontalListSortingStrategy 
+} from '@dnd-kit/sortable';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { Tabs, TabsContent, TabsList } from '@/components/ui/tabs';
+import { useSessionState } from '@/hooks/useSessionState';
+import { useImpersonation } from '@/contexts/ImpersonationContext';
+import { FranchiseurProvider } from '@/franchiseur/contexts/FranchiseurContext';
+import { NetworkFiltersProvider } from '@/franchiseur/contexts/NetworkFiltersContext';
+import { AiUnifiedProvider } from '@/components/ai';
+import { DraggableTab } from '@/components/unified/DraggableTab';
+import { FloatingChatButton } from '@/components/chat/FloatingChatButton';
+import { ImageModal } from '@/components/ImageModal';
+
+// Lazy loaded franchiseur pages
+const FranchiseurHome = lazy(() => import('@/franchiseur/pages/FranchiseurHome'));
+const FranchiseurComparison = lazy(() => import('@/franchiseur/pages/FranchiseurComparison'));
+const FranchiseurAgencies = lazy(() => import('@/franchiseur/pages/FranchiseurAgencies'));
+const FranchiseurRoyalties = lazy(() => import('@/franchiseur/pages/FranchiseurRoyalties'));
+const FranchiseurStats = lazy(() => import('@/franchiseur/pages/FranchiseurStats'));
+const DiversTabContent = lazy(() => import('@/components/unified/tabs/DiversTabContent'));
+const GuidesTabContent = lazy(() => import('@/components/unified/tabs/GuidesTabContent'));
+const TicketingTabContent = lazy(() => import('@/components/unified/tabs/TicketingTabContent'));
+const SupportTabContent = lazy(() => import('@/components/unified/tabs/SupportTabContent'));
+
+type FranchiseurTab = 
+  | 'accueil' 
+  | 'periode' 
+  | 'agences' 
+  | 'redevances' 
+  | 'statistiques' 
+  | 'divers' 
+  | 'guides'
+  | 'ticketing' 
+  | 'aide';
+
+interface TabConfig {
+  id: FranchiseurTab;
+  label: string;
+  icon: React.ElementType;
+}
+
+// Ordre par défaut des onglets (hors Accueil qui est toujours premier)
+const DEFAULT_TAB_ORDER: FranchiseurTab[] = ['periode', 'agences', 'redevances', 'statistiques', 'divers', 'guides', 'ticketing', 'aide'];
+
+const ALL_TABS: TabConfig[] = [
+  { id: 'accueil', label: 'Accueil', icon: Home },
+  { id: 'periode', label: 'Période', icon: GitCompare },
+  { id: 'agences', label: 'Agences', icon: Building2 },
+  { id: 'redevances', label: 'Redevances', icon: Coins },
+  { id: 'statistiques', label: 'Statistiques', icon: BarChart3 },
+  { id: 'divers', label: 'Divers', icon: MoreHorizontal },
+  { id: 'guides', label: 'Guides', icon: BookOpen },
+  { id: 'ticketing', label: 'Ticketing', icon: Ticket },
+  { id: 'aide', label: 'Aide', icon: HelpCircle },
+];
+
+function LoadingFallback() {
+  return (
+    <div className="flex items-center justify-center h-64">
+      <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+    </div>
+  );
+}
+
+function FranchiseurViewContent() {
+  const { isImpersonating } = useImpersonation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [tabOrder, setTabOrder] = useSessionState<FranchiseurTab[]>('franchiseur_view_tab_order', DEFAULT_TAB_ORDER);
+  
+  // Support URL ?tab=XXX pour navigation directe
+  const urlTab = searchParams.get('tab') as FranchiseurTab | null;
+  const [activeTab, setActiveTabState] = useSessionState<FranchiseurTab>('franchiseur_view_tab', urlTab || 'accueil');
+  
+  // Synchroniser l'URL quand l'onglet change
+  const setActiveTab = useCallback((tab: FranchiseurTab) => {
+    setActiveTabState(tab);
+    if (tab === 'accueil') {
+      setSearchParams({}, { replace: true });
+    } else {
+      setSearchParams({ tab }, { replace: true });
+    }
+  }, [setActiveTabState, setSearchParams]);
+  
+  // Sync depuis URL au mount
+  useEffect(() => {
+    if (urlTab && urlTab !== activeTab) {
+      setActiveTabState(urlTab);
+    }
+  }, [urlTab]);
+  
+  // Onglets triés selon l'ordre personnalisé (Accueil toujours premier)
+  const sortedTabs = useMemo(() => {
+    const accueilTab = ALL_TABS.find(t => t.id === 'accueil')!;
+    const otherTabs = ALL_TABS.filter(t => t.id !== 'accueil');
+    
+    // Trier selon tabOrder
+    const sorted = [...otherTabs].sort((a, b) => {
+      const indexA = tabOrder.indexOf(a.id);
+      const indexB = tabOrder.indexOf(b.id);
+      if (indexA === -1 && indexB === -1) return 0;
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    });
+    
+    return [accueilTab, ...sorted];
+  }, [tabOrder]);
+  
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+  
+  // Handle drag end
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over || active.id === over.id) return;
+    
+    // Ne pas permettre de déplacer Accueil
+    if (active.id === 'accueil' || over.id === 'accueil') return;
+    
+    const oldIndex = tabOrder.indexOf(active.id as FranchiseurTab);
+    const newIndex = tabOrder.indexOf(over.id as FranchiseurTab);
+    
+    if (oldIndex !== -1 && newIndex !== -1) {
+      setTabOrder(arrayMove(tabOrder, oldIndex, newIndex));
+    }
+  }, [tabOrder, setTabOrder]);
+  
+  // Mettre à jour le titre de la page selon l'onglet actif
+  useEffect(() => {
+    const activeTabConfig = sortedTabs.find(t => t.id === activeTab);
+    const tabLabel = activeTabConfig?.label || 'Accueil';
+    document.title = `${tabLabel} - Réseau HelpConfort`;
+  }, [activeTab, sortedTabs]);
+  
+  const tabButtonClass = `
+    relative px-3 py-2.5 rounded-t-xl border-2 border-b-0 transition-all duration-300 whitespace-nowrap shrink-0 min-w-0
+    data-[state=inactive]:bg-muted/40 data-[state=inactive]:border-border/50 data-[state=inactive]:text-muted-foreground 
+    data-[state=inactive]:hover:bg-primary/10 data-[state=inactive]:hover:border-primary/40
+    data-[state=inactive]:hover:scale-105 data-[state=inactive]:hover:-translate-y-0.5 data-[state=inactive]:hover:shadow-md
+    data-[state=active]:bg-background data-[state=active]:border-primary/50 data-[state=active]:border-b-background
+    data-[state=active]:z-20 data-[state=active]:-mb-[2px] data-[state=active]:scale-[1.02]
+  `;
+  
+  // IDs pour le sortable context (exclure accueil)
+  const sortableIds = sortedTabs.filter(t => t.id !== 'accueil').map(t => t.id);
+  
+  // Calculer le padding top selon les bandeaux actifs
+  const topPadding = isImpersonating ? 'pt-10' : '';
+  
+  return (
+    <div className={`min-h-screen bg-background ${topPadding}`}>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FranchiseurTab)} className="flex flex-col h-screen">
+        {/* Tab bar fixe en haut */}
+        <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm">
+          <div className="container mx-auto max-w-7xl px-4 pt-3 pb-0">
+            <div className="flex items-end justify-between gap-4">
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <TabsList className="h-auto p-0 bg-transparent flex flex-nowrap gap-1 items-end justify-start flex-1 overflow-x-auto scrollbar-hide">
+                  {/* Onglet Accueil - non draggable */}
+                  {sortedTabs[0] && (
+                    <button
+                      onClick={() => setActiveTab('accueil')}
+                      data-state={activeTab === 'accueil' ? 'active' : 'inactive'}
+                      className={tabButtonClass}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-sm transition-transform group-hover:scale-110 shrink-0">
+                          <Home className="w-3 h-3 text-white" />
+                        </div>
+                        <span className="text-xs font-semibold tracking-tight truncate max-w-[80px]">Accueil</span>
+                      </div>
+                    </button>
+                  )}
+                  
+                  {/* Onglets sortables */}
+                  <SortableContext items={sortableIds} strategy={horizontalListSortingStrategy}>
+                    {sortedTabs.slice(1).map((tab) => {
+                      const Icon = tab.icon;
+                      return (
+                        <DraggableTab
+                          key={tab.id}
+                          id={tab.id}
+                          isActive={activeTab === tab.id}
+                          isDraggable={true}
+                          onClick={() => setActiveTab(tab.id)}
+                          className={tabButtonClass}
+                        >
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-sm transition-transform duration-300 group-hover:scale-110 shrink-0">
+                              <Icon className="w-3 h-3 text-white" />
+                            </div>
+                            <span className="text-xs font-semibold tracking-tight truncate max-w-[80px]">{tab.label}</span>
+                          </div>
+                        </DraggableTab>
+                      );
+                    })}
+                  </SortableContext>
+                </TabsList>
+              </DndContext>
+            </div>
+          </div>
+          {/* Ligne de bordure qui se connecte aux onglets */}
+          <div className="container mx-auto max-w-7xl px-4">
+            <div className="border-t-2 border-primary/50 bg-background"></div>
+          </div>
+        </div>
+        
+        {/* Contenu des onglets */}
+        <main id="main-content" className="flex-1 overflow-auto" role="main">
+          <Suspense fallback={<LoadingFallback />}>
+            <TabsContent value="accueil" className="mt-0 h-full">
+              <FranchiseurHome />
+            </TabsContent>
+            
+            <TabsContent value="periode" className="mt-0">
+              <FranchiseurComparison />
+            </TabsContent>
+            
+            <TabsContent value="agences" className="mt-0">
+              <FranchiseurAgencies />
+            </TabsContent>
+            
+            <TabsContent value="redevances" className="mt-0">
+              <FranchiseurRoyalties />
+            </TabsContent>
+            
+            <TabsContent value="statistiques" className="mt-0">
+              <FranchiseurStats />
+            </TabsContent>
+            
+            <TabsContent value="divers" className="mt-0">
+              <DiversTabContent />
+            </TabsContent>
+            
+            <TabsContent value="guides" className="mt-0">
+              <GuidesTabContent />
+            </TabsContent>
+            
+            <TabsContent value="ticketing" className="mt-0">
+              <TicketingTabContent />
+            </TabsContent>
+            
+            <TabsContent value="aide" className="mt-0">
+              <SupportTabContent />
+            </TabsContent>
+          </Suspense>
+        </main>
+      </Tabs>
+      
+      <ImageModal />
+      <FloatingChatButton />
+    </div>
+  );
+}
+
+export default function FranchiseurView() {
+  return (
+    <FranchiseurProvider>
+      <NetworkFiltersProvider>
+        <AiUnifiedProvider>
+          <TooltipProvider delayDuration={0}>
+            <FranchiseurViewContent />
+          </TooltipProvider>
+        </AiUnifiedProvider>
+      </NetworkFiltersProvider>
+    </FranchiseurProvider>
+  );
+}

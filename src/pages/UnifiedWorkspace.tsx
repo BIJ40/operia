@@ -11,7 +11,7 @@ import { useSearchParams } from 'react-router-dom';
 import { 
   Home, Building2, BarChart3, ClipboardList, 
   Car, MoreHorizontal, Ticket, HelpCircle,
-  Loader2, BookOpen, Settings, Network, Cog, Shield
+  Loader2, BookOpen, Shield
 } from 'lucide-react';
 import { 
   DndContext, 
@@ -64,8 +64,8 @@ const DiversTabContent = lazy(() => import('@/components/unified/tabs/DiversTabC
 const GuidesTabContent = lazy(() => import('@/components/unified/tabs/GuidesTabContent'));
 const TicketingTabContent = lazy(() => import('@/components/unified/tabs/TicketingTabContent'));
 const SupportTabContent = lazy(() => import('@/components/unified/tabs/SupportTabContent'));
-const FranchiseurTabContent = lazy(() => import('@/components/unified/tabs/FranchiseurTabContent'));
 const AdminTabContent = lazy(() => import('@/components/unified/tabs/AdminTabContent'));
+const FranchiseurView = lazy(() => import('@/components/unified/views/FranchiseurView'));
 
 type UnifiedTab = 
   | 'accueil' 
@@ -77,7 +77,6 @@ type UnifiedTab =
   | 'guides'
   | 'ticketing' 
   | 'aide'
-  | 'franchiseur'
   | 'admin';
 
 interface TabConfig {
@@ -88,7 +87,7 @@ interface TabConfig {
 }
 
 // Ordre par défaut des onglets (hors Accueil qui est toujours premier)
-const DEFAULT_TAB_ORDER: UnifiedTab[] = ['agence', 'stats', 'salaries', 'parc', 'divers', 'guides', 'ticketing', 'aide', 'franchiseur', 'admin'];
+const DEFAULT_TAB_ORDER: UnifiedTab[] = ['agence', 'stats', 'salaries', 'parc', 'divers', 'guides', 'ticketing', 'aide', 'admin'];
 
 function LoadingFallback() {
   return (
@@ -99,7 +98,7 @@ function LoadingFallback() {
 }
 
 function UnifiedWorkspaceContent() {
-  const { globalRole, isAdmin } = useAuth();
+  const { globalRole, isFranchiseur } = useAuth();
   const { isImpersonating } = useImpersonation();
   const { hasModule, hasModuleOption } = useEffectiveModules();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -146,7 +145,6 @@ function UnifiedWorkspaceContent() {
     { id: 'guides', label: 'Guides', icon: BookOpen, requiresOption: { module: 'help_academy' } },
     { id: 'ticketing', label: 'Ticketing', icon: Ticket, requiresOption: { module: 'apogee_tickets' } },
     { id: 'aide', label: 'Aide', icon: HelpCircle },
-    { id: 'franchiseur', label: 'Franchiseur', icon: Network, requiresOption: { module: 'reseau_franchiseur' } },
     { id: 'admin', label: 'Admin', icon: Shield, requiresOption: { module: 'admin_plateforme' } },
   ], []);
   
@@ -235,6 +233,15 @@ function UnifiedWorkspaceContent() {
   
   // Calculer le padding top selon les bandeaux actifs
   const topPadding = isImpersonating ? 'pt-10' : '';
+  
+  // Vue Franchiseur = interface complètement différente pour N3+
+  if (isFranchiseur) {
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <FranchiseurView />
+      </Suspense>
+    );
+  }
   
   return (
     <AiUnifiedProvider>
@@ -340,10 +347,6 @@ function UnifiedWorkspaceContent() {
                 
                 <TabsContent value="aide" className="mt-0">
                   <SupportTabContent />
-                </TabsContent>
-                
-                <TabsContent value="franchiseur" className="mt-0">
-                  <FranchiseurTabContent />
                 </TabsContent>
                 
                 <TabsContent value="admin" className="mt-0">
