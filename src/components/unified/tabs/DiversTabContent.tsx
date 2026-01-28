@@ -40,7 +40,11 @@ export default function DiversTabContent() {
           {subTabs.map((tab) => {
             const Icon = tab.icon;
             return (
-              <TabsTrigger key={tab.id} value={tab.id} className="gap-2">
+              <TabsTrigger 
+                key={tab.id} 
+                value={tab.id} 
+                className="gap-2 transition-all duration-200 data-[state=inactive]:hover:bg-muted/80 data-[state=inactive]:hover:scale-[1.02] data-[state=inactive]:hover:shadow-sm"
+              >
                 <Icon className="w-4 h-4" />
                 <span className="hidden sm:inline">{tab.label}</span>
               </TabsTrigger>
