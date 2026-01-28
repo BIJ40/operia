@@ -43,7 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PageHeader } from '@/components/layout/PageHeader';
+
 
 const GROUP_COLORS: Record<string, string> = {
   rh: 'bg-violet-500/10 text-violet-700 border-violet-200',
@@ -263,13 +263,11 @@ export default function AdminFeatureFlags() {
   const totalFlags = flags?.length || 0;
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <PageHeader
-        title="Feature Flags"
-        subtitle="Activer/désactiver les modules et suivre leur développement"
-        backTo="/admin"
-        backLabel="Administration"
-      />
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Feature Flags</h1>
+        <p className="text-muted-foreground">Activer/désactiver les modules et suivre leur développement</p>
+      </div>
 
       {/* Stats par statut de développement */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">

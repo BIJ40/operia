@@ -3,7 +3,7 @@
  * Gère les utilisateurs, leurs rôles et accès
  */
 
-import { PageHeader } from '@/components/layout/PageHeader';
+
 import { useAccessRightsUsers, UserRow } from '@/hooks/access-rights';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -123,13 +123,11 @@ export default function UnifiedManagementPage() {
   };
 
   return (
-    <div className="container py-6 space-y-6">
-      <PageHeader
-        title="Gestion des Permissions"
-        subtitle="Utilisateurs, rôles et accès"
-        backTo="/admin"
-        backLabel="Administration"
-      />
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Gestion des Permissions</h1>
+        <p className="text-muted-foreground">Utilisateurs, rôles et accès</p>
+      </div>
 
       <Card>
         <CardHeader className="pb-4">
