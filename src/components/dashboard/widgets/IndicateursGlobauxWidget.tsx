@@ -15,16 +15,15 @@ import { LoadedData, StatParams } from '@/statia/definitions/types';
 import { supabase } from '@/integrations/supabase/client';
 import { loadSAVOverridesByAgencyUuid } from '@/statia/services/savOverridesService';
 import { useDashboardPeriod } from '@/pages/DashboardStatic';
-import { getMetricForAgency } from '@/statia/api/getMetricForAgency';
-import { getGlobalApogeeDataServices } from '@/statia/adapters/dataServiceAdapter';
 
-// Configuration des KPIs à afficher
+// Configuration des KPIs à afficher (sans SAV)
 const KPI_CONFIG: Array<{ 
   id: string; 
   statId: string;
   label: string; 
   format: 'currency' | 'percent' | 'number' | 'days'; 
-  color: string; 
+  bgColor: string; 
+  textColor: string;
   icon: string;
   getValue: (result: any) => number | null;
 }> = [
@@ -33,7 +32,8 @@ const KPI_CONFIG: Array<{
     statId: 'ca_global_ht',
     label: 'CA période', 
     format: 'currency', 
-    color: 'from-orange-500 to-orange-600', 
+    bgColor: 'bg-blue-500',
+    textColor: 'text-blue-600',
     icon: '€',
     getValue: (r) => r?.value ?? null
   },
@@ -42,17 +42,9 @@ const KPI_CONFIG: Array<{
     statId: 'taux_transformation_devis_nombre',
     label: 'Taux transfo', 
     format: 'percent', 
-    color: 'from-cyan-500 to-cyan-600', 
+    bgColor: 'bg-emerald-500',
+    textColor: 'text-emerald-600',
     icon: '📈',
-    getValue: (r) => r?.value ?? null
-  },
-  { 
-    id: 'sav', 
-    statId: 'taux_sav_global',
-    label: 'Taux SAV', 
-    format: 'percent', 
-    color: 'from-red-500 to-red-600', 
-    icon: 'SAV',
     getValue: (r) => r?.value ?? null
   },
   { 
@@ -60,7 +52,8 @@ const KPI_CONFIG: Array<{
     statId: 'panier_moyen',
     label: 'Panier moyen', 
     format: 'currency', 
-    color: 'from-pink-500 to-pink-600', 
+    bgColor: 'bg-pink-500',
+    textColor: 'text-pink-600',
     icon: '🛒',
     getValue: (r) => r?.value ?? null
   },
@@ -69,7 +62,8 @@ const KPI_CONFIG: Array<{
     statId: 'nb_dossiers_crees',
     label: 'Dossiers', 
     format: 'number', 
-    color: 'from-blue-500 to-blue-600', 
+    bgColor: 'bg-violet-500',
+    textColor: 'text-violet-600',
     icon: '📁',
     getValue: (r) => r?.value ?? null
   },
@@ -78,7 +72,8 @@ const KPI_CONFIG: Array<{
     statId: 'nombre_devis',
     label: 'Devis émis', 
     format: 'number', 
-    color: 'from-purple-500 to-purple-600', 
+    bgColor: 'bg-amber-500',
+    textColor: 'text-amber-600',
     icon: '📄',
     getValue: (r) => r?.value ?? null
   },
@@ -169,25 +164,12 @@ export function IndicateursGlobauxWidget() {
       
       for (const kpi of KPI_CONFIG) {
         try {
-          // Pour tous les KPIs sauf le SAV, on utilise computeStat directement
-          if (kpi.id !== 'sav') {
-            const result = await computeStat(kpi.statId, params, services, { useCache: false });
-            results[kpi.id] = kpi.getValue(result);
-          }
+          const result = await computeStat(kpi.statId, params, services, { useCache: false });
+          results[kpi.id] = kpi.getValue(result);
         } catch (error) {
           console.error(`[Widget] Erreur calcul ${kpi.statId}:`, error);
           results[kpi.id] = null;
         }
-      }
-
-      // Pour le Taux SAV, on s'aligne strictement sur la logique de la carte Taux SAV
-      try {
-        const statiaServices = getGlobalApogeeDataServices();
-        const savResult = await getMetricForAgency('taux_sav_global', agencySlug, { dateRange }, statiaServices);
-        results['sav'] = savResult?.value ?? null;
-      } catch (error) {
-        console.error('[Widget] Erreur calcul taux_sav_global (KPI):', error);
-        results['sav'] = null;
       }
 
       return results;
@@ -227,34 +209,37 @@ export function IndicateursGlobauxWidget() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4 p-2">
-        <div className="grid grid-cols-3 gap-2">
-          {Array(6).fill(0).map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full" />
+      <div className="space-y-3">
+        <div className="grid grid-cols-5 gap-2">
+          {Array(5).fill(0).map((_, i) => (
+            <Skeleton key={i} className="h-[72px] w-full rounded-xl" />
           ))}
         </div>
-        <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-32 w-full rounded-xl" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {/* KPIs en grille */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+    <div className="space-y-3">
+      {/* KPIs en ligne - 5 colonnes */}
+      <div className="grid grid-cols-5 gap-2">
         {KPI_CONFIG.map((kpi) => {
           const value = kpiData?.[kpi.id] as number | null;
           
           return (
-            <Card key={kpi.id} className="p-2 border hover:border-primary/50 transition-colors">
-              <div className="flex items-center gap-1.5 mb-1">
-                <div className={`bg-gradient-to-br ${kpi.color} p-1 rounded text-[10px] text-white font-bold flex items-center justify-center w-5 h-5`}>
+            <div 
+              key={kpi.id} 
+              className="bg-card/60 backdrop-blur-sm rounded-xl p-3 border border-border/50 hover:border-primary/30 hover:shadow-sm transition-all"
+            >
+              <div className="flex items-center gap-2 mb-1.5">
+                <div className={`${kpi.bgColor} w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold shadow-sm`}>
                   {kpi.icon}
                 </div>
-                <span className="text-[10px] text-muted-foreground truncate">{kpi.label}</span>
+                <span className="text-[11px] text-muted-foreground font-medium truncate">{kpi.label}</span>
               </div>
-              <p className="text-sm font-bold truncate">{formatValue(value, kpi.format)}</p>
-            </Card>
+              <p className={`text-lg font-bold ${kpi.textColor} truncate`}>{formatValue(value, kpi.format)}</p>
+            </div>
           );
         })}
       </div>

@@ -21,7 +21,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ChevronDown, BarChart3, Trophy, PieChart, TrendingUp, AlertTriangle, MessageSquare, Star, ShoppingCart, Users, Building2, Network, MapPin } from 'lucide-react';
+import { ChevronDown, BarChart3, Trophy, PieChart, TrendingUp, MessageSquare, Star, Users, Building2, Network, MapPin } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 
@@ -32,8 +32,6 @@ import { RecentTicketsWidget } from '@/components/dashboard/widgets/RecentTicket
 import { Top3TechniciensWidget } from '@/components/dashboard/widgets/Top3TechniciensWidget';
 import { CAParUniversWidget } from '@/components/dashboard/widgets/CAParUniversWidget';
 import { CAApporteursWidget } from '@/components/dashboard/widgets/CAApporteursWidget';
-import { TauxSavWidget } from '@/components/dashboard/widgets/TauxSavWidget';
-import { PanierMoyenWidget } from '@/components/dashboard/widgets/PanierMoyenWidget';
 import { TechniciensProdWidget } from '@/components/dashboard/widgets/TechniciensProdWidget';
 import { TechnicienPersonnelKPIs } from '@/components/dashboard/TechnicienPersonnelKPIs';
 import { AssistantePersonnelKPIs } from '@/components/dashboard/AssistantePersonnelKPIs';
@@ -510,8 +508,8 @@ export default function DashboardStatic() {
           </motion.div>
         </div>
 
-        {/* NIVEAU 3 - EXPLORABLE: Tickets + Favoris + SAV/Panier (compacts) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {/* NIVEAU 3 - EXPLORABLE: Tickets + Favoris */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Tickets récents */}
           <motion.div variants={itemVariants}>
             <WarmCard
@@ -538,41 +536,6 @@ export default function DashboardStatic() {
               <HumanTitle titleKey="favoris" icon={Star} iconColor="text-amber-500" />
               <div className="mt-3 min-h-[120px]">
                 <FavorisWidget />
-              </div>
-            </WarmCard>
-          </motion.div>
-
-          {/* Mini indicateurs: SAV + Panier moyen */}
-          <motion.div variants={itemVariants} className="space-y-3">
-            {/* Taux SAV (compact) */}
-            <WarmCard
-              variant="orange"
-              animate={false}
-              className="py-3 px-4"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-warm-orange/15">
-                  <AlertTriangle className="h-4 w-4 text-warm-orange" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <TauxSavWidget compact />
-                </div>
-              </div>
-            </WarmCard>
-
-            {/* Panier Moyen (compact) */}
-            <WarmCard
-              variant="pink"
-              animate={false}
-              className="py-3 px-4"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-warm-pink/15">
-                  <ShoppingCart className="h-4 w-4 text-warm-pink" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <PanierMoyenWidget compact />
-                </div>
               </div>
             </WarmCard>
           </motion.div>
