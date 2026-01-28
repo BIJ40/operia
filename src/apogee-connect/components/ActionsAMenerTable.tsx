@@ -2,24 +2,41 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, AlertTriangle, Clock, BellRing } from 'lucide-react';
-import { ActionRow } from '../types/actions';
+import { ExternalLink, AlertTriangle, Clock, BellRing, FileText, Receipt, UserCheck } from 'lucide-react';
+import { ActionRow, ActionType } from '../types/actions';
 import { DataService } from '../services/dataService';
+import { cn } from '@/lib/utils';
 
 interface ActionsAMenerTableProps {
   actions: ActionRow[];
   onOpenDossier?: (projectId: number) => void;
 }
+
+const ACTION_COLORS: Record<ActionType, { bg: string; border: string; icon: string }> = {
+  devis_a_faire: { 
+    bg: 'bg-blue-50 dark:bg-blue-950/30', 
+    border: 'border-blue-200 dark:border-blue-800',
+    icon: 'text-blue-500'
+  },
+  a_facturer: { 
+    bg: 'bg-emerald-50 dark:bg-emerald-950/30', 
+    border: 'border-emerald-200 dark:border-emerald-800',
+    icon: 'text-emerald-500'
+  },
+  relance_technicien: { 
+    bg: 'bg-purple-50 dark:bg-purple-950/30', 
+    border: 'border-purple-200 dark:border-purple-800',
+    icon: 'text-purple-500'
+  },
+};
+
+const ACTION_ICONS: Record<ActionType, typeof FileText> = {
+  devis_a_faire: FileText,
+  a_facturer: Receipt,
+  relance_technicien: UserCheck,
+};
 
 export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTableProps) {
   // Récupérer les IDs des techniciens à lookup
@@ -69,95 +86,112 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
 
   if (actions.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
-        <p className="text-lg font-medium">Aucune action en attente</p>
-        <p className="text-sm mt-2">Tous vos dossiers sont à jour !</p>
+      <div className="text-center py-16">
+        <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-emerald-100 to-emerald-50 dark:from-emerald-900/30 dark:to-emerald-950/20 flex items-center justify-center">
+          <Clock className="w-10 h-10 text-emerald-500" />
+        </div>
+        <p className="text-lg font-semibold text-foreground">Aucune action en attente</p>
+        <p className="text-sm text-muted-foreground mt-2">Tous vos dossiers sont à jour ! 🎉</p>
       </div>
     );
   }
 
   return (
-    <div className="border rounded-lg overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[100px]">Réf.</TableHead>
-            <TableHead className="w-[200px]">Libellé</TableHead>
-            <TableHead>Statut</TableHead>
-            <TableHead>Action à mener</TableHead>
-            <TableHead className="w-[140px]">Date limite</TableHead>
-            <TableHead>Client</TableHead>
-            <TableHead>Technicien</TableHead>
-            <TableHead className="w-[100px] text-center">État</TableHead>
-            <TableHead className="w-[80px]"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {actions.map((action, index) => (
-            <TableRow key={`${action.projectId}-${index}`}>
-              <TableCell className="font-medium text-xs">
-                {action.ref}
-              </TableCell>
-              <TableCell className="font-medium">
-                {action.label}
-              </TableCell>
-              <TableCell>
-                <span className="text-sm text-muted-foreground">
-                  {action.statut}
-                </span>
-              </TableCell>
-              <TableCell className="font-medium">
-                {action.actionLabel}
-              </TableCell>
-              <TableCell>
-                <div className="text-sm">
-                  {format(action.deadline, 'dd/MM/yyyy', { locale: fr })}
+    <div className="space-y-3">
+      {actions.map((action, index) => {
+        const colors = ACTION_COLORS[action.actionType];
+        const ActionIcon = ACTION_ICONS[action.actionType];
+        
+        return (
+          <div
+            key={`${action.projectId}-${index}`}
+            className={cn(
+              "group relative rounded-2xl border-2 p-4 transition-all duration-200",
+              "hover:shadow-lg hover:scale-[1.01] cursor-pointer",
+              colors.bg,
+              colors.border,
+              action.isLate && "ring-2 ring-red-400/50 ring-offset-2 ring-offset-background"
+            )}
+            onClick={() => onOpenDossier?.(action.projectId)}
+          >
+            {/* Status badge */}
+            <div className="absolute -top-2 -right-2">
+              {action.isLate ? (
+                <Badge className="bg-red-500 hover:bg-red-600 text-white shadow-lg animate-pulse gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  En retard
+                </Badge>
+              ) : action.isDueSoon ? (
+                <Badge className="bg-amber-500 hover:bg-amber-600 text-white shadow-lg gap-1">
+                  <BellRing className="w-3 h-3" />
+                  Demain
+                </Badge>
+              ) : null}
+            </div>
+
+            <div className="flex items-start gap-4">
+              {/* Icon */}
+              <div className={cn(
+                "w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0",
+                "bg-white/80 dark:bg-black/20 shadow-sm"
+              )}>
+                <ActionIcon className={cn("w-6 h-6", colors.icon)} />
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-mono text-muted-foreground bg-white/50 dark:bg-black/20 px-2 py-0.5 rounded">
+                    {action.ref}
+                  </span>
+                  <span className="text-sm font-semibold text-foreground truncate">
+                    {action.label}
+                  </span>
                 </div>
-                {action.isLate && action.daysLate && action.daysLate > 0 && (
-                  <div className="text-xs text-destructive mt-1">
-                    +{action.daysLate} jour{action.daysLate > 1 ? 's' : ''}
-                  </div>
-                )}
-              </TableCell>
-              <TableCell className="text-sm">
-                {action.clientName}
-              </TableCell>
-              <TableCell className="text-sm">
-                {getTechnicienName(action)}
-              </TableCell>
-              <TableCell className="text-center">
-                {action.isLate ? (
-                  <Badge variant="destructive" className="gap-1">
-                    <AlertTriangle className="w-3 h-3" />
-                    En retard
-                  </Badge>
-                ) : action.isDueSoon ? (
-                  <Badge variant="default" className="gap-1 bg-orange-500 hover:bg-orange-600 text-white">
-                    <BellRing className="w-3 h-3" />
-                    J+1
-                  </Badge>
-                ) : (
-                  <Badge variant="secondary" className="gap-1">
+                
+                <p className="text-base font-medium text-foreground mb-2">
+                  {action.actionLabel}
+                </p>
+
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-current opacity-50" />
+                    {action.clientName}
+                  </span>
+                  {getTechnicienName(action) !== '-' && (
+                    <span className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-50" />
+                      {getTechnicienName(action)}
+                    </span>
+                  )}
+                  <span className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
-                    À venir
-                  </Badge>
-                )}
-              </TableCell>
-              <TableCell>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onOpenDossier?.(action.projectId)}
-                  className="h-8 w-8 p-0"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                    {format(action.deadline, 'dd MMM yyyy', { locale: fr })}
+                    {action.isLate && action.daysLate && action.daysLate > 0 && (
+                      <span className="text-red-500 font-medium">
+                        (+{action.daysLate}j)
+                      </span>
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              {/* Action button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenDossier?.(action.projectId);
+                }}
+              >
+                <ExternalLink className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

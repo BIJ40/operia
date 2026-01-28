@@ -153,17 +153,32 @@ export function ActionsAMenerTab() {
         )}
 
         {/* Tableau des actions */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between py-4">
-            <div>
-              <CardTitle className="text-base">Liste des actions</CardTitle>
-              <CardDescription className="text-xs">
-                Triées par urgence
-              </CardDescription>
+        <Card className="border-0 shadow-sm bg-gradient-to-br from-background to-muted/20">
+          <CardHeader className="py-3 px-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-base">Liste des actions</CardTitle>
+                <CardDescription className="text-xs hidden sm:block">
+                  Triées par urgence
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <ActionsAMenerFilters
+                  actionTypeFilter={actionTypeFilter}
+                  onActionTypeChange={setActionTypeFilter}
+                  clientFilter={clientFilter}
+                  onClientFilterChange={setClientFilter}
+                  statusFilter={statusFilter}
+                  onStatusFilterChange={setStatusFilter}
+                  availableClients={availableClients}
+                  activeFiltersCount={activeFiltersCount}
+                  onResetFilters={handleResetFilters}
+                />
+                <ConditionalRender minRole="franchisee_admin">
+                  <ActionsConfigDialog />
+                </ConditionalRender>
+              </div>
             </div>
-            <ConditionalRender minRole="franchisee_admin">
-              <ActionsConfigDialog />
-            </ConditionalRender>
           </CardHeader>
           <CardContent className="space-y-4">
             {isLoading || isLoadingConfig ? (
@@ -179,17 +194,6 @@ export function ActionsAMenerTab() {
               </div>
             ) : (
               <>
-                <ActionsAMenerFilters
-                  actionTypeFilter={actionTypeFilter}
-                  onActionTypeChange={setActionTypeFilter}
-                  clientFilter={clientFilter}
-                  onClientFilterChange={setClientFilter}
-                  statusFilter={statusFilter}
-                  onStatusFilterChange={setStatusFilter}
-                  availableClients={availableClients}
-                  activeFiltersCount={activeFiltersCount}
-                  onResetFilters={handleResetFilters}
-                />
                 
                 <ActionsAMenerTable
                   actions={filteredActions}
