@@ -202,30 +202,46 @@ Deno.serve(async (req) => {
     const isFranchiseurRole = ['franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(profile.global_role || '');
     let targetAgency = profile.agence;
 
+    // MODE DÉMO: Les utilisateurs N0 (base_user sans agence) peuvent accéder à DAX en lecture seule
+    const isN0DemoUser = !profile.agence && profile.global_role === 'base_user';
+    const DEMO_AGENCY_SLUG = 'dax';
+
     if (requestedAgency && requestedAgency !== profile.agence) {
-      if (!isFranchiseurRole) {
+      // Cas spécial: Mode démo N0 pour l'agence DAX uniquement
+      if (isN0DemoUser && requestedAgency === DEMO_AGENCY_SLUG) {
+        console.log(`[GET-RDV-MAP] Mode démo activé pour user ${user.id.substring(0, 8)}... sur agence ${DEMO_AGENCY_SLUG}`);
+        targetAgency = DEMO_AGENCY_SLUG;
+      }
+      // Sinon vérifier que l'utilisateur a le droit d'accéder à cette agence (rôle franchiseur)
+      else if (!isFranchiseurRole) {
         return withCors(req, new Response(
           JSON.stringify({ success: false, error: 'Access denied to this agency' }),
           { status: 403, headers: { 'Content-Type': 'application/json' } }
         ));
       }
-      
-      // Vérifier que l'agence existe
-      const { data: agency } = await supabase
-        .from('apogee_agencies')
-        .select('slug')
-        .eq('slug', requestedAgency)
-        .eq('is_active', true)
-        .maybeSingle();
-      
-      if (!agency) {
-        return withCors(req, new Response(
-          JSON.stringify({ success: false, error: 'Agency not found' }),
-          { status: 404, headers: { 'Content-Type': 'application/json' } }
-        ));
+      else {
+        // Vérifier que l'agence existe
+        const { data: agency } = await supabase
+          .from('apogee_agencies')
+          .select('slug')
+          .eq('slug', requestedAgency)
+          .eq('is_active', true)
+          .maybeSingle();
+        
+        if (!agency) {
+          return withCors(req, new Response(
+            JSON.stringify({ success: false, error: 'Agency not found' }),
+            { status: 404, headers: { 'Content-Type': 'application/json' } }
+          ));
+        }
+        
+        targetAgency = requestedAgency;
       }
-      
-      targetAgency = requestedAgency;
+    }
+
+    // Pour les utilisateurs N0 en mode démo, définir l'agence DAX par défaut
+    if (!targetAgency && isN0DemoUser) {
+      targetAgency = DEMO_AGENCY_SLUG;
     }
 
     if (!targetAgency) {
