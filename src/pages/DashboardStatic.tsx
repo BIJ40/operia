@@ -424,19 +424,20 @@ export default function DashboardStatic() {
         animate="visible"
         className="space-y-6"
       >
-        {/* HERO SECTION - Carte RDV */}
-        <motion.div variants={itemVariants}>
-          <DashboardMapWidget agencySlug={agence} />
-        </motion.div>
+        {/* NIVEAU 1 - HERO ROW: Carte RDV + Indicateurs Globaux */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {/* Carte RDV (demi-tuile) */}
+          <motion.div variants={itemVariants}>
+            <DashboardMapWidget agencySlug={agence} className="h-full" />
+          </motion.div>
 
-        {/* NIVEAU 1 - VUE IMMÉDIATE */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          {/* Indicateurs Globaux (large) */}
-          <motion.div variants={itemVariants} className="lg:col-span-8">
+          {/* Indicateurs Globaux (demi-tuile) */}
+          <motion.div variants={itemVariants}>
             <WarmCard
               variant="blue"
               icon={BarChart3}
               animate={false}
+              className="h-full"
             >
               <HumanTitle titleKey="kpis" icon={BarChart3} iconColor="text-warm-blue" size="lg" />
               <div className="mt-4">
@@ -444,21 +445,21 @@ export default function DashboardStatic() {
               </div>
             </WarmCard>
           </motion.div>
-
-          {/* Top 3 Techniciens */}
-          <motion.div variants={itemVariants} className="lg:col-span-4">
-            <WarmCard
-              variant="orange"
-              icon={Trophy}
-              animate={false}
-            >
-              <HumanTitle titleKey="top_techniciens" icon={Trophy} iconColor="text-warm-orange" size="lg" />
-              <div className="mt-4">
-                <Top3TechniciensWidget />
-              </div>
-            </WarmCard>
-          </motion.div>
         </div>
+
+        {/* NIVEAU 2 - Top Techniciens */}
+        <motion.div variants={itemVariants}>
+          <WarmCard
+            variant="orange"
+            icon={Trophy}
+            animate={false}
+          >
+            <HumanTitle titleKey="top_techniciens" icon={Trophy} iconColor="text-warm-orange" size="lg" />
+            <div className="mt-4">
+              <Top3TechniciensWidget />
+            </div>
+          </WarmCard>
+        </motion.div>
 
         {/* NIVEAU 2 - EXPLORABLE */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
