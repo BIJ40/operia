@@ -1,8 +1,9 @@
 /**
  * Routes du module RH (Ressources Humaines)
  * 
- * SIMPLIFICATION v0.8.5: Suppression des pages legacy collaborateur.
- * L'accès aux fiches se fait uniquement via le Cockpit (/rh/suivi).
+ * SIMPLIFICATION v0.9: Navigation unifiée via onglets.
+ * Les routes principales redirigent vers l'interface unifiée.
+ * Les sous-pages de détail conservent MainLayout.
  */
 import { lazy } from "react";
 import { Route, Navigate } from "react-router-dom";
@@ -10,10 +11,8 @@ import { MainLayout } from "@/components/layout";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { ModuleGuard } from "@/components/auth/ModuleGuard";
 
-// Pages N2 (back-office) - Lazy loaded
-const RHIndex = lazy(() => import("@/pages/RHIndex"));
+// Pages détail - Lazy loaded
 const RHSuiviIndex = lazy(() => import("@/pages/rh/RHSuiviIndex"));
-const CollaborateurProfilePage = lazy(() => import("@/pages/CollaborateurProfilePage"));
 const MaintenancePreventivePage = lazy(() => import("@/pages/MaintenancePreventivePage"));
 const DocGenPage = lazy(() => import("@/pages/rh/DocGenPage"));
 const RHMeetingsPage = lazy(() => import("@/pages/rh/RHMeetingsPage"));
@@ -23,20 +22,10 @@ export function RHRoutes() {
   return (
     <>
       {/* ============================================ */}
-      {/* RH INDEX - N2+ uniquement */}
+      {/* REDIRECTIONS VERS INTERFACE UNIFIEE */}
       {/* ============================================ */}
-      <Route 
-        path="/rh" 
-        element={
-          <MainLayout>
-            <RoleGuard minRole="franchisee_admin">
-              <ModuleGuard moduleKey="rh">
-                <RHIndex />
-              </ModuleGuard>
-            </RoleGuard>
-          </MainLayout>
-        } 
-      />
+      <Route path="/rh" element={<Navigate to="/?tab=salaries" replace />} />
+      <Route path="/rh/parc" element={<Navigate to="/?tab=parc" replace />} />
 
       {/* ============================================ */}
       {/* SUIVI RH - COCKPIT (N2 back-office) */}
@@ -67,23 +56,8 @@ export function RHRoutes() {
         } 
       />
 
-      {/* ============================================ */}
-      {/* MAINTENANCE (N2) */}
-      {/* ============================================ */}
-      <Route 
-        path="/rh/parc" 
-        element={
-          <MainLayout>
-            <RoleGuard minRole="franchisee_admin">
-              <ModuleGuard moduleKey="rh">
-                <MaintenancePreventivePage />
-              </ModuleGuard>
-            </RoleGuard>
-          </MainLayout>
-        } 
-      />
-      {/* Route /rh/epi supprimée - redirection vers /rh/parc */}
-      <Route path="/rh/epi" element={<Navigate to="/rh/parc" replace />} />
+      {/* Route /rh/epi supprimée - redirection vers onglet parc */}
+      <Route path="/rh/epi" element={<Navigate to="/?tab=parc" replace />} />
 
       {/* ============================================ */}
       {/* OUTILS RH (N2) */}
