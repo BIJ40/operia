@@ -33,7 +33,6 @@ import {
   Loader2,
   Clock,
   Trash2,
-  Sparkles,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -58,11 +57,6 @@ import {
 } from '@/types/collaborator';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { useCollaboratorDocuments } from '@/hooks/useCollaboratorDocuments';
-import { useAnalyzePayslip, usePayslipDataByCollaborator } from '@/hooks/usePayslipAnalysis';
-import { toast } from 'sonner';
-import { PayslipDataViewer } from './payslip';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface ContractSalaryTabProps {
@@ -90,58 +84,12 @@ export function ContractSalaryTab({ collaboratorId, canManage }: ContractSalaryT
     deleteSalaryEntry,
   } = useSalaryHistory(currentContract?.id);
 
-  const { documents } = useCollaboratorDocuments(collaboratorId);
-  const analyzePayslip = useAnalyzePayslip();
-  const { data: payslipsData, isLoading: isLoadingPayslips } = usePayslipDataByCollaborator(collaboratorId);
-
   const [showContractDialog, setShowContractDialog] = useState(false);
   const [showSalaryDialog, setShowSalaryDialog] = useState(false);
   const [showCloseDialog, setShowCloseDialog] = useState(false);
   const [editingContract, setEditingContract] = useState<EmploymentContract | null>(null);
   const [editingSalary, setEditingSalary] = useState<SalaryHistory | null>(null);
   const [deletingSalaryId, setDeletingSalaryId] = useState<string | null>(null);
-  const [isAnalyzingAll, setIsAnalyzingAll] = useState(false);
-
-  // Get payslip documents (PDF only)
-  const payslipDocuments = documents.filter(
-    (doc) => doc.doc_type === 'PAYSLIP' && doc.file_type === 'application/pdf'
-  );
-
-  const handleAnalyzeAllPayslips = async () => {
-    if (!agencyId || payslipDocuments.length === 0) {
-      toast.info('Aucun bulletin de paie PDF à analyser');
-      return;
-    }
-
-    setIsAnalyzingAll(true);
-    toast.info(`Analyse de ${payslipDocuments.length} bulletin(s) en cours...`);
-
-    let successCount = 0;
-    let errorCount = 0;
-
-    for (const doc of payslipDocuments) {
-      try {
-        await analyzePayslip.mutateAsync({
-          documentId: doc.id,
-          filePath: doc.file_path,
-          collaboratorId,
-          agencyId,
-        });
-        successCount++;
-      } catch (error) {
-        console.error('Erreur analyse bulletin:', doc.id, error);
-        errorCount++;
-      }
-    }
-
-    setIsAnalyzingAll(false);
-
-    if (errorCount === 0) {
-      toast.success(`${successCount} bulletin(s) analysé(s) avec succès`);
-    } else {
-      toast.warning(`${successCount} réussi(s), ${errorCount} échec(s)`);
-    }
-  };
 
   const formatDate = (date: string | null) => {
     if (!date) return '-';
@@ -344,31 +292,11 @@ export function ContractSalaryTab({ collaboratorId, canManage }: ContractSalaryT
             )}
 
             {canManage && currentContract && (
-              <div className="pt-2 flex gap-2">
+              <div className="pt-2">
                 <Button variant="outline" size="sm" onClick={() => setShowSalaryDialog(true)}>
                   <Plus className="h-4 w-4 mr-1" />
                   Nouvelle entrée salaire
                 </Button>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleAnalyzeAllPayslips}
-                      disabled={isAnalyzingAll || payslipDocuments.length === 0}
-                      className="text-violet-600 border-violet-300 hover:bg-violet-50 hover:text-violet-700"
-                    >
-                      {isAnalyzingAll ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Sparkles className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Analyser {payslipDocuments.length} bulletin(s) de paie avec l'IA</p>
-                  </TooltipContent>
-                </Tooltip>
               </div>
             )}
           </CardContent>
@@ -401,12 +329,6 @@ export function ContractSalaryTab({ collaboratorId, canManage }: ContractSalaryT
         )}
       </div>
 
-      {/* Données bulletins de paie analysés */}
-      {(payslipsData && payslipsData.length > 0) && (
-        <div className="mt-6">
-          <PayslipDataViewer payslips={payslipsData} isLoading={isLoadingPayslips} />
-        </div>
-      )}
 
       {/* Dialogs */}
       <ContractDialog

@@ -55,14 +55,17 @@ export function AiInlineResult({ messages, isLoading, onClose, onContactSupport,
     
     setIsSendingTicket(true);
     try {
-      const { error } = await supabase.from('support_tickets').insert({
-        subject: 'Question depuis l\'IA Assistant',
-        type: 'chat_ai',
-        status: 'new',
+      // Create ticket in apogee_tickets (Gestion de Projet system)
+      const { error } = await supabase.from('apogee_tickets').insert({
+        element_concerne: 'Question depuis l\'IA Assistant',
+        description: supportMessage,
+        kanban_status: 'USER',
         heat_priority: 4,
-        user_id: user.id,
-        agency_slug: agence,
-        chatbot_conversation: { context: supportMessage },
+        is_urgent_support: true,
+        support_initiator_user_id: user.id,
+        created_by_user_id: user.id,
+        created_from: 'support_chat',
+        initiator_profile: { agency_slug: agence },
       });
 
       if (error) throw error;
