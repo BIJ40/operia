@@ -1,11 +1,10 @@
 /**
- * Vue d'ensemble des véhicules - Liste et filtres
+ * Vue d'ensemble des véhicules - Liste simple et filtres
  * Édition inline (double-clic + auto-save 10s)
  */
 
 import { useState } from 'react';
 import { useVehicleInlineEdit } from '@/hooks/maintenance/useVehicleInlineEdit';
-import { useVehicleTabs } from './browser-tabs/VehicleTabsContext';
 import type { FleetVehicle, FleetVehiclesFilters, VehicleStatus, FleetVehicleFormData } from '@/types/maintenance';
 import { VEHICLE_STATUSES } from '@/types/maintenance';
 import {
@@ -24,9 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, AlertTriangle, Clock, QrCode, Save, Eye } from 'lucide-react';
+import { Plus, AlertTriangle, Clock, QrCode, Save } from 'lucide-react';
 import { VehicleFormDialog } from './VehicleFormDialog';
 import { QrCodeModal } from './QrCodeModal';
 import { VehicleEditableCell } from './VehicleEditableCell';
@@ -49,7 +47,6 @@ export function VehiclesOverview({ vehicles, isLoading }: VehiclesOverviewProps)
   const [qrVehicle, setQrVehicle] = useState<FleetVehicle | null>(null);
 
   const { handleValueChange, getLocalValue, saveChanges, hasPendingChanges } = useVehicleInlineEdit();
-  const { openVehicle, openVehicleById } = useVehicleTabs();
 
   // Filtrer les véhicules côté client
   const filteredVehicles = vehicles.filter(v => {
@@ -88,10 +85,6 @@ export function VehiclesOverview({ vehicles, isLoading }: VehiclesOverviewProps)
   const handleAddVehicle = () => {
     setEditingVehicle(undefined);
     setIsFormOpen(true);
-  };
-
-  const handleVehicleCreated = (vehicleId: string, label: string) => {
-    openVehicleById(vehicleId, label);
   };
 
   return (
@@ -183,7 +176,6 @@ export function VehiclesOverview({ vehicles, isLoading }: VehiclesOverviewProps)
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/40 text-xs uppercase text-muted-foreground">
-                  <th className="py-2 pr-2 text-center font-medium w-10"></th>
                   <th className="py-2 pr-4 text-left font-medium">Nom</th>
                   <th className="px-4 py-2 text-left font-medium">Immat.</th>
                   <th className="px-4 py-2 text-left font-medium">Marque</th>
@@ -204,7 +196,6 @@ export function VehiclesOverview({ vehicles, isLoading }: VehiclesOverviewProps)
                     getLocalValue={getLocalValue}
                     onValueChange={handleValueChange}
                     onShowQr={(v) => setQrVehicle(v)}
-                    onShowDetail={openVehicle}
                   />
                 ))}
               </tbody>
@@ -217,7 +208,6 @@ export function VehiclesOverview({ vehicles, isLoading }: VehiclesOverviewProps)
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
         vehicle={editingVehicle}
-        onVehicleCreated={handleVehicleCreated}
       />
 
       {qrVehicle && qrVehicle.qr_token && (
@@ -255,23 +245,11 @@ interface VehicleRowProps {
   getLocalValue: (vehicleId: string, field: keyof FleetVehicleFormData, originalValue: unknown) => unknown;
   onValueChange: (vehicleId: string, field: keyof FleetVehicleFormData, value: unknown) => void;
   onShowQr: (vehicle: FleetVehicle) => void;
-  onShowDetail: (vehicle: FleetVehicle) => void;
 }
 
-function VehicleRow({ vehicle, getLocalValue, onValueChange, onShowQr, onShowDetail }: VehicleRowProps) {
+function VehicleRow({ vehicle, getLocalValue, onValueChange, onShowQr }: VehicleRowProps) {
   return (
     <tr className="border-b hover:bg-muted/20">
-      <td className="py-1 pr-2 align-middle text-center">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7"
-          onClick={() => onShowDetail(vehicle)}
-          title="Voir les détails"
-        >
-          <Eye className="h-4 w-4 text-primary" />
-        </Button>
-      </td>
       <td className="py-1 pr-4 align-middle">
         <VehicleEditableCell
           value={getLocalValue(vehicle.id, 'name', vehicle.name)}
