@@ -5,6 +5,7 @@
 
 import { lazy, Suspense } from 'react';
 import { FileText, Users2, Loader2, Users, CalendarDays } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useSessionState } from '@/hooks/useSessionState';
 
@@ -36,18 +37,30 @@ export default function DiversTabContent() {
   return (
     <div className="py-3 px-2 sm:px-4">
       <Tabs value={activeSubTab} onValueChange={(v) => setActiveSubTab(v as DiversSubTab)}>
-        <TabsList className="mb-4">
-          {subTabs.map((tab) => {
+        <TabsList className="flex flex-wrap justify-start gap-2 bg-transparent h-auto p-2 mb-4">
+          {subTabs.map((tab, index) => {
             const Icon = tab.icon;
             return (
-              <TabsTrigger 
-                key={tab.id} 
-                value={tab.id} 
-                className="gap-2 transition-all duration-200 data-[state=inactive]:hover:bg-muted/80 data-[state=inactive]:hover:scale-[1.02] data-[state=inactive]:hover:shadow-sm"
+              <motion.div
+                key={tab.id}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05, duration: 0.2 }}
               >
-                <Icon className="w-4 h-4" />
-                <span className="hidden sm:inline">{tab.label}</span>
-              </TabsTrigger>
+                <TabsTrigger 
+                  value={tab.id} 
+                  className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium
+                    bg-background border border-border rounded-xl shadow-sm
+                    transition-all duration-300 ease-out
+                    hover:scale-105 hover:shadow-md hover:border-primary/30 hover:bg-primary/5
+                    data-[state=active]:bg-primary data-[state=active]:text-primary-foreground 
+                    data-[state=active]:border-primary data-[state=active]:shadow-lg 
+                    data-[state=active]:scale-105"
+                >
+                  <Icon className="w-4 h-4 transition-transform duration-200" />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                </TabsTrigger>
+              </motion.div>
             );
           })}
         </TabsList>
