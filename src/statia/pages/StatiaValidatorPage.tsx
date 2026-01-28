@@ -10,9 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { CheckCircle2, XCircle, AlertCircle, Play, Loader2, ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { ROUTES } from '@/config/routes';
+import { CheckCircle2, XCircle, AlertCircle, Play, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
@@ -325,22 +323,13 @@ export default function StatiaValidatorPage() {
   };
 
   return (
-    <div className="container mx-auto py-6 px-4 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link 
-            to={ROUTES.admin.statia} 
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            StatIA-BY-BIJ
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold">StatIA Validator</h1>
-            <p className="text-muted-foreground">
-              Compare forceMetric vs NLP routing ({agencySlug})
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold">StatIA Validator</h1>
+          <p className="text-muted-foreground">
+            Compare forceMetric vs NLP routing ({agencySlug})
+          </p>
         </div>
         
         <div className="flex items-center gap-4">

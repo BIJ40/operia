@@ -6,7 +6,7 @@
 import { EyeOff, Clock, AlertTriangle, Info, Calendar, FileText, Fingerprint, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { PageHeader } from '@/components/layout/PageHeader';
+
 import { Separator } from '@/components/ui/separator';
 
 interface HiddenFeature {
@@ -59,13 +59,11 @@ function getPriorityLabel(priority: HiddenFeature['priority']) {
 
 export default function HiddenFeaturesPage() {
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-      <PageHeader
-        title="Fonctionnalités Masquées"
-        subtitle="Récapitulatif des fonctionnalités temporairement désactivées"
-        backTo="/admin"
-        backLabel="Admin"
-      />
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Fonctionnalités Masquées</h1>
+        <p className="text-muted-foreground">Récapitulatif des fonctionnalités temporairement désactivées</p>
+      </div>
 
       {/* Stats rapides */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

@@ -1,17 +1,20 @@
 /**
  * StatIA - Page Admin (N5/N6)
  * Affiche toutes les métriques disponibles avec leurs valeurs
+ * 
+ * NOTE: Cette page est affichée DANS l'espace Admin unifié,
+ * donc les onglets internes (Vue Métriques / Validator Hub) 
+ * utilisent un paramètre URL dédié 'statiaTab' pour ne pas 
+ * interférer avec les params de navigation admin.
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import { AllMetricsViewer } from '../components/AllMetricsViewer';
 import { MetricValidatorHub } from '../components/MetricValidatorHub';
 import { LocalErrorBoundary } from '@/components/system/LocalErrorBoundary';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertTriangle, FlaskConical, LayoutGrid, CheckSquare } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { AlertTriangle, LayoutGrid, CheckSquare } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
 function StatiaErrorFallback({ error }: { error: Error }) {
@@ -37,23 +40,21 @@ function StatiaErrorFallback({ error }: { error: Error }) {
 
 export default function StatiaBuilderAdminPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const currentTab = searchParams.get('tab') || 'viewer';
+  // Utiliser un paramètre dédié pour les onglets internes StatIA
+  const currentTab = searchParams.get('statiaTab') || 'viewer';
 
   const handleTabChange = (value: string) => {
-    setSearchParams({ tab: value });
+    // Préserver TOUS les params existants (tab, adminTab, adminView)
+    const next = new URLSearchParams(searchParams);
+    next.set('statiaTab', value);
+    setSearchParams(next);
   };
 
   return (
     <LocalErrorBoundary componentName="StatIA Builder">
-      <div className="container mx-auto py-6 px-4 space-y-6">
+      <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">StatIA-BY-BIJ</h1>
-          <Button asChild variant="outline" size="sm">
-            <Link to="/admin/statia-validator" className="flex items-center gap-2">
-              <FlaskConical className="h-4 w-4" />
-              Validator NLP
-            </Link>
-          </Button>
         </div>
 
         <Tabs value={currentTab} onValueChange={handleTabChange}>

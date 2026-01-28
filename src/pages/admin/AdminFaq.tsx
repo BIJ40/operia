@@ -17,7 +17,6 @@ import {
   ContextType,
   CONTEXT_OPTIONS,
 } from '@/components/admin/faq';
-import { PageHeader } from '@/components/layout/PageHeader';
 
 export default function AdminFaq() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -39,15 +38,19 @@ export default function AdminFaq() {
   const [editingItem, setEditingItem] = useState<FaqItem | null>(null);
   const [searchResults, setSearchResults] = useState<FaqItem[] | null>(null);
 
-  // Navigate to context
+  // Navigate to context - préserve les params admin
   const goToContext = (context: ContextType) => {
-    setSearchParams({ context });
+    const next = new URLSearchParams(searchParams);
+    next.set('context', context);
+    setSearchParams(next);
     setSearchResults(null);
   };
 
-  // Back to hub
+  // Back to hub - préserve les params admin
   const goToHub = () => {
-    setSearchParams({});
+    const next = new URLSearchParams(searchParams);
+    next.delete('context');
+    setSearchParams(next);
     setSearchResults(null);
   };
 
@@ -189,20 +192,20 @@ export default function AdminFaq() {
 
   // HUB VIEW
   return (
-    <div className="container py-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
-      <PageHeader
-        title="HUB FAQ"
-        subtitle={`${totalFaqs} FAQ au total · ${totalPublished} publiées`}
-        backTo="/admin"
-        backLabel="Administration"
-        rightElement={
-          <Button onClick={openCreateDialog} className="bg-helpconfort-blue hover:bg-helpconfort-blue/90">
-            <Plus className="h-4 w-4 mr-2" />
-            Nouvelle FAQ
-          </Button>
-        }
-      />
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">HUB FAQ</h1>
+          <p className="text-muted-foreground">
+            {totalFaqs} FAQ au total · {totalPublished} publiées
+          </p>
+        </div>
+        <Button onClick={openCreateDialog} className="bg-helpconfort-blue hover:bg-helpconfort-blue/90">
+          <Plus className="h-4 w-4 mr-2" />
+          Nouvelle FAQ
+        </Button>
+      </div>
 
       {/* Context Tiles Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
