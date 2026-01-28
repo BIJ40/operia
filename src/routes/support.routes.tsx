@@ -1,11 +1,19 @@
 import { lazy } from "react";
 import { Route, Navigate } from "react-router-dom";
-import { MainLayout } from "@/components/layout";
-import { RoleGuard } from "@/components/auth/RoleGuard";
+import { MinimalLayout } from "@/components/layout";
 
 // Lazy loaded pages
 const SupportIndex = lazy(() => import("@/pages/SupportIndex"));
 const Faq = lazy(() => import("@/pages/Faq"));
+
+// Helper pour créer les layouts Support
+function SupportLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <MinimalLayout backTab="aide" backLabel="Retour à l'Aide">
+      {children}
+    </MinimalLayout>
+  );
+}
 
 export function SupportRoutes() {
   return (
@@ -21,7 +29,7 @@ export function SupportRoutes() {
       <Route path="/support/console" element={<Navigate to="/projects/kanban" replace />} />
       
       {/* FAQ - accessible à tous */}
-      <Route path="/support/faq" element={<MainLayout><Faq /></MainLayout>} />
+      <Route path="/support/faq" element={<SupportLayout><Faq /></SupportLayout>} />
     </>
   );
 }

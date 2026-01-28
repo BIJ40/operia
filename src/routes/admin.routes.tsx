@@ -1,6 +1,6 @@
 import { lazy } from "react";
 import { Route, Navigate } from "react-router-dom";
-import { MainLayout } from "@/components/layout";
+import { MinimalLayout } from "@/components/layout";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { ModuleGuard } from "@/components/auth/ModuleGuard";
 import { FaqAdminGuard } from "@/components/auth/FaqAdminGuard";
@@ -37,6 +37,15 @@ const HiddenFeaturesPage = lazy(() => import("@/pages/admin/HiddenFeaturesPage")
 const AdminSitemap = lazy(() => import("@/pages/admin/AdminSitemap"));
 const AdminNotificationSender = lazy(() => import("@/pages/admin/AdminNotificationSender"));
 
+// Helper pour créer les layouts admin
+function AdminLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <MinimalLayout backTab="admin" backLabel="Retour à l'administration">
+      {children}
+    </MinimalLayout>
+  );
+}
+
 export function AdminRoutes() {
   return (
     <>
@@ -44,38 +53,38 @@ export function AdminRoutes() {
       <Route path="/admin" element={<Navigate to="/?tab=admin" replace />} />
       
       {/* Redirects legacy */}
-      <Route path="/admin/documents" element={<Navigate to="/admin/helpi" replace />} />
-      <Route path="/admin/chatbot-rag" element={<Navigate to="/admin/helpi" replace />} />
+      <Route path="/admin/documents" element={<Navigate to="/?tab=admin" replace />} />
+      <Route path="/admin/chatbot-rag" element={<Navigate to="/?tab=admin" replace />} />
       
       {/* Support - All redirected to projects (V3) */}
       <Route path="/admin/support-tickets" element={<Navigate to="/projects/kanban" replace />} />
       <Route path="/admin/support-stats" element={<Navigate to="/projects/kanban" replace />} />
       <Route path="/admin/escalation-history" element={<Navigate to="/projects/kanban" replace />} />
-      <Route path="/admin/support/settings" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><SupportSettings /></ModuleGuard></RoleGuard></MainLayout>} />
+      <Route path="/admin/support/settings" element={<AdminLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><SupportSettings /></ModuleGuard></RoleGuard></AdminLayout>} />
       
       {/* Backup & Storage */}
-      <Route path="/admin/backup" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminBackup /></ModuleGuard></RoleGuard></MainLayout>} />
-      <Route path="/admin/helpconfort-backup" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminHelpConfortBackup /></ModuleGuard></RoleGuard></MainLayout>} />
-      <Route path="/admin/storage-quota" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminStorageQuota /></ModuleGuard></RoleGuard></MainLayout>} />
-      <Route path="/admin/cache-backup" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminCacheBackup /></ModuleGuard></RoleGuard></MainLayout>} />
+      <Route path="/admin/backup" element={<AdminLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminBackup /></ModuleGuard></RoleGuard></AdminLayout>} />
+      <Route path="/admin/helpconfort-backup" element={<AdminLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminHelpConfortBackup /></ModuleGuard></RoleGuard></AdminLayout>} />
+      <Route path="/admin/storage-quota" element={<AdminLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminStorageQuota /></ModuleGuard></RoleGuard></AdminLayout>} />
+      <Route path="/admin/cache-backup" element={<AdminLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminCacheBackup /></ModuleGuard></RoleGuard></AdminLayout>} />
       
       {/* Agencies */}
-      <Route path="/admin/agencies" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminAgencies /></ModuleGuard></RoleGuard></MainLayout>} />
-      <Route path="/admin/agencies/:agencyId" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><FranchiseurLayout /></ModuleGuard></RoleGuard></MainLayout>}>
+      <Route path="/admin/agencies" element={<AdminLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminAgencies /></ModuleGuard></RoleGuard></AdminLayout>} />
+      <Route path="/admin/agencies/:agencyId" element={<AdminLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><FranchiseurLayout /></ModuleGuard></RoleGuard></AdminLayout>}>
         <Route index element={<FranchiseurAgencyProfile />} />
       </Route>
       
       {/* Monitoring */}
-      <Route path="/admin/user-activity" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminUserActivity /></ModuleGuard></RoleGuard></MainLayout>} />
-      <Route path="/admin/system-health" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminSystemHealth /></ModuleGuard></RoleGuard></MainLayout>} />
+      <Route path="/admin/user-activity" element={<AdminLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminUserActivity /></ModuleGuard></RoleGuard></AdminLayout>} />
+      <Route path="/admin/system-health" element={<AdminLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminSystemHealth /></ModuleGuard></RoleGuard></AdminLayout>} />
       
       {/* Content Management */}
-      <Route path="/admin/page-metadata" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminPageMetadata /></ModuleGuard></RoleGuard></MainLayout>} />
-      <Route path="/admin/apogee-guides" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminApogeeGuides /></ModuleGuard></RoleGuard></MainLayout>} />
-      <Route path="/admin/helpi" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminHelpi /></ModuleGuard></RoleGuard></MainLayout>} />
-      <Route path="/admin/announcements" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminAnnouncements /></ModuleGuard></RoleGuard></MainLayout>} />
-      <Route path="/admin/faq" element={<MainLayout><FaqAdminGuard><AdminFaq /></FaqAdminGuard></MainLayout>} />
-      <Route path="/admin/formation-generator" element={<Navigate to="/admin" replace />} />
+      <Route path="/admin/page-metadata" element={<AdminLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminPageMetadata /></ModuleGuard></RoleGuard></AdminLayout>} />
+      <Route path="/admin/apogee-guides" element={<AdminLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminApogeeGuides /></ModuleGuard></RoleGuard></AdminLayout>} />
+      <Route path="/admin/helpi" element={<AdminLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminHelpi /></ModuleGuard></RoleGuard></AdminLayout>} />
+      <Route path="/admin/announcements" element={<AdminLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminAnnouncements /></ModuleGuard></RoleGuard></AdminLayout>} />
+      <Route path="/admin/faq" element={<AdminLayout><FaqAdminGuard><AdminFaq /></FaqAdminGuard></AdminLayout>} />
+      <Route path="/admin/formation-generator" element={<Navigate to="/?tab=admin" replace />} />
       
       {/* Legacy apogee-tickets redirects */}
       <Route path="/admin/apogee-tickets" element={<Navigate to="/projects/kanban" replace />} />
@@ -84,32 +93,32 @@ export function AdminRoutes() {
       <Route path="/admin/apogee-tickets/permissions" element={<Navigate to="/projects/permissions" replace />} />
       
       {/* StatIA */}
-      <Route path="/admin/statia-by-bij" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><StatiaBuilderAdminPage /></ModuleGuard></RoleGuard></MainLayout>} />
-      <Route path="/admin/statia-validator" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><StatiaValidatorPage /></ModuleGuard></RoleGuard></MainLayout>} />
+      <Route path="/admin/statia-by-bij" element={<AdminLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><StatiaBuilderAdminPage /></ModuleGuard></RoleGuard></AdminLayout>} />
+      <Route path="/admin/statia-validator" element={<AdminLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><StatiaValidatorPage /></ModuleGuard></RoleGuard></AdminLayout>} />
       <Route path="/admin/statia-builder" element={<Navigate to="/admin/statia-by-bij" replace />} />
       
       {/* Feature flags & Permissions */}
-      <Route path="/admin/feature-flags" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminFeatureFlags /></ModuleGuard></RoleGuard></MainLayout>} />
+      <Route path="/admin/feature-flags" element={<AdminLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminFeatureFlags /></ModuleGuard></RoleGuard></AdminLayout>} />
       <Route path="/admin/modules" element={<Navigate to="/admin/feature-flags" replace />} />
       <Route path="/admin/permissions-center" element={<Navigate to="/admin/gestion" replace />} />
       <Route path="/admin/droits" element={<Navigate to="/admin/gestion" replace />} />
-      <Route path="/admin/gestion" element={<MainLayout><RoleGuard minRole="franchisee_admin"><UnifiedManagementPage /></RoleGuard></MainLayout>} />
+      <Route path="/admin/gestion" element={<AdminLayout><RoleGuard minRole="franchisee_admin"><UnifiedManagementPage /></RoleGuard></AdminLayout>} />
       
       {/* Reports & Tools */}
-      <Route path="/admin/apogee-report" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminApogeeReport /></ModuleGuard></RoleGuard></MainLayout>} />
-      <Route path="/admin/flow" element={<MainLayout><RoleGuard minRole="franchisor_admin"><AdminFlow /></RoleGuard></MainLayout>} />
-      <Route path="/admin/templates" element={<MainLayout><RoleGuard minRole="franchisor_admin"><ModuleGuard moduleKey="admin_plateforme"><DocTemplatesPage /></ModuleGuard></RoleGuard></MainLayout>} />
-      <Route path="/admin/apporteurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><AdminApporteurs /></RoleGuard></MainLayout>} />
-      <Route path="/admin/rapportactivite" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ReportActivityPage /></RoleGuard></MainLayout>} />
+      <Route path="/admin/apogee-report" element={<AdminLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminApogeeReport /></ModuleGuard></RoleGuard></AdminLayout>} />
+      <Route path="/admin/flow" element={<AdminLayout><RoleGuard minRole="franchisor_admin"><AdminFlow /></RoleGuard></AdminLayout>} />
+      <Route path="/admin/templates" element={<AdminLayout><RoleGuard minRole="franchisor_admin"><ModuleGuard moduleKey="admin_plateforme"><DocTemplatesPage /></ModuleGuard></RoleGuard></AdminLayout>} />
+      <Route path="/admin/apporteurs" element={<AdminLayout><RoleGuard minRole="franchisee_admin"><AdminApporteurs /></RoleGuard></AdminLayout>} />
+      <Route path="/admin/rapportactivite" element={<AdminLayout><RoleGuard minRole="franchisee_admin"><ReportActivityPage /></RoleGuard></AdminLayout>} />
       
       {/* Fonctionnalités masquées */}
-      <Route path="/admin/hidden-features" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><HiddenFeaturesPage /></ModuleGuard></RoleGuard></MainLayout>} />
+      <Route path="/admin/hidden-features" element={<AdminLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><HiddenFeaturesPage /></ModuleGuard></RoleGuard></AdminLayout>} />
       
       {/* Sitemap - Visualisation des routes */}
-      <Route path="/admin/sitemap" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminSitemap /></ModuleGuard></RoleGuard></MainLayout>} />
+      <Route path="/admin/sitemap" element={<AdminLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminSitemap /></ModuleGuard></RoleGuard></AdminLayout>} />
       
       {/* Envoi de notifications admin */}
-      <Route path="/admin/notifications" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminNotificationSender /></ModuleGuard></RoleGuard></MainLayout>} />
+      <Route path="/admin/notifications" element={<AdminLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminNotificationSender /></ModuleGuard></RoleGuard></AdminLayout>} />
       
       {/* gestionV2 supprimée - redirige vers gestion */}
       <Route path="/admin/gestionV2" element={<Navigate to="/admin/gestion" replace />} />

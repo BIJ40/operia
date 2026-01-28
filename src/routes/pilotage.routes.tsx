@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import { Route, Navigate } from "react-router-dom";
-import { MainLayout } from "@/components/layout";
+import { MinimalLayout } from "@/components/layout";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { ModuleGuard } from "@/components/auth/ModuleGuard";
 import { Loader2 } from "lucide-react";
@@ -29,6 +29,15 @@ function PageLoader() {
   );
 }
 
+// Helper pour créer les layouts pilotage
+function AgencyLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <MinimalLayout backTab="agence" backLabel="Retour à Mon Agence">
+      {children}
+    </MinimalLayout>
+  );
+}
+
 export function PilotageRoutes() {
   return (
     <>
@@ -40,7 +49,7 @@ export function PilotageRoutes() {
       <Route path="/agency/statistiques" element={<Navigate to="/?tab=stats" replace />} />
       
       {/* Indicateurs détaillés */}
-      <Route path="/agency/indicateurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="indicateurs"><IndicateursLayout /></ModuleGuard></RoleGuard></MainLayout>}>
+      <Route path="/agency/indicateurs" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="indicateurs"><IndicateursLayout /></ModuleGuard></RoleGuard></AgencyLayout>}>
         <Route index element={<IndicateursAccueil />} />
       </Route>
       {/* Legacy routes - redirect to StatsHub */}
@@ -50,28 +59,28 @@ export function PilotageRoutes() {
       <Route path="/agency/indicateurs/sav" element={<Navigate to="/agency/stats-hub" replace />} />
       
       {/* Veille Apporteurs */}
-      <Route path="/agency/veille-apporteurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="veille_apporteurs"><VeilleApporteursPage /></ModuleGuard></RoleGuard></MainLayout>} />
+      <Route path="/agency/veille-apporteurs" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="veille_apporteurs"><VeilleApporteursPage /></ModuleGuard></RoleGuard></AgencyLayout>} />
       
       {/* Actions à Mener */}
-      <Route path="/agency/actions" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="actions_a_mener"><ActionsAMener /></ModuleGuard></RoleGuard></MainLayout>} />
-      <Route path="/agency/actions/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="actions_a_mener"><CategoryActionsAMener /></ModuleGuard></RoleGuard></MainLayout>} />
+      <Route path="/agency/actions" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="actions_a_mener"><ActionsAMener /></ModuleGuard></RoleGuard></AgencyLayout>} />
+      <Route path="/agency/actions/category/:slug" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="actions_a_mener"><CategoryActionsAMener /></ModuleGuard></RoleGuard></AgencyLayout>} />
       
       {/* Diffusion */}
-      <Route path="/agency/diffusion" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="diffusion"><DiffusionDashboard /></ModuleGuard></RoleGuard></MainLayout>} />
+      <Route path="/agency/diffusion" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="diffusion"><DiffusionDashboard /></ModuleGuard></RoleGuard></AgencyLayout>} />
       
       {/* RH Tech - redirige vers RH principal */}
       <Route path="/agency/rh-tech" element={<Navigate to="/rh/suivi" replace />} />
-      <Route path="/agency/rh-tech/planning" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><PlanningHebdo /></ModuleGuard></RoleGuard></MainLayout>} />
+      <Route path="/agency/rh-tech/planning" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><PlanningHebdo /></ModuleGuard></RoleGuard></AgencyLayout>} />
       
       {/* Mes Apporteurs */}
-      <Route path="/agency/apporteurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="mes_apporteurs"><Suspense fallback={<PageLoader />}><MesApporteursPage /></Suspense></ModuleGuard></RoleGuard></MainLayout>} />
+      <Route path="/agency/apporteurs" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="mes_apporteurs"><Suspense fallback={<PageLoader />}><MesApporteursPage /></Suspense></ModuleGuard></RoleGuard></AgencyLayout>} />
       
       {/* Carte des RDV */}
-      <Route path="/agency/carte" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="carte_rdv"><Suspense fallback={<PageLoader />}><RdvMapPage /></Suspense></ModuleGuard></RoleGuard></MainLayout>} />
+      <Route path="/agency/carte" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="carte_rdv"><Suspense fallback={<PageLoader />}><RdvMapPage /></Suspense></ModuleGuard></RoleGuard></AgencyLayout>} />
       
       {/* Commercial */}
-      <Route path="/agency/commercial" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><CommercialPage /></ModuleGuard></RoleGuard></MainLayout>} />
-      <Route path="/agency/commercial/support-pptx" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><CommercialSupportPptx /></ModuleGuard></RoleGuard></MainLayout>} />
+      <Route path="/agency/commercial" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><CommercialPage /></ModuleGuard></RoleGuard></AgencyLayout>} />
+      <Route path="/agency/commercial/support-pptx" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><CommercialSupportPptx /></ModuleGuard></RoleGuard></AgencyLayout>} />
       
       {/* Legacy /hc-agency redirects */}
       <Route path="/hc-agency" element={<Navigate to="/?tab=agence" replace />} />

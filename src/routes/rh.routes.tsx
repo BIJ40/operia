@@ -3,11 +3,11 @@
  * 
  * SIMPLIFICATION v0.9: Navigation unifiée via onglets.
  * Les routes principales redirigent vers l'interface unifiée.
- * Les sous-pages de détail conservent MainLayout.
+ * Les sous-pages de détail utilisent MinimalLayout sans header legacy.
  */
 import { lazy } from "react";
 import { Route, Navigate } from "react-router-dom";
-import { MainLayout } from "@/components/layout";
+import { MinimalLayout } from "@/components/layout";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { ModuleGuard } from "@/components/auth/ModuleGuard";
 
@@ -17,6 +17,15 @@ const MaintenancePreventivePage = lazy(() => import("@/pages/MaintenancePreventi
 const DocGenPage = lazy(() => import("@/pages/rh/DocGenPage"));
 const RHMeetingsPage = lazy(() => import("@/pages/rh/RHMeetingsPage"));
 const PlanningHebdo = lazy(() => import("@/pages/PlanningTechniciensSemaine"));
+
+// Helper pour créer les layouts RH
+function RHLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <MinimalLayout backTab="salaries" backLabel="Retour aux Salariés">
+      {children}
+    </MinimalLayout>
+  );
+}
 
 export function RHRoutes() {
   return (
@@ -33,11 +42,11 @@ export function RHRoutes() {
       <Route 
         path="/rh/suivi" 
         element={
-          <MainLayout>
+          <RHLayout>
             <RoleGuard minRole="franchisee_admin">
               <RHSuiviIndex />
             </RoleGuard>
-          </MainLayout>
+          </RHLayout>
         } 
       />
       {/* Legacy: /rh/suivi/:id redirige vers le cockpit */}
@@ -46,13 +55,13 @@ export function RHRoutes() {
       <Route 
         path="/rh/suivi/plannings" 
         element={
-          <MainLayout>
+          <RHLayout>
             <RoleGuard minRole="franchisee_admin">
               <ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}>
                 <PlanningHebdo />
               </ModuleGuard>
             </RoleGuard>
-          </MainLayout>
+          </RHLayout>
         } 
       />
 
@@ -65,25 +74,25 @@ export function RHRoutes() {
       <Route 
         path="/rh/docgen" 
         element={
-          <MainLayout>
+          <RHLayout>
             <RoleGuard minRole="franchisee_admin">
               <ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}>
                 <DocGenPage />
               </ModuleGuard>
             </RoleGuard>
-          </MainLayout>
+          </RHLayout>
         } 
       />
       <Route 
         path="/rh/reunions" 
         element={
-          <MainLayout>
+          <RHLayout>
             <RoleGuard minRole="franchisee_admin">
               <ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}>
                 <RHMeetingsPage />
               </ModuleGuard>
             </RoleGuard>
-          </MainLayout>
+          </RHLayout>
         } 
       />
 
