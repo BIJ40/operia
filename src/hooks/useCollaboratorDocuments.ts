@@ -1,6 +1,5 @@
 /**
  * Hooks pour la gestion des documents RH - Phase 2.1
- * Avec analyse automatique des bulletins de paie
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -10,8 +9,8 @@ import { useHasMinLevel } from '@/hooks/useHasGlobalRole';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLogRHAction } from '@/hooks/rh/useRHAuditLog';
 import { validateFile } from '@/utils/fileValidation';
-import { handleRHError, showRHSuccess, showRHInfo } from '@/utils/rhErrorHandler';
-import { logError, logDebug, logWarn } from '@/lib/logger';
+import { handleRHError, showRHSuccess } from '@/utils/rhErrorHandler';
+import { logWarn } from '@/lib/logger';
 
 const BUCKET_NAME = 'rh-documents';
 
@@ -47,31 +46,6 @@ async function createSignedDownloadUrl(
   }
 
   return data.signedUrl;
-}
-
-/**
- * Déclenche l'analyse automatique d'un bulletin de paie (async, non-bloquant)
- */
-async function triggerPayslipAnalysis(
-  documentId: string,
-  filePath: string,
-  collaboratorId: string,
-  agencyId: string
-) {
-  try {
-    // Appel non-bloquant - on n'attend pas le résultat
-    supabase.functions.invoke('analyze-payslip', {
-      body: { documentId, filePath, collaboratorId, agencyId },
-    }).then(({ data, error }) => {
-      if (error) {
-        logError('[triggerPayslipAnalysis] Erreur analyse bulletin (async):', error);
-      } else if (data?.success) {
-        logDebug('[triggerPayslipAnalysis] Bulletin analysé:', documentId);
-      }
-    });
-  } catch (err) {
-    logError('[triggerPayslipAnalysis] Erreur déclenchement:', err);
-  }
 }
 
 export function useCollaboratorDocuments(collaboratorId: string | undefined) {
@@ -150,11 +124,6 @@ export function useCollaboratorDocuments(collaboratorId: string | undefined) {
 
       const doc = data as CollaboratorDocument;
 
-      // 3) Si c'est un bulletin de paie PDF, déclencher l'analyse automatique
-      if (formData.doc_type === 'PAYSLIP' && formData.file.type === 'application/pdf') {
-        triggerPayslipAnalysis(doc.id, filePath, formData.collaborator_id, agencyId);
-        showRHInfo('Analyse du bulletin en cours...');
-      }
 
       return doc;
     },

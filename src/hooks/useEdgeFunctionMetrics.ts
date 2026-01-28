@@ -27,21 +27,15 @@ const EDGE_FUNCTION_NAMES: Record<string, string> = {
   "unified-search": "Unified Search",
   "get-kpis": "Get KPIs",
   "network-kpis": "Network KPIs",
-  "notify-support-ticket": "Notify Support Ticket",
-  "notify-escalation": "Notify Escalation",
-  "send-support-email": "Send Support Email",
   "test-sms": "Test SMS",
-  
-  "analyze-payslip": "Analyze Payslip",
   "faq-search": "FAQ Search",
   "export-my-data": "Export My Data",
   "maintenance-alerts-scan": "Maintenance Alerts Scan",
-  "generate-formation-summary": "Generate Formation Summary",
-  "regenerate-apogee-rag": "Regenerate Apogée RAG",
-  "regenerate-helpconfort-rag": "Regenerate HelpConfort RAG",
   "helpi-search": "Helpi Search",
   "helpi-index": "Helpi Index",
   "index-document": "Index Document",
+  "qualify-ticket": "Qualify Ticket",
+  "statia-analyze-metric": "StatIA Analyze Metric",
 };
 
 export function useEdgeFunctionMetrics(refreshInterval: number = 30000) {

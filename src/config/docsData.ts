@@ -55,12 +55,12 @@ export const MODULES_DOCS: ModuleDoc[] = [
   {
     id: 'support',
     name: 'Support',
-    description: 'Système de tickets et assistance utilisateur',
-    routes: ['/support', '/support/console', '/support/mes-demandes'],
-    permissions: 'N0+ (création), Agent (console)',
+    description: 'Système de support intégré via Gestion de Projet',
+    routes: ['/support', '/support/mes-demandes'],
+    permissions: 'N0+ (création)',
     icon: 'Headset',
-    tables: ['support_tickets', 'support_ticket_messages', 'support_ticket_actions'],
-    edgeFunctions: ['notify-support-ticket', 'send-support-email'],
+    tables: ['apogee_tickets', 'apogee_ticket_support_exchanges'],
+    edgeFunctions: ['qualify-ticket'],
   },
   {
     id: 'pilotage_agence',
@@ -135,14 +135,9 @@ export const EDGE_FUNCTIONS_DOCS: EdgeFunctionDoc[] = [
   { name: 'helpi-search', category: 'IA', description: 'Recherche Helpi avec scoring pertinence', rateLimit: '30/min', authentication: true, dependencies: ['OPENAI_API_KEY'] },
   { name: 'helpi-index', category: 'IA', description: 'Indexation batch des contenus RAG', rateLimit: '5/10min', authentication: true, dependencies: ['OPENAI_API_KEY'] },
   
-  { name: 'generate-formation-summary', category: 'IA', description: 'Génération résumés pédagogiques', rateLimit: '5/min', authentication: true, dependencies: ['OPENAI_API_KEY'] },
-  { name: 'analyze-payslip', category: 'IA', description: 'Extraction données bulletins de paie', rateLimit: '10/min', authentication: true, dependencies: ['OPENAI_API_KEY'] },
-  { name: 'faq-search', category: 'IA', description: 'Recherche sémantique FAQ', rateLimit: '30/min', authentication: true, dependencies: ['OPENAI_API_KEY'] },
+  { name: 'faq-search', category: 'IA', description: 'Recherche sémantique FAQ', rateLimit: '30/min', authentication: true, dependencies: ['LOVABLE_API_KEY'] },
   
   // Notifications
-  { name: 'notify-support-ticket', category: 'Notifications', description: 'Notifications création/MAJ tickets support', rateLimit: '10/min', authentication: true, dependencies: ['RESEND_API_KEY', 'ALLMYSMS_API_KEY'] },
-  { name: 'notify-escalation', category: 'Notifications', description: 'Alertes escalade chatbot', rateLimit: '10/min', authentication: true, dependencies: ['RESEND_API_KEY'] },
-  { name: 'send-support-email', category: 'Notifications', description: 'Envoi emails support', rateLimit: '20/min', authentication: true, dependencies: ['RESEND_API_KEY'] },
   { name: 'test-sms', category: 'Notifications', description: 'Test connectivité AllMySMS', rateLimit: '5/min', authentication: true, dependencies: ['ALLMYSMS_API_KEY'] },
   
   // KPIs
