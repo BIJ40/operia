@@ -768,3 +768,48 @@ button[data-image-modal] {
   background-color: hsl(var(--primary) / 0.1);
   color: hsl(var(--primary));
 }
+
+/* ============================================
+   SALARIES PILL TABS - Onglets salariés (thème warm-pastel)
+   ============================================ */
+.salaries-pill-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 0.75rem;
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--card));
+  color: hsl(var(--muted-foreground));
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.03);
+  min-width: fit-content;
+}
+
+.salaries-pill-tab-collab {
+  flex-direction: column;
+  gap: 0;
+  padding: 0.25rem 0.75rem;
+  min-width: 52px;
+  justify-content: center;
+}
+
+.salaries-pill-tab:hover {
+  background-color: hsl(var(--pill-color) / 0.1);
+  border-color: hsl(var(--pill-color) / 0.5);
+  color: hsl(var(--pill-color));
+  box-shadow: 0 4px 12px -2px hsl(var(--pill-color) / 0.15);
+}
+
+.salaries-pill-tab-active {
+  background-color: hsl(var(--pill-color));
+  color: white;
+  border-color: hsl(var(--pill-color));
+  box-shadow: 0 4px 16px -2px hsl(var(--pill-color) / 0.4);
+}
+
+.salaries-pill-tab-active:hover {
+  background-color: hsl(var(--pill-color) / 0.9);
+}
