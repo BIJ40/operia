@@ -115,20 +115,18 @@ function PilotageContent() {
 
   return (
     <div className="container mx-auto py-4 px-4 space-y-4">
-      {/* Header avec titre */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-md">
-          <Building2 className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <h1 className="text-xl font-bold text-foreground tracking-tight">Mon Agence</h1>
-          <p className="text-xs text-muted-foreground">Pilotez votre activité</p>
-        </div>
-      </div>
-
-      {/* Onglets style browser */}
+      {/* Header avec titre et onglets sur la même ligne */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as MainTab)}>
-        <div className="border-b border-border">
+        <div className="flex items-center gap-6 border-b border-border pb-0">
+          {/* Titre */}
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-md">
+              <Building2 className="w-5 h-5 text-white" />
+            </div>
+            <h1 className="text-xl font-bold text-foreground tracking-tight">Mon Agence</h1>
+          </div>
+
+          {/* Onglets */}
           <TabsList className="h-auto p-0 bg-transparent gap-0">
             <TabsTrigger 
               value="agence" 
