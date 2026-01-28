@@ -533,8 +533,6 @@ export function TicketTable({
                   onSelect={() => setSelectedRowId(ticket.id)}
                   onOpenDetail={() => onTicketClick(ticket)}
                   onUpdate={(updates) => onTicketUpdate(ticket.id, updates)}
-                  onQualify={() => onQualifyTicket(ticket.id)}
-                  isQualifying={qualifyingTicketId === ticket.id}
                   statusSelectRef={{
                     current: statusSelectRefs.current.get(ticket.id) || null,
                   } as React.RefObject<HTMLButtonElement>}
