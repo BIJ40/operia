@@ -3,8 +3,7 @@
  */
 
 import { lazy, Suspense } from 'react';
-import { AdminViewHeader } from '../AdminViewHeader';
-import { Building2, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 const AdminAgencies = lazy(() => import('@/pages/AdminAgencies'));
 
@@ -18,17 +17,8 @@ function LoadingFallback() {
 
 export function ReseauView() {
   return (
-    <div className="space-y-4">
-      <AdminViewHeader
-        title="Réseau d'Agences"
-        subtitle="Configuration et gestion des agences"
-        breadcrumb={['Admin', 'Réseau', 'Agences']}
-        icon={<Building2 className="h-5 w-5 text-primary" />}
-      />
-
-      <Suspense fallback={<LoadingFallback />}>
-        <AdminAgencies />
-      </Suspense>
-    </div>
+    <Suspense fallback={<LoadingFallback />}>
+      <AdminAgencies />
+    </Suspense>
   );
 }

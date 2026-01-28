@@ -6,8 +6,7 @@ import { lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
-import { AdminViewHeader } from '../AdminViewHeader';
-import { Cpu, Activity, Map, FlaskConical, GitBranch, ToggleRight, Loader2 } from 'lucide-react';
+import { Activity, Map, FlaskConical, GitBranch, ToggleRight, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { MaintenanceModeCard } from '@/components/admin/MaintenanceModeCard';
 
@@ -47,49 +46,39 @@ export function PlateformeView() {
     setSearchParams(next);
   };
 
-  const currentTab = SUB_TABS.find(t => t.id === activeView);
-  const breadcrumb = ['Admin', 'Plateforme', currentTab?.label || 'Santé'];
-
   return (
     <div className="space-y-4">
-      <AdminViewHeader
-        title="Plateforme"
-        subtitle="Santé système, routes et outils"
-        breadcrumb={breadcrumb}
-        icon={<Cpu className="h-5 w-5 text-primary" />}
-      />
-
       {/* Mode Maintenance - Visible uniquement pour N6 */}
       {isSuperadmin && <MaintenanceModeCard compact />}
 
       <Tabs value={activeView} onValueChange={handleViewChange}>
         <PillTabsList tabs={SUB_TABS} className="justify-start" />
 
-        <TabsContent value="health" className="mt-6">
+        <TabsContent value="health" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>
             <AdminSystemHealth />
           </Suspense>
         </TabsContent>
 
-        <TabsContent value="modules" className="mt-6">
+        <TabsContent value="modules" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>
             <AdminFeatureFlags />
           </Suspense>
         </TabsContent>
 
-        <TabsContent value="lab" className="mt-6">
+        <TabsContent value="lab" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>
             <HiddenFeaturesPage />
           </Suspense>
         </TabsContent>
 
-        <TabsContent value="sitemap" className="mt-6">
+        <TabsContent value="sitemap" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>
             <AdminSitemap />
           </Suspense>
         </TabsContent>
 
-        <TabsContent value="flow" className="mt-6">
+        <TabsContent value="flow" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>
             <AdminFlow />
           </Suspense>
