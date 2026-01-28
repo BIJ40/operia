@@ -110,16 +110,18 @@ export function RHCockpitDrawer({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent 
-        className="w-full sm:max-w-md overflow-y-auto"
+        className="w-full sm:max-w-md overflow-y-auto border-l-4 border-l-warm-blue"
         side="right"
       >
         <SheetHeader className="space-y-3">
-          {/* Header avec nom du collaborateur */}
+          {/* Header avec nom du collaborateur - style warm-pastel */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-2xl">{config.icon}</span>
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-warm-blue/20 to-warm-teal/20 flex items-center justify-center">
+                <span className="text-xl">{config.icon}</span>
+              </div>
               <div>
-                <SheetTitle className="text-lg font-semibold">
+                <SheetTitle className="text-lg font-semibold bg-gradient-to-r from-warm-blue to-warm-purple bg-clip-text text-transparent">
                   {config.title}
                 </SheetTitle>
                 {collaborator && (
@@ -135,23 +137,29 @@ export function RHCockpitDrawer({
             {config.description}
           </SheetDescription>
 
-          {/* Message pédagogique style LUCCA */}
+          {/* Message pédagogique style warm-pastel */}
           {message && status !== 'na' && (
             <div
               className={cn(
-                'flex items-start gap-3 p-3 rounded-lg border',
-                INDICATOR_COLORS[status].bg,
-                INDICATOR_COLORS[status].border
+                'flex items-start gap-3 p-3 rounded-xl border shadow-sm',
+                status === 'ok' && 'bg-warm-green/10 border-warm-green/30',
+                status === 'warning' && 'bg-warm-orange/10 border-warm-orange/30',
+                status === 'error' && 'bg-warm-pink/10 border-warm-pink/30'
               )}
             >
               {status === 'ok' ? (
-                <Check className={cn('h-5 w-5 mt-0.5 shrink-0', INDICATOR_COLORS[status].text)} />
+                <Check className="h-5 w-5 mt-0.5 shrink-0 text-warm-green" />
               ) : status === 'warning' ? (
-                <Lightbulb className={cn('h-5 w-5 mt-0.5 shrink-0', INDICATOR_COLORS[status].text)} />
+                <Lightbulb className="h-5 w-5 mt-0.5 shrink-0 text-warm-orange" />
               ) : (
-                <AlertTriangle className={cn('h-5 w-5 mt-0.5 shrink-0', INDICATOR_COLORS[status].text)} />
+                <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0 text-warm-pink" />
               )}
-              <p className={cn('text-sm', INDICATOR_COLORS[status].text)}>
+              <p className={cn(
+                'text-sm font-medium',
+                status === 'ok' && 'text-warm-green',
+                status === 'warning' && 'text-warm-orange',
+                status === 'error' && 'text-warm-pink'
+              )}>
                 {message}
               </p>
             </div>
