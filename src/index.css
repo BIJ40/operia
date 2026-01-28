@@ -625,3 +625,13 @@ button[data-image-modal] {
 .animate-pulse-subtle {
   animation: pulse-subtle 2s ease-in-out infinite;
 }
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
