@@ -103,9 +103,9 @@ export function CAParUniversWidget() {
               <span className="font-medium truncate">{univers.name}</span>
               <span className="text-muted-foreground">{formatCurrency(univers.ca)}</span>
             </div>
-            <div className="h-2 bg-accent rounded-full overflow-hidden">
+            <div className="h-2 bg-muted rounded-full overflow-hidden">
               <div
-                className="h-full bg-helpconfort-blue rounded-full transition-all"
+                className="h-full bg-warm-blue/80 rounded-full transition-all"
                 style={{ width: `${percentage}%` }}
               />
             </div>
