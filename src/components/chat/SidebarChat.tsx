@@ -63,7 +63,7 @@ export function SidebarChat() {
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "fixed right-0 top-1/2 -translate-y-1/2 z-50",
+          "fixed right-0 bottom-24 z-50",
           "flex items-center gap-2",
           "bg-helpconfort-blue text-white",
           "px-2 py-4 rounded-l-xl",
