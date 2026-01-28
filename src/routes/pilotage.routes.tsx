@@ -12,7 +12,7 @@ const IndicateursAccueil = lazy(() => import("@/apogee-connect/pages/Indicateurs
 const StatsHub = lazy(() => import("@/apogee-connect/pages/StatsHub"));
 const VeilleApporteursPage = lazy(() => import("@/pages/VeilleApporteursPage"));
 const PlanningHebdo = lazy(() => import("@/pages/PlanningTechniciensSemaine"));
-const RHTech = lazy(() => import("@/pages/RHTechPage"));
+
 const MesApporteursPage = lazy(() => import("@/pages/hc-agency/MesApporteursPage"));
 const RdvMapPage = lazy(() => import("@/pages/hc-agency/RdvMapPage"));
 const ActionsAMener = lazy(() => import("@/pages/ActionsAMener"));
@@ -59,8 +59,8 @@ export function PilotageRoutes() {
       {/* Diffusion */}
       <Route path="/hc-agency/statistiques/diffusion" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="diffusion"><DiffusionDashboard /></ModuleGuard></RoleGuard></MainLayout>} />
       
-      {/* RH Tech */}
-      <Route path="/hc-agency/rh-tech" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><RHTech /></ModuleGuard></RoleGuard></MainLayout>} />
+      {/* RH Tech - redirige vers RH principal */}
+      <Route path="/hc-agency/rh-tech" element={<Navigate to="/rh/suivi" replace />} />
       <Route path="/hc-agency/rh-tech/planning" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><PlanningHebdo /></ModuleGuard></RoleGuard></MainLayout>} />
       
       {/* Mes Apporteurs */}
