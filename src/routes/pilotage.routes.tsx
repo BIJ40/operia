@@ -32,12 +32,12 @@ function PageLoader() {
 export function PilotageRoutes() {
   return (
     <>
-      {/* Section Index */}
-      <Route path="/agency" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><PilotageIndex /></ModuleGuard></RoleGuard></MainLayout>} />
-      
-      {/* Hub Statistiques */}
-      <Route path="/agency/stats-hub" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="stats_hub"><StatsHub /></ModuleGuard></RoleGuard></MainLayout>} />
-      <Route path="/agency/statistiques" element={<Navigate to="/agency/indicateurs" replace />} />
+      {/* ============================================ */}
+      {/* REDIRECTIONS VERS INTERFACE UNIFIEE */}
+      {/* ============================================ */}
+      <Route path="/agency" element={<Navigate to="/?tab=agence" replace />} />
+      <Route path="/agency/stats-hub" element={<Navigate to="/?tab=stats" replace />} />
+      <Route path="/agency/statistiques" element={<Navigate to="/?tab=stats" replace />} />
       
       {/* Indicateurs détaillés */}
       <Route path="/agency/indicateurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="indicateurs"><IndicateursLayout /></ModuleGuard></RoleGuard></MainLayout>}>
@@ -74,12 +74,12 @@ export function PilotageRoutes() {
       <Route path="/agency/commercial/support-pptx" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><CommercialSupportPptx /></ModuleGuard></RoleGuard></MainLayout>} />
       
       {/* Legacy /hc-agency redirects */}
-      <Route path="/hc-agency" element={<Navigate to="/agency" replace />} />
-      <Route path="/hc-agency/*" element={<Navigate to="/agency" replace />} />
+      <Route path="/hc-agency" element={<Navigate to="/?tab=agence" replace />} />
+      <Route path="/hc-agency/*" element={<Navigate to="/?tab=agence" replace />} />
       
       {/* Legacy redirects */}
       <Route path="/agency/statia-builder" element={<Navigate to="/admin/statia-by-bij" replace />} />
-      <Route path="/agency/maintenance" element={<Navigate to="/rh/parc" replace />} />
+      <Route path="/agency/maintenance" element={<Navigate to="/?tab=parc" replace />} />
     </>
   );
 }

@@ -2,13 +2,16 @@
  * UnifiedWorkspace - Interface unifiée sans header
  * Tous les modules accessibles via onglets sur une seule page
  * Onglets réorganisables via drag-and-drop (sauf Accueil)
+ * 
+ * Support URL: ?tab=XXX pour navigation directe vers un onglet
  */
 
 import { lazy, Suspense, useMemo, useState, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   Home, Building2, BarChart3, ClipboardList, 
   Car, MoreHorizontal, Ticket, HelpCircle,
-  Loader2, BookOpen
+  Loader2, BookOpen, Settings, Network, Cog
 } from 'lucide-react';
 import { 
   DndContext, 
@@ -41,6 +44,9 @@ import { ImageModal } from '@/components/ImageModal';
 import { AiUnifiedProvider } from '@/components/ai';
 import { DraggableTab } from '@/components/unified/DraggableTab';
 import { SimulationBanner } from '@/components/layout/SimulationBanner';
+import { RoleSimulatorDropdown } from '@/components/layout/RoleSimulatorDropdown';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 // Providers nécessaires
 import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
@@ -90,13 +96,34 @@ function LoadingFallback() {
 }
 
 function UnifiedWorkspaceContent() {
-  const { globalRole } = useAuth();
+  const { globalRole, isAdmin } = useAuth();
   const { isImpersonating } = useImpersonation();
   const { isSimulating, simulatedView, viewConfig } = useRoleSimulator();
   const { hasModule, hasModuleOption } = useEffectiveModules();
-  const [activeTab, setActiveTab] = useSessionState<UnifiedTab>('unified_workspace_tab', 'accueil');
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tabOrder, setTabOrder] = useSessionState<UnifiedTab[]>('unified_workspace_tab_order', DEFAULT_TAB_ORDER);
   const [loginOpen, setLoginOpen] = useState(false);
+  
+  // Support URL ?tab=XXX pour navigation directe
+  const urlTab = searchParams.get('tab') as UnifiedTab | null;
+  const [activeTab, setActiveTabState] = useSessionState<UnifiedTab>('unified_workspace_tab', urlTab || 'accueil');
+  
+  // Synchroniser l'URL quand l'onglet change
+  const setActiveTab = useCallback((tab: UnifiedTab) => {
+    setActiveTabState(tab);
+    if (tab === 'accueil') {
+      setSearchParams({}, { replace: true });
+    } else {
+      setSearchParams({ tab }, { replace: true });
+    }
+  }, [setActiveTabState, setSearchParams]);
+  
+  // Sync depuis URL au mount
+  useEffect(() => {
+    if (urlTab && urlTab !== activeTab) {
+      setActiveTabState(urlTab);
+    }
+  }, [urlTab]);
   
   // Hooks for tracking
   useStorageQuota();
@@ -235,53 +262,72 @@ function UnifiedWorkspaceContent() {
             {/* Tab bar fixe en haut */}
             <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm">
               <div className="container mx-auto max-w-7xl px-4 pt-3 pb-0">
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
-                >
-                  <TabsList className="h-auto p-0 bg-transparent flex flex-wrap gap-1 items-end justify-start">
-                    {/* Onglet Accueil - non draggable */}
-                    {sortedTabs[0] && (
-                      <button
-                        onClick={() => setActiveTab('accueil')}
-                        data-state={validActiveTab === 'accueil' ? 'active' : 'inactive'}
-                        className={tabButtonClass}
-                      >
-                        <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-sm transition-transform group-hover:scale-110">
-                            <Home className="w-3.5 h-3.5 text-white" />
-                          </div>
-                          <span className="text-sm font-semibold tracking-tight">Accueil</span>
-                        </div>
-                      </button>
-                    )}
-                    
-                    {/* Onglets sortables */}
-                    <SortableContext items={sortableIds} strategy={horizontalListSortingStrategy}>
-                      {sortedTabs.slice(1).map((tab) => {
-                        const Icon = tab.icon;
-                        return (
-                          <DraggableTab
-                            key={tab.id}
-                            id={tab.id}
-                            isActive={validActiveTab === tab.id}
-                            isDraggable={true}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={tabButtonClass}
-                          >
-                            <div className="flex items-center gap-2">
-                              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-sm transition-transform duration-300 group-hover:scale-110">
-                                <Icon className="w-3.5 h-3.5 text-white" />
-                              </div>
-                              <span className="text-sm font-semibold tracking-tight">{tab.label}</span>
+                <div className="flex items-end justify-between gap-4">
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <TabsList className="h-auto p-0 bg-transparent flex flex-wrap gap-1 items-end justify-start flex-1">
+                      {/* Onglet Accueil - non draggable */}
+                      {sortedTabs[0] && (
+                        <button
+                          onClick={() => setActiveTab('accueil')}
+                          data-state={validActiveTab === 'accueil' ? 'active' : 'inactive'}
+                          className={tabButtonClass}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-sm transition-transform group-hover:scale-110">
+                              <Home className="w-3.5 h-3.5 text-white" />
                             </div>
-                          </DraggableTab>
-                        );
-                      })}
-                    </SortableContext>
-                  </TabsList>
-                </DndContext>
+                            <span className="text-sm font-semibold tracking-tight">Accueil</span>
+                          </div>
+                        </button>
+                      )}
+                      
+                      {/* Onglets sortables */}
+                      <SortableContext items={sortableIds} strategy={horizontalListSortingStrategy}>
+                        {sortedTabs.slice(1).map((tab) => {
+                          const Icon = tab.icon;
+                          return (
+                            <DraggableTab
+                              key={tab.id}
+                              id={tab.id}
+                              isActive={validActiveTab === tab.id}
+                              isDraggable={true}
+                              onClick={() => setActiveTab(tab.id)}
+                              className={tabButtonClass}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-sm transition-transform duration-300 group-hover:scale-110">
+                                  <Icon className="w-3.5 h-3.5 text-white" />
+                                </div>
+                                <span className="text-sm font-semibold tracking-tight">{tab.label}</span>
+                              </div>
+                            </DraggableTab>
+                          );
+                        })}
+                      </SortableContext>
+                    </TabsList>
+                  </DndContext>
+                  
+                  {/* Contrôles admin à droite */}
+                  <div className="flex items-center gap-2 pb-1">
+                    <RoleSimulatorDropdown />
+                    {isAdmin && (
+                      <Link to="/admin">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="rounded-full h-8 w-8 text-muted-foreground hover:text-foreground"
+                          title="Administration"
+                        >
+                          <Cog className="w-4 h-4" />
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                </div>
               </div>
               {/* Ligne de bordure qui se connecte aux onglets */}
               <div className="container mx-auto max-w-7xl px-4">
