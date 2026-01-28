@@ -74,8 +74,8 @@ export function VehicleTabsProvider({ children, vehicles }: VehicleTabsProviderP
     [state.tabs, vehiclesMap]
   );
   
-  // Sync active tab avec URL
-  const activeTabId = searchParams.get('tab') || state.activeTabId || 'overview';
+  // Sync active tab avec URL (utiliser 'vehicule' pour éviter conflit avec tab global)
+  const activeTabId = searchParams.get('vehicule') || state.activeTabId || 'overview';
   
   const openVehicle = useCallback((vehicle: FleetVehicle) => {
     const tabId = vehicle.id;
@@ -100,10 +100,10 @@ export function VehicleTabsProvider({ children, vehicles }: VehicleTabsProviderP
       };
     });
     
-    // Update URL
+    // Update URL (utiliser 'vehicule' pour éviter conflit avec tab global)
     setSearchParams(prev => {
       const newParams = new URLSearchParams(prev);
-      newParams.set('tab', tabId);
+      newParams.set('vehicule', tabId);
       return newParams;
     }, { replace: true });
   }, [setState, setSearchParams]);
@@ -129,7 +129,7 @@ export function VehicleTabsProvider({ children, vehicles }: VehicleTabsProviderP
     
     setSearchParams(prev => {
       const newParams = new URLSearchParams(prev);
-      newParams.set('tab', vehicleId);
+      newParams.set('vehicule', vehicleId);
       return newParams;
     }, { replace: true });
   }, [setState, setSearchParams]);
@@ -169,7 +169,7 @@ export function VehicleTabsProvider({ children, vehicles }: VehicleTabsProviderP
     
     setSearchParams(prev => {
       const newParams = new URLSearchParams(prev);
-      newParams.set('tab', tabId);
+      newParams.set('vehicule', tabId);
       return newParams;
     }, { replace: true });
   }, [setState, setSearchParams]);
