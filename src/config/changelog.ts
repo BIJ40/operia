@@ -15,6 +15,50 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.8.5",
+    title: "UX Chatbot & Demo N0",
+    date: "2026-01-28",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // CHATBOT SIDEBAR
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'Remplacement de la bulle flottante par un panneau latéral droit' },
+      { type: 'improvement', description: 'Onglet vertical "Aide" fixé en bas à droite de l\'écran' },
+      { type: 'improvement', description: 'Animation fluide slide-in à l\'ouverture du chat' },
+      { type: 'improvement', description: 'Overlay pour fermer le chat en cliquant à l\'extérieur' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // DASHBOARD DÉMO N0
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Nouveau dashboard démo pour utilisateurs N0 (basiques)' },
+      { type: 'feature', description: 'KPIs factices style DAX : CA, taux transformation, productivité' },
+      { type: 'feature', description: 'Widgets démo : carte stylisée, répartition CA, techniciens' },
+      { type: 'improvement', description: 'Bannière explicite "Mode démonstration" pour éviter confusion' },
+    ],
+  },
+  {
+    version: "V0.8.4",
+    title: "Guide Apogée Public",
+    date: "2026-01-26",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // GUIDE APOGÉE PUBLIC
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Nouvelle interface /guide-apogee accessible sans authentification' },
+      { type: 'feature', description: 'Navigation multi-onglets type navigateur (drag & drop)' },
+      { type: 'feature', description: 'Sidebar catégories avec redimensionnement' },
+      { type: 'improvement', description: 'Filtrage des catégories obsolètes (support formation, recap fiches)' },
+      { type: 'improvement', description: 'Page d\'accueil avec instructions d\'utilisation' },
+      { type: 'improvement', description: 'Message "version simplifiée" avec roadmap (support, tickets, FAQ)' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // DOCUMENTATION
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'Nettoyage documentation legacy (audits 2025)' },
+      { type: 'improvement', description: 'Mise à jour horodatée des fichiers de doc' },
+    ],
+  },
+  {
     version: "V0.8.3",
     title: "Recentrage N2 Franchisé",
     date: "2026-01-23",
