@@ -1,28 +1,23 @@
-import { lazy } from "react";
-import { Route, Navigate } from "react-router-dom";
-import { MainLayout } from "@/components/layout";
-import { RoleGuard } from "@/components/auth/RoleGuard";
-import { ModuleGuard } from "@/components/auth/ModuleGuard";
+import { Navigate } from "react-router-dom";
 
-// Lazy loaded pages for detail views only
-const FranchiseurLayout = lazy(() => import("@/franchiseur/components/layout/FranchiseurLayout"));
-const FranchiseurAgencyProfile = lazy(() => import("@/franchiseur/pages/FranchiseurAgencyProfile"));
-const AnimatorProfile = lazy(() => import("@/franchiseur/pages/AnimatorProfile"));
-
+/**
+ * Routes Franchiseur Legacy - DEPRECATED
+ * 
+ * Ces routes ne sont plus utilisées car le module Franchiseur
+ * est maintenant intégré dans UnifiedWorkspace via FranchiseurView.
+ * 
+ * Les pages de détail (agences, animateurs) utilisent maintenant
+ * des panneaux/sheets au sein de la vue unifiée.
+ */
 export function FranchiseurRoutes() {
   return (
     <>
-      {/* Main route - redirect to unified interface */}
-      <Route path="/hc-reseau" element={<Navigate to="/?tab=franchiseur" replace />} />
+      {/* Toutes les routes redirigent vers la vue unifiée */}
+      {/* Main route */}
+      {/* <Route path="/hc-reseau" element={<Navigate to="/?tab=franchiseur" replace />} /> */}
       
-      {/* Detail pages that need their own routes */}
-      <Route path="/hc-reseau/agences/:agencyId" element={<MainLayout><RoleGuard minRole="franchisor_user"><ModuleGuard moduleKey="reseau_franchiseur"><FranchiseurLayout /></ModuleGuard></RoleGuard></MainLayout>}>
-        <Route index element={<FranchiseurAgencyProfile />} />
-      </Route>
-      
-      <Route path="/hc-reseau/animateurs/:animatorId" element={<MainLayout><RoleGuard minRole="franchisor_user"><ModuleGuard moduleKey="reseau_franchiseur"><FranchiseurLayout /></ModuleGuard></RoleGuard></MainLayout>}>
-        <Route index element={<AnimatorProfile />} />
-      </Route>
+      {/* Les anciennes routes de détail ne sont plus nécessaires */}
+      {/* Le profil d'agence s'affiche dans un Sheet au sein de FranchiseurView */}
     </>
   );
 }
