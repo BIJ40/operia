@@ -8,9 +8,9 @@
  * - Compteur de RDV visible
  */
 
-import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Maximize2, Users, Calendar } from 'lucide-react';
+import { MapPin, Maximize2, Users, Calendar, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -18,11 +18,27 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useRdvMap, calculateBounds, MapRdv } from '@/hooks/useRdvMap';
 import { createPinMarkerElement } from '@/components/map/PinMarker';
 import { HumanTitle } from './HumanTitle';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-// Token Mapbox public
-const MAPBOX_TOKEN = 'pk.eyJ1IjoiaGVscGNvbmZvcnQiLCJhIjoiY200bWRtbHFwMGZjbTJpcjJhZmNqd3QzNyJ9.9-fZehEfhIbzMJOECvwkqg';
+/**
+ * Hook pour récupérer le token Mapbox depuis l'edge function
+ */
+function useMapboxToken() {
+  return useQuery({
+    queryKey: ['mapbox-token'],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+      if (error) throw new Error(error.message);
+      if (!data?.token) throw new Error('Token non disponible');
+      return data.token as string;
+    },
+    staleTime: Infinity, // Le token ne change pas
+    gcTime: Infinity,
+  });
+}
 
 interface DashboardMapWidgetProps {
   className?: string;
@@ -35,20 +51,22 @@ function MapContent({
   onSelectRdv,
   containerRef,
   isExpanded = false,
+  mapboxToken,
 }: {
   rdvs: MapRdv[];
   selectedRdv: MapRdv | null;
   onSelectRdv: (rdv: MapRdv | null) => void;
   containerRef: React.RefObject<HTMLDivElement>;
   isExpanded?: boolean;
+  mapboxToken: string;
 }) {
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
 
   useEffect(() => {
-    if (!containerRef.current || mapRef.current) return;
+    if (!containerRef.current || mapRef.current || !mapboxToken) return;
 
-    mapboxgl.accessToken = MAPBOX_TOKEN;
+    mapboxgl.accessToken = mapboxToken;
 
     const map = new mapboxgl.Map({
       container: containerRef.current,
@@ -112,13 +130,14 @@ function MapContent({
 export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidgetProps) {
   const today = new Date();
   const { rdvs, isLoading, technicians } = useRdvMap({ date: today, agencySlug });
+  const { data: mapboxToken, isLoading: tokenLoading, error: tokenError } = useMapboxToken();
   const [selectedRdv, setSelectedRdv] = useState<MapRdv | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const compactMapRef = useRef<HTMLDivElement>(null);
   const expandedMapRef = useRef<HTMLDivElement>(null);
 
-  if (isLoading) {
+  if (isLoading || tokenLoading) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -130,6 +149,25 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
     );
   }
 
+  if (tokenError || !mapboxToken) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={cn(
+          'relative rounded-warm overflow-hidden border border-border/50 h-[280px]',
+          'bg-muted/30 flex items-center justify-center',
+          className
+        )}
+      >
+        <div className="text-center text-muted-foreground">
+          <AlertCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+          <p className="text-sm">Carte non disponible</p>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -137,7 +175,7 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
       transition={{ duration: 0.4 }}
       className={cn(
         'relative rounded-warm overflow-hidden border border-border/50',
-        'bg-gradient-to-br from-blue-50/50 to-teal-50/30 dark:from-blue-950/20 dark:to-teal-950/10',
+        'bg-gradient-to-br from-warm-blue/10 to-warm-teal/5',
         'shadow-warm',
         className
       )}
@@ -196,6 +234,7 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
                       onSelectRdv={setSelectedRdv}
                       containerRef={expandedMapRef}
                       isExpanded
+                      mapboxToken={mapboxToken}
                     />
                   )}
                 </div>
@@ -213,6 +252,7 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
             selectedRdv={selectedRdv}
             onSelectRdv={setSelectedRdv}
             containerRef={compactMapRef}
+            mapboxToken={mapboxToken}
           />
         )}
       </div>
