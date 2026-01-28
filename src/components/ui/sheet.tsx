@@ -59,10 +59,23 @@ interface SheetContentProps
 }
 
 const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Content>, SheetContentProps>(
-  ({ side = "right", className, children, hideCloseButton = false, ...props }, ref) => (
+  ({ side = "right", className, children, hideCloseButton = false, onFocusOutside, onPointerDownOutside, ...props }, ref) => (
     <SheetPortal>
       <SheetOverlay />
-      <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
+      <SheetPrimitive.Content
+        ref={ref}
+        className={cn(sheetVariants({ side }), className)}
+        // Prevent sheet from closing when browser tab loses focus
+        onFocusOutside={(e) => {
+          if (document.hidden) e.preventDefault();
+          onFocusOutside?.(e);
+        }}
+        onPointerDownOutside={(e) => {
+          if (document.hidden) e.preventDefault();
+          onPointerDownOutside?.(e);
+        }}
+        {...props}
+      >
         {children}
         {!hideCloseButton && (
           <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-secondary hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none z-50">

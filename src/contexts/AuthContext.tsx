@@ -408,12 +408,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const newUserId = session?.user?.id ?? null;
         currentUserIdRef.current = newUserId;
 
-        // Skip no-op events when user didn't change (but keep USER_UPDATED)
+        // Skip no-op events when user didn't change
+        // NOTE: USER_UPDATED is now also ignored if user ID is unchanged
+        // This prevents tab-switch-induced reloads that reset UI state
         if (
           newUserId === prevUserId &&
           event !== 'SIGNED_IN' &&
-          event !== 'SIGNED_OUT' &&
-          event !== 'USER_UPDATED'
+          event !== 'SIGNED_OUT'
         ) {
           return;
         }

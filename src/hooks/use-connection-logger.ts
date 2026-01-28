@@ -5,11 +5,13 @@ import { logConnection } from '@/lib/logger';
 
 export const useConnectionLogger = () => {
   const { user } = useAuth();
+  // Use stable userId to prevent re-runs on tab switch (user object changes reference)
+  const userId = user?.id;
   const connectionLogIdRef = useRef<string | null>(null);
   const connectedAtRef = useRef<Date | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
 
     let isActive = true;
 
@@ -23,7 +25,7 @@ export const useConnectionLogger = () => {
         const { data, error } = await supabase
           .from('user_connection_logs')
           .insert({
-            user_id: user.id,
+            user_id: userId,
             connected_at: connectedAtRef.current.toISOString(),
             user_agent: navigator.userAgent
           })
@@ -91,5 +93,5 @@ export const useConnectionLogger = () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       logDisconnection();
     };
-  }, [user]);
+  }, [userId]); // Stable: only re-run on actual user change (login/logout)
 };
