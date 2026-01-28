@@ -25,7 +25,7 @@ export default function GuidesTabContent() {
   const [activeGuide, setActiveGuide] = useState<GuideTab>('apogee');
 
   return (
-    <div className="container mx-auto py-4 px-4">
+    <div className="py-3 px-2 sm:px-4">
       <Tabs value={activeGuide} onValueChange={(v) => setActiveGuide(v as GuideTab)}>
         <TabsList className="grid w-full grid-cols-4 mb-4">
           <TabsTrigger value="apogee" className="flex items-center gap-1.5 text-xs sm:text-sm">

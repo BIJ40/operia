@@ -6,7 +6,7 @@ import { MesApporteursTab } from '@/components/pilotage/MesApporteursTab';
 
 export default function ApporteursTabContent() {
   return (
-    <div className="container mx-auto py-4 px-4">
+    <div className="py-3 px-2 sm:px-4">
       <MesApporteursTab />
     </div>
   );
