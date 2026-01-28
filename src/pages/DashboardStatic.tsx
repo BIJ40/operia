@@ -21,6 +21,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { ChevronDown, BarChart3, Trophy, PieChart, TrendingUp, Users, Building2, Network, MapPin } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -441,6 +442,7 @@ export default function DashboardStatic() {
 
   return (
     <DashboardPeriodContext.Provider value={periodConfig}>
+      <TooltipProvider delayDuration={0}>
       <div className="container mx-auto py-6 px-4 max-w-7xl">
         {/* Header avec greeting chaleureux */}
         <motion.div 
@@ -526,6 +528,7 @@ export default function DashboardStatic() {
         {/* Contenu du dashboard */}
         {renderDashboardContent()}
       </div>
+      </TooltipProvider>
     </DashboardPeriodContext.Provider>
   );
 }
