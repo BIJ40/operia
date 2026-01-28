@@ -144,7 +144,7 @@ function UnifiedWorkspaceContent() {
           <Tabs value={validActiveTab} onValueChange={(v) => setActiveTab(v as UnifiedTab)} className="flex flex-col h-screen">
             {/* Tab bar fixe en haut */}
             <div className="sticky top-0 z-50 bg-background border-b border-border">
-              <div className="container mx-auto px-4">
+              <div className="px-2 sm:px-4">
                 <ScrollArea className="w-full">
                   <div className="flex items-end gap-0.5 pt-3 pb-0">
                     <TabsList className="h-auto p-0 bg-transparent gap-0.5 items-end flex-nowrap">

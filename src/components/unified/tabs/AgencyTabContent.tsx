@@ -8,7 +8,7 @@ import { ActionsAMenerTab } from '@/components/pilotage/ActionsAMenerTab';
 
 export default function AgencyTabContent() {
   return (
-    <div className="container mx-auto py-4 px-4 space-y-4">
+    <div className="py-3 px-2 sm:px-4 space-y-4">
       <AgencyInfoCompact />
       <ActionsAMenerTab />
     </div>

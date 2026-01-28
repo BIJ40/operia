@@ -46,7 +46,7 @@ export default function SupportTabContent() {
 
   if (selectedProjectTicketId) {
     return (
-      <div className="container mx-auto py-4 px-4">
+      <div className="py-3 px-2 sm:px-4">
         <ProjectTicketDetailPanel
           ticketId={selectedProjectTicketId}
           onBack={() => setSelectedProjectTicketId(null)}
@@ -56,7 +56,7 @@ export default function SupportTabContent() {
   }
 
   return (
-    <div className="container mx-auto py-4 px-4">
+    <div className="py-3 px-2 sm:px-4">
       <div className="mb-4">
         <h2 className="text-2xl font-bold bg-gradient-to-r from-helpconfort-blue-dark to-helpconfort-blue-lighter bg-clip-text text-transparent">
           Support

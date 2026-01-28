@@ -45,7 +45,7 @@ export default function StatsTabContent() {
   };
 
   return (
-    <div className="container mx-auto py-4 px-4 space-y-4">
+    <div className="py-3 px-2 sm:px-4 space-y-4">
       {/* Header avec bouton TV et sélecteur de période */}
       <div className="flex items-center justify-between">
         <Button 

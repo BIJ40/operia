@@ -26,7 +26,7 @@ export default function DiversTabContent() {
   
   if (activeSection === 'reunions') {
     return (
-      <div className="container mx-auto py-4 px-4">
+      <div className="py-3 px-2 sm:px-4">
         <Button variant="ghost" onClick={() => setActiveSection(null)} className="mb-4">
           ← Retour
         </Button>
@@ -39,7 +39,7 @@ export default function DiversTabContent() {
   
   if (activeSection === 'docgen') {
     return (
-      <div className="container mx-auto py-4 px-4">
+      <div className="py-3 px-2 sm:px-4">
         <Button variant="ghost" onClick={() => setActiveSection(null)} className="mb-4">
           ← Retour
         </Button>
@@ -51,7 +51,7 @@ export default function DiversTabContent() {
   }
 
   return (
-    <div className="container mx-auto py-4 px-4">
+    <div className="py-3 px-2 sm:px-4">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card 
           className="cursor-pointer hover:border-primary/50 transition-colors"

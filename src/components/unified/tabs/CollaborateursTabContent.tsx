@@ -7,7 +7,7 @@ import { RHSuiviContent } from '@/components/rh/RHSuiviContent';
 
 export default function CollaborateursTabContent() {
   return (
-    <div className="container mx-auto py-4 px-4">
+    <div className="py-3 px-2 sm:px-4">
       <RHSuiviContent />
     </div>
   );
