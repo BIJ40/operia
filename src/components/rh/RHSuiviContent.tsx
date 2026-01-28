@@ -17,7 +17,6 @@ import { useSensitiveData } from '@/hooks/useSensitiveData';
 import { CollaboratorFormData } from '@/types/collaborator';
 import { Button } from '@/components/ui/button';
 import { UserPlus } from 'lucide-react';
-import { useSessionState } from '@/hooks/useSessionState';
 
 import { ApogeeSyncButton } from '@/components/rh/ApogeeSync';
 import { SalariesPillTabs } from '@/components/rh/salaries/SalariesPillTabs';
@@ -25,11 +24,6 @@ import { RHCollaboratorPanel } from '@/components/rh/browser-tabs/RHCollaborator
 import { RHTabsProvider } from '@/components/rh/browser-tabs/RHTabsContext';
 import { RHCollaborator } from '@/types/rh-suivi';
 import { cn } from '@/lib/utils';
-
-interface OpenTabsState {
-  tabs: string[];
-  activeId: string | null;
-}
 
 export function RHSuiviContent() {
   const queryClient = useQueryClient();
@@ -39,15 +33,9 @@ export function RHSuiviContent() {
   const { data: collaborators = [], isLoading, refetch } = useRHCollaborators({ includeFormer: false });
   const { data: epiSummaries = [] } = useCollaboratorsEpiSummary(agencyId || undefined);
   
-  // État des onglets ouverts - persisté en session
-  const [tabsState, setTabsState] = useSessionState<OpenTabsState>('rh_salaries_tabs', {
-    tabs: [],
-    activeId: null,
-  });
-  
   // Sync avec URL (paramètre ?collab=)
   const urlCollab = searchParams.get('collab');
-  const activeCollaboratorId = urlCollab || tabsState.activeId;
+  const activeCollaboratorId = urlCollab || null;
   
   const [showCompetencesMatrix, setShowCompetencesMatrix] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
@@ -93,55 +81,18 @@ export function RHSuiviContent() {
     };
   }, [editingCollaborator, sensitiveData]);
 
-  // Sélectionner un collaborateur (ouvre un onglet si pas déjà ouvert)
+  // Sélectionner un collaborateur (navigation via URL)
   const handleSelectCollaborator = useCallback((id: string | null) => {
-    if (id === null) {
-      // Vue d'ensemble
-      setTabsState(prev => ({ ...prev, activeId: null }));
-      setSearchParams(params => {
-        const newParams = new URLSearchParams(params);
+    setSearchParams(params => {
+      const newParams = new URLSearchParams(params);
+      if (id === null) {
         newParams.delete('collab');
-        return newParams;
-      }, { replace: true });
-    } else {
-      // Ouvrir le collaborateur
-      setTabsState(prev => ({
-        tabs: prev.tabs.includes(id) ? prev.tabs : [...prev.tabs, id],
-        activeId: id,
-      }));
-      setSearchParams(params => {
-        const newParams = new URLSearchParams(params);
+      } else {
         newParams.set('collab', id);
-        return newParams;
-      }, { replace: true });
-    }
-  }, [setTabsState, setSearchParams]);
-  
-  // Fermer un onglet
-  const handleCloseTab = useCallback((id: string) => {
-    setTabsState(prev => {
-      const newTabs = prev.tabs.filter(t => t !== id);
-      const wasActive = prev.activeId === id;
-      const newActiveId = wasActive 
-        ? (newTabs.length > 0 ? newTabs[newTabs.length - 1] : null)
-        : prev.activeId;
-      
-      // Mettre à jour URL si on ferme l'onglet actif
-      if (wasActive) {
-        setSearchParams(params => {
-          const newParams = new URLSearchParams(params);
-          if (newActiveId) {
-            newParams.set('collab', newActiveId);
-          } else {
-            newParams.delete('collab');
-          }
-          return newParams;
-        }, { replace: true });
       }
-      
-      return { tabs: newTabs, activeId: newActiveId };
-    });
-  }, [setTabsState, setSearchParams]);
+      return newParams;
+    }, { replace: true });
+  }, [setSearchParams]);
 
   // Handler de création collaborateur
   const handleCreateCollaborator = (data: CollaboratorFormData) => {
@@ -216,13 +167,11 @@ export function RHSuiviContent() {
           </div>
         </div>
 
-        {/* Barre de pills salariés */}
+        {/* Barre de pills salariés - tous affichés en permanence */}
         <SalariesPillTabs
           collaborators={collaborators}
           activeCollaboratorId={activeCollaboratorId}
           onSelectCollaborator={handleSelectCollaborator}
-          openTabs={tabsState.tabs}
-          onCloseTab={handleCloseTab}
         />
         
         {/* Contenu */}
@@ -242,16 +191,16 @@ export function RHSuiviContent() {
             />
           </div>
           
-          {/* Panneaux collaborateurs (restent montés pour préserver l'état) */}
-          {tabsState.tabs.map(collabId => (
+          {/* Panneaux collaborateurs (tous préchargés pour navigation instantanée) */}
+          {collaborators.map(collab => (
             <div
-              key={collabId}
+              key={collab.id}
               className={cn(
                 "h-full overflow-auto",
-                activeCollaboratorId === collabId ? "block" : "hidden"
+                activeCollaboratorId === collab.id ? "block" : "hidden"
               )}
             >
-              <RHCollaboratorPanel collaboratorId={collabId} />
+              <RHCollaboratorPanel collaboratorId={collab.id} />
             </div>
           ))}
         </div>
