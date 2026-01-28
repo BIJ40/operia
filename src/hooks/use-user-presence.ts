@@ -8,9 +8,11 @@ const OFFLINE_THRESHOLD = 60000; // 1 minute
 
 export const useUserPresence = () => {
   const { user } = useAuth();
+  // Use stable userId to prevent re-runs on tab switch (user object changes reference)
+  const userId = user?.id;
 
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
 
     let heartbeatInterval: NodeJS.Timeout;
     let isActive = true;
@@ -22,7 +24,7 @@ export const useUserPresence = () => {
         await supabase
           .from('user_presence')
           .upsert({
-            user_id: user.id,
+            user_id: userId,
             status,
             last_seen: new Date().toISOString(),
             updated_at: new Date().toISOString()
@@ -55,5 +57,5 @@ export const useUserPresence = () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       updatePresence('offline');
     };
-  }, [user]);
+  }, [userId]); // Stable: only re-run on actual user change (login/logout)
 };
