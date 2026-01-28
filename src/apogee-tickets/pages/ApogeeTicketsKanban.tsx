@@ -27,7 +27,7 @@ import { TicketFilters } from '../components/TicketFilters';
 import { TicketDetailDrawer } from '../components/TicketDetailDrawer';
 import { CreateTicketDialog } from '../components/CreateTicketDialog';
 import { ActionsConfigDialog } from '../components/ActionsConfigDialog';
-import { RecentChangesSheet } from '../components/RecentChangesSheet';
+
 import { HeatPrioritySlider } from '../components/HeatPrioritySlider';
 import { exportToCSV, exportToExcel, exportToPDF } from '../utils/exportKanban';
 
@@ -139,7 +139,6 @@ function ApogeeTicketsKanbanContent({ roleInfo, embedded = false }: { roleInfo: 
   const [selectedTicket, setSelectedTicket] = useState<ApogeeTicket | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showConfigDialog, setShowConfigDialog] = useState(false);
-  const [showRecentChanges, setShowRecentChanges] = useState(false);
 
   const togglePECFilter = (pecId: string) => {
     setSelectedPEC(prev => {
@@ -290,16 +289,6 @@ function ApogeeTicketsKanbanContent({ roleInfo, embedded = false }: { roleInfo: 
               <span className="hidden sm:inline">Nouveau ticket</span>
             </Button>
           )}
-          
-          {/* Bouton dernières modifications */}
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="h-8 text-xs"
-            onClick={() => setShowRecentChanges(true)}
-          >
-            dernières modif
-          </Button>
           
           {/* Export dropdown */}
           <DropdownMenu>
@@ -524,16 +513,6 @@ function ApogeeTicketsKanbanContent({ roleInfo, embedded = false }: { roleInfo: 
       <ActionsConfigDialog
         open={showConfigDialog}
         onClose={() => setShowConfigDialog(false)}
-      />
-
-      {/* Sheet dernières modifications */}
-      <RecentChangesSheet
-        open={showRecentChanges}
-        onOpenChange={setShowRecentChanges}
-        tickets={tickets}
-        statuses={statuses}
-        modules={modules}
-        onTicketClick={handleTicketClick}
       />
     </div>
   );
