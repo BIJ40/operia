@@ -31,6 +31,9 @@ import { useCreateFleetVehicle, useUpdateFleetVehicle } from '@/hooks/maintenanc
 import { useCollaborators } from '@/hooks/useCollaborators';
 import { toast } from 'sonner';
 
+// Callback optionnel pour ouvrir le véhicule créé dans un onglet
+export type OnVehicleCreated = (vehicleId: string, label: string) => void;
+
 const vehicleSchema = z.object({
   name: z.string().min(1, 'Le nom est requis'),
   registration: z.string().optional(),
@@ -51,9 +54,10 @@ interface VehicleFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   vehicle?: FleetVehicle;
+  onVehicleCreated?: OnVehicleCreated;
 }
 
-export function VehicleFormDialog({ open, onOpenChange, vehicle }: VehicleFormDialogProps) {
+export function VehicleFormDialog({ open, onOpenChange, vehicle, onVehicleCreated }: VehicleFormDialogProps) {
   const isEdit = !!vehicle;
   const createVehicle = useCreateFleetVehicle();
   const updateVehicle = useUpdateFleetVehicle();
@@ -115,8 +119,13 @@ export function VehicleFormDialog({ open, onOpenChange, vehicle }: VehicleFormDi
         await updateVehicle.mutateAsync({ vehicleId: vehicle.id, data: payload });
         toast.success('Véhicule mis à jour');
       } else {
-        await createVehicle.mutateAsync(payload);
+        const newVehicle = await createVehicle.mutateAsync(payload);
         toast.success('Véhicule créé');
+        // Ouvrir le véhicule créé dans un onglet si callback fourni
+        if (onVehicleCreated && newVehicle) {
+          const label = payload.registration || payload.name;
+          onVehicleCreated(newVehicle.id, label);
+        }
       }
       onOpenChange(false);
       form.reset();
