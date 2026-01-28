@@ -1,203 +1,242 @@
 
-# Plan de Nettoyage Legacy Complet - v0.8.6
+# Plan de Refonte UX/UI du Dashboard d'Accueil
 
-## Récapitulatif des décisions utilisateur
-
-| Domaine | Action confirmée |
-|---------|------------------|
-| **Paye / bulletins** | Supprimer entièrement (hook, composants, table `payslip_data`) |
-| **Guide OPERIA** | Conserver mais renommer "Guide HC Services" |
-| **Support V2 (`support_tickets`)** | Supprimer complètement (code + tables DB) |
-| **Routes `/hc-agency`** | **Migrer vers `/agency`** (pas `/pilotage`) |
+## Vision Cible
+Transformer le dashboard "outil administratif" en une **expérience engageante** que l'on ouvre par envie, pas par obligation. L'interface doit être chaleureuse, intuitive et orientée décision.
 
 ---
 
-## Phase 1 : Suppression Module Paye (Bulletins)
+## 1. Analyse Critique du Dashboard Actuel
 
-### Fichiers à supprimer
-- `src/hooks/usePayslipAnalysis.ts`
-- `src/types/payslipData.ts` 
-- `src/components/collaborators/payslip/` (dossier complet)
+### Forces
+- Structure claire par rôle (N0, N1, N2+)
+- Sélecteur de période fonctionnel
+- Widgets modulaires réutilisables
+- Design system cohérent (HelpConfort colors)
 
-### Fichiers à corriger
-- `src/components/collaborators/ContractSalaryTab.tsx` : retirer imports et bloc `PayslipDataViewer`
-
-### Base de données
-```sql
-DROP TABLE IF EXISTS public.payslip_data CASCADE;
-```
-
----
-
-## Phase 2 : Suppression Support V2 (support_tickets)
-
-### Fichiers à supprimer
-- `src/hooks/use-support-stats.ts`
-- `src/pages/AdminSupportStats.tsx`
-- `src/pages/AdminEscalationHistory.tsx`
-
-### Fichiers à corriger
-- `src/components/ai/AiInlineResult.tsx` : modifier bouton "Créer un ticket" pour utiliser `apogee_tickets`
-
-### Config à nettoyer
-| Fichier | Éléments à supprimer |
-|---------|---------------------|
-| `src/config/navigation.ts` | Entrées Console Support V2, support_tickets children |
-| `src/config/routes.ts` | `supportStats`, `escalationHistory` de admin |
-| `src/config/scopeRegistry.ts` | `SUPPORT_TICKETS` |
-| `src/config/roleMatrix.ts` | case `support_tickets` |
-| `src/routes/admin.routes.tsx` | Routes `/admin/support-stats`, `/admin/escalation-history` |
-
-### Base de données
-```sql
-DROP TABLE IF EXISTS public.support_ticket_actions CASCADE;
-DROP TABLE IF EXISTS public.support_attachments CASCADE;
-DROP TABLE IF EXISTS public.support_ticket_messages CASCADE;
-DROP TABLE IF EXISTS public.support_tickets CASCADE;
-```
+### Faiblesses
+- **Titres administratifs froids** : "Indicateurs clés", "CA par Univers", "Top 3 Techniciens"
+- **Cartes plates** : Bordures fines, peu de profondeur, effet "tableur Excel"
+- **Surcharge visuelle** : Trop d'informations affichées d'emblée
+- **Pas de carte RDV** : Module clé absent de la page d'accueil
+- **Effet ERP** : Grille rigide, zéro respiration, couleurs trop saturées
+- **Pas de hiérarchie visuelle** : Tout semble avoir la meme importance
 
 ---
 
-## Phase 3 : Renommage OPERIA → HC Services
+## 2. Nouvelle Architecture du Dashboard
 
-### Fichiers à renommer
-| Ancien | Nouveau |
-|--------|---------|
-| `src/contexts/OperiaEditorContext.tsx` | `src/contexts/HcServicesEditorContext.tsx` |
-| `src/pages/OperiaGuide.tsx` | `src/pages/HcServicesGuide.tsx` |
-| `src/pages/CategoryOperia.tsx` | `src/pages/CategoryHcServices.tsx` |
-| `src/components/operia/` | `src/components/hc-services-guide/` |
-
-### Routes à migrer
-| Ancienne route | Nouvelle route |
-|----------------|----------------|
-| `/academy/operia` | `/academy/hc-services` |
-| `/academy/operia/category/:slug` | `/academy/hc-services/category/:slug` |
-
-### Config à mettre à jour
-- `src/config/routes.ts` : `operia` → `hcServices`, `operiaCategory` → `hcServicesCategory`
-- `src/routes/academy.routes.tsx` : nouveaux imports + routes
-- `src/config/sitemapData.ts` : labels "OPERIA" → "HC Services"
-- Ajouter redirects legacy `/academy/operia/*` → `/academy/hc-services/*`
-
-### Base de données
-- Table `operia_blocks` conservée (nom technique interne)
-
----
-
-## Phase 4 : Migration /hc-agency → /agency
-
-### Nouvelle structure des routes
-
-| Route actuelle | Nouvelle route |
-|----------------|----------------|
-| `/hc-agency` | `/agency` |
-| `/hc-agency/stats-hub` | `/agency/stats-hub` |
-| `/hc-agency/indicateurs` | `/agency/indicateurs` |
-| `/hc-agency/actions` | `/agency/actions` |
-| `/hc-agency/mes-apporteurs` | `/agency/apporteurs` |
-| `/hc-agency/map` | `/agency/carte` |
-| `/hc-agency/veille-apporteurs` | `/agency/veille-apporteurs` |
-| `/hc-agency/commercial/*` | `/agency/commercial/*` |
-| `/hc-agency/statistiques/diffusion` | `/agency/diffusion` |
-
-### Fichiers à déplacer
-| Source | Destination |
-|--------|-------------|
-| `src/pages/hc-agency/MesApporteursPage.tsx` | `src/pages/agency/ApporteursPage.tsx` |
-| `src/pages/hc-agency/RdvMapPage.tsx` | `src/pages/agency/CartePage.tsx` |
-
-### Fichiers à modifier
-- `src/routes/pilotage.routes.tsx` : remplacer tous les `/hc-agency` par `/agency`
-- `src/config/routes.ts` : mettre à jour bloc `agency` avec nouvelles URLs
-- `src/config/navigation.ts` : mettre à jour `ROUTES.agency.*`
-- `src/config/dashboardTiles.ts` : mettre à jour URLs des tuiles pilotage
-- `src/config/sitemapData.ts` : mettre à jour URLs
-
-### Redirects legacy
-```tsx
-<Route path="/hc-agency" element={<Navigate to="/agency" replace />} />
-<Route path="/hc-agency/*" element={<Navigate to="/agency" replace />} />
-```
-
----
-
-## Phase 5 : Script de détection automatique
-
-Ajouter dans `scripts/check-architecture.sh` :
-
-```bash
-# Patterns interdits (legacy)
-FORBIDDEN_PATTERNS=(
-  "support_tickets"      # Table V2 supprimée
-  "payslip"              # Module paye supprimé
-  "hc-agency"            # Ancien préfixe route
-  "operia"               # Ancien nom guide
-  "analyze-payslip"      # Edge function supprimée
-)
-```
-
----
-
-## Ordre d'exécution (prévenir les erreurs de build)
+### Structure en 3 Niveaux de Lecture
 
 ```text
++------------------------------------------------------------------+
+|  HERO SECTION - "Où ça se passe aujourd'hui" (Carte RDV mini)    |
+|  [ Carte interactive intégrée avec pastilles techniciens ]       |
++------------------------------------------------------------------+
+|                                                                   |
+|  NIVEAU 1 - VUE IMMÉDIATE                                        |
+|  +-------------+  +-------------+  +-------------+  +------------+|
+|  | Le Pouls    |  | Qui fait    |  | Ce qui      |  | À         ||
+|  | de l'Agence |  | tourner     |  | mérite      |  | surveiller||
+|  | (CA + KPIs) |  | (Univers)   |  | le podium   |  | (SAV)     ||
+|  +-------------+  +-------------+  +-------------+  +------------+|
+|                                                                   |
+|  NIVEAU 2 - EXPLORABLE                                           |
+|  +---------------------------+  +--------------------------------+|
+|  | À ne pas oublier          |  | Mes raccourcis                 ||
+|  | (Tickets récents)         |  | (Favoris)                      ||
+|  +---------------------------+  +--------------------------------+|
+|                                                                   |
++------------------------------------------------------------------+
+```
+
+---
+
+## 3. Nouveaux Titres "Humains"
+
+### Remplacement des titres actuels
+
+| Ancien Titre             | Nouveaux Titres (rotation aléatoire)                                |
+|--------------------------|---------------------------------------------------------------------|
+| "Indicateurs clés"       | "Le pouls de l'agence", "Comment ça tourne", "En un coup d'oeil"   |
+| "Top 3 Techniciens"      | "Qui fait la différence", "Le podium du mois", "Les étoiles"      |
+| "CA par Univers"         | "Ce qui fait tourner", "Où se fait le CA", "Les métiers"          |
+| "CA par Apporteur"       | "D'où vient le travail", "Nos prescripteurs", "Les sources"       |
+| "Taux SAV"               | "À surveiller", "Attention requise", "Point de vigilance"         |
+| "Derniers tickets"       | "À ne pas oublier", "Demandes en cours", "Ce qui attend"          |
+| "Mes favoris"            | "Mes raccourcis", "Accès rapides", "Ma boîte à outils"            |
+
+---
+
+## 4. Design System "Warm Dashboard"
+
+### Nouveaux Tokens CSS
+```css
+/* Palette émotionnelle pastel */
+--warm-blue: 200 85% 60%;      /* Bleu doux */
+--warm-green: 145 60% 55%;     /* Vert apaisant */
+--warm-orange: 35 90% 60%;     /* Orange chaleureux */
+--warm-purple: 270 60% 65%;    /* Violet doux */
+--warm-pink: 340 70% 65%;      /* Rose tendre */
+
+/* Ombres douces */
+--shadow-card: 0 4px 20px -4px rgba(0,0,0,0.08);
+--shadow-card-hover: 0 8px 30px -8px rgba(0,0,0,0.12);
+
+/* Rayons ultra-arrondis */
+--radius-warm: 1.25rem; /* 20px */
+```
+
+### Composant `WarmCard`
+- Border-radius: 20px (ultra-arrondi)
+- Ombres douces et diffuses
+- Background avec gradient subtil
+- Hover: légère élévation + scale(1.02)
+- Icones colorées en pastilles rondes
+
+---
+
+## 5. Intégration Module Carte RDV
+
+### Position: Hero Section du Dashboard
+- **Emplacement**: En haut, pleine largeur, hauteur 280px
+- **Mode compact**: Carte simplifiée sans filtres visibles
+- **Interaction**: Clic pour agrandir en modal/drawer
+
+### Caractéristiques
+- Affiche les RDV du jour uniquement
+- Pastilles colorées par technicien (réutilise `PinMarker.tsx`)
+- Compteur de RDV visible: "12 RDV aujourd'hui"
+- Bouton "Voir en grand" → Modal plein écran avec filtres
+
+### Composant `DashboardMapWidget`
+```text
++-----------------------------------------------------------+
+| 🗺️  Où ça se passe aujourd'hui         12 RDV  [Agrandir] |
++-----------------------------------------------------------+
+|                                                           |
+|     [Carte Mapbox simplifiée avec markers]                |
+|                                                           |
++-----------------------------------------------------------+
+```
+
+---
+
+## 6. Animations et Interactions
+
+### Micro-interactions avec Framer Motion
+- **Entrée des cartes**: fade-in + scale-in échelonné (stagger 50ms)
+- **Hover cartes**: scale(1.02) + shadow-lg
+- **Chargement KPIs**: Skeleton avec shimmer effect
+- **Compteurs**: Animation numérique (count-up)
+
+### Révélation Progressive
+- Widgets secondaires (SAV, Panier Moyen) en mode "collapsed" par défaut
+- Expansion au clic ou hover
+- Drawers latéraux pour les détails
+
+---
+
+## 7. Fichiers à Créer/Modifier
+
+### Nouveaux Fichiers
+```text
+src/components/dashboard/v2/
+├── WarmCard.tsx              # Nouveau composant carte arrondie
+├── DashboardHero.tsx         # Hero section avec carte RDV
+├── DashboardMapWidget.tsx    # Widget carte intégré
+├── PulseIndicator.tsx        # KPI avec animation
+├── HumanTitle.tsx            # Générateur de titres aléatoires
+├── DashboardV2.tsx           # Nouveau layout principal
+└── hooks/
+    └── useHumanTitles.ts     # Hook pour rotation des titres
+```
+
+### Fichiers à Modifier
+```text
+src/pages/DashboardStatic.tsx        # Refactor complet du layout
+src/components/ui/card.tsx           # Ajouter variante "warm"
+src/index.css                        # Nouveaux tokens CSS pastel
+tailwind.config.ts                   # Ajouter couleurs + shadows
+src/components/dashboard/KpiTile.tsx # Appliquer style warm
+src/components/dashboard/widgets/*   # Adapter tous les widgets
+```
+
+---
+
+## 8. Plan d'Exécution
+
+### Phase 1: Design System (30 min)
+1. Ajouter tokens CSS pastel dans `index.css`
+2. Étendre `tailwind.config.ts` avec nouvelles couleurs/shadows
+3. Créer composant `WarmCard.tsx`
+
+### Phase 2: Titres Humains (15 min)
+1. Créer hook `useHumanTitles.ts`
+2. Créer composant `HumanTitle.tsx`
+3. Configurer la rotation aléatoire des titres
+
+### Phase 3: Widget Carte RDV (45 min)
+1. Créer `DashboardMapWidget.tsx` (version compacte)
+2. Réutiliser `useRdvMap` et `PinMarker`
+3. Ajouter modal d'expansion
+
+### Phase 4: Refonte DashboardStatic (60 min)
+1. Restructurer le layout en 3 niveaux
+2. Remplacer tous les titres par `HumanTitle`
+3. Appliquer `WarmCard` partout
+4. Intégrer le hero avec carte
+
+### Phase 5: Animations (20 min)
+1. Ajouter framer-motion pour entrées échelonnées
+2. Animer les compteurs KPI
+3. Implémenter hover effects
+
+---
+
+## 9. Exemple de Rendu Visuel
+
+### Avant (Actuel)
+```text
 ┌─────────────────────────────────────────────────┐
-│ 1. Migration DB : DROP tables legacy            │
-│    (payslip_data, support_tickets, etc.)        │
-└─────────────────────┬───────────────────────────┘
-                      ▼
-┌─────────────────────────────────────────────────┐
-│ 2. Supprimer fichiers inutiles                  │
-│    (hooks, pages, composants paye/support V2)   │
-└─────────────────────┬───────────────────────────┘
-                      ▼
-┌─────────────────────────────────────────────────┐
-│ 3. Corriger imports cassés                      │
-│    (ContractSalaryTab, AiInlineResult, etc.)    │
-└─────────────────────┬───────────────────────────┘
-                      ▼
-┌─────────────────────────────────────────────────┐
-│ 4. Renommer OPERIA → HC Services                │
-│    (fichiers + routes + config)                 │
-└─────────────────────┬───────────────────────────┘
-                      ▼
-┌─────────────────────────────────────────────────┐
-│ 5. Migrer /hc-agency → /agency                  │
-│    (routes + navigation + pages)                │
-└─────────────────────┬───────────────────────────┘
-                      ▼
-┌─────────────────────────────────────────────────┐
-│ 6. Ajouter redirects legacy                     │
-│    (/hc-agency/* → /agency/*, etc.)             │
-└─────────────────────┬───────────────────────────┘
-                      ▼
-┌─────────────────────────────────────────────────┐
-│ 7. Mettre à jour check-architecture.sh          │
-│    (patterns interdits)                         │
+│ Indicateurs clés                    [icône]     │
+├─────────────────────────────────────────────────┤
+│ CA période: 45 230 €   Taux SAV: 3.2%          │
+│ ...                                             │
 └─────────────────────────────────────────────────┘
 ```
 
+### Après (Nouveau)
+```text
+╭─────────────────────────────────────────────────╮
+│  🔵                                             │
+│  Le pouls de l'agence                           │
+│                                                 │
+│  ╭─────╮ ╭─────╮ ╭─────╮ ╭─────╮ ╭─────╮ ╭────╮│
+│  │ 45k │ │ 72% │ │ 3.2%│ │ 890€│ │ 127 │ │ 48 ││
+│  │ CA  │ │Trans│ │ SAV │ │Panie│ │Dossi│ │Devi││
+│  ╰─────╯ ╰─────╯ ╰─────╯ ╰─────╯ ╰─────╯ ╰────╯│
+│                                                 │
+│  [Sparkline CA mensuel avec gradient doux]      │
+╰─────────────────────────────────────────────────╯
+```
+
 ---
 
-## Estimation
+## 10. Section Technique
 
-| Phase | Effort |
-|-------|--------|
-| 1. Supprimer Paye | 15 min |
-| 2. Supprimer Support V2 | 30 min |
-| 3. Renommer OPERIA | 25 min |
-| 4. Migrer /hc-agency → /agency | 35 min |
-| 5. Script détection + redirects | 15 min |
-| **Total** | **~2h** |
+### Dépendances Existantes Utilisées
+- `framer-motion` (déjà installé) - Animations
+- `mapbox-gl` (déjà installé) - Carte
+- `recharts` (déjà installé) - Graphiques
+- `@radix-ui/*` (déjà installé) - Composants UI
 
----
+### Compatibilité Rôles
+- **N0**: Tickets + Favoris (style warm, pas de carte)
+- **N1 Tech**: KPIs perso + Tickets + Favoris
+- **N2+**: Layout complet avec carte RDV
 
-## Livrables attendus
-
-1. **~800 lignes de code supprimées** (dead code)
-2. **4 tables DB supprimées** (payslip_data, support_tickets, support_ticket_messages, support_ticket_actions)
-3. **Routes simplifiées** : `/agency/*` au lieu de `/hc-agency/*`
-4. **Guide renommé** : "HC Services" au lieu de "OPERIA"
-5. **Script CI amélioré** : détection automatique des patterns legacy
-6. **Redirects legacy** : aucun lien cassé pour les bookmarks existants
+### Performance
+- Carte RDV chargée en lazy (Suspense)
+- Widgets avec `staleTime: 5min` (déjà en place)
+- Animations CSS uniquement (pas de JS pour hover)
