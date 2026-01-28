@@ -11,20 +11,20 @@ interface NetworkMonthlyCAChartProps {
   }>;
 }
 
-// Palette de couleurs vibrantes pour les barres
+// Palette de couleurs douces et pâles pour les barres
 const BAR_COLORS = [
-  '#3b82f6', // blue
-  '#06b6d4', // cyan
-  '#10b981', // emerald
-  '#22c55e', // green
-  '#84cc16', // lime
-  '#eab308', // yellow
-  '#f97316', // orange
-  '#ef4444', // red
-  '#ec4899', // pink
-  '#a855f7', // purple
-  '#6366f1', // indigo
-  '#8b5cf6', // violet
+  '#93c5fd', // blue-300
+  '#67e8f9', // cyan-300
+  '#6ee7b7', // emerald-300
+  '#86efac', // green-300
+  '#bef264', // lime-300
+  '#fde047', // yellow-300
+  '#fdba74', // orange-300
+  '#fca5a5', // red-300
+  '#f9a8d4', // pink-300
+  '#c4b5fd', // purple-300
+  '#a5b4fc', // indigo-300
+  '#c4b5fd', // violet-300
 ];
 
 export const NetworkMonthlyCAChart = ({ data }: NetworkMonthlyCAChartProps) => {
@@ -33,20 +33,20 @@ export const NetworkMonthlyCAChart = ({ data }: NetworkMonthlyCAChartProps) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="relative overflow-hidden rounded-2xl bg-white dark:bg-card border-0 shadow-lg p-6"
+      className="relative overflow-hidden rounded-2xl bg-white dark:bg-card border-0 shadow-sm p-6"
     >
-      {/* Decorative gradient */}
-      <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-blue-400/15 to-cyan-500/10 rounded-bl-[100px] -mr-10 -mt-10" />
+      {/* Decorative gradient - plus subtil */}
+      <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-blue-200/20 to-cyan-200/10 rounded-bl-[100px] -mr-10 -mt-10" />
       
       <div className="mb-6 relative flex items-center gap-3">
         <motion.div 
-          whileHover={{ scale: 1.1 }}
-          className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg"
+          whileHover={{ scale: 1.05 }}
+          className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center shadow-md"
         >
           <TrendingUp className="h-5 w-5 text-white" />
         </motion.div>
         <div>
-          <h3 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
+          <h3 className="text-lg font-semibold text-foreground">
             Évolution du CA
           </h3>
           <p className="text-sm text-muted-foreground">Répartition mensuelle du réseau</p>
@@ -111,8 +111,8 @@ export const NetworkMonthlyCAChart = ({ data }: NetworkMonthlyCAChartProps) => {
         </BarChart>
       </ResponsiveContainer>
       
-      {/* Bottom accent */}
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-cyan-400 to-emerald-400" />
+      {/* Bottom accent - plus subtil */}
+      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-300 via-cyan-300 to-emerald-300" />
     </motion.div>
   );
 };
