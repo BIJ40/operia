@@ -355,6 +355,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!isMounted) return;
         
         setUser(session?.user ?? null);
+        // IMPORTANT: keep a stable userId reference from the very first session load.
+        // If this stays null until the first auth event, a later focus/tab event can
+        // look like a "user change" and retrigger loadUserData(), causing the micro-loader.
+        currentUserIdRef.current = session?.user?.id ?? null;
         
         if (session?.user) {
           setTimeout(async () => {
@@ -408,14 +412,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const newUserId = session?.user?.id ?? null;
         currentUserIdRef.current = newUserId;
 
-        // Skip no-op events when user didn't change
-        // NOTE: USER_UPDATED is now also ignored if user ID is unchanged
-        // This prevents tab-switch-induced reloads that reset UI state
-        if (
-          newUserId === prevUserId &&
-          event !== 'SIGNED_IN' &&
-          event !== 'SIGNED_OUT'
-        ) {
+        // Skip no-op events when user didn't change.
+        // We also ignore a redundant SIGNED_IN for the same userId (seen on some tab-focus flows),
+        // otherwise it can briefly set isAuthLoading(true) and unmount guarded routes.
+        if (newUserId === prevUserId && event !== 'SIGNED_OUT') {
           return;
         }
 
