@@ -46,7 +46,11 @@ import type { ApogeeTicket, TicketFilters as Filters } from '../types';
 import { ROUTES } from '@/config/routes';
 import { PageHeader } from '@/components/layout/PageHeader';
 
-export default function ApogeeTicketsListPage() {
+interface ApogeeTicketsListPageProps {
+  embedded?: boolean;
+}
+
+export default function ApogeeTicketsListPage({ embedded = false }: ApogeeTicketsListPageProps) {
   const { data: myTicketRole, isLoading: isLoadingRole, error: roleError } = useMyTicketRole();
 
   // Chargement des droits
@@ -82,17 +86,17 @@ export default function ApogeeTicketsListPage() {
           <ShieldAlert className="h-4 w-4" />
           <AlertTitle>Module tickets non disponible</AlertTitle>
           <AlertDescription>
-            Votre profil n'a pas accès au module <strong>Gestion de Projet</strong>.
+            Votre profil n'a pas accès au module <strong>Ticketing</strong>.
           </AlertDescription>
         </Alert>
       </div>
     );
   }
 
-  return <ApogeeTicketsListContent roleInfo={myTicketRole} />;
+  return <ApogeeTicketsListContent roleInfo={myTicketRole} embedded={embedded} />;
 }
 
-function ApogeeTicketsListContent({ roleInfo }: { roleInfo: NonNullable<ReturnType<typeof useMyTicketRole>['data']> }) {
+function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: NonNullable<ReturnType<typeof useMyTicketRole>['data']>; embedded?: boolean }) {
   const navigate = useNavigate();
   const { canViewKanban, canImport, canManage, ticketRole, isPlatformAdmin } = roleInfo;
 
@@ -167,36 +171,40 @@ function ApogeeTicketsListContent({ roleInfo }: { roleInfo: NonNullable<ReturnTy
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 space-y-6">
-      <PageHeader 
-        title="Gestion de Projet - Liste"
-        backTo={ROUTES.projects.index}
-        backLabel="Gestion de Projet"
-      />
+    <div className={embedded ? "space-y-4" : "container mx-auto py-8 px-4 space-y-6"}>
+      {!embedded && (
+        <PageHeader 
+          title="Ticketing - Liste"
+          backTo="/"
+          backLabel="Accueil"
+        />
+      )}
       
       {/* Header avec toggle Kanban/Liste */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Toggle vue */}
-          <div className="flex gap-1 p-1 bg-muted rounded-lg">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8"
-              onClick={() => navigate(ROUTES.projects.kanban)}
-            >
-              <LayoutGrid className="h-4 w-4 mr-1" />
-              Kanban
-            </Button>
-            <Button
-              variant="default"
-              size="sm"
-              className="h-8"
-            >
-              <List className="h-4 w-4 mr-1" />
-              Liste
-            </Button>
-          </div>
+          {/* Toggle vue - only shown when not embedded */}
+          {!embedded && (
+            <div className="flex gap-1 p-1 bg-muted rounded-lg">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8"
+                onClick={() => navigate(ROUTES.projects.kanban)}
+              >
+                <LayoutGrid className="h-4 w-4 mr-1" />
+                Kanban
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                className="h-8"
+              >
+                <List className="h-4 w-4 mr-1" />
+                Liste
+              </Button>
+            </div>
+          )}
 
           {canViewKanban && (
             <Button onClick={() => setShowCreateDialog(true)} size="sm">

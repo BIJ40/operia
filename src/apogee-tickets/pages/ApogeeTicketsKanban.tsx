@@ -40,7 +40,11 @@ import { useMyTicketViews } from '../hooks/useTicketViews';
 import { useAuth } from '@/contexts/AuthContext';
 import { PageHeader } from '@/components/layout/PageHeader';
 
-export default function ApogeeTicketsKanbanPage() {
+interface ApogeeTicketsKanbanPageProps {
+  embedded?: boolean;
+}
+
+export default function ApogeeTicketsKanbanPage({ embedded = false }: ApogeeTicketsKanbanPageProps) {
   const { data: myTicketRole, isLoading: isLoadingRole, error: roleError } = useMyTicketRole();
 
   // 1) Chargement des droits
@@ -78,7 +82,7 @@ export default function ApogeeTicketsKanbanPage() {
           <AlertTitle>Module tickets non disponible</AlertTitle>
           <AlertDescription className="space-y-2">
             <p>
-              Votre profil n'a pas accès au module <strong>Gestion de Projet</strong>.
+              Votre profil n'a pas accès au module <strong>Ticketing</strong>.
             </p>
             {myTicketRole.reason && (
               <p className="text-xs text-muted-foreground">
@@ -92,11 +96,11 @@ export default function ApogeeTicketsKanbanPage() {
   }
 
   // 4) Cas nominal : on affiche le Kanban
-  return <ApogeeTicketsKanbanContent roleInfo={myTicketRole} />;
+  return <ApogeeTicketsKanbanContent roleInfo={myTicketRole} embedded={embedded} />;
 }
 
 // Composant interne avec le contenu du Kanban
-function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) {
+function ApogeeTicketsKanbanContent({ roleInfo, embedded = false }: { roleInfo: TicketRoleInfo; embedded?: boolean }) {
   const { isPlatformAdmin, isSupport, ticketRole, canManage, canImport, canViewKanban } = roleInfo;
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -250,32 +254,36 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 space-y-6">
-      <PageHeader 
-        title="Gestion de Projet - Kanban"
-        backTo={ROUTES.projects.index}
-        backLabel="Gestion de Projet"
-      />
+    <div className={embedded ? "space-y-4" : "container mx-auto py-8 px-4 space-y-6"}>
+      {!embedded && (
+        <PageHeader 
+          title="Ticketing - Kanban"
+          backTo="/"
+          backLabel="Accueil"
+        />
+      )}
       
       {/* Header actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Toggle vue Kanban/Liste */}
-          <div className="flex gap-1 p-1 bg-muted rounded-lg">
-            <Button variant="default" size="sm" className="h-8">
-              <LayoutGrid className="h-4 w-4 mr-1" />
-              Kanban
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8"
-              onClick={() => navigate(ROUTES.projects.list)}
-            >
-              <List className="h-4 w-4 mr-1" />
-              Liste
-            </Button>
-          </div>
+          {/* Toggle vue Kanban/Liste - only shown when not embedded */}
+          {!embedded && (
+            <div className="flex gap-1 p-1 bg-muted rounded-lg">
+              <Button variant="default" size="sm" className="h-8">
+                <LayoutGrid className="h-4 w-4 mr-1" />
+                Kanban
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8"
+                onClick={() => navigate(ROUTES.projects.list)}
+              >
+                <List className="h-4 w-4 mr-1" />
+                Liste
+              </Button>
+            </div>
+          )}
           {canViewKanban && (
             <Button onClick={() => setShowCreateDialog(true)} size="sm" className="sm:size-default">
               <Plus className="h-4 w-4 sm:mr-2" />

@@ -14,7 +14,11 @@ import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { ROUTES } from '@/config/routes';
 import { PageHeader } from '@/components/layout/PageHeader';
 
-export default function ApogeeTicketsHistoryPage() {
+interface ApogeeTicketsHistoryPageProps {
+  embedded?: boolean;
+}
+
+export default function ApogeeTicketsHistoryPage({ embedded = false }: ApogeeTicketsHistoryPageProps) {
   const { data: history, isLoading } = useTicketHistory('');
   const { statuses, tickets } = useApogeeTickets();
   
@@ -48,13 +52,15 @@ export default function ApogeeTicketsHistoryPage() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 space-y-6">
-      <PageHeader 
-        title="Historique"
-        subtitle="Traçabilité complète des actions sur les tickets"
-        backTo={ROUTES.projects.kanban}
-        backLabel="Kanban"
-      />
+    <div className={embedded ? "space-y-4" : "container mx-auto py-8 px-4 space-y-6"}>
+      {!embedded && (
+        <PageHeader 
+          title="Ticketing - Historique"
+          subtitle="Traçabilité complète des actions sur les tickets"
+          backTo="/"
+          backLabel="Accueil"
+        />
+      )}
 
       <Card>
         <CardHeader>
