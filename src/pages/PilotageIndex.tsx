@@ -116,47 +116,55 @@ function PilotageContent() {
   return (
     <div className="container mx-auto py-4 px-4 space-y-4">
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as MainTab)}>
-        <div className="border-b border-border">
-          <TabsList className="h-auto p-0 bg-transparent gap-0">
-            {/* Premier onglet = Mon Agence avec le style titre */}
+        <div className="flex items-end gap-1 pb-0">
+          <TabsList className="h-auto p-0 bg-transparent gap-1 items-end">
+            {/* Onglet Mon Agence */}
             <TabsTrigger 
               value="agence" 
-              className="relative rounded-none border-b-2 border-transparent data-[state=active]:border-helpconfort-blue data-[state=active]:bg-transparent bg-transparent px-4 py-2.5 transition-colors hover:text-foreground data-[state=active]:shadow-none"
+              className="relative px-5 py-3 rounded-t-xl border border-b-0 transition-all duration-200
+                data-[state=inactive]:bg-muted/50 data-[state=inactive]:border-border/50 data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted
+                data-[state=active]:bg-background data-[state=active]:border-border data-[state=active]:shadow-sm data-[state=active]:z-10"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-md">
-                  <Building2 className="w-5 h-5 text-white" />
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-sm">
+                  <Building2 className="w-4.5 h-4.5 text-white" />
                 </div>
-                <span className="text-xl font-bold text-foreground tracking-tight">Mon Agence</span>
+                <span className="text-lg font-semibold tracking-tight">Mon Agence</span>
               </div>
             </TabsTrigger>
             {hasStatsAccess && (
               <TabsTrigger 
                 value="stats" 
-                className="relative rounded-none border-b-2 border-transparent data-[state=active]:border-helpconfort-blue data-[state=active]:bg-transparent bg-transparent px-4 py-2.5 transition-colors hover:text-foreground data-[state=active]:shadow-none"
+                className="relative px-5 py-3 rounded-t-xl border border-b-0 transition-all duration-200
+                  data-[state=inactive]:bg-muted/50 data-[state=inactive]:border-border/50 data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted
+                  data-[state=active]:bg-background data-[state=active]:border-border data-[state=active]:shadow-sm data-[state=active]:z-10"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-md">
-                    <BarChart3 className="w-5 h-5 text-white" />
+                  <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-sm">
+                    <BarChart3 className="w-4.5 h-4.5 text-white" />
                   </div>
-                  <span className="text-xl font-bold text-foreground tracking-tight">Statistiques</span>
+                  <span className="text-lg font-semibold tracking-tight">Statistiques</span>
                 </div>
               </TabsTrigger>
             )}
             {hasApporteursAccess && (
               <TabsTrigger 
                 value="apporteurs" 
-                className="relative rounded-none border-b-2 border-transparent data-[state=active]:border-helpconfort-blue data-[state=active]:bg-transparent bg-transparent px-4 py-2.5 transition-colors hover:text-foreground data-[state=active]:shadow-none"
+                className="relative px-5 py-3 rounded-t-xl border border-b-0 transition-all duration-200
+                  data-[state=inactive]:bg-muted/50 data-[state=inactive]:border-border/50 data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted
+                  data-[state=active]:bg-background data-[state=active]:border-border data-[state=active]:shadow-sm data-[state=active]:z-10"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-md">
-                    <Users className="w-5 h-5 text-white" />
+                  <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-sm">
+                    <Users className="w-4.5 h-4.5 text-white" />
                   </div>
-                  <span className="text-xl font-bold text-foreground tracking-tight">Mes apporteurs</span>
+                  <span className="text-lg font-semibold tracking-tight">Mes apporteurs</span>
                 </div>
               </TabsTrigger>
             )}
           </TabsList>
+          {/* Ligne de séparation qui passe "sous" l'onglet actif */}
+          <div className="flex-1 border-b border-border" />
         </div>
 
         <div className="pt-4">
