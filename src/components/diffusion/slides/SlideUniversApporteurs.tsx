@@ -12,7 +12,17 @@ interface SlideUniversApporteursProps {
   currentMonthIndex: number;
 }
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+// Palette warm dashboard
+const COLORS = [
+  'hsl(200, 85%, 60%)',  // warm-blue
+  'hsl(145, 60%, 55%)',  // warm-green
+  'hsl(35, 90%, 60%)',   // warm-orange
+  'hsl(270, 60%, 65%)',  // warm-purple
+  'hsl(340, 70%, 65%)',  // warm-pink
+  'hsl(175, 60%, 50%)',  // warm-teal
+  'hsl(200, 70%, 70%)',  // light blue
+  'hsl(30, 80%, 55%)',   // peach
+];
 
 export const SlideUniversApporteurs = ({ currentMonthIndex }: SlideUniversApporteursProps) => {
   const { agence } = useAuth();

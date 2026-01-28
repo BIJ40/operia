@@ -95,22 +95,23 @@ const CADevisTooltip = () => (
   </div>
 );
 
+// Palette warm dashboard pour univers
 const UNIVERS_COLORS: Record<string, string> = {
-  'Plomberie': '#3b82f6',
-  'Électricité': '#f59e0b',
-  'Serrurerie': '#10b981',
-  'Vitrerie': '#8b5cf6',
-  'Multiservice': '#ec4899',
-  'Rénovation': '#06b6d4',
-  'PMR': '#84cc16',
-  'Recherche de fuite': '#f43f5e',
-  'Non classé': '#6b7280',
+  'Plomberie': 'hsl(200, 85%, 60%)',      // warm-blue
+  'Électricité': 'hsl(35, 90%, 60%)',     // warm-orange
+  'Serrurerie': 'hsl(145, 60%, 55%)',     // warm-green
+  'Vitrerie': 'hsl(270, 60%, 65%)',       // warm-purple
+  'Multiservice': 'hsl(340, 70%, 65%)',   // warm-pink
+  'Rénovation': 'hsl(175, 60%, 50%)',     // warm-teal
+  'PMR': 'hsl(100, 55%, 55%)',            // soft lime
+  'Recherche de fuite': 'hsl(350, 65%, 60%)', // coral
+  'Non classé': 'hsl(210, 10%, 60%)',     // neutral gray
 };
 
 const ETAT_CONFIG: Record<string, { color: string; icon: typeof Clock; bgClass: string }> = {
-  'to_planify_tvx': { color: '#3b82f6', icon: ClipboardList, bgClass: 'bg-blue-500/10' },
-  'devis_to_order': { color: '#f59e0b', icon: ShoppingCart, bgClass: 'bg-amber-500/10' },
-  'wait_fourn': { color: '#8b5cf6', icon: Package, bgClass: 'bg-purple-500/10' },
+  'to_planify_tvx': { color: 'hsl(200, 85%, 60%)', icon: ClipboardList, bgClass: 'bg-warm-blue/10' },
+  'devis_to_order': { color: 'hsl(35, 90%, 60%)', icon: ShoppingCart, bgClass: 'bg-warm-orange/10' },
+  'wait_fourn': { color: 'hsl(270, 60%, 65%)', icon: Package, bgClass: 'bg-warm-purple/10' },
 };
 
 const containerVariants = {
@@ -241,13 +242,13 @@ export function PrevisionnelTab() {
           <TooltipProvider delayDuration={200}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Card className="border-l-4 bg-emerald-500/10 cursor-help" style={{ borderLeftColor: '#10b981' }}>
+                <Card className="border-l-4 bg-warm-green/10 cursor-help" style={{ borderLeftColor: 'hsl(145, 60%, 55%)' }}>
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">CA Planifié</CardTitle>
-                    <Euro className="h-5 w-5 text-emerald-500" />
+                    <Euro className="h-5 w-5 text-warm-green" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-3xl font-bold text-emerald-600">{formatCurrency(totaux.caPlanifie)}</div>
+                    <div className="text-3xl font-bold text-warm-green">{formatCurrency(totaux.caPlanifie)}</div>
                     <p className="text-sm text-muted-foreground mt-1">devis acceptés</p>
                     <div className="flex gap-4 mt-3 text-xs">
                       <div className="flex items-center gap-1">

@@ -74,7 +74,17 @@ export function SAVTab() {
     }))
     .sort((a, b) => b.sav - a.sav);
 
-  const COLORS = ["#ef4444", "#f97316", "#f59e0b", "#84cc16", "#06b6d4", "#8b5cf6", "#ec4899", "#f43f5e"];
+  // Palette warm dashboard
+  const COLORS = [
+    "hsl(0, 70%, 60%)",     // soft red
+    "hsl(30, 80%, 55%)",    // peach
+    "hsl(35, 90%, 60%)",    // warm-orange
+    "hsl(145, 60%, 55%)",   // warm-green
+    "hsl(175, 60%, 50%)",   // warm-teal
+    "hsl(270, 60%, 65%)",   // warm-purple
+    "hsl(340, 70%, 65%)",   // warm-pink
+    "hsl(350, 65%, 60%)",   // coral
+  ];
 
   return (
     <div className="space-y-8">

@@ -45,7 +45,15 @@ export function GeneralTab() {
       }));
   }, [caTrancheData]);
 
-  const TRANCHE_COLORS = ['#3b82f6', '#f59e0b', '#10b981', '#8b5cf6', '#6b7280', '#94a3b8'];
+  // Palette warm dashboard - couleurs douces
+  const TRANCHE_COLORS = [
+    'hsl(200, 85%, 60%)',  // warm-blue
+    'hsl(145, 60%, 55%)',  // warm-green
+    'hsl(270, 60%, 65%)',  // warm-purple
+    'hsl(35, 90%, 60%)',   // warm-orange
+    'hsl(340, 70%, 65%)',  // warm-pink
+    'hsl(175, 60%, 50%)',  // warm-teal
+  ];
 
   if (isLoading) {
     return (
@@ -201,8 +209,8 @@ export function GeneralTab() {
                     }}
                   />
                   <Legend wrapperStyle={{ fontSize: '10px' }} />
-                  <Bar dataKey="dossiers" fill="hsl(220, 70%, 50%)" name="Dossiers" radius={[2, 2, 0, 0]} animationDuration={2500} animationEasing="ease-out" />
-                  <Bar dataKey="devis" fill="hsl(142, 70%, 45%)" name="Devis" radius={[2, 2, 0, 0]} animationDuration={2500} animationEasing="ease-out" animationBegin={300} />
+                  <Bar dataKey="dossiers" fill="hsl(var(--warm-blue))" name="Dossiers" radius={[2, 2, 0, 0]} animationDuration={2500} animationEasing="ease-out" />
+                  <Bar dataKey="devis" fill="hsl(var(--warm-green))" name="Devis" radius={[2, 2, 0, 0]} animationDuration={2500} animationEasing="ease-out" animationBegin={300} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
