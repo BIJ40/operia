@@ -219,9 +219,47 @@ function UnifiedWorkspaceContent() {
     }
   }, [tabOrder, setTabOrder]);
   
-  // Si l'onglet actif n'est pas accessible, revenir à accueil
+  // Déterminer si l'utilisateur est N0 (base_user ou null)
+  const isN0User = !globalRole || globalRole === 'base_user';
+  
+  // Trouver le premier onglet accessible (priorité à Ticketing pour N0)
+  const getDefaultTabForN0 = useCallback((): UnifiedTab => {
+    // Priorité 1: Ticketing si accessible
+    const ticketingTab = allTabs.find(t => t.id === 'ticketing');
+    if (ticketingTab && isTabAccessible(ticketingTab)) {
+      return 'ticketing';
+    }
+    // Priorité 2: Premier onglet accessible (autre que accueil)
+    const firstAccessible = allTabs.find(t => t.id !== 'accueil' && isTabAccessible(t));
+    if (firstAccessible) {
+      return firstAccessible.id as UnifiedTab;
+    }
+    // Fallback: Accueil
+    return 'accueil';
+  }, [allTabs, isTabAccessible]);
+  
+  // Si l'onglet actif n'est pas accessible, rediriger
   const activeTabConfig = sortedTabs.find(t => t.id === activeTab);
-  const validActiveTab = (activeTabConfig && isTabAccessible(activeTabConfig)) ? activeTab : 'accueil';
+  const isActiveTabAccessible = activeTabConfig && isTabAccessible(activeTabConfig);
+  
+  // Pour N0 sur accueil sans contenu, rediriger vers un onglet utile
+  const validActiveTab = useMemo(() => {
+    if (!isActiveTabAccessible) {
+      return isN0User ? getDefaultTabForN0() : 'accueil';
+    }
+    // N0 sur accueil -> rediriger vers Ticketing ou premier accessible
+    if (isN0User && activeTab === 'accueil') {
+      return getDefaultTabForN0();
+    }
+    return activeTab;
+  }, [activeTab, isActiveTabAccessible, isN0User, getDefaultTabForN0]);
+  
+  // Synchroniser l'URL si redirection automatique (N0 vers Ticketing)
+  useEffect(() => {
+    if (validActiveTab !== activeTab) {
+      setActiveTab(validActiveTab);
+    }
+  }, [validActiveTab, activeTab, setActiveTab]);
   
   // Mettre à jour le titre de la page selon l'onglet actif
   useEffect(() => {
