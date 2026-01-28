@@ -116,9 +116,14 @@ function PilotageContent() {
   return (
     <div className="container mx-auto py-4 px-4 space-y-4">
       {/* Header avec titre */}
-      <div>
-        <h1 className="text-xl font-bold text-foreground tracking-tight">Mon Agence</h1>
-        <p className="text-xs text-muted-foreground">Pilotez votre activité</p>
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-md">
+          <Building2 className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold text-foreground tracking-tight">Mon Agence</h1>
+          <p className="text-xs text-muted-foreground">Pilotez votre activité</p>
+        </div>
       </div>
 
       {/* Onglets style browser */}

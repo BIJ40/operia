@@ -112,16 +112,11 @@ export function AgencyInfoCompact() {
   };
 
   return (
-    <div className="flex items-center gap-4 p-4 rounded-xl border border-helpconfort-blue/20 bg-gradient-to-r from-helpconfort-blue/5 to-transparent">
-      {/* Icon */}
-      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-md flex-shrink-0">
-        <Building2 className="w-6 h-6 text-white" />
-      </div>
-
+    <div className="flex items-center gap-4 p-3 rounded-lg border border-border/50 bg-muted/30">
       {/* Info compacte */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <h2 className="text-lg font-bold text-foreground">{agency.label}</h2>
+          <h2 className="text-base font-semibold text-foreground">{agency.label}</h2>
           {agency.animateurs && agency.animateurs.length > 0 && (
             <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
               <Users className="w-3 h-3 inline mr-1" />
