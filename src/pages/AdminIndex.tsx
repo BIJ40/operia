@@ -58,20 +58,26 @@ export default function AdminIndex() {
   const { hasGlobalRole } = useAuth();
   const isSuperadmin = hasGlobalRole('superadmin');
   const [searchParams, setSearchParams] = useSearchParams();
-  const tabFromUrl = searchParams.get('tab') || 'gestion';
+  // IMPORTANT: Ne pas utiliser le query param `tab` ici (réservé au workspace unifié : /?tab=admin, /?tab=accueil, etc.)
+  // Sinon, cliquer sur un sous-onglet Admin écrase l'onglet principal et renvoie vers l'accueil.
+  const tabFromUrl = searchParams.get('adminTab') || 'gestion';
   const [activeTab, setActiveTab] = useState(tabFromUrl);
 
   // Sync tab with URL
   useEffect(() => {
-    const urlTab = searchParams.get('tab');
+    const urlTab = searchParams.get('adminTab');
     if (urlTab && urlTab !== activeTab) {
       setActiveTab(urlTab);
     }
-  }, [searchParams]);
+  }, [searchParams, activeTab]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    setSearchParams({ tab: value });
+    const next = new URLSearchParams(searchParams);
+    // Forcer le maintien du contexte Admin dans le workspace unifié
+    next.set('tab', 'admin');
+    next.set('adminTab', value);
+    setSearchParams(next);
   };
 
   return (
