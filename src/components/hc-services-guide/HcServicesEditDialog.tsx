@@ -17,22 +17,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { OperiaBlock } from '@/contexts/OperiaEditorContext';
+import { OperiaBlock } from '@/contexts/HcServicesEditorContext';
 import { RichTextEditor } from '@/components/RichTextEditor';
 
-interface OperiaEditDialogProps {
+interface HcServicesEditDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   section: OperiaBlock | null | undefined;
   onSave: (updates: Partial<OperiaBlock>) => void;
 }
 
-export function OperiaEditDialog({
+export function HcServicesEditDialog({
   open,
   onOpenChange,
   section,
   onSave,
-}: OperiaEditDialogProps) {
+}: HcServicesEditDialogProps) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [contentType, setContentType] = useState<'section' | 'tips'>('section');

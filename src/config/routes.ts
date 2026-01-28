@@ -29,49 +29,52 @@ export const ROUTES = {
     apporteurs: '/academy/apporteurs',
     apporteursCategory: (slug: string) => `/academy/apporteurs/category/${slug}`,
     apporteursSubCategory: (slug: string, subslug: string) => `/academy/apporteurs/category/${slug}/sub/${subslug}`,
-    // Guide OPERIA
-    operia: '/academy/operia',
-    operiaCategory: (slug: string) => `/academy/operia/category/${slug}`,
+    // Guide HC Services (ex-OPERIA)
+    hcServices: '/academy/hc-services',
+    hcServicesCategory: (slug: string) => `/academy/hc-services/category/${slug}`,
+    // Legacy OPERIA (redirect)
+    operia: '/academy/hc-services',
+    operiaCategory: (slug: string) => `/academy/hc-services/category/${slug}`,
     // Base Documentaire
     documents: '/academy/hc-base',
     documentsCategory: (slug: string) => `/academy/hc-base/category/${slug}`,
   },
 
   // ============================================
-  // MON AGENCE (hc-agency)
+  // MON AGENCE (/agency - ex /hc-agency)
   // ============================================
   agency: {
-    index: '/hc-agency',
+    index: '/agency',
     // Module RT Technicien
-    techInterventions: '/hc-agency/tech-interventions',
-    techRtRunner: (interventionId: string) => `/hc-agency/tech-interventions/rt/${interventionId}`,
+    techInterventions: '/agency/tech-interventions',
+    techRtRunner: (interventionId: string) => `/agency/tech-interventions/rt/${interventionId}`,
     // Hub Statistiques
-    statsHub: '/hc-agency/stats-hub',
+    statsHub: '/agency/stats-hub',
     // Mes Apporteurs
-    mesApporteurs: '/hc-agency/mes-apporteurs',
+    mesApporteurs: '/agency/apporteurs',
     // Indicateurs (pages détaillées)
-    indicateurs: '/hc-agency/indicateurs',
-    indicateursApporteurs: '/hc-agency/indicateurs/apporteurs',
-    indicateursUnivers: '/hc-agency/indicateurs/univers',
-    indicateursTechniciens: '/hc-agency/indicateurs/techniciens',
-    indicateursSav: '/hc-agency/indicateurs/sav',
+    indicateurs: '/agency/indicateurs',
+    indicateursApporteurs: '/agency/indicateurs/apporteurs',
+    indicateursUnivers: '/agency/indicateurs/univers',
+    indicateursTechniciens: '/agency/indicateurs/techniciens',
+    indicateursSav: '/agency/indicateurs/sav',
     // Actions à mener
-    actions: '/hc-agency/actions',
-    actionsCategory: (slug: string) => `/hc-agency/actions/category/${slug}`,
+    actions: '/agency/actions',
+    actionsCategory: (slug: string) => `/agency/actions/category/${slug}`,
     // Veille Apporteurs
-    veilleApporteurs: '/hc-agency/veille-apporteurs',
-    // Diffusion (sous statistiques)
-    diffusion: '/hc-agency/statistiques/diffusion',
+    veilleApporteurs: '/agency/veille-apporteurs',
+    // Diffusion
+    diffusion: '/agency/diffusion',
     // RH Tech
-    rhTech: '/hc-agency/rh-tech',
-    planningHebdo: '/hc-agency/rh-tech/planning',
+    rhTech: '/agency/rh-tech',
+    planningHebdo: '/agency/rh-tech/planning',
     // Maintenance préventive
-    maintenance: '/hc-agency/maintenance',
+    maintenance: '/agency/maintenance',
     // Commercial
-    commercial: '/hc-agency/commercial',
-    commercialPptx: '/hc-agency/commercial/support-pptx',
+    commercial: '/agency/commercial',
+    commercialPptx: '/agency/commercial/support-pptx',
     // Carte RDV
-    map: '/hc-agency/map',
+    map: '/agency/carte',
   },
 
   // ============================================

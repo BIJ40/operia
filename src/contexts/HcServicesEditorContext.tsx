@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { CacheManager } from '@/lib/cache-manager';
 
-export interface OperiaBlock {
+export interface HcServicesBlock {
   id: string;
   type: 'category' | 'section';
   title: string;
@@ -30,23 +30,23 @@ export interface OperiaBlock {
   targetRoles?: string[];
 }
 
-interface OperiaEditorContextType {
-  blocks: OperiaBlock[];
+interface HcServicesEditorContextType {
+  blocks: HcServicesBlock[];
   isEditMode: boolean;
-  addBlock: (block: Omit<OperiaBlock, 'id'>) => Promise<string>;
-  updateBlock: (id: string, updates: Partial<OperiaBlock>) => Promise<void>;
+  addBlock: (block: Omit<HcServicesBlock, 'id'>) => Promise<string>;
+  updateBlock: (id: string, updates: Partial<HcServicesBlock>) => Promise<void>;
   deleteBlock: (id: string) => Promise<void>;
-  reorderBlocks: (blocks: OperiaBlock[]) => Promise<void>;
+  reorderBlocks: (blocks: HcServicesBlock[]) => Promise<void>;
   reloadBlocks: () => Promise<void>;
   loading: boolean;
 }
 
-const OperiaEditorContext = createContext<OperiaEditorContextType | undefined>(undefined);
+const HcServicesEditorContext = createContext<HcServicesEditorContextType | undefined>(undefined);
 
-const CACHE_KEY = 'operia_blocks_cache';
+const CACHE_KEY = 'hc_services_blocks_cache';
 
-// Map database row to OperiaBlock
-function mapRowToBlock(row: any): OperiaBlock {
+// Map database row to HcServicesBlock
+function mapRowToBlock(row: any): HcServicesBlock {
   return {
     id: row.id,
     type: row.type,
@@ -73,8 +73,8 @@ function mapRowToBlock(row: any): OperiaBlock {
   };
 }
 
-export function OperiaEditorProvider({ children }: { children: ReactNode }) {
-  const [blocks, setBlocks] = useState<OperiaBlock[]>([]);
+export function HcServicesEditorProvider({ children }: { children: ReactNode }) {
+  const [blocks, setBlocks] = useState<HcServicesBlock[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { hasGlobalRole, hasModuleOption, user } = useAuth();
@@ -113,7 +113,7 @@ export function OperiaEditorProvider({ children }: { children: ReactNode }) {
       console.error('Error loading operia blocks:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de charger le guide OPERIA',
+        description: 'Impossible de charger le guide HC Services',
         variant: 'destructive',
       });
     } finally {
@@ -125,7 +125,7 @@ export function OperiaEditorProvider({ children }: { children: ReactNode }) {
     loadBlocks();
   }, [loadBlocks]);
 
-  const addBlock = useCallback(async (block: Omit<OperiaBlock, 'id'>): Promise<string> => {
+  const addBlock = useCallback(async (block: Omit<HcServicesBlock, 'id'>): Promise<string> => {
     try {
       const { data, error } = await supabase
         .from('operia_blocks')
@@ -174,7 +174,7 @@ export function OperiaEditorProvider({ children }: { children: ReactNode }) {
     }
   }, [toast]);
 
-  const updateBlock = useCallback(async (id: string, updates: Partial<OperiaBlock>): Promise<void> => {
+  const updateBlock = useCallback(async (id: string, updates: Partial<HcServicesBlock>): Promise<void> => {
     try {
       const dbUpdates: any = {};
       if (updates.title !== undefined) dbUpdates.title = updates.title;
@@ -246,7 +246,7 @@ export function OperiaEditorProvider({ children }: { children: ReactNode }) {
     }
   }, [toast]);
 
-  const reorderBlocks = useCallback(async (reorderedBlocks: OperiaBlock[]): Promise<void> => {
+  const reorderBlocks = useCallback(async (reorderedBlocks: HcServicesBlock[]): Promise<void> => {
     try {
       const updates = reorderedBlocks.map((block, index) => ({
         id: block.id,
@@ -287,7 +287,7 @@ export function OperiaEditorProvider({ children }: { children: ReactNode }) {
   }, [loadBlocks]);
 
   return (
-    <OperiaEditorContext.Provider
+    <HcServicesEditorContext.Provider
       value={{
         blocks,
         isEditMode,
@@ -300,14 +300,19 @@ export function OperiaEditorProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
-    </OperiaEditorContext.Provider>
+    </HcServicesEditorContext.Provider>
   );
 }
 
-export function useOperiaEditor() {
-  const context = useContext(OperiaEditorContext);
+export function useHcServicesEditor() {
+  const context = useContext(HcServicesEditorContext);
   if (!context) {
-    throw new Error('useOperiaEditor must be used within OperiaEditorProvider');
+    throw new Error('useHcServicesEditor must be used within HcServicesEditorProvider');
   }
   return context;
 }
+
+// Export alias for backward compatibility
+export type OperiaBlock = HcServicesBlock;
+export const OperiaEditorProvider = HcServicesEditorProvider;
+export const useOperiaEditor = useHcServicesEditor;

@@ -298,7 +298,7 @@ function StatResultContent({ result, query, isAdmin, onPeriodChange }: StatResul
       {/* Link to StatIA */}
       <div className="pt-4 border-t">
         <Button asChild variant="outline" className="gap-2">
-          <Link to="/hc-agency/indicateurs">
+          <Link to="/agency/indicateurs">
             <ExternalLink className="w-4 h-4" />
             Voir dans Pilotage Agence
           </Link>

@@ -1,4 +1,4 @@
-import { useOperiaEditor, OperiaBlock } from '@/contexts/OperiaEditorContext';
+import { useOperiaEditor, OperiaBlock } from '@/contexts/HcServicesEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useMemo } from 'react';
 import { Link, Navigate } from 'react-router-dom';
@@ -223,7 +223,7 @@ const SortableCategory = ({
           </div>
         </div>
       ) : (
-        <Link to={`${ROUTES.academy.operiaCategory(category.slug)}${isEditMode ? '?edit=true' : ''}`} className="flex items-center gap-3 flex-1 min-w-0">
+        <Link to={`${ROUTES.academy.hcServicesCategory(category.slug)}${isEditMode ? '?edit=true' : ''}`} className="flex items-center gap-3 flex-1 min-w-0">
           {(isCustomImage && category.icon) || editImageUrl ? (
             <img 
               src={editImageUrl || category.icon} 
@@ -399,8 +399,8 @@ export default function OperiaGuide() {
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
       <div className="container max-w-6xl mx-auto px-4 py-8">
         <PageHeader
-          title="Guide OPERIA"
-          subtitle="Apprenez à utiliser toutes les fonctionnalités d'OPERIA"
+          title="Guide HC Services"
+          subtitle="Apprenez à utiliser toutes les fonctionnalités de HC Services"
           backTo={ROUTES.academy.index}
           backLabel="Help! Academy"
         />
