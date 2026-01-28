@@ -108,14 +108,7 @@ export default function FranchiseurHome() {
       </div>
 
       {/* Ligne 1: KPIs temporels */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <NetworkKpiTile
-          title="CA Année en cours"
-          value={tuilesHautes.caAnneeEnCours}
-          icon={TrendingUp}
-          format="currency"
-        />
-
+      <div className="grid gap-4 md:grid-cols-3">
         <NetworkKpiTile
           title="CA Période"
           value={tuilesHautes.caPeriode}
