@@ -560,7 +560,20 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
   const resetPasswordMutation = useMutation({
     mutationFn: async ({ userId, newPassword, sendEmail = true }: { userId: string; newPassword: string; sendEmail?: boolean }) => {
       const { data, error } = await supabase.functions.invoke('reset-user-password', { body: { targetUserId: userId, newPassword, sendEmail } });
-      if (error) throw error;
+      
+      // Extraire le message d'erreur propre du JSON embarqué dans l'erreur SDK
+      if (error) {
+        let errorMessage = error.message || 'Erreur inconnue';
+        const jsonMatch = errorMessage.match(/\{[^}]+\}/);
+        if (jsonMatch) {
+          try {
+            const parsed = JSON.parse(jsonMatch[0]);
+            if (parsed.error) errorMessage = parsed.error;
+          } catch { /* garder le message original */ }
+        }
+        throw new Error(errorMessage);
+      }
+      
       if (data?.error) throw new Error(data.error);
       return data;
     },
@@ -568,7 +581,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       toast.success('Mot de passe réinitialisé');
       invalidateAllUserQueries(queryClient);
     },
-    onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
+    onError: (error: Error) => toast.error(error.message),
   });
 
   // ============================================================================
