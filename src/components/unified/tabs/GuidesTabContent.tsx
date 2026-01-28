@@ -3,15 +3,24 @@
  * Sous-onglets: Apogée, Apporteurs, HelpConfort, FAQ
  */
 
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense } from 'react';
 import { BookOpen, Users, Building2, HelpCircle, Loader2 } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
+import { useSessionState } from '@/hooks/useSessionState';
 
 const ApogeeGuide = lazy(() => import('@/pages/ApogeeGuide'));
 const ApporteurGuide = lazy(() => import('@/pages/ApporteurGuide'));
 const HelpConfort = lazy(() => import('@/pages/HelpConfort'));
 
 type GuideTab = 'apogee' | 'apporteurs' | 'helpconfort' | 'faq';
+
+const GUIDE_TABS: PillTabConfig[] = [
+  { id: 'apogee', label: 'Apogée', icon: BookOpen },
+  { id: 'apporteurs', label: 'Apporteurs', icon: Users },
+  { id: 'helpconfort', label: 'HelpConfort', icon: Building2 },
+  { id: 'faq', label: 'FAQ', icon: HelpCircle },
+];
 
 function LoadingFallback() {
   return (
@@ -22,44 +31,27 @@ function LoadingFallback() {
 }
 
 export default function GuidesTabContent() {
-  const [activeGuide, setActiveGuide] = useState<GuideTab>('apogee');
+  const [activeGuide, setActiveGuide] = useSessionState<GuideTab>('guides_sub_tab', 'apogee');
 
   return (
-    <div className="py-3 px-2 sm:px-4">
+    <div className="py-3 px-2 sm:px-4 space-y-4">
       <Tabs value={activeGuide} onValueChange={(v) => setActiveGuide(v as GuideTab)}>
-        <TabsList className="grid w-full grid-cols-4 mb-4">
-          <TabsTrigger value="apogee" className="flex items-center gap-1.5 text-xs sm:text-sm">
-            <BookOpen className="w-4 h-4" />
-            <span className="hidden sm:inline">Apogée</span>
-          </TabsTrigger>
-          <TabsTrigger value="apporteurs" className="flex items-center gap-1.5 text-xs sm:text-sm">
-            <Users className="w-4 h-4" />
-            <span className="hidden sm:inline">Apporteurs</span>
-          </TabsTrigger>
-          <TabsTrigger value="helpconfort" className="flex items-center gap-1.5 text-xs sm:text-sm">
-            <Building2 className="w-4 h-4" />
-            <span className="hidden sm:inline">HelpConfort</span>
-          </TabsTrigger>
-          <TabsTrigger value="faq" className="flex items-center gap-1.5 text-xs sm:text-sm">
-            <HelpCircle className="w-4 h-4" />
-            <span className="hidden sm:inline">FAQ</span>
-          </TabsTrigger>
-        </TabsList>
+        <PillTabsList tabs={GUIDE_TABS} />
 
         <Suspense fallback={<LoadingFallback />}>
-          <TabsContent value="apogee" className="mt-0">
+          <TabsContent value="apogee" className="mt-4">
             <ApogeeGuide />
           </TabsContent>
           
-          <TabsContent value="apporteurs" className="mt-0">
+          <TabsContent value="apporteurs" className="mt-4">
             <ApporteurGuide />
           </TabsContent>
           
-          <TabsContent value="helpconfort" className="mt-0">
+          <TabsContent value="helpconfort" className="mt-4">
             <HelpConfort />
           </TabsContent>
           
-          <TabsContent value="faq" className="mt-0">
+          <TabsContent value="faq" className="mt-4">
             <div className="text-center py-12 text-muted-foreground">
               <HelpCircle className="w-12 h-12 mx-auto mb-4 opacity-30" />
               <p className="text-lg font-medium">FAQ</p>
