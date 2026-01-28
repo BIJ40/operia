@@ -12,7 +12,6 @@ import {
   useFaqData,
   FaqContextTile,
   FaqCategoryAccordion,
-  FaqAISearch,
   FaqEditDialog,
   FaqItem,
   ContextType,
