@@ -142,9 +142,9 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className={cn('rounded-warm overflow-hidden', className)}
+        className={cn('rounded-warm overflow-hidden h-full min-h-[240px]', className)}
       >
-        <Skeleton className="w-full h-[280px] rounded-warm" />
+        <Skeleton className="w-full h-full min-h-[240px] rounded-warm" />
       </motion.div>
     );
   }
@@ -155,7 +155,7 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         className={cn(
-          'relative rounded-warm overflow-hidden border border-border/50 h-[280px]',
+          'relative rounded-warm overflow-hidden border border-border/50 h-full min-h-[240px]',
           'bg-muted/30 flex items-center justify-center',
           className
         )}
@@ -174,7 +174,7 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
       className={cn(
-        'relative rounded-warm overflow-hidden border border-border/50',
+        'relative rounded-warm overflow-hidden border border-border/50 h-full min-h-[240px]',
         'bg-gradient-to-br from-warm-blue/10 to-warm-teal/5',
         'shadow-warm',
         className
@@ -245,7 +245,7 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
       </div>
 
       {/* Carte compacte */}
-      <div ref={compactMapRef} className="w-full h-[280px]">
+      <div ref={compactMapRef} className="w-full h-full min-h-[240px]">
         {!isExpanded && (
           <MapContent
             rdvs={rdvs}
