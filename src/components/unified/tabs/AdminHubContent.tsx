@@ -21,16 +21,15 @@ interface AdminMainTab {
   id: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  colorHsl: string; // HSL value for dynamic color
 }
 
 const ADMIN_MAIN_TABS: AdminMainTab[] = [
-  { id: 'acces', label: 'Accès', icon: Shield, colorHsl: '270 60% 65%' }, // Purple
-  { id: 'reseau', label: 'Réseau', icon: Building2, colorHsl: '200 85% 60%' }, // Blue
-  { id: 'ia', label: 'IA', icon: Brain, colorHsl: '340 70% 65%' }, // Pink
-  { id: 'contenu', label: 'Contenu', icon: FileText, colorHsl: '145 60% 55%' }, // Green
-  { id: 'ops', label: 'Ops', icon: Database, colorHsl: '35 90% 60%' }, // Orange
-  { id: 'plateforme', label: 'Plateforme', icon: Cpu, colorHsl: '175 60% 50%' }, // Teal
+  { id: 'acces', label: 'Accès', icon: Shield },
+  { id: 'reseau', label: 'Réseau', icon: Building2 },
+  { id: 'ia', label: 'IA', icon: Brain },
+  { id: 'contenu', label: 'Contenu', icon: FileText },
+  { id: 'ops', label: 'Ops', icon: Database },
+  { id: 'plateforme', label: 'Plateforme', icon: Cpu },
 ];
 
 export default function AdminHubContent() {
@@ -82,9 +81,6 @@ export default function AdminHubContent() {
                 <TabsTrigger
                   value={tab.id}
                   className="admin-main-tab"
-                  style={{
-                    '--tab-color': tab.colorHsl,
-                  } as React.CSSProperties}
                 >
                   <div className="admin-tab-icon">
                     <Icon className="w-4 h-4" />
