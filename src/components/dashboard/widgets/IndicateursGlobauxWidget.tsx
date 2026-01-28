@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { formatEuros } from '@/apogee-connect/utils/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { DataService } from '@/apogee-connect/services/dataService';
 import { computeStat } from '@/statia/engine/computeStat';
 import { calculateMonthlyCA } from '@/apogee-connect/utils/monthlyCalculations';
@@ -16,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { loadSAVOverridesByAgencyUuid } from '@/statia/services/savOverridesService';
 import { useDashboardPeriod } from '@/pages/DashboardStatic';
 import { ACCENT_THEMES, type AccentThemeKey } from '@/lib/accentThemes';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 // Configuration des KPIs à afficher (sans SAV)
 const KPI_CONFIG: Array<{ 
@@ -222,20 +223,28 @@ export function IndicateursGlobauxWidget() {
         {KPI_CONFIG.map((kpi) => {
           const value = kpiData?.[kpi.id] as number | null;
           const accent = ACCENT_THEMES[kpi.accent];
+          const formatted = formatValue(value, kpi.format);
           
           return (
-            <div 
-              key={kpi.id} 
-              className="bg-card/60 backdrop-blur-sm rounded-xl p-3 border border-border/50 hover:border-primary/30 hover:shadow-sm transition-all"
-            >
-              <div className="flex items-center gap-2 mb-1.5">
-                <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-primary-foreground text-xs font-bold shadow-sm bg-gradient-to-br ${accent.gradient}`}>
-                  {kpi.icon}
+            <Tooltip key={kpi.id} delayDuration={0}>
+              <TooltipTrigger asChild>
+                <div 
+                  className="bg-card/60 backdrop-blur-sm rounded-xl p-3 border border-border/50 hover:border-primary/30 hover:shadow-sm transition-all cursor-default"
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-primary-foreground text-xs font-bold shadow-sm bg-gradient-to-br ${accent.gradient}`}>
+                      {kpi.icon}
+                    </div>
+                    <span className="text-[11px] text-muted-foreground font-medium truncate">{kpi.label}</span>
+                  </div>
+                  <p className={`text-lg font-bold ${accent.text} truncate`}>{formatted}</p>
                 </div>
-                <span className="text-[11px] text-muted-foreground font-medium truncate">{kpi.label}</span>
-              </div>
-              <p className={`text-lg font-bold ${accent.text} truncate`}>{formatValue(value, kpi.format)}</p>
-            </div>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="bg-popover border border-border shadow-lg">
+                <div className="text-sm font-semibold">{kpi.label}</div>
+                <div className={`text-lg font-bold ${accent.text}`}>{formatted}</div>
+              </TooltipContent>
+            </Tooltip>
           );
         })}
       </div>
@@ -258,7 +267,7 @@ export function IndicateursGlobauxWidget() {
                 tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
                 width={35}
               />
-              <Tooltip 
+               <RechartsTooltip 
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
