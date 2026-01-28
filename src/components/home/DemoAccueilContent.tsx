@@ -1,16 +1,20 @@
 /**
  * DemoAccueilContent - Version démo du dashboard N2+ avec données mockées
  * Même présentation exacte que DashboardStatic pour les N2+, mais données fictives
+ * Exception: La carte RDV affiche les vraies données de l'agence DAX
  */
 
 import { motion } from 'framer-motion';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { BarChart3, Trophy, PieChart, TrendingUp, Users, MapPin, AlertTriangle } from 'lucide-react';
+import { BarChart3, Trophy, PieChart, TrendingUp, Users, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 // Composants V2 du dashboard
-import { WarmCard, HumanTitle } from '@/components/dashboard/v2';
+import { WarmCard, HumanTitle, DashboardMapWidget } from '@/components/dashboard/v2';
 import { formatEuros, formatPercent } from '@/apogee-connect/utils/formatters';
+
+// Slug de l'agence DAX pour la carte démo
+const DEMO_AGENCY_SLUG = 'dax';
 
 // Données mockées réalistes pour la démo
 const DEMO_DATA = {
@@ -52,8 +56,6 @@ const DEMO_DATA = {
     { technicien: 'Pierre Bernard', charge: 68, rdvAujourdhui: 3 },
     { technicien: 'Luc Moreau', charge: 54, rdvAujourdhui: 2 },
   ],
-  // RDV aujourd'hui (pour la carte)
-  rdvAujourdhui: 12,
 };
 
 // Animation stagger pour les cartes
@@ -196,40 +198,6 @@ function DemoChargeTravail() {
   );
 }
 
-// Widget Carte RDV mocké (placeholder visuel)
-function DemoMapWidget() {
-  return (
-    <div className="relative h-full min-h-[220px] rounded-2xl overflow-hidden bg-gradient-to-br from-muted/50 to-muted border border-border">
-      {/* Fond stylisé façon carte */}
-      <div className="absolute inset-0 opacity-30">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border))_1px,transparent_1px)] bg-[size:40px_40px]" />
-      </div>
-      
-      {/* Points de RDV fictifs */}
-      <div className="absolute top-1/4 left-1/3 w-3 h-3 rounded-full bg-warm-blue shadow-lg animate-pulse" />
-      <div className="absolute top-1/2 right-1/4 w-3 h-3 rounded-full bg-warm-green shadow-lg animate-pulse" style={{ animationDelay: '0.5s' }} />
-      <div className="absolute bottom-1/3 left-1/2 w-3 h-3 rounded-full bg-warm-orange shadow-lg animate-pulse" style={{ animationDelay: '1s' }} />
-      <div className="absolute top-1/3 right-1/3 w-3 h-3 rounded-full bg-warm-purple shadow-lg animate-pulse" style={{ animationDelay: '0.3s' }} />
-      
-      {/* Badge RDV */}
-      <div className="absolute top-4 left-4 bg-background/95 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-border">
-        <div className="flex items-center gap-2">
-          <MapPin className="h-5 w-5 text-primary" />
-          <div>
-            <p className="text-xs text-muted-foreground">RDV aujourd'hui</p>
-            <p className="text-2xl font-bold text-foreground">{DEMO_DATA.rdvAujourdhui}</p>
-          </div>
-        </div>
-      </div>
-      
-      {/* Label démo */}
-      <div className="absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm rounded-lg px-2 py-1 text-xs text-muted-foreground">
-        Carte de démonstration
-      </div>
-    </div>
-  );
-}
-
 export function DemoAccueilContent() {
   const greeting = getGreeting();
 
@@ -240,8 +208,8 @@ export function DemoAccueilContent() {
         <Alert className="mb-6 bg-warning/10 border-warning/30">
           <AlertTriangle className="h-4 w-4 text-warning" />
           <AlertDescription className="text-warning-foreground">
-            <strong>Mode démonstration</strong> — Les données affichées ci-dessous sont des exemples fictifs. 
-            Pour accéder à vos données réelles, contactez votre administrateur pour activer les modules nécessaires.
+            <strong>Mode démonstration</strong> — Les KPIs et statistiques sont des exemples fictifs. 
+            La carte affiche les RDV réels de l'agence DAX à titre d'illustration.
           </AlertDescription>
         </Alert>
 
@@ -290,9 +258,9 @@ export function DemoAccueilContent() {
         >
           {/* NIVEAU 1 - HERO ROW: Carte RDV + Indicateurs Globaux */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {/* Carte RDV (demi-tuile) */}
+            {/* Carte RDV avec vraies données de DAX */}
             <motion.div variants={itemVariants}>
-              <DemoMapWidget />
+              <DashboardMapWidget agencySlug={DEMO_AGENCY_SLUG} />
             </motion.div>
 
             {/* Indicateurs Globaux (demi-tuile) */}
