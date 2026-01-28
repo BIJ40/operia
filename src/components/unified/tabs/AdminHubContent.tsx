@@ -49,7 +49,7 @@ export default function AdminHubContent() {
     <div className="py-6 space-y-4">
       {/* Main Tabs Navigation - directement en haut */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-        <TabsList className="flex flex-wrap justify-start gap-1.5 bg-transparent h-auto p-0">
+        <TabsList className="flex flex-wrap justify-center gap-1.5 bg-transparent h-auto p-0">
           {ADMIN_MAIN_TABS.map((tab, index) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
