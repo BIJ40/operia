@@ -45,6 +45,35 @@ if [ "$ERRORS" -eq 0 ]; then
 fi
 
 # ==============================================================================
+# 1b. Vérifier les patterns obsolètes (v0.8.6+)
+# ==============================================================================
+echo ""
+echo "📋 1b. Vérification des patterns obsolètes v0.8.6..."
+
+OBSOLETE_PATTERNS=(
+  "support_tickets"
+  "payslip"
+  "analyze-payslip"
+)
+
+for pattern in "${OBSOLETE_PATTERNS[@]}"; do
+  # Exclure les redirects et les commentaires
+  count=$(grep -r "$pattern" src --include="*.ts" --include="*.tsx" 2>/dev/null | \
+    grep -v "node_modules" | \
+    grep -v "// Legacy" | \
+    grep -v "Navigate to" | \
+    grep -v "Redirect" | \
+    wc -l || true)
+  if [ "$count" -gt 0 ]; then
+    echo -e "${RED}❌ Pattern obsolète trouvé: $pattern ($count occurrences)${NC}"
+    grep -r "$pattern" src --include="*.ts" --include="*.tsx" 2>/dev/null | grep -v "node_modules" | head -3
+    ((ERRORS++))
+  fi
+done
+
+echo -e "${GREEN}✓ Patterns obsolètes v0.8.6 vérifiés${NC}"
+
+# ==============================================================================
 # 2. Vérifier les routes documentées vs App.tsx
 # ==============================================================================
 echo ""

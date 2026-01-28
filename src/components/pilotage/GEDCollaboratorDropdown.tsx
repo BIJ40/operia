@@ -22,7 +22,7 @@ export function GEDCollaboratorDropdown() {
   const activeCollaborators = collaborators.filter(c => !c.leaving_date);
 
   const handleCollaboratorClick = (collaboratorId: string) => {
-    navigate(`/hc-agency/collaborateurs/${collaboratorId}?tab=documents`);
+    navigate(`/rh/suivi?open=${collaboratorId}&tab=documents`);
     setIsOpen(false);
   };
 

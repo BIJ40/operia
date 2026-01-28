@@ -132,7 +132,7 @@ export async function exportModulesDocumentationPdf(): Promise<Blob> {
   addTitle('Accès', 12);
   addBullet('N1+ avec module activé dans le plan agence');
   addTitle('Routes', 12);
-  addParagraph('/hc-agency/dossiers');
+  addParagraph('/projects/list');
 
   // Module 3: Pilotage Agence
   addPage();
@@ -162,7 +162,7 @@ export async function exportModulesDocumentationPdf(): Promise<Blob> {
   addTitle('Accès', 12);
   addBullet('N2+ (dirigeants) avec module activé');
   addTitle('Routes', 12);
-  addParagraph('/hc-agency/stats-hub, /hc-agency/veille-apporteurs');
+  addParagraph('/agency/stats-hub, /agency/veille-apporteurs');
 
   // Module 4: Apogee Tickets
   addPage();
@@ -310,7 +310,7 @@ export async function exportModulesDocumentationPdf(): Promise<Blob> {
   addTitle('Accès', 12);
   addBullet('N2+ avec module activé');
   addTitle('Routes', 12);
-  addParagraph('/hc-agency/commercial');
+  addParagraph('/agency/commercial');
 
   // Module 10: Diffusion
   addPage();
@@ -347,7 +347,7 @@ export async function exportModulesDocumentationPdf(): Promise<Blob> {
   addTitle('Accès', 12);
   addBullet('N2+ avec module activé');
   addTitle('Routes', 12);
-  addParagraph('/hc-agency/maintenance');
+  addParagraph('/rh/parc/maintenance');
 
   // Plans et Rôles
   addPage();

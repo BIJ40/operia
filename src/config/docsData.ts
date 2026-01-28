@@ -161,7 +161,7 @@ export const TABLE_CATEGORIES = [
   { id: 'agencies', name: 'Agences', tables: ['apogee_agencies', 'agency_commercial_profile', 'agency_stamps', 'agency_royalty_config'] },
   { id: 'academy', name: 'Help Academy', tables: ['blocks', 'categories', 'documents', 'favorites', 'apporteur_blocks'] },
   { id: 'rag', name: 'RAG & IA', tables: ['guide_chunks', 'chatbot_queries', 'faq_items', 'faq_categories', 'ai_search_cache'] },
-  { id: 'support', name: 'Support', tables: ['support_tickets', 'support_ticket_messages', 'support_ticket_actions', 'support_attachments'] },
+  { id: 'support', name: 'Support (Legacy)', tables: [] },
   { id: 'apogee_tickets', name: 'Gestion Projet', tables: ['apogee_tickets', 'apogee_ticket_comments', 'apogee_ticket_history', 'apogee_ticket_statuses'] },
   { id: 'rh', name: 'Ressources Humaines', tables: ['collaborators', 'collaborator_documents', 'employment_contracts', 'document_requests', 'leave_requests'] },
   { id: 'parc', name: 'Parc & Maintenance', tables: ['fleet_vehicles', 'maintenance_events', 'maintenance_alerts'] },

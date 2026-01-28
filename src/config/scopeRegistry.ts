@@ -21,7 +21,6 @@ export const SCOPE_SLUGS = {
 
   // Support
   MES_DEMANDES: 'mes_demandes',
-  SUPPORT_TICKETS: 'support_tickets',
 
   // Réseau Franchiseur
   FRANCHISEUR_DASHBOARD: 'franchiseur_dashboard',

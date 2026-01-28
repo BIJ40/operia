@@ -48,7 +48,7 @@ export interface NavGroup {
  * 
  * Support:
  * - mes_demandes: Création/suivi de tickets utilisateur
- * - support_tickets: Gestion des tickets (staff support)
+ * - apogee_tickets: Gestion des tickets (staff support + projet)
  * 
  * Franchiseur:
  * - franchiseur_dashboard: Vue d'ensemble réseau
@@ -144,7 +144,7 @@ export const NAV_GROUPS: NavGroup[] = [
         title: 'Console Support', 
         url: ROUTES.support.console, 
         icon: Headset, 
-        scope: 'support_tickets', 
+        scope: 'apogee_tickets', 
         description: 'Traiter les demandes de support' 
       },
     ],
@@ -230,16 +230,11 @@ export const NAV_GROUPS: NavGroup[] = [
         description: 'Configurer les agences'
       },
       { 
-        title: 'Support', 
-        url: ROUTES.admin.supportTickets, 
+        title: 'Gestion Projet', 
+        url: ROUTES.projects.kanban, 
         icon: LifeBuoy, 
-        scope: 'support_tickets',
-        description: 'Gérer les tickets support',
-        children: [
-          { title: 'Tickets', url: ROUTES.admin.supportTickets, icon: LifeBuoy, scope: 'support_tickets' },
-          { title: 'Statistiques', url: ROUTES.admin.supportStats, icon: BarChart3, scope: 'support_tickets' },
-          { title: 'Historique Escalades', url: ROUTES.admin.escalationHistory, icon: FileText, scope: 'support_tickets' },
-        ]
+        scope: 'apogee_tickets',
+        description: 'Gérer les tickets projet'
       },
       { 
         title: 'Helpi (IA)', 

@@ -170,9 +170,9 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     isDynamic: true,
   },
   {
-    path: '/academy/operia',
-    label: 'Guide OPERIA',
-    component: 'OperiaGuide',
+    path: '/academy/hc-services',
+    label: 'Guide HC Services',
+    component: 'HcServicesGuide',
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
@@ -180,14 +180,34 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     },
   },
   {
-    path: '/academy/operia/category/:slug',
-    label: 'Catégorie OPERIA',
-    component: 'CategoryOperia',
+    path: '/academy/hc-services/category/:slug',
+    label: 'Catégorie HC Services',
+    component: 'CategoryHcServices',
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
       moduleGuard: { moduleKey: 'help_academy' },
     },
+    isDynamic: true,
+  },
+  // Legacy OPERIA redirects
+  {
+    path: '/academy/operia',
+    label: 'Redirect to HC Services',
+    component: 'Navigate',
+    section: 'academy',
+    guards: {},
+    isRedirect: true,
+    redirectTo: '/academy/hc-services',
+  },
+  {
+    path: '/academy/operia/category/:slug',
+    label: 'Redirect OPERIA Category',
+    component: 'Navigate',
+    section: 'academy',
+    guards: {},
+    isRedirect: true,
+    redirectTo: '/academy/hc-services',
     isDynamic: true,
   },
   {
@@ -368,7 +388,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
       moduleGuard: { moduleKey: 'pilotage_agence' },
     },
   },
-  // Legacy /hc-agency redirects
+  // Legacy /hc-agency redirect
   {
     path: '/hc-agency',
     label: 'Redirect to /agency',
