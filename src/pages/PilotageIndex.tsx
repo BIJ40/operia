@@ -114,49 +114,51 @@ function PilotageContent() {
   const hasApporteursAccess = isPlatformAdmin || hasModuleOption('pilotage_agence', 'mes_apporteurs');
 
   return (
-    <div className="container mx-auto py-6 px-4 space-y-6">
-      {/* Header avec titre */}
+    <div className="container mx-auto py-4 px-4 space-y-4">
+      {/* Header avec titre et onglets browser-like */}
       <div className="flex items-center gap-4">
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-lg">
-          <Building2 className="w-7 h-7 text-white" />
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-md flex-shrink-0">
+          <Building2 className="w-6 h-6 text-white" />
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">Mon Agence</h1>
-          <p className="text-sm text-muted-foreground">Pilotez votre activité</p>
+        <div className="flex-1">
+          <h1 className="text-xl font-bold text-foreground tracking-tight">Mon Agence</h1>
+          <p className="text-xs text-muted-foreground">Pilotez votre activité</p>
         </div>
       </div>
 
-      {/* Onglets principaux */}
+      {/* Onglets style browser */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as MainTab)}>
-        <TabsList className="w-full justify-start bg-muted/50 p-1 h-auto">
-          <TabsTrigger 
-            value="agence" 
-            className="flex items-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm px-4 py-2"
-          >
-            <Building2 className="h-4 w-4" />
-            Mon agence
-          </TabsTrigger>
-          {hasStatsAccess && (
+        <div className="border-b border-border">
+          <TabsList className="h-auto p-0 bg-transparent gap-0">
             <TabsTrigger 
-              value="stats" 
-              className="flex items-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm px-4 py-2"
+              value="agence" 
+              className="relative rounded-none border-b-2 border-transparent data-[state=active]:border-helpconfort-blue data-[state=active]:bg-transparent bg-transparent px-4 py-2.5 text-sm font-medium transition-colors hover:text-foreground data-[state=active]:text-helpconfort-blue data-[state=active]:shadow-none"
             >
-              <BarChart3 className="h-4 w-4" />
-              Statistiques
+              <Building2 className="h-4 w-4 mr-2" />
+              Mon agence
             </TabsTrigger>
-          )}
-          {hasApporteursAccess && (
-            <TabsTrigger 
-              value="apporteurs" 
-              className="flex items-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm px-4 py-2"
-            >
-              <Users className="h-4 w-4" />
-              Mes apporteurs
-            </TabsTrigger>
-          )}
-        </TabsList>
+            {hasStatsAccess && (
+              <TabsTrigger 
+                value="stats" 
+                className="relative rounded-none border-b-2 border-transparent data-[state=active]:border-helpconfort-blue data-[state=active]:bg-transparent bg-transparent px-4 py-2.5 text-sm font-medium transition-colors hover:text-foreground data-[state=active]:text-helpconfort-blue data-[state=active]:shadow-none"
+              >
+                <BarChart3 className="h-4 w-4 mr-2" />
+                Statistiques
+              </TabsTrigger>
+            )}
+            {hasApporteursAccess && (
+              <TabsTrigger 
+                value="apporteurs" 
+                className="relative rounded-none border-b-2 border-transparent data-[state=active]:border-helpconfort-blue data-[state=active]:bg-transparent bg-transparent px-4 py-2.5 text-sm font-medium transition-colors hover:text-foreground data-[state=active]:text-helpconfort-blue data-[state=active]:shadow-none"
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Mes apporteurs
+              </TabsTrigger>
+            )}
+          </TabsList>
+        </div>
 
-        <div className="mt-6">
+        <div className="pt-4">
           <TabsContent value="agence" className="mt-0">
             <AgencyInfoCompact />
             <div className="mt-4">
