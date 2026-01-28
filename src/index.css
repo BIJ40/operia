@@ -722,36 +722,34 @@ button[data-image-modal] {
 }
 
 /* ============================================
-   ADMIN MAIN TABS - Onglets principaux (style neutre/folder)
+   ADMIN MAIN TABS - Onglets principaux (style pill centré)
    ============================================ */
 .admin-main-tab {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.625rem 1rem;
+  padding: 0.5rem 1rem;
   font-size: 0.875rem;
   font-weight: 500;
-  border-radius: 1rem 1rem 0 0;
-  border: 2px solid transparent;
-  border-bottom: none;
-  margin-bottom: -2px;
-  background-color: hsl(var(--muted) / 0.5);
+  border-radius: 0.75rem;
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--card));
   color: hsl(var(--muted-foreground));
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.03);
 }
 
 .admin-main-tab:hover {
   background-color: hsl(var(--muted));
   color: hsl(var(--foreground));
-  border-color: hsl(var(--border) / 0.5);
+  border-color: hsl(var(--border));
 }
 
 .admin-main-tab[data-state="active"] {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
-  border-color: hsl(var(--border));
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
-  z-index: 10;
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-color: hsl(var(--primary));
+  box-shadow: 0 2px 8px -2px hsl(var(--primary) / 0.4);
 }
 
 .admin-tab-icon {
@@ -765,8 +763,8 @@ button[data-image-modal] {
 }
 
 .admin-main-tab[data-state="active"] .admin-tab-icon {
-  background-color: hsl(var(--primary) / 0.1);
-  color: hsl(var(--primary));
+  background-color: hsl(var(--primary-foreground) / 0.2);
+  color: hsl(var(--primary-foreground));
 }
 
 /* ============================================
