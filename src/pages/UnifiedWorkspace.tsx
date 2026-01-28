@@ -181,11 +181,11 @@ function UnifiedWorkspaceContent() {
   
   const tabButtonClass = `
     relative px-5 py-3 rounded-t-xl border-2 border-b-0 transition-all duration-300 whitespace-nowrap
-    data-[state=inactive]:bg-muted/40 data-[state=inactive]:border-border/40 data-[state=inactive]:text-muted-foreground 
+    data-[state=inactive]:bg-muted/40 data-[state=inactive]:border-border/50 data-[state=inactive]:text-muted-foreground 
     data-[state=inactive]:hover:bg-primary/10 data-[state=inactive]:hover:border-primary/40
     data-[state=inactive]:hover:scale-105 data-[state=inactive]:hover:-translate-y-0.5 data-[state=inactive]:hover:shadow-md
-    data-[state=active]:bg-background data-[state=active]:border-primary/40 data-[state=active]:shadow-lg 
-    data-[state=active]:z-10 data-[state=active]:-mb-[2px] data-[state=active]:scale-[1.02]
+    data-[state=active]:bg-background data-[state=active]:border-primary/50 data-[state=active]:border-b-background
+    data-[state=active]:z-20 data-[state=active]:-mb-[2px] data-[state=active]:scale-[1.02]
   `;
   
   // IDs pour le sortable context (exclure accueil)
@@ -197,7 +197,7 @@ function UnifiedWorkspaceContent() {
         <div className={`min-h-screen bg-background ${isImpersonating ? 'pt-10' : ''}`}>
           <Tabs value={validActiveTab} onValueChange={(v) => setActiveTab(v as UnifiedTab)} className="flex flex-col h-screen">
             {/* Tab bar fixe en haut */}
-            <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border shadow-sm">
+            <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm">
               <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-0">
                 <DndContext
                   sensors={sensors}
@@ -246,6 +246,10 @@ function UnifiedWorkspaceContent() {
                     </SortableContext>
                   </TabsList>
                 </DndContext>
+              </div>
+              {/* Ligne de bordure qui se connecte aux onglets */}
+              <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="border-t-2 border-primary/50 bg-background"></div>
               </div>
             </div>
             
