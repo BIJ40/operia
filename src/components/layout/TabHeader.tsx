@@ -269,49 +269,55 @@ export function TabHeader() {
           </div>
 
           {/* Ligne 2 : Onglets principaux avec morphing */}
-          <nav className="flex items-center justify-center gap-1 py-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {topTabs.map((tab) => {
-              const isActive = tab.id === effectiveTabId;
-              const IconComponent = tab.icon;
+          <nav className="flex items-center justify-center gap-1 py-2">
+            {/* Onglets scrollables */}
+            <div className="flex items-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {topTabs.map((tab) => {
+                const isActive = tab.id === effectiveTabId;
+                const IconComponent = tab.icon;
 
-              return (
-                <NavLink
-                  key={tab.id}
-                  to={tab.href}
-                  className="relative shrink-0"
-                  style={{ WebkitTapHighlightColor: 'transparent' }}
-                  onPointerDown={() => {
-                    // Optimistic uniquement si on change réellement d'onglet principal
-                    if (tab.id !== activeTabId) {
-                      setOptimisticTopTabId(tab.id);
-                    }
-                  }}
-                >
-                  <div
-                    className={cn(
-                      "relative flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-all duration-200",
-                      isActive 
-                        ? "text-white" 
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted hover:shadow-md hover:scale-105"
-                    )}
+                return (
+                  <NavLink
+                    key={tab.id}
+                    to={tab.href}
+                    className="relative shrink-0"
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
+                    onPointerDown={() => {
+                      // Optimistic uniquement si on change réellement d'onglet principal
+                      if (tab.id !== activeTabId) {
+                        setOptimisticTopTabId(tab.id);
+                      }
+                    }}
                   >
-                    {/* Indicateur morphing rapide */}
-                    {isActive && (
-                      <motion.div
-                        layoutId="activeTabIndicator"
-                        className="absolute inset-0 -z-10 rounded-full"
-                        style={{ backgroundColor: ACTIVE_COLOR }}
-                        transition={morphTransition}
-                      />
-                    )}
-                    <IconComponent className="w-4 h-4" />
-                    <span>{tab.label}</span>
-                  </div>
-                </NavLink>
-              );
-            })}
+                    <div
+                      className={cn(
+                        "relative flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-all duration-200",
+                        isActive 
+                          ? "text-white" 
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted hover:shadow-md hover:scale-105"
+                      )}
+                    >
+                      {/* Indicateur morphing rapide */}
+                      {isActive && (
+                        <motion.div
+                          layoutId="activeTabIndicator"
+                          className="absolute inset-0 -z-10 rounded-full"
+                          style={{ backgroundColor: ACTIVE_COLOR }}
+                          transition={morphTransition}
+                        />
+                      )}
+                      <IconComponent className="w-4 h-4" />
+                      <span>{tab.label}</span>
+                    </div>
+                  </NavLink>
+                );
+              })}
+            </div>
 
-            {/* Onglet Compte - Dropdown déguisé en onglet */}
+            {/* Séparateur visuel */}
+            <div className="h-6 w-px bg-border/50 mx-1 shrink-0" />
+
+            {/* Onglet Compte - Toujours visible à droite */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
@@ -329,7 +335,7 @@ export function TabHeader() {
                   </div>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-56 bg-popover z-50">
+              <DropdownMenuContent align="end" className="w-56 bg-popover z-50">
                 <div className="px-3 py-2">
                   <p className="font-medium text-sm">{user?.email?.split('@')[0] || 'Utilisateur'}</p>
                   <p className="text-xs text-muted-foreground">{user?.email}</p>
