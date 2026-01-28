@@ -129,12 +129,12 @@ export function ActionsAMenerTab() {
                       className={cn(
                         "flex items-center gap-1 rounded-full border px-2 py-0.5 transition-all cursor-pointer hover:scale-105",
                         activeFilter === 'a_facturer' 
-                          ? "border-emerald-500 bg-emerald-500/20 ring-2 ring-emerald-500/30" 
-                          : "border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/40"
+                          ? "border-amber-500 bg-amber-500/20 ring-2 ring-amber-500/30" 
+                          : "border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-900/40"
                       )}
                     >
                       <span className="text-[10px] text-muted-foreground">Factures</span>
-                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                      <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
                         {actions.filter(a => a.actionType === 'a_facturer').length}
                       </span>
                     </button>
