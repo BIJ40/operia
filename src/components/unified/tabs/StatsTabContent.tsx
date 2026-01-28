@@ -62,12 +62,30 @@ export default function StatsTabContent() {
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabId)}>
-        <TabsList className="grid w-full grid-cols-6">
-          {TABS_CONFIG.map(tab => (
-            <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-1.5 text-xs">
-              {TAB_ICONS[tab.id]}
-              <span className="hidden sm:inline">{tab.label}</span>
-            </TabsTrigger>
+        <TabsList className="flex flex-wrap justify-center gap-2 bg-transparent h-auto p-2">
+          {TABS_CONFIG.map((tab, index) => (
+            <motion.div
+              key={tab.id}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05, duration: 0.2 }}
+            >
+              <TabsTrigger 
+                value={tab.id} 
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium
+                  bg-background border border-border rounded-xl shadow-sm
+                  transition-all duration-300 ease-out
+                  hover:scale-105 hover:shadow-md hover:border-primary/30 hover:bg-primary/5
+                  data-[state=active]:bg-primary data-[state=active]:text-primary-foreground 
+                  data-[state=active]:border-primary data-[state=active]:shadow-lg 
+                  data-[state=active]:scale-105"
+              >
+                <span className="transition-transform duration-200 group-hover:scale-110">
+                  {TAB_ICONS[tab.id]}
+                </span>
+                <span className="hidden sm:inline">{tab.label}</span>
+              </TabsTrigger>
+            </motion.div>
           ))}
         </TabsList>
 
