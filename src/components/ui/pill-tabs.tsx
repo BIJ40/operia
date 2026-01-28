@@ -20,14 +20,14 @@ interface PillTabsListProps {
   className?: string;
 }
 
-// Palette de couleurs pastel pour les pills (HSL values)
+// Palette de couleurs utilisant les tokens du design system
 const PILL_COLOR_PALETTE = [
-  { name: 'blue', hsl: '200 85% 60%' },
-  { name: 'purple', hsl: '270 60% 65%' },
-  { name: 'green', hsl: '145 60% 55%' },
-  { name: 'orange', hsl: '35 90% 60%' },
-  { name: 'pink', hsl: '340 70% 65%' },
-  { name: 'teal', hsl: '175 60% 50%' },
+  { name: 'blue', cssVar: '--warm-blue' },
+  { name: 'orange', cssVar: '--warm-orange' },
+  { name: 'purple', cssVar: '--warm-purple' },
+  { name: 'green', cssVar: '--warm-green' },
+  { name: 'pink', cssVar: '--warm-pink' },
+  { name: 'teal', cssVar: '--warm-teal' },
 ];
 
 export function PillTabsList({ tabs, className }: PillTabsListProps) {
@@ -53,7 +53,7 @@ export function PillTabsList({ tabs, className }: PillTabsListProps) {
               value={tab.id}
               className="group pill-tab-trigger"
               style={{
-                '--pill-color': color.hsl,
+                '--pill-color': `var(${color.cssVar})`,
               } as React.CSSProperties}
             >
               <Icon className="w-4 h-4 transition-transform duration-200 group-hover:rotate-6" />
