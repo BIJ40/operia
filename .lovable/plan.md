@@ -1,219 +1,195 @@
 
 
-# Plan de Refonte : Admin → Modèle Workspace à 6 Onglets
+# Plan de Correction : Labels Admin Définitifs
 
-## Vision Globale
+## Analyse des Écarts
 
-Transformer `/admin` d'une interface à tuiles vers un modèle **"workspace direct"** où chaque onglet affiche directement son contenu (tables, formulaires, dashboards) sans écran intermédiaire.
+### ✅ Onglets Niveau 1 - CONFORMES
+Les 6 onglets principaux sont corrects : Accès, Réseau, IA, Contenu, Ops, Plateforme
+
+### ❌ Sous-onglets Niveau 2 - ÉCARTS DÉTECTÉS
+
+| Vue | Actuel | Attendu | Action |
+|-----|--------|---------|--------|
+| **Accès** | Utilisateurs, Activité, **Feature Flags** | Utilisateurs, Activité | ❌ Supprimer "Feature Flags" → déplacer vers Plateforme/Modules |
+| **Ops** | Backups, **HC Backup**, Cache, **Rapport Apogée**, **Stockage** | Backups, **Imports**, Cache, **Reports**, **Quota** | ❌ Renommer 3 labels |
+| **Contenu** | Guides, FAQ, Templates, Annonces, Notifications, **Métadonnées** | Guides, FAQ, Templates, **Metadata**, Annonces, Notifications | ❌ Renommer "Métadonnées" → "Metadata" |
+| **Plateforme** | Santé, Sitemap, **Masqué**, Flow | Santé, **Modules**, **Laboratoire**, Sitemap, Flow | ❌ Ajouter "Modules" (Feature Flags), renommer "Masqué" → "Laboratoire", réordonner |
+
+---
+
+## Modifications à Effectuer
+
+### 1. AccesView.tsx - Supprimer Feature Flags
+**Fichier** : `src/components/admin/views/AccesView.tsx`
 
 ```text
-┌────────────────────────────────────────────────────────────────────────────┐
-│                        ESPACE ADMINISTRATION                               │
-├────────┬─────────┬────────┬──────────┬────────┬──────────────┬────────────│
-│ Accès  │ Réseau  │   IA   │ Contenu  │  Ops   │  Plateforme  │  (active)  │
-└────────┴─────────┴────────┴──────────┴────────┴──────────────┴────────────┘
-│                                                                            │
-│   [Contenu direct de l'onglet sélectionné]                                │
-│   - Pas d'écran intermédiaire                                              │
-│   - Sous-onglets pills si plusieurs vues                                   │
-│                                                                            │
-└────────────────────────────────────────────────────────────────────────────┘
+AVANT:
+SUB_TABS = [
+  { id: 'users', label: 'Utilisateurs', icon: Users },
+  { id: 'activity', label: 'Activité', icon: Activity },
+  { id: 'flags', label: 'Feature Flags', icon: ToggleRight },  ← SUPPRIMER
+]
+
+APRÈS:
+SUB_TABS = [
+  { id: 'users', label: 'Utilisateurs', icon: Users },
+  { id: 'activity', label: 'Activité', icon: Activity },
+]
+```
+- Retirer l'import `AdminFeatureFlags` et `ToggleRight`
+- Supprimer le `TabsContent value="flags"`
+
+---
+
+### 2. PlateformeView.tsx - Ajouter Modules + Renommer Laboratoire
+**Fichier** : `src/components/admin/views/PlateformeView.tsx`
+
+```text
+AVANT:
+SUB_TABS = [
+  { id: 'health', label: 'Santé', icon: Activity },
+  { id: 'sitemap', label: 'Sitemap', icon: Map },
+  { id: 'hidden', label: 'Masqué', icon: EyeOff },
+  { id: 'flow', label: 'Flow', icon: GitBranch },
+]
+
+APRÈS:
+SUB_TABS = [
+  { id: 'health', label: 'Santé', icon: Activity },
+  { id: 'modules', label: 'Modules', icon: ToggleRight },      ← NOUVEAU
+  { id: 'lab', label: 'Laboratoire', icon: FlaskConical },     ← RENOMMÉ
+  { id: 'sitemap', label: 'Sitemap', icon: Map },
+  { id: 'flow', label: 'Flow', icon: GitBranch },
+]
+```
+- Ajouter import `AdminFeatureFlags`, `ToggleRight`, `FlaskConical`
+- Ajouter `TabsContent value="modules"` avec `AdminFeatureFlags`
+- Renommer id `hidden` → `lab` et label `Masqué` → `Laboratoire`
+
+---
+
+### 3. OpsView.tsx - Renommer les labels
+**Fichier** : `src/components/admin/views/OpsView.tsx`
+
+```text
+AVANT:
+SUB_TABS = [
+  { id: 'backup', label: 'Backups', icon: Database },
+  { id: 'hc-backup', label: 'HC Backup', icon: FileStack },
+  { id: 'cache', label: 'Cache', icon: Archive },
+  { id: 'report', label: 'Rapport Apogée', icon: FileJson },
+  { id: 'storage', label: 'Stockage', icon: HardDrive },
+]
+
+APRÈS:
+SUB_TABS = [
+  { id: 'backup', label: 'Backups', icon: Database },
+  { id: 'imports', label: 'Imports', icon: FileStack },        ← RENOMMÉ
+  { id: 'cache', label: 'Cache', icon: Archive },
+  { id: 'report', label: 'Reports', icon: FileJson },          ← RENOMMÉ
+  { id: 'quota', label: 'Quota', icon: HardDrive },            ← RENOMMÉ
+]
 ```
 
 ---
 
-## 1. Structure des 6 Onglets Principaux
+### 4. ContenuView.tsx - Renommer + Réordonner
+**Fichier** : `src/components/admin/views/ContenuView.tsx`
 
-| Onglet | ID | Sous-vues (pills) | Pages existantes réutilisées |
-|--------|-----|-------------------|------------------------------|
-| **Accès** | `acces` | Utilisateurs, Activité, Flags | `TDRUsersPage`, `AdminUserActivity`, `AdminFeatureFlags` |
-| **Réseau** | `reseau` | Agences, (détail split) | `AdminAgencies`, `FranchiseurAgencyProfile` |
-| **IA** | `ia` | Helpi*, STATiA, Validator | `AdminHelpi`*, `StatiaBuilderAdminPage`, `StatiaValidatorPage` |
-| **Contenu** | `contenu` | Guides, FAQ, Templates, Annonces, Notifs, Métadonnées | 6 pages existantes |
-| **Ops** | `ops` | Backups, HC-Backup, Cache, Rapport Apogée, Stockage | 5 pages existantes |
-| **Plateforme** | `plateforme` | Santé*, Sitemap, Hidden, Flow | 4 pages existantes |
+```text
+AVANT:
+SUB_TABS = [
+  { id: 'guides', label: 'Guides', icon: BookOpen },
+  { id: 'faq', label: 'FAQ', icon: HelpCircle },
+  { id: 'templates', label: 'Templates', icon: FileEdit },
+  { id: 'annonces', label: 'Annonces', icon: Megaphone },
+  { id: 'notifs', label: 'Notifications', icon: Bell },
+  { id: 'metadata', label: 'Métadonnées', icon: FileText },
+]
 
-> *Helpi et Santé gardent leurs sous-onglets internes (8 et 3 tabs respectivement)
-
----
-
-## 2. Architecture Technique
-
-### A) Nouveau composant `AdminHub`
-
-Remplace `AdminIndex.tsx` — devient le point d'entrée unique de l'onglet Admin :
-
-```tsx
-// src/components/unified/tabs/AdminHubContent.tsx
-
-const ADMIN_MAIN_TABS = [
-  { id: 'acces', label: 'Accès', icon: Shield },
-  { id: 'reseau', label: 'Réseau', icon: Building2 },
-  { id: 'ia', label: 'IA', icon: Brain },
-  { id: 'contenu', label: 'Contenu', icon: FileText },
-  { id: 'ops', label: 'Ops', icon: Database },
-  { id: 'plateforme', label: 'Plateforme', icon: Cpu },
-];
-
-// Chaque onglet principal a ses sous-vues (pills)
-const ADMIN_SUB_VIEWS = {
-  acces: [
-    { id: 'users', label: 'Utilisateurs', icon: Users },
-    { id: 'activity', label: 'Activité', icon: Activity },
-    { id: 'flags', label: 'Feature Flags', icon: ToggleRight },
-  ],
-  reseau: [
-    { id: 'agencies', label: 'Agences', icon: Building2 },
-  ],
-  ia: [
-    { id: 'helpi', label: 'Helpi', icon: Bot },
-    { id: 'statia', label: 'STATiA', icon: FlaskConical },
-    { id: 'validator', label: 'Validator', icon: FlaskConical },
-  ],
-  // ... etc
-};
-```
-
-### B) Gestion de l'état via URL params
-
-Navigation interne pilotée par query params pour cohérence avec le workspace unifié :
-
-```
-/?tab=admin&adminTab=acces&adminView=users
-/?tab=admin&adminTab=ia&adminView=helpi
-```
-
-### C) Sous-onglets en "Pill Tabs"
-
-Réutilisation du composant `PillTabsList` existant (même style que Stats, Guides) :
-
-```tsx
-<PillTabsList tabs={ADMIN_SUB_VIEWS[activeTab]} />
+APRÈS:
+SUB_TABS = [
+  { id: 'guides', label: 'Guides', icon: BookOpen },
+  { id: 'faq', label: 'FAQ', icon: HelpCircle },
+  { id: 'templates', label: 'Templates', icon: FileEdit },
+  { id: 'metadata', label: 'Metadata', icon: FileText },       ← RENOMMÉ + POSITION
+  { id: 'annonces', label: 'Annonces', icon: Megaphone },
+  { id: 'notifs', label: 'Notifications', icon: Bell },
+]
 ```
 
 ---
 
-## 3. Mapping Routes → Onglets/Vues
+### 5. admin.routes.tsx - Mettre à jour les redirections
+**Fichier** : `src/routes/admin.routes.tsx`
 
-| Route existante | Onglet | Vue | Action |
-|-----------------|--------|-----|--------|
-| `/admin/gestion` | Accès | users | Embed `TDRUsersPage` |
-| `/admin/user-activity` | Accès | activity | Embed `AdminUserActivity` |
-| `/admin/feature-flags` | Accès | flags | Embed `AdminFeatureFlags` |
-| `/admin/agencies` | Réseau | agencies | Embed `AdminAgencies` |
-| `/admin/agencies/:id` | Réseau | agencies | Modal/Sheet détail |
-| `/admin/helpi` | IA | helpi | Embed `AdminHelpi` (garde ses 8 tabs) |
-| `/admin/statia-by-bij` | IA | statia | Embed `StatiaBuilderAdminPage` |
-| `/admin/statia-validator` | IA | validator | Embed `StatiaValidatorPage` |
-| `/admin/apogee-guides` | Contenu | guides | Embed page |
-| `/admin/faq` | Contenu | faq | Embed page |
-| `/admin/templates` | Contenu | templates | Embed page |
-| `/admin/announcements` | Contenu | annonces | Embed page |
-| `/admin/notifications` | Contenu | notifs | Embed page |
-| `/admin/page-metadata` | Contenu | metadata | Embed page |
-| `/admin/backup` | Ops | backup | Embed page |
-| `/admin/helpconfort-backup` | Ops | hc-backup | Embed page |
-| `/admin/cache-backup` | Ops | cache | Embed page |
-| `/admin/apogee-report` | Ops | report | Embed page |
-| `/admin/storage-quota` | Ops | storage | Embed page |
-| `/admin/system-health` | Plateforme | health | Embed (garde ses 3 tabs) |
-| `/admin/sitemap` | Plateforme | sitemap | Embed page |
-| `/admin/hidden-features` | Plateforme | hidden | Embed page |
-| `/admin/flow` | Plateforme | flow | Embed page |
+Corrections nécessaires :
+- `/admin/feature-flags` → `plateforme/modules` (plus `acces/flags`)
+- `/admin/modules` → `plateforme/modules`
+- `/admin/helpconfort-backup` → `ops/imports` (plus `hc-backup`)
+- `/admin/storage-quota` → `ops/quota` (plus `storage`)
+- `/admin/hidden-features` → `plateforme/lab` (plus `hidden`)
 
 ---
 
-## 4. Design & UX
+## Récapitulatif Labels Finaux
 
-### Header Admin Standardisé
+### Accès (2 sous-onglets)
+| ID | Label |
+|----|-------|
+| users | Utilisateurs |
+| activity | Activité |
 
-Chaque vue affiche un header léger avec :
-- Icône + Titre de l'onglet courant
-- Fil d'Ariane contextuel (Admin → IA → Helpi)
-- Actions contextuelles à droite
+### Réseau (1 sous-onglet)
+| ID | Label |
+|----|-------|
+| agencies | Agences |
 
-```tsx
-<AdminViewHeader 
-  title="Helpi - Moteur IA"
-  breadcrumb={['Admin', 'IA', 'Helpi']}
-  actions={<Button>Indexer</Button>}
-/>
-```
+### IA (3 sous-onglets)
+| ID | Label |
+|----|-------|
+| helpi | Helpi |
+| statia | StatIA |
+| validator | Validator |
 
-### Style Warm Pastel
+### Contenu (6 sous-onglets)
+| ID | Label |
+|----|-------|
+| guides | Guides |
+| faq | FAQ |
+| templates | Templates |
+| metadata | Metadata |
+| annonces | Annonces |
+| notifs | Notifications |
 
-- Coins ultra-arrondis (rounded-xl, rounded-2xl)
-- Gradients doux par onglet
-- Animations Framer Motion subtiles sur les transitions
+### Ops (5 sous-onglets)
+| ID | Label |
+|----|-------|
+| backup | Backups |
+| imports | Imports |
+| cache | Cache |
+| report | Reports |
+| quota | Quota |
 
-### Mode Maintenance (N6)
-
-Visible uniquement pour superadmin, affiché en bandeau discret en haut de l'onglet Plateforme.
-
----
-
-## 5. Fichiers à Créer/Modifier
-
-### Créations
-
-| Fichier | Description |
-|---------|-------------|
-| `src/components/unified/tabs/AdminHubContent.tsx` | Nouveau conteneur principal avec 6 tabs |
-| `src/components/admin/AdminViewHeader.tsx` | Header standardisé avec breadcrumb |
-| `src/components/admin/views/AccesView.tsx` | Vue Accès (Users, Activity, Flags) |
-| `src/components/admin/views/ReseauView.tsx` | Vue Réseau (Agencies) |
-| `src/components/admin/views/IAView.tsx` | Vue IA (Helpi, STATiA) |
-| `src/components/admin/views/ContenuView.tsx` | Vue Contenu (6 sous-vues) |
-| `src/components/admin/views/OpsView.tsx` | Vue Ops (5 sous-vues) |
-| `src/components/admin/views/PlateformeView.tsx` | Vue Plateforme (4 sous-vues) |
-
-### Modifications
-
-| Fichier | Action |
-|---------|--------|
-| `src/components/unified/tabs/AdminTabContent.tsx` | Remplacer par import de `AdminHubContent` |
-| `src/pages/AdminIndex.tsx` | Supprimer (remplacé par AdminHubContent) |
-| `src/pages/TDRUsersPage.tsx` | ✅ Déjà corrigé (container neutre) |
-| Pages admin individuelles | Retirer leurs headers internes, garder uniquement le contenu |
-
-### Routes Admin
-
-Les routes `/admin/*` restent fonctionnelles et redirigent vers le workspace unifié avec les bons params :
-
-```tsx
-// admin.routes.tsx - Redirections intelligentes
-<Route path="/admin/helpi" element={<Navigate to="/?tab=admin&adminTab=ia&adminView=helpi" replace />} />
-```
+### Plateforme (5 sous-onglets)
+| ID | Label |
+|----|-------|
+| health | Santé |
+| modules | Modules |
+| lab | Laboratoire |
+| sitemap | Sitemap |
+| flow | Flow |
 
 ---
 
-## 6. Plan d'Exécution
+## Fichiers à Modifier
 
-| Étape | Description | Fichiers |
-|-------|-------------|----------|
-| **1** | Créer `AdminHubContent.tsx` avec 6 onglets PillTabs | 1 nouveau |
-| **2** | Créer les 6 composants de vue (AccesView, etc.) | 6 nouveaux |
-| **3** | Créer `AdminViewHeader.tsx` standardisé | 1 nouveau |
-| **4** | Mettre à jour `AdminTabContent.tsx` pour utiliser `AdminHubContent` | 1 modif |
-| **5** | Supprimer `AdminIndex.tsx` (devenu obsolète) | 1 suppression |
-| **6** | Mettre à jour les redirections dans `admin.routes.tsx` | 1 modif |
-| **7** | Nettoyer les headers des pages embarquées | ~15 modifs mineures |
-
----
-
-## 7. Rétrocompatibilité
-
-- ✅ Toutes les URLs existantes restent fonctionnelles via redirections
-- ✅ Les pages individuelles peuvent toujours être ouvertes en standalone (AdminLayout)
-- ✅ Les bookmarks et liens partagés continuent de fonctionner
-- ✅ Pas de breaking change pour l'API ou les permissions
-
----
-
-## Résultat Attendu
-
-1. **Navigation directe** : Clic sur "Accès" → Table utilisateurs immédiatement visible
-2. **Zéro tuile** : Plus d'écran intermédiaire avec des cartes cliquables
-3. **Design cohérent** : Même style que les autres onglets du workspace (Stats, Guides)
-4. **Maintenance réduite** : Un seul point d'entrée (`AdminHubContent`) au lieu de 27 pages dispersées
+| Fichier | Actions |
+|---------|---------|
+| `AccesView.tsx` | Supprimer flags (2 tabs restants) |
+| `PlateformeView.tsx` | Ajouter Modules, renommer Laboratoire (5 tabs) |
+| `OpsView.tsx` | Renommer 3 labels |
+| `ContenuView.tsx` | Renommer Metadata, réordonner |
+| `admin.routes.tsx` | Corriger 5 redirections |
 
