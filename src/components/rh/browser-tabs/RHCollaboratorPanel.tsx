@@ -95,7 +95,13 @@ const ROLE_OPTIONS = [
   { value: 'Peintre', label: 'Peintre' },
   { value: 'Plaquiste', label: 'Plaquiste' },
   { value: 'Polyvalent', label: 'Polyvalent' },
+  { value: 'Secretaire', label: 'Secrétaire' },
 ];
+
+// Mapping type → rôle par défaut
+const TYPE_DEFAULT_ROLE: Record<string, string> = {
+  'ASSISTANTE': 'Secretaire',
+};
 
 function getCollaboratorStatus(c: RHCollaborator): 'active' | 'inactive' | 'exited' {
   if (c.leaving_date) {
@@ -275,7 +281,14 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
                 {/* Type sélectionnable */}
                 <Select
                   value={collaborator.type || ''}
-                  onValueChange={(v) => handleFieldUpdate('type', v)}
+                  onValueChange={async (v) => {
+                    await handleFieldUpdate('type', v);
+                    // Auto-set default role based on type
+                    const defaultRole = TYPE_DEFAULT_ROLE[v];
+                    if (defaultRole) {
+                      await handleFieldUpdate('role', defaultRole);
+                    }
+                  }}
                 >
                   <SelectTrigger className="h-6 w-auto min-w-[90px] text-xs border-dashed px-2 gap-1">
                     <SelectValue placeholder="Type..." />
