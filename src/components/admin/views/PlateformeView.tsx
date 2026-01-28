@@ -5,7 +5,7 @@
 import { lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
+import { FolderTabsList, FolderContentContainer, FolderTabConfig } from '@/components/ui/folder-tabs';
 import { Activity, Map, FlaskConical, GitBranch, ToggleRight, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { MaintenanceModeCard } from '@/components/admin/MaintenanceModeCard';
@@ -16,7 +16,7 @@ const HiddenFeaturesPage = lazy(() => import('@/pages/admin/HiddenFeaturesPage')
 const AdminSitemap = lazy(() => import('@/pages/admin/AdminSitemap'));
 const AdminFlow = lazy(() => import('@/pages/admin/AdminFlow'));
 
-const SUB_TABS: PillTabConfig[] = [
+const SUB_TABS: FolderTabConfig[] = [
   { id: 'health', label: 'Santé', icon: Activity },
   { id: 'modules', label: 'Modules', icon: ToggleRight },
   { id: 'lab', label: 'Laboratoire', icon: FlaskConical },
@@ -52,37 +52,39 @@ export function PlateformeView() {
       {isSuperadmin && <MaintenanceModeCard compact />}
 
       <Tabs value={activeView} onValueChange={handleViewChange}>
-        <PillTabsList tabs={SUB_TABS} className="justify-start" />
+        <FolderTabsList tabs={SUB_TABS} activeTab={activeView} />
 
-        <TabsContent value="health" className="mt-4">
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminSystemHealth />
-          </Suspense>
-        </TabsContent>
+        <FolderContentContainer>
+          <TabsContent value="health" className="mt-0 focus-visible:outline-none">
+            <Suspense fallback={<LoadingFallback />}>
+              <AdminSystemHealth />
+            </Suspense>
+          </TabsContent>
 
-        <TabsContent value="modules" className="mt-4">
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminFeatureFlags />
-          </Suspense>
-        </TabsContent>
+          <TabsContent value="modules" className="mt-0 focus-visible:outline-none">
+            <Suspense fallback={<LoadingFallback />}>
+              <AdminFeatureFlags />
+            </Suspense>
+          </TabsContent>
 
-        <TabsContent value="lab" className="mt-4">
-          <Suspense fallback={<LoadingFallback />}>
-            <HiddenFeaturesPage />
-          </Suspense>
-        </TabsContent>
+          <TabsContent value="lab" className="mt-0 focus-visible:outline-none">
+            <Suspense fallback={<LoadingFallback />}>
+              <HiddenFeaturesPage />
+            </Suspense>
+          </TabsContent>
 
-        <TabsContent value="sitemap" className="mt-4">
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminSitemap />
-          </Suspense>
-        </TabsContent>
+          <TabsContent value="sitemap" className="mt-0 focus-visible:outline-none">
+            <Suspense fallback={<LoadingFallback />}>
+              <AdminSitemap />
+            </Suspense>
+          </TabsContent>
 
-        <TabsContent value="flow" className="mt-4">
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminFlow />
-          </Suspense>
-        </TabsContent>
+          <TabsContent value="flow" className="mt-0 focus-visible:outline-none">
+            <Suspense fallback={<LoadingFallback />}>
+              <AdminFlow />
+            </Suspense>
+          </TabsContent>
+        </FolderContentContainer>
       </Tabs>
     </div>
   );

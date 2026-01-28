@@ -5,7 +5,7 @@
 import { lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
+import { FolderTabsList, FolderContentContainer, FolderTabConfig } from '@/components/ui/folder-tabs';
 import { FileText, BookOpen, HelpCircle, FileEdit, Bell, Megaphone, Loader2 } from 'lucide-react';
 
 const AdminApogeeGuides = lazy(() => import('@/pages/AdminApogeeGuides'));
@@ -15,7 +15,7 @@ const AdminAnnouncements = lazy(() => import('@/pages/admin/AdminAnnouncements')
 const AdminNotificationSender = lazy(() => import('@/pages/admin/AdminNotificationSender'));
 const AdminPageMetadata = lazy(() => import('@/pages/AdminPageMetadata'));
 
-const SUB_TABS: PillTabConfig[] = [
+const SUB_TABS: FolderTabConfig[] = [
   { id: 'guides', label: 'Guides', icon: BookOpen },
   { id: 'faq', label: 'FAQ', icon: HelpCircle },
   { id: 'templates', label: 'Templates', icon: FileEdit },
@@ -46,43 +46,45 @@ export function ContenuView() {
 
   return (
     <Tabs value={activeView} onValueChange={handleViewChange}>
-      <PillTabsList tabs={SUB_TABS} className="justify-start" />
+      <FolderTabsList tabs={SUB_TABS} activeTab={activeView} />
 
-      <TabsContent value="guides" className="mt-4">
-        <Suspense fallback={<LoadingFallback />}>
-          <AdminApogeeGuides />
-        </Suspense>
-      </TabsContent>
+      <FolderContentContainer>
+        <TabsContent value="guides" className="mt-0 focus-visible:outline-none">
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminApogeeGuides />
+          </Suspense>
+        </TabsContent>
 
-      <TabsContent value="faq" className="mt-4">
-        <Suspense fallback={<LoadingFallback />}>
-          <AdminFaq />
-        </Suspense>
-      </TabsContent>
+        <TabsContent value="faq" className="mt-0 focus-visible:outline-none">
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminFaq />
+          </Suspense>
+        </TabsContent>
 
-      <TabsContent value="templates" className="mt-4">
-        <Suspense fallback={<LoadingFallback />}>
-          <DocTemplatesPage />
-        </Suspense>
-      </TabsContent>
+        <TabsContent value="templates" className="mt-0 focus-visible:outline-none">
+          <Suspense fallback={<LoadingFallback />}>
+            <DocTemplatesPage />
+          </Suspense>
+        </TabsContent>
 
-      <TabsContent value="annonces" className="mt-4">
-        <Suspense fallback={<LoadingFallback />}>
-          <AdminAnnouncements />
-        </Suspense>
-      </TabsContent>
+        <TabsContent value="annonces" className="mt-0 focus-visible:outline-none">
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminAnnouncements />
+          </Suspense>
+        </TabsContent>
 
-      <TabsContent value="notifs" className="mt-4">
-        <Suspense fallback={<LoadingFallback />}>
-          <AdminNotificationSender />
-        </Suspense>
-      </TabsContent>
+        <TabsContent value="notifs" className="mt-0 focus-visible:outline-none">
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminNotificationSender />
+          </Suspense>
+        </TabsContent>
 
-      <TabsContent value="metadata" className="mt-4">
-        <Suspense fallback={<LoadingFallback />}>
-          <AdminPageMetadata />
-        </Suspense>
-      </TabsContent>
+        <TabsContent value="metadata" className="mt-0 focus-visible:outline-none">
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminPageMetadata />
+          </Suspense>
+        </TabsContent>
+      </FolderContentContainer>
     </Tabs>
   );
 }

@@ -138,27 +138,19 @@ export default function AdminHubContent() {
           </TabsContent>
 
           <TabsContent value="ia" className="mt-0 focus-visible:outline-none">
-            <div className="rounded-2xl border-2 border-border bg-background p-4 sm:p-6 shadow-sm">
-              <IAView />
-            </div>
+            <IAView />
           </TabsContent>
 
           <TabsContent value="contenu" className="mt-0 focus-visible:outline-none">
-            <div className="rounded-2xl border-2 border-border bg-background p-4 sm:p-6 shadow-sm">
-              <ContenuView />
-            </div>
+            <ContenuView />
           </TabsContent>
 
           <TabsContent value="ops" className="mt-0 focus-visible:outline-none">
-            <div className="rounded-2xl border-2 border-border bg-background p-4 sm:p-6 shadow-sm">
-              <OpsView />
-            </div>
+            <OpsView />
           </TabsContent>
 
           <TabsContent value="plateforme" className="mt-0 focus-visible:outline-none">
-            <div className="rounded-2xl border-2 border-border bg-background p-4 sm:p-6 shadow-sm">
-              <PlateformeView />
-            </div>
+            <PlateformeView />
           </TabsContent>
         </motion.div>
       </Tabs>

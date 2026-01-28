@@ -5,14 +5,14 @@
 import { lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
+import { FolderTabsList, FolderContentContainer, FolderTabConfig } from '@/components/ui/folder-tabs';
 import { Bot, FlaskConical, Loader2 } from 'lucide-react';
 
 const AdminHelpi = lazy(() => import('@/pages/AdminHelpi'));
 const StatiaBuilderAdminPage = lazy(() => import('@/statia/pages/StatiaBuilderAdminPage'));
 const StatiaValidatorPage = lazy(() => import('@/statia/pages/StatiaValidatorPage'));
 
-const SUB_TABS: PillTabConfig[] = [
+const SUB_TABS: FolderTabConfig[] = [
   { id: 'helpi', label: 'Helpi', icon: Bot },
   { id: 'statia', label: 'STATiA', icon: FlaskConical },
   { id: 'validator', label: 'Validator', icon: FlaskConical },
@@ -40,25 +40,27 @@ export function IAView() {
 
   return (
     <Tabs value={activeView} onValueChange={handleViewChange}>
-      <PillTabsList tabs={SUB_TABS} className="justify-start" />
+      <FolderTabsList tabs={SUB_TABS} activeTab={activeView} />
 
-      <TabsContent value="helpi" className="mt-4">
-        <Suspense fallback={<LoadingFallback />}>
-          <AdminHelpi />
-        </Suspense>
-      </TabsContent>
+      <FolderContentContainer>
+        <TabsContent value="helpi" className="mt-0 focus-visible:outline-none">
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminHelpi />
+          </Suspense>
+        </TabsContent>
 
-      <TabsContent value="statia" className="mt-4">
-        <Suspense fallback={<LoadingFallback />}>
-          <StatiaBuilderAdminPage />
-        </Suspense>
-      </TabsContent>
+        <TabsContent value="statia" className="mt-0 focus-visible:outline-none">
+          <Suspense fallback={<LoadingFallback />}>
+            <StatiaBuilderAdminPage />
+          </Suspense>
+        </TabsContent>
 
-      <TabsContent value="validator" className="mt-4">
-        <Suspense fallback={<LoadingFallback />}>
-          <StatiaValidatorPage />
-        </Suspense>
-      </TabsContent>
+        <TabsContent value="validator" className="mt-0 focus-visible:outline-none">
+          <Suspense fallback={<LoadingFallback />}>
+            <StatiaValidatorPage />
+          </Suspense>
+        </TabsContent>
+      </FolderContentContainer>
     </Tabs>
   );
 }
