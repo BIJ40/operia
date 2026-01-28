@@ -258,20 +258,9 @@ export default function DashboardStatic() {
   // ============================================================================
   
   const renderDashboardContent = () => {
-    // N0 (Extérieur) - Placeholder simple
+    // N0 (Extérieur) - Aucun contenu dashboard, accès direct aux autres onglets
     if (isN0) {
-      return (
-        <motion.div 
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="flex flex-col items-center justify-center py-12 text-muted-foreground"
-        >
-          <Building2 className="h-16 w-16 mb-4 opacity-50" />
-          <p className="text-lg">Bienvenue sur HelpConfort</p>
-          <p className="text-sm mt-1">Accédez à l'Academy pour consulter les guides</p>
-        </motion.div>
-      );
+      return null;
     }
     
     // N1 - KPIs personnels uniquement
