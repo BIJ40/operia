@@ -17,33 +17,24 @@ interface KpiTileProps {
 }
 
 export function KpiTile({ title, value, subtitle, icon: Icon, isLoading, trend, tooltip }: KpiTileProps) {
-  return (
-    <Card className="border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300">
+  const cardContent = (
+    <Card className="border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 cursor-default">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-        <CardTitle className="text-sm font-semibold text-foreground">{title}</CardTitle>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="p-2 rounded-full bg-accent/20 cursor-help">
-              <Icon className="h-5 w-5 text-accent" />
-            </div>
-          </TooltipTrigger>
-          {tooltip && (
-            <TooltipContent>
-              <p className="max-w-xs text-xs">{tooltip}</p>
-            </TooltipContent>
-          )}
-        </Tooltip>
+        <CardTitle className="text-sm font-semibold text-foreground truncate">{title}</CardTitle>
+        <div className="p-2 rounded-full bg-accent/20 flex-shrink-0">
+          <Icon className="h-5 w-5 text-accent" />
+        </div>
       </CardHeader>
       <CardContent>
         {isLoading ? (
           <Skeleton className="h-10 w-full rounded-lg" />
         ) : (
           <>
-            <div className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
+            <div className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent truncate">
               {value}
             </div>
             {subtitle && (
-              <p className="text-xs text-muted-foreground mt-2">
+              <p className="text-xs text-muted-foreground mt-2 truncate">
                 {subtitle}
               </p>
             )}
@@ -56,5 +47,24 @@ export function KpiTile({ title, value, subtitle, icon: Icon, isLoading, trend, 
         )}
       </CardContent>
     </Card>
+  );
+
+  return (
+    <Tooltip delayDuration={0}>
+      <TooltipTrigger asChild>
+        {cardContent}
+      </TooltipTrigger>
+      <TooltipContent side="top" className="bg-popover border border-border shadow-lg">
+        <div className="text-sm font-semibold">{title}</div>
+        <div className="text-lg font-bold text-primary">{value}</div>
+        {subtitle && <div className="text-xs text-muted-foreground">{subtitle}</div>}
+        {tooltip && <div className="text-xs text-muted-foreground mt-1 max-w-xs">{tooltip}</div>}
+        {trend && (
+          <div className={`text-xs ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+            {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}%
+          </div>
+        )}
+      </TooltipContent>
+    </Tooltip>
   );
 }
