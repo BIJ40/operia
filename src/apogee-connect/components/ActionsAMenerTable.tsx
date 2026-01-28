@@ -97,7 +97,7 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {actions.map((action, index) => {
         const colors = ACTION_COLORS[action.actionType];
         const ActionIcon = ACTION_ICONS[action.actionType];
@@ -106,88 +106,92 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
           <div
             key={`${action.projectId}-${index}`}
             className={cn(
-              "group relative rounded-2xl border-2 p-4 transition-all duration-200",
-              "hover:shadow-lg hover:scale-[1.01] cursor-pointer",
+              "group relative rounded-xl border p-3 transition-all duration-200",
+              "hover:shadow-md hover:scale-[1.005] cursor-pointer",
               colors.bg,
               colors.border,
-              action.isLate && "ring-2 ring-red-400/50 ring-offset-2 ring-offset-background"
+              action.isLate && "ring-1 ring-red-400/50 ring-offset-1 ring-offset-background"
             )}
             onClick={() => onOpenDossier?.(action.projectId)}
           >
-            {/* Status badge */}
-            <div className="absolute -top-2 -right-2">
-              {action.isLate ? (
-                <Badge className="bg-red-500 hover:bg-red-600 text-white shadow-lg animate-pulse gap-1">
-                  <AlertTriangle className="w-3 h-3" />
-                  En retard
-                </Badge>
-              ) : action.isDueSoon ? (
-                <Badge className="bg-amber-500 hover:bg-amber-600 text-white shadow-lg gap-1">
-                  <BellRing className="w-3 h-3" />
-                  Demain
-                </Badge>
-              ) : null}
-            </div>
-
-            <div className="flex items-start gap-4">
-              {/* Icon */}
+            <div className="flex items-center gap-3">
+              {/* Icon compact */}
               <div className={cn(
-                "w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0",
-                "bg-white/80 dark:bg-black/20 shadow-sm"
+                "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0",
+                "bg-white/80 dark:bg-black/20"
               )}>
-                <ActionIcon className={cn("w-6 h-6", colors.icon)} />
+                <ActionIcon className={cn("w-4 h-4", colors.icon)} />
               </div>
 
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-mono text-muted-foreground bg-white/50 dark:bg-black/20 px-2 py-0.5 rounded">
+              {/* Content - single line */}
+              <div className="flex-1 min-w-0 flex items-center gap-3 flex-wrap">
+                {/* Ref + Label */}
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-[10px] font-mono text-muted-foreground bg-white/50 dark:bg-black/20 px-1.5 py-0.5 rounded flex-shrink-0">
                     {action.ref}
                   </span>
-                  <span className="text-sm font-semibold text-foreground truncate">
+                  <span className="text-sm font-medium text-foreground truncate max-w-[150px]">
                     {action.label}
                   </span>
                 </div>
-                
-                <p className="text-base font-medium text-foreground mb-2">
-                  {action.actionLabel}
-                </p>
 
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-current opacity-50" />
-                    {action.clientName}
+                {/* Action label */}
+                <span className="text-xs text-muted-foreground hidden sm:block">
+                  {action.actionLabel}
+                </span>
+
+                {/* Client */}
+                <span className="text-xs text-muted-foreground flex items-center gap-1 hidden md:flex">
+                  <span className="w-1 h-1 rounded-full bg-current opacity-40" />
+                  {action.clientName}
+                </span>
+
+                {/* Technicien */}
+                {getTechnicienName(action) !== '-' && (
+                  <span className="text-xs text-muted-foreground flex items-center gap-1 hidden lg:flex">
+                    <span className="w-1 h-1 rounded-full bg-current opacity-40" />
+                    {getTechnicienName(action)}
                   </span>
-                  {getTechnicienName(action) !== '-' && (
-                    <span className="flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-50" />
-                      {getTechnicienName(action)}
-                    </span>
-                  )}
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {format(action.deadline, 'dd MMM yyyy', { locale: fr })}
-                    {action.isLate && action.daysLate && action.daysLate > 0 && (
-                      <span className="text-red-500 font-medium">
-                        (+{action.daysLate}j)
-                      </span>
-                    )}
-                  </span>
-                </div>
+                )}
               </div>
 
-              {/* Action button */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpenDossier?.(action.projectId);
-                }}
-              >
-                <ExternalLink className="w-4 h-4" />
-              </Button>
+              {/* Right side - date & status */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {/* Date */}
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {format(action.deadline, 'dd/MM', { locale: fr })}
+                  {action.isLate && action.daysLate && action.daysLate > 0 && (
+                    <span className="text-red-500 font-medium text-[10px]">
+                      +{action.daysLate}j
+                    </span>
+                  )}
+                </span>
+
+                {/* Status badge */}
+                {action.isLate ? (
+                  <Badge className="bg-red-500 hover:bg-red-600 text-white text-[10px] px-1.5 py-0 h-5 gap-0.5">
+                    <AlertTriangle className="w-3 h-3" />
+                  </Badge>
+                ) : action.isDueSoon ? (
+                  <Badge className="bg-amber-500 hover:bg-amber-600 text-white text-[10px] px-1.5 py-0 h-5 gap-0.5">
+                    <BellRing className="w-3 h-3" />
+                  </Badge>
+                ) : null}
+
+                {/* Action button */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenDossier?.(action.projectId);
+                  }}
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </Button>
+              </div>
             </div>
           </div>
         );

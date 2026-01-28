@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,11 +12,15 @@ import { useActionsConfig } from '@/apogee-connect/hooks/useActionsConfig';
 import { DossierDetailDialog } from '@/apogee-connect/components/DossierDetailDialog';
 import { toast } from '@/hooks/use-toast';
 import { ConditionalRender } from '@/components/PermissionGuard';
+import { cn } from '@/lib/utils';
+
+type FilterType = 'all' | 'late' | 'a_facturer' | 'devis_a_faire' | 'relance_technicien';
 
 export function ActionsAMenerTab() {
   const { isAgencyReady, currentAgency } = useAgency();
   const { config, isLoading: isLoadingConfig } = useActionsConfig();
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
   const { data: actions, isLoading, error } = useQuery({
     queryKey: ['actions-a-mener', currentAgency?.id, config],
@@ -36,6 +40,13 @@ export function ActionsAMenerTab() {
       return actionsList;
     },
   });
+
+  const filteredActions = useMemo(() => {
+    if (!actions) return [];
+    if (activeFilter === 'all') return actions;
+    if (activeFilter === 'late') return actions.filter(a => a.isLate);
+    return actions.filter(a => a.actionType === activeFilter);
+  }, [actions, activeFilter]);
 
   // Notification automatique pour les actions qui vont passer en retard dans J+1
   useEffect(() => {
@@ -84,37 +95,77 @@ export function ActionsAMenerTab() {
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
-                {/* Stats inline */}
+                {/* Stats inline - clickable filters */}
                 {!isLoading && actions && (
                   <>
-                    <div className="flex items-center gap-1 rounded-full border border-primary/20 px-2 py-0.5 bg-primary/5">
+                    <button
+                      onClick={() => setActiveFilter('all')}
+                      className={cn(
+                        "flex items-center gap-1 rounded-full border px-2 py-0.5 transition-all cursor-pointer hover:scale-105",
+                        activeFilter === 'all' 
+                          ? "border-primary bg-primary/20 ring-2 ring-primary/30" 
+                          : "border-primary/20 bg-primary/5 hover:bg-primary/10"
+                      )}
+                    >
                       <span className="text-[10px] text-muted-foreground">Total</span>
                       <span className="text-xs font-bold text-primary">{actions.length}</span>
-                    </div>
-                    <div className="flex items-center gap-1 rounded-full border border-destructive/20 px-2 py-0.5 bg-destructive/5">
+                    </button>
+                    <button
+                      onClick={() => setActiveFilter('late')}
+                      className={cn(
+                        "flex items-center gap-1 rounded-full border px-2 py-0.5 transition-all cursor-pointer hover:scale-105",
+                        activeFilter === 'late' 
+                          ? "border-destructive bg-destructive/20 ring-2 ring-destructive/30" 
+                          : "border-destructive/20 bg-destructive/5 hover:bg-destructive/10"
+                      )}
+                    >
                       <span className="text-[10px] text-muted-foreground">Retard</span>
                       <span className="text-xs font-bold text-destructive">
                         {actions.filter(a => a.isLate).length}
                       </span>
-                    </div>
-                    <div className="flex items-center gap-1 rounded-full border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/30">
+                    </button>
+                    <button
+                      onClick={() => setActiveFilter('a_facturer')}
+                      className={cn(
+                        "flex items-center gap-1 rounded-full border px-2 py-0.5 transition-all cursor-pointer hover:scale-105",
+                        activeFilter === 'a_facturer' 
+                          ? "border-emerald-500 bg-emerald-500/20 ring-2 ring-emerald-500/30" 
+                          : "border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/40"
+                      )}
+                    >
                       <span className="text-[10px] text-muted-foreground">Factures</span>
                       <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
                         {actions.filter(a => a.actionType === 'a_facturer').length}
                       </span>
-                    </div>
-                    <div className="flex items-center gap-1 rounded-full border border-blue-200 dark:border-blue-800 px-2 py-0.5 bg-blue-50 dark:bg-blue-950/30">
+                    </button>
+                    <button
+                      onClick={() => setActiveFilter('devis_a_faire')}
+                      className={cn(
+                        "flex items-center gap-1 rounded-full border px-2 py-0.5 transition-all cursor-pointer hover:scale-105",
+                        activeFilter === 'devis_a_faire' 
+                          ? "border-blue-500 bg-blue-500/20 ring-2 ring-blue-500/30" 
+                          : "border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-900/40"
+                      )}
+                    >
                       <span className="text-[10px] text-muted-foreground">Devis</span>
                       <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
                         {actions.filter(a => a.actionType === 'devis_a_faire').length}
                       </span>
-                    </div>
-                    <div className="flex items-center gap-1 rounded-full border border-purple-200 dark:border-purple-800 px-2 py-0.5 bg-purple-50 dark:bg-purple-950/30">
+                    </button>
+                    <button
+                      onClick={() => setActiveFilter('relance_technicien')}
+                      className={cn(
+                        "flex items-center gap-1 rounded-full border px-2 py-0.5 transition-all cursor-pointer hover:scale-105",
+                        activeFilter === 'relance_technicien' 
+                          ? "border-purple-500 bg-purple-500/20 ring-2 ring-purple-500/30" 
+                          : "border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/30 hover:bg-purple-100 dark:hover:bg-purple-900/40"
+                      )}
+                    >
                       <span className="text-[10px] text-muted-foreground">Relances</span>
                       <span className="text-xs font-bold text-purple-600 dark:text-purple-400">
                         {actions.filter(a => a.actionType === 'relance_technicien').length}
                       </span>
-                    </div>
+                    </button>
                   </>
                 )}
                 <ConditionalRender minRole="franchisee_admin">
@@ -136,13 +187,10 @@ export function ActionsAMenerTab() {
                 <p className="text-sm">Erreur lors du chargement</p>
               </div>
             ) : (
-              <>
-                
-                <ActionsAMenerTable
-                  actions={actions || []}
-                  onOpenDossier={handleOpenDossier}
-                />
-              </>
+              <ActionsAMenerTable
+                actions={filteredActions}
+                onOpenDossier={handleOpenDossier}
+              />
             )}
           </CardContent>
         </Card>
