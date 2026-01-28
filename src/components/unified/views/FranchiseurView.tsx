@@ -34,7 +34,7 @@ import { FranchiseurProvider } from '@/franchiseur/contexts/FranchiseurContext';
 import { NetworkFiltersProvider } from '@/franchiseur/contexts/NetworkFiltersContext';
 import { AiUnifiedProvider } from '@/components/ai';
 import { DraggableTab } from '@/components/unified/DraggableTab';
-import { FloatingChatButton } from '@/components/chat/FloatingChatButton';
+import { SidebarChat } from '@/components/chat/SidebarChat';
 import { ImageModal } from '@/components/ImageModal';
 import { ACCENT_THEMES, type AccentThemeKey } from '@/lib/accentThemes';
 
@@ -302,7 +302,7 @@ function FranchiseurViewContent() {
       </Tabs>
       
       <ImageModal />
-      <FloatingChatButton />
+      <SidebarChat />
     </div>
   );
 }
