@@ -296,7 +296,7 @@ export function DocsHoverCard({
         <div className="space-y-2">
           <p className="font-medium text-foreground flex items-center gap-2">
             <FileText className="h-3.5 w-3.5" />
-            Documents ({indicators.documents.filled}/{indicators.documents.total})
+            Documents ({indicators.documents.count})
           </p>
           <div className="space-y-1.5 text-muted-foreground">
             <div className="flex items-center gap-2">

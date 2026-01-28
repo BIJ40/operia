@@ -7,7 +7,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { RHCollaborator } from '@/types/rh-suivi';
 import { CockpitIndicators, INDICATOR_COLORS } from '@/hooks/rh/useRHCockpitIndicators';
-import { RHCockpitCell, RHCockpitRatioCell, RHCockpitCountCell, RHCockpitICECell } from './RHCockpitCell';
+import { RHCockpitCell, RHCockpitCountCell, RHCockpitICECell } from './RHCockpitCell';
 import { RHCollaboratorAvatar } from '@/components/rh/unified/RHCollaboratorAvatar';
 import { CollaboratorHoverPreview } from '@/components/rh/unified/CollaboratorHoverPreview';
 import { 
@@ -125,10 +125,10 @@ export function RHCockpitRow({
       <td className="px-2 py-2.5 text-center">
         <DocsHoverCard collaborator={collaborator} indicators={indicators}>
           <div>
-            <RHCockpitRatioCell
-              filled={indicators.documents.filled}
-              total={indicators.documents.total}
+            <RHCockpitCountCell
+              count={indicators.documents.count}
               onClick={() => onOpenDrawer('docs')}
+              threshold={1}
             />
           </div>
         </DocsHoverCard>
