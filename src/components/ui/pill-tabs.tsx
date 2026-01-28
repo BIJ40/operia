@@ -1,6 +1,6 @@
 /**
  * PillTabsList - Style unifié pour les sous-onglets en pills
- * Réutilisable sur toutes les pages avec onglets internes
+ * Chaque pill a une couleur pastel différente avec animations
  */
 
 import * as React from 'react';
@@ -20,6 +20,16 @@ interface PillTabsListProps {
   className?: string;
 }
 
+// Palette de couleurs pastel pour les pills (HSL values)
+const PILL_COLOR_PALETTE = [
+  { name: 'blue', hsl: '200 85% 60%' },
+  { name: 'purple', hsl: '270 60% 65%' },
+  { name: 'green', hsl: '145 60% 55%' },
+  { name: 'orange', hsl: '35 90% 60%' },
+  { name: 'pink', hsl: '340 70% 65%' },
+  { name: 'teal', hsl: '175 60% 50%' },
+];
+
 export function PillTabsList({ tabs, className }: PillTabsListProps) {
   return (
     <TabsList className={cn(
@@ -28,24 +38,25 @@ export function PillTabsList({ tabs, className }: PillTabsListProps) {
     )}>
       {tabs.map((tab, index) => {
         const Icon = tab.icon;
+        const color = PILL_COLOR_PALETTE[index % PILL_COLOR_PALETTE.length];
+        
         return (
           <motion.div
             key={tab.id}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05, duration: 0.2 }}
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.98 }}
           >
             <TabsTrigger 
-              value={tab.id} 
-              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium
-                bg-background border border-border rounded-xl shadow-sm
-                transition-all duration-300 ease-out
-                hover:scale-105 hover:shadow-md hover:border-primary/30 hover:bg-primary/5
-                data-[state=active]:bg-primary data-[state=active]:text-primary-foreground 
-                data-[state=active]:border-primary data-[state=active]:shadow-lg 
-                data-[state=active]:scale-105"
+              value={tab.id}
+              className="group pill-tab-trigger"
+              style={{
+                '--pill-color': color.hsl,
+              } as React.CSSProperties}
             >
-              <Icon className="w-4 h-4 transition-transform duration-200" />
+              <Icon className="w-4 h-4 transition-transform duration-200 group-hover:rotate-6" />
               <span className="hidden sm:inline">{tab.label}</span>
             </TabsTrigger>
           </motion.div>

@@ -683,3 +683,86 @@ button[data-image-modal] {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* ============================================
+   PILL TABS - Couleurs pastel dynamiques
+   ============================================ */
+.pill-tab-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.75rem;
+  border: 1px solid hsl(var(--pill-color) / 0.25);
+  background-color: hsl(var(--background));
+  color: hsl(var(--pill-color));
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pill-tab-trigger:hover {
+  background-color: hsl(var(--pill-color) / 0.1);
+  border-color: hsl(var(--pill-color) / 0.4);
+  box-shadow: 0 4px 12px -2px hsl(var(--pill-color) / 0.2);
+}
+
+.pill-tab-trigger[data-state="active"] {
+  background-color: hsl(var(--pill-color));
+  color: white;
+  border-color: hsl(var(--pill-color));
+  box-shadow: 0 4px 16px -2px hsl(var(--pill-color) / 0.4);
+  transform: scale(1.02);
+}
+
+.pill-tab-trigger[data-state="active"]:hover {
+  background-color: hsl(var(--pill-color) / 0.9);
+}
+
+/* ============================================
+   ADMIN MAIN TABS - Onglets principaux colorés
+   ============================================ */
+.admin-main-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 1rem 1rem 0 0;
+  border: 2px solid transparent;
+  border-bottom: none;
+  margin-bottom: -2px;
+  background-color: hsl(var(--tab-color) / 0.05);
+  color: hsl(var(--tab-color) / 0.7);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-main-tab:hover {
+  background-color: hsl(var(--tab-color) / 0.1);
+  color: hsl(var(--tab-color));
+  border-color: hsl(var(--tab-color) / 0.2);
+}
+
+.admin-main-tab[data-state="active"] {
+  background-color: hsl(var(--tab-color) / 0.15);
+  color: hsl(var(--tab-color));
+  border-color: hsl(var(--tab-color) / 0.3);
+  box-shadow: 0 -2px 12px -4px hsl(var(--tab-color) / 0.3);
+  z-index: 10;
+}
+
+.admin-tab-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.admin-main-tab[data-state="active"] .admin-tab-icon {
+  background-color: hsl(var(--tab-color) / 0.15);
+}

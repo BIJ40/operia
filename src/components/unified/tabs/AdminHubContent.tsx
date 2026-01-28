@@ -1,6 +1,6 @@
 /**
  * AdminHubContent - Nouveau point d'entrée Admin avec 6 onglets principaux
- * Remplace l'ancienne interface à tuiles par un workspace direct
+ * Chaque onglet a sa propre couleur pastel
  */
 
 import { useSearchParams } from 'react-router-dom';
@@ -21,15 +21,16 @@ interface AdminMainTab {
   id: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
+  colorHsl: string; // HSL value for dynamic color
 }
 
 const ADMIN_MAIN_TABS: AdminMainTab[] = [
-  { id: 'acces', label: 'Accès', icon: Shield },
-  { id: 'reseau', label: 'Réseau', icon: Building2 },
-  { id: 'ia', label: 'IA', icon: Brain },
-  { id: 'contenu', label: 'Contenu', icon: FileText },
-  { id: 'ops', label: 'Ops', icon: Database },
-  { id: 'plateforme', label: 'Plateforme', icon: Cpu },
+  { id: 'acces', label: 'Accès', icon: Shield, colorHsl: '270 60% 65%' }, // Purple
+  { id: 'reseau', label: 'Réseau', icon: Building2, colorHsl: '200 85% 60%' }, // Blue
+  { id: 'ia', label: 'IA', icon: Brain, colorHsl: '340 70% 65%' }, // Pink
+  { id: 'contenu', label: 'Contenu', icon: FileText, colorHsl: '145 60% 55%' }, // Green
+  { id: 'ops', label: 'Ops', icon: Database, colorHsl: '35 90% 60%' }, // Orange
+  { id: 'plateforme', label: 'Plateforme', icon: Cpu, colorHsl: '175 60% 50%' }, // Teal
 ];
 
 export default function AdminHubContent() {
@@ -68,25 +69,26 @@ export default function AdminHubContent() {
           {ADMIN_MAIN_TABS.map((tab, index) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
+            
             return (
               <motion.div
                 key={tab.id}
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: index * 0.03, duration: 0.15 }}
+                whileHover={{ scale: 1.02, y: -1 }}
+                whileTap={{ scale: 0.98 }}
               >
                 <TabsTrigger
                   value={tab.id}
-                  className={cn(
-                    "flex items-center gap-2 px-4 py-2.5 text-sm font-medium",
-                    "rounded-t-2xl border-2 border-b-0 -mb-[2px]",
-                    "transition-all duration-200",
-                    isActive
-                      ? "bg-background border-border shadow-sm z-10"
-                      : "bg-muted/50 border-transparent hover:bg-muted hover:border-border/50"
-                  )}
+                  className="admin-main-tab"
+                  style={{
+                    '--tab-color': tab.colorHsl,
+                  } as React.CSSProperties}
                 >
-                  <Icon className="w-4 h-4" />
+                  <div className="admin-tab-icon">
+                    <Icon className="w-4 h-4" />
+                  </div>
                   <span className="hidden sm:inline">{tab.label}</span>
                 </TabsTrigger>
               </motion.div>
@@ -95,7 +97,13 @@ export default function AdminHubContent() {
         </TabsList>
 
         {/* Content Container */}
-        <div className="rounded-2xl border-2 border-border bg-background p-4 sm:p-6 shadow-sm">
+        <motion.div 
+          key={activeTab}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="rounded-2xl border-2 border-border bg-background p-4 sm:p-6 shadow-sm"
+        >
           <TabsContent value="acces" className="mt-0 focus-visible:outline-none">
             <AccesView />
           </TabsContent>
@@ -119,7 +127,7 @@ export default function AdminHubContent() {
           <TabsContent value="plateforme" className="mt-0 focus-visible:outline-none">
             <PlateformeView />
           </TabsContent>
-        </div>
+        </motion.div>
       </Tabs>
     </div>
   );
