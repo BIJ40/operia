@@ -11,7 +11,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useDashboardPeriod } from '@/pages/DashboardStatic';
 
-export function TauxSavWidget() {
+interface TauxSavWidgetProps {
+  compact?: boolean;
+}
+
+export function TauxSavWidget({ compact = false }: TauxSavWidgetProps) {
   const { agence } = useAuth();
   const agencySlug = agence || '';
 
@@ -44,14 +48,6 @@ export function TauxSavWidget() {
     staleTime: 5 * 60 * 1000,
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full gap-2">
-        <Skeleton className="h-24 w-24 rounded-full" />
-      </div>
-    );
-  }
-
   const taux = data?.taux ?? 0;
   
   const getColor = () => {
@@ -59,6 +55,28 @@ export function TauxSavWidget() {
     if (taux <= 5) return 'text-amber-500';
     return 'text-red-500';
   };
+
+  // Version compacte inline
+  if (compact) {
+    if (isLoading) {
+      return <Skeleton className="h-5 w-16" />;
+    }
+    return (
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-muted-foreground">Taux SAV</span>
+        <span className={`text-sm font-bold ${getColor()}`}>{taux.toFixed(1)}%</span>
+      </div>
+    );
+  }
+
+  // Version standard
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-2">
+        <Skeleton className="h-24 w-24 rounded-full" />
+      </div>
+    );
+  }
   
   const getStrokeColor = () => {
     if (taux <= 2) return 'stroke-emerald-500';

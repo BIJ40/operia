@@ -10,7 +10,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatEuros } from '@/apogee-connect/utils/formatters';
 import { useDashboardPeriod } from '@/pages/DashboardStatic';
 
-export function PanierMoyenWidget() {
+interface PanierMoyenWidgetProps {
+  compact?: boolean;
+}
+
+export function PanierMoyenWidget({ compact = false }: PanierMoyenWidgetProps) {
   const { agence } = useAuth();
   const agencySlug = agence || '';
 
@@ -33,6 +37,22 @@ export function PanierMoyenWidget() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const current = data?.current ?? 0;
+
+  // Version compacte inline
+  if (compact) {
+    if (isLoading) {
+      return <Skeleton className="h-5 w-16" />;
+    }
+    return (
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-muted-foreground">Panier moyen</span>
+        <span className="text-sm font-bold text-foreground">{formatEuros(current)}</span>
+      </div>
+    );
+  }
+
+  // Version standard
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-2 p-4">
@@ -41,8 +61,6 @@ export function PanierMoyenWidget() {
       </div>
     );
   }
-
-  const current = data?.current ?? 0;
 
   return (
     <div className="flex flex-col items-center justify-center h-full gap-2 p-4">

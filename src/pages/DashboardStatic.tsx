@@ -447,44 +447,17 @@ export default function DashboardStatic() {
           </motion.div>
         </div>
 
-        {/* NIVEAU 2 - Top Techniciens */}
-        <motion.div variants={itemVariants}>
-          <WarmCard
-            variant="orange"
-            icon={Trophy}
-            animate={false}
-          >
-            <HumanTitle titleKey="top_techniciens" icon={Trophy} iconColor="text-warm-orange" size="lg" />
-            <div className="mt-4">
-              <Top3TechniciensWidget />
-            </div>
-          </WarmCard>
-        </motion.div>
-
-        {/* NIVEAU 2 - EXPLORABLE */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {/* Tickets récents */}
-          <motion.div variants={itemVariants}>
-            <WarmCard
-              variant="teal"
-              icon={MessageSquare}
-              animate={false}
-            >
-              <HumanTitle titleKey="tickets" icon={MessageSquare} iconColor="text-warm-teal" />
-              <div className="mt-3">
-                <RecentTicketsWidget />
-              </div>
-            </WarmCard>
-          </motion.div>
-
+        {/* NIVEAU 2 - 4 TUILES ALIGNÉES: CA + Techniciens + Charge */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* CA par Univers */}
           <motion.div variants={itemVariants}>
             <WarmCard
               variant="purple"
               icon={PieChart}
               animate={false}
+              className="h-full"
             >
-              <HumanTitle titleKey="ca_univers" icon={PieChart} iconColor="text-warm-purple" />
+              <HumanTitle titleKey="ca_univers" icon={PieChart} iconColor="text-warm-purple" size="sm" />
               <div className="mt-3">
                 <CAParUniversWidget />
               </div>
@@ -497,55 +470,59 @@ export default function DashboardStatic() {
               variant="green"
               icon={TrendingUp}
               animate={false}
+              className="h-full"
             >
-              <HumanTitle titleKey="ca_apporteurs" icon={TrendingUp} iconColor="text-warm-green" />
+              <HumanTitle titleKey="ca_apporteurs" icon={TrendingUp} iconColor="text-warm-green" size="sm" />
               <div className="mt-3">
                 <CAApporteursWidget />
               </div>
             </WarmCard>
           </motion.div>
-        </div>
 
-        {/* NIVEAU 3 - DÉTAILS */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {/* Taux SAV */}
+          {/* Top Techniciens (compact) */}
           <motion.div variants={itemVariants}>
             <WarmCard
               variant="orange"
-              className="h-full"
+              icon={Trophy}
               animate={false}
+              className="h-full"
             >
-              <HumanTitle titleKey="taux_sav" icon={AlertTriangle} iconColor="text-warm-orange" size="sm" />
-              <div className="mt-2">
-                <TauxSavWidget />
+              <HumanTitle titleKey="top_techniciens" icon={Trophy} iconColor="text-warm-orange" size="sm" />
+              <div className="mt-3">
+                <Top3TechniciensWidget />
               </div>
             </WarmCard>
           </motion.div>
 
-          {/* Panier Moyen */}
-          <motion.div variants={itemVariants}>
-            <WarmCard
-              variant="pink"
-              className="h-full"
-              animate={false}
-            >
-              <HumanTitle titleKey="panier_moyen" icon={ShoppingCart} iconColor="text-warm-pink" size="sm" />
-              <div className="mt-2">
-                <PanierMoyenWidget />
-              </div>
-            </WarmCard>
-          </motion.div>
-
-          {/* Productivité Techniciens */}
+          {/* Charge de travail / Productivité */}
           <motion.div variants={itemVariants}>
             <WarmCard
               variant="blue"
-              className="h-full"
+              icon={Users}
               animate={false}
+              className="h-full"
             >
               <HumanTitle titleKey="productivite" icon={Users} iconColor="text-warm-blue" size="sm" />
-              <div className="mt-2">
+              <div className="mt-3">
                 <TechniciensProdWidget />
+              </div>
+            </WarmCard>
+          </motion.div>
+        </div>
+
+        {/* NIVEAU 3 - EXPLORABLE: Tickets + Favoris + SAV/Panier (compacts) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {/* Tickets récents */}
+          <motion.div variants={itemVariants}>
+            <WarmCard
+              variant="teal"
+              icon={MessageSquare}
+              animate={false}
+              className="h-full"
+            >
+              <HumanTitle titleKey="tickets" icon={MessageSquare} iconColor="text-warm-teal" />
+              <div className="mt-3">
+                <RecentTicketsWidget />
               </div>
             </WarmCard>
           </motion.div>
@@ -554,12 +531,48 @@ export default function DashboardStatic() {
           <motion.div variants={itemVariants}>
             <WarmCard
               variant="neutral"
-              className="h-full"
+              icon={Star}
               animate={false}
+              className="h-full"
             >
-              <HumanTitle titleKey="favoris" icon={Star} iconColor="text-amber-500" size="sm" />
-              <div className="mt-2 min-h-[120px]">
+              <HumanTitle titleKey="favoris" icon={Star} iconColor="text-amber-500" />
+              <div className="mt-3 min-h-[120px]">
                 <FavorisWidget />
+              </div>
+            </WarmCard>
+          </motion.div>
+
+          {/* Mini indicateurs: SAV + Panier moyen */}
+          <motion.div variants={itemVariants} className="space-y-3">
+            {/* Taux SAV (compact) */}
+            <WarmCard
+              variant="orange"
+              animate={false}
+              className="py-3 px-4"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-warm-orange/15">
+                  <AlertTriangle className="h-4 w-4 text-warm-orange" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <TauxSavWidget compact />
+                </div>
+              </div>
+            </WarmCard>
+
+            {/* Panier Moyen (compact) */}
+            <WarmCard
+              variant="pink"
+              animate={false}
+              className="py-3 px-4"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-warm-pink/15">
+                  <ShoppingCart className="h-4 w-4 text-warm-pink" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <PanierMoyenWidget compact />
+                </div>
               </div>
             </WarmCard>
           </motion.div>
