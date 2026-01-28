@@ -3,25 +3,25 @@
  * Hub statistiques avec sous-onglets
  */
 
-import { useState } from 'react';
 import { Tv, ExternalLink, LayoutDashboard, Building2, Users, Layers, AlertTriangle, CalendarClock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useStatsHub } from '@/apogee-connect/components/stats-hub/StatsHubContext';
 import { TABS_CONFIG, TabId } from '@/apogee-connect/components/stats-hub/types';
 import { GeneralTab, ApporteursTab, TechniciensTab, UniversTab, SAVTab, PrevisionnelTab } from '@/apogee-connect/components/stats-hub/tabs';
 import { PeriodSelector } from '@/apogee-connect/components/filters/PeriodSelector';
+import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { ROUTES } from '@/config/routes';
 
-const TAB_ICONS: Record<TabId, React.ReactNode> = {
-  general: <LayoutDashboard className="h-4 w-4" />,
-  apporteurs: <Building2 className="h-4 w-4" />,
-  techniciens: <Users className="h-4 w-4" />,
-  univers: <Layers className="h-4 w-4" />,
-  sav: <AlertTriangle className="h-4 w-4" />,
-  previsionnel: <CalendarClock className="h-4 w-4" />,
-};
+const STATS_TABS: PillTabConfig[] = [
+  { id: 'general', label: 'Général', icon: LayoutDashboard },
+  { id: 'apporteurs', label: 'Apporteurs', icon: Building2 },
+  { id: 'techniciens', label: 'Techniciens', icon: Users },
+  { id: 'univers', label: 'Univers', icon: Layers },
+  { id: 'sav', label: 'SAV', icon: AlertTriangle },
+  { id: 'previsionnel', label: 'Prévisionnel', icon: CalendarClock },
+];
 
 const TAB_COMPONENTS: Record<TabId, React.ComponentType> = {
   general: GeneralTab,
@@ -62,32 +62,7 @@ export default function StatsTabContent() {
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabId)}>
-        <TabsList className="flex flex-wrap justify-center gap-2 bg-transparent h-auto p-2">
-          {TABS_CONFIG.map((tab, index) => (
-            <motion.div
-              key={tab.id}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05, duration: 0.2 }}
-            >
-              <TabsTrigger 
-                value={tab.id} 
-                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium
-                  bg-background border border-border rounded-xl shadow-sm
-                  transition-all duration-300 ease-out
-                  hover:scale-105 hover:shadow-md hover:border-primary/30 hover:bg-primary/5
-                  data-[state=active]:bg-primary data-[state=active]:text-primary-foreground 
-                  data-[state=active]:border-primary data-[state=active]:shadow-lg 
-                  data-[state=active]:scale-105"
-              >
-                <span className="transition-transform duration-200 group-hover:scale-110">
-                  {TAB_ICONS[tab.id]}
-                </span>
-                <span className="hidden sm:inline">{tab.label}</span>
-              </TabsTrigger>
-            </motion.div>
-          ))}
-        </TabsList>
+        <PillTabsList tabs={STATS_TABS} />
 
         <AnimatePresence mode="wait">
           <motion.div
