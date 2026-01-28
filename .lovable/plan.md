@@ -1,114 +1,151 @@
 
-# Plan de correction : Page de gestion des utilisateurs
+# Audit EXHAUSTIF Section ADMIN - Inventaire Complet
 
-## Problèmes identifiés
-
-### 1. Mauvais composant affiché
-La capture d'écran montre la page **"Gestion des Permissions"** (composant `UnifiedManagementPage`) au lieu de **"Gestion Utilisateurs Réseau"** (composant `TDRUsersPage`).
-
-Bien que la route `/admin/gestion` soit correctement configurée pour utiliser `TDRUsersPage`, il semble que l'ancienne page soit toujours affichée (possible problème de cache ou de déploiement).
-
-### 2. Colonne Agence affiche des UUIDs
-Dans `UnifiedManagementPage.tsx`, ligne 122-123 :
-```typescript
-{user.agency_id ? (
-  <span className="text-sm">{user.agency_id}</span>  // ❌ Affiche l'UUID
-) : (
-```
-Devrait afficher le **label lisible** de l'agence, pas l'UUID.
-
-### 3. Bouton "Nouvel utilisateur" manquant
-Le composant `UnifiedManagementPage` n'a pas d'interface pour créer des utilisateurs, contrairement à `TDRUsersPage` qui l'a.
+## Résumé du problème
+Quand on accède à une page admin via URL directe (ex: `/admin/gestion`), l'ancien système de header/layout (legacy) s'affiche au lieu du workspace unifié minimal.
 
 ---
 
-## Plan de correction
+## INVENTAIRE COMPLET PAGES ADMIN
 
-### Étape 1 : Corriger `UnifiedManagementPage.tsx` (backup/fallback)
-Même si cette page ne devrait plus être utilisée pour `/admin/gestion`, je vais la corriger pour qu'elle soit fonctionnelle au cas où :
-
-**Modifications :**
-1. Afficher `user.agency?.label` au lieu de `user.agency_id`
-2. Ajouter le bouton "Nouvel utilisateur" avec les droits appropriés
-3. Ajouter les actions (édition, désactivation, etc.) via le hook `useAccessRightsUsers` existant
-
-### Étape 2 : Vérifier la cohérence du hook `useAccessRightsUsers`
-Le hook récupère déjà les agences avec leurs labels via la jointure :
-```typescript
-agency:apogee_agencies(id, label, slug)
-```
-Et résout les agences par slug si `agency_id` est null.
-
-### Étape 3 : S'assurer que `TDRUsersPage` affiche le label d'agence
-Vérifier que le composant `UserAccordionItem` affiche le label d'agence lisible et non le slug brut.
+### 1. Page Index Admin (`/admin` → redirigé vers `/?tab=admin`)
+**Fichier** : `src/pages/AdminIndex.tsx`
+**Sous-onglets internes (PillTabs)** :
+- `gestion` - Gestion
+- `ia` - IA  
+- `support` - Support
+- `donnees` - Données
+- `systeme` - Système
 
 ---
 
-## Détails techniques
+### 2. Routes ADMIN (27 routes dans `admin.routes.tsx`)
 
-### Fichier : `src/pages/admin/UnifiedManagementPage.tsx`
+| # | Route | Page | Layout actuel | Onglets internes |
+|---|-------|------|---------------|------------------|
+| 1 | `/admin` | Redirect → `/?tab=admin` | — | — |
+| 2 | `/admin/gestion` | `TDRUsersPage` | `AdminLayout` (MinimalLayout) | ❌ |
+| 3 | `/admin/agencies` | `AdminAgencies` | `AdminLayout` | ❌ |
+| 4 | `/admin/agencies/:agencyId` | `FranchiseurAgencyProfile` | `AdminLayout` | Sous-routes |
+| 5 | `/admin/user-activity` | `AdminUserActivity` | `AdminLayout` | 2 onglets (7j/30j) |
+| 6 | `/admin/feature-flags` | `AdminFeatureFlags` | `AdminLayout` | ❌ |
+| 7 | `/admin/hidden-features` | `HiddenFeaturesPage` | `AdminLayout` | ❌ |
+| 8 | `/admin/helpi` | `AdminHelpi` | `AdminLayout` | **8 onglets** : Dashboard, Indexer, Tester, Questions, Lacunes, Stats, Ingestion, Config |
+| 9 | `/admin/apogee-guides` | `AdminApogeeGuides` | `AdminLayout` | ❌ |
+| 10 | `/admin/statia-by-bij` | `StatiaBuilderAdminPage` | `AdminLayout` | **2 onglets** : Vue Métriques, Validator Hub |
+| 11 | `/admin/statia-validator` | `StatiaValidatorPage` | `AdminLayout` | ❌ |
+| 12 | `/admin/faq` | `AdminFaq` | `AdminLayout` | Vue Hub + Vue Context |
+| 13 | `/admin/announcements` | `AdminAnnouncements` | `AdminLayout` | ❌ |
+| 14 | `/admin/support/settings` | `SupportSettings` | `AdminLayout` | ❌ |
+| 15 | `/admin/backup` | `AdminBackup` | `AdminLayout` | **3 onglets** : Export Complet, Export Catégorie, Sauvegarde Complète |
+| 16 | `/admin/helpconfort-backup` | `AdminHelpConfortBackup` | `AdminLayout` | **3 onglets** : Export complet, Export par catégorie, Import |
+| 17 | `/admin/cache-backup` | `AdminCacheBackup` | `AdminLayout` | ❌ |
+| 18 | `/admin/storage-quota` | `AdminStorageQuota` | `AdminLayout` | ❌ |
+| 19 | `/admin/system-health` | `AdminSystemHealth` | `AdminLayout` | **3 onglets** : Vue d'ensemble, Métriques temps réel, Outils |
+| 20 | `/admin/page-metadata` | `AdminPageMetadata` | `AdminLayout` | ❌ |
+| 21 | `/admin/notifications` | `AdminNotificationSender` | `AdminLayout` | ❌ |
+| 22 | `/admin/apogee-report` | `AdminApogeeReport` | `AdminLayout` | ❌ |
+| 23 | `/admin/flow` | `AdminFlow` | `AdminLayout` | ❌ |
+| 24 | `/admin/templates` | `DocTemplatesPage` | `AdminLayout` | ❌ |
+| 25 | `/admin/apporteurs` | `AdminApporteurs` | `AdminLayout` | ❌ |
+| 26 | `/admin/rapportactivite` | `ReportActivityPage` | `AdminLayout` | **2 onglets** : Paramètres, Historique |
+| 27 | `/admin/sitemap` | `AdminSitemap` | `AdminLayout` | **3 onglets** : Arborescence, Tableau, Diagramme |
 
-**Correction de l'affichage de l'agence :**
-```typescript
-// AVANT (ligne 121-127)
-<TableCell>
-  {user.agency_id ? (
-    <span className="text-sm">{user.agency_id}</span>
-  ) : (
-    <span className="text-muted-foreground text-sm">—</span>
-  )}
-</TableCell>
+---
 
-// APRÈS
-<TableCell>
-  {user.agency?.label ? (
-    <span className="text-sm">{user.agency.label}</span>
-  ) : user.agence ? (
-    <span className="text-sm text-muted-foreground">{user.agence}</span>
-  ) : (
-    <span className="text-muted-foreground text-sm">—</span>
-  )}
-</TableCell>
+### 3. DIALOGS/POPUPS Admin (par page)
+
+| Page | Dialogs |
+|------|---------|
+| `TDRUsersPage` | CreateUserDialog, EditUserDialog, DeactivateDialog, ReactivateDialog, DeleteDialog |
+| `AdminAgencies` | Dialog création/édition agence |
+| `AdminFeatureFlags` | DropdownMenu statut dev |
+| `AdminHelpi` | ImproveGuideDialog, DocumentDetailsDialog (dans sous-onglets) |
+| `AdminFaq` | FaqEditDialog |
+| `AdminAnnouncements` | AnnouncementForm, AlertDialog suppression |
+| `AdminApogeeGuides` | Dialog création/édition guide |
+| `AdminApporteurs` | ApporteurCreateDialog, ApporteurDetailDrawer |
+| `DocTemplatesPage` | Dialog création template, TokenConfigEditor |
+| `AdminNotificationSender` | — (formulaire inline) |
+| `UnifiedManagementPage` | CreateUserDialog, EditUserDialog, DeactivateDialog, ReactivateDialog, DeleteDialog |
+
+---
+
+### 4. Redirections Legacy (déjà gérées)
+
 ```
-
-**Ajout du bouton "Nouvel utilisateur" et des actions :**
-- Utiliser le hook complet `useAccessRightsUsers` au lieu d'une version simplifiée
-- Ajouter les dialogs de création/édition/désactivation
-- Ajouter les dropdowns d'actions par utilisateur
-
-### Fichier : `src/components/admin/users/UserAccordionItem.tsx`
-
-**Correction de l'affichage de l'agence (ligne 126-128) :**
-La valeur `user.agence` est un slug (ex: "dax"). Il faut afficher le label lisible.
-
-**Option 1 :** Passer les agences en props et faire une lookup
-**Option 2 :** Enrichir les données utilisateur avec le label d'agence dans le hook
-
-Je recommande l'Option 2 car elle centralise la logique dans le hook.
-
-### Fichier : `src/hooks/use-user-management.ts`
-
-**Enrichir les utilisateurs avec le label d'agence :**
-```typescript
-// Dans la query users (ligne ~190), ajouter une jointure ou post-traitement
-// pour résoudre agence slug → label
+/admin/documents → /?tab=admin
+/admin/chatbot-rag → /?tab=admin  
+/admin/support-tickets → /projects/kanban
+/admin/support-stats → /projects/kanban
+/admin/escalation-history → /projects/kanban
+/admin/apogee-tickets → /projects/kanban
+/admin/formation-generator → /?tab=admin
+/admin/statia-builder → /admin/statia-by-bij
+/admin/modules → /admin/feature-flags
+/admin/permissions-center → /admin/gestion
+/admin/droits → /admin/gestion
+/admin/gestionV2 → /admin/gestion
 ```
 
 ---
 
-## Résumé des fichiers à modifier
+## LE PROBLÈME : `TDRUsersPage` utilise `FranchiseurPageContainer`
 
-| Fichier | Modification |
-|---------|--------------|
-| `src/pages/admin/UnifiedManagementPage.tsx` | Afficher `agency.label` + ajouter bouton création + actions utilisateur |
-| `src/hooks/use-user-management.ts` | Enrichir les users avec `agencyLabel` |
-| `src/components/admin/users/UserAccordionItem.tsx` | Afficher `agencyLabel` au lieu de `agence` (slug) |
-| `src/hooks/user-management/types.ts` | Ajouter `agencyLabel?: string` au type `UserProfile` |
+**Cause identifiée** : La page `/admin/gestion` utilise `TDRUsersPage` qui contient :
+- `FranchiseurPageContainer`
+- `FranchiseurPageHeader`
+
+Ces composants affichent l'ancien header "Franchiseur" au lieu de s'intégrer au MinimalLayout !
+
+**Fichiers concernés** :
+1. `src/pages/TDRUsersPage.tsx` (ligne 152, 162-163)
+2. `src/franchiseur/components/layout/FranchiseurPageContainer.tsx`
+3. `src/franchiseur/components/layout/FranchiseurPageHeader.tsx`
 
 ---
 
-## Impact
+## PLAN DE CORRECTION
 
-- **Bouton "Nouvel utilisateur"** : Visible pour les utilisateurs ayant les droits de création (N2+ selon leur scope)
-- **Colonne Agence** : Affichera "DAX", "SAINT-OMER", etc. au lieu des UUIDs ou slugs
-- **Compatibilité** : Les deux pages (`TDRUsersPage` et `UnifiedManagementPage`) seront fonctionnelles
+### Étape 1 : Neutraliser `FranchiseurPageContainer` dans `TDRUsersPage`
+
+Remplacer :
+```tsx
+<FranchiseurPageContainer>
+  <FranchiseurPageHeader ... />
+  ...
+</FranchiseurPageContainer>
+```
+
+Par un simple conteneur neutre :
+```tsx
+<div className="container py-6 space-y-6">
+  <PageHeader ... /> // Utiliser le PageHeader standard
+  ...
+</div>
+```
+
+### Étape 2 : Vérifier que toutes les pages utilisent `AdminLayout`
+
+Toutes les routes dans `admin.routes.tsx` utilisent déjà `AdminLayout` qui wrape `MinimalLayout`. ✅
+
+### Étape 3 : Vérifier `UnifiedManagementPage` (alternative à TDRUsersPage)
+
+Ce composant a été corrigé dans la précédente session - il n'utilise pas de layout legacy.
+
+---
+
+## FICHIERS À MODIFIER
+
+| Fichier | Action |
+|---------|--------|
+| `src/pages/TDRUsersPage.tsx` | Remplacer `FranchiseurPageContainer` + `FranchiseurPageHeader` par conteneur neutre + `PageHeader` standard |
+
+---
+
+## RÉSULTAT ATTENDU
+
+- Accès direct à `/admin/gestion` → affiche le **MinimalLayout** avec barre de navigation minimale en haut
+- Plus AUCUN ancien header "Franchiseur" ou système d'onglets legacy visible
+- Cohérence visuelle avec l'ensemble du workspace unifié
+
