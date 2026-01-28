@@ -1,8 +1,5 @@
 project_id = "uxcovgqhgjsuibgdvcof"
 
-[functions.generate-formation-content]
-verify_jwt = true
-
 [functions.generate-hr-document]
 verify_jwt = true
 
@@ -30,25 +27,16 @@ verify_jwt = true
 [functions.update-user-email]
 verify_jwt = true
 
-[functions.notify-support-ticket]
-verify_jwt = true
-
 [functions.get-kpis]
 verify_jwt = true
 
 [functions.network-kpis]
 verify_jwt = true
 
-[functions.notify-escalation]
-verify_jwt = true
-
 [functions.seed-test-users]
 verify_jwt = true
 
 [functions.qualify-ticket]
-verify_jwt = true
-
-[functions.support-auto-classify]
 verify_jwt = true
 
 [functions.test-sms]
@@ -70,9 +58,6 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.generate-leave-decision]
-verify_jwt = true
-
-[functions.analyze-payslip]
 verify_jwt = true
 
 [functions.test-email-template]

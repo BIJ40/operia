@@ -23,7 +23,7 @@ const AdminHelpi = lazy(() => import("@/pages/AdminHelpi"));
 const AdminSystemHealth = lazy(() => import("@/pages/AdminSystemHealth"));
 const AdminAnnouncements = lazy(() => import("@/pages/admin/AdminAnnouncements"));
 const AdminFaq = lazy(() => import("@/pages/admin/AdminFaq"));
-const FormationGenerator = lazy(() => import("@/pages/admin/FormationGenerator"));
+
 const AdminFeatureFlags = lazy(() => import("@/pages/admin/AdminFeatureFlags"));
 const StatiaBuilderAdminPage = lazy(() => import("@/statia/pages/StatiaBuilderAdminPage"));
 const StatiaValidatorPage = lazy(() => import("@/statia/pages/StatiaValidatorPage"));
@@ -76,7 +76,7 @@ export function AdminRoutes() {
       <Route path="/admin/helpi" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminHelpi /></ModuleGuard></RoleGuard></MainLayout>} />
       <Route path="/admin/announcements" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminAnnouncements /></ModuleGuard></RoleGuard></MainLayout>} />
       <Route path="/admin/faq" element={<MainLayout><FaqAdminGuard><AdminFaq /></FaqAdminGuard></MainLayout>} />
-      <Route path="/admin/formation-generator" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><FormationGenerator /></ModuleGuard></RoleGuard></MainLayout>} />
+      <Route path="/admin/formation-generator" element={<Navigate to="/admin" replace />} />
       
       {/* Legacy apogee-tickets redirects */}
       <Route path="/admin/apogee-tickets" element={<Navigate to="/projects/kanban" replace />} />
