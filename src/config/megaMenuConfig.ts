@@ -190,11 +190,11 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
     href: ROUTES.admin.index,
     accessKey: 'canAccessAdmin',
     links: [
-      { label: 'Gestion', href: '/admin?tab=gestion', icon: 'Shield', description: 'Utilisateurs, agences, permissions', minRole: 'platform_admin' },
-      { label: 'IA', href: '/admin?tab=ia', icon: 'Brain', description: 'Helpi, StatIA, Formation', minRole: 'platform_admin' },
-      { label: 'Support', href: '/admin?tab=support', icon: 'Headset', description: 'Console, stats, escalades', minRole: 'platform_admin' },
-      { label: 'Données', href: '/admin?tab=donnees', icon: 'Database', description: 'Sauvegardes, stockage', minRole: 'platform_admin' },
-      { label: 'Système', href: '/admin?tab=systeme', icon: 'Cpu', description: 'Santé, métadonnées, annonces', minRole: 'platform_admin' },
+      { label: 'Gestion', href: '/admin/gestion', icon: 'Shield', description: 'Utilisateurs, agences, permissions', minRole: 'platform_admin' },
+      { label: 'IA', href: '/admin/helpi', icon: 'Brain', description: 'Helpi, StatIA, Formation', minRole: 'platform_admin' },
+      { label: 'Support', href: '/admin/support-stats', icon: 'Headset', description: 'Console, stats, escalades', minRole: 'platform_admin' },
+      { label: 'Données', href: '/admin/backup', icon: 'Database', description: 'Sauvegardes, stockage', minRole: 'platform_admin' },
+      { label: 'Système', href: '/admin/system-health', icon: 'Cpu', description: 'Santé, métadonnées, annonces', minRole: 'platform_admin' },
     ],
   },
 ];
