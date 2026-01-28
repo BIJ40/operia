@@ -10,6 +10,7 @@ interface DraggableTabProps {
   id: string;
   isActive: boolean;
   isDraggable: boolean;
+  isDisabled?: boolean;
   onClick: () => void;
   children: React.ReactNode;
   className?: string;
@@ -19,6 +20,7 @@ export function DraggableTab({
   id, 
   isActive, 
   isDraggable,
+  isDisabled = false,
   onClick, 
   children,
   className 
@@ -32,7 +34,7 @@ export function DraggableTab({
     isDragging,
   } = useSortable({ 
     id,
-    disabled: !isDraggable 
+    disabled: !isDraggable || isDisabled
   });
 
   const style = {
@@ -41,19 +43,29 @@ export function DraggableTab({
     zIndex: isDragging ? 50 : undefined,
   };
 
+  const handleClick = () => {
+    if (!isDisabled) {
+      onClick();
+    }
+  };
+
   return (
     <button
       ref={setNodeRef}
       style={style}
-      {...(isDraggable ? { ...attributes, ...listeners } : {})}
-      onClick={onClick}
+      {...(isDraggable && !isDisabled ? { ...attributes, ...listeners } : {})}
+      onClick={handleClick}
+      disabled={isDisabled}
       className={cn(
         className,
         isDragging && 'opacity-50 shadow-lg scale-105',
-        isDraggable && 'cursor-grab active:cursor-grabbing',
-        !isDraggable && 'cursor-pointer'
+        isDraggable && !isDisabled && 'cursor-grab active:cursor-grabbing',
+        !isDraggable && !isDisabled && 'cursor-pointer',
+        isDisabled && 'opacity-40 cursor-not-allowed hover:!scale-100 hover:!translate-y-0 hover:!shadow-none hover:!bg-muted/40'
       )}
       data-state={isActive ? 'active' : 'inactive'}
+      aria-disabled={isDisabled}
+      title={isDisabled ? 'Module non disponible' : undefined}
     >
       {children}
     </button>
