@@ -1,165 +1,203 @@
 
+# Plan de Nettoyage Legacy Complet - v0.8.6
 
-# Plan de correction global : Éliminer le "pseudo-refresh" au changement d'onglet navigateur
+## Récapitulatif des décisions utilisateur
 
-## Diagnostic confirmé
-
-Les logs réseau prouvent que l'application se "remonte" complètement à chaque retour d'onglet :
-- Nouveau log de connexion créé
-- Ancien log de connexion fermé (durée: 28-42 secondes)
-- Profil utilisateur rechargé depuis Supabase
-- Modules effectifs rechargés via RPC
-
-Cette cascade provient de l'objet `user` qui change de référence dans les dépendances React, même si l'utilisateur est identique.
+| Domaine | Action confirmée |
+|---------|------------------|
+| **Paye / bulletins** | Supprimer entièrement (hook, composants, table `payslip_data`) |
+| **Guide OPERIA** | Conserver mais renommer "Guide HC Services" |
+| **Support V2 (`support_tickets`)** | Supprimer complètement (code + tables DB) |
+| **Routes `/hc-agency`** | **Migrer vers `/agency`** (pas `/pilotage`) |
 
 ---
 
-## Correction A : Stabiliser les hooks globaux (cause principale)
+## Phase 1 : Suppression Module Paye (Bulletins)
 
-**Fichiers concernés :**
-- `src/hooks/use-connection-logger.ts`
-- `src/hooks/use-user-presence.ts`
+### Fichiers à supprimer
+- `src/hooks/usePayslipAnalysis.ts`
+- `src/types/payslipData.ts` 
+- `src/components/collaborators/payslip/` (dossier complet)
 
-**Probleme actuel (ligne 94 de use-connection-logger) :**
-```typescript
-}, [user]);  // <- L'objet user change de référence au retour d'onglet
+### Fichiers à corriger
+- `src/components/collaborators/ContractSalaryTab.tsx` : retirer imports et bloc `PayslipDataViewer`
+
+### Base de données
+```sql
+DROP TABLE IF EXISTS public.payslip_data CASCADE;
 ```
-
-**Solution :**
-Remplacer la dépendance `[user]` par `[user?.id]` pour que l'effet ne se ré-exécute QUE si l'utilisateur change réellement (login/logout).
-
-```typescript
-// use-connection-logger.ts
-const userId = user?.id;
-
-useEffect(() => {
-  if (!userId) return;
-  // ... logique existante avec userId au lieu de user.id
-}, [userId]);  // Stable tant que l'utilisateur reste le même
-```
-
-```typescript
-// use-user-presence.ts  
-const userId = user?.id;
-
-useEffect(() => {
-  if (!userId) return;
-  // ... logique existante
-}, [userId]);  // Stable
-```
-
-**Impact attendu :**
-- Plus de logs "Déconnexion/Connexion" au simple changement d'onglet
-- Réduction massive des appels réseau inutiles
 
 ---
 
-## Correction B : Protéger les Dialog/Sheet contre la fermeture au changement d'onglet
+## Phase 2 : Suppression Support V2 (support_tickets)
 
-**Fichiers concernés :**
-- `src/components/ui/dialog.tsx`
-- `src/components/ui/sheet.tsx`
+### Fichiers à supprimer
+- `src/hooks/use-support-stats.ts`
+- `src/pages/AdminSupportStats.tsx`
+- `src/pages/AdminEscalationHistory.tsx`
 
-**Probleme actuel :**
-Radix Dialog détecte une perte de focus quand l'onglet navigateur perd le premier plan et peut déclencher une fermeture.
+### Fichiers à corriger
+- `src/components/ai/AiInlineResult.tsx` : modifier bouton "Créer un ticket" pour utiliser `apogee_tickets`
 
-**Solution :**
-Ajouter des handlers par défaut qui bloquent la fermeture si `document.hidden === true` :
-
-```typescript
-// dialog.tsx - DialogContent
-<DialogPrimitive.Content
-  onFocusOutside={(e) => {
-    if (document.hidden) e.preventDefault();
-  }}
-  onPointerDownOutside={(e) => {
-    if (document.hidden) e.preventDefault();
-  }}
-  // ... reste des props
->
-```
-
-```typescript
-// sheet.tsx - SheetContent
-<SheetPrimitive.Content
-  onFocusOutside={(e) => {
-    if (document.hidden) e.preventDefault();
-  }}
-  // ... reste des props
->
-```
-
-**Impact attendu :**
-- Les modales restent ouvertes quand tu changes d'onglet pour copier du texte
-- Le comportement normal (clic extérieur, ESC, bouton X) reste fonctionnel
-
----
-
-## Correction C : Ignorer USER_UPDATED si l'utilisateur est identique
-
-**Fichier concerné :**
-- `src/contexts/AuthContext.tsx`
-
-**Probleme actuel (lignes 411-418) :**
-L'événement `USER_UPDATED` est autorisé même si `newUserId === prevUserId`, ce qui peut déclencher un rechargement complet des données utilisateur.
-
-**Solution :**
-Modifier la condition pour aussi ignorer `USER_UPDATED` si l'id n'a pas changé :
-
-```typescript
-// Ligne 411-419 actuelle
-if (
-  newUserId === prevUserId &&
-  event !== 'SIGNED_IN' &&
-  event !== 'SIGNED_OUT' &&
-  event !== 'USER_UPDATED'  // <- À RETIRER
-) {
-  return;
-}
-```
-
-```typescript
-// Nouveau code
-if (
-  newUserId === prevUserId &&
-  event !== 'SIGNED_IN' &&
-  event !== 'SIGNED_OUT'
-  // USER_UPDATED ignoré si même utilisateur
-) {
-  return;
-}
-```
-
-**Impact attendu :**
-- Moins de rechargements `loadUserData()` inutiles
-- Réduction du temps de "loader visible" au retour d'onglet
-
----
-
-## Récapitulatif des fichiers modifiés
-
-| Fichier | Type de modification |
+### Config à nettoyer
+| Fichier | Éléments à supprimer |
 |---------|---------------------|
-| `src/hooks/use-connection-logger.ts` | Dépendance `[user]` → `[user?.id]` |
-| `src/hooks/use-user-presence.ts` | Dépendance `[user]` → `[user?.id]` |
-| `src/components/ui/dialog.tsx` | Protection `onFocusOutside` |
-| `src/components/ui/sheet.tsx` | Protection `onFocusOutside` |
-| `src/contexts/AuthContext.tsx` | Ignorer `USER_UPDATED` si id identique |
+| `src/config/navigation.ts` | Entrées Console Support V2, support_tickets children |
+| `src/config/routes.ts` | `supportStats`, `escalationHistory` de admin |
+| `src/config/scopeRegistry.ts` | `SUPPORT_TICKETS` |
+| `src/config/roleMatrix.ts` | case `support_tickets` |
+| `src/routes/admin.routes.tsx` | Routes `/admin/support-stats`, `/admin/escalation-history` |
+
+### Base de données
+```sql
+DROP TABLE IF EXISTS public.support_ticket_actions CASCADE;
+DROP TABLE IF EXISTS public.support_attachments CASCADE;
+DROP TABLE IF EXISTS public.support_ticket_messages CASCADE;
+DROP TABLE IF EXISTS public.support_tickets CASCADE;
+```
 
 ---
 
-## Garanties de non-régression
+## Phase 3 : Renommage OPERIA → HC Services
 
-- Les corrections Dialog/Sheet sont conditionnelles à `document.hidden` : aucun impact sur le comportement normal
-- La stabilisation des hooks utilise `user?.id` qui est une string stable : pas de risque de bugs de type
-- La modification AuthContext est conservative : seuls les événements redondants sont filtrés
+### Fichiers à renommer
+| Ancien | Nouveau |
+|--------|---------|
+| `src/contexts/OperiaEditorContext.tsx` | `src/contexts/HcServicesEditorContext.tsx` |
+| `src/pages/OperiaGuide.tsx` | `src/pages/HcServicesGuide.tsx` |
+| `src/pages/CategoryOperia.tsx` | `src/pages/CategoryHcServices.tsx` |
+| `src/components/operia/` | `src/components/hc-services-guide/` |
+
+### Routes à migrer
+| Ancienne route | Nouvelle route |
+|----------------|----------------|
+| `/academy/operia` | `/academy/hc-services` |
+| `/academy/operia/category/:slug` | `/academy/hc-services/category/:slug` |
+
+### Config à mettre à jour
+- `src/config/routes.ts` : `operia` → `hcServices`, `operiaCategory` → `hcServicesCategory`
+- `src/routes/academy.routes.tsx` : nouveaux imports + routes
+- `src/config/sitemapData.ts` : labels "OPERIA" → "HC Services"
+- Ajouter redirects legacy `/academy/operia/*` → `/academy/hc-services/*`
+
+### Base de données
+- Table `operia_blocks` conservée (nom technique interne)
 
 ---
 
-## Ce que tu verras après correction
+## Phase 4 : Migration /hc-agency → /agency
 
-- Plus de loader bleu flash au retour d'onglet
-- Les popups d'édition restent ouvertes quand tu copies du texte depuis un autre onglet
-- Plus de logs "Déconnexion enregistrée. Durée: X secondes" intempestifs
-- La page `/guide-apogee` reste inchangée (elle fonctionnait déjà)
+### Nouvelle structure des routes
 
+| Route actuelle | Nouvelle route |
+|----------------|----------------|
+| `/hc-agency` | `/agency` |
+| `/hc-agency/stats-hub` | `/agency/stats-hub` |
+| `/hc-agency/indicateurs` | `/agency/indicateurs` |
+| `/hc-agency/actions` | `/agency/actions` |
+| `/hc-agency/mes-apporteurs` | `/agency/apporteurs` |
+| `/hc-agency/map` | `/agency/carte` |
+| `/hc-agency/veille-apporteurs` | `/agency/veille-apporteurs` |
+| `/hc-agency/commercial/*` | `/agency/commercial/*` |
+| `/hc-agency/statistiques/diffusion` | `/agency/diffusion` |
+
+### Fichiers à déplacer
+| Source | Destination |
+|--------|-------------|
+| `src/pages/hc-agency/MesApporteursPage.tsx` | `src/pages/agency/ApporteursPage.tsx` |
+| `src/pages/hc-agency/RdvMapPage.tsx` | `src/pages/agency/CartePage.tsx` |
+
+### Fichiers à modifier
+- `src/routes/pilotage.routes.tsx` : remplacer tous les `/hc-agency` par `/agency`
+- `src/config/routes.ts` : mettre à jour bloc `agency` avec nouvelles URLs
+- `src/config/navigation.ts` : mettre à jour `ROUTES.agency.*`
+- `src/config/dashboardTiles.ts` : mettre à jour URLs des tuiles pilotage
+- `src/config/sitemapData.ts` : mettre à jour URLs
+
+### Redirects legacy
+```tsx
+<Route path="/hc-agency" element={<Navigate to="/agency" replace />} />
+<Route path="/hc-agency/*" element={<Navigate to="/agency" replace />} />
+```
+
+---
+
+## Phase 5 : Script de détection automatique
+
+Ajouter dans `scripts/check-architecture.sh` :
+
+```bash
+# Patterns interdits (legacy)
+FORBIDDEN_PATTERNS=(
+  "support_tickets"      # Table V2 supprimée
+  "payslip"              # Module paye supprimé
+  "hc-agency"            # Ancien préfixe route
+  "operia"               # Ancien nom guide
+  "analyze-payslip"      # Edge function supprimée
+)
+```
+
+---
+
+## Ordre d'exécution (prévenir les erreurs de build)
+
+```text
+┌─────────────────────────────────────────────────┐
+│ 1. Migration DB : DROP tables legacy            │
+│    (payslip_data, support_tickets, etc.)        │
+└─────────────────────┬───────────────────────────┘
+                      ▼
+┌─────────────────────────────────────────────────┐
+│ 2. Supprimer fichiers inutiles                  │
+│    (hooks, pages, composants paye/support V2)   │
+└─────────────────────┬───────────────────────────┘
+                      ▼
+┌─────────────────────────────────────────────────┐
+│ 3. Corriger imports cassés                      │
+│    (ContractSalaryTab, AiInlineResult, etc.)    │
+└─────────────────────┬───────────────────────────┘
+                      ▼
+┌─────────────────────────────────────────────────┐
+│ 4. Renommer OPERIA → HC Services                │
+│    (fichiers + routes + config)                 │
+└─────────────────────┬───────────────────────────┘
+                      ▼
+┌─────────────────────────────────────────────────┐
+│ 5. Migrer /hc-agency → /agency                  │
+│    (routes + navigation + pages)                │
+└─────────────────────┬───────────────────────────┘
+                      ▼
+┌─────────────────────────────────────────────────┐
+│ 6. Ajouter redirects legacy                     │
+│    (/hc-agency/* → /agency/*, etc.)             │
+└─────────────────────┬───────────────────────────┘
+                      ▼
+┌─────────────────────────────────────────────────┐
+│ 7. Mettre à jour check-architecture.sh          │
+│    (patterns interdits)                         │
+└─────────────────────────────────────────────────┘
+```
+
+---
+
+## Estimation
+
+| Phase | Effort |
+|-------|--------|
+| 1. Supprimer Paye | 15 min |
+| 2. Supprimer Support V2 | 30 min |
+| 3. Renommer OPERIA | 25 min |
+| 4. Migrer /hc-agency → /agency | 35 min |
+| 5. Script détection + redirects | 15 min |
+| **Total** | **~2h** |
+
+---
+
+## Livrables attendus
+
+1. **~800 lignes de code supprimées** (dead code)
+2. **4 tables DB supprimées** (payslip_data, support_tickets, support_ticket_messages, support_ticket_actions)
+3. **Routes simplifiées** : `/agency/*` au lieu de `/hc-agency/*`
+4. **Guide renommé** : "HC Services" au lieu de "OPERIA"
+5. **Script CI amélioré** : détection automatique des patterns legacy
+6. **Redirects legacy** : aucun lien cassé pour les bookmarks existants
