@@ -29,7 +29,7 @@ const StatiaValidatorPage = lazy(() => import("@/statia/pages/StatiaValidatorPag
 const AdminApogeeReport = lazy(() => import("@/pages/admin/AdminApogeeReport"));
 const AdminFlow = lazy(() => import("@/pages/admin/AdminFlow"));
 const DocTemplatesPage = lazy(() => import("@/pages/admin/DocTemplatesPage"));
-const AdminApporteurs = lazy(() => import("@/pages/admin/AdminApporteurs"));
+// AdminApporteurs supprimé - fonctionnalité non utilisée
 const ReportActivityPage = lazy(() => import("@/pages/admin/ReportActivityPage"));
 const FranchiseurLayout = lazy(() => import("@/franchiseur/components/layout/FranchiseurLayout"));
 const FranchiseurAgencyProfile = lazy(() => import("@/franchiseur/pages/FranchiseurAgencyProfile"));
@@ -108,7 +108,7 @@ export function AdminRoutes() {
       <Route path="/admin/apogee-report" element={<AdminLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminApogeeReport /></ModuleGuard></RoleGuard></AdminLayout>} />
       <Route path="/admin/flow" element={<AdminLayout><RoleGuard minRole="franchisor_admin"><AdminFlow /></RoleGuard></AdminLayout>} />
       <Route path="/admin/templates" element={<AdminLayout><RoleGuard minRole="franchisor_admin"><ModuleGuard moduleKey="admin_plateforme"><DocTemplatesPage /></ModuleGuard></RoleGuard></AdminLayout>} />
-      <Route path="/admin/apporteurs" element={<AdminLayout><RoleGuard minRole="franchisee_admin"><AdminApporteurs /></RoleGuard></AdminLayout>} />
+      {/* /admin/apporteurs supprimé - fonctionnalité non utilisée */}
       <Route path="/admin/rapportactivite" element={<AdminLayout><RoleGuard minRole="franchisee_admin"><ReportActivityPage /></RoleGuard></AdminLayout>} />
       
       {/* Fonctionnalités masquées */}
