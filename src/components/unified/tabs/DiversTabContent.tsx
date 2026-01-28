@@ -1,17 +1,19 @@
 /**
  * DiversTabContent - Contenu de l'onglet "Divers"
- * Réunions, documentation, paramètres
+ * Réunions, documentation, paramètres, apporteurs, plannings
  */
 
 import { lazy, Suspense, useState } from 'react';
-import { FileText, Settings, Users2, Loader2 } from 'lucide-react';
+import { FileText, Settings, Users2, Loader2, Users, CalendarDays } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 const RHMeetingsPage = lazy(() => import('@/pages/rh/RHMeetingsPage'));
 const DocGenPage = lazy(() => import('@/pages/rh/DocGenPage'));
+const MesApporteursTab = lazy(() => import('@/components/pilotage/MesApporteursTab').then(m => ({ default: m.MesApporteursTab })));
+const PlanningHebdo = lazy(() => import('@/pages/PlanningTechniciensSemaine'));
 
-type DiversSection = 'reunions' | 'docgen' | null;
+type DiversSection = 'reunions' | 'docgen' | 'apporteurs' | 'plannings' | null;
 
 function LoadingFallback() {
   return (
@@ -50,9 +52,69 @@ export default function DiversTabContent() {
     );
   }
 
+  if (activeSection === 'apporteurs') {
+    return (
+      <div className="py-3 px-2 sm:px-4">
+        <Button variant="ghost" onClick={() => setActiveSection(null)} className="mb-4">
+          ← Retour
+        </Button>
+        <Suspense fallback={<LoadingFallback />}>
+          <MesApporteursTab />
+        </Suspense>
+      </div>
+    );
+  }
+
+  if (activeSection === 'plannings') {
+    return (
+      <div className="py-3 px-2 sm:px-4">
+        <Button variant="ghost" onClick={() => setActiveSection(null)} className="mb-4">
+          ← Retour
+        </Button>
+        <Suspense fallback={<LoadingFallback />}>
+          <PlanningHebdo />
+        </Suspense>
+      </div>
+    );
+  }
+
   return (
     <div className="py-3 px-2 sm:px-4">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card 
+          className="cursor-pointer hover:border-primary/50 transition-colors"
+          onClick={() => setActiveSection('apporteurs')}
+        >
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Users className="w-5 h-5 text-primary" />
+              Apporteurs
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Gestion des apporteurs d'affaires
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card 
+          className="cursor-pointer hover:border-primary/50 transition-colors"
+          onClick={() => setActiveSection('plannings')}
+        >
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <CalendarDays className="w-5 h-5 text-primary" />
+              Plannings
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Planning hebdomadaire des techniciens
+            </p>
+          </CardContent>
+        </Card>
+
         <Card 
           className="cursor-pointer hover:border-primary/50 transition-colors"
           onClick={() => setActiveSection('reunions')}
