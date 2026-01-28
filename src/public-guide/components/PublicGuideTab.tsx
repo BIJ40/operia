@@ -1,5 +1,6 @@
 /**
  * PublicGuideTab - Onglet individuel draggable pour le Guide Apogée public
+ * Version Warm Pastel avec coins arrondis et animations
  */
 
 import React from 'react';
@@ -46,22 +47,31 @@ export function PublicGuideTab({ tab, isActive, onActivate, onClose }: PublicGui
       {...listeners}
       onClick={onActivate}
       className={cn(
-        'group flex items-center gap-2 px-3 py-2 rounded-t-lg cursor-pointer select-none',
-        'border border-b-0 transition-colors min-w-[100px] max-w-[180px]',
+        'group flex items-center gap-2 px-4 py-2.5 cursor-pointer select-none',
+        'rounded-t-xl border-x border-t transition-all duration-200',
+        'min-w-[120px] max-w-[200px]',
         isActive
-          ? 'bg-background border-border text-foreground shadow-sm'
-          : 'bg-muted/50 border-transparent text-muted-foreground hover:bg-muted hover:text-foreground',
-        isDragging && 'opacity-50 z-50'
+          ? 'bg-background border-border text-foreground shadow-sm -mb-px'
+          : 'bg-muted/40 border-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground',
+        isDragging && 'opacity-50 z-50 shadow-warm'
       )}
     >
-      <Icon className="h-4 w-4 shrink-0" />
+      <div className={cn(
+        'w-6 h-6 rounded-lg flex items-center justify-center shrink-0 transition-colors',
+        isActive 
+          ? 'bg-warm-blue/15 text-warm-blue' 
+          : 'bg-muted text-muted-foreground group-hover:bg-warm-blue/10 group-hover:text-warm-blue'
+      )}>
+        <Icon className="h-3.5 w-3.5" />
+      </div>
       <span className="truncate text-sm font-medium">{tab.label}</span>
       {tab.closable && (
         <button
           onClick={handleClose}
           className={cn(
-            'ml-auto p-0.5 rounded-sm transition-opacity shrink-0',
-            'opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive',
+            'ml-auto p-1 rounded-lg transition-all shrink-0',
+            'opacity-0 group-hover:opacity-100',
+            'hover:bg-destructive/10 hover:text-destructive',
             isActive && 'opacity-60'
           )}
         >

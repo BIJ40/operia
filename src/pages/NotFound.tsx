@@ -1,6 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { logError } from "@/lib/logger";
+import { FileQuestion, Home } from "lucide-react";
+import { WarmPageContainer } from "@/components/ui/warm-page-container";
+import { WarmEmptyState } from "@/components/ui/warm-empty-state";
 
 const NotFound = () => {
   const location = useLocation();
@@ -10,17 +13,20 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">404</h1>
-        <p className="mb-4 text-xl text-muted-foreground">Oups ! Page introuvable</p>
-        <Link to="/" className="text-primary underline hover:text-primary/90">
-          Retour à l'accueil
-        </Link>
-      </div>
-    </div>
+    <WarmPageContainer maxWidth="lg" className="min-h-screen flex items-center justify-center">
+      <WarmEmptyState
+        icon={FileQuestion}
+        title="Page introuvable"
+        description="Oups ! La page que vous cherchez n'existe pas ou a été déplacée."
+        accentColor="orange"
+        action={{
+          label: "Retour à l'accueil",
+          onClick: () => window.location.href = '/',
+        }}
+        footer="Erreur 404"
+      />
+    </WarmPageContainer>
   );
 };
 
 export default NotFound;
-

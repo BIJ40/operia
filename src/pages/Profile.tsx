@@ -6,7 +6,6 @@ import { logError } from '@/lib/logger';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
@@ -18,14 +17,15 @@ import {
   Shield, 
   Zap,
   Loader2,
-  Camera,
-  Upload
+  Camera
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
+import { GlobalRole } from '@/types/globalRoles';
 import { VISIBLE_ROLE_LABELS, VISIBLE_ROLE_COLORS } from '@/lib/visibleRoleLabels';
 import { MODULE_DEFINITIONS, EnabledModules } from '@/types/modules';
 import { ALL_USER_QUERY_PATTERNS } from '@/lib/queryKeys';
+import { WarmPageContainer } from '@/components/ui/warm-page-container';
+import { WarmCard } from '@/components/ui/warm-card';
 
 // ✅ SYNCHRONISATION COMPLÈTE: fonction pour invalider TOUTES les query keys utilisateurs
 function invalidateAllUserQueries(queryClient: ReturnType<typeof useQueryClient>) {
@@ -118,13 +118,11 @@ export default function Profile() {
     const file = event.target.files?.[0];
     if (!file || !user) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast.error('Veuillez sélectionner une image');
       return;
     }
 
-    // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       toast.error('L\'image ne doit pas dépasser 2 Mo');
       return;
@@ -133,7 +131,6 @@ export default function Profile() {
     try {
       setIsUploading(true);
       
-      // Upload to Supabase storage
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
@@ -144,14 +141,12 @@ export default function Profile() {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: urlData } = supabase.storage
         .from('category-images')
         .getPublicUrl(filePath);
 
       const publicUrl = urlData.publicUrl;
 
-      // Update profile
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: publicUrl })
@@ -162,7 +157,6 @@ export default function Profile() {
       setAvatarUrl(publicUrl);
       toast.success('Photo de profil mise à jour');
       
-      // ✅ SYNCHRONISATION: Invalider les caches utilisateurs
       invalidateAllUserQueries(queryClient);
     } catch (error) {
       logError('PROFILE', 'Error uploading avatar:', error);
@@ -175,7 +169,6 @@ export default function Profile() {
   const handleSaveProfile = async () => {
     if (!user) return;
 
-    // Validation
     if (!editableData.first_name.trim() || !editableData.last_name.trim()) {
       toast.error('Le prénom et le nom sont obligatoires');
       return;
@@ -197,7 +190,6 @@ export default function Profile() {
       toast.success('Profil mis à jour avec succès');
       loadProfile();
       
-      // ✅ SYNCHRONISATION: Invalider les caches utilisateurs
       invalidateAllUserQueries(queryClient);
     } catch (error) {
       logError('PROFILE', 'Error saving profile:', error);
@@ -224,9 +216,11 @@ export default function Profile() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
+      <WarmPageContainer maxWidth="4xl" className="min-h-screen">
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </WarmPageContainer>
     );
   }
 
@@ -234,79 +228,73 @@ export default function Profile() {
   const enabledModules = getEnabledModulesList(profile?.enabled_modules);
 
   return (
-    <div className="container max-w-4xl mx-auto px-4 py-8">
+    <WarmPageContainer maxWidth="4xl">
       <div className="space-y-6">
         {/* Header avec Avatar */}
-        <Card>
-          <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5">
-            <div className="flex items-center gap-6">
-              {/* Avatar */}
-              <div className="relative group">
-                <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border-4 border-background shadow-lg">
-                  {avatarUrl ? (
-                    <img 
-                      src={avatarUrl} 
-                      alt="Avatar" 
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User className="w-12 h-12 text-primary" />
-                  )}
-                </div>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleAvatarUpload}
-                  accept="image/*"
-                  className="hidden"
-                />
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploading}
-                >
-                  {isUploading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Camera className="w-4 h-4" />
-                  )}
-                </Button>
-              </div>
-
-              <div className="flex-1">
-                <CardTitle className="text-2xl">
-                  {profile?.first_name || profile?.last_name 
-                    ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
-                    : 'Mon Profil'
-                  }
-                </CardTitle>
-                <CardDescription className="text-base">
-                  {profile?.email || 'Pas d\'email'}
-                </CardDescription>
-                {effectiveRole && (
-                  <Badge className={`mt-2 ${VISIBLE_ROLE_COLORS[effectiveRole] || ''}`}>
-                    {VISIBLE_ROLE_LABELS[effectiveRole]}
-                  </Badge>
+        <WarmCard variant="gradient" accentColor="blue" padding="spacious">
+          <div className="flex items-center gap-6">
+            {/* Avatar */}
+            <div className="relative group">
+              <div className="w-24 h-24 rounded-2xl bg-primary/10 flex items-center justify-center overflow-hidden border-4 border-background shadow-warm-lg">
+                {avatarUrl ? (
+                  <img 
+                    src={avatarUrl} 
+                    alt="Avatar" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="w-12 h-12 text-primary" />
                 )}
               </div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleAvatarUpload}
+                accept="image/*"
+                className="hidden"
+              />
+              <Button
+                size="sm"
+                variant="secondary"
+                className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+              >
+                {isUploading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Camera className="w-4 h-4" />
+                )}
+              </Button>
             </div>
-          </CardHeader>
-        </Card>
+
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold text-foreground">
+                {profile?.first_name || profile?.last_name 
+                  ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
+                  : 'Mon Profil'
+                }
+              </h1>
+              <p className="text-muted-foreground">
+                {profile?.email || 'Pas d\'email'}
+              </p>
+              {effectiveRole && (
+                <Badge className={`mt-2 ${VISIBLE_ROLE_COLORS[effectiveRole] || ''}`}>
+                  {VISIBLE_ROLE_LABELS[effectiveRole]}
+                </Badge>
+              )}
+            </div>
+          </div>
+        </WarmCard>
 
         {/* Informations modifiables */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <User className="w-5 h-5 text-primary" />
-              Mes informations personnelles
-            </CardTitle>
-            <CardDescription>
-              Vous pouvez modifier ces informations
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <WarmCard 
+          icon={User} 
+          title="Mes informations personnelles"
+          description="Vous pouvez modifier ces informations"
+          accentColor="teal"
+        >
+          <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Prénom *</Label>
@@ -314,6 +302,7 @@ export default function Profile() {
                   value={editableData.first_name}
                   onChange={(e) => setEditableData(prev => ({ ...prev, first_name: e.target.value }))}
                   placeholder="Votre prénom"
+                  className="rounded-xl"
                 />
               </div>
 
@@ -323,6 +312,7 @@ export default function Profile() {
                   value={editableData.last_name}
                   onChange={(e) => setEditableData(prev => ({ ...prev, last_name: e.target.value }))}
                   placeholder="Votre nom"
+                  className="rounded-xl"
                 />
               </div>
 
@@ -333,6 +323,7 @@ export default function Profile() {
                   value={editableData.phone}
                   onChange={(e) => setEditableData(prev => ({ ...prev, phone: e.target.value }))}
                   placeholder="Votre numéro de téléphone"
+                  className="rounded-xl"
                 />
               </div>
             </div>
@@ -340,26 +331,22 @@ export default function Profile() {
             <Button 
               onClick={handleSaveProfile} 
               disabled={isSaving || !editableData.first_name.trim() || !editableData.last_name.trim()}
-              className="w-full"
+              className="w-full rounded-xl"
             >
               {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
               Enregistrer mes informations
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </WarmCard>
 
         {/* Informations compte (lecture seule) */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Shield className="w-5 h-5 text-primary" />
-              Informations du compte
-            </CardTitle>
-            <CardDescription>
-              Ces informations sont gérées par votre administrateur
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <WarmCard 
+          icon={Shield} 
+          title="Informations du compte"
+          description="Ces informations sont gérées par votre administrateur"
+          accentColor="purple"
+        >
+          <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-muted-foreground">
@@ -369,7 +356,7 @@ export default function Profile() {
                 <Input
                   value={profile?.email || ''}
                   disabled
-                  className="bg-muted cursor-not-allowed"
+                  className="bg-muted cursor-not-allowed rounded-xl"
                 />
               </div>
 
@@ -381,7 +368,7 @@ export default function Profile() {
                 <Input
                   value={profile?.agence || ''}
                   disabled
-                  className="bg-muted cursor-not-allowed"
+                  className="bg-muted cursor-not-allowed rounded-xl"
                   placeholder="Non rattaché"
                 />
               </div>
@@ -394,7 +381,7 @@ export default function Profile() {
                 <Input
                   value={ROLE_AGENCE_LABELS[profile?.role_agence || ''] || profile?.role_agence || ''}
                   disabled
-                  className="bg-muted cursor-not-allowed"
+                  className="bg-muted cursor-not-allowed rounded-xl"
                   placeholder="Non renseigné"
                 />
               </div>
@@ -411,7 +398,7 @@ export default function Profile() {
               <div className="flex flex-wrap gap-2">
                 {enabledModules.length > 0 ? (
                   enabledModules.map((mod) => (
-                    <Badge key={mod} variant="secondary">
+                    <Badge key={mod} variant="secondary" className="rounded-lg">
                       {mod}
                     </Badge>
                   ))
@@ -420,15 +407,15 @@ export default function Profile() {
                 )}
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </WarmCard>
 
         {/* Actions */}
         <div className="flex gap-4">
           <Button
             variant="outline"
             onClick={() => navigate(-1)}
-            className="flex-1"
+            className="flex-1 rounded-xl"
           >
             Retour
           </Button>
@@ -438,6 +425,6 @@ export default function Profile() {
           Pour modifier votre email, agence ou rôle, contactez votre administrateur.
         </p>
       </div>
-    </div>
+    </WarmPageContainer>
   );
 }

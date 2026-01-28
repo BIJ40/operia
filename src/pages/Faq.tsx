@@ -4,7 +4,6 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,13 +22,22 @@ import {
 import { Input } from '@/components/ui/input';
 import { Loader2, HelpCircle, Search, Link as LinkIcon, RefreshCw } from 'lucide-react';
 import { getFaqItems, getFaqCategories, type FaqItem, type FaqCategory } from '@/lib/rag-improvement';
-import { Link } from 'react-router-dom';
+import { WarmPageContainer } from '@/components/ui/warm-page-container';
+import { WarmCard } from '@/components/ui/warm-card';
+import { WarmEmptyState } from '@/components/ui/warm-empty-state';
 
 const CONTEXT_LABELS: Record<string, string> = {
   apogee: 'Apogée',
   apporteurs: 'Apporteurs',
   helpconfort: 'HelpConfort',
   documents: 'Documents',
+};
+
+const CONTEXT_COLORS: Record<string, 'blue' | 'green' | 'orange' | 'purple' | 'pink' | 'teal'> = {
+  apogee: 'blue',
+  apporteurs: 'orange',
+  helpconfort: 'teal',
+  documents: 'purple',
 };
 
 export default function Faq() {
@@ -78,120 +86,140 @@ export default function Faq() {
   }, {} as Record<string, FaqItem[]>);
 
   return (
-    <div className="container max-w-4xl mx-auto px-4 py-6">
+    <WarmPageContainer 
+      maxWidth="4xl" 
+      title="Questions fréquentes"
+      description="Trouvez rapidement des réponses à vos questions"
+    >
+      {/* Filters */}
+      <WarmCard variant="muted" padding="compact">
+        <div className="flex flex-wrap gap-4 items-center">
+          {/* Search */}
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 rounded-xl"
+            />
+          </div>
 
-        {/* Filters */}
-        <Card className="mb-6">
-          <CardContent className="pt-4">
-            <div className="flex flex-wrap gap-4 items-center">
-              {/* Search */}
-              <div className="relative flex-1 min-w-[200px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Rechercher..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
+          {/* Context filter */}
+          <Select value={contextFilter} onValueChange={setContextFilter}>
+            <SelectTrigger className="w-[150px] rounded-xl">
+              <SelectValue placeholder="Contexte" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous contextes</SelectItem>
+              <SelectItem value="apogee">Apogée</SelectItem>
+              <SelectItem value="apporteurs">Apporteurs</SelectItem>
+              <SelectItem value="helpconfort">HelpConfort</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Category filter */}
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-[180px] rounded-xl">
+              <SelectValue placeholder="Catégorie" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes catégories</SelectItem>
+              {categories.map((cat) => (
+                <SelectItem key={cat.id} value={cat.id}>
+                  {cat.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={loadData} 
+            disabled={loading}
+            className="rounded-xl"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
+      </WarmCard>
+
+      {/* FAQ Items */}
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : filteredItems.length === 0 ? (
+        <WarmCard>
+          <WarmEmptyState
+            icon={HelpCircle}
+            title="Aucune question trouvée"
+            description="Essayez d'ajuster vos filtres de recherche"
+            accentColor="muted"
+          />
+        </WarmCard>
+      ) : (
+        <div className="space-y-6">
+          {Object.entries(groupedItems).map(([context, ctxItems]) => (
+            <WarmCard 
+              key={context} 
+              variant="accent" 
+              accentColor={CONTEXT_COLORS[context] || 'blue'}
+              padding="normal"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <Badge 
+                  variant="outline" 
+                  className="rounded-lg px-3 py-1 text-sm font-medium"
+                >
+                  {CONTEXT_LABELS[context] || context}
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  {ctxItems.length} question{ctxItems.length > 1 ? 's' : ''}
+                </span>
               </div>
+              
+              <Accordion type="multiple" className="w-full">
+                {ctxItems.map((item) => (
+                  <AccordionItem key={item.id} value={item.id} className="border-b-muted/50">
+                    <AccordionTrigger className="text-left hover:no-underline py-4">
+                      <div className="flex items-start gap-3 pr-4">
+                        <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <HelpCircle className="h-3.5 w-3.5 text-primary" />
+                        </div>
+                        <span className="font-medium">{item.question}</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="pl-9 space-y-3">
+                        <p className="whitespace-pre-wrap text-sm text-muted-foreground leading-relaxed">
+                          {item.answer}
+                        </p>
 
-              {/* Context filter */}
-              <Select value={contextFilter} onValueChange={setContextFilter}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Contexte" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous contextes</SelectItem>
-                  <SelectItem value="apogee">Apogée</SelectItem>
-                  <SelectItem value="apporteurs">Apporteurs</SelectItem>
-                  <SelectItem value="helpconfort">HelpConfort</SelectItem>
-                </SelectContent>
-              </Select>
+                        {/* Category badge */}
+                        {item.category && (
+                          <Badge variant="secondary" className="text-xs rounded-lg">
+                            {item.category.label}
+                          </Badge>
+                        )}
 
-              {/* Category filter */}
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Catégorie" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Toutes catégories</SelectItem>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Button variant="outline" size="icon" onClick={loadData} disabled={loading}>
-                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* FAQ Items */}
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : filteredItems.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <HelpCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Aucune question trouvée</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-6">
-            {Object.entries(groupedItems).map(([context, ctxItems]) => (
-              <Card key={context}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Badge variant="outline">{CONTEXT_LABELS[context] || context}</Badge>
-                    <span className="text-sm text-muted-foreground font-normal">
-                      ({ctxItems.length} question{ctxItems.length > 1 ? 's' : ''})
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Accordion type="multiple" className="w-full">
-                    {ctxItems.map((item) => (
-                      <AccordionItem key={item.id} value={item.id}>
-                        <AccordionTrigger className="text-left">
-                          <div className="flex items-start gap-2 pr-4">
-                            <HelpCircle className="h-4 w-4 mt-1 shrink-0 text-muted-foreground" />
-                            <span>{item.question}</span>
+                        {/* Linked blocks */}
+                        {item.linked_block_ids && item.linked_block_ids.length > 0 && (
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <LinkIcon className="h-3 w-3" />
+                            <span>{item.linked_block_ids.length} bloc(s) lié(s)</span>
                           </div>
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          <div className="pl-6 space-y-3">
-                            <p className="whitespace-pre-wrap text-sm">{item.answer}</p>
-
-                            {/* Category badge */}
-                            {item.category && (
-                              <Badge variant="secondary" className="text-xs">
-                                {item.category.label}
-                              </Badge>
-                            )}
-
-                            {/* Linked blocks */}
-                            {item.linked_block_ids && item.linked_block_ids.length > 0 && (
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <LinkIcon className="h-3 w-3" />
-                                <span>{item.linked_block_ids.length} bloc(s) lié(s)</span>
-                              </div>
-                            )}
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
-                  </Accordion>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
+                        )}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </WarmCard>
+          ))}
+        </div>
+      )}
+    </WarmPageContainer>
   );
 }
