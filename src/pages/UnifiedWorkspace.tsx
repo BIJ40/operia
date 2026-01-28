@@ -180,11 +180,12 @@ function UnifiedWorkspaceContent() {
   const validActiveTab = sortedTabs.some(t => t.id === activeTab) ? activeTab : 'accueil';
   
   const tabButtonClass = `
-    relative px-4 py-2.5 rounded-t-xl border-2 border-b-0 transition-all duration-200 whitespace-nowrap
+    relative px-5 py-3 rounded-t-xl border-2 border-b-0 transition-all duration-300 whitespace-nowrap
     data-[state=inactive]:bg-muted/40 data-[state=inactive]:border-border/40 data-[state=inactive]:text-muted-foreground 
-    data-[state=inactive]:hover:bg-muted/60 data-[state=inactive]:hover:border-border/60
-    data-[state=active]:bg-background data-[state=active]:border-primary/30 data-[state=active]:shadow-md 
-    data-[state=active]:z-10 data-[state=active]:-mb-[2px]
+    data-[state=inactive]:hover:bg-primary/10 data-[state=inactive]:hover:border-primary/40
+    data-[state=inactive]:hover:scale-105 data-[state=inactive]:hover:-translate-y-0.5 data-[state=inactive]:hover:shadow-md
+    data-[state=active]:bg-background data-[state=active]:border-primary/40 data-[state=active]:shadow-lg 
+    data-[state=active]:z-10 data-[state=active]:-mb-[2px] data-[state=active]:scale-[1.02]
   `;
   
   // IDs pour le sortable context (exclure accueil)
@@ -196,8 +197,8 @@ function UnifiedWorkspaceContent() {
         <div className={`min-h-screen bg-background ${isImpersonating ? 'pt-10' : ''}`}>
           <Tabs value={validActiveTab} onValueChange={(v) => setActiveTab(v as UnifiedTab)} className="flex flex-col h-screen">
             {/* Tab bar fixe en haut */}
-            <div className="sticky top-0 z-50 bg-background border-b border-border">
-              <div className="px-2 sm:px-4 pt-2 pb-0">
+            <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border shadow-sm">
+              <div className="px-3 sm:px-6 pt-3 pb-0">
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
@@ -211,11 +212,11 @@ function UnifiedWorkspaceContent() {
                         data-state={validActiveTab === 'accueil' ? 'active' : 'inactive'}
                         className={tabButtonClass}
                       >
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-6 h-6 rounded-md bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-sm">
-                            <Home className="w-3 h-3 text-white" />
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-sm transition-transform group-hover:scale-110">
+                            <Home className="w-3.5 h-3.5 text-white" />
                           </div>
-                          <span className="text-xs font-semibold tracking-tight">Accueil</span>
+                          <span className="text-sm font-semibold tracking-tight">Accueil</span>
                         </div>
                       </button>
                     )}
@@ -233,11 +234,11 @@ function UnifiedWorkspaceContent() {
                             onClick={() => setActiveTab(tab.id)}
                             className={tabButtonClass}
                           >
-                            <div className="flex items-center gap-1.5">
-                              <div className="w-6 h-6 rounded-md bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-sm">
-                                <Icon className="w-3 h-3 text-white" />
+                            <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-sm transition-transform duration-300 group-hover:scale-110">
+                                <Icon className="w-3.5 h-3.5 text-white" />
                               </div>
-                              <span className="text-xs font-semibold tracking-tight">{tab.label}</span>
+                              <span className="text-sm font-semibold tracking-tight">{tab.label}</span>
                             </div>
                           </DraggableTab>
                         );
