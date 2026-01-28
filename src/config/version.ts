@@ -1,26 +1,26 @@
-export const APP_VERSION = '0.8.4';
-export const APP_CODENAME = 'Guide Apogée Public';
+export const APP_VERSION = '0.8.5';
+export const APP_CODENAME = 'UX Chatbot & Demo N0';
 
 /**
- * Changelog v0.8.4 (2026-01-26)
+ * Changelog v0.8.5 (2026-01-28)
  * ==============================
  * 
- * GUIDE APOGÉE PUBLIC
- * -------------------
- * - Nouvelle interface /guide-apogee accessible sans authentification
- * - Navigation multi-onglets type navigateur (drag & drop)
- * - Sidebar catégories avec redimensionnement
- * - Filtrage des catégories obsolètes (support formation, recap fiches)
- * - Page d'accueil avec instructions d'utilisation
- * - Message "version simplifiée" avec roadmap (support, tickets, FAQ)
+ * CHATBOT SIDEBAR
+ * ---------------
+ * - Remplacement bulle flottante par panneau latéral droit
+ * - Onglet vertical "Aide" fixé en bas à droite
+ * - Ouverture fluide avec animation slide-in
+ * - Overlay pour fermer en cliquant à l'extérieur
  * 
- * DOCUMENTATION
- * -------------
- * - Nettoyage documentation legacy (audits 2025)
- * - Mise à jour horodatée des fichiers de doc
+ * DASHBOARD DÉMO N0
+ * -----------------
+ * - Nouveau dashboard démo pour utilisateurs N0 (style DAX)
+ * - KPIs factices : CA, taux transformation, productivité
+ * - Bannière explicite "Mode démonstration"
+ * - Widgets : carte stylisée, répartition CA, techniciens
  * 
- * PRÉCÉDENT (v0.8.3 - 2026-01-23)
+ * PRÉCÉDENT (v0.8.4 - 2026-01-26)
  * --------------------------------
- * - Suppression portail salarié N1
- * - Simplification collaborateurs
+ * - Guide Apogée Public (/guide-apogee)
+ * - Navigation multi-onglets
  */
