@@ -199,33 +199,48 @@ Deno.serve(async (req) => {
     // 6. Déterminer l'agence cible avec contrôle d'accès
     let targetAgency = profile.agence;
     
-    // Si une agence spécifique est demandée (pour franchiseur)
+    // MODE DÉMO: Les utilisateurs N0 (base_user sans agence) peuvent accéder à DAX en lecture seule
+    const isN0DemoUser = !profile.agence && profile.global_role === 'base_user';
+    const DEMO_AGENCY_SLUG = 'dax';
+    
+    // Si une agence spécifique est demandée (pour franchiseur ou mode démo)
     if (requestedAgency && requestedAgency !== profile.agence) {
-      // Vérifier que l'utilisateur a le droit d'accéder à cette agence (déjà calculé dans isFranchiseurRole)
-      if (!isFranchiseurRole) {
+      // Cas spécial: Mode démo N0 pour l'agence DAX uniquement
+      if (isN0DemoUser && requestedAgency === DEMO_AGENCY_SLUG) {
+        console.log(`[PROXY-APOGEE] Mode démo activé pour user ${user.id.substring(0, 8)}... sur agence ${DEMO_AGENCY_SLUG}`);
+        targetAgency = DEMO_AGENCY_SLUG;
+      }
+      // Sinon vérifier que l'utilisateur a le droit d'accéder à cette agence (rôle franchiseur)
+      else if (!isFranchiseurRole) {
         console.warn(`[PROXY-APOGEE] Accès refusé: user ${user.id} tente d'accéder à l'agence ${requestedAgency}`);
         return withCors(req, new Response(
           JSON.stringify({ success: false, error: 'Accès non autorisé à cette agence' }),
           { status: 403, headers: { 'Content-Type': 'application/json' } }
         ));
       }
-      
-      // Vérifier que l'agence existe et est active
-      const { data: agency } = await supabase
-        .from('apogee_agencies')
-        .select('slug')
-        .eq('slug', requestedAgency)
-        .eq('is_active', true)
-        .maybeSingle();
-      
-      if (!agency) {
-        return withCors(req, new Response(
-          JSON.stringify({ success: false, error: 'Agence non trouvée ou inactive' }),
-          { status: 404, headers: { 'Content-Type': 'application/json' } }
-        ));
+      else {
+        // Vérifier que l'agence existe et est active
+        const { data: agency } = await supabase
+          .from('apogee_agencies')
+          .select('slug')
+          .eq('slug', requestedAgency)
+          .eq('is_active', true)
+          .maybeSingle();
+        
+        if (!agency) {
+          return withCors(req, new Response(
+            JSON.stringify({ success: false, error: 'Agence non trouvée ou inactive' }),
+            { status: 404, headers: { 'Content-Type': 'application/json' } }
+          ));
+        }
+        
+        targetAgency = requestedAgency;
       }
-      
-      targetAgency = requestedAgency;
+    }
+
+    // Pour les utilisateurs N0 en mode démo, définir l'agence DAX par défaut
+    if (!targetAgency && isN0DemoUser) {
+      targetAgency = DEMO_AGENCY_SLUG;
     }
 
     if (!targetAgency) {
