@@ -5,9 +5,9 @@
 
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, Building2, Brain, FileText, Database, Cpu, Settings } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { Shield, Building2, Brain, FileText, Database, Cpu } from 'lucide-react';
+import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import {
   AccesView,
   ReseauView,
@@ -17,19 +17,13 @@ import {
   PlateformeView,
 } from '@/components/admin/views';
 
-interface AdminMainTab {
-  id: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-}
-
-const ADMIN_MAIN_TABS: AdminMainTab[] = [
-  { id: 'acces', label: 'Accès', icon: Shield },
-  { id: 'agences', label: 'Agences', icon: Building2 },
-  { id: 'ia', label: 'IA', icon: Brain },
-  { id: 'contenu', label: 'Contenu', icon: FileText },
-  { id: 'ops', label: 'Ops', icon: Database },
-  { id: 'plateforme', label: 'Plateforme', icon: Cpu },
+const ADMIN_MAIN_TABS: PillTabConfig[] = [
+  { id: 'acces', label: 'Accès', icon: Shield, accent: 'blue' },
+  { id: 'agences', label: 'Agences', icon: Building2, accent: 'purple' },
+  { id: 'ia', label: 'IA', icon: Brain, accent: 'green' },
+  { id: 'contenu', label: 'Contenu', icon: FileText, accent: 'orange' },
+  { id: 'ops', label: 'Ops', icon: Database, accent: 'pink' },
+  { id: 'plateforme', label: 'Plateforme', icon: Cpu, accent: 'teal' },
 ];
 
 export default function AdminHubContent() {
@@ -49,33 +43,7 @@ export default function AdminHubContent() {
     <div className="py-6 space-y-4">
       {/* Main Tabs Navigation - directement en haut */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-        <TabsList className="flex flex-wrap justify-center gap-1.5 bg-transparent h-auto p-0">
-          {ADMIN_MAIN_TABS.map((tab, index) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            
-            return (
-              <motion.div
-                key={tab.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.03, duration: 0.15 }}
-                whileHover={{ scale: 1.02, y: -1 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <TabsTrigger
-                  value={tab.id}
-                  className="admin-main-tab"
-                >
-                  <div className="admin-tab-icon">
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <span className="hidden sm:inline">{tab.label}</span>
-                </TabsTrigger>
-              </motion.div>
-            );
-          })}
-        </TabsList>
+        <PillTabsList tabs={ADMIN_MAIN_TABS} />
 
         {/* Content Container */}
         <motion.div 
