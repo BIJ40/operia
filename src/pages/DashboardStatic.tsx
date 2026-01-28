@@ -359,7 +359,6 @@ export default function DashboardStatic() {
           <motion.div variants={itemVariants}>
             <WarmCard
               variant="blue"
-              icon={BarChart3}
               animate={false}
               className="h-full"
             >
