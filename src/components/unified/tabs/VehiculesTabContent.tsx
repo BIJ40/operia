@@ -1,26 +1,17 @@
 /**
- * VehiculesTabContent - Contenu de l'onglet "Véhicules"
+ * VehiculesTabContent - Contenu de l'onglet "Véhicules" (Parc)
+ * Liste simple des véhicules sans système d'onglets
  */
 
-import { lazy, Suspense } from 'react';
-import { Loader2 } from 'lucide-react';
-
-const MaintenancePreventivePage = lazy(() => import('@/pages/MaintenancePreventivePage'));
-
-function LoadingFallback() {
-  return (
-    <div className="flex items-center justify-center h-64">
-      <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-    </div>
-  );
-}
+import { VehiclesOverview } from '@/components/maintenance/VehiclesOverview';
+import { useFleetVehicles } from '@/hooks/maintenance/useFleetVehicles';
 
 export default function VehiculesTabContent() {
+  const { data: vehicles = [], isLoading } = useFleetVehicles();
+
   return (
-    <div className="h-[calc(100vh-14rem)]">
-      <Suspense fallback={<LoadingFallback />}>
-        <MaintenancePreventivePage embedded />
-      </Suspense>
+    <div className="h-full p-4">
+      <VehiclesOverview vehicles={vehicles} isLoading={isLoading} />
     </div>
   );
 }
