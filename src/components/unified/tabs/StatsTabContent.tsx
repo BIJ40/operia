@@ -45,24 +45,24 @@ export default function StatsTabContent() {
   };
 
   return (
-    <div className="py-3 px-2 sm:px-4 space-y-4">
-      {/* Header avec bouton TV et sélecteur de période */}
-      <div className="flex items-center justify-between">
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={handleOpenDiffusion}
-          className="gap-2"
-        >
-          <Tv className="h-4 w-4" />
-          Diffusion TV
-          <ExternalLink className="h-3 w-3" />
-        </Button>
-        {periodSelector}
-      </div>
-
+    <div className="py-6 px-2 sm:px-4 space-y-4">
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabId)}>
         <PillTabsList tabs={STATS_TABS} />
+
+        {/* Diffusion TV + Sélecteur de période SOUS les onglets */}
+        <div className="flex items-center justify-between mt-4">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleOpenDiffusion}
+            className="gap-2"
+          >
+            <Tv className="h-4 w-4" />
+            Diffusion TV
+            <ExternalLink className="h-3 w-3" />
+          </Button>
+          {periodSelector}
+        </div>
 
         <AnimatePresence mode="wait">
           <motion.div
