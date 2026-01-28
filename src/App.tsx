@@ -111,7 +111,7 @@ function AppContent() {
           {/* ============================================ */}
           {/* CORE ROUTES */}
           {/* ============================================ */}
-          <Route path="/" element={<RoleGuard minRole="franchisee_user"><UnifiedWorkspace /></RoleGuard>} />
+          <Route path="/" element={<UnifiedWorkspace />} />
           <Route path="/profile" element={<MinimalLayout backTab="accueil" backLabel="Retour à l'accueil"><RoleGuard><Profile /></RoleGuard></MinimalLayout>} />
           <Route path="/changelog" element={<MinimalLayout backTab="accueil" backLabel="Retour à l'accueil"><Changelog /></MinimalLayout>} />
           <Route path="/roadmap" element={<MinimalLayout backTab="accueil" backLabel="Retour à l'accueil"><Roadmap /></MinimalLayout>} />
