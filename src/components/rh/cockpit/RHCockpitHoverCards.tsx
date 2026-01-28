@@ -287,8 +287,9 @@ export function DocsHoverCard({
   indicators: CockpitIndicators;
   children: React.ReactNode;
 }) {
-  const hasPermis = !!collaborator.permis;
-  const hasCNI = !!collaborator.cni;
+  // Pour l'instant on affiche juste le count, pas de détail permis/cni
+  // car ces infos viennent maintenant de collaborator_documents
+  const docCount = indicators.documents.count;
   
   return (
     <HoverCardWrapper
@@ -296,22 +297,14 @@ export function DocsHoverCard({
         <div className="space-y-2">
           <p className="font-medium text-foreground flex items-center gap-2">
             <FileText className="h-3.5 w-3.5" />
-            Documents ({indicators.documents.count})
+            {docCount > 0 
+              ? `${docCount} document${docCount > 1 ? 's' : ''}`
+              : 'Aucun document'
+            }
           </p>
-          <div className="space-y-1.5 text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <span className={hasPermis ? "text-emerald-500" : "text-rose-400"}>
-                {hasPermis ? '✓' : '✗'}
-              </span>
-              <span>Permis de conduire</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className={hasCNI ? "text-emerald-500" : "text-rose-400"}>
-                {hasCNI ? '✓' : '✗'}
-              </span>
-              <span>Carte d'identité</span>
-            </div>
-          </div>
+          <p className="text-xs text-muted-foreground">
+            Cliquez pour gérer les documents
+          </p>
         </div>
       }
     >

@@ -1,15 +1,18 @@
 /**
  * Contenu du drawer Documents pour le Cockpit RH
- * Version simplifiée pointant vers le Finder existant
+ * Permet l'upload direct des documents obligatoires (Permis, CNI)
  */
 
 import React from 'react';
 import { DrawerSection } from './RHCockpitDrawer';
 import { RHCollaborator } from '@/types/rh-suivi';
-import { FileText, Upload, FolderOpen, Check, AlertTriangle } from 'lucide-react';
+import { FileText, FolderOpen, Check, AlertTriangle, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { RHDocumentCell } from '@/components/rh/unified/RHDocumentCell';
 
 interface RHCockpitDrawerDocsProps {
   collaborator: RHCollaborator;
@@ -24,10 +27,25 @@ const REQUIRED_DOCS = [
 ];
 
 export function RHCockpitDrawerDocs({ collaborator, onOpenFinder, onUpdate }: RHCockpitDrawerDocsProps) {
-  // Vérifier les documents obligatoires
+  // Récupérer les documents depuis la base
+  const { data: documents = [] } = useQuery({
+    queryKey: ['rh-documents-check', collaborator.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('collaborator_documents')
+        .select('doc_type')
+        .eq('collaborator_id', collaborator.id)
+        .in('doc_type', ['permis', 'cni']);
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Vérifier les documents obligatoires (depuis la DB, pas les champs legacy)
   const docStatus = REQUIRED_DOCS.map(doc => ({
     ...doc,
-    present: !!collaborator[doc.key as keyof RHCollaborator],
+    present: documents.some(d => d.doc_type === doc.key),
   }));
 
   const filledCount = docStatus.filter(d => d.present).length;
@@ -58,7 +76,7 @@ export function RHCockpitDrawerDocs({ collaborator, onOpenFinder, onUpdate }: RH
         </div>
       </DrawerSection>
 
-      {/* Liste des documents obligatoires */}
+      {/* Liste des documents obligatoires avec upload */}
       <DrawerSection title="Documents obligatoires" className="mt-6">
         <div className="space-y-3">
           {docStatus.map(doc => (
@@ -75,9 +93,16 @@ export function RHCockpitDrawerDocs({ collaborator, onOpenFinder, onUpdate }: RH
                 <span className="text-lg">{doc.icon}</span>
                 <span className="text-sm font-medium">{doc.label}</span>
               </div>
-              <Badge variant={doc.present ? 'default' : 'secondary'}>
-                {doc.present ? '✓ Présent' : 'Manquant'}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant={doc.present ? 'default' : 'secondary'} className="text-xs">
+                  {doc.present ? '✓ Présent' : 'Manquant'}
+                </Badge>
+                <RHDocumentCell
+                  collaboratorId={collaborator.id}
+                  agencyId={collaborator.agency_id}
+                  docType={doc.key as 'permis' | 'cni'}
+                />
+              </div>
             </div>
           ))}
         </div>
