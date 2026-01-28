@@ -2,15 +2,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StatsHubProvider, useStatsHub } from '../components/stats-hub/StatsHubContext';
 import { TABS_CONFIG, TabId } from '../components/stats-hub/types';
 import { GeneralTab, ApporteursTab, TechniciensTab, UniversTab, SAVTab, PrevisionnelTab } from '../components/stats-hub/tabs';
-import { LayoutDashboard, Building2, Users, Layers, AlertTriangle, CalendarClock } from 'lucide-react';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { ROUTES } from '@/config/routes';
+import { LayoutDashboard, Building2, Users, Layers, AlertTriangle, CalendarClock, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiltersProvider } from '../contexts/FiltersContext';
 import { ApiToggleProvider } from '../contexts/ApiToggleContext';
 import { AgencyProvider } from '../contexts/AgencyContext';
 import { SecondaryFiltersProvider } from '../contexts/SecondaryFiltersContext';
 import { PeriodSelector } from '../components/filters/PeriodSelector';
+import { Button } from '@/components/ui/button';
 
 const TAB_ICONS: Record<TabId, React.ReactNode> = {
   general: <LayoutDashboard className="h-4 w-4" />,
@@ -40,16 +39,10 @@ function StatsHubContent() {
     : <PeriodSelector />;
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
-      <PageHeader
-        title="Hub Statistiques"
-        backTo={ROUTES.agency.index}
-        backLabel="Mon Agence"
-        rightElement={periodSelector}
-      />
-
+    <div className="container mx-auto px-4 py-6 space-y-4">
+      {/* Ligne 1 : Sous-onglets centrés */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabId)}>
-        <TabsList className="flex flex-wrap justify-center gap-2 bg-transparent h-auto p-0 mb-6">
+        <TabsList className="flex flex-wrap justify-center gap-2 bg-transparent h-auto p-0">
           {TABS_CONFIG.map(tab => (
             <TabsTrigger 
               key={tab.id} 
@@ -61,6 +54,22 @@ function StatsHubContent() {
             </TabsTrigger>
           ))}
         </TabsList>
+
+      {/* Ligne 2 : Diffusion TV + Sélecteur de période */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+          onClick={() => window.open('/tv-display', '_blank')}
+        >
+          <ExternalLink className="h-4 w-4" />
+          <span>Diffusion TV</span>
+        </Button>
+        <div className="shrink-0">
+          {periodSelector}
+        </div>
+      </div>
 
         <AnimatePresence mode="wait">
           <motion.div
