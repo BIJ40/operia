@@ -3,7 +3,7 @@
  */
 
 import { useMemo } from 'react';
-import { Home, Clock, Ban, BookOpen } from 'lucide-react';
+import { Home, Clock, Ban, BookOpen, Loader2 } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -14,7 +14,7 @@ import { usePublicGuideTabs } from '../contexts/PublicGuideTabsContext';
 import { Block } from '@/types/block';
 
 export function PublicCategorySidebar() {
-  const { blocks } = usePublicEditor();
+  const { blocks, loading } = usePublicEditor();
   const { openTab, activeTabId } = usePublicGuideTabs();
 
   // Filtrer les catégories Apogée (exclure FAQ, HelpConfort, support de formation, recap fiches rapides)
@@ -78,8 +78,16 @@ export function PublicCategorySidebar() {
           
           <Separator className="my-2" />
           
+          {/* État de chargement */}
+          {loading && (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+              <span className="ml-2 text-sm text-muted-foreground">Chargement...</span>
+            </div>
+          )}
+          
           {/* Liste des catégories */}
-          {categories.map(category => {
+          {!loading && categories.map(category => {
             const badges = getCategoryBadges(category.id, category);
             const Icon = getIcon(category.icon);
             const isCustomImage = category.icon?.startsWith('http://') || category.icon?.startsWith('https://');
@@ -96,6 +104,13 @@ export function PublicCategorySidebar() {
               />
             );
           })}
+          
+          {/* Message si aucune catégorie */}
+          {!loading && categories.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground text-sm">
+              Aucune catégorie disponible
+            </div>
+          )}
         </div>
       </ScrollArea>
     </div>
