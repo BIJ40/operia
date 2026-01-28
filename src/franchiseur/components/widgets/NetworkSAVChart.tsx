@@ -1,4 +1,6 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
+import { motion } from "framer-motion";
+import { AlertTriangle } from "lucide-react";
 
 interface NetworkSAVChartProps {
   data: Array<{
@@ -9,56 +11,88 @@ interface NetworkSAVChartProps {
 
 export const NetworkSAVChart = ({ data }: NetworkSAVChartProps) => {
   return (
-    <div className="group relative rounded-xl border border-helpconfort-blue/15 p-6
-      bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white dark:via-background dark:to-background
-      shadow-sm transition-all duration-300 border-l-4 border-l-helpconfort-blue
-      hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5">
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold text-helpconfort-blue">
-          Évolution du taux SAV
-        </h3>
-        <p className="text-sm text-muted-foreground">Taux moyen SAV réseau par mois.</p>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: 0.2 }}
+      className="relative overflow-hidden rounded-2xl bg-white dark:bg-card border-0 shadow-lg p-6"
+    >
+      {/* Decorative gradient */}
+      <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-orange-400/15 to-red-500/10 rounded-bl-[100px] -mr-10 -mt-10" />
+      
+      <div className="mb-6 relative flex items-center gap-3">
+        <motion.div 
+          animate={{ scale: [1, 1.1, 1] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center shadow-lg"
+        >
+          <AlertTriangle className="h-5 w-5 text-white" />
+        </motion.div>
+        <div>
+          <h3 className="text-lg font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
+            Évolution SAV
+          </h3>
+          <p className="text-sm text-muted-foreground">Taux moyen mensuel du réseau</p>
+        </div>
       </div>
       
-      <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+      <ResponsiveContainer width="100%" height={280}>
+        <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <defs>
+            <linearGradient id="savGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#f97316" stopOpacity={0.4} />
+              <stop offset="100%" stopColor="#f97316" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
           <XAxis 
             dataKey="month" 
-            className="text-xs"
+            tick={{ fontSize: 11, fill: '#9ca3af' }}
+            axisLine={false}
+            tickLine={false}
           />
           <YAxis 
-            className="text-xs"
-            tickFormatter={(value) => `${value.toFixed(1)}%`}
+            tick={{ fontSize: 11, fill: '#9ca3af' }}
+            tickFormatter={(value) => `${value.toFixed(0)}%`}
+            axisLine={false}
+            tickLine={false}
           />
           <Tooltip 
             content={({ active, payload }) => {
               if (active && payload && payload.length) {
                 const data = payload[0].payload;
                 return (
-                  <div className="bg-white dark:bg-gray-800 border-2 border-primary p-3 rounded-lg shadow-xl z-50">
-                    <p className="font-semibold mb-1 text-foreground">{data.month}</p>
-                    <p className="text-sm text-primary font-bold">
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="bg-white dark:bg-card border-0 shadow-2xl p-4 rounded-xl"
+                  >
+                    <p className="font-bold text-foreground mb-2">{data.month}</p>
+                    <p className="text-lg font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
                       {data.tauxSAV.toFixed(2)}%
                     </p>
-                  </div>
+                  </motion.div>
                 );
               }
               return null;
             }}
-            cursor={{ stroke: 'hsl(var(--primary))', strokeWidth: 2 }}
+            cursor={{ stroke: '#f97316', strokeWidth: 2 }}
             wrapperStyle={{ zIndex: 100 }}
           />
-          <Line 
+          <Area 
             type="monotone"
             dataKey="tauxSAV" 
-            stroke="hsl(var(--primary))" 
+            stroke="#f97316" 
             strokeWidth={3}
-            dot={{ fill: 'hsl(var(--primary))', r: 5 }}
-            activeDot={{ r: 7 }}
+            fill="url(#savGradient)"
+            dot={{ fill: '#f97316', r: 4, strokeWidth: 2, stroke: 'white' }}
+            activeDot={{ r: 6, fill: '#ea580c' }}
           />
-        </LineChart>
+        </AreaChart>
       </ResponsiveContainer>
-    </div>
+      
+      {/* Bottom accent */}
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 via-red-500 to-rose-400" />
+    </motion.div>
   );
 };
