@@ -198,7 +198,7 @@ function UnifiedWorkspaceContent() {
           <Tabs value={validActiveTab} onValueChange={(v) => setActiveTab(v as UnifiedTab)} className="flex flex-col h-screen">
             {/* Tab bar fixe en haut */}
             <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border shadow-sm">
-              <div className="px-3 sm:px-6 pt-3 pb-0">
+              <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-0">
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
