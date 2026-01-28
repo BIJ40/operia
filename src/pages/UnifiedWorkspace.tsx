@@ -251,7 +251,7 @@ function UnifiedWorkspaceContent() {
     stats: 'pink',
     salaries: 'green',
     parc: 'orange',
-    divers: 'neutral',
+    divers: 'purple',
     guides: 'teal',
     ticketing: 'orange',
     aide: 'blue',
