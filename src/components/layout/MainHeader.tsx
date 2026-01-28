@@ -31,7 +31,7 @@ import { getRoleCapabilities } from '@/config/roleMatrix';
 import { isModuleEnabled, ModuleKey } from '@/types/modules';
 import { UnifiedSearchFloatingBar } from '@/components/unified-search';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
-import { RoleSimulatorDropdown } from './RoleSimulatorDropdown';
+// REMOVED: RoleSimulatorDropdown - fonctionnalité supprimée
 
 
 // Map d'icônes pour les sections
@@ -247,9 +247,6 @@ export function MainHeader() {
 
                 {/* Actions droite */}
                 <div className="flex items-center gap-1 ml-auto">
-                  
-                  {/* Simulateur de rôle (admin only) */}
-                  <RoleSimulatorDropdown />
                   
                   {/* Centre de notifications */}
                   <NotificationCenter />

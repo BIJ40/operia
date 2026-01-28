@@ -32,7 +32,7 @@ import { getRoleCapabilities } from '@/config/roleMatrix';
 import { ModuleKey } from '@/types/modules';
 import { UnifiedSearchFloatingBar } from '@/components/unified-search';
 import { GLOBAL_ROLES } from '@/types/globalRoles';
-import { RoleSimulatorDropdown } from './RoleSimulatorDropdown';
+// REMOVED: RoleSimulatorDropdown - fonctionnalité supprimée
 
 // Couleur active - bleu plus moderne et élégant
 const ACTIVE_COLOR = 'hsl(217, 91%, 60%)'; // Un bleu plus vif et moderne
@@ -252,9 +252,6 @@ export function TabHeader() {
 
             {/* Actions droite - position absolue dans ligne 1 */}
             <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1">
-
-              {/* Simulateur de rôle (admin only) */}
-              <RoleSimulatorDropdown />
 
               {/* Icône admin discrète (admin only) */}
               {isAdmin && (
