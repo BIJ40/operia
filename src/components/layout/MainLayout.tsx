@@ -4,6 +4,7 @@ import { LoginFormCard } from '@/components/LoginFormCard';
 import { LoginDialog } from '@/components/LoginDialog';
 import { ImageModal } from '@/components/ImageModal';
 import { AiUnifiedProvider } from '@/components/ai';
+import { FloatingChatButton } from '@/components/chat/FloatingChatButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useStorageQuota } from '@/hooks/use-storage-quota';
@@ -62,6 +63,7 @@ export function MainLayout({
 
       <ImageModal />
       <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
+      <FloatingChatButton />
     </AiUnifiedProvider>
   );
 }
