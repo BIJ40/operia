@@ -18,6 +18,16 @@ interface SalariesPillTabsProps {
   onCloseTab: (id: string) => void;
 }
 
+// Palette de couleurs du thème pour les pills collaborateurs
+const COLLAB_PILL_COLORS = [
+  '--warm-blue',
+  '--warm-orange',
+  '--warm-purple',
+  '--warm-green',
+  '--warm-pink',
+  '--warm-teal',
+];
+
 function formatCollaboratorName(c: RHCollaborator): { line1: string; line2: string } {
   const firstName = c.first_name || '';
   const lastInitial = c.last_name?.charAt(0)?.toUpperCase() || '';
@@ -42,15 +52,15 @@ export function SalariesPillTabs({
       {/* Pill Vue d'ensemble */}
       <motion.button
         onClick={() => onSelectCollaborator(null)}
-        whileHover={{ scale: 1.02 }}
+        whileHover={{ scale: 1.03, y: -1 }}
         whileTap={{ scale: 0.98 }}
         className={cn(
-          "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all",
-          "border shadow-sm min-w-fit",
-          activeCollaboratorId === null
-            ? "bg-gradient-to-r from-warm-teal/80 to-warm-blue/70 text-white border-transparent shadow-md"
-            : "bg-card hover:bg-muted/50 text-muted-foreground border-border/40"
+          "salaries-pill-tab",
+          activeCollaboratorId === null && "salaries-pill-tab-active"
         )}
+        style={{
+          '--pill-color': 'var(--warm-teal)',
+        } as React.CSSProperties}
       >
         <Users className="h-3.5 w-3.5" />
         <span>Tous</span>
@@ -62,9 +72,10 @@ export function SalariesPillTabs({
       )}
 
       {/* Pills collaborateurs ouverts */}
-      {openCollaborators.map((collab) => {
+      {openCollaborators.map((collab, index) => {
         const { line1, line2 } = formatCollaboratorName(collab);
         const isActive = activeCollaboratorId === collab.id;
+        const colorVar = COLLAB_PILL_COLORS[index % COLLAB_PILL_COLORS.length];
         
         return (
           <motion.div
@@ -74,24 +85,26 @@ export function SalariesPillTabs({
             exit={{ opacity: 0, scale: 0.9 }}
             className="relative group"
           >
-            <button
+            <motion.button
               onClick={() => onSelectCollaborator(collab.id)}
+              whileHover={{ scale: 1.03, y: -1 }}
+              whileTap={{ scale: 0.98 }}
               className={cn(
-                "flex flex-col items-center justify-center px-3 py-1 rounded-xl text-xs transition-all",
-                "border shadow-sm min-w-[52px]",
-                isActive
-                  ? "bg-gradient-to-br from-primary/90 to-primary/70 text-primary-foreground border-transparent shadow-md"
-                  : "bg-card hover:bg-muted/50 text-foreground border-border/40"
+                "salaries-pill-tab salaries-pill-tab-collab",
+                isActive && "salaries-pill-tab-active"
               )}
+              style={{
+                '--pill-color': `var(${colorVar})`,
+              } as React.CSSProperties}
             >
               <span className="font-medium leading-tight">{line1}</span>
               <span className={cn(
                 "text-[10px] leading-tight",
-                isActive ? "text-primary-foreground/80" : "text-muted-foreground"
+                isActive ? "text-white/80" : "text-muted-foreground"
               )}>
                 {line2}
               </span>
-            </button>
+            </motion.button>
             
             {/* Bouton fermer */}
             <Button
