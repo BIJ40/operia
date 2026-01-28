@@ -40,8 +40,8 @@ const AdminNotificationSender = lazy(() => import("@/pages/admin/AdminNotificati
 export function AdminRoutes() {
   return (
     <>
-      {/* Index */}
-      <Route path="/admin" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminIndex /></ModuleGuard></RoleGuard></MainLayout>} />
+      {/* Index - redirect to unified interface */}
+      <Route path="/admin" element={<Navigate to="/?tab=admin" replace />} />
       
       {/* Redirects legacy */}
       <Route path="/admin/documents" element={<Navigate to="/admin/helpi" replace />} />

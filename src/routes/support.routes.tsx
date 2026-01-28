@@ -10,12 +10,12 @@ const Faq = lazy(() => import("@/pages/Faq"));
 export function SupportRoutes() {
   return (
     <>
-      {/* Support HUB */}
-      <Route path="/support" element={<MainLayout><RoleGuard><SupportIndex /></RoleGuard></MainLayout>} />
+      {/* Support HUB - redirect to unified interface */}
+      <Route path="/support" element={<Navigate to="/?tab=aide" replace />} />
       
       {/* Legacy routes */}
-      <Route path="/support/mes-demandes" element={<Navigate to="/support" replace />} />
-      <Route path="/mes-demandes" element={<Navigate to="/support" replace />} />
+      <Route path="/support/mes-demandes" element={<Navigate to="/?tab=aide" replace />} />
+      <Route path="/mes-demandes" element={<Navigate to="/?tab=aide" replace />} />
       
       {/* Console Support - Redirected to Gestion de Projet */}
       <Route path="/support/console" element={<Navigate to="/projects/kanban" replace />} />

@@ -11,7 +11,7 @@ import { useSearchParams } from 'react-router-dom';
 import { 
   Home, Building2, BarChart3, ClipboardList, 
   Car, MoreHorizontal, Ticket, HelpCircle,
-  Loader2, BookOpen, Settings, Network, Cog
+  Loader2, BookOpen, Settings, Network, Cog, Shield
 } from 'lucide-react';
 import { 
   DndContext, 
@@ -65,6 +65,8 @@ const DiversTabContent = lazy(() => import('@/components/unified/tabs/DiversTabC
 const GuidesTabContent = lazy(() => import('@/components/unified/tabs/GuidesTabContent'));
 const TicketingTabContent = lazy(() => import('@/components/unified/tabs/TicketingTabContent'));
 const SupportTabContent = lazy(() => import('@/components/unified/tabs/SupportTabContent'));
+const FranchiseurTabContent = lazy(() => import('@/components/unified/tabs/FranchiseurTabContent'));
+const AdminTabContent = lazy(() => import('@/components/unified/tabs/AdminTabContent'));
 
 type UnifiedTab = 
   | 'accueil' 
@@ -75,7 +77,9 @@ type UnifiedTab =
   | 'divers' 
   | 'guides'
   | 'ticketing' 
-  | 'aide';
+  | 'aide'
+  | 'franchiseur'
+  | 'admin';
 
 interface TabConfig {
   id: UnifiedTab;
@@ -85,7 +89,7 @@ interface TabConfig {
 }
 
 // Ordre par défaut des onglets (hors Accueil qui est toujours premier)
-const DEFAULT_TAB_ORDER: UnifiedTab[] = ['agence', 'stats', 'salaries', 'parc', 'divers', 'guides', 'ticketing', 'aide'];
+const DEFAULT_TAB_ORDER: UnifiedTab[] = ['agence', 'stats', 'salaries', 'parc', 'divers', 'guides', 'ticketing', 'aide', 'franchiseur', 'admin'];
 
 function LoadingFallback() {
   return (
@@ -148,6 +152,8 @@ function UnifiedWorkspaceContent() {
     { id: 'guides', label: 'Guides', icon: BookOpen, requiresOption: { module: 'help_academy' } },
     { id: 'ticketing', label: 'Ticketing', icon: Ticket, requiresOption: { module: 'apogee_tickets' } },
     { id: 'aide', label: 'Aide', icon: HelpCircle },
+    { id: 'franchiseur', label: 'Franchiseur', icon: Network, requiresOption: { module: 'reseau_franchiseur' } },
+    { id: 'admin', label: 'Admin', icon: Shield, requiresOption: { module: 'admin_plateforme' } },
   ], []);
   
   // Filtrer les onglets visibles selon permissions et simulation
@@ -314,18 +320,6 @@ function UnifiedWorkspaceContent() {
                   {/* Contrôles admin à droite */}
                   <div className="flex items-center gap-2 pb-1">
                     <RoleSimulatorDropdown />
-                    {isAdmin && (
-                      <Link to="/admin">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="rounded-full h-8 w-8 text-muted-foreground hover:text-foreground"
-                          title="Administration"
-                        >
-                          <Cog className="w-4 h-4" />
-                        </Button>
-                      </Link>
-                    )}
                   </div>
                 </div>
               </div>
@@ -374,6 +368,14 @@ function UnifiedWorkspaceContent() {
                 
                 <TabsContent value="aide" className="mt-0">
                   <SupportTabContent />
+                </TabsContent>
+                
+                <TabsContent value="franchiseur" className="mt-0">
+                  <FranchiseurTabContent />
+                </TabsContent>
+                
+                <TabsContent value="admin" className="mt-0">
+                  <AdminTabContent />
                 </TabsContent>
               </Suspense>
             </main>
