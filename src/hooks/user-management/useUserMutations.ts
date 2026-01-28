@@ -199,14 +199,27 @@ export function useUserMutations({
       const { data, error } = await supabase.functions.invoke('reset-user-password', {
         body: { userId, newPassword },
       });
-      if (error) throw error;
+      
+      // Extraire le message d'erreur propre du JSON embarqué dans l'erreur SDK
+      if (error) {
+        let errorMessage = error.message || 'Erreur inconnue';
+        const jsonMatch = errorMessage.match(/\{[^}]+\}/);
+        if (jsonMatch) {
+          try {
+            const parsed = JSON.parse(jsonMatch[0]);
+            if (parsed.error) errorMessage = parsed.error;
+          } catch { /* garder le message original */ }
+        }
+        throw new Error(errorMessage);
+      }
+      
       if (data?.error) throw new Error(data.error);
       return { userId };
     },
     onSuccess: () => {
       toast.success('Mot de passe réinitialisé');
     },
-    onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
+    onError: (error: Error) => toast.error(error.message),
   });
 
   return {
