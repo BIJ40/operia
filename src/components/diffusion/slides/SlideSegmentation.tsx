@@ -50,8 +50,8 @@ export const SlideSegmentation = ({ currentMonthIndex }: SlideSegmentationProps)
             <YAxis tickFormatter={(value) => formatEuros(value)} />
             <Tooltip formatter={(value: number) => formatEuros(value)} />
             <Legend />
-            <Bar dataKey="Particuliers" fill="#3b82f6" stackId="a" />
-            <Bar dataKey="Apporteurs" fill="#10b981" stackId="a" />
+            <Bar dataKey="Particuliers" fill="hsl(200, 85%, 60%)" stackId="a" />
+            <Bar dataKey="Apporteurs" fill="hsl(145, 60%, 55%)" stackId="a" />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

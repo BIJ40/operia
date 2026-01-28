@@ -71,7 +71,7 @@ export const SlideApporteursSAV = ({ currentMonthIndex }: SlideApporteursSAVProp
               <XAxis type="number" tickFormatter={(value) => formatEuros(value)} />
               <YAxis type="category" dataKey="name" width={100} />
               <Tooltip formatter={(value: number) => formatEuros(value)} />
-              <Bar dataKey="CA" fill="#3b82f6" />
+              <Bar dataKey="CA" fill="hsl(200, 85%, 60%)" />
             </BarChart>
           </ResponsiveContainer>
         </div>
