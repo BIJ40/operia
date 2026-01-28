@@ -1,10 +1,11 @@
 /**
- * Contenu de l'onglet "Mes collaborateurs" - Suivi RH
- * Wraps the RHTabs system for use within the main RH tabbed interface
+ * Contenu de l'onglet "Salariés" - Suivi RH
+ * Utilise un système de pills comme StatsHub pour afficher chaque salarié
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { useRHCollaborators } from '@/hooks/useRHSuivi';
 import { RHCockpitTable } from '@/components/rh/cockpit';
 import { CompetencesMatrixPrint } from '@/components/rh/CompetencesMatrixPrint';
@@ -16,19 +17,37 @@ import { useSensitiveData } from '@/hooks/useSensitiveData';
 import { CollaboratorFormData } from '@/types/collaborator';
 import { Button } from '@/components/ui/button';
 import { UserPlus } from 'lucide-react';
+import { useSessionState } from '@/hooks/useSessionState';
 
-// Système d'onglets navigateur
-import { RHTabsProvider, RHTabsBar, RHTabsContent, useRHTabs } from '@/components/rh/browser-tabs';
 import { ApogeeSyncButton } from '@/components/rh/ApogeeSync';
+import { SalariesPillTabs } from '@/components/rh/salaries/SalariesPillTabs';
+import { RHCollaboratorPanel } from '@/components/rh/browser-tabs/RHCollaboratorPanel';
+import { RHTabsProvider } from '@/components/rh/browser-tabs/RHTabsContext';
 import { RHCollaborator } from '@/types/rh-suivi';
+import { cn } from '@/lib/utils';
 
-function RHSuiviContentInner() {
+interface OpenTabsState {
+  tabs: string[];
+  activeId: string | null;
+}
+
+export function RHSuiviContent() {
   const queryClient = useQueryClient();
   const { agencyId, agence } = useAuth();
-  const { openCollaborator } = useRHTabs();
+  const [searchParams, setSearchParams] = useSearchParams();
   
   const { data: collaborators = [], isLoading, refetch } = useRHCollaborators({ includeFormer: false });
   const { data: epiSummaries = [] } = useCollaboratorsEpiSummary(agencyId || undefined);
+  
+  // État des onglets ouverts - persisté en session
+  const [tabsState, setTabsState] = useSessionState<OpenTabsState>('rh_salaries_tabs', {
+    tabs: [],
+    activeId: null,
+  });
+  
+  // Sync avec URL (paramètre ?collab=)
+  const urlCollab = searchParams.get('collab');
+  const activeCollaboratorId = urlCollab || tabsState.activeId;
   
   const [showCompetencesMatrix, setShowCompetencesMatrix] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
@@ -66,7 +85,6 @@ function RHSuiviContentInner() {
       city: editingCollaborator.city || '',
       birth_place: editingCollaborator.birth_place || '',
       apogee_user_id: editingCollaborator.apogee_user_id || undefined,
-      // Données sensibles
       birth_date: sensitiveData?.birth_date || '',
       social_security_number: sensitiveData?.social_security_number || '',
       emergency_contact: sensitiveData?.emergency_contact || '',
@@ -74,6 +92,56 @@ function RHSuiviContentInner() {
       competences: [],
     };
   }, [editingCollaborator, sensitiveData]);
+
+  // Sélectionner un collaborateur (ouvre un onglet si pas déjà ouvert)
+  const handleSelectCollaborator = useCallback((id: string | null) => {
+    if (id === null) {
+      // Vue d'ensemble
+      setTabsState(prev => ({ ...prev, activeId: null }));
+      setSearchParams(params => {
+        const newParams = new URLSearchParams(params);
+        newParams.delete('collab');
+        return newParams;
+      }, { replace: true });
+    } else {
+      // Ouvrir le collaborateur
+      setTabsState(prev => ({
+        tabs: prev.tabs.includes(id) ? prev.tabs : [...prev.tabs, id],
+        activeId: id,
+      }));
+      setSearchParams(params => {
+        const newParams = new URLSearchParams(params);
+        newParams.set('collab', id);
+        return newParams;
+      }, { replace: true });
+    }
+  }, [setTabsState, setSearchParams]);
+  
+  // Fermer un onglet
+  const handleCloseTab = useCallback((id: string) => {
+    setTabsState(prev => {
+      const newTabs = prev.tabs.filter(t => t !== id);
+      const wasActive = prev.activeId === id;
+      const newActiveId = wasActive 
+        ? (newTabs.length > 0 ? newTabs[newTabs.length - 1] : null)
+        : prev.activeId;
+      
+      // Mettre à jour URL si on ferme l'onglet actif
+      if (wasActive) {
+        setSearchParams(params => {
+          const newParams = new URLSearchParams(params);
+          if (newActiveId) {
+            newParams.set('collab', newActiveId);
+          } else {
+            newParams.delete('collab');
+          }
+          return newParams;
+        }, { replace: true });
+      }
+      
+      return { tabs: newTabs, activeId: newActiveId };
+    });
+  }, [setTabsState, setSearchParams]);
 
   // Handler de création collaborateur
   const handleCreateCollaborator = (data: CollaboratorFormData) => {
@@ -117,77 +185,92 @@ function RHSuiviContentInner() {
     }
   };
 
-  // Handler pour ouvrir un profil dans un onglet navigateur
+  // Handler pour ouvrir un profil depuis le tableau
   const handleOpenProfile = (collaborator: RHCollaborator) => {
-    openCollaborator(collaborator);
+    handleSelectCollaborator(collaborator.id);
   };
 
-  // Contenu de l'onglet "Vue d'ensemble" - maintenant le cockpit
-  const overviewContent = (
-    <div className="flex-1 flex flex-col min-h-0">
-      {/* Tableau cockpit */}
-      <RHCockpitTable
-        collaborators={collaborators}
-        epiSummaries={epiSummaries}
-        isLoading={isLoading}
-        onRefresh={refetch}
-        onOpenProfile={handleOpenProfile}
-        className="flex-1"
-      />
-    </div>
-  );
+  // Vérifier si l'onglet actif est valide
+  const activeCollaborator = useMemo(() => {
+    if (!activeCollaboratorId) return null;
+    return collaborators.find(c => c.id === activeCollaboratorId) || null;
+  }, [activeCollaboratorId, collaborators]);
 
   return (
-    <div className="flex flex-col min-h-0 flex-1">
-      {/* Header avec actions */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="text-sm text-muted-foreground">
-          {collaborators.length} collaborateur{collaborators.length > 1 ? 's' : ''} actif{collaborators.length > 1 ? 's' : ''}
+    <RHTabsProvider collaborators={collaborators}>
+      <div className="flex flex-col h-[calc(100vh-12rem)] overflow-hidden">
+        {/* Header avec actions */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-sm text-muted-foreground">
+            {collaborators.length} salarié{collaborators.length > 1 ? 's' : ''} actif{collaborators.length > 1 ? 's' : ''}
+          </div>
+          <div className="flex items-center gap-2">
+            <ApogeeSyncButton
+              agencySlug={agence || undefined}
+              collaborators={collaborators}
+            />
+            <Button onClick={handleOpenCreate} size="sm">
+              <UserPlus className="h-4 w-4 mr-2" />
+              Nouveau salarié
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <ApogeeSyncButton
-            agencySlug={agence || undefined}
-            collaborators={collaborators}
-          />
-          <Button onClick={handleOpenCreate} size="sm">
-            <UserPlus className="h-4 w-4 mr-2" />
-            Nouveau collaborateur
-          </Button>
+
+        {/* Barre de pills salariés */}
+        <SalariesPillTabs
+          collaborators={collaborators}
+          activeCollaboratorId={activeCollaboratorId}
+          onSelectCollaborator={handleSelectCollaborator}
+          openTabs={tabsState.tabs}
+          onCloseTab={handleCloseTab}
+        />
+        
+        {/* Contenu */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          {/* Vue d'ensemble (tableau) */}
+          <div className={cn(
+            "h-full overflow-auto",
+            activeCollaboratorId ? "hidden" : "block"
+          )}>
+            <RHCockpitTable
+              collaborators={collaborators}
+              epiSummaries={epiSummaries}
+              isLoading={isLoading}
+              onRefresh={refetch}
+              onOpenProfile={handleOpenProfile}
+              className="flex-1"
+            />
+          </div>
+          
+          {/* Panneaux collaborateurs (restent montés pour préserver l'état) */}
+          {tabsState.tabs.map(collabId => (
+            <div
+              key={collabId}
+              className={cn(
+                "h-full overflow-auto",
+                activeCollaboratorId === collabId ? "block" : "hidden"
+              )}
+            >
+              <RHCollaboratorPanel collaboratorId={collabId} />
+            </div>
+          ))}
         </div>
+        
+        <CompetencesMatrixPrint
+          open={showCompetencesMatrix}
+          onOpenChange={setShowCompetencesMatrix}
+        />
+
+        {/* Wizard création/édition fiche collaborateur RH */}
+        <CollaboratorWizard
+          open={showWizard}
+          onOpenChange={handleCloseWizard}
+          onSubmit={wizardMode === 'edit' ? handleUpdateCollaborator : handleCreateCollaborator}
+          isPending={wizardMode === 'edit' ? updateMutation.isPending : createMutation.isPending}
+          mode={wizardMode}
+          initialData={wizardInitialData}
+        />
       </div>
-
-      {/* Barre d'onglets navigateur (conservée) */}
-      <RHTabsBar collaborators={collaborators} />
-      
-      {/* Contenu des onglets */}
-      <RHTabsContent overviewContent={overviewContent} />
-      
-      <CompetencesMatrixPrint
-        open={showCompetencesMatrix}
-        onOpenChange={setShowCompetencesMatrix}
-      />
-
-      {/* Wizard création/édition fiche collaborateur RH */}
-      <CollaboratorWizard
-        open={showWizard}
-        onOpenChange={handleCloseWizard}
-        onSubmit={wizardMode === 'edit' ? handleUpdateCollaborator : handleCreateCollaborator}
-        isPending={wizardMode === 'edit' ? updateMutation.isPending : createMutation.isPending}
-        mode={wizardMode}
-        initialData={wizardInitialData}
-      />
-    </div>
-  );
-}
-
-export function RHSuiviContent() {
-  const { data: collaborators = [] } = useRHCollaborators({ includeFormer: false });
-  
-  return (
-    <div className="flex flex-col h-[calc(100vh-12rem)] overflow-hidden">
-      <RHTabsProvider collaborators={collaborators}>
-        <RHSuiviContentInner />
-      </RHTabsProvider>
-    </div>
+    </RHTabsProvider>
   );
 }

@@ -106,7 +106,7 @@ export function useAutoSaveCompetencies(collaboratorId: string) {
 }
 
 // Direct update function (for use outside of hooks)
-export async function updateCollaboratorField(collaboratorId: string, field: string, value: any) {
+export async function updateCollaboratorField(collaboratorId: string, field: string, value: any): Promise<void> {
   const { error } = await supabase
     .from('collaborators')
     .update({ [field]: value || null, updated_at: new Date().toISOString() })
@@ -116,4 +116,6 @@ export async function updateCollaboratorField(collaboratorId: string, field: str
     toast.error('Erreur lors de la sauvegarde');
     throw error;
   }
+  
+  toast.success('Enregistré');
 }
