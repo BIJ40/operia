@@ -79,11 +79,15 @@ function PageLoader() {
 import { useMaintenanceMode } from "./hooks/useMaintenanceMode";
 import { MaintenanceBlock } from "./components/maintenance/MaintenanceBlock";
 import { PWAInstallPrompt } from "./components/pwa/PWAInstallPrompt";
+import { useVersionCheck } from "./hooks/useVersionCheck";
 
 function AppContent() {
   const { mustChangePassword, user, isAuthLoading } = useAuth();
   const { isBlocked, message, isLoading: isMaintenanceLoading } = useMaintenanceMode();
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+
+  // Auto-check for app updates and force refresh if needed
+  useVersionCheck();
 
   useEffect(() => {
     setShowPasswordDialog(mustChangePassword);
