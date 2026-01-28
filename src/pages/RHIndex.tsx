@@ -1,116 +1,123 @@
 /**
- * RHIndex - Page index RH pour N2+ uniquement
- * Le portail salarié N1 a été supprimé.
+ * RHIndex - Page index RH et Parc avec navigation par onglets style navigateur
  */
-import { 
-  Users, 
-  CalendarDays,
-  Car,
-  ClipboardList,
-  Presentation
-} from "lucide-react";
-import { ROUTES } from "@/config/routes";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { IndexTile } from "@/components/ui/index-tile";
-import type { LucideIcon } from "lucide-react";
+import { CalendarDays, Car, MoreHorizontal, ClipboardList, Loader2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSessionState } from "@/hooks/useSessionState";
+import { RHSuiviContent } from "@/components/rh/RHSuiviContent";
+import { lazy, Suspense } from "react";
 
-interface RHModule {
-  id: string;
-  title: string;
-  description: string;
-  icon: LucideIcon;
-  href: string;
+// Lazy load des contenus d'onglets
+const PlanningsContent = lazy(() => import("@/components/rh/tabs/PlanningsTabContent"));
+const VehiculesContent = lazy(() => import("@/components/rh/tabs/VehiculesTabContent"));
+const DiversContent = lazy(() => import("@/components/rh/tabs/DiversTabContent"));
+
+type RHTab = 'collaborateurs' | 'plannings' | 'vehicules' | 'divers';
+
+function LoadingFallback() {
+  return (
+    <div className="flex items-center justify-center h-64">
+      <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+    </div>
+  );
 }
 
-const RH_MODULES: RHModule[] = [
-  {
-    id: 'suivi-rh',
-    title: 'Suivi RH',
-    description: 'Gestion des collaborateurs',
-    icon: ClipboardList,
-    href: ROUTES.rh.suivi,
-  },
-  {
-    id: 'plannings',
-    title: 'Plannings',
-    description: 'Plannings hebdomadaires',
-    icon: CalendarDays,
-    href: ROUTES.rh.plannings,
-  },
-  // DocGen masqué pour le moment - accessible via /admin/hidden-features
-  // {
-  //   id: 'docgen',
-  //   title: 'DocGen',
-  //   description: 'Génération de documents',
-  //   icon: FileEdit,
-  //   href: ROUTES.rh.docgen,
-  // },
-  {
-    id: 'reunions',
-    title: 'Réunions',
-    description: 'Historique des réunions',
-    icon: Presentation,
-    href: ROUTES.rh.reunions,
-  },
-];
-
-const MAINTENANCE_MODULES: RHModule[] = [
-  {
-    id: 'parc-vehicules',
-    title: 'Parc & Matériel',
-    description: 'Véhicules, EPI et équipements',
-    icon: Car,
-    href: ROUTES.rh.parc,
-  },
-];
-
 export default function RHIndex() {
+  const [activeTab, setActiveTab] = useSessionState<RHTab>('rh_active_tab', 'collaborateurs');
+
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
-      <PageHeader
-        title="RH & Maintenance"
-        subtitle="Gestion des ressources humaines et maintenance"
-        backTo="/"
-        backLabel="Accueil"
-      />
+    <div className="container mx-auto py-4 px-4 space-y-4">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as RHTab)}>
+        <div className="flex items-end gap-1 pb-0">
+          <TabsList className="h-auto p-0 bg-transparent gap-0.5 items-end">
+            {/* Onglet Mes collaborateurs */}
+            <TabsTrigger 
+              value="collaborateurs" 
+              className="relative px-5 py-3 rounded-t-2xl border-2 border-b-0 transition-all duration-200
+                data-[state=inactive]:bg-muted/40 data-[state=inactive]:border-border/40 data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/60 data-[state=inactive]:hover:border-border/60
+                data-[state=active]:bg-background data-[state=active]:border-primary/30 data-[state=active]:shadow-md data-[state=active]:z-10 data-[state=active]:-mb-[2px]"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-sm">
+                  <ClipboardList className="w-4.5 h-4.5 text-white" />
+                </div>
+                <span className="text-lg font-semibold tracking-tight">Mes collaborateurs</span>
+              </div>
+            </TabsTrigger>
 
-      {/* Section Gestion RH */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
-          <Users className="h-5 w-5 text-helpconfort-blue" />
-          Gestion RH
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {RH_MODULES.map(module => (
-            <IndexTile
-              key={module.id}
-              title={module.title}
-              description={module.description}
-              icon={module.icon}
-              href={module.href}
-            />
-          ))}
-        </div>
-      </section>
+            {/* Onglet Plannings */}
+            <TabsTrigger 
+              value="plannings" 
+              className="relative px-5 py-3 rounded-t-2xl border-2 border-b-0 transition-all duration-200
+                data-[state=inactive]:bg-muted/40 data-[state=inactive]:border-border/40 data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/60 data-[state=inactive]:hover:border-border/60
+                data-[state=active]:bg-background data-[state=active]:border-primary/30 data-[state=active]:shadow-md data-[state=active]:z-10 data-[state=active]:-mb-[2px]"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-sm">
+                  <CalendarDays className="w-4.5 h-4.5 text-white" />
+                </div>
+                <span className="text-lg font-semibold tracking-tight">Plannings</span>
+              </div>
+            </TabsTrigger>
 
-      {/* Section Maintenance */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
-          <Car className="h-5 w-5 text-helpconfort-blue" />
-          Maintenance
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {MAINTENANCE_MODULES.map(module => (
-            <IndexTile
-              key={module.id}
-              title={module.title}
-              description={module.description}
-              icon={module.icon}
-              href={module.href}
-            />
-          ))}
+            {/* Onglet Véhicules */}
+            <TabsTrigger 
+              value="vehicules" 
+              className="relative px-5 py-3 rounded-t-2xl border-2 border-b-0 transition-all duration-200
+                data-[state=inactive]:bg-muted/40 data-[state=inactive]:border-border/40 data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/60 data-[state=inactive]:hover:border-border/60
+                data-[state=active]:bg-background data-[state=active]:border-primary/30 data-[state=active]:shadow-md data-[state=active]:z-10 data-[state=active]:-mb-[2px]"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-sm">
+                  <Car className="w-4.5 h-4.5 text-white" />
+                </div>
+                <span className="text-lg font-semibold tracking-tight">Véhicules</span>
+              </div>
+            </TabsTrigger>
+
+            {/* Onglet Divers */}
+            <TabsTrigger 
+              value="divers" 
+              className="relative px-5 py-3 rounded-t-2xl border-2 border-b-0 transition-all duration-200
+                data-[state=inactive]:bg-muted/40 data-[state=inactive]:border-border/40 data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/60 data-[state=inactive]:hover:border-border/60
+                data-[state=active]:bg-background data-[state=active]:border-primary/30 data-[state=active]:shadow-md data-[state=active]:z-10 data-[state=active]:-mb-[2px]"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-sm">
+                  <MoreHorizontal className="w-4.5 h-4.5 text-white" />
+                </div>
+                <span className="text-lg font-semibold tracking-tight">Divers</span>
+              </div>
+            </TabsTrigger>
+          </TabsList>
+          {/* Ligne de séparation qui passe "sous" l'onglet actif */}
+          <div className="flex-1 border-b border-border" />
         </div>
-      </section>
+
+        <div className="pt-4">
+          <TabsContent value="collaborateurs" className="mt-0">
+            <RHSuiviContent />
+          </TabsContent>
+
+          <TabsContent value="plannings" className="mt-0">
+            <Suspense fallback={<LoadingFallback />}>
+              <PlanningsContent />
+            </Suspense>
+          </TabsContent>
+
+          <TabsContent value="vehicules" className="mt-0">
+            <Suspense fallback={<LoadingFallback />}>
+              <VehiculesContent />
+            </Suspense>
+          </TabsContent>
+
+          <TabsContent value="divers" className="mt-0">
+            <Suspense fallback={<LoadingFallback />}>
+              <DiversContent />
+            </Suspense>
+          </TabsContent>
+        </div>
+      </Tabs>
     </div>
   );
 }

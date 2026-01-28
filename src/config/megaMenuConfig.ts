@@ -66,8 +66,8 @@ export const MEGA_MENU_CONFIG: MegaMenuSection[] = [
   // ============================================
   {
     id: 'rh',
-    title: 'RH & Maintenance',
-    description: 'Ressources humaines & maintenance',
+    title: 'RH et Parc',
+    description: 'Ressources humaines et gestion du parc',
     icon: 'Briefcase',
     href: '/rh',
     moduleKey: 'rh',

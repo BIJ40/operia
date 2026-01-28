@@ -144,9 +144,9 @@ export const PAGE_HEADER_MATCHERS: PageHeaderConfig[] = [
   { match: (path) => path === '/rh/equipe', pageKey: 'rh_equipe_redirect', defaultTitle: 'Suivi RH', defaultSubtitle: 'Redirection vers Suivi RH', icon: 'Users', parentRoute: '/rh', parentLabel: 'RH' },
   { match: (path) => path === '/rh/suivi/plannings', pageKey: 'rh_plannings', defaultTitle: 'Plannings Techniciens', defaultSubtitle: 'Visualisez les plannings hebdomadaires', icon: 'Calendar', parentRoute: '/rh/suivi', parentLabel: 'Suivi RH' },
   { match: (path) => path.startsWith('/rh/suivi/') && path !== '/rh/suivi/plannings' && path !== '/rh/suivi/heures', pageKey: 'rh_collaborateur_profile', defaultTitle: 'Fiche collaborateur', defaultSubtitle: 'Profil 360°', icon: 'User', parentRoute: '/rh/suivi', parentLabel: 'Suivi RH' },
-  { match: (path) => path === '/rh/dashboard', pageKey: 'rh_dashboard', defaultTitle: 'Dashboard RH', defaultSubtitle: 'Statistiques et indicateurs RH', icon: 'BarChart3', parentRoute: '/rh', parentLabel: 'RH & Maintenance' },
-  { match: (path) => path === '/rh/parc', pageKey: 'rh_parc', defaultTitle: 'Parc & Véhicules', defaultSubtitle: 'Gestion des véhicules et équipements', icon: 'Car', parentRoute: '/rh', parentLabel: 'RH & Maintenance' },
-  { match: (path) => path === '/rh', pageKey: 'rh_index', defaultTitle: 'RH & Maintenance', defaultSubtitle: 'Ressources Humaines & Maintenance', icon: 'Users', parentRoute: '/', parentLabel: 'Accueil' },
+  { match: (path) => path === '/rh/dashboard', pageKey: 'rh_dashboard', defaultTitle: 'Dashboard RH', defaultSubtitle: 'Statistiques et indicateurs RH', icon: 'BarChart3', parentRoute: '/rh', parentLabel: 'RH et Parc' },
+  { match: (path) => path === '/rh/parc', pageKey: 'rh_parc', defaultTitle: 'Parc & Véhicules', defaultSubtitle: 'Gestion des véhicules et équipements', icon: 'Car', parentRoute: '/rh', parentLabel: 'RH et Parc' },
+  { match: (path) => path === '/rh', pageKey: 'rh_index', defaultTitle: 'RH et Parc', defaultSubtitle: 'Ressources humaines et gestion du parc', icon: 'Users', parentRoute: '/', parentLabel: 'Accueil' },
   
   // ============================================
   // HELP ACADEMY

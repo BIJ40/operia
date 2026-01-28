@@ -349,7 +349,7 @@ export function TabHeader() {
           {/* Clé basée sur l'onglet actif pour éviter la persistance de sous-menus entre sections */}
           {/* Masqué pour /hc-reseau et /agency car les browser tabs remplacent ce menu */}
           <AnimatePresence mode="wait">
-            {effectiveTabId && subTabs.length > 0 && !location.pathname.startsWith('/hc-reseau') && !location.pathname.startsWith('/agency') ? (
+            {effectiveTabId && subTabs.length > 0 && !location.pathname.startsWith('/hc-reseau') && !location.pathname.startsWith('/agency') && !location.pathname.startsWith('/rh') ? (
               <motion.div
                 key={`subtabs-${effectiveTabId}`}
                 initial={{ opacity: 0, y: -8 }}
