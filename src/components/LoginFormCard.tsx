@@ -7,7 +7,6 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
 import { Loader2, LogIn } from 'lucide-react';
-import operiaLogo from '@/assets/operia-logo.png';
 
 const loginSchema = z.object({
   email: z.string()
@@ -86,12 +85,6 @@ export function LoginFormCard() {
   return (
     <Card className="w-full max-w-md shadow-2xl border-border/50">
       <CardHeader className="text-center pb-4">
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <img src={operiaLogo} alt="OPER.IA" className="w-12 h-12 object-contain" />
-          <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            OPER.IA
-          </span>
-        </div>
         <CardTitle className="text-xl">Connexion</CardTitle>
         <CardDescription>
           Connectez-vous avec votre email et votre mot de passe.
