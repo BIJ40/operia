@@ -101,6 +101,7 @@ export function InternalGuideSidebar() {
                 isActive={activeTabId === category.slug}
                 onClick={() => openTab(category.slug, category.title, Icon)}
                 badges={badges}
+                disabled={badges.isEmpty}
               />
             );
           })}
@@ -124,17 +125,20 @@ interface SidebarItemProps {
   isActive: boolean;
   onClick: () => void;
   badges?: { hasInProgress: boolean; hasNew: boolean; isEmpty: boolean };
+  disabled?: boolean;
 }
 
-function SidebarItem({ icon: Icon, customIcon, label, isActive, onClick, badges }: SidebarItemProps) {
+function SidebarItem({ icon: Icon, customIcon, label, isActive, onClick, badges, disabled }: SidebarItemProps) {
   return (
     <button
-      onClick={onClick}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
       className={cn(
         'w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-sm transition-colors',
-        'hover:bg-accent hover:text-accent-foreground',
-        isActive && 'bg-primary/10 text-primary font-medium',
-        badges?.isEmpty && 'opacity-50'
+        disabled 
+          ? 'opacity-50 cursor-not-allowed' 
+          : 'hover:bg-accent hover:text-accent-foreground cursor-pointer',
+        isActive && 'bg-primary/10 text-primary font-medium'
       )}
     >
       {customIcon ? (
