@@ -63,13 +63,7 @@ verify_jwt = true
 [functions.sensitive-data]
 verify_jwt = true
 
-[functions.faq-search]
-verify_jwt = true
-
 [functions.unified-search]
-verify_jwt = true
-
-[functions.ai-search-extract]
 verify_jwt = true
 
 [functions.helpi-search]
@@ -88,9 +82,6 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.generate-embeddings]
-verify_jwt = true
-
-[functions.reformulate-ticket-faq]
 verify_jwt = true
 
 [functions.get-client-contact]
