@@ -4,7 +4,7 @@
  * Onglets réorganisables via drag-and-drop (sauf Accueil)
  */
 
-import { lazy, Suspense, useMemo, useState, useCallback } from 'react';
+import { lazy, Suspense, useMemo, useState, useCallback, useEffect } from 'react';
 import { 
   Home, Building2, BarChart3, ClipboardList, 
   Car, MoreHorizontal, Ticket, HelpCircle,
@@ -178,6 +178,13 @@ function UnifiedWorkspaceContent() {
   
   // Si l'onglet actif n'est plus visible, revenir à accueil
   const validActiveTab = sortedTabs.some(t => t.id === activeTab) ? activeTab : 'accueil';
+  
+  // Mettre à jour le titre de la page selon l'onglet actif
+  useEffect(() => {
+    const activeTabConfig = sortedTabs.find(t => t.id === validActiveTab);
+    const tabLabel = activeTabConfig?.label || 'Accueil';
+    document.title = `${tabLabel} - HelpConfort`;
+  }, [validActiveTab, sortedTabs]);
   
   const tabButtonClass = `
     relative px-5 py-3 rounded-t-xl border-2 border-b-0 transition-all duration-300 whitespace-nowrap
