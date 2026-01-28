@@ -16,6 +16,7 @@ import Error403 from "./pages/Error403";
 import Error500 from "./pages/Error500";
 
 // Dashboard & core pages
+const UnifiedWorkspace = lazy(() => import("./pages/UnifiedWorkspace"));
 const Dashboard = lazy(() => import("./pages/DashboardStatic"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Changelog = lazy(() => import("./pages/Changelog"));
@@ -109,7 +110,7 @@ function AppContent() {
           {/* ============================================ */}
           {/* CORE ROUTES */}
           {/* ============================================ */}
-          <Route path="/" element={<MainLayout><RoleGuard minRole="franchisee_user"><Dashboard /></RoleGuard></MainLayout>} />
+          <Route path="/" element={<RoleGuard minRole="franchisee_user"><UnifiedWorkspace /></RoleGuard>} />
           <Route path="/profile" element={<MainLayout><RoleGuard><Profile /></RoleGuard></MainLayout>} />
           <Route path="/changelog" element={<MainLayout><Changelog /></MainLayout>} />
           <Route path="/roadmap" element={<MainLayout><Roadmap /></MainLayout>} />
