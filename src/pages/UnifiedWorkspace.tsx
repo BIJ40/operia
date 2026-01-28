@@ -30,6 +30,7 @@ import { Tabs, TabsContent, TabsList } from '@/components/ui/tabs';
 import { useSessionState } from '@/hooks/useSessionState';
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
+import { useRoleSimulator } from '@/contexts/RoleSimulatorContext';
 import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
 import { useStorageQuota } from '@/hooks/use-storage-quota';
 import { useUserPresence } from '@/hooks/use-user-presence';
@@ -39,6 +40,7 @@ import { LoginDialog } from '@/components/LoginDialog';
 import { ImageModal } from '@/components/ImageModal';
 import { AiUnifiedProvider } from '@/components/ai';
 import { DraggableTab } from '@/components/unified/DraggableTab';
+import { SimulationBanner } from '@/components/layout/SimulationBanner';
 
 // Providers nécessaires
 import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
@@ -90,6 +92,7 @@ function LoadingFallback() {
 function UnifiedWorkspaceContent() {
   const { globalRole } = useAuth();
   const { isImpersonating } = useImpersonation();
+  const { isSimulating, simulatedView, viewConfig } = useRoleSimulator();
   const { hasModule, hasModuleOption } = useEffectiveModules();
   const [activeTab, setActiveTab] = useSessionState<UnifiedTab>('unified_workspace_tab', 'accueil');
   const [tabOrder, setTabOrder] = useSessionState<UnifiedTab[]>('unified_workspace_tab_order', DEFAULT_TAB_ORDER);
@@ -100,7 +103,12 @@ function UnifiedWorkspaceContent() {
   useUserPresence();
   useConnectionLogger();
   
-  const isPlatformAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';
+  // Utiliser le rôle simulé ou réel
+  const effectiveRole = isSimulating ? viewConfig.simulatedRole : globalRole;
+  const isPlatformAdmin = !isSimulating && (globalRole === 'superadmin' || globalRole === 'platform_admin');
+  
+  // Onglets exclus pour la vue Franchiseur
+  const franchiseurExcludedTabs: UnifiedTab[] = ['agence', 'salaries', 'parc'];
   
   // Configuration des onglets avec permissions
   const allTabs: TabConfig[] = useMemo(() => [
@@ -115,11 +123,26 @@ function UnifiedWorkspaceContent() {
     { id: 'aide', label: 'Aide', icon: HelpCircle },
   ], []);
   
-  // Filtrer les onglets visibles selon permissions
+  // Filtrer les onglets visibles selon permissions et simulation
   const visibleTabs = useMemo(() => {
     return allTabs.filter(tab => {
+      // En mode franchiseur, exclure certains onglets
+      if (simulatedView === 'franchiseur' && franchiseurExcludedTabs.includes(tab.id)) {
+        return false;
+      }
+      
       if (!tab.requiresOption) return true;
       if (isPlatformAdmin) return true;
+      
+      // Pour N0 simulé avec projet, montrer ticketing
+      if (simulatedView === 'n0_project' && tab.id === 'ticketing') {
+        return true;
+      }
+      
+      // Pour N0 simple, cacher ticketing
+      if (simulatedView === 'n0_simple' && tab.id === 'ticketing') {
+        return false;
+      }
       
       const { module, option } = tab.requiresOption;
       if (option) {
@@ -127,7 +150,7 @@ function UnifiedWorkspaceContent() {
       }
       return hasModule(module as any);
     });
-  }, [allTabs, isPlatformAdmin, hasModule, hasModuleOption]);
+  }, [allTabs, isPlatformAdmin, hasModule, hasModuleOption, simulatedView]);
   
   // Onglets triés selon l'ordre personnalisé (Accueil toujours premier)
   const sortedTabs = useMemo(() => {
@@ -198,10 +221,16 @@ function UnifiedWorkspaceContent() {
   // IDs pour le sortable context (exclure accueil)
   const sortableIds = sortedTabs.filter(t => t.id !== 'accueil').map(t => t.id);
   
+  // Calculer le padding top selon les bandeaux actifs
+  const topPadding = isSimulating ? 'pt-10' : isImpersonating ? 'pt-10' : '';
+  
   return (
     <AiUnifiedProvider>
       <TooltipProvider delayDuration={0}>
-        <div className={`min-h-screen bg-background ${isImpersonating ? 'pt-10' : ''}`}>
+        {/* Bandeau de simulation admin */}
+        <SimulationBanner />
+        
+        <div className={`min-h-screen bg-background ${topPadding}`}>
           <Tabs value={validActiveTab} onValueChange={(v) => setActiveTab(v as UnifiedTab)} className="flex flex-col h-screen">
             {/* Tab bar fixe en haut */}
             <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm">
