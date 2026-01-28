@@ -31,7 +31,7 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { EditorProvider } from "./contexts/EditorContext";
 import { ApporteurEditorProvider } from "./contexts/ApporteurEditorContext";
 import { ImpersonationProvider } from "./contexts/ImpersonationContext";
-import { RoleSimulatorProvider } from "./contexts/RoleSimulatorContext";
+// REMOVED: RoleSimulatorProvider - fonctionnalité supprimée (simulation non fonctionnelle)
 import { ChangePasswordDialog } from "./components/ChangePasswordDialog";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { GlobalErrorBoundary } from "./components/system/GlobalErrorBoundary";
@@ -170,19 +170,17 @@ function App() {
       <TooltipProvider>
         <BrowserRouter>
           <AuthProvider>
-            <RoleSimulatorProvider>
-              <ImpersonationProvider>
-                <EditorProvider>
-                  <ApporteurEditorProvider>
-                    <GlobalErrorBoundary>
-                      <AppContent />
-                    </GlobalErrorBoundary>
-                    <Toaster />
-                    <Sonner />
-                  </ApporteurEditorProvider>
-                </EditorProvider>
-              </ImpersonationProvider>
-            </RoleSimulatorProvider>
+            <ImpersonationProvider>
+              <EditorProvider>
+                <ApporteurEditorProvider>
+                  <GlobalErrorBoundary>
+                    <AppContent />
+                  </GlobalErrorBoundary>
+                  <Toaster />
+                  <Sonner />
+                </ApporteurEditorProvider>
+              </EditorProvider>
+            </ImpersonationProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
