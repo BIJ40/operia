@@ -1,29 +1,32 @@
 /**
  * UnifiedWorkspace - Interface unifiée sans header
  * Tous les modules accessibles via onglets sur une seule page
- * 
- * Onglets:
- * - ACCUEIL (dashboard)
- * - Mon agence
- * - Statistiques
- * - Mes apporteurs
- * - Mes collaborateurs
- * - Plannings
- * - Véhicules
- * - Divers
- * - TICKETING (si accès)
- * - SUPPORT
+ * Onglets réorganisables via drag-and-drop (sauf Accueil)
  */
 
-import { lazy, Suspense, useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState, useCallback } from 'react';
 import { 
   Home, Building2, BarChart3, ClipboardList, 
   Car, MoreHorizontal, Ticket, HelpCircle,
   Loader2, BookOpen
 } from 'lucide-react';
+import { 
+  DndContext, 
+  closestCenter, 
+  KeyboardSensor, 
+  PointerSensor, 
+  useSensor, 
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core';
+import { 
+  arrayMove, 
+  SortableContext, 
+  sortableKeyboardCoordinates, 
+  horizontalListSortingStrategy 
+} from '@dnd-kit/sortable';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList } from '@/components/ui/tabs';
 import { useSessionState } from '@/hooks/useSessionState';
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
@@ -35,6 +38,7 @@ import { LoginFormCard } from '@/components/LoginFormCard';
 import { LoginDialog } from '@/components/LoginDialog';
 import { ImageModal } from '@/components/ImageModal';
 import { AiUnifiedProvider } from '@/components/ai';
+import { DraggableTab } from '@/components/unified/DraggableTab';
 
 // Providers nécessaires
 import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
@@ -72,6 +76,9 @@ interface TabConfig {
   requiresOption?: { module: string; option?: string };
 }
 
+// Ordre par défaut des onglets (hors Accueil qui est toujours premier)
+const DEFAULT_TAB_ORDER: UnifiedTab[] = ['agence', 'stats', 'salaries', 'parc', 'divers', 'guides', 'ticketing', 'aide'];
+
 function LoadingFallback() {
   return (
     <div className="flex items-center justify-center h-64">
@@ -85,6 +92,7 @@ function UnifiedWorkspaceContent() {
   const { isImpersonating } = useImpersonation();
   const { hasModule, hasModuleOption } = useEffectiveModules();
   const [activeTab, setActiveTab] = useSessionState<UnifiedTab>('unified_workspace_tab', 'accueil');
+  const [tabOrder, setTabOrder] = useSessionState<UnifiedTab[]>('unified_workspace_tab_order', DEFAULT_TAB_ORDER);
   const [loginOpen, setLoginOpen] = useState(false);
   
   // Hooks for tracking
@@ -95,20 +103,21 @@ function UnifiedWorkspaceContent() {
   const isPlatformAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';
   
   // Configuration des onglets avec permissions
-  const tabs: TabConfig[] = useMemo(() => {
-    const baseTabs: TabConfig[] = [
-      { id: 'accueil', label: 'Accueil', icon: Home },
-      { id: 'agence', label: 'Mon agence', icon: Building2 },
-      { id: 'stats', label: 'Stats', icon: BarChart3, requiresOption: { module: 'pilotage_agence', option: 'stats_hub' } },
-      { id: 'salaries', label: 'Salariés', icon: ClipboardList },
-      { id: 'parc', label: 'Parc', icon: Car },
-      { id: 'divers', label: 'Divers', icon: MoreHorizontal },
-      { id: 'guides', label: 'Guides', icon: BookOpen, requiresOption: { module: 'help_academy' } },
-      { id: 'ticketing', label: 'Ticketing', icon: Ticket, requiresOption: { module: 'apogee_tickets' } },
-      { id: 'aide', label: 'Aide', icon: HelpCircle },
-    ];
-    
-    return baseTabs.filter(tab => {
+  const allTabs: TabConfig[] = useMemo(() => [
+    { id: 'accueil', label: 'Accueil', icon: Home },
+    { id: 'agence', label: 'Mon agence', icon: Building2 },
+    { id: 'stats', label: 'Stats', icon: BarChart3, requiresOption: { module: 'pilotage_agence', option: 'stats_hub' } },
+    { id: 'salaries', label: 'Salariés', icon: ClipboardList },
+    { id: 'parc', label: 'Parc', icon: Car },
+    { id: 'divers', label: 'Divers', icon: MoreHorizontal },
+    { id: 'guides', label: 'Guides', icon: BookOpen, requiresOption: { module: 'help_academy' } },
+    { id: 'ticketing', label: 'Ticketing', icon: Ticket, requiresOption: { module: 'apogee_tickets' } },
+    { id: 'aide', label: 'Aide', icon: HelpCircle },
+  ], []);
+  
+  // Filtrer les onglets visibles selon permissions
+  const visibleTabs = useMemo(() => {
+    return allTabs.filter(tab => {
       if (!tab.requiresOption) return true;
       if (isPlatformAdmin) return true;
       
@@ -118,10 +127,57 @@ function UnifiedWorkspaceContent() {
       }
       return hasModule(module as any);
     });
-  }, [isPlatformAdmin, hasModule, hasModuleOption]);
+  }, [allTabs, isPlatformAdmin, hasModule, hasModuleOption]);
+  
+  // Onglets triés selon l'ordre personnalisé (Accueil toujours premier)
+  const sortedTabs = useMemo(() => {
+    const accueilTab = visibleTabs.find(t => t.id === 'accueil')!;
+    const otherTabs = visibleTabs.filter(t => t.id !== 'accueil');
+    
+    // Trier selon tabOrder, en gardant les onglets non présents dans l'ordre à la fin
+    const sorted = [...otherTabs].sort((a, b) => {
+      const indexA = tabOrder.indexOf(a.id);
+      const indexB = tabOrder.indexOf(b.id);
+      if (indexA === -1 && indexB === -1) return 0;
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    });
+    
+    return [accueilTab, ...sorted];
+  }, [visibleTabs, tabOrder]);
+  
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Minimum distance before drag starts
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+  
+  // Handle drag end
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over || active.id === over.id) return;
+    
+    // Ne pas permettre de déplacer Accueil
+    if (active.id === 'accueil' || over.id === 'accueil') return;
+    
+    const oldIndex = tabOrder.indexOf(active.id as UnifiedTab);
+    const newIndex = tabOrder.indexOf(over.id as UnifiedTab);
+    
+    if (oldIndex !== -1 && newIndex !== -1) {
+      setTabOrder(arrayMove(tabOrder, oldIndex, newIndex));
+    }
+  }, [tabOrder, setTabOrder]);
   
   // Si l'onglet actif n'est plus visible, revenir à accueil
-  const validActiveTab = tabs.some(t => t.id === activeTab) ? activeTab : 'accueil';
+  const validActiveTab = sortedTabs.some(t => t.id === activeTab) ? activeTab : 'accueil';
   
   const tabButtonClass = `
     relative px-4 py-2.5 rounded-t-xl border-2 border-b-0 transition-all duration-200 whitespace-nowrap
@@ -131,6 +187,9 @@ function UnifiedWorkspaceContent() {
     data-[state=active]:z-10 data-[state=active]:-mb-[2px]
   `;
   
+  // IDs pour le sortable context (exclure accueil)
+  const sortableIds = sortedTabs.filter(t => t.id !== 'accueil').map(t => t.id);
+  
   return (
     <AiUnifiedProvider>
       <TooltipProvider delayDuration={0}>
@@ -139,25 +198,53 @@ function UnifiedWorkspaceContent() {
             {/* Tab bar fixe en haut */}
             <div className="sticky top-0 z-50 bg-background border-b border-border">
               <div className="px-2 sm:px-4 pt-2 pb-0">
-                <TabsList className="h-auto p-0 bg-transparent flex flex-wrap gap-1 items-end justify-start">
-                  {tabs.map((tab) => {
-                    const Icon = tab.icon;
-                    return (
-                      <TabsTrigger 
-                        key={tab.id}
-                        value={tab.id} 
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <TabsList className="h-auto p-0 bg-transparent flex flex-wrap gap-1 items-end justify-start">
+                    {/* Onglet Accueil - non draggable */}
+                    {sortedTabs[0] && (
+                      <button
+                        onClick={() => setActiveTab('accueil')}
+                        data-state={validActiveTab === 'accueil' ? 'active' : 'inactive'}
                         className={tabButtonClass}
                       >
                         <div className="flex items-center gap-1.5">
                           <div className="w-6 h-6 rounded-md bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-sm">
-                            <Icon className="w-3 h-3 text-white" />
+                            <Home className="w-3 h-3 text-white" />
                           </div>
-                          <span className="text-xs font-semibold tracking-tight">{tab.label}</span>
+                          <span className="text-xs font-semibold tracking-tight">Accueil</span>
                         </div>
-                      </TabsTrigger>
-                    );
-                  })}
-                </TabsList>
+                      </button>
+                    )}
+                    
+                    {/* Onglets sortables */}
+                    <SortableContext items={sortableIds} strategy={horizontalListSortingStrategy}>
+                      {sortedTabs.slice(1).map((tab) => {
+                        const Icon = tab.icon;
+                        return (
+                          <DraggableTab
+                            key={tab.id}
+                            id={tab.id}
+                            isActive={validActiveTab === tab.id}
+                            isDraggable={true}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={tabButtonClass}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-6 h-6 rounded-md bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-sm">
+                                <Icon className="w-3 h-3 text-white" />
+                              </div>
+                              <span className="text-xs font-semibold tracking-tight">{tab.label}</span>
+                            </div>
+                          </DraggableTab>
+                        );
+                      })}
+                    </SortableContext>
+                  </TabsList>
+                </DndContext>
               </div>
             </div>
             
