@@ -241,14 +241,6 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
           </DropdownMenu>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Link to={ROUTES.projects.review}>
-            <Button variant="outline" size="sm">
-              <ListChecks className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Revue en masse</span>
-            </Button>
-          </Link>
-        </div>
       </div>
 
       {/* Filtres */}
