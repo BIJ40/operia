@@ -88,8 +88,9 @@ export function RHTabsProvider({ children, collaborators }: RHTabsProviderProps)
     [state.tabs, collaboratorsMap]
   );
   
-  // Sync active tab avec URL
-  const activeTabId = searchParams.get('tab') || state.activeTabId || 'overview';
+  // Sync active tab avec URL - utilise 'collab' pour éviter conflit avec onglet global 'tab'
+  const urlCollab = searchParams.get('collab');
+  const activeTabId = urlCollab || state.activeTabId || 'overview';
   
   const openCollaborator = useCallback((collaborator: RHCollaborator) => {
     const tabId = collaborator.id;
@@ -114,10 +115,10 @@ export function RHTabsProvider({ children, collaborators }: RHTabsProviderProps)
       };
     });
     
-    // Update URL
+    // Update URL avec 'collab' pour éviter conflit avec onglet global
     setSearchParams(prev => {
       const newParams = new URLSearchParams(prev);
-      newParams.set('tab', tabId);
+      newParams.set('collab', tabId);
       return newParams;
     }, { replace: true });
   }, [setState, setSearchParams]);
@@ -142,12 +143,23 @@ export function RHTabsProvider({ children, collaborators }: RHTabsProviderProps)
         }
       }
       
+      // Sync URL
+      setSearchParams(params => {
+        const newParams = new URLSearchParams(params);
+        if (newActiveId === 'overview') {
+          newParams.delete('collab');
+        } else {
+          newParams.set('collab', newActiveId);
+        }
+        return newParams;
+      }, { replace: true });
+      
       return {
         tabs: newTabs,
         activeTabId: newActiveId,
       };
     });
-  }, [setState]);
+  }, [setState, setSearchParams]);
   
   const setActiveTab = useCallback((tabId: string) => {
     setState(prev => ({
@@ -157,7 +169,11 @@ export function RHTabsProvider({ children, collaborators }: RHTabsProviderProps)
     
     setSearchParams(prev => {
       const newParams = new URLSearchParams(prev);
-      newParams.set('tab', tabId);
+      if (tabId === 'overview') {
+        newParams.delete('collab');
+      } else {
+        newParams.set('collab', tabId);
+      }
       return newParams;
     }, { replace: true });
   }, [setState, setSearchParams]);
