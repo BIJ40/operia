@@ -233,7 +233,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
 
   // ==================== PILOTAGE ====================
   {
-    path: '/hc-agency',
+    path: '/agency',
     label: 'Pilotage Index',
     component: 'PilotageIndex',
     section: 'pilotage',
@@ -243,7 +243,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     },
   },
   {
-    path: '/hc-agency/stats-hub',
+    path: '/agency/stats-hub',
     label: 'Hub Statistiques',
     component: 'StatsHub',
     section: 'pilotage',
@@ -254,7 +254,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     },
   },
   {
-    path: '/hc-agency/indicateurs',
+    path: '/agency/indicateurs',
     label: 'Indicateurs',
     component: 'IndicateursLayout',
     section: 'pilotage',
@@ -264,7 +264,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     },
   },
   {
-    path: '/hc-agency/veille-apporteurs',
+    path: '/agency/veille-apporteurs',
     label: 'Veille Apporteurs',
     component: 'VeilleApporteursPage',
     section: 'pilotage',
@@ -275,7 +275,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     },
   },
   {
-    path: '/hc-agency/actions',
+    path: '/agency/actions',
     label: 'Actions à Mener',
     component: 'ActionsAMener',
     section: 'pilotage',
@@ -285,7 +285,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     },
   },
   {
-    path: '/hc-agency/actions/category/:slug',
+    path: '/agency/actions/category/:slug',
     label: 'Catégorie Actions',
     component: 'CategoryActionsAMener',
     section: 'pilotage',
@@ -296,7 +296,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     isDynamic: true,
   },
   {
-    path: '/hc-agency/statistiques/diffusion',
+    path: '/agency/diffusion',
     label: 'Dashboard Diffusion',
     component: 'DiffusionDashboard',
     section: 'pilotage',
@@ -307,7 +307,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     },
   },
   {
-    path: '/hc-agency/rh-tech',
+    path: '/agency/rh-tech',
     label: 'RH Tech',
     component: 'RHTech',
     section: 'pilotage',
@@ -317,7 +317,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     },
   },
   {
-    path: '/hc-agency/rh-tech/planning',
+    path: '/agency/rh-tech/planning',
     label: 'Planning Hebdo',
     component: 'PlanningHebdo',
     section: 'pilotage',
@@ -327,7 +327,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     },
   },
   {
-    path: '/hc-agency/mes-apporteurs',
+    path: '/agency/apporteurs',
     label: 'Mes Apporteurs',
     component: 'MesApporteursPage',
     section: 'pilotage',
@@ -338,7 +338,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     },
   },
   {
-    path: '/hc-agency/map',
+    path: '/agency/carte',
     label: 'Carte des RDV',
     component: 'RdvMapPage',
     section: 'pilotage',
@@ -349,7 +349,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     },
   },
   {
-    path: '/hc-agency/commercial',
+    path: '/agency/commercial',
     label: 'Commercial',
     component: 'CommercialPage',
     section: 'pilotage',
@@ -359,7 +359,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     },
   },
   {
-    path: '/hc-agency/commercial/support-pptx',
+    path: '/agency/commercial/support-pptx',
     label: 'Support Commercial PPTX',
     component: 'CommercialSupportPptx',
     section: 'pilotage',
@@ -368,54 +368,64 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
       moduleGuard: { moduleKey: 'pilotage_agence' },
     },
   },
+  // Legacy /hc-agency redirects
+  {
+    path: '/hc-agency',
+    label: 'Redirect to /agency',
+    component: 'Navigate',
+    section: 'pilotage',
+    guards: {},
+    isRedirect: true,
+    redirectTo: '/agency',
+  },
   // Pilotage Redirects
   {
-    path: '/hc-agency/statistiques',
+    path: '/agency/statistiques',
     label: 'Redirect Statistiques',
     component: 'Navigate',
     section: 'pilotage',
     guards: {},
     isRedirect: true,
-    redirectTo: '/hc-agency/indicateurs',
+    redirectTo: '/agency/indicateurs',
   },
   {
-    path: '/hc-agency/indicateurs/apporteurs',
+    path: '/agency/indicateurs/apporteurs',
     label: 'Redirect Indicateurs Apporteurs',
     component: 'Navigate',
     section: 'pilotage',
     guards: {},
     isRedirect: true,
-    redirectTo: '/hc-agency/stats-hub',
+    redirectTo: '/agency/stats-hub',
   },
   {
-    path: '/hc-agency/indicateurs/univers',
+    path: '/agency/indicateurs/univers',
     label: 'Redirect Indicateurs Univers',
     component: 'Navigate',
     section: 'pilotage',
     guards: {},
     isRedirect: true,
-    redirectTo: '/hc-agency/stats-hub',
+    redirectTo: '/agency/stats-hub',
   },
   {
-    path: '/hc-agency/indicateurs/techniciens',
+    path: '/agency/indicateurs/techniciens',
     label: 'Redirect Indicateurs Tech',
     component: 'Navigate',
     section: 'pilotage',
     guards: {},
     isRedirect: true,
-    redirectTo: '/hc-agency/stats-hub',
+    redirectTo: '/agency/stats-hub',
   },
   {
-    path: '/hc-agency/indicateurs/sav',
+    path: '/agency/indicateurs/sav',
     label: 'Redirect Indicateurs SAV',
     component: 'Navigate',
     section: 'pilotage',
     guards: {},
     isRedirect: true,
-    redirectTo: '/hc-agency/stats-hub',
+    redirectTo: '/agency/stats-hub',
   },
   {
-    path: '/hc-agency/statia-builder',
+    path: '/agency/statia-builder',
     label: 'Redirect STATiA',
     component: 'Navigate',
     section: 'pilotage',
@@ -424,7 +434,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     redirectTo: '/admin/statia-by-bij',
   },
   {
-    path: '/hc-agency/maintenance',
+    path: '/agency/maintenance',
     label: 'Redirect Maintenance',
     component: 'Navigate',
     section: 'pilotage',

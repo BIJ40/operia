@@ -3,9 +3,9 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Edit, Trash2, Plus, Lightbulb, AlertCircle, Info, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
-import { OperiaBlock } from '@/contexts/OperiaEditorContext';
+import { OperiaBlock } from '@/contexts/HcServicesEditorContext';
 
-interface OperiaSectionProps {
+interface HcServicesSectionProps {
   section: OperiaBlock;
   isEditMode: boolean;
   canEdit: boolean;
@@ -29,7 +29,7 @@ const TIPS_COLORS: Record<string, string> = {
   success: 'bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800',
 };
 
-export function OperiaSection({
+export function HcServicesSection({
   section,
   isEditMode,
   canEdit,
@@ -37,7 +37,7 @@ export function OperiaSection({
   onDelete,
   onAddSection,
   onAddTips,
-}: OperiaSectionProps) {
+}: HcServicesSectionProps) {
   const {
     attributes,
     listeners,

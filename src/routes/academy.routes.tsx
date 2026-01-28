@@ -3,7 +3,7 @@ import { Route, Navigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { ModuleGuard } from "@/components/auth/ModuleGuard";
-import { OperiaEditorProvider } from "@/contexts/OperiaEditorContext";
+import { HcServicesEditorProvider } from "@/contexts/HcServicesEditorContext";
 
 // Lazy loaded pages
 const AcademyIndex = lazy(() => import("@/pages/AcademyIndex"));
@@ -15,8 +15,8 @@ const CategoryApporteur = lazy(() => import("@/pages/CategoryApporteur"));
 const HelpConfort = lazy(() => import("@/pages/HelpConfort"));
 const CategoryHelpConfort = lazy(() => import("@/pages/CategoryHelpConfort"));
 const Favorites = lazy(() => import("@/pages/Favorites"));
-const OperiaGuide = lazy(() => import("@/pages/OperiaGuide"));
-const CategoryOperia = lazy(() => import("@/pages/CategoryOperia"));
+const HcServicesGuide = lazy(() => import("@/pages/HcServicesGuide"));
+const CategoryHcServices = lazy(() => import("@/pages/CategoryHcServices"));
 
 export function AcademyRoutes() {
   return (
@@ -33,9 +33,12 @@ export function AcademyRoutes() {
       <Route path="/academy/apporteurs/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><ApporteurSubcategories /></ModuleGuard></RoleGuard></MainLayout>} />
       <Route path="/academy/apporteurs/category/:slug/sub/:subslug" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><CategoryApporteur /></ModuleGuard></RoleGuard></MainLayout>} />
       
-      {/* Guide OPERIA */}
-      <Route path="/academy/operia" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><OperiaEditorProvider><OperiaGuide /></OperiaEditorProvider></ModuleGuard></RoleGuard></MainLayout>} />
-      <Route path="/academy/operia/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><OperiaEditorProvider><CategoryOperia /></OperiaEditorProvider></ModuleGuard></RoleGuard></MainLayout>} />
+      {/* Guide HC Services (ex-OPERIA) */}
+      <Route path="/academy/hc-services" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><HcServicesEditorProvider><HcServicesGuide /></HcServicesEditorProvider></ModuleGuard></RoleGuard></MainLayout>} />
+      <Route path="/academy/hc-services/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><HcServicesEditorProvider><CategoryHcServices /></HcServicesEditorProvider></ModuleGuard></RoleGuard></MainLayout>} />
+      {/* Legacy OPERIA redirects */}
+      <Route path="/academy/operia" element={<Navigate to="/academy/hc-services" replace />} />
+      <Route path="/academy/operia/category/:slug" element={<Navigate to="/academy/hc-services" replace />} />
       
       {/* Base Documentaire */}
       <Route path="/academy/hc-base" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><HelpConfort /></ModuleGuard></RoleGuard></MainLayout>} />

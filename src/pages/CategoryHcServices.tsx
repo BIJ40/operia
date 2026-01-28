@@ -1,5 +1,5 @@
 import { useParams, Navigate, Link } from 'react-router-dom';
-import { useOperiaEditor, OperiaBlock } from '@/contexts/OperiaEditorContext';
+import { useOperiaEditor, OperiaBlock } from '@/contexts/HcServicesEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { ROUTES } from '@/config/routes';
 import { Button } from '@/components/ui/button';
@@ -25,8 +25,8 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { useMemo, useState } from 'react';
-import { OperiaSection } from '@/components/operia/OperiaSection';
-import { OperiaEditDialog } from '@/components/operia/OperiaEditDialog';
+import { HcServicesSection } from '@/components/hc-services-guide/HcServicesSection';
+import { HcServicesEditDialog } from '@/components/hc-services-guide/HcServicesEditDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -197,7 +197,7 @@ export default function CategoryOperia() {
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm pb-4 pt-2 -mx-4 px-4">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 shrink-0">
-            <Link to={getEditUrl(ROUTES.academy.operia)}>
+            <Link to={getEditUrl(ROUTES.academy.hcServices)}>
               <Button variant="ghost" size="sm" className="gap-2">
                 <ArrowLeft className="h-4 w-4" />
                 Retour
@@ -208,7 +208,7 @@ export default function CategoryOperia() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span>
-                    <Link to={prevCategory ? getEditUrl(ROUTES.academy.operiaCategory(prevCategory.slug)) : '#'}>
+                    <Link to={prevCategory ? getEditUrl(ROUTES.academy.hcServicesCategory(prevCategory.slug)) : '#'}>
                       <Button 
                         variant="ghost" 
                         size="icon" 
@@ -247,7 +247,7 @@ export default function CategoryOperia() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span>
-                    <Link to={nextCategory ? getEditUrl(ROUTES.academy.operiaCategory(nextCategory.slug)) : '#'}>
+                    <Link to={nextCategory ? getEditUrl(ROUTES.academy.hcServicesCategory(nextCategory.slug)) : '#'}>
                       <Button 
                         variant="ghost" 
                         size="icon" 
@@ -357,7 +357,7 @@ export default function CategoryOperia() {
               className="space-y-4"
             >
               {filteredSections.map((section) => (
-                <OperiaSection
+                <HcServicesSection
                   key={section.id}
                   section={section}
                   isEditMode={isEditMode}
@@ -374,7 +374,7 @@ export default function CategoryOperia() {
       )}
 
       {/* Edit Dialog */}
-      <OperiaEditDialog
+      <HcServicesEditDialog
         open={!!editingId}
         onOpenChange={(open) => !open && setEditingId(null)}
         section={editingSection}

@@ -28,7 +28,7 @@ const HIDDEN_FEATURES: HiddenFeature[] = [
     name: 'Veille Apporteurs',
     description: 'Radar de surveillance des apporteurs d\'affaires : dormants, en déclin, sous-seuil CA.',
     module: 'Pilotage Agence',
-    hiddenRoutes: ['/hc-agency/veille-apporteurs'],
+    hiddenRoutes: ['/agency/veille-apporteurs'],
     reason: 'Fonctionnalité en cours de finalisation - engine StatIA opérationnel mais UI non stabilisée.',
     priority: 'medium',
   },
