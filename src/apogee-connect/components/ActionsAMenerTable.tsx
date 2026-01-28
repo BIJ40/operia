@@ -21,9 +21,9 @@ const ACTION_COLORS: Record<ActionType, { bg: string; border: string; icon: stri
     icon: 'text-blue-500'
   },
   a_facturer: { 
-    bg: 'bg-emerald-50 dark:bg-emerald-950/30', 
-    border: 'border-emerald-200 dark:border-emerald-800',
-    icon: 'text-emerald-500'
+    bg: 'bg-amber-50 dark:bg-amber-950/30', 
+    border: 'border-amber-200 dark:border-amber-800',
+    icon: 'text-amber-500'
   },
   relance_technicien: { 
     bg: 'bg-purple-50 dark:bg-purple-950/30', 
