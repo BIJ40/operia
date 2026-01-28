@@ -1,8 +1,8 @@
 /**
  * Routes du module RH (Ressources Humaines)
  * 
- * SIMPLIFICATION: Le portail salarié N1 a été supprimé.
- * Seules les fonctionnalités N2 (back-office franchisé) sont conservées.
+ * SIMPLIFICATION v0.8.5: Suppression des pages legacy collaborateur.
+ * L'accès aux fiches se fait uniquement via le Cockpit (/rh/suivi).
  */
 import { lazy } from "react";
 import { Route, Navigate } from "react-router-dom";
@@ -13,11 +13,8 @@ import { ModuleGuard } from "@/components/auth/ModuleGuard";
 // Pages N2 (back-office) - Lazy loaded
 const RHIndex = lazy(() => import("@/pages/RHIndex"));
 const RHSuiviIndex = lazy(() => import("@/pages/rh/RHSuiviIndex"));
-const RHCollaborateurPage = lazy(() => import("@/pages/rh/RHCollaborateurPage"));
 const CollaborateurProfilePage = lazy(() => import("@/pages/CollaborateurProfilePage"));
-// GestionHeuresPage et TimesheetsValidationPage supprimés (legacy N1 v0.8.3)
 const MaintenancePreventivePage = lazy(() => import("@/pages/MaintenancePreventivePage"));
-// EPIPage supprimée - fonctionnalités intégrées dans le Parc
 const DocGenPage = lazy(() => import("@/pages/rh/DocGenPage"));
 const RHMeetingsPage = lazy(() => import("@/pages/rh/RHMeetingsPage"));
 const PlanningHebdo = lazy(() => import("@/pages/PlanningTechniciensSemaine"));
@@ -42,7 +39,7 @@ export function RHRoutes() {
       />
 
       {/* ============================================ */}
-      {/* SUIVI RH (N2 back-office) */}
+      {/* SUIVI RH - COCKPIT (N2 back-office) */}
       {/* ============================================ */}
       <Route 
         path="/rh/suivi" 
@@ -54,16 +51,9 @@ export function RHRoutes() {
           </MainLayout>
         } 
       />
-      <Route 
-        path="/rh/suivi/:id" 
-        element={
-          <MainLayout>
-            <RoleGuard minRole="franchisee_admin">
-              <RHCollaborateurPage />
-            </RoleGuard>
-          </MainLayout>
-        } 
-      />
+      {/* Legacy: /rh/suivi/:id redirige vers le cockpit */}
+      <Route path="/rh/suivi/:id" element={<Navigate to="/rh/suivi" replace />} />
+      
       <Route 
         path="/rh/suivi/plannings" 
         element={
@@ -76,7 +66,6 @@ export function RHRoutes() {
           </MainLayout>
         } 
       />
-      {/* Routes GestionHeuresPage et TimesheetsValidationPage supprimées (legacy N1 v0.8.3) */}
 
       {/* ============================================ */}
       {/* MAINTENANCE (N2) */}
@@ -126,35 +115,17 @@ export function RHRoutes() {
 
       {/* ============================================ */}
       {/* LEGACY REDIRECTS */}
+      {/* Toutes les anciennes routes redirigent vers le cockpit */}
       {/* ============================================ */}
-      {/* Anciennes routes équipe → suivi */}
       <Route path="/rh/equipe" element={<Navigate to="/rh/suivi" replace />} />
       <Route path="/rh/equipe/plannings" element={<Navigate to="/rh/suivi/plannings" replace />} />
-      <Route path="/rh/equipe/heures" element={<Navigate to="/rh/suivi/heures" replace />} />
-      <Route 
-        path="/rh/equipe/:id" 
-        element={
-          <MainLayout>
-            <RoleGuard minRole="franchisee_admin">
-              <RHCollaborateurPage />
-            </RoleGuard>
-          </MainLayout>
-        } 
-      />
+      <Route path="/rh/equipe/heures" element={<Navigate to="/rh/suivi" replace />} />
+      <Route path="/rh/equipe/:id" element={<Navigate to="/rh/suivi" replace />} />
       
       {/* Legacy redirects maintenus pour bookmarks existants */}
       <Route path="/hc-agency/equipe" element={<Navigate to="/rh/suivi" replace />} />
       <Route path="/hc-agency/collaborateurs" element={<Navigate to="/rh/suivi" replace />} />
-      <Route 
-        path="/hc-agency/collaborateurs/:id" 
-        element={
-          <MainLayout>
-            <RoleGuard minRole="franchisee_admin">
-              <RHCollaborateurPage />
-            </RoleGuard>
-          </MainLayout>
-        } 
-      />
+      <Route path="/hc-agency/collaborateurs/:id" element={<Navigate to="/rh/suivi" replace />} />
       <Route path="/hc-agency/demandes-rh" element={<Navigate to="/rh" replace />} />
       <Route path="/hc-agency/gestion-conges" element={<Navigate to="/rh" replace />} />
       <Route path="/hc-agency/dashboard-rh" element={<Navigate to="/rh" replace />} />
