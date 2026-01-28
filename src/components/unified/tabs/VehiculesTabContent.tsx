@@ -17,9 +17,9 @@ function LoadingFallback() {
 
 export default function VehiculesTabContent() {
   return (
-    <div className="py-3 px-2 sm:px-4">
+    <div className="h-[calc(100vh-14rem)]">
       <Suspense fallback={<LoadingFallback />}>
-        <MaintenancePreventivePage />
+        <MaintenancePreventivePage embedded />
       </Suspense>
     </div>
   );
