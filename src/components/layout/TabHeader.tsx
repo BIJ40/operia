@@ -29,10 +29,10 @@ import { APP_VERSION } from '@/config/version';
 import { cn } from '@/lib/utils';
 import { MEGA_MENU_CONFIG, SUPPORT_MENU, MegaMenuLink, MegaMenuSection } from '@/config/megaMenuConfig';
 import { getRoleCapabilities } from '@/config/roleMatrix';
-// Logo temporairement retiré
 import { ModuleKey } from '@/types/modules';
 import { UnifiedSearchFloatingBar } from '@/components/unified-search';
 import { GLOBAL_ROLES } from '@/types/globalRoles';
+import { RoleSimulatorDropdown } from './RoleSimulatorDropdown';
 
 // Couleur active - bleu plus moderne et élégant
 const ACTIVE_COLOR = 'hsl(217, 91%, 60%)'; // Un bleu plus vif et moderne
@@ -253,7 +253,8 @@ export function TabHeader() {
             {/* Actions droite - position absolue dans ligne 1 */}
             <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1">
 
-              {/* Console support supprimée - basé sur support_tickets legacy */}
+              {/* Simulateur de rôle (admin only) */}
+              <RoleSimulatorDropdown />
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
