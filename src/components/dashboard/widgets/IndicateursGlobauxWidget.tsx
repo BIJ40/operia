@@ -15,6 +15,7 @@ import { LoadedData, StatParams } from '@/statia/definitions/types';
 import { supabase } from '@/integrations/supabase/client';
 import { loadSAVOverridesByAgencyUuid } from '@/statia/services/savOverridesService';
 import { useDashboardPeriod } from '@/pages/DashboardStatic';
+import { ACCENT_THEMES, type AccentThemeKey } from '@/lib/accentThemes';
 
 // Configuration des KPIs à afficher (sans SAV)
 const KPI_CONFIG: Array<{ 
@@ -22,8 +23,7 @@ const KPI_CONFIG: Array<{
   statId: string;
   label: string; 
   format: 'currency' | 'percent' | 'number' | 'days'; 
-  bgColor: string; 
-  textColor: string;
+  accent: AccentThemeKey;
   icon: string;
   getValue: (result: any) => number | null;
 }> = [
@@ -32,8 +32,7 @@ const KPI_CONFIG: Array<{
     statId: 'ca_global_ht',
     label: 'CA période', 
     format: 'currency', 
-    bgColor: 'bg-blue-500',
-    textColor: 'text-blue-600',
+    accent: 'blue',
     icon: '€',
     getValue: (r) => r?.value ?? null
   },
@@ -42,8 +41,7 @@ const KPI_CONFIG: Array<{
     statId: 'taux_transformation_devis_nombre',
     label: 'Taux transfo', 
     format: 'percent', 
-    bgColor: 'bg-emerald-500',
-    textColor: 'text-emerald-600',
+    accent: 'green',
     icon: '📈',
     getValue: (r) => r?.value ?? null
   },
@@ -52,8 +50,7 @@ const KPI_CONFIG: Array<{
     statId: 'panier_moyen',
     label: 'Panier moyen', 
     format: 'currency', 
-    bgColor: 'bg-pink-500',
-    textColor: 'text-pink-600',
+    accent: 'pink',
     icon: '🛒',
     getValue: (r) => r?.value ?? null
   },
@@ -62,8 +59,7 @@ const KPI_CONFIG: Array<{
     statId: 'nb_dossiers_crees',
     label: 'Dossiers', 
     format: 'number', 
-    bgColor: 'bg-violet-500',
-    textColor: 'text-violet-600',
+    accent: 'purple',
     icon: '📁',
     getValue: (r) => r?.value ?? null
   },
@@ -72,8 +68,7 @@ const KPI_CONFIG: Array<{
     statId: 'nombre_devis',
     label: 'Devis émis', 
     format: 'number', 
-    bgColor: 'bg-amber-500',
-    textColor: 'text-amber-600',
+    accent: 'orange',
     icon: '📄',
     getValue: (r) => r?.value ?? null
   },
@@ -226,6 +221,7 @@ export function IndicateursGlobauxWidget() {
       <div className="grid grid-cols-5 gap-2">
         {KPI_CONFIG.map((kpi) => {
           const value = kpiData?.[kpi.id] as number | null;
+          const accent = ACCENT_THEMES[kpi.accent];
           
           return (
             <div 
@@ -233,12 +229,12 @@ export function IndicateursGlobauxWidget() {
               className="bg-card/60 backdrop-blur-sm rounded-xl p-3 border border-border/50 hover:border-primary/30 hover:shadow-sm transition-all"
             >
               <div className="flex items-center gap-2 mb-1.5">
-                <div className={`${kpi.bgColor} w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold shadow-sm`}>
+                <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-primary-foreground text-xs font-bold shadow-sm bg-gradient-to-br ${accent.gradient}`}>
                   {kpi.icon}
                 </div>
                 <span className="text-[11px] text-muted-foreground font-medium truncate">{kpi.label}</span>
               </div>
-              <p className={`text-lg font-bold ${kpi.textColor} truncate`}>{formatValue(value, kpi.format)}</p>
+              <p className={`text-lg font-bold ${accent.text} truncate`}>{formatValue(value, kpi.format)}</p>
             </div>
           );
         })}

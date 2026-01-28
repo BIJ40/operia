@@ -46,6 +46,7 @@ import { FloatingChatButton } from '@/components/chat/FloatingChatButton';
 // REMOVED: SimulationBanner, RoleSimulatorDropdown - fonctionnalité supprimée
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { ACCENT_THEMES, type AccentThemeKey } from '@/lib/accentThemes';
 
 // Providers nécessaires
 import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
@@ -235,13 +236,27 @@ function UnifiedWorkspaceContent() {
   const topPadding = isImpersonating ? 'pt-10' : '';
   
   // Vue Franchiseur = interface complètement différente pour N3+
-  if (isFranchiseur) {
+  // IMPORTANT: un admin plateforme doit pouvoir revenir à la vue normale.
+  if (isFranchiseur && !isPlatformAdmin) {
     return (
       <Suspense fallback={<LoadingFallback />}>
         <FranchiseurView />
       </Suspense>
     );
   }
+
+  const unifiedTabAccent: Record<UnifiedTab, AccentThemeKey> = {
+    accueil: 'blue',
+    agence: 'purple',
+    stats: 'pink',
+    salaries: 'green',
+    parc: 'orange',
+    divers: 'neutral',
+    guides: 'teal',
+    ticketing: 'orange',
+    aide: 'blue',
+    admin: 'purple',
+  };
   
   return (
     <AiUnifiedProvider>
@@ -279,6 +294,7 @@ function UnifiedWorkspaceContent() {
                       <SortableContext items={sortableIds} strategy={horizontalListSortingStrategy}>
                         {sortedTabs.slice(1).map((tab) => {
                           const Icon = tab.icon;
+                           const accent = ACCENT_THEMES[unifiedTabAccent[tab.id]];
                           return (
                             <DraggableTab
                               key={tab.id}
@@ -289,8 +305,8 @@ function UnifiedWorkspaceContent() {
                               className={tabButtonClass}
                             >
                               <div className="flex items-center gap-1.5">
-                                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-sm transition-transform duration-300 group-hover:scale-110 shrink-0">
-                                  <Icon className="w-3 h-3 text-white" />
+                                 <div className={`w-6 h-6 rounded-lg bg-gradient-to-br ${accent.gradient} flex items-center justify-center shadow-sm transition-transform duration-300 group-hover:scale-110 shrink-0`}>
+                                   <Icon className="w-3 h-3 text-primary-foreground" />
                                 </div>
                                 <span className="text-xs font-semibold tracking-tight truncate max-w-[80px]">{tab.label}</span>
                               </div>

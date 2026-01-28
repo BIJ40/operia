@@ -36,6 +36,7 @@ import { AiUnifiedProvider } from '@/components/ai';
 import { DraggableTab } from '@/components/unified/DraggableTab';
 import { FloatingChatButton } from '@/components/chat/FloatingChatButton';
 import { ImageModal } from '@/components/ImageModal';
+import { ACCENT_THEMES, type AccentThemeKey } from '@/lib/accentThemes';
 
 // Lazy loaded franchiseur pages
 const FranchiseurHome = lazy(() => import('@/franchiseur/pages/FranchiseurHome'));
@@ -168,24 +169,24 @@ function FranchiseurViewContent() {
     document.title = `${tabLabel} - Réseau HelpConfort`;
   }, [activeTab, sortedTabs]);
   
-  // Couleurs vibrantes par onglet
-  const tabColors: Record<FranchiseurTab, string> = {
-    accueil: 'from-blue-500 to-cyan-400',
-    periode: 'from-violet-500 to-purple-400',
-    agences: 'from-emerald-500 to-teal-400',
-    redevances: 'from-amber-500 to-orange-400',
-    statistiques: 'from-pink-500 to-rose-400',
-    divers: 'from-slate-500 to-gray-400',
-    guides: 'from-indigo-500 to-blue-400',
-    ticketing: 'from-red-500 to-orange-400',
-    aide: 'from-green-500 to-emerald-400',
+  // Palette pastel tokenisée (même identité visuelle que les tuiles)
+  const tabAccent: Record<FranchiseurTab, AccentThemeKey> = {
+    accueil: 'blue',
+    periode: 'purple',
+    agences: 'green',
+    redevances: 'orange',
+    statistiques: 'pink',
+    divers: 'neutral',
+    guides: 'teal',
+    ticketing: 'orange',
+    aide: 'blue',
   };
   
-  const tabButtonClass = (tabId: FranchiseurTab, isActive: boolean) => `
+  const tabButtonClass = (_tabId: FranchiseurTab, isActive: boolean) => `
     relative px-3 py-2.5 rounded-t-2xl border-2 border-b-0 transition-all duration-300 whitespace-nowrap shrink-0 min-w-0
     ${isActive 
-      ? 'bg-background border-primary/50 border-b-background z-20 -mb-[2px] scale-[1.02] shadow-lg' 
-      : 'bg-muted/40 border-border/50 text-muted-foreground hover:bg-white hover:border-primary/40 hover:scale-105 hover:-translate-y-0.5 hover:shadow-md'
+      ? 'bg-background border-primary/50 border-b-background z-20 -mb-[2px] scale-[1.02] shadow-sm' 
+      : 'bg-muted/40 border-border/50 text-muted-foreground hover:bg-background hover:border-primary/40 hover:scale-105 hover:-translate-y-0.5 hover:shadow-sm'
     }
   `;
   
@@ -215,8 +216,8 @@ function FranchiseurViewContent() {
                       className={tabButtonClass('accueil', activeTab === 'accueil')}
                     >
                       <div className="flex items-center gap-1.5">
-                        <div className={`w-7 h-7 rounded-xl bg-gradient-to-br ${tabColors.accueil} flex items-center justify-center shadow-md transition-transform group-hover:scale-110 shrink-0`}>
-                          <Home className="w-3.5 h-3.5 text-white" />
+                        <div className={`w-7 h-7 rounded-xl bg-gradient-to-br ${ACCENT_THEMES[tabAccent.accueil].gradient} flex items-center justify-center shadow-sm transition-transform group-hover:scale-110 shrink-0`}>
+                          <Home className="w-3.5 h-3.5 text-primary-foreground" />
                         </div>
                         <span className="text-xs font-bold tracking-tight truncate max-w-[80px]">Accueil</span>
                       </div>
@@ -228,6 +229,7 @@ function FranchiseurViewContent() {
                     {sortedTabs.slice(1).map((tab) => {
                       const Icon = tab.icon;
                       const isActive = activeTab === tab.id;
+                      const accent = ACCENT_THEMES[tabAccent[tab.id]];
                       return (
                         <DraggableTab
                           key={tab.id}
@@ -238,8 +240,8 @@ function FranchiseurViewContent() {
                           className={tabButtonClass(tab.id, isActive)}
                         >
                           <div className="flex items-center gap-1.5">
-                            <div className={`w-7 h-7 rounded-xl bg-gradient-to-br ${tabColors[tab.id]} flex items-center justify-center shadow-md transition-transform duration-300 group-hover:scale-110 shrink-0`}>
-                              <Icon className="w-3.5 h-3.5 text-white" />
+                            <div className={`w-7 h-7 rounded-xl bg-gradient-to-br ${accent.gradient} flex items-center justify-center shadow-sm transition-transform duration-300 group-hover:scale-110 shrink-0`}>
+                              <Icon className="w-3.5 h-3.5 text-primary-foreground" />
                             </div>
                             <span className="text-xs font-bold tracking-tight truncate max-w-[80px]">{tab.label}</span>
                           </div>
