@@ -23,7 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useSupportNotifications } from '@/hooks/use-support-notifications';
+
 import { ROUTES } from '@/config/routes';
 import { APP_VERSION } from '@/config/version';
 import { cn } from '@/lib/utils';
@@ -89,7 +89,7 @@ export function TabHeader() {
     hasModule,
     user,
   } = useAuth();
-  const { hasNewTickets, newTicketsCount } = useSupportNotifications();
+  
   
   const caps = getRoleCapabilities(globalRole);
   const userLevel = globalRole ? GLOBAL_ROLES[globalRole] : 0;
@@ -253,22 +253,7 @@ export function TabHeader() {
             {/* Actions droite - position absolue dans ligne 1 */}
             <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1">
 
-              {canAccessSupportConsoleUI && (
-                <Link to={ROUTES.support.console}>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className={cn("relative h-8 w-8", hasNewTickets && "text-destructive")}
-                  >
-                    <Headset className="w-4 h-4" />
-                    {hasNewTickets && (
-                      <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center animate-bounce">
-                        {newTicketsCount}
-                      </span>
-                    )}
-                  </Button>
-                </Link>
-              )}
+              {/* Console support supprimée - basé sur support_tickets legacy */}
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -353,12 +338,7 @@ export function TabHeader() {
                     )}
                     <IconComponent className="w-4 h-4" />
                     <span>{tab.label}</span>
-                    {/* Badge Support */}
-                    {tab.id === 'support' && hasNewTickets && (
-                      <span className="ml-1 bg-destructive text-destructive-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                        {newTicketsCount}
-                      </span>
-                    )}
+                    {/* Badge Support retiré - système legacy supprimé */}
                   </div>
                 </NavLink>
               );

@@ -20,7 +20,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useSupportNotifications } from '@/hooks/use-support-notifications';
 import { useUserProjectUnreadCount, useSupportProjectUnreadCount } from '@/hooks/use-project-ticket-notifications';
 import { ROUTES } from '@/config/routes';
 import { APP_VERSION } from '@/config/version';
@@ -65,7 +64,6 @@ export function MainHeader() {
     hasModule,
     user,
   } = useAuth();
-  const { hasNewTickets, newTicketsCount } = useSupportNotifications();
   const { unreadCount: userProjectUnreadCount } = useUserProjectUnreadCount();
   const { unreadCount: supportProjectUnreadCount } = useSupportProjectUnreadCount();
   
@@ -229,10 +227,10 @@ export function MainHeader() {
                           "w-3 h-3 transition-transform",
                           activeMenu === 'support' && "rotate-180"
                         )} />
-                        {/* Badge pour support agents OU badge pour utilisateurs avec messages non lus */}
-                        {(hasNewTickets || userProjectUnreadCount > 0) && (
+                        {/* Badge pour utilisateurs avec messages non lus */}
+                        {userProjectUnreadCount > 0 && (
                           <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
-                            {hasNewTickets ? newTicketsCount : userProjectUnreadCount}
+                            {userProjectUnreadCount}
                           </span>
                         )}
                       </button>
@@ -253,23 +251,7 @@ export function MainHeader() {
                   {/* Centre de notifications */}
                   <NotificationCenter />
                   
-                  {/* Console support pour agents */}
-                  {canAccessSupportConsoleUI && (
-                    <Link to={ROUTES.support.console}>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className={cn("relative h-8 w-8", hasNewTickets && "text-destructive")}
-                      >
-                        <Headset className="w-4 h-4" />
-                        {hasNewTickets && (
-                          <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center animate-bounce">
-                            {newTicketsCount}
-                          </span>
-                        )}
-                      </Button>
-                    </Link>
-                  )}
+                  {/* Console support pour agents - supprimé car basé sur support_tickets legacy */}
 
                   {/* Menu utilisateur */}
                   <DropdownMenu>
