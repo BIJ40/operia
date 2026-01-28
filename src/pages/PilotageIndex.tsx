@@ -133,19 +133,27 @@ function PilotageContent() {
             {hasStatsAccess && (
               <TabsTrigger 
                 value="stats" 
-                className="relative rounded-none border-b-2 border-transparent data-[state=active]:border-helpconfort-blue data-[state=active]:bg-transparent bg-transparent px-4 py-2.5 text-sm font-medium transition-colors hover:text-foreground data-[state=active]:text-helpconfort-blue data-[state=active]:shadow-none"
+                className="relative rounded-none border-b-2 border-transparent data-[state=active]:border-helpconfort-blue data-[state=active]:bg-transparent bg-transparent px-4 py-2.5 transition-colors hover:text-foreground data-[state=active]:shadow-none"
               >
-                <BarChart3 className="h-4 w-4 mr-2" />
-                Statistiques
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-md">
+                    <BarChart3 className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-xl font-bold text-foreground tracking-tight">Statistiques</span>
+                </div>
               </TabsTrigger>
             )}
             {hasApporteursAccess && (
               <TabsTrigger 
                 value="apporteurs" 
-                className="relative rounded-none border-b-2 border-transparent data-[state=active]:border-helpconfort-blue data-[state=active]:bg-transparent bg-transparent px-4 py-2.5 text-sm font-medium transition-colors hover:text-foreground data-[state=active]:text-helpconfort-blue data-[state=active]:shadow-none"
+                className="relative rounded-none border-b-2 border-transparent data-[state=active]:border-helpconfort-blue data-[state=active]:bg-transparent bg-transparent px-4 py-2.5 transition-colors hover:text-foreground data-[state=active]:shadow-none"
               >
-                <Users className="h-4 w-4 mr-2" />
-                Mes apporteurs
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-md">
+                    <Users className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-xl font-bold text-foreground tracking-tight">Mes apporteurs</span>
+                </div>
               </TabsTrigger>
             )}
           </TabsList>
