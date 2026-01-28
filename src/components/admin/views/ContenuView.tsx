@@ -6,7 +6,6 @@ import { lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
-import { AdminViewHeader } from '../AdminViewHeader';
 import { FileText, BookOpen, HelpCircle, FileEdit, Bell, Megaphone, Loader2 } from 'lucide-react';
 
 const AdminApogeeGuides = lazy(() => import('@/pages/AdminApogeeGuides'));
@@ -45,57 +44,45 @@ export function ContenuView() {
     setSearchParams(next);
   };
 
-  const currentTab = SUB_TABS.find(t => t.id === activeView);
-  const breadcrumb = ['Admin', 'Contenu', currentTab?.label || 'Guides'];
-
   return (
-    <div className="space-y-4">
-      <AdminViewHeader
-        title="Gestion du Contenu"
-        subtitle="Guides, FAQ, templates et annonces"
-        breadcrumb={breadcrumb}
-        icon={<FileText className="h-5 w-5 text-primary" />}
-      />
+    <Tabs value={activeView} onValueChange={handleViewChange}>
+      <PillTabsList tabs={SUB_TABS} className="justify-start" />
 
-      <Tabs value={activeView} onValueChange={handleViewChange}>
-        <PillTabsList tabs={SUB_TABS} className="justify-start" />
+      <TabsContent value="guides" className="mt-4">
+        <Suspense fallback={<LoadingFallback />}>
+          <AdminApogeeGuides />
+        </Suspense>
+      </TabsContent>
 
-        <TabsContent value="guides" className="mt-6">
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminApogeeGuides />
-          </Suspense>
-        </TabsContent>
+      <TabsContent value="faq" className="mt-4">
+        <Suspense fallback={<LoadingFallback />}>
+          <AdminFaq />
+        </Suspense>
+      </TabsContent>
 
-        <TabsContent value="faq" className="mt-6">
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminFaq />
-          </Suspense>
-        </TabsContent>
+      <TabsContent value="templates" className="mt-4">
+        <Suspense fallback={<LoadingFallback />}>
+          <DocTemplatesPage />
+        </Suspense>
+      </TabsContent>
 
-        <TabsContent value="templates" className="mt-6">
-          <Suspense fallback={<LoadingFallback />}>
-            <DocTemplatesPage />
-          </Suspense>
-        </TabsContent>
+      <TabsContent value="annonces" className="mt-4">
+        <Suspense fallback={<LoadingFallback />}>
+          <AdminAnnouncements />
+        </Suspense>
+      </TabsContent>
 
-        <TabsContent value="annonces" className="mt-6">
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminAnnouncements />
-          </Suspense>
-        </TabsContent>
+      <TabsContent value="notifs" className="mt-4">
+        <Suspense fallback={<LoadingFallback />}>
+          <AdminNotificationSender />
+        </Suspense>
+      </TabsContent>
 
-        <TabsContent value="notifs" className="mt-6">
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminNotificationSender />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="metadata" className="mt-6">
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminPageMetadata />
-          </Suspense>
-        </TabsContent>
-      </Tabs>
-    </div>
+      <TabsContent value="metadata" className="mt-4">
+        <Suspense fallback={<LoadingFallback />}>
+          <AdminPageMetadata />
+        </Suspense>
+      </TabsContent>
+    </Tabs>
   );
 }

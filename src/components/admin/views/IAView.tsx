@@ -6,8 +6,7 @@ import { lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
-import { AdminViewHeader } from '../AdminViewHeader';
-import { Brain, Bot, FlaskConical, Loader2 } from 'lucide-react';
+import { Bot, FlaskConical, Loader2 } from 'lucide-react';
 
 const AdminHelpi = lazy(() => import('@/pages/AdminHelpi'));
 const StatiaBuilderAdminPage = lazy(() => import('@/statia/pages/StatiaBuilderAdminPage'));
@@ -39,39 +38,27 @@ export function IAView() {
     setSearchParams(next);
   };
 
-  const currentTab = SUB_TABS.find(t => t.id === activeView);
-  const breadcrumb = ['Admin', 'IA', currentTab?.label || 'Helpi'];
-
   return (
-    <div className="space-y-4">
-      <AdminViewHeader
-        title="Intelligence Artificielle"
-        subtitle="Moteurs IA et métriques"
-        breadcrumb={breadcrumb}
-        icon={<Brain className="h-5 w-5 text-primary" />}
-      />
+    <Tabs value={activeView} onValueChange={handleViewChange}>
+      <PillTabsList tabs={SUB_TABS} className="justify-start" />
 
-      <Tabs value={activeView} onValueChange={handleViewChange}>
-        <PillTabsList tabs={SUB_TABS} className="justify-start" />
+      <TabsContent value="helpi" className="mt-4">
+        <Suspense fallback={<LoadingFallback />}>
+          <AdminHelpi />
+        </Suspense>
+      </TabsContent>
 
-        <TabsContent value="helpi" className="mt-6">
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminHelpi />
-          </Suspense>
-        </TabsContent>
+      <TabsContent value="statia" className="mt-4">
+        <Suspense fallback={<LoadingFallback />}>
+          <StatiaBuilderAdminPage />
+        </Suspense>
+      </TabsContent>
 
-        <TabsContent value="statia" className="mt-6">
-          <Suspense fallback={<LoadingFallback />}>
-            <StatiaBuilderAdminPage />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="validator" className="mt-6">
-          <Suspense fallback={<LoadingFallback />}>
-            <StatiaValidatorPage />
-          </Suspense>
-        </TabsContent>
-      </Tabs>
-    </div>
+      <TabsContent value="validator" className="mt-4">
+        <Suspense fallback={<LoadingFallback />}>
+          <StatiaValidatorPage />
+        </Suspense>
+      </TabsContent>
+    </Tabs>
   );
 }

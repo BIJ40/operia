@@ -1,12 +1,11 @@
 /**
- * AccesView - Vue Accès (Utilisateurs, Activité, Flags)
+ * AccesView - Vue Accès (Utilisateurs, Activité)
  */
 
 import { lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
-import { AdminViewHeader } from '../AdminViewHeader';
 import { Users, Activity, Loader2 } from 'lucide-react';
 
 const TDRUsersPage = lazy(() => import('@/pages/TDRUsersPage'));
@@ -37,33 +36,21 @@ export function AccesView() {
     setSearchParams(next);
   };
 
-  const currentTab = SUB_TABS.find(t => t.id === activeView);
-  const breadcrumb = ['Admin', 'Accès', currentTab?.label || 'Utilisateurs'];
-
   return (
-    <div className="space-y-4">
-      <AdminViewHeader
-        title="Gestion des Accès"
-        subtitle="Utilisateurs, activité et modules"
-        breadcrumb={breadcrumb}
-        icon={<Users className="h-5 w-5 text-primary" />}
-      />
+    <Tabs value={activeView} onValueChange={handleViewChange}>
+      <PillTabsList tabs={SUB_TABS} className="justify-start" />
 
-      <Tabs value={activeView} onValueChange={handleViewChange}>
-        <PillTabsList tabs={SUB_TABS} className="justify-start" />
+      <TabsContent value="users" className="mt-4">
+        <Suspense fallback={<LoadingFallback />}>
+          <TDRUsersPage />
+        </Suspense>
+      </TabsContent>
 
-        <TabsContent value="users" className="mt-6">
-          <Suspense fallback={<LoadingFallback />}>
-            <TDRUsersPage />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="activity" className="mt-6">
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminUserActivity />
-          </Suspense>
-        </TabsContent>
-      </Tabs>
-    </div>
+      <TabsContent value="activity" className="mt-4">
+        <Suspense fallback={<LoadingFallback />}>
+          <AdminUserActivity />
+        </Suspense>
+      </TabsContent>
+    </Tabs>
   );
 }

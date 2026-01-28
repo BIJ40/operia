@@ -6,7 +6,6 @@ import { lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
-import { AdminViewHeader } from '../AdminViewHeader';
 import { Database, Archive, HardDrive, FileJson, FileStack, Loader2 } from 'lucide-react';
 
 const AdminBackup = lazy(() => import('@/pages/AdminBackup'));
@@ -43,51 +42,39 @@ export function OpsView() {
     setSearchParams(next);
   };
 
-  const currentTab = SUB_TABS.find(t => t.id === activeView);
-  const breadcrumb = ['Admin', 'Ops', currentTab?.label || 'Backups'];
-
   return (
-    <div className="space-y-4">
-      <AdminViewHeader
-        title="Opérations"
-        subtitle="Backups, stockage et rapports"
-        breadcrumb={breadcrumb}
-        icon={<Database className="h-5 w-5 text-primary" />}
-      />
+    <Tabs value={activeView} onValueChange={handleViewChange}>
+      <PillTabsList tabs={SUB_TABS} className="justify-start" />
 
-      <Tabs value={activeView} onValueChange={handleViewChange}>
-        <PillTabsList tabs={SUB_TABS} className="justify-start" />
+      <TabsContent value="backup" className="mt-4">
+        <Suspense fallback={<LoadingFallback />}>
+          <AdminBackup />
+        </Suspense>
+      </TabsContent>
 
-        <TabsContent value="backup" className="mt-6">
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminBackup />
-          </Suspense>
-        </TabsContent>
+      <TabsContent value="imports" className="mt-4">
+        <Suspense fallback={<LoadingFallback />}>
+          <AdminHelpConfortBackup />
+        </Suspense>
+      </TabsContent>
 
-        <TabsContent value="imports" className="mt-6">
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminHelpConfortBackup />
-          </Suspense>
-        </TabsContent>
+      <TabsContent value="cache" className="mt-4">
+        <Suspense fallback={<LoadingFallback />}>
+          <AdminCacheBackup />
+        </Suspense>
+      </TabsContent>
 
-        <TabsContent value="cache" className="mt-6">
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminCacheBackup />
-          </Suspense>
-        </TabsContent>
+      <TabsContent value="report" className="mt-4">
+        <Suspense fallback={<LoadingFallback />}>
+          <AdminApogeeReport />
+        </Suspense>
+      </TabsContent>
 
-        <TabsContent value="report" className="mt-6">
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminApogeeReport />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="quota" className="mt-6">
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminStorageQuota />
-          </Suspense>
-        </TabsContent>
-      </Tabs>
-    </div>
+      <TabsContent value="quota" className="mt-4">
+        <Suspense fallback={<LoadingFallback />}>
+          <AdminStorageQuota />
+        </Suspense>
+      </TabsContent>
+    </Tabs>
   );
 }
