@@ -1,6 +1,6 @@
 import { lazy } from "react";
 import { Route, Navigate } from "react-router-dom";
-import { MainLayout } from "@/components/layout";
+import { MinimalLayout } from "@/components/layout";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { ModuleGuard } from "@/components/auth/ModuleGuard";
 
@@ -13,6 +13,15 @@ const ApogeeTicketsIncomplete = lazy(() => import("@/apogee-tickets/pages/Apogee
 const ApogeeTicketsReview = lazy(() => import("@/apogee-tickets/pages/ApogeeTicketsReview"));
 const ApogeeTicketsAdmin = lazy(() => import("@/apogee-tickets/pages/ApogeeTicketsAdmin"));
 
+// Helper pour créer les layouts Projects
+function ProjectsLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <MinimalLayout backTab="ticketing" backLabel="Retour au Ticketing">
+      {children}
+    </MinimalLayout>
+  );
+}
+
 export function ProjectsRoutes() {
   return (
     <>
@@ -20,12 +29,12 @@ export function ProjectsRoutes() {
       <Route path="/projects" element={<Navigate to="/?tab=ticketing" replace />} />
       
       {/* Detail pages keep their routes */}
-      <Route path="/projects/kanban" element={<MainLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsKanban /></ModuleGuard></RoleGuard></MainLayout>} />
-      <Route path="/projects/historique" element={<MainLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsHistory /></ModuleGuard></RoleGuard></MainLayout>} />
-      <Route path="/projects/list" element={<MainLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsList /></ModuleGuard></RoleGuard></MainLayout>} />
-      <Route path="/projects/incomplets" element={<MainLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsIncomplete /></ModuleGuard></RoleGuard></MainLayout>} />
-      <Route path="/projects/review" element={<MainLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsReview /></ModuleGuard></RoleGuard></MainLayout>} />
-      <Route path="/projects/permissions" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsAdmin /></ModuleGuard></RoleGuard></MainLayout>} />
+      <Route path="/projects/kanban" element={<ProjectsLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsKanban /></ModuleGuard></RoleGuard></ProjectsLayout>} />
+      <Route path="/projects/historique" element={<ProjectsLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsHistory /></ModuleGuard></RoleGuard></ProjectsLayout>} />
+      <Route path="/projects/list" element={<ProjectsLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsList /></ModuleGuard></RoleGuard></ProjectsLayout>} />
+      <Route path="/projects/incomplets" element={<ProjectsLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsIncomplete /></ModuleGuard></RoleGuard></ProjectsLayout>} />
+      <Route path="/projects/review" element={<ProjectsLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsReview /></ModuleGuard></RoleGuard></ProjectsLayout>} />
+      <Route path="/projects/permissions" element={<ProjectsLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsAdmin /></ModuleGuard></RoleGuard></ProjectsLayout>} />
     </>
   );
 }

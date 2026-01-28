@@ -1,6 +1,6 @@
 import { lazy } from "react";
 import { Route, Navigate } from "react-router-dom";
-import { MainLayout } from "@/components/layout";
+import { MinimalLayout } from "@/components/layout";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { ModuleGuard } from "@/components/auth/ModuleGuard";
 import { HcServicesEditorProvider } from "@/contexts/HcServicesEditorContext";
@@ -12,6 +12,15 @@ const CategoryHelpConfort = lazy(() => import("@/pages/CategoryHelpConfort"));
 const CategoryHcServices = lazy(() => import("@/pages/CategoryHcServices"));
 const ApporteurSubcategories = lazy(() => import("@/pages/ApporteurSubcategories"));
 
+// Helper pour créer les layouts Academy
+function GuidesLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <MinimalLayout backTab="guides" backLabel="Retour aux Guides">
+      {children}
+    </MinimalLayout>
+  );
+}
+
 export function AcademyRoutes() {
   return (
     <>
@@ -20,23 +29,23 @@ export function AcademyRoutes() {
       
       {/* Guide Apogée - Index redirige, détails restent */}
       <Route path="/academy/apogee" element={<Navigate to="/?tab=guides" replace />} />
-      <Route path="/academy/apogee/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><Category /></ModuleGuard></RoleGuard></MainLayout>} />
+      <Route path="/academy/apogee/category/:slug" element={<GuidesLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><Category /></ModuleGuard></RoleGuard></GuidesLayout>} />
       
       {/* Guide Apporteurs */}
       <Route path="/academy/apporteurs" element={<Navigate to="/?tab=guides" replace />} />
-      <Route path="/academy/apporteurs/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><ApporteurSubcategories /></ModuleGuard></RoleGuard></MainLayout>} />
-      <Route path="/academy/apporteurs/category/:slug/sub/:subslug" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><CategoryApporteur /></ModuleGuard></RoleGuard></MainLayout>} />
+      <Route path="/academy/apporteurs/category/:slug" element={<GuidesLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><ApporteurSubcategories /></ModuleGuard></RoleGuard></GuidesLayout>} />
+      <Route path="/academy/apporteurs/category/:slug/sub/:subslug" element={<GuidesLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><CategoryApporteur /></ModuleGuard></RoleGuard></GuidesLayout>} />
       
       {/* Guide HC Services (ex-OPERIA) */}
       <Route path="/academy/hc-services" element={<Navigate to="/?tab=guides" replace />} />
-      <Route path="/academy/hc-services/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><HcServicesEditorProvider><CategoryHcServices /></HcServicesEditorProvider></ModuleGuard></RoleGuard></MainLayout>} />
+      <Route path="/academy/hc-services/category/:slug" element={<GuidesLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><HcServicesEditorProvider><CategoryHcServices /></HcServicesEditorProvider></ModuleGuard></RoleGuard></GuidesLayout>} />
       {/* Legacy OPERIA redirects */}
       <Route path="/academy/operia" element={<Navigate to="/?tab=guides" replace />} />
       <Route path="/academy/operia/category/:slug" element={<Navigate to="/?tab=guides" replace />} />
       
       {/* Base Documentaire */}
       <Route path="/academy/hc-base" element={<Navigate to="/?tab=guides" replace />} />
-      <Route path="/academy/hc-base/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><CategoryHelpConfort /></ModuleGuard></RoleGuard></MainLayout>} />
+      <Route path="/academy/hc-base/category/:slug" element={<GuidesLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><CategoryHelpConfort /></ModuleGuard></RoleGuard></GuidesLayout>} />
     </>
   );
 }
