@@ -8,7 +8,6 @@ import {
 } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { cn } from '@/lib/utils';
-import { StatsOverview } from '@/components/admin/overview/StatsOverview';
 import { DatabaseExportButton } from '@/components/admin/DatabaseExportButton';
 import { MaintenanceModeCard } from '@/components/admin/MaintenanceModeCard';
 import { useAuth } from '@/contexts/AuthContext';
@@ -92,9 +91,6 @@ export default function AdminIndex() {
           <p className="text-sm text-muted-foreground">Centre de contrôle HC Services</p>
         </div>
       </div>
-
-      {/* Stats Overview */}
-      <StatsOverview />
 
       {/* Tabs Navigation */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
