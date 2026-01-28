@@ -126,9 +126,6 @@ function PilotageContent() {
         </div>
       </div>
 
-      {/* Infos agence compactes */}
-      <AgencyInfoCompact />
-
       {/* Onglets principaux */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as MainTab)}>
         <TabsList className="w-full justify-start bg-muted/50 p-1 h-auto">
@@ -161,7 +158,10 @@ function PilotageContent() {
 
         <div className="mt-6">
           <TabsContent value="agence" className="mt-0">
-            <ActionsAMenerTab />
+            <AgencyInfoCompact />
+            <div className="mt-4">
+              <ActionsAMenerTab />
+            </div>
           </TabsContent>
 
           {hasStatsAccess && (
