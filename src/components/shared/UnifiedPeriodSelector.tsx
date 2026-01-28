@@ -284,16 +284,16 @@ export function UnifiedPeriodSelector({
   // Styles selon la variante
   const buttonStyles = {
     default: {
-      active: "bg-green-600 hover:bg-green-700 text-white",
-      inactive: "hover:bg-muted"
+      active: "bg-gradient-to-r from-warm-teal/90 to-warm-blue/80 text-white shadow-sm",
+      inactive: "bg-warm-teal/10 hover:bg-warm-teal/20 border-warm-teal/30 text-foreground"
     },
     compact: {
-      active: "bg-green-600 hover:bg-green-700 text-white",
-      inactive: "hover:bg-muted"
+      active: "bg-gradient-to-r from-warm-teal/90 to-warm-blue/80 text-white shadow-sm",
+      inactive: "bg-warm-teal/10 hover:bg-warm-teal/20 border-warm-teal/30 text-foreground"
     },
     franchiseur: {
-      active: "bg-helpconfort-blue text-white",
-      inactive: "border-helpconfort-blue/30 hover:border-helpconfort-blue/60 hover:bg-helpconfort-blue/10"
+      active: "bg-gradient-to-r from-helpconfort-blue to-warm-blue/80 text-white shadow-sm",
+      inactive: "bg-helpconfort-blue/10 border-helpconfort-blue/30 hover:border-helpconfort-blue/50 hover:bg-helpconfort-blue/15"
     }
   };
 
@@ -310,7 +310,7 @@ export function UnifiedPeriodSelector({
             size="sm"
             onClick={() => handlePeriodClick(period)}
             className={cn(
-              "text-xs font-medium px-3 py-1.5 transition-all",
+              "text-xs font-medium px-3 py-1.5 transition-all rounded-lg",
               isActive ? styles.active : styles.inactive
             )}
           >
