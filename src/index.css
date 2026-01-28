@@ -225,6 +225,54 @@
   .grid-gap-lg {
     @apply gap-6;
   }
+
+  /* ============================================
+     WARM PASTEL DESIGN SYSTEM
+     ============================================ */
+  
+  /* Warm rounded corners - 20px */
+  .rounded-warm {
+    border-radius: 1.25rem;
+  }
+
+  /* Warm card shadows */
+  .shadow-warm {
+    box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.08);
+  }
+
+  .shadow-warm-hover {
+    box-shadow: 0 8px 30px -8px rgba(0, 0, 0, 0.12);
+  }
+
+  .shadow-warm-lg {
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.12);
+  }
+
+  /* Warm gradient backgrounds */
+  .bg-warm-gradient-blue {
+    background: linear-gradient(135deg, hsl(var(--warm-blue) / 0.15), hsl(var(--warm-teal) / 0.08));
+  }
+
+  .bg-warm-gradient-orange {
+    background: linear-gradient(135deg, hsl(var(--warm-orange) / 0.15), hsl(var(--accent) / 0.08));
+  }
+
+  .bg-warm-gradient-purple {
+    background: linear-gradient(135deg, hsl(var(--warm-purple) / 0.15), hsl(var(--warm-blue) / 0.08));
+  }
+
+  .bg-warm-gradient-green {
+    background: linear-gradient(135deg, hsl(var(--warm-green) / 0.15), hsl(var(--warm-teal) / 0.08));
+  }
+
+  .bg-warm-gradient-pink {
+    background: linear-gradient(135deg, hsl(var(--warm-pink) / 0.15), hsl(var(--warm-purple) / 0.08));
+  }
+
+  /* Warm page background */
+  .bg-warm-page {
+    background: linear-gradient(135deg, hsl(var(--background)), hsl(var(--muted) / 0.3));
+  }
 }
 
 /* ============================================

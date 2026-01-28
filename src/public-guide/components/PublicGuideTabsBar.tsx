@@ -1,5 +1,6 @@
 /**
  * PublicGuideTabsBar - Barre d'onglets draggable pour le Guide Apogée public
+ * Version Warm Pastel avec fond gradient
  */
 
 import React from 'react';
@@ -50,9 +51,9 @@ export function PublicGuideTabsBar() {
   };
 
   return (
-    <div className="flex items-end border-b bg-muted/30">
+    <div className="flex items-end border-b bg-gradient-to-r from-muted/40 to-muted/20">
       <ScrollArea className="flex-1">
-        <div className="flex items-end px-2 pt-2">
+        <div className="flex items-end px-3 pt-3 gap-1">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}

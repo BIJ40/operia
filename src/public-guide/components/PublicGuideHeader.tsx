@@ -1,5 +1,6 @@
 /**
  * PublicGuideHeader - Header minimaliste pour le Guide Apogée public
+ * Version Warm Pastel
  */
 
 import { Link } from 'react-router-dom';
@@ -13,12 +14,12 @@ export function PublicGuideHeader() {
           to="/guide-apogee" 
           className="flex items-center gap-3 hover:opacity-80 transition-opacity"
         >
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/80 flex items-center justify-center shadow-md">
-            <BookOpen className="w-4 h-4 text-white" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-warm-blue to-warm-teal flex items-center justify-center shadow-warm">
+            <BookOpen className="w-5 h-5 text-white" />
           </div>
           <div className="flex flex-col">
-            <span className="font-bold text-base leading-tight">
-              <span className="text-primary">Guide Apogée</span>
+            <span className="font-bold text-base leading-tight text-foreground">
+              Guide Apogée
             </span>
             <span className="text-[10px] text-muted-foreground leading-tight">
               HelpConfort Services

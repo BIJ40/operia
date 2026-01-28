@@ -1,6 +1,6 @@
 /**
  * PublicApogeeLayout - Layout avec sidebar et onglets pour le Guide Apogée public
- * Interface navigateur similaire au module Franchiseur
+ * Version Warm Pastel avec fond gradient
  */
 
 import { ReactNode } from 'react';
@@ -19,7 +19,7 @@ interface PublicApogeeLayoutProps {
 export function PublicApogeeLayout({ children }: PublicApogeeLayoutProps) {
   return (
     <PublicGuideTabsProvider>
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex flex-col">
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex flex-col">
         {/* Header minimaliste */}
         <PublicGuideHeader />
 
@@ -28,7 +28,7 @@ export function PublicApogeeLayout({ children }: PublicApogeeLayoutProps) {
           <ResizablePanelGroup direction="horizontal" className="flex-1">
             {/* Sidebar des catégories */}
             <ResizablePanel 
-              defaultSize={20} 
+              defaultSize={22} 
               minSize={15} 
               maxSize={30} 
               collapsible
@@ -37,11 +37,11 @@ export function PublicApogeeLayout({ children }: PublicApogeeLayoutProps) {
               <PublicCategorySidebar />
             </ResizablePanel>
             
-            <ResizableHandle withHandle className="hidden md:flex" />
+            <ResizableHandle withHandle className="hidden md:flex bg-border/50 hover:bg-border transition-colors" />
             
             {/* Zone principale avec onglets */}
-            <ResizablePanel defaultSize={80}>
-              <div className="flex flex-col h-full">
+            <ResizablePanel defaultSize={78}>
+              <div className="flex flex-col h-full bg-background/50">
                 <PublicGuideTabsBar />
                 <PublicGuideTabsContent />
               </div>
