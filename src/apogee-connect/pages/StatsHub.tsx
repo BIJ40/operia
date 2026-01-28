@@ -49,9 +49,13 @@ function StatsHubContent() {
       />
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabId)}>
-        <TabsList className="grid w-full grid-cols-6 mb-6">
+        <TabsList className="flex flex-wrap justify-center gap-2 bg-transparent h-auto p-0 mb-6">
           {TABS_CONFIG.map(tab => (
-            <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-2">
+            <TabsTrigger 
+              key={tab.id} 
+              value={tab.id} 
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border/60 bg-gradient-to-br from-card to-muted/30 text-muted-foreground shadow-sm transition-all duration-200 hover:bg-muted/40 data-[state=active]:bg-gradient-to-br data-[state=active]:from-warm-blue/15 data-[state=active]:to-warm-teal/10 data-[state=active]:text-warm-blue data-[state=active]:border-warm-blue/30 data-[state=active]:shadow-md"
+            >
               {TAB_ICONS[tab.id]}
               <span className="hidden sm:inline">{tab.label}</span>
             </TabsTrigger>
