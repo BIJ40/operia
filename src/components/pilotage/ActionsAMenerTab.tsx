@@ -123,31 +123,31 @@ export function ActionsAMenerTab() {
       <div className="space-y-6">
         {/* Statistiques rapides */}
         {!isLoading && actions && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="rounded-xl border border-primary/20 p-3 bg-gradient-to-br from-background to-primary/5">
-              <p className="text-xs font-medium text-muted-foreground">Total</p>
-              <div className="text-xl font-bold text-primary">{filteredActions.length}</div>
+          <div className="flex flex-wrap gap-2">
+            <div className="flex items-center gap-1.5 rounded-md border border-primary/20 px-2.5 py-1 bg-primary/5">
+              <span className="text-xs text-muted-foreground">Total</span>
+              <span className="text-sm font-semibold text-primary">{filteredActions.length}</span>
               {activeFiltersCount > 0 && (
-                <p className="text-[10px] text-muted-foreground">sur {actions.length}</p>
+                <span className="text-[10px] text-muted-foreground">/{actions.length}</span>
               )}
             </div>
-            <div className="rounded-xl border border-destructive/20 p-3 bg-gradient-to-br from-background to-destructive/5">
-              <p className="text-xs font-medium text-muted-foreground">En retard</p>
-              <div className="text-xl font-bold text-destructive">
+            <div className="flex items-center gap-1.5 rounded-md border border-destructive/20 px-2.5 py-1 bg-destructive/5">
+              <span className="text-xs text-muted-foreground">En retard</span>
+              <span className="text-sm font-semibold text-destructive">
                 {filteredActions.filter(a => a.isLate).length}
-              </div>
+              </span>
             </div>
-            <div className="rounded-xl border border-accent/30 p-3 bg-gradient-to-br from-background to-accent/10">
-              <p className="text-xs font-medium text-muted-foreground">Factures</p>
-              <div className="text-xl font-bold text-accent-foreground">
+            <div className="flex items-center gap-1.5 rounded-md border border-accent/30 px-2.5 py-1 bg-accent/10">
+              <span className="text-xs text-muted-foreground">Factures</span>
+              <span className="text-sm font-semibold text-accent-foreground">
                 {filteredActions.filter(a => a.actionType === 'a_facturer').length}
-              </div>
+              </span>
             </div>
-            <div className="rounded-xl border border-secondary/30 p-3 bg-gradient-to-br from-background to-secondary/20">
-              <p className="text-xs font-medium text-muted-foreground">Relances</p>
-              <div className="text-xl font-bold text-secondary-foreground">
+            <div className="flex items-center gap-1.5 rounded-md border border-secondary/30 px-2.5 py-1 bg-secondary/10">
+              <span className="text-xs text-muted-foreground">Relances</span>
+              <span className="text-sm font-semibold text-secondary-foreground">
                 {filteredActions.filter(a => a.actionType === 'relance_technicien').length}
-              </div>
+              </span>
             </div>
           </div>
         )}
