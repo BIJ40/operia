@@ -10,8 +10,8 @@ import { GlobalRole } from '@/types/globalRoles';
  * Les codes N0-N6 sont masqués au profit de termes métier
  */
 export const VISIBLE_ROLE_LABELS: Record<GlobalRole, string> = {
-  base_user: 'Visiteur',
-  franchisee_user: 'Collaborateur agence',
+  base_user: 'Partenaire externe',
+  franchisee_user: 'Utilisateur agence', // Rôle legacy - affiché mais non créable
   franchisee_admin: 'Dirigeant agence',
   franchisor_user: 'Animateur réseau',
   franchisor_admin: 'Direction réseau',
@@ -23,8 +23,8 @@ export const VISIBLE_ROLE_LABELS: Record<GlobalRole, string> = {
  * Descriptions courtes pour chaque rôle
  */
 export const VISIBLE_ROLE_DESCRIPTIONS: Record<GlobalRole, string> = {
-  base_user: 'Accès limité en consultation',
-  franchisee_user: 'Accès aux outils de l\'agence',
+  base_user: 'Partenaire externe avec accès limité',
+  franchisee_user: 'Accès aux outils de l\'agence (legacy)',
   franchisee_admin: 'Gestion complète de l\'agence',
   franchisor_user: 'Vue multi-agences du réseau',
   franchisor_admin: 'Pilotage complet du réseau',

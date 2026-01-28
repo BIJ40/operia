@@ -30,6 +30,7 @@ function isRhOptionAllowedForRole(userRole: GlobalRole | null, optionKey: string
   return RH_OPTIONS_BY_ROLE[userRole]?.includes(optionKey) ?? false;
 }
 
+// Postes disponibles (N1 supprimé - technicien legacy conservé pour affichage)
 const ROLE_AGENCE_LABELS: Record<string, string> = {
   'dirigeant': 'Dirigeant(e)',
   'assistante': 'Assistante',

@@ -13,11 +13,11 @@ import { Loader2, Mail, KeyRound, AlertCircle, UserX, RefreshCw } from 'lucide-r
 import { generateSecurePassword } from '@/lib/passwordUtils';
 import { ApogeeUserSelect } from '@/components/collaborators/ApogeeUserSelect';
 
+// Postes disponibles (N1 supprimé - technicien legacy conservé pour édition mais pas création)
 const ROLE_AGENCE_LABELS: Record<string, string> = {
   'dirigeant': 'Dirigeant(e)',
   'assistante': 'Assistante',
   'commercial': 'Commercial',
-  'technicien': 'Technicien',
   'tete_de_reseau': 'Tête de réseau',
   'externe': 'Externe',
 };

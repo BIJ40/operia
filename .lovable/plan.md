@@ -1,39 +1,36 @@
 
+# Corrections Admin - Janvier 2026
 
-# Plan : Suppression des statistiques de la page Admin
+## ✅ Corrections effectuées
 
-## Ce qui sera supprimé
+### 1. Bug critique : Modules non sauvegardés (Help! Academy, etc.)
+**Problème** : Quand on décochait un module (ex: Help! Academy), il se recochait après sauvegarde.
+**Cause** : Le hook `use-user-management.ts` lisait les modules depuis `profiles.enabled_modules` (JSONB legacy) mais sauvegardait vers `user_modules` (nouvelle table normalisée). Lors du rechargement, il relisait le JSONB qui n'était jamais mis à jour.
+**Solution** : Modifié la requête fetch dans `useUserManagement` pour lire depuis `user_modules` table (source de vérité).
 
-Le composant `StatsOverview` à la ligne 97 de `AdminIndex.tsx` qui affiche :
-- Utilisateurs
-- Contenus  
-- Documents
-- Tickets
-- En attente
-- Agences
+### 2. Incohérences N1 (rôle Collaborateur obsolète)
+**Problème** : L'ancien rôle "Collaborateur" (N1/franchisee_user) apparaissait encore dans les interfaces.
+**Solution** :
+- `visibleRoleLabels.ts` : Renommé `base_user` → "Partenaire externe", `franchisee_user` → "Utilisateur agence (legacy)"
+- `UserEditForm.tsx`, `UserFullDialog.tsx`, `UserAccordionItem.tsx` : Supprimé "Technicien" des postes disponibles
+- `UnifiedManagementPage.tsx` : Labels alignés avec le système unifié
 
-## Modification
+### 3. Statistiques Admin supprimées
+**Action** : Supprimé le composant `StatsOverview` de `AdminIndex.tsx` (inutile et ajoutait de la lourdeur).
 
-### Fichier : `src/pages/AdminIndex.tsx`
+## Fichiers modifiés
 
-**Lignes à supprimer :**
-- Ligne 11 : `import { StatsOverview } from '@/components/admin/overview/StatsOverview';`
-- Lignes 96-97 : 
-```tsx
-{/* Stats Overview */}
-<StatsOverview />
-```
+| Fichier | Modification |
+|---------|-------------|
+| `src/hooks/use-user-management.ts` | Lecture modules depuis user_modules au lieu de profiles.enabled_modules |
+| `src/lib/visibleRoleLabels.ts` | Labels N1 mis à jour |
+| `src/components/users/UserEditForm.tsx` | Poste technicien supprimé |
+| `src/components/admin/users/UserFullDialog.tsx` | Poste technicien supprimé |
+| `src/components/admin/users/UserAccordionItem.tsx` | Poste technicien supprimé |
+| `src/pages/admin/UnifiedManagementPage.tsx` | Labels rôles alignés |
+| `src/pages/AdminIndex.tsx` | StatsOverview supprimé |
 
-## Résultat
+## Note technique
 
-La page Admin affichera directement :
-1. Le header (icône + titre "Administration")
-2. Les onglets de navigation (Gestion, IA, Support, Données, Système)
-3. Le contenu de l'onglet sélectionné
-
-Plus de barre de statistiques entre le header et les onglets.
-
-## Note
-
-Le fichier `src/components/admin/overview/StatsOverview.tsx` et le hook `src/hooks/use-admin-stats.ts` ne seront pas supprimés (ils pourraient être réutilisés ailleurs), seule leur utilisation dans `AdminIndex.tsx` sera retirée.
-
+La table `user_modules` est maintenant la source de vérité unique pour les permissions utilisateurs.
+La colonne `profiles.enabled_modules` (JSONB) n'est plus utilisée - migration P3.2 complète.
