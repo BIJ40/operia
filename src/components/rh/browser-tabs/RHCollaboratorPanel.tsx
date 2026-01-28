@@ -139,13 +139,17 @@ function CollapsibleSection({ title, icon, defaultOpen = false, children, badge 
   const [isOpen, setIsOpen] = useState(defaultOpen);
   
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="border rounded-lg overflow-hidden bg-card h-fit">
-      <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-muted/50 transition-colors">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-md bg-primary/10 text-primary">
+    <Collapsible 
+      open={isOpen} 
+      onOpenChange={setIsOpen} 
+      className="rounded-2xl overflow-hidden bg-gradient-to-br from-card to-muted/30 border border-border/50 shadow-sm h-fit"
+    >
+      <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/30 transition-colors">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-gradient-to-br from-warm-blue/20 to-warm-teal/20 text-warm-blue">
             {icon}
           </div>
-          <h3 className="font-medium text-sm">{title}</h3>
+          <h3 className="font-semibold text-sm">{title}</h3>
           {badge}
         </div>
         <ChevronDown className={cn(
@@ -153,8 +157,8 @@ function CollapsibleSection({ title, icon, defaultOpen = false, children, badge 
           isOpen && "rotate-180"
         )} />
       </CollapsibleTrigger>
-      <CollapsibleContent forceMount className={cn("border-t", !isOpen && "hidden")}>
-        <div className="p-3">
+      <CollapsibleContent forceMount className={cn("border-t border-border/30", !isOpen && "hidden")}>
+        <div className="p-4 bg-background/50">
           {children}
         </div>
       </CollapsibleContent>
@@ -263,8 +267,8 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
 
   return (
     <div className="p-4 space-y-3">
-      {/* Header enrichi avec infos de contact */}
-      <Card>
+      {/* Header enrichi avec infos de contact - Warm Pastel style */}
+      <Card className="rounded-2xl border-border/50 shadow-sm bg-gradient-to-br from-card to-muted/30">
         <CardContent className="p-3">
           <div className="flex items-start gap-3">
             <Avatar className="h-10 w-10 shrink-0">
