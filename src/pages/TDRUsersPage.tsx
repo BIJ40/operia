@@ -13,8 +13,6 @@ import { Accordion } from '@/components/ui/accordion';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Users, UserPlus } from 'lucide-react';
 import { UserListSkeleton } from '@/components/admin/users/UserListSkeleton';
-import { FranchiseurPageHeader } from '@/franchiseur/components/layout/FranchiseurPageHeader';
-import { FranchiseurPageContainer } from '@/franchiseur/components/layout/FranchiseurPageContainer';
 
 import {
   CreateUserDialog,
@@ -149,35 +147,43 @@ export default function TDRUsersPage() {
 
   if (usersLoading) {
     return (
-      <FranchiseurPageContainer>
+      <div className="container max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <UserListSkeleton />
-      </FranchiseurPageContainer>
+      </div>
     );
   }
 
   return (
-    <FranchiseurPageContainer>
+    <div className="container max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
       <TooltipProvider>
         <div className="space-y-6">
           {/* Header */}
-          <FranchiseurPageHeader
-            title="Gestion Utilisateurs Réseau"
-            subtitle="Gestion des utilisateurs et permissions du réseau"
-            icon={<Users className="h-6 w-6 text-helpconfort-blue" />}
-            actions={
-              <div className="flex items-center gap-3">
-                <Badge variant="outline" className="text-lg px-4 py-2">
-                  {filteredUsers.length} utilisateur{filteredUsers.length > 1 ? 's' : ''}
-                </Badge>
-                {canCreateUsers && (
-                  <Button onClick={() => setShowCreateDialog(true)}>
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    Nouvel utilisateur
-                  </Button>
-                )}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20">
+                <Users className="h-6 w-6 text-primary" />
               </div>
-            }
-          />
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+                  Gestion Utilisateurs Réseau
+                </h1>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Gestion des utilisateurs et permissions du réseau
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <Badge variant="outline" className="text-lg px-4 py-2">
+                {filteredUsers.length} utilisateur{filteredUsers.length > 1 ? 's' : ''}
+              </Badge>
+              {canCreateUsers && (
+                <Button onClick={() => setShowCreateDialog(true)}>
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Nouvel utilisateur
+                </Button>
+              )}
+            </div>
+          </div>
 
         {/* Filters */}
         <UserFilters
@@ -331,6 +337,6 @@ export default function TDRUsersPage() {
         />
         </div>
       </TooltipProvider>
-    </FranchiseurPageContainer>
+    </div>
   );
 }
