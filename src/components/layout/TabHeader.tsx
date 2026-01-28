@@ -252,7 +252,6 @@ export function TabHeader() {
 
             {/* Actions droite - position absolue dans ligne 1 */}
             <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1">
-
               {/* Icône admin discrète (admin only) */}
               {isAdmin && (
                 <Link to="/admin">
@@ -266,41 +265,6 @@ export function TabHeader() {
                   </Button>
                 </Link>
               )}
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full h-8 w-8">
-                    <User className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-popover">
-                  <div className="px-2 py-1.5 text-sm">
-                    <p className="font-medium">{user?.email?.split('@')[0] || 'Utilisateur'}</p>
-                    <p className="text-xs text-muted-foreground">{user?.email}</p>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
-                      <User className="w-4 h-4" />
-                      Mon profil
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onClick={logout}
-                    className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Déconnexion
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <Link to="/changelog" className="block px-2 py-1.5 text-center">
-                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors">
-                      v{APP_VERSION}
-                    </span>
-                  </Link>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
           </div>
 
@@ -342,11 +306,63 @@ export function TabHeader() {
                     )}
                     <IconComponent className="w-4 h-4" />
                     <span>{tab.label}</span>
-                    {/* Badge Support retiré - système legacy supprimé */}
                   </div>
                 </NavLink>
               );
             })}
+
+            {/* Onglet Compte - Dropdown déguisé en onglet */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="relative shrink-0 outline-none"
+                  style={{ WebkitTapHighlightColor: 'transparent' }}
+                >
+                  <div
+                    className={cn(
+                      "relative flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-all duration-200",
+                      "text-muted-foreground hover:text-foreground hover:bg-muted hover:shadow-md hover:scale-105"
+                    )}
+                  >
+                    <User className="w-4 h-4" />
+                    <span>Compte</span>
+                  </div>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="w-56 bg-popover z-50">
+                <div className="px-3 py-2">
+                  <p className="font-medium text-sm">{user?.email?.split('@')[0] || 'Utilisateur'}</p>
+                  <p className="text-xs text-muted-foreground">{user?.email}</p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
+                    <User className="w-4 h-4" />
+                    Mon profil
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/changelog" className="flex items-center gap-2 cursor-pointer">
+                    <Settings className="w-4 h-4" />
+                    Paramètres
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={logout}
+                  className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Déconnexion
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <div className="px-2 py-1.5 text-center">
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                    v{APP_VERSION}
+                  </span>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </nav>
 
           {/* Ligne 3 : Sous-onglets contextuels avec pills arrondis */}
