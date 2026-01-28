@@ -101,6 +101,15 @@ export default {
             dark: "hsl(var(--hc-gray-dark))",
           },
         },
+        // Warm Dashboard palette
+        warm: {
+          blue: "hsl(var(--warm-blue))",
+          green: "hsl(var(--warm-green))",
+          orange: "hsl(var(--warm-orange))",
+          purple: "hsl(var(--warm-purple))",
+          pink: "hsl(var(--warm-pink))",
+          teal: "hsl(var(--warm-teal))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -110,6 +119,12 @@ export default {
       boxShadow: {
         'card': '0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05)',
         'card-hover': '0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.05)',
+        'warm': 'var(--shadow-card)',
+        'warm-hover': 'var(--shadow-card-hover)',
+        'warm-lg': '0 10px 40px -10px rgba(0,0,0,0.12)',
+      },
+      borderRadius: {
+        'warm': 'var(--radius-warm)',
       },
       keyframes: {
         "accordion-down": {
