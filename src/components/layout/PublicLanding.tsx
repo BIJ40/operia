@@ -15,7 +15,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DemoCarousel } from '@/components/landing/DemoCarousel';
-import operiaLogo from '@/assets/operia-logo.png';
 
 interface PublicLandingProps {
   onLoginClick: () => void;
@@ -26,13 +25,11 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-950/10 via-background to-indigo-950/10">
-      {/* Header OPER.IA */}
+      {/* Header */}
       <header className="w-full bg-gradient-to-r from-blue-900 to-indigo-800">
         <div className="container mx-auto px-4 sm:px-6 py-3 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <img src={operiaLogo} alt="OPER.IA" className="w-8 h-8 sm:w-10 sm:h-10 object-contain" />
-            <span className="text-white font-bold text-lg sm:text-xl">OPER.IA</span>
-            <span className="text-blue-200 text-xs sm:text-sm hidden sm:inline ml-2">Intelligence Opérationnelle</span>
+            <span className="text-white font-bold text-lg sm:text-xl">HC Services</span>
           </div>
           <Button 
             onClick={onLoginClick}
@@ -177,15 +174,14 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
         </motion.div>
       </section>
 
-      {/* Footer OPER.IA */}
+      {/* Footer */}
       <footer className="border-t bg-gradient-to-r from-blue-900/5 to-indigo-800/5 py-8 mt-auto">
         <div className="container mx-auto px-6 text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <img src={operiaLogo} alt="OPER.IA" className="w-6 h-6 object-contain" />
-            <span className="font-bold text-foreground">OPER.IA</span>
+            <span className="font-bold text-foreground">HC Services</span>
           </div>
           <p className="text-muted-foreground text-sm">
-            © {new Date().getFullYear()} OPER.IA - Intelligence Opérationnelle pour réseaux multi-sites
+            © {new Date().getFullYear()} HelpConfort Services
           </p>
         </div>
       </footer>
