@@ -505,7 +505,6 @@ export function canAccessFeature(
       return caps.canAccessSupport;
       
     case 'CONSOLE_SUPPORT':
-    case 'support_tickets':
       // P2.1 - Utiliser canAccessSupportConsoleUI (support.agent OU N5+)
       return canAccessSupportConsoleUI ?? caps.canAccessSupportConsoleUI;
     

@@ -32,7 +32,7 @@ export default function CollaborateurProfilePage() {
   const handleDelete = () => {
     if (!id) return;
     deleteMutation.mutate(id, {
-      onSuccess: () => navigate('/hc-agency/collaborateurs'),
+      onSuccess: () => navigate('/rh/suivi'),
     });
   };
 

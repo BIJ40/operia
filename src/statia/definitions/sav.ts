@@ -1,7 +1,7 @@
 /**
  * StatIA V2 - Définitions des métriques SAV
  * 
- * IMPORTANT: Le tableau de gestion SAV (/hc-agency/indicateurs/sav) est la SOURCE DE VÉRITÉ.
+ * IMPORTANT: Le tableau de gestion SAV (/agency/indicateurs/sav) est la SOURCE DE VÉRITÉ.
  * Les overrides sont passés via params.savOverrides par le hook useStatiaSAVMetrics.
  */
 
