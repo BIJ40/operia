@@ -21,7 +21,6 @@ export const ROUTES = {
   // ============================================
   academy: {
     index: '/academy',
-    favorites: '/academy/favoris',
     // Guide Apogée
     apogee: '/academy/apogee',
     apogeeCategory: (slug: string) => `/academy/apogee/category/${slug}`,
@@ -195,7 +194,6 @@ export const ROUTES = {
   // USER
   // ============================================
   profile: '/profile',
-  favorites: '/favorites',
   changelog: '/changelog',
 
   // ============================================
@@ -223,7 +221,6 @@ export const ROUTES = {
 type StaticRoutes = 
   | typeof ROUTES['home']
   | typeof ROUTES['profile']
-  | typeof ROUTES['favorites']
   | typeof ROUTES['academy']['index']
   | typeof ROUTES['academy']['apogee']
   | typeof ROUTES['academy']['apporteurs']

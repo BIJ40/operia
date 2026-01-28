@@ -1,7 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { GripVertical, Plus, Lightbulb, Edit2, Copy, FolderInput, Trash2, ChevronDown, Info, Clock, Sparkles, Ban, RefreshCw } from 'lucide-react';
 import { createSanitizedHtml } from '@/lib/sanitize';
-import { FavoriteButton } from '@/components/FavoriteButton';
 import {
   AccordionContent,
   AccordionItem,
@@ -133,17 +132,6 @@ export function AccordionSection({
                 <RefreshCw className="w-3 h-3" />
                 M.A.J
               </span>
-            )}
-            {!isEditMode && !isEmptySection && (
-              <div onClick={(e) => e.stopPropagation()}>
-                <FavoriteButton
-                  blockId={section.id}
-                  blockTitle={section.title}
-                  blockSlug={section.slug}
-                  categorySlug={category.slug}
-                  scope={scope}
-                />
-              </div>
             )}
           </div>
             {isEditMode && canEdit && (

@@ -14,7 +14,6 @@ const Category = lazy(() => import("@/pages/Category"));
 const CategoryApporteur = lazy(() => import("@/pages/CategoryApporteur"));
 const HelpConfort = lazy(() => import("@/pages/HelpConfort"));
 const CategoryHelpConfort = lazy(() => import("@/pages/CategoryHelpConfort"));
-const Favorites = lazy(() => import("@/pages/Favorites"));
 const HcServicesGuide = lazy(() => import("@/pages/HcServicesGuide"));
 const CategoryHcServices = lazy(() => import("@/pages/CategoryHcServices"));
 
@@ -43,10 +42,6 @@ export function AcademyRoutes() {
       {/* Base Documentaire */}
       <Route path="/academy/hc-base" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><HelpConfort /></ModuleGuard></RoleGuard></MainLayout>} />
       <Route path="/academy/hc-base/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><CategoryHelpConfort /></ModuleGuard></RoleGuard></MainLayout>} />
-      
-      {/* Favoris */}
-      <Route path="/academy/favoris" element={<MainLayout><RoleGuard><ModuleGuard moduleKey="help_academy"><Favorites /></ModuleGuard></RoleGuard></MainLayout>} />
-      <Route path="/favorites" element={<Navigate to="/academy/favoris" replace />} />
     </>
   );
 }
