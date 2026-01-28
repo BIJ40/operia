@@ -331,7 +331,7 @@ export function TabHeader() {
                     )}
                   >
                     <User className="w-4 h-4" />
-                    <span>Compte</span>
+                    <span>Profil</span>
                   </div>
                 </button>
               </DropdownMenuTrigger>
