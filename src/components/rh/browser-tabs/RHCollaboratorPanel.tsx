@@ -3,7 +3,8 @@
  * Une seule fiche avec sections repliables (plus d'onglets internes)
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -160,6 +161,7 @@ interface RHCollaboratorPanelProps {
 }
 
 export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps) {
+  const queryClient = useQueryClient();
   const { data: collaborator, isLoading } = useRHCollaborator(collaboratorId);
   const deleteCollaborator = useDeleteCollaborator();
   const { closeTab } = useRHTabs();
@@ -175,6 +177,13 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
     updateSensitiveData,
     isUpdating: updatingICE 
   } = useSensitiveData(collaboratorId);
+  
+  // Helper pour update avec invalidation cache
+  const handleFieldUpdate = useCallback(async (field: string, value: any) => {
+    await updateCollaboratorField(collaboratorId, field, value);
+    queryClient.invalidateQueries({ queryKey: ['rh-collaborators'] });
+    queryClient.invalidateQueries({ queryKey: ['rh-collaborator', collaboratorId] });
+  }, [collaboratorId, queryClient]);
   
   const [iceContact, setIceContact] = useState('');
   const [icePhone, setIcePhone] = useState('');
@@ -266,7 +275,7 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
                 {/* Type sélectionnable */}
                 <Select
                   value={collaborator.type || ''}
-                  onValueChange={(v) => updateCollaboratorField(collaborator.id, 'type', v)}
+                  onValueChange={(v) => handleFieldUpdate('type', v)}
                 >
                   <SelectTrigger className="h-6 w-auto min-w-[90px] text-xs border-dashed px-2 gap-1">
                     <SelectValue placeholder="Type..." />
@@ -283,7 +292,7 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
                 {/* Rôle/Poste sélectionnable */}
                 <Select
                   value={collaborator.role || ''}
-                  onValueChange={(v) => updateCollaboratorField(collaborator.id, 'role', v)}
+                  onValueChange={(v) => handleFieldUpdate('role', v)}
                 >
                   <SelectTrigger className="h-6 w-auto min-w-[100px] text-xs border-dashed px-2 gap-1">
                     <Briefcase className="h-3 w-3 shrink-0 text-muted-foreground" />
