@@ -25,7 +25,7 @@ interface AdminMainTab {
 
 const ADMIN_MAIN_TABS: AdminMainTab[] = [
   { id: 'acces', label: 'Accès', icon: Shield },
-  { id: 'reseau', label: 'Réseau', icon: Building2 },
+  { id: 'agences', label: 'Agences', icon: Building2 },
   { id: 'ia', label: 'IA', icon: Brain },
   { id: 'contenu', label: 'Contenu', icon: FileText },
   { id: 'ops', label: 'Ops', icon: Database },
@@ -104,7 +104,7 @@ export default function AdminHubContent() {
             <AccesView />
           </TabsContent>
 
-          <TabsContent value="reseau" className="mt-0 focus-visible:outline-none">
+          <TabsContent value="agences" className="mt-0 focus-visible:outline-none">
             <ReseauView />
           </TabsContent>
 
