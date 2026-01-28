@@ -1,253 +1,198 @@
-import { BarChart3, ListTodo, Tv, Radar, Building2, ChevronDown, MapPin } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
-import { ROUTES } from '@/config/routes';
-import { AgencyInfoTile } from '@/components/pilotage/AgencyInfoTile';
+import { Building2, BarChart3, Users, Tv, ExternalLink } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { AgencyInfoCompact } from '@/components/pilotage/AgencyInfoCompact';
+import { ActionsAMenerTab } from '@/components/pilotage/ActionsAMenerTab';
+import { MesApporteursTab } from '@/components/pilotage/MesApporteursTab';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
-import { memo, useState, useEffect } from 'react';
-import type { LucideIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useSessionState } from '@/hooks/useSessionState';
+import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
+import { AgencyProvider } from '@/apogee-connect/contexts/AgencyContext';
+import { FiltersProvider } from '@/apogee-connect/contexts/FiltersContext';
+import { SecondaryFiltersProvider } from '@/apogee-connect/contexts/SecondaryFiltersContext';
+import { StatsHubProvider, useStatsHub } from '@/apogee-connect/components/stats-hub/StatsHubContext';
+import { TABS_CONFIG, TabId } from '@/apogee-connect/components/stats-hub/types';
+import { GeneralTab, ApporteursTab, TechniciensTab, UniversTab, SAVTab, PrevisionnelTab } from '@/apogee-connect/components/stats-hub/tabs';
+import { PeriodSelector } from '@/apogee-connect/components/filters/PeriodSelector';
+import { LayoutDashboard, Layers, AlertTriangle, CalendarClock } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ROUTES } from '@/config/routes';
 
-interface PilotageModule {
-  id: string;
-  title: string;
-  description: string;
-  icon: LucideIcon;
-  href: string;
-  badge?: string | number;
-  requiredOption?: string;
-}
+type MainTab = 'agence' | 'stats' | 'apporteurs';
 
-const pilotageModules: PilotageModule[] = [
-  {
-    id: 'stats_hub',
-    title: 'Stats Hub',
-    description: 'Centre statistiques unifié de l\'agence',
-    icon: BarChart3,
-    href: ROUTES.agency.statsHub,
-    requiredOption: 'stats_hub',
-  },
-  // HIDDEN: Veille Apporteurs - temporairement désactivé (voir /admin/hidden-features)
-  // {
-  //   id: 'veille_apporteurs',
-  //   title: 'Veille Apporteurs',
-  //   description: 'Suivi performance et alertes apporteurs',
-  //   icon: Radar,
-  //   href: ROUTES.agency.veilleApporteurs,
-  //   requiredOption: 'veille_apporteurs',
-  // },
-  {
-    id: 'carte_rdv',
-    title: 'Carte RDV',
-    description: 'Visualisation géographique des RDV du jour',
-    icon: MapPin,
-    href: ROUTES.agency.map,
-    requiredOption: 'carte_rdv',
-  },
-  {
-    id: 'diffusion',
-    title: 'Diffusion',
-    description: 'Mode TV agence avec statistiques',
-    icon: Tv,
-    href: ROUTES.agency.diffusion,
-    requiredOption: 'diffusion',
-  },
-  {
-    id: 'actions',
-    title: 'Actions à mener',
-    description: 'Suivi des actions et tâches en cours',
-    icon: ListTodo,
-    href: ROUTES.agency.actions,
-    requiredOption: 'actions_a_mener',
-  },
-  {
-    id: 'mes_apporteurs',
-    title: 'Mes Apporteurs',
-    description: 'Créer un espace apporteur',
-    icon: Building2,
-    href: ROUTES.agency.mesApporteurs,
-    requiredOption: 'mes_apporteurs',
-  },
-];
+const TAB_ICONS: Record<TabId, React.ReactNode> = {
+  general: <LayoutDashboard className="h-4 w-4" />,
+  apporteurs: <Building2 className="h-4 w-4" />,
+  techniciens: <Users className="h-4 w-4" />,
+  univers: <Layers className="h-4 w-4" />,
+  sav: <AlertTriangle className="h-4 w-4" />,
+  previsionnel: <CalendarClock className="h-4 w-4" />,
+};
 
-// Custom hook for agency info collapse state
-const AGENCY_INFO_STORAGE_KEY = 'pilotage-agency-info-open';
+const TAB_COMPONENTS: Record<TabId, React.ComponentType> = {
+  general: GeneralTab,
+  apporteurs: ApporteursTab,
+  techniciens: TechniciensTab,
+  univers: UniversTab,
+  sav: SAVTab,
+  previsionnel: PrevisionnelTab,
+};
 
-export default function PilotageIndex() {
-  const { globalRole } = useAuth();
-  const { hasModuleOption } = useEffectiveModules();
-  
-  const [isAgencyInfoOpen, setIsAgencyInfoOpen] = useState(() => {
-    try {
-      const stored = localStorage.getItem(AGENCY_INFO_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : false;
-    } catch {
-      return false;
-    }
-  });
+function StatsHubContent() {
+  const { activeTab, setActiveTab } = useStatsHub();
+  const TabComponent = TAB_COMPONENTS[activeTab];
 
-  useEffect(() => {
-    localStorage.setItem(AGENCY_INFO_STORAGE_KEY, JSON.stringify(isAgencyInfoOpen));
-  }, [isAgencyInfoOpen]);
+  const periodSelector = activeTab === 'previsionnel' 
+    ? <PeriodSelector variant="previsionnel" />
+    : <PeriodSelector />;
 
-  const isPlatformAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';
-
-  // Filtrer les modules selon les permissions
-  const visibleModules = pilotageModules.filter(module => {
-    if (isPlatformAdmin) return true;
-    if (!module.requiredOption) return true;
-    return hasModuleOption('pilotage_agence', module.requiredOption);
-  });
+  const handleOpenDiffusion = () => {
+    window.open(ROUTES.agency.diffusion, '_blank');
+  };
 
   return (
-    <div className="container mx-auto py-8 px-4 space-y-6">
-      {/* Header Mon Agence */}
-      <div className="flex items-center gap-5 py-6">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-lg">
-          <Building2 className="w-9 h-9 text-white" />
-        </div>
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold text-foreground tracking-tight">Mon Agence</h1>
-          <p className="text-muted-foreground">Pilotez votre activité et suivez vos indicateurs clés</p>
-        </div>
-      </div>
-      
-      {/* Tuiles principales - filtrées par permissions */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {visibleModules.map(module => (
-          <PilotageTileCard
-            key={module.id}
-            module={module}
-            badge={module.badge}
-            isAdmin={isPlatformAdmin}
-          />
-        ))}
+    <div className="space-y-4">
+      {/* Header avec bouton TV et sélecteur de période */}
+      <div className="flex items-center justify-between">
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={handleOpenDiffusion}
+          className="gap-2"
+        >
+          <Tv className="h-4 w-4" />
+          Diffusion TV
+          <ExternalLink className="h-3 w-3" />
+        </Button>
+        {periodSelector}
       </div>
 
-      {/* Informations de l'agence - section collapsible */}
-      <section className="group/section">
-        <div
-          onClick={() => setIsAgencyInfoOpen(!isAgencyInfoOpen)}
-          className={cn(
-            "w-full flex items-center justify-between cursor-pointer",
-            "min-h-[72px] py-4 px-5 -mx-1 rounded-2xl",
-            "border border-transparent",
-            "bg-gradient-to-r from-muted/50 via-background to-muted/30",
-            "hover:border-border hover:from-muted/80 hover:via-background hover:to-muted/50",
-            "hover:shadow-md",
-            "transition-all duration-300"
-          )}
-        >
-          <div className="flex items-center gap-4">
-            <div className={cn(
-              "w-14 h-14 rounded-xl flex items-center justify-center",
-              "bg-gradient-to-br from-helpconfort-blue/15 to-helpconfort-blue/5",
-              "border border-helpconfort-blue/20",
-              "transition-all duration-300"
-            )}>
-              <Building2 className="w-7 h-7 text-helpconfort-blue" />
-            </div>
-            <h2 className="text-xl font-bold text-foreground tracking-tight">
-              Informations de l'agence
-            </h2>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className={cn(
-              "hidden sm:block w-16 h-1 rounded-full",
-              "bg-gradient-to-r from-helpconfort-blue/40 to-helpconfort-blue/10",
-              "group-hover/section:from-helpconfort-blue/60 group-hover/section:to-helpconfort-blue/20",
-              "transition-all duration-300"
-            )} />
-            <div className={cn(
-              "w-10 h-10 rounded-xl flex items-center justify-center",
-              "bg-muted/80 border border-border/50",
-              "transition-all duration-300"
-            )}>
-              <ChevronDown 
-                className={cn(
-                  "w-5 h-5 text-muted-foreground",
-                  "transition-all duration-300",
-                  isAgencyInfoOpen && "rotate-180"
-                )} 
-              />
-            </div>
-          </div>
-        </div>
-        
-        <div
-          className={cn(
-            "grid transition-all duration-300 ease-out",
-            isAgencyInfoOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-          )}
-        >
-          <div className="overflow-hidden">
-            <div className={cn(
-              "pt-5 pb-2",
-              "transition-transform duration-300 ease-out",
-              isAgencyInfoOpen ? "translate-y-0" : "-translate-y-2"
-            )}>
-              <AgencyInfoTile hideHeader />
-            </div>
-          </div>
-        </div>
-      </section>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabId)}>
+        <TabsList className="grid w-full grid-cols-6">
+          {TABS_CONFIG.map(tab => (
+            <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-1.5 text-xs">
+              {TAB_ICONS[tab.id]}
+              <span className="hidden sm:inline">{tab.label}</span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.2 }}
+          >
+            {TABS_CONFIG.map(tab => (
+              <TabsContent key={tab.id} value={tab.id} className="mt-4">
+                {activeTab === tab.id && <TabComponent />}
+              </TabsContent>
+            ))}
+          </motion.div>
+        </AnimatePresence>
+      </Tabs>
+
+      <div className="text-center text-xs text-muted-foreground">
+        Touches 1-6 pour changer d'onglet
+      </div>
     </div>
   );
 }
 
-interface PilotageTileCardProps {
-  module: PilotageModule;
-  badge?: string | number;
-  isAdmin?: boolean;
-  isClickable?: boolean;
-}
+function PilotageContent() {
+  const { globalRole } = useAuth();
+  const { hasModuleOption } = useEffectiveModules();
+  const [activeTab, setActiveTab] = useSessionState<MainTab>('pilotage_active_tab', 'agence');
+  
+  const isPlatformAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';
 
-const PilotageTileCard = memo(function PilotageTileCard({ 
-  module, 
-  badge, 
-  isAdmin,
-  isClickable = true 
-}: PilotageTileCardProps) {
-  const Icon = module.icon;
-  const isDisabled = module.badge === 'Bientôt' && !isAdmin;
+  // Vérifier les permissions pour chaque onglet
+  const hasStatsAccess = isPlatformAdmin || hasModuleOption('pilotage_agence', 'stats_hub');
+  const hasApporteursAccess = isPlatformAdmin || hasModuleOption('pilotage_agence', 'mes_apporteurs');
 
-  const content = (
-    <div className={`
-      group relative rounded-xl border border-helpconfort-blue/15 p-4
-      bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-background to-background
-      shadow-sm transition-all duration-300 border-l-4 border-l-helpconfort-blue
-      ${isDisabled 
-        ? 'opacity-50 cursor-not-allowed' 
-        : 'cursor-pointer hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5'
-      }
-    `}>
-      {badge && (
-        <span className={`absolute top-2 right-2 text-xs font-bold px-2 py-0.5 rounded-full z-10 ${
-          typeof badge === 'number' 
-            ? 'bg-red-500 text-white animate-pulse min-w-[20px] text-center' 
-            : 'bg-helpconfort-blue text-white text-[10px]'
-        }`}>
-          {badge}
-        </span>
-      )}
-      <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-full border-2 border-helpconfort-blue/30 flex-shrink-0 flex items-center justify-center bg-helpconfort-blue/10
-          ${!isDisabled && 'group-hover:border-helpconfort-blue'} transition-all`}>
-          <Icon className="w-5 h-5 text-helpconfort-blue" />
+  return (
+    <div className="container mx-auto py-6 px-4 space-y-6">
+      {/* Header avec titre */}
+      <div className="flex items-center gap-4">
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-lg">
+          <Building2 className="w-7 h-7 text-white" />
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-base font-semibold text-foreground truncate">{module.title}</p>
-          <p className="text-xs text-muted-foreground truncate">{module.description}</p>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Mon Agence</h1>
+          <p className="text-sm text-muted-foreground">Pilotez votre activité</p>
         </div>
-        <ArrowRight className={`w-4 h-4 flex-shrink-0 text-muted-foreground ${!isDisabled && 'group-hover:text-helpconfort-blue group-hover:translate-x-0.5'} transition-all`} aria-hidden="true" />
       </div>
+
+      {/* Infos agence compactes */}
+      <AgencyInfoCompact />
+
+      {/* Onglets principaux */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as MainTab)}>
+        <TabsList className="w-full justify-start bg-muted/50 p-1 h-auto">
+          <TabsTrigger 
+            value="agence" 
+            className="flex items-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm px-4 py-2"
+          >
+            <Building2 className="h-4 w-4" />
+            Mon agence
+          </TabsTrigger>
+          {hasStatsAccess && (
+            <TabsTrigger 
+              value="stats" 
+              className="flex items-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm px-4 py-2"
+            >
+              <BarChart3 className="h-4 w-4" />
+              Statistiques
+            </TabsTrigger>
+          )}
+          {hasApporteursAccess && (
+            <TabsTrigger 
+              value="apporteurs" 
+              className="flex items-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm px-4 py-2"
+            >
+              <Users className="h-4 w-4" />
+              Mes apporteurs
+            </TabsTrigger>
+          )}
+        </TabsList>
+
+        <div className="mt-6">
+          <TabsContent value="agence" className="mt-0">
+            <ActionsAMenerTab />
+          </TabsContent>
+
+          {hasStatsAccess && (
+            <TabsContent value="stats" className="mt-0">
+              <StatsHubProvider>
+                <StatsHubContent />
+              </StatsHubProvider>
+            </TabsContent>
+          )}
+
+          {hasApporteursAccess && (
+            <TabsContent value="apporteurs" className="mt-0">
+              <MesApporteursTab />
+            </TabsContent>
+          )}
+        </div>
+      </Tabs>
     </div>
   );
+}
 
-  if (isDisabled || !isClickable) {
-    return content;
-  }
-
-  return <Link to={module.href}>{content}</Link>;
-});
+export default function PilotageIndex() {
+  return (
+    <ApiToggleProvider>
+      <AgencyProvider>
+        <FiltersProvider>
+          <SecondaryFiltersProvider>
+            <PilotageContent />
+          </SecondaryFiltersProvider>
+        </FiltersProvider>
+      </AgencyProvider>
+    </ApiToggleProvider>
+  );
+}
