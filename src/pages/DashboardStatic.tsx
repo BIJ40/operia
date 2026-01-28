@@ -1,25 +1,31 @@
 /**
- * DashboardStatic - Page d'accueil avec layout conditionnel par rôle
+ * DashboardStatic - Page d'accueil "Warm Dashboard" avec layout conditionnel par rôle
+ * 
+ * Refonte UX/UI complète:
+ * - Design chaleureux avec cartes arrondies et couleurs pastel
+ * - Titres humains et conversationnels
+ * - Hiérarchie visuelle en 3 niveaux
+ * - Hero section avec carte RDV pour N2+
+ * - Animations framer-motion
  * 
  * Layouts par niveau:
  * - N0 (external): Tickets + Favoris uniquement
- * - N1 Technicien: KPIs personnels + Tickets + Favoris
- * - N1 Assistante: KPIs personnels + Tickets + Favoris
- * - N1 Autre: Tickets + Favoris
- * - N2 (franchisee_admin): Layout complet agence
+ * - N1 Technicien/Assistante: KPIs personnels + Tickets + Favoris
+ * - N2 (franchisee_admin): Layout complet agence avec carte
  * - N3/N4 (franchisor): Placeholder réseau + Tickets + Favoris
- * - N5/N6 (admin): Layout agence pour l'instant
+ * - N5/N6 (admin): Layout agence complet
  */
 
 import { useState, useMemo, createContext, useContext, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { motion } from 'framer-motion';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ChevronDown, FolderOpen, CalendarDays, Car, Wrench, Calendar } from 'lucide-react';
+import { ChevronDown, BarChart3, Trophy, PieChart, TrendingUp, AlertTriangle, MessageSquare, Star, ShoppingCart, Users, Building2, Network, MapPin } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+
+// Widgets existants
 import { IndicateursGlobauxWidget } from '@/components/dashboard/widgets/IndicateursGlobauxWidget';
 import { FavorisWidget } from '@/components/dashboard/widgets/FavorisWidget';
 import { RecentTicketsWidget } from '@/components/dashboard/widgets/RecentTicketsWidget';
@@ -31,14 +37,13 @@ import { PanierMoyenWidget } from '@/components/dashboard/widgets/PanierMoyenWid
 import { TechniciensProdWidget } from '@/components/dashboard/widgets/TechniciensProdWidget';
 import { TechnicienPersonnelKPIs } from '@/components/dashboard/TechnicienPersonnelKPIs';
 import { AssistantePersonnelKPIs } from '@/components/dashboard/AssistantePersonnelKPIs';
-import { IndexTile } from '@/components/ui/index-tile';
-import { ROUTES } from '@/config/routes';
-import { BarChart3, Star, MessageSquare, Trophy, PieChart, AlertTriangle, TrendingUp, Users, ShoppingCart, Building2, Network } from 'lucide-react';
-import { startOfYear, endOfYear, startOfQuarter, endOfQuarter, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfDay, endOfDay, subMonths, subWeeks, subDays, subYears, format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { GLOBAL_ROLES } from '@/types/globalRoles';
 
-// MON_ESPACE_MODULES supprimé - portail salarié N1 abandonné
+// Nouveaux composants V2
+import { WarmCard, HumanTitle, DashboardMapWidget } from '@/components/dashboard/v2';
+
+import { GLOBAL_ROLES } from '@/types/globalRoles';
+import { startOfYear, endOfYear, startOfQuarter, endOfQuarter, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfDay, endOfDay, subMonths, subWeeks, subDays, format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 // Types pour les périodes
 type PeriodKey = 'year' | 'quarter' | 'prev_month' | 'month' | 'prev_week' | 'week' | 'prev_day' | 'day';
@@ -129,7 +134,6 @@ const DashboardPeriodContext = createContext<DashboardPeriodContextValue | null>
 export function useDashboardPeriod() {
   const ctx = useContext(DashboardPeriodContext);
   if (!ctx) {
-    // Fallback vers le mois en cours si pas de contexte
     return {
       period: 'month' as PeriodKey,
       dateRange: { start: startOfMonth(new Date()), end: endOfMonth(new Date()) },
@@ -146,8 +150,22 @@ function getGreeting(): string {
   return 'Bonsoir';
 }
 
+// Animation stagger pour les cartes
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.05 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3 } }
+};
+
 export default function DashboardStatic() {
-  const { firstName, globalRole, roleAgence, user } = useAuth();
+  const { firstName, globalRole, roleAgence, user, agence } = useAuth();
   const greeting = getGreeting();
   
   // Détermination du niveau d'accès
@@ -165,7 +183,7 @@ export default function DashboardStatic() {
   // N2+ = accès aux KPIs agence
   const hasAgencyAccess = isN2 || isN5orN6;
   
-  // Vérifier si le N1 a une liaison apogee_user_id (pour masquer le sélecteur si pas lié)
+  // Vérifier si le N1 a une liaison apogee_user_id
   const { data: hasApogeeLink } = useQuery({
     queryKey: ['dashboard-apogee-link', user?.id],
     queryFn: async () => {
@@ -181,7 +199,7 @@ export default function DashboardStatic() {
     staleTime: 5 * 60 * 1000,
   });
   
-  // État du sélecteur de période - défaut: mois en cours, mais persisté en sessionStorage
+  // État du sélecteur de période
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodKey>(() => {
     if (typeof window === 'undefined') return 'month';
     const stored = window.sessionStorage.getItem('dashboard-selected-period') as PeriodKey | null;
@@ -189,14 +207,12 @@ export default function DashboardStatic() {
     return isValid ? stored! : 'month';
   });
   
-  // État pour l'année sélectionnée (offset: 0 = année actuelle, -1 = année précédente)
   const [selectedYearOffset, setSelectedYearOffset] = useState<number>(() => {
     if (typeof window === 'undefined') return 0;
     const stored = window.sessionStorage.getItem('dashboard-selected-year-offset');
     return stored ? parseInt(stored, 10) : 0;
   });
   
-  // Sauvegarde de la période sélectionnée pour éviter la réinitialisation au changement d'onglet / reload
   useEffect(() => {
     if (typeof window === 'undefined') return;
     window.sessionStorage.setItem('dashboard-selected-period', selectedPeriod);
@@ -207,12 +223,10 @@ export default function DashboardStatic() {
     window.sessionStorage.setItem('dashboard-selected-year-offset', selectedYearOffset.toString());
   }, [selectedYearOffset]);
   
-  // Calcul des dates selon la période sélectionnée
   const periodConfig = useMemo(() => {
     const period = PERIODS.find(p => p.key === selectedPeriod) || PERIODS.find(p => p.key === 'month')!;
     const dates = period.getDates(period.hasYearSelector ? selectedYearOffset : undefined);
     
-    // Générer le label de période lisible
     let periodLabel = '';
     switch (selectedPeriod) {
       case 'year':
@@ -243,263 +257,313 @@ export default function DashboardStatic() {
   }, [selectedPeriod, selectedYearOffset]);
 
   // ============================================================================
-  // RENDU CONDITIONNEL PAR RÔLE
+  // LAYOUTS PAR RÔLE AVEC NOUVEAU DESIGN WARM
   // ============================================================================
   
   const renderDashboardContent = () => {
     // N0 (Extérieur) - Tickets + Favoris uniquement
     if (isN0) {
       return (
-        <div className="grid grid-cols-12 gap-4">
-          <Card className="col-span-12 md:col-span-6">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-primary" />
-                Mes tickets
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="grid grid-cols-1 md:grid-cols-2 gap-5"
+        >
+          <motion.div variants={itemVariants}>
+            <WarmCard
+              variant="blue"
+              icon={MessageSquare}
+              title="Mes tickets"
+              subtitle="Vos demandes récentes"
+            >
               <RecentTicketsWidget />
-            </CardContent>
-          </Card>
+            </WarmCard>
+          </motion.div>
 
-          <Card className="col-span-12 md:col-span-6">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Star className="h-4 w-4 text-yellow-500" />
-                Mes favoris
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="min-h-[150px]">
-              <FavorisWidget />
-            </CardContent>
-          </Card>
-        </div>
+          <motion.div variants={itemVariants}>
+            <WarmCard
+              variant="orange"
+              icon={Star}
+              title="Mes favoris"
+              subtitle="Accès rapides"
+            >
+              <div className="min-h-[150px]">
+                <FavorisWidget />
+              </div>
+            </WarmCard>
+          </motion.div>
+        </motion.div>
       );
     }
     
-    // N1 - Affiche uniquement Tickets + Favoris (portail salarié supprimé)
+    // N1 - KPIs personnels + Tickets + Favoris
     if (isN1) {
       return (
-        <div className="grid grid-cols-12 gap-4">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="space-y-5"
+        >
           {/* KPIs personnels si technicien */}
           {isTechnicien && (
-            <Card className="col-span-12">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4 text-primary" />
-                  Mes performances
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+            <motion.div variants={itemVariants}>
+              <WarmCard
+                variant="blue"
+                icon={BarChart3}
+                title="Mes performances"
+                subtitle="Vos indicateurs personnels"
+              >
                 <TechnicienPersonnelKPIs />
-              </CardContent>
-            </Card>
+              </WarmCard>
+            </motion.div>
           )}
+          
           {/* KPIs personnels si assistante */}
           {isAssistante && (
-            <Card className="col-span-12">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4 text-primary" />
-                  Mon activité
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+            <motion.div variants={itemVariants}>
+              <WarmCard
+                variant="purple"
+                icon={BarChart3}
+                title="Mon activité"
+                subtitle="Suivi de votre travail"
+              >
                 <AssistantePersonnelKPIs />
-              </CardContent>
-            </Card>
+              </WarmCard>
+            </motion.div>
           )}
 
-          <Card className="col-span-12 md:col-span-6">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-primary" />
-                Mes tickets
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RecentTicketsWidget />
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <motion.div variants={itemVariants}>
+              <WarmCard
+                variant="teal"
+                icon={MessageSquare}
+                title="Mes tickets"
+                subtitle="Vos demandes en cours"
+              >
+                <RecentTicketsWidget />
+              </WarmCard>
+            </motion.div>
 
-          <Card className="col-span-12 md:col-span-6">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Star className="h-4 w-4 text-amber-500" />
-                Mes favoris
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="min-h-[150px]">
-              <FavorisWidget />
-            </CardContent>
-          </Card>
-        </div>
+            <motion.div variants={itemVariants}>
+              <WarmCard
+                variant="orange"
+                icon={Star}
+                title="Mes favoris"
+                subtitle="Vos raccourcis"
+              >
+                <div className="min-h-[150px]">
+                  <FavorisWidget />
+                </div>
+              </WarmCard>
+            </motion.div>
+          </div>
+        </motion.div>
       );
     }
     
     // N3/N4 (Franchiseur) - Placeholder réseau + Tickets + Favoris
     if (isN3orN4) {
       return (
-        <div className="grid grid-cols-12 gap-4">
-          {/* Placeholder pour KPIs réseau */}
-          <Card className="col-span-12">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Network className="h-4 w-4 text-primary" />
-                Vue Réseau
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="space-y-5"
+        >
+          <motion.div variants={itemVariants}>
+            <WarmCard
+              variant="purple"
+              icon={Network}
+              title="Vue Réseau"
+              subtitle="Pilotage multi-agences"
+            >
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <Building2 className="h-12 w-12 mb-4 opacity-50" />
                 <p className="text-sm">Les KPIs réseau seront affichés ici</p>
                 <p className="text-xs mt-1">Accédez à l'espace Franchiseur pour la vue complète</p>
               </div>
-            </CardContent>
-          </Card>
+            </WarmCard>
+          </motion.div>
 
-          <Card className="col-span-12 md:col-span-6">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-primary" />
-                Derniers tickets
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RecentTicketsWidget />
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <motion.div variants={itemVariants}>
+              <WarmCard
+                variant="blue"
+                icon={MessageSquare}
+                title="Derniers tickets"
+                subtitle="Demandes du réseau"
+              >
+                <RecentTicketsWidget />
+              </WarmCard>
+            </motion.div>
 
-          <Card className="col-span-12 md:col-span-6">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Star className="h-4 w-4 text-yellow-500" />
-                Mes favoris
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="min-h-[150px]">
-              <FavorisWidget />
-            </CardContent>
-          </Card>
-        </div>
+            <motion.div variants={itemVariants}>
+              <WarmCard
+                variant="orange"
+                icon={Star}
+                title="Mes favoris"
+                subtitle="Accès rapides"
+              >
+                <div className="min-h-[150px]">
+                  <FavorisWidget />
+                </div>
+              </WarmCard>
+            </motion.div>
+          </div>
+        </motion.div>
       );
     }
     
-    // N2, N5, N6 - Layout complet agence
+    // N2, N5, N6 - Layout complet agence avec Hero Map
     return (
-      <div className="grid grid-cols-12 gap-4">
-        {/* Row 1: Indicateurs Globaux (large) + Top 3 Techniciens */}
-        <Card className="col-span-12 lg:col-span-8">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-primary" />
-              Indicateurs clés
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <IndicateursGlobauxWidget />
-          </CardContent>
-        </Card>
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="space-y-6"
+      >
+        {/* HERO SECTION - Carte RDV */}
+        <motion.div variants={itemVariants}>
+          <DashboardMapWidget agencySlug={agence} />
+        </motion.div>
 
-        <Card className="col-span-12 lg:col-span-4">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Trophy className="h-4 w-4 text-yellow-500" />
-              Top 3 Techniciens
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Top3TechniciensWidget />
-          </CardContent>
-        </Card>
+        {/* NIVEAU 1 - VUE IMMÉDIATE */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          {/* Indicateurs Globaux (large) */}
+          <motion.div variants={itemVariants} className="lg:col-span-8">
+            <WarmCard
+              variant="blue"
+              icon={BarChart3}
+              animate={false}
+            >
+              <HumanTitle titleKey="kpis" icon={BarChart3} iconColor="text-warm-blue" size="lg" />
+              <div className="mt-4">
+                <IndicateursGlobauxWidget />
+              </div>
+            </WarmCard>
+          </motion.div>
 
-        {/* Row 2: Derniers Tickets + CA par Univers + CA par Apporteur */}
-        <Card className="col-span-12 md:col-span-6 lg:col-span-4">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-primary" />
-              Derniers tickets
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <RecentTicketsWidget />
-          </CardContent>
-        </Card>
+          {/* Top 3 Techniciens */}
+          <motion.div variants={itemVariants} className="lg:col-span-4">
+            <WarmCard
+              variant="orange"
+              icon={Trophy}
+              animate={false}
+            >
+              <HumanTitle titleKey="top_techniciens" icon={Trophy} iconColor="text-warm-orange" size="lg" />
+              <div className="mt-4">
+                <Top3TechniciensWidget />
+              </div>
+            </WarmCard>
+          </motion.div>
+        </div>
 
-        <Card className="col-span-12 md:col-span-6 lg:col-span-4">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <PieChart className="h-4 w-4 text-primary" />
-              CA par Univers
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CAParUniversWidget />
-          </CardContent>
-        </Card>
+        {/* NIVEAU 2 - EXPLORABLE */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {/* Tickets récents */}
+          <motion.div variants={itemVariants}>
+            <WarmCard
+              variant="teal"
+              icon={MessageSquare}
+              animate={false}
+            >
+              <HumanTitle titleKey="tickets" icon={MessageSquare} iconColor="text-warm-teal" />
+              <div className="mt-3">
+                <RecentTicketsWidget />
+              </div>
+            </WarmCard>
+          </motion.div>
 
-        <Card className="col-span-12 md:col-span-6 lg:col-span-4">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-primary" />
-              CA par Apporteur
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CAApporteursWidget />
-          </CardContent>
-        </Card>
+          {/* CA par Univers */}
+          <motion.div variants={itemVariants}>
+            <WarmCard
+              variant="purple"
+              icon={PieChart}
+              animate={false}
+            >
+              <HumanTitle titleKey="ca_univers" icon={PieChart} iconColor="text-warm-purple" />
+              <div className="mt-3">
+                <CAParUniversWidget />
+              </div>
+            </WarmCard>
+          </motion.div>
 
-        {/* Row 3: Taux SAV + Panier Moyen + Productivité Techniciens + Favoris */}
-        <Card className="col-span-6 md:col-span-3">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-orange-500" />
-              Taux SAV
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <TauxSavWidget />
-          </CardContent>
-        </Card>
+          {/* CA par Apporteur */}
+          <motion.div variants={itemVariants}>
+            <WarmCard
+              variant="green"
+              icon={TrendingUp}
+              animate={false}
+            >
+              <HumanTitle titleKey="ca_apporteurs" icon={TrendingUp} iconColor="text-warm-green" />
+              <div className="mt-3">
+                <CAApporteursWidget />
+              </div>
+            </WarmCard>
+          </motion.div>
+        </div>
 
-        <Card className="col-span-6 md:col-span-3">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <ShoppingCart className="h-4 w-4 text-pink-500" />
-              Panier Moyen
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <PanierMoyenWidget />
-          </CardContent>
-        </Card>
+        {/* NIVEAU 3 - DÉTAILS */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Taux SAV */}
+          <motion.div variants={itemVariants}>
+            <WarmCard
+              variant="orange"
+              className="h-full"
+              animate={false}
+            >
+              <HumanTitle titleKey="taux_sav" icon={AlertTriangle} iconColor="text-warm-orange" size="sm" />
+              <div className="mt-2">
+                <TauxSavWidget />
+              </div>
+            </WarmCard>
+          </motion.div>
 
-        <Card className="col-span-12 md:col-span-6 lg:col-span-3">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Users className="h-4 w-4 text-primary" />
-              Productivité Techniciens
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <TechniciensProdWidget />
-          </CardContent>
-        </Card>
+          {/* Panier Moyen */}
+          <motion.div variants={itemVariants}>
+            <WarmCard
+              variant="pink"
+              className="h-full"
+              animate={false}
+            >
+              <HumanTitle titleKey="panier_moyen" icon={ShoppingCart} iconColor="text-warm-pink" size="sm" />
+              <div className="mt-2">
+                <PanierMoyenWidget />
+              </div>
+            </WarmCard>
+          </motion.div>
 
-        <Card className="col-span-12 md:col-span-6 lg:col-span-3">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Star className="h-4 w-4 text-yellow-500" />
-              Mes favoris
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="min-h-[150px]">
-            <FavorisWidget />
-          </CardContent>
-        </Card>
-      </div>
+          {/* Productivité Techniciens */}
+          <motion.div variants={itemVariants}>
+            <WarmCard
+              variant="blue"
+              className="h-full"
+              animate={false}
+            >
+              <HumanTitle titleKey="productivite" icon={Users} iconColor="text-warm-blue" size="sm" />
+              <div className="mt-2">
+                <TechniciensProdWidget />
+              </div>
+            </WarmCard>
+          </motion.div>
+
+          {/* Favoris */}
+          <motion.div variants={itemVariants}>
+            <WarmCard
+              variant="neutral"
+              className="h-full"
+              animate={false}
+            >
+              <HumanTitle titleKey="favoris" icon={Star} iconColor="text-amber-500" size="sm" />
+              <div className="mt-2 min-h-[120px]">
+                <FavorisWidget />
+              </div>
+            </WarmCard>
+          </motion.div>
+        </div>
+      </motion.div>
     );
   };
 
@@ -508,81 +572,87 @@ export default function DashboardStatic() {
 
   return (
     <DashboardPeriodContext.Provider value={periodConfig}>
-      <div className="container mx-auto py-6 px-4">
-        {/* Header avec sélecteur de période */}
-        <div className="mb-6 space-y-4">
-          <div>
-            <h1 className="text-2xl font-bold">
-              {greeting}{firstName ? `, ${firstName}` : ''}
-            </h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              Voici un aperçu de votre activité
-            </p>
-          </div>
-          
-          {/* Sélecteur de période - visible pour N1+ avec KPIs */}
-          {showPeriodSelector && (
-            <>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm text-muted-foreground mr-2">Période :</span>
-                {PERIODS.map((period) => (
-                  period.hasYearSelector ? (
-                    <Popover key={period.key}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant={selectedPeriod === period.key ? 'default' : 'outline'}
-                          size="sm"
-                          className="h-8 px-3 text-xs gap-1"
-                        >
-                          <span className="hidden sm:inline">{period.label}</span>
-                          <span className="sm:hidden">{period.shortLabel}</span>
-                          <ChevronDown className="h-3 w-3" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-1" align="start">
-                        <div className="flex flex-col gap-1">
-                          {[0, -1, -2].map((offset) => {
-                            const year = new Date().getFullYear() + offset;
-                            return (
-                              <Button
-                                key={offset}
-                                variant={selectedPeriod === period.key && selectedYearOffset === offset ? 'default' : 'ghost'}
-                                size="sm"
-                                className="h-8 justify-start text-xs"
-                                onClick={() => {
-                                  setSelectedPeriod(period.key);
-                                  setSelectedYearOffset(offset);
-                                }}
-                              >
-                                {year}
-                              </Button>
-                            );
-                          })}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  ) : (
-                    <Button
-                      key={period.key}
-                      variant={selectedPeriod === period.key ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setSelectedPeriod(period.key)}
-                      className="h-8 px-3 text-xs"
-                    >
-                      <span className="hidden sm:inline">{period.label}</span>
-                      <span className="sm:hidden">{period.shortLabel}</span>
-                    </Button>
-                  )
-                ))}
-              </div>
-              
-              {/* Affichage de la période sélectionnée */}
-              <p className="text-sm font-medium text-primary capitalize">
-                {periodConfig.periodLabel}
+      <div className="container mx-auto py-6 px-4 max-w-7xl">
+        {/* Header avec greeting chaleureux */}
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="mb-8"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">
+                {greeting}{firstName ? `, ${firstName}` : ''} 👋
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                Voici un aperçu de votre activité
               </p>
-            </>
-          )}
-        </div>
+            </div>
+            
+            {/* Sélecteur de période - visible pour N1+ avec KPIs */}
+            {showPeriodSelector && (
+              <div className="flex flex-col items-start sm:items-end gap-2">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {PERIODS.map((period) => (
+                    period.hasYearSelector ? (
+                      <Popover key={period.key}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant={selectedPeriod === period.key ? 'default' : 'outline'}
+                            size="sm"
+                            className="h-8 px-3 text-xs gap-1 rounded-full"
+                          >
+                            <span className="hidden sm:inline">{period.label}</span>
+                            <span className="sm:hidden">{period.shortLabel}</span>
+                            <ChevronDown className="h-3 w-3" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-1 bg-popover" align="end">
+                          <div className="flex flex-col gap-1">
+                            {[0, -1, -2].map((offset) => {
+                              const year = new Date().getFullYear() + offset;
+                              return (
+                                <Button
+                                  key={offset}
+                                  variant={selectedPeriod === period.key && selectedYearOffset === offset ? 'default' : 'ghost'}
+                                  size="sm"
+                                  className="h-8 justify-start text-xs"
+                                  onClick={() => {
+                                    setSelectedPeriod(period.key);
+                                    setSelectedYearOffset(offset);
+                                  }}
+                                >
+                                  {year}
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    ) : (
+                      <Button
+                        key={period.key}
+                        variant={selectedPeriod === period.key ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setSelectedPeriod(period.key)}
+                        className="h-8 px-3 text-xs rounded-full"
+                      >
+                        <span className="hidden sm:inline">{period.label}</span>
+                        <span className="sm:hidden">{period.shortLabel}</span>
+                      </Button>
+                    )
+                  ))}
+                </div>
+                
+                {/* Affichage de la période sélectionnée */}
+                <p className="text-sm font-medium text-primary capitalize">
+                  {periodConfig.periodLabel}
+                </p>
+              </div>
+            )}
+          </div>
+        </motion.div>
 
         {/* Contenu du dashboard */}
         {renderDashboardContent()}

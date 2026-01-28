@@ -81,6 +81,23 @@
     --hc-gray: 210 20% 97%;
     --hc-gray-dark: 210 15% 85%;
 
+    /* ============================================
+       WARM DASHBOARD - Palette émotionnelle pastel
+       ============================================ */
+    --warm-blue: 200 85% 60%;
+    --warm-green: 145 60% 55%;
+    --warm-orange: 35 90% 60%;
+    --warm-purple: 270 60% 65%;
+    --warm-pink: 340 70% 65%;
+    --warm-teal: 175 60% 50%;
+    
+    /* Ombres douces */
+    --shadow-card: 0 4px 20px -4px rgba(0,0,0,0.08);
+    --shadow-card-hover: 0 8px 30px -8px rgba(0,0,0,0.12);
+    
+    /* Rayons ultra-arrondis */
+    --radius-warm: 1.25rem;
+
     /* Legacy aliases */
     --blue-light: 200 100% 50%;
     --blue-main: 200 100% 43%;
