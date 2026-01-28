@@ -141,15 +141,6 @@ export default function AdminFaq() {
           </Button>
         </div>
 
-        {/* AI Search */}
-        <Card>
-          <CardContent className="pt-4">
-            <FaqAISearch
-              onResults={setSearchResults}
-              onClear={() => setSearchResults(null)}
-            />
-          </CardContent>
-        </Card>
 
         {/* Categories Accordions */}
         {Object.keys(groupedItems).length === 0 ? (
@@ -212,23 +203,6 @@ export default function AdminFaq() {
           </Button>
         }
       />
-
-      {/* Global AI Search */}
-      <Card>
-        <CardContent className="pt-4">
-          <FaqAISearch
-            onResults={(results) => {
-              if (results && results.length > 0) {
-                // Navigate to first result's context
-                const firstContext = results[0].context_type as ContextType;
-                setSearchParams({ context: firstContext });
-                setSearchResults(results);
-              }
-            }}
-            onClear={() => setSearchResults(null)}
-          />
-        </CardContent>
-      </Card>
 
       {/* Context Tiles Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
