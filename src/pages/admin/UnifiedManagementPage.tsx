@@ -17,15 +17,15 @@ import { useState, useMemo } from 'react';
 import { CreateUserDialog, EditUserDialog, DeactivateDialog, ReactivateDialog, DeleteDialog } from '@/components/admin/users';
 import { UserProfile } from '@/hooks/use-user-management';
 
-// Mapping simplifié des labels de rôles
+// Mapping simplifié des labels de rôles (N1 legacy conservé pour affichage utilisateurs existants)
 const ROLE_LABELS: Record<string, string> = {
-  superadmin: 'Super Admin',
-  platform_admin: 'Admin Plateforme',
-  franchisor_admin: 'Admin Réseau',
-  franchisor_user: 'Animateur',
-  franchisee_admin: 'Dirigeant',
-  franchisee_user: 'Utilisateur',
-  base_user: 'Externe',
+  superadmin: 'Administrateur',
+  platform_admin: 'Support avancé',
+  franchisor_admin: 'Direction réseau',
+  franchisor_user: 'Animateur réseau',
+  franchisee_admin: 'Dirigeant agence',
+  franchisee_user: 'Utilisateur agence',
+  base_user: 'Partenaire externe',
 };
 
 // Mapping simplifié des couleurs

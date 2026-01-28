@@ -14,9 +14,8 @@ import {
 import { EnabledModules, ModuleOptionsState, ModuleKey, MODULE_DEFINITIONS } from '@/types/modules';
 import { logAuth } from '@/lib/logger';
 import { toast } from 'sonner';
-// Json type removed - no longer writing to JSONB (P3.2 migration complete)
 import { useAdminAgencies } from './use-admin-agencies';
-import { enabledModulesToRows } from '@/lib/userModulesUtils';
+import { enabledModulesToRows, userModulesToEnabledModules } from '@/lib/userModulesUtils';
 import { ALL_USER_QUERY_PATTERNS } from '@/lib/queryKeys';
 
 // ✅ SYNCHRONISATION COMPLÈTE: fonction centralisée pour invalider TOUTES les query keys utilisateurs
@@ -187,7 +186,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
     }
   }, [effectiveScope, restrictToAgencyId, currentUserAgency, assignedAgenciesRaw]);
 
-  // ✅ Fetch users avec sélection explicite de colonnes
+  // ✅ Fetch users avec sélection explicite de colonnes + modules depuis user_modules
   const { data: users, isLoading: usersLoading } = useQuery({
     queryKey: ['user-management', manageableAgencyIds, showDeactivated],
     queryFn: async () => {
@@ -200,7 +199,6 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
           last_name, 
           agence, 
           global_role, 
-          enabled_modules, 
           role_agence, 
           is_active, 
           created_at,
@@ -220,9 +218,32 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
         query = query.eq('is_active', true);
       }
       
-      const { data, error } = await query.order('created_at', { ascending: false });
-      if (error) throw error;
-      return data as UserProfile[];
+      const { data: profilesData, error: profilesError } = await query.order('created_at', { ascending: false });
+      if (profilesError) throw profilesError;
+      
+      // ✅ Fetch user_modules pour tous les users (SOURCE DE VÉRITÉ pour les modules)
+      const userIds = profilesData?.map(p => p.id) ?? [];
+      const { data: modulesData } = await supabase
+        .from('user_modules')
+        .select('user_id, module_key, options')
+        .in('user_id', userIds);
+      
+      // Group modules by user_id
+      const modulesByUser = new Map<string, { module_key: string; options: unknown }[]>();
+      modulesData?.forEach(row => {
+        const existing = modulesByUser.get(row.user_id) || [];
+        existing.push({ module_key: row.module_key, options: row.options });
+        modulesByUser.set(row.user_id, existing);
+      });
+      
+      // Enrichir les utilisateurs avec les modules de user_modules table
+      const enrichedUsers = profilesData?.map(profile => {
+        const userModules = modulesByUser.get(profile.id);
+        const enabled_modules = userModulesToEnabledModules(userModules ?? []);
+        return { ...profile, enabled_modules };
+      }) ?? [];
+      
+      return enrichedUsers as UserProfile[];
     },
     enabled: effectiveScope !== 'none' && effectiveScope !== 'self',
   });
