@@ -42,6 +42,7 @@ import { LoginDialog } from '@/components/LoginDialog';
 import { ImageModal } from '@/components/ImageModal';
 import { AiUnifiedProvider } from '@/components/ai';
 import { DraggableTab } from '@/components/unified/DraggableTab';
+import { FloatingChatButton } from '@/components/chat/FloatingChatButton';
 // REMOVED: SimulationBanner, RoleSimulatorDropdown - fonctionnalité supprimée
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -355,6 +356,7 @@ function UnifiedWorkspaceContent() {
         
         <ImageModal />
         <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
+        <FloatingChatButton />
       </TooltipProvider>
     </AiUnifiedProvider>
   );
