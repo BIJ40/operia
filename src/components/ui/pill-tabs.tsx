@@ -1,6 +1,6 @@
 /**
  * PillTabsList - Style unifié pour les sous-onglets
- * Utilise le même style "folder" que les onglets Admin principaux
+ * Utilise le thème "Warm Pastel" avec couleurs vives
  */
 
 import * as React from 'react';
@@ -13,7 +13,42 @@ export interface PillTabConfig {
   id: string;
   label: string;
   icon: LucideIcon;
+  /** Optionnel: couleur d'accent (blue, purple, green, orange, pink, teal) */
+  accent?: 'blue' | 'purple' | 'green' | 'orange' | 'pink' | 'teal';
 }
+
+// Mapping des couleurs d'accent vers les classes Tailwind
+const ACCENT_STYLES: Record<string, { active: string; icon: string }> = {
+  blue: {
+    active: 'data-[state=active]:bg-gradient-to-br data-[state=active]:from-warm-blue/20 data-[state=active]:to-warm-teal/15 data-[state=active]:border-warm-blue/40 data-[state=active]:text-warm-blue',
+    icon: 'bg-warm-blue/15 text-warm-blue group-data-[state=active]:bg-warm-blue/25',
+  },
+  purple: {
+    active: 'data-[state=active]:bg-gradient-to-br data-[state=active]:from-warm-purple/20 data-[state=active]:to-warm-pink/15 data-[state=active]:border-warm-purple/40 data-[state=active]:text-warm-purple',
+    icon: 'bg-warm-purple/15 text-warm-purple group-data-[state=active]:bg-warm-purple/25',
+  },
+  green: {
+    active: 'data-[state=active]:bg-gradient-to-br data-[state=active]:from-warm-green/20 data-[state=active]:to-warm-teal/15 data-[state=active]:border-warm-green/40 data-[state=active]:text-warm-green',
+    icon: 'bg-warm-green/15 text-warm-green group-data-[state=active]:bg-warm-green/25',
+  },
+  orange: {
+    active: 'data-[state=active]:bg-gradient-to-br data-[state=active]:from-warm-orange/20 data-[state=active]:to-accent/15 data-[state=active]:border-warm-orange/40 data-[state=active]:text-warm-orange',
+    icon: 'bg-warm-orange/15 text-warm-orange group-data-[state=active]:bg-warm-orange/25',
+  },
+  pink: {
+    active: 'data-[state=active]:bg-gradient-to-br data-[state=active]:from-warm-pink/20 data-[state=active]:to-warm-purple/15 data-[state=active]:border-warm-pink/40 data-[state=active]:text-warm-pink',
+    icon: 'bg-warm-pink/15 text-warm-pink group-data-[state=active]:bg-warm-pink/25',
+  },
+  teal: {
+    active: 'data-[state=active]:bg-gradient-to-br data-[state=active]:from-warm-teal/20 data-[state=active]:to-warm-blue/15 data-[state=active]:border-warm-teal/40 data-[state=active]:text-warm-teal',
+    icon: 'bg-warm-teal/15 text-warm-teal group-data-[state=active]:bg-warm-teal/25',
+  },
+};
+
+// Couleurs cycliques par défaut
+const DEFAULT_ACCENTS: Array<'blue' | 'purple' | 'green' | 'orange' | 'pink' | 'teal'> = [
+  'blue', 'purple', 'green', 'orange', 'pink', 'teal'
+];
 
 interface PillTabsListProps {
   tabs: PillTabConfig[];
@@ -23,11 +58,13 @@ interface PillTabsListProps {
 export function PillTabsList({ tabs, className }: PillTabsListProps) {
   return (
     <TabsList className={cn(
-      "flex flex-wrap justify-center gap-1.5 bg-transparent h-auto p-0",
+      "flex flex-wrap justify-center gap-2 bg-transparent h-auto p-0",
       className
     )}>
       {tabs.map((tab, index) => {
         const Icon = tab.icon;
+        const accent = tab.accent || DEFAULT_ACCENTS[index % DEFAULT_ACCENTS.length];
+        const styles = ACCENT_STYLES[accent];
         
         return (
           <motion.div
@@ -35,14 +72,26 @@ export function PillTabsList({ tabs, className }: PillTabsListProps) {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: index * 0.03, duration: 0.15 }}
-            whileHover={{ scale: 1.02, y: -1 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: 1.03, y: -2 }}
+            whileTap={{ scale: 0.97 }}
           >
             <TabsTrigger 
               value={tab.id}
-              className="admin-main-tab"
+              className={cn(
+                "group flex items-center gap-2 px-4 py-2.5 rounded-xl",
+                "border-2 border-border/50 bg-card/80 backdrop-blur-sm",
+                "text-muted-foreground font-medium text-sm",
+                "shadow-sm hover:shadow-md hover:border-border",
+                "transition-all duration-200",
+                styles.active,
+                "data-[state=active]:shadow-lg data-[state=active]:font-semibold"
+              )}
             >
-              <div className="admin-tab-icon">
+              <div className={cn(
+                "flex items-center justify-center w-7 h-7 rounded-lg",
+                "transition-colors duration-200",
+                styles.icon
+              )}>
                 <Icon className="w-4 h-4" />
               </div>
               <span className="hidden sm:inline">{tab.label}</span>
