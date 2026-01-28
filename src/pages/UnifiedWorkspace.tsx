@@ -17,8 +17,8 @@
 
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { 
-  Home, Building2, BarChart3, Users, ClipboardList, 
-  CalendarDays, Car, MoreHorizontal, Ticket, HelpCircle,
+  Home, Building2, BarChart3, ClipboardList, 
+  Car, MoreHorizontal, Ticket, HelpCircle,
   Loader2, BookOpen
 } from 'lucide-react';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -47,9 +47,7 @@ import { StatsHubProvider } from '@/apogee-connect/components/stats-hub/StatsHub
 const DashboardContent = lazy(() => import('@/pages/DashboardStatic'));
 const AgencyTabContent = lazy(() => import('@/components/unified/tabs/AgencyTabContent'));
 const StatsTabContent = lazy(() => import('@/components/unified/tabs/StatsTabContent'));
-const ApporteursTabContent = lazy(() => import('@/components/unified/tabs/ApporteursTabContent'));
 const CollaborateursTabContent = lazy(() => import('@/components/unified/tabs/CollaborateursTabContent'));
-const PlanningsTabContent = lazy(() => import('@/components/unified/tabs/PlanningsTabContent'));
 const VehiculesTabContent = lazy(() => import('@/components/unified/tabs/VehiculesTabContent'));
 const DiversTabContent = lazy(() => import('@/components/unified/tabs/DiversTabContent'));
 const GuidesTabContent = lazy(() => import('@/components/unified/tabs/GuidesTabContent'));
@@ -60,9 +58,7 @@ type UnifiedTab =
   | 'accueil' 
   | 'agence' 
   | 'stats' 
-  | 'apporteurs' 
   | 'salaries' 
-  | 'plannings' 
   | 'parc' 
   | 'divers' 
   | 'guides'
@@ -104,9 +100,7 @@ function UnifiedWorkspaceContent() {
       { id: 'accueil', label: 'Accueil', icon: Home },
       { id: 'agence', label: 'Mon agence', icon: Building2 },
       { id: 'stats', label: 'Stats', icon: BarChart3, requiresOption: { module: 'pilotage_agence', option: 'stats_hub' } },
-      { id: 'apporteurs', label: 'Apporteurs', icon: Users, requiresOption: { module: 'pilotage_agence', option: 'mes_apporteurs' } },
       { id: 'salaries', label: 'Salariés', icon: ClipboardList },
-      { id: 'plannings', label: 'Plannings', icon: CalendarDays },
       { id: 'parc', label: 'Parc', icon: Car },
       { id: 'divers', label: 'Divers', icon: MoreHorizontal },
       { id: 'guides', label: 'Guides', icon: BookOpen, requiresOption: { module: 'help_academy' } },
@@ -184,16 +178,8 @@ function UnifiedWorkspaceContent() {
                   </StatsHubProvider>
                 </TabsContent>
                 
-                <TabsContent value="apporteurs" className="mt-0">
-                  <ApporteursTabContent />
-                </TabsContent>
-                
                 <TabsContent value="salaries" className="mt-0">
                   <CollaborateursTabContent />
-                </TabsContent>
-                
-                <TabsContent value="plannings" className="mt-0">
-                  <PlanningsTabContent />
                 </TabsContent>
                 
                 <TabsContent value="parc" className="mt-0">
