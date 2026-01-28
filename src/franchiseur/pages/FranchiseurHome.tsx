@@ -107,8 +107,8 @@ export default function FranchiseurHome() {
         <NetworkPeriodSelector />
       </div>
 
-      {/* Ligne 1: KPIs temporels */}
-      <div className="grid gap-4 md:grid-cols-3">
+      {/* Ligne 1: KPIs temporels + SAV */}
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
         <NetworkKpiTile
           title="CA Période"
           value={tuilesHautes.caPeriode}
@@ -116,7 +116,7 @@ export default function FranchiseurHome() {
           format="currency"
           subtitle={
             dateRange
-              ? `Du ${dateRange.from.toLocaleDateString('fr-FR')} au ${dateRange.to.toLocaleDateString('fr-FR')}`
+              ? `${dateRange.from.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })} - ${dateRange.to.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}`
               : undefined
           }
         />
@@ -131,6 +131,14 @@ export default function FranchiseurHome() {
           title="Interventions"
           value={tuilesHautes.interventionsPeriode}
           icon={Wrench}
+        />
+
+        <NetworkKpiTile
+          title="Taux SAV Réseau"
+          value={blocSav.tauxSavGlobalReseau}
+          icon={AlertCircle}
+          format="percentage"
+          subtitle={`${blocSav.nbSavGlobal} SAV / ${blocSav.nbDossiersBaseSav} dossiers`}
         />
       </div>
 
@@ -182,33 +190,6 @@ export default function FranchiseurHome() {
           subtitle="plusieurs univers"
         />
       </div>
-
-      {/* SAV Card */}
-      <Card className="rounded-2xl border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-helpconfort-blue/5 to-transparent">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <AlertCircle className="h-5 w-5 text-helpconfort-blue" />
-            <span className="font-semibold text-foreground">Taux SAV</span>
-          </div>
-          <div className="grid gap-6 md:grid-cols-2">
-            <div>
-              <p className="text-sm text-muted-foreground">Global Réseau</p>
-              <p className="text-3xl font-bold text-foreground">
-                {blocSav.tauxSavGlobalReseau.toFixed(1)}%
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                {blocSav.nbSavGlobal} SAV / {blocSav.nbDossiersBaseSav} dossiers
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Moyenne Agences</p>
-              <p className="text-2xl font-semibold text-helpconfort-blue">
-                {blocSav.tauxSavMoyenAgences.toFixed(1)}%
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Graphiques */}
       <div className="grid gap-6 lg:grid-cols-2">
