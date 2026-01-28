@@ -13,7 +13,7 @@ const AdminBackup = lazy(() => import("@/pages/AdminBackup"));
 const AdminHelpConfortBackup = lazy(() => import("@/pages/AdminHelpConfortBackup"));
 const AdminAgencies = lazy(() => import("@/pages/AdminAgencies"));
 const AdminStorageQuota = lazy(() => import("@/pages/AdminStorageQuota"));
-const UnifiedManagementPage = lazy(() => import("@/pages/admin/UnifiedManagementPage"));
+const TDRUsersPage = lazy(() => import("@/pages/TDRUsersPage"));
 const AdminCacheBackup = lazy(() => import("@/pages/AdminCacheBackup"));
 const AdminUserActivity = lazy(() => import("@/pages/AdminUserActivity"));
 const AdminPageMetadata = lazy(() => import("@/pages/AdminPageMetadata"));
@@ -102,7 +102,7 @@ export function AdminRoutes() {
       <Route path="/admin/modules" element={<Navigate to="/admin/feature-flags" replace />} />
       <Route path="/admin/permissions-center" element={<Navigate to="/admin/gestion" replace />} />
       <Route path="/admin/droits" element={<Navigate to="/admin/gestion" replace />} />
-      <Route path="/admin/gestion" element={<AdminLayout><RoleGuard minRole="franchisee_admin"><UnifiedManagementPage /></RoleGuard></AdminLayout>} />
+      <Route path="/admin/gestion" element={<AdminLayout><RoleGuard minRole="franchisee_admin"><TDRUsersPage /></RoleGuard></AdminLayout>} />
       
       {/* Reports & Tools */}
       <Route path="/admin/apogee-report" element={<AdminLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminApogeeReport /></ModuleGuard></RoleGuard></AdminLayout>} />
