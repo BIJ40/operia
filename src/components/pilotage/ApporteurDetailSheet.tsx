@@ -7,7 +7,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Building2, Users, ExternalLink, Check, X, Info, Link2, Link2Off, Archive, Trash2 } from 'lucide-react';
 import { Apporteur, useToggleApporteurStatus, useApporteurUsers, useUpdateApporteurApogeeId, useDeleteApporteur } from '@/hooks/useApporteurs';
 import { ApporteurContactsSection } from './ApporteurContactsSection';
-import { ApogeeCommanditaireSelector } from '@/components/admin/apporteurs/ApogeeCommanditaireSelector';
+import { ApogeeCommanditaireSelector } from '@/components/shared/apporteurs/ApogeeCommanditaireSelector';
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
