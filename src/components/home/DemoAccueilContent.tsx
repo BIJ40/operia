@@ -10,9 +10,11 @@ import { BarChart3, Trophy, PieChart, TrendingUp, Users, AlertTriangle } from 'l
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 // Composants V2 du dashboard
-import { WarmCard, HumanTitle } from '@/components/dashboard/v2';
+import { WarmCard, HumanTitle, DashboardMapWidget } from '@/components/dashboard/v2';
 import { formatEuros, formatPercent } from '@/apogee-connect/utils/formatters';
-import { DemoStaticMapWidget } from './DemoStaticMapWidget';
+
+// Slug de l'agence DAX pour la carte démo
+const DEMO_AGENCY_SLUG = 'dax';
 
 // Données mockées réalistes pour la démo
 const DEMO_DATA = {
@@ -206,7 +208,8 @@ export function DemoAccueilContent() {
         <Alert className="mb-6 bg-warning/10 border-warning/30">
           <AlertTriangle className="h-4 w-4 text-warning" />
           <AlertDescription className="text-warning-foreground">
-            <strong>Mode démonstration</strong> — Les données affichées sont fictives et servent uniquement à illustrer les fonctionnalités disponibles.
+            <strong>Mode démonstration</strong> — Les KPIs et statistiques sont des exemples fictifs. 
+            La carte affiche les RDV réels de l'agence DAX à titre d'illustration.
           </AlertDescription>
         </Alert>
 
@@ -255,10 +258,11 @@ export function DemoAccueilContent() {
         >
           {/* NIVEAU 1 - HERO ROW: Carte RDV + Indicateurs Globaux */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {/* Carte RDV statique (image fixe) */}
+            {/* Carte RDV avec vraies données de DAX */}
             <motion.div variants={itemVariants}>
-              <DemoStaticMapWidget />
+              <DashboardMapWidget agencySlug={DEMO_AGENCY_SLUG} />
             </motion.div>
+
             {/* Indicateurs Globaux (demi-tuile) */}
             <motion.div variants={itemVariants}>
               <WarmCard
