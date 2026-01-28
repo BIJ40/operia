@@ -57,6 +57,8 @@ interface UserAccordionItemProps {
   onDeactivate: () => void;
   onReactivate: () => void;
   onDelete: () => void;
+  /** Map slug → label pour l'affichage des agences */
+  agencyLabelsMap?: Map<string, string>;
 }
 
 export const UserAccordionItem = memo(function UserAccordionItem({
@@ -78,6 +80,7 @@ export const UserAccordionItem = memo(function UserAccordionItem({
   onDeactivate,
   onReactivate,
   onDelete,
+  agencyLabelsMap,
 }: UserAccordionItemProps) {
   const isDeactivated = user.is_active === false;
 
@@ -124,7 +127,7 @@ export const UserAccordionItem = memo(function UserAccordionItem({
 
           {/* Agency - fixed width */}
           <div className="hidden md:block w-24 shrink-0 text-sm text-muted-foreground truncate">
-            {user.agence || 'Sans agence'}
+            {user.agencyLabel || agencyLabelsMap?.get(user.agence || '') || user.agence || 'Sans agence'}
           </div>
 
           {/* Poste - fixed width */}
