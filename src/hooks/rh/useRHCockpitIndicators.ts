@@ -26,8 +26,8 @@ export interface CockpitIndicators {
   epiTailles: IndicatorStatus;
   /** Parc : véhicule attribué */
   parc: 'vehicle' | 'none';
-  /** Documents : ratio remplis / total */
-  documents: { filled: number; total: number };
+  /** Documents : nombre total de documents */
+  documents: { count: number };
   documentsStatus: IndicatorStatus;
   /** Compétences : nombre total */
   competences: number;
@@ -39,8 +39,6 @@ export interface CockpitIndicators {
   globalStatus: IndicatorStatus;
 }
 
-// Documents obligatoires pour le calcul
-const REQUIRED_DOCUMENTS = ['permis', 'cni'] as const;
 
 /**
  * Calcule les indicateurs cockpit pour un collaborateur
@@ -91,14 +89,14 @@ export function calculateCockpitIndicators(
   // Parc : véhicule attribué
   const parc: 'vehicle' | 'none' = collaborator.assets?.vehicule_attribue ? 'vehicle' : 'none';
 
-  // Documents : ratio remplis / total
-  let docsFilled = 0;
-  if (collaborator.permis) docsFilled++;
-  if (collaborator.cni) docsFilled++;
-  const documents = { filled: docsFilled, total: REQUIRED_DOCUMENTS.length };
+  // Documents : nombre total (permis + CNI + documents uploadés via collaborator_documents)
+  let docsCount = 0;
+  if (collaborator.permis) docsCount++;
+  if (collaborator.cni) docsCount++;
+  // Note: les documents uploadés seront comptés via une query séparée si nécessaire
+  const documents = { count: docsCount };
   const documentsStatus: IndicatorStatus = 
-    docsFilled === REQUIRED_DOCUMENTS.length ? 'ok' : 
-    docsFilled > 0 ? 'warning' : 'error';
+    docsCount > 0 ? 'ok' : 'na';
 
   // Compétences : nombre total
   const competencesCount = (collaborator.competencies?.competences_techniques?.length || 0) +
