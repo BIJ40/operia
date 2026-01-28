@@ -110,6 +110,12 @@ serve(async (req) => {
 
     if (updateError) {
       console.error('[reset-user-password] Erreur update:', updateError)
+      
+      // Gestion spécifique de l'erreur "pwned password"
+      if (updateError.code === 'weak_password' || updateError.message?.includes('weak')) {
+        throw new Error('Ce mot de passe est trop courant ou a été compromis dans une fuite de données. Utilisez le bouton "Générer" pour créer un mot de passe sécurisé.')
+      }
+      
       throw updateError
     }
 
