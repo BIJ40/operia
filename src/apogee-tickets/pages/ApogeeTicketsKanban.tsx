@@ -29,7 +29,6 @@ import { CreateTicketDialog } from '../components/CreateTicketDialog';
 import { ActionsConfigDialog } from '../components/ActionsConfigDialog';
 import { RecentChangesSheet } from '../components/RecentChangesSheet';
 import { HeatPrioritySlider } from '../components/HeatPrioritySlider';
-import { useTicketQualification } from '../hooks/useTicketQualification';
 import { exportToCSV, exportToExcel, exportToPDF } from '../utils/exportKanban';
 
 import { useMyTicketRole, TicketRoleInfo } from '../hooks/useTicketPermissions';
@@ -178,8 +177,7 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
     deleteTicket,
   } = useApogeeTickets(filters);
 
-  const { qualifyAllUnqualified, isQualifying } = useTicketQualification();
-  
+
   // Restaurer le ticket sélectionné depuis l'URL au chargement
   useEffect(() => {
     if (selectedTicketId && tickets.length > 0 && !selectedTicket) {
@@ -192,7 +190,6 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
 
   // Compteurs (exclure EN_PROD pour les incomplets)
   const incompleteCount = tickets.filter(t => t.needs_completion && t.kanban_status !== 'EN_PROD').length;
-  const unqualifiedCount = tickets.filter(t => !t.is_qualified).length;
   const toClassifyCount = tickets.filter(t => t.kanban_status === 'SPEC_A_FAIRE').length;
 
   // Compteur de tickets avec nouvelles modifications (blinking)
@@ -424,43 +421,6 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
               <p>Incomplets ({incompleteCount})</p>
             </TooltipContent>
           </Tooltip>
-          {/* Menu IA */}
-          <DropdownMenu>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="icon"
-                    className="h-8 w-8 text-purple-600 border-purple-300 hover:bg-purple-50"
-                  >
-                    <Sparkles className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-              </TooltipTrigger>
-              <TooltipContent>Outils IA</TooltipContent>
-            </Tooltip>
-            <DropdownMenuContent align="end" className="bg-background border shadow-lg z-50 w-56">
-              <DropdownMenuItem 
-                onClick={qualifyAllUnqualified}
-                disabled={isQualifying || unqualifiedCount === 0}
-                className="cursor-pointer"
-              >
-                <Sparkles className="h-4 w-4 mr-2 text-purple-600" />
-                <div className="flex-1">
-                  <span>K-LifIA</span>
-                  <span className="text-xs text-muted-foreground ml-1">
-                    (Qualification)
-                  </span>
-                </div>
-                {unqualifiedCount > 0 && (
-                  <Badge variant="secondary" className="ml-auto">
-                    {unqualifiedCount}
-                  </Badge>
-                )}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
           {isPlatformAdmin && (
             <>
               <Tooltip>

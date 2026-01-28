@@ -25,8 +25,6 @@ interface TicketTableRowProps {
   onSelect: () => void;
   onOpenDetail: () => void;
   onUpdate: (updates: Partial<ApogeeTicket>) => void;
-  onQualify: () => void;
-  isQualifying?: boolean;
   statusSelectRef?: React.RefObject<HTMLButtonElement>;
   columnWidths?: number[];
   visibleColumnIndices?: number[]; // indices des colonnes à afficher
@@ -59,8 +57,6 @@ export function TicketTableRow({
   onSelect,
   onOpenDetail,
   onUpdate,
-  onQualify,
-  isQualifying = false,
   statusSelectRef,
   columnWidths,
   visibleColumnIndices,

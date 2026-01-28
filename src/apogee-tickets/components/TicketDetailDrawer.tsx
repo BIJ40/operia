@@ -54,7 +54,6 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useApogeeTicket } from '../hooks/useApogeeTickets';
 import { supabase } from '@/integrations/supabase/client';
-import { useTicketQualification } from '../hooks/useTicketQualification';
 import { useMarkTicketAsViewed } from '../hooks/useTicketViews';
 import { HeatPriorityBadge } from './HeatPriorityBadge';
 import { OwnerSideSlider, ownerSideToSliderValue, sliderValueToOwnerSide } from './OwnerSideSlider';
@@ -149,7 +148,6 @@ export function TicketDetailDrawer({
     },
     enabled: !!ticket?.id,
   });
-  const { qualifyOne, isQualifying } = useTicketQualification();
   const [newComment, setNewComment] = useState('');
   const [showAllComments, setShowAllComments] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
@@ -469,20 +467,7 @@ export function TicketDetailDrawer({
                       </Badge>
                     )}
                   </>
-                ) : (
-                  canManage && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 text-purple-600 border-purple-300 hover:bg-purple-50"
-                      onClick={() => qualifyOne(ticket.id)}
-                      disabled={isQualifying}
-                    >
-                      <Sparkles className="h-3 w-3 mr-1" />
-                      {isQualifying ? 'Qualification...' : 'Qualifier avec IA'}
-                    </Button>
-                  )
-                )}
+                ) : null}
               </div>
             </div>
             

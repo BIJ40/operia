@@ -34,8 +34,6 @@ interface TicketTableProps {
   allowedTransitionsMap: Record<string, string[]>;
   onTicketClick: (ticket: ApogeeTicket) => void;
   onTicketUpdate: (ticketId: string, updates: Partial<ApogeeTicket>) => void;
-  onQualifyTicket: (ticketId: string) => void;
-  qualifyingTicketId?: string | null;
 }
 
 type SortColumn = 'ticket_number' | 'heat_priority' | 'element_concerne' | 'module' | 'kanban_status' | 'created_at' | 'last_modified_at';
@@ -147,8 +145,6 @@ export function TicketTable({
   allowedTransitionsMap,
   onTicketClick,
   onTicketUpdate,
-  onQualifyTicket,
-  qualifyingTicketId,
 }: TicketTableProps) {
   const { user } = useAuth();
   const { data: myViews = [] } = useMyTicketViews();
@@ -356,12 +352,6 @@ export function TicketTable({
           selectRef?.click();
         }
         break;
-      case '4':
-        e.preventDefault();
-        if (roleInfo.canManage && !ticket.is_qualified) {
-          onQualifyTicket(ticket.id);
-        }
-        break;
       case 'Escape':
         e.preventDefault();
         setSelectedRowId(null);
@@ -381,7 +371,7 @@ export function TicketTable({
         }
         break;
     }
-  }, [selectedRowId, paginatedTickets, allowedTransitionsMap, roleInfo, onTicketClick, onQualifyTicket]);
+  }, [selectedRowId, paginatedTickets, allowedTransitionsMap, roleInfo, onTicketClick]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -543,8 +533,6 @@ export function TicketTable({
                   onSelect={() => setSelectedRowId(ticket.id)}
                   onOpenDetail={() => onTicketClick(ticket)}
                   onUpdate={(updates) => onTicketUpdate(ticket.id, updates)}
-                  onQualify={() => onQualifyTicket(ticket.id)}
-                  isQualifying={qualifyingTicketId === ticket.id}
                   statusSelectRef={{
                     current: statusSelectRefs.current.get(ticket.id) || null,
                   } as React.RefObject<HTMLButtonElement>}

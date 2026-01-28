@@ -36,7 +36,6 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { useMyTicketRole, useTicketTransitions } from '../hooks/useTicketPermissions';
-import { useTicketQualification } from '../hooks/useTicketQualification';
 import { usePersistedListFilters } from '../hooks/usePersistedListFilters';
 import { TicketTable } from '../components/TicketTable';
 import { TicketTableFilters } from '../components/TicketTableFilters';
@@ -113,7 +112,6 @@ function ApogeeTicketsListContent({ roleInfo }: { roleInfo: NonNullable<ReturnTy
       return false;
     }
   });
-  const [qualifyingTicketId, setQualifyingTicketId] = useState<string | null>(null);
 
   const {
     tickets,
@@ -132,8 +130,6 @@ function ApogeeTicketsListContent({ roleInfo }: { roleInfo: NonNullable<ReturnTy
     if (!selectedTicketId) return null;
     return tickets.find(t => t.id === selectedTicketId) ?? null;
   }, [selectedTicketId, tickets]);
-
-  const { qualifyOne } = useTicketQualification();
 
   // Récupérer toutes les transitions autorisées
   const { data: allTransitions = [] } = useTicketTransitions();
@@ -168,15 +164,6 @@ function ApogeeTicketsListContent({ roleInfo }: { roleInfo: NonNullable<ReturnTy
   const handleTicketDelete = (id: string) => {
     deleteTicket.mutate(id);
     setSelectedTicketId(null);
-  };
-
-  const handleQualifyTicket = async (ticketId: string) => {
-    setQualifyingTicketId(ticketId);
-    try {
-      await qualifyOne(ticketId);
-    } finally {
-      setQualifyingTicketId(null);
-    }
   };
 
   return (
@@ -279,8 +266,6 @@ function ApogeeTicketsListContent({ roleInfo }: { roleInfo: NonNullable<ReturnTy
           allowedTransitionsMap={allowedTransitionsMap}
           onTicketClick={handleTicketClick}
           onTicketUpdate={handleTicketUpdate}
-          onQualifyTicket={handleQualifyTicket}
-          qualifyingTicketId={qualifyingTicketId}
         />
       )}
 
