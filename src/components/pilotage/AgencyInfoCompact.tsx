@@ -112,7 +112,7 @@ export function AgencyInfoCompact() {
   };
 
   return (
-    <div className="flex items-center gap-4 p-3 rounded-lg border border-border/50 bg-muted/30">
+    <div className="flex items-center gap-4 p-4 rounded-xl border-2 border-border bg-gradient-to-r from-muted/40 to-muted/20 shadow-sm">
       {/* Info compacte */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
