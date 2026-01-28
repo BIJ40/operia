@@ -1265,13 +1265,6 @@ export type Database = {
             referencedRelation: "apogee_modules"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "apogee_tickets_source_support_ticket_id_fkey"
-            columns: ["source_support_ticket_id"]
-            isOneToOne: false
-            referencedRelation: "support_tickets"
-            referencedColumns: ["id"]
-          },
         ]
       }
       app_notification_settings: {
@@ -4933,121 +4926,6 @@ export type Database = {
         }
         Relationships: []
       }
-      payslip_data: {
-        Row: {
-          agency_id: string
-          brut_cumule: number | null
-          collaborator_id: string
-          cout_global_employeur: number | null
-          created_at: string
-          document_id: string
-          extracted_at: string | null
-          extraction_error: string | null
-          extraction_status: string
-          extraction_warnings: string[] | null
-          heures_base: number | null
-          heures_cumulees: number | null
-          id: string
-          montant_brut_base: number | null
-          montant_net_social: number | null
-          net_a_payer: number | null
-          net_imposable: number | null
-          net_imposable_cumule: number | null
-          periode_annee: number | null
-          periode_date_debut: string | null
-          periode_date_fin: string | null
-          periode_mois: number | null
-          raw_data: Json
-          taux_horaire_brut: number | null
-          total_brut: number | null
-          total_charges_patronales: number | null
-          total_charges_salariales: number | null
-          updated_at: string
-        }
-        Insert: {
-          agency_id: string
-          brut_cumule?: number | null
-          collaborator_id: string
-          cout_global_employeur?: number | null
-          created_at?: string
-          document_id: string
-          extracted_at?: string | null
-          extraction_error?: string | null
-          extraction_status?: string
-          extraction_warnings?: string[] | null
-          heures_base?: number | null
-          heures_cumulees?: number | null
-          id?: string
-          montant_brut_base?: number | null
-          montant_net_social?: number | null
-          net_a_payer?: number | null
-          net_imposable?: number | null
-          net_imposable_cumule?: number | null
-          periode_annee?: number | null
-          periode_date_debut?: string | null
-          periode_date_fin?: string | null
-          periode_mois?: number | null
-          raw_data?: Json
-          taux_horaire_brut?: number | null
-          total_brut?: number | null
-          total_charges_patronales?: number | null
-          total_charges_salariales?: number | null
-          updated_at?: string
-        }
-        Update: {
-          agency_id?: string
-          brut_cumule?: number | null
-          collaborator_id?: string
-          cout_global_employeur?: number | null
-          created_at?: string
-          document_id?: string
-          extracted_at?: string | null
-          extraction_error?: string | null
-          extraction_status?: string
-          extraction_warnings?: string[] | null
-          heures_base?: number | null
-          heures_cumulees?: number | null
-          id?: string
-          montant_brut_base?: number | null
-          montant_net_social?: number | null
-          net_a_payer?: number | null
-          net_imposable?: number | null
-          net_imposable_cumule?: number | null
-          periode_annee?: number | null
-          periode_date_debut?: string | null
-          periode_date_fin?: string | null
-          periode_mois?: number | null
-          raw_data?: Json
-          taux_horaire_brut?: number | null
-          total_brut?: number | null
-          total_charges_patronales?: number | null
-          total_charges_salariales?: number | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payslip_data_agency_id_fkey"
-            columns: ["agency_id"]
-            isOneToOne: false
-            referencedRelation: "apogee_agencies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payslip_data_collaborator_id_fkey"
-            columns: ["collaborator_id"]
-            isOneToOne: false
-            referencedRelation: "collaborators"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payslip_data_document_id_fkey"
-            columns: ["document_id"]
-            isOneToOne: true
-            referencedRelation: "collaborator_documents"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       permission_audit: {
         Row: {
           action: string
@@ -6611,44 +6489,6 @@ export type Database = {
         }
         Relationships: []
       }
-      support_attachments: {
-        Row: {
-          created_at: string
-          file_name: string
-          file_path: string
-          file_size: number
-          file_type: string
-          id: string
-          ticket_id: string
-        }
-        Insert: {
-          created_at?: string
-          file_name: string
-          file_path: string
-          file_size: number
-          file_type: string
-          id?: string
-          ticket_id: string
-        }
-        Update: {
-          created_at?: string
-          file_name?: string
-          file_path?: string
-          file_size?: number
-          file_type?: string
-          id?: string
-          ticket_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "support_attachments_ticket_id_fkey"
-            columns: ["ticket_id"]
-            isOneToOne: false
-            referencedRelation: "support_tickets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       support_messages: {
         Row: {
           created_at: string
@@ -6683,15 +6523,7 @@ export type Database = {
           sender_id?: string
           ticket_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "support_messages_ticket_id_fkey"
-            columns: ["ticket_id"]
-            isOneToOne: false
-            referencedRelation: "support_tickets"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       support_presence: {
         Row: {
@@ -6714,51 +6546,6 @@ export type Database = {
         }
         Relationships: []
       }
-      support_ticket_actions: {
-        Row: {
-          action_type: string
-          created_at: string
-          id: string
-          new_value: string | null
-          old_value: string | null
-          performed_by: string | null
-          ticket_id: string
-        }
-        Insert: {
-          action_type: string
-          created_at?: string
-          id?: string
-          new_value?: string | null
-          old_value?: string | null
-          performed_by?: string | null
-          ticket_id: string
-        }
-        Update: {
-          action_type?: string
-          created_at?: string
-          id?: string
-          new_value?: string | null
-          old_value?: string | null
-          performed_by?: string | null
-          ticket_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "support_ticket_actions_performed_by_fkey"
-            columns: ["performed_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "support_ticket_actions_ticket_id_fkey"
-            columns: ["ticket_id"]
-            isOneToOne: false
-            referencedRelation: "support_tickets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       support_ticket_views: {
         Row: {
           id: string
@@ -6778,137 +6565,7 @@ export type Database = {
           user_id?: string
           viewed_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "support_ticket_views_ticket_id_fkey"
-            columns: ["ticket_id"]
-            isOneToOne: false
-            referencedRelation: "support_tickets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      support_tickets: {
-        Row: {
-          agency_slug: string | null
-          ai_category: string | null
-          ai_classified_at: string | null
-          ai_confidence: number | null
-          ai_is_incomplete: boolean | null
-          ai_priority: string | null
-          ai_suggested_answer: string | null
-          ai_tags: string[] | null
-          assigned_to: string | null
-          auto_classified: boolean | null
-          category: string | null
-          chatbot_conversation: Json | null
-          created_at: string
-          due_at: string | null
-          escalation_history: Json | null
-          has_attachments: boolean
-          heat_priority: number | null
-          id: string
-          last_message_at: string | null
-          last_message_by: string | null
-          merged_into_ticket_id: string | null
-          priority: string | null
-          rating: number | null
-          rating_comment: string | null
-          resolved_at: string | null
-          service: string | null
-          sla_status: string | null
-          source: string
-          status: string
-          subject: string
-          support_level: number | null
-          type: string | null
-          updated_at: string
-          user_id: string
-          viewed_by_support_at: string | null
-        }
-        Insert: {
-          agency_slug?: string | null
-          ai_category?: string | null
-          ai_classified_at?: string | null
-          ai_confidence?: number | null
-          ai_is_incomplete?: boolean | null
-          ai_priority?: string | null
-          ai_suggested_answer?: string | null
-          ai_tags?: string[] | null
-          assigned_to?: string | null
-          auto_classified?: boolean | null
-          category?: string | null
-          chatbot_conversation?: Json | null
-          created_at?: string
-          due_at?: string | null
-          escalation_history?: Json | null
-          has_attachments?: boolean
-          heat_priority?: number | null
-          id?: string
-          last_message_at?: string | null
-          last_message_by?: string | null
-          merged_into_ticket_id?: string | null
-          priority?: string | null
-          rating?: number | null
-          rating_comment?: string | null
-          resolved_at?: string | null
-          service?: string | null
-          sla_status?: string | null
-          source?: string
-          status?: string
-          subject?: string
-          support_level?: number | null
-          type?: string | null
-          updated_at?: string
-          user_id: string
-          viewed_by_support_at?: string | null
-        }
-        Update: {
-          agency_slug?: string | null
-          ai_category?: string | null
-          ai_classified_at?: string | null
-          ai_confidence?: number | null
-          ai_is_incomplete?: boolean | null
-          ai_priority?: string | null
-          ai_suggested_answer?: string | null
-          ai_tags?: string[] | null
-          assigned_to?: string | null
-          auto_classified?: boolean | null
-          category?: string | null
-          chatbot_conversation?: Json | null
-          created_at?: string
-          due_at?: string | null
-          escalation_history?: Json | null
-          has_attachments?: boolean
-          heat_priority?: number | null
-          id?: string
-          last_message_at?: string | null
-          last_message_by?: string | null
-          merged_into_ticket_id?: string | null
-          priority?: string | null
-          rating?: number | null
-          rating_comment?: string | null
-          resolved_at?: string | null
-          service?: string | null
-          sla_status?: string | null
-          source?: string
-          status?: string
-          subject?: string
-          support_level?: number | null
-          type?: string | null
-          updated_at?: string
-          user_id?: string
-          viewed_by_support_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "support_tickets_merged_into_ticket_id_fkey"
-            columns: ["merged_into_ticket_id"]
-            isOneToOne: false
-            referencedRelation: "support_tickets"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       ticket_duplicate_suggestions: {
         Row: {
