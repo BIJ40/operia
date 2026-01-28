@@ -142,14 +142,14 @@ function CollapsibleSection({ title, icon, defaultOpen = false, children, badge 
     <Collapsible 
       open={isOpen} 
       onOpenChange={setIsOpen} 
-      className="rounded-xl overflow-hidden bg-card border border-border shadow-sm h-fit"
+      className="rounded-2xl overflow-hidden bg-gradient-to-br from-card via-card to-muted/40 border border-border/60 shadow-warm h-fit"
     >
-      <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors">
+      <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/30 transition-all duration-200">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-muted text-muted-foreground">
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-warm-blue/20 to-warm-teal/15 text-warm-blue shadow-sm">
             {icon}
           </div>
-          <h3 className="font-semibold text-sm">{title}</h3>
+          <h3 className="font-semibold text-sm text-foreground">{title}</h3>
           {badge}
         </div>
         <ChevronDown className={cn(
@@ -157,8 +157,8 @@ function CollapsibleSection({ title, icon, defaultOpen = false, children, badge 
           isOpen && "rotate-180"
         )} />
       </CollapsibleTrigger>
-      <CollapsibleContent forceMount className={cn("border-t border-border", !isOpen && "hidden")}>
-        <div className="p-4">
+      <CollapsibleContent forceMount className={cn("border-t border-border/40", !isOpen && "hidden")}>
+        <div className="p-4 bg-gradient-to-b from-background/50 to-background/80">
           {children}
         </div>
       </CollapsibleContent>
@@ -267,12 +267,12 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
 
   return (
     <div className="p-4 space-y-3">
-      {/* Header enrichi avec infos de contact */}
-      <Card className="rounded-xl border border-border shadow-sm">
-        <CardContent className="p-3">
+      {/* Header enrichi avec infos de contact - Warm Pastel style */}
+      <Card className="rounded-2xl border border-border/60 shadow-warm bg-gradient-to-br from-card via-card to-muted/40">
+        <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <Avatar className="h-10 w-10 shrink-0">
-              <AvatarFallback className="bg-primary/10 text-primary text-sm">
+            <Avatar className="h-11 w-11 shrink-0 ring-2 ring-warm-blue/20 ring-offset-2 ring-offset-background">
+              <AvatarFallback className="bg-gradient-to-br from-warm-blue/20 to-warm-teal/20 text-warm-blue text-sm font-semibold">
                 {initials}
               </AvatarFallback>
             </Avatar>
