@@ -19,6 +19,7 @@ export interface UserProfile {
   deactivated_by: string | null;
   must_change_password: boolean | null;
   apogee_user_id: number | null;
+  agencyLabel?: string | null;
 }
 
 export type HookScopeOption = 'ownAgency' | 'assignedAgencies' | 'allAgencies';
