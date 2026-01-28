@@ -35,78 +35,65 @@ export function ActionsAMenerFilters({
   onResetFilters,
 }: ActionsAMenerFiltersProps) {
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Filtres</h3>
-        {activeFiltersCount > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onResetFilters}
-            className="h-8"
-          >
-            <X className="w-4 h-4 mr-1" />
-            Réinitialiser ({activeFiltersCount})
-          </Button>
-        )}
-      </div>
+    <div className="flex items-center gap-2 flex-wrap">
+      {/* Filtre type d'action */}
+      <Select value={actionTypeFilter} onValueChange={onActionTypeChange}>
+        <SelectTrigger className="h-8 w-auto min-w-[140px] text-xs">
+          <SelectValue placeholder="Type d'action" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Toutes les actions</SelectItem>
+          {Object.entries(ACTION_LABELS).map(([key, label]) => (
+            <SelectItem key={key} value={key}>
+              {label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Filtre type d'action */}
-        <div className="space-y-2">
-          <Label htmlFor="action-type">Type d'action</Label>
-          <Select value={actionTypeFilter} onValueChange={onActionTypeChange}>
-            <SelectTrigger id="action-type">
-              <SelectValue placeholder="Toutes les actions" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes les actions</SelectItem>
-              {Object.entries(ACTION_LABELS).map(([key, label]) => (
-                <SelectItem key={key} value={key}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      {/* Filtre client */}
+      <Select value={clientFilter} onValueChange={onClientFilterChange}>
+        <SelectTrigger className="h-8 w-auto min-w-[120px] text-xs">
+          <SelectValue placeholder="Client" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Tous les clients</SelectItem>
+          {availableClients.map((client) => (
+            <SelectItem key={client} value={client}>
+              {client}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-        {/* Filtre client */}
-        <div className="space-y-2">
-          <Label htmlFor="client">Client</Label>
-          <Select value={clientFilter} onValueChange={onClientFilterChange}>
-            <SelectTrigger id="client">
-              <SelectValue placeholder="Tous les clients" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous les clients</SelectItem>
-              {availableClients.map((client) => (
-                <SelectItem key={client} value={client}>
-                  {client}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      {/* Filtre statut */}
+      <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+        <SelectTrigger className="h-8 w-auto min-w-[100px] text-xs">
+          <SelectValue placeholder="Statut" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Tous</SelectItem>
+          <SelectItem value="late">
+            <div className="flex items-center gap-1">
+              <Badge variant="destructive" className="px-1 py-0 text-[10px]">!</Badge>
+              En retard
+            </div>
+          </SelectItem>
+        </SelectContent>
+      </Select>
 
-        {/* Filtre statut */}
-        <div className="space-y-2">
-          <Label htmlFor="status">Statut</Label>
-          <Select value={statusFilter} onValueChange={onStatusFilterChange}>
-            <SelectTrigger id="status">
-              <SelectValue placeholder="Tous les statuts" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous les dossiers</SelectItem>
-              <SelectItem value="late">
-                <div className="flex items-center gap-2">
-                  <Badge variant="destructive" className="px-1.5 py-0">!</Badge>
-                  En retard uniquement
-                </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      {/* Reset */}
+      {activeFiltersCount > 0 && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onResetFilters}
+          className="h-8 px-2 text-xs"
+        >
+          <X className="w-3 h-3 mr-1" />
+          ({activeFiltersCount})
+        </Button>
+      )}
     </div>
   );
 }

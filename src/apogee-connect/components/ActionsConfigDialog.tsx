@@ -40,9 +40,9 @@ export function ActionsConfigDialog() {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Settings className="w-4 h-4 mr-2" />
-          Configurer les délais
+        <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
+          <Settings className="w-3.5 h-3.5 mr-1" />
+          Délais
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
