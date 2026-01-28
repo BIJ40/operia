@@ -30,8 +30,6 @@ export function AdminRoutes() {
       {/* Accès */}
       <Route path="/admin/gestion" element={<Navigate to="/?tab=admin&adminTab=acces&adminView=users" replace />} />
       <Route path="/admin/user-activity" element={<Navigate to="/?tab=admin&adminTab=acces&adminView=activity" replace />} />
-      <Route path="/admin/feature-flags" element={<Navigate to="/?tab=admin&adminTab=acces&adminView=flags" replace />} />
-      <Route path="/admin/modules" element={<Navigate to="/?tab=admin&adminTab=acces&adminView=flags" replace />} />
       <Route path="/admin/permissions-center" element={<Navigate to="/?tab=admin&adminTab=acces&adminView=users" replace />} />
       <Route path="/admin/droits" element={<Navigate to="/?tab=admin&adminTab=acces&adminView=users" replace />} />
       <Route path="/admin/gestionV2" element={<Navigate to="/?tab=admin&adminTab=acces&adminView=users" replace />} />
@@ -56,15 +54,17 @@ export function AdminRoutes() {
       
       {/* Ops */}
       <Route path="/admin/backup" element={<Navigate to="/?tab=admin&adminTab=ops&adminView=backup" replace />} />
-      <Route path="/admin/helpconfort-backup" element={<Navigate to="/?tab=admin&adminTab=ops&adminView=hc-backup" replace />} />
+      <Route path="/admin/helpconfort-backup" element={<Navigate to="/?tab=admin&adminTab=ops&adminView=imports" replace />} />
       <Route path="/admin/cache-backup" element={<Navigate to="/?tab=admin&adminTab=ops&adminView=cache" replace />} />
       <Route path="/admin/apogee-report" element={<Navigate to="/?tab=admin&adminTab=ops&adminView=report" replace />} />
-      <Route path="/admin/storage-quota" element={<Navigate to="/?tab=admin&adminTab=ops&adminView=storage" replace />} />
+      <Route path="/admin/storage-quota" element={<Navigate to="/?tab=admin&adminTab=ops&adminView=quota" replace />} />
       
       {/* Plateforme */}
       <Route path="/admin/system-health" element={<Navigate to="/?tab=admin&adminTab=plateforme&adminView=health" replace />} />
+      <Route path="/admin/feature-flags" element={<Navigate to="/?tab=admin&adminTab=plateforme&adminView=modules" replace />} />
+      <Route path="/admin/modules" element={<Navigate to="/?tab=admin&adminTab=plateforme&adminView=modules" replace />} />
       <Route path="/admin/sitemap" element={<Navigate to="/?tab=admin&adminTab=plateforme&adminView=sitemap" replace />} />
-      <Route path="/admin/hidden-features" element={<Navigate to="/?tab=admin&adminTab=plateforme&adminView=hidden" replace />} />
+      <Route path="/admin/hidden-features" element={<Navigate to="/?tab=admin&adminTab=plateforme&adminView=lab" replace />} />
       <Route path="/admin/flow" element={<Navigate to="/?tab=admin&adminTab=plateforme&adminView=flow" replace />} />
       
       {/* ===== ROUTES STANDALONE (MinimalLayout) - Gardées pour cas spéciaux ===== */}

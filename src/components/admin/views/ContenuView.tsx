@@ -20,9 +20,9 @@ const SUB_TABS: PillTabConfig[] = [
   { id: 'guides', label: 'Guides', icon: BookOpen },
   { id: 'faq', label: 'FAQ', icon: HelpCircle },
   { id: 'templates', label: 'Templates', icon: FileEdit },
+  { id: 'metadata', label: 'Metadata', icon: FileText },
   { id: 'annonces', label: 'Annonces', icon: Megaphone },
   { id: 'notifs', label: 'Notifications', icon: Bell },
-  { id: 'metadata', label: 'Métadonnées', icon: FileText },
 ];
 
 function LoadingFallback() {

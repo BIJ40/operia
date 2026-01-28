@@ -17,10 +17,10 @@ const AdminStorageQuota = lazy(() => import('@/pages/AdminStorageQuota'));
 
 const SUB_TABS: PillTabConfig[] = [
   { id: 'backup', label: 'Backups', icon: Database },
-  { id: 'hc-backup', label: 'HC Backup', icon: FileStack },
+  { id: 'imports', label: 'Imports', icon: FileStack },
   { id: 'cache', label: 'Cache', icon: Archive },
-  { id: 'report', label: 'Rapport Apogée', icon: FileJson },
-  { id: 'storage', label: 'Stockage', icon: HardDrive },
+  { id: 'report', label: 'Reports', icon: FileJson },
+  { id: 'quota', label: 'Quota', icon: HardDrive },
 ];
 
 function LoadingFallback() {
@@ -64,7 +64,7 @@ export function OpsView() {
           </Suspense>
         </TabsContent>
 
-        <TabsContent value="hc-backup" className="mt-6">
+        <TabsContent value="imports" className="mt-6">
           <Suspense fallback={<LoadingFallback />}>
             <AdminHelpConfortBackup />
           </Suspense>
@@ -82,7 +82,7 @@ export function OpsView() {
           </Suspense>
         </TabsContent>
 
-        <TabsContent value="storage" className="mt-6">
+        <TabsContent value="quota" className="mt-6">
           <Suspense fallback={<LoadingFallback />}>
             <AdminStorageQuota />
           </Suspense>
