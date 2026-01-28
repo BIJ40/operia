@@ -1,149 +1,114 @@
 
+# Plan de correction : Page de gestion des utilisateurs
 
-# Plan : Vue Franchiseur dédiée (pas un onglet)
+## Problèmes identifiés
 
-## 🎯 Contexte et Objectif
+### 1. Mauvais composant affiché
+La capture d'écran montre la page **"Gestion des Permissions"** (composant `UnifiedManagementPage`) au lieu de **"Gestion Utilisateurs Réseau"** (composant `TDRUsersPage`).
 
-**Problème actuel** : "Franchiseur" est implémenté comme un onglet parmi d'autres dans `UnifiedWorkspace`. C'est incorrect.
+Bien que la route `/admin/gestion` soit correctement configurée pour utiliser `TDRUsersPage`, il semble que l'ancienne page soit toujours affichée (possible problème de cache ou de déploiement).
 
-**Correction demandée** : Quand l'utilisateur a le rôle `franchiseur` (N3+), il doit voir une **VUE COMPLÈTEMENT DIFFÉRENTE** avec ses propres onglets :
+### 2. Colonne Agence affiche des UUIDs
+Dans `UnifiedManagementPage.tsx`, ligne 122-123 :
+```typescript
+{user.agency_id ? (
+  <span className="text-sm">{user.agency_id}</span>  // ❌ Affiche l'UUID
+) : (
+```
+Devrait afficher le **label lisible** de l'agence, pas l'UUID.
 
-| Onglets Franchiseur (nouvelle vue) |
-|---|
-| Accueil |
-| Periode |
-| Agences |
-| Redevances |
-| Statistiques |
-| Divers |
-| Guides |
-| Ticketing |
-| Aide |
+### 3. Bouton "Nouvel utilisateur" manquant
+Le composant `UnifiedManagementPage` n'a pas d'interface pour créer des utilisateurs, contrairement à `TDRUsersPage` qui l'a.
 
 ---
 
-## 📋 Stratégie d'implémentation
+## Plan de correction
 
-### Logique de rendu conditionnel
+### Étape 1 : Corriger `UnifiedManagementPage.tsx` (backup/fallback)
+Même si cette page ne devrait plus être utilisée pour `/admin/gestion`, je vais la corriger pour qu'elle soit fonctionnelle au cas où :
 
-```text
-┌──────────────────────────────────────────────────────┐
-│                  UnifiedWorkspace                    │
-├──────────────────────────────────────────────────────┤
-│  ┌─────────────────────────────────────────────────┐ │
-│  │  isFranchiseur (N3+) ?                          │ │
-│  │    ├── OUI → Afficher FranchiseurView          │ │
-│  │    │         (onglets dédiés: Accueil,         │ │
-│  │    │          Periode, Agences, etc.)          │ │
-│  │    │                                            │ │
-│  │    └── NON → Afficher vue standard              │ │
-│  │              (onglets: Accueil, Mon agence,     │ │
-│  │               Stats, Salariés, Parc, etc.)      │ │
-│  └─────────────────────────────────────────────────┘ │
-└──────────────────────────────────────────────────────┘
+**Modifications :**
+1. Afficher `user.agency?.label` au lieu de `user.agency_id`
+2. Ajouter le bouton "Nouvel utilisateur" avec les droits appropriés
+3. Ajouter les actions (édition, désactivation, etc.) via le hook `useAccessRightsUsers` existant
+
+### Étape 2 : Vérifier la cohérence du hook `useAccessRightsUsers`
+Le hook récupère déjà les agences avec leurs labels via la jointure :
+```typescript
+agency:apogee_agencies(id, label, slug)
+```
+Et résout les agences par slug si `agency_id` est null.
+
+### Étape 3 : S'assurer que `TDRUsersPage` affiche le label d'agence
+Vérifier que le composant `UserAccordionItem` affiche le label d'agence lisible et non le slug brut.
+
+---
+
+## Détails techniques
+
+### Fichier : `src/pages/admin/UnifiedManagementPage.tsx`
+
+**Correction de l'affichage de l'agence :**
+```typescript
+// AVANT (ligne 121-127)
+<TableCell>
+  {user.agency_id ? (
+    <span className="text-sm">{user.agency_id}</span>
+  ) : (
+    <span className="text-muted-foreground text-sm">—</span>
+  )}
+</TableCell>
+
+// APRÈS
+<TableCell>
+  {user.agency?.label ? (
+    <span className="text-sm">{user.agency.label}</span>
+  ) : user.agence ? (
+    <span className="text-sm text-muted-foreground">{user.agence}</span>
+  ) : (
+    <span className="text-muted-foreground text-sm">—</span>
+  )}
+</TableCell>
+```
+
+**Ajout du bouton "Nouvel utilisateur" et des actions :**
+- Utiliser le hook complet `useAccessRightsUsers` au lieu d'une version simplifiée
+- Ajouter les dialogs de création/édition/désactivation
+- Ajouter les dropdowns d'actions par utilisateur
+
+### Fichier : `src/components/admin/users/UserAccordionItem.tsx`
+
+**Correction de l'affichage de l'agence (ligne 126-128) :**
+La valeur `user.agence` est un slug (ex: "dax"). Il faut afficher le label lisible.
+
+**Option 1 :** Passer les agences en props et faire une lookup
+**Option 2 :** Enrichir les données utilisateur avec le label d'agence dans le hook
+
+Je recommande l'Option 2 car elle centralise la logique dans le hook.
+
+### Fichier : `src/hooks/use-user-management.ts`
+
+**Enrichir les utilisateurs avec le label d'agence :**
+```typescript
+// Dans la query users (ligne ~190), ajouter une jointure ou post-traitement
+// pour résoudre agence slug → label
 ```
 
 ---
 
-## 📁 Fichiers à modifier/créer
+## Résumé des fichiers à modifier
 
-### 1. Créer `src/components/unified/views/FranchiseurView.tsx`
-Nouveau composant contenant :
-- Système d'onglets dédié avec les 9 onglets demandés
-- Réutilise les composants existants (`GuidesTabContent`, `TicketingTabContent`, `SupportTabContent`)
-- Intègre les pages franchiseur existantes (`FranchiseurHome`, `FranchiseurStats`, etc.)
-- Même style visuel que l'interface standard (tabs dossier, drag-and-drop)
-
-**Mapping des onglets :**
-| Onglet | Composant |
-|--------|-----------|
-| Accueil | `FranchiseurHome` (existant) |
-| Periode | `FranchiseurComparison` (existant) |
-| Agences | `FranchiseurAgencies` (existant) |
-| Redevances | `FranchiseurRoyalties` (existant) |
-| Statistiques | `FranchiseurStats` (existant) |
-| Divers | `DiversTabContent` (existant) ou nouveau |
-| Guides | `GuidesTabContent` (existant) |
-| Ticketing | `TicketingTabContent` (existant) |
-| Aide | `SupportTabContent` (existant) |
-
-### 2. Modifier `src/pages/UnifiedWorkspace.tsx`
-- Ajouter la détection du rôle franchiseur via `isFranchiseur` de `useAuth()`
-- Rendu conditionnel : si `isFranchiseur` → afficher `FranchiseurView`, sinon vue standard
-- **Supprimer** l'onglet "Franchiseur" de la liste `allTabs`
-
-### 3. Supprimer `src/components/unified/tabs/FranchiseurTabContent.tsx`
-Ce fichier devient obsolète car la vue franchiseur sera un composant racine, pas un contenu d'onglet.
-
-### 4. Envelopper dans les Providers nécessaires
-La vue Franchiseur nécessite :
-- `FranchiseurProvider` (contexte franchiseur)
-- `NetworkFiltersProvider` (filtres réseau)
+| Fichier | Modification |
+|---------|--------------|
+| `src/pages/admin/UnifiedManagementPage.tsx` | Afficher `agency.label` + ajouter bouton création + actions utilisateur |
+| `src/hooks/use-user-management.ts` | Enrichir les users avec `agencyLabel` |
+| `src/components/admin/users/UserAccordionItem.tsx` | Afficher `agencyLabel` au lieu de `agence` (slug) |
+| `src/hooks/user-management/types.ts` | Ajouter `agencyLabel?: string` au type `UserProfile` |
 
 ---
 
-## 🔧 Détails techniques
+## Impact
 
-### Structure de `FranchiseurView.tsx`
-
-```tsx
-// Pseudo-code simplifié
-function FranchiseurView() {
-  const tabs = [
-    { id: 'accueil', label: 'Accueil', icon: Home },
-    { id: 'periode', label: 'Periode', icon: GitCompare },
-    { id: 'agences', label: 'Agences', icon: Building2 },
-    { id: 'redevances', label: 'Redevances', icon: Coins },
-    { id: 'statistiques', label: 'Statistiques', icon: BarChart3 },
-    { id: 'divers', label: 'Divers', icon: MoreHorizontal },
-    { id: 'guides', label: 'Guides', icon: BookOpen },
-    { id: 'ticketing', label: 'Ticketing', icon: Ticket },
-    { id: 'aide', label: 'Aide', icon: HelpCircle },
-  ];
-  
-  return (
-    <FranchiseurProvider>
-      <NetworkFiltersProvider>
-        <Tabs>
-          {/* Même style visuel que UnifiedWorkspace */}
-          <TabsList>...</TabsList>
-          <TabsContent>...</TabsContent>
-        </Tabs>
-      </NetworkFiltersProvider>
-    </FranchiseurProvider>
-  );
-}
-```
-
-### Modification de `UnifiedWorkspace.tsx`
-
-```tsx
-function UnifiedWorkspaceContent() {
-  const { isFranchiseur } = useAuth();
-  
-  // Vue Franchiseur = système d'onglets complètement différent
-  if (isFranchiseur) {
-    return <FranchiseurView />;
-  }
-  
-  // Vue standard (franchisés)
-  return (
-    <Tabs>
-      {/* Onglets actuels sans "Franchiseur" */}
-    </Tabs>
-  );
-}
-```
-
----
-
-## ✅ Résultat attendu
-
-1. **Utilisateurs franchisés (N2)** : voient les onglets actuels (Accueil, Mon agence, Stats, Salariés, etc.)
-
-2. **Utilisateurs franchiseurs (N3+)** : voient automatiquement une interface dédiée avec les 9 onglets spécifiques
-
-3. **Plus d'onglet "Franchiseur"** : supprimé de la vue standard
-
-4. **Cohérence visuelle** : même style de tabs "dossier" dans les deux vues
-
+- **Bouton "Nouvel utilisateur"** : Visible pour les utilisateurs ayant les droits de création (N2+ selon leur scope)
+- **Colonne Agence** : Affichera "DAX", "SAINT-OMER", etc. au lieu des UUIDs ou slugs
+- **Compatibilité** : Les deux pages (`TDRUsersPage` et `UnifiedManagementPage`) seront fonctionnelles
