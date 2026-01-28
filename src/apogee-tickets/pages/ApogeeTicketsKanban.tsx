@@ -390,17 +390,6 @@ function ApogeeTicketsKanbanContent({ roleInfo, embedded = false }: { roleInfo: 
         </div>
 
         <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-          <Link to={ROUTES.projects.review}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <ListChecks className="h-4 w-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Revue</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Revue en masse</TooltipContent>
-            </Tooltip>
-          </Link>
           {/* Bouton complétion */}
           <Tooltip>
             <TooltipTrigger asChild>
