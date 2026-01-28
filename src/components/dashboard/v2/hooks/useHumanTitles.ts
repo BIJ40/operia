@@ -79,10 +79,10 @@ const TITLE_VARIANTS: Record<TitleKey, TitleVariant[]> = {
     { title: "Charge de travail", subtitle: "Répartition de l'activité" },
   ],
   map: [
-    { title: "Où ça se passe", subtitle: "Vos RDV du jour sur le terrain" },
-    { title: "Sur le terrain", subtitle: "Localisation des interventions" },
-    { title: "La carte du jour", subtitle: "Vue géographique de l'activité" },
-    { title: "Aujourd'hui", subtitle: "Vos techniciens en action" },
+    { title: "Sur le terrain aujourd'hui", subtitle: "Vos RDV du jour en temps réel" },
+    { title: "Où ça se passe aujourd'hui", subtitle: "Localisation des interventions du jour" },
+    { title: "La carte du jour", subtitle: "Vos techniciens en action maintenant" },
+    { title: "Aujourd'hui sur le terrain", subtitle: "Vue géographique des RDV" },
   ],
   recouvrement: [
     { title: "À encaisser", subtitle: "Factures en attente de règlement" },
