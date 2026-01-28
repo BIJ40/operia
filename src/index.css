@@ -813,3 +813,65 @@ button[data-image-modal] {
 .salaries-pill-tab-active:hover {
   background-color: hsl(var(--pill-color) / 0.9);
 }
+
+/* ============================================
+   RH BROWSER TABS - Onglets navigateur RH (thème warm-pastel)
+   ============================================ */
+.rh-browser-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.75rem 0.75rem 0 0;
+  border: 1px solid hsl(var(--border));
+  border-bottom: none;
+  background-color: hsl(var(--muted) / 0.5);
+  color: hsl(var(--muted-foreground));
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 120px;
+  max-width: 200px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.rh-browser-tab:hover {
+  background-color: hsl(var(--tab-color) / 0.1);
+  border-color: hsl(var(--tab-color) / 0.4);
+  color: hsl(var(--tab-color));
+}
+
+.rh-browser-tab-active {
+  background: linear-gradient(135deg, hsl(var(--tab-color)) 0%, hsl(var(--tab-color) / 0.85) 100%);
+  color: white;
+  border-color: hsl(var(--tab-color));
+  box-shadow: 0 4px 12px -2px hsl(var(--tab-color) / 0.35);
+}
+
+.rh-browser-tab-active:hover {
+  background: linear-gradient(135deg, hsl(var(--tab-color) / 0.9) 0%, hsl(var(--tab-color) / 0.75) 100%);
+}
+
+/* ============================================
+   RH DRAWER - Style warm-pastel pour les popups/drawers
+   ============================================ */
+.rh-drawer-section {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background-color: hsl(var(--muted) / 0.3);
+  border: 1px solid hsl(var(--border));
+}
+
+.rh-drawer-field {
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background-color: hsl(var(--background));
+  border: 1px solid hsl(var(--border));
+  transition: all 0.2s ease;
+}
+
+.rh-drawer-field:hover {
+  border-color: hsl(var(--warm-blue) / 0.5);
+  box-shadow: 0 2px 8px -2px hsl(var(--warm-blue) / 0.15);
+}

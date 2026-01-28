@@ -50,7 +50,7 @@ export function RHTabsBar({ collaborators }: RHTabsBarProps) {
   };
   
   return (
-    <div className="flex items-end gap-1 border-b border-border bg-muted/30 px-2 overflow-x-auto">
+    <div className="flex items-end gap-1.5 border-b border-border bg-muted/30 px-3 py-2 overflow-x-auto">
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -60,13 +60,14 @@ export function RHTabsBar({ collaborators }: RHTabsBarProps) {
           items={tabs.map(t => t.id)}
           strategy={horizontalListSortingStrategy}
         >
-          {tabs.map(tab => (
+          {tabs.map((tab, index) => (
             <RHTab
               key={tab.id}
               tab={tab}
               isActive={tab.id === activeTabId}
               onActivate={() => setActiveTab(tab.id)}
               onClose={() => closeTab(tab.id)}
+              colorIndex={index}
             />
           ))}
         </SortableContext>

@@ -1,6 +1,6 @@
 /**
  * Composant onglet individuel RH
- * Réutilise le pattern de BrowserTab du module Franchiseur
+ * Style warm-pastel cohérent avec le design system
  */
 
 import React from 'react';
@@ -15,9 +15,20 @@ interface RHTabProps {
   isActive: boolean;
   onActivate: () => void;
   onClose: () => void;
+  colorIndex?: number;
 }
 
-export function RHTab({ tab, isActive, onActivate, onClose }: RHTabProps) {
+// Palette de couleurs warm-pastel pour les onglets
+const TAB_COLORS = [
+  '--warm-blue',
+  '--warm-purple',
+  '--warm-green',
+  '--warm-orange',
+  '--warm-pink',
+  '--warm-teal',
+];
+
+export function RHTab({ tab, isActive, onActivate, onClose, colorIndex = 0 }: RHTabProps) {
   const {
     attributes,
     listeners,
@@ -30,7 +41,8 @@ export function RHTab({ tab, isActive, onActivate, onClose }: RHTabProps) {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-  };
+    '--tab-color': `var(${TAB_COLORS[colorIndex % TAB_COLORS.length]})`,
+  } as React.CSSProperties;
 
   const Icon = tab.icon;
 
@@ -47,11 +59,8 @@ export function RHTab({ tab, isActive, onActivate, onClose }: RHTabProps) {
       {...listeners}
       onClick={onActivate}
       className={cn(
-        'group flex items-center gap-2 px-3 py-2 rounded-t-lg cursor-pointer select-none',
-        'border border-b-0 transition-colors min-w-[120px] max-w-[200px]',
-        isActive
-          ? 'bg-background border-border text-foreground shadow-sm'
-          : 'bg-muted/50 border-transparent text-muted-foreground hover:bg-muted hover:text-foreground',
+        'rh-browser-tab group',
+        isActive && 'rh-browser-tab-active',
         isDragging && 'opacity-50 z-50'
       )}
     >
@@ -61,9 +70,10 @@ export function RHTab({ tab, isActive, onActivate, onClose }: RHTabProps) {
         <button
           onClick={handleClose}
           className={cn(
-            'ml-auto p-0.5 rounded-sm transition-opacity shrink-0',
-            'opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive',
-            isActive && 'opacity-60'
+            'ml-auto p-0.5 rounded-full transition-all shrink-0',
+            'opacity-0 group-hover:opacity-100',
+            'hover:bg-white/20 hover:text-white',
+            isActive ? 'hover:bg-destructive/20 hover:text-destructive' : 'hover:text-destructive'
           )}
         >
           <X className="h-3.5 w-3.5" />
