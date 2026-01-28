@@ -49,21 +49,21 @@ export function TopAgenciesWidget({ agencies }: TopAgenciesWidgetProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="relative overflow-hidden rounded-2xl bg-white dark:bg-card border-0 shadow-lg"
+      className="relative overflow-hidden rounded-2xl bg-white dark:bg-card border-0 shadow-sm"
     >
-      {/* Decorative gradient */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-400/20 to-orange-500/10 rounded-bl-[80px] -mr-8 -mt-8" />
+      {/* Decorative gradient - plus subtil */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-200/20 to-orange-200/10 rounded-bl-[80px] -mr-8 -mt-8" />
       
       <CardHeader className="pb-3 relative">
-        <CardTitle className="text-lg font-bold flex items-center gap-2">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
           <motion.div 
-            animate={{ rotate: [0, -10, 10, 0] }}
+            animate={{ rotate: [0, -5, 5, 0] }}
             transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-            className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg"
+            className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-300 to-orange-400 flex items-center justify-center shadow-md"
           >
             <Trophy className="h-5 w-5 text-white" />
           </motion.div>
-          <span className="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
+          <span className="text-foreground">
             TOP 5 Agences
           </span>
         </CardTitle>
@@ -96,7 +96,7 @@ export function TopAgenciesWidget({ agencies }: TopAgenciesWidgetProps) {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-emerald-600">{formatEuros(agency.ca)}</p>
+                    <p className="font-semibold text-emerald-500">{formatEuros(agency.ca)}</p>
                   </div>
                 </motion.div>
               );
@@ -105,8 +105,8 @@ export function TopAgenciesWidget({ agencies }: TopAgenciesWidgetProps) {
         )}
       </CardContent>
       
-      {/* Bottom accent */}
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-400" />
+      {/* Bottom accent - plus subtil */}
+      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-300 via-orange-300 to-amber-300" />
     </motion.div>
   );
 }

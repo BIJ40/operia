@@ -15,21 +15,21 @@ export const NetworkSAVChart = ({ data }: NetworkSAVChartProps) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.2 }}
-      className="relative overflow-hidden rounded-2xl bg-white dark:bg-card border-0 shadow-lg p-6"
+      className="relative overflow-hidden rounded-2xl bg-white dark:bg-card border-0 shadow-sm p-6"
     >
-      {/* Decorative gradient */}
-      <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-orange-400/15 to-red-500/10 rounded-bl-[100px] -mr-10 -mt-10" />
+      {/* Decorative gradient - plus subtil */}
+      <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-orange-200/20 to-red-200/10 rounded-bl-[100px] -mr-10 -mt-10" />
       
       <div className="mb-6 relative flex items-center gap-3">
         <motion.div 
-          animate={{ scale: [1, 1.1, 1] }}
+          animate={{ scale: [1, 1.05, 1] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center shadow-lg"
+          className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-red-400 flex items-center justify-center shadow-md"
         >
           <AlertTriangle className="h-5 w-5 text-white" />
         </motion.div>
         <div>
-          <h3 className="text-lg font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
+          <h3 className="text-lg font-semibold text-foreground">
             Évolution SAV
           </h3>
           <p className="text-sm text-muted-foreground">Taux moyen mensuel du réseau</p>
@@ -40,8 +40,8 @@ export const NetworkSAVChart = ({ data }: NetworkSAVChartProps) => {
         <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
           <defs>
             <linearGradient id="savGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#f97316" stopOpacity={0.4} />
-              <stop offset="100%" stopColor="#f97316" stopOpacity={0} />
+              <stop offset="0%" stopColor="#fdba74" stopOpacity={0.3} />
+              <stop offset="100%" stopColor="#fdba74" stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
@@ -82,17 +82,17 @@ export const NetworkSAVChart = ({ data }: NetworkSAVChartProps) => {
           <Area 
             type="monotone"
             dataKey="tauxSAV" 
-            stroke="#f97316" 
-            strokeWidth={3}
+            stroke="#fdba74" 
+            strokeWidth={2}
             fill="url(#savGradient)"
-            dot={{ fill: '#f97316', r: 4, strokeWidth: 2, stroke: 'white' }}
-            activeDot={{ r: 6, fill: '#ea580c' }}
+            dot={{ fill: '#fdba74', r: 3, strokeWidth: 2, stroke: 'white' }}
+            activeDot={{ r: 5, fill: '#fb923c' }}
           />
         </AreaChart>
       </ResponsiveContainer>
       
-      {/* Bottom accent */}
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 via-red-500 to-rose-400" />
+      {/* Bottom accent - plus subtil */}
+      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-300 via-red-300 to-rose-300" />
     </motion.div>
   );
 };
