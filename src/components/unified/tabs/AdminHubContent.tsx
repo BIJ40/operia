@@ -46,7 +46,7 @@ export default function AdminHubContent() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="py-6 space-y-4">
       {/* Main Tabs Navigation - directement en haut */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList className="flex flex-wrap justify-start gap-1.5 bg-transparent h-auto p-0">
