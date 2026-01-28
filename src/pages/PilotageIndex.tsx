@@ -117,13 +117,13 @@ function PilotageContent() {
     <div className="container mx-auto py-4 px-4 space-y-4">
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as MainTab)}>
         <div className="flex items-end gap-1 pb-0">
-          <TabsList className="h-auto p-0 bg-transparent gap-1 items-end">
+        <TabsList className="h-auto p-0 bg-transparent gap-0.5 items-end">
             {/* Onglet Mon Agence */}
             <TabsTrigger 
               value="agence" 
-              className="relative px-5 py-3 rounded-t-xl border border-b-0 transition-all duration-200
-                data-[state=inactive]:bg-muted/50 data-[state=inactive]:border-border/50 data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted
-                data-[state=active]:bg-background data-[state=active]:border-border data-[state=active]:shadow-sm data-[state=active]:z-10"
+              className="relative px-5 py-3 rounded-t-2xl border-2 border-b-0 transition-all duration-200
+                data-[state=inactive]:bg-muted/40 data-[state=inactive]:border-border/40 data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/60 data-[state=inactive]:hover:border-border/60
+                data-[state=active]:bg-background data-[state=active]:border-primary/30 data-[state=active]:shadow-md data-[state=active]:z-10 data-[state=active]:-mb-[2px]"
             >
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-sm">
@@ -135,9 +135,9 @@ function PilotageContent() {
             {hasStatsAccess && (
               <TabsTrigger 
                 value="stats" 
-                className="relative px-5 py-3 rounded-t-xl border border-b-0 transition-all duration-200
-                  data-[state=inactive]:bg-muted/50 data-[state=inactive]:border-border/50 data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted
-                  data-[state=active]:bg-background data-[state=active]:border-border data-[state=active]:shadow-sm data-[state=active]:z-10"
+                className="relative px-5 py-3 rounded-t-2xl border-2 border-b-0 transition-all duration-200
+                  data-[state=inactive]:bg-muted/40 data-[state=inactive]:border-border/40 data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/60 data-[state=inactive]:hover:border-border/60
+                  data-[state=active]:bg-background data-[state=active]:border-primary/30 data-[state=active]:shadow-md data-[state=active]:z-10 data-[state=active]:-mb-[2px]"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-sm">
@@ -150,9 +150,9 @@ function PilotageContent() {
             {hasApporteursAccess && (
               <TabsTrigger 
                 value="apporteurs" 
-                className="relative px-5 py-3 rounded-t-xl border border-b-0 transition-all duration-200
-                  data-[state=inactive]:bg-muted/50 data-[state=inactive]:border-border/50 data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted
-                  data-[state=active]:bg-background data-[state=active]:border-border data-[state=active]:shadow-sm data-[state=active]:z-10"
+                className="relative px-5 py-3 rounded-t-2xl border-2 border-b-0 transition-all duration-200
+                  data-[state=inactive]:bg-muted/40 data-[state=inactive]:border-border/40 data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/60 data-[state=inactive]:hover:border-border/60
+                  data-[state=active]:bg-background data-[state=active]:border-primary/30 data-[state=active]:shadow-md data-[state=active]:z-10 data-[state=active]:-mb-[2px]"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-helpconfort-blue to-helpconfort-blue/70 flex items-center justify-center shadow-sm">
