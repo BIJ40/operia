@@ -14,7 +14,6 @@ export type TitleKey =
   | 'ca_apporteurs'
   | 'taux_sav'
   | 'tickets'
-  | 'favoris'
   | 'panier_moyen'
   | 'productivite'
   | 'map'
@@ -61,12 +60,6 @@ const TITLE_VARIANTS: Record<TitleKey, TitleVariant[]> = {
     { title: "Ce qui attend", subtitle: "Tickets en cours" },
     { title: "Demandes actives", subtitle: "Votre fil de suivi" },
     { title: "En attente", subtitle: "Les sujets ouverts" },
-  ],
-  favoris: [
-    { title: "Mes raccourcis", subtitle: "Accès rapides" },
-    { title: "Ma boîte à outils", subtitle: "Vos pages favorites" },
-    { title: "Accès directs", subtitle: "En un clic" },
-    { title: "Épinglés", subtitle: "Toujours à portée" },
   ],
   panier_moyen: [
     { title: "Panier moyen", subtitle: "Valeur moyenne par dossier" },

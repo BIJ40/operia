@@ -1,12 +1,8 @@
-import { useState, useEffect } from 'react';
-import { BookOpen, FileText, FolderOpen, HelpCircle, Heart } from 'lucide-react';
+import { BookOpen, FileText, FolderOpen, HelpCircle } from 'lucide-react';
 import { IndexTile, getVariantForIndex } from '@/components/ui/index-tile';
 import { ROUTES } from '@/config/routes';
 import { useMenuLabels } from '@/hooks/use-page-metadata';
 import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { Link } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
 
 const ROUTE_TO_PAGE_KEY: Record<string, string> = {
@@ -46,24 +42,6 @@ const faqModule = {
 
 export default function AcademyIndex() {
   const menuLabels = useMenuLabels();
-  const { user, isAuthenticated } = useAuth();
-  const [favoritesCount, setFavoritesCount] = useState(0);
-
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      loadFavoritesCount();
-    }
-  }, [isAuthenticated, user]);
-
-  const loadFavoritesCount = async () => {
-    if (!user) return;
-    const { count } = await supabase
-      .from('favorites')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .in('scope', ['apogee', 'apporteurs-nationaux']);
-    setFavoritesCount(count || 0);
-  };
 
   const getModuleTitle = (module: typeof academyModules[0]): string => {
     const pageKey = ROUTE_TO_PAGE_KEY[module.href];
@@ -92,37 +70,6 @@ export default function AcademyIndex() {
             variant={getVariantForIndex(index)}
           />
         ))}
-        {/* Mes Favoris Tile */}
-        {isAuthenticated && (
-          <Link 
-            to={ROUTES.academy.favorites}
-            className="group h-full rounded-xl p-5
-              bg-gradient-to-r from-helpconfort-blue-light/20 via-helpconfort-blue-light/10 to-transparent dark:from-helpconfort-blue-dark/30 dark:via-helpconfort-blue-dark/10
-              border border-helpconfort-blue-light/40 dark:border-helpconfort-blue-dark/40 border-l-4 border-l-helpconfort-blue
-              shadow-sm hover:shadow-md transition-all duration-300 hover:scale-[1.02]"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-11 h-11 rounded-full border-2 border-helpconfort-blue-light dark:border-helpconfort-blue-dark flex items-center justify-center bg-helpconfort-blue-light/30 dark:bg-helpconfort-blue-dark/50 group-hover:scale-110 transition-transform">
-                <Heart className="w-5 h-5 text-pink-500 fill-pink-500 animate-heartbeat" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-semibold text-foreground">Mes Favoris</h3>
-                  {favoritesCount > 0 && (
-                    <Badge className="bg-pink-500 text-white text-xs">
-                      {favoritesCount}
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {favoritesCount === 0 
-                    ? 'Ajoutez des sections en favoris' 
-                    : `${favoritesCount} section${favoritesCount > 1 ? 's' : ''} sauvegardée${favoritesCount > 1 ? 's' : ''}`}
-                </p>
-              </div>
-            </div>
-          </Link>
-        )}
 
         {/* FAQ Tile - non cliquable */}
         <div className="group h-full rounded-xl p-5

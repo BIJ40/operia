@@ -69,7 +69,6 @@ export const PAGE_DEFAULTS: PageDefaultConfig[] = [
   
   // User
   { pageKey: 'profile', defaultTitle: 'Mon Compte', defaultSubtitle: 'Gérez vos informations personnelles', route: ROUTES.profile },
-  { pageKey: 'favorites', defaultTitle: 'Mes Favoris', defaultSubtitle: 'Accès rapide à vos contenus favoris', route: ROUTES.favorites },
   { pageKey: 'changelog', defaultTitle: 'Historique des versions', defaultSubtitle: 'Nouveautés et améliorations de l\'application', route: ROUTES.changelog },
 ];
 

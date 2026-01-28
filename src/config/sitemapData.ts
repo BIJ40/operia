@@ -231,25 +231,6 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     },
     isDynamic: true,
   },
-  {
-    path: '/academy/favoris',
-    label: 'Favoris',
-    component: 'Favorites',
-    section: 'academy',
-    guards: {
-      roleGuard: { minRole: 'base_user' },
-      moduleGuard: { moduleKey: 'help_academy' },
-    },
-  },
-  {
-    path: '/favorites',
-    label: 'Redirect Favoris',
-    component: 'Navigate',
-    section: 'academy',
-    guards: {},
-    isRedirect: true,
-    redirectTo: '/academy/favoris',
-  },
 
   // ==================== PILOTAGE ====================
   {

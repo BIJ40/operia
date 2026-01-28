@@ -4,15 +4,15 @@
  * Refonte UX/UI complète:
  * - Design chaleureux avec cartes arrondies et couleurs pastel
  * - Titres humains et conversationnels
- * - Hiérarchie visuelle en 3 niveaux
+ * - Hiérarchie visuelle en 2 niveaux
  * - Hero section avec carte RDV pour N2+
  * - Animations framer-motion
  * 
  * Layouts par niveau:
- * - N0 (external): Tickets + Favoris uniquement
- * - N1 Technicien/Assistante: KPIs personnels + Tickets + Favoris
+ * - N0 (external): Placeholder simple
+ * - N1 Technicien/Assistante: KPIs personnels uniquement
  * - N2 (franchisee_admin): Layout complet agence avec carte
- * - N3/N4 (franchisor): Placeholder réseau + Tickets + Favoris
+ * - N3/N4 (franchisor): Placeholder réseau
  * - N5/N6 (admin): Layout agence complet
  */
 
@@ -21,14 +21,12 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ChevronDown, BarChart3, Trophy, PieChart, TrendingUp, MessageSquare, Star, Users, Building2, Network, MapPin } from 'lucide-react';
+import { ChevronDown, BarChart3, Trophy, PieChart, TrendingUp, Users, Building2, Network, MapPin } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 
 // Widgets existants
 import { IndicateursGlobauxWidget } from '@/components/dashboard/widgets/IndicateursGlobauxWidget';
-import { FavorisWidget } from '@/components/dashboard/widgets/FavorisWidget';
-import { RecentTicketsWidget } from '@/components/dashboard/widgets/RecentTicketsWidget';
 import { Top3TechniciensWidget } from '@/components/dashboard/widgets/Top3TechniciensWidget';
 import { CAParUniversWidget } from '@/components/dashboard/widgets/CAParUniversWidget';
 import { CAApporteursWidget } from '@/components/dashboard/widgets/CAApporteursWidget';
@@ -259,43 +257,23 @@ export default function DashboardStatic() {
   // ============================================================================
   
   const renderDashboardContent = () => {
-    // N0 (Extérieur) - Tickets + Favoris uniquement
+    // N0 (Extérieur) - Placeholder simple
     if (isN0) {
       return (
         <motion.div 
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="grid grid-cols-1 md:grid-cols-2 gap-5"
+          className="flex flex-col items-center justify-center py-12 text-muted-foreground"
         >
-          <motion.div variants={itemVariants}>
-            <WarmCard
-              variant="blue"
-              icon={MessageSquare}
-              title="Mes tickets"
-              subtitle="Vos demandes récentes"
-            >
-              <RecentTicketsWidget />
-            </WarmCard>
-          </motion.div>
-
-          <motion.div variants={itemVariants}>
-            <WarmCard
-              variant="orange"
-              icon={Star}
-              title="Mes favoris"
-              subtitle="Accès rapides"
-            >
-              <div className="min-h-[150px]">
-                <FavorisWidget />
-              </div>
-            </WarmCard>
-          </motion.div>
+          <Building2 className="h-16 w-16 mb-4 opacity-50" />
+          <p className="text-lg">Bienvenue sur HelpConfort</p>
+          <p className="text-sm mt-1">Accédez à l'Academy pour consulter les guides</p>
         </motion.div>
       );
     }
     
-    // N1 - KPIs personnels + Tickets + Favoris
+    // N1 - KPIs personnels uniquement
     if (isN1) {
       return (
         <motion.div 
@@ -331,37 +309,11 @@ export default function DashboardStatic() {
               </WarmCard>
             </motion.div>
           )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <motion.div variants={itemVariants}>
-              <WarmCard
-                variant="teal"
-                icon={MessageSquare}
-                title="Mes tickets"
-                subtitle="Vos demandes en cours"
-              >
-                <RecentTicketsWidget />
-              </WarmCard>
-            </motion.div>
-
-            <motion.div variants={itemVariants}>
-              <WarmCard
-                variant="orange"
-                icon={Star}
-                title="Mes favoris"
-                subtitle="Vos raccourcis"
-              >
-                <div className="min-h-[150px]">
-                  <FavorisWidget />
-                </div>
-              </WarmCard>
-            </motion.div>
-          </div>
         </motion.div>
       );
     }
     
-    // N3/N4 (Franchiseur) - Placeholder réseau + Tickets + Favoris
+    // N3/N4 (Franchiseur) - Placeholder réseau
     if (isN3orN4) {
       return (
         <motion.div 
@@ -384,32 +336,6 @@ export default function DashboardStatic() {
               </div>
             </WarmCard>
           </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <motion.div variants={itemVariants}>
-              <WarmCard
-                variant="blue"
-                icon={MessageSquare}
-                title="Derniers tickets"
-                subtitle="Demandes du réseau"
-              >
-                <RecentTicketsWidget />
-              </WarmCard>
-            </motion.div>
-
-            <motion.div variants={itemVariants}>
-              <WarmCard
-                variant="orange"
-                icon={Star}
-                title="Mes favoris"
-                subtitle="Accès rapides"
-              >
-                <div className="min-h-[150px]">
-                  <FavorisWidget />
-                </div>
-              </WarmCard>
-            </motion.div>
-          </div>
         </motion.div>
       );
     }
@@ -503,39 +429,6 @@ export default function DashboardStatic() {
               <HumanTitle titleKey="productivite" icon={Users} iconColor="text-warm-blue" size="sm" />
               <div className="mt-3">
                 <TechniciensProdWidget />
-              </div>
-            </WarmCard>
-          </motion.div>
-        </div>
-
-        {/* NIVEAU 3 - EXPLORABLE: Tickets + Favoris */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* Tickets récents */}
-          <motion.div variants={itemVariants}>
-            <WarmCard
-              variant="teal"
-              icon={MessageSquare}
-              animate={false}
-              className="h-full"
-            >
-              <HumanTitle titleKey="tickets" icon={MessageSquare} iconColor="text-warm-teal" />
-              <div className="mt-3">
-                <RecentTicketsWidget />
-              </div>
-            </WarmCard>
-          </motion.div>
-
-          {/* Favoris */}
-          <motion.div variants={itemVariants}>
-            <WarmCard
-              variant="neutral"
-              icon={Star}
-              animate={false}
-              className="h-full"
-            >
-              <HumanTitle titleKey="favoris" icon={Star} iconColor="text-amber-500" />
-              <div className="mt-3 min-h-[120px]">
-                <FavorisWidget />
               </div>
             </WarmCard>
           </motion.div>

@@ -1,7 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { GripVertical, Plus, Lightbulb, Edit2, Copy, FolderInput, Trash2, Clock, Sparkles } from 'lucide-react';
 import { createSanitizedHtml } from '@/lib/sanitize';
-import { FavoriteButton } from '@/components/FavoriteButton';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -146,31 +145,9 @@ export function TipsSection({
             </Button>
           </div>
         )}
-        {!isEditMode && !canEdit && isTips && (
-          <div className="absolute top-2 right-2">
-            <FavoriteButton
-              blockId={section.id}
-              blockTitle={section.title || 'TIPS'}
-              blockSlug={section.slug}
-              categorySlug={category.slug}
-              scope={scope}
-            />
-          </div>
-        )}
         <div className="flex items-center gap-2 flex-wrap">
           {!section.hideTitle && section.title && section.title.trim() !== '' && section.contentType !== 'tips' ? (
-            <>
-              <h3 className="text-lg font-semibold text-foreground">{section.title}</h3>
-              {!isEditMode && !canEdit && (
-                <FavoriteButton
-                  blockId={section.id}
-                  blockTitle={section.title}
-                  blockSlug={section.slug}
-                  categorySlug={category.slug}
-                  scope={scope}
-                />
-              )}
-            </>
+            <h3 className="text-lg font-semibold text-foreground">{section.title}</h3>
           ) : null}
           {/* Section badges */}
           {section.isInProgress && (

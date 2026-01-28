@@ -5,7 +5,6 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent } from '@/components/ui/dropdown-menu';
 import { Edit, Trash2, Copy, GripVertical, MoreVertical, MoveRight, Lightbulb, Info, AlertTriangle } from 'lucide-react';
-import { FavoriteButton } from '@/components/FavoriteButton';
 import { Block } from '@/types/block';
 import { createSanitizedHtml } from '@/lib/sanitize';
 
@@ -80,7 +79,6 @@ export function SortableAccordionItem({
                 />
               </div>
               <div className="flex items-center gap-2">
-                <FavoriteButton blockId={section.id} blockSlug={section.slug} blockTitle={section.title} categorySlug="" scope="apogee" />
                 {isAdmin && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -139,7 +137,6 @@ export function SortableAccordionItem({
               <h3 className="text-xl font-semibold text-left">{section.title}</h3>
             )}
             <div className="ml-auto flex items-center gap-2">
-              <FavoriteButton blockId={section.id} blockSlug={section.slug} blockTitle={section.title} categorySlug="" scope="apogee" />
               {isAdmin && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>

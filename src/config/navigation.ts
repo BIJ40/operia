@@ -346,7 +346,6 @@ export const PAGE_TITLES: Record<string, string> = {
   
   // User
   [ROUTES.profile]: 'Mon Profil',
-  [ROUTES.favorites]: 'Mes Favoris',
   
   // Legacy routes (backward compatibility)
   [ROUTES.legacy.apogee]: 'Guide Apogée',
