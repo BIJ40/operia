@@ -57,9 +57,9 @@ export default function ProjectsIndex() {
   return (
     <div className="container mx-auto py-8 px-4 space-y-8">
       <PageHeader 
-        title="Gestion de Projet"
+        title="Ticketing"
         subtitle="Gérez le backlog, les tickets et le suivi de développement"
-        backTo={ROUTES.home}
+        backTo="/"
         backLabel="Accueil"
       />
 
