@@ -8,8 +8,8 @@ import { BookOpen, Users, Building2, HelpCircle, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
+import { InternalApogeeLayout } from '@/components/guides/apogee/InternalApogeeLayout';
 
-const ApogeeGuide = lazy(() => import('@/pages/ApogeeGuide'));
 const ApporteurGuide = lazy(() => import('@/pages/ApporteurGuide'));
 const HelpConfort = lazy(() => import('@/pages/HelpConfort'));
 
@@ -38,11 +38,12 @@ export default function GuidesTabContent() {
       <Tabs value={activeGuide} onValueChange={(v) => setActiveGuide(v as GuideTab)}>
         <PillTabsList tabs={GUIDE_TABS} />
 
+        {/* Apogée - Layout avec sidebar intégré (pas de Suspense car pas lazy) */}
+        <TabsContent value="apogee" className="mt-4">
+          <InternalApogeeLayout />
+        </TabsContent>
+
         <Suspense fallback={<LoadingFallback />}>
-          <TabsContent value="apogee" className="mt-4">
-            <ApogeeGuide />
-          </TabsContent>
-          
           <TabsContent value="apporteurs" className="mt-4">
             <ApporteurGuide />
           </TabsContent>
