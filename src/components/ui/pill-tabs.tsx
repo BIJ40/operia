@@ -23,7 +23,7 @@ interface PillTabsListProps {
 export function PillTabsList({ tabs, className }: PillTabsListProps) {
   return (
     <TabsList className={cn(
-      "flex flex-wrap justify-start gap-1.5 bg-transparent h-auto p-0",
+      "flex flex-wrap justify-center gap-1.5 bg-transparent h-auto p-0",
       className
     )}>
       {tabs.map((tab, index) => {
