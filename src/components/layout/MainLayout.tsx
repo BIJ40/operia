@@ -1,11 +1,9 @@
 import { ReactNode, useState } from 'react';
-import { MainHeader } from './MainHeader';
 import { TabHeader } from './TabHeader';
 import { LoginFormCard } from '@/components/LoginFormCard';
 import { LoginDialog } from '@/components/LoginDialog';
 import { ImageModal } from '@/components/ImageModal';
 import { AiUnifiedProvider } from '@/components/ai';
-// REMOVED: RHLoginNotificationPopup - No auto-popup policy (see NO_POPUP_POLICY.md)
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useStorageQuota } from '@/hooks/use-storage-quota';
@@ -53,18 +51,8 @@ export function MainLayout({
   return (
     <AiUnifiedProvider>
       <div className={`min-h-screen w-full flex flex-col bg-background ${isImpersonating ? 'pt-10' : ''}`}>
-        {/* Desktop: TabHeader avec morphing */}
-        {showHeader && (
-          <>
-            <div className="hidden lg:block">
-              <TabHeader />
-            </div>
-            {/* Mobile/Tablet: Header existant */}
-            <div className="lg:hidden">
-              <MainHeader />
-            </div>
-          </>
-        )}
+        {/* Header unifié - TabHeader uniquement */}
+        {showHeader && <TabHeader />}
         
         {/* Contenu principal */}
         <main id="main-content" className="flex-1 overflow-auto" role="main">
@@ -74,7 +62,6 @@ export function MainLayout({
 
       <ImageModal />
       <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
-      {/* REMOVED: RHLoginNotificationPopup - No auto-popup policy */}
     </AiUnifiedProvider>
   );
 }

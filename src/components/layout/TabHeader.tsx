@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LogOut, User, Settings, Headset, Loader2, Home,
   Building2, Briefcase, Kanban, GraduationCap, Network,
-  LucideIcon, Circle, PenTool
+  LucideIcon, Circle, Cog
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -256,13 +256,27 @@ export function TabHeader() {
               {/* Simulateur de rôle (admin only) */}
               <RoleSimulatorDropdown />
 
+              {/* Icône admin discrète (admin only) */}
+              {isAdmin && (
+                <Link to="/admin">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="rounded-full h-8 w-8 text-muted-foreground hover:text-foreground"
+                    title="Administration"
+                  >
+                    <Cog className="w-4 h-4" />
+                  </Button>
+                </Link>
+              )}
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="rounded-full h-8 w-8">
                     <User className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-56 bg-popover">
                   <div className="px-2 py-1.5 text-sm">
                     <p className="font-medium">{user?.email?.split('@')[0] || 'Utilisateur'}</p>
                     <p className="text-xs text-muted-foreground">{user?.email}</p>
@@ -274,14 +288,6 @@ export function TabHeader() {
                       Mon profil
                     </Link>
                   </DropdownMenuItem>
-                  {isAdmin && (
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin" className="flex items-center gap-2 cursor-pointer">
-                        <Settings className="w-4 h-4" />
-                        Administration
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     onClick={logout}
