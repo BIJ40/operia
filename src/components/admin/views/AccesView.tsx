@@ -7,17 +7,14 @@ import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { AdminViewHeader } from '../AdminViewHeader';
-import { Users, Activity, ToggleRight } from 'lucide-react';
-import { Loader2 } from 'lucide-react';
+import { Users, Activity, Loader2 } from 'lucide-react';
 
 const TDRUsersPage = lazy(() => import('@/pages/TDRUsersPage'));
 const AdminUserActivity = lazy(() => import('@/pages/AdminUserActivity'));
-const AdminFeatureFlags = lazy(() => import('@/pages/admin/AdminFeatureFlags'));
 
 const SUB_TABS: PillTabConfig[] = [
   { id: 'users', label: 'Utilisateurs', icon: Users },
   { id: 'activity', label: 'Activité', icon: Activity },
-  { id: 'flags', label: 'Feature Flags', icon: ToggleRight },
 ];
 
 function LoadingFallback() {
@@ -64,12 +61,6 @@ export function AccesView() {
         <TabsContent value="activity" className="mt-6">
           <Suspense fallback={<LoadingFallback />}>
             <AdminUserActivity />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="flags" className="mt-6">
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminFeatureFlags />
           </Suspense>
         </TabsContent>
       </Tabs>

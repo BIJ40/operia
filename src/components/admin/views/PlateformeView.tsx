@@ -7,19 +7,21 @@ import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { AdminViewHeader } from '../AdminViewHeader';
-import { Cpu, Activity, Map, EyeOff, GitBranch, Loader2 } from 'lucide-react';
+import { Cpu, Activity, Map, FlaskConical, GitBranch, ToggleRight, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { MaintenanceModeCard } from '@/components/admin/MaintenanceModeCard';
 
 const AdminSystemHealth = lazy(() => import('@/pages/AdminSystemHealth'));
-const AdminSitemap = lazy(() => import('@/pages/admin/AdminSitemap'));
+const AdminFeatureFlags = lazy(() => import('@/pages/admin/AdminFeatureFlags'));
 const HiddenFeaturesPage = lazy(() => import('@/pages/admin/HiddenFeaturesPage'));
+const AdminSitemap = lazy(() => import('@/pages/admin/AdminSitemap'));
 const AdminFlow = lazy(() => import('@/pages/admin/AdminFlow'));
 
 const SUB_TABS: PillTabConfig[] = [
   { id: 'health', label: 'Santé', icon: Activity },
+  { id: 'modules', label: 'Modules', icon: ToggleRight },
+  { id: 'lab', label: 'Laboratoire', icon: FlaskConical },
   { id: 'sitemap', label: 'Sitemap', icon: Map },
-  { id: 'hidden', label: 'Masqué', icon: EyeOff },
   { id: 'flow', label: 'Flow', icon: GitBranch },
 ];
 
@@ -69,15 +71,21 @@ export function PlateformeView() {
           </Suspense>
         </TabsContent>
 
-        <TabsContent value="sitemap" className="mt-6">
+        <TabsContent value="modules" className="mt-6">
           <Suspense fallback={<LoadingFallback />}>
-            <AdminSitemap />
+            <AdminFeatureFlags />
           </Suspense>
         </TabsContent>
 
-        <TabsContent value="hidden" className="mt-6">
+        <TabsContent value="lab" className="mt-6">
           <Suspense fallback={<LoadingFallback />}>
             <HiddenFeaturesPage />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="sitemap" className="mt-6">
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminSitemap />
           </Suspense>
         </TabsContent>
 
