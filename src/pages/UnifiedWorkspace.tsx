@@ -11,7 +11,7 @@ import { useSearchParams } from 'react-router-dom';
 import { 
   Home, Building2, BarChart3, ClipboardList, 
   Car, MoreHorizontal, Ticket, HelpCircle,
-  Loader2, BookOpen, Shield
+  Loader2, BookOpen, Shield, User, LogOut, Settings
 } from 'lucide-react';
 import { 
   DndContext, 
@@ -47,6 +47,13 @@ import { FloatingChatButton } from '@/components/chat/FloatingChatButton';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ACCENT_THEMES, type AccentThemeKey } from '@/lib/accentThemes';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 // Providers nécessaires
 import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
@@ -99,7 +106,7 @@ function LoadingFallback() {
 }
 
 function UnifiedWorkspaceContent() {
-  const { globalRole, isFranchiseur } = useAuth();
+  const { globalRole, isFranchiseur, logout, user, isLoggingOut } = useAuth();
   const { isImpersonating } = useImpersonation();
   const { hasModule, hasModuleOption } = useEffectiveModules();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -261,6 +268,19 @@ function UnifiedWorkspaceContent() {
   return (
     <AiUnifiedProvider>
       <TooltipProvider delayDuration={0}>
+
+        {/* Overlay de déconnexion (cohérence avec le reste de l'app) */}
+        {isLoggingOut && (
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100] flex items-center justify-center animate-fade-in">
+            <div className="bg-card border-2 border-primary/20 rounded-2xl p-8 shadow-2xl flex flex-col items-center gap-4">
+              <Loader2 className="w-12 h-12 text-primary animate-spin" />
+              <div className="text-center">
+                <h3 className="text-xl font-bold text-foreground mb-2">Déconnexion en cours...</h3>
+                <p className="text-sm text-muted-foreground">À bientôt !</p>
+              </div>
+            </div>
+          </div>
+        )}
         
         <div className={`min-h-screen bg-background ${topPadding}`}>
           <Tabs value={validActiveTab} onValueChange={(v) => setActiveTab(v as UnifiedTab)} className="flex flex-col h-screen">
@@ -316,6 +336,55 @@ function UnifiedWorkspaceContent() {
                       </SortableContext>
                     </TabsList>
                   </DndContext>
+
+                  {/* Onglet “leurre” Profil (menu déroulant) — toujours visible */}
+                  <div className="flex items-end gap-2 shrink-0">
+                    <div className="h-6 w-px bg-border/50 mb-2" />
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          className={tabButtonClass}
+                          data-state="inactive"
+                          aria-label="Profil"
+                        >
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-6 h-6 rounded-lg bg-muted flex items-center justify-center shadow-sm transition-transform group-hover:scale-110 shrink-0">
+                              <User className="w-3 h-3 text-foreground" />
+                            </div>
+                            <span className="text-xs font-semibold tracking-tight truncate max-w-[80px]">Profil</span>
+                          </div>
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56 bg-popover z-50">
+                        <div className="px-3 py-2">
+                          <p className="font-medium text-sm">{user?.email?.split('@')[0] || 'Utilisateur'}</p>
+                          <p className="text-xs text-muted-foreground">{user?.email}</p>
+                        </div>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
+                            <User className="w-4 h-4" />
+                            Mon profil
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to="/changelog" className="flex items-center gap-2 cursor-pointer">
+                            <Settings className="w-4 h-4" />
+                            Paramètres
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={logout}
+                          className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Déconnexion
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
               </div>
               {/* Ligne de bordure qui se connecte aux onglets */}
