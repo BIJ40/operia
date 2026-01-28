@@ -64,6 +64,7 @@ import { StatsHubProvider } from '@/apogee-connect/components/stats-hub/StatsHub
 
 // Lazy loaded tab contents
 const DashboardContent = lazy(() => import('@/pages/DashboardStatic'));
+const DemoAccueilContent = lazy(() => import('@/components/home/DemoAccueilContent').then(m => ({ default: m.DemoAccueilContent })));
 const AgencyTabContent = lazy(() => import('@/components/unified/tabs/AgencyTabContent'));
 const StatsTabContent = lazy(() => import('@/components/unified/tabs/StatsTabContent'));
 const CollaborateursTabContent = lazy(() => import('@/components/unified/tabs/CollaborateursTabContent'));
@@ -251,17 +252,13 @@ function UnifiedWorkspaceContent() {
   const activeTabConfig = sortedTabs.find(t => t.id === activeTab);
   const isActiveTabAccessible = activeTabConfig && isTabAccessible(activeTabConfig);
   
-  // Pour N0 sur accueil sans contenu, rediriger vers un onglet utile
+  // Pour onglet inaccessible, rediriger vers accueil
   const validActiveTab = useMemo(() => {
     if (!isActiveTabAccessible) {
-      return isN0User ? getDefaultTabForN0() : 'accueil';
-    }
-    // N0 sur accueil -> rediriger vers Ticketing ou premier accessible
-    if (isN0User && activeTab === 'accueil') {
-      return getDefaultTabForN0();
+      return 'accueil';
     }
     return activeTab;
-  }, [activeTab, isActiveTabAccessible, isN0User, getDefaultTabForN0]);
+  }, [activeTab, isActiveTabAccessible]);
   
   // Synchroniser l'URL si redirection automatique (N0 vers Ticketing)
   useEffect(() => {
@@ -449,7 +446,7 @@ function UnifiedWorkspaceContent() {
             <main id="main-content" className="flex-1 overflow-auto" role="main">
               <Suspense fallback={<LoadingFallback />}>
                 <TabsContent value="accueil" className="mt-0 h-full">
-                  <DashboardContent />
+                  {isN0User ? <DemoAccueilContent /> : <DashboardContent />}
                 </TabsContent>
                 
                 <TabsContent value="agence" className="mt-0">
