@@ -1,95 +1,70 @@
 
 
-# Implementation PWA - Application installable sur telephone
+# Suppression des Pages Legacy RH Collaborateur
 
-## Objectif
-Rendre HC Services installable comme une app native sur ton telephone, accessible depuis l'ecran d'accueil.
+## Contexte
 
----
+Tu as deux systèmes de visualisation des fiches collaborateur :
+- **NOUVEAU (à conserver)** : Interface Cockpit + onglets navigateur dans `/rh/suivi` qui utilise `RHCollaboratorPanel.tsx` avec ses sections repliables (Compétences, Sécurité, Documents)
+- **LEGACY (à supprimer)** : Pages avec onglets classiques (Essentiel, RH, Sécurité & EPI, Compétences, IT & Accès, Documents) accessibles via `/rh/suivi/:id`
 
-## Etape 1 : Corriger le manifest PWA
-
-**Fichier:** `public/manifest.webmanifest`
-
-| Propriete | Avant | Apres |
-|-----------|-------|-------|
-| name | "OPERIA Technicien" | "HC Services" |
-| short_name | "Technicien" | "HC Services" |
-| description | "Application mobile technicien..." | "HelpConfort Services - Gestion complete" |
-| start_url | "/t" | "/" |
-| scope | "/t" | "/" |
+L'image que tu as envoyée montre l'ancienne interface avec l'onglet "IT & Accès" - c'est exactement ce qu'il faut supprimer.
 
 ---
 
-## Etape 2 : Hook usePWA
+## Ce qui sera supprimé
 
-**Fichier:** `src/hooks/usePWA.ts`
+### Fichiers à supprimer
 
-Fonctionnalites:
-- Detecte si l'app peut etre installee (evenement `beforeinstallprompt`)
-- Expose une fonction `promptInstall()` pour declencher l'installation
-- Detecte si l'app est deja installee (mode standalone)
-- Detecte iOS pour afficher les instructions manuelles
+| Fichier | Raison |
+|---------|--------|
+| `src/pages/rh/RHCollaborateurPage.tsx` | Page legacy avec onglets |
+| `src/components/rh/tabs/RHTabEssentiel.tsx` | Onglet Essentiel legacy |
+| `src/components/rh/tabs/RHTabRH.tsx` | Onglet RH legacy |
+| `src/components/rh/tabs/RHTabSecurite.tsx` | Onglet Sécurité legacy |
+| `src/components/rh/tabs/RHTabCompetences.tsx` | Onglet Compétences legacy |
+| `src/components/rh/tabs/RHTabParc.tsx` | Onglet Parc legacy |
+| `src/components/rh/tabs/RHTabIT.tsx` | Onglet IT & Accès legacy |
+| `src/components/rh/tabs/RHTabDocuments.tsx` | Onglet Documents legacy |
+| `src/components/rh/tabs/components/` | Dossier sous-composants |
+
+### Routes à modifier
+
+Dans `src/routes/rh.routes.tsx` :
+- Supprimer la route `/rh/suivi/:id` qui pointe vers `RHCollaborateurPage`
+- Supprimer les routes legacy `/rh/equipe/:id` et `/hc-agency/collaborateurs/:id`
+- Rediriger ces anciennes URLs vers `/rh/suivi` (le cockpit)
+
+---
+
+## Ce qui sera conservé
+
+- `RHSuiviIndex.tsx` - La page cockpit principale
+- `src/components/rh/browser-tabs/` - Système d'onglets navigateur moderne
+- `src/components/rh/cockpit/` - Interface cockpit
+- `src/components/rh/sections/` - Sections modernes (RHSectionSecurite, RHSectionCompetences, RHSectionDocuments)
+- `RHCollaboratorPanel.tsx` - Le panneau moderne utilisé dans les browser-tabs
+
+---
+
+## Résumé technique
 
 ```text
-API du hook:
-- canInstall: boolean
-- isInstalled: boolean
-- isIOS: boolean
-- promptInstall: () => Promise<void>
+SUPPRESSION:
+├── src/pages/rh/RHCollaborateurPage.tsx
+└── src/components/rh/tabs/
+    ├── RHTabEssentiel.tsx
+    ├── RHTabRH.tsx
+    ├── RHTabSecurite.tsx
+    ├── RHTabCompetences.tsx
+    ├── RHTabParc.tsx
+    ├── RHTabIT.tsx
+    ├── RHTabDocuments.tsx
+    └── components/
+
+MODIFICATION:
+└── src/routes/rh.routes.tsx → Redirection /rh/suivi/:id vers /rh/suivi
 ```
 
----
-
-## Etape 3 : Composant PWAInstallPrompt
-
-**Fichier:** `src/components/pwa/PWAInstallPrompt.tsx`
-
-Banniere discrete en bas de l'ecran sur mobile:
-- Android: bouton "Installer l'app" (declenche le prompt natif)
-- iOS: instructions "Appuie sur Partager puis Sur l'ecran d'accueil"
-- Bouton pour fermer (memorise en localStorage pour ne pas reapparaitre)
-
----
-
-## Etape 4 : Integrer dans App.tsx
-
-Ajouter le composant `PWAInstallPrompt` dans le layout principal pour qu'il apparaisse sur toutes les pages.
-
----
-
-## Etape 5 (Optionnel) : Notifications Push
-
-Si tu veux les notifications push, il faudra:
-1. Generer des cles VAPID (secret a ajouter)
-2. Creer la table `push_subscriptions` en base
-3. Creer l'edge function `send-push`
-4. Creer le hook `usePushNotifications`
-
-**Note:** Les notifications push sur iOS necessitent que l'app soit installee sur l'ecran d'accueil ET iOS 16.4+.
-
----
-
-## Resume des fichiers
-
-| Fichier | Action |
-|---------|--------|
-| `public/manifest.webmanifest` | Modifier |
-| `src/hooks/usePWA.ts` | Creer |
-| `src/components/pwa/PWAInstallPrompt.tsx` | Creer |
-| `src/App.tsx` | Modifier (ajouter PWAInstallPrompt) |
-
----
-
-## Comment utiliser apres implementation
-
-**Android (Chrome):**
-1. Ouvrir https://helpconfort-services.lovable.app
-2. Banniere "Installer l'app" apparait en bas
-3. Cliquer "Installer" > l'app s'ajoute a l'ecran d'accueil
-
-**iPhone (Safari):**
-1. Ouvrir https://helpconfort-services.lovable.app en Safari
-2. Banniere avec instructions apparait
-3. Appuyer Partager > "Sur l'ecran d'accueil" > Ajouter
+Après cette suppression, l'accès à une fiche collaborateur se fera uniquement via le cockpit (`/rh/suivi`) en double-cliquant sur une ligne ou via le système d'onglets navigateur.
 
