@@ -10,13 +10,26 @@ import { Settings, Building2, Brain, FileText, Database, Cpu, Shield, Users, Act
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { cn } from '@/lib/utils';
 import {
-  AccesView,
   ReseauView,
   IAView,
   ContenuView,
   OpsView,
   PlateformeView,
 } from '@/components/admin/views';
+import { lazy, Suspense } from 'react';
+import { Loader2 } from 'lucide-react';
+
+// Lazy load des composants directs
+const TDRUsersPage = lazy(() => import('@/pages/TDRUsersPage'));
+const AdminUserActivity = lazy(() => import('@/pages/AdminUserActivity'));
+
+function LoadingFallback() {
+  return (
+    <div className="flex items-center justify-center h-64">
+      <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+    </div>
+  );
+}
 
 // Configuration des onglets principaux (style Pill)
 const ADMIN_MAIN_TABS: PillTabConfig[] = [
@@ -27,16 +40,17 @@ const ADMIN_MAIN_TABS: PillTabConfig[] = [
   { id: 'plateforme', label: 'Plateforme', icon: Cpu, accent: 'teal' },
 ];
 
-// Sous-onglets pour Gestion (style Folder)
+// Sous-onglets pour Gestion (style Folder) - 3 onglets directs
 const GESTION_SUB_TABS = [
-  { id: 'acces', label: 'Utilisateurs', icon: Users },
+  { id: 'users', label: 'Utilisateurs', icon: Users },
   { id: 'agences', label: 'Agences', icon: Building2 },
+  { id: 'activity', label: 'Activité', icon: Activity },
 ];
 
 export default function AdminHubContent() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('adminTab') || 'gestion';
-  const activeSubTab = searchParams.get('adminView') || 'acces';
+  const activeSubTab = searchParams.get('adminView') || 'users';
 
   const handleTabChange = (value: string) => {
     const next = new URLSearchParams(searchParams);
@@ -104,12 +118,20 @@ export default function AdminHubContent() {
               
               {/* Content inside Folder */}
               <div className="rounded-2xl rounded-tl-none border-2 border-border bg-background p-4 sm:p-6 shadow-sm">
-                <TabsContent value="acces" className="mt-0 focus-visible:outline-none">
-                  <AccesView />
+                <TabsContent value="users" className="mt-0 focus-visible:outline-none">
+                  <Suspense fallback={<LoadingFallback />}>
+                    <TDRUsersPage />
+                  </Suspense>
                 </TabsContent>
                 
                 <TabsContent value="agences" className="mt-0 focus-visible:outline-none">
                   <ReseauView />
+                </TabsContent>
+
+                <TabsContent value="activity" className="mt-0 focus-visible:outline-none">
+                  <Suspense fallback={<LoadingFallback />}>
+                    <AdminUserActivity />
+                  </Suspense>
                 </TabsContent>
               </div>
             </Tabs>
