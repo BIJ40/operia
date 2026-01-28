@@ -721,7 +721,7 @@ button[data-image-modal] {
 }
 
 /* ============================================
-   ADMIN MAIN TABS - Onglets principaux colorés
+   ADMIN MAIN TABS - Onglets principaux (style neutre/folder)
    ============================================ */
 .admin-main-tab {
   display: flex;
@@ -734,22 +734,22 @@ button[data-image-modal] {
   border: 2px solid transparent;
   border-bottom: none;
   margin-bottom: -2px;
-  background-color: hsl(var(--tab-color) / 0.05);
-  color: hsl(var(--tab-color) / 0.7);
+  background-color: hsl(var(--muted) / 0.5);
+  color: hsl(var(--muted-foreground));
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .admin-main-tab:hover {
-  background-color: hsl(var(--tab-color) / 0.1);
-  color: hsl(var(--tab-color));
-  border-color: hsl(var(--tab-color) / 0.2);
+  background-color: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--border) / 0.5);
 }
 
 .admin-main-tab[data-state="active"] {
-  background-color: hsl(var(--tab-color) / 0.15);
-  color: hsl(var(--tab-color));
-  border-color: hsl(var(--tab-color) / 0.3);
-  box-shadow: 0 -2px 12px -4px hsl(var(--tab-color) / 0.3);
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--border));
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
   z-index: 10;
 }
 
@@ -764,5 +764,6 @@ button[data-image-modal] {
 }
 
 .admin-main-tab[data-state="active"] .admin-tab-icon {
-  background-color: hsl(var(--tab-color) / 0.15);
+  background-color: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
 }
