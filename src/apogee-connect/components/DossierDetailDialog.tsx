@@ -40,11 +40,11 @@ export function DossierDetailDialog({ open, onOpenChange, projectId }: DossierDe
   const [contactData, setContactData] = useState<ClientContact | null>(null);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['dossier-detail', projectId],
-    enabled: open && !!projectId,
+    queryKey: ['dossier-detail', projectId, agence],
+    enabled: open && !!projectId && !!agence,
     staleTime: 2 * 60 * 1000,
     queryFn: async () => {
-      const apiData = await DataService.loadAllData(true, false);
+      const apiData = await DataService.loadAllData(true, false, agence);
       
       const project: ApiProject = apiData.projects?.find((p: ApiProject) => String(p.id) === String(projectId));
       if (!project) throw new Error('Dossier non trouvé');
