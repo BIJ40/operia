@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -8,23 +8,15 @@ import { DataService } from '@/apogee-connect/services/dataService';
 import { buildActionsAMener } from '@/apogee-connect/utils/actionsAMenerCalculations';
 import { ActionsAMenerTable } from '@/apogee-connect/components/ActionsAMenerTable';
 import { ActionsConfigDialog } from '@/apogee-connect/components/ActionsConfigDialog';
-import { ActionsAMenerFilters } from '@/apogee-connect/components/ActionsAMenerFilters';
 import { useActionsConfig } from '@/apogee-connect/hooks/useActionsConfig';
 import { DossierDetailDialog } from '@/apogee-connect/components/DossierDetailDialog';
-import { ActionType } from '@/apogee-connect/types/actions';
 import { toast } from '@/hooks/use-toast';
 import { ConditionalRender } from '@/components/PermissionGuard';
-import { useSessionState } from '@/hooks/useSessionState';
 
 export function ActionsAMenerTab() {
   const { isAgencyReady, currentAgency } = useAgency();
   const { config, isLoading: isLoadingConfig } = useActionsConfig();
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
-  
-  // États des filtres avec persistance sessionStorage
-  const [actionTypeFilter, setActionTypeFilter] = useSessionState<ActionType | 'all'>('actions-actionTypeFilter', 'all');
-  const [clientFilter, setClientFilter] = useSessionState<string>('actions-clientFilter', 'all');
-  const [statusFilter, setStatusFilter] = useSessionState<'all' | 'late'>('actions-statusFilter', 'all');
 
   const { data: actions, isLoading, error } = useQuery({
     queryKey: ['actions-a-mener', currentAgency?.id, config],
@@ -74,46 +66,6 @@ export function ActionsAMenerTab() {
     }
   }, [actions]);
 
-  // Filtrage des actions
-  const filteredActions = useMemo(() => {
-    if (!actions) return [];
-    
-    return actions.filter(action => {
-      if (actionTypeFilter !== 'all' && action.actionType !== actionTypeFilter) {
-        return false;
-      }
-      if (clientFilter !== 'all' && action.clientName !== clientFilter) {
-        return false;
-      }
-      if (statusFilter === 'late' && !action.isLate) {
-        return false;
-      }
-      return true;
-    });
-  }, [actions, actionTypeFilter, clientFilter, statusFilter]);
-
-  // Liste des clients disponibles pour le filtre
-  const availableClients = useMemo(() => {
-    if (!actions) return [];
-    const clients = Array.from(new Set(actions.map(a => a.clientName)));
-    return clients.sort();
-  }, [actions]);
-
-  // Nombre de filtres actifs
-  const activeFiltersCount = useMemo(() => {
-    let count = 0;
-    if (actionTypeFilter !== 'all') count++;
-    if (clientFilter !== 'all') count++;
-    if (statusFilter !== 'all') count++;
-    return count;
-  }, [actionTypeFilter, clientFilter, statusFilter]);
-
-  const handleResetFilters = () => {
-    setActionTypeFilter('all');
-    setClientFilter('all');
-    setStatusFilter('all');
-  };
-
   const handleOpenDossier = (projectId: number) => {
     setSelectedProjectId(projectId);
   };
@@ -121,37 +73,6 @@ export function ActionsAMenerTab() {
   return (
     <>
       <div className="space-y-6">
-        {/* Statistiques rapides */}
-        {!isLoading && actions && (
-          <div className="flex flex-wrap gap-2">
-            <div className="flex items-center gap-1.5 rounded-md border border-primary/20 px-2.5 py-1 bg-primary/5">
-              <span className="text-xs text-muted-foreground">Total</span>
-              <span className="text-sm font-semibold text-primary">{filteredActions.length}</span>
-              {activeFiltersCount > 0 && (
-                <span className="text-[10px] text-muted-foreground">/{actions.length}</span>
-              )}
-            </div>
-            <div className="flex items-center gap-1.5 rounded-md border border-destructive/20 px-2.5 py-1 bg-destructive/5">
-              <span className="text-xs text-muted-foreground">En retard</span>
-              <span className="text-sm font-semibold text-destructive">
-                {filteredActions.filter(a => a.isLate).length}
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5 rounded-md border border-accent/30 px-2.5 py-1 bg-accent/10">
-              <span className="text-xs text-muted-foreground">Factures</span>
-              <span className="text-sm font-semibold text-accent-foreground">
-                {filteredActions.filter(a => a.actionType === 'a_facturer').length}
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5 rounded-md border border-secondary/30 px-2.5 py-1 bg-secondary/10">
-              <span className="text-xs text-muted-foreground">Relances</span>
-              <span className="text-sm font-semibold text-secondary-foreground">
-                {filteredActions.filter(a => a.actionType === 'relance_technicien').length}
-              </span>
-            </div>
-          </div>
-        )}
-
         {/* Tableau des actions */}
         <Card className="border-0 shadow-sm bg-gradient-to-br from-background to-muted/20">
           <CardHeader className="py-3 px-4">
@@ -163,17 +84,39 @@ export function ActionsAMenerTab() {
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
-                <ActionsAMenerFilters
-                  actionTypeFilter={actionTypeFilter}
-                  onActionTypeChange={setActionTypeFilter}
-                  clientFilter={clientFilter}
-                  onClientFilterChange={setClientFilter}
-                  statusFilter={statusFilter}
-                  onStatusFilterChange={setStatusFilter}
-                  availableClients={availableClients}
-                  activeFiltersCount={activeFiltersCount}
-                  onResetFilters={handleResetFilters}
-                />
+                {/* Stats inline */}
+                {!isLoading && actions && (
+                  <>
+                    <div className="flex items-center gap-1 rounded-full border border-primary/20 px-2 py-0.5 bg-primary/5">
+                      <span className="text-[10px] text-muted-foreground">Total</span>
+                      <span className="text-xs font-bold text-primary">{actions.length}</span>
+                    </div>
+                    <div className="flex items-center gap-1 rounded-full border border-destructive/20 px-2 py-0.5 bg-destructive/5">
+                      <span className="text-[10px] text-muted-foreground">Retard</span>
+                      <span className="text-xs font-bold text-destructive">
+                        {actions.filter(a => a.isLate).length}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 rounded-full border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/30">
+                      <span className="text-[10px] text-muted-foreground">Factures</span>
+                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                        {actions.filter(a => a.actionType === 'a_facturer').length}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 rounded-full border border-blue-200 dark:border-blue-800 px-2 py-0.5 bg-blue-50 dark:bg-blue-950/30">
+                      <span className="text-[10px] text-muted-foreground">Devis</span>
+                      <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
+                        {actions.filter(a => a.actionType === 'devis_a_faire').length}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 rounded-full border border-purple-200 dark:border-purple-800 px-2 py-0.5 bg-purple-50 dark:bg-purple-950/30">
+                      <span className="text-[10px] text-muted-foreground">Relances</span>
+                      <span className="text-xs font-bold text-purple-600 dark:text-purple-400">
+                        {actions.filter(a => a.actionType === 'relance_technicien').length}
+                      </span>
+                    </div>
+                  </>
+                )}
                 <ConditionalRender minRole="franchisee_admin">
                   <ActionsConfigDialog />
                 </ConditionalRender>
@@ -196,7 +139,7 @@ export function ActionsAMenerTab() {
               <>
                 
                 <ActionsAMenerTable
-                  actions={filteredActions}
+                  actions={actions || []}
                   onOpenDossier={handleOpenDossier}
                 />
               </>
