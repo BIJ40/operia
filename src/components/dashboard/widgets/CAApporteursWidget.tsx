@@ -99,9 +99,9 @@ export function CAApporteursWidget() {
               <span className="font-medium truncate max-w-[60%]">{apporteur.name}</span>
               <span className="text-muted-foreground">{formatCurrency(apporteur.ca)}</span>
             </div>
-            <div className="h-2 bg-accent rounded-full overflow-hidden">
+            <div className="h-2 bg-muted rounded-full overflow-hidden">
               <div
-                className="h-full bg-helpconfort-orange rounded-full transition-all"
+                className="h-full bg-warm-orange/80 rounded-full transition-all"
                 style={{ width: `${percentage}%` }}
               />
             </div>
