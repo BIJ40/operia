@@ -577,7 +577,7 @@ export const UserModulesTab = memo(function UserModulesTab({
                             {/* Checkbox */}
                             <div className="pt-0.5">
                               <Checkbox
-                                checked={isEnabled}
+                                checked={isEnabled && isAllowed}
                                 disabled={isDisabled}
                                 onCheckedChange={() => togglePermission(perm)}
                                 onClick={(e) => e.stopPropagation()}
