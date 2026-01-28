@@ -19,7 +19,7 @@ import { lazy, Suspense, useMemo, useState } from 'react';
 import { 
   Home, Building2, BarChart3, Users, ClipboardList, 
   CalendarDays, Car, MoreHorizontal, Ticket, HelpCircle,
-  Loader2
+  Loader2, BookOpen
 } from 'lucide-react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -52,6 +52,7 @@ const CollaborateursTabContent = lazy(() => import('@/components/unified/tabs/Co
 const PlanningsTabContent = lazy(() => import('@/components/unified/tabs/PlanningsTabContent'));
 const VehiculesTabContent = lazy(() => import('@/components/unified/tabs/VehiculesTabContent'));
 const DiversTabContent = lazy(() => import('@/components/unified/tabs/DiversTabContent'));
+const GuidesTabContent = lazy(() => import('@/components/unified/tabs/GuidesTabContent'));
 const TicketingTabContent = lazy(() => import('@/components/unified/tabs/TicketingTabContent'));
 const SupportTabContent = lazy(() => import('@/components/unified/tabs/SupportTabContent'));
 
@@ -60,12 +61,13 @@ type UnifiedTab =
   | 'agence' 
   | 'stats' 
   | 'apporteurs' 
-  | 'collaborateurs' 
+  | 'salaries' 
   | 'plannings' 
-  | 'vehicules' 
+  | 'parc' 
   | 'divers' 
+  | 'guides'
   | 'ticketing' 
-  | 'support';
+  | 'aide';
 
 interface TabConfig {
   id: UnifiedTab;
@@ -101,14 +103,15 @@ function UnifiedWorkspaceContent() {
     const baseTabs: TabConfig[] = [
       { id: 'accueil', label: 'Accueil', icon: Home },
       { id: 'agence', label: 'Mon agence', icon: Building2 },
-      { id: 'stats', label: 'Statistiques', icon: BarChart3, requiresOption: { module: 'pilotage_agence', option: 'stats_hub' } },
-      { id: 'apporteurs', label: 'Mes apporteurs', icon: Users, requiresOption: { module: 'pilotage_agence', option: 'mes_apporteurs' } },
-      { id: 'collaborateurs', label: 'Mes collaborateurs', icon: ClipboardList },
+      { id: 'stats', label: 'Stats', icon: BarChart3, requiresOption: { module: 'pilotage_agence', option: 'stats_hub' } },
+      { id: 'apporteurs', label: 'Apporteurs', icon: Users, requiresOption: { module: 'pilotage_agence', option: 'mes_apporteurs' } },
+      { id: 'salaries', label: 'Salariés', icon: ClipboardList },
       { id: 'plannings', label: 'Plannings', icon: CalendarDays },
-      { id: 'vehicules', label: 'Véhicules', icon: Car },
+      { id: 'parc', label: 'Parc', icon: Car },
       { id: 'divers', label: 'Divers', icon: MoreHorizontal },
+      { id: 'guides', label: 'Guides', icon: BookOpen, requiresOption: { module: 'help_academy' } },
       { id: 'ticketing', label: 'Ticketing', icon: Ticket, requiresOption: { module: 'apogee_tickets' } },
-      { id: 'support', label: 'Support', icon: HelpCircle },
+      { id: 'aide', label: 'Aide', icon: HelpCircle },
     ];
     
     return baseTabs.filter(tab => {
@@ -192,7 +195,7 @@ function UnifiedWorkspaceContent() {
                   <ApporteursTabContent />
                 </TabsContent>
                 
-                <TabsContent value="collaborateurs" className="mt-0">
+                <TabsContent value="salaries" className="mt-0">
                   <CollaborateursTabContent />
                 </TabsContent>
                 
@@ -200,7 +203,7 @@ function UnifiedWorkspaceContent() {
                   <PlanningsTabContent />
                 </TabsContent>
                 
-                <TabsContent value="vehicules" className="mt-0">
+                <TabsContent value="parc" className="mt-0">
                   <VehiculesTabContent />
                 </TabsContent>
                 
@@ -208,11 +211,15 @@ function UnifiedWorkspaceContent() {
                   <DiversTabContent />
                 </TabsContent>
                 
+                <TabsContent value="guides" className="mt-0">
+                  <GuidesTabContent />
+                </TabsContent>
+                
                 <TabsContent value="ticketing" className="mt-0">
                   <TicketingTabContent />
                 </TabsContent>
                 
-                <TabsContent value="support" className="mt-0">
+                <TabsContent value="aide" className="mt-0">
                   <SupportTabContent />
                 </TabsContent>
               </Suspense>
