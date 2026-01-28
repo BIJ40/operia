@@ -266,8 +266,6 @@ function ApogeeTicketsListContent({ roleInfo }: { roleInfo: NonNullable<ReturnTy
           allowedTransitionsMap={allowedTransitionsMap}
           onTicketClick={handleTicketClick}
           onTicketUpdate={handleTicketUpdate}
-          onQualifyTicket={handleQualifyTicket}
-          qualifyingTicketId={qualifyingTicketId}
         />
       )}
 
