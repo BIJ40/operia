@@ -1,19 +1,19 @@
 /**
  * DiversTabContent - Contenu de l'onglet "Divers"
- * Réunions, documentation, paramètres, apporteurs, plannings
+ * Sous-onglets: Apporteurs, Plannings, Réunions, Documents
  */
 
-import { lazy, Suspense, useState } from 'react';
-import { FileText, Settings, Users2, Loader2, Users, CalendarDays } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { lazy, Suspense } from 'react';
+import { FileText, Users2, Loader2, Users, CalendarDays } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useSessionState } from '@/hooks/useSessionState';
 
 const RHMeetingsPage = lazy(() => import('@/pages/rh/RHMeetingsPage'));
 const DocGenPage = lazy(() => import('@/pages/rh/DocGenPage'));
 const MesApporteursTab = lazy(() => import('@/components/pilotage/MesApporteursTab').then(m => ({ default: m.MesApporteursTab })));
 const PlanningHebdo = lazy(() => import('@/pages/PlanningTechniciensSemaine'));
 
-type DiversSection = 'reunions' | 'docgen' | 'apporteurs' | 'plannings' | null;
+type DiversSubTab = 'apporteurs' | 'plannings' | 'reunions' | 'docgen';
 
 function LoadingFallback() {
   return (
@@ -24,145 +24,54 @@ function LoadingFallback() {
 }
 
 export default function DiversTabContent() {
-  const [activeSection, setActiveSection] = useState<DiversSection>(null);
-  
-  if (activeSection === 'reunions') {
-    return (
-      <div className="py-3 px-2 sm:px-4">
-        <Button variant="ghost" onClick={() => setActiveSection(null)} className="mb-4">
-          ← Retour
-        </Button>
-        <Suspense fallback={<LoadingFallback />}>
-          <RHMeetingsPage />
-        </Suspense>
-      </div>
-    );
-  }
-  
-  if (activeSection === 'docgen') {
-    return (
-      <div className="py-3 px-2 sm:px-4">
-        <Button variant="ghost" onClick={() => setActiveSection(null)} className="mb-4">
-          ← Retour
-        </Button>
-        <Suspense fallback={<LoadingFallback />}>
-          <DocGenPage />
-        </Suspense>
-      </div>
-    );
-  }
+  const [activeSubTab, setActiveSubTab] = useSessionState<DiversSubTab>('divers_sub_tab', 'apporteurs');
 
-  if (activeSection === 'apporteurs') {
-    return (
-      <div className="py-3 px-2 sm:px-4">
-        <Button variant="ghost" onClick={() => setActiveSection(null)} className="mb-4">
-          ← Retour
-        </Button>
-        <Suspense fallback={<LoadingFallback />}>
-          <MesApporteursTab />
-        </Suspense>
-      </div>
-    );
-  }
-
-  if (activeSection === 'plannings') {
-    return (
-      <div className="py-3 px-2 sm:px-4">
-        <Button variant="ghost" onClick={() => setActiveSection(null)} className="mb-4">
-          ← Retour
-        </Button>
-        <Suspense fallback={<LoadingFallback />}>
-          <PlanningHebdo />
-        </Suspense>
-      </div>
-    );
-  }
+  const subTabs = [
+    { id: 'apporteurs' as const, label: 'Apporteurs', icon: Users },
+    { id: 'plannings' as const, label: 'Plannings', icon: CalendarDays },
+    { id: 'reunions' as const, label: 'Réunions', icon: Users2 },
+    { id: 'docgen' as const, label: 'Documents', icon: FileText },
+  ];
 
   return (
     <div className="py-3 px-2 sm:px-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card 
-          className="cursor-pointer hover:border-primary/50 transition-colors"
-          onClick={() => setActiveSection('apporteurs')}
-        >
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Users className="w-5 h-5 text-primary" />
-              Apporteurs
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Gestion des apporteurs d'affaires
-            </p>
-          </CardContent>
-        </Card>
+      <Tabs value={activeSubTab} onValueChange={(v) => setActiveSubTab(v as DiversSubTab)}>
+        <TabsList className="mb-4">
+          {subTabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <TabsTrigger key={tab.id} value={tab.id} className="gap-2">
+                <Icon className="w-4 h-4" />
+                <span className="hidden sm:inline">{tab.label}</span>
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
 
-        <Card 
-          className="cursor-pointer hover:border-primary/50 transition-colors"
-          onClick={() => setActiveSection('plannings')}
-        >
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <CalendarDays className="w-5 h-5 text-primary" />
-              Plannings
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Planning hebdomadaire des techniciens
-            </p>
-          </CardContent>
-        </Card>
+        <TabsContent value="apporteurs" className="mt-0">
+          <Suspense fallback={<LoadingFallback />}>
+            <MesApporteursTab />
+          </Suspense>
+        </TabsContent>
 
-        <Card 
-          className="cursor-pointer hover:border-primary/50 transition-colors"
-          onClick={() => setActiveSection('reunions')}
-        >
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Users2 className="w-5 h-5 text-primary" />
-              Réunions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Planifier et gérer les réunions d'équipe
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card 
-          className="cursor-pointer hover:border-primary/50 transition-colors"
-          onClick={() => setActiveSection('docgen')}
-        >
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <FileText className="w-5 h-5 text-primary" />
-              Génération de documents
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Créer des documents RH automatiquement
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card className="opacity-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Settings className="w-5 h-5 text-muted-foreground" />
-              Paramètres
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Configuration de l'agence (à venir)
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+        <TabsContent value="plannings" className="mt-0">
+          <Suspense fallback={<LoadingFallback />}>
+            <PlanningHebdo />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="reunions" className="mt-0">
+          <Suspense fallback={<LoadingFallback />}>
+            <RHMeetingsPage />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="docgen" className="mt-0">
+          <Suspense fallback={<LoadingFallback />}>
+            <DocGenPage />
+          </Suspense>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
