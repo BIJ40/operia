@@ -143,32 +143,34 @@ function UnifiedWorkspaceContent() {
   const isPlatformAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';
   
   // Configuration des onglets avec permissions
+  // Chaque onglet a un requiresOption qui définit le module/option nécessaire
   const allTabs: TabConfig[] = useMemo(() => [
     { id: 'accueil', label: 'Accueil', icon: Home },
-    { id: 'agence', label: 'Mon agence', icon: Building2 },
+    { id: 'agence', label: 'Mon agence', icon: Building2, requiresOption: { module: 'pilotage_agence' } },
     { id: 'stats', label: 'Stats', icon: BarChart3, requiresOption: { module: 'pilotage_agence', option: 'stats_hub' } },
-    { id: 'salaries', label: 'Salariés', icon: ClipboardList },
-    { id: 'parc', label: 'Parc', icon: Car },
-    { id: 'divers', label: 'Divers', icon: MoreHorizontal },
+    { id: 'salaries', label: 'Salariés', icon: ClipboardList, requiresOption: { module: 'pilotage_agence' } },
+    { id: 'parc', label: 'Parc', icon: Car, requiresOption: { module: 'pilotage_agence' } },
+    { id: 'divers', label: 'Divers', icon: MoreHorizontal, requiresOption: { module: 'pilotage_agence' } },
     { id: 'guides', label: 'Guides', icon: BookOpen, requiresOption: { module: 'help_academy' } },
     { id: 'ticketing', label: 'Ticketing', icon: Ticket, requiresOption: { module: 'apogee_tickets' } },
-    { id: 'aide', label: 'Aide', icon: HelpCircle },
+    { id: 'aide', label: 'Aide', icon: HelpCircle, requiresOption: { module: 'support' } },
     { id: 'admin', label: 'Admin', icon: Shield, requiresOption: { module: 'admin_plateforme' } },
   ], []);
   
-  // Filtrer les onglets visibles selon permissions
-  const visibleTabs = useMemo(() => {
-    return allTabs.filter(tab => {
-      if (!tab.requiresOption) return true;
-      if (isPlatformAdmin) return true;
-      
-      const { module, option } = tab.requiresOption;
-      if (option) {
-        return hasModuleOption(module as any, option);
-      }
-      return hasModule(module as any);
-    });
-  }, [allTabs, isPlatformAdmin, hasModule, hasModuleOption]);
+  // Vérifier si un onglet est accessible (pour le rendre cliquable ou non)
+  const isTabAccessible = useCallback((tab: TabConfig): boolean => {
+    if (!tab.requiresOption) return true;
+    if (isPlatformAdmin) return true;
+    
+    const { module, option } = tab.requiresOption;
+    if (option) {
+      return hasModuleOption(module as any, option);
+    }
+    return hasModule(module as any);
+  }, [isPlatformAdmin, hasModule, hasModuleOption]);
+  
+  // Tous les onglets sont visibles, mais certains peuvent être désactivés
+  const visibleTabs = allTabs;
   
   // Onglets triés selon l'ordre personnalisé (Accueil toujours premier)
   const sortedTabs = useMemo(() => {
@@ -217,8 +219,9 @@ function UnifiedWorkspaceContent() {
     }
   }, [tabOrder, setTabOrder]);
   
-  // Si l'onglet actif n'est plus visible, revenir à accueil
-  const validActiveTab = sortedTabs.some(t => t.id === activeTab) ? activeTab : 'accueil';
+  // Si l'onglet actif n'est pas accessible, revenir à accueil
+  const activeTabConfig = sortedTabs.find(t => t.id === activeTab);
+  const validActiveTab = (activeTabConfig && isTabAccessible(activeTabConfig)) ? activeTab : 'accueil';
   
   // Mettre à jour le titre de la page selon l'onglet actif
   useEffect(() => {
@@ -314,13 +317,15 @@ function UnifiedWorkspaceContent() {
                       <SortableContext items={sortableIds} strategy={horizontalListSortingStrategy}>
                         {sortedTabs.slice(1).map((tab) => {
                           const Icon = tab.icon;
-                           const accent = ACCENT_THEMES[unifiedTabAccent[tab.id]];
+                          const accent = ACCENT_THEMES[unifiedTabAccent[tab.id]];
+                          const isAccessible = isTabAccessible(tab);
                           return (
                             <DraggableTab
                               key={tab.id}
                               id={tab.id}
                               isActive={validActiveTab === tab.id}
-                              isDraggable={true}
+                              isDraggable={isAccessible}
+                              isDisabled={!isAccessible}
                               onClick={() => setActiveTab(tab.id)}
                               className={tabButtonClass}
                             >
