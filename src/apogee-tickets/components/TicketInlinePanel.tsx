@@ -116,6 +116,9 @@ export function TicketInlinePanel({
   const [showAllComments, setShowAllComments] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentBody, setEditingCommentBody] = useState('');
+  
+  // Mode édition pour titre/description (verrouillé par défaut)
+  const [isEditingContent, setIsEditingContent] = useState(false);
 
   const autoCommentType: AuthorType = isDeveloper ? 'APOGEE' : 'HC';
   const draftKey = `ticket-draft-${ticket.id}`;
@@ -355,8 +358,21 @@ export function TicketInlinePanel({
             )}
           </div>
           
-          {/* Actions: Corbeille & Fermer */}
+          {/* Actions: Crayon (édition), Corbeille & Fermer */}
           <div className="flex items-center gap-1">
+            {/* Bouton crayon pour éditer titre/description */}
+            {canManage && (
+              <Button 
+                size="sm" 
+                variant={isEditingContent ? "secondary" : "ghost"} 
+                className={`h-8 w-8 p-0 ${isEditingContent ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                onClick={() => setIsEditingContent(!isEditingContent)}
+                title={isEditingContent ? "Verrouiller l'édition" : "Modifier titre/description"}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
+            
             {onDelete && canManage && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -443,16 +459,22 @@ export function TicketInlinePanel({
                   LIGNE: TITRE + TAGS + ROADMAP (sur une même ligne)
                  ═══════════════════════════════════════════════════════════ */}
               <div className="flex items-end gap-3">
-                {/* Titre (50% de largeur) */}
+                {/* Titre (50% de largeur) - Mode consultation/édition */}
                 <div className="w-1/2 space-y-1">
                   <label className="text-xs font-medium text-muted-foreground uppercase">Titre</label>
-                  <Input
-                    value={localTitle}
-                    onChange={(e) => setLocalTitle(e.target.value)}
-                    onBlur={handleTitleBlur}
-                    className="text-sm font-semibold"
-                    disabled={!canManage}
-                  />
+                  {isEditingContent ? (
+                    <Input
+                      value={localTitle}
+                      onChange={(e) => setLocalTitle(e.target.value)}
+                      onBlur={handleTitleBlur}
+                      className="text-sm font-semibold"
+                      autoFocus
+                    />
+                  ) : (
+                    <p className="text-sm font-semibold py-2 px-3 bg-muted/40 rounded-md border border-transparent min-h-[38px] flex items-center">
+                      {localTitle || <span className="text-muted-foreground italic">Sans titre</span>}
+                    </p>
+                  )}
                 </div>
                 
                 {/* Tags */}
@@ -484,18 +506,23 @@ export function TicketInlinePanel({
                 </div>
               </div>
 
-              {/* Description */}
+              {/* Description - Mode consultation/édition */}
               <div>
                 <label className="text-xs font-medium text-muted-foreground uppercase">Description</label>
-                <Textarea
-                  value={localDescription}
-                  onChange={(e) => setLocalDescription(e.target.value)}
-                  onBlur={handleDescriptionBlur}
-                  rows={3}
-                  placeholder="Description..."
-                  className="mt-1 resize-none"
-                  disabled={!canManage}
-                />
+                {isEditingContent ? (
+                  <Textarea
+                    value={localDescription}
+                    onChange={(e) => setLocalDescription(e.target.value)}
+                    onBlur={handleDescriptionBlur}
+                    rows={3}
+                    placeholder="Description..."
+                    className="mt-1 resize-none"
+                  />
+                ) : (
+                  <div className="mt-1 py-2 px-3 bg-muted/40 rounded-md border border-transparent min-h-[80px] text-sm whitespace-pre-wrap">
+                    {localDescription || <span className="text-muted-foreground italic">Aucune description</span>}
+                  </div>
+                )}
               </div>
 
               {/* Parameters row: Estimation, Porteur */}
