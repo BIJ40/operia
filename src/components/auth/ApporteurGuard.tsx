@@ -1,15 +1,14 @@
 /**
  * ApporteurGuard - Protection des routes Apporteur
- * Redirige vers la landing apporteur si non authentifié comme apporteur
- * Affiche message si organisation désactivée
+ * Utilise le nouveau système d'authentification autonome (ApporteurSessionContext)
  * 
  * DEV MODE: Bypass l'auth en preview/localhost pour tester l'UI
  */
 
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useApporteurAuth } from '@/contexts/ApporteurAuthContext';
-import { Loader2, ShieldX, Building2, Bug } from 'lucide-react';
+import { useApporteurSession } from '@/apporteur/contexts/ApporteurSessionContext';
+import { Loader2, ShieldX, Bug } from 'lucide-react';
 
 interface ApporteurGuardProps {
   /** Requiert le rôle manager */
@@ -24,6 +23,7 @@ interface ApporteurGuardProps {
 const isDevMode = () => {
   const hostname = window.location.hostname;
   return hostname === 'localhost' || 
+         hostname === '127.0.0.1' ||
          hostname.includes('preview') || 
          hostname.includes('lovable');
 };
@@ -33,10 +33,10 @@ export function ApporteurGuard({
   children, 
   redirectTo = '/apporteur'
 }: ApporteurGuardProps) {
-  const { isApporteurAuthenticated, isApporteurLoading, isApporteurManager, isOrgDisabled, apporteurUser } = useApporteurAuth();
+  const { isAuthenticated, isLoading, isManager } = useApporteurSession();
 
   // DEV MODE BYPASS - Permet d'accéder à l'espace apporteur sans auth en dev
-  if (isDevMode() && !isApporteurAuthenticated && !isApporteurLoading) {
+  if (isDevMode() && !isAuthenticated && !isLoading) {
     console.log('🔧 DEV MODE: Bypass ApporteurGuard - accès direct autorisé');
     return (
       <div className="relative">
@@ -53,7 +53,7 @@ export function ApporteurGuard({
   }
 
   // Afficher un loader pendant le chargement
-  if (isApporteurLoading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -62,30 +62,13 @@ export function ApporteurGuard({
     );
   }
 
-  // Organisation désactivée
-  if (apporteurUser && isOrgDisabled) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] p-8">
-        <div className="flex items-center justify-center w-20 h-20 rounded-full bg-muted mb-6">
-          <Building2 className="w-10 h-10 text-muted-foreground" />
-        </div>
-        <h1 className="text-2xl font-bold text-foreground mb-3">
-          Organisation désactivée
-        </h1>
-        <p className="text-muted-foreground text-center max-w-md">
-          L'accès à cet espace est temporairement suspendu. Veuillez contacter votre administrateur.
-        </p>
-      </div>
-    );
-  }
-
-  // Rediriger si non authentifié comme apporteur
-  if (!isApporteurAuthenticated) {
+  // Rediriger si non authentifié
+  if (!isAuthenticated) {
     return <Navigate to={redirectTo} replace />;
   }
 
   // Vérifier le rôle manager si requis
-  if (requireManager && !isApporteurManager) {
+  if (requireManager && !isManager) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-8">
         <div className="flex items-center justify-center w-20 h-20 rounded-full bg-destructive/10 mb-6">

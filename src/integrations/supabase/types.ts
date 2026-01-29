@@ -1580,6 +1580,149 @@ export type Database = {
           },
         ]
       }
+      apporteur_invitation_links: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          manager_id: string
+          token_hash: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          manager_id: string
+          token_hash: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          manager_id?: string
+          token_hash?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apporteur_invitation_links_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "apporteur_managers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apporteur_managers: {
+        Row: {
+          agency_id: string
+          apporteur_id: string
+          created_at: string
+          email: string
+          email_verified_at: string | null
+          first_name: string | null
+          id: string
+          invited_by: string | null
+          is_active: boolean
+          last_login_at: string | null
+          last_name: string | null
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          apporteur_id: string
+          created_at?: string
+          email: string
+          email_verified_at?: string | null
+          first_name?: string | null
+          id?: string
+          invited_by?: string | null
+          is_active?: boolean
+          last_login_at?: string | null
+          last_name?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          apporteur_id?: string
+          created_at?: string
+          email?: string
+          email_verified_at?: string | null
+          first_name?: string | null
+          id?: string
+          invited_by?: string | null
+          is_active?: boolean
+          last_login_at?: string | null
+          last_name?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apporteur_managers_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apporteur_managers_apporteur_id_fkey"
+            columns: ["apporteur_id"]
+            isOneToOne: false
+            referencedRelation: "apporteurs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apporteur_managers_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apporteur_otp_codes: {
+        Row: {
+          code_hash: string
+          created_at: string
+          expires_at: string
+          id: string
+          ip_address: unknown
+          manager_id: string
+          used_at: string | null
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          ip_address?: unknown
+          manager_id: string
+          used_at?: string | null
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip_address?: unknown
+          manager_id?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apporteur_otp_codes_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "apporteur_managers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       apporteur_project_links: {
         Row: {
           agency_id: string
@@ -1615,6 +1758,47 @@ export type Database = {
             columns: ["apporteur_id"]
             isOneToOne: false
             referencedRelation: "apporteurs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apporteur_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          ip_address: unknown
+          manager_id: string
+          revoked_at: string | null
+          token_hash: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          ip_address?: unknown
+          manager_id: string
+          revoked_at?: string | null
+          token_hash: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip_address?: unknown
+          manager_id?: string
+          revoked_at?: string | null
+          token_hash?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apporteur_sessions_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "apporteur_managers"
             referencedColumns: ["id"]
           },
         ]
@@ -1701,6 +1885,7 @@ export type Database = {
           is_active: boolean
           logo_url: string | null
           name: string
+          portal_enabled: boolean
           type: string
           updated_at: string
         }
@@ -1712,6 +1897,7 @@ export type Database = {
           is_active?: boolean
           logo_url?: string | null
           name: string
+          portal_enabled?: boolean
           type?: string
           updated_at?: string
         }
@@ -1723,6 +1909,7 @@ export type Database = {
           is_active?: boolean
           logo_url?: string | null
           name?: string
+          portal_enabled?: boolean
           type?: string
           updated_at?: string
         }
@@ -7481,6 +7668,8 @@ export type Database = {
       }
       can_user_login: { Args: { p_user_id: string }; Returns: boolean }
       cleanup_ai_search_cache: { Args: never; Returns: number }
+      cleanup_expired_apporteur_otps: { Args: never; Returns: number }
+      cleanup_expired_apporteur_sessions: { Args: never; Returns: number }
       cleanup_expired_request_locks: { Args: never; Returns: number }
       create_notification: {
         Args: {
