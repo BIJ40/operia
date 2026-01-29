@@ -56,7 +56,7 @@ import { errorToast } from '@/lib/toastHelpers';
 import { TagSelector } from './TagSelector';
 import { RoadmapEditor } from './RoadmapEditor';
 import { TicketSupportExchanges } from './TicketSupportExchanges';
-import type { ApogeeTicket, ApogeeModule, ApogeePriority, ApogeeTicketStatus, AuthorType, ReportedBy } from '../types';
+import type { ApogeeTicket, ApogeeModule, ApogeePriority, ApogeeTicketStatus, AuthorType } from '../types';
 
 interface TicketInlinePanelProps {
   ticket: ApogeeTicket;
@@ -73,16 +73,6 @@ const AUTHOR_COLORS: Record<AuthorType, string> = {
   APOGEE: 'bg-purple-600 text-white',
 };
 
-const ORIGINE_OPTIONS: { value: ReportedBy; label: string }[] = [
-  { value: 'JEROME', label: 'Jérôme' },
-  { value: 'FLORIAN', label: 'Florian' },
-  { value: 'ERIC', label: 'Éric' },
-  { value: 'MARIE', label: 'Marie' },
-  { value: 'MATHILDE', label: 'Mathilde' },
-  { value: 'APOGEE', label: 'Apogée' },
-  { value: 'HUGO', label: 'Hugo (Apogée)' },
-  { value: 'AUTRE', label: 'Autre' },
-];
 
 const MAX_VISIBLE_COMMENTS = 3;
 
@@ -527,48 +517,8 @@ export function TicketInlinePanel({
                 />
               </div>
 
-              {/* Parameters row: Module, Origine, Estimation, Porteur */}
+              {/* Parameters row: Estimation, Porteur */}
               <div className="flex items-end gap-3 flex-wrap">
-                <div className="w-28">
-                  <label className="text-xs text-muted-foreground">Module</label>
-                  <Select
-                    value={ticket.module || ''}
-                    onValueChange={(v) => handleFieldUpdate('module', v || null)}
-                    disabled={!canManage}
-                  >
-                    <SelectTrigger className="h-8 mt-1 text-xs">
-                      <SelectValue placeholder="—" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {modules.map((m) => (
-                        <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="w-28">
-                  <label className="text-xs text-muted-foreground">Origine</label>
-                  {ticket.created_from === 'support' ? (
-                    <div className="h-8 mt-1 px-2 py-1 rounded-md border bg-purple-50 text-xs flex items-center">
-                      <span className="px-1 py-0.5 rounded bg-purple-100 text-purple-700 font-medium text-xs">Support</span>
-                    </div>
-                  ) : (
-                    <Select
-                      value={ticket.reported_by || ''}
-                      onValueChange={(v) => handleFieldUpdate('reported_by', v || null)}
-                      disabled={!canManage}
-                    >
-                      <SelectTrigger className="h-8 mt-1 text-xs">
-                        <SelectValue placeholder="—" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ORIGINE_OPTIONS.map((opt) => (
-                          <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </div>
                 <div className="w-32">
                   <label className="text-xs text-muted-foreground">Estim. (h)</label>
                   <div className="flex gap-1.5 mt-1">
