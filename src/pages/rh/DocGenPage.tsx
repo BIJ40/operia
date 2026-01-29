@@ -109,25 +109,25 @@ export default function DocGenPage() {
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <PageHeader
-        title="Génération de Documents"
-        subtitle="Créez des documents personnalisés à partir de templates"
-        backTo="/rh"
-        backLabel="Retour RH"
-        rightElement={
-          <Button 
-            disabled={publishedTemplates.length === 0}
-            onClick={() => setShowCreateDialog(true)}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Nouveau document
-          </Button>
-        }
-      />
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-semibold text-foreground">Génération de Documents</h2>
+          <p className="text-sm text-muted-foreground">Créez des documents personnalisés à partir de templates</p>
+        </div>
+        <Button 
+          disabled={publishedTemplates.length === 0}
+          onClick={() => setShowCreateDialog(true)}
+          className="rounded-xl bg-warm-orange/90 hover:bg-warm-orange text-white shadow-sm"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Nouveau document
+        </Button>
+      </div>
 
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent>
+        <DialogContent className="rounded-2xl">
             <DialogHeader>
               <DialogTitle>Créer un nouveau document</DialogTitle>
               <DialogDescription>
@@ -143,6 +143,7 @@ export default function DocGenPage() {
                   value={newDoc.name}
                   onChange={(e) => setNewDoc({ ...newDoc, name: e.target.value })}
                   placeholder="Ex: Attestation de travail - Jean Dupont"
+                  className="rounded-xl"
                 />
               </div>
 
@@ -152,7 +153,7 @@ export default function DocGenPage() {
                   value={newDoc.template_id}
                   onValueChange={(v) => setNewDoc({ ...newDoc, template_id: v })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-xl">
                     <SelectValue placeholder="Sélectionner un template" />
                   </SelectTrigger>
                   <SelectContent>
@@ -171,7 +172,7 @@ export default function DocGenPage() {
                   value={newDoc.collaborator_id || "__NONE__"}
                   onValueChange={(v) => setNewDoc({ ...newDoc, collaborator_id: v === "__NONE__" ? "" : v })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-xl">
                     <SelectValue placeholder="Sélectionner un collaborateur" />
                   </SelectTrigger>
                   <SelectContent>
@@ -187,10 +188,10 @@ export default function DocGenPage() {
             </div>
 
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+              <Button variant="outline" onClick={() => setShowCreateDialog(false)} className="rounded-xl">
                 Annuler
               </Button>
-              <Button onClick={handleCreate} disabled={createInstance.isPending}>
+              <Button onClick={handleCreate} disabled={createInstance.isPending} className="rounded-xl">
                 Créer
               </Button>
             </div>
@@ -198,9 +199,11 @@ export default function DocGenPage() {
       </Dialog>
 
       {publishedTemplates.length === 0 && (
-        <Card>
+        <Card className="rounded-2xl border-dashed">
           <CardContent className="py-8 text-center">
-            <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+              <FileText className="h-8 w-8 text-muted-foreground" />
+            </div>
             <h3 className="font-medium mb-2">Aucun template disponible</h3>
             <p className="text-sm text-muted-foreground">
               Les templates doivent être créés et publiés par un administrateur
@@ -209,9 +212,14 @@ export default function DocGenPage() {
         </Card>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Mes documents</CardTitle>
+      <Card className="rounded-2xl border-border/50 shadow-sm backdrop-blur-sm bg-card/80">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-3 text-lg">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-warm-orange/70 to-accent/50 flex items-center justify-center">
+              <FileText className="h-5 w-5 text-white" />
+            </div>
+            Mes documents
+          </CardTitle>
           <CardDescription>Documents générés à partir des templates</CardDescription>
         </CardHeader>
         <CardContent>
@@ -227,17 +235,17 @@ export default function DocGenPage() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Nom</TableHead>
-                    <TableHead className="hidden sm:table-cell">Template</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead className="hidden sm:table-cell">Date</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                  <TableRow className="border-border/50 hover:bg-transparent">
+                    <TableHead className="text-muted-foreground font-medium">Nom</TableHead>
+                    <TableHead className="hidden sm:table-cell text-muted-foreground font-medium">Template</TableHead>
+                    <TableHead className="text-muted-foreground font-medium">Statut</TableHead>
+                    <TableHead className="hidden sm:table-cell text-muted-foreground font-medium">Date</TableHead>
+                    <TableHead className="text-right text-muted-foreground font-medium">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {instances.map((instance) => (
-                    <TableRow key={instance.id}>
+                    <TableRow key={instance.id} className="border-border/30 hover:bg-muted/30">
                       <TableCell className="font-medium">{instance.name}</TableCell>
                       <TableCell className="hidden sm:table-cell">{instance.template?.name || "-"}</TableCell>
                       <TableCell>{getStatusBadge(instance.status)}</TableCell>
@@ -252,6 +260,7 @@ export default function DocGenPage() {
                               size="icon"
                               onClick={() => setSelectedInstance(instance)}
                               title="Modifier"
+                              className="rounded-lg hover:bg-warm-orange/10"
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
@@ -261,6 +270,7 @@ export default function DocGenPage() {
                             size="icon"
                             onClick={() => setSelectedInstance(instance)}
                             title="Voir"
+                            className="rounded-lg hover:bg-warm-blue/10"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -269,6 +279,7 @@ export default function DocGenPage() {
                               variant="ghost"
                               size="icon"
                               onClick={() => handleDownload(instance.final_path, instance.name)}
+                              className="rounded-lg hover:bg-warm-green/10"
                             >
                               <Download className="h-4 w-4" />
                             </Button>
@@ -278,6 +289,7 @@ export default function DocGenPage() {
                             size="icon"
                             onClick={() => deleteInstance.mutate(instance.id)}
                             disabled={deleteInstance.isPending}
+                            className="rounded-lg hover:bg-destructive/10"
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
