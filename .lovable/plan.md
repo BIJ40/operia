@@ -1,228 +1,181 @@
 
-# Plan : Bouton "Nouveaux" - Tickets modifiés depuis la dernière visite
+# Plan : Routage Automatique des Utilisateurs Apporteurs
 
-## Objectif
-Ajouter un bouton "NOUVEAUX" à côté du bouton "RETARD" sur la page `/liste` (ApogeeTicketsList) qui affiche les tickets ayant été modifiés par d'autres utilisateurs depuis la dernière consultation de l'utilisateur courant.
+## Problème Identifié
 
-## Analyse Technique
+Actuellement, quand un utilisateur apporteur se connecte avec ses identifiants :
+1. Le système charge son profil via `AuthContext`
+2. Il a `global_role = null` dans `profiles` (ou n'a pas de profil du tout)
+3. Il est traité comme un utilisateur N0 et affiché sur l'interface interne (`/` = UnifiedWorkspace avec le dashboard de démo)
+4. L'espace apporteur dédié (`/apporteur/*`) existe mais n'est jamais atteint automatiquement
 
-### Système existant
-- **Table `apogee_ticket_views`** : stocke `ticket_id`, `user_id`, `viewed_at`
-- **Champs tickets** : `last_modified_at`, `last_modified_by_user_id`
-- **Logique de clignotement** : Un ticket est "nouveau" si :
-  1. `last_modified_by_user_id !== user.id` (modifié par quelqu'un d'autre)
-  2. `last_modified_at > viewed_at` (modifié après la dernière consultation)
-  3. Ou jamais consulté (`myView` inexistant)
+**Données actuelles** : L'utilisateur `email@contact.fre` (user_id: `17ab234e-ab24-41d7-b998-2077e2f1899c`) est dans `apporteur_users` avec `role: manager`, mais son profil n'a pas de `global_role` spécifique qui le distinguerait.
 
-### Réutilisation
-- Hook existant : `useMyTicketViews()` pour récupérer les vues de l'utilisateur
-- Même pattern que le Kanban (`blinkingTicketsCount`, `filterBlinkingOnly`)
+## Solution Proposée
 
----
+### Architecture à 2 Niveaux
 
-## Phase 1 : Nouveau Composant `NewTicketsPanel.tsx`
-
-Créer un panel similaire à `LateTicketsPanel` qui affiche les tickets "nouveaux" (modifiés depuis la dernière visite).
-
-```text
-Structure du panel:
-┌─────────────────────────────────────────────────────────┐
-│ 🆕 X tickets avec mises à jour                         │
-│ [Filtre Priorité]                                       │
-│ Tickets modifiés par d'autres depuis votre dernière vue│
-├─────────────────────────────────────────────────────────┤
-│ #123  [Statut]  [Module]                               │
-│ Titre du ticket                                         │
-│ 📝 Modifié par Jean D. il y a 2h                       │
-│                                              [8] 🔥     │
-├─────────────────────────────────────────────────────────┤
-│ ...                                                     │
-└─────────────────────────────────────────────────────────┘
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Connexion Supabase Auth                   │
+│                         (email/password)                     │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    AuthRouter (NOUVEAU)                      │
+│  Vérifie si user_id existe dans apporteur_users             │
+│                                                              │
+│  ┌──────────────────────┐    ┌──────────────────────────┐   │
+│  │ OUI = Apporteur      │    │ NON = Utilisateur interne │   │
+│  │ Redirect /apporteur  │    │ Charge profil + modules    │   │
+│  └──────────────────────┘    └──────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+                              │
+            ┌─────────────────┴─────────────────┐
+            │                                   │
+            ▼                                   ▼
+┌───────────────────────┐         ┌───────────────────────────┐
+│   Espace Apporteur    │         │  Espace Interne (actuel)  │
+│   /apporteur/*        │         │  / (UnifiedWorkspace)     │
+│   Layout dédié        │         │  N0-N6 standard           │
+└───────────────────────┘         └───────────────────────────┘
 ```
 
-**Caractéristiques** :
-- Style identique à `LateTicketsPanel` (ScrollArea, badges colorés)
-- Icône : `Sparkles` ou `MessageSquare` (cohérent avec le Kanban)
-- Couleur thématique : Vert/Teal (comme le badge "Nouveaux" du Kanban)
-- Tri : par `last_modified_at` décroissant (les plus récents en haut)
-- Affiche le nom du dernier modificateur et la date relative
+### Implémentation Technique
 
----
+#### 1. Nouveau Hook `useApporteurCheck` 
 
-## Phase 2 : Mise à jour de `TicketTabBar.tsx`
+Créer un hook léger qui vérifie si l'utilisateur authentifié est un apporteur :
 
-Ajouter un nouvel onglet "NOUVEAUX" entre "LISTE" et "RETARD".
-
-**Nouvelles props** :
 ```typescript
-interface TicketTabBarProps {
-  // ... existants ...
-  showNewTab?: boolean;
-  isNewTabActive?: boolean;
-  onNewTabClick?: () => void;
-  newCount?: number;
+// src/hooks/useApporteurCheck.ts
+export function useApporteurCheck() {
+  const { user } = useAuth();
+  
+  const { data: isApporteur, isLoading } = useQuery({
+    queryKey: ['is-apporteur', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return false;
+      const { data } = await supabase
+        .from('apporteur_users')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!user?.id,
+    staleTime: Infinity, // Ne change pas pendant la session
+  });
+
+  return { isApporteur: isApporteur ?? false, isLoading };
 }
 ```
 
-**Style de l'onglet NOUVEAUX** :
-- Couleur : Vert/Teal (bg-emerald-50, border-emerald-400)
-- Icône : `Sparkles` ou `MessageSquarePlus`
-- Badge pulsant si `newCount > 0` et onglet non actif
+#### 2. Composant `AuthRouter` (Point d'Entrée Global)
 
----
-
-## Phase 3 : Mise à jour de `ApogeeTicketsList.tsx`
-
-### Ajouter les états
-```typescript
-// État pour afficher l'onglet NOUVEAUX
-const [showNewTab, setShowNewTab] = useState(false);
-const [isNewTabActive, setIsNewTabActive] = useState(false);
-```
-
-### Calculer le compteur de tickets "nouveaux"
-Utiliser `useMyTicketViews()` pour compter les tickets modifiés depuis la dernière visite :
+Créer un composant qui intercepte le routage après authentification :
 
 ```typescript
-const { data: myViews = [] } = useMyTicketViews();
+// src/components/auth/AuthRouter.tsx
+export function AuthRouter({ children }: { children: ReactNode }) {
+  const { user, isAuthLoading } = useAuth();
+  const { isApporteur, isLoading: isApporteurLoading } = useApporteurCheck();
+  const location = useLocation();
 
-const newTicketsCount = useMemo(() => {
-  return tickets.filter(ticket => {
-    if (!user?.id || !ticket.last_modified_by_user_id || !ticket.last_modified_at) {
-      return false;
-    }
-    // Pas modifié par moi-même
-    if (ticket.last_modified_by_user_id === user.id) {
-      return false;
-    }
-    const myView = myViews.find(v => v.ticket_id === ticket.id);
-    // Jamais vu = nouveau
-    if (!myView) return true;
-    // Modifié après ma dernière vue
-    return new Date(ticket.last_modified_at).getTime() > new Date(myView.viewed_at).getTime();
-  }).length;
-}, [tickets, myViews, user?.id]);
+  // Toujours autoriser les routes /apporteur (gérées par leur propre auth)
+  if (location.pathname.startsWith('/apporteur')) {
+    return <>{children}</>;
+  }
+
+  // Chargement
+  if (isAuthLoading || (user && isApporteurLoading)) {
+    return <FullPageLoader />;
+  }
+
+  // Utilisateur apporteur sur route interne → redirection automatique
+  if (user && isApporteur && !location.pathname.startsWith('/apporteur')) {
+    return <Navigate to="/apporteur/dashboard" replace />;
+  }
+
+  // Utilisateur interne ou non connecté → flux normal
+  return <>{children}</>;
+}
 ```
 
-### Ajouter le bouton "Nouveaux" dans le header
-À côté du bouton "En retard", avec le même style :
+#### 3. Intégration dans App.tsx
+
+Wrapper l'ensemble des routes avec `AuthRouter` :
 
 ```tsx
-<Button
-  variant={showNewTab ? "secondary" : "outline"}
-  size="sm"
-  onClick={() => {
-    if (!showNewTab) {
-      setShowNewTab(true);
-      setIsNewTabActive(true);
-      setActiveTabId(null);
-    } else {
-      setShowNewTab(false);
-      setIsNewTabActive(false);
-    }
-  }}
-  className={cn(
-    "gap-2 transition-all",
-    newTicketsCount > 0 && !showNewTab && "border-emerald-500/50 text-emerald-600 hover:bg-emerald-50"
-  )}
->
-  <Sparkles className="h-4 w-4" />
-  <span className="hidden sm:inline">Nouveaux</span>
-  {newTicketsCount > 0 && (
-    <span className={cn(
-      "inline-flex items-center justify-center h-5 min-w-5 px-1.5 text-xs font-medium rounded-full",
-      showNewTab 
-        ? "bg-emerald-500 text-white" 
-        : "bg-emerald-100 text-emerald-700 animate-pulse"
-    )}>
-      {newTicketsCount}
-    </span>
-  )}
-</Button>
+// Dans App.tsx
+function AppContent() {
+  return (
+    <AuthRouter>
+      <Routes>
+        {/* Toutes les routes existantes */}
+      </Routes>
+    </AuthRouter>
+  );
+}
 ```
 
-### Passer les nouvelles props à `TicketTabBar`
-```tsx
-<TicketTabBar
-  // ... existants ...
-  showNewTab={showNewTab}
-  isNewTabActive={isNewTabActive}
-  onNewTabClick={handleNewTabClick}
-  newCount={newTicketsCount}
-/>
+### Comportement Final
+
+| Utilisateur | Route accédée | Comportement |
+|-------------|---------------|--------------|
+| Apporteur connecté | `/` | Redirect → `/apporteur/dashboard` |
+| Apporteur connecté | `/profile` | Redirect → `/apporteur/dashboard` |
+| Apporteur connecté | `/apporteur/*` | Accès normal (layout apporteur) |
+| Interne N0-N6 | `/` | Accès normal (UnifiedWorkspace) |
+| Interne N0-N6 | `/apporteur/*` | Landing apporteur (pas auth apporteur) |
+| Non connecté | `/` | Login interne |
+| Non connecté | `/apporteur` | Landing apporteur + login |
+
+### Fichiers à Créer/Modifier
+
+1. **`src/hooks/useApporteurCheck.ts`** (NOUVEAU)
+   - Hook simple qui vérifie si `user_id` existe dans `apporteur_users`
+
+2. **`src/components/auth/AuthRouter.tsx`** (NOUVEAU)
+   - Composant wrapper qui redirige les apporteurs vers leur espace dédié
+
+3. **`src/App.tsx`**
+   - Wrapper les routes avec `AuthRouter`
+
+4. **`src/contexts/AuthContext.tsx`** (optionnel)
+   - Ajouter un flag `isApporteurUser` directement dans le contexte pour éviter une requête supplémentaire
+
+### Alternative : Détection dans AuthContext
+
+Pour éviter une requête supplémentaire, on peut intégrer la vérification directement dans `loadUserData()` :
+
+```typescript
+// Dans AuthContext.tsx, loadUserData()
+const { data: apporteurEntry } = await supabase
+  .from('apporteur_users')
+  .select('id')
+  .eq('user_id', userId)
+  .eq('is_active', true)
+  .maybeSingle();
+
+setIsApporteurUser(!!apporteurEntry);
 ```
 
-### Gérer l'affichage du panel
-Dans la zone de contenu, ajouter la condition pour `showingNew` :
+Puis exposer `isApporteurUser` dans le contexte et l'utiliser dans `AuthRouter`.
 
-```tsx
-const showingNew = isNewTabActive;
-const showingLate = isLateTabActive && !isNewTabActive;
-const showingList = activeTabId === null && !isLateTabActive && !isNewTabActive;
+### Sécurité
 
-// Dans le rendu:
-{showingNew ? (
-  <NewTicketsPanel onTicketClick={handleTicketClick} />
-) : showingLate ? (
-  <LateTicketsPanel onTicketClick={handleTicketClick} />
-) : showingList ? (
-  // Vue Liste
-) : /* Vue ticket */}
-```
+- Les routes `/apporteur/*` conservent leur propre `ApporteurGuard` qui vérifie les permissions apporteur
+- Un utilisateur interne qui tente d'accéder à `/apporteur/*` verra la landing page apporteur (pas d'accès aux données)
+- Un apporteur ne peut pas accéder à l'interface interne (redirection automatique)
+- Les données sont isolées via RLS sur `apporteur_id`
 
----
+### Avantages
 
-## Phase 4 : Styling & Cohérence
-
-### Palette de couleurs
-| Onglet | Background | Border | Text |
-|--------|------------|--------|------|
-| LISTE | sky-50 | sky-400 | sky-700 |
-| NOUVEAUX | emerald-50 | emerald-400 | emerald-600 |
-| RETARD | red-50 | destructive/50 | destructive |
-| Ticket | violet-50 | violet-400 | violet-700 |
-
-### Icônes
-- LISTE : `List`
-- NOUVEAUX : `Sparkles` (cohérent avec "mises à jour")
-- RETARD : `AlertTriangle`
-
----
-
-## Fichiers à Modifier
-
-1. **`src/apogee-tickets/components/NewTicketsPanel.tsx`** (NOUVEAU)
-   - Panel affichant les tickets modifiés depuis la dernière visite
-   - Style copié de `LateTicketsPanel` avec couleur emerald/teal
-
-2. **`src/apogee-tickets/components/TicketTabBar.tsx`**
-   - Ajouter props pour l'onglet NOUVEAUX
-   - Ajouter le rendu de l'onglet avec style emerald
-
-3. **`src/apogee-tickets/pages/ApogeeTicketsList.tsx`**
-   - Import de `useMyTicketViews`
-   - Calcul de `newTicketsCount`
-   - États `showNewTab`, `isNewTabActive`
-   - Bouton "Nouveaux" dans le header
-   - Rendu conditionnel de `NewTicketsPanel`
-
----
-
-## Comportement UX
-
-1. **État initial** : Le bouton "Nouveaux" affiche un badge vert pulsant si des tickets ont été modifiés
-2. **Clic sur "Nouveaux"** : 
-   - Active l'onglet NOUVEAUX dans la tab bar
-   - Affiche le panel avec la liste des tickets modifiés
-3. **Clic sur un ticket** : Ouvre le ticket en onglet (comme depuis RETARD)
-4. **Ouverture d'un ticket** : Marque le ticket comme "vu" (via `useMarkTicketAsViewed`)
-5. **Fermeture de l'onglet NOUVEAUX** : Re-clic sur le bouton "Nouveaux" dans le header
-
----
-
-## Avantages
-
-- **Cohérence** : Même pattern visuel et comportemental que "En retard"
-- **Réutilisation** : Utilise les hooks existants (`useMyTicketViews`)
-- **Clarté** : L'utilisateur voit immédiatement les tickets nécessitant son attention
-- **Performance** : Le compteur est calculé côté client à partir des données déjà chargées
+1. **Expériences séparées** : Interface complètement différente pour les apporteurs
+2. **Zéro friction** : Redirection automatique sans action utilisateur
+3. **Sécurité** : Impossible pour un apporteur d'accéder aux données internes
+4. **Scalabilité** : Chaque franchisé peut créer ses apporteurs sans impacter le système interne
+5. **Maintenance** : Les deux espaces évoluent indépendamment
