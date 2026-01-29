@@ -234,6 +234,8 @@ export function useTicketTabs() {
 
         for (const [field, newValue] of Object.entries(updates)) {
           if (IGNORED_HISTORY_FIELDS.includes(field)) continue;
+          // Skip kanban_status - already logged by updateTicketKanbanStatus in useApogeeTickets
+          if (field === 'kanban_status') continue;
 
           const oldValue = oldTicket[field as keyof ApogeeTicket];
           const oldFormatted = formatHistoryValue(oldValue);
@@ -241,13 +243,11 @@ export function useTicketTabs() {
 
           if (oldFormatted !== newFormatted) {
             const fieldLabel = FIELD_LABELS[field] || field;
-            let actionType = 'field_update';
-            if (field === 'kanban_status') actionType = 'status_change';
 
             entries.push({
               ticket_id: id,
               user_id: user.id,
-              action_type: actionType,
+              action_type: 'field_update',
               old_value: oldFormatted,
               new_value: newFormatted,
               metadata: { field, fieldLabel } as Json,
