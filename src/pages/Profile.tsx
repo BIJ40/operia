@@ -17,9 +17,13 @@ import {
   Shield, 
   Zap,
   Loader2,
-  Camera
+  Camera,
+  Info
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { AgencyInfoCompact } from '@/components/pilotage/AgencyInfoCompact';
+import { AgencyProvider } from '@/apogee-connect/contexts/AgencyContext';
+import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
 import { GlobalRole } from '@/types/globalRoles';
 import { VISIBLE_ROLE_LABELS, VISIBLE_ROLE_COLORS } from '@/lib/visibleRoleLabels';
 import { MODULE_DEFINITIONS, EnabledModules } from '@/types/modules';
@@ -408,6 +412,20 @@ export default function Profile() {
               </div>
             </div>
           </div>
+        </WarmCard>
+
+        {/* Informations agence */}
+        <WarmCard 
+          icon={Info} 
+          title="Informations de l'agence"
+          description="Détails sur votre agence de rattachement"
+          accentColor="orange"
+        >
+          <ApiToggleProvider>
+            <AgencyProvider>
+              <AgencyInfoCompact />
+            </AgencyProvider>
+          </ApiToggleProvider>
         </WarmCard>
 
         {/* Actions */}

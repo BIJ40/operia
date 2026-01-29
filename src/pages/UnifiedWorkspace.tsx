@@ -9,7 +9,7 @@
 import { lazy, Suspense, useMemo, useState, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
-  Home, Building2, BarChart3, ClipboardList, 
+  Home, BarChart3, ClipboardList, 
   Car, MoreHorizontal, Ticket, HelpCircle,
   Loader2, BookOpen, Shield, User, LogOut, Settings, Eye
 } from 'lucide-react';
@@ -66,7 +66,6 @@ import { StatsHubProvider } from '@/apogee-connect/components/stats-hub/StatsHub
 // Lazy loaded tab contents
 const DashboardContent = lazy(() => import('@/pages/DashboardStatic'));
 const DemoAccueilContent = lazy(() => import('@/components/home/DemoAccueilContent').then(m => ({ default: m.DemoAccueilContent })));
-const AgencyTabContent = lazy(() => import('@/components/unified/tabs/AgencyTabContent'));
 const StatsTabContent = lazy(() => import('@/components/unified/tabs/StatsTabContent'));
 const CollaborateursTabContent = lazy(() => import('@/components/unified/tabs/CollaborateursTabContent'));
 const VehiculesTabContent = lazy(() => import('@/components/unified/tabs/VehiculesTabContent'));
@@ -79,11 +78,10 @@ const FranchiseurView = lazy(() => import('@/components/unified/views/Franchiseu
 
 type UnifiedTab = 
   | 'accueil' 
-  | 'agence' 
   | 'stats' 
   | 'salaries' 
   | 'parc' 
-  | 'divers' 
+  | 'outils' 
   | 'guides'
   | 'ticketing' 
   | 'aide'
@@ -97,7 +95,7 @@ interface TabConfig {
 }
 
 // Ordre par défaut des onglets (hors Accueil qui est toujours premier)
-const DEFAULT_TAB_ORDER: UnifiedTab[] = ['agence', 'stats', 'salaries', 'parc', 'divers', 'guides', 'ticketing', 'aide', 'admin'];
+const DEFAULT_TAB_ORDER: UnifiedTab[] = ['stats', 'salaries', 'parc', 'outils', 'guides', 'ticketing', 'aide', 'admin'];
 
 function LoadingFallback() {
   return (
@@ -155,11 +153,10 @@ function UnifiedWorkspaceContent() {
   // Chaque onglet a un requiresOption qui définit le module/option nécessaire
   const allTabs: TabConfig[] = useMemo(() => [
     { id: 'accueil', label: 'Accueil', icon: Home },
-    { id: 'agence', label: 'Mon agence', icon: Building2, requiresOption: { module: 'pilotage_agence' } },
     { id: 'stats', label: 'Stats', icon: BarChart3, requiresOption: { module: 'pilotage_agence', option: 'stats_hub' } },
     { id: 'salaries', label: 'Salariés', icon: ClipboardList, requiresOption: { module: 'pilotage_agence' } },
     { id: 'parc', label: 'Parc', icon: Car, requiresOption: { module: 'pilotage_agence' } },
-    { id: 'divers', label: 'Divers', icon: MoreHorizontal, requiresOption: { module: 'pilotage_agence' } },
+    { id: 'outils', label: 'Outils', icon: MoreHorizontal, requiresOption: { module: 'pilotage_agence' } },
     { id: 'guides', label: 'Guides', icon: BookOpen, requiresOption: { module: 'help_academy' } },
     { id: 'ticketing', label: 'Ticketing', icon: Ticket, requiresOption: { module: 'apogee_tickets' } },
     { id: 'aide', label: 'Aide', icon: HelpCircle, requiresOption: { module: 'support' } },
@@ -335,11 +332,10 @@ function UnifiedWorkspaceContent() {
 
   const unifiedTabAccent: Record<UnifiedTab, AccentThemeKey> = {
     accueil: 'blue',
-    agence: 'purple',
     stats: 'pink',
     salaries: 'green',
     parc: 'orange',
-    divers: 'purple',
+    outils: 'purple',
     guides: 'teal',
     ticketing: 'orange',
     aide: 'blue',
@@ -481,12 +477,8 @@ function UnifiedWorkspaceContent() {
             {/* Contenu des onglets */}
             <main id="main-content" className="flex-1 overflow-auto" role="main">
               <Suspense fallback={<LoadingFallback />}>
-                <TabsContent value="accueil" className="mt-0 h-full">
+              <TabsContent value="accueil" className="mt-0 h-full">
                   {isN0User ? <DemoAccueilContent /> : <DashboardContent />}
-                </TabsContent>
-                
-                <TabsContent value="agence" className="mt-0">
-                  <AgencyTabContent />
                 </TabsContent>
                 
                 <TabsContent value="stats" className="mt-0">
@@ -503,7 +495,7 @@ function UnifiedWorkspaceContent() {
                   <VehiculesTabContent />
                 </TabsContent>
                 
-                <TabsContent value="divers" className="mt-0">
+                <TabsContent value="outils" className="mt-0">
                   <DiversTabContent />
                 </TabsContent>
                 

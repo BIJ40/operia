@@ -1,14 +1,15 @@
 /**
- * DiversTabContent - Contenu de l'onglet "Divers"
- * Sous-onglets: Apporteurs, Veille, Plannings, Réunions, Documents
+ * DiversTabContent (renommé "Outils" dans l'UI) - Contenu de l'onglet Outils
+ * Sous-onglets: Actions, Apporteurs, Veille, Plannings, Réunions, Documents
  * Design: Warm Pastel theme avec PillTabsList colorés
  */
 
 import { lazy, Suspense } from 'react';
-import { FileText, Users2, Loader2, Users, CalendarDays, Radar } from 'lucide-react';
+import { FileText, Users2, Loader2, Users, CalendarDays, Radar, ClipboardList } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
+import { ActionsAMenerTab } from '@/components/pilotage/ActionsAMenerTab';
 
 const RHMeetingsPage = lazy(() => import('@/pages/rh/RHMeetingsPage'));
 const DocGenPage = lazy(() => import('@/pages/rh/DocGenPage'));
@@ -16,14 +17,15 @@ const MesApporteursTab = lazy(() => import('@/components/pilotage/MesApporteursT
 const PlanningHebdo = lazy(() => import('@/pages/PlanningTechniciensSemaine'));
 const VeilleApporteursPage = lazy(() => import('@/pages/VeilleApporteursPage'));
 
-type DiversSubTab = 'apporteurs' | 'veille' | 'plannings' | 'reunions' | 'docgen';
+type OutilsSubTab = 'actions' | 'apporteurs' | 'veille' | 'plannings' | 'reunions' | 'docgen';
 
-const DIVERS_TABS: PillTabConfig[] = [
-  { id: 'apporteurs', label: 'Apporteurs', icon: Users, accent: 'blue' },
+const OUTILS_TABS: PillTabConfig[] = [
+  { id: 'actions', label: 'Actions', icon: ClipboardList, accent: 'blue' },
+  { id: 'apporteurs', label: 'Apporteurs', icon: Users, accent: 'purple' },
   { id: 'veille', label: 'Veille', icon: Radar, accent: 'pink' },
   { id: 'plannings', label: 'Plannings', icon: CalendarDays, accent: 'teal' },
-  { id: 'reunions', label: 'Réunions', icon: Users2, accent: 'purple' },
-  { id: 'docgen', label: 'Documents', icon: FileText, accent: 'orange' },
+  { id: 'reunions', label: 'Réunions', icon: Users2, accent: 'orange' },
+  { id: 'docgen', label: 'Documents', icon: FileText, accent: 'green' },
 ];
 
 function LoadingFallback() {
@@ -38,12 +40,16 @@ function LoadingFallback() {
 }
 
 export default function DiversTabContent() {
-  const [activeSubTab, setActiveSubTab] = useSessionState<DiversSubTab>('divers_sub_tab', 'apporteurs');
+  const [activeSubTab, setActiveSubTab] = useSessionState<OutilsSubTab>('outils_sub_tab', 'actions');
 
   return (
     <div className="py-6 px-2 sm:px-4 space-y-4">
-      <Tabs value={activeSubTab} onValueChange={(v) => setActiveSubTab(v as DiversSubTab)}>
-        <PillTabsList tabs={DIVERS_TABS} />
+      <Tabs value={activeSubTab} onValueChange={(v) => setActiveSubTab(v as OutilsSubTab)}>
+        <PillTabsList tabs={OUTILS_TABS} />
+
+        <TabsContent value="actions" className="mt-6 animate-fade-in">
+          <ActionsAMenerTab />
+        </TabsContent>
 
         <TabsContent value="apporteurs" className="mt-6 animate-fade-in">
           <Suspense fallback={<LoadingFallback />}>
