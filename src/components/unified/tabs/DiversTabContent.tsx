@@ -3,21 +3,37 @@
  * 
  * Navigation à deux niveaux :
  * - Niveau 1 (Pill tabs colorés) : Apporteurs, Administratif, Parc
- * - Niveau 2 (Folder tabs) : Sous-onglets spécifiques
+ * - Niveau 2 (Folder tabs) : Sous-onglets spécifiques avec drag-and-drop
  * 
  * Design: Warm Pastel theme avec navigation folder
  */
 
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useCallback } from 'react';
 import { 
   FileText, Users2, Loader2, Users, CalendarDays, 
   Radar, Car, FolderOpen, Settings, Eye
 } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  horizontalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
 import { cn } from '@/lib/utils';
 import { ActionsAMenerTab } from '@/components/pilotage/ActionsAMenerTab';
+import { DraggableTab } from '@/components/unified/DraggableTab';
 
 // Lazy loaded components
 const RHMeetingsPage = lazy(() => import('@/pages/rh/RHMeetingsPage'));
@@ -51,64 +67,115 @@ function LoadingFallback() {
   );
 }
 
-// Composant FolderTabs réutilisable (même style que AdminHubContent)
-import { motion } from 'framer-motion';
-
-interface FolderTabsProps {
-  tabs: { id: string; label: string; icon: React.ElementType }[];
-  activeTab: string;
-  onTabChange: (tab: string) => void;
+interface FolderTabConfig {
+  id: string;
+  label: string;
+  icon: React.ElementType;
 }
 
-function FolderTabs({ tabs, activeTab, onTabChange }: FolderTabsProps) {
+interface DraggableFolderTabsProps {
+  tabs: FolderTabConfig[];
+  tabOrder: string[];
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+  onReorder: (newOrder: string[]) => void;
+  storageKey: string;
+}
+
+function DraggableFolderTabs({ 
+  tabs, 
+  tabOrder, 
+  activeTab, 
+  onTabChange, 
+  onReorder 
+}: DraggableFolderTabsProps) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = tabOrder.indexOf(active.id as string);
+      const newIndex = tabOrder.indexOf(over.id as string);
+      onReorder(arrayMove(tabOrder, oldIndex, newIndex));
+    }
+  };
+
+  // Trier les tabs selon l'ordre
+  const sortedTabs = [...tabs].sort((a, b) => 
+    tabOrder.indexOf(a.id) - tabOrder.indexOf(b.id)
+  );
+
   return (
-    <div className="flex gap-1 bg-transparent h-auto p-0 mb-0">
-      {tabs.map((tab) => {
-        const Icon = tab.icon;
-        const isActive = activeTab === tab.id;
-        return (
-          <motion.div
-            key={tab.id}
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <button
-              type="button"
-              onClick={() => onTabChange(tab.id)}
-              className={cn(
-                "flex items-center gap-2 px-5 py-3",
-                "rounded-t-2xl border-2 border-b-0",
-                "font-medium text-sm transition-all duration-200",
-                "relative -mb-[2px] z-10",
-                isActive 
-                  ? "bg-background border-border text-foreground shadow-sm" 
-                  : "bg-muted/50 border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              <Icon className="w-4 h-4" />
-              <span>{tab.label}</span>
-            </button>
-          </motion.div>
-        );
-      })}
-    </div>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext items={tabOrder} strategy={horizontalListSortingStrategy}>
+        <div className="flex gap-1 bg-transparent h-auto p-0 mb-0">
+          {sortedTabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <DraggableTab
+                key={tab.id}
+                id={tab.id}
+                isActive={isActive}
+                isDraggable={true}
+                onClick={() => onTabChange(tab.id)}
+                className={cn(
+                  "flex items-center gap-2 px-5 py-3",
+                  "rounded-t-2xl border-2 border-b-0",
+                  "font-medium text-sm transition-all duration-200",
+                  "relative -mb-[2px] z-10",
+                  isActive 
+                    ? "bg-background border-border text-foreground shadow-sm" 
+                    : "bg-muted/50 border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <Icon className="w-4 h-4" />
+                <span>{tab.label}</span>
+              </DraggableTab>
+            );
+          })}
+        </div>
+      </SortableContext>
+    </DndContext>
   );
 }
 
 // Sous-onglets Apporteurs
+const APPORTEURS_TABS: FolderTabConfig[] = [
+  { id: 'espace', label: 'Espace', icon: Eye },
+  { id: 'veille', label: 'Veille', icon: Radar },
+];
+const DEFAULT_APPORTEURS_ORDER = ['espace', 'veille'];
+
 function ApporteursSection() {
   const [subTab, setSubTab] = useSessionState<ApporteursSubTab>('outils_apporteurs_sub', 'espace');
-  
-  const tabs = [
-    { id: 'espace', label: 'Espace', icon: Eye },
-    { id: 'veille', label: 'Veille', icon: Radar },
-  ];
+  const [tabOrder, setTabOrder] = useSessionState<string[]>('outils_apporteurs_order', DEFAULT_APPORTEURS_ORDER);
+
+  const handleReorder = useCallback((newOrder: string[]) => {
+    setTabOrder(newOrder);
+  }, [setTabOrder]);
 
   return (
     <div className="space-y-0">
-      <FolderTabs tabs={tabs} activeTab={subTab} onTabChange={(t) => setSubTab(t as ApporteursSubTab)} />
+      <DraggableFolderTabs 
+        tabs={APPORTEURS_TABS} 
+        tabOrder={tabOrder}
+        activeTab={subTab} 
+        onTabChange={(t) => setSubTab(t as ApporteursSubTab)}
+        onReorder={handleReorder}
+        storageKey="outils_apporteurs_order"
+      />
       <div className="rounded-2xl rounded-tl-none border-2 border-border bg-background p-4 sm:p-6 shadow-sm">
         {subTab === 'espace' && (
           <Suspense fallback={<LoadingFallback />}>
@@ -126,18 +193,31 @@ function ApporteursSection() {
 }
 
 // Sous-onglets Administratif
+const ADMIN_TABS: FolderTabConfig[] = [
+  { id: 'reunions', label: 'Réunions', icon: Users2 },
+  { id: 'plannings', label: 'Plannings', icon: CalendarDays },
+  { id: 'documents', label: 'Documents', icon: FileText },
+];
+const DEFAULT_ADMIN_ORDER = ['reunions', 'plannings', 'documents'];
+
 function AdministratifSection() {
   const [subTab, setSubTab] = useSessionState<AdminSubTab>('outils_admin_sub', 'reunions');
-  
-  const tabs = [
-    { id: 'reunions', label: 'Réunions', icon: Users2 },
-    { id: 'plannings', label: 'Plannings', icon: CalendarDays },
-    { id: 'documents', label: 'Documents', icon: FileText },
-  ];
+  const [tabOrder, setTabOrder] = useSessionState<string[]>('outils_admin_order', DEFAULT_ADMIN_ORDER);
+
+  const handleReorder = useCallback((newOrder: string[]) => {
+    setTabOrder(newOrder);
+  }, [setTabOrder]);
 
   return (
     <div className="space-y-0">
-      <FolderTabs tabs={tabs} activeTab={subTab} onTabChange={(t) => setSubTab(t as AdminSubTab)} />
+      <DraggableFolderTabs 
+        tabs={ADMIN_TABS} 
+        tabOrder={tabOrder}
+        activeTab={subTab} 
+        onTabChange={(t) => setSubTab(t as AdminSubTab)}
+        onReorder={handleReorder}
+        storageKey="outils_admin_order"
+      />
       <div className="rounded-2xl rounded-tl-none border-2 border-border bg-background p-4 sm:p-6 shadow-sm">
         {subTab === 'reunions' && (
           <Suspense fallback={<LoadingFallback />}>
