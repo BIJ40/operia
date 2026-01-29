@@ -84,12 +84,21 @@ export default function TicketingTabContent() {
             <DropdownMenuTrigger asChild>
               <button
                 className={cn(
-                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all",
-                  "bg-muted/60 text-muted-foreground hover:bg-primary/10 hover:text-primary",
-                  "border border-transparent hover:border-primary/30"
+                  "group flex items-center gap-2 px-4 py-2.5 rounded-xl",
+                  "border-2 border-border/50 bg-card/80 backdrop-blur-sm",
+                  "text-muted-foreground font-medium text-sm",
+                  "shadow-sm hover:shadow-md hover:border-border",
+                  "transition-all duration-200",
+                  "hover:bg-gradient-to-br hover:from-warm-orange/20 hover:to-accent/15 hover:border-warm-orange/40 hover:text-warm-orange"
                 )}
               >
-                <Download className="h-4 w-4" />
+                <div className={cn(
+                  "flex items-center justify-center w-7 h-7 rounded-lg",
+                  "transition-colors duration-200",
+                  "bg-warm-orange/15 text-warm-orange group-hover:bg-warm-orange/25"
+                )}>
+                  <Download className="w-4 h-4" />
+                </div>
                 <span className="hidden sm:inline">Exporter</span>
               </button>
             </DropdownMenuTrigger>
