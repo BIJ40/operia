@@ -219,7 +219,7 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
             <Button 
               onClick={() => setShowCreateDialog(true)} 
               size="sm"
-              className="bg-gradient-to-r from-sky-500 to-violet-500 hover:from-sky-600 hover:to-violet-600 text-white border-0 shadow-md hover:shadow-lg transition-all"
+              className="bg-warm-blue/90 hover:bg-warm-blue text-white border-0 shadow-sm hover:shadow-md transition-all duration-200"
             >
               <Plus className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Nouveau ticket</span>
