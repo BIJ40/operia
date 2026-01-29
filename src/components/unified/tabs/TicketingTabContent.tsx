@@ -89,13 +89,13 @@ export default function TicketingTabContent() {
                   "text-muted-foreground font-medium text-sm",
                   "shadow-sm hover:shadow-md hover:border-border",
                   "transition-all duration-200",
-                  "hover:bg-gradient-to-br hover:from-warm-orange/20 hover:to-accent/15 hover:border-warm-orange/40 hover:text-warm-orange"
+                  "hover:bg-gradient-to-br hover:from-warm-teal/20 hover:to-accent/15 hover:border-warm-teal/40 hover:text-warm-teal"
                 )}
               >
                 <div className={cn(
                   "flex items-center justify-center w-7 h-7 rounded-lg",
                   "transition-colors duration-200",
-                  "bg-warm-orange/15 text-warm-orange group-hover:bg-warm-orange/25"
+                  "bg-warm-teal/15 text-warm-teal group-hover:bg-warm-teal/25"
                 )}>
                   <Download className="w-4 h-4" />
                 </div>
