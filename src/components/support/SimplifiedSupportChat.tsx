@@ -444,19 +444,6 @@ export function SimplifiedSupportChat({
                 </Card>
               </div>
             </div>
-            
-            {/* Progress */}
-            <div className="flex justify-center gap-2">
-              {ORIENTATION_STEPS.map((_, idx) => (
-                <div
-                  key={idx}
-                  className={cn(
-                    "w-2 h-2 rounded-full transition-colors",
-                    idx <= orientationStep ? "bg-primary" : "bg-muted"
-                  )}
-                />
-              ))}
-            </div>
           </div>
         </ScrollArea>
       </div>
