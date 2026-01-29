@@ -1,11 +1,12 @@
 /**
  * Barre d'onglets style navigateur pour la vue Liste
- * Onglet "LISTE" fixe à gauche + tickets ouverts à droite
+ * Onglet "LISTE" fixe à gauche + optionnel "RETARD" + tickets ouverts à droite
  * Style "folder tab" avec bordure continue vers le contenu
  */
 
-import { X, Loader2, List } from 'lucide-react';
+import { X, Loader2, List, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { TicketTab } from '../hooks/useTicketTabs';
 
@@ -16,6 +17,10 @@ interface TicketTabBarProps {
   onTabClose: (tabId: string) => void;
   onCloseAll: () => void;
   isSaving?: boolean;
+  showLateTab?: boolean;
+  isLateTabActive?: boolean;
+  onLateTabClick?: () => void;
+  lateCount?: number;
 }
 
 export function TicketTabBar({
@@ -25,10 +30,13 @@ export function TicketTabBar({
   onTabClose,
   onCloseAll,
   isSaving = false,
+  showLateTab = false,
+  isLateTabActive = false,
+  onLateTabClick,
+  lateCount = 0,
 }: TicketTabBarProps) {
-  const isListeActive = activeTabId === null;
-  const borderColor = isListeActive ? 'border-sky-400 dark:border-sky-500' : 'border-violet-400 dark:border-violet-500';
-  const bgBorderColor = isListeActive ? 'bg-sky-400 dark:bg-sky-500' : 'bg-violet-400 dark:bg-violet-500';
+  const isListeActive = activeTabId === null && !isLateTabActive;
+  const isTicketActive = activeTabId !== null && !isLateTabActive;
 
   return (
     <div className="relative mx-2 pt-2">
@@ -46,6 +54,33 @@ export function TicketTabBar({
           <List className={cn("h-4 w-4", isListeActive && "text-sky-600 dark:text-sky-400")} />
           LISTE
         </button>
+
+        {/* Onglet RETARD - visible si showLateTab */}
+        {showLateTab && (
+          <button
+            onClick={onLateTabClick}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-all shrink-0 rounded-t-xl relative ml-1",
+              isLateTabActive
+                ? "bg-destructive/5 dark:bg-destructive/10 text-destructive border-2 border-b-0 border-destructive/50 mb-[-2px] pb-[calc(0.625rem+2px)]"
+                : "bg-slate-100/80 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 hover:text-destructive hover:bg-destructive/5 border border-transparent mb-[2px]"
+            )}
+          >
+            <AlertTriangle className={cn("h-4 w-4", isLateTabActive && "text-destructive")} />
+            RETARD
+            {lateCount > 0 && (
+              <Badge 
+                variant="destructive" 
+                className={cn(
+                  "h-5 min-w-5 px-1.5 text-xs",
+                  !isLateTabActive && "animate-pulse"
+                )}
+              >
+                {lateCount}
+              </Badge>
+            )}
+          </button>
+        )}
         
         {/* Séparateur vertical */}
         {tabs.length > 0 && (
@@ -63,7 +98,7 @@ export function TicketTabBar({
             )}
           >
             {tabs.map((tab) => {
-              const isActive = activeTabId === tab.id;
+              const isActive = activeTabId === tab.id && !isLateTabActive;
               return (
                 <button
                   key={tab.id}
