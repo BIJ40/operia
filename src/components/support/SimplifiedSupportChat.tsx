@@ -421,11 +421,11 @@ export function SimplifiedSupportChat({
           <div className="space-y-4">
             {/* Welcome */}
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Bot className="w-5 h-5 text-primary" />
+              <div className="w-8 h-8 rounded-xl bg-warm-orange/15 flex items-center justify-center flex-shrink-0">
+                <Bot className="w-5 h-5 text-warm-orange" />
               </div>
               <div className="flex-1">
-                <Card className="p-4 bg-muted/50">
+                <Card className="p-4 rounded-2xl bg-muted/30 border-border/40">
                   <p className="text-sm font-medium mb-4">{currentStep.question}</p>
                   <div className="flex flex-wrap gap-2">
                     {currentStep.options.map((option) => (
@@ -433,7 +433,7 @@ export function SimplifiedSupportChat({
                         key={option.value}
                         variant="outline"
                         size="sm"
-                        className="gap-2"
+                        className="gap-2 rounded-xl border-border/50 hover:border-warm-orange/40 hover:bg-warm-orange/10"
                         onClick={() => handleOrientationAnswer(option.value)}
                       >
                         {option.icon}
@@ -455,18 +455,18 @@ export function SimplifiedSupportChat({
     return (
       <div className={cn("flex flex-col h-full items-center justify-center p-6", className)}>
         <div className="text-center space-y-4">
-          <div className="w-16 h-16 mx-auto rounded-full bg-green-100 flex items-center justify-center">
-            <CheckCircle2 className="w-8 h-8 text-green-600" />
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-warm-green/15 flex items-center justify-center">
+            <CheckCircle2 className="w-8 h-8 text-warm-green" />
           </div>
           <h3 className="font-semibold text-lg">Demande transmise</h3>
           <p className="text-sm text-muted-foreground max-w-xs">
             Votre demande a été enregistrée. Vous pouvez suivre son avancement dans "Mes demandes".
           </p>
           <div className="flex gap-2 justify-center pt-2">
-            <Button variant="outline" onClick={handleNewChat}>
+            <Button variant="outline" onClick={handleNewChat} className="rounded-xl">
               Nouvelle question
             </Button>
-            <Button onClick={() => navigate(ROUTES.support.index)}>
+            <Button onClick={() => navigate(ROUTES.support.index)} className="rounded-xl bg-warm-blue/90 hover:bg-warm-blue">
               Mes demandes
             </Button>
           </div>
@@ -489,28 +489,28 @@ export function SimplifiedSupportChat({
               )}
             >
               {msg.role !== 'user' && (
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <Bot className="w-5 h-5 text-primary" />
+                <div className="w-8 h-8 rounded-xl bg-warm-orange/15 flex items-center justify-center flex-shrink-0">
+                  <Bot className="w-5 h-5 text-warm-orange" />
                 </div>
               )}
               <div
                 className={cn(
-                  "max-w-[80%] p-3 rounded-lg text-sm",
+                  "max-w-[80%] p-3 rounded-2xl text-sm",
                   msg.role === 'user'
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted"
+                    ? "bg-warm-blue/90 text-white"
+                    : "bg-muted/50 border border-border/40"
                 )}
               >
                 {msg.content}
                 {msg.isIncomplete && (
-                  <Badge variant="outline" className="mt-2 text-xs">
+                  <Badge variant="outline" className="mt-2 text-xs rounded-full">
                     Réponse partielle
                   </Badge>
                 )}
               </div>
               {msg.role === 'user' && (
-                <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
-                  <UserIcon className="w-5 h-5" />
+                <div className="w-8 h-8 rounded-xl bg-warm-teal/15 flex items-center justify-center flex-shrink-0">
+                  <UserIcon className="w-5 h-5 text-warm-teal" />
                 </div>
               )}
             </div>
@@ -518,8 +518,8 @@ export function SimplifiedSupportChat({
           
           {isLoading && (
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+              <div className="w-8 h-8 rounded-xl bg-warm-orange/15 flex items-center justify-center">
+                <Loader2 className="w-5 h-5 animate-spin text-warm-orange" />
               </div>
               <span className="text-sm text-muted-foreground">Recherche en cours...</span>
             </div>
@@ -531,27 +531,27 @@ export function SimplifiedSupportChat({
 
       {/* Action buttons after AI response - NEW FLOW */}
       {aiHasResponded && !isLoading && (
-        <div className="p-4 border-t bg-muted/30">
+        <div className="p-4 border-t border-border/40 bg-muted/20">
           <p className="text-sm text-muted-foreground mb-3 text-center">
             Cette réponse a-t-elle résolu votre problème ?
           </p>
           <div className="flex gap-2">
             <Button
               variant="outline"
-              className="flex-1 gap-2"
+              className="flex-1 gap-2 rounded-xl border-warm-green/40 text-warm-green hover:bg-warm-green/10"
               onClick={handleProblemResolved}
               disabled={isCreatingTicket}
             >
               {isCreatingTicket ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <CheckCircle2 className="w-4 h-4 text-green-600" />
+                <CheckCircle2 className="w-4 h-4" />
               )}
               Problème résolu
             </Button>
             <Button
-              variant="destructive"
-              className="flex-1 gap-2"
+              variant="outline"
+              className="flex-1 gap-2 rounded-xl border-warm-orange/40 text-warm-orange hover:bg-warm-orange/10"
               onClick={handleStillBlocked}
               disabled={isCreatingTicket}
             >
@@ -568,7 +568,7 @@ export function SimplifiedSupportChat({
 
       {/* Input - only show before AI has responded */}
       {!aiHasResponded && (
-        <div className="p-4 border-t">
+        <div className="p-4 border-t border-border/40">
           <div className="flex gap-2">
             <Input
               value={input}
@@ -576,10 +576,12 @@ export function SimplifiedSupportChat({
               onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
               placeholder="Décrivez votre problème..."
               disabled={isLoading}
+              className="rounded-xl border-border/50"
             />
             <Button
               onClick={handleSendMessage}
               disabled={!input.trim() || isLoading}
+              className="rounded-xl bg-warm-blue/90 hover:bg-warm-blue"
             >
               <Send className="w-4 h-4" />
             </Button>

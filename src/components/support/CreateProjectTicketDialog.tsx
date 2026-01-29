@@ -53,21 +53,21 @@ const TICKET_TYPES = [
     label: 'Bug ou dysfonctionnement',
     description: 'Quelque chose ne fonctionne pas comme prévu',
     icon: Bug,
-    color: 'text-red-500'
+    color: 'text-warm-orange'
   },
   { 
     value: 'question', 
     label: "Question d'utilisation",
     description: "Besoin d'aide sur une fonctionnalité",
     icon: HelpCircle,
-    color: 'text-blue-500'
+    color: 'text-warm-blue'
   },
   { 
     value: 'evolution', 
     label: "Demande d'amélioration",
     description: 'Proposer une nouvelle fonctionnalité',
     icon: Lightbulb,
-    color: 'text-yellow-500'
+    color: 'text-warm-teal'
   },
 ];
 
@@ -286,6 +286,7 @@ export function CreateProjectTicketDialog({
             <div className="grid grid-cols-1 gap-3">
               {TICKET_TYPES.map((type) => {
                 const Icon = type.icon;
+                const isSelected = formData.ticketType === type.value;
                 return (
                   <Button
                     key={type.value}
@@ -293,16 +294,21 @@ export function CreateProjectTicketDialog({
                     variant="outline"
                     onClick={() => handleOptionSelect('ticketType', type.value)}
                     className={cn(
-                      "h-auto py-4 px-4 rounded-xl border-l-4 transition-all justify-start text-left",
-                      formData.ticketType === type.value
-                        ? 'border-l-primary bg-primary text-primary-foreground shadow-lg'
-                        : 'border-l-border hover:border-l-primary hover:shadow-md'
+                      "h-auto py-4 px-4 rounded-2xl border-l-4 transition-all justify-start text-left",
+                      isSelected
+                        ? 'border-l-warm-blue bg-warm-blue/90 text-white shadow-lg'
+                        : 'border-l-border/50 hover:border-l-warm-blue/60 hover:shadow-md hover:bg-muted/30'
                     )}
                   >
-                    <Icon className={cn("w-5 h-5 mr-3", formData.ticketType === type.value ? 'text-primary-foreground' : type.color)} />
+                    <div className={cn(
+                      "w-8 h-8 rounded-xl flex items-center justify-center mr-3",
+                      isSelected ? 'bg-white/20' : 'bg-muted/50'
+                    )}>
+                      <Icon className={cn("w-5 h-5", isSelected ? 'text-white' : type.color)} />
+                    </div>
                     <div>
                       <p className="font-medium">{type.label}</p>
-                      <p className={cn("text-xs", formData.ticketType === type.value ? 'text-primary-foreground/70' : 'text-muted-foreground')}>
+                      <p className={cn("text-xs", isSelected ? 'text-white/70' : 'text-muted-foreground')}>
                         {type.description}
                       </p>
                     </div>
@@ -318,27 +324,30 @@ export function CreateProjectTicketDialog({
           <div className="space-y-4">
             <Label className="text-base font-medium">Quel est le niveau d'urgence ?</Label>
             <div className="grid grid-cols-1 gap-2">
-              {URGENCIES.map((urg) => (
-                <Button
-                  key={urg.value}
-                  type="button"
-                  variant="outline"
-                  onClick={() => handleOptionSelect('heatPriority', urg.value)}
-                  className={cn(
-                    "h-auto py-3 px-4 rounded-xl border-l-4 transition-all justify-start",
-                    formData.heatPriority === urg.value
-                      ? urg.isRed
-                        ? 'border-l-destructive bg-destructive text-destructive-foreground shadow-lg'
-                        : urg.isOrange
-                        ? 'border-l-accent bg-accent text-accent-foreground shadow-lg'
-                        : 'border-l-primary bg-primary text-primary-foreground shadow-lg'
-                      : 'border-l-border hover:border-l-primary hover:shadow-md'
-                  )}
-                >
-                  <span className="font-medium">{urg.label}</span>
-                  <span className="ml-auto text-xs opacity-70">{urg.description}</span>
-                </Button>
-              ))}
+              {URGENCIES.map((urg) => {
+                const isSelected = formData.heatPriority === urg.value;
+                return (
+                  <Button
+                    key={urg.value}
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleOptionSelect('heatPriority', urg.value)}
+                    className={cn(
+                      "h-auto py-3 px-4 rounded-2xl border-l-4 transition-all justify-start",
+                      isSelected
+                        ? urg.isRed
+                          ? 'border-l-warm-orange bg-warm-orange/90 text-white shadow-lg'
+                          : urg.isOrange
+                          ? 'border-l-warm-orange/70 bg-warm-orange/80 text-white shadow-lg'
+                          : 'border-l-warm-blue bg-warm-blue/90 text-white shadow-lg'
+                        : 'border-l-border/50 hover:border-l-warm-blue/60 hover:shadow-md hover:bg-muted/30'
+                    )}
+                  >
+                    <span className="font-medium">{urg.label}</span>
+                    <span className={cn("ml-auto text-xs", isSelected ? 'text-white/70' : 'text-muted-foreground')}>{urg.description}</span>
+                  </Button>
+                );
+              })}
             </div>
           </div>
         );
@@ -348,14 +357,15 @@ export function CreateProjectTicketDialog({
           <div className="space-y-4">
             <Label className="text-base font-medium">Quel module est concerné ?</Label>
             <p className="text-sm text-muted-foreground">
-              Sélectionné : <span className="font-medium">{getModuleLabel(formData.module)}</span>
+              Sélectionné : <span className="font-medium text-warm-blue">{getModuleLabel(formData.module)}</span>
             </p>
             
-            <Command className="rounded-lg border">
+            <Command className="rounded-2xl border border-border/50">
               <CommandInput 
                 placeholder="Rechercher un module..." 
                 value={moduleSearch}
                 onValueChange={setModuleSearch}
+                className="rounded-t-2xl"
               />
               <CommandList>
                 <CommandEmpty>Aucun module trouvé</CommandEmpty>
@@ -367,13 +377,13 @@ export function CreateProjectTicketDialog({
                         value={mod.label}
                         onSelect={() => handleModuleSelect(mod.id)}
                         className={cn(
-                          "cursor-pointer",
-                          formData.module === mod.id && "bg-primary/10 text-primary font-medium"
+                          "cursor-pointer rounded-xl mx-1 my-0.5",
+                          formData.module === mod.id && "bg-warm-blue/10 text-warm-blue font-medium"
                         )}
                       >
                         <Check className={cn(
                           "mr-2 h-4 w-4",
-                          formData.module === mod.id ? "opacity-100" : "opacity-0"
+                          formData.module === mod.id ? "opacity-100 text-warm-blue" : "opacity-0"
                         )} />
                         {mod.label}
                       </CommandItem>
@@ -384,7 +394,7 @@ export function CreateProjectTicketDialog({
             </Command>
             
             {canProceed() && (
-              <Button onClick={goNext} className="w-full">
+              <Button onClick={goNext} className="w-full rounded-xl bg-warm-blue/90 hover:bg-warm-blue">
                 Continuer <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             )}
@@ -399,14 +409,14 @@ export function CreateProjectTicketDialog({
               value={formData.subject}
               onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
               placeholder="Ex: Impossible de créer un devis depuis l'onglet client"
-              className="h-12 text-base"
+              className="h-12 text-base rounded-xl border-border/50"
               autoFocus
             />
             {formData.subject.trim().length > 0 && formData.subject.trim().length < 3 && (
-              <p className="text-sm text-destructive">Minimum 3 caractères requis</p>
+              <p className="text-sm text-warm-orange">Minimum 3 caractères requis</p>
             )}
             {canProceed() && (
-              <Button onClick={goNext} className="w-full">
+              <Button onClick={goNext} className="w-full rounded-xl bg-warm-blue/90 hover:bg-warm-blue">
                 Continuer <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             )}
@@ -416,7 +426,7 @@ export function CreateProjectTicketDialog({
       case 'description':
         return (
           <div className="space-y-4">
-            <div className="p-3 bg-muted/50 rounded-lg">
+            <div className="p-3 bg-warm-blue/5 rounded-xl border border-warm-blue/20">
               <p className="text-sm text-muted-foreground">Sujet :</p>
               <p className="font-medium">{formData.subject}</p>
             </div>
@@ -426,11 +436,11 @@ export function CreateProjectTicketDialog({
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Décrivez précisément le problème, les étapes pour le reproduire, et ce que vous attendiez..."
               rows={5}
-              className="text-base"
+              className="text-base rounded-xl border-border/50"
               autoFocus
             />
             {canProceed() && (
-              <Button onClick={goNext} className="w-full">
+              <Button onClick={goNext} className="w-full rounded-xl bg-warm-blue/90 hover:bg-warm-blue">
                 Continuer <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             )}
@@ -440,13 +450,15 @@ export function CreateProjectTicketDialog({
       case 'attachments':
         return (
           <div className="space-y-4">
-            <div className="p-3 bg-muted/50 rounded-lg space-y-1">
+            <div className="p-3 bg-warm-blue/5 rounded-xl border border-warm-blue/20 space-y-1">
               <p className="text-sm"><span className="text-muted-foreground">Sujet :</span> {formData.subject}</p>
               <p className="text-sm line-clamp-2"><span className="text-muted-foreground">Description :</span> {formData.description}</p>
             </div>
             
             <Label className="text-base font-medium flex items-center gap-2">
-              <Paperclip className="w-4 h-4" />
+              <div className="w-6 h-6 rounded-lg bg-warm-teal/15 flex items-center justify-center">
+                <Paperclip className="w-3.5 h-3.5 text-warm-teal" />
+              </div>
               Captures d'écran ou fichiers (optionnel)
             </Label>
             <Input
@@ -454,10 +466,10 @@ export function CreateProjectTicketDialog({
               multiple
               accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
               onChange={(e) => setFiles(Array.from(e.target.files || []))}
-              className="h-12"
+              className="h-12 rounded-xl border-border/50"
             />
             {files.length > 0 && (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-warm-green">
                 {files.length} fichier(s) sélectionné(s)
               </p>
             )}
@@ -465,7 +477,7 @@ export function CreateProjectTicketDialog({
             <Button 
               onClick={handleCreateTicket} 
               disabled={isCreating}
-              className="w-full h-12 text-base"
+              className="w-full h-12 text-base rounded-xl bg-warm-green/90 hover:bg-warm-green"
             >
               {isCreating ? (
                 <>
@@ -489,10 +501,12 @@ export function CreateProjectTicketDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md rounded-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Plus className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-xl bg-warm-blue/15 flex items-center justify-center">
+              <Plus className="w-5 h-5 text-warm-blue" />
+            </div>
             Nouvelle demande
           </DialogTitle>
           <DialogDescription>
