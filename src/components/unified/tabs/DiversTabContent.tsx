@@ -37,7 +37,7 @@ import { DraggableTab } from '@/components/unified/DraggableTab';
 
 // Lazy loaded components
 const RHMeetingsPage = lazy(() => import('@/pages/rh/RHMeetingsPage'));
-const DocGenPage = lazy(() => import('@/pages/rh/DocGenPage'));
+const AgencyAdminDocuments = lazy(() => import('@/components/outils/AgencyAdminDocuments').then(m => ({ default: m.AgencyAdminDocuments })));
 const MesApporteursTab = lazy(() => import('@/components/pilotage/MesApporteursTab').then(m => ({ default: m.MesApporteursTab })));
 const PlanningHebdo = lazy(() => import('@/pages/PlanningTechniciensSemaine'));
 const VeilleApporteursPage = lazy(() => import('@/pages/VeilleApporteursPage'));
@@ -267,7 +267,7 @@ function AdministratifSection() {
         )}
         {subTab === 'documents' && (
           <Suspense fallback={<LoadingFallback />}>
-            <DocGenPage />
+            <AgencyAdminDocuments />
           </Suspense>
         )}
       </div>
