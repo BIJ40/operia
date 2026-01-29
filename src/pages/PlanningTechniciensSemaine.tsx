@@ -283,7 +283,7 @@ function PlanningTechniciensSemaineContent() {
   const hasError = usersError || creneauxError;
   
   return (
-    <div className="container mx-auto py-6 space-y-6 print:py-0 print:space-y-2 print:max-w-none print:w-full">
+    <div className="space-y-6 print:py-0 print:space-y-2 print:max-w-none print:w-full">
       {/* Styles d'impression */}
       <style>
         {`
@@ -321,17 +321,16 @@ function PlanningTechniciensSemaineContent() {
         `}
       </style>
       
-      <div className="print:hidden flex items-start justify-between gap-4">
-        <PageHeader
-          title="Planning Techniciens"
-          subtitle="Vue hebdomadaire des interventions"
-          backTo="/rh/suivi"
-          backLabel="Suivi RH"
-        />
+      {/* Header */}
+      <div className="print:hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-semibold text-foreground">Planning Techniciens</h2>
+          <p className="text-sm text-muted-foreground">Vue hebdomadaire des interventions</p>
+        </div>
       </div>
       
       {/* Contrôles */}
-      <Card className="print:hidden">
+      <Card className="print:hidden rounded-2xl border-border/50 shadow-sm backdrop-blur-sm bg-card/80">
         <CardContent className="pt-6">
           <div className="flex flex-wrap items-center gap-4">
             {/* Sélection technicien */}
@@ -340,7 +339,7 @@ function PlanningTechniciensSemaineContent() {
                 value={selectedTechId?.toString() ?? "all"}
                 onValueChange={(v) => setSelectedTechId(v === "all" ? null : Number(v))}
               >
-                <SelectTrigger>
+                <SelectTrigger className="rounded-xl">
                   <SelectValue placeholder="Sélectionner un technicien" />
                 </SelectTrigger>
                 <SelectContent>
@@ -370,13 +369,13 @@ function PlanningTechniciensSemaineContent() {
             
             {/* Navigation semaine avec flèches et label */}
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" onClick={handlePrevWeek}>
+              <Button variant="outline" size="icon" onClick={handlePrevWeek} className="rounded-xl">
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <span className="text-sm font-medium text-muted-foreground min-w-[160px] text-center">
                 {weekLabel}
               </span>
-              <Button variant="outline" size="icon" onClick={handleNextWeek}>
+              <Button variant="outline" size="icon" onClick={handleNextWeek} className="rounded-xl">
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -385,6 +384,7 @@ function PlanningTechniciensSemaineContent() {
             <Button
               variant="outline"
               onClick={() => window.print()}
+              className="rounded-xl"
             >
               <Printer className="h-4 w-4 mr-2" />
               Imprimer le planning
@@ -395,7 +395,7 @@ function PlanningTechniciensSemaineContent() {
       
       {/* Bandeau nom technicien + heures */}
       {selectedTechId && selectedTechLabel && (
-        <div className="bg-muted/50 border rounded-lg px-4 py-3 print:bg-white print:border-2 print:py-2" id="print-header">
+        <div className="bg-warm-teal/10 border border-warm-teal/30 rounded-2xl px-4 py-3 print:bg-white print:border-2 print:py-2" id="print-header">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
               {selectedTechColor && (
@@ -405,9 +405,9 @@ function PlanningTechniciensSemaineContent() {
                 />
               )}
               <span className="font-semibold text-lg">{selectedTechLabel}</span>
-              <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-lg">
-                <Clock className="h-4 w-4 text-primary" />
-                <span className="font-semibold text-primary">
+              <div className="flex items-center gap-2 bg-warm-teal/20 px-4 py-2 rounded-xl">
+                <Clock className="h-4 w-4 text-warm-teal" />
+                <span className="font-semibold text-warm-teal">
                   {formatMinutes(workMinutes)}
                 </span>
                 <span className="text-sm text-muted-foreground">travaillées</span>
@@ -419,7 +419,7 @@ function PlanningTechniciensSemaineContent() {
       
       {/* Erreurs */}
       {hasError && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="rounded-2xl">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             Erreur lors du chargement des données planning. Veuillez réessayer.
@@ -428,7 +428,7 @@ function PlanningTechniciensSemaineContent() {
       )}
       
       {/* Planning grille */}
-      <Card className="planning-print-container">
+      <Card className="planning-print-container rounded-2xl border-border/50 shadow-sm overflow-hidden">
         <CardContent className="p-0 overflow-x-auto print:overflow-visible">
           {isLoading ? (
             <div className="p-6 space-y-4">

@@ -123,20 +123,21 @@ export default function RHMeetingsPage() {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Réunions RH</h1>
-          <p className="text-muted-foreground">Historique des réunions et présentations</p>
+          <h2 className="text-xl font-semibold text-foreground">Réunions RH</h2>
+          <p className="text-sm text-muted-foreground">Historique des réunions et présentations</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="rounded-xl bg-warm-purple/90 hover:bg-warm-purple text-white shadow-sm">
               <Plus className="h-4 w-4 mr-2" />
               Nouvelle réunion
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="rounded-2xl">
             <DialogHeader>
               <DialogTitle>Ajouter une réunion</DialogTitle>
             </DialogHeader>
@@ -148,6 +149,7 @@ export default function RHMeetingsPage() {
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="Ex: Réunion mensuelle Janvier"
+                  className="rounded-xl"
                   required
                 />
               </div>
@@ -158,6 +160,7 @@ export default function RHMeetingsPage() {
                   type="date"
                   value={formData.meeting_date}
                   onChange={(e) => setFormData({ ...formData, meeting_date: e.target.value })}
+                  className="rounded-xl"
                   required
                 />
               </div>
@@ -168,6 +171,7 @@ export default function RHMeetingsPage() {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Notes ou ordre du jour..."
+                  className="rounded-xl"
                   rows={3}
                 />
               </div>
@@ -178,7 +182,7 @@ export default function RHMeetingsPage() {
                     type="file"
                     accept=".pdf,.ppt,.pptx,.doc,.docx"
                     onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                    className="flex-1"
+                    className="flex-1 rounded-xl"
                   />
                   {selectedFile && (
                     <span className="text-sm text-muted-foreground truncate max-w-32">
@@ -188,10 +192,10 @@ export default function RHMeetingsPage() {
                 </div>
               </div>
               <div className="flex justify-end gap-2 pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="rounded-xl">
                   Annuler
                 </Button>
-                <Button type="submit" disabled={uploadingFile || createMutation.isPending}>
+                <Button type="submit" disabled={uploadingFile || createMutation.isPending} className="rounded-xl">
                   {(uploadingFile || createMutation.isPending) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                   Ajouter
                 </Button>
@@ -201,10 +205,13 @@ export default function RHMeetingsPage() {
         </Dialog>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
+      {/* Card tableau */}
+      <Card className="rounded-2xl border-border/50 shadow-sm backdrop-blur-sm bg-card/80">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-3 text-lg">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-warm-purple/70 to-warm-blue/50 flex items-center justify-center">
+              <Calendar className="h-5 w-5 text-white" />
+            </div>
             Historique des réunions
           </CardTitle>
         </CardHeader>
@@ -218,54 +225,58 @@ export default function RHMeetingsPage() {
               Aucune réunion enregistrée
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Titre</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Présentation</TableHead>
-                  <TableHead className="w-16"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {meetings.map((meeting) => (
-                  <TableRow key={meeting.id}>
-                    <TableCell className="font-medium whitespace-nowrap">
-                      {format(new Date(meeting.meeting_date), 'dd MMM yyyy', { locale: fr })}
-                    </TableCell>
-                    <TableCell>{meeting.title}</TableCell>
-                    <TableCell className="text-muted-foreground max-w-xs truncate">
-                      {meeting.description || '-'}
-                    </TableCell>
-                    <TableCell>
-                      {meeting.presentation_file_path ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border/50 hover:bg-transparent">
+                    <TableHead className="text-muted-foreground font-medium">Date</TableHead>
+                    <TableHead className="text-muted-foreground font-medium">Titre</TableHead>
+                    <TableHead className="text-muted-foreground font-medium">Description</TableHead>
+                    <TableHead className="text-muted-foreground font-medium">Présentation</TableHead>
+                    <TableHead className="w-16"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {meetings.map((meeting) => (
+                    <TableRow key={meeting.id} className="border-border/30 hover:bg-muted/30">
+                      <TableCell className="font-medium whitespace-nowrap">
+                        {format(new Date(meeting.meeting_date), 'dd MMM yyyy', { locale: fr })}
+                      </TableCell>
+                      <TableCell>{meeting.title}</TableCell>
+                      <TableCell className="text-muted-foreground max-w-xs truncate">
+                        {meeting.description || '-'}
+                      </TableCell>
+                      <TableCell>
+                        {meeting.presentation_file_path ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => getFileUrl(meeting.presentation_file_path!)}
+                            className="rounded-lg hover:bg-warm-purple/10"
+                          >
+                            <FileText className="h-4 w-4 mr-1 text-warm-purple" />
+                            Fichier
+                          </Button>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <Button
                           variant="ghost"
-                          size="sm"
-                          onClick={() => getFileUrl(meeting.presentation_file_path!)}
+                          size="icon"
+                          onClick={() => deleteMutation.mutate(meeting)}
+                          disabled={deleteMutation.isPending}
+                          className="rounded-lg hover:bg-destructive/10"
                         >
-                          <FileText className="h-4 w-4 mr-1" />
-                          Fichier
+                          <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => deleteMutation.mutate(meeting)}
-                        disabled={deleteMutation.isPending}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
