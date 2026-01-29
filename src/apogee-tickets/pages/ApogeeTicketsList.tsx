@@ -27,7 +27,7 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useApogeeTickets } from '../hooks/useApogeeTickets';
+import { useApogeeTicket, useApogeeTickets } from '../hooks/useApogeeTickets';
 import { useMyTicketRole, useTicketTransitions } from '../hooks/useTicketPermissions';
 import { usePersistedListFilters } from '../hooks/usePersistedListFilters';
 import { useTicketTabs } from '../hooks/useTicketTabs';
@@ -150,11 +150,16 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
     return map;
   }, [allTransitions, statuses, ticketRole, isPlatformAdmin]);
 
-  // Ticket actuellement actif
-  const activeTicket = useMemo(() => {
+  // Ticket actif depuis la liste filtrée (peut être absent si une recherche/filtre est appliqué)
+  const activeTicketFromList = useMemo(() => {
     if (!activeTabId) return null;
     return tickets.find(t => t.id === activeTabId) ?? null;
   }, [activeTabId, tickets]);
+
+  // Fallback robuste : charger le ticket par ID même s'il n'est plus dans la liste filtrée
+  const { ticket: activeTicketFromDb, isLoading: isLoadingActiveTicket } = useApogeeTicket(activeTabId);
+
+  const activeTicket = activeTicketFromList ?? activeTicketFromDb;
 
   const handleTicketClick = (ticket: ApogeeTicket) => {
     openTicketTab(ticket);
@@ -302,6 +307,12 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
               onDelete={handleTicketDelete}
               onClose={() => closeTab(activeTicket.id)}
             />
+          </div>
+        ) : isLoadingActiveTicket ? (
+          /* Chargement du ticket hors liste (ex: après filtre/recherche) */
+          <div className="flex items-center justify-center h-full text-muted-foreground">
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            <span>Chargement du ticket…</span>
           </div>
         ) : (
           /* Fallback si ticket non trouvé */
