@@ -33,6 +33,18 @@ export function StatusSelector({
   const statusColor = currentStatus?.color || '#6b7280';
   const statusLabel = currentStatus?.label || localStatus;
 
+  // Calculate if we need dark text for light backgrounds
+  const needsDarkText = (color: string) => {
+    const hex = color.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.6;
+  };
+
+  const textColorClass = needsDarkText(statusColor) ? 'text-gray-900' : 'text-white';
+
   const handleSelect = (value: string) => {
     setLocalStatus(value);
     setOpen(false);
@@ -47,7 +59,8 @@ export function StatusSelector({
           disabled={disabled}
           className={cn(
             'inline-flex items-center gap-1.5 font-medium rounded-full transition-all shadow-md',
-            'text-sm px-3 py-1 text-white',
+            'text-sm px-3 py-1',
+            textColorClass,
             disabled ? 'cursor-default opacity-70' : 'cursor-pointer hover:opacity-90 hover:shadow-lg'
           )}
           style={{ 
