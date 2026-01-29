@@ -1,6 +1,6 @@
 /**
  * PublicGuideCategoryPanel - Contenu d'une catégorie (dans un onglet)
- * Mode lecture seule avec accordéons pour les sections
+ * Version Warm Pastel avec accordéons stylisés
  */
 
 import { useMemo, useState } from 'react';
@@ -33,12 +33,12 @@ import { Block } from '@/types/block';
 import { createSanitizedHtml } from '@/lib/sanitize';
 import { cn } from '@/lib/utils';
 
-// Couleurs pour les TIPS
+// Couleurs Warm Pastel pour les TIPS
 const TIPS_COLORS: Record<string, { bg: string; border: string; icon: string }> = {
-  danger: { bg: 'bg-red-50 dark:bg-red-950/30', border: 'border-l-red-500', icon: 'text-red-500' },
-  warning: { bg: 'bg-amber-50 dark:bg-amber-950/30', border: 'border-l-amber-500', icon: 'text-amber-500' },
-  success: { bg: 'bg-green-50 dark:bg-green-950/30', border: 'border-l-green-500', icon: 'text-green-500' },
-  information: { bg: 'bg-blue-50 dark:bg-blue-950/30', border: 'border-l-blue-500', icon: 'text-blue-500' },
+  danger: { bg: 'bg-red-50/80 dark:bg-red-950/30', border: 'border-l-red-400', icon: 'text-red-500' },
+  warning: { bg: 'bg-warm-orange/10', border: 'border-l-warm-orange', icon: 'text-warm-orange' },
+  success: { bg: 'bg-warm-green/10', border: 'border-l-warm-green', icon: 'text-warm-green' },
+  information: { bg: 'bg-warm-blue/10', border: 'border-l-warm-blue', icon: 'text-warm-blue' },
 };
 
 interface PublicGuideCategoryPanelProps {
@@ -112,10 +112,10 @@ export default function PublicGuideCategoryPanel({ slug }: PublicGuideCategoryPa
   if (loading) {
     return (
       <div className="p-6">
-        <div className="h-8 w-48 bg-muted animate-pulse rounded mb-6" />
+        <div className="h-8 w-48 bg-muted/50 animate-pulse rounded-xl mb-6" />
         <div className="space-y-4">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-14 bg-muted animate-pulse rounded-xl" />
+            <div key={i} className="h-14 bg-muted/50 animate-pulse rounded-2xl" />
           ))}
         </div>
       </div>
@@ -138,7 +138,7 @@ export default function PublicGuideCategoryPanel({ slug }: PublicGuideCategoryPa
     if (isTips) {
       return (
         <div className={cn(
-          "rounded-lg border-l-4 p-4",
+          "rounded-xl border-l-4 p-4",
           colors.bg,
           colors.border
         )}>
@@ -164,7 +164,7 @@ export default function PublicGuideCategoryPanel({ slug }: PublicGuideCategoryPa
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-4">
       {/* Header avec navigation */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm pb-4 -mt-2 pt-2">
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm pb-4 -mt-2 pt-2 rounded-2xl">
         <div className="flex items-center justify-between gap-2">
           {/* Zone gauche - Navigation */}
           <div className="flex items-center gap-1 shrink-0">
@@ -174,7 +174,7 @@ export default function PublicGuideCategoryPanel({ slug }: PublicGuideCategoryPa
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="h-8 w-8"
+                    className="h-9 w-9 rounded-xl hover:bg-warm-blue/10 hover:text-warm-blue"
                     disabled={!prevCategory}
                     onClick={() => prevCategory && handleNavigateCategory(prevCategory)}
                   >
@@ -182,7 +182,7 @@ export default function PublicGuideCategoryPanel({ slug }: PublicGuideCategoryPa
                   </Button>
                 </TooltipTrigger>
                 {prevCategory && (
-                  <TooltipContent side="bottom">
+                  <TooltipContent side="bottom" className="rounded-xl">
                     {prevCategory.title}
                   </TooltipContent>
                 )}
@@ -191,19 +191,21 @@ export default function PublicGuideCategoryPanel({ slug }: PublicGuideCategoryPa
           </div>
           
           {/* Zone centrale - Titre */}
-          <h1 className="text-xl font-bold text-foreground truncate flex-1 min-w-0 text-center">
-            {category.title}
-          </h1>
+          <div className="flex-1 min-w-0 text-center">
+            <h1 className="text-xl font-bold text-foreground truncate">
+              {category.title}
+            </h1>
+          </div>
           
           {/* Zone droite - Progress + Navigation */}
           <div className="flex items-center gap-2 shrink-0">
-            <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden hidden sm:block">
+            <div className="w-16 h-1.5 bg-muted/50 rounded-full overflow-hidden hidden sm:block">
               <div 
-                className="h-full bg-primary transition-all duration-300"
+                className="h-full bg-warm-teal transition-all duration-300 rounded-full"
                 style={{ width: `${((currentCategoryIndex + 1) / availableCategories.length) * 100}%` }}
               />
             </div>
-            <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">
+            <span className="text-xs text-muted-foreground font-medium whitespace-nowrap bg-muted/30 px-2 py-1 rounded-lg">
               {currentCategoryIndex + 1}/{availableCategories.length}
             </span>
             
@@ -213,7 +215,7 @@ export default function PublicGuideCategoryPanel({ slug }: PublicGuideCategoryPa
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="h-8 w-8"
+                    className="h-9 w-9 rounded-xl hover:bg-warm-blue/10 hover:text-warm-blue"
                     disabled={!nextCategory}
                     onClick={() => nextCategory && handleNavigateCategory(nextCategory)}
                   >
@@ -221,7 +223,7 @@ export default function PublicGuideCategoryPanel({ slug }: PublicGuideCategoryPa
                   </Button>
                 </TooltipTrigger>
                 {nextCategory && (
-                  <TooltipContent side="bottom">
+                  <TooltipContent side="bottom" className="rounded-xl">
                     {nextCategory.title}
                   </TooltipContent>
                 )}
@@ -231,13 +233,18 @@ export default function PublicGuideCategoryPanel({ slug }: PublicGuideCategoryPa
         </div>
         
         {/* Boutons de filtrage */}
-        <div className="flex items-center justify-end gap-1 mt-3 flex-wrap">
+        <div className="flex items-center justify-end gap-2 mt-3 flex-wrap">
           {hasTips && (
             <Button
               variant={showTips ? "default" : "outline"}
               size="sm"
               onClick={() => setShowTips(!showTips)}
-              className="gap-1 h-7 text-xs"
+              className={cn(
+                "gap-1.5 h-8 text-xs rounded-xl transition-all",
+                showTips 
+                  ? "bg-warm-orange/90 hover:bg-warm-orange text-white border-0" 
+                  : "border-warm-orange/30 text-warm-orange hover:bg-warm-orange/10"
+              )}
             >
               <Lightbulb className="h-3.5 w-3.5" />
               TIPS
@@ -248,7 +255,12 @@ export default function PublicGuideCategoryPanel({ slug }: PublicGuideCategoryPa
               variant={showSections ? "default" : "outline"}
               size="sm"
               onClick={() => setShowSections(!showSections)}
-              className="gap-1 h-7 text-xs"
+              className={cn(
+                "gap-1.5 h-8 text-xs rounded-xl transition-all",
+                showSections 
+                  ? "bg-warm-blue/90 hover:bg-warm-blue text-white border-0" 
+                  : "border-warm-blue/30 text-warm-blue hover:bg-warm-blue/10"
+              )}
             >
               Sections
             </Button>
@@ -257,7 +269,7 @@ export default function PublicGuideCategoryPanel({ slug }: PublicGuideCategoryPa
             variant="outline"
             size="sm"
             onClick={() => setOpenAccordions(openAccordions.length > 0 ? [] : sections.map(s => s.id))}
-            className="gap-1 h-7 text-xs"
+            className="gap-1.5 h-8 text-xs rounded-xl border-border/50 hover:bg-muted/50"
           >
             {openAccordions.length > 0 ? (
               <><ChevronsDownUp className="h-3.5 w-3.5" />Fermer</>
@@ -297,11 +309,19 @@ export default function PublicGuideCategoryPanel({ slug }: PublicGuideCategoryPa
             }
 
             return (
-              <AccordionItem key={section.id} value={section.id} className="border rounded-lg px-4">
-                <AccordionTrigger className="text-left py-3">
-                  <div className="flex items-center gap-2">
-                    {isTips && <Lightbulb className="w-4 h-4 text-warning" />}
-                    <span className="text-sm">{section.title}</span>
+              <AccordionItem 
+                key={section.id} 
+                value={section.id} 
+                className="border border-border/40 rounded-2xl px-4 bg-card/50 backdrop-blur-sm shadow-sm"
+              >
+                <AccordionTrigger className="text-left py-4 hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    {isTips && (
+                      <div className="w-7 h-7 rounded-lg bg-warm-orange/15 flex items-center justify-center">
+                        <Lightbulb className="w-4 h-4 text-warm-orange" />
+                      </div>
+                    )}
+                    <span className="text-sm font-medium">{section.title}</span>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pb-4">
