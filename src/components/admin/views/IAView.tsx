@@ -1,22 +1,30 @@
 /**
  * IAView - Vue IA (Helpi, STATiA, Validator)
+ * Utilise DraggableFolderTabs avec bordures colorées
  */
 
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { FolderTabsList, FolderContentContainer, FolderTabConfig } from '@/components/ui/folder-tabs';
-import { Bot, FlaskConical, Loader2 } from 'lucide-react';
+import { 
+  DraggableFolderTabsList, 
+  DraggableFolderContentContainer,
+  FolderTabConfig 
+} from '@/components/ui/draggable-folder-tabs';
+import { Bot, FlaskConical, Loader2, TestTube } from 'lucide-react';
+import { useSessionState } from '@/hooks/useSessionState';
 
 const AdminHelpi = lazy(() => import('@/pages/AdminHelpi'));
 const StatiaBuilderAdminPage = lazy(() => import('@/statia/pages/StatiaBuilderAdminPage'));
 const StatiaValidatorPage = lazy(() => import('@/statia/pages/StatiaValidatorPage'));
 
 const SUB_TABS: FolderTabConfig[] = [
-  { id: 'helpi', label: 'Helpi', icon: Bot },
-  { id: 'statia', label: 'STATiA', icon: FlaskConical },
-  { id: 'validator', label: 'Validator', icon: FlaskConical },
+  { id: 'helpi', label: 'Helpi', icon: Bot, accent: 'blue' },
+  { id: 'statia', label: 'STATiA', icon: FlaskConical, accent: 'purple' },
+  { id: 'validator', label: 'Validator', icon: TestTube, accent: 'green' },
 ];
+
+const DEFAULT_TAB_ORDER = ['helpi', 'statia', 'validator'];
 
 function LoadingFallback() {
   return (
@@ -29,6 +37,7 @@ function LoadingFallback() {
 export function IAView() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeView = searchParams.get('adminView') || 'helpi';
+  const [tabOrder, setTabOrder] = useSessionState<string[]>('admin_ia_tab_order', DEFAULT_TAB_ORDER);
 
   const handleViewChange = (value: string) => {
     const next = new URLSearchParams(searchParams);
@@ -38,11 +47,31 @@ export function IAView() {
     setSearchParams(next);
   };
 
+  const handleReorder = useCallback((newOrder: string[]) => {
+    setTabOrder(newOrder);
+  }, [setTabOrder]);
+
+  // Trouver la couleur de l'onglet actif
+  const activeTab = SUB_TABS.find(t => t.id === activeView);
+  const accentColors: Record<string, string> = {
+    blue: 'hsl(var(--warm-blue))',
+    purple: 'hsl(var(--warm-purple))',
+    green: 'hsl(var(--warm-green))',
+  };
+  const activeAccent = activeTab?.accent ? accentColors[activeTab.accent] : undefined;
+
   return (
     <Tabs value={activeView} onValueChange={handleViewChange}>
-      <FolderTabsList tabs={SUB_TABS} activeTab={activeView} />
+      <DraggableFolderTabsList 
+        tabs={SUB_TABS} 
+        tabOrder={tabOrder}
+        activeTab={activeView}
+        onTabChange={handleViewChange}
+        onReorder={handleReorder}
+        isDraggable={true}
+      />
 
-      <FolderContentContainer>
+      <DraggableFolderContentContainer accentColor={activeAccent}>
         <TabsContent value="helpi" className="mt-0 focus-visible:outline-none">
           <Suspense fallback={<LoadingFallback />}>
             <AdminHelpi />
@@ -60,7 +89,7 @@ export function IAView() {
             <StatiaValidatorPage />
           </Suspense>
         </TabsContent>
-      </FolderContentContainer>
+      </DraggableFolderContentContainer>
     </Tabs>
   );
 }

@@ -1,14 +1,18 @@
 /**
  * AdminHubContent - Nouveau point d'entrée Admin avec 5 onglets principaux
- * Onglets principaux en style "Pill", sous-onglets en style "Folder"
+ * Onglets principaux en style "Pill", sous-onglets en style "DraggableFolder" avec bordures colorées
  */
 
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, Building2, Brain, FileText, Database, Cpu, Shield, Users, Activity, Crown } from 'lucide-react';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Crown } from 'lucide-react';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
-import { cn } from '@/lib/utils';
+import { 
+  DraggableFolderTabsList, 
+  DraggableFolderContentContainer,
+  FolderTabConfig 
+} from '@/components/ui/draggable-folder-tabs';
 import {
   ReseauView,
   IAView,
@@ -17,8 +21,9 @@ import {
   PlateformeView,
   PlansManagerView,
 } from '@/components/admin/views';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useSessionState } from '@/hooks/useSessionState';
 
 // Lazy load des composants directs
 const TDRUsersPage = lazy(() => import('@/pages/TDRUsersPage'));
@@ -42,17 +47,20 @@ const ADMIN_MAIN_TABS: PillTabConfig[] = [
 ];
 
 // Sous-onglets pour Gestion (style Folder) - 4 onglets directs
-const GESTION_SUB_TABS = [
-  { id: 'users', label: 'Utilisateurs', icon: Users },
-  { id: 'agences', label: 'Agences', icon: Building2 },
-  { id: 'plans', label: 'Plans', icon: Crown },
-  { id: 'activity', label: 'Activité', icon: Activity },
+const GESTION_SUB_TABS: FolderTabConfig[] = [
+  { id: 'users', label: 'Utilisateurs', icon: Users, accent: 'blue' },
+  { id: 'agences', label: 'Agences', icon: Building2, accent: 'purple' },
+  { id: 'plans', label: 'Plans', icon: Crown, accent: 'orange' },
+  { id: 'activity', label: 'Activité', icon: Activity, accent: 'green' },
 ];
+
+const DEFAULT_GESTION_ORDER = ['users', 'agences', 'plans', 'activity'];
 
 export default function AdminHubContent() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('adminTab') || 'gestion';
   const activeSubTab = searchParams.get('adminView') || 'users';
+  const [gestionTabOrder, setGestionTabOrder] = useSessionState<string[]>('admin_gestion_tab_order', DEFAULT_GESTION_ORDER);
 
   const handleTabChange = (value: string) => {
     const next = new URLSearchParams(searchParams);
@@ -68,6 +76,20 @@ export default function AdminHubContent() {
     setSearchParams(next);
   };
 
+  const handleGestionReorder = useCallback((newOrder: string[]) => {
+    setGestionTabOrder(newOrder);
+  }, [setGestionTabOrder]);
+
+  // Trouver la couleur de l'onglet Gestion actif
+  const activeGestionTab = GESTION_SUB_TABS.find(t => t.id === activeSubTab);
+  const accentColors: Record<string, string> = {
+    blue: 'hsl(var(--warm-blue))',
+    purple: 'hsl(var(--warm-purple))',
+    green: 'hsl(var(--warm-green))',
+    orange: 'hsl(var(--warm-orange))',
+  };
+  const activeGestionAccent = activeGestionTab?.accent ? accentColors[activeGestionTab.accent] : undefined;
+
   return (
     <div className="py-6 space-y-6">
       <Tabs value={activeTab} onValueChange={handleTabChange}>
@@ -82,44 +104,19 @@ export default function AdminHubContent() {
           transition={{ duration: 0.2 }}
           className="mt-6"
         >
-          {/* Gestion - avec sous-onglets style Folder */}
+          {/* Gestion - avec sous-onglets style DraggableFolder */}
           <TabsContent value="gestion" className="mt-0 focus-visible:outline-none">
             <Tabs value={activeSubTab} onValueChange={handleSubTabChange}>
-              {/* Sub-Tabs - Style Folder */}
-              <TabsList className="flex gap-1 bg-transparent h-auto p-0 mb-0">
-                {GESTION_SUB_TABS.map((tab) => {
-                  const Icon = tab.icon;
-                  const isActive = activeSubTab === tab.id;
-                  return (
-                    <motion.div
-                      key={tab.id}
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      whileHover={{ y: -2 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <TabsTrigger 
-                        value={tab.id}
-                        className={cn(
-                          "flex items-center gap-2 px-5 py-3",
-                          "rounded-t-2xl border-2 border-b-0",
-                          "font-medium text-sm transition-all duration-200",
-                          "relative -mb-[2px] z-10",
-                          isActive 
-                            ? "bg-background border-border text-foreground shadow-sm" 
-                            : "bg-muted/50 border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
-                        )}
-                      >
-                        <Icon className="w-4 h-4" />
-                        <span>{tab.label}</span>
-                      </TabsTrigger>
-                    </motion.div>
-                  );
-                })}
-              </TabsList>
+              <DraggableFolderTabsList 
+                tabs={GESTION_SUB_TABS} 
+                tabOrder={gestionTabOrder}
+                activeTab={activeSubTab}
+                onTabChange={handleSubTabChange}
+                onReorder={handleGestionReorder}
+                isDraggable={true}
+              />
               
-              {/* Content inside Folder */}
-              <div className="rounded-2xl rounded-tl-none border-2 border-border bg-background p-4 sm:p-6 shadow-sm">
+              <DraggableFolderContentContainer accentColor={activeGestionAccent}>
                 <TabsContent value="users" className="mt-0 focus-visible:outline-none">
                   <Suspense fallback={<LoadingFallback />}>
                     <TDRUsersPage />
@@ -139,7 +136,7 @@ export default function AdminHubContent() {
                     <AdminUserActivity />
                   </Suspense>
                 </TabsContent>
-              </div>
+              </DraggableFolderContentContainer>
             </Tabs>
           </TabsContent>
 

@@ -1,14 +1,20 @@
 /**
  * PlateformeView - Vue Plateforme (Santé, Modules, Sitemap, Flow)
+ * Utilise DraggableFolderTabs avec bordures colorées
  */
 
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { FolderTabsList, FolderContentContainer, FolderTabConfig } from '@/components/ui/folder-tabs';
+import { 
+  DraggableFolderTabsList, 
+  DraggableFolderContentContainer,
+  FolderTabConfig 
+} from '@/components/ui/draggable-folder-tabs';
 import { Activity, Map, GitBranch, ToggleRight, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { MaintenanceModeCard } from '@/components/admin/MaintenanceModeCard';
+import { useSessionState } from '@/hooks/useSessionState';
 
 const AdminSystemHealth = lazy(() => import('@/pages/AdminSystemHealth'));
 const AdminFeatureFlags = lazy(() => import('@/pages/admin/AdminFeatureFlags'));
@@ -16,11 +22,13 @@ const AdminSitemap = lazy(() => import('@/pages/admin/AdminSitemap'));
 const AdminFlow = lazy(() => import('@/pages/admin/AdminFlow'));
 
 const SUB_TABS: FolderTabConfig[] = [
-  { id: 'health', label: 'Santé', icon: Activity },
-  { id: 'modules', label: 'Modules', icon: ToggleRight },
-  { id: 'sitemap', label: 'Sitemap', icon: Map },
-  { id: 'flow', label: 'Flow', icon: GitBranch },
+  { id: 'health', label: 'Santé', icon: Activity, accent: 'green' },
+  { id: 'modules', label: 'Modules', icon: ToggleRight, accent: 'blue' },
+  { id: 'sitemap', label: 'Sitemap', icon: Map, accent: 'purple' },
+  { id: 'flow', label: 'Flow', icon: GitBranch, accent: 'orange' },
 ];
+
+const DEFAULT_TAB_ORDER = ['health', 'modules', 'sitemap', 'flow'];
 
 function LoadingFallback() {
   return (
@@ -35,6 +43,7 @@ export function PlateformeView() {
   const isSuperadmin = hasGlobalRole('superadmin');
   const [searchParams, setSearchParams] = useSearchParams();
   const activeView = searchParams.get('adminView') || 'health';
+  const [tabOrder, setTabOrder] = useSessionState<string[]>('admin_plateforme_tab_order', DEFAULT_TAB_ORDER);
 
   const handleViewChange = (value: string) => {
     const next = new URLSearchParams(searchParams);
@@ -44,15 +53,36 @@ export function PlateformeView() {
     setSearchParams(next);
   };
 
+  const handleReorder = useCallback((newOrder: string[]) => {
+    setTabOrder(newOrder);
+  }, [setTabOrder]);
+
+  // Trouver la couleur de l'onglet actif
+  const activeTab = SUB_TABS.find(t => t.id === activeView);
+  const accentColors: Record<string, string> = {
+    blue: 'hsl(var(--warm-blue))',
+    purple: 'hsl(var(--warm-purple))',
+    green: 'hsl(var(--warm-green))',
+    orange: 'hsl(var(--warm-orange))',
+  };
+  const activeAccent = activeTab?.accent ? accentColors[activeTab.accent] : undefined;
+
   return (
     <div className="space-y-4">
       {/* Mode Maintenance - Visible uniquement pour N6 */}
       {isSuperadmin && <MaintenanceModeCard compact />}
 
       <Tabs value={activeView} onValueChange={handleViewChange}>
-        <FolderTabsList tabs={SUB_TABS} activeTab={activeView} />
+        <DraggableFolderTabsList 
+          tabs={SUB_TABS} 
+          tabOrder={tabOrder}
+          activeTab={activeView}
+          onTabChange={handleViewChange}
+          onReorder={handleReorder}
+          isDraggable={true}
+        />
 
-        <FolderContentContainer>
+        <DraggableFolderContentContainer accentColor={activeAccent}>
           <TabsContent value="health" className="mt-0 focus-visible:outline-none">
             <Suspense fallback={<LoadingFallback />}>
               <AdminSystemHealth />
@@ -76,7 +106,7 @@ export function PlateformeView() {
               <AdminFlow />
             </Suspense>
           </TabsContent>
-        </FolderContentContainer>
+        </DraggableFolderContentContainer>
       </Tabs>
     </div>
   );
