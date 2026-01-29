@@ -134,13 +134,54 @@ export class DataService {
       this.cache = this.cacheEntry.data;
       return this.cache;
     }
-
-    logApogee.info('Chargement des données via proxy sécurisé SÉQUENTIEL (cache expiré ou forcé)...');
     
     const proxyOptions = agencySlug ? { agencySlug } : undefined;
     const startTime = Date.now();
     
-    // APPELS SÉQUENTIELS (un par un) pour éviter les rate limits 429
+    // Vérifier si le cache apogeeProxy est déjà chaud (préchargement effectué)
+    // Si oui, les appels seront instantanés (cache hit) → pas besoin de throttling
+    const hasProxyCacheWarm = agencySlug && apogeeProxy.hasCachedData('apiGetProjects', agencySlug);
+    
+    if (hasProxyCacheWarm) {
+      // Cache proxy chaud → appels parallèles instantanés (pas d'appels réseau)
+      logApogee.info('Cache proxy CHAUD détecté → chargement parallèle instantané');
+      
+      const [usersRes, clientsRes, projectsRes, interventionsRes, facturesRes, devisRes, creneauxRes] = await Promise.all([
+        apogeeProxy.getUsers(proxyOptions).catch(() => []),
+        apogeeProxy.getClients(proxyOptions).catch(() => []),
+        apogeeProxy.getProjects(proxyOptions).catch(() => []),
+        apogeeProxy.getInterventions(proxyOptions).catch(() => []),
+        apogeeProxy.getFactures(proxyOptions).catch(() => []),
+        apogeeProxy.getDevis(proxyOptions).catch(() => []),
+        apogeeProxy.getInterventionsCreneaux(proxyOptions).catch(() => []),
+      ]);
+      
+      const duration = Date.now() - startTime;
+      logApogee.info(`[CACHE-HIT] Toutes les données récupérées en ${duration}ms (depuis cache proxy préchargé)`);
+      
+      const cachedData: CachedData = {
+        users: validateAndCast<User>(usersRes || [], 'User', z.object({}).passthrough()),
+        clients: validateAndCast<Client>(clientsRes || [], 'Client', z.object({}).passthrough()),
+        projects: validateAndCast<Project>(projectsRes || [], 'Project', ProjectSchema),
+        interventions: validateAndCast<Intervention>(interventionsRes || [], 'Intervention', InterventionSchema),
+        factures: validateAndCast<Facture>(facturesRes || [], 'Facture', FactureSchema),
+        devis: validateAndCast<Devis>(devisRes || [], 'Devis', z.object({}).passthrough()),
+        creneaux: validateAndCast<InterventionCreneau>(creneauxRes || [], 'Creneau', z.object({}).passthrough()),
+      };
+      
+      this.cache = cachedData;
+      this.cacheEntry = {
+        data: cachedData,
+        timestamp: Date.now(),
+        agencyUrl: agencySlug || 'default',
+      };
+      
+      return this.cache;
+    }
+
+    // Cache proxy FROID → appels séquentiels avec throttling pour éviter rate limits
+    logApogee.info('Cache proxy FROID → chargement séquentiel avec throttling...');
+    
     let usersRes: any[] = [];
     let clientsRes: any[] = [];
     let projectsRes: any[] = [];
