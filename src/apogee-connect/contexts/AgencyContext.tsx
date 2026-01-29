@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { DataService } from '@/apogee-connect/services/dataService';
 import { logApogee } from '@/lib/logger';
 
@@ -19,17 +20,25 @@ const AgencyContext = createContext<AgencyContextType | undefined>(undefined);
 
 export function AgencyProvider({ children }: { children: ReactNode }) {
   const { agence, isAuthLoading } = useAuth();
+  const { isRealUserImpersonation, impersonatedUser } = useImpersonation();
   const [isApiConfigured, setIsApiConfigured] = useState(false);
   
   // Track previous agency to only clear cache when agency actually changes
   const previousAgencyRef = useRef<string | null>(null);
   
-  // Construire l'agence à partir du profil utilisateur
-  const currentAgency: Agency | null = agence 
+  // ============================================================================
+  // IMPERSONATION : Utiliser l'agence de l'utilisateur impersonné si actif
+  // ============================================================================
+  const effectiveAgence = isRealUserImpersonation && impersonatedUser 
+    ? impersonatedUser.agence 
+    : agence;
+  
+  // Construire l'agence à partir du profil utilisateur (réel ou impersonné)
+  const currentAgency: Agency | null = effectiveAgence 
     ? {
-        id: agence,
-        name: agence,
-        slug: agence
+        id: effectiveAgence,
+        name: effectiveAgence,
+        slug: effectiveAgence
       }
     : null;
 
@@ -41,9 +50,9 @@ export function AgencyProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Auth OK mais aucune agence
-    if (!agence) {
-      logApogee.warn('Aucune agence définie pour l\'utilisateur');
+    // Auth OK mais aucune agence (réelle ou impersonnée)
+    if (!effectiveAgence) {
+      logApogee.warn('Aucune agence définie pour l\'utilisateur' + (isRealUserImpersonation ? ' (impersonné)' : ''));
       setIsApiConfigured(true);
       previousAgencyRef.current = null;
       return;
@@ -52,18 +61,18 @@ export function AgencyProvider({ children }: { children: ReactNode }) {
     // Auth OK et agence présente
     if (currentAgency) {
       // Ne vider le cache QUE si l'agence a réellement changé
-      if (previousAgencyRef.current !== null && previousAgencyRef.current !== agence) {
-        logApogee.info(`Changement d'agence: ${previousAgencyRef.current} → ${agence}`);
+      if (previousAgencyRef.current !== null && previousAgencyRef.current !== effectiveAgence) {
+        logApogee.info(`Changement d'agence: ${previousAgencyRef.current} → ${effectiveAgence}`);
         DataService.clearCache();
       }
       
-      previousAgencyRef.current = agence;
+      previousAgencyRef.current = effectiveAgence;
       setIsApiConfigured(true);
     }
-  }, [isAuthLoading, agence, currentAgency?.id]);
+  }, [isAuthLoading, effectiveAgence, currentAgency?.id, isRealUserImpersonation]);
 
   // isAgencyReady = auth terminée + agence définie + API configurée
-  const isAgencyReady = !isAuthLoading && !!agence && isApiConfigured;
+  const isAgencyReady = !isAuthLoading && !!effectiveAgence && isApiConfigured;
 
   return (
     <AgencyContext.Provider value={{ currentAgency, agencyChangeCounter: 0, isAgencyReady }}>
