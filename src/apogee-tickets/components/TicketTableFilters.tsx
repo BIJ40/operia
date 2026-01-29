@@ -248,42 +248,47 @@ export function TicketTableFilters({
 
   return (
     <div className="space-y-3">
-      {/* Barre de filtres principale - Style Warm */}
-      <div className="flex flex-wrap items-center gap-2 bg-gradient-to-r from-slate-50/60 to-transparent dark:from-slate-800/20 rounded-2xl px-3 py-2">
-        {/* Recherche */}
-        <div className="relative flex-1 min-w-[200px] max-w-[300px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      {/* Barre de filtres principale - Style Warm Pastel ludique */}
+      <div className="flex flex-wrap items-center gap-2.5 bg-gradient-to-r from-sky-50/50 via-rose-50/30 to-amber-50/40 dark:from-slate-800/30 dark:via-slate-800/20 dark:to-slate-800/30 rounded-[20px] px-4 py-3 shadow-sm border border-sky-100/40 dark:border-slate-700/30">
+        {/* Recherche - Style pilule douce */}
+        <div className="relative flex-1 min-w-[200px] max-w-[320px]">
+          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-gradient-to-br from-sky-100 to-sky-50 dark:from-sky-900/40 dark:to-sky-800/30 flex items-center justify-center">
+            <Search className="h-3.5 w-3.5 text-sky-500 dark:text-sky-400" />
+          </div>
           <Input
-            placeholder="Rechercher..."
+            placeholder="Rechercher un ticket..."
             value={localSearch}
             onChange={(e) => setLocalSearch(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit()}
             onBlur={handleSearchSubmit}
-            className="pl-9 h-9 rounded-full border-muted bg-background/80"
+            className="pl-12 h-10 rounded-full border-sky-100/60 dark:border-slate-600/40 bg-white/70 dark:bg-slate-800/50 shadow-inner focus:border-sky-200 focus:ring-sky-100/50 placeholder:text-slate-400"
           />
         </div>
+
+        {/* Séparateur visuel doux */}
+        <div className="h-6 w-px bg-gradient-to-b from-transparent via-slate-200/60 to-transparent dark:via-slate-600/40 mx-1" />
 
         {/* Modules (multi-select) */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="h-9 rounded-full border-muted hover:bg-muted/50">
-              <Filter className="h-4 w-4 mr-2" />
-              Module
+            <button className="inline-flex items-center gap-2 h-9 px-4 text-sm font-medium rounded-full bg-white/60 dark:bg-slate-800/40 border border-violet-100/60 dark:border-violet-800/30 text-violet-600 dark:text-violet-400 hover:bg-violet-50/80 dark:hover:bg-violet-900/30 hover:border-violet-200 transition-all shadow-sm">
+              <Filter className="h-3.5 w-3.5" />
+              <span>Module</span>
               {selectedModules.length > 0 && (
-                <Badge variant="secondary" className="ml-2 px-1.5 rounded-full">
+                <span className="ml-0.5 px-1.5 py-0.5 text-xs font-semibold bg-violet-100 dark:bg-violet-900/50 text-violet-600 dark:text-violet-300 rounded-full">
                   {selectedModules.length}
-                </Badge>
+                </span>
               )}
-            </Button>
+            </button>
           </PopoverTrigger>
-          <PopoverContent className="w-72 bg-background z-50 rounded-xl" align="start">
+          <PopoverContent className="w-72 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm z-50 rounded-2xl border-violet-100/50 dark:border-violet-800/30 shadow-lg" align="start">
             <div className="space-y-2">
-              <div className="text-sm font-medium">Modules</div>
+              <div className="text-sm font-medium text-violet-700 dark:text-violet-300">Modules</div>
               <div className="space-y-1 max-h-[240px] overflow-auto">
                 {modules.map((mod) => (
                   <label
                     key={mod.id}
-                    className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded-lg px-2 py-1.5 transition-colors"
+                    className="flex items-center gap-2 cursor-pointer hover:bg-violet-50/60 dark:hover:bg-violet-900/30 rounded-xl px-2.5 py-2 transition-colors"
                   >
                     <Checkbox
                       checked={selectedModules.includes(mod.id)}
@@ -300,33 +305,31 @@ export function TicketTableFilters({
         {/* Statut (multi-select) */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="h-9 rounded-full border-muted hover:bg-muted/50">
-              Statut
+            <button className="inline-flex items-center gap-2 h-9 px-4 text-sm font-medium rounded-full bg-white/60 dark:bg-slate-800/40 border border-sky-100/60 dark:border-sky-800/30 text-sky-600 dark:text-sky-400 hover:bg-sky-50/80 dark:hover:bg-sky-900/30 hover:border-sky-200 transition-all shadow-sm">
+              <span>Statut</span>
               {selectedStatuses.length > 0 && (
-                <Badge variant="secondary" className="ml-2 px-1.5 rounded-full">
+                <span className="ml-0.5 px-1.5 py-0.5 text-xs font-semibold bg-sky-100 dark:bg-sky-900/50 text-sky-600 dark:text-sky-300 rounded-full">
                   {selectedStatuses.length}
-                </Badge>
+                </span>
               )}
-            </Button>
+            </button>
           </PopoverTrigger>
-          <PopoverContent className="w-72 bg-background z-50 rounded-xl" align="start">
+          <PopoverContent className="w-72 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm z-50 rounded-2xl border-sky-100/50 dark:border-sky-800/30 shadow-lg" align="start">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Statuts</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 text-xs px-2 rounded-lg"
+                <span className="text-sm font-medium text-sky-700 dark:text-sky-300">Statuts</span>
+                <button
+                  className="h-6 text-xs px-2.5 rounded-full bg-sky-50 dark:bg-sky-900/40 text-sky-600 dark:text-sky-400 hover:bg-sky-100 transition-colors"
                   onClick={handleSelectAllStatuses}
                 >
                   {selectedStatuses.length === statuses.length ? 'Tout décocher' : 'Tout cocher'}
-                </Button>
+                </button>
               </div>
               <div className="space-y-1 max-h-[240px] overflow-auto">
                 {statuses.map((status) => (
                   <label
                     key={status.id}
-                    className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded-lg px-2 py-1.5 transition-colors"
+                    className="flex items-center gap-2 cursor-pointer hover:bg-sky-50/60 dark:hover:bg-sky-900/30 rounded-xl px-2.5 py-2 transition-colors"
                   >
                     <Checkbox
                       checked={selectedStatuses.includes(status.id)}
@@ -342,13 +345,13 @@ export function TicketTableFilters({
 
         {/* PEC */}
         <Select value={filters.owner_side || 'all'} onValueChange={handleOwnerSideChange}>
-          <SelectTrigger className="w-[100px] h-9 rounded-full border-muted">
+          <SelectTrigger className="w-[105px] h-9 rounded-full border-teal-100/60 dark:border-teal-800/30 bg-white/60 dark:bg-slate-800/40 text-teal-600 dark:text-teal-400 hover:bg-teal-50/80 transition-all shadow-sm text-sm font-medium">
             <SelectValue placeholder="PEC" />
           </SelectTrigger>
-          <SelectContent className="bg-background z-50 rounded-xl">
-            <SelectItem value="all">Tous PEC</SelectItem>
+          <SelectContent className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm z-50 rounded-2xl border-teal-100/50 shadow-lg">
+            <SelectItem value="all" className="rounded-xl">Tous PEC</SelectItem>
             {OWNER_SIDES.map((os) => (
-              <SelectItem key={os.value} value={os.value}>
+              <SelectItem key={os.value} value={os.value} className="rounded-xl">
                 {os.label}
               </SelectItem>
             ))}
@@ -357,13 +360,13 @@ export function TicketTableFilters({
 
         {/* Origine */}
         <Select value={filters.reported_by || 'all'} onValueChange={handleReportedByChange}>
-          <SelectTrigger className="w-[110px] h-9 rounded-full border-muted">
+          <SelectTrigger className="w-[115px] h-9 rounded-full border-amber-100/60 dark:border-amber-800/30 bg-white/60 dark:bg-slate-800/40 text-amber-600 dark:text-amber-400 hover:bg-amber-50/80 transition-all shadow-sm text-sm font-medium">
             <SelectValue placeholder="Origine" />
           </SelectTrigger>
-          <SelectContent className="bg-background z-50 rounded-xl">
-            <SelectItem value="all">Tous</SelectItem>
+          <SelectContent className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm z-50 rounded-2xl border-amber-100/50 shadow-lg">
+            <SelectItem value="all" className="rounded-xl">Tous</SelectItem>
             {REPORTED_BY_OPTIONS.map((rb) => (
-              <SelectItem key={rb.value} value={rb.value}>
+              <SelectItem key={rb.value} value={rb.value} className="rounded-xl">
                 {rb.label}
               </SelectItem>
             ))}
@@ -373,13 +376,13 @@ export function TicketTableFilters({
         {/* Priorité slider */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="h-9 rounded-full border-muted hover:bg-muted/50">
-              Priorité {heatRange[0]}-{heatRange[1]}
-            </Button>
+            <button className="inline-flex items-center gap-2 h-9 px-4 text-sm font-medium rounded-full bg-white/60 dark:bg-slate-800/40 border border-rose-100/60 dark:border-rose-800/30 text-rose-500 dark:text-rose-400 hover:bg-rose-50/80 dark:hover:bg-rose-900/30 hover:border-rose-200 transition-all shadow-sm">
+              <span>🎯 {heatRange[0]}-{heatRange[1]}</span>
+            </button>
           </PopoverTrigger>
-          <PopoverContent className="w-64 bg-background z-50 rounded-xl" align="start">
-            <div className="space-y-4">
-              <div className="text-sm font-medium">Priorité thermique</div>
+          <PopoverContent className="w-64 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm z-50 rounded-2xl border-rose-100/50 shadow-lg" align="start">
+            <div className="space-y-4 p-1">
+              <div className="text-sm font-medium text-rose-600 dark:text-rose-400">Priorité thermique</div>
               <Slider
                 value={heatRange}
                 onValueChange={handleHeatRangeChange}
@@ -402,37 +405,37 @@ export function TicketTableFilters({
           value={filters.is_qualified === undefined ? 'all' : filters.is_qualified ? 'yes' : 'no'}
           onValueChange={handleQualifiedChange}
         >
-          <SelectTrigger className="w-[120px] h-9 rounded-full border-muted">
+          <SelectTrigger className="w-[125px] h-9 rounded-full border-emerald-100/60 dark:border-emerald-800/30 bg-white/60 dark:bg-slate-800/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50/80 transition-all shadow-sm text-sm font-medium">
             <SelectValue placeholder="Qualifié" />
           </SelectTrigger>
-          <SelectContent className="bg-background z-50 rounded-xl">
-            <SelectItem value="all">Tous</SelectItem>
-            <SelectItem value="yes">✓ Qualifiés</SelectItem>
-            <SelectItem value="no">Non qualifiés</SelectItem>
+          <SelectContent className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm z-50 rounded-2xl border-emerald-100/50 shadow-lg">
+            <SelectItem value="all" className="rounded-xl">Tous</SelectItem>
+            <SelectItem value="yes" className="rounded-xl">✓ Qualifiés</SelectItem>
+            <SelectItem value="no" className="rounded-xl">Non qualifiés</SelectItem>
           </SelectContent>
         </Select>
 
         {/* Tags */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="h-9 rounded-full border-muted hover:bg-muted/50">
-              <Tag className="h-4 w-4 mr-2" />
-              Tags
+            <button className="inline-flex items-center gap-2 h-9 px-4 text-sm font-medium rounded-full bg-white/60 dark:bg-slate-800/40 border border-pink-100/60 dark:border-pink-800/30 text-pink-500 dark:text-pink-400 hover:bg-pink-50/80 dark:hover:bg-pink-900/30 hover:border-pink-200 transition-all shadow-sm">
+              <Tag className="h-3.5 w-3.5" />
+              <span>Tags</span>
               {selectedTags.length > 0 && (
-                <Badge variant="secondary" className="ml-2 px-1.5 rounded-full">
+                <span className="ml-0.5 px-1.5 py-0.5 text-xs font-semibold bg-pink-100 dark:bg-pink-900/50 text-pink-600 dark:text-pink-300 rounded-full">
                   {selectedTags.length}
-                </Badge>
+                </span>
               )}
-            </Button>
+            </button>
           </PopoverTrigger>
-          <PopoverContent className="w-56 bg-background z-50 rounded-xl" align="start">
+          <PopoverContent className="w-56 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm z-50 rounded-2xl border-pink-100/50 shadow-lg" align="start">
             <div className="space-y-2">
-              <div className="text-sm font-medium">Tags</div>
+              <div className="text-sm font-medium text-pink-600 dark:text-pink-400">Tags</div>
               <div className="space-y-1">
                 {DEFAULT_TAGS.map((tag) => (
                   <label
                     key={tag}
-                    className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded-lg px-2 py-1.5 transition-colors"
+                    className="flex items-center gap-2 cursor-pointer hover:bg-pink-50/60 dark:hover:bg-pink-900/30 rounded-xl px-2.5 py-2 transition-colors"
                   >
                     <Checkbox checked={selectedTags.includes(tag)} onCheckedChange={() => handleTagToggle(tag)} />
                     <span className="text-sm">{tag}</span>
@@ -444,26 +447,30 @@ export function TicketTableFilters({
         </Popover>
 
         {/* Roadmap */}
-        <Button
-          variant={filters.roadmap_only ? 'default' : 'outline'}
-          size="sm"
-          className="h-9 rounded-full border-muted"
+        <button
+          className={`inline-flex items-center gap-2 h-9 px-4 text-sm font-medium rounded-full transition-all shadow-sm ${
+            filters.roadmap_only 
+              ? 'bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900/50 dark:to-purple-900/50 border border-indigo-200 dark:border-indigo-700 text-indigo-600 dark:text-indigo-300' 
+              : 'bg-white/60 dark:bg-slate-800/40 border border-indigo-100/60 dark:border-indigo-800/30 text-indigo-500 dark:text-indigo-400 hover:bg-indigo-50/80'
+          }`}
           onClick={() => onFiltersChange({ ...filters, roadmap_only: !filters.roadmap_only })}
         >
-          <MapIcon className="h-4 w-4 mr-2" />
-          Roadmap
-        </Button>
+          <MapIcon className="h-3.5 w-3.5" />
+          <span>Roadmap</span>
+        </button>
 
         {/* Date */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="h-9 rounded-full border-muted hover:bg-muted/50">
-              <CalendarIcon className="h-4 w-4 mr-2" />
-              {dateRange.from ? format(dateRange.from, 'dd/MM', { locale: fr }) : 'Date'}
-              {dateRange.to && ` - ${format(dateRange.to, 'dd/MM', { locale: fr })}`}
-            </Button>
+            <button className="inline-flex items-center gap-2 h-9 px-4 text-sm font-medium rounded-full bg-white/60 dark:bg-slate-800/40 border border-cyan-100/60 dark:border-cyan-800/30 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50/80 dark:hover:bg-cyan-900/30 hover:border-cyan-200 transition-all shadow-sm">
+              <CalendarIcon className="h-3.5 w-3.5" />
+              <span>
+                {dateRange.from ? format(dateRange.from, 'dd/MM', { locale: fr }) : 'Date'}
+                {dateRange.to && ` - ${format(dateRange.to, 'dd/MM', { locale: fr })}`}
+              </span>
+            </button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 bg-background z-50 rounded-xl" align="start">
+          <PopoverContent className="w-auto p-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm z-50 rounded-2xl border-cyan-100/50 shadow-lg" align="start">
             <Calendar
               mode="range"
               selected={{ from: dateRange.from, to: dateRange.to }}
@@ -475,15 +482,13 @@ export function TicketTableFilters({
 
         {/* Reset */}
         {activeFiltersCount > 0 && (
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full" 
+          <button 
+            className="h-9 w-9 rounded-full flex items-center justify-center bg-rose-50/80 dark:bg-rose-900/30 border border-rose-200/60 dark:border-rose-800/30 text-rose-500 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-all shadow-sm" 
             onClick={handleReset}
             title="Réinitialiser les filtres"
           >
             <X className="h-4 w-4" />
-          </Button>
+          </button>
         )}
       </div>
 
