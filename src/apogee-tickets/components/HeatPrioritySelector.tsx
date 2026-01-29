@@ -3,7 +3,7 @@
  * Affiche un badge ovale qui ouvre un popover avec tous les niveaux
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Flame, Snowflake } from 'lucide-react';
@@ -62,9 +62,16 @@ export function HeatPrioritySelector({
   size = 'sm',
 }: HeatPrioritySelectorProps) {
   const [open, setOpen] = useState(false);
+  // État local pour mise à jour optimiste (UI immédiate)
+  const [localPriority, setLocalPriority] = useState(priority);
   
-  const p = priority !== null && priority !== undefined 
-    ? Math.max(0, Math.min(12, priority)) 
+  // Sync avec la prop quand elle change (après sauvegarde confirmée)
+  useEffect(() => {
+    setLocalPriority(priority);
+  }, [priority]);
+  
+  const p = localPriority !== null && localPriority !== undefined 
+    ? Math.max(0, Math.min(12, localPriority)) 
     : null;
   
   const bgColor = p !== null ? getHeatColor(p) : undefined;
@@ -77,8 +84,11 @@ export function HeatPrioritySelector({
     : 'text-xs px-2.5 py-1';
 
   const handleSelect = (value: number) => {
-    onChange(value);
+    // Mise à jour optimiste : UI immédiate
+    setLocalPriority(value);
     setOpen(false);
+    // Sauvegarde en arrière-plan
+    onChange(value);
   };
 
   if (p === null) {
