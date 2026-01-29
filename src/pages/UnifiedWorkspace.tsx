@@ -167,20 +167,28 @@ function UnifiedWorkspaceContent() {
     { id: 'admin', label: 'Admin', icon: Shield, requiresOption: { module: 'admin_plateforme' } },
   ], []);
   
-  // Vérifier si un onglet est accessible (pour le rendre cliquable ou non)
-  // Utilise le rôle EFFECTIF (impersonné) pour refléter l'expérience utilisateur
-  const isTabAccessible = useCallback((tab: TabConfig): boolean => {
+  // Vérifier si un onglet est accessible pour l'utilisateur EFFECTIF (impersonné)
+  // En mode impersonation, on montre ce que l'utilisateur impersonné verrait
+  const isTabAccessibleForEffectiveUser = useCallback((tab: TabConfig): boolean => {
     if (!tab.requiresOption) return true;
-    // IMPORTANT: Utiliser realIsPlatformAdmin pour que l'admin réel puisse naviguer partout
-    // même en mode impersonation (sinon il serait bloqué)
-    if (realIsPlatformAdmin) return true;
+    // Utiliser les modules EFFECTIFS (de l'utilisateur impersonné)
+    if (effectiveIsPlatformAdmin) return true;
     
     const { module, option } = tab.requiresOption;
     if (option) {
       return hasModuleOption(module as any, option);
     }
     return hasModule(module as any);
-  }, [realIsPlatformAdmin, hasModule, hasModuleOption]);
+  }, [effectiveIsPlatformAdmin, hasModule, hasModuleOption]);
+  
+  // L'admin réel peut toujours cliquer sur les onglets (pour naviguer)
+  // mais on affiche visuellement l'état "désactivé" selon l'utilisateur impersonné
+  const isTabAccessible = useCallback((tab: TabConfig): boolean => {
+    if (!tab.requiresOption) return true;
+    // L'admin réel peut toujours naviguer (même pour voir un onglet vide)
+    if (realIsPlatformAdmin) return true;
+    return isTabAccessibleForEffectiveUser(tab);
+  }, [realIsPlatformAdmin, isTabAccessibleForEffectiveUser]);
   
   // Vérifier si un onglet doit être complètement masqué (pas juste désactivé)
   // Utilise le rôle EFFECTIF pour l'affichage
@@ -191,6 +199,15 @@ function UnifiedWorkspaceContent() {
     }
     return false;
   }, [realIsPlatformAdmin]);
+  
+  // Détermine si un onglet doit apparaître comme désactivé visuellement
+  // En mode impersonation, on montre les onglets inaccessibles comme grisés
+  const isTabVisuallyDisabled = useCallback((tab: TabConfig): boolean => {
+    if (isRealUserImpersonation) {
+      return !isTabAccessibleForEffectiveUser(tab);
+    }
+    return !isTabAccessible(tab);
+  }, [isRealUserImpersonation, isTabAccessibleForEffectiveUser, isTabAccessible]);
   
   // Filtrer les onglets masqués (Admin pour non-admins)
   const visibleTabs = useMemo(() => allTabs.filter(tab => !isTabHidden(tab)), [allTabs, isTabHidden]);
@@ -376,17 +393,18 @@ function UnifiedWorkspaceContent() {
                           const Icon = tab.icon;
                           const accent = ACCENT_THEMES[unifiedTabAccent[tab.id]];
                           const isAccessible = isTabAccessible(tab);
+                          const isVisuallyDisabled = isTabVisuallyDisabled(tab);
                           return (
                             <DraggableTab
                               key={tab.id}
                               id={tab.id}
                               isActive={validActiveTab === tab.id}
-                              isDraggable={isAccessible}
-                              isDisabled={!isAccessible}
-                              onClick={() => setActiveTab(tab.id)}
+                              isDraggable={isAccessible && !isVisuallyDisabled}
+                              isDisabled={isVisuallyDisabled}
+                              onClick={() => isAccessible ? setActiveTab(tab.id) : undefined}
                               className={tabButtonClass}
                             >
-                              <div className="flex items-center gap-1.5">
+                              <div className={`flex items-center gap-1.5 ${isVisuallyDisabled ? 'opacity-40' : ''}`}>
                                  <div className={`w-6 h-6 rounded-lg bg-gradient-to-br ${accent.gradient} flex items-center justify-center shadow-sm transition-transform duration-300 group-hover:scale-110 shrink-0`}>
                                    <Icon className="w-3 h-3 text-primary-foreground" />
                                 </div>
