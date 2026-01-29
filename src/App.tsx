@@ -20,6 +20,7 @@ import Error500 from "./pages/Error500";
 const UnifiedWorkspace = lazy(() => import("./pages/UnifiedWorkspace"));
 const Dashboard = lazy(() => import("./pages/DashboardStatic"));
 const Profile = lazy(() => import("./pages/Profile"));
+const Agency = lazy(() => import("./pages/Agency"));
 const Changelog = lazy(() => import("./pages/Changelog"));
 const Roadmap = lazy(() => import("./pages/Roadmap"));
 const QrAssetPage = lazy(() => import("./pages/QrAssetPage"));
@@ -125,6 +126,7 @@ function AppContent() {
             {/* ============================================ */}
             <Route path="/" element={<UnifiedWorkspace />} />
             <Route path="/profile" element={<MinimalLayout backTab="accueil" backLabel="Retour à l'accueil"><RoleGuard><Profile /></RoleGuard></MinimalLayout>} />
+            <Route path="/agence" element={<MinimalLayout backTab="accueil" backLabel="Retour à l'accueil"><RoleGuard><Agency /></RoleGuard></MinimalLayout>} />
             <Route path="/changelog" element={<MinimalLayout backTab="accueil" backLabel="Retour à l'accueil"><Changelog /></MinimalLayout>} />
             <Route path="/roadmap" element={<MinimalLayout backTab="accueil" backLabel="Retour à l'accueil"><Roadmap /></MinimalLayout>} />
             

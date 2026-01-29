@@ -417,70 +417,6 @@ export default function Profile() {
           </WarmCard>
         </section>
 
-        {/* ====================== SECTION MON AGENCE ====================== */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-warm-orange/80 to-warm-pink/60 flex items-center justify-center shadow-sm">
-              <Building2 className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-foreground">Mon agence</h2>
-              <p className="text-sm text-muted-foreground">Informations sur votre agence de rattachement</p>
-            </div>
-          </div>
-
-          {/* Rattachement agence */}
-          <WarmCard 
-            icon={Building2} 
-            title="Rattachement"
-            description="Votre agence et contact associé"
-            accentColor="orange"
-            className="border-2 border-warm-orange/20"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2 text-muted-foreground">
-                  <Building2 className="w-4 h-4" />
-                  Agence
-                </Label>
-                <Input
-                  value={profile?.agence || ''}
-                  disabled
-                  className="bg-muted cursor-not-allowed rounded-xl"
-                  placeholder="Non rattaché"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2 text-muted-foreground">
-                  <Mail className="w-4 h-4" />
-                  Email de l'agence
-                </Label>
-                <Input
-                  value="contact@agence.fr"
-                  disabled
-                  className="bg-muted cursor-not-allowed rounded-xl"
-                  placeholder="Non renseigné"
-                />
-              </div>
-            </div>
-          </WarmCard>
-
-          {/* Informations détaillées agence */}
-          <WarmCard 
-            icon={Info} 
-            title="Détails de l'agence"
-            description="Coordonnées et informations complémentaires"
-            accentColor="teal"
-            className="border-2 border-warm-teal/10"
-          >
-            <ApiToggleProvider>
-              <AgencyProvider>
-                <AgencyInfoCompact />
-              </AgencyProvider>
-            </ApiToggleProvider>
-          </WarmCard>
-        </section>
-
         {/* Actions */}
         <div className="flex gap-4 pt-4">
           <Button
@@ -490,11 +426,16 @@ export default function Profile() {
           >
             Retour
           </Button>
+          <Button
+            variant="default"
+            onClick={() => navigate('/agence')}
+            className="flex-1 rounded-xl bg-warm-orange hover:bg-warm-orange/90"
+          >
+            <Building2 className="w-4 h-4 mr-2" />
+            Voir mon agence
+          </Button>
         </div>
 
-        <p className="text-sm text-center text-muted-foreground pb-4">
-          Pour modifier votre email, agence ou rôle, contactez votre administrateur.
-        </p>
       </div>
     </WarmPageContainer>
   );
