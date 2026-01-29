@@ -1,6 +1,7 @@
 /**
  * Barre d'onglets style navigateur pour la vue Liste
  * Onglet "LISTE" fixe à gauche + tickets ouverts à droite
+ * Style "folder tab" avec bordure continue vers le contenu
  */
 
 import { X, Loader2, List } from 'lucide-react';
@@ -27,43 +28,38 @@ export function TicketTabBar({
 }: TicketTabBarProps) {
   const isListeActive = activeTabId === null;
 
-  // Couleur d'accent pour l'onglet actif
-  const getActiveColor = () => {
-    if (isListeActive) return 'sky';
-    return 'violet'; // Couleur pour les tickets
-  };
-
-  const activeColor = getActiveColor();
-
   return (
-    <div className="flex items-center gap-0 bg-gradient-to-r from-slate-50/80 via-slate-100/50 to-slate-50/80 dark:from-slate-800/40 dark:via-slate-800/60 dark:to-slate-800/40 overflow-x-auto px-2 pt-2">
+    <div className="flex items-end gap-0 px-2 pt-2 relative">
+      {/* Ligne de fond (bordure continue) - visible sous les onglets inactifs */}
+      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-border" />
+      
       {/* Onglet LISTE - toujours visible et fixe */}
       <button
         onClick={() => onTabClick(null)}
         className={cn(
-          "flex items-center gap-2 px-5 py-2.5 text-sm font-semibold transition-all shrink-0 rounded-t-xl relative",
+          "flex items-center gap-2 px-5 py-2.5 text-sm font-semibold transition-all shrink-0 rounded-t-xl relative z-10",
           isListeActive
-            ? "bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-md border-2 border-b-0 border-sky-300 dark:border-sky-600"
-            : "bg-slate-100/80 dark:bg-slate-700/50 border-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/80 dark:hover:bg-slate-700/80"
+            ? "bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border-2 border-b-0 border-sky-400 dark:border-sky-500"
+            : "bg-slate-100/80 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/80 dark:hover:bg-slate-700/80"
         )}
       >
-        <List className={cn("h-4 w-4", isListeActive && "text-sky-500")} />
+        <List className={cn("h-4 w-4", isListeActive && "text-sky-600 dark:text-sky-400")} />
         LISTE
-        {/* Prolongement de la bordure vers le bas */}
+        {/* Masque la ligne de fond sous l'onglet actif */}
         {isListeActive && (
-          <div className="absolute -bottom-[2px] left-0 right-0 h-[3px] bg-white dark:bg-slate-900" />
+          <div className="absolute -bottom-[2px] left-0 right-0 h-[2px] bg-sky-50 dark:bg-sky-950/50" />
         )}
       </button>
       
-      {/* Séparateur vertical accentué */}
+      {/* Séparateur vertical */}
       {tabs.length > 0 && (
-        <div className="flex items-center mx-3 shrink-0">
-          <div className="h-8 w-0.5 bg-gradient-to-b from-violet-200 via-violet-300 to-violet-200 dark:from-violet-700 dark:via-violet-600 dark:to-violet-700 rounded-full" />
+        <div className="flex items-center mx-3 shrink-0 mb-1">
+          <div className="h-6 w-px bg-slate-300 dark:bg-slate-600" />
         </div>
       )}
       
       {/* Onglets tickets */}
-      <div className="flex items-center gap-1.5 flex-1 overflow-x-auto">
+      <div className="flex items-end gap-1 flex-1 overflow-x-auto">
         {tabs.map((tab) => {
           const isActive = activeTabId === tab.id;
           return (
@@ -71,10 +67,10 @@ export function TicketTabBar({
               key={tab.id}
               onClick={() => onTabClick(tab.id)}
               className={cn(
-                "group flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all shrink-0 rounded-t-xl relative",
+                "group flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all shrink-0 rounded-t-xl relative z-10",
                 isActive
-                  ? "bg-white dark:bg-slate-900 text-violet-600 dark:text-violet-400 shadow-md border-2 border-b-0 border-violet-300 dark:border-violet-600"
-                  : "bg-slate-100/60 dark:bg-slate-700/40 border-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/70 dark:hover:bg-slate-700/60"
+                  ? "bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 border-2 border-b-0 border-violet-400 dark:border-violet-500"
+                  : "bg-slate-100/60 dark:bg-slate-700/40 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/70 dark:hover:bg-slate-700/60"
               )}
             >
               <span className={cn(
@@ -97,9 +93,9 @@ export function TicketTabBar({
               >
                 <X className="h-3.5 w-3.5" />
               </button>
-              {/* Prolongement de la bordure vers le bas */}
+              {/* Masque la ligne de fond sous l'onglet actif */}
               {isActive && (
-                <div className="absolute -bottom-[2px] left-0 right-0 h-[3px] bg-white dark:bg-slate-900" />
+                <div className="absolute -bottom-[2px] left-0 right-0 h-[2px] bg-violet-50 dark:bg-violet-950/50" />
               )}
             </button>
           );
@@ -107,7 +103,7 @@ export function TicketTabBar({
       </div>
       
       {/* Indicateur de sauvegarde + fermer tout */}
-      <div className="flex items-center gap-2 ml-auto px-3 shrink-0">
+      <div className="flex items-center gap-2 ml-auto px-3 shrink-0 mb-1">
         {isSaving ? (
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
             <Loader2 className="h-3 w-3 animate-spin" />
