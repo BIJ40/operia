@@ -2,7 +2,7 @@
  * InternalGuideHome - Page d'accueil du Guide Apogée interne
  */
 
-import { BookOpen, Search, Sparkles } from 'lucide-react';
+import { BookOpen, Search } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { useEditor } from '@/contexts/EditorContext';
@@ -84,34 +84,6 @@ export function InternalGuideHome() {
         />
       </div>
 
-      {/* Navigation rapide */}
-      <div className="space-y-3">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-          <Sparkles className="w-4 h-4" />
-          Accès rapide
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {filteredCategories.slice(0, 6).map(category => {
-            const Icon = getIcon(category.icon);
-            const isCustomImage = category.icon?.startsWith('http://') || category.icon?.startsWith('https://');
-            
-            return (
-              <button
-                key={category.id}
-                onClick={() => openTab(category.slug, category.title, Icon)}
-                className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent hover:text-accent-foreground transition-colors text-left group"
-              >
-                {isCustomImage && category.icon ? (
-                  <img src={category.icon} alt="" className="w-5 h-5 object-contain" />
-                ) : (
-                  <Icon className="w-5 h-5 text-primary" />
-                )}
-                <span className="text-sm font-medium truncate">{category.title}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
 
       {/* Guide d'utilisation */}
       <div className="bg-muted/50 rounded-lg p-4 space-y-2">
