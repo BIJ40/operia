@@ -116,7 +116,7 @@ export const UserPermissionsDialog = memo(function UserPermissionsDialog({
           </p>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 -mx-6 px-6">
+        <ScrollArea className="flex-1 -mx-6 px-6 max-h-[55vh]">
           <div className="space-y-3 py-4">
             {MODULE_DEFINITIONS.map(moduleDef => {
               const isEnabled = isModuleEnabled(moduleDef.key);
