@@ -49,7 +49,7 @@ import { OrigineBadge } from './OrigineBadge';
 import { OwnerSideSlider, ownerSideToSliderValue, sliderValueToOwnerSide } from './OwnerSideSlider';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { useMyTicketRole, useAllowedTransitions, useLogTicketAction } from '../hooks/useTicketPermissions';
+import { useMyTicketRole, useAllowedTransitions } from '../hooks/useTicketPermissions';
 import { TicketTimelineTab } from './TicketTimelineTab';
 import { errorToast } from '@/lib/toastHelpers';
 import { TagSelector } from './TagSelector';
@@ -92,7 +92,6 @@ export function TicketInlinePanel({
   const canEditDevFields = canManage || isDeveloper;
   
   const { data: allowedTransitions = [] } = useAllowedTransitions(ticket.kanban_status || '');
-  const logAction = useLogTicketAction();
   const markAsViewed = useMarkTicketAsViewed();
   const { comments, addComment, updateComment } = useApogeeTicket(ticket.id);
   
