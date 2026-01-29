@@ -51,14 +51,8 @@ function LoadingFallback() {
   );
 }
 
-// Style "folder" pour les sous-onglets
-const folderTabClass = `
-  relative px-4 py-2 rounded-t-lg border-2 border-b-0 transition-all duration-200 whitespace-nowrap
-  bg-muted/40 border-border/50 text-muted-foreground text-sm font-medium
-  hover:bg-background/80 hover:text-foreground
-  data-[state=active]:bg-background data-[state=active]:border-primary/40 data-[state=active]:text-foreground
-  data-[state=active]:z-10 data-[state=active]:-mb-[2px] data-[state=active]:pb-[calc(0.5rem+2px)]
-`;
+// Composant FolderTabs réutilisable (même style que AdminHubContent)
+import { motion } from 'framer-motion';
 
 interface FolderTabsProps {
   tabs: { id: string; label: string; icon: React.ElementType }[];
@@ -68,27 +62,37 @@ interface FolderTabsProps {
 
 function FolderTabs({ tabs, activeTab, onTabChange }: FolderTabsProps) {
   return (
-    <div className="mb-0">
-      <div className="flex gap-1 items-end">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          return (
+    <div className="flex gap-1 bg-transparent h-auto p-0 mb-0">
+      {tabs.map((tab) => {
+        const Icon = tab.icon;
+        const isActive = activeTab === tab.id;
+        return (
+          <motion.div
+            key={tab.id}
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.98 }}
+          >
             <button
-              key={tab.id}
               type="button"
-              data-state={activeTab === tab.id ? 'active' : 'inactive'}
               onClick={() => onTabChange(tab.id)}
-              className={folderTabClass}
+              className={cn(
+                "flex items-center gap-2 px-5 py-3",
+                "rounded-t-2xl border-2 border-b-0",
+                "font-medium text-sm transition-all duration-200",
+                "relative -mb-[2px] z-10",
+                isActive 
+                  ? "bg-background border-border text-foreground shadow-sm" 
+                  : "bg-muted/50 border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
             >
-              <div className="flex items-center gap-2">
-                <Icon className="w-4 h-4" />
-                <span>{tab.label}</span>
-              </div>
+              <Icon className="w-4 h-4" />
+              <span>{tab.label}</span>
             </button>
-          );
-        })}
-      </div>
-      <div className="border-t-2 border-primary/40 bg-background rounded-tr-xl" />
+          </motion.div>
+        );
+      })}
     </div>
   );
 }
@@ -105,7 +109,7 @@ function ApporteursSection() {
   return (
     <div className="space-y-0">
       <FolderTabs tabs={tabs} activeTab={subTab} onTabChange={(t) => setSubTab(t as ApporteursSubTab)} />
-      <div className="bg-background rounded-b-xl rounded-tr-xl border-2 border-t-0 border-primary/40 p-4">
+      <div className="rounded-2xl rounded-tl-none border-2 border-border bg-background p-4 sm:p-6 shadow-sm">
         {subTab === 'espace' && (
           <Suspense fallback={<LoadingFallback />}>
             <MesApporteursTab />
@@ -134,7 +138,7 @@ function AdministratifSection() {
   return (
     <div className="space-y-0">
       <FolderTabs tabs={tabs} activeTab={subTab} onTabChange={(t) => setSubTab(t as AdminSubTab)} />
-      <div className="bg-background rounded-b-xl rounded-tr-xl border-2 border-t-0 border-primary/40 p-4">
+      <div className="rounded-2xl rounded-tl-none border-2 border-border bg-background p-4 sm:p-6 shadow-sm">
         {subTab === 'reunions' && (
           <Suspense fallback={<LoadingFallback />}>
             <RHMeetingsPage />
