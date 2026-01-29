@@ -434,8 +434,6 @@ export default function HelpConfort() {
         <PageHeader
           title="Base de connaissance HelpConfort"
           subtitle="Documentation et ressources sur HelpConfort"
-          backTo={ROUTES.academy.index}
-          backLabel="Help! Academy"
         />
 
         {!isEditMode && helpconfortCategories.length > 0 && (

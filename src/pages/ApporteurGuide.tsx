@@ -502,8 +502,6 @@ export default function ApporteurGuide() {
         <PageHeader
           title="Guide Apporteurs"
           subtitle="Toutes les informations pour les apporteurs d'affaires"
-          backTo={ROUTES.academy.index}
-          backLabel="Help! Academy"
         />
 
         <div className="mb-6 flex gap-3 items-center">
