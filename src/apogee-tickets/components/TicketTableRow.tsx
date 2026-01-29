@@ -74,7 +74,7 @@ export function TicketTableRow({
   const canEditEstimation = canManage || ticketRole === 'developer';
 
   // Style des cellules non-éditables (plus doux)
-  const disabledCellClass = "bg-muted/20";
+  const disabledCellClass = "bg-slate-50/50 dark:bg-slate-800/20";
 
   // Helper pour appliquer la largeur de colonne
   const cellStyle = (index: number) => columnWidths ? { width: columnWidths[index] } : {};
@@ -89,24 +89,24 @@ export function TicketTableRow({
   // Couleur de statut pour le badge
   const getStatusColor = (statusId: string) => {
     const statusColorMap: Record<string, string> = {
-      'BACKLOG': 'bg-slate-100 text-slate-700 border-slate-200',
-      'TODO': 'bg-amber-50 text-amber-700 border-amber-200',
-      'IN_PROGRESS': 'bg-blue-50 text-blue-700 border-blue-200',
-      'REVIEW': 'bg-purple-50 text-purple-700 border-purple-200',
-      'DONE': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      'ARCHIVED': 'bg-gray-100 text-gray-500 border-gray-200',
+      'BACKLOG': 'bg-slate-50 text-slate-600 border-slate-100',
+      'TODO': 'bg-amber-50/70 text-amber-600 border-amber-100',
+      'IN_PROGRESS': 'bg-sky-50/70 text-sky-600 border-sky-100',
+      'REVIEW': 'bg-violet-50/70 text-violet-600 border-violet-100',
+      'DONE': 'bg-emerald-50/70 text-emerald-600 border-emerald-100',
+      'ARCHIVED': 'bg-gray-50 text-gray-400 border-gray-100',
     };
-    return statusColorMap[statusId] || 'bg-muted text-muted-foreground border-border';
+    return statusColorMap[statusId] || 'bg-slate-50/50 text-slate-500 border-slate-100';
   };
 
   return (
     <TableRow
       className={cn(
-        "cursor-pointer transition-all hover:bg-muted/40",
-        isSelected && "bg-primary/5 ring-1 ring-primary/30",
-        ticket.needs_completion && "border-l-2 border-l-orange-400",
-        !ticket.is_qualified && "bg-amber-50/20 dark:bg-amber-950/10",
-        shouldBlink && "animate-pulse ring-2 ring-green-500"
+        "cursor-pointer transition-all hover:bg-slate-50/60 dark:hover:bg-slate-800/30",
+        isSelected && "bg-sky-50/40 ring-1 ring-sky-200/50 dark:bg-sky-900/20 dark:ring-sky-700/30",
+        ticket.needs_completion && "border-l-2 border-l-amber-300",
+        !ticket.is_qualified && "bg-amber-50/30 dark:bg-amber-950/10",
+        shouldBlink && "animate-pulse ring-2 ring-emerald-300"
       )}
       onClick={onSelect}
       onDoubleClick={onOpenDetail}
@@ -114,7 +114,7 @@ export function TicketTableRow({
       {/* Réf - Index 0 */}
       {isVisible(0) && (
         <TableCell className="font-mono text-xs whitespace-nowrap overflow-hidden py-3" style={cellStyle(0)}>
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-muted/50 text-muted-foreground font-medium">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100/70 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 font-medium">
             APO-{ticket.ticket_number}
           </span>
         </TableCell>
@@ -162,10 +162,10 @@ export function TicketTableRow({
         <TableCell className="overflow-hidden py-3" style={cellStyle(3)}>
           <div className="flex flex-wrap gap-1">
             {ticket.impact_tags?.map(tag => {
-              const tagColor = tag === 'BUG' ? 'bg-red-100 text-red-700 border-red-200' :
-                               tag === 'EVO' ? 'bg-blue-100 text-blue-700 border-blue-200' :
-                               tag === 'NTH' ? 'bg-slate-100 text-slate-600 border-slate-200' :
-                               'bg-purple-100 text-purple-700 border-purple-200';
+              const tagColor = tag === 'BUG' ? 'bg-rose-50 text-rose-500 border-rose-100' :
+                               tag === 'EVO' ? 'bg-sky-50 text-sky-500 border-sky-100' :
+                               tag === 'NTH' ? 'bg-slate-50 text-slate-500 border-slate-100' :
+                               'bg-violet-50 text-violet-500 border-violet-100';
               return (
                 <Badge key={tag} variant="outline" className={`${tagColor} text-xs whitespace-nowrap rounded-full border px-2`}>
                   {tag}
@@ -246,7 +246,7 @@ export function TicketTableRow({
               </SelectContent>
             </Select>
           ) : (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-muted/50 text-xs text-muted-foreground">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-50 dark:bg-slate-800/40 text-xs text-slate-500 dark:text-slate-400">
               {ticket.owner_side || '—'}
             </span>
           )}
@@ -264,7 +264,7 @@ export function TicketTableRow({
       {isVisible(8) && (
         <TableCell className={cn("text-center overflow-hidden py-3", !canEditEstimation && disabledCellClass)} style={cellStyle(8)}>
           {ticket.h_min !== null || ticket.h_max !== null ? (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-muted/50 text-xs">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-50 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 text-xs">
               {ticket.h_min ?? '?'}-{ticket.h_max ?? '?'}h
             </span>
           ) : (

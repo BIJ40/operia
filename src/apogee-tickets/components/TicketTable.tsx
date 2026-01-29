@@ -391,13 +391,13 @@ export function TicketTable({
   return (
     <div className="space-y-4">
       {/* Stats rapides - Style Warm */}
-      <div className="flex items-center justify-between bg-gradient-to-r from-muted/30 to-transparent rounded-2xl px-4 py-3">
+      <div className="flex items-center justify-between bg-gradient-to-r from-slate-50/80 to-transparent dark:from-slate-800/30 rounded-2xl px-4 py-3">
         <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="rounded-full px-3 bg-primary/10 text-primary border-0">
+          <Badge variant="secondary" className="rounded-full px-3 bg-sky-50 text-sky-600 dark:bg-sky-900/30 dark:text-sky-300 border-0">
             {tickets.length} ticket{tickets.length !== 1 ? 's' : ''}
           </Badge>
           {selectedRowId && (
-            <Badge variant="outline" className="text-xs rounded-full border-primary/30 bg-primary/5">
+            <Badge variant="outline" className="text-xs rounded-full border-sky-200 bg-sky-50/50 dark:border-sky-800 dark:bg-sky-900/20 text-sky-700 dark:text-sky-300">
               Sélectionné: APO-{paginatedTickets.find(t => t.id === selectedRowId)?.ticket_number}
               <span className="ml-2 text-muted-foreground">
                 (1=détail, 2=statut, ↑↓=navigation)
