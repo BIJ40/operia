@@ -557,7 +557,7 @@ export function TicketInlinePanel({
                     />
                   </div>
                 </div>
-                <div className="w-[240px] shrink-0">
+                <div className="w-[260px] shrink-0">
                   <label className="text-xs text-muted-foreground">Porteur</label>
                   <OwnerSideSlider
                     value={ownerSideToSliderValue(ticket.owner_side)}
