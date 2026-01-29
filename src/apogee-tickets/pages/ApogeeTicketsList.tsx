@@ -262,10 +262,10 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
 
       {/* Zone de contenu: soit la liste, soit le ticket actif - avec bordure continue depuis l'onglet */}
       <div className={cn(
-        "flex-1 overflow-hidden mx-2 mb-2",
+        "flex-1 overflow-hidden mx-2 mb-2 border-2",
         showingList 
-          ? "bg-sky-50 dark:bg-sky-950/50 border-2 border-t-0 border-sky-400 dark:border-sky-500 rounded-bl-2xl rounded-br-2xl rounded-tr-2xl" 
-          : "bg-violet-50 dark:bg-violet-950/50 border-2 border-t-0 border-violet-400 dark:border-violet-500 rounded-2xl"
+          ? "bg-sky-50 dark:bg-sky-950/50 border-t-0 border-sky-400 dark:border-sky-500 rounded-bl-2xl rounded-br-2xl rounded-tr-2xl" 
+          : "bg-violet-50 dark:bg-violet-950/50 border-violet-400 dark:border-violet-500 rounded-2xl"
       )}>
         {showingList ? (
           /* Vue Liste */
