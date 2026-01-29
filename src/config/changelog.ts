@@ -15,6 +15,28 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.8.6",
+    title: "Audit Sécurité RLS",
+    date: "2026-01-29",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // AUDIT SÉCURITÉ RLS - FAUX POSITIFS RÉSOLUS
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'audit', description: 'Analyse 5 alertes sécurité RLS : 100% faux positifs ou appropriées' },
+      { type: 'audit', description: 'profiles : policy anon USING(false) correcte (blocage explicite)' },
+      { type: 'audit', description: 'collaborator_sensitive_data : chiffrement AES-256-GCM + RLS rh_admin/N5' },
+      { type: 'audit', description: 'salary_history : accès N2+ agence approprié pour gestion RH' },
+      { type: 'audit', description: 'collaborators : N1 limité à sa propre fiche uniquement' },
+      { type: 'audit', description: 'employment_contracts : accès N2+ correct, salaires séparés' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // MISE À JOUR SYSTÈME VERSIONING
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'Vérification version au focus onglet navigateur' },
+      { type: 'improvement', description: 'Force refresh automatique si nouvelle version détectée' },
+    ],
+  },
+  {
     version: "V0.8.5",
     title: "UX Chatbot & Demo N0",
     date: "2026-01-28",

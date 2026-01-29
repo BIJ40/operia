@@ -1,26 +1,26 @@
-export const APP_VERSION = '0.8.5';
-export const APP_CODENAME = 'UX Chatbot & Demo N0';
+export const APP_VERSION = '0.8.6';
+export const APP_CODENAME = 'Audit Sécurité RLS';
 
 /**
- * Changelog v0.8.5 (2026-01-28)
+ * Changelog v0.8.6 (2026-01-29)
  * ==============================
  * 
- * CHATBOT SIDEBAR
- * ---------------
- * - Remplacement bulle flottante par panneau latéral droit
- * - Onglet vertical "Aide" fixé en bas à droite
- * - Ouverture fluide avec animation slide-in
- * - Overlay pour fermer en cliquant à l'extérieur
+ * AUDIT SÉCURITÉ RLS
+ * ------------------
+ * - Analyse 5 alertes sécurité : 100% faux positifs ou appropriées
+ * - profiles : policy anon USING(false) correcte
+ * - collaborator_sensitive_data : chiffrement AES-256-GCM + RLS
+ * - salary_history : accès N2+ agence approprié
+ * - collaborators : N1 limité à sa propre fiche
+ * - employment_contracts : accès N2+ correct
  * 
- * DASHBOARD DÉMO N0
- * -----------------
- * - Nouveau dashboard démo pour utilisateurs N0 (style DAX)
- * - KPIs factices : CA, taux transformation, productivité
- * - Bannière explicite "Mode démonstration"
- * - Widgets : carte stylisée, répartition CA, techniciens
+ * VERSIONING
+ * ----------
+ * - Vérification version au focus onglet navigateur
+ * - Force refresh automatique si nouvelle version
  * 
- * PRÉCÉDENT (v0.8.4 - 2026-01-26)
+ * PRÉCÉDENT (v0.8.5 - 2026-01-28)
  * --------------------------------
- * - Guide Apogée Public (/guide-apogee)
- * - Navigation multi-onglets
+ * - Chatbot sidebar latéral
+ * - Dashboard démo N0
  */
