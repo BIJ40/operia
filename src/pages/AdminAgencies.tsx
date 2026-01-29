@@ -309,13 +309,7 @@ export default function AdminAgencies() {
 
       {/* Liste des agences */}
       <Card>
-        <CardHeader>
-          <CardTitle>Agences configurées</CardTitle>
-          <CardDescription>
-            Liste des agences avec leurs utilisateurs. L'URL de l'API est construite automatiquement
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4">
           {isLoading ? (
             <p className="text-center text-muted-foreground py-4">Chargement...</p>
           ) : agencies.length === 0 ? (
@@ -331,26 +325,17 @@ export default function AdminAgencies() {
                     <div className="p-4 bg-gradient-to-r from-primary/5 to-primary/10">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4 flex-1">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h3 className="text-lg font-semibold">{agency.label}</h3>
-                              <Badge
-                                variant={agency.is_active ? 'default' : 'secondary'}
-                                className={
-                                  agency.is_active
-                                    ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                    : ''
-                                }
-                              >
-                                {agency.is_active ? 'Active' : 'Inactive'}
-                              </Badge>
-                            </div>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              Slug: <span className="font-mono">{agency.slug}</span> • URL:{' '}
-                              <span className="font-mono text-xs">
-                                https://{agency.slug}.hc-apogee.fr/api
-                              </span>
-                            </p>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold">{agency.label}</h3>
+                            <Badge
+                              variant={agency.is_active ? 'default' : 'secondary'}
+                              className={agency.is_active ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}
+                            >
+                              {agency.is_active ? 'Active' : 'Inactive'}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground font-mono">
+                              {agency.slug}
+                            </span>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
