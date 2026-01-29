@@ -4,7 +4,7 @@
  */
 
 import { lazy, Suspense, useState, useEffect } from 'react';
-import { Loader2, LayoutGrid, List, History, ListChecks, Download, FileText, Sheet, FileDown } from 'lucide-react';
+import { Loader2, LayoutGrid, List, History, ListChecks, Download, FileText, Sheet, FileDown, AlertTriangle } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { AnimatePresence, motion } from 'framer-motion';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
@@ -25,14 +25,16 @@ const TicketingKanbanView = lazy(() => import('@/apogee-tickets/pages/ApogeeTick
 const TicketingListView = lazy(() => import('@/apogee-tickets/pages/ApogeeTicketsList'));
 const TicketingHistoryView = lazy(() => import('@/apogee-tickets/pages/ApogeeTicketsHistory'));
 const TicketingReviewView = lazy(() => import('@/apogee-tickets/pages/ApogeeTicketsReview'));
+const TicketingLateView = lazy(() => import('@/apogee-tickets/pages/ApogeeTicketsLate'));
 
-type TicketingSubTab = 'kanban' | 'liste' | 'historique' | 'revue';
+type TicketingSubTab = 'kanban' | 'liste' | 'historique' | 'revue' | 'retard';
 
 const TICKETING_SUBTABS: PillTabConfig[] = [
   { id: 'kanban', label: 'Kanban', icon: LayoutGrid },
   { id: 'liste', label: 'Liste', icon: List },
   { id: 'revue', label: 'Revue', icon: ListChecks },
   { id: 'historique', label: 'Historique', icon: History },
+  { id: 'retard', label: 'En retard', icon: AlertTriangle },
 ];
 
 function LoadingFallback() {
@@ -52,7 +54,7 @@ export default function TicketingTabContent() {
   // Persister le sous-onglet dans l'URL
   const subtabParam = searchParams.get('subtab') as TicketingSubTab | null;
   const [activeSubTab, setActiveSubTab] = useState<TicketingSubTab>(
-    subtabParam && ['kanban', 'liste', 'historique', 'revue'].includes(subtabParam) 
+    subtabParam && ['kanban', 'liste', 'historique', 'revue', 'retard'].includes(subtabParam) 
       ? subtabParam 
       : 'kanban'
   );
@@ -156,6 +158,14 @@ export default function TicketingTabContent() {
               {activeSubTab === 'revue' && (
                 <Suspense fallback={<LoadingFallback />}>
                   <TicketingReviewView />
+                </Suspense>
+              )}
+            </TabsContent>
+
+            <TabsContent value="retard" className="mt-4">
+              {activeSubTab === 'retard' && (
+                <Suspense fallback={<LoadingFallback />}>
+                  <TicketingLateView />
                 </Suspense>
               )}
             </TabsContent>
