@@ -112,6 +112,25 @@ function DraggableFolderTabs({
     tabOrder.indexOf(a.id) - tabOrder.indexOf(b.id)
   );
 
+  // Palette de couleurs
+  const accentColors: Record<string, string> = {
+    blue: 'hsl(var(--warm-blue))',
+    purple: 'hsl(var(--warm-purple))',
+    green: 'hsl(var(--warm-green))',
+    orange: 'hsl(var(--warm-orange))',
+    pink: 'hsl(var(--warm-pink))',
+    teal: 'hsl(var(--warm-teal))',
+  };
+
+  // Mapper les indices aux couleurs
+  const tabColorMap: Record<string, string> = {};
+  sortedTabs.forEach((tab, index) => {
+    const colorKeys = Object.keys(accentColors);
+    tabColorMap[tab.id] = accentColors[colorKeys[index % colorKeys.length]];
+  });
+
+  const activeColor = tabColorMap[activeTab];
+
   return (
     <DndContext
       sensors={sensors}
@@ -120,9 +139,12 @@ function DraggableFolderTabs({
     >
       <SortableContext items={tabOrder} strategy={horizontalListSortingStrategy}>
         <div className="flex gap-1 bg-transparent h-auto p-0 mb-0">
-          {sortedTabs.map((tab) => {
+          {sortedTabs.map((tab, index) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
+            const colorKeys = Object.keys(accentColors);
+            const accentColor = accentColors[colorKeys[index % colorKeys.length]];
+            
             return (
               <DraggableTab
                 key={tab.id}
@@ -136,11 +158,25 @@ function DraggableFolderTabs({
                   "font-medium text-sm transition-all duration-200",
                   "relative -mb-[2px] z-10",
                   isActive 
-                    ? "bg-background border-border text-foreground shadow-sm" 
+                    ? "bg-background text-foreground shadow-md" 
                     : "bg-muted/50 border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
+                style={{
+                  borderColor: isActive ? accentColor : undefined,
+                  boxShadow: isActive ? `0 -2px 8px -2px ${accentColor}40` : undefined,
+                }}
               >
-                <Icon className="w-4 h-4" />
+                <span 
+                  className={cn(
+                    "flex items-center justify-center w-6 h-6 rounded-lg",
+                    isActive ? "text-white" : "text-muted-foreground"
+                  )}
+                  style={{
+                    backgroundColor: isActive ? accentColor : 'transparent',
+                  }}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                </span>
                 <span>{tab.label}</span>
               </DraggableTab>
             );

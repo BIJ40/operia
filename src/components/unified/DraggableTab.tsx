@@ -14,6 +14,7 @@ interface DraggableTabProps {
   onClick: () => void;
   children: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 export function DraggableTab({ 
@@ -23,7 +24,8 @@ export function DraggableTab({
   isDisabled = false,
   onClick, 
   children,
-  className 
+  className,
+  style: externalStyle,
 }: DraggableTabProps) {
   const {
     attributes,
@@ -41,6 +43,7 @@ export function DraggableTab({
     transform: CSS.Transform.toString(transform),
     transition,
     zIndex: isDragging ? 50 : undefined,
+    ...externalStyle,
   };
 
   const handleClick = () => {

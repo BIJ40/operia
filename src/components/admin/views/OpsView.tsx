@@ -1,12 +1,18 @@
 /**
  * OpsView - Vue Ops (Backups, HC-Backup, Cache, Rapport Apogée, Stockage)
+ * Utilise DraggableFolderTabs avec bordures colorées
  */
 
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { FolderTabsList, FolderContentContainer, FolderTabConfig } from '@/components/ui/folder-tabs';
+import { 
+  DraggableFolderTabsList, 
+  DraggableFolderContentContainer,
+  FolderTabConfig 
+} from '@/components/ui/draggable-folder-tabs';
 import { Database, Archive, HardDrive, FileJson, FileStack, Loader2 } from 'lucide-react';
+import { useSessionState } from '@/hooks/useSessionState';
 
 const AdminBackup = lazy(() => import('@/pages/AdminBackup'));
 const AdminHelpConfortBackup = lazy(() => import('@/pages/AdminHelpConfortBackup'));
@@ -15,12 +21,14 @@ const AdminApogeeReport = lazy(() => import('@/pages/admin/AdminApogeeReport'));
 const AdminStorageQuota = lazy(() => import('@/pages/AdminStorageQuota'));
 
 const SUB_TABS: FolderTabConfig[] = [
-  { id: 'backup', label: 'Backups', icon: Database },
-  { id: 'imports', label: 'Imports', icon: FileStack },
-  { id: 'cache', label: 'Cache', icon: Archive },
-  { id: 'report', label: 'Reports', icon: FileJson },
-  { id: 'quota', label: 'Quota', icon: HardDrive },
+  { id: 'backup', label: 'Backups', icon: Database, accent: 'blue' },
+  { id: 'imports', label: 'Imports', icon: FileStack, accent: 'purple' },
+  { id: 'cache', label: 'Cache', icon: Archive, accent: 'orange' },
+  { id: 'report', label: 'Reports', icon: FileJson, accent: 'green' },
+  { id: 'quota', label: 'Quota', icon: HardDrive, accent: 'teal' },
 ];
+
+const DEFAULT_TAB_ORDER = ['backup', 'imports', 'cache', 'report', 'quota'];
 
 function LoadingFallback() {
   return (
@@ -33,6 +41,7 @@ function LoadingFallback() {
 export function OpsView() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeView = searchParams.get('adminView') || 'backup';
+  const [tabOrder, setTabOrder] = useSessionState<string[]>('admin_ops_tab_order', DEFAULT_TAB_ORDER);
 
   const handleViewChange = (value: string) => {
     const next = new URLSearchParams(searchParams);
@@ -42,11 +51,33 @@ export function OpsView() {
     setSearchParams(next);
   };
 
+  const handleReorder = useCallback((newOrder: string[]) => {
+    setTabOrder(newOrder);
+  }, [setTabOrder]);
+
+  // Trouver la couleur de l'onglet actif
+  const activeTab = SUB_TABS.find(t => t.id === activeView);
+  const accentColors: Record<string, string> = {
+    blue: 'hsl(var(--warm-blue))',
+    purple: 'hsl(var(--warm-purple))',
+    green: 'hsl(var(--warm-green))',
+    orange: 'hsl(var(--warm-orange))',
+    teal: 'hsl(var(--warm-teal))',
+  };
+  const activeAccent = activeTab?.accent ? accentColors[activeTab.accent] : undefined;
+
   return (
     <Tabs value={activeView} onValueChange={handleViewChange}>
-      <FolderTabsList tabs={SUB_TABS} activeTab={activeView} />
+      <DraggableFolderTabsList 
+        tabs={SUB_TABS} 
+        tabOrder={tabOrder}
+        activeTab={activeView}
+        onTabChange={handleViewChange}
+        onReorder={handleReorder}
+        isDraggable={true}
+      />
 
-      <FolderContentContainer>
+      <DraggableFolderContentContainer accentColor={activeAccent}>
         <TabsContent value="backup" className="mt-0 focus-visible:outline-none">
           <Suspense fallback={<LoadingFallback />}>
             <AdminBackup />
@@ -76,7 +107,7 @@ export function OpsView() {
             <AdminStorageQuota />
           </Suspense>
         </TabsContent>
-      </FolderContentContainer>
+      </DraggableFolderContentContainer>
     </Tabs>
   );
 }

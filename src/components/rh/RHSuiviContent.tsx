@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { UserPlus } from 'lucide-react';
 
 import { ApogeeSyncButton } from '@/components/rh/ApogeeSync';
-import { SalariesPillTabs } from '@/components/rh/salaries/SalariesPillTabs';
+import { SalariesFolderTabs } from '@/components/rh/salaries/SalariesFolderTabs';
 import { RHCollaboratorPanel } from '@/components/rh/browser-tabs/RHCollaboratorPanel';
 import { RHTabsProvider } from '@/components/rh/browser-tabs/RHTabsContext';
 import { RHCollaborator } from '@/types/rh-suivi';
@@ -167,8 +167,8 @@ export function RHSuiviContent() {
           </div>
         </div>
 
-        {/* Barre de pills salariés - tous affichés en permanence */}
-        <SalariesPillTabs
+        {/* Barre de tabs folder salariés - tous affichés en permanence */}
+        <SalariesFolderTabs
           collaborators={collaborators}
           activeCollaboratorId={activeCollaboratorId}
           onSelectCollaborator={handleSelectCollaborator}
