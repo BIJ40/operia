@@ -400,20 +400,6 @@ export function TicketTableFilters({
           </PopoverContent>
         </Popover>
 
-        {/* Qualifié */}
-        <Select
-          value={filters.is_qualified === undefined ? 'all' : filters.is_qualified ? 'yes' : 'no'}
-          onValueChange={handleQualifiedChange}
-        >
-          <SelectTrigger className="w-[125px] h-9 rounded-full border-emerald-100/60 dark:border-emerald-800/30 bg-white/60 dark:bg-slate-800/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50/80 transition-all shadow-sm text-sm font-medium">
-            <SelectValue placeholder="Qualifié" />
-          </SelectTrigger>
-          <SelectContent className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm z-50 rounded-2xl border-emerald-100/50 shadow-lg">
-            <SelectItem value="all" className="rounded-xl">Tous</SelectItem>
-            <SelectItem value="yes" className="rounded-xl">✓ Qualifiés</SelectItem>
-            <SelectItem value="no" className="rounded-xl">Non qualifiés</SelectItem>
-          </SelectContent>
-        </Select>
 
         {/* Tags */}
         <Popover>
