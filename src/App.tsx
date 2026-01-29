@@ -8,6 +8,7 @@ import { useState, useEffect, lazy, Suspense } from "react";
 import { MinimalLayout } from "./components/layout";
 import { Loader2 } from "lucide-react";
 import { RoleGuard } from "./components/auth/RoleGuard";
+import { AuthRouter } from "./components/auth/AuthRouter";
 
 // Critical pages - loaded immediately
 import NotFound from "./pages/NotFound";
@@ -105,54 +106,57 @@ function AppContent() {
       {/* Welcome Wizard - First-login onboarding (exception to NO_POPUP_POLICY) */}
       {!isAuthLoading && user && <WelcomeWizardGate />}
       
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
-          {/* ============================================ */}
-          {/* PUBLIC ROUTES - No auth required */}
-          {/* ============================================ */}
-          {PublicRoutes()}
-          
-          {/* ============================================ */}
-          {/* CORE ROUTES */}
-          {/* ============================================ */}
-          <Route path="/" element={<UnifiedWorkspace />} />
-          <Route path="/profile" element={<MinimalLayout backTab="accueil" backLabel="Retour à l'accueil"><RoleGuard><Profile /></RoleGuard></MinimalLayout>} />
-          <Route path="/changelog" element={<MinimalLayout backTab="accueil" backLabel="Retour à l'accueil"><Changelog /></MinimalLayout>} />
-          <Route path="/roadmap" element={<MinimalLayout backTab="accueil" backLabel="Retour à l'accueil"><Roadmap /></MinimalLayout>} />
-          
-          {/* ============================================ */}
-          {/* DOMAIN ROUTES - Imported from modules */}
-          {/* ============================================ */}
-          {AcademyRoutes()}
-          {PilotageRoutes()}
-          {RHRoutes()}
-          {AdminRoutes()}
-          {FranchiseurRoutes()}
-          {SupportRoutes()}
-          {ProjectsRoutes()}
-          {ApporteurRoutes()}
-          
-          {/* ============================================ */}
-          {/* DEV PAGES - Admin only (N5/N6) */}
-          {/* ============================================ */}
-          <Route path="/dev/unified-search-animations" element={<RoleGuard minRole="platform_admin"><UnifiedSearchAnimationPlayground /></RoleGuard>} />
-          
-          {/* ============================================ */}
-          {/* PUBLIC PAGES */}
-          {/* ============================================ */}
-          <Route path="/qr/:token" element={<QrAssetPage />} />
-          
-          {/* ============================================ */}
-          {/* ERROR PAGES */}
-          {/* ============================================ */}
-          <Route path="/401" element={<Error401 />} />
-          <Route path="/403" element={<Error403 />} />
-          <Route path="/500" element={<Error500 />} />
-          
-          {/* 404 */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Suspense>
+      {/* AuthRouter - Redirige automatiquement les apporteurs vers leur espace */}
+      <AuthRouter>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            {/* ============================================ */}
+            {/* PUBLIC ROUTES - No auth required */}
+            {/* ============================================ */}
+            {PublicRoutes()}
+            
+            {/* ============================================ */}
+            {/* CORE ROUTES */}
+            {/* ============================================ */}
+            <Route path="/" element={<UnifiedWorkspace />} />
+            <Route path="/profile" element={<MinimalLayout backTab="accueil" backLabel="Retour à l'accueil"><RoleGuard><Profile /></RoleGuard></MinimalLayout>} />
+            <Route path="/changelog" element={<MinimalLayout backTab="accueil" backLabel="Retour à l'accueil"><Changelog /></MinimalLayout>} />
+            <Route path="/roadmap" element={<MinimalLayout backTab="accueil" backLabel="Retour à l'accueil"><Roadmap /></MinimalLayout>} />
+            
+            {/* ============================================ */}
+            {/* DOMAIN ROUTES - Imported from modules */}
+            {/* ============================================ */}
+            {AcademyRoutes()}
+            {PilotageRoutes()}
+            {RHRoutes()}
+            {AdminRoutes()}
+            {FranchiseurRoutes()}
+            {SupportRoutes()}
+            {ProjectsRoutes()}
+            {ApporteurRoutes()}
+            
+            {/* ============================================ */}
+            {/* DEV PAGES - Admin only (N5/N6) */}
+            {/* ============================================ */}
+            <Route path="/dev/unified-search-animations" element={<RoleGuard minRole="platform_admin"><UnifiedSearchAnimationPlayground /></RoleGuard>} />
+            
+            {/* ============================================ */}
+            {/* PUBLIC PAGES */}
+            {/* ============================================ */}
+            <Route path="/qr/:token" element={<QrAssetPage />} />
+            
+            {/* ============================================ */}
+            {/* ERROR PAGES */}
+            {/* ============================================ */}
+            <Route path="/401" element={<Error401 />} />
+            <Route path="/403" element={<Error403 />} />
+            <Route path="/500" element={<Error500 />} />
+            
+            {/* 404 */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+      </AuthRouter>
       
       <ChangePasswordDialog 
         open={showPasswordDialog} 
