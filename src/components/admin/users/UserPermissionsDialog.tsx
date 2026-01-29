@@ -105,8 +105,8 @@ export const UserPermissionsDialog = memo(function UserPermissionsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Zap className="w-5 h-5 text-primary" />
             Permissions de {getDisplayName()}
@@ -116,7 +116,7 @@ export const UserPermissionsDialog = memo(function UserPermissionsDialog({
           </p>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 -mx-6 px-6 max-h-[55vh]">
+        <ScrollArea className="flex-1 min-h-0 -mx-6 px-6">
           <div className="space-y-3 py-4">
             {MODULE_DEFINITIONS.map(moduleDef => {
               const isEnabled = isModuleEnabled(moduleDef.key);
