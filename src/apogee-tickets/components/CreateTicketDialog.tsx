@@ -18,8 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
-import { Plus, Paperclip, X, FileIcon, Flame, Snowflake } from 'lucide-react';
+import { Plus, Paperclip, X, FileIcon } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import type { ApogeeModule, ApogeeTicketInsert, OwnerSide } from '../types';
 import type { TicketRole } from '../hooks/useTicketPermissions';
@@ -28,7 +27,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { TagSelector } from './TagSelector';
 import { OwnerSideSlider, ownerSideToSliderValue, sliderValueToOwnerSide } from './OwnerSideSlider';
 import { RoadmapEditor } from './RoadmapEditor';
-import { HeatPriorityBadge } from './HeatPriorityBadge';
+import { HeatPrioritySelector } from './HeatPrioritySelector';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -324,44 +323,13 @@ export function CreateTicketDialog({
 
           {/* PRIORITÉ */}
           <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <Flame className="h-4 w-4 text-orange-500" />
-              Priorité
-            </Label>
-            <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
-              <HeatPriorityBadge priority={form.heat_priority ?? DEFAULT_HEAT_PRIORITY} size="sm" />
-              <button
-                type="button"
-                onClick={() => {
-                  const newValue = Math.max(0, (form.heat_priority ?? DEFAULT_HEAT_PRIORITY) - 1);
-                  setForm({ ...form, heat_priority: newValue });
-                }}
-                className="p-1 hover:bg-blue-100 rounded transition-colors"
-                title="Diminuer la priorité"
-              >
-                <Snowflake className="h-4 w-4 text-blue-400" />
-              </button>
-              <Slider
-                value={[form.heat_priority ?? DEFAULT_HEAT_PRIORITY]}
-                min={0}
-                max={12}
-                step={1}
-                onValueChange={(v) => setForm({ ...form, heat_priority: v[0] })}
-                className="flex-1"
-                trackClassName="bg-gradient-to-r from-blue-400 via-yellow-400 to-red-500"
-                rangeClassName="bg-transparent"
+            <Label>Priorité</Label>
+            <div className="p-3 bg-muted/30 rounded-lg">
+              <HeatPrioritySelector
+                priority={form.heat_priority ?? DEFAULT_HEAT_PRIORITY}
+                onChange={(v) => setForm({ ...form, heat_priority: v })}
+                size="default"
               />
-              <button
-                type="button"
-                onClick={() => {
-                  const newValue = Math.min(12, (form.heat_priority ?? DEFAULT_HEAT_PRIORITY) + 1);
-                  setForm({ ...form, heat_priority: newValue });
-                }}
-                className="p-1 hover:bg-red-100 rounded transition-colors"
-                title="Augmenter la priorité"
-              >
-                <Flame className="h-4 w-4 text-red-500" />
-              </button>
             </div>
           </div>
 
