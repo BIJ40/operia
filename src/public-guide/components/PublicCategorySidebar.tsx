@@ -1,5 +1,6 @@
 /**
  * PublicCategorySidebar - Sidebar permanente avec liste des catégories
+ * Version Warm Pastel
  */
 
 import { useMemo } from 'react';
@@ -59,9 +60,12 @@ export function PublicCategorySidebar() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-card border-r">
-      <div className="p-3 border-b">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+    <div className="h-full flex flex-col bg-gradient-to-b from-card to-muted/20 border-r border-border/50">
+      <div className="p-4 border-b border-border/40">
+        <h2 className="text-sm font-semibold text-foreground/80 uppercase tracking-wide flex items-center gap-2">
+          <div className="w-6 h-6 rounded-lg bg-warm-blue/15 flex items-center justify-center">
+            <BookOpen className="w-3.5 h-3.5 text-warm-blue" />
+          </div>
           Catégories
         </h2>
       </div>
@@ -76,12 +80,12 @@ export function PublicCategorySidebar() {
             onClick={() => openTab('home', 'Accueil', Home)}
           />
           
-          <Separator className="my-2" />
+          <Separator className="my-3 bg-border/40" />
           
           {/* État de chargement */}
           {loading && (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+              <Loader2 className="w-5 h-5 animate-spin text-warm-blue" />
               <span className="ml-2 text-sm text-muted-foreground">Chargement...</span>
             </div>
           )}
@@ -131,31 +135,38 @@ function SidebarItem({ icon: Icon, customIcon, label, isActive, onClick, badges 
     <button
       onClick={onClick}
       className={cn(
-        'w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-sm transition-colors',
-        'hover:bg-accent hover:text-accent-foreground',
-        isActive && 'bg-primary/10 text-primary font-medium',
-        badges?.isEmpty && 'opacity-50'
+        'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-sm transition-all duration-200',
+        'hover:bg-warm-blue/10 hover:text-foreground',
+        isActive && 'bg-warm-blue/15 text-warm-blue font-medium shadow-sm',
+        badges?.isEmpty && 'opacity-40'
       )}
     >
-      {customIcon ? (
-        <img src={customIcon} alt="" className="w-4 h-4 object-contain shrink-0" />
-      ) : (
-        <Icon className="w-4 h-4 shrink-0" />
-      )}
+      <div className={cn(
+        'w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors',
+        isActive 
+          ? 'bg-warm-blue/20 text-warm-blue' 
+          : 'bg-muted/50 text-muted-foreground'
+      )}>
+        {customIcon ? (
+          <img src={customIcon} alt="" className="w-4 h-4 object-contain" />
+        ) : (
+          <Icon className="w-4 h-4" />
+        )}
+      </div>
       
       <span className="truncate flex-1">{label}</span>
       
       {/* Badges */}
       {badges?.isEmpty && (
-        <Ban className="w-3 h-3 text-muted-foreground shrink-0" />
+        <Ban className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0" />
       )}
       {badges?.hasNew && !badges.isEmpty && (
-        <span className="px-1.5 py-0.5 text-[10px] font-bold bg-primary text-primary-foreground rounded shrink-0">
+        <span className="px-1.5 py-0.5 text-[10px] font-bold bg-warm-green/20 text-warm-green rounded-md shrink-0">
           NEW
         </span>
       )}
       {badges?.hasInProgress && !badges.isEmpty && (
-        <Clock className="w-3 h-3 text-primary shrink-0" />
+        <Clock className="w-3.5 h-3.5 text-warm-orange shrink-0" />
       )}
     </button>
   );

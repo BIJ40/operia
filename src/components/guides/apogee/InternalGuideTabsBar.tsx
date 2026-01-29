@@ -50,9 +50,9 @@ export function InternalGuideTabsBar() {
   };
 
   return (
-    <div className="flex items-end border-b bg-muted/30">
+    <div className="flex items-end border-b border-border/50 bg-gradient-to-r from-muted/30 to-muted/10">
       <ScrollArea className="flex-1">
-        <div className="flex items-end px-2 pt-2">
+        <div className="flex items-end px-3 pt-3 gap-1">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
