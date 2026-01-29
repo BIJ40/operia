@@ -440,17 +440,46 @@ export function TicketInlinePanel({
         <TabsContent value="main" className="flex-1 overflow-hidden m-0">
           <ScrollArea className="h-full">
             <div className="p-4 space-y-4">
-              {/* Title */}
-              <div>
-                <label className="text-xs font-medium text-muted-foreground uppercase">Titre</label>
-                <Textarea
-                  value={localTitle}
-                  onChange={(e) => setLocalTitle(e.target.value)}
-                  onBlur={handleTitleBlur}
-                  rows={2}
-                  className="mt-1 text-base font-semibold resize-none"
-                  disabled={!canManage}
-                />
+              {/* Title + Tags + Roadmap on same row */}
+              <div className="flex items-start gap-3">
+                <div className="flex-1 min-w-0">
+                  <label className="text-xs font-medium text-muted-foreground uppercase">Titre</label>
+                  <Input
+                    value={localTitle}
+                    onChange={(e) => setLocalTitle(e.target.value)}
+                    onBlur={handleTitleBlur}
+                    className="mt-1 text-sm font-semibold"
+                    disabled={!canManage}
+                  />
+                </div>
+                <div className="flex-shrink-0 w-44">
+                  <label className="text-xs font-medium text-muted-foreground uppercase">Tags</label>
+                  <div className="mt-1">
+                    <TagSelector
+                      selectedTags={ticket.impact_tags || []}
+                      onTagsChange={(tags) => handleFieldUpdate('impact_tags', tags)}
+                      disabled={!canEditDevFields}
+                      compact
+                    />
+                  </div>
+                </div>
+                <div className="flex-shrink-0 w-40">
+                  <label className="text-xs font-medium text-muted-foreground uppercase">Roadmap</label>
+                  <div className="mt-1">
+                    <RoadmapEditor
+                      enabled={ticket.roadmap_enabled}
+                      month={ticket.roadmap_month}
+                      year={ticket.roadmap_year}
+                      onChange={(enabled, month, year) => onQueueChange(ticket.id, {
+                        roadmap_enabled: enabled,
+                        roadmap_month: month,
+                        roadmap_year: year,
+                      })}
+                      disabled={!canEditDevFields}
+                      compact
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Description */}
@@ -460,7 +489,7 @@ export function TicketInlinePanel({
                   value={localDescription}
                   onChange={(e) => setLocalDescription(e.target.value)}
                   onBlur={handleDescriptionBlur}
-                  rows={4}
+                  rows={3}
                   placeholder="Description..."
                   className="mt-1 resize-none"
                   disabled={!canManage}
