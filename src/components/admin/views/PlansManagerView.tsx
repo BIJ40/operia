@@ -14,6 +14,7 @@ import { getPlanColorClass } from '@/config/planTiers';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 // Définition des modules avec labels UI
+// Note: 'ticketing' is excluded - it's an individual user permission, not a plan-level module
 const MODULE_CATALOG = [
   { key: 'agence', label: 'Mon agence', group: null },
   { key: 'stats', label: 'Statistiques', group: null },
@@ -24,7 +25,6 @@ const MODULE_CATALOG = [
   { key: 'divers_reunions', label: 'Réunions', group: 'Divers' },
   { key: 'divers_documents', label: 'Documents', group: 'Divers' },
   { key: 'guides', label: 'Guides', group: null },
-  { key: 'ticketing', label: 'Ticketing', group: null },
   { key: 'aide', label: 'Aide', group: null },
 ] as const;
 
