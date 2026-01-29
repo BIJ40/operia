@@ -16,15 +16,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import { 
   Search, Building2, User, Check, Loader2, ArrowRight, ArrowLeft, 
-  Mail, Phone, MapPin, Users, Filter, RefreshCw, CheckCircle2,
+  Mail, Phone, MapPin, Users, RefreshCw, CheckCircle2,
   Link2Off, AlertCircle
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCreateApporteur, useCreateApporteurUser } from '@/hooks/useApporteurs';
-import { useApogeeCommanditaires, APPORTEUR_TYPES, getApporteurTypeLabel, ApogeeCommanditaire, ApogeeContact } from '@/hooks/useApogeeCommanditaires';
+import { useApogeeCommanditaires, getApporteurTypeLabel, ApogeeCommanditaire, ApogeeContact } from '@/hooks/useApogeeCommanditaires';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
@@ -53,7 +53,6 @@ export function ApporteurCreateWizard({ open, onOpenChange }: ApporteurCreateWiz
   // State
   const [step, setStep] = useState<Step>('select');
   const [searchQuery, setSearchQuery] = useState('');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
   const [hideLinked, setHideLinked] = useState(true);
   const [selectedCommanditaire, setSelectedCommanditaire] = useState<ApogeeCommanditaire | null>(null);
   const [createdApporteurId, setCreatedApporteurId] = useState<string | null>(null);
@@ -68,21 +67,19 @@ export function ApporteurCreateWizard({ open, onOpenChange }: ApporteurCreateWiz
       // Filtre "déjà lié"
       if (hideLinked && cmd.alreadyLinked) return false;
       
-      // Filtre par type
-      if (typeFilter !== 'all' && cmd.type !== typeFilter) return false;
-      
       // Filtre par recherche
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
         const nameMatch = cmd.name.toLowerCase().includes(query);
         const idMatch = String(cmd.id).includes(query);
         const villeMatch = cmd.ville?.toLowerCase().includes(query);
-        if (!nameMatch && !idMatch && !villeMatch) return false;
+        const typeMatch = cmd.type.toLowerCase().includes(query);
+        if (!nameMatch && !idMatch && !villeMatch && !typeMatch) return false;
       }
       
       return true;
     });
-  }, [commanditaires, hideLinked, typeFilter, searchQuery]);
+  }, [commanditaires, hideLinked, searchQuery]);
 
   // Stats pour le header
   const stats = useMemo(() => {
@@ -95,7 +92,6 @@ export function ApporteurCreateWizard({ open, onOpenChange }: ApporteurCreateWiz
   const resetForm = () => {
     setStep('select');
     setSearchQuery('');
-    setTypeFilter('all');
     setSelectedCommanditaire(null);
     setCreatedApporteurId(null);
     setSelectedContacts([]);
@@ -284,9 +280,9 @@ export function ApporteurCreateWizard({ open, onOpenChange }: ApporteurCreateWiz
               </div>
             </div>
 
-            {/* Filters */}
-            <div className="flex gap-2 flex-wrap">
-              <div className="flex-1 min-w-[200px]">
+            {/* Search */}
+            <div className="flex gap-2">
+              <div className="flex-1">
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -297,20 +293,6 @@ export function ApporteurCreateWizard({ open, onOpenChange }: ApporteurCreateWiz
                   />
                 </div>
               </div>
-              
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <Filter className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {APPORTEUR_TYPES.map(t => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
               
               <Button variant="outline" size="icon" onClick={() => refetch()} disabled={isLoading}>
                 <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
