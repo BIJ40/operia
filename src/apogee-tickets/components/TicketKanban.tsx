@@ -26,7 +26,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { HeatPriorityBadge } from './HeatPriorityBadge';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { useCanTransition, useLogTicketAction } from '../hooks/useTicketPermissions';
+import { useCanTransition } from '../hooks/useTicketPermissions';
 import { useMyTicketViews } from '../hooks/useTicketViews';
 import { useAuth } from '@/contexts/AuthContext';
 import type { ApogeeTicket, ApogeeTicketStatus, ApogeeModule, ApogeeOwnerSide } from '../types';
@@ -543,7 +543,6 @@ export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusC
   const { user } = useAuth();
   const [activeTicket, setActiveTicket] = useState<ApogeeTicket | null>(null);
   const canTransition = useCanTransition();
-  const logAction = useLogTicketAction();
   const { data: myViews = [] } = useMyTicketViews();
 
   // Fonction pour déterminer si un ticket doit clignoter
@@ -655,14 +654,8 @@ export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusC
         return;
       }
       
-      // Logger l'action avant le changement
-      logAction.mutate({
-        ticketId,
-        actionType: 'status_change',
-        oldValue: ticket.kanban_status,
-        newValue: newStatus,
-      });
-      
+      // Le logging est géré par la mutation centrale appelée par onStatusChange
+      // (évite les doublons dans l'historique)
       onStatusChange(ticketId, newStatus);
     }
   };

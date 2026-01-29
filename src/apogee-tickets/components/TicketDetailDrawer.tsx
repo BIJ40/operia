@@ -59,7 +59,7 @@ import { HeatPriorityBadge } from './HeatPriorityBadge';
 import { OwnerSideSlider, ownerSideToSliderValue, sliderValueToOwnerSide } from './OwnerSideSlider';
 import { Slider } from '@/components/ui/slider';
 import { useAuth } from '@/contexts/AuthContext';
-import { useMyTicketRole, useAllowedTransitions, useLogTicketAction, useTicketHistory } from '../hooks/useTicketPermissions';
+import { useMyTicketRole, useAllowedTransitions, useTicketHistory } from '../hooks/useTicketPermissions';
 import { TicketTimelineTab } from './TicketTimelineTab';
 import { errorToast } from '@/lib/toastHelpers';
 import { TagSelector } from './TagSelector';
@@ -125,7 +125,6 @@ export function TicketDetailDrawer({
   
   // Transitions autorisées selon le rôle
   const { data: allowedTransitions = [] } = useAllowedTransitions(ticket?.kanban_status || '');
-  const logAction = useLogTicketAction();
   const markAsViewed = useMarkTicketAsViewed();
   const { comments, addComment, updateComment } = useApogeeTicket(ticket?.id || null);
   
@@ -333,7 +332,7 @@ export function TicketDetailDrawer({
   };
 
   // Gestion du changement de statut avec contrôle des transitions
-  const handleStatusChange = async (newStatus: string) => {
+  const handleStatusChange = (newStatus: string) => {
     if (!ticket) return;
     
     const isAllowed = isAdmin || allowedTransitions.includes(newStatus);
@@ -342,18 +341,8 @@ export function TicketDetailDrawer({
       return;
     }
     
-    // Loguer la transition
-    await logAction.mutateAsync({
-      ticketId: ticket.id,
-      actionType: 'status_change',
-      oldValue: ticket.kanban_status,
-      newValue: newStatus,
-      metadata: { 
-        ticket_ref: `APO-${String(ticket.ticket_number || 0).padStart(3, '0')}`,
-        ticket_number: ticket.ticket_number
-      }
-    });
-    
+    // Le logging est géré par la mutation centrale appelée via onUpdate
+    // (évite les doublons dans l'historique)
     handleFieldUpdate('kanban_status', newStatus);
   };
 
