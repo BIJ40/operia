@@ -1,10 +1,10 @@
 /**
  * Barre d'onglets style navigateur pour la vue Liste
- * Onglet "LISTE" fixe à gauche + optionnel "RETARD" + tickets ouverts à droite
+ * Onglet "LISTE" fixe à gauche + optionnel "NOUVEAUX" + "RETARD" + tickets ouverts à droite
  * Style "folder tab" avec bordure continue vers le contenu
  */
 
-import { X, Loader2, List, AlertTriangle } from 'lucide-react';
+import { X, Loader2, List, AlertTriangle, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -21,6 +21,10 @@ interface TicketTabBarProps {
   isLateTabActive?: boolean;
   onLateTabClick?: () => void;
   lateCount?: number;
+  showNewTab?: boolean;
+  isNewTabActive?: boolean;
+  onNewTabClick?: () => void;
+  newCount?: number;
 }
 
 export function TicketTabBar({
@@ -34,9 +38,13 @@ export function TicketTabBar({
   isLateTabActive = false,
   onLateTabClick,
   lateCount = 0,
+  showNewTab = false,
+  isNewTabActive = false,
+  onNewTabClick,
+  newCount = 0,
 }: TicketTabBarProps) {
-  const isListeActive = activeTabId === null && !isLateTabActive;
-  const isTicketActive = activeTabId !== null && !isLateTabActive;
+  const isListeActive = activeTabId === null && !isLateTabActive && !isNewTabActive;
+  const isTicketActive = activeTabId !== null && !isLateTabActive && !isNewTabActive;
 
   return (
     <div className="relative mx-2 pt-2">
@@ -54,6 +62,35 @@ export function TicketTabBar({
           <List className={cn("h-4 w-4", isListeActive && "text-sky-600 dark:text-sky-400")} />
           LISTE
         </button>
+
+        {/* Onglet NOUVEAUX - visible si showNewTab */}
+        {showNewTab && (
+          <button
+            onClick={onNewTabClick}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-all shrink-0 rounded-t-xl relative ml-1",
+              isNewTabActive
+                ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border-2 border-b-0 border-emerald-400 dark:border-emerald-500 mb-[-2px] pb-[calc(0.625rem+2px)]"
+                : "bg-slate-100/80 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20 border border-transparent mb-[2px]"
+            )}
+          >
+            <Sparkles className={cn("h-4 w-4", isNewTabActive && "text-emerald-600 dark:text-emerald-400")} />
+            NOUVEAUX
+            {newCount > 0 && (
+              <Badge 
+                variant="secondary" 
+                className={cn(
+                  "h-5 min-w-5 px-1.5 text-xs",
+                  isNewTabActive 
+                    ? "bg-emerald-500 text-white" 
+                    : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400 animate-pulse"
+                )}
+              >
+                {newCount}
+              </Badge>
+            )}
+          </button>
+        )}
 
         {/* Onglet RETARD - visible si showLateTab */}
         {showLateTab && (
@@ -98,7 +135,7 @@ export function TicketTabBar({
             )}
           >
             {tabs.map((tab) => {
-              const isActive = activeTabId === tab.id && !isLateTabActive;
+              const isActive = activeTabId === tab.id && !isLateTabActive && !isNewTabActive;
               return (
                 <button
                   key={tab.id}
