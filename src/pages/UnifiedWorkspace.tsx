@@ -44,8 +44,7 @@ import { ImageModal } from '@/components/ImageModal';
 import { AiUnifiedProvider } from '@/components/ai';
 import { DraggableTab } from '@/components/unified/DraggableTab';
 import { SidebarChat } from '@/components/chat/SidebarChat';
-// REMOVED: SimulationBanner, RoleSimulatorDropdown - fonctionnalité supprimée
-import { RealUserImpersonationDialog } from '@/components/RealUserImpersonationDialog';
+// REMOVED: SimulationBanner, RoleSimulatorDropdown, RealUserImpersonationDialog - fonctionnalités supprimées
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ACCENT_THEMES, type AccentThemeKey } from '@/lib/accentThemes';
@@ -116,7 +115,7 @@ function UnifiedWorkspaceContent() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [tabOrder, setTabOrder] = useSessionState<UnifiedTab[]>('unified_workspace_tab_order', DEFAULT_TAB_ORDER);
   const [loginOpen, setLoginOpen] = useState(false);
-  const [impersonationDialogOpen, setImpersonationDialogOpen] = useState(false);
+  // REMOVED: impersonationDialogOpen - fonctionnalité "Voir en tant que" désactivée
   
   // Support URL ?tab=XXX pour navigation directe
   const urlTab = searchParams.get('tab') as UnifiedTab | null;
@@ -470,31 +469,7 @@ function UnifiedWorkspaceContent() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                     
-                    {/* Bouton "Voir en tant que" pour N5+ */}
-                    {realIsPlatformAdmin && (
-                      <button
-                        type="button"
-                        onClick={() => setImpersonationDialogOpen(true)}
-                        className={tabButtonClass}
-                        data-state="inactive"
-                        aria-label="Voir en tant que..."
-                        title="Voir l'application comme un autre utilisateur"
-                      >
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-6 h-6 rounded-lg bg-primary/20 flex items-center justify-center shadow-sm transition-transform group-hover:scale-110 shrink-0">
-                            <Eye className="w-3 h-3 text-primary" />
-                          </div>
-                          <span className="text-xs font-semibold tracking-tight truncate max-w-[80px]">👁️</span>
-                        </div>
-                      </button>
-                    )}
                   </div>
-                  
-                  {/* Dialog d'impersonation utilisateur réel */}
-                  <RealUserImpersonationDialog 
-                    open={impersonationDialogOpen} 
-                    onOpenChange={setImpersonationDialogOpen} 
-                  />
                 </div>
               </div>
               {/* Ligne de bordure qui se connecte aux onglets */}
