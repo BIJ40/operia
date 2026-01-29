@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Users, ChevronDown, ChevronUp, Eye, User } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, ChevronDown, ChevronUp, Eye, User, Crown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/config/routes';
 import {
@@ -35,6 +35,8 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { usePlanTiers } from '@/hooks/access-rights/usePlanTiers';
+import { useAllAgencySubscriptions, useUpdateAgencySubscription } from '@/hooks/access-rights/useAgencySubscription';
 
 interface Agency {
   id: string;
@@ -73,6 +75,11 @@ export default function AdminAgencies() {
     label: '',
     is_active: true,
   });
+
+  // Plan management hooks
+  const { data: planTiers } = usePlanTiers();
+  const { data: allSubscriptions } = useAllAgencySubscriptions();
+  const updateSubscription = useUpdateAgencySubscription();
 
   useEffect(() => {
     loadData();
@@ -119,6 +126,23 @@ export default function AdminAgencies() {
 
   const getUsersWithoutAgency = () => {
     return users.filter((user) => !user.agence && user.role_agence === 'dirigeant');
+  };
+
+  // Get current plan for an agency
+  const getAgencyPlan = (agencyId: string) => {
+    const subscription = allSubscriptions?.find(s => s.agency_id === agencyId);
+    return subscription?.tier_key || null;
+  };
+
+  const getAgencyPlanLabel = (agencyId: string) => {
+    const tierKey = getAgencyPlan(agencyId);
+    if (!tierKey) return 'Aucun';
+    const tier = planTiers?.find(t => t.key === tierKey);
+    return tier?.label || tierKey;
+  };
+
+  const handlePlanChange = (agencyId: string, tierKey: string) => {
+    updateSubscription.mutate({ agencyId, tierKey });
   };
 
   const openDialog = (agency?: Agency) => {
@@ -330,6 +354,23 @@ export default function AdminAgencies() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
+                          {/* Plan selector */}
+                          <Select
+                            value={getAgencyPlan(agency.id) || ''}
+                            onValueChange={(value) => handlePlanChange(agency.id, value)}
+                          >
+                            <SelectTrigger className="w-[120px] h-8">
+                              <Crown className="h-3 w-3 mr-1 text-amber-500" />
+                              <SelectValue placeholder="Plan" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {planTiers?.map((tier) => (
+                                <SelectItem key={tier.key} value={tier.key}>
+                                  {tier.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <Badge variant="outline">
                             <Users className="h-3 w-3 mr-1" />
                             {agencyUsers.length}
