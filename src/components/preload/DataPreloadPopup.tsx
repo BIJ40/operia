@@ -9,7 +9,7 @@
  * - Mode non-bloquant (réduire) / bloquant (erreur)
  */
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Minimize2, RefreshCw, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -30,6 +30,15 @@ const LOADING_MESSAGES = [
 ];
 
 export function DataPreloadPopup() {
+  // Use try-catch to handle HMR edge cases gracefully
+  let preloadContext: ReturnType<typeof useDataPreload> | null = null;
+  try {
+    preloadContext = useDataPreload();
+  } catch {
+    // During HMR, context might not be available - just return null
+    return null;
+  }
+  
   const {
     isVisible,
     isMinimized,
@@ -42,7 +51,7 @@ export function DataPreloadPopup() {
     minimize,
     retryPreload,
     dismiss,
-  } = useDataPreload();
+  } = preloadContext;
   
   const [messageIndex, setMessageIndex] = useState(0);
   
