@@ -32,11 +32,13 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { EditorProvider } from "./contexts/EditorContext";
 import { ApporteurEditorProvider } from "./contexts/ApporteurEditorContext";
 import { ImpersonationProvider } from "./contexts/ImpersonationContext";
+import { DataPreloadProvider } from "./contexts/DataPreloadContext";
 // REMOVED: RoleSimulatorProvider - fonctionnalité supprimée (simulation non fonctionnelle)
 import { ChangePasswordDialog } from "./components/ChangePasswordDialog";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { GlobalErrorBoundary } from "./components/system/GlobalErrorBoundary";
 import { WelcomeWizardGate } from "./components/onboarding";
+import { DataPreloadPopup } from "./components/preload/DataPreloadPopup";
 // REMOVED: AnnouncementGate - No auto-popup policy (see NO_POPUP_POLICY.md)
 // REMOVED: LiveSupportProvider - Simplifié en V3 (plus de live chat)
 // REMOVED: N1Redirect - Module technicien /t supprimé
@@ -105,6 +107,9 @@ function AppContent() {
       
       {/* Welcome Wizard - First-login onboarding (exception to NO_POPUP_POLICY) */}
       {!isAuthLoading && user && <WelcomeWizardGate />}
+      
+      {/* Data Preload Popup - Préchargement des données pour utilisateurs avec stats */}
+      <DataPreloadPopup />
       
       {/* AuthRouter - Redirige automatiquement les apporteurs vers leur espace */}
       <AuthRouter>
@@ -179,15 +184,17 @@ function App() {
         <BrowserRouter>
           <AuthProvider>
             <ImpersonationProvider>
-              <EditorProvider>
-                <ApporteurEditorProvider>
-                  <GlobalErrorBoundary>
-                    <AppContent />
-                  </GlobalErrorBoundary>
-                  <Toaster />
-                  <Sonner />
-                </ApporteurEditorProvider>
-              </EditorProvider>
+              <DataPreloadProvider>
+                <EditorProvider>
+                  <ApporteurEditorProvider>
+                    <GlobalErrorBoundary>
+                      <AppContent />
+                    </GlobalErrorBoundary>
+                    <Toaster />
+                    <Sonner />
+                  </ApporteurEditorProvider>
+                </EditorProvider>
+              </DataPreloadProvider>
             </ImpersonationProvider>
           </AuthProvider>
         </BrowserRouter>
