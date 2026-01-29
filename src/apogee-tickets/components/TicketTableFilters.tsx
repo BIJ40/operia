@@ -12,6 +12,7 @@ import { Slider } from '@/components/ui/slider';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, X, CalendarIcon, Filter, RotateCcw, Tag, MapIcon } from 'lucide-react';
+import { FilterPresetSelector } from './FilterPresetSelector';
 import { endOfDay, format, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { ApogeeModule, ApogeeTicketStatus, TicketFilters, OwnerSide, ReportedBy } from '../types';
@@ -465,6 +466,16 @@ export function TicketTableFilters({
             />
           </PopoverContent>
         </Popover>
+
+        {/* Séparateur */}
+        <div className="h-6 w-px bg-gradient-to-b from-transparent via-slate-200/60 to-transparent dark:via-slate-600/40 mx-1" />
+
+        {/* Preset selector - Mes filtres sauvegardés */}
+        <FilterPresetSelector
+          currentFilters={filters}
+          onLoadPreset={onFiltersChange}
+          hasActiveFilters={activeFiltersCount > 0}
+        />
 
         {/* Reset */}
         {activeFiltersCount > 0 && (
