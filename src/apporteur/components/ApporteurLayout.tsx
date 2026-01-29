@@ -110,36 +110,28 @@ export function ApporteurLayout({ children }: ApporteurLayoutProps) {
           </div>
         )}
 
-        {/* Header minimal */}
+        {/* Header avec onglets intégrés */}
         <header
           className={cn(
             "sticky z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60",
             devBypass ? "top-9" : "top-0"
           )}
         >
-          <div className="container flex h-14 items-center justify-between">
-            {/* Logo */}
-            <Link to="/apporteur" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
-                <Building2 className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <span className="font-bold text-lg hidden sm:inline">
-                <span className="text-primary">Help</span>
-                <span className="text-accent">!</span>
-                <span className="text-primary">Confort</span>
-                <span className="text-muted-foreground ml-2 text-sm font-normal">Espace Apporteur</span>
-              </span>
-            </Link>
+          <div className="container flex h-14 items-center gap-4">
+            {/* Onglets de navigation - prennent toute la place */}
+            <div className="flex-1">
+              <ApporteurTabsBar />
+            </div>
 
-            {/* User Menu */}
+            {/* User Menu à droite */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="gap-2">
+                <Button variant="ghost" size="sm" className="gap-2 shrink-0">
                   <User className="w-4 h-4" />
-                  <span className="hidden sm:inline max-w-[150px] truncate">
-                    {displayUser?.firstName || displayUser?.email || 'Mon compte'}
+                  <span className="hidden sm:inline max-w-[100px] truncate text-sm">
+                    {displayUser?.firstName || 'Compte'}
                   </span>
-                  <ChevronDown className="w-4 h-4" />
+                  <ChevronDown className="w-3 h-3" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
@@ -160,9 +152,6 @@ export function ApporteurLayout({ children }: ApporteurLayoutProps) {
             </DropdownMenu>
           </div>
         </header>
-
-        {/* Tabs Bar */}
-        <ApporteurTabsBar />
 
         {/* Main Content */}
         <main className="flex-1 overflow-auto">
