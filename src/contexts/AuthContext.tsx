@@ -488,6 +488,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await new Promise((resolve) => setTimeout(resolve, 800));
       await supabase.auth.signOut();
 
+      // Reset préchargement (sessionStorage) :
+      // - permet de ré-afficher la pop-up à la prochaine connexion
+      // - évite les effets de bord entre sessions
+      try {
+        Object.keys(sessionStorage)
+          .filter((key) => key.startsWith('preload:') || key.startsWith('preload_ui_shown:'))
+          .forEach((key) => sessionStorage.removeItem(key));
+      } catch {
+        // Ignore
+      }
+
       Object.keys(localStorage)
         .filter((key) => key.startsWith('sb-'))
         .forEach((key) => localStorage.removeItem(key));

@@ -77,6 +77,7 @@ const PRELOAD_STEPS_CONFIG: Omit<PreloadStep, 'status' | 'error'>[] = [
 const TOTAL_WEIGHT = PRELOAD_STEPS_CONFIG.reduce((sum, s) => sum + s.weight, 0);
 const CACHE_TTL_MS = 2 * 60 * 60 * 1000; // 2 heures
 const SESSION_VERSION = 'v1';
+const UI_SHOWN_PREFIX = 'preload_ui_shown';
 
 // =============================================================================
 // CONTEXT
@@ -90,6 +91,26 @@ const DataPreloadContext = createContext<DataPreloadContextType | undefined>(und
 
 function getSessionKey(userId: string, agencySlug: string): string {
   return `preload:${userId}:${agencySlug}:${SESSION_VERSION}`;
+}
+
+function getUiShownKey(userId: string, agencySlug: string): string {
+  return `${UI_SHOWN_PREFIX}:${userId}:${agencySlug}:${SESSION_VERSION}`;
+}
+
+function hasUiBeenShown(userId: string, agencySlug: string): boolean {
+  try {
+    return !!sessionStorage.getItem(getUiShownKey(userId, agencySlug));
+  } catch {
+    return false;
+  }
+}
+
+function markUiShown(userId: string, agencySlug: string): void {
+  try {
+    sessionStorage.setItem(getUiShownKey(userId, agencySlug), String(Date.now()));
+  } catch {
+    // Ignore
+  }
 }
 
 function getSessionMeta(userId: string, agencySlug: string): PreloadSessionMeta | null {
@@ -249,18 +270,26 @@ export function DataPreloadProvider({ children }: { children: ReactNode }) {
   }, [user, isAuthLoading, isModulesLoading, effectiveAgence, hasStatsAccess]);
   
   // Fonction de préchargement principale
-  const executePreload = useCallback(async () => {
+  const executePreload = useCallback(async (opts?: { showUI?: boolean }) => {
     if (!user || !effectiveAgence) return;
+
+    const showUI = opts?.showUI ?? true;
     
     logApogee.info(`[PRELOAD] Starting for agency: ${effectiveAgence}`);
     
     setIsPreloading(true);
-    setIsVisible(true);
+    setIsVisible(showUI);
     setProgress(0);
     setError(null);
     setIsDegraded(false);
     setMode('non-blocking');
     setSteps(initializeSteps());
+
+    // IMPORTANT: ne montrer la pop-up qu'après connexion (pas après refresh).
+    // Une fois affichée dans cette session d'onglet, on la masque aux triggers suivants.
+    if (showUI) {
+      markUiShown(user.id, effectiveAgence);
+    }
     
     const stepResults: Record<string, 'done' | 'error'> = {};
     let hasCriticalError = false;
@@ -350,12 +379,12 @@ export function DataPreloadProvider({ children }: { children: ReactNode }) {
   
   // Actions exposées
   const startPreload = useCallback(async () => {
-    await executePreload();
+    await executePreload({ showUI: true });
   }, [executePreload]);
   
   const retryPreload = useCallback(async () => {
     setError(null);
-    await executePreload();
+    await executePreload({ showUI: true });
   }, [executePreload]);
   
   const skipPreload = useCallback(() => {
@@ -389,9 +418,17 @@ export function DataPreloadProvider({ children }: { children: ReactNode }) {
     // Vérifier les conditions
     if (shouldTriggerPreload()) {
       hasTriggeredRef.current = true;
-      executePreload();
+      const showUI = (() => {
+        if (!user || !effectiveAgence) return true;
+        // Si on a déjà un meta de session (préchargement terminé),
+        // alors on ne ré-affiche pas la pop-up lors d'un simple refresh.
+        const hasCompletedSession = !!getSessionMeta(user.id, effectiveAgence);
+        if (hasCompletedSession) return false;
+        return !hasUiBeenShown(user.id, effectiveAgence);
+      })();
+      executePreload({ showUI });
     }
-  }, [isAuthLoading, isModulesLoading, isPreloading, shouldTriggerPreload, executePreload]);
+  }, [isAuthLoading, isModulesLoading, isPreloading, shouldTriggerPreload, executePreload, user, effectiveAgence]);
   
   // Effet d'invalidation sur changement d'agence
   useEffect(() => {
