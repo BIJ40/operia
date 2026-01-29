@@ -206,6 +206,21 @@ function UnifiedWorkspaceContent() {
   
   // Filtrer les onglets masqués (Admin pour non-admins)
   const visibleTabs = useMemo(() => allTabs.filter(tab => !isTabHidden(tab)), [allTabs, isTabHidden]);
+
+  // Auto-réparer un ordre stocké obsolète (ex: un onglet ajouté/renommé n'est pas présent)
+  // => sinon l'onglet peut sembler "non déplaçable" car absent de tabOrder.
+  useEffect(() => {
+    const visibleIds = visibleTabs.filter(t => t.id !== 'accueil').map(t => t.id);
+    const cleaned = tabOrder.filter(id => visibleIds.includes(id));
+
+    const defaultVisible = DEFAULT_TAB_ORDER.filter(id => visibleIds.includes(id));
+    const missingFromDefault = defaultVisible.filter(id => !cleaned.includes(id));
+    const extraMissing = visibleIds.filter(id => !cleaned.includes(id) && !defaultVisible.includes(id));
+
+    const next = [...cleaned, ...missingFromDefault, ...extraMissing];
+    const isSame = next.length === tabOrder.length && next.every((v, i) => v === tabOrder[i]);
+    if (!isSame) setTabOrder(next);
+  }, [visibleTabs, tabOrder, setTabOrder]);
   
   // Onglets triés selon l'ordre personnalisé (Accueil toujours premier)
   const sortedTabs = useMemo(() => {
@@ -224,6 +239,12 @@ function UnifiedWorkspaceContent() {
     
     return [accueilTab, ...sorted];
   }, [visibleTabs, tabOrder]);
+
+  // IDs pour le sortable context (exclure accueil)
+  const sortableIds = useMemo(
+    () => sortedTabs.filter(t => t.id !== 'accueil').map(t => t.id),
+    [sortedTabs]
+  );
   
   // DnD sensors
   const sensors = useSensors(
@@ -245,14 +266,16 @@ function UnifiedWorkspaceContent() {
     
     // Ne pas permettre de déplacer Accueil
     if (active.id === 'accueil' || over.id === 'accueil') return;
-    
-    const oldIndex = tabOrder.indexOf(active.id as UnifiedTab);
-    const newIndex = tabOrder.indexOf(over.id as UnifiedTab);
-    
+
+    // IMPORTANT: se baser sur l'ordre effectivement affiché (sortableIds),
+    // pas sur tabOrder (qui peut être incomplet/obsolète).
+    const oldIndex = sortableIds.indexOf(active.id as UnifiedTab);
+    const newIndex = sortableIds.indexOf(over.id as UnifiedTab);
+
     if (oldIndex !== -1 && newIndex !== -1) {
-      setTabOrder(arrayMove(tabOrder, oldIndex, newIndex));
+      setTabOrder(arrayMove(sortableIds, oldIndex, newIndex) as UnifiedTab[]);
     }
-  }, [tabOrder, setTabOrder]);
+  }, [sortableIds, setTabOrder]);
   
   // Déterminer si l'utilisateur EFFECTIF est N0 (base_user ou null)
   // En mode impersonation, utiliser le rôle de l'utilisateur impersonné
@@ -312,9 +335,6 @@ function UnifiedWorkspaceContent() {
     data-[state=active]:bg-background data-[state=active]:border-primary/50
     data-[state=active]:z-20 data-[state=active]:-mb-[2px] data-[state=active]:pb-[calc(0.625rem+2px)] data-[state=active]:scale-[1.02]
   `;
-  
-  // IDs pour le sortable context (exclure accueil)
-  const sortableIds = sortedTabs.filter(t => t.id !== 'accueil').map(t => t.id);
   
   // Calculer le padding top selon les bandeaux actifs
   const topPadding = (isImpersonating || isRealUserImpersonation) ? 'pt-10' : '';
