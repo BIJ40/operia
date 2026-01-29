@@ -120,8 +120,9 @@ export const UserPermissionsDialog = memo(function UserPermissionsDialog({
           <div className="space-y-3 py-4">
             {MODULE_DEFINITIONS.map(moduleDef => {
               const isEnabled = isModuleEnabled(moduleDef.key);
-              const canUserAccessModule = canAccessModule(effectiveRole, moduleDef.key);
-              const isModuleDisabled = !canEdit || !canUserAccessModule;
+              const canUserAccessModuleByRole = canAccessModule(effectiveRole, moduleDef.key);
+              // L'admin peut TOUJOURS éditer les permissions (override du plan)
+              const isModuleDisabled = !canEdit;
               const moduleOptions = getModuleOptions(moduleDef.key);
               const hasOptions = moduleDef.options && moduleDef.options.length > 0;
               const isRhModule = moduleDef.key === 'rh';
@@ -163,16 +164,16 @@ export const UserPermissionsDialog = memo(function UserPermissionsDialog({
                           className="w-5 h-5 pointer-events-none"
                         />
                         <div className="flex-1 min-w-0">
-                          <span className={`text-sm font-medium ${!canUserAccessModule ? 'text-muted-foreground' : ''}`}>
+                          <span className={`text-sm font-medium ${!canUserAccessModuleByRole ? 'text-muted-foreground/70' : ''}`}>
                             {moduleDef.label}
                           </span>
                           {moduleDef.description && (
                             <p className="text-xs text-muted-foreground truncate">{moduleDef.description}</p>
                           )}
                         </div>
-                        {!canUserAccessModule && (
-                          <Badge variant="outline" className="text-xs shrink-0">
-                            {VISIBLE_ROLE_LABELS[moduleDef.minRole]}+
+                        {!canUserAccessModuleByRole && (
+                          <Badge variant="secondary" className="text-xs shrink-0">
+                            Override {VISIBLE_ROLE_LABELS[moduleDef.minRole]}+
                           </Badge>
                         )}
                       </div>
