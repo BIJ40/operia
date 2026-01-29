@@ -15,6 +15,8 @@ export interface PillTabConfig {
   icon: LucideIcon;
   /** Optionnel: couleur d'accent (blue, purple, green, orange, pink, teal) */
   accent?: 'blue' | 'purple' | 'green' | 'orange' | 'pink' | 'teal';
+  /** Optionnel: désactiver l'onglet */
+  disabled?: boolean;
 }
 
 // Mapping des couleurs d'accent vers les classes Tailwind
@@ -65,18 +67,20 @@ export function PillTabsList({ tabs, className }: PillTabsListProps) {
         const Icon = tab.icon;
         const accent = tab.accent || DEFAULT_ACCENTS[index % DEFAULT_ACCENTS.length];
         const styles = ACCENT_STYLES[accent];
+        const isDisabled = tab.disabled === true;
         
         return (
           <motion.div
             key={tab.id}
             initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
+            animate={{ opacity: isDisabled ? 0.5 : 1, scale: 1 }}
             transition={{ delay: index * 0.03, duration: 0.15 }}
-            whileHover={{ scale: 1.03, y: -2 }}
-            whileTap={{ scale: 0.97 }}
+            whileHover={isDisabled ? {} : { scale: 1.03, y: -2 }}
+            whileTap={isDisabled ? {} : { scale: 0.97 }}
           >
             <TabsTrigger 
               value={tab.id}
+              disabled={isDisabled}
               className={cn(
                 "group flex items-center gap-2 px-4 py-2.5 rounded-xl",
                 "border-2 border-border/50 bg-card/80 backdrop-blur-sm",
@@ -84,13 +88,15 @@ export function PillTabsList({ tabs, className }: PillTabsListProps) {
                 "shadow-sm hover:shadow-md hover:border-border",
                 "transition-all duration-200",
                 styles.active,
-                "data-[state=active]:shadow-lg data-[state=active]:font-semibold"
+                "data-[state=active]:shadow-lg data-[state=active]:font-semibold",
+                isDisabled && "opacity-50 cursor-not-allowed hover:shadow-sm hover:border-border/50"
               )}
             >
               <div className={cn(
                 "flex items-center justify-center w-7 h-7 rounded-lg",
                 "transition-colors duration-200",
-                styles.icon
+                styles.icon,
+                isDisabled && "opacity-60"
               )}>
                 <Icon className="w-4 h-4" />
               </div>
