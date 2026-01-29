@@ -530,16 +530,16 @@ export function TicketInlinePanel({
                     </Select>
                   )}
                 </div>
-                <div className="w-24">
+                <div className="w-32">
                   <label className="text-xs text-muted-foreground">Estim. (h)</label>
-                  <div className="flex gap-1 mt-1">
+                  <div className="flex gap-1.5 mt-1">
                     <Input
                       type="number"
                       placeholder="Min"
                       value={localHMin}
                       onChange={(e) => setLocalHMin(e.target.value)}
                       onBlur={handleHMinBlur}
-                      className="h-8 text-xs w-11 px-1"
+                      className="h-8 text-xs w-14 px-1.5"
                       min={0}
                       step={0.5}
                       disabled={!canEditDevFields}
@@ -550,7 +550,7 @@ export function TicketInlinePanel({
                       value={localHMax}
                       onChange={(e) => setLocalHMax(e.target.value)}
                       onBlur={handleHMaxBlur}
-                      className="h-8 text-xs w-11 px-1"
+                      className="h-8 text-xs w-14 px-1.5"
                       min={0}
                       step={0.5}
                       disabled={!canEditDevFields}
