@@ -62,7 +62,7 @@ export function TicketTabBar({
             className={cn(
               "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-all shrink-0 rounded-t-xl relative ml-1",
               isLateTabActive
-                ? "bg-destructive/5 dark:bg-destructive/10 text-destructive border-2 border-b-0 border-destructive/50 mb-[-2px] pb-[calc(0.625rem+2px)]"
+                ? "bg-red-50 dark:bg-red-950/50 text-destructive border-2 border-b-0 border-destructive/50 mb-[-2px] pb-[calc(0.625rem+2px)]"
                 : "bg-slate-100/80 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 hover:text-destructive hover:bg-destructive/5 border border-transparent mb-[2px]"
             )}
           >
