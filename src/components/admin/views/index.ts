@@ -8,3 +8,4 @@ export { IAView } from './IAView';
 export { ContenuView } from './ContenuView';
 export { OpsView } from './OpsView';
 export { PlateformeView } from './PlateformeView';
+export { PlansManagerView } from './PlansManagerView';

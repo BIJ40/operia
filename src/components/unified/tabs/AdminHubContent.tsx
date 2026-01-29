@@ -6,7 +6,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, Building2, Brain, FileText, Database, Cpu, Shield, Users, Activity } from 'lucide-react';
+import { Settings, Building2, Brain, FileText, Database, Cpu, Shield, Users, Activity, Crown } from 'lucide-react';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { cn } from '@/lib/utils';
 import {
@@ -15,6 +15,7 @@ import {
   ContenuView,
   OpsView,
   PlateformeView,
+  PlansManagerView,
 } from '@/components/admin/views';
 import { lazy, Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
@@ -40,10 +41,11 @@ const ADMIN_MAIN_TABS: PillTabConfig[] = [
   { id: 'plateforme', label: 'Plateforme', icon: Cpu, accent: 'teal' },
 ];
 
-// Sous-onglets pour Gestion (style Folder) - 3 onglets directs
+// Sous-onglets pour Gestion (style Folder) - 4 onglets directs
 const GESTION_SUB_TABS = [
   { id: 'users', label: 'Utilisateurs', icon: Users },
   { id: 'agences', label: 'Agences', icon: Building2 },
+  { id: 'plans', label: 'Plans', icon: Crown },
   { id: 'activity', label: 'Activité', icon: Activity },
 ];
 
@@ -126,6 +128,10 @@ export default function AdminHubContent() {
                 
                 <TabsContent value="agences" className="mt-0 focus-visible:outline-none">
                   <ReseauView />
+                </TabsContent>
+
+                <TabsContent value="plans" className="mt-0 focus-visible:outline-none">
+                  <PlansManagerView />
                 </TabsContent>
 
                 <TabsContent value="activity" className="mt-0 focus-visible:outline-none">
