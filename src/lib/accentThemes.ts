@@ -5,18 +5,20 @@ export type AccentThemeKey =
   | 'orange'
   | 'pink'
   | 'teal'
+  | 'cyan'
+  | 'red'
   | 'neutral';
 
 /**
  * Thèmes de couleurs pastel basés sur les tokens (voir index.css / tailwind.config.ts).
- * Objectif: réutiliser exactement la même identité (onglets, tuiles, badges) sans couleurs “hardcodées”.
+ * Objectif: réutiliser exactement la même identité (onglets, tuiles, badges) sans couleurs "hardcodées".
  */
 export const ACCENT_THEMES: Record<
   AccentThemeKey,
   {
     /** Gradient pour fonds décoratifs / icônes */
     gradient: string;
-    /** Couleur de fond “solide” (icône carré) */
+    /** Couleur de fond "solide" (icône carré) */
     solidBg: string;
     /** Couleur texte associée */
     text: string;
@@ -59,6 +61,18 @@ export const ACCENT_THEMES: Record<
     solidBg: 'bg-warm-teal/80',
     text: 'text-warm-teal/90',
     dot: 'bg-warm-teal/70',
+  },
+  cyan: {
+    gradient: 'from-warm-cyan/70 to-warm-teal/50',
+    solidBg: 'bg-warm-cyan/80',
+    text: 'text-warm-cyan/90',
+    dot: 'bg-warm-cyan/70',
+  },
+  red: {
+    gradient: 'from-warm-red/70 to-warm-orange/50',
+    solidBg: 'bg-warm-red/80',
+    text: 'text-warm-red/90',
+    dot: 'bg-warm-red/70',
   },
   neutral: {
     gradient: 'from-muted/70 to-muted/50',

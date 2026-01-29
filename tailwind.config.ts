@@ -109,6 +109,8 @@ export default {
           purple: "hsl(var(--warm-purple))",
           pink: "hsl(var(--warm-pink))",
           teal: "hsl(var(--warm-teal))",
+          cyan: "hsl(var(--warm-cyan))",
+          red: "hsl(var(--warm-red))",
         },
       },
       borderRadius: {
