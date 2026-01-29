@@ -440,32 +440,17 @@ export function TicketInlinePanel({
         <TabsContent value="main" className="flex-1 overflow-hidden m-0">
           <ScrollArea className="h-full">
             <div className="p-4 space-y-4">
-              {/* Title + Tags + Roadmap on same row */}
-              <div className="flex items-start gap-3">
-                <div className="flex-1 min-w-0">
+              {/* Title row with Tags/Roadmap top-right */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
                   <label className="text-xs font-medium text-muted-foreground uppercase">Titre</label>
-                  <Input
-                    value={localTitle}
-                    onChange={(e) => setLocalTitle(e.target.value)}
-                    onBlur={handleTitleBlur}
-                    className="mt-1 text-sm font-semibold"
-                    disabled={!canManage}
-                  />
-                </div>
-                <div className="flex-shrink-0 w-44">
-                  <label className="text-xs font-medium text-muted-foreground uppercase">Tags</label>
-                  <div className="mt-1">
+                  <div className="flex items-center gap-3">
                     <TagSelector
                       selectedTags={ticket.impact_tags || []}
                       onTagsChange={(tags) => handleFieldUpdate('impact_tags', tags)}
                       disabled={!canEditDevFields}
                       compact
                     />
-                  </div>
-                </div>
-                <div className="flex-shrink-0 w-40">
-                  <label className="text-xs font-medium text-muted-foreground uppercase">Roadmap</label>
-                  <div className="mt-1">
                     <RoadmapEditor
                       enabled={ticket.roadmap_enabled}
                       month={ticket.roadmap_month}
@@ -480,6 +465,13 @@ export function TicketInlinePanel({
                     />
                   </div>
                 </div>
+                <Input
+                  value={localTitle}
+                  onChange={(e) => setLocalTitle(e.target.value)}
+                  onBlur={handleTitleBlur}
+                  className="text-sm font-semibold"
+                  disabled={!canManage}
+                />
               </div>
 
               {/* Description */}
@@ -496,16 +488,16 @@ export function TicketInlinePanel({
                 />
               </div>
 
-              {/* Parameters grid */}
-              <div className="grid grid-cols-3 gap-3">
-                <div>
+              {/* Parameters row: Module, Origine, Estimation, Porteur */}
+              <div className="flex items-end gap-3 flex-wrap">
+                <div className="w-28">
                   <label className="text-xs text-muted-foreground">Module</label>
                   <Select
                     value={ticket.module || ''}
                     onValueChange={(v) => handleFieldUpdate('module', v || null)}
                     disabled={!canManage}
                   >
-                    <SelectTrigger className="h-8 mt-1 text-sm">
+                    <SelectTrigger className="h-8 mt-1 text-xs">
                       <SelectValue placeholder="—" />
                     </SelectTrigger>
                     <SelectContent>
@@ -515,11 +507,11 @@ export function TicketInlinePanel({
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
+                <div className="w-28">
                   <label className="text-xs text-muted-foreground">Origine</label>
                   {ticket.created_from === 'support' ? (
-                    <div className="h-8 mt-1 px-2 py-1 rounded-md border bg-purple-50 text-xs flex items-center gap-1">
-                      <span className="px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 font-medium">Support</span>
+                    <div className="h-8 mt-1 px-2 py-1 rounded-md border bg-purple-50 text-xs flex items-center">
+                      <span className="px-1 py-0.5 rounded bg-purple-100 text-purple-700 font-medium text-xs">Support</span>
                     </div>
                   ) : (
                     <Select
@@ -527,7 +519,7 @@ export function TicketInlinePanel({
                       onValueChange={(v) => handleFieldUpdate('reported_by', v || null)}
                       disabled={!canManage}
                     >
-                      <SelectTrigger className="h-8 mt-1 text-sm">
+                      <SelectTrigger className="h-8 mt-1 text-xs">
                         <SelectValue placeholder="—" />
                       </SelectTrigger>
                       <SelectContent>
@@ -538,8 +530,8 @@ export function TicketInlinePanel({
                     </Select>
                   )}
                 </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Estimation (h)</label>
+                <div className="w-24">
+                  <label className="text-xs text-muted-foreground">Estim. (h)</label>
                   <div className="flex gap-1 mt-1">
                     <Input
                       type="number"
@@ -547,7 +539,7 @@ export function TicketInlinePanel({
                       value={localHMin}
                       onChange={(e) => setLocalHMin(e.target.value)}
                       onBlur={handleHMinBlur}
-                      className="h-8 text-sm"
+                      className="h-8 text-xs w-11 px-1"
                       min={0}
                       step={0.5}
                       disabled={!canEditDevFields}
@@ -558,10 +550,21 @@ export function TicketInlinePanel({
                       value={localHMax}
                       onChange={(e) => setLocalHMax(e.target.value)}
                       onBlur={handleHMaxBlur}
-                      className="h-8 text-sm"
+                      className="h-8 text-xs w-11 px-1"
                       min={0}
                       step={0.5}
                       disabled={!canEditDevFields}
+                    />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-[140px]">
+                  <label className="text-xs text-muted-foreground">Porteur</label>
+                  <div className="mt-1">
+                    <OwnerSideSlider
+                      value={ownerSideToSliderValue(ticket.owner_side)}
+                      onChange={(v) => handleFieldUpdate('owner_side', sliderValueToOwnerSide(v))}
+                      disabled={!canEditDevFields}
+                      compact
                     />
                   </div>
                 </div>
@@ -602,50 +605,6 @@ export function TicketInlinePanel({
                   >
                     <Flame className="h-4 w-4 text-red-500" />
                   </button>
-                </div>
-              </div>
-
-              {/* Owner side */}
-              <div>
-                <label className="text-xs font-medium text-muted-foreground uppercase">Porteur</label>
-                <div className="mt-2">
-                  <OwnerSideSlider
-                    value={ownerSideToSliderValue(ticket.owner_side)}
-                    onChange={(v) => handleFieldUpdate('owner_side', sliderValueToOwnerSide(v))}
-                    disabled={!canEditDevFields}
-                  />
-                </div>
-              </div>
-
-              {/* Tags */}
-              <div>
-                <label className="text-xs font-medium text-muted-foreground uppercase">Tags</label>
-                <div className="mt-2">
-                  <TagSelector
-                    selectedTags={ticket.impact_tags || []}
-                    onTagsChange={(tags) => handleFieldUpdate('impact_tags', tags)}
-                    disabled={!canManage}
-                  />
-                </div>
-              </div>
-
-              {/* Roadmap */}
-              <div>
-                <label className="text-xs font-medium text-muted-foreground uppercase">Roadmap</label>
-                <div className="mt-2">
-                  <RoadmapEditor
-                    enabled={ticket.roadmap_enabled}
-                    month={ticket.roadmap_month}
-                    year={ticket.roadmap_year}
-                    onChange={(enabled, month, year) => {
-                      onQueueChange(ticket.id, {
-                        roadmap_enabled: enabled,
-                        roadmap_month: month,
-                        roadmap_year: year,
-                      });
-                    }}
-                    disabled={!canManage}
-                  />
                 </div>
               </div>
 

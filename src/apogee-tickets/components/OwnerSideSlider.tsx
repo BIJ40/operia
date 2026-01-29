@@ -13,6 +13,7 @@ interface OwnerSideSliderProps {
   value: number | null; // null = non déterminé, 0-100 = valeur
   onChange: (value: number | null) => void;
   disabled?: boolean;
+  compact?: boolean;
 }
 
 const STEPS = [
@@ -23,7 +24,7 @@ const STEPS = [
   { value: 100, label: 'HC', apogee: 0, hc: 100 },
 ];
 
-export function OwnerSideSlider({ value, onChange, disabled }: OwnerSideSliderProps) {
+export function OwnerSideSlider({ value, onChange, disabled, compact = false }: OwnerSideSliderProps) {
   const isUndetermined = value === null;
   const currentValue = value ?? 50; // Position visuelle par défaut au milieu
   const currentStep = isUndetermined ? null : STEPS.reduce((prev, curr) => 
@@ -37,6 +38,42 @@ export function OwnerSideSlider({ value, onChange, disabled }: OwnerSideSliderPr
   const handleReset = () => {
     onChange(null);
   };
+
+  // Compact mode: simple row with badge
+  if (compact) {
+    return (
+      <div className="flex items-center gap-2 h-8">
+        <span className="text-xs text-blue-600 font-medium">Apogée</span>
+        <div className="flex-1 relative">
+          <Slider
+            value={[currentValue]}
+            onValueChange={([v]) => {
+              const snappedValue = STEPS.reduce((prev, curr) => 
+                Math.abs(curr.value - v) < Math.abs(prev.value - v) ? curr : prev
+              ).value;
+              handleSliderChange(snappedValue);
+            }}
+            min={0}
+            max={100}
+            step={1}
+            disabled={disabled}
+            className={cn("cursor-pointer", isUndetermined && "opacity-50")}
+            trackClassName="h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-orange-500"
+            rangeClassName="bg-transparent"
+          />
+        </div>
+        <span className="text-xs text-orange-600 font-medium">HC</span>
+        {!isUndetermined && currentStep && (
+          <span className="text-xs px-1.5 py-0.5 rounded bg-muted font-medium min-w-[40px] text-center">
+            {currentStep.label}
+          </span>
+        )}
+        {isUndetermined && (
+          <span className="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">?</span>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
