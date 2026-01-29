@@ -34,7 +34,6 @@ import {
   Trash2,
   CheckCircle2,
   History,
-  GitBranch,
   Pencil,
   X,
   Check,
@@ -56,6 +55,7 @@ import { errorToast } from '@/lib/toastHelpers';
 import { TagSelector } from './TagSelector';
 import { RoadmapEditor } from './RoadmapEditor';
 import { TicketSupportExchanges } from './TicketSupportExchanges';
+import { StatusSelector } from './StatusSelector';
 import type { ApogeeTicket, ApogeeModule, ApogeePriority, ApogeeTicketStatus, AuthorType } from '../types';
 
 interface TicketInlinePanelProps {
@@ -240,10 +240,6 @@ export function TicketInlinePanel({
     );
   }, [statuses, ticket, isAdmin, allowedTransitions]);
 
-  const currentStatusColor = useMemo(() => {
-    const status = statuses.find(s => s.id === ticket.kanban_status);
-    return status?.color || '#6b7280';
-  }, [statuses, ticket.kanban_status]);
 
   const handleStatusChange = async (newStatus: string) => {
     const isAllowed = isAdmin || allowedTransitions.includes(newStatus);
@@ -318,40 +314,17 @@ export function TicketInlinePanel({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 flex-wrap">
             {/* Numéro du ticket */}
-            <Badge variant="outline" className="font-mono text-sm font-bold bg-background shadow-sm">
+            <Badge variant="outline" className="font-mono text-sm font-bold bg-background shadow-sm px-3 py-1">
               {ticketRef}
             </Badge>
             
-            {/* Statut Kanban */}
-            <Select
-              value={ticket.kanban_status}
-              onValueChange={handleStatusChange}
+            {/* Statut Kanban (style tag) */}
+            <StatusSelector
+              status={ticket.kanban_status}
+              availableStatuses={availableStatuses}
+              onChange={handleStatusChange}
               disabled={!canManage}
-            >
-              <SelectTrigger 
-                className="h-8 w-auto min-w-[130px] text-sm font-medium gap-2 shadow-sm"
-                style={{ 
-                  backgroundColor: `${currentStatusColor}20`,
-                  borderColor: currentStatusColor
-                }}
-              >
-                <GitBranch className="h-3.5 w-3.5" style={{ color: currentStatusColor }} />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-background z-50">
-                {availableStatuses.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-2 h-2 rounded-full" 
-                        style={{ backgroundColor: s.color || '#6b7280' }}
-                      />
-                      {s.label}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            />
             
             {/* Tag Module (cliquable) */}
             <ModuleSelector
@@ -359,7 +332,7 @@ export function TicketInlinePanel({
               modules={modules}
               onChange={(v) => handleFieldUpdate('module', v)}
               disabled={!canManage}
-              size="sm"
+              size="default"
             />
             
             {/* Tag Priorité (cliquable) */}
@@ -367,11 +340,11 @@ export function TicketInlinePanel({
               priority={ticket.heat_priority}
               onChange={(v) => handleFieldUpdate('heat_priority', v)}
               disabled={!canManage}
-              size="sm"
+              size="default"
             />
             
             {/* Tag Origine (lecture seule) */}
-            <OrigineBadge origine={ticket.reported_by} size="sm" />
+            <OrigineBadge origine={ticket.reported_by} size="default" />
           </div>
           
           {/* Actions: Corbeille & Fermer */}
