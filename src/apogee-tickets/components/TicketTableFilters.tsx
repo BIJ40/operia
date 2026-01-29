@@ -475,9 +475,14 @@ export function TicketTableFilters({
 
         {/* Reset */}
         {activeFiltersCount > 0 && (
-          <Button variant="ghost" size="sm" className="h-9" onClick={handleReset}>
-            <RotateCcw className="h-4 w-4 mr-1" />
-            Réinitialiser
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10" 
+            onClick={handleReset}
+            title="Réinitialiser les filtres"
+          >
+            <X className="h-4 w-4" />
           </Button>
         )}
       </div>
