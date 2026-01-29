@@ -28,17 +28,8 @@ export function TicketTabBar({
 }: TicketTabBarProps) {
   const isListeActive = activeTabId === null;
 
-  // Determine border color based on active state
-  const activeBorderColor = isListeActive ? 'border-sky-400 dark:border-sky-500' : 'border-violet-400 dark:border-violet-500';
-
   return (
-    <div className="flex items-end gap-0 pl-2 pt-2 pr-2 pb-1 relative overflow-hidden">
-      {/* Bordure horizontale du bas - z-0 pour passer DERRIÈRE les onglets */}
-      <div className={cn(
-        "absolute bottom-0 left-2 right-2 h-[2px] z-0",
-        isListeActive ? "bg-sky-400 dark:bg-sky-500" : "bg-violet-400 dark:bg-violet-500"
-      )} />
-      
+    <div className="flex items-end gap-0 mx-2 pt-2 relative">
       {/* Onglet LISTE - toujours visible et fixe */}
       <button
         onClick={() => onTabClick(null)}
@@ -46,7 +37,7 @@ export function TicketTabBar({
           "flex items-center gap-2 px-5 py-2.5 text-sm font-semibold transition-all shrink-0 rounded-t-xl relative z-10",
           isListeActive
             ? "bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border-2 border-b-0 border-sky-400 dark:border-sky-500"
-            : "bg-slate-100/80 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/80 dark:hover:bg-slate-700/80"
+            : "bg-slate-100/80 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/80 dark:hover:bg-slate-700/80 mb-[2px]"
         )}
       >
         <List className={cn("h-4 w-4", isListeActive && "text-sky-600 dark:text-sky-400")} />
@@ -55,16 +46,16 @@ export function TicketTabBar({
       
       {/* Séparateur vertical */}
       {tabs.length > 0 && (
-        <div className="flex items-center mx-3 shrink-0 mb-1">
+        <div className="flex items-center mx-3 shrink-0 mb-2">
           <div className="h-6 w-px bg-slate-300 dark:bg-slate-600" />
         </div>
       )}
       
-      {/* Onglets tickets + indicateurs */}
-      <div className="flex items-end gap-1 flex-1 min-w-0">
+      {/* Onglets tickets */}
+      <div className="flex items-end gap-1.5 flex-1 min-w-0">
         <div
           className={cn(
-            "flex items-end gap-1 flex-1 min-w-0 overflow-x-auto",
+            "flex items-end gap-1.5 flex-1 min-w-0",
             "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           )}
         >
@@ -78,7 +69,7 @@ export function TicketTabBar({
                   "group flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all shrink-0 rounded-t-xl relative z-10",
                   isActive
                     ? "bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 border-2 border-b-0 border-violet-400 dark:border-violet-500"
-                    : "bg-slate-100/60 dark:bg-slate-700/40 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/70 dark:hover:bg-slate-700/60"
+                    : "bg-slate-100/60 dark:bg-slate-700/40 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/70 dark:hover:bg-slate-700/60 mb-[2px]"
                 )}
               >
                 <span className={cn(
@@ -106,8 +97,8 @@ export function TicketTabBar({
           })}
         </div>
         
-        {/* Indicateur de sauvegarde + fermer tout - maintenant dans le flux */}
-        <div className="flex items-center gap-2 shrink-0 mb-1 ml-1">
+        {/* Indicateur de sauvegarde + fermer tout */}
+        <div className="flex items-center gap-1.5 shrink-0 mb-2 ml-1">
           {isSaving ? (
             <span className="flex items-center gap-1 text-xs text-muted-foreground">
               <Loader2 className="h-3 w-3 animate-spin" />
