@@ -26,6 +26,7 @@ import {
   FileDown, 
   Loader2, 
   ShieldAlert,
+  AlertTriangle,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApogeeTicket, useApogeeTickets } from '../hooks/useApogeeTickets';
@@ -37,6 +38,7 @@ import { TicketTableFilters } from '../components/TicketTableFilters';
 import { TicketTabBar } from '../components/TicketTabBar';
 import { TicketInlinePanel } from '../components/TicketInlinePanel';
 import { CreateTicketDialog } from '../components/CreateTicketDialog';
+import { LateTicketsPanel } from '../components/LateTicketsPanel';
 import { exportToCSV, exportToExcel, exportToPDF } from '../utils/exportKanban';
 import type { ApogeeTicket } from '../types';
 import { ROUTES } from '@/config/routes';
@@ -120,6 +122,10 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
     }
   });
 
+  // État pour afficher l'onglet RETARD
+  const [showLateTab, setShowLateTab] = useState(false);
+  const [isLateTabActive, setIsLateTabActive] = useState(false);
+
   const {
     tickets,
     statuses,
@@ -130,6 +136,20 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
     createTicket,
     deleteTicket,
   } = useApogeeTickets(filters);
+
+  // Compter les tickets en retard (BUG > 48h)
+  const lateTicketsCount = useMemo(() => {
+    const now = new Date();
+    const hours48Ago = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+    return tickets.filter(ticket => {
+      const hasBugTag = ticket.impact_tags?.some(tag => tag.toUpperCase() === 'BUG');
+      if (!hasBugTag) return false;
+      const createdAt = new Date(ticket.created_at);
+      if (createdAt > hours48Ago) return false;
+      const status = statuses.find(s => s.id === ticket.kanban_status);
+      return !status?.is_final;
+    }).length;
+  }, [tickets, statuses]);
 
   // Récupérer toutes les transitions autorisées
   const { data: allTransitions = [] } = useTicketTransitions();
@@ -163,6 +183,8 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
   const activeTicket = activeTicketFromList ?? activeTicketFromDb;
 
   const handleTicketClick = (ticket: ApogeeTicket) => {
+    // Fermer l'onglet RETARD quand on ouvre un ticket depuis celui-ci
+    setIsLateTabActive(false);
     openTicketTab(ticket);
   };
 
@@ -176,8 +198,21 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
     queueChange(ticketId, updates);
   };
 
-  // Vue active: null = liste, sinon ticket ID
-  const showingList = activeTabId === null;
+  // Gérer le clic sur l'onglet RETARD
+  const handleLateTabClick = () => {
+    setIsLateTabActive(true);
+    setActiveTabId(null); // Désélectionner les autres onglets
+  };
+
+  // Gérer le clic sur liste ou ticket (désactive RETARD)
+  const handleTabClick = (tabId: string | null) => {
+    setIsLateTabActive(false);
+    setActiveTabId(tabId);
+  };
+
+  // Vue active: null = liste (si pas RETARD actif), sinon ticket ID
+  const showingList = activeTabId === null && !isLateTabActive;
+  const showingLate = isLateTabActive;
 
   return (
     <div className={embedded ? "flex flex-col h-full" : "container mx-auto py-8 px-4 flex flex-col h-[calc(100vh-6rem)]"}>
@@ -225,27 +260,69 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
               <span className="hidden sm:inline">Nouveau ticket</span>
             </Button>
           )}
+          
+          {/* Bouton En retard */}
+          <Button
+            variant={showLateTab ? "secondary" : "outline"}
+            size="sm"
+            onClick={() => {
+              if (!showLateTab) {
+                setShowLateTab(true);
+                setIsLateTabActive(true);
+                setActiveTabId(null);
+              } else {
+                setShowLateTab(false);
+                setIsLateTabActive(false);
+              }
+            }}
+            className={cn(
+              "gap-2 transition-all",
+              lateTicketsCount > 0 && !showLateTab && "border-destructive/50 text-destructive hover:bg-destructive/10"
+            )}
+          >
+            <AlertTriangle className="h-4 w-4" />
+            <span className="hidden sm:inline">En retard</span>
+            {lateTicketsCount > 0 && (
+              <span className={cn(
+                "inline-flex items-center justify-center h-5 min-w-5 px-1.5 text-xs font-medium rounded-full",
+                showLateTab 
+                  ? "bg-destructive text-destructive-foreground" 
+                  : "bg-destructive/10 text-destructive"
+              )}>
+                {lateTicketsCount}
+              </span>
+            )}
+          </Button>
         </div>
       </div>
 
-      {/* Barre d'onglets: LISTE fixe + tickets à droite */}
+      {/* Barre d'onglets: LISTE fixe + RETARD optionnel + tickets à droite */}
       <TicketTabBar
         tabs={openTabs}
         activeTabId={activeTabId}
-        onTabClick={setActiveTabId}
+        onTabClick={handleTabClick}
         onTabClose={closeTab}
         onCloseAll={closeAllTabs}
         isSaving={isSaving}
+        showLateTab={showLateTab}
+        isLateTabActive={isLateTabActive}
+        onLateTabClick={handleLateTabClick}
+        lateCount={lateTicketsCount}
       />
 
-      {/* Zone de contenu: soit la liste, soit le ticket actif - coins adaptés selon l'onglet actif */}
+      {/* Zone de contenu: soit la liste, soit RETARD, soit le ticket actif */}
       <div className={cn(
         "flex-1 overflow-hidden mx-2 mb-2 border-2",
-        showingList 
-          ? "bg-sky-50 dark:bg-sky-950/50 border-sky-400 dark:border-sky-500 rounded-tr-2xl rounded-br-2xl rounded-bl-2xl"
-          : "bg-violet-50 dark:bg-violet-950/50 border-violet-400 dark:border-violet-500 rounded-2xl"
+        showingLate
+          ? "bg-destructive/5 dark:bg-destructive/10 border-destructive/30 rounded-2xl"
+          : showingList 
+            ? "bg-sky-50 dark:bg-sky-950/50 border-sky-400 dark:border-sky-500 rounded-tr-2xl rounded-br-2xl rounded-bl-2xl"
+            : "bg-violet-50 dark:bg-violet-950/50 border-violet-400 dark:border-violet-500 rounded-2xl"
       )}>
-        {showingList ? (
+        {showingLate ? (
+          /* Vue En retard */
+          <LateTicketsPanel onTicketClick={handleTicketClick} />
+        ) : showingList ? (
           /* Vue Liste */
           <div className="h-full flex flex-col">
             {/* Filtres */}
@@ -301,7 +378,7 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
         ) : (
           /* Fallback si ticket non trouvé */
           <div className="flex items-center justify-center h-full text-muted-foreground">
-            <p>Ticket introuvable. <Button variant="link" onClick={() => setActiveTabId(null)}>Retour à la liste</Button></p>
+            <p>Ticket introuvable. <Button variant="link" onClick={() => handleTabClick(null)}>Retour à la liste</Button></p>
           </div>
         )}
       </div>
