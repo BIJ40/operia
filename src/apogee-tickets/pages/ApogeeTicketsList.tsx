@@ -260,12 +260,12 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
         isSaving={isSaving}
       />
 
-      {/* Zone de contenu: soit la liste, soit le ticket actif - bordure complète avec coins arrondis */}
+      {/* Zone de contenu: soit la liste, soit le ticket actif - coins adaptés selon l'onglet actif */}
       <div className={cn(
-        "flex-1 overflow-hidden mx-2 mb-2 border-2 rounded-2xl",
+        "flex-1 overflow-hidden mx-2 mb-2 border-2",
         showingList 
-          ? "bg-sky-50 dark:bg-sky-950/50 border-sky-400 dark:border-sky-500"
-          : "bg-violet-50 dark:bg-violet-950/50 border-violet-400 dark:border-violet-500"
+          ? "bg-sky-50 dark:bg-sky-950/50 border-sky-400 dark:border-sky-500 rounded-tr-2xl rounded-br-2xl rounded-bl-2xl"
+          : "bg-violet-50 dark:bg-violet-950/50 border-violet-400 dark:border-violet-500 rounded-2xl"
       )}>
         {showingList ? (
           /* Vue Liste */
