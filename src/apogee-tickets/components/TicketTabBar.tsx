@@ -32,20 +32,6 @@ export function TicketTabBar({
 
   return (
     <div className="relative mx-2 pt-2">
-      {/* Ligne horizontale qui prolonge la bordure depuis l'onglet actif */}
-      <div className="absolute bottom-0 right-0 left-0 flex items-end pointer-events-none">
-        {/* Ligne à gauche (pour tickets, commence du bord gauche jusqu'au début de LISTE + séparateur) */}
-        {!isListeActive && activeTabId && (
-          <div className={cn("h-[2px] -ml-2 rounded-l-2xl w-32", bgBorderColor)} />
-        )}
-        {/* Espace vide sous LISTE quand actif */}
-        {isListeActive && (
-          <div className="w-[calc(theme(spacing.5)*2+theme(spacing.4)+4ch+theme(spacing.2))]" />
-        )}
-        {/* Ligne qui continue à droite - étendue légèrement pour rejoindre le coin arrondi */}
-        <div className={cn("flex-1 h-[2px] -mr-2 rounded-r-2xl", bgBorderColor)} />
-      </div>
-
       <div className="flex items-end gap-0 relative z-10">
         {/* Onglet LISTE - toujours visible et fixe */}
         <button
@@ -53,7 +39,7 @@ export function TicketTabBar({
           className={cn(
             "flex items-center gap-2 px-5 py-2.5 text-sm font-semibold transition-all shrink-0 rounded-t-xl relative",
             isListeActive
-              ? "bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border-2 border-b-0 border-sky-400 dark:border-sky-500"
+              ? "bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border-2 border-b-0 border-sky-400 dark:border-sky-500 mb-[-2px] pb-[calc(0.625rem+2px)]"
               : "bg-slate-100/80 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/80 dark:hover:bg-slate-700/80 border border-transparent mb-[2px]"
           )}
         >
@@ -85,7 +71,7 @@ export function TicketTabBar({
                   className={cn(
                     "group flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all shrink-0 rounded-t-xl relative",
                     isActive
-                      ? "bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 border-2 border-b-0 border-violet-400 dark:border-violet-500"
+                      ? "bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 border-2 border-b-0 border-violet-400 dark:border-violet-500 mb-[-2px] pb-[calc(0.5rem+2px)]"
                       : "bg-slate-100/60 dark:bg-slate-700/40 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/70 dark:hover:bg-slate-700/60 border border-transparent mb-[2px]"
                   )}
                 >
