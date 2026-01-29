@@ -33,8 +33,6 @@ import {
   Paperclip,
   Trash2,
   CheckCircle2,
-  Flame,
-  Snowflake,
   History,
   GitBranch,
   Pencil,
@@ -46,9 +44,9 @@ import { fr } from 'date-fns/locale';
 import { useApogeeTicket } from '../hooks/useApogeeTickets';
 import { supabase } from '@/integrations/supabase/client';
 import { useMarkTicketAsViewed } from '../hooks/useTicketViews';
-import { HeatPriorityBadge } from './HeatPriorityBadge';
+import { HeatPrioritySelector } from './HeatPrioritySelector';
 import { OwnerSideSlider, ownerSideToSliderValue, sliderValueToOwnerSide } from './OwnerSideSlider';
-import { Slider } from '@/components/ui/slider';
+
 import { useAuth } from '@/contexts/AuthContext';
 import { useMyTicketRole, useAllowedTransitions, useLogTicketAction } from '../hooks/useTicketPermissions';
 import { TicketTimelineTab } from './TicketTimelineTab';
@@ -370,8 +368,13 @@ export function TicketInlinePanel({
               </Badge>
             )}
             
-            {/* Tag Priorité */}
-            <HeatPriorityBadge priority={ticket.heat_priority} size="sm" />
+            {/* Tag Priorité (cliquable) */}
+            <HeatPrioritySelector
+              priority={ticket.heat_priority}
+              onChange={(v) => handleFieldUpdate('heat_priority', v)}
+              disabled={!canManage}
+              size="sm"
+            />
           </div>
           
           {/* Actions: Corbeille & Fermer */}
@@ -597,43 +600,6 @@ export function TicketInlinePanel({
                 </div>
               </div>
 
-              {/* Priority slider */}
-              <div>
-                <label className="text-xs font-medium text-muted-foreground uppercase flex items-center gap-1">
-                  <Flame className="h-3.5 w-3.5" />
-                  Priorité
-                </label>
-                <div className="mt-2 flex items-center gap-3">
-                  <HeatPriorityBadge priority={ticket.heat_priority} size="sm" showLabel />
-                  <button
-                    type="button"
-                    onClick={() => handleFieldUpdate('heat_priority', Math.max(0, (ticket.heat_priority ?? 3) - 1))}
-                    className="p-1 hover:bg-blue-100 rounded transition-colors disabled:opacity-50"
-                    disabled={!canManage}
-                  >
-                    <Snowflake className="h-4 w-4 text-blue-400" />
-                  </button>
-                  <div className="flex-1">
-                    <Slider
-                      value={[ticket.heat_priority ?? 3]}
-                      min={0}
-                      max={12}
-                      step={1}
-                      onValueChange={(v) => handleFieldUpdate('heat_priority', v[0])}
-                      className="w-full"
-                      disabled={!canManage}
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleFieldUpdate('heat_priority', Math.min(12, (ticket.heat_priority ?? 3) + 1))}
-                    className="p-1 hover:bg-red-100 rounded transition-colors disabled:opacity-50"
-                    disabled={!canManage}
-                  >
-                    <Flame className="h-4 w-4 text-red-500" />
-                  </button>
-                </div>
-              </div>
 
               <Separator />
 
