@@ -10,7 +10,6 @@ const PilotageIndex = lazy(() => import("@/pages/PilotageIndex"));
 const IndicateursLayout = lazy(() => import("@/apogee-connect/pages/IndicateursLayout"));
 const IndicateursAccueil = lazy(() => import("@/apogee-connect/pages/IndicateursAccueil"));
 const StatsHub = lazy(() => import("@/apogee-connect/pages/StatsHub"));
-const VeilleApporteursPage = lazy(() => import("@/pages/VeilleApporteursPage"));
 const PlanningHebdo = lazy(() => import("@/pages/PlanningTechniciensSemaine"));
 
 const MesApporteursPage = lazy(() => import("@/pages/agency/ApporteursPage"));
@@ -58,8 +57,8 @@ export function PilotageRoutes() {
       <Route path="/agency/indicateurs/techniciens" element={<Navigate to="/agency/stats-hub" replace />} />
       <Route path="/agency/indicateurs/sav" element={<Navigate to="/agency/stats-hub" replace />} />
       
-      {/* Veille Apporteurs */}
-      <Route path="/agency/veille-apporteurs" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="veille_apporteurs"><VeilleApporteursPage /></ModuleGuard></RoleGuard></AgencyLayout>} />
+      {/* Veille Apporteurs - Redirige vers sous-onglet Divers */}
+      <Route path="/agency/veille-apporteurs" element={<Navigate to="/?tab=divers" replace />} />
       
       {/* Actions à Mener */}
       <Route path="/agency/actions" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="actions_a_mener"><ActionsAMener /></ModuleGuard></RoleGuard></AgencyLayout>} />
