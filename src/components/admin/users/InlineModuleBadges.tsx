@@ -1,6 +1,6 @@
 /**
- * Badges inline pour les modules utilisateur - Ultra simplifié
- * Affiche les accès spéciaux sous forme de badges cliquables
+ * Badges inline pour les modules utilisateur - V3 aligné avec les plans
+ * Affiche les modules activés pour un utilisateur sous forme de badges cliquables
  */
 
 import { memo, useState } from 'react';
@@ -8,56 +8,75 @@ import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Kanban, Headphones, HelpCircle, Plus } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { 
+  Building2, BarChart3, Users, Truck, Handshake, Calendar, 
+  Video, FileText, BookOpen, Kanban, HelpCircle, Plus, Crown,
+  LucideIcon
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { EnabledModules, ModuleKey } from '@/types/modules';
+import { PLAN_VISIBLE_MODULES, MODULE_SHORT_LABELS } from '@/types/modules';
 
-// Accès spéciaux gérés individuellement (hors plan agence)
-const SPECIAL_ACCESS = [
-  { 
-    key: 'apogee_tickets' as ModuleKey, 
-    label: 'Projet', 
-    icon: Kanban,
-    color: 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300',
-    activeColor: 'bg-indigo-500 text-white hover:bg-indigo-600',
-  },
-  { 
-    key: 'support' as ModuleKey, 
-    option: 'agent',
-    label: 'Support Agent', 
-    icon: Headphones,
-    color: 'bg-violet-100 text-violet-700 hover:bg-violet-200 dark:bg-violet-900/30 dark:text-violet-300',
-    activeColor: 'bg-violet-500 text-white hover:bg-violet-600',
-  },
-  { 
-    key: 'help_academy' as ModuleKey, 
-    option: 'edition',
-    label: 'Éditeur FAQ', 
-    icon: HelpCircle,
-    color: 'bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300',
-    activeColor: 'bg-amber-500 text-white hover:bg-amber-600',
-  },
-];
+// Icônes pour chaque module (uniquement les modules de plan)
+const MODULE_ICONS: Partial<Record<ModuleKey, LucideIcon>> = {
+  agence: Building2,
+  stats: BarChart3,
+  rh: Users,
+  parc: Truck,
+  divers_apporteurs: Handshake,
+  divers_plannings: Calendar,
+  divers_reunions: Video,
+  divers_documents: FileText,
+  guides: BookOpen,
+  ticketing: Kanban,
+  aide: HelpCircle,
+  reseau_franchiseur: Crown,
+  admin_plateforme: Crown,
+  // Legacy
+  help_academy: BookOpen,
+  pilotage_agence: BarChart3,
+  support: HelpCircle,
+  apogee_tickets: Kanban,
+  unified_search: BarChart3,
+};
+
+// Couleurs pour les badges actifs
+const MODULE_COLORS: Partial<Record<ModuleKey, string>> = {
+  agence: 'bg-blue-500 text-white hover:bg-blue-600',
+  stats: 'bg-emerald-500 text-white hover:bg-emerald-600',
+  rh: 'bg-violet-500 text-white hover:bg-violet-600',
+  parc: 'bg-orange-500 text-white hover:bg-orange-600',
+  divers_apporteurs: 'bg-pink-500 text-white hover:bg-pink-600',
+  divers_plannings: 'bg-cyan-500 text-white hover:bg-cyan-600',
+  divers_reunions: 'bg-indigo-500 text-white hover:bg-indigo-600',
+  divers_documents: 'bg-amber-500 text-white hover:bg-amber-600',
+  guides: 'bg-teal-500 text-white hover:bg-teal-600',
+  ticketing: 'bg-purple-500 text-white hover:bg-purple-600',
+  aide: 'bg-rose-500 text-white hover:bg-rose-600',
+  reseau_franchiseur: 'bg-slate-700 text-white hover:bg-slate-800',
+  admin_plateforme: 'bg-slate-800 text-white hover:bg-slate-900',
+  // Legacy
+  help_academy: 'bg-teal-500 text-white hover:bg-teal-600',
+  pilotage_agence: 'bg-blue-500 text-white hover:bg-blue-600',
+  support: 'bg-rose-500 text-white hover:bg-rose-600',
+  apogee_tickets: 'bg-purple-500 text-white hover:bg-purple-600',
+  unified_search: 'bg-emerald-500 text-white hover:bg-emerald-600',
+};
 
 interface InlineModuleBadgesProps {
   userId: string;
   enabledModules: EnabledModules | null;
   canEdit: boolean;
   onToggle: (moduleKey: ModuleKey, enabled: boolean, optionKey?: string) => void;
+  /** Modules du plan de l'agence (pour montrer ce qui vient du plan vs override) */
+  planModules?: ModuleKey[];
 }
 
-function isAccessEnabled(modules: EnabledModules | null, moduleKey: ModuleKey, optionKey?: string): boolean {
+function isModuleEnabled(modules: EnabledModules | null, moduleKey: ModuleKey): boolean {
   if (!modules) return false;
   const mod = modules[moduleKey];
   if (!mod) return false;
-  
-  if (optionKey) {
-    if (typeof mod === 'object' && mod.options) {
-      return !!mod.options[optionKey];
-    }
-    return false;
-  }
-  
   if (typeof mod === 'boolean') return mod;
   if (typeof mod === 'object') return mod.enabled ?? false;
   return false;
@@ -68,34 +87,45 @@ export const InlineModuleBadges = memo(function InlineModuleBadges({
   enabledModules,
   canEdit,
   onToggle,
+  planModules = [],
 }: InlineModuleBadgesProps) {
   const [open, setOpen] = useState(false);
   
-  const activeAccess = SPECIAL_ACCESS.filter(access => 
-    isAccessEnabled(enabledModules, access.key, access.option)
+  // Modules activés pour cet utilisateur
+  const activeModules = PLAN_VISIBLE_MODULES.filter(key => 
+    isModuleEnabled(enabledModules, key)
   );
   
-  const inactiveAccess = SPECIAL_ACCESS.filter(access => 
-    !isAccessEnabled(enabledModules, access.key, access.option)
+  // Modules non activés
+  const inactiveModules = PLAN_VISIBLE_MODULES.filter(key => 
+    !isModuleEnabled(enabledModules, key)
   );
 
-  const handleToggle = (access: typeof SPECIAL_ACCESS[0], enabled: boolean) => {
-    onToggle(access.key, enabled, access.option);
+  const handleToggle = (moduleKey: ModuleKey, enabled: boolean) => {
+    onToggle(moduleKey, enabled);
   };
 
-  // Si pas le droit d'éditer, afficher juste les badges actifs
+  // Mode lecture seule
   if (!canEdit) {
-    if (activeAccess.length === 0) {
-      return <span className="text-muted-foreground text-sm">—</span>;
+    if (activeModules.length === 0) {
+      return <span className="text-muted-foreground text-sm">Aucun module</span>;
     }
     return (
       <div className="flex flex-wrap gap-1">
-        {activeAccess.map(access => (
-          <Badge key={access.key} variant="secondary" className={cn("text-xs", access.activeColor)}>
-            <access.icon className="w-3 h-3 mr-1" />
-            {access.label}
+        {activeModules.slice(0, 4).map(key => {
+          const Icon = MODULE_ICONS[key];
+          return (
+            <Badge key={key} className={cn("text-xs", MODULE_COLORS[key])}>
+              <Icon className="w-3 h-3 mr-1" />
+              {MODULE_SHORT_LABELS[key]}
+            </Badge>
+          );
+        })}
+        {activeModules.length > 4 && (
+          <Badge variant="secondary" className="text-xs">
+            +{activeModules.length - 4}
           </Badge>
-        ))}
+        )}
       </div>
     );
   }
@@ -103,22 +133,42 @@ export const InlineModuleBadges = memo(function InlineModuleBadges({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <div className="flex flex-wrap gap-1 cursor-pointer group">
-          {activeAccess.length === 0 ? (
+        <div className="flex flex-wrap gap-1 cursor-pointer group min-w-[100px]">
+          {activeModules.length === 0 ? (
             <Badge variant="outline" className="text-xs text-muted-foreground hover:bg-muted">
               <Plus className="w-3 h-3 mr-1" />
-              Ajouter accès
+              Configurer
             </Badge>
           ) : (
             <>
-              {activeAccess.map(access => (
-                <Badge key={access.key} className={cn("text-xs transition-colors", access.activeColor)}>
-                  <access.icon className="w-3 h-3 mr-1" />
-                  {access.label}
+              {activeModules.slice(0, 3).map(key => {
+                const Icon = MODULE_ICONS[key];
+                const isFromPlan = planModules.includes(key);
+                return (
+                  <Badge 
+                    key={key} 
+                    className={cn(
+                      "text-xs transition-colors",
+                      MODULE_COLORS[key],
+                      isFromPlan && "ring-1 ring-primary/50"
+                    )}
+                    title={isFromPlan ? "Inclus dans le plan" : "Override utilisateur"}
+                  >
+                    <Icon className="w-3 h-3 mr-1" />
+                    {MODULE_SHORT_LABELS[key]}
+                  </Badge>
+                );
+              })}
+              {activeModules.length > 3 && (
+                <Badge variant="secondary" className="text-xs">
+                  +{activeModules.length - 3}
                 </Badge>
-              ))}
-              {inactiveAccess.length > 0 && (
-                <Badge variant="outline" className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+              )}
+              {inactiveModules.length > 0 && (
+                <Badge 
+                  variant="outline" 
+                  className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                >
                   <Plus className="w-3 h-3" />
                 </Badge>
               )}
@@ -126,27 +176,58 @@ export const InlineModuleBadges = memo(function InlineModuleBadges({
           )}
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-3" align="start">
-        <div className="space-y-3">
-          <p className="text-sm font-medium">Accès spéciaux</p>
-          <div className="space-y-2">
-            {SPECIAL_ACCESS.map(access => {
-              const isEnabled = isAccessEnabled(enabledModules, access.key, access.option);
+      <PopoverContent className="w-80 p-0" align="start">
+        <div className="p-3 border-b">
+          <p className="text-sm font-medium">Modules utilisateur</p>
+          <p className="text-xs text-muted-foreground">
+            Cochez les modules accessibles pour cet utilisateur
+          </p>
+        </div>
+        <div className="p-3 max-h-[400px] overflow-y-auto">
+          <div className="space-y-1">
+            {PLAN_VISIBLE_MODULES.map(key => {
+              const Icon = MODULE_ICONS[key];
+              const isEnabled = isModuleEnabled(enabledModules, key);
+              const isFromPlan = planModules.includes(key);
+              
               return (
-                <div key={access.key + (access.option || '')} className="flex items-center justify-between">
-                  <Label htmlFor={`${userId}-${access.key}`} className="flex items-center gap-2 text-sm cursor-pointer">
-                    <access.icon className="w-4 h-4 text-muted-foreground" />
-                    {access.label}
+                <div 
+                  key={key} 
+                  className={cn(
+                    "flex items-center justify-between py-2 px-2 rounded-md",
+                    isEnabled && "bg-muted/50"
+                  )}
+                >
+                  <Label 
+                    htmlFor={`${userId}-${key}`} 
+                    className="flex items-center gap-2 text-sm cursor-pointer flex-1"
+                  >
+                    <Icon className={cn(
+                      "w-4 h-4",
+                      isEnabled ? "text-primary" : "text-muted-foreground"
+                    )} />
+                    <span className={cn(!isEnabled && "text-muted-foreground")}>
+                      {MODULE_SHORT_LABELS[key]}
+                    </span>
+                    {isFromPlan && isEnabled && (
+                      <span className="text-[10px] text-muted-foreground bg-muted px-1 rounded">
+                        Plan
+                      </span>
+                    )}
                   </Label>
                   <Switch
-                    id={`${userId}-${access.key}`}
+                    id={`${userId}-${key}`}
                     checked={isEnabled}
-                    onCheckedChange={(checked) => handleToggle(access, checked)}
+                    onCheckedChange={(checked) => handleToggle(key, checked)}
                   />
                 </div>
               );
             })}
           </div>
+        </div>
+        <Separator />
+        <div className="p-2 text-xs text-muted-foreground text-center">
+          {activeModules.length} module{activeModules.length > 1 ? 's' : ''} activé{activeModules.length > 1 ? 's' : ''}
         </div>
       </PopoverContent>
     </Popover>
