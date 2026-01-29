@@ -98,6 +98,7 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
     // Invalider les caches pour forcer le rechargement avec les vraies données
     queryClient.invalidateQueries({ queryKey: ['rh-collaborators'] });
     queryClient.invalidateQueries({ queryKey: ['collaborators'] });
+    queryClient.invalidateQueries({ queryKey: ['effective-modules'] });
   }, [queryClient]);
 
   // Démarrer impersonation utilisateur réel
@@ -161,6 +162,7 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
       // Invalider les caches pour forcer le rechargement avec les données impersonnées
       queryClient.invalidateQueries({ queryKey: ['rh-collaborators'] });
       queryClient.invalidateQueries({ queryKey: ['collaborators'] });
+      queryClient.invalidateQueries({ queryKey: ['effective-modules'] });
       
       const userName = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || profile.email;
       toast.success(`Vous voyez maintenant l'application comme ${userName}`);
