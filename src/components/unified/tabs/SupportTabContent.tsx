@@ -56,9 +56,10 @@ export default function SupportTabContent() {
   }
 
   return (
-    <div className="py-3 px-2 sm:px-4">
-      <div className="mb-4">
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-helpconfort-blue-dark to-helpconfort-blue-lighter bg-clip-text text-transparent">
+    <div className="py-6 px-4 sm:px-6">
+      {/* Warm Header */}
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-warm-blue to-warm-teal bg-clip-text text-transparent">
           Support
         </h2>
         <p className="text-muted-foreground mt-1">
@@ -66,13 +67,15 @@ export default function SupportTabContent() {
         </p>
       </div>
 
-      {/* 3 Column Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
-        {/* Column 1: Créer un ticket */}
-        <Card className="lg:col-span-1 border-l-4 border-l-helpconfort-blue flex flex-col">
+      {/* 3 Column Layout - Warm Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-stretch">
+        {/* Column 1: Créer un ticket - Warm Blue accent */}
+        <Card className="lg:col-span-1 rounded-2xl border-l-4 border-l-warm-blue/60 bg-card/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow flex flex-col">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <PlusCircle className="w-5 h-5 text-helpconfort-blue" />
+              <div className="w-8 h-8 rounded-xl bg-warm-blue/15 flex items-center justify-center">
+                <PlusCircle className="w-5 h-5 text-warm-blue" />
+              </div>
               Créer un ticket
             </CardTitle>
             <p className="text-xs text-muted-foreground">
@@ -87,23 +90,27 @@ export default function SupportTabContent() {
             
             <Button
               onClick={() => setShowCreateDialog(true)}
-              className="w-full gap-2"
+              className="w-full gap-2 rounded-xl bg-warm-blue/90 hover:bg-warm-blue text-white shadow-sm"
             >
               <Plus className="w-4 h-4" />
               Ouvrir un ticket
             </Button>
             
-            <div className="pt-4 border-t">
+            <div className="pt-4 border-t border-border/40">
               <p className="text-xs text-muted-foreground mb-2">
                 Nos engagements :
               </p>
-              <ul className="text-xs text-muted-foreground space-y-1">
+              <ul className="text-xs text-muted-foreground space-y-1.5">
                 <li className="flex items-center gap-2">
-                  <Clock className="w-3 h-3 text-primary" />
+                  <div className="w-4 h-4 rounded-full bg-warm-green/15 flex items-center justify-center">
+                    <Clock className="w-2.5 h-2.5 text-warm-green" />
+                  </div>
                   Réponse sous 24h ouvrées
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3 h-3 text-primary" />
+                  <div className="w-4 h-4 rounded-full bg-warm-green/15 flex items-center justify-center">
+                    <CheckCircle2 className="w-2.5 h-2.5 text-warm-green" />
+                  </div>
                   Suivi en temps réel
                 </li>
               </ul>
@@ -111,11 +118,13 @@ export default function SupportTabContent() {
           </CardContent>
         </Card>
 
-        {/* Column 2: Chat IA */}
-        <Card className="lg:col-span-1 flex flex-col border-l-4 border-l-helpconfort-orange min-h-[520px]">
+        {/* Column 2: Chat IA - Warm Orange accent */}
+        <Card className="lg:col-span-1 flex flex-col rounded-2xl border-l-4 border-l-warm-orange/60 bg-card/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow min-h-[520px]">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <MessageSquare className="w-5 h-5 text-helpconfort-orange" />
+              <div className="w-8 h-8 rounded-xl bg-warm-orange/15 flex items-center justify-center">
+                <MessageSquare className="w-5 h-5 text-warm-orange" />
+              </div>
               Chat IA
             </CardTitle>
             <p className="text-xs text-muted-foreground">
@@ -131,14 +140,16 @@ export default function SupportTabContent() {
           </CardContent>
         </Card>
 
-        {/* Column 3: Mes Demandes */}
-        <Card className="lg:col-span-1 border-l-4 border-l-primary flex flex-col min-h-[520px]">
+        {/* Column 3: Mes Demandes - Warm Purple accent */}
+        <Card className="lg:col-span-1 rounded-2xl border-l-4 border-l-warm-purple/60 bg-card/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow flex flex-col min-h-[520px]">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <FileText className="w-5 h-5 text-primary" />
+              <div className="w-8 h-8 rounded-xl bg-warm-purple/15 flex items-center justify-center">
+                <FileText className="w-5 h-5 text-warm-purple" />
+              </div>
               Mes Demandes
               {totalUnreadCount > 0 && (
-                <Badge variant="destructive" className="text-xs animate-pulse">
+                <Badge variant="destructive" className="text-xs animate-pulse rounded-full px-2">
                   {totalUnreadCount} nouveau{totalUnreadCount > 1 ? 'x' : ''}
                 </Badge>
               )}
@@ -148,16 +159,18 @@ export default function SupportTabContent() {
             <ScrollArea className="h-full max-h-[420px] pr-4">
               {combinedLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                  <Loader2 className="w-6 h-6 animate-spin text-warm-purple" />
                 </div>
               ) : combinedTickets.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">
-                  <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-muted/50 flex items-center justify-center">
+                    <FileText className="w-7 h-7 opacity-40" />
+                  </div>
                   <p className="text-sm">Aucune demande en cours</p>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="mt-4"
+                    className="mt-4 rounded-xl border-warm-blue/40 text-warm-blue hover:bg-warm-blue/10"
                     onClick={() => setShowCreateDialog(true)}
                   >
                     <Plus className="w-4 h-4 mr-1" />
@@ -174,7 +187,7 @@ export default function SupportTabContent() {
                       key={`${ticket.ticketType}-${ticket.id}`}
                       onClick={() => setSelectedProjectTicketId(ticket.id)}
                       className={cn(
-                        "w-full text-left p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-muted/50 transition-all",
+                        "w-full text-left p-3 rounded-xl border border-border/50 bg-card/50 hover:border-warm-purple/40 hover:bg-muted/30 transition-all",
                         hasUnread && "animate-pulse ring-2 ring-destructive ring-offset-1 bg-destructive/5"
                       )}
                     >
@@ -182,7 +195,7 @@ export default function SupportTabContent() {
                         <p className="font-medium text-sm truncate flex-1 flex items-center gap-1">
                           {ticket.subject}
                           {ticket.unread_exchanges_count > 0 && (
-                            <Badge variant="secondary" className="text-xs gap-0.5 ml-1">
+                            <Badge variant="secondary" className="text-xs gap-0.5 ml-1 rounded-full bg-warm-pink/15 text-warm-pink">
                               <MessageCircle className="h-3 w-3" />
                               {ticket.unread_exchanges_count}
                             </Badge>
@@ -194,6 +207,7 @@ export default function SupportTabContent() {
                             color: ticket.statusColor || undefined
                           }}
                           variant="secondary"
+                          className="rounded-full"
                         >
                           {ticket.statusLabel || ticket.status}
                         </Badge>
