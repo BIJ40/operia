@@ -337,14 +337,6 @@ export function extractFactureMeta(facture: any): FactureMeta {
 }
 
 /**
- * Calcule le montant net d'une facture (gestion des avoirs)
- * @deprecated Utiliser extractFactureMeta().montantNetHT à la place
- */
-export function calculateNetAmount(facture: any): number {
-  return extractFactureMeta(facture).montantNetHT;
-}
-
-/**
  * Vérifie si un état de facture est inclus dans le CA
  */
 export function isFactureStateIncluded(state: string): boolean {

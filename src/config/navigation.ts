@@ -342,21 +342,8 @@ export const PAGE_TITLES: Record<string, string> = {
   // Legacy admin apogee-tickets (redirects)
   [ROUTES.admin.apogeeTickets]: 'Gestion de Projet',
   
-  // RH (portail salarié supprimé)
-  
   // User
   [ROUTES.profile]: 'Mon Profil',
-  
-  // Legacy routes (backward compatibility)
-  [ROUTES.legacy.apogee]: 'Guide Apogée',
-  [ROUTES.legacy.apporteurs]: 'Guide Apporteurs',
-  [ROUTES.legacy.helpconfort]: 'Base Documentaire',
-  [ROUTES.legacy.mesIndicateurs]: 'Indicateurs généraux',
-  [ROUTES.legacy.actionsAMener]: 'Actions à Mener',
-  [ROUTES.legacy.diffusion]: 'Mode Diffusion',
-  [ROUTES.legacy.rhTech]: 'RH Tech - Planning',
-  // mesDemandes removed - now active route at ROUTES.support.userTickets
-  [ROUTES.legacy.tetDeReseau]: 'Dashboard Réseau',
 };
 
 /**

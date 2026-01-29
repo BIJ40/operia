@@ -26,10 +26,10 @@ import {
   isProductiveIntervention,
   isSAVIntervention,
   getDateField,
-  calculateNetAmount,
   getGroupByConfig,
   normalizeSynonym
 } from '../rules/rules';
+import { calculateNetAmount } from './normalizers';
 
 // ============================================
 // TYPES DU MOTEUR
