@@ -237,10 +237,13 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       });
       
       // Enrichir les utilisateurs avec les modules de user_modules table
+      // ✅ Exclure explicitement le JSONB legacy pour éviter toute pollution
       const enrichedUsers = profilesData?.map(profile => {
         const userModules = modulesByUser.get(profile.id);
         const enabled_modules = userModulesToEnabledModules(userModules ?? []);
-        return { ...profile, enabled_modules };
+        // Supprimer le champ legacy enabled_modules du profil avant merge
+        const { enabled_modules: _legacyIgnored, ...cleanProfile } = profile as any;
+        return { ...cleanProfile, enabled_modules };
       }) ?? [];
       
       return enrichedUsers as UserProfile[];
