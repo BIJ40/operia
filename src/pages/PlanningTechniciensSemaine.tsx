@@ -339,7 +339,7 @@ function PlanningTechniciensSemaineContent() {
                 value={selectedTechId?.toString() ?? "all"}
                 onValueChange={(v) => setSelectedTechId(v === "all" ? null : Number(v))}
               >
-                <SelectTrigger className="rounded-xl">
+                <SelectTrigger className="rounded-xl border-border/50 bg-background/60">
                   <SelectValue placeholder="Sélectionner un technicien" />
                 </SelectTrigger>
                 <SelectContent>
@@ -369,13 +369,13 @@ function PlanningTechniciensSemaineContent() {
             
             {/* Navigation semaine avec flèches et label */}
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" onClick={handlePrevWeek} className="rounded-xl">
+              <Button variant="outline" size="icon" onClick={handlePrevWeek} className="rounded-xl border-border/50 hover:bg-muted/50">
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="text-sm font-medium text-muted-foreground min-w-[160px] text-center">
+              <span className="text-sm font-medium text-foreground/80 min-w-[160px] text-center bg-muted/30 px-3 py-1.5 rounded-lg">
                 {weekLabel}
               </span>
-              <Button variant="outline" size="icon" onClick={handleNextWeek} className="rounded-xl">
+              <Button variant="outline" size="icon" onClick={handleNextWeek} className="rounded-xl border-border/50 hover:bg-muted/50">
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -384,7 +384,7 @@ function PlanningTechniciensSemaineContent() {
             <Button
               variant="outline"
               onClick={() => window.print()}
-              className="rounded-xl"
+              className="rounded-xl border-warm-teal/40 text-warm-teal hover:bg-warm-teal/10 hover:text-warm-teal hover:border-warm-teal/60"
             >
               <Printer className="h-4 w-4 mr-2" />
               Imprimer le planning
