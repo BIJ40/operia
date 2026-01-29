@@ -244,24 +244,15 @@ export function TicketInlinePanel({
   }, [statuses, ticket, isAdmin, allowedTransitions]);
 
 
-  const handleStatusChange = async (newStatus: string) => {
+  const handleStatusChange = (newStatus: string) => {
     const isAllowed = isAdmin || allowedTransitions.includes(newStatus);
     if (!isAllowed && newStatus !== ticket.kanban_status) {
       errorToast("Vous n'êtes pas autorisé à effectuer cette transition");
       return;
     }
     
-    await logAction.mutateAsync({
-      ticketId: ticket.id,
-      actionType: 'status_change',
-      oldValue: ticket.kanban_status,
-      newValue: newStatus,
-      metadata: { 
-        ticket_ref: `APO-${String(ticket.ticket_number || 0).padStart(3, '0')}`,
-        ticket_number: ticket.ticket_number
-      }
-    });
-    
+    // Le logging est fait automatiquement par useApogeeTickets.updateTicketKanbanStatus
+    // Ne PAS logger ici pour éviter les doublons
     handleFieldUpdate('kanban_status', newStatus);
   };
 
