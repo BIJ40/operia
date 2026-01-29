@@ -1,152 +1,288 @@
 
-# Plan : Impersonation d'utilisateur réel (Voir en tant que Hugo Bulthé)
+# Implémentation du système de préchargement des données
 
-## Objectif
-Permettre aux administrateurs (N5+) de voir l'application exactement comme un utilisateur spécifique, en chargeant ses vraies données (rôle, modules, agence, permissions).
+## Résumé
 
----
-
-## Contexte actuel
-
-### Système d'impersonation existant
-- **ImpersonationContext** : Permet de simuler des rôles fictifs (dirigeant, technicien, etc.)
-- **ImpersonationDialog** : Interface de configuration des rôles à simuler
-- **ImpersonationBanner** : Bandeau affiché pendant la simulation
-- **Problème** : Ce système simule des rôles génériques, pas un utilisateur réel avec ses vraies données
-
-### Données Hugo Bulthé (e43de17a-ce1d-4238-aeaa-4b57f4b822e2)
-- **global_role** : `base_user`
-- **role_agence** : `externe`
-- **Agence** : Aucune
-- **Modules activés** :
-  - `support` : agent=true, user=true
-  - `apogee_tickets` : kanban, create, import, manage
-  - `ticketing` : kanban, create, manage
-  - `aide` : agent=true, user=true
+Création d'un système de préchargement des données API Apogée au login, avec popup de progression thème "warm-blue", pour les utilisateurs ayant accès aux statistiques. L'objectif : navigation instantanée vers l'onglet Stats.
 
 ---
 
-## Solution proposée
+## Fichiers à créer
 
-### 1. Étendre ImpersonationContext
+### 1. `src/contexts/DataPreloadContext.tsx`
+Contexte React orchestrant tout le préchargement avec :
+- Gestion des steps pondérés (users: 10, clients: 15, projects: 25, interventions: 20, factures: 20, devis: 10)
+- Calcul de progression indépendant de l'ordre des appels parallèles
+- Modes non-bloquant (défaut) et bloquant (erreur critique)
+- Mode dégradé si erreurs non critiques
+- Gestion de session versionnée (`preload:${userId}:${agencySlug}:v1`)
+- Vérification TTL cache apogeeProxy (2h)
 
-Ajouter un nouveau mode "impersonation utilisateur réel" qui :
-- Charge le profil complet d'un utilisateur depuis la DB
-- Remplace temporairement les données d'authentification (rôle, modules, agence)
-- Affiche un bandeau distinct "Mode visualisation utilisateur"
+### 2. `src/components/preload/DataPreloadPopup.tsx`
+Composant popup principal avec :
+- Barre de progression animée warm-blue
+- Liste des étapes avec statuts visuels (pending/active/done/error)
+- Messages d'attente dynamiques (rotation 4-6s)
+- Astuces contextualisées selon modules (rotation 8-10s)
+- Bouton "Réduire" (mode non-bloquant)
+- Bouton "Réessayer" (mode bloquant sur erreur)
+- Animation douce fermeture/ouverture
 
-### 2. Créer RealUserImpersonationDialog
+### 3. `src/components/preload/PreloadStepsList.tsx`
+Sous-composant listant les étapes avec icônes de statut :
+- ⋯ Pending (gris)
+- ⟳ Active (warm-blue animé)
+- ✓ Done (warm-green)
+- ✗ Error (warm-orange)
 
-Nouveau composant permettant de :
-- Rechercher un utilisateur par email ou nom
-- Sélectionner depuis une liste déroulante
-- Charger ses données réelles
-- Démarrer l'impersonation
+### 4. `src/components/preload/PreloadTipsCarousel.tsx`
+Carrousel d'astuces contextuel selon les modules activés de l'utilisateur.
 
-### 3. Intégrer dans l'interface Admin
-
-Ajouter un bouton "Voir en tant que..." dans :
-- Le menu utilisateur (pour N5+)
-- La page de gestion des utilisateurs (clic sur un utilisateur)
-
----
-
-## Fichiers à modifier/créer
-
-### 1. Étendre le contexte
-**src/contexts/ImpersonationContext.tsx**
-- Ajouter `impersonatedUser` (profil utilisateur réel complet)
-- Ajouter `startRealUserImpersonation(userId: string)`
-- Ajouter `isRealUserImpersonation: boolean`
-
-### 2. Créer le dialog de sélection d'utilisateur
-**src/components/RealUserImpersonationDialog.tsx**
-- Recherche utilisateur par email/nom
-- Affichage des infos (rôle, agence, modules)
-- Bouton "Voir en tant que..."
-
-### 3. Étendre le bandeau
-**src/components/ImpersonationBanner.tsx**
-- Mode distinct pour l'impersonation d'utilisateur réel
-- Afficher le nom de l'utilisateur impersonné
-
-### 4. Modifier AuthContext pour utiliser les données impersonnées
-**src/contexts/AuthContext.tsx**
-- Vérifier si impersonation active
-- Retourner les données impersonnées au lieu des vraies
-
-### 5. Ajouter le bouton dans l'interface
-**src/pages/UnifiedWorkspace.tsx** ou menu utilisateur
-- Bouton "Voir en tant que..." (N5+ uniquement)
+### 5. `src/components/preload/PreloadMinimizedIndicator.tsx`
+Indicateur discret (coin écran) quand popup réduite, permettant de la rouvrir.
 
 ---
 
-## Architecture technique
+## Fichiers à modifier
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│  AuthContext (modifié)                                      │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │ Si ImpersonationContext.isRealUserImpersonation:      │  │
-│  │   → Retourner impersonatedUser.globalRole             │  │
-│  │   → Retourner impersonatedUser.enabledModules         │  │
-│  │   → Retourner impersonatedUser.agence                 │  │
-│  │ Sinon:                                                │  │
-│  │   → Comportement normal                               │  │
-│  └───────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
-          │
-          ▼
-┌─────────────────────────────────────────────────────────────┐
-│  ImpersonationContext (étendu)                              │
-│  - impersonatedUser: RealUserProfile | null                 │
-│  - isRealUserImpersonation: boolean                         │
-│  - startRealUserImpersonation(userId) → charge profil DB    │
-│  - stopImpersonation() → reset tout                         │
-└─────────────────────────────────────────────────────────────┘
+### 1. `src/services/apogeeProxy.ts`
+Ajouter la méthode `getAllDataWithProgress` :
+```typescript
+type StepStatus = 'pending' | 'active' | 'done' | 'error';
+
+interface StepUpdateCallback {
+  (stepKey: string, status: StepStatus, error?: string): void;
+}
+
+getAllDataWithProgress: async (
+  agencySlug: string,
+  onStepUpdate: StepUpdateCallback,
+  bypassCache?: boolean
+) => Promise<AllDataResult>
+```
+
+### 2. `src/App.tsx`
+- Ajouter `DataPreloadProvider` dans la hiérarchie des providers
+- Ajouter `DataPreloadPopup` dans `AppContent` (après WelcomeWizardGate)
+
+---
+
+## Logique de déclenchement
+
+```typescript
+function shouldTriggerPreload(): boolean {
+  // 1. Utilisateur authentifié ?
+  if (!user || isAuthLoading) return false;
+  
+  // 2. A-t-il une agence ?
+  const effectiveAgence = isImpersonating ? impersonatedUser.agence : agence;
+  if (!effectiveAgence) return false;
+  
+  // 3. A-t-il accès aux stats ?
+  // Vérifier: stats.stats_hub OU pilotage_agence.stats_hub (legacy)
+  const hasStatsAccess = 
+    hasModuleOption('stats', 'stats_hub') ||
+    hasModuleOption('pilotage_agence', 'stats_hub') ||
+    globalRole === 'platform_admin' ||
+    globalRole === 'superadmin';
+  
+  if (!hasStatsAccess) return false;
+  
+  // 4. Déjà préchargé cette session avec ce user/agence ?
+  const sessionKey = `preload:${user.id}:${effectiveAgence}:v1`;
+  const sessionMeta = sessionStorage.getItem(sessionKey);
+  if (sessionMeta) {
+    const meta = JSON.parse(sessionMeta);
+    // Vérifier TTL (2h = 7_200_000ms)
+    if (Date.now() - meta.completedAt < 7_200_000) {
+      return false; // Cache encore valide
+    }
+  }
+  
+  return true;
+}
 ```
 
 ---
 
-## Interface de sélection
+## Système de steps pondérés
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│  👤 Voir en tant qu'utilisateur                             │
-│                                                             │
-│  Rechercher un utilisateur :                                │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │ 🔍 hugo@dynoco.fr                                     │  │
-│  └───────────────────────────────────────────────────────┘  │
-│                                                             │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │ Hugo Bulthé                                           │  │
-│  │ hugo@dynoco.fr                                        │  │
-│  │ Rôle : base_user (externe)                            │  │
-│  │ Agence : Aucune                                       │  │
-│  │ Modules : support, ticketing, aide                    │  │
-│  └───────────────────────────────────────────────────────┘  │
-│                                                             │
-│  [Annuler]                          [Voir en tant que Hugo] │
-└─────────────────────────────────────────────────────────────┘
+```typescript
+const PRELOAD_STEPS = [
+  { key: 'users', label: 'Utilisateurs', weight: 10, critical: false },
+  { key: 'clients', label: 'Clients', weight: 15, critical: false },
+  { key: 'projects', label: 'Projets', weight: 25, critical: false },
+  { key: 'interventions', label: 'Interventions', weight: 20, critical: false },
+  { key: 'factures', label: 'Factures', weight: 20, critical: false },
+  { key: 'devis', label: 'Devis', weight: 10, critical: false },
+] as const;
+// Total: 100
+
+// Calcul progression:
+// progress = (sum of weights where status === 'done') / 100 * 100
 ```
 
 ---
 
-## Sécurité
+## Gestion du cache session
 
-- **Restriction N5+** : Seuls les platform_admin et superadmin peuvent utiliser cette fonctionnalité
-- **Audit log** : Logger chaque impersonation (qui, quand, quel utilisateur)
-- **Read-only** : L'impersonation ne permet pas de modifier les données au nom de l'utilisateur
-- **Session temporaire** : L'impersonation ne persiste pas après refresh
+```typescript
+interface PreloadSessionMeta {
+  completedAt: number;         // Timestamp fin
+  agencySlug: string;          // Agence
+  userId: string;              // User
+  version: 'v1';               // Version schéma
+  stepResults: Record<string, 'done' | 'error'>;
+}
+
+// Clé: preload:${userId}:${agencySlug}:v1
+// Stockage: sessionStorage (survit au refresh, pas au close tab)
+```
 
 ---
 
-## Ordre d'implémentation
+## Messages et astuces
 
-1. **Étendre ImpersonationContext** avec le support utilisateur réel
-2. **Créer RealUserImpersonationDialog** avec recherche et sélection
-3. **Modifier AuthContext** pour utiliser les données impersonnées
-4. **Étendre ImpersonationBanner** pour le mode utilisateur réel
-5. **Ajouter le bouton** dans l'interface admin
-6. **Tester** avec Hugo Bulthé et vérifier que la vue est identique
+### Messages d'attente (rotation 4-6s)
+```typescript
+const LOADING_MESSAGES = [
+  "Préparation de votre espace...",
+  "Synchronisation en cours...",
+  "Chargement de vos données...",
+  "Mise à jour des informations...",
+  "Optimisation de l'affichage...",
+];
+```
+
+### Astuces par module (rotation 8-10s)
+```typescript
+const TIPS = {
+  stats: [
+    "💡 Consultez le CA par technicien depuis l'onglet Stats",
+    "📊 Filtrez les données par période pour affiner l'analyse",
+  ],
+  pilotage_agence: [
+    "🎯 Les indicateurs clés sont visibles sur le tableau de bord",
+    "📈 Suivez l'évolution du CA mensuel en temps réel",
+  ],
+  // ...
+};
+```
+
+---
+
+## Modes d'affichage
+
+### Mode non-bloquant (défaut)
+- Overlay semi-transparent
+- Bouton "Réduire" visible
+- Navigation possible en arrière-plan
+
+### Mode bloquant (erreur critique)
+- Dialog modal sans fermeture
+- Bouton "Réessayer" uniquement
+- Message d'erreur clair
+
+### Mode dégradé
+- App utilisable
+- Badge "Données partielles" affiché
+- Stats peuvent être incomplètes
+
+---
+
+## Throttling UI
+
+```typescript
+// Limiter les updates UI à 10/s max
+const throttledSetProgress = useMemo(
+  () => throttle((value: number) => setProgress(value), 100),
+  []
+);
+```
+
+---
+
+## Intégration App.tsx
+
+```typescript
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <ImpersonationProvider>
+              <DataPreloadProvider>  {/* ← Nouveau */}
+                <EditorProvider>
+                  <ApporteurEditorProvider>
+                    <GlobalErrorBoundary>
+                      <AppContent />
+                    </GlobalErrorBoundary>
+                    <Toaster />
+                    <Sonner />
+                  </ApporteurEditorProvider>
+                </EditorProvider>
+              </DataPreloadProvider>
+            </ImpersonationProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
+```
+
+---
+
+## Séquence détaillée
+
+| # | Action | Progression |
+|---|--------|-------------|
+| 1 | Login détecté + conditions OK | 0% |
+| 2 | Popup apparaît | 0% |
+| 3 | 6 appels API lancés en parallèle | 0% |
+| 4 | Premier terminé (ex: users) | 10% |
+| 5 | Deuxième terminé (ex: devis) | 20% |
+| 6 | ... | ... |
+| 7 | Tous terminés | 100% |
+| 8 | Animation fermeture | ✓ |
+| 9 | Session meta sauvegardée | - |
+
+---
+
+## Section technique
+
+### Dépendances utilisées
+- `@radix-ui/react-dialog` (existant)
+- `@radix-ui/react-progress` (existant)
+- `framer-motion` (existant) pour animations
+- `sessionStorage` pour meta de session
+
+### Hooks créés
+- `useDataPreload()` - Accès au contexte
+- Pas de nouveaux hooks externes nécessaires
+
+### Performance
+- Throttling 100ms sur updates progression
+- `requestAnimationFrame` pour animations barre
+- Sémaphore existant (15 req max) gère la parallélisation
+
+### Invalidation cache
+- Changement agence (impersonation) → clear cache + clear session meta
+- Déconnexion → session meta effacée automatiquement (sessionStorage)
+
+---
+
+## Tests prévus
+
+| Scénario | Comportement attendu |
+|----------|---------------------|
+| Utilisateur N2 Pro avec stats | Popup affichée, progression fluide |
+| Utilisateur N1 sans stats | Pas de popup |
+| Utilisateur sans agence | Pas de popup |
+| Refresh après preload | Pas de popup (session meta OK) |
+| Attendre 2h+ puis refresh | Popup réapparaît (TTL expiré) |
+| Impersonation autre agence | Nouveau préchargement |
+| Erreur réseau | Mode bloquant + Réessayer |
+| Erreur non critique (1 endpoint) | Mode dégradé, app utilisable |
+| Clic "Réduire" | Popup minimisée, indicateur affiché |
