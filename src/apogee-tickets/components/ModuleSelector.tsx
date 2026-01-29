@@ -72,7 +72,7 @@ export function ModuleSelector({
 
   const sizeClasses = size === 'sm' 
     ? 'text-xs px-2 py-0.5' 
-    : 'text-xs px-2.5 py-1';
+    : 'text-sm px-3 py-1';
 
   const handleSelect = (value: string) => {
     setLocalModuleId(value);

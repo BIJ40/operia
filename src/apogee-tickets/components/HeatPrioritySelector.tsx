@@ -81,7 +81,7 @@ export function HeatPrioritySelector({
 
   const sizeClasses = size === 'sm' 
     ? 'text-xs px-2 py-0.5' 
-    : 'text-xs px-2.5 py-1';
+    : 'text-sm px-3 py-1';
 
   const handleSelect = (value: number) => {
     // Mise à jour optimiste : UI immédiate
