@@ -1,13 +1,18 @@
+/**
+ * AgencyStatsTab - 100% StatIA
+ * P1a: Tous les calculs legacy remplacés par StatIA
+ */
+
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileText, Euro, FolderOpen, Loader2 } from "lucide-react";
 import { PeriodSelector } from "@/apogee-connect/components/filters/PeriodSelector";
 import { useFilters } from "@/apogee-connect/contexts/FiltersContext";
-import { apogeeProxy } from "@/services/apogeeProxy";
-import { calculateCaJour, calculateDevisJour, calculateDossiersJour } from "@/apogee-connect/utils/dashboardCalculations";
 import { formatEuros } from "@/apogee-connect/utils/formatters";
 import { logApogee } from "@/lib/logger";
 import { RecouvrementTile } from "@/apogee-connect/components/kpi/RecouvrementTile";
+import { getMetricForAgency } from "@/statia/api/getMetricForAgency";
+import { getGlobalApogeeDataServices } from "@/statia/adapters/dataServiceAdapter";
 
 interface AgencyStatsTabProps {
   agencySlug: string;
@@ -15,53 +20,36 @@ interface AgencyStatsTabProps {
 
 export function AgencyStatsTab({ agencySlug }: AgencyStatsTabProps) {
   const { filters } = useFilters();
+  const services = getGlobalApogeeDataServices();
   
   // Ne pas charger les données pour les agences système (templates)
   const isSystemAgency = agencySlug?.startsWith('_');
 
   const { data, isLoading } = useQuery({
-    queryKey: ['franchiseur-agency-stats', agencySlug, filters.dateRange],
+    queryKey: ['franchiseur-agency-stats-statia', agencySlug, filters.dateRange],
     queryFn: async () => {
-      logApogee.debug('🎯 AgencyStatsTab - Chargement données via proxy sécurisé', { agencySlug });
+      logApogee.debug('🎯 AgencyStatsTab - Chargement 100% StatIA', { agencySlug });
       
-      // Charger toutes les données via le proxy sécurisé pour l'agence cible
-      const [factures, devis, projects, clients] = await Promise.all([
-        apogeeProxy.getFactures({ agencySlug }),
-        apogeeProxy.getDevis({ agencySlug }),
-        apogeeProxy.getProjects({ agencySlug }),
-        apogeeProxy.getClients({ agencySlug }),
+      const statiaParams = { dateRange: filters.dateRange };
+      
+      // Charger toutes les métriques via StatIA
+      const [caResult, dossiersResult, devisResult] = await Promise.all([
+        getMetricForAgency('ca_global_ht', agencySlug, statiaParams, services),
+        getMetricForAgency('nb_dossiers_crees', agencySlug, statiaParams, services),
+        getMetricForAgency('montant_devis', agencySlug, statiaParams, services),
       ]);
       
-      logApogee.debug('📊 AgencyStatsTab - Données chargées via proxy', {
+      logApogee.debug('📊 AgencyStatsTab - Métriques StatIA', {
         agencySlug,
-        nbFactures: factures?.length || 0,
-        nbProjects: projects?.length || 0,
+        ca: caResult.value,
+        dossiers: dossiersResult.value,
+        devis: devisResult.value,
       });
       
-      const { caTotal } = calculateCaJour(
-        factures,
-        clients,
-        projects,
-        filters.dateRange,
-        agencySlug
-      );
-      
-      const { nbDevis, caDevis } = calculateDevisJour(
-        devis,
-        filters.dateRange,
-        agencySlug
-      );
-      
-      const nbDossiers = calculateDossiersJour(
-        projects,
-        filters.dateRange,
-        agencySlug
-      );
-
       return {
-        ca: caTotal,
-        nbDossiers,
-        volumeDevis: caDevis,
+        ca: (caResult.value as number) || 0,
+        nbDossiers: (dossiersResult.value as number) || 0,
+        volumeDevis: (devisResult.value as number) || 0,
       };
     },
     enabled: !!agencySlug && !isSystemAgency,

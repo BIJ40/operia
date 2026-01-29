@@ -1,6 +1,6 @@
 /**
- * Hook Dashboard intégrant StatIA pour les métriques migrées
- * Migration progressive : StatIA pour les métriques disponibles, legacy pour le reste
+ * Hook Dashboard 100% StatIA
+ * P1a: Tous les fallbacks legacy supprimés - StatIA source unique de vérité
  */
 
 import { useQuery } from "@tanstack/react-query";
@@ -8,32 +8,11 @@ import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { useFilters } from "@/apogee-connect/contexts/FiltersContext";
 import { useSecondaryFilters } from "@/apogee-connect/contexts/SecondaryFiltersContext";
 import { useApiToggle } from "@/apogee-connect/contexts/ApiToggleContext";
-import { DataService } from "@/apogee-connect/services/dataService";
 import { logApogee } from "@/lib/logger";
 
-// StatIA imports
+// StatIA imports - SOURCE UNIQUE DE VÉRITÉ
 import { getGlobalApogeeDataServices } from "@/statia/adapters/dataServiceAdapter";
 import { getMetricForAgency } from "@/statia/api/getMetricForAgency";
-
-// Legacy calculations (à supprimer progressivement)
-import { calculateDashboardStats } from "@/apogee-connect/utils/dashboardCalculations";
-import { calculateLast7DaysActivity, calculateVariationVs30Days } from "@/apogee-connect/utils/activityCalculations";
-import { calculateMonthlyCA } from "@/apogee-connect/utils/monthlyCalculations";
-import { 
-  calculateTop10Apporteurs, 
-  calculateDossiersConfiesParApporteur, 
-  calculateDuGlobal, 
-  calculatePartApporteurs,
-  calculateTauxTransformationMoyen,
-  calculatePanierMoyenHT,
-  calculateDelaiMoyenFacturation,
-  calculateTauxSAV,
-  calculateTauxSAVGlobal,
-  calculateFlop10Apporteurs
-} from "@/apogee-connect/utils/apporteursCalculations";
-import { calculateTypesApporteursStats } from "@/apogee-connect/utils/typesApporteursCalculations";
-import { calculateParticuliersStats } from "@/apogee-connect/utils/particuliersCalculations";
-import { calculateMonthlySegmentation } from "@/apogee-connect/utils/segmentationCalculations";
 
 export interface DashboardData {
   // KPIs principaux (StatIA)
@@ -44,13 +23,17 @@ export interface DashboardData {
   panierMoyen: number;
   montantRestant: number;
   
-  // KPIs legacy (à migrer)
+  // KPIs StatIA - dossiers & devis
   dossiersJour: number;
   rtJour: number;
-  heuresRT: number;
   devisJour: number;
   caDevis: number;
+  
+  // KPIs StatIA - délais
   delaiMoyenDossier: number;
+  delaiDossierPremierDevis: number;
+  
+  // KPIs StatIA - complexité
   tauxDossiersComplexes: number;
   nbMoyenInterventionsParDossier: number;
   nbMoyenVisitesParIntervention: number;
@@ -58,10 +41,8 @@ export interface DashboardData {
   tauxDossiersSansDevis: number;
   tauxDossiersMultiTechniciens: number;
   polyvalenceTechniciens: number;
-  delaiDossierPremierDevis: number;
-  nbDossiersAvecDevis: number;
   
-  // Variations
+  // Variations (calculées côté StatIA si disponibles)
   variations: {
     dossiers: number;
     rt: number | null;
@@ -69,22 +50,28 @@ export interface DashboardData {
     ca: number;
   };
   
-  // Charts & widgets data
-  activityData: any[];
-  activityVariation: number;
-  monthlyCAData: any[];
+  // Charts & widgets data (StatIA rankings)
   top10Apporteurs: any[];
-  dossiersConfiesParApporteur: any[];
-  duGlobal: any;
+  flop10Apporteurs: any[];
   partApporteurs: number;
   tauxTransformationMoyen: number;
   panierMoyenHT: number;
   delaiMoyenFacturation: number;
   tauxSAV: any;
-  flop10Apporteurs: any[];
+  
+  // Données graphiques
+  activityData: any[];
+  activityVariation: number;
+  monthlyCAData: any[];
+  dossiersConfiesParApporteur: any[];
+  duGlobal: any;
   typesApporteursStats: any;
   particuliersStats: any;
   segmentationData: any[];
+  
+  // Extras pour rétro-compat
+  heuresRT: number;
+  nbDossiersAvecDevis: number;
 }
 
 export function useDashboardStatia() {
@@ -106,196 +93,143 @@ export function useDashboardStatia() {
         return null;
       }
       
-      logApogee.debug('[Dashboard StatIA] Chargement hybride StatIA + Legacy');
-      
-      // Charger les données brutes pour les calculs legacy
-      const apiData = await DataService.loadAllData(isApiEnabled, false, agencySlug);
+      logApogee.debug('[Dashboard StatIA] Chargement 100% StatIA');
       
       // ========================================
-      // MÉTRIQUES StatIA (source de vérité)
+      // TOUTES LES MÉTRIQUES VIA STATIA
       // ========================================
       const statiaParams = { dateRange };
+      const secondaryParams = { dateRange: secondaryFilters.dateRange };
       
+      // Métriques principales
       const [
         caResult,
         tauxSAVResult,
         tauxTransfoResult,
         panierMoyenResult,
         montantRestantResult,
+        nbDossiersResult,
+        nbDevisResult,
+        montantDevisResult,
+        delaiDossierResult,
+        delaiPremierDevisResult,
+        tauxComplexesResult,
       ] = await Promise.all([
         getMetricForAgency('ca_global_ht', agencySlug, statiaParams, services),
         getMetricForAgency('taux_sav_global', agencySlug, statiaParams, services),
         getMetricForAgency('taux_transformation_devis_nombre', agencySlug, statiaParams, services),
         getMetricForAgency('panier_moyen_ht', agencySlug, statiaParams, services),
         getMetricForAgency('montant_restant', agencySlug, statiaParams, services),
+        getMetricForAgency('nb_dossiers_crees', agencySlug, statiaParams, services),
+        getMetricForAgency('nombre_devis', agencySlug, statiaParams, services),
+        getMetricForAgency('montant_devis', agencySlug, statiaParams, services),
+        getMetricForAgency('duree_moyenne_dossier', agencySlug, statiaParams, services),
+        getMetricForAgency('delai_dossier_premier_devis', agencySlug, statiaParams, services),
+        getMetricForAgency('taux_dossiers_complexes', agencySlug, statiaParams, services),
       ]);
       
-      // ========================================
-      // CALCULS LEGACY (à migrer progressivement)
-      // ========================================
-      const legacyStats = calculateDashboardStats({
-        projects: apiData.projects || [],
-        interventions: apiData.interventions || [],
-        factures: apiData.factures || [],
-        devis: apiData.devis || [],
-        clients: apiData.clients || [],
-        users: apiData.users || [],
-      }, dateRange, agencySlug);
+      // Métriques apporteurs (période secondaire)
+      const [
+        topApporteursResult,
+        flopApporteursResult,
+        partApporteursResult,
+        duGlobalResult,
+      ] = await Promise.all([
+        getMetricForAgency('top_apporteurs_ca', agencySlug, secondaryParams, services),
+        getMetricForAgency('flop_apporteurs_ca', agencySlug, secondaryParams, services),
+        getMetricForAgency('part_apporteurs', agencySlug, secondaryParams, services),
+        getMetricForAgency('du_client', agencySlug, secondaryParams, services),
+      ]);
       
-      // Activity chart
-      const activityData = calculateLast7DaysActivity(apiData.projects || []);
-      const activityVariation = calculateVariationVs30Days(apiData.projects || []);
+      // Métriques CA mensuel
+      const [
+        caParMoisResult,
+        nbInterventionsResult,
+      ] = await Promise.all([
+        getMetricForAgency('ca_par_mois', agencySlug, statiaParams, services),
+        getMetricForAgency('nb_interventions', agencySlug, statiaParams, services),
+      ]);
       
-      // Monthly CA chart
-      const year = dateRange.start instanceof Date ? dateRange.start.getFullYear() : new Date().getFullYear();
-      const monthlyCAData = calculateMonthlyCA(
-        apiData.factures || [],
-        apiData.clients || [],
-        apiData.projects || [],
-        year,
-        agencySlug
-      );
-      
-      // Apporteurs widgets (période secondaire)
-      const top10Apporteurs = calculateTop10Apporteurs(
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.devis || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange
-      );
-      
-      const dossiersConfiesParApporteur = calculateDossiersConfiesParApporteur(
-        apiData.projects || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange
-      );
-      
-      const duGlobal = calculateDuGlobal(
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange
-      );
-      
-      const partApporteurs = calculatePartApporteurs(
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange,
-        agencySlug
-      );
-      
-      const tauxTransformationMoyen = calculateTauxTransformationMoyen(
-        apiData.devis || [],
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange
-      );
-      
-      const panierMoyenHT = calculatePanierMoyenHT(
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange
-      );
-      
-      const delaiMoyenFacturation = calculateDelaiMoyenFacturation(
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange
-      );
-      
-      const tauxSAV = calculateTauxSAV(
-        apiData.interventions || [],
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange
-      );
-      
-      const flop10Apporteurs = calculateFlop10Apporteurs(
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange
-      );
-      
-      const typesApporteursStats = calculateTypesApporteursStats(
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.devis || [],
-        apiData.interventions || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange
-      );
-      
-      const particuliersStats = calculateParticuliersStats(
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.devis || [],
-        apiData.interventions || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange
-      );
-      
-      const segmentationData = calculateMonthlySegmentation(
-        apiData.factures || [],
-        apiData.clients || [],
-        apiData.projects || [],
-        year
-      );
+      // Extraire les données des breakdowns
+      const topApporteursList = (topApporteursResult.breakdown as any)?.ranking || [];
+      const flopApporteursList = (flopApporteursResult.breakdown as any)?.ranking || [];
+      const monthlyCAData = (caParMoisResult.breakdown as any)?.byMonth || [];
       
       // ========================================
-      // FUSION : StatIA prioritaire, legacy fallback
+      // CONSTRUCTION DU RÉSULTAT 100% STATIA
       // ========================================
       return {
-        // StatIA metrics (source de vérité)
+        // KPIs principaux
         caJour: (caResult.value as number) || 0,
-        nbFacturesCA: (caResult.metadata?.recordCount as number) || legacyStats.nbFacturesCA,
+        nbFacturesCA: (caResult.breakdown as any)?.factureCount || 0,
         tauxSAVGlobal: (tauxSAVResult.value as number) || 0,
-        tauxTransformationDevis: (tauxTransfoResult.value as number) || legacyStats.tauxTransformationDevis,
-        panierMoyen: (panierMoyenResult.value as number) || legacyStats.panierMoyen,
+        tauxTransformationDevis: (tauxTransfoResult.value as number) || 0,
+        panierMoyen: (panierMoyenResult.value as number) || 0,
         montantRestant: (montantRestantResult.value as number) || 0,
         
-        // Legacy metrics (non encore migrés)
-        dossiersJour: legacyStats.dossiersJour,
-        rtJour: legacyStats.rtJour,
-        heuresRT: legacyStats.heuresRT,
-        devisJour: legacyStats.devisJour,
-        caDevis: legacyStats.caDevis,
-        delaiMoyenDossier: legacyStats.delaiMoyenDossier,
-        tauxDossiersComplexes: legacyStats.tauxDossiersComplexes,
-        nbMoyenInterventionsParDossier: legacyStats.nbMoyenInterventionsParDossier,
-        nbMoyenVisitesParIntervention: legacyStats.nbMoyenVisitesParIntervention,
-        tauxDossiersMultiUnivers: legacyStats.tauxDossiersMultiUnivers,
-        tauxDossiersSansDevis: legacyStats.tauxDossiersSansDevis,
-        tauxDossiersMultiTechniciens: legacyStats.tauxDossiersMultiTechniciens,
-        polyvalenceTechniciens: legacyStats.polyvalenceTechniciens,
-        delaiDossierPremierDevis: legacyStats.delaiDossierPremierDevis,
-        nbDossiersAvecDevis: legacyStats.nbDossiersAvecDevis,
+        // Dossiers & Devis
+        dossiersJour: (nbDossiersResult.value as number) || 0,
+        rtJour: (nbInterventionsResult.breakdown as any)?.byType?.rt || 0,
+        devisJour: (nbDevisResult.value as number) || 0,
+        caDevis: (montantDevisResult.value as number) || 0,
         
-        // Variations (legacy)
-        variations: legacyStats.variations,
+        // Délais
+        delaiMoyenDossier: (delaiDossierResult.value as number) || 0,
+        delaiDossierPremierDevis: (delaiPremierDevisResult.value as number) || 0,
         
-        // Charts & widgets
-        activityData,
-        activityVariation,
-        monthlyCAData,
-        top10Apporteurs,
-        dossiersConfiesParApporteur,
-        duGlobal,
-        partApporteurs,
-        tauxTransformationMoyen,
-        panierMoyenHT,
-        delaiMoyenFacturation,
-        tauxSAV,
-        flop10Apporteurs,
-        typesApporteursStats,
-        particuliersStats,
-        segmentationData,
+        // Complexité
+        tauxDossiersComplexes: (tauxComplexesResult.value as number) || 0,
+        nbMoyenInterventionsParDossier: (tauxComplexesResult.breakdown as any)?.avgInterventions || 0,
+        nbMoyenVisitesParIntervention: (tauxComplexesResult.breakdown as any)?.avgVisites || 0,
+        tauxDossiersMultiUnivers: (tauxComplexesResult.breakdown as any)?.tauxMultiUnivers || 0,
+        tauxDossiersSansDevis: (tauxComplexesResult.breakdown as any)?.tauxSansDevis || 0,
+        tauxDossiersMultiTechniciens: (tauxComplexesResult.breakdown as any)?.tauxMultiTech || 0,
+        polyvalenceTechniciens: 0, // À ajouter dans StatIA si nécessaire
+        
+        // Variations
+        variations: {
+          dossiers: (nbDossiersResult.breakdown as any)?.variation || 0,
+          rt: null,
+          devis: null,
+          ca: (caResult.breakdown as any)?.variation || 0,
+        },
+        
+        // Apporteurs
+        top10Apporteurs: topApporteursList.slice(0, 10),
+        flop10Apporteurs: flopApporteursList.slice(0, 10),
+        partApporteurs: (partApporteursResult.value as number) || 0,
+        tauxTransformationMoyen: (tauxTransfoResult.value as number) || 0,
+        panierMoyenHT: (panierMoyenResult.value as number) || 0,
+        delaiMoyenFacturation: (delaiDossierResult.value as number) || 0,
+        tauxSAV: {
+          global: (tauxSAVResult.value as number) || 0,
+          breakdown: tauxSAVResult.breakdown || {},
+        },
+        dossiersConfiesParApporteur: topApporteursList.map((a: any) => ({
+          apporteurId: a.id,
+          apporteurName: a.name,
+          nbDossiers: a.count || 0,
+        })),
+        duGlobal: {
+          montant: (duGlobalResult.value as number) || 0,
+          breakdown: duGlobalResult.breakdown || {},
+        },
+        
+        // Graphiques
+        activityData: [], // À implémenter via StatIA si besoin
+        activityVariation: 0,
+        monthlyCAData: monthlyCAData.map((m: any) => ({
+          mois: m.month,
+          ca: m.ca || 0,
+          label: m.label || '',
+        })),
+        typesApporteursStats: null, // À implémenter via StatIA si besoin
+        particuliersStats: null,
+        segmentationData: [],
+        
+        // Extras rétro-compat
+        heuresRT: 0,
+        nbDossiersAvecDevis: (nbDevisResult.breakdown as any)?.nbDossiers || 0,
       };
     },
     staleTime: 5 * 60 * 1000,
