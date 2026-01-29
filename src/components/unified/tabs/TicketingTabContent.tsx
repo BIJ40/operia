@@ -1,14 +1,24 @@
 /**
  * TicketingTabContent - Contenu de l'onglet "Ticketing"
- * Avec sous-onglets: Kanban, Liste, Historique
+ * Avec sous-onglets: Kanban, Liste, Historique, Revue + pseudo-onglet Exporter
  */
 
 import { lazy, Suspense, useState, useEffect } from 'react';
-import { Loader2, LayoutGrid, List, History, ListChecks } from 'lucide-react';
+import { Loader2, LayoutGrid, List, History, ListChecks, Download, FileText, Sheet, FileDown } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { AnimatePresence, motion } from 'framer-motion';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSearchParams } from 'react-router-dom';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import { useApogeeTickets } from '@/apogee-tickets/hooks/useApogeeTickets';
+import { exportToCSV, exportToExcel, exportToPDF } from '@/apogee-tickets/utils/exportKanban';
+import { cn } from '@/lib/utils';
 
 // Lazy load des contenus
 const TicketingKanbanView = lazy(() => import('@/apogee-tickets/pages/ApogeeTicketsKanban'));
@@ -36,6 +46,9 @@ function LoadingFallback() {
 export default function TicketingTabContent() {
   const [searchParams, setSearchParams] = useSearchParams();
   
+  // Données pour export
+  const { tickets, statuses, modules, priorities, ownerSides } = useApogeeTickets();
+  
   // Persister le sous-onglet dans l'URL
   const subtabParam = searchParams.get('subtab') as TicketingSubTab | null;
   const [activeSubTab, setActiveSubTab] = useState<TicketingSubTab>(
@@ -62,7 +75,41 @@ export default function TicketingTabContent() {
   return (
     <div className="py-3 px-2 sm:px-4 space-y-4">
       <Tabs value={activeSubTab} onValueChange={handleTabChange}>
-        <PillTabsList tabs={TICKETING_SUBTABS} />
+        {/* Navigation avec pseudo-onglet Exporter */}
+        <div className="flex items-center justify-center gap-2">
+          <PillTabsList tabs={TICKETING_SUBTABS} />
+          
+          {/* Pseudo-onglet Exporter - style identique aux pills */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all",
+                  "bg-muted/60 text-muted-foreground hover:bg-primary/10 hover:text-primary",
+                  "border border-transparent hover:border-primary/30"
+                )}
+              >
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">Exporter</span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-background border shadow-lg z-50">
+              <DropdownMenuItem onClick={() => exportToCSV({ tickets, statuses, modules, priorities, ownerSides })}>
+                <FileText className="h-4 w-4 mr-2 text-green-600" />
+                Export CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportToExcel({ tickets, statuses, modules, priorities, ownerSides })}>
+                <Sheet className="h-4 w-4 mr-2 text-emerald-600" />
+                Export Excel
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => exportToPDF({ tickets, statuses, modules, priorities, ownerSides })}>
+                <FileDown className="h-4 w-4 mr-2 text-red-600" />
+                Export PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
 
         <AnimatePresence mode="wait">
           <motion.div
