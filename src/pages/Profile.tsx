@@ -233,137 +233,211 @@ export default function Profile() {
 
   return (
     <WarmPageContainer maxWidth="4xl">
-      <div className="space-y-6">
-        {/* Header avec Avatar */}
-        <WarmCard variant="gradient" accentColor="blue" padding="spacious">
-          <div className="flex items-center gap-6">
-            {/* Avatar */}
-            <div className="relative group">
-              <div className="w-24 h-24 rounded-2xl bg-primary/10 flex items-center justify-center overflow-hidden border-4 border-background shadow-warm-lg">
-                {avatarUrl ? (
-                  <img 
-                    src={avatarUrl} 
-                    alt="Avatar" 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <User className="w-12 h-12 text-primary" />
+      <div className="space-y-8">
+        
+        {/* ====================== SECTION MON PROFIL ====================== */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-warm-blue/80 to-warm-teal/60 flex items-center justify-center shadow-sm">
+              <User className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-foreground">Mon profil</h2>
+              <p className="text-sm text-muted-foreground">Vos informations personnelles et paramètres de compte</p>
+            </div>
+          </div>
+
+          {/* Header avec Avatar */}
+          <WarmCard variant="gradient" accentColor="blue" padding="spacious" className="border-2 border-warm-blue/20">
+            <div className="flex items-center gap-6">
+              {/* Avatar */}
+              <div className="relative group">
+                <div className="w-24 h-24 rounded-2xl bg-warm-blue/10 flex items-center justify-center overflow-hidden border-4 border-background shadow-warm-lg">
+                  {avatarUrl ? (
+                    <img 
+                      src={avatarUrl} 
+                      alt="Avatar" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-12 h-12 text-warm-blue" />
+                  )}
+                </div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleAvatarUpload}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Camera className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
+
+              <div className="flex-1">
+                <h1 className="text-2xl font-bold text-foreground">
+                  {profile?.first_name || profile?.last_name 
+                    ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
+                    : 'Mon Profil'
+                  }
+                </h1>
+                <p className="text-muted-foreground">
+                  {profile?.email || 'Pas d\'email'}
+                </p>
+                {effectiveRole && (
+                  <Badge className={`mt-2 ${VISIBLE_ROLE_COLORS[effectiveRole] || ''}`}>
+                    {VISIBLE_ROLE_LABELS[effectiveRole]}
+                  </Badge>
                 )}
               </div>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleAvatarUpload}
-                accept="image/*"
-                className="hidden"
-              />
-              <Button
-                size="sm"
-                variant="secondary"
-                className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
+            </div>
+          </WarmCard>
+
+          {/* Informations modifiables */}
+          <WarmCard 
+            icon={User} 
+            title="Mes informations personnelles"
+            description="Vous pouvez modifier ces informations"
+            accentColor="blue"
+            className="border-2 border-warm-blue/10"
+          >
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Prénom *</Label>
+                  <Input
+                    value={editableData.first_name}
+                    onChange={(e) => setEditableData(prev => ({ ...prev, first_name: e.target.value }))}
+                    placeholder="Votre prénom"
+                    className="rounded-xl"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Nom *</Label>
+                  <Input
+                    value={editableData.last_name}
+                    onChange={(e) => setEditableData(prev => ({ ...prev, last_name: e.target.value }))}
+                    placeholder="Votre nom"
+                    className="rounded-xl"
+                  />
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Téléphone</Label>
+                  <Input
+                    type="tel"
+                    value={editableData.phone}
+                    onChange={(e) => setEditableData(prev => ({ ...prev, phone: e.target.value }))}
+                    placeholder="Votre numéro de téléphone"
+                    className="rounded-xl"
+                  />
+                </div>
+              </div>
+
+              <Button 
+                onClick={handleSaveProfile} 
+                disabled={isSaving || !editableData.first_name.trim() || !editableData.last_name.trim()}
+                className="w-full rounded-xl bg-warm-blue hover:bg-warm-blue/90"
               >
-                {isUploading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Camera className="w-4 h-4" />
-                )}
+                {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                Enregistrer mes informations
               </Button>
             </div>
+          </WarmCard>
 
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-foreground">
-                {profile?.first_name || profile?.last_name 
-                  ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
-                  : 'Mon Profil'
-                }
-              </h1>
-              <p className="text-muted-foreground">
-                {profile?.email || 'Pas d\'email'}
-              </p>
-              {effectiveRole && (
-                <Badge className={`mt-2 ${VISIBLE_ROLE_COLORS[effectiveRole] || ''}`}>
-                  {VISIBLE_ROLE_LABELS[effectiveRole]}
-                </Badge>
-              )}
-            </div>
-          </div>
-        </WarmCard>
+          {/* Informations compte (lecture seule) */}
+          <WarmCard 
+            icon={Shield} 
+            title="Sécurité et accès"
+            description="Ces informations sont gérées par votre administrateur"
+            accentColor="purple"
+            className="border-2 border-warm-purple/10"
+          >
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-muted-foreground">
+                    <Mail className="w-4 h-4" />
+                    Email
+                  </Label>
+                  <Input
+                    value={profile?.email || ''}
+                    disabled
+                    className="bg-muted cursor-not-allowed rounded-xl"
+                  />
+                </div>
 
-        {/* Informations modifiables */}
-        <WarmCard 
-          icon={User} 
-          title="Mes informations personnelles"
-          description="Vous pouvez modifier ces informations"
-          accentColor="teal"
-        >
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Prénom *</Label>
-                <Input
-                  value={editableData.first_name}
-                  onChange={(e) => setEditableData(prev => ({ ...prev, first_name: e.target.value }))}
-                  placeholder="Votre prénom"
-                  className="rounded-xl"
-                />
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-muted-foreground">
+                    <Briefcase className="w-4 h-4" />
+                    Poste occupé
+                  </Label>
+                  <Input
+                    value={ROLE_AGENCE_LABELS[profile?.role_agence || ''] || profile?.role_agence || ''}
+                    disabled
+                    className="bg-muted cursor-not-allowed rounded-xl"
+                    placeholder="Non renseigné"
+                  />
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Nom *</Label>
-                <Input
-                  value={editableData.last_name}
-                  onChange={(e) => setEditableData(prev => ({ ...prev, last_name: e.target.value }))}
-                  placeholder="Votre nom"
-                  className="rounded-xl"
-                />
-              </div>
+              <Separator className="my-4" />
 
-              <div className="space-y-2 md:col-span-2">
-                <Label>Téléphone</Label>
-                <Input
-                  type="tel"
-                  value={editableData.phone}
-                  onChange={(e) => setEditableData(prev => ({ ...prev, phone: e.target.value }))}
-                  placeholder="Votre numéro de téléphone"
-                  className="rounded-xl"
-                />
-              </div>
-            </div>
-
-            <Button 
-              onClick={handleSaveProfile} 
-              disabled={isSaving || !editableData.first_name.trim() || !editableData.last_name.trim()}
-              className="w-full rounded-xl"
-            >
-              {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-              Enregistrer mes informations
-            </Button>
-          </div>
-        </WarmCard>
-
-        {/* Informations compte (lecture seule) */}
-        <WarmCard 
-          icon={Shield} 
-          title="Informations du compte"
-          description="Ces informations sont gérées par votre administrateur"
-          accentColor="purple"
-        >
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Modules activés */}
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-muted-foreground">
-                  <Mail className="w-4 h-4" />
-                  Email
+                  <Zap className="w-4 h-4" />
+                  Modules activés
                 </Label>
-                <Input
-                  value={profile?.email || ''}
-                  disabled
-                  className="bg-muted cursor-not-allowed rounded-xl"
-                />
+                <div className="flex flex-wrap gap-2">
+                  {enabledModules.length > 0 ? (
+                    enabledModules.map((mod) => (
+                      <Badge key={mod} variant="secondary" className="rounded-lg">
+                        {mod}
+                      </Badge>
+                    ))
+                  ) : (
+                    <span className="text-sm text-muted-foreground">Aucun module spécifique</span>
+                  )}
+                </div>
               </div>
+            </div>
+          </WarmCard>
+        </section>
 
+        {/* ====================== SECTION MON AGENCE ====================== */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-warm-orange/80 to-warm-pink/60 flex items-center justify-center shadow-sm">
+              <Building2 className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-foreground">Mon agence</h2>
+              <p className="text-sm text-muted-foreground">Informations sur votre agence de rattachement</p>
+            </div>
+          </div>
+
+          {/* Rattachement agence */}
+          <WarmCard 
+            icon={Building2} 
+            title="Rattachement"
+            description="Votre agence et contact associé"
+            accentColor="orange"
+            className="border-2 border-warm-orange/20"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-muted-foreground">
                   <Building2 className="w-4 h-4" />
@@ -376,60 +450,39 @@ export default function Profile() {
                   placeholder="Non rattaché"
                 />
               </div>
-
-              <div className="space-y-2 md:col-span-2">
+              <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-muted-foreground">
-                  <Briefcase className="w-4 h-4" />
-                  Poste occupé
+                  <Mail className="w-4 h-4" />
+                  Email de l'agence
                 </Label>
                 <Input
-                  value={ROLE_AGENCE_LABELS[profile?.role_agence || ''] || profile?.role_agence || ''}
+                  value="contact@agence.fr"
                   disabled
                   className="bg-muted cursor-not-allowed rounded-xl"
                   placeholder="Non renseigné"
                 />
               </div>
             </div>
+          </WarmCard>
 
-            <Separator className="my-4" />
-
-            {/* Modules activés */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2 text-muted-foreground">
-                <Zap className="w-4 h-4" />
-                Modules activés
-              </Label>
-              <div className="flex flex-wrap gap-2">
-                {enabledModules.length > 0 ? (
-                  enabledModules.map((mod) => (
-                    <Badge key={mod} variant="secondary" className="rounded-lg">
-                      {mod}
-                    </Badge>
-                  ))
-                ) : (
-                  <span className="text-sm text-muted-foreground">Aucun module spécifique</span>
-                )}
-              </div>
-            </div>
-          </div>
-        </WarmCard>
-
-        {/* Informations agence */}
-        <WarmCard 
-          icon={Info} 
-          title="Informations de l'agence"
-          description="Détails sur votre agence de rattachement"
-          accentColor="orange"
-        >
-          <ApiToggleProvider>
-            <AgencyProvider>
-              <AgencyInfoCompact />
-            </AgencyProvider>
-          </ApiToggleProvider>
-        </WarmCard>
+          {/* Informations détaillées agence */}
+          <WarmCard 
+            icon={Info} 
+            title="Détails de l'agence"
+            description="Coordonnées et informations complémentaires"
+            accentColor="teal"
+            className="border-2 border-warm-teal/10"
+          >
+            <ApiToggleProvider>
+              <AgencyProvider>
+                <AgencyInfoCompact />
+              </AgencyProvider>
+            </ApiToggleProvider>
+          </WarmCard>
+        </section>
 
         {/* Actions */}
-        <div className="flex gap-4">
+        <div className="flex gap-4 pt-4">
           <Button
             variant="outline"
             onClick={() => navigate(-1)}
@@ -439,7 +492,7 @@ export default function Profile() {
           </Button>
         </div>
 
-        <p className="text-sm text-center text-muted-foreground">
+        <p className="text-sm text-center text-muted-foreground pb-4">
           Pour modifier votre email, agence ou rôle, contactez votre administrateur.
         </p>
       </div>
