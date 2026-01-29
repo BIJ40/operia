@@ -46,14 +46,12 @@ export function StatusSelector({
           type="button"
           disabled={disabled}
           className={cn(
-            'inline-flex items-center gap-1.5 font-medium rounded-full transition-all shadow-sm',
-            'text-sm px-3 py-1',
-            disabled ? 'cursor-default opacity-70' : 'cursor-pointer hover:opacity-90 hover:shadow-md'
+            'inline-flex items-center gap-1.5 font-medium rounded-full transition-all shadow-md',
+            'text-sm px-3 py-1 text-white',
+            disabled ? 'cursor-default opacity-70' : 'cursor-pointer hover:opacity-90 hover:shadow-lg'
           )}
           style={{ 
-            backgroundColor: `${statusColor}25`,
-            color: statusColor,
-            border: `1.5px solid ${statusColor}`,
+            backgroundColor: statusColor,
           }}
         >
           <GitBranch className="w-3.5 h-3.5" />
