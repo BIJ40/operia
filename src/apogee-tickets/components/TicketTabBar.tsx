@@ -32,12 +32,18 @@ export function TicketTabBar({
   const activeBorderColor = isListeActive ? 'border-sky-400 dark:border-sky-500' : 'border-violet-400 dark:border-violet-500';
 
   return (
-    <div className="flex items-end gap-0 px-2 pt-2 relative">
-      {/* Bordure continue vers la droite - depuis l'onglet actif jusqu'au bord */}
+    <div className="flex items-end gap-0 pl-2 pt-2 relative">
+      {/* Bordure horizontale du bas (sous les onglets inactifs) */}
       <div className={cn(
-        "absolute bottom-0 right-0 h-[2px] border-t-2",
+        "absolute bottom-0 left-0 h-[2px]",
+        isListeActive ? "bg-sky-400 dark:bg-sky-500" : "bg-violet-400 dark:bg-violet-500"
+      )} style={{ right: '12px' }} />
+      
+      {/* Coin arrondi à droite - bordure verticale + arrondi */}
+      <div className={cn(
+        "absolute bottom-0 right-2 w-3 h-4 border-r-2 border-b-2 rounded-br-xl",
         activeBorderColor
-      )} style={{ left: 0 }} />
+      )} />
       
       {/* Onglet LISTE - toujours visible et fixe */}
       <button
