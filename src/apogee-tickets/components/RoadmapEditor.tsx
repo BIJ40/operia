@@ -101,9 +101,41 @@ export function RoadmapEditor({
           Roadmap
         </label>
         {isEnabled && (
-          <span className="text-xs text-muted-foreground">
-            {selectedMonth ? MONTHS.find((m) => m.value === selectedMonth)?.label : '—'} {selectedYear}
-          </span>
+          <div className="flex items-center gap-1">
+            <Select
+              value={selectedMonth?.toString() ?? 'none'}
+              onValueChange={handleMonthChange}
+              disabled={disabled}
+            >
+              <SelectTrigger className="h-6 w-20 text-xs px-2">
+                <SelectValue placeholder="Mois" />
+              </SelectTrigger>
+              <SelectContent className="bg-background z-50">
+                <SelectItem value="none">— Mois</SelectItem>
+                {MONTHS.map((m) => (
+                  <SelectItem key={m.value} value={m.value.toString()}>
+                    {m.label.slice(0, 3)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={selectedYear?.toString() ?? defaultYear.toString()}
+              onValueChange={handleYearChange}
+              disabled={disabled}
+            >
+              <SelectTrigger className="h-6 w-16 text-xs px-2">
+                <SelectValue placeholder="Année" />
+              </SelectTrigger>
+              <SelectContent className="bg-background z-50">
+                {getYearOptions().map((y) => (
+                  <SelectItem key={y} value={y.toString()}>
+                    {y}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         )}
       </div>
     );
