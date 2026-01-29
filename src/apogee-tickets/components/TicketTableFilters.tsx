@@ -249,7 +249,7 @@ export function TicketTableFilters({
   return (
     <div className="space-y-3">
       {/* Barre de filtres principale - Style Warm */}
-      <div className="flex flex-wrap items-center gap-2 bg-gradient-to-r from-muted/20 to-transparent rounded-2xl px-3 py-2">
+      <div className="flex flex-wrap items-center gap-2 bg-gradient-to-r from-slate-50/60 to-transparent dark:from-slate-800/20 rounded-2xl px-3 py-2">
         {/* Recherche */}
         <div className="relative flex-1 min-w-[200px] max-w-[300px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
