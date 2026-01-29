@@ -398,7 +398,7 @@ function UnifiedWorkspaceContent() {
                               key={tab.id}
                               id={tab.id}
                               isActive={validActiveTab === tab.id}
-                              isDraggable={isAccessible && !isVisuallyDisabled}
+                              isDraggable={isAccessible}
                               isDisabled={isVisuallyDisabled}
                               onClick={() => isAccessible ? setActiveTab(tab.id) : undefined}
                               className={tabButtonClass}
