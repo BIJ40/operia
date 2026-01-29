@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { GlobalRole } from '@/types/globalRoles';
 import { EnabledModules, ModuleKey } from '@/types/modules';
@@ -66,6 +67,8 @@ export const FRANCHISEUR_ROLE_OPTIONS = [
 ];
 
 export function ImpersonationProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
+  
   // État pour simulation de rôles fictifs
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [impersonatedProfile, setImpersonatedProfile] = useState<ImpersonatedProfile | null>(null);
@@ -86,12 +89,16 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
   };
 
   // Arrêter toute impersonation
-  const stopImpersonation = () => {
+  const stopImpersonation = useCallback(() => {
     setImpersonatedProfile(null);
     setIsImpersonating(false);
     setIsRealUserImpersonation(false);
     setImpersonatedUser(null);
-  };
+    
+    // Invalider les caches pour forcer le rechargement avec les vraies données
+    queryClient.invalidateQueries({ queryKey: ['rh-collaborators'] });
+    queryClient.invalidateQueries({ queryKey: ['collaborators'] });
+  }, [queryClient]);
 
   // Démarrer impersonation utilisateur réel
   const startRealUserImpersonation = useCallback(async (userId: string): Promise<boolean> => {
@@ -150,6 +157,10 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
       
       setImpersonatedUser(realUserProfile);
       setIsRealUserImpersonation(true);
+      
+      // Invalider les caches pour forcer le rechargement avec les données impersonnées
+      queryClient.invalidateQueries({ queryKey: ['rh-collaborators'] });
+      queryClient.invalidateQueries({ queryKey: ['collaborators'] });
       
       const userName = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || profile.email;
       toast.success(`Vous voyez maintenant l'application comme ${userName}`);

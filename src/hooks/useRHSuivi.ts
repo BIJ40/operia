@@ -5,6 +5,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 import { toast } from 'sonner';
 import type { 
   RHCollaborator, 
@@ -20,7 +21,7 @@ import type {
 // ============================================================================
 
 export function useRHCollaborators(options?: { includeFormer?: boolean }) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useEffectiveAuth();
   const includeFormer = options?.includeFormer ?? false;
   
   return useQuery({

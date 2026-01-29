@@ -10,7 +10,7 @@ import { useRHCollaborators } from '@/hooks/useRHSuivi';
 import { RHCockpitTable } from '@/components/rh/cockpit';
 import { CompetencesMatrixPrint } from '@/components/rh/CompetencesMatrixPrint';
 import { useCollaboratorsEpiSummary } from '@/hooks/epi/useCollaboratorsEpiSummary';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 import { CollaboratorWizard } from '@/components/collaborators';
 import { useCollaborators } from '@/hooks/useCollaborators';
 import { useSensitiveData } from '@/hooks/useSensitiveData';
@@ -27,7 +27,7 @@ import { cn } from '@/lib/utils';
 
 export function RHSuiviContent() {
   const queryClient = useQueryClient();
-  const { agencyId, agence } = useAuth();
+  const { agencyId, agence } = useEffectiveAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   
   const { data: collaborators = [], isLoading, refetch } = useRHCollaborators({ includeFormer: false });
