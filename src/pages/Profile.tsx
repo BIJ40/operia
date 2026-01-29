@@ -11,7 +11,6 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { 
   User, 
-  Building2, 
   Briefcase, 
   Mail, 
   Shield, 
@@ -425,14 +424,6 @@ export default function Profile() {
             className="flex-1 rounded-xl"
           >
             Retour
-          </Button>
-          <Button
-            variant="default"
-            onClick={() => navigate('/agence')}
-            className="flex-1 rounded-xl bg-warm-orange hover:bg-warm-orange/90"
-          >
-            <Building2 className="w-4 h-4 mr-2" />
-            Voir mon agence
           </Button>
         </div>
 

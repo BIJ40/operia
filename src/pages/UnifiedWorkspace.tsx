@@ -11,7 +11,7 @@ import { useSearchParams } from 'react-router-dom';
 import { 
   Home, BarChart3, ClipboardList, 
   MoreHorizontal, Ticket, HelpCircle,
-  Loader2, BookOpen, Shield, User, LogOut, Settings, Eye
+  Loader2, BookOpen, Shield, User, Building2, LogOut, Settings, Eye
 } from 'lucide-react';
 import { 
   DndContext, 
@@ -468,9 +468,15 @@ function UnifiedWorkspaceContent() {
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
+                          <Link to="/agence" className="flex items-center gap-2 cursor-pointer">
+                            <Building2 className="w-4 h-4" />
+                            Mon agence
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
                           <Link to="/changelog" className="flex items-center gap-2 cursor-pointer">
                             <Settings className="w-4 h-4" />
-                            Paramètres
+                            Changelog
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
