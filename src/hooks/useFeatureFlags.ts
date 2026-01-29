@@ -24,6 +24,45 @@ export interface FeatureFlag {
   updated_by: string | null;
 }
 
+/**
+ * Aliases pour éviter les doublons historiques (ex: apogee_tickets vs ticketing).
+ * Objectif: 1 seule clé canonique côté UI, sans casser les enregistrements existants.
+ */
+const MODULE_KEY_ALIASES: Record<string, string> = {
+  apogee_tickets: 'ticketing',
+  'apogee_tickets.kanban': 'ticketing.kanban',
+  'apogee_tickets.create': 'ticketing.create',
+  'apogee_tickets.manage': 'ticketing.manage',
+  'apogee_tickets.import': 'ticketing.import',
+};
+
+const MODULE_GROUP_ALIASES: Record<string, string> = {
+  // ancien groupe historique
+  projects: '07_ticketing',
+};
+
+function normalizeFeatureFlag(row: FeatureFlag): FeatureFlag {
+  const module_key = MODULE_KEY_ALIASES[row.module_key] ?? row.module_key;
+  const module_group = MODULE_GROUP_ALIASES[row.module_group] ?? row.module_group;
+  return { ...row, module_key, module_group };
+}
+
+function pickBestFlag(a: FeatureFlag, b: FeatureFlag): FeatureFlag {
+  // Priorité: clé déjà canonique > clé aliasée
+  const aIsAliased = a.module_key !== (MODULE_KEY_ALIASES[a.module_key] ?? a.module_key);
+  const bIsAliased = b.module_key !== (MODULE_KEY_ALIASES[b.module_key] ?? b.module_key);
+
+  if (aIsAliased !== bIsAliased) return aIsAliased ? b : a;
+
+  // Sinon: garder la plus récemment modifiée
+  const aUpdated = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+  const bUpdated = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+  if (aUpdated !== bUpdated) return aUpdated > bUpdated ? a : b;
+
+  // Fallback stable
+  return a.display_order <= b.display_order ? a : b;
+}
+
 const QUERY_KEY = 'feature-flags';
 
 /**
@@ -40,7 +79,23 @@ export function useFeatureFlags() {
         .order('display_order');
 
       if (error) throw error;
-      return (data || []) as FeatureFlag[];
+
+      // Normalisation + déduplication (évite les doublons ticketing / apogee_tickets)
+      const normalized = ((data || []) as FeatureFlag[]).map(normalizeFeatureFlag);
+      const byKey = new Map<string, FeatureFlag>();
+
+      for (const flag of normalized) {
+        const existing = byKey.get(flag.module_key);
+        byKey.set(flag.module_key, existing ? pickBestFlag(existing, flag) : flag);
+      }
+
+      return Array.from(byKey.values()).sort((a, b) => {
+        const g = a.module_group.localeCompare(b.module_group);
+        if (g !== 0) return g;
+        const d = (a.display_order ?? 0) - (b.display_order ?? 0);
+        if (d !== 0) return d;
+        return a.module_key.localeCompare(b.module_key);
+      });
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
