@@ -37,13 +37,25 @@ export function TicketTabBar({
       <div className={cn(
         "absolute bottom-0 left-2 h-[2px] z-0",
         isListeActive ? "bg-sky-400 dark:bg-sky-500" : "bg-violet-400 dark:bg-violet-500"
-      )} style={{ right: '8px' }} />
+      )} style={{ right: '20px' }} />
       
-      {/* Bordure verticale droite */}
-      <div className={cn(
-        "absolute bottom-0 right-2 w-[2px] h-4 z-0",
-        isListeActive ? "bg-sky-400 dark:bg-sky-500" : "bg-violet-400 dark:bg-violet-500"
-      )} />
+      {/* Coin arrondi en bas à droite - utilise border pour faire le L arrondi */}
+      <div 
+        className={cn(
+          "absolute z-0",
+          isListeActive ? "border-sky-400 dark:border-sky-500" : "border-violet-400 dark:border-violet-500"
+        )}
+        style={{
+          bottom: 0,
+          right: 8,
+          width: 12,
+          height: 16,
+          borderRight: '2px solid',
+          borderBottom: '2px solid',
+          borderBottomRightRadius: 12,
+          borderColor: 'inherit'
+        }}
+      />
       
       {/* Onglet LISTE - toujours visible et fixe */}
       <button
