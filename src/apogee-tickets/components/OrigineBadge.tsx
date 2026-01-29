@@ -28,7 +28,9 @@ export function OrigineBadge({ origine, size = 'sm' }: OrigineBadgeProps) {
     return null;
   }
 
-  const config = ORIGINE_CONFIG[origine] || ORIGINE_CONFIG.AUTRE;
+  // Recherche insensible à la casse
+  const normalizedOrigine = origine.toUpperCase();
+  const config = ORIGINE_CONFIG[normalizedOrigine] || ORIGINE_CONFIG.AUTRE;
   
   const sizeClasses = size === 'sm' 
     ? 'text-xs px-2 py-0.5' 
