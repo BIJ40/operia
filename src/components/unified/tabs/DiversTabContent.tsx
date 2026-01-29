@@ -1,11 +1,11 @@
 /**
  * DiversTabContent - Contenu de l'onglet "Divers"
- * Sous-onglets: Apporteurs, Plannings, Réunions, Documents
+ * Sous-onglets: Apporteurs, Veille, Plannings, Réunions, Documents
  * Design: Warm Pastel theme avec PillTabsList colorés
  */
 
 import { lazy, Suspense } from 'react';
-import { FileText, Users2, Loader2, Users, CalendarDays } from 'lucide-react';
+import { FileText, Users2, Loader2, Users, CalendarDays, Radar } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
@@ -14,11 +14,13 @@ const RHMeetingsPage = lazy(() => import('@/pages/rh/RHMeetingsPage'));
 const DocGenPage = lazy(() => import('@/pages/rh/DocGenPage'));
 const MesApporteursTab = lazy(() => import('@/components/pilotage/MesApporteursTab').then(m => ({ default: m.MesApporteursTab })));
 const PlanningHebdo = lazy(() => import('@/pages/PlanningTechniciensSemaine'));
+const VeilleApporteursPage = lazy(() => import('@/pages/VeilleApporteursPage'));
 
-type DiversSubTab = 'apporteurs' | 'plannings' | 'reunions' | 'docgen';
+type DiversSubTab = 'apporteurs' | 'veille' | 'plannings' | 'reunions' | 'docgen';
 
 const DIVERS_TABS: PillTabConfig[] = [
   { id: 'apporteurs', label: 'Apporteurs', icon: Users, accent: 'blue' },
+  { id: 'veille', label: 'Veille', icon: Radar, accent: 'pink' },
   { id: 'plannings', label: 'Plannings', icon: CalendarDays, accent: 'teal' },
   { id: 'reunions', label: 'Réunions', icon: Users2, accent: 'purple' },
   { id: 'docgen', label: 'Documents', icon: FileText, accent: 'orange' },
@@ -46,6 +48,12 @@ export default function DiversTabContent() {
         <TabsContent value="apporteurs" className="mt-6 animate-fade-in">
           <Suspense fallback={<LoadingFallback />}>
             <MesApporteursTab />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="veille" className="mt-6 animate-fade-in">
+          <Suspense fallback={<LoadingFallback />}>
+            <VeilleApporteursPage />
           </Suspense>
         </TabsContent>
 

@@ -2,7 +2,6 @@
  * Page Veille Apporteurs - Radar temps réel de la performance apporteurs
  */
 
-import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +15,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Building2, TrendingDown, AlertTriangle, CheckCircle, Search, Filter, ArrowUpDown, CalendarIcon, RefreshCw, Eye } from 'lucide-react';
+import { Building2, TrendingDown, AlertTriangle, CheckCircle, Search, Filter, ArrowUpDown, CalendarIcon, RefreshCw, Eye, Radar } from 'lucide-react';
 import { useVeilleApporteurs, VeilleFilterType, VeilleSortKey } from '@/statia/hooks/useVeilleApporteurs';
 import { VeilleApporteurConsolide } from '@/statia/engines/veilleApporteursEngine';
 import { ROUTES } from '@/config/routes';
@@ -132,9 +131,14 @@ export default function VeilleApporteursPage() {
   );
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
-      <PageHeader title="Veille Apporteurs" backTo={ROUTES.agency.index} backLabel="Mon Agence" />
-      <p className="text-muted-foreground -mt-4">Radar temps réel de la performance apporteurs (demandes & CA HT)</p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+          <Radar className="w-6 h-6 text-primary" />
+          Veille Apporteurs
+        </h1>
+        <p className="text-muted-foreground">Radar temps réel de la performance apporteurs (demandes & CA HT)</p>
+      </div>
       
       {/* Filtres */}
       <Card>
