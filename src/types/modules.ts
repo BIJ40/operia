@@ -1,30 +1,110 @@
 /**
- * Modules System V2.0
+ * Modules System V3.0 - Aligné avec les onglets UI
  * 
- * Chaque module peut être activé/désactivé par utilisateur.
- * Les sous-options permettent un contrôle granulaire au sein d'un module.
+ * Chaque onglet du workspace = 1 module (sauf DIVERS qui contient 4 sous-modules)
+ * Les modules sont gérés au niveau plan (Basique/Pro) puis override par utilisateur
  */
 
 import { GlobalRole, GLOBAL_ROLES } from './globalRoles';
 
-// Définition des modules principaux
-// ATTENTION: carte_rdv et apporteur_portal sont des sous-options de pilotage_agence, pas des modules racines
+// Définition des modules alignés avec les onglets UI
 export const MODULES = {
+  // Nouveaux modules V3 alignés avec les onglets
+  agence: 'agence',                       // Mon agence
+  stats: 'stats',                         // Stats
+  rh: 'rh',                               // Salariés (RH)
+  parc: 'parc',                           // Parc
+  divers_apporteurs: 'divers_apporteurs', // Divers > Apporteurs
+  divers_plannings: 'divers_plannings',   // Divers > Plannings
+  divers_reunions: 'divers_reunions',     // Divers > Réunions
+  divers_documents: 'divers_documents',   // Divers > Documents
+  guides: 'guides',                       // Guides
+  ticketing: 'ticketing',                 // Ticketing
+  aide: 'aide',                           // Aide
+  // Modules réservés admin/réseau (non visibles dans les plans)
+  reseau_franchiseur: 'reseau_franchiseur',
+  admin_plateforme: 'admin_plateforme',
+  // Legacy keys pour rétrocompatibilité (à supprimer progressivement)
   help_academy: 'help_academy',
   pilotage_agence: 'pilotage_agence',
-  reseau_franchiseur: 'reseau_franchiseur',
   support: 'support',
-  admin_plateforme: 'admin_plateforme',
   apogee_tickets: 'apogee_tickets',
-  rh: 'rh',     // Module RH séparé
-  parc: 'parc', // Module Parc séparé
-  unified_search: 'unified_search', // Barre de recherche unifiée (Stats + Docs)
+  unified_search: 'unified_search',
 } as const;
 
 export type ModuleKey = keyof typeof MODULES;
 
+// Modules visibles dans la gestion des plans (excluant admin/réseau)
+export const PLAN_VISIBLE_MODULES: ModuleKey[] = [
+  'agence',
+  'stats', 
+  'rh',
+  'parc',
+  'divers_apporteurs',
+  'divers_plannings',
+  'divers_reunions',
+  'divers_documents',
+  'guides',
+  'ticketing',
+  'aide',
+];
+
 // Sous-options par module
 export const MODULE_OPTIONS = {
+  agence: {
+    indicateurs: 'agence.indicateurs',
+    actions_a_mener: 'agence.actions_a_mener',
+    diffusion: 'agence.diffusion',
+  },
+  stats: {
+    stats_hub: 'stats.stats_hub',
+    exports: 'stats.exports',
+  },
+  rh: {
+    rh_viewer: 'rh.rh_viewer',
+    rh_admin: 'rh.rh_admin',
+  },
+  parc: {
+    vehicules: 'parc.vehicules',
+    epi: 'parc.epi',
+    equipements: 'parc.equipements',
+  },
+  divers_apporteurs: {
+    consulter: 'divers_apporteurs.consulter',
+    gerer: 'divers_apporteurs.gerer',
+  },
+  divers_plannings: {},
+  divers_reunions: {},
+  divers_documents: {},
+  guides: {
+    apogee: 'guides.apogee',
+    apporteurs: 'guides.apporteurs',
+    helpconfort: 'guides.helpconfort',
+    faq: 'guides.faq',
+  },
+  ticketing: {
+    kanban: 'ticketing.kanban',
+    create: 'ticketing.create',
+    manage: 'ticketing.manage',
+    import: 'ticketing.import',
+  },
+  aide: {
+    user: 'aide.user',
+    agent: 'aide.agent',
+  },
+  reseau_franchiseur: {
+    dashboard: 'reseau_franchiseur.dashboard',
+    stats: 'reseau_franchiseur.stats',
+    agences: 'reseau_franchiseur.agences',
+    redevances: 'reseau_franchiseur.redevances',
+    comparatifs: 'reseau_franchiseur.comparatifs',
+  },
+  admin_plateforme: {
+    users: 'admin_plateforme.users',
+    agencies: 'admin_plateforme.agencies',
+    permissions: 'admin_plateforme.permissions',
+  },
+  // Legacy modules pour rétrocompatibilité
   help_academy: {
     apogee: 'help_academy.apogee',
     helpconfort: 'help_academy.helpconfort',
@@ -34,53 +114,21 @@ export const MODULE_OPTIONS = {
   pilotage_agence: {
     indicateurs: 'pilotage_agence.indicateurs',
     stats_hub: 'pilotage_agence.stats_hub',
-    actions_a_mener: 'pilotage_agence.actions_a_mener',
-    diffusion: 'pilotage_agence.diffusion',
-    exports: 'pilotage_agence.exports',
-    veille_apporteurs: 'pilotage_agence.veille_apporteurs',
-    // Nouvelles options intégrées (ex-modules racines)
     carte_rdv: 'pilotage_agence.carte_rdv',
-    mes_apporteurs: 'pilotage_agence.mes_apporteurs',
-    gestion_apporteurs: 'pilotage_agence.gestion_apporteurs',
-  },
-  reseau_franchiseur: {
-    dashboard: 'reseau_franchiseur.dashboard',
-    stats: 'reseau_franchiseur.stats',
-    agences: 'reseau_franchiseur.agences',
-    redevances: 'reseau_franchiseur.redevances',
-    comparatifs: 'reseau_franchiseur.comparatifs',
   },
   support: {
-    user: 'support.user',      // Créer des tickets utilisateur
-    agent: 'support.agent',    // Répondre aux tickets (support N1-N3)
-    admin: 'support.admin',    // Gérer l'équipe support
-  },
-  admin_plateforme: {
-    users: 'admin_plateforme.users',
-    agencies: 'admin_plateforme.agencies',
-    permissions: 'admin_plateforme.permissions',
-    backup: 'admin_plateforme.backup',
-    logs: 'admin_plateforme.logs',
-    faq_admin: 'admin_plateforme.faq_admin', // Admin FAQ sans accès /admin complet
+    user: 'support.user',
+    agent: 'support.agent',
   },
   apogee_tickets: {
-    kanban: 'apogee_tickets.kanban',     // Vue + création tickets
-    import: 'apogee_tickets.import',     // Import Excel
-    manage: 'apogee_tickets.manage',     // Modifier tickets existants
-    create: 'apogee_tickets.create',     // Créer des tickets (sans = lecture seule)
-  },
-  rh: {
-    rh_viewer: 'rh.rh_viewer',     // Gestion RH opérationnelle (sans paie)
-    rh_admin: 'rh.rh_admin',       // Administration RH complète (paie incluse)
-  },
-  parc: {
-    vehicules: 'parc.vehicules',     // Gestion flotte véhicules
-    epi: 'parc.epi',                 // Gestion EPI
-    equipements: 'parc.equipements', // Autres équipements
+    kanban: 'apogee_tickets.kanban',
+    create: 'apogee_tickets.create',
+    manage: 'apogee_tickets.manage',
+    import: 'apogee_tickets.import',
   },
   unified_search: {
-    stats: 'unified_search.stats',  // Recherche statistiques
-    docs: 'unified_search.docs',    // Recherche documentaire
+    stats: 'unified_search.stats',
+    docs: 'unified_search.docs',
   },
 } as const;
 
@@ -92,9 +140,11 @@ export interface ModuleDefinition {
   label: string;
   description: string;
   icon: string;
-  defaultForRoles: GlobalRole[]; // Rôles qui ont ce module par défaut
-  minRole: GlobalRole;           // Rôle minimum pour pouvoir activer ce module
+  defaultForRoles: GlobalRole[];
+  minRole: GlobalRole;
   options: ModuleOptionDefinition[];
+  /** Si true, ce module n'apparaît pas dans la gestion des plans */
+  adminOnly?: boolean;
 }
 
 export interface ModuleOptionDefinition {
@@ -103,159 +153,193 @@ export interface ModuleOptionDefinition {
   label: string;
   description: string;
   defaultEnabled: boolean;
-  routes?: string[]; // Pages/routes concernées par cette option
+  routes?: string[];
 }
 
 // Configuration complète des modules
 export const MODULE_DEFINITIONS: ModuleDefinition[] = [
   {
-    key: 'help_academy',
-    label: 'Help! Academy',
-    description: 'Accès aux guides Apogée, Apporteurs et HelpConfort',
-    icon: 'BookOpen',
-    defaultForRoles: ['franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
-    minRole: 'base_user',
-    options: [
-      { key: 'apogee', path: 'help_academy.apogee', label: 'Apogée', description: 'Guide du logiciel Apogée', defaultEnabled: true, routes: ['/apogee'] },
-      { key: 'helpconfort', path: 'help_academy.helpconfort', label: 'HelpConfort', description: 'Guide des procédures HelpConfort', defaultEnabled: false, routes: ['/helpconfort'] },
-      { key: 'apporteurs', path: 'help_academy.apporteurs', label: 'Apporteurs', description: 'Guide des prescripteurs', defaultEnabled: true, routes: ['/apporteurs'] },
-      { key: 'edition', path: 'help_academy.edition', label: 'Mode édition', description: 'Modifier le contenu des guides', defaultEnabled: false, routes: [] },
-    ],
-  },
-  {
-    key: 'pilotage_agence',
-    label: 'Pilotage Agence',
-    description: 'Statistiques, actions à mener et diffusion',
-    icon: 'BarChart3',
-    // N3/N4 exclus : ils n'ont pas d'agence propre, ils utilisent reseau_franchiseur
+    key: 'agence',
+    label: 'Mon agence',
+    description: 'Tableau de bord, KPIs et actions',
+    icon: 'Building2',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
-    minRole: 'franchisee_user',
+    minRole: 'franchisee_admin',
     options: [
-      { key: 'indicateurs', path: 'pilotage_agence.indicateurs', label: 'Vue d\'ensemble', description: 'Page d\'accueil avec KPIs principaux', defaultEnabled: true, routes: ['/agency'] },
-      { key: 'stats_hub', path: 'pilotage_agence.stats_hub', label: 'Stats Hub', description: 'Tableaux de bord avancés', defaultEnabled: false, routes: ['/agency/stats-hub'] },
-      { key: 'veille_apporteurs', path: 'pilotage_agence.veille_apporteurs', label: 'Veille Apporteurs', description: 'Surveillance des apporteurs', defaultEnabled: false, routes: ['/agency/veille-apporteurs'] },
-      { key: 'actions_a_mener', path: 'pilotage_agence.actions_a_mener', label: 'Actions à mener', description: 'Liste des actions prioritaires', defaultEnabled: true, routes: ['/agency/actions'] },
-      { key: 'diffusion', path: 'pilotage_agence.diffusion', label: 'Écran diffusion', description: 'Affichage sur écran TV', defaultEnabled: true, routes: ['/agency/diffusion'] },
-      { key: 'exports', path: 'pilotage_agence.exports', label: 'Exports', description: 'Export des données', defaultEnabled: false, routes: ['/agency/exports'] },
-      // Ex-modules racines intégrés comme sous-options
-      { key: 'carte_rdv', path: 'pilotage_agence.carte_rdv', label: 'Carte RDV', description: 'Carte interactive des interventions', defaultEnabled: false, routes: ['/agency/carte'] },
-      { key: 'mes_apporteurs', path: 'pilotage_agence.mes_apporteurs', label: 'Mes Apporteurs', description: 'Consultation des apporteurs', defaultEnabled: false, routes: ['/agency/apporteurs'] },
-      { key: 'gestion_apporteurs', path: 'pilotage_agence.gestion_apporteurs', label: 'Gestion Apporteurs', description: 'Créer et gérer les comptes apporteurs', defaultEnabled: false, routes: ['/agency/apporteurs'] },
+      { key: 'indicateurs', path: 'agence.indicateurs', label: 'Indicateurs', description: 'KPIs principaux', defaultEnabled: true, routes: ['/'] },
+      { key: 'actions_a_mener', path: 'agence.actions_a_mener', label: 'Actions à mener', description: 'Liste des actions', defaultEnabled: true, routes: ['/'] },
+      { key: 'diffusion', path: 'agence.diffusion', label: 'Diffusion', description: 'Écran TV', defaultEnabled: true, routes: ['/diffusion'] },
     ],
   },
   {
-    key: 'reseau_franchiseur',
-    label: 'Réseau Franchiseur',
-    description: 'Vision multi-agences pour le franchiseur',
-    icon: 'Network',
-    defaultForRoles: ['franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
-    minRole: 'franchisor_user',
+    key: 'stats',
+    label: 'Stats',
+    description: 'Statistiques et tableaux de bord',
+    icon: 'BarChart3',
+    defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
+    minRole: 'franchisee_admin',
     options: [
-      { key: 'dashboard', path: 'reseau_franchiseur.dashboard', label: 'Dashboard', description: 'Vue d\'ensemble réseau', defaultEnabled: true, routes: ['/hc-reseau'] },
-      { key: 'stats', path: 'reseau_franchiseur.stats', label: 'Statistiques', description: 'KPIs consolidés réseau', defaultEnabled: true, routes: ['/hc-reseau/tableaux'] },
-      { key: 'agences', path: 'reseau_franchiseur.agences', label: 'Gestion agences', description: 'Fiches et paramètres agences', defaultEnabled: true, routes: ['/hc-reseau/agences'] },
-      { key: 'redevances', path: 'reseau_franchiseur.redevances', label: 'Redevances', description: 'Calcul et suivi des redevances', defaultEnabled: false, routes: ['/hc-reseau/redevances'] },
-      { key: 'comparatifs', path: 'reseau_franchiseur.comparatifs', label: 'Comparatifs', description: 'Comparaison inter-agences', defaultEnabled: true, routes: ['/hc-reseau/comparatif'] },
-    ],
-  },
-  {
-    key: 'support',
-    label: 'Support',
-    description: 'Tickets et assistance utilisateurs',
-    icon: 'MessageSquare',
-    defaultForRoles: ['franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
-    minRole: 'base_user',
-    options: [
-      { key: 'user', path: 'support.user', label: 'Créer tickets', description: 'Créer et suivre ses propres tickets', defaultEnabled: true, routes: ['/support', '/support/mes-demandes'] },
-      { key: 'agent', path: 'support.agent', label: 'Agent support', description: 'Répondre aux tickets des utilisateurs', defaultEnabled: false, routes: ['/admin/support'] },
-      { key: 'admin', path: 'support.admin', label: 'Admin support', description: 'Gérer l\'équipe et les escalades', defaultEnabled: false, routes: ['/admin/support/team'] },
-    ],
-  },
-  {
-    key: 'admin_plateforme',
-    label: 'Administration',
-    description: 'Gestion de la plateforme',
-    icon: 'Settings',
-    defaultForRoles: ['platform_admin', 'superadmin'],
-    minRole: 'platform_admin',
-    options: [
-      { key: 'users', path: 'admin_plateforme.users', label: 'Utilisateurs', description: 'Gestion des comptes utilisateurs', defaultEnabled: true, routes: ['/admin/utilisateurs'] },
-      { key: 'agencies', path: 'admin_plateforme.agencies', label: 'Agences', description: 'Configuration des agences', defaultEnabled: true, routes: ['/admin/agences'] },
-      { key: 'permissions', path: 'admin_plateforme.permissions', label: 'Permissions', description: 'Rôles et droits d\'accès', defaultEnabled: true, routes: ['/admin/droits'] },
-      { key: 'backup', path: 'admin_plateforme.backup', label: 'Sauvegardes', description: 'Import/export de données', defaultEnabled: true, routes: ['/admin/backup'] },
-      { key: 'logs', path: 'admin_plateforme.logs', label: 'Logs', description: 'Journaux d\'activité', defaultEnabled: false, routes: ['/admin/logs'] },
-      { key: 'faq_admin', path: 'admin_plateforme.faq_admin', label: 'Admin FAQ', description: 'Gestion de la FAQ', defaultEnabled: false, routes: ['/admin/faq'] },
-    ],
-  },
-  {
-    key: 'apogee_tickets',
-    label: 'Suivi Dev',
-    description: 'Suivi du développement Apogée (tickets, Kanban)',
-    icon: 'Kanban',
-    defaultForRoles: ['platform_admin', 'superadmin'],
-    minRole: 'base_user',
-    options: [
-      { key: 'kanban', path: 'apogee_tickets.kanban', label: 'Accès Kanban', description: 'Voir le tableau Kanban et les tickets', defaultEnabled: true, routes: ['/gestion-projet'] },
-      { key: 'create', path: 'apogee_tickets.create', label: 'Créer tickets', description: 'Créer de nouveaux tickets (sans = lecture seule)', defaultEnabled: true, routes: ['/gestion-projet'] },
-      { key: 'manage', path: 'apogee_tickets.manage', label: 'Modifier tickets', description: 'Modifier priorité, statut, contenu des tickets existants', defaultEnabled: true, routes: ['/gestion-projet'] },
-      { key: 'import', path: 'apogee_tickets.import', label: 'Import Excel', description: 'Importer des tickets depuis fichiers Excel', defaultEnabled: false, routes: ['/gestion-projet/import'] },
+      { key: 'stats_hub', path: 'stats.stats_hub', label: 'Stats Hub', description: 'Tableaux avancés', defaultEnabled: true, routes: ['/?tab=stats'] },
+      { key: 'exports', path: 'stats.exports', label: 'Exports', description: 'Export des données', defaultEnabled: false, routes: ['/?tab=stats'] },
     ],
   },
   {
     key: 'rh',
-    label: 'RH',
+    label: 'Salariés',
     description: 'Gestion des ressources humaines',
-    icon: 'Briefcase',
-    // N2+ uniquement (le portail salarié N1 a été supprimé en v0.8.3)
+    icon: 'Users',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
-      { key: 'rh_viewer', path: 'rh.rh_viewer', label: 'Gestionnaire RH', description: 'Documents et demandes équipe', defaultEnabled: false, routes: ['/rh/suivi'] },
-      { key: 'rh_admin', path: 'rh.rh_admin', label: 'Admin RH', description: 'Gestion complète : salaires, contrats', defaultEnabled: false, routes: ['/rh/suivi'] },
+      { key: 'rh_viewer', path: 'rh.rh_viewer', label: 'Gestionnaire', description: 'Vue équipe', defaultEnabled: true, routes: ['/?tab=rh'] },
+      { key: 'rh_admin', path: 'rh.rh_admin', label: 'Admin RH', description: 'Gestion complète', defaultEnabled: false, routes: ['/?tab=rh'] },
     ],
   },
   {
     key: 'parc',
     label: 'Parc',
-    description: 'Gestion flotte véhicules et équipements',
+    description: 'Véhicules et équipements',
     icon: 'Truck',
-    // N3/N4 exclus : ils ne gèrent pas de flotte, c'est un module agence
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
-    minRole: 'franchisee_user',
+    minRole: 'franchisee_admin',
     options: [
-      { key: 'vehicules', path: 'parc.vehicules', label: 'Véhicules', description: 'Gestion flotte véhicules', defaultEnabled: true, routes: ['/parc/vehicules'] },
-      { key: 'epi', path: 'parc.epi', label: 'EPI', description: 'Équipements de protection', defaultEnabled: true, routes: ['/parc/epi'] },
-      { key: 'equipements', path: 'parc.equipements', label: 'Équipements', description: 'Autres équipements', defaultEnabled: true, routes: ['/parc/equipements'] },
+      { key: 'vehicules', path: 'parc.vehicules', label: 'Véhicules', description: 'Flotte véhicules', defaultEnabled: true, routes: ['/?tab=parc'] },
+      { key: 'epi', path: 'parc.epi', label: 'EPI', description: 'Équipements protection', defaultEnabled: true, routes: ['/?tab=parc'] },
+      { key: 'equipements', path: 'parc.equipements', label: 'Équipements', description: 'Autres équipements', defaultEnabled: true, routes: ['/?tab=parc'] },
     ],
   },
   {
-    key: 'unified_search',
-    label: 'Recherche unifiée',
-    description: 'Barre de recherche intelligente (stats + docs)',
-    icon: 'Sparkles',
-    defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
-    minRole: 'franchisee_user',
+    key: 'divers_apporteurs',
+    label: 'Apporteurs',
+    description: 'Gestion des apporteurs',
+    icon: 'Handshake',
+    defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
+    minRole: 'franchisee_admin',
     options: [
-      { key: 'stats', path: 'unified_search.stats', label: 'Recherche Stats', description: 'Questions sur les statistiques', defaultEnabled: true, routes: [] },
-      { key: 'docs', path: 'unified_search.docs', label: 'Recherche Docs', description: 'Recherche documentation', defaultEnabled: true, routes: [] },
+      { key: 'consulter', path: 'divers_apporteurs.consulter', label: 'Consulter', description: 'Voir les apporteurs', defaultEnabled: true, routes: ['/?tab=divers'] },
+      { key: 'gerer', path: 'divers_apporteurs.gerer', label: 'Gérer', description: 'Créer/modifier', defaultEnabled: true, routes: ['/?tab=divers'] },
+    ],
+  },
+  {
+    key: 'divers_plannings',
+    label: 'Plannings',
+    description: 'Gestion des plannings',
+    icon: 'Calendar',
+    defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
+    minRole: 'franchisee_admin',
+    options: [],
+  },
+  {
+    key: 'divers_reunions',
+    label: 'Réunions',
+    description: 'Gestion des réunions',
+    icon: 'Video',
+    defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
+    minRole: 'franchisee_admin',
+    options: [],
+  },
+  {
+    key: 'divers_documents',
+    label: 'Documents',
+    description: 'Gestion documentaire',
+    icon: 'FileText',
+    defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
+    minRole: 'franchisee_admin',
+    options: [],
+  },
+  {
+    key: 'guides',
+    label: 'Guides',
+    description: 'Documentation et guides',
+    icon: 'BookOpen',
+    defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
+    minRole: 'base_user',
+    options: [
+      { key: 'apogee', path: 'guides.apogee', label: 'Apogée', description: 'Guide Apogée', defaultEnabled: true, routes: ['/?tab=guides'] },
+      { key: 'apporteurs', path: 'guides.apporteurs', label: 'Apporteurs', description: 'Guide apporteurs', defaultEnabled: true, routes: ['/?tab=guides'] },
+      { key: 'helpconfort', path: 'guides.helpconfort', label: 'HelpConfort', description: 'Guide HelpConfort', defaultEnabled: true, routes: ['/?tab=guides'] },
+      { key: 'faq', path: 'guides.faq', label: 'FAQ', description: 'Questions fréquentes', defaultEnabled: true, routes: ['/?tab=guides'] },
+    ],
+  },
+  {
+    key: 'ticketing',
+    label: 'Ticketing',
+    description: 'Suivi des développements',
+    icon: 'Kanban',
+    defaultForRoles: ['platform_admin', 'superadmin'],
+    minRole: 'base_user',
+    options: [
+      { key: 'kanban', path: 'ticketing.kanban', label: 'Kanban', description: 'Vue tableau', defaultEnabled: true, routes: ['/?tab=ticketing'] },
+      { key: 'create', path: 'ticketing.create', label: 'Créer', description: 'Créer tickets', defaultEnabled: true, routes: ['/?tab=ticketing'] },
+      { key: 'manage', path: 'ticketing.manage', label: 'Gérer', description: 'Modifier tickets', defaultEnabled: true, routes: ['/?tab=ticketing'] },
+      { key: 'import', path: 'ticketing.import', label: 'Import', description: 'Import Excel', defaultEnabled: false, routes: ['/?tab=ticketing'] },
+    ],
+  },
+  {
+    key: 'aide',
+    label: 'Aide',
+    description: 'Support et assistance',
+    icon: 'HelpCircle',
+    defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
+    minRole: 'base_user',
+    options: [
+      { key: 'user', path: 'aide.user', label: 'Utilisateur', description: 'Créer demandes', defaultEnabled: true, routes: ['/?tab=aide'] },
+      { key: 'agent', path: 'aide.agent', label: 'Agent', description: 'Répondre demandes', defaultEnabled: false, routes: ['/?tab=aide'] },
+    ],
+  },
+  // Modules admin (non visibles dans les plans)
+  {
+    key: 'reseau_franchiseur',
+    label: 'Réseau Franchiseur',
+    description: 'Vision multi-agences',
+    icon: 'Network',
+    defaultForRoles: ['franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
+    minRole: 'franchisor_user',
+    adminOnly: true,
+    options: [
+      { key: 'dashboard', path: 'reseau_franchiseur.dashboard', label: 'Dashboard', description: 'Vue réseau', defaultEnabled: true, routes: ['/?tab=hc-reseau'] },
+      { key: 'stats', path: 'reseau_franchiseur.stats', label: 'Stats', description: 'KPIs réseau', defaultEnabled: true, routes: ['/?tab=hc-reseau'] },
+      { key: 'agences', path: 'reseau_franchiseur.agences', label: 'Agences', description: 'Gestion agences', defaultEnabled: true, routes: ['/?tab=hc-reseau'] },
+      { key: 'redevances', path: 'reseau_franchiseur.redevances', label: 'Redevances', description: 'Calcul redevances', defaultEnabled: false, routes: ['/?tab=hc-reseau'] },
+      { key: 'comparatifs', path: 'reseau_franchiseur.comparatifs', label: 'Comparatifs', description: 'Inter-agences', defaultEnabled: true, routes: ['/?tab=hc-reseau'] },
+    ],
+  },
+  {
+    key: 'admin_plateforme',
+    label: 'Administration',
+    description: 'Gestion plateforme',
+    icon: 'Settings',
+    defaultForRoles: ['platform_admin', 'superadmin'],
+    minRole: 'platform_admin',
+    adminOnly: true,
+    options: [
+      { key: 'users', path: 'admin_plateforme.users', label: 'Utilisateurs', description: 'Gestion comptes', defaultEnabled: true, routes: ['/?tab=admin'] },
+      { key: 'agencies', path: 'admin_plateforme.agencies', label: 'Agences', description: 'Config agences', defaultEnabled: true, routes: ['/?tab=admin'] },
+      { key: 'permissions', path: 'admin_plateforme.permissions', label: 'Permissions', description: 'Droits accès', defaultEnabled: true, routes: ['/?tab=admin'] },
     ],
   },
 ];
 
-// NOTE: carte_rdv et apporteur_portal ont été intégrés comme sous-options de pilotage_agence
-// Voir pilotage_agence.carte_rdv, pilotage_agence.mes_apporteurs, pilotage_agence.gestion_apporteurs
-
-// Structure de stockage des modules activés (JSONB dans profiles)
-// NOTE: carte_rdv et apporteur_portal ne sont plus des modules racines
+// Structure de stockage des modules activés
 export interface EnabledModules {
-  help_academy?: boolean | ModuleOptionsState;
-  pilotage_agence?: boolean | ModuleOptionsState;
-  reseau_franchiseur?: boolean | ModuleOptionsState;
-  support?: boolean | ModuleOptionsState;
-  admin_plateforme?: boolean | ModuleOptionsState;
-  apogee_tickets?: boolean | ModuleOptionsState;
+  agence?: boolean | ModuleOptionsState;
+  stats?: boolean | ModuleOptionsState;
   rh?: boolean | ModuleOptionsState;
   parc?: boolean | ModuleOptionsState;
+  divers_apporteurs?: boolean | ModuleOptionsState;
+  divers_plannings?: boolean | ModuleOptionsState;
+  divers_reunions?: boolean | ModuleOptionsState;
+  divers_documents?: boolean | ModuleOptionsState;
+  guides?: boolean | ModuleOptionsState;
+  ticketing?: boolean | ModuleOptionsState;
+  aide?: boolean | ModuleOptionsState;
+  reseau_franchiseur?: boolean | ModuleOptionsState;
+  admin_plateforme?: boolean | ModuleOptionsState;
+  // Legacy keys pour rétrocompatibilité
+  help_academy?: boolean | ModuleOptionsState;
+  pilotage_agence?: boolean | ModuleOptionsState;
+  support?: boolean | ModuleOptionsState;
+  apogee_tickets?: boolean | ModuleOptionsState;
   unified_search?: boolean | ModuleOptionsState;
 }
 
@@ -288,10 +372,9 @@ export function isModuleOptionEnabled(
   if (!enabledModules) return false;
   
   const moduleState = enabledModules[moduleKey];
-  if (typeof moduleState === 'boolean') return moduleState; // Si module = true, toutes options actives
+  if (typeof moduleState === 'boolean') return moduleState;
   if (typeof moduleState === 'object') {
     if (!moduleState.enabled) return false;
-    // Si options non définies, utiliser les défauts
     if (!moduleState.options) {
       const moduleDef = MODULE_DEFINITIONS.find(m => m.key === moduleKey);
       const optionDef = moduleDef?.options.find(o => o.key === optionKey);
@@ -311,7 +394,6 @@ export function getDefaultModulesForRole(role: GlobalRole): EnabledModules {
   
   for (const moduleDef of MODULE_DEFINITIONS) {
     if (moduleDef.defaultForRoles.includes(role)) {
-      // Activer le module avec ses options par défaut
       const options: Record<string, boolean> = {};
       for (const opt of moduleDef.options) {
         options[opt.key] = opt.defaultEnabled;
@@ -334,3 +416,28 @@ export function canAccessModule(role: GlobalRole | null, moduleKey: ModuleKey): 
   
   return GLOBAL_ROLES[role] >= GLOBAL_ROLES[moduleDef.minRole];
 }
+
+/**
+ * Labels courts pour les modules (utilisés dans les badges)
+ */
+export const MODULE_SHORT_LABELS: Record<ModuleKey, string> = {
+  agence: 'Agence',
+  stats: 'Stats',
+  rh: 'RH',
+  parc: 'Parc',
+  divers_apporteurs: 'Apporteurs',
+  divers_plannings: 'Plannings',
+  divers_reunions: 'Réunions',
+  divers_documents: 'Documents',
+  guides: 'Guides',
+  ticketing: 'Ticketing',
+  aide: 'Aide',
+  reseau_franchiseur: 'Réseau',
+  admin_plateforme: 'Admin',
+  // Legacy
+  help_academy: 'Academy',
+  pilotage_agence: 'Pilotage',
+  support: 'Support',
+  apogee_tickets: 'Tickets',
+  unified_search: 'Recherche',
+};

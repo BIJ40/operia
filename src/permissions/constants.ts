@@ -61,16 +61,26 @@ export const ROLE_HIERARCHY: Record<GlobalRole, number> = {
 
 /** Rôle minimum requis pour activer chaque module */
 // NOTE: carte_rdv et apporteur_portal sont maintenant des sous-options de pilotage_agence
-export const MODULE_MIN_ROLES: Record<ModuleKey, GlobalRole> = {
+export const MODULE_MIN_ROLES: Partial<Record<ModuleKey, GlobalRole>> = {
   help_academy: 'base_user',
   pilotage_agence: 'franchisee_user',
   reseau_franchiseur: 'franchisor_user',
   support: 'base_user',
   admin_plateforme: 'platform_admin',
-  apogee_tickets: 'base_user', // Module individuel - N0+ peut y accéder si activé
-  rh: 'base_user',  // Module accessible N0+ mais options différenciées
+  apogee_tickets: 'base_user',
+  rh: 'base_user',
   parc: 'franchisee_user',
   unified_search: 'franchisee_user',
+  // New modules
+  agence: 'franchisee_admin',
+  stats: 'franchisee_admin',
+  divers_apporteurs: 'franchisee_admin',
+  divers_plannings: 'franchisee_admin',
+  divers_reunions: 'franchisee_admin',
+  divers_documents: 'franchisee_admin',
+  guides: 'base_user',
+  ticketing: 'base_user',
+  aide: 'base_user',
 };
 
 // ============================================================================
@@ -126,7 +136,7 @@ export const MODULE_OPTION_MIN_ROLES: Record<string, GlobalRole> = {
 // ============================================================================
 
 // NOTE: carte_rdv et apporteur_portal sont maintenant des sous-options de pilotage_agence
-export const MODULE_LABELS: Record<ModuleKey, string> = {
+export const MODULE_LABELS: Partial<Record<ModuleKey, string>> = {
   help_academy: 'Help! Academy',
   pilotage_agence: 'Pilotage Agence',
   reseau_franchiseur: 'Réseau Franchiseur',
@@ -136,4 +146,14 @@ export const MODULE_LABELS: Record<ModuleKey, string> = {
   rh: 'RH',
   parc: 'Parc',
   unified_search: 'Recherche unifiée',
+  // New modules
+  agence: 'Mon agence',
+  stats: 'Stats',
+  divers_apporteurs: 'Apporteurs',
+  divers_plannings: 'Plannings',
+  divers_reunions: 'Réunions',
+  divers_documents: 'Documents',
+  guides: 'Guides',
+  ticketing: 'Ticketing',
+  aide: 'Aide',
 };

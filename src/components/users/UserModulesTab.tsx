@@ -28,7 +28,7 @@ interface UserModulesTabProps {
 // ============================================================================
 
 // Mapping module -> catégorie UI (pour le regroupement visuel)
-const MODULE_CATEGORY_MAP: Record<ModuleKey, string> = {
+const MODULE_CATEGORY_MAP: Partial<Record<ModuleKey, string>> = {
   rh: 'rh',
   parc: 'parc',
   help_academy: 'academy',
@@ -41,7 +41,7 @@ const MODULE_CATEGORY_MAP: Record<ModuleKey, string> = {
 };
 
 // Mapping icon par module (pour l'affichage)
-const MODULE_ICONS: Record<ModuleKey, React.ReactNode> = {
+const MODULE_ICONS: Partial<Record<ModuleKey, React.ReactNode>> = {
   rh: <Briefcase className="w-5 h-5" />,
   parc: <Truck className="w-5 h-5" />,
   help_academy: <BookOpen className="w-5 h-5" />,
@@ -318,7 +318,7 @@ const CATEGORY_INFO: Record<string, { label: string; icon: React.ReactNode; desc
 
 // Options autorisées par rôle pour chaque module
 // NOTE: Options N1 supprimées en v0.8.3
-const OPTIONS_BY_ROLE: Record<ModuleKey, Record<GlobalRole, string[]>> = {
+const OPTIONS_BY_ROLE: Partial<Record<ModuleKey, Record<GlobalRole, string[]>>> = {
   rh: {
     base_user: [],
     franchisee_user: [],
