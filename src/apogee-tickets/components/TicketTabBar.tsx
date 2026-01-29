@@ -37,8 +37,8 @@ export function TicketTabBar({
         <div className="absolute bottom-0 right-0 left-0 flex items-end pointer-events-none">
           {/* Espace vide sous LISTE quand actif */}
           <div className="w-[calc(theme(spacing.5)*2+theme(spacing.4)+4ch+theme(spacing.2))]" />
-          {/* Ligne qui continue après LISTE */}
-          <div className={cn("flex-1 h-[2px]", bgBorderColor)} />
+          {/* Ligne qui continue après LISTE - étendue légèrement pour rejoindre le coin arrondi */}
+          <div className={cn("flex-1 h-[2px] -mr-2 rounded-r-2xl", bgBorderColor)} />
         </div>
       )}
 
