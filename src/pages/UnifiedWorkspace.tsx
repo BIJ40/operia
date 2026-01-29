@@ -259,8 +259,13 @@ function UnifiedWorkspaceContent() {
     }
   }, [tabOrder, setTabOrder]);
   
-  // Déterminer si l'utilisateur est N0 (base_user ou null)
-  const isN0User = !globalRole || globalRole === 'base_user';
+  // Déterminer si l'utilisateur EFFECTIF est N0 (base_user ou null)
+  // En mode impersonation, utiliser le rôle de l'utilisateur impersonné
+  const effectiveIsN0User = !effectiveGlobalRole || effectiveGlobalRole === 'base_user';
+  
+  // Pour Hugo Bulthé (base_user sans agence), on doit afficher le DemoAccueilContent
+  // car il n'a pas accès aux données réelles d'agence
+  const isN0User = effectiveIsN0User;
   
   // Trouver le premier onglet accessible (priorité à Ticketing pour N0)
   const getDefaultTabForN0 = useCallback((): UnifiedTab => {
