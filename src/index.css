@@ -90,6 +90,8 @@
     --warm-purple: 270 60% 65%;
     --warm-pink: 340 70% 65%;
     --warm-teal: 175 60% 50%;
+    --warm-cyan: 185 70% 55%;
+    --warm-red: 0 70% 60%;
     
     /* Ombres douces */
     --shadow-card: 0 4px 20px -4px rgba(0,0,0,0.08);
