@@ -1,6 +1,7 @@
 /**
- * Page Liste des tickets Apogée - Vue tabulaire avec filtres et actions
- * Utilise usePersistedFilters pour persister les filtres et le ticket sélectionné
+ * Page Liste des tickets Apogée - Vue tabulaire avec onglets de tickets
+ * Les tickets s'ouvrent en onglets au-dessus de la liste (max 10)
+ * Auto-save des modifications avec debounce
  */
 
 import { useMemo, useState, useEffect } from 'react';
@@ -17,32 +18,26 @@ import {
   Plus, 
   LayoutGrid, 
   List, 
-  Upload, 
   Download, 
   ChevronDown, 
-  Flame, 
-  Bug, 
-  FileSpreadsheet, 
-  Files, 
-  ListChecks, 
   FileText, 
   Sheet, 
   FileDown, 
   Loader2, 
   ShieldAlert,
-  FileCheck,
-  AlertTriangle
 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { useMyTicketRole, useTicketTransitions } from '../hooks/useTicketPermissions';
 import { usePersistedListFilters } from '../hooks/usePersistedListFilters';
+import { useTicketTabs } from '../hooks/useTicketTabs';
 import { TicketTable } from '../components/TicketTable';
 import { TicketTableFilters } from '../components/TicketTableFilters';
-import { TicketDetailDrawer } from '../components/TicketDetailDrawer';
+import { TicketTabBar } from '../components/TicketTabBar';
+import { TicketInlinePanel } from '../components/TicketInlinePanel';
 import { CreateTicketDialog } from '../components/CreateTicketDialog';
 import { exportToCSV, exportToExcel, exportToPDF } from '../utils/exportKanban';
-import type { ApogeeTicket, TicketFilters as Filters } from '../types';
+import type { ApogeeTicket } from '../types';
 import { ROUTES } from '@/config/routes';
 import { PageHeader } from '@/components/layout/PageHeader';
 
@@ -100,15 +95,22 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
   const navigate = useNavigate();
   const { canViewKanban, canImport, canManage, ticketRole, isPlatformAdmin } = roleInfo;
 
-  // Utiliser les filtres persistés (localStorage + URL pour le ticket sélectionné)
-  const { 
-    filters, 
-    setFilters, 
-    selectedTicketId, 
-    setSelectedTicketId 
-  } = usePersistedListFilters();
+  // Filtres persistés
+  const { filters, setFilters } = usePersistedListFilters();
+  
+  // Système d'onglets tickets
+  const {
+    openTabs,
+    activeTabId,
+    setActiveTabId,
+    openTicketTab,
+    closeTab,
+    closeAllTabs,
+    queueChange,
+    isSaving,
+  } = useTicketTabs();
+
   const [showCreateDialog, setShowCreateDialog] = useState(() => {
-    // Restaurer l'état du dialog depuis sessionStorage au montage
     try {
       const saved = sessionStorage.getItem('create-ticket-dialog-open');
       return saved === 'true';
@@ -125,28 +127,19 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
     ownerSides,
     isLoading,
     createTicket,
-    updateTicket,
     deleteTicket,
   } = useApogeeTickets(filters);
-
-  // Trouver le ticket sélectionné à partir de l'URL
-  const selectedTicket = useMemo(() => {
-    if (!selectedTicketId) return null;
-    return tickets.find(t => t.id === selectedTicketId) ?? null;
-  }, [selectedTicketId, tickets]);
 
   // Récupérer toutes les transitions autorisées
   const { data: allTransitions = [] } = useTicketTransitions();
   
-  // Construire une map des transitions autorisées par statut de départ pour le rôle actuel
+  // Map des transitions autorisées par statut
   const allowedTransitionsMap = useMemo(() => {
     const map: Record<string, string[]> = {};
     statuses.forEach(status => {
       if (isPlatformAdmin) {
-        // Admin peut tout faire
         map[status.id] = statuses.filter(s => s.id !== status.id).map(s => s.id);
       } else if (ticketRole) {
-        // Filtrer par rôle
         map[status.id] = allTransitions
           .filter(t => t.from_status === status.id && t.allowed_role === ticketRole)
           .map(t => t.to_status);
@@ -157,17 +150,24 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
     return map;
   }, [allTransitions, statuses, ticketRole, isPlatformAdmin]);
 
-  const handleTicketClick = (ticket: ApogeeTicket) => {
-    setSelectedTicketId(ticket.id);
-  };
+  // Ticket actuellement actif
+  const activeTicket = useMemo(() => {
+    if (!activeTabId) return null;
+    return tickets.find(t => t.id === activeTabId) ?? null;
+  }, [activeTabId, tickets]);
 
-  const handleTicketUpdate = (ticketId: string, updates: Partial<ApogeeTicket>) => {
-    updateTicket.mutate({ id: ticketId, ...updates });
+  const handleTicketClick = (ticket: ApogeeTicket) => {
+    openTicketTab(ticket);
   };
 
   const handleTicketDelete = (id: string) => {
     deleteTicket.mutate(id);
-    setSelectedTicketId(null);
+    closeTab(id);
+  };
+
+  // Handle inline ticket updates via queue (auto-save)
+  const handleTicketQueueChange = (ticketId: string, updates: Partial<ApogeeTicket>) => {
+    queueChange(ticketId, updates);
   };
 
   return (
@@ -183,7 +183,7 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
       {/* Header avec toggle Kanban/Liste */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Toggle vue - only shown when not embedded */}
+          {/* Toggle vue */}
           {!embedded && (
             <div className="flex gap-1 p-1 bg-muted rounded-lg">
               <Button
@@ -213,7 +213,6 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
             </Button>
           )}
 
-
           {/* Export */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -240,7 +239,6 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-
       </div>
 
       {/* Filtres */}
@@ -250,6 +248,32 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
         modules={modules}
         statuses={statuses}
       />
+
+      {/* Barre d'onglets tickets ouverts */}
+      <TicketTabBar
+        tabs={openTabs}
+        activeTabId={activeTabId}
+        onTabClick={setActiveTabId}
+        onTabClose={closeTab}
+        onCloseAll={closeAllTabs}
+        isSaving={isSaving}
+      />
+
+      {/* Panel inline pour le ticket actif */}
+      {activeTicket && (
+        <div className="h-[600px] mb-4">
+          <TicketInlinePanel
+            key={activeTicket.id}
+            ticket={activeTicket}
+            modules={modules}
+            priorities={priorities}
+            statuses={statuses}
+            onQueueChange={handleTicketQueueChange}
+            onDelete={handleTicketDelete}
+            onClose={() => closeTab(activeTicket.id)}
+          />
+        </div>
+      )}
 
       {/* Table */}
       {isLoading ? (
@@ -265,23 +289,9 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
           roleInfo={roleInfo}
           allowedTransitionsMap={allowedTransitionsMap}
           onTicketClick={handleTicketClick}
-          onTicketUpdate={handleTicketUpdate}
+          onTicketUpdate={() => {}} // Les updates passent par queueChange
         />
       )}
-
-      {/* Drawer détail */}
-      <TicketDetailDrawer
-        ticket={selectedTicket}
-        open={!!selectedTicket}
-        onClose={() => setSelectedTicketId(null)}
-        modules={modules}
-        priorities={priorities}
-        statuses={statuses}
-        onUpdate={(updates) => {
-          updateTicket.mutate(updates);
-        }}
-        onDelete={handleTicketDelete}
-      />
 
       {/* Dialog création */}
       <CreateTicketDialog
