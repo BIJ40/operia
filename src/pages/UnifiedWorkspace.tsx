@@ -33,6 +33,7 @@ import { Tabs, TabsContent, TabsList } from '@/components/ui/tabs';
 import { useSessionState } from '@/hooks/useSessionState';
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
+import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
 import { useStorageQuota } from '@/hooks/use-storage-quota';
 import { useUserPresence } from '@/hooks/use-user-presence';
@@ -110,6 +111,7 @@ function LoadingFallback() {
 function UnifiedWorkspaceContent() {
   const { globalRole, isFranchiseur, logout, user, isLoggingOut } = useAuth();
   const { isImpersonating, isRealUserImpersonation } = useImpersonation();
+  const effectiveAuth = useEffectiveAuth();
   const { hasModule, hasModuleOption } = useEffectiveModules();
   const [searchParams, setSearchParams] = useSearchParams();
   const [tabOrder, setTabOrder] = useSessionState<UnifiedTab[]>('unified_workspace_tab_order', DEFAULT_TAB_ORDER);
@@ -142,8 +144,13 @@ function UnifiedWorkspaceContent() {
   useUserPresence();
   useConnectionLogger();
   
-  // Utiliser le rôle réel
-  const isPlatformAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';
+  // IMPERSONATION: Utiliser le rôle réel pour certaines permissions (bouton impersonation, etc.)
+  // mais le rôle effectif pour l'affichage de l'interface
+  const realIsPlatformAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';
+  
+  // Pour l'affichage des onglets, utiliser le rôle EFFECTIF (impersonné)
+  const effectiveGlobalRole = effectiveAuth.globalRole;
+  const effectiveIsPlatformAdmin = effectiveGlobalRole === 'superadmin' || effectiveGlobalRole === 'platform_admin';
   
   // Configuration des onglets avec permissions
   // Chaque onglet a un requiresOption qui définit le module/option nécessaire
@@ -161,25 +168,29 @@ function UnifiedWorkspaceContent() {
   ], []);
   
   // Vérifier si un onglet est accessible (pour le rendre cliquable ou non)
+  // Utilise le rôle EFFECTIF (impersonné) pour refléter l'expérience utilisateur
   const isTabAccessible = useCallback((tab: TabConfig): boolean => {
     if (!tab.requiresOption) return true;
-    if (isPlatformAdmin) return true;
+    // IMPORTANT: Utiliser realIsPlatformAdmin pour que l'admin réel puisse naviguer partout
+    // même en mode impersonation (sinon il serait bloqué)
+    if (realIsPlatformAdmin) return true;
     
     const { module, option } = tab.requiresOption;
     if (option) {
       return hasModuleOption(module as any, option);
     }
     return hasModule(module as any);
-  }, [isPlatformAdmin, hasModule, hasModuleOption]);
+  }, [realIsPlatformAdmin, hasModule, hasModuleOption]);
   
   // Vérifier si un onglet doit être complètement masqué (pas juste désactivé)
+  // Utilise le rôle EFFECTIF pour l'affichage
   const isTabHidden = useCallback((tab: TabConfig): boolean => {
-    // Admin n'est visible QUE pour les admins plateforme
-    if (tab.id === 'admin' && !isPlatformAdmin) {
+    // Admin n'est visible QUE pour les vrais admins plateforme (pas impersonable)
+    if (tab.id === 'admin' && !realIsPlatformAdmin) {
       return true;
     }
     return false;
-  }, [isPlatformAdmin]);
+  }, [realIsPlatformAdmin]);
   
   // Filtrer les onglets masqués (Admin pour non-admins)
   const visibleTabs = useMemo(() => allTabs.filter(tab => !isTabHidden(tab)), [allTabs, isTabHidden]);
@@ -292,8 +303,8 @@ function UnifiedWorkspaceContent() {
   const topPadding = (isImpersonating || isRealUserImpersonation) ? 'pt-10' : '';
   
   // Vue Franchiseur = interface complètement différente pour N3+
-  // IMPORTANT: un admin plateforme doit pouvoir revenir à la vue normale.
-  if (isFranchiseur && !isPlatformAdmin) {
+  // IMPORTANT: un admin plateforme RÉEL doit pouvoir revenir à la vue normale.
+  if (isFranchiseur && !realIsPlatformAdmin) {
     return (
       <Suspense fallback={<LoadingFallback />}>
         <FranchiseurView />
@@ -437,7 +448,7 @@ function UnifiedWorkspaceContent() {
                     </DropdownMenu>
                     
                     {/* Bouton "Voir en tant que" pour N5+ */}
-                    {isPlatformAdmin && (
+                    {realIsPlatformAdmin && (
                       <button
                         type="button"
                         onClick={() => setImpersonationDialogOpen(true)}

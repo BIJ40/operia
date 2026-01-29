@@ -1,11 +1,15 @@
 /**
  * Hook pour obtenir les modules effectifs d'un utilisateur
  * Combine: modules du plan agence + overrides utilisateur
+ * 
+ * IMPERSONATION: Utilise useEffectiveAuth pour respecter l'impersonation
  */
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
+import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { ModuleKey } from '@/types/modules';
 
 export interface EffectiveModuleRow {
@@ -21,15 +25,38 @@ export interface EffectiveModulesResult {
 }
 
 export function useEffectiveModules(): EffectiveModulesResult & { isLoading: boolean } {
-  const { user, globalRole } = useAuth();
+  const { user } = useAuth();
+  const { isRealUserImpersonation, impersonatedUser } = useImpersonation();
+  const effectiveAuth = useEffectiveAuth();
+  
+  // Utiliser le globalRole effectif (impersonné ou réel)
+  const effectiveGlobalRole = effectiveAuth.globalRole;
+  
+  // Déterminer l'ID utilisateur pour charger les modules
+  // Si impersonation active, charger les modules de l'utilisateur impersonné
+  const effectiveUserId = isRealUserImpersonation && impersonatedUser 
+    ? impersonatedUser.id 
+    : user?.id;
   
   const query = useQuery({
-    queryKey: ['effective-modules', user?.id],
+    queryKey: ['effective-modules', effectiveUserId, isRealUserImpersonation],
     queryFn: async (): Promise<Record<ModuleKey, { enabled: boolean; options: Record<string, boolean> }>> => {
-      if (!user?.id) return {} as Record<ModuleKey, { enabled: boolean; options: Record<string, boolean> }>;
+      // Si impersonation active, utiliser directement les modules de l'utilisateur impersonné
+      if (isRealUserImpersonation && impersonatedUser?.enabledModules) {
+        const result: Record<string, { enabled: boolean; options: Record<string, boolean> }> = {};
+        for (const [key, value] of Object.entries(impersonatedUser.enabledModules)) {
+          result[key] = {
+            enabled: value?.enabled ?? false,
+            options: value?.options ?? {},
+          };
+        }
+        return result as Record<ModuleKey, { enabled: boolean; options: Record<string, boolean> }>;
+      }
+      
+      if (!effectiveUserId) return {} as Record<ModuleKey, { enabled: boolean; options: Record<string, boolean> }>;
       
       const { data, error } = await supabase.rpc('get_user_effective_modules', {
-        p_user_id: user.id
+        p_user_id: effectiveUserId
       });
       
       if (error) {
@@ -50,23 +77,24 @@ export function useEffectiveModules(): EffectiveModulesResult & { isLoading: boo
       
       return result as Record<ModuleKey, { enabled: boolean; options: Record<string, boolean> }>;
     },
-    enabled: !!user?.id,
+    enabled: !!effectiveUserId,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
   
   const modules = query.data || {} as Record<ModuleKey, { enabled: boolean; options: Record<string, boolean> }>;
   
   const hasModule = (moduleKey: ModuleKey): boolean => {
-    // N5+ bypass
-    if (globalRole === 'platform_admin' || globalRole === 'superadmin') {
+    // N5+ bypass - utiliser le rôle RÉEL pour le bypass admin
+    // (un admin qui impersonne doit toujours avoir accès à tout)
+    if (effectiveAuth.realGlobalRole === 'platform_admin' || effectiveAuth.realGlobalRole === 'superadmin') {
       return true;
     }
     return modules[moduleKey]?.enabled ?? false;
   };
   
   const hasModuleOption = (moduleKey: ModuleKey, optionKey: string): boolean => {
-    // N5+ bypass
-    if (globalRole === 'platform_admin' || globalRole === 'superadmin') {
+    // N5+ bypass - utiliser le rôle RÉEL pour le bypass admin
+    if (effectiveAuth.realGlobalRole === 'platform_admin' || effectiveAuth.realGlobalRole === 'superadmin') {
       return true;
     }
     if (!modules[moduleKey]?.enabled) return false;
