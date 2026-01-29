@@ -6108,6 +6108,51 @@ export type Database = {
         }
         Relationships: []
       }
+      salary_access_audit: {
+        Row: {
+          accessed_at: string
+          action: string
+          agency_id: string | null
+          contract_id: string | null
+          employee_user_id: string | null
+          id: string
+          ip_address: unknown
+          metadata: Json | null
+          record_id: string
+          table_name: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          accessed_at?: string
+          action: string
+          agency_id?: string | null
+          contract_id?: string | null
+          employee_user_id?: string | null
+          id?: string
+          ip_address?: unknown
+          metadata?: Json | null
+          record_id: string
+          table_name: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          accessed_at?: string
+          action?: string
+          agency_id?: string | null
+          contract_id?: string | null
+          employee_user_id?: string | null
+          id?: string
+          ip_address?: unknown
+          metadata?: Json | null
+          record_id?: string
+          table_name?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       salary_history: {
         Row: {
           comment: string | null
@@ -7609,6 +7654,18 @@ export type Database = {
           p_metadata?: Json
           p_new_values?: Json
           p_old_values?: Json
+        }
+        Returns: string
+      }
+      log_salary_access: {
+        Args: {
+          p_action: string
+          p_agency_id?: string
+          p_contract_id?: string
+          p_employee_user_id?: string
+          p_metadata?: Json
+          p_record_id: string
+          p_table_name: string
         }
         Returns: string
       }
