@@ -390,17 +390,17 @@ export function TicketTable({
 
   return (
     <div className="space-y-4">
-      {/* Stats rapides */}
-      <div className="flex items-center justify-between">
+      {/* Stats rapides - Style Warm */}
+      <div className="flex items-center justify-between bg-gradient-to-r from-muted/30 to-transparent rounded-2xl px-4 py-3">
         <div className="flex items-center gap-2">
-          <Badge variant="secondary">
+          <Badge variant="secondary" className="rounded-full px-3 bg-primary/10 text-primary border-0">
             {tickets.length} ticket{tickets.length !== 1 ? 's' : ''}
           </Badge>
           {selectedRowId && (
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className="text-xs rounded-full border-primary/30 bg-primary/5">
               Sélectionné: APO-{paginatedTickets.find(t => t.id === selectedRowId)?.ticket_number}
               <span className="ml-2 text-muted-foreground">
-                (1=détail, 2=statut, 4=IA, ↑↓=navigation, Esc=désélect.)
+                (1=détail, 2=statut, ↑↓=navigation)
               </span>
             </Badge>
           )}
@@ -410,17 +410,17 @@ export function TicketTable({
           {/* Sélecteur de colonnes */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 gap-2">
+              <Button variant="outline" size="sm" className="h-8 gap-2 rounded-full border-muted hover:bg-muted/50">
                 <Columns3 className="h-4 w-4" />
                 <span className="hidden sm:inline">Colonnes</span>
                 {hiddenColumns.length > 0 && (
-                  <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                  <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs rounded-full">
                     {COLUMNS.length - hiddenColumns.length}/{COLUMNS.length}
                   </Badge>
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-56 p-3 bg-background z-50" align="end">
+            <PopoverContent className="w-56 p-3 bg-background z-50 rounded-xl" align="end">
               <div className="space-y-1">
                 <p className="text-sm font-medium mb-2">Colonnes visibles</p>
                 {COLUMNS.map((col, idx) => {
@@ -430,7 +430,7 @@ export function TicketTable({
                     <label
                       key={col.id}
                       className={cn(
-                        "flex items-center gap-2 py-1 px-1 rounded hover:bg-muted cursor-pointer",
+                        "flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-muted cursor-pointer transition-colors",
                         isRequired && "opacity-60 cursor-not-allowed"
                       )}
                     >
@@ -450,7 +450,7 @@ export function TicketTable({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full mt-2 text-xs"
+                    className="w-full mt-2 text-xs rounded-lg"
                     onClick={() => setHiddenColumns([])}
                   >
                     Réinitialiser
@@ -462,10 +462,10 @@ export function TicketTable({
 
           <span className="text-sm text-muted-foreground">Afficher</span>
           <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
-            <SelectTrigger className="w-[70px] h-8">
+            <SelectTrigger className="w-[70px] h-8 rounded-full border-muted">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-background z-50">
+            <SelectContent className="bg-background z-50 rounded-xl">
               {PAGE_SIZE_OPTIONS.map((size) => (
                 <SelectItem key={size} value={String(size)}>
                   {size}
@@ -477,11 +477,11 @@ export function TicketTable({
         </div>
       </div>
 
-      {/* Table avec colonnes redimensionnables et scroll horizontal */}
-      <div className="rounded-md border overflow-x-auto">
+      {/* Table avec style Warm Pastel */}
+      <div className="rounded-2xl border border-border/50 overflow-x-auto bg-card/50 shadow-sm">
         <Table style={{ tableLayout: 'fixed', minWidth: visibleColumnIndices.reduce((sum, idx) => sum + columnWidths[idx], 0) }}>
           <TableHeader>
-            <TableRow className="bg-muted/50">
+            <TableRow className="bg-gradient-to-r from-muted/40 to-muted/20 border-b border-border/30">
               {visibleColumnIndices.map((colIdx) => {
                 const col = COLUMNS[colIdx];
                 return (
@@ -489,8 +489,8 @@ export function TicketTable({
                     key={`${col.key}-${colIdx}`}
                     style={{ width: columnWidths[colIdx], minWidth: col.minWidth }}
                     className={cn(
-                      "relative select-none",
-                      col.sortable && "cursor-pointer hover:bg-muted"
+                      "relative select-none py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide",
+                      col.sortable && "cursor-pointer hover:text-foreground hover:bg-muted/30 transition-colors"
                     )}
                     onClick={col.sortable ? () => handleSort(col.key as SortColumn) : undefined}
                   >
@@ -502,8 +502,8 @@ export function TicketTable({
                     {/* Poignée de redimensionnement */}
                     <div
                       className={cn(
-                        "absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-helpconfort-blue/50 transition-colors",
-                        resizingIndex === colIdx && "bg-helpconfort-blue"
+                        "absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/50 transition-colors",
+                        resizingIndex === colIdx && "bg-primary"
                       )}
                       onMouseDown={(e) => handleResizeStart(e, colIdx)}
                       onClick={(e) => e.stopPropagation()}
@@ -516,8 +516,11 @@ export function TicketTable({
           <TableBody>
             {paginatedTickets.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={visibleColumnIndices.length} className="text-center py-8 text-muted-foreground">
-                  Aucun ticket trouvé
+                <TableCell colSpan={visibleColumnIndices.length} className="text-center py-12 text-muted-foreground">
+                  <div className="flex flex-col items-center gap-2">
+                    <span className="text-4xl">📋</span>
+                    <span>Aucun ticket trouvé</span>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
@@ -546,9 +549,9 @@ export function TicketTable({
         </Table>
       </div>
 
-      {/* Pagination */}
+      {/* Pagination - Style Warm */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between bg-gradient-to-r from-transparent to-muted/30 rounded-2xl px-4 py-3">
           <span className="text-sm text-muted-foreground">
             Page {currentPage} sur {totalPages}
           </span>
@@ -556,6 +559,7 @@ export function TicketTable({
             <Button
               variant="outline"
               size="sm"
+              className="rounded-full border-muted hover:bg-muted/50"
               onClick={() => setCurrentPage(1)}
               disabled={currentPage === 1}
             >
@@ -564,17 +568,19 @@ export function TicketTable({
             <Button
               variant="outline"
               size="sm"
+              className="rounded-full border-muted hover:bg-muted/50"
               onClick={() => setCurrentPage(p => p - 1)}
               disabled={currentPage === 1}
             >
               ‹ Préc.
             </Button>
-            <span className="px-2 text-sm">
+            <span className="px-3 py-1 text-sm bg-muted/30 rounded-full">
               {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, tickets.length)} / {tickets.length}
             </span>
             <Button
               variant="outline"
               size="sm"
+              className="rounded-full border-muted hover:bg-muted/50"
               onClick={() => setCurrentPage(p => p + 1)}
               disabled={currentPage === totalPages}
             >
@@ -583,6 +589,7 @@ export function TicketTable({
             <Button
               variant="outline"
               size="sm"
+              className="rounded-full border-muted hover:bg-muted/50"
               onClick={() => setCurrentPage(totalPages)}
               disabled={currentPage === totalPages}
             >

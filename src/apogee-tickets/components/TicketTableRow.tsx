@@ -1,9 +1,9 @@
 /**
  * Ligne de ticket dans la table avec édition inline et gestion des droits
+ * Style "Warm Pastel" avec badges tags pour Module/Origine
  */
 
 import { TableCell, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,8 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { HeatPriorityBadge } from './HeatPriorityBadge';
+import { ModuleBadge } from './ModuleBadge';
+import { OrigineBadge } from './OrigineBadge';
 import type { ApogeeTicket, ApogeeModule, ApogeeTicketStatus, OwnerSide, ReportedBy } from '../types';
 import type { TicketRoleInfo } from '../hooks/useTicketPermissions';
 
@@ -37,14 +39,6 @@ const OWNER_SIDES: { value: OwnerSide; label: string }[] = [
   { value: '50_50', label: '50/50' },
   { value: '25_75', label: '25/75' },
   { value: 'HC', label: 'HC' },
-];
-
-const REPORTED_BY_OPTIONS: { value: ReportedBy; label: string }[] = [
-  { value: 'JEROME', label: 'Jérôme' },
-  { value: 'FLORIAN', label: 'Florian' },
-  { value: 'ERIC', label: 'Eric' },
-  { value: 'APOGEE', label: 'Apogée' },
-  { value: 'AUTRE', label: 'Autre' },
 ];
 
 export function TicketTableRow({
@@ -76,14 +70,11 @@ export function TicketTableRow({
   
   // Permissions spécifiques - canManage requis pour toute modification
   const canEditStatus = canManage && (allowedTransitions.length > 0 || isPlatformAdmin);
-  const canEditModule = canManage;
-  const canEditPriority = canManage;
   const canEditOwnerSide = canManage || ticketRole === 'developer';
-  const canEditReportedBy = canManage;
   const canEditEstimation = canManage || ticketRole === 'developer';
 
-  // Style des cellules non-éditables
-  const disabledCellClass = "bg-muted/30 cursor-not-allowed";
+  // Style des cellules non-éditables (plus doux)
+  const disabledCellClass = "bg-muted/20";
 
   // Helper pour appliquer la largeur de colonne
   const cellStyle = (index: number) => columnWidths ? { width: columnWidths[index] } : {};
@@ -91,21 +82,30 @@ export function TicketTableRow({
   // Vérifier si une colonne est visible
   const isVisible = (index: number) => !visibleColumnIndices || visibleColumnIndices.includes(index);
 
-  // Trouve le module label
-  const moduleLabel = ticket.module 
-    ? modules.find(m => m.id === ticket.module)?.label || ticket.module
-    : '—';
+  // Trouve le statut label et couleur
+  const currentStatus = statuses.find(s => s.id === ticket.kanban_status);
+  const statusLabel = currentStatus?.label || ticket.kanban_status;
 
-  // Trouve le statut label
-  const statusLabel = statuses.find(s => s.id === ticket.kanban_status)?.label || ticket.kanban_status;
+  // Couleur de statut pour le badge
+  const getStatusColor = (statusId: string) => {
+    const statusColorMap: Record<string, string> = {
+      'BACKLOG': 'bg-slate-100 text-slate-700 border-slate-200',
+      'TODO': 'bg-amber-50 text-amber-700 border-amber-200',
+      'IN_PROGRESS': 'bg-blue-50 text-blue-700 border-blue-200',
+      'REVIEW': 'bg-purple-50 text-purple-700 border-purple-200',
+      'DONE': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      'ARCHIVED': 'bg-gray-100 text-gray-500 border-gray-200',
+    };
+    return statusColorMap[statusId] || 'bg-muted text-muted-foreground border-border';
+  };
 
   return (
     <TableRow
       className={cn(
-        "cursor-pointer transition-colors",
-        isSelected && "bg-helpconfort-blue/10 ring-1 ring-helpconfort-blue",
+        "cursor-pointer transition-all hover:bg-muted/40",
+        isSelected && "bg-primary/5 ring-1 ring-primary/30",
         ticket.needs_completion && "border-l-2 border-l-orange-400",
-        !ticket.is_qualified && "bg-amber-50/30 dark:bg-amber-950/10",
+        !ticket.is_qualified && "bg-amber-50/20 dark:bg-amber-950/10",
         shouldBlink && "animate-pulse ring-2 ring-green-500"
       )}
       onClick={onSelect}
@@ -113,14 +113,16 @@ export function TicketTableRow({
     >
       {/* Réf - Index 0 */}
       {isVisible(0) && (
-        <TableCell className="font-mono text-xs whitespace-nowrap overflow-hidden" style={cellStyle(0)}>
-          APO-{ticket.ticket_number}
+        <TableCell className="font-mono text-xs whitespace-nowrap overflow-hidden py-3" style={cellStyle(0)}>
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-muted/50 text-muted-foreground font-medium">
+            APO-{ticket.ticket_number}
+          </span>
         </TableCell>
       )}
 
       {/* Priorité - Index 1 */}
       {isVisible(1) && (
-        <TableCell className={cn("overflow-hidden", !canEditPriority && disabledCellClass)} style={cellStyle(1)}>
+        <TableCell className="overflow-hidden py-3" style={cellStyle(1)}>
           <div className={cn(isBugOver48h && "animate-pulse-subtle")}>
             <HeatPriorityBadge priority={ticket.heat_priority} size="sm" showLabel={false} />
           </div>
@@ -129,7 +131,7 @@ export function TicketTableRow({
 
       {/* Titre - Index 2 */}
       {isVisible(2) && (
-        <TableCell className="truncate overflow-hidden" title={ticket.element_concerne} style={cellStyle(2)}>
+        <TableCell className="truncate overflow-hidden py-3" title={ticket.element_concerne} style={cellStyle(2)}>
           <div className="flex items-center gap-2 overflow-hidden">
             {/* Icône Roadmap */}
             {ticket.roadmap_enabled && (
@@ -150,22 +152,22 @@ export function TicketTableRow({
                 <TooltipContent>Ticket incomplet</TooltipContent>
               </Tooltip>
             )}
-            <span className="truncate">{ticket.element_concerne}</span>
+            <span className="truncate font-medium text-foreground/90">{ticket.element_concerne}</span>
           </div>
         </TableCell>
       )}
 
       {/* Tags - Index 3 */}
       {isVisible(3) && (
-        <TableCell className="overflow-hidden" style={cellStyle(3)}>
+        <TableCell className="overflow-hidden py-3" style={cellStyle(3)}>
           <div className="flex flex-wrap gap-1">
             {ticket.impact_tags?.map(tag => {
-              const tagColor = tag === 'BUG' ? 'bg-red-100 text-red-800' :
-                               tag === 'EVO' ? 'bg-blue-100 text-blue-800' :
-                               tag === 'NTH' ? 'bg-gray-100 text-gray-800' :
-                               'bg-purple-100 text-purple-800';
+              const tagColor = tag === 'BUG' ? 'bg-red-100 text-red-700 border-red-200' :
+                               tag === 'EVO' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                               tag === 'NTH' ? 'bg-slate-100 text-slate-600 border-slate-200' :
+                               'bg-purple-100 text-purple-700 border-purple-200';
               return (
-                <Badge key={tag} variant="secondary" className={`${tagColor} text-xs whitespace-nowrap`}>
+                <Badge key={tag} variant="outline" className={`${tagColor} text-xs whitespace-nowrap rounded-full border px-2`}>
                   {tag}
                 </Badge>
               );
@@ -174,38 +176,16 @@ export function TicketTableRow({
         </TableCell>
       )}
 
-      {/* Module - Index 4 */}
+      {/* Module - Index 4 (maintenant en tag lecture seule) */}
       {isVisible(4) && (
-        <TableCell className={cn("overflow-hidden", !canEditModule && disabledCellClass)} style={cellStyle(4)}>
-          {canEditModule ? (
-            <Select
-              value={ticket.module || 'none'}
-              onValueChange={(value) => onUpdate({ module: value === 'none' ? null : value })}
-            >
-              <SelectTrigger 
-                className="h-7 text-xs w-full max-w-[100px]"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-background z-50">
-                <SelectItem value="none">—</SelectItem>
-                {modules.map((mod) => (
-                  <SelectItem key={mod.id} value={mod.id}>
-                    {mod.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            <span className="text-xs text-muted-foreground truncate">{moduleLabel}</span>
-          )}
+        <TableCell className="overflow-hidden py-3" style={cellStyle(4)}>
+          <ModuleBadge moduleId={ticket.module} modules={modules} size="sm" />
         </TableCell>
       )}
 
       {/* Statut - Index 5 */}
       {isVisible(5) && (
-        <TableCell className={cn("overflow-hidden", !canEditStatus && disabledCellClass)} style={cellStyle(5)}>
+        <TableCell className={cn("overflow-hidden py-3", !canEditStatus && disabledCellClass)} style={cellStyle(5)}>
           {canEditStatus ? (
             <Select
               value={ticket.kanban_status}
@@ -213,7 +193,7 @@ export function TicketTableRow({
             >
               <SelectTrigger 
                 ref={statusSelectRef}
-                className="h-7 text-xs w-full max-w-[110px]"
+                className="h-7 text-xs w-full max-w-[110px] rounded-full border-muted"
                 onClick={(e) => e.stopPropagation()}
               >
                 <SelectValue />
@@ -235,7 +215,7 @@ export function TicketTableRow({
               </SelectContent>
             </Select>
           ) : (
-            <Badge variant="outline" className="text-xs truncate">
+            <Badge variant="outline" className={cn("text-xs truncate rounded-full border px-2.5", getStatusColor(ticket.kanban_status))}>
               {statusLabel}
             </Badge>
           )}
@@ -244,14 +224,14 @@ export function TicketTableRow({
 
       {/* PEC - Index 6 */}
       {isVisible(6) && (
-        <TableCell className={cn("overflow-hidden", !canEditOwnerSide && disabledCellClass)} style={cellStyle(6)}>
+        <TableCell className={cn("overflow-hidden py-3", !canEditOwnerSide && disabledCellClass)} style={cellStyle(6)}>
           {canEditOwnerSide ? (
             <Select
               value={ticket.owner_side || 'none'}
               onValueChange={(value) => onUpdate({ owner_side: value === 'none' ? null : value as OwnerSide })}
             >
               <SelectTrigger 
-                className="h-7 text-xs w-full max-w-[80px]"
+                className="h-7 text-xs w-full max-w-[80px] rounded-full border-muted"
                 onClick={(e) => e.stopPropagation()}
               >
                 <SelectValue />
@@ -266,52 +246,25 @@ export function TicketTableRow({
               </SelectContent>
             </Select>
           ) : (
-            <span className="text-xs text-muted-foreground truncate">{ticket.owner_side || '—'}</span>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-muted/50 text-xs text-muted-foreground">
+              {ticket.owner_side || '—'}
+            </span>
           )}
         </TableCell>
       )}
 
-      {/* Origine - Index 7 */}
+      {/* Origine - Index 7 (maintenant en tag lecture seule) */}
       {isVisible(7) && (
-        <TableCell className={cn("overflow-hidden", !canEditReportedBy && disabledCellClass)} style={cellStyle(7)}>
-          {(() => {
-            // Normaliser reported_by en majuscules pour matcher les options
-            const normalizedReportedBy = ticket.reported_by?.toUpperCase() || null;
-            const matchingOption = REPORTED_BY_OPTIONS.find(rb => rb.value === normalizedReportedBy);
-            const displayLabel = matchingOption?.label || ticket.reported_by || '—';
-            
-            return canEditReportedBy ? (
-              <Select
-                value={normalizedReportedBy || 'none'}
-                onValueChange={(value) => onUpdate({ reported_by: value === 'none' ? null : value as ReportedBy })}
-              >
-                <SelectTrigger 
-                  className="h-7 text-xs w-full max-w-[90px]"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-background z-50">
-                  <SelectItem value="none">—</SelectItem>
-                  {REPORTED_BY_OPTIONS.map((rb) => (
-                    <SelectItem key={rb.value} value={rb.value}>
-                      {rb.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <span className="text-xs text-muted-foreground truncate">{displayLabel}</span>
-            );
-          })()}
+        <TableCell className="overflow-hidden py-3" style={cellStyle(7)}>
+          <OrigineBadge origine={ticket.reported_by} size="sm" />
         </TableCell>
       )}
 
       {/* Estimation - Index 8 */}
       {isVisible(8) && (
-        <TableCell className={cn("text-center overflow-hidden", !canEditEstimation && disabledCellClass)} style={cellStyle(8)}>
+        <TableCell className={cn("text-center overflow-hidden py-3", !canEditEstimation && disabledCellClass)} style={cellStyle(8)}>
           {ticket.h_min !== null || ticket.h_max !== null ? (
-            <span className="text-xs">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-muted/50 text-xs">
               {ticket.h_min ?? '?'}-{ticket.h_max ?? '?'}h
             </span>
           ) : (
@@ -322,14 +275,14 @@ export function TicketTableRow({
 
       {/* Créé le - Index 9 */}
       {isVisible(9) && (
-        <TableCell className="text-xs text-muted-foreground whitespace-nowrap overflow-hidden" style={cellStyle(9)}>
+        <TableCell className="text-xs text-muted-foreground whitespace-nowrap overflow-hidden py-3" style={cellStyle(9)}>
           {format(new Date(ticket.created_at), 'dd/MM/yy', { locale: fr })}
         </TableCell>
       )}
 
       {/* Modifié le - Index 10 */}
       {isVisible(10) && (
-        <TableCell className="text-xs text-muted-foreground whitespace-nowrap overflow-hidden" style={cellStyle(10)}>
+        <TableCell className="text-xs text-muted-foreground whitespace-nowrap overflow-hidden py-3" style={cellStyle(10)}>
           {ticket.last_modified_at 
             ? format(new Date(ticket.last_modified_at), 'dd/MM/yy', { locale: fr })
             : '—'}
