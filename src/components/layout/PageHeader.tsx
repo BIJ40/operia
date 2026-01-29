@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 interface PageHeaderProps {
   title: string;
   subtitle?: string;
-  backTo: string;
+  backTo?: string;
   backLabel?: string;
   rightElement?: React.ReactNode;
   className?: string;
@@ -27,14 +27,16 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <div className={cn("space-y-2", className)}>
-      {/* Lien retour */}
-      <Link 
-        to={backTo}
-        className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors group"
-      >
-        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-        <span>{backLabel}</span>
-      </Link>
+      {/* Lien retour - uniquement si backTo est fourni */}
+      {backTo && (
+        <Link 
+          to={backTo}
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors group"
+        >
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+          <span>{backLabel}</span>
+        </Link>
+      )}
       
       {/* Ligne titre + élément droit */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
