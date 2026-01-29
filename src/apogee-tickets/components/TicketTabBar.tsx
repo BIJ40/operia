@@ -32,15 +32,19 @@ export function TicketTabBar({
 
   return (
     <div className="relative mx-2 pt-2">
-      {/* Ligne horizontale qui prolonge la bordure depuis l'onglet actif vers la droite - uniquement pour LISTE */}
-      {isListeActive && (
-        <div className="absolute bottom-0 right-0 left-0 flex items-end pointer-events-none">
-          {/* Espace vide sous LISTE quand actif */}
+      {/* Ligne horizontale qui prolonge la bordure depuis l'onglet actif */}
+      <div className="absolute bottom-0 right-0 left-0 flex items-end pointer-events-none">
+        {/* Ligne à gauche (pour tickets, commence du bord gauche jusqu'au début de LISTE + séparateur) */}
+        {!isListeActive && activeTabId && (
+          <div className={cn("h-[2px] -ml-2 rounded-l-2xl w-32", bgBorderColor)} />
+        )}
+        {/* Espace vide sous LISTE quand actif */}
+        {isListeActive && (
           <div className="w-[calc(theme(spacing.5)*2+theme(spacing.4)+4ch+theme(spacing.2))]" />
-          {/* Ligne qui continue après LISTE - étendue légèrement pour rejoindre le coin arrondi */}
-          <div className={cn("flex-1 h-[2px] -mr-2 rounded-r-2xl", bgBorderColor)} />
-        </div>
-      )}
+        )}
+        {/* Ligne qui continue à droite - étendue légèrement pour rejoindre le coin arrondi */}
+        <div className={cn("flex-1 h-[2px] -mr-2 rounded-r-2xl", bgBorderColor)} />
+      </div>
 
       <div className="flex items-end gap-0 relative z-10">
         {/* Onglet LISTE - toujours visible et fixe */}
