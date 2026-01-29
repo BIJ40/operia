@@ -346,10 +346,10 @@ export function TicketTableFilters({
         {/* PEC */}
         <Select value={filters.owner_side || 'all'} onValueChange={handleOwnerSideChange}>
           <SelectTrigger className="w-[105px] h-9 rounded-full border-teal-100/60 dark:border-teal-800/30 bg-white/60 dark:bg-slate-800/40 text-teal-600 dark:text-teal-400 hover:bg-teal-50/80 transition-all shadow-sm text-sm font-medium">
-            <SelectValue placeholder="PEC" />
+            <span>{filters.owner_side ? OWNER_SIDES.find(os => os.value === filters.owner_side)?.label || 'P.E.C.' : 'P.E.C.'}</span>
           </SelectTrigger>
           <SelectContent className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm z-50 rounded-2xl border-teal-100/50 shadow-lg">
-            <SelectItem value="all" className="rounded-xl">Tous PEC</SelectItem>
+            <SelectItem value="all" className="rounded-xl">Tous</SelectItem>
             {OWNER_SIDES.map((os) => (
               <SelectItem key={os.value} value={os.value} className="rounded-xl">
                 {os.label}
@@ -361,7 +361,7 @@ export function TicketTableFilters({
         {/* Origine */}
         <Select value={filters.reported_by || 'all'} onValueChange={handleReportedByChange}>
           <SelectTrigger className="w-[115px] h-9 rounded-full border-amber-100/60 dark:border-amber-800/30 bg-white/60 dark:bg-slate-800/40 text-amber-600 dark:text-amber-400 hover:bg-amber-50/80 transition-all shadow-sm text-sm font-medium">
-            <SelectValue placeholder="Origine" />
+            <span>{filters.reported_by ? REPORTED_BY_OPTIONS.find(rb => rb.value === filters.reported_by)?.label || 'Origine' : 'Origine'}</span>
           </SelectTrigger>
           <SelectContent className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm z-50 rounded-2xl border-amber-100/50 shadow-lg">
             <SelectItem value="all" className="rounded-xl">Tous</SelectItem>
