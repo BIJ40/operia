@@ -1,13 +1,24 @@
 /**
- * ApporteurLayout - Layout principal pour l'espace Apporteur
- * Isolé du système interne HelpConfort
+ * ApporteurLayout - Layout unifié pour l'espace Apporteur
+ * Utilise le système d'onglets browser-like comme le reste du site
  */
 
 import { ReactNode, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useApporteurAuth } from '@/contexts/ApporteurAuthContext';
 import { ApporteurLoginDialog } from './ApporteurLoginDialog';
+import { ApporteurTabsProvider } from './browser-tabs/ApporteurTabsContext';
+import { ApporteurTabsBar } from './browser-tabs/ApporteurTabsBar';
+import { ApporteurTabsContent } from './browser-tabs/ApporteurTabsContent';
 import { Button } from '@/components/ui/button';
+import { 
+  Home, 
+  User, 
+  LogOut, 
+  Building2,
+  Bug,
+  ChevronDown,
+} from 'lucide-react';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -15,30 +26,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { 
-  Home, 
-  FolderOpen, 
-  FileText, 
-  PlusCircle, 
-  User, 
-  LogOut, 
-  Menu,
-  X,
-  Building2,
-  ChevronDown,
-  Bug,
-} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ApporteurLayoutProps {
-  children: ReactNode;
+  children?: ReactNode;
 }
-
-const NAV_ITEMS = [
-  { path: '/apporteur/dashboard', label: 'Tableau de bord', icon: Home },
-  { path: '/apporteur/dossiers', label: 'Mes dossiers', icon: FolderOpen },
-  { path: '/apporteur/demandes', label: 'Demandes', icon: FileText },
-];
 
 export function ApporteurLayout({ children }: ApporteurLayoutProps) {
   const {
@@ -49,8 +41,6 @@ export function ApporteurLayout({ children }: ApporteurLayoutProps) {
     logout,
   } = useApporteurAuth();
   const [loginOpen, setLoginOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const location = useLocation();
   const navigate = useNavigate();
 
   const isDevMode = () => {
@@ -92,81 +82,56 @@ export function ApporteurLayout({ children }: ApporteurLayoutProps) {
   }
 
   const handleLogout = async () => {
-    // En mode DEV, on évite de déconnecter la session interne (ça brouille le test)
     if (devBypass) {
       setLoginOpen(true);
       return;
     }
-
     await logout();
     navigate('/apporteur');
   };
 
   return (
-    <div className={cn("min-h-screen bg-background", devBypass && "pt-9")}>
-      {devBypass && (
-        <div className="fixed top-0 inset-x-0 z-[60] h-9 border-b border-border bg-accent text-accent-foreground flex items-center justify-center gap-2 px-3 text-xs">
-          <Bug className="w-4 h-4" />
-          <span className="font-medium">Mode DEV</span>
-          <span className="hidden sm:inline">— accès apporteur sans authentification</span>
-          <span className="hidden md:inline opacity-80">(UI uniquement)</span>
-          <Button
-            variant="secondary"
-            size="sm"
-            className="h-7 px-2 ml-2"
-            onClick={() => setLoginOpen(true)}
-          >
-            Se connecter
-          </Button>
-        </div>
-      )}
-
-      {/* Header */}
-      <header
-        className={cn(
-          "sticky z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60",
-          devBypass ? "top-9" : "top-0"
+    <ApporteurTabsProvider>
+      <div className={cn("min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex flex-col", devBypass && "pt-9")}>
+        {/* Dev Mode Banner */}
+        {devBypass && (
+          <div className="fixed top-0 inset-x-0 z-[60] h-9 border-b border-border bg-accent text-accent-foreground flex items-center justify-center gap-2 px-3 text-xs">
+            <Bug className="w-4 h-4" />
+            <span className="font-medium">Mode DEV</span>
+            <span className="hidden sm:inline">— accès apporteur sans authentification</span>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-7 px-2 ml-2"
+              onClick={() => setLoginOpen(true)}
+            >
+              Se connecter
+            </Button>
+          </div>
         )}
-      >
-        <div className="container flex h-16 items-center justify-between">
-          {/* Logo */}
-          <Link to="/apporteur/dashboard" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-bold text-lg hidden sm:inline">
-              <span className="text-primary">Help</span>
-              <span className="text-accent">!</span>
-              <span className="text-primary">Confort</span>
-              <span className="text-muted-foreground ml-2 text-sm font-normal">Espace Apporteur</span>
-            </span>
-          </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1">
-            {NAV_ITEMS.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.path;
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  )}
-                >
-                  <Icon className="w-4 h-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
+        {/* Header minimal */}
+        <header
+          className={cn(
+            "sticky z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60",
+            devBypass ? "top-9" : "top-0"
+          )}
+        >
+          <div className="container flex h-14 items-center justify-between">
+            {/* Logo */}
+            <Link to="/apporteur" className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
+                <Building2 className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <span className="font-bold text-lg hidden sm:inline">
+                <span className="text-primary">Help</span>
+                <span className="text-accent">!</span>
+                <span className="text-primary">Confort</span>
+                <span className="text-muted-foreground ml-2 text-sm font-normal">Espace Apporteur</span>
+              </span>
+            </Link>
 
-          {/* User Menu */}
-          <div className="flex items-center gap-2">
+            {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="gap-2">
@@ -193,62 +158,31 @@ export function ApporteurLayout({ children }: ApporteurLayoutProps) {
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
-
-            {/* Mobile Menu Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </Button>
           </div>
-        </div>
+        </header>
 
-        {/* Mobile Navigation */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t bg-card">
-            <nav className="container py-2 space-y-1">
-              {NAV_ITEMS.map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.path;
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                      isActive
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                    )}
-                  >
-                    <Icon className="w-5 h-5" />
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
+        {/* Tabs Bar */}
+        <ApporteurTabsBar />
+
+        {/* Main Content */}
+        <main className="flex-1 overflow-auto">
+          <div className="container">
+            <ApporteurTabsContent />
           </div>
+        </main>
+
+        {/* Footer */}
+        <footer className="border-t bg-muted/30 py-3 mt-auto">
+          <div className="container text-center text-sm text-muted-foreground">
+            <p>© {new Date().getFullYear()} HelpConfort Services - Espace Apporteur</p>
+          </div>
+        </footer>
+
+        {devBypass && (
+          <ApporteurLoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
         )}
-      </header>
-
-      {/* Main Content */}
-      <main className="container py-6">{children}</main>
-
-      {/* Footer */}
-      <footer className="border-t bg-muted/30 py-4 mt-auto">
-        <div className="container text-center text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} HelpConfort Services - Espace Apporteur</p>
-        </div>
-      </footer>
-
-      {devBypass && (
-        <ApporteurLoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
-      )}
-    </div>
+      </div>
+    </ApporteurTabsProvider>
   );
 }
 
@@ -259,7 +193,7 @@ function ApporteurLanding({ onLoginClick }: { onLoginClick: () => void }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
       {/* Header */}
-      <header className="w-full bg-gradient-to-r from-primary to-primary-dark">
+      <header className="w-full bg-gradient-to-r from-primary to-primary/80">
         <div className="container mx-auto px-4 py-3">
           <p className="text-center text-primary-foreground text-lg font-medium">
             Espace Partenaires Apporteurs d'Affaires
@@ -270,8 +204,8 @@ function ApporteurLanding({ onLoginClick }: { onLoginClick: () => void }) {
       {/* Hero */}
       <section className="container mx-auto px-6 py-16 md:py-24">
         <div className="text-center max-w-3xl mx-auto">
-          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center mx-auto mb-8">
-            <Building2 className="w-10 h-10 text-white" />
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center mx-auto mb-8">
+            <Building2 className="w-10 h-10 text-primary-foreground" />
           </div>
           
           <h1 className="text-3xl md:text-5xl font-black text-foreground mb-6">
@@ -291,7 +225,7 @@ function ApporteurLanding({ onLoginClick }: { onLoginClick: () => void }) {
             <Button 
               onClick={onLoginClick}
               size="lg"
-              className="gap-2 bg-primary hover:bg-primary/90 shadow-xl"
+              className="gap-2 bg-primary hover:bg-primary/90 shadow-xl rounded-xl"
             >
               <User className="w-5 h-5" />
               Me connecter
@@ -300,7 +234,7 @@ function ApporteurLanding({ onLoginClick }: { onLoginClick: () => void }) {
               variant="outline"
               size="lg"
               onClick={() => navigate('/')}
-              className="gap-2"
+              className="gap-2 rounded-xl"
             >
               <Home className="w-5 h-5" />
               Retour à l'accueil
@@ -311,17 +245,17 @@ function ApporteurLanding({ onLoginClick }: { onLoginClick: () => void }) {
         {/* Features */}
         <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mt-16">
           <FeatureCard
-            icon={FolderOpen}
+            icon={Building2}
             title="Suivi des dossiers"
             description="Consultez l'avancement de tous vos dossiers en cours."
           />
           <FeatureCard
-            icon={PlusCircle}
+            icon={User}
             title="Demandes rapides"
             description="Créez une demande d'intervention en quelques clics."
           />
           <FeatureCard
-            icon={FileText}
+            icon={Home}
             title="Documents"
             description="Accédez aux devis et factures de vos dossiers."
           />
@@ -340,7 +274,7 @@ function ApporteurLanding({ onLoginClick }: { onLoginClick: () => void }) {
 
 function FeatureCard({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description: string }) {
   return (
-    <div className="bg-card border rounded-xl p-6 text-center">
+    <div className="bg-card border rounded-2xl p-6 text-center">
       <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
         <Icon className="w-6 h-6 text-primary" />
       </div>
