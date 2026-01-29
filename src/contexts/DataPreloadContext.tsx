@@ -226,15 +226,23 @@ export function DataPreloadProvider({ children }: { children: ReactNode }) {
       return false;
     }
     
-    // 4. Vérifier le cache session
+    // 4. Vérifier le cache session ET le cache mémoire apogeeProxy
+    // Le cache session peut être valide mais le cache mémoire peut être vide (après refresh/deco-reco)
     const meta = getSessionMeta(user.id, effectiveAgence);
     if (meta) {
       const age = Date.now() - meta.completedAt;
       if (age < CACHE_TTL_MS) {
-        logApogee.debug(`[PRELOAD] Skip: session cache valid (${Math.round(age / 60000)}min old)`);
-        return false;
+        // Vérifier si le cache mémoire proxy est encore chaud (au moins les projets)
+        const hasMemoryCache = apogeeProxy.hasCachedData('apiGetProjects', effectiveAgence);
+        if (hasMemoryCache) {
+          logApogee.debug(`[PRELOAD] Skip: session + memory cache valid (${Math.round(age / 60000)}min old)`);
+          return false;
+        }
+        // Cache session ok mais mémoire vide → forcer le preload
+        logApogee.info('[PRELOAD] Session cache valid but memory cache empty → will preload');
+      } else {
+        logApogee.debug('[PRELOAD] Session cache expired, will preload');
       }
-      logApogee.debug('[PRELOAD] Session cache expired, will preload');
     }
     
     return true;

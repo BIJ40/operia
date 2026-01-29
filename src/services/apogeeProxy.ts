@@ -216,6 +216,23 @@ export function getApogeeCacheInfo(): {
   };
 }
 
+/**
+ * Check if cached data exists for endpoint + agency (without filters)
+ */
+export function hasApogeeCachedData(endpoint: string, agencySlug: string): boolean {
+  const key = getCacheKey(endpoint, agencySlug);
+  const entry = memoryCache.get(key);
+  if (!entry) return false;
+  
+  const now = Date.now();
+  if (now > entry.expiresAt) {
+    memoryCache.delete(key);
+    return false;
+  }
+  
+  return true;
+}
+
 // Legacy alias
 export const clearProxyCache = clearApogeeCache;
 
@@ -347,6 +364,7 @@ export interface ApogeeProxy {
   clearCache: (agencySlug?: string) => void;
   getCacheInfo: () => { entries: number; ttlMinutes: number; agencies: string[] };
   setTTL: (ttlMs: number) => void;
+  hasCachedData: (endpoint: string, agencySlug: string) => boolean;
   
   // Batch method for loading all data for an agency
   getAllData: (agencySlug: string, bypassCache?: boolean) => Promise<{
@@ -372,6 +390,7 @@ export const apogeeProxy: ApogeeProxy = {
   clearCache: clearApogeeCache,
   getCacheInfo: getApogeeCacheInfo,
   setTTL: setApogeeCacheTTL,
+  hasCachedData: hasApogeeCachedData,
   
   /**
    * Load all data for an agency via SEMAPHORE (15 concurrent max)
