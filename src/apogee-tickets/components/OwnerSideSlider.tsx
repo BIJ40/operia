@@ -39,12 +39,12 @@ export function OwnerSideSlider({ value, onChange, disabled, compact = false }: 
     onChange(null);
   };
 
-  // Compact mode: simple row with badge
+  // Compact mode: slim row with reference points and reset icon
   if (compact) {
     return (
-      <div className="flex items-center gap-2 h-8">
-        <span className="text-xs text-blue-600 font-medium">Apogée</span>
-        <div className="flex-1 relative">
+      <div className="flex items-center gap-1.5 h-6">
+        <span className="text-[10px] text-blue-600 font-medium shrink-0">APO</span>
+        <div className="flex-1 relative min-w-[80px]">
           <Slider
             value={[currentValue]}
             onValueChange={([v]) => {
@@ -58,18 +58,42 @@ export function OwnerSideSlider({ value, onChange, disabled, compact = false }: 
             step={1}
             disabled={disabled}
             className={cn("cursor-pointer", isUndetermined && "opacity-50")}
-            trackClassName="h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-orange-500"
+            trackClassName="h-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-orange-500"
             rangeClassName="bg-transparent"
           />
+          {/* Reference points */}
+          <div className="absolute top-0.5 left-0 right-0 flex justify-between pointer-events-none">
+            {STEPS.map((step) => (
+              <div
+                key={step.value}
+                className={cn(
+                  "w-1 h-1 rounded-full",
+                  !isUndetermined && currentValue === step.value
+                    ? "bg-white ring-1 ring-primary"
+                    : "bg-white/60"
+                )}
+              />
+            ))}
+          </div>
         </div>
-        <span className="text-xs text-orange-600 font-medium">HC</span>
+        <span className="text-[10px] text-orange-600 font-medium shrink-0">HC</span>
         {!isUndetermined && currentStep && (
-          <span className="text-xs px-1.5 py-0.5 rounded bg-muted font-medium min-w-[40px] text-center">
+          <span className="text-[10px] px-1 py-0.5 rounded bg-muted font-medium min-w-[32px] text-center">
             {currentStep.label}
           </span>
         )}
         {isUndetermined && (
-          <span className="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">?</span>
+          <span className="text-[10px] px-1 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">?</span>
+        )}
+        {!isUndetermined && !disabled && (
+          <button
+            type="button"
+            onClick={handleReset}
+            className="p-0.5 text-muted-foreground hover:text-destructive transition-colors"
+            title="Réinitialiser"
+          >
+            <X className="h-3 w-3" />
+          </button>
         )}
       </div>
     );
