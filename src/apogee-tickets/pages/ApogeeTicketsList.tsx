@@ -216,37 +216,15 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
           )}
 
           {canViewKanban && (
-            <Button onClick={() => setShowCreateDialog(true)} size="sm">
+            <Button 
+              onClick={() => setShowCreateDialog(true)} 
+              size="sm"
+              className="bg-gradient-to-r from-sky-500 to-violet-500 hover:from-sky-600 hover:to-violet-600 text-white border-0 shadow-md hover:shadow-lg transition-all"
+            >
               <Plus className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Nouveau ticket</span>
             </Button>
           )}
-
-          {/* Export */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Exporter</span>
-                <ChevronDown className="h-4 w-4 sm:ml-2" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="bg-background border shadow-lg z-50">
-              <DropdownMenuItem onClick={() => exportToCSV({ tickets, statuses, modules, priorities, ownerSides })}>
-                <FileText className="h-4 w-4 mr-2 text-green-600" />
-                Export CSV
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => exportToExcel({ tickets, statuses, modules, priorities, ownerSides })}>
-                <Sheet className="h-4 w-4 mr-2 text-emerald-600" />
-                Export Excel
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => exportToPDF({ tickets, statuses, modules, priorities, ownerSides })}>
-                <FileDown className="h-4 w-4 mr-2 text-red-600" />
-                Export PDF
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
 
