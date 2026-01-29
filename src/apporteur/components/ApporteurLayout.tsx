@@ -3,7 +3,7 @@
  * Utilise le nouveau système d'authentification autonome (ApporteurSessionContext)
  */
 
-import { ReactNode, useState } from 'react';
+import { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApporteurSession } from '@/apporteur/contexts/ApporteurSessionContext';
 import { ApporteurLoginPage } from '@/apporteur/pages/ApporteurLoginPage';
@@ -16,6 +16,8 @@ import {
   LogOut, 
   Bug,
   ChevronDown,
+  Building2,
+  Home,
 } from 'lucide-react';
 import { 
   DropdownMenu,
@@ -30,6 +32,17 @@ interface ApporteurLayoutProps {
   children?: ReactNode;
 }
 
+// Check if we're in dev/preview mode
+const isDevMode = () => {
+  const hostname = window.location.hostname;
+  return (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname.includes('preview') ||
+    hostname.includes('lovable')
+  );
+};
+
 export function ApporteurLayout({ children }: ApporteurLayoutProps) {
   const {
     isAuthenticated,
@@ -39,27 +52,24 @@ export function ApporteurLayout({ children }: ApporteurLayoutProps) {
   } = useApporteurSession();
   const navigate = useNavigate();
 
-  const isDevMode = () => {
-    const hostname = window.location.hostname;
-    return (
-      hostname === 'localhost' ||
-      hostname === '127.0.0.1' ||
-      hostname.includes('preview') ||
-      hostname.includes('lovable')
-    );
-  };
-
-  const devBypass = isDevMode() && !isApporteurAuthenticated;
+  const devBypass = isDevMode() && !isAuthenticated;
+  
   const displayUser = devBypass
     ? {
         firstName: 'Mode DEV',
-        email: user?.email ?? null,
+        email: 'dev@preview.local',
         apporteurName: 'Accès sans authentification',
       }
-    : apporteurUser;
+    : session
+    ? {
+        firstName: session.firstName || session.email?.split('@')[0] || 'Utilisateur',
+        email: session.email,
+        apporteurName: session.apporteurName,
+      }
+    : null;
 
   // Loading state
-  if (isApporteurLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -67,21 +77,12 @@ export function ApporteurLayout({ children }: ApporteurLayoutProps) {
     );
   }
 
-  // Landing page for unauthenticated apporteurs (prod)
-  if (!isApporteurAuthenticated && !devBypass) {
-    return (
-      <>
-        <ApporteurLanding onLoginClick={() => setLoginOpen(true)} />
-        <ApporteurLoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
-      </>
-    );
+  // Login page for unauthenticated users (prod only)
+  if (!isAuthenticated && !devBypass) {
+    return <ApporteurLoginPage />;
   }
 
   const handleLogout = async () => {
-    if (devBypass) {
-      setLoginOpen(true);
-      return;
-    }
     await logout();
     navigate('/apporteur');
   };
@@ -95,14 +96,6 @@ export function ApporteurLayout({ children }: ApporteurLayoutProps) {
             <Bug className="w-4 h-4" />
             <span className="font-medium">Mode DEV</span>
             <span className="hidden sm:inline">— accès apporteur sans authentification</span>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="h-7 px-2 ml-2"
-              onClick={() => setLoginOpen(true)}
-            >
-              Se connecter
-            </Button>
           </div>
         )}
 
@@ -162,101 +155,12 @@ export function ApporteurLayout({ children }: ApporteurLayoutProps) {
             <p>© {new Date().getFullYear()} HelpConfort Services - Espace Apporteur</p>
           </div>
         </footer>
-
-        {devBypass && (
-          <ApporteurLoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
-        )}
       </div>
     </ApporteurTabsProvider>
   );
 }
 
-// Landing page pour apporteurs non connectés
-function ApporteurLanding({ onLoginClick }: { onLoginClick: () => void }) {
-  const navigate = useNavigate();
-  
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
-      {/* Header */}
-      <header className="w-full bg-gradient-to-r from-primary to-primary/80">
-        <div className="container mx-auto px-4 py-3">
-          <p className="text-center text-primary-foreground text-lg font-medium">
-            Espace Partenaires Apporteurs d'Affaires
-          </p>
-        </div>
-      </header>
-
-      {/* Hero */}
-      <section className="container mx-auto px-6 py-16 md:py-24">
-        <div className="text-center max-w-3xl mx-auto">
-          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center mx-auto mb-8">
-            <Building2 className="w-10 h-10 text-primary-foreground" />
-          </div>
-          
-          <h1 className="text-3xl md:text-5xl font-black text-foreground mb-6">
-            <span className="text-primary">Help</span>
-            <span className="text-accent">!</span>
-            <span className="text-primary">Confort</span>
-            <span className="block text-2xl md:text-3xl mt-2 font-semibold text-muted-foreground">
-              Espace Apporteur
-            </span>
-          </h1>
-          
-          <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
-            Suivez vos dossiers, créez des demandes d'intervention et accédez à vos statistiques en temps réel.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              onClick={onLoginClick}
-              size="lg"
-              className="gap-2 bg-primary hover:bg-primary/90 shadow-xl rounded-xl"
-            >
-              <User className="w-5 h-5" />
-              Me connecter
-            </Button>
-            <Button 
-              variant="outline"
-              size="lg"
-              onClick={() => navigate('/')}
-              className="gap-2 rounded-xl"
-            >
-              <Home className="w-5 h-5" />
-              Retour à l'accueil
-            </Button>
-          </div>
-        </div>
-
-        {/* Features */}
-        <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mt-16">
-          <FeatureCard
-            icon={Building2}
-            title="Suivi des dossiers"
-            description="Consultez l'avancement de tous vos dossiers en cours."
-          />
-          <FeatureCard
-            icon={User}
-            title="Demandes rapides"
-            description="Créez une demande d'intervention en quelques clics."
-          />
-          <FeatureCard
-            icon={Home}
-            title="Documents"
-            description="Accédez aux devis et factures de vos dossiers."
-          />
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t bg-muted/30 py-6 mt-auto">
-        <div className="container text-center text-muted-foreground">
-          <p>© {new Date().getFullYear()} HelpConfort Services. Tous droits réservés.</p>
-        </div>
-      </footer>
-    </div>
-  );
-}
-
+// Feature card component for landing page
 function FeatureCard({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description: string }) {
   return (
     <div className="bg-card border rounded-2xl p-6 text-center">
