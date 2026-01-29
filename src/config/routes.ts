@@ -194,6 +194,7 @@ export const ROUTES = {
   // USER
   // ============================================
   profile: '/profile',
+  agence: '/agence',
   changelog: '/changelog',
 
 } as const;
