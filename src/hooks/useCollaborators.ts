@@ -5,14 +5,14 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 import { Collaborator, CollaboratorFormData } from '@/types/collaborator';
 import { toast } from 'sonner';
 import { useHasMinLevel } from '@/hooks/useHasGlobalRole';
 import { saveSensitiveData } from './useSensitiveData';
 
 export function useCollaborators(agencyId?: string) {
-  const { agencyId: userAgencyId } = useAuth();
+  const { agencyId: userAgencyId } = useEffectiveAuth();
   const canManageCollaborators = useHasMinLevel(2); // N2+ (Dirigeant)
   const effectiveAgencyId = agencyId || userAgencyId;
   const queryClient = useQueryClient();

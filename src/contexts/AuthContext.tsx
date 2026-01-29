@@ -518,6 +518,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Wrappers minimaux de compatibilité
   const hasAccessToScope = useCallback((_scope: string): boolean => true, []);
 
+  // ============================================================================
+  // IMPERSONATION OVERRIDE - Substituer les données si impersonation active
+  // ============================================================================
+  // NOTE: On ne peut pas utiliser useImpersonation() ici car AuthContext enveloppe
+  // ImpersonationContext. La gestion de l'override se fait donc dans le wrapper
+  // AuthProviderWithImpersonation ci-dessous.
+  
   return (
     <AuthContext.Provider value={{ 
       isAuthenticated: !!user,
