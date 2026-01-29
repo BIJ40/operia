@@ -29,8 +29,8 @@ const TicketingReviewView = lazy(() => import('@/apogee-tickets/pages/ApogeeTick
 type TicketingSubTab = 'kanban' | 'liste' | 'historique' | 'revue';
 
 const TICKETING_SUBTABS: PillTabConfig[] = [
-  { id: 'kanban', label: 'Kanban', icon: LayoutGrid },
   { id: 'liste', label: 'Liste', icon: List },
+  { id: 'kanban', label: 'Kanban', icon: LayoutGrid },
   { id: 'revue', label: 'Revue', icon: ListChecks },
   { id: 'historique', label: 'Historique', icon: History },
 ];
@@ -54,13 +54,13 @@ export default function TicketingTabContent() {
   const [activeSubTab, setActiveSubTab] = useState<TicketingSubTab>(
     subtabParam && ['kanban', 'liste', 'historique', 'revue'].includes(subtabParam) 
       ? subtabParam 
-      : 'kanban'
+      : 'liste'
   );
 
   // Synchroniser avec l'URL
   useEffect(() => {
     const current = new URLSearchParams(searchParams);
-    if (activeSubTab !== 'kanban') {
+    if (activeSubTab !== 'liste') {
       current.set('subtab', activeSubTab);
     } else {
       current.delete('subtab');
