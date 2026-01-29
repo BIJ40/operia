@@ -170,8 +170,11 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
     queueChange(ticketId, updates);
   };
 
+  // Vue active: null = liste, sinon ticket ID
+  const showingList = activeTabId === null;
+
   return (
-    <div className={embedded ? "space-y-4" : "container mx-auto py-8 px-4 space-y-6"}>
+    <div className={embedded ? "flex flex-col h-full" : "container mx-auto py-8 px-4 flex flex-col h-[calc(100vh-6rem)]"}>
       {!embedded && (
         <PageHeader 
           title="Ticketing - Liste"
@@ -181,7 +184,7 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
       )}
       
       {/* Header avec toggle Kanban/Liste */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2 flex-wrap">
           {/* Toggle vue */}
           {!embedded && (
@@ -241,15 +244,7 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
         </div>
       </div>
 
-      {/* Filtres */}
-      <TicketTableFilters
-        filters={filters}
-        onFiltersChange={setFilters}
-        modules={modules}
-        statuses={statuses}
-      />
-
-      {/* Barre d'onglets tickets ouverts */}
+      {/* Barre d'onglets: LISTE fixe + tickets à droite */}
       <TicketTabBar
         tabs={openTabs}
         activeTabId={activeTabId}
@@ -259,39 +254,62 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
         isSaving={isSaving}
       />
 
-      {/* Panel inline pour le ticket actif */}
-      {activeTicket && (
-        <div className="h-[600px] mb-4">
-          <TicketInlinePanel
-            key={activeTicket.id}
-            ticket={activeTicket}
-            modules={modules}
-            priorities={priorities}
-            statuses={statuses}
-            onQueueChange={handleTicketQueueChange}
-            onDelete={handleTicketDelete}
-            onClose={() => closeTab(activeTicket.id)}
-          />
-        </div>
-      )}
+      {/* Zone de contenu: soit la liste, soit le ticket actif */}
+      <div className="flex-1 overflow-hidden">
+        {showingList ? (
+          /* Vue Liste */
+          <div className="h-full flex flex-col">
+            {/* Filtres */}
+            <div className="py-3">
+              <TicketTableFilters
+                filters={filters}
+                onFiltersChange={setFilters}
+                modules={modules}
+                statuses={statuses}
+              />
+            </div>
 
-      {/* Table */}
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      ) : (
-        <TicketTable
-          tickets={tickets}
-          modules={modules}
-          statuses={statuses}
-          ownerSides={ownerSides}
-          roleInfo={roleInfo}
-          allowedTransitionsMap={allowedTransitionsMap}
-          onTicketClick={handleTicketClick}
-          onTicketUpdate={() => {}} // Les updates passent par queueChange
-        />
-      )}
+            {/* Table */}
+            <div className="flex-1 overflow-auto">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <TicketTable
+                  tickets={tickets}
+                  modules={modules}
+                  statuses={statuses}
+                  ownerSides={ownerSides}
+                  roleInfo={roleInfo}
+                  allowedTransitionsMap={allowedTransitionsMap}
+                  onTicketClick={handleTicketClick}
+                  onTicketUpdate={() => {}}
+                />
+              )}
+            </div>
+          </div>
+        ) : activeTicket ? (
+          /* Vue Ticket en onglet */
+          <div className="h-full">
+            <TicketInlinePanel
+              key={activeTicket.id}
+              ticket={activeTicket}
+              modules={modules}
+              priorities={priorities}
+              statuses={statuses}
+              onQueueChange={handleTicketQueueChange}
+              onDelete={handleTicketDelete}
+              onClose={() => closeTab(activeTicket.id)}
+            />
+          </div>
+        ) : (
+          /* Fallback si ticket non trouvé */
+          <div className="flex items-center justify-center h-full text-muted-foreground">
+            <p>Ticket introuvable. <Button variant="link" onClick={() => setActiveTabId(null)}>Retour à la liste</Button></p>
+          </div>
+        )}
+      </div>
 
       {/* Dialog création */}
       <CreateTicketDialog
