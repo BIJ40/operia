@@ -1,21 +1,19 @@
 /**
  * ApporteurLayout - Layout unifié pour l'espace Apporteur
- * Utilise le système d'onglets browser-like comme le reste du site
+ * Utilise le nouveau système d'authentification autonome (ApporteurSessionContext)
  */
 
 import { ReactNode, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useApporteurAuth } from '@/contexts/ApporteurAuthContext';
-import { ApporteurLoginDialog } from './ApporteurLoginDialog';
+import { useNavigate } from 'react-router-dom';
+import { useApporteurSession } from '@/apporteur/contexts/ApporteurSessionContext';
+import { ApporteurLoginPage } from '@/apporteur/pages/ApporteurLoginPage';
 import { ApporteurTabsProvider } from './browser-tabs/ApporteurTabsContext';
 import { ApporteurTabsBar } from './browser-tabs/ApporteurTabsBar';
 import { ApporteurTabsContent } from './browser-tabs/ApporteurTabsContent';
 import { Button } from '@/components/ui/button';
 import { 
-  Home, 
   User, 
   LogOut, 
-  Building2,
   Bug,
   ChevronDown,
 } from 'lucide-react';
@@ -34,13 +32,11 @@ interface ApporteurLayoutProps {
 
 export function ApporteurLayout({ children }: ApporteurLayoutProps) {
   const {
-    isApporteurAuthenticated,
-    isApporteurLoading,
-    apporteurUser,
-    user,
+    isAuthenticated,
+    isLoading,
+    session,
     logout,
-  } = useApporteurAuth();
-  const [loginOpen, setLoginOpen] = useState(false);
+  } = useApporteurSession();
   const navigate = useNavigate();
 
   const isDevMode = () => {

@@ -146,3 +146,16 @@ verify_jwt = true
 
 [functions.send-push]
 verify_jwt = true
+
+# Apporteur autonomous auth (no JWT verification - custom token auth)
+[functions.apporteur-auth-send-code]
+verify_jwt = false
+
+[functions.apporteur-auth-verify-code]
+verify_jwt = false
+
+[functions.apporteur-auth-validate-session]
+verify_jwt = false
+
+[functions.apporteur-auth-logout]
+verify_jwt = false

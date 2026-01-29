@@ -1,0 +1,310 @@
+/**
+ * ApporteurSessionContext - Contexte d'authentification autonome pour apporteurs
+ * Système OTP + session custom, totalement isolé de Supabase Auth
+ */
+
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+
+interface ApporteurSession {
+  managerId: string;
+  apporteurId: string;
+  apporteurName: string;
+  agencyId: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  role: 'reader' | 'manager';
+  expiresAt: Date;
+}
+
+interface ApporteurSessionContextType {
+  // État
+  session: ApporteurSession | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  
+  // Helpers
+  isManager: boolean;
+  apporteurId: string | null;
+  agencyId: string | null;
+  
+  // Actions
+  requestCode: (email: string) => Promise<{ success: boolean; message: string }>;
+  verifyCode: (email: string, code: string) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
+  refreshSession: () => Promise<void>;
+}
+
+const ApporteurSessionContext = createContext<ApporteurSessionContextType | undefined>(undefined);
+
+// Check if we're in dev/preview mode (for localStorage fallback)
+const isDevMode = () => {
+  const hostname = window.location.hostname;
+  return hostname === 'localhost' || 
+         hostname === '127.0.0.1' ||
+         hostname.includes('preview') || 
+         hostname.includes('lovable');
+};
+
+// Storage helpers for DEV mode
+const DEV_TOKEN_KEY = 'apporteur_session_token';
+const DEV_SESSION_KEY = 'apporteur_session_data';
+
+const getDevToken = (): string | null => {
+  if (!isDevMode()) return null;
+  return localStorage.getItem(DEV_TOKEN_KEY);
+};
+
+const setDevSession = (token: string, session: ApporteurSession) => {
+  if (!isDevMode()) return;
+  localStorage.setItem(DEV_TOKEN_KEY, token);
+  localStorage.setItem(DEV_SESSION_KEY, JSON.stringify(session));
+};
+
+const clearDevSession = () => {
+  localStorage.removeItem(DEV_TOKEN_KEY);
+  localStorage.removeItem(DEV_SESSION_KEY);
+};
+
+const getStoredDevSession = (): ApporteurSession | null => {
+  if (!isDevMode()) return null;
+  try {
+    const stored = localStorage.getItem(DEV_SESSION_KEY);
+    if (!stored) return null;
+    const parsed = JSON.parse(stored);
+    return {
+      ...parsed,
+      expiresAt: new Date(parsed.expiresAt),
+    };
+  } catch {
+    return null;
+  }
+};
+
+// API helpers
+const getApiBaseUrl = () => {
+  return `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+};
+
+const fetchWithAuth = async (path: string, options: RequestInit = {}) => {
+  const baseUrl = getApiBaseUrl();
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
+
+  // In DEV mode, add token to header
+  if (isDevMode()) {
+    const token = getDevToken();
+    if (token) {
+      (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+    }
+  }
+
+  return fetch(`${baseUrl}${path}`, {
+    ...options,
+    headers,
+    credentials: 'include', // Send cookies in prod
+  });
+};
+
+export function ApporteurSessionProvider({ children }: { children: ReactNode }) {
+  const [session, setSession] = useState<ApporteurSession | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Validate session on mount
+  const refreshSession = useCallback(async () => {
+    setIsLoading(true);
+    
+    try {
+      // In DEV, check localStorage first for quick restore
+      if (isDevMode()) {
+        const storedSession = getStoredDevSession();
+        if (storedSession && storedSession.expiresAt > new Date()) {
+          // Validate with server
+          const response = await fetchWithAuth('/apporteur-auth-validate-session', {
+            method: 'GET',
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.valid && data.session) {
+              const newSession: ApporteurSession = {
+                managerId: data.session.managerId,
+                apporteurId: data.session.apporteurId,
+                apporteurName: data.session.apporteurName,
+                agencyId: data.session.agencyId,
+                email: data.session.email,
+                firstName: data.session.firstName,
+                lastName: data.session.lastName,
+                role: data.session.role,
+                expiresAt: new Date(data.session.expiresAt),
+              };
+              setSession(newSession);
+              // Update stored session
+              const token = getDevToken();
+              if (token) {
+                setDevSession(token, newSession);
+              }
+              setIsLoading(false);
+              return;
+            }
+          }
+          // Session invalid, clear it
+          clearDevSession();
+        }
+      }
+
+      // Try to validate with server (will use cookie in prod)
+      const response = await fetchWithAuth('/apporteur-auth-validate-session', {
+        method: 'GET',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.valid && data.session) {
+          setSession({
+            managerId: data.session.managerId,
+            apporteurId: data.session.apporteurId,
+            apporteurName: data.session.apporteurName,
+            agencyId: data.session.agencyId,
+            email: data.session.email,
+            firstName: data.session.firstName,
+            lastName: data.session.lastName,
+            role: data.session.role,
+            expiresAt: new Date(data.session.expiresAt),
+          });
+        } else {
+          setSession(null);
+          clearDevSession();
+        }
+      } else {
+        setSession(null);
+        clearDevSession();
+      }
+    } catch (error) {
+      console.error('[ApporteurSession] Error validating session:', error);
+      setSession(null);
+      clearDevSession();
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Request OTP code
+  const requestCode = useCallback(async (email: string): Promise<{ success: boolean; message: string }> => {
+    try {
+      const response = await fetch(`${getApiBaseUrl()}/apporteur-auth-send-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+      
+      if (response.status === 429) {
+        return { success: false, message: data.error || 'Trop de tentatives. Réessayez dans 15 minutes.' };
+      }
+
+      return { 
+        success: data.success, 
+        message: data.message || (data.success ? 'Code envoyé' : 'Erreur') 
+      };
+    } catch (error) {
+      console.error('[ApporteurSession] Error requesting code:', error);
+      return { success: false, message: 'Erreur de connexion au serveur' };
+    }
+  }, []);
+
+  // Verify OTP code
+  const verifyCode = useCallback(async (email: string, code: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const response = await fetch(`${getApiBaseUrl()}/apporteur-auth-verify-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Important for receiving cookie
+        body: JSON.stringify({ email, code }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: data.error || 'Code invalide' };
+      }
+
+      if (data.success && data.manager) {
+        const newSession: ApporteurSession = {
+          managerId: data.manager.id,
+          apporteurId: data.manager.apporteurId,
+          apporteurName: data.manager.apporteurName,
+          agencyId: data.manager.agencyId,
+          email: data.manager.email,
+          firstName: data.manager.firstName,
+          lastName: data.manager.lastName,
+          role: data.manager.role,
+          expiresAt: new Date(data.expiresAt),
+        };
+
+        setSession(newSession);
+
+        // In DEV mode, store token and session
+        if (isDevMode() && data.token) {
+          setDevSession(data.token, newSession);
+        }
+
+        return { success: true };
+      }
+
+      return { success: false, error: 'Réponse invalide du serveur' };
+    } catch (error) {
+      console.error('[ApporteurSession] Error verifying code:', error);
+      return { success: false, error: 'Erreur de connexion au serveur' };
+    }
+  }, []);
+
+  // Logout
+  const logout = useCallback(async () => {
+    try {
+      await fetchWithAuth('/apporteur-auth-logout', {
+        method: 'POST',
+      });
+    } catch (error) {
+      console.error('[ApporteurSession] Error logging out:', error);
+    } finally {
+      setSession(null);
+      clearDevSession();
+    }
+  }, []);
+
+  // Initialize session on mount
+  useEffect(() => {
+    refreshSession();
+  }, [refreshSession]);
+
+  const value: ApporteurSessionContextType = {
+    session,
+    isLoading,
+    isAuthenticated: !!session,
+    isManager: session?.role === 'manager',
+    apporteurId: session?.apporteurId || null,
+    agencyId: session?.agencyId || null,
+    requestCode,
+    verifyCode,
+    logout,
+    refreshSession,
+  };
+
+  return (
+    <ApporteurSessionContext.Provider value={value}>
+      {children}
+    </ApporteurSessionContext.Provider>
+  );
+}
+
+export function useApporteurSession() {
+  const context = useContext(ApporteurSessionContext);
+  if (!context) {
+    throw new Error('useApporteurSession must be used within ApporteurSessionProvider');
+  }
+  return context;
+}
