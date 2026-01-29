@@ -4,6 +4,7 @@ import { logInfo, logWarn } from '@/lib/logger';
 
 const VERSION_CHECK_KEY = 'hc_last_version_check';
 const CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes minimum between checks
+const FORCE_UPDATE_SESSION_KEY = 'hc_force_update_in_progress';
 
 interface VersionInfo {
   version: string;
@@ -48,9 +49,26 @@ export function useVersionCheck() {
 
         // Compare versions
         if (serverVersion.version !== APP_VERSION) {
+          // Guard: avoid infinite reload loops if mismatch persists for any reason
+          try {
+            const inProgress = sessionStorage.getItem(FORCE_UPDATE_SESSION_KEY);
+            if (inProgress) {
+              logWarn(`[VERSION] Update already attempted in this tab session (since ${inProgress}). Skipping forceUpdate to avoid reload loop.`);
+              return;
+            }
+          } catch {
+            // sessionStorage might be blocked; ignore
+          }
+
           logInfo(`[VERSION] Update detected: ${APP_VERSION} → ${serverVersion.version}`);
           await forceUpdate();
         } else {
+          // If we previously attempted a force update, clear the session guard once versions match
+          try {
+            sessionStorage.removeItem(FORCE_UPDATE_SESSION_KEY);
+          } catch {
+            // ignore
+          }
           logInfo(`[VERSION] App is up to date (${APP_VERSION})`);
         }
       } catch (error) {
@@ -75,6 +93,13 @@ async function forceUpdate(): Promise<void> {
   logInfo('[VERSION] Forcing update...');
 
   try {
+    // Mark attempt in this tab session to prevent infinite reload loops
+    try {
+      sessionStorage.setItem(FORCE_UPDATE_SESSION_KEY, String(Date.now()));
+    } catch {
+      // ignore
+    }
+
     // 1. Unregister all service workers
     if ('serviceWorker' in navigator) {
       const registrations = await navigator.serviceWorker.getRegistrations();
@@ -89,10 +114,7 @@ async function forceUpdate(): Promise<void> {
       logInfo('[VERSION] Caches cleared');
     }
 
-    // 3. Clear localStorage version marker to allow fresh check
-    localStorage.removeItem(VERSION_CHECK_KEY);
-
-    // 4. Force hard reload
+    // 3. Force hard reload
     window.location.reload();
   } catch (error) {
     logWarn('[VERSION] Force update failed, attempting basic reload:', error);
