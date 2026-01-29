@@ -395,15 +395,6 @@ export function calculateNetworkSAVStats(agencyData: AgencyData[]): NetworkSAVSt
 }
 
 /**
- * @deprecated Use calculateNetworkSAVStats instead for comprehensive SAV statistics
- * Calculate network-wide SAV rate as AVERAGE of individual agency rates
- */
-export function calculateSAVRate(agencyData: AgencyData[]): number {
-  const stats = calculateNetworkSAVStats(agencyData);
-  return stats.tauxMoyenAgences;
-}
-
-/**
  * Calculate average processing time (days from project creation to last intervention)
  */
 export function calculateAverageProcessingTime(agencyData: AgencyData[]): number {

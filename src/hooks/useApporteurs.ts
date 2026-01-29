@@ -292,51 +292,6 @@ export function useCreateApporteurUser() {
 }
 
 /**
- * @deprecated Use useCreateApporteurUser instead
- * Inviter un utilisateur apporteur via Edge Function (ancien système)
- */
-export function useInviteApporteurUser() {
-  const queryClient = useQueryClient();
-  const { agencyId } = useAuth();
-
-  return useMutation({
-    mutationFn: async (input: {
-      apporteur_id: string;
-      email: string;
-      first_name?: string;
-      last_name?: string;
-      role: 'reader' | 'manager';
-    }) => {
-      if (!agencyId) throw new Error('Agency ID requis');
-
-      const { data, error } = await supabase.functions.invoke('invite-apporteur-user', {
-        body: {
-          agency_id: agencyId,
-          apporteur_id: input.apporteur_id,
-          email: input.email,
-          first_name: input.first_name || null,
-          last_name: input.last_name || null,
-          role: input.role,
-        },
-      });
-
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['apporteur-users'] });
-      queryClient.invalidateQueries({ queryKey: ['apporteurs'] });
-      toast.success('Invitation envoyée avec succès');
-    },
-    onError: (err: Error) => {
-      toast.error(err.message || 'Erreur lors de l\'invitation');
-    },
-  });
-}
-
-/**
  * Supprimer complètement un utilisateur apporteur
  */
 export function useDeleteApporteurUser() {

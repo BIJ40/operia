@@ -196,22 +196,6 @@ export const ROUTES = {
   profile: '/profile',
   changelog: '/changelog',
 
-  // ============================================
-  // LEGACY ROUTES (SUPPRIMÉES)
-  // Ces routes ne sont plus actives dans App.tsx.
-  // Elles sont documentées ici pour référence historique uniquement.
-  // ============================================
-  legacy: {
-    apogee: '/apogee',
-    apporteurs: '/apporteurs',
-    helpconfort: '/helpconfort',
-    mesIndicateurs: '/mes-indicateurs',
-    actionsAMener: '/actions-a-mener',
-    diffusion: '/diffusion',
-    rhTech: '/rh-tech',
-    mesDemandes: '/mes-demandes',
-    tetDeReseau: '/tete-de-reseau',
-  },
 } as const;
 
 // ============================================
@@ -254,30 +238,3 @@ type StaticRoutes =
   | typeof ROUTES['admin']['escalationHistory'];
 
 export type RoutePath = StaticRoutes | string;
-
-/**
- * Helper pour vérifier si une route est une route legacy
- */
-export function isLegacyRoute(path: string): boolean {
-  const legacyPaths = Object.values(ROUTES.legacy);
-  return legacyPaths.some(legacyPath => path === legacyPath || path.startsWith(legacyPath + '/'));
-}
-
-/**
- * Mapper une route legacy vers la route V2 correspondante
- */
-export function getLegacyRouteRedirect(path: string): string | null {
-  const mappings: Record<string, string> = {
-    [ROUTES.legacy.apogee]: ROUTES.academy.apogee,
-    [ROUTES.legacy.apporteurs]: ROUTES.academy.apporteurs,
-    [ROUTES.legacy.helpconfort]: ROUTES.academy.documents,
-    [ROUTES.legacy.mesIndicateurs]: ROUTES.agency.indicateurs,
-    [ROUTES.legacy.actionsAMener]: ROUTES.agency.actions,
-    [ROUTES.legacy.diffusion]: ROUTES.agency.diffusion,
-    [ROUTES.legacy.rhTech]: ROUTES.agency.rhTech,
-    [ROUTES.legacy.mesDemandes]: ROUTES.support.userTickets,
-    [ROUTES.legacy.tetDeReseau]: ROUTES.reseau.dashboard,
-  };
-  
-  return mappings[path] || null;
-}

@@ -29,7 +29,6 @@ function deriveFranchiseurRole(globalRole: GlobalRole | null): 'animateur' | 'di
   // N5/N6 = DG / Admin plateforme
   if (globalRole === 'platform_admin' || globalRole === 'superadmin') return 'dg';
   
-  // Fallback pour legacy role_agence = 'tete_de_reseau' sans global_role
   return 'animateur';
 }
 
@@ -37,13 +36,12 @@ export function useAnimators() {
   return useQuery({
     queryKey: ['animators'],
     queryFn: async () => {
-      // Get users with global_role N3 (franchisor_user) or N4 (franchisor_admin) ONLY
+      // Get users with global_role N3 (franchisor_user) or N4 (franchisor_admin)
       // N5/N6 (platform_admin, superadmin) are platform admins, NOT franchiseur network staff
-      // Also include legacy role_agence = 'tete_de_reseau'
       const { data: profiles, error } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, email, agence, global_role')
-        .or('global_role.in.(franchisor_user,franchisor_admin),role_agence.eq.tete_de_reseau')
+        .in('global_role', ['franchisor_user', 'franchisor_admin'])
         .order('first_name');
 
       if (error) throw error;
