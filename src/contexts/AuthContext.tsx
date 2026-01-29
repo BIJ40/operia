@@ -94,6 +94,9 @@ interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Import du contexte d'impersonation (lazy pour éviter les cycles)
+import { useImpersonation } from '@/contexts/ImpersonationContext';
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
