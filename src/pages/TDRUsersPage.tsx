@@ -9,7 +9,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Accordion } from '@/components/ui/accordion';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Users, UserPlus } from 'lucide-react';
 import { UserListSkeleton } from '@/components/admin/users/UserListSkeleton';
@@ -21,7 +20,7 @@ import {
   ReactivateDialog,
   DeleteDialog,
   UserFilters,
-  UserAccordionItem,
+  UserRowItem,
 } from '@/components/admin/users';
 
 export default function TDRUsersPage() {
@@ -133,9 +132,6 @@ export default function TDRUsersPage() {
   const [deactivateDialog, setDeactivateDialog] = useState<{ open: boolean; user: UserProfile | null }>({ open: false, user: null });
   const [reactivateDialog, setReactivateDialog] = useState<{ open: boolean; user: UserProfile | null }>({ open: false, user: null });
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; user: UserProfile | null }>({ open: false, user: null });
-  
-  // Accordion state
-  const [openItems, setOpenItems] = useState<string[]>([]);
 
   // Get effective values for a user
   const getEffectiveRole = (user: UserProfile) => modifiedUsers[user.id]?.global_role ?? user.global_role;
@@ -209,32 +205,30 @@ export default function TDRUsersPage() {
 
         {/* Users List */}
         <Card>
-          <CardContent className="p-0">
-            <Accordion type="multiple" value={openItems} onValueChange={setOpenItems} className="divide-y">
-              {paginatedUsers.map((userItem) => (
-                <UserAccordionItem
-                  key={userItem.id}
-                  user={userItem}
-                  effectiveRole={getEffectiveRole(userItem)}
-                  effectiveModules={getEffectiveModules(userItem)}
-                  isModified={!!modifiedUsers[userItem.id]}
-                  canEdit={canEditUser(userItem.global_role, userItem.agence, userItem.id)}
-                  canDeactivate={canDeactivateUserCheck(userItem.global_role)}
-                  canDelete={canDeleteUser(userItem.global_role)}
-                  isSuperAdmin={isSuperAdmin}
-                  assignableRoles={assignableRoles}
-                  isSaving={saveMutation.isPending}
-                  onSaveChanges={() => saveChanges(userItem.id)}
-                  onRoleChange={(role) => handleRoleChange(userItem.id, role)}
-                  onModuleToggle={(moduleKey, enabled) => handleModuleToggle(userItem.id, moduleKey, enabled)}
-                  onModuleOptionToggle={(moduleKey, optionKey, enabled) => handleModuleOptionToggle(userItem.id, moduleKey, optionKey, enabled)}
-                  onEditUser={() => setEditDialog({ open: true, user: userItem })}
-                  onDeactivate={() => setDeactivateDialog({ open: true, user: userItem })}
-                  onReactivate={() => setReactivateDialog({ open: true, user: userItem })}
-                  onDelete={() => setDeleteDialog({ open: true, user: userItem })}
-                />
-              ))}
-            </Accordion>
+          <CardContent className="p-0 divide-y">
+            {paginatedUsers.map((userItem) => (
+              <UserRowItem
+                key={userItem.id}
+                user={userItem}
+                effectiveRole={getEffectiveRole(userItem)}
+                effectiveModules={getEffectiveModules(userItem)}
+                isModified={!!modifiedUsers[userItem.id]}
+                canEdit={canEditUser(userItem.global_role, userItem.agence, userItem.id)}
+                canDeactivate={canDeactivateUserCheck(userItem.global_role)}
+                canDelete={canDeleteUser(userItem.global_role)}
+                isSuperAdmin={isSuperAdmin}
+                assignableRoles={assignableRoles}
+                isSaving={saveMutation.isPending}
+                onSaveChanges={() => saveChanges(userItem.id)}
+                onRoleChange={(role) => handleRoleChange(userItem.id, role)}
+                onModuleToggle={(moduleKey, enabled) => handleModuleToggle(userItem.id, moduleKey, enabled)}
+                onModuleOptionToggle={(moduleKey, optionKey, enabled) => handleModuleOptionToggle(userItem.id, moduleKey, optionKey, enabled)}
+                onEditUser={() => setEditDialog({ open: true, user: userItem })}
+                onDeactivate={() => setDeactivateDialog({ open: true, user: userItem })}
+                onReactivate={() => setReactivateDialog({ open: true, user: userItem })}
+                onDelete={() => setDeleteDialog({ open: true, user: userItem })}
+              />
+            ))}
 
             {paginatedUsers.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">
