@@ -45,6 +45,8 @@ import { useApogeeTicket } from '../hooks/useApogeeTickets';
 import { supabase } from '@/integrations/supabase/client';
 import { useMarkTicketAsViewed } from '../hooks/useTicketViews';
 import { HeatPrioritySelector } from './HeatPrioritySelector';
+import { ModuleSelector } from './ModuleSelector';
+import { OrigineBadge } from './OrigineBadge';
 import { OwnerSideSlider, ownerSideToSliderValue, sliderValueToOwnerSide } from './OwnerSideSlider';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -361,12 +363,14 @@ export function TicketInlinePanel({
               </SelectContent>
             </Select>
             
-            {/* Tag Module */}
-            {ticket.module && (
-              <Badge className="bg-blue-500 text-white text-xs shadow-sm">
-                {ticket.apogee_modules?.label || ticket.module}
-              </Badge>
-            )}
+            {/* Tag Module (cliquable) */}
+            <ModuleSelector
+              moduleId={ticket.module}
+              modules={modules}
+              onChange={(v) => handleFieldUpdate('module', v)}
+              disabled={!canManage}
+              size="sm"
+            />
             
             {/* Tag Priorité (cliquable) */}
             <HeatPrioritySelector
@@ -375,6 +379,9 @@ export function TicketInlinePanel({
               disabled={!canManage}
               size="sm"
             />
+            
+            {/* Tag Origine (lecture seule) */}
+            <OrigineBadge origine={ticket.reported_by} size="sm" />
           </div>
           
           {/* Actions: Corbeille & Fermer */}
