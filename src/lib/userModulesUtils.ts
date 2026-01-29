@@ -37,16 +37,34 @@ export function userModulesToEnabledModules(
   if (!rows || rows.length === 0) return {};
   
   const result: EnabledModules = {};
+
+  const normalizeOptions = (raw: unknown): Record<string, boolean> | null => {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+    const obj = raw as Record<string, unknown>;
+    const boolEntries = Object.entries(obj).filter(([, v]) => typeof v === 'boolean') as Array<
+      [string, boolean]
+    >;
+    if (boolEntries.length === 0) return null;
+    return Object.fromEntries(boolEntries);
+  };
+
+  const hasAnyTrue = (opts: Record<string, boolean>): boolean => {
+    return Object.values(opts).some(v => v === true);
+  };
   
   for (const row of rows) {
     const moduleKey = row.module_key as ModuleKey;
-    const options = row.options as Record<string, boolean> | null;
-    
-    if (options && typeof options === 'object' && Object.keys(options).length > 0) {
-      result[moduleKey] = {
-        enabled: true,
-        options,
-      };
+
+    const options = normalizeOptions(row.options);
+
+    // 🧹 Cas legacy / incohérent : options présentes mais toutes à false → on considère le module désactivé
+    // (évite le "coché mais grisé" sur des rôles qui n'ont de toute façon pas accès)
+    if (options && Object.keys(options).length > 0 && !hasAnyTrue(options)) {
+      continue;
+    }
+
+    if (options && Object.keys(options).length > 0) {
+      result[moduleKey] = { enabled: true, options };
     } else {
       result[moduleKey] = { enabled: true };
     }
@@ -70,6 +88,16 @@ export function enabledModulesToRows(
   if (!enabledModules) return [];
   
   const rows: Omit<UserModuleRow, 'id' | 'created_at' | 'updated_at'>[] = [];
+
+  const filterTrueOptions = (opts: unknown): Record<string, boolean> | null => {
+    if (!opts || typeof opts !== 'object' || Array.isArray(opts)) return null;
+    const obj = opts as Record<string, unknown>;
+    const trues = Object.entries(obj)
+      .filter(([, v]) => v === true)
+      .map(([k]) => [k, true] as const);
+    if (trues.length === 0) return null;
+    return Object.fromEntries(trues);
+  };
   
   for (const [key, value] of Object.entries(enabledModules)) {
     if (!value) continue;
@@ -78,8 +106,14 @@ export function enabledModulesToRows(
     if (!isEnabled) continue;
     
     const options = typeof value === 'object' && 'options' in value && value.options
-      ? value.options
+      ? filterTrueOptions(value.options)
       : null;
+
+    // Si quelqu'un a laissé un module "activé" mais toutes les options à false, on n'écrit rien.
+    // (évite de recréer des rows legacy incohérentes)
+    if (typeof value === 'object' && 'options' in value && value.options && options === null) {
+      continue;
+    }
     
     rows.push({
       user_id: userId,
