@@ -14,6 +14,62 @@ export type Database = {
   }
   public: {
     Tables: {
+      agency_admin_documents: {
+        Row: {
+          agency_id: string
+          document_type: string
+          expiry_date: string | null
+          file_name: string | null
+          file_path: string | null
+          file_size: number | null
+          id: string
+          label: string
+          mime_type: string | null
+          notes: string | null
+          updated_at: string | null
+          uploaded_at: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          agency_id: string
+          document_type: string
+          expiry_date?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          id?: string
+          label: string
+          mime_type?: string | null
+          notes?: string | null
+          updated_at?: string | null
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          agency_id?: string
+          document_type?: string
+          expiry_date?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          id?: string
+          label?: string
+          mime_type?: string | null
+          notes?: string | null
+          updated_at?: string | null
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_admin_documents_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agency_commercial_profile: {
         Row: {
           agence_nom_long: string | null
