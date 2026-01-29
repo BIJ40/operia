@@ -10,7 +10,7 @@ import { lazy, Suspense, useMemo, useState, useCallback, useEffect } from 'react
 import { useSearchParams } from 'react-router-dom';
 import { 
   Home, BarChart3, ClipboardList, 
-  Car, MoreHorizontal, Ticket, HelpCircle,
+  MoreHorizontal, Ticket, HelpCircle,
   Loader2, BookOpen, Shield, User, LogOut, Settings, Eye
 } from 'lucide-react';
 import { 
@@ -68,7 +68,6 @@ const DashboardContent = lazy(() => import('@/pages/DashboardStatic'));
 const DemoAccueilContent = lazy(() => import('@/components/home/DemoAccueilContent').then(m => ({ default: m.DemoAccueilContent })));
 const StatsTabContent = lazy(() => import('@/components/unified/tabs/StatsTabContent'));
 const CollaborateursTabContent = lazy(() => import('@/components/unified/tabs/CollaborateursTabContent'));
-const VehiculesTabContent = lazy(() => import('@/components/unified/tabs/VehiculesTabContent'));
 const DiversTabContent = lazy(() => import('@/components/unified/tabs/DiversTabContent'));
 const GuidesTabContent = lazy(() => import('@/components/unified/tabs/GuidesTabContent'));
 const TicketingTabContent = lazy(() => import('@/components/unified/tabs/TicketingTabContent'));
@@ -80,7 +79,6 @@ type UnifiedTab =
   | 'accueil' 
   | 'stats' 
   | 'salaries' 
-  | 'parc' 
   | 'outils' 
   | 'guides'
   | 'ticketing' 
@@ -95,7 +93,8 @@ interface TabConfig {
 }
 
 // Ordre par défaut des onglets (hors Accueil qui est toujours premier)
-const DEFAULT_TAB_ORDER: UnifiedTab[] = ['stats', 'salaries', 'parc', 'outils', 'guides', 'ticketing', 'aide', 'admin'];
+// Outils vient après Salariés, Parc est maintenant sous Outils
+const DEFAULT_TAB_ORDER: UnifiedTab[] = ['stats', 'salaries', 'outils', 'guides', 'ticketing', 'aide', 'admin'];
 
 function LoadingFallback() {
   return (
@@ -151,11 +150,11 @@ function UnifiedWorkspaceContent() {
   
   // Configuration des onglets avec permissions
   // Chaque onglet a un requiresOption qui définit le module/option nécessaire
+  // Parc est maintenant intégré sous Outils
   const allTabs: TabConfig[] = useMemo(() => [
     { id: 'accueil', label: 'Accueil', icon: Home },
     { id: 'stats', label: 'Stats', icon: BarChart3, requiresOption: { module: 'pilotage_agence', option: 'stats_hub' } },
     { id: 'salaries', label: 'Salariés', icon: ClipboardList, requiresOption: { module: 'pilotage_agence' } },
-    { id: 'parc', label: 'Parc', icon: Car, requiresOption: { module: 'pilotage_agence' } },
     { id: 'outils', label: 'Outils', icon: MoreHorizontal, requiresOption: { module: 'pilotage_agence' } },
     { id: 'guides', label: 'Guides', icon: BookOpen, requiresOption: { module: 'help_academy' } },
     { id: 'ticketing', label: 'Ticketing', icon: Ticket, requiresOption: { module: 'apogee_tickets' } },
@@ -330,16 +329,16 @@ function UnifiedWorkspaceContent() {
     );
   }
 
+  // Couleurs distinctes pour chaque onglet (aucune répétition)
   const unifiedTabAccent: Record<UnifiedTab, AccentThemeKey> = {
     accueil: 'blue',
     stats: 'pink',
     salaries: 'green',
-    parc: 'orange',
     outils: 'purple',
     guides: 'teal',
     ticketing: 'orange',
-    aide: 'blue',
-    admin: 'purple',
+    aide: 'neutral',
+    admin: 'neutral',
   };
   
   return (
@@ -489,10 +488,6 @@ function UnifiedWorkspaceContent() {
                 
                 <TabsContent value="salaries" className="mt-0">
                   <CollaborateursTabContent />
-                </TabsContent>
-                
-                <TabsContent value="parc" className="mt-0">
-                  <VehiculesTabContent />
                 </TabsContent>
                 
                 <TabsContent value="outils" className="mt-0">
