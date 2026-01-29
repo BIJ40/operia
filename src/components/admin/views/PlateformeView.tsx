@@ -1,25 +1,23 @@
 /**
- * PlateformeView - Vue Plateforme (Santé, Sitemap, Hidden, Flow)
+ * PlateformeView - Vue Plateforme (Santé, Modules, Sitemap, Flow)
  */
 
 import { lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { FolderTabsList, FolderContentContainer, FolderTabConfig } from '@/components/ui/folder-tabs';
-import { Activity, Map, FlaskConical, GitBranch, ToggleRight, Loader2 } from 'lucide-react';
+import { Activity, Map, GitBranch, ToggleRight, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { MaintenanceModeCard } from '@/components/admin/MaintenanceModeCard';
 
 const AdminSystemHealth = lazy(() => import('@/pages/AdminSystemHealth'));
 const AdminFeatureFlags = lazy(() => import('@/pages/admin/AdminFeatureFlags'));
-const HiddenFeaturesPage = lazy(() => import('@/pages/admin/HiddenFeaturesPage'));
 const AdminSitemap = lazy(() => import('@/pages/admin/AdminSitemap'));
 const AdminFlow = lazy(() => import('@/pages/admin/AdminFlow'));
 
 const SUB_TABS: FolderTabConfig[] = [
   { id: 'health', label: 'Santé', icon: Activity },
   { id: 'modules', label: 'Modules', icon: ToggleRight },
-  { id: 'lab', label: 'Laboratoire', icon: FlaskConical },
   { id: 'sitemap', label: 'Sitemap', icon: Map },
   { id: 'flow', label: 'Flow', icon: GitBranch },
 ];
@@ -64,12 +62,6 @@ export function PlateformeView() {
           <TabsContent value="modules" className="mt-0 focus-visible:outline-none">
             <Suspense fallback={<LoadingFallback />}>
               <AdminFeatureFlags />
-            </Suspense>
-          </TabsContent>
-
-          <TabsContent value="lab" className="mt-0 focus-visible:outline-none">
-            <Suspense fallback={<LoadingFallback />}>
-              <HiddenFeaturesPage />
             </Suspense>
           </TabsContent>
 

@@ -162,9 +162,21 @@ export function groupFlagsByGroup(flags: FeatureFlag[]): Record<string, FeatureF
 }
 
 /**
- * Labels pour les groupes de modules
+ * Labels pour les groupes de modules (alignés avec les onglets UI)
  */
 export const MODULE_GROUP_LABELS: Record<string, string> = {
+  '01_agence': 'Mon Agence',
+  '02_stats': 'Statistiques',
+  '03_rh': 'Salariés (RH)',
+  '04_parc': 'Parc & Équipements',
+  '05_divers': 'Divers',
+  '06_guides': 'Guides',
+  '07_ticketing': 'Ticketing',
+  '08_aide': 'Aide',
+  '09_reseau': 'Réseau Franchiseur',
+  '10_admin': 'Administration',
+  '11_transversal': 'Transversal',
+  // Legacy (pour rétrocompatibilité)
   rh: 'Ressources Humaines',
   pilotage: 'Pilotage Agence',
   support: 'Support',

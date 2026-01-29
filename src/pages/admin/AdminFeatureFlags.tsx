@@ -46,6 +46,19 @@ import {
 
 
 const GROUP_COLORS: Record<string, string> = {
+  // Nouveaux groupes alignés avec navigation
+  '01_agence': 'bg-blue-500/10 text-blue-700 border-blue-200',
+  '02_stats': 'bg-emerald-500/10 text-emerald-700 border-emerald-200',
+  '03_rh': 'bg-violet-500/10 text-violet-700 border-violet-200',
+  '04_parc': 'bg-amber-500/10 text-amber-700 border-amber-200',
+  '05_divers': 'bg-cyan-500/10 text-cyan-700 border-cyan-200',
+  '06_guides': 'bg-orange-500/10 text-orange-700 border-orange-200',
+  '07_ticketing': 'bg-pink-500/10 text-pink-700 border-pink-200',
+  '08_aide': 'bg-green-500/10 text-green-700 border-green-200',
+  '09_reseau': 'bg-rose-500/10 text-rose-700 border-rose-200',
+  '10_admin': 'bg-slate-500/10 text-slate-700 border-slate-200',
+  '11_transversal': 'bg-indigo-500/10 text-indigo-700 border-indigo-200',
+  // Legacy
   rh: 'bg-violet-500/10 text-violet-700 border-violet-200',
   pilotage: 'bg-blue-500/10 text-blue-700 border-blue-200',
   support: 'bg-green-500/10 text-green-700 border-green-200',
