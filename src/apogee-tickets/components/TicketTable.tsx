@@ -318,65 +318,7 @@ export function TicketTable({
     }
   };
 
-  // Raccourcis clavier - NE PAS intercepter si l'utilisateur est dans un champ de saisie
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    // Ignorer si on est dans un input, textarea, select ou élément contentEditable
-    const target = e.target as HTMLElement;
-    const tagName = target.tagName.toLowerCase();
-    const isEditable = tagName === 'input' || 
-                       tagName === 'textarea' || 
-                       tagName === 'select' ||
-                       target.isContentEditable ||
-                       target.closest('[role="combobox"]') ||
-                       target.closest('[role="listbox"]') ||
-                       target.closest('[data-radix-popper-content-wrapper]');
-    
-    if (isEditable) return;
-    
-    if (!selectedRowId) return;
-    const ticket = paginatedTickets.find(t => t.id === selectedRowId);
-    if (!ticket) return;
-
-    const allowedTransitions = allowedTransitionsMap[ticket.kanban_status] || [];
-
-    switch (e.key) {
-      case '1':
-      case 'Enter':
-        e.preventDefault();
-        onTicketClick(ticket);
-        break;
-      case '2':
-        e.preventDefault();
-        if (allowedTransitions.length > 0 || roleInfo.isPlatformAdmin) {
-          const selectRef = statusSelectRefs.current.get(selectedRowId);
-          selectRef?.click();
-        }
-        break;
-      case 'Escape':
-        e.preventDefault();
-        setSelectedRowId(null);
-        break;
-      case 'ArrowDown':
-        e.preventDefault();
-        const currentIndex = paginatedTickets.findIndex(t => t.id === selectedRowId);
-        if (currentIndex < paginatedTickets.length - 1) {
-          setSelectedRowId(paginatedTickets[currentIndex + 1].id);
-        }
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        const currentIdx = paginatedTickets.findIndex(t => t.id === selectedRowId);
-        if (currentIdx > 0) {
-          setSelectedRowId(paginatedTickets[currentIdx - 1].id);
-        }
-        break;
-    }
-  }, [selectedRowId, paginatedTickets, allowedTransitionsMap, roleInfo, onTicketClick]);
-
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
+  // Raccourcis clavier supprimés à la demande de l'utilisateur
 
   // Rendu icône de tri
   const renderSortIcon = (column: SortColumn) => {
@@ -399,9 +341,6 @@ export function TicketTable({
           {selectedRowId && (
             <Badge variant="outline" className="text-xs rounded-full border-sky-200 bg-sky-50/50 dark:border-sky-800 dark:bg-sky-900/20 text-sky-700 dark:text-sky-300">
               Sélectionné: APO-{paginatedTickets.find(t => t.id === selectedRowId)?.ticket_number}
-              <span className="ml-2 text-muted-foreground">
-                (1=détail, 2=statut, ↑↓=navigation)
-              </span>
             </Badge>
           )}
         </div>
