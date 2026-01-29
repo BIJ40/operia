@@ -32,7 +32,7 @@ export function TicketTabBar({
   const activeBorderColor = isListeActive ? 'border-sky-400 dark:border-sky-500' : 'border-violet-400 dark:border-violet-500';
 
   return (
-    <div className="flex items-end gap-0 pl-2 pt-2 pr-2 relative overflow-hidden">
+    <div className="flex items-end gap-0 pl-2 pt-2 pr-2 pb-1 relative overflow-hidden">
       {/* Bordure horizontale du bas - z-0 pour passer DERRIÈRE les onglets */}
       <div className={cn(
         "absolute bottom-0 left-2 right-2 h-[2px] z-0",
@@ -51,10 +51,6 @@ export function TicketTabBar({
       >
         <List className={cn("h-4 w-4", isListeActive && "text-sky-600 dark:text-sky-400")} />
         LISTE
-        {/* Masque la ligne de fond sous l'onglet actif */}
-        {isListeActive && (
-          <div className="absolute -bottom-[2px] left-0 right-0 h-[2px] bg-sky-50 dark:bg-sky-950/50" />
-        )}
       </button>
       
       {/* Séparateur vertical */}
@@ -66,7 +62,12 @@ export function TicketTabBar({
       
       {/* Onglets tickets + indicateurs */}
       <div className="flex items-end gap-1 flex-1 min-w-0">
-        <div className="flex items-end gap-1 overflow-x-auto">
+        <div
+          className={cn(
+            "flex items-end gap-1 flex-1 min-w-0 overflow-x-auto",
+            "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          )}
+        >
           {tabs.map((tab) => {
             const isActive = activeTabId === tab.id;
             return (
@@ -100,17 +101,13 @@ export function TicketTabBar({
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
-                {/* Masque la ligne de fond sous l'onglet actif */}
-                {isActive && (
-                  <div className="absolute -bottom-[2px] left-0 right-0 h-[2px] bg-violet-50 dark:bg-violet-950/50" />
-                )}
               </button>
             );
           })}
         </div>
         
         {/* Indicateur de sauvegarde + fermer tout - maintenant dans le flux */}
-        <div className="flex items-center gap-2 shrink-0 mb-1 ml-2">
+        <div className="flex items-center gap-2 shrink-0 mb-1 ml-1">
           {isSaving ? (
             <span className="flex items-center gap-1 text-xs text-muted-foreground">
               <Loader2 className="h-3 w-3 animate-spin" />
@@ -123,7 +120,7 @@ export function TicketTabBar({
             <Button
               variant="ghost"
               size="sm"
-              className="text-xs text-muted-foreground hover:text-destructive h-6 px-2"
+              className="text-xs text-muted-foreground hover:text-destructive h-6 px-1.5"
               onClick={onCloseAll}
             >
               Tout fermer
