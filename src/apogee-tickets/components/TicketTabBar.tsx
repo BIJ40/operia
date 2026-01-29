@@ -32,30 +32,12 @@ export function TicketTabBar({
   const activeBorderColor = isListeActive ? 'border-sky-400 dark:border-sky-500' : 'border-violet-400 dark:border-violet-500';
 
   return (
-    <div className="flex items-end gap-0 pl-2 pt-2 relative">
+    <div className="flex items-end gap-0 pl-2 pt-2 pr-2 relative overflow-hidden">
       {/* Bordure horizontale du bas - z-0 pour passer DERRIÈRE les onglets */}
       <div className={cn(
-        "absolute bottom-0 left-2 h-[2px] z-0",
+        "absolute bottom-0 left-2 right-2 h-[2px] z-0",
         isListeActive ? "bg-sky-400 dark:bg-sky-500" : "bg-violet-400 dark:bg-violet-500"
-      )} style={{ right: '20px' }} />
-      
-      {/* Coin arrondi en bas à droite - utilise border pour faire le L arrondi */}
-      <div 
-        className={cn(
-          "absolute z-0",
-          isListeActive ? "border-sky-400 dark:border-sky-500" : "border-violet-400 dark:border-violet-500"
-        )}
-        style={{
-          bottom: 0,
-          right: 8,
-          width: 12,
-          height: 16,
-          borderRight: '2px solid',
-          borderBottom: '2px solid',
-          borderBottomRightRadius: 12,
-          borderColor: 'inherit'
-        }}
-      />
+      )} />
       
       {/* Onglet LISTE - toujours visible et fixe */}
       <button
@@ -82,71 +64,72 @@ export function TicketTabBar({
         </div>
       )}
       
-      {/* Onglets tickets */}
-      <div className="flex items-end gap-1 flex-1 overflow-x-auto">
-        {tabs.map((tab) => {
-          const isActive = activeTabId === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => onTabClick(tab.id)}
-              className={cn(
-                "group flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all shrink-0 rounded-t-xl relative z-10",
-                isActive
-                  ? "bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 border-2 border-b-0 border-violet-400 dark:border-violet-500"
-                  : "bg-slate-100/60 dark:bg-slate-700/40 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/70 dark:hover:bg-slate-700/60"
-              )}
-            >
-              <span className={cn(
-                "font-mono text-xs",
-                isActive && "text-violet-700 dark:text-violet-300 font-semibold"
-              )}>
-                {tab.label}
-              </span>
+      {/* Onglets tickets + indicateurs */}
+      <div className="flex items-end gap-1 flex-1 min-w-0">
+        <div className="flex items-end gap-1 overflow-x-auto">
+          {tabs.map((tab) => {
+            const isActive = activeTabId === tab.id;
+            return (
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onTabClose(tab.id);
-                }}
+                key={tab.id}
+                onClick={() => onTabClick(tab.id)}
                 className={cn(
-                  "p-0.5 rounded-full hover:bg-destructive/20 hover:text-destructive transition-colors",
-                  "opacity-0 group-hover:opacity-100 focus:opacity-100",
-                  isActive && "opacity-70"
+                  "group flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all shrink-0 rounded-t-xl relative z-10",
+                  isActive
+                    ? "bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 border-2 border-b-0 border-violet-400 dark:border-violet-500"
+                    : "bg-slate-100/60 dark:bg-slate-700/40 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/70 dark:hover:bg-slate-700/60"
                 )}
-                title="Fermer"
               >
-                <X className="h-3.5 w-3.5" />
+                <span className={cn(
+                  "font-mono text-xs",
+                  isActive && "text-violet-700 dark:text-violet-300 font-semibold"
+                )}>
+                  {tab.label}
+                </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onTabClose(tab.id);
+                  }}
+                  className={cn(
+                    "p-0.5 rounded-full hover:bg-destructive/20 hover:text-destructive transition-colors",
+                    "opacity-0 group-hover:opacity-100 focus:opacity-100",
+                    isActive && "opacity-70"
+                  )}
+                  title="Fermer"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+                {/* Masque la ligne de fond sous l'onglet actif */}
+                {isActive && (
+                  <div className="absolute -bottom-[2px] left-0 right-0 h-[2px] bg-violet-50 dark:bg-violet-950/50" />
+                )}
               </button>
-              {/* Masque la ligne de fond sous l'onglet actif */}
-              {isActive && (
-                <div className="absolute -bottom-[2px] left-0 right-0 h-[2px] bg-violet-50 dark:bg-violet-950/50" />
-              )}
-            </button>
-          );
-        })}
-      </div>
-      
-      {/* Indicateur de sauvegarde + fermer tout */}
-      <div className="flex items-center gap-2 ml-auto px-3 shrink-0 mb-1">
-        {isSaving ? (
-          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Loader2 className="h-3 w-3 animate-spin" />
-            Sauvegarde...
-          </span>
-        ) : tabs.length > 0 ? (
-          <span className="text-xs text-green-600">✓</span>
-        ) : null}
+            );
+          })}
+        </div>
         
-        {tabs.length > 1 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-xs text-muted-foreground hover:text-destructive h-6 px-2"
-            onClick={onCloseAll}
-          >
-            Tout fermer
-          </Button>
-        )}
+        {/* Indicateur de sauvegarde + fermer tout - maintenant dans le flux */}
+        <div className="flex items-center gap-2 shrink-0 mb-1 ml-2">
+          {isSaving ? (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Loader2 className="h-3 w-3 animate-spin" />
+            </span>
+          ) : tabs.length > 0 ? (
+            <span className="text-xs text-green-600">✓</span>
+          ) : null}
+          
+          {tabs.length > 1 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-muted-foreground hover:text-destructive h-6 px-2"
+              onClick={onCloseAll}
+            >
+              Tout fermer
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
