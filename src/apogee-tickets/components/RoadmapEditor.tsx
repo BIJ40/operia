@@ -34,8 +34,8 @@ const MONTHS = [
 ];
 
 function getYearOptions(): number[] {
-  const currentYear = new Date().getFullYear();
-  return [currentYear, currentYear + 1, currentYear + 2];
+  // Par défaut on commence à 2026
+  return [2025, 2026, 2027, 2028];
 }
 
 export function RoadmapEditor({
@@ -46,22 +46,22 @@ export function RoadmapEditor({
   disabled = false,
   compact = false,
 }: RoadmapEditorProps) {
-  const currentYear = new Date().getFullYear();
+  const defaultYear = 2026; // Année par défaut
   const [isEnabled, setIsEnabled] = useState(enabled ?? false);
   const [selectedMonth, setSelectedMonth] = useState<number | null>(month ?? null);
-  const [selectedYear, setSelectedYear] = useState<number | null>(year ?? currentYear);
+  const [selectedYear, setSelectedYear] = useState<number | null>(year ?? defaultYear);
 
   useEffect(() => {
     setIsEnabled(enabled ?? false);
     setSelectedMonth(month ?? null);
-    setSelectedYear(year ?? currentYear);
-  }, [enabled, month, year, currentYear]);
+    setSelectedYear(year ?? defaultYear);
+  }, [enabled, month, year]);
 
   const handleEnabledChange = (checked: boolean) => {
     setIsEnabled(checked);
     if (checked) {
-      // Par défaut: année en cours, pas de mois
-      const newYear = selectedYear ?? currentYear;
+      // Par défaut: 2026, pas de mois
+      const newYear = selectedYear ?? defaultYear;
       setSelectedYear(newYear);
       onChange(true, selectedMonth, newYear);
     } else {
@@ -151,7 +151,7 @@ export function RoadmapEditor({
           </Select>
 
           <Select
-            value={selectedYear?.toString() ?? currentYear.toString()}
+            value={selectedYear?.toString() ?? defaultYear.toString()}
             onValueChange={handleYearChange}
             disabled={disabled}
           >

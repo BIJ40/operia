@@ -320,20 +320,26 @@ export function TicketInlinePanel({
 
   return (
     <div className="flex flex-col h-full bg-background border rounded-lg overflow-hidden">
-      {/* Header */}
-      <div className="p-4 border-b bg-muted/30 space-y-2">
+      {/* ═══════════════════════════════════════════════════════════════════
+          BLOC: HEADER DU TICKET
+          Contient: numéro, statut kanban, module, priorité, corbeille, fermer
+         ═══════════════════════════════════════════════════════════════════ */}
+      <div className="p-3 border-b-2 border-primary/20 bg-gradient-to-r from-muted/50 to-muted/30 shadow-sm">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="font-mono text-sm font-semibold">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Numéro du ticket */}
+            <Badge variant="outline" className="font-mono text-sm font-bold bg-background shadow-sm">
               {ticketRef}
             </Badge>
+            
+            {/* Statut Kanban */}
             <Select
               value={ticket.kanban_status}
               onValueChange={handleStatusChange}
               disabled={!canManage}
             >
               <SelectTrigger 
-                className="h-8 w-auto min-w-[130px] text-sm font-medium gap-2"
+                className="h-8 w-auto min-w-[130px] text-sm font-medium gap-2 shadow-sm"
                 style={{ 
                   backgroundColor: `${currentStatusColor}20`,
                   borderColor: currentStatusColor
@@ -356,20 +362,25 @@ export function TicketInlinePanel({
                 ))}
               </SelectContent>
             </Select>
+            
+            {/* Tag Module */}
             {ticket.module && (
-              <Badge className="bg-blue-500 text-white text-xs">
+              <Badge className="bg-blue-500 text-white text-xs shadow-sm">
                 {ticket.apogee_modules?.label || ticket.module}
               </Badge>
             )}
+            
+            {/* Tag Priorité */}
             <HeatPriorityBadge priority={ticket.heat_priority} size="sm" />
           </div>
           
-          <div className="flex items-center gap-2">
+          {/* Actions: Corbeille & Fermer */}
+          <div className="flex items-center gap-1">
             {onDelete && canManage && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button size="sm" variant="ghost" className="h-7 text-destructive hover:text-destructive hover:bg-destructive/10">
-                    <Trash2 className="h-3.5 w-3.5" />
+                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10">
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -394,15 +405,15 @@ export function TicketInlinePanel({
                 </AlertDialogContent>
               </AlertDialog>
             )}
-            <Button size="sm" variant="ghost" className="h-7" onClick={onClose}>
+            <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
           </div>
         </div>
         
-        {/* Qualification badges */}
+        {/* Badges de qualification */}
         {ticket.is_qualified && (
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-primary/10">
             <Badge className="bg-green-600 text-white flex items-center gap-1">
               <CheckCircle2 className="h-3 w-3" />
               Qualifié
@@ -416,62 +427,80 @@ export function TicketInlinePanel({
         )}
       </div>
 
-      {/* Tabs Content */}
+      {/* ═══════════════════════════════════════════════════════════════════
+          BLOC: ONGLETS DE NAVIGATION
+          Contient: Ticket, Historique, Docs, Support
+         ═══════════════════════════════════════════════════════════════════ */}
       <Tabs defaultValue="main" className="flex-1 flex flex-col overflow-hidden">
-        <TabsList className="mx-4 mt-2 w-auto justify-start">
-          <TabsTrigger value="main">Ticket</TabsTrigger>
-          <TabsTrigger value="timeline" className="flex items-center gap-1">
-            <History className="h-3 w-3" />
-            Historique
-          </TabsTrigger>
-          <TabsTrigger value="documents" className="flex items-center gap-1">
-            <Paperclip className="h-3 w-3" />
-            Docs ({filesCount})
-          </TabsTrigger>
-          {ticket.support_initiator_user_id && (
-            <TabsTrigger value="support-exchanges" className="flex items-center gap-1">
-              <Send className="h-3 w-3" />
-              Support
+        <div className="px-4 pt-3 pb-0 border-b bg-muted/20">
+          <TabsList className="w-auto h-10 p-1 bg-muted/60 rounded-lg shadow-inner">
+            <TabsTrigger value="main" className="data-[state=active]:bg-background data-[state=active]:shadow-sm font-medium px-4">
+              Ticket
             </TabsTrigger>
-          )}
-        </TabsList>
+            <TabsTrigger value="timeline" className="flex items-center gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm font-medium px-4">
+              <History className="h-3.5 w-3.5" />
+              Historique
+            </TabsTrigger>
+            <TabsTrigger value="documents" className="flex items-center gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm font-medium px-4">
+              <Paperclip className="h-3.5 w-3.5" />
+              Docs ({filesCount})
+            </TabsTrigger>
+            {ticket.support_initiator_user_id && (
+              <TabsTrigger value="support-exchanges" className="flex items-center gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm font-medium px-4">
+                <Send className="h-3.5 w-3.5" />
+                Support
+              </TabsTrigger>
+            )}
+          </TabsList>
+        </div>
 
         {/* Main Tab */}
         <TabsContent value="main" className="flex-1 overflow-hidden m-0">
           <ScrollArea className="h-full">
             <div className="p-4 space-y-4">
-              {/* Title row with Tags/Roadmap top-right */}
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
+              {/* ═══════════════════════════════════════════════════════════
+                  LIGNE: TITRE + TAGS + ROADMAP (sur une même ligne)
+                 ═══════════════════════════════════════════════════════════ */}
+              <div className="flex items-end gap-3">
+                {/* Titre (50% de largeur) */}
+                <div className="w-1/2 space-y-1">
                   <label className="text-xs font-medium text-muted-foreground uppercase">Titre</label>
-                  <div className="flex items-center gap-3">
-                    <TagSelector
-                      selectedTags={ticket.impact_tags || []}
-                      onTagsChange={(tags) => handleFieldUpdate('impact_tags', tags)}
-                      disabled={!canEditDevFields}
-                      compact
-                    />
-                    <RoadmapEditor
-                      enabled={ticket.roadmap_enabled}
-                      month={ticket.roadmap_month}
-                      year={ticket.roadmap_year}
-                      onChange={(enabled, month, year) => onQueueChange(ticket.id, {
-                        roadmap_enabled: enabled,
-                        roadmap_month: month,
-                        roadmap_year: year,
-                      })}
-                      disabled={!canEditDevFields}
-                      compact
-                    />
-                  </div>
+                  <Input
+                    value={localTitle}
+                    onChange={(e) => setLocalTitle(e.target.value)}
+                    onBlur={handleTitleBlur}
+                    className="text-sm font-semibold"
+                    disabled={!canManage}
+                  />
                 </div>
-                <Input
-                  value={localTitle}
-                  onChange={(e) => setLocalTitle(e.target.value)}
-                  onBlur={handleTitleBlur}
-                  className="text-sm font-semibold"
-                  disabled={!canManage}
-                />
+                
+                {/* Tags */}
+                <div className="flex-1 space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground uppercase">Tags</label>
+                  <TagSelector
+                    selectedTags={ticket.impact_tags || []}
+                    onTagsChange={(tags) => handleFieldUpdate('impact_tags', tags)}
+                    disabled={!canEditDevFields}
+                    compact
+                  />
+                </div>
+                
+                {/* Roadmap */}
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground uppercase">Roadmap</label>
+                  <RoadmapEditor
+                    enabled={ticket.roadmap_enabled}
+                    month={ticket.roadmap_month}
+                    year={ticket.roadmap_year}
+                    onChange={(enabled, month, year) => onQueueChange(ticket.id, {
+                      roadmap_enabled: enabled,
+                      roadmap_month: month,
+                      roadmap_year: year,
+                    })}
+                    disabled={!canEditDevFields}
+                    compact
+                  />
+                </div>
               </div>
 
               {/* Description */}
