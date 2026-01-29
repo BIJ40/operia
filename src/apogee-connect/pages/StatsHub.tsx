@@ -88,10 +88,6 @@ function StatsHubContent() {
         </AnimatePresence>
       </Tabs>
 
-      {/* Keyboard hint */}
-      <div className="text-center text-xs text-muted-foreground">
-        Touches 1-6 pour changer d'onglet
-      </div>
     </div>
   );
 }

@@ -35,21 +35,6 @@ export function StatsHubProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Keyboard shortcuts for tabs (1-6)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-      const num = parseInt(e.key);
-      if (num >= 1 && num <= 6) {
-        setActiveTab(VALID_TABS[num - 1]);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [setActiveTab]);
 
   return (
     <StatsHubContext.Provider value={{ activeTab, setActiveTab }}>
