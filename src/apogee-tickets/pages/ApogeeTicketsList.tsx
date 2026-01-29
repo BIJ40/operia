@@ -437,7 +437,7 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
                   roleInfo={roleInfo}
                   allowedTransitionsMap={allowedTransitionsMap}
                   onTicketClick={handleTicketClick}
-                  onTicketUpdate={() => {}}
+                  onTicketUpdate={handleTicketQueueChange}
                 />
               )}
             </div>
