@@ -345,6 +345,14 @@ export function TicketInlinePanel({
             
             {/* Tag Origine (lecture seule) */}
             <OrigineBadge origine={ticket.reported_by} size="default" />
+            
+            {/* Badge Roadmap si activé */}
+            {ticket.roadmap_enabled && (
+              <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30 font-medium flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Roadmap: {ticket.roadmap_month ? String(ticket.roadmap_month).padStart(2, '0') : '--'}/{ticket.roadmap_year ? String(ticket.roadmap_year).slice(-2) : '--'}
+              </Badge>
+            )}
           </div>
           
           {/* Actions: Corbeille & Fermer */}
