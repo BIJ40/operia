@@ -5,6 +5,7 @@
  */
 
 import { useMemo, useState, useEffect } from 'react';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import {
@@ -260,7 +261,12 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
       />
 
       {/* Zone de contenu: soit la liste, soit le ticket actif */}
-      <div className="flex-1 overflow-hidden">
+      <div className={cn(
+        "flex-1 overflow-hidden border-t-2 bg-white dark:bg-slate-900 rounded-t-none",
+        showingList 
+          ? "border-sky-300 dark:border-sky-600" 
+          : "border-violet-300 dark:border-violet-600"
+      )}>
         {showingList ? (
           /* Vue Liste */
           <div className="h-full flex flex-col">
