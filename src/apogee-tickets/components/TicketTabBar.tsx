@@ -33,16 +33,16 @@ export function TicketTabBar({
 
   return (
     <div className="flex items-end gap-0 pl-2 pt-2 relative">
-      {/* Bordure horizontale du bas (sous les onglets inactifs) */}
+      {/* Bordure horizontale du bas - z-0 pour passer DERRIÈRE les onglets */}
       <div className={cn(
-        "absolute bottom-0 left-0 h-[2px]",
+        "absolute bottom-0 left-2 h-[2px] z-0",
         isListeActive ? "bg-sky-400 dark:bg-sky-500" : "bg-violet-400 dark:bg-violet-500"
-      )} style={{ right: '12px' }} />
+      )} style={{ right: '8px' }} />
       
-      {/* Coin arrondi à droite - bordure verticale + arrondi */}
+      {/* Bordure verticale droite */}
       <div className={cn(
-        "absolute bottom-0 right-2 w-3 h-4 border-r-2 border-b-2 rounded-br-xl",
-        activeBorderColor
+        "absolute bottom-0 right-2 w-[2px] h-4 z-0",
+        isListeActive ? "bg-sky-400 dark:bg-sky-500" : "bg-violet-400 dark:bg-violet-500"
       )} />
       
       {/* Onglet LISTE - toujours visible et fixe */}
