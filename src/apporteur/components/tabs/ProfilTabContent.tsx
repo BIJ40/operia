@@ -41,83 +41,107 @@ export default function ProfilTabContent() {
         </p>
       </div>
 
-      {/* Profile Card */}
-      <Card className="rounded-2xl">
-        <CardHeader>
-          <CardTitle className="text-lg">Informations personnelles</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-              <User className="w-8 h-8 text-primary" />
+      {/* Section Utilisateur */}
+      <div className="space-y-4">
+        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+          <User className="w-4 h-4" />
+          Mes informations
+        </h2>
+        
+        <Card className="rounded-2xl border-2 border-primary/20">
+          <CardContent className="pt-6 space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                <User className="w-8 h-8 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg">
+                  {apporteurUser?.firstName || 'Utilisateur'} {apporteurUser?.lastName || ''}
+                </h3>
+                <Badge variant="outline" className="mt-1">
+                  {apporteurUser?.role === 'manager' ? 'Gestionnaire' : 'Lecteur'}
+                </Badge>
+              </div>
             </div>
-            <div>
-              <h3 className="font-semibold text-lg">
-                {apporteurUser?.firstName || 'Utilisateur'} {apporteurUser?.lastName || ''}
-              </h3>
-              <Badge variant="outline" className="mt-1">
-                {apporteurUser?.role === 'manager' ? 'Gestionnaire' : 'Lecteur'}
-              </Badge>
-            </div>
-          </div>
 
-          <div className="border-t pt-4 space-y-3">
-            <div className="flex items-center gap-3">
-              <Mail className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm">{apporteurUser?.email || user?.email || 'Non renseigné'}</span>
+            <div className="border-t pt-4 space-y-3">
+              <div className="flex items-center gap-3">
+                <Mail className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm">{apporteurUser?.email || user?.email || 'Non renseigné'}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Building2 className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm">{apporteurUser?.apporteurName || 'Organisation non définie'}</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Security Card */}
-      <Card className="rounded-2xl">
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Shield className="w-5 h-5" />
-            Sécurité
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {devBypass ? (
-            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
-              <p className="text-sm text-amber-800 dark:text-amber-200">
-                Mode développement actif — déconnexion désactivée
-              </p>
-            </div>
-          ) : (
-            <Button 
-              variant="outline" 
-              onClick={handleLogout}
-              className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl"
-            >
-              <LogOut className="w-4 h-4" />
-              Se déconnecter
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+        {/* Security Card */}
+        <Card className="rounded-2xl">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Shield className="w-4 h-4" />
+              Sécurité
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {devBypass ? (
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
+                <p className="text-sm text-amber-800 dark:text-amber-200">
+                  Mode développement actif — déconnexion désactivée
+                </p>
+              </div>
+            ) : (
+              <Button 
+                variant="outline" 
+                onClick={handleLogout}
+                className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl"
+              >
+                <LogOut className="w-4 h-4" />
+                Se déconnecter
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Contact Card */}
-      <Card className="rounded-2xl bg-muted/30">
-        <CardContent className="py-6">
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-              <Phone className="w-5 h-5 text-primary" />
+      {/* Section Organisation */}
+      <div className="space-y-4">
+        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+          <Building2 className="w-4 h-4" />
+          Mon organisation
+        </h2>
+        
+        <Card className="rounded-2xl border-2 border-secondary/30 bg-secondary/5">
+          <CardContent className="pt-6 space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-secondary/20 flex items-center justify-center">
+                <Building2 className="w-7 h-7 text-secondary-foreground" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg">
+                  {apporteurUser?.apporteurName || 'Organisation non définie'}
+                </h3>
+                <p className="text-sm text-muted-foreground">Partenaire HelpConfort</p>
+              </div>
             </div>
-            <div>
-              <h4 className="font-semibold">Besoin d'aide ?</h4>
-              <p className="text-sm text-muted-foreground mt-1">
-                Contactez votre agence HelpConfort pour toute question concernant votre compte ou vos dossiers.
-              </p>
+          </CardContent>
+        </Card>
+
+        {/* Contact Card */}
+        <Card className="rounded-2xl bg-muted/30">
+          <CardContent className="py-5">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <Phone className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h4 className="font-semibold">Besoin d'aide ?</h4>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Contactez votre agence HelpConfort pour toute question concernant votre compte ou vos dossiers.
+                </p>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
