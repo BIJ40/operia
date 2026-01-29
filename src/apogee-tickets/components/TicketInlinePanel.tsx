@@ -557,16 +557,14 @@ export function TicketInlinePanel({
                     />
                   </div>
                 </div>
-                <div className="flex-1 min-w-[140px]">
+                <div className="w-[180px] shrink-0">
                   <label className="text-xs text-muted-foreground">Porteur</label>
-                  <div className="mt-1">
-                    <OwnerSideSlider
-                      value={ownerSideToSliderValue(ticket.owner_side)}
-                      onChange={(v) => handleFieldUpdate('owner_side', sliderValueToOwnerSide(v))}
-                      disabled={!canEditDevFields}
-                      compact
-                    />
-                  </div>
+                  <OwnerSideSlider
+                    value={ownerSideToSliderValue(ticket.owner_side)}
+                    onChange={(v) => handleFieldUpdate('owner_side', sliderValueToOwnerSide(v))}
+                    disabled={!canEditDevFields}
+                    compact
+                  />
                 </div>
               </div>
 
