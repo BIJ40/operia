@@ -174,7 +174,18 @@ Deno.serve(async (req) => {
       .eq('id', user.id)
       .single();
 
-    if (profileError || !profile) {
+    // 2bis. Vérifier si l'utilisateur est un apporteur (système séparé)
+    const { data: apporteurUser } = await supabase
+      .from('apporteur_users')
+      .select('agency_id, apporteur_id, is_active')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    const apporteurAgencyId = apporteurUser?.agency_id ?? null;
+    const isApporteurUser = !!apporteurUser && apporteurUser.is_active;
+
+    if ((profileError || !profile) && !isApporteurUser) {
       return withCors(req, new Response(
         JSON.stringify({ success: false, error: 'Profile not found' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -199,16 +210,42 @@ Deno.serve(async (req) => {
     }
 
     // 5. Déterminer l'agence cible avec contrôle d'accès
-    const isFranchiseurRole = ['franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(profile.global_role || '');
-    let targetAgency = profile.agence;
+    const globalRole = profile?.global_role || '';
+    const isFranchiseurRole = ['franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(globalRole);
+    let targetAgency = profile?.agence || null;
+
+    // APPORTEUR: Les utilisateurs apporteurs accèdent à leur agence associée
+    if (isApporteurUser && apporteurAgencyId) {
+      const { data: apporteurAgency } = await supabase
+        .from('apogee_agencies')
+        .select('slug')
+        .eq('id', apporteurAgencyId)
+        .eq('is_active', true)
+        .maybeSingle();
+      
+      if (apporteurAgency?.slug) {
+        console.log(`[GET-RDV-MAP] Mode apporteur: user ${user.id.substring(0, 8)}... accède à l'agence ${apporteurAgency.slug}`);
+        targetAgency = apporteurAgency.slug;
+      }
+    }
 
     // MODE DÉMO: Les utilisateurs N0 (base_user sans agence) peuvent accéder à DAX en lecture seule
-    const isN0DemoUser = !profile.agence && profile.global_role === 'base_user';
+    const isN0DemoUser = !profile?.agence && profile?.global_role === 'base_user';
     const DEMO_AGENCY_SLUG = 'dax';
 
-    if (requestedAgency && requestedAgency !== profile.agence) {
+    if (requestedAgency && requestedAgency !== targetAgency) {
+      // Cas spécial: Apporteur ne peut accéder qu'à son agence
+      if (isApporteurUser) {
+        if (targetAgency && requestedAgency !== targetAgency) {
+          console.warn(`[GET-RDV-MAP] Apporteur ${user.id} tente d'accéder à une autre agence: ${requestedAgency}`);
+          return withCors(req, new Response(
+            JSON.stringify({ success: false, error: 'Access denied to this agency' }),
+            { status: 403, headers: { 'Content-Type': 'application/json' } }
+          ));
+        }
+      }
       // Cas spécial: Mode démo N0 pour l'agence DAX uniquement
-      if (isN0DemoUser && requestedAgency === DEMO_AGENCY_SLUG) {
+      else if (isN0DemoUser && requestedAgency === DEMO_AGENCY_SLUG) {
         console.log(`[GET-RDV-MAP] Mode démo activé pour user ${user.id.substring(0, 8)}... sur agence ${DEMO_AGENCY_SLUG}`);
         targetAgency = DEMO_AGENCY_SLUG;
       }
