@@ -98,7 +98,7 @@ export function useStatiaIndicateurs(selectedYear?: number) {
           getMetricForAgency('nb_dossiers_crees', userAgency, statiaParams, services),
           getMetricForAgency('taux_dossiers_complexes', userAgency, statiaParams, services),
           getMetricForAgency('delai_dossier_premier_devis', userAgency, statiaParams, services),
-          getMetricForAgency('nb_interventions', userAgency, statiaParams, services),
+          getMetricForAgency('nb_interventions_periode', userAgency, statiaParams, services),
         ]);
 
         // Extraction des breakdowns
