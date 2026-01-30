@@ -68,7 +68,14 @@ function useGeneralTabKpis() {
       const nbFactures = (caGlobal?.breakdown as any)?.factureCount ?? 0;
       
       // Extraire nombre RT depuis breakdown interventions
-      const rtCount = (nbInterventions?.breakdown as any)?.byType?.rt ?? 0;
+      // Le breakdown peut être structuré différemment - chercher dans plusieurs chemins possibles
+      const interventionsBreakdown = nbInterventions?.breakdown as any || {};
+      const rtCount = interventionsBreakdown?.byType?.rt 
+        ?? interventionsBreakdown?.byType?.['releve technique']
+        ?? interventionsBreakdown?.byType?.['RT']
+        ?? interventionsBreakdown?.rtCount
+        ?? interventionsBreakdown?.rt
+        ?? 0;
       
       // Extraire nombre techniciens actifs
       const topTechBreakdown = topTechs?.breakdown as any;
@@ -154,12 +161,12 @@ export function GeneralTab() {
     { icon: Receipt, title: 'Factures', value: data?.nbFactures ?? 0, format: 'number', color: 'green' },
     { icon: Euro, title: 'CA HT', value: data?.caHT ?? 0, format: 'currency', color: 'blue' },
     { icon: ShoppingCart, title: 'Panier', value: data?.panierMoyen ?? 0, format: 'currency', color: 'purple' },
-    { icon: Target, title: 'Objectif', value: 0, format: 'currency', color: 'orange' },
+    { icon: Wrench, title: 'Interventions', value: data?.nbInterventions ?? 0, format: 'number', color: 'orange' },
     // Ligne 2
     { icon: AlertTriangle, title: 'Taux SAV', value: savData?.tauxSavGlobal ?? 0, format: 'percent', color: 'rose' },
     { icon: Percent, title: 'Transfo', value: data?.tauxTransfo ?? 0, format: 'percent', color: 'teal' },
     { icon: Clock, title: 'Délai', value: data?.delaiMoyen ?? 0, format: 'days', color: 'cyan' },
-    { icon: Wrench, title: 'RT', value: data?.nbRT ?? 0, format: 'number', color: 'purple' },
+    { icon: Target, title: 'RT', value: data?.nbRT ?? 0, format: 'number', color: 'purple' },
     { icon: TrendingUp, title: 'Évolution', value: 0, format: 'percent', color: 'green' },
     { icon: Users, title: 'Techniciens', value: data?.nbTechsActifs ?? 0, format: 'number', color: 'blue' },
   ];
