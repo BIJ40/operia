@@ -1,9 +1,9 @@
 /**
  * InternalGuideCategoryPanel - Contenu d'une catégorie (dans un onglet) pour le Guide interne
- * Version Warm Pastel avec accordéons stylisés
+ * Version Warm Pastel avec accordéons stylisés + mode édition pour admins
  */
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useInternalGuideTabs } from './InternalGuideTabsContext';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,12 @@ import {
   ChevronsDownUp, 
   ChevronsUpDown,
   Lightbulb,
-  BookOpen
+  BookOpen,
+  Plus,
+  Edit2,
+  Trash2,
+  Copy,
+  Pencil
 } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
@@ -29,9 +34,28 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Block } from '@/types/block';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Block, ColorPreset, TipsType } from '@/types/block';
 import { createSanitizedHtml } from '@/lib/sanitize';
 import { cn } from '@/lib/utils';
+import { SectionEditForm } from '@/components/SectionEditForm';
+import { TipsEditForm } from '@/components/TipsEditForm';
+import { useToast } from '@/hooks/use-toast';
 
 // Couleurs Warm Pastel pour les TIPS
 const TIPS_COLORS: Record<string, { bg: string; border: string; icon: string }> = {
@@ -46,11 +70,18 @@ interface InternalGuideCategoryPanelProps {
 }
 
 export function InternalGuideCategoryPanel({ slug }: InternalGuideCategoryPanelProps) {
-  const { blocks, loading } = useEditor();
+  const { blocks, loading, isEditMode, addBlock, updateBlock, deleteBlock } = useEditor();
   const { openTab } = useInternalGuideTabs();
+  const { toast } = useToast();
+  
   const [openAccordions, setOpenAccordions] = useState<string[]>([]);
   const [showTips, setShowTips] = useState(true);
   const [showSections, setShowSections] = useState(true);
+  
+  // États pour les dialogues d'édition
+  const [editingSection, setEditingSection] = useState<Block | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
 
   // Trouver la catégorie
   const category = useMemo(() => 
@@ -111,6 +142,139 @@ export function InternalGuideCategoryPanel({ slug }: InternalGuideCategoryPanelP
     const Icon = getIcon(cat.icon);
     openTab(cat.slug, cat.title, Icon);
   };
+
+  // Handlers pour l'édition
+  const handleEditSection = useCallback((section: Block) => {
+    setEditingSection(section);
+  }, []);
+
+  const handleDeleteSection = useCallback((sectionId: string) => {
+    setSectionToDelete(sectionId);
+    setDeleteDialogOpen(true);
+  }, []);
+
+  const confirmDelete = useCallback(async () => {
+    if (sectionToDelete) {
+      await deleteBlock(sectionToDelete);
+      toast({ title: 'Section supprimée' });
+    }
+    setDeleteDialogOpen(false);
+    setSectionToDelete(null);
+  }, [sectionToDelete, deleteBlock, toast]);
+
+  const handleAddSection = useCallback(async (afterSectionId?: string) => {
+    if (!category) return;
+    
+    const afterSection = afterSectionId ? sections.find(s => s.id === afterSectionId) : null;
+    const newOrder = afterSection 
+      ? afterSection.order + 0.5 
+      : (sections.length > 0 ? Math.max(...sections.map(s => s.order)) + 1 : 0);
+
+    await addBlock({
+      type: 'section',
+      title: 'Nouvelle section',
+      slug: `section-${Date.now()}`,
+      content: '<p>Contenu de la section...</p>',
+      parentId: category.id,
+      order: newOrder,
+      colorPreset: 'white',
+      contentType: 'section',
+      attachments: [],
+    });
+
+    toast({ title: 'Section créée' });
+  }, [category, sections, addBlock, toast]);
+
+  const handleAddTips = useCallback(async (afterSectionId?: string) => {
+    if (!category) return;
+    
+    const afterSection = afterSectionId ? sections.find(s => s.id === afterSectionId) : null;
+    const newOrder = afterSection 
+      ? afterSection.order + 0.5 
+      : (sections.length > 0 ? Math.max(...sections.map(s => s.order)) + 1 : 0);
+
+    await addBlock({
+      type: 'section',
+      title: 'Nouveau TIPS',
+      slug: `tips-${Date.now()}`,
+      content: '<p>Contenu du tips...</p>',
+      parentId: category.id,
+      order: newOrder,
+      colorPreset: 'white',
+      contentType: 'tips',
+      tipsType: 'information',
+      attachments: [],
+    });
+
+    toast({ title: 'TIPS créé' });
+  }, [category, sections, addBlock, toast]);
+
+  const handleDuplicate = useCallback(async (section: Block) => {
+    if (!category) return;
+    
+    const newOrder = section.order + 0.5;
+
+    await addBlock({
+      ...section,
+      title: `${section.title} (copie)`,
+      slug: `${section.slug}-copy-${Date.now()}`,
+      order: newOrder,
+    });
+
+    toast({ title: 'Section dupliquée' });
+  }, [category, addBlock, toast]);
+
+  const handleSaveSection = useCallback(async (data: {
+    title: string;
+    content: string;
+    colorPreset: ColorPreset;
+    summary?: string;
+    showSummary?: boolean;
+    hideTitle?: boolean;
+    hideFromSidebar?: boolean;
+    isInProgress?: boolean;
+    completedAt?: string;
+    contentUpdatedAt?: string;
+    isEmpty?: boolean;
+  }) => {
+    if (!editingSection) return;
+    
+    await updateBlock(editingSection.id, {
+      title: data.title,
+      content: data.content,
+      colorPreset: data.colorPreset,
+      summary: data.summary,
+      showSummary: data.showSummary,
+      hideTitle: data.hideTitle,
+      hideFromSidebar: data.hideFromSidebar,
+      isInProgress: data.isInProgress,
+      completedAt: data.completedAt,
+      contentUpdatedAt: data.contentUpdatedAt,
+      isEmpty: data.isEmpty,
+    });
+
+    toast({ title: 'Section modifiée' });
+    setEditingSection(null);
+  }, [editingSection, updateBlock, toast]);
+
+  const handleSaveTips = useCallback(async (
+    title: string, 
+    content: string, 
+    tipsType: TipsType, 
+    hideFromSidebar: boolean
+  ) => {
+    if (!editingSection) return;
+    
+    await updateBlock(editingSection.id, {
+      title,
+      content,
+      tipsType,
+      hideFromSidebar,
+    });
+
+    toast({ title: 'TIPS modifié' });
+    setEditingSection(null);
+  }, [editingSection, updateBlock, toast]);
 
   if (loading) {
     return (
@@ -235,51 +399,78 @@ export function InternalGuideCategoryPanel({ slug }: InternalGuideCategoryPanelP
           </div>
         </div>
         
-        {/* Boutons de filtrage */}
-        <div className="flex items-center justify-end gap-2 mt-3 flex-wrap">
-          {hasTips && (
-            <Button
-              variant={showTips ? "default" : "outline"}
-              size="sm"
-              onClick={() => setShowTips(!showTips)}
-              className={cn(
-                "gap-1.5 h-8 text-xs rounded-xl transition-all",
-                showTips 
-                  ? "bg-warm-orange/90 hover:bg-warm-orange text-white border-0" 
-                  : "border-warm-orange/30 text-warm-orange hover:bg-warm-orange/10"
-              )}
-            >
-              <Lightbulb className="h-3.5 w-3.5" />
-              TIPS
-            </Button>
+        {/* Boutons de filtrage + mode édition */}
+        <div className="flex items-center justify-between gap-2 mt-3 flex-wrap">
+          {/* Boutons d'ajout pour admins */}
+          {isEditMode && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleAddSection()}
+                className="gap-1.5 h-8 text-xs rounded-xl border-warm-green/50 text-warm-green hover:bg-warm-green/10"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Section
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleAddTips()}
+                className="gap-1.5 h-8 text-xs rounded-xl border-warm-orange/50 text-warm-orange hover:bg-warm-orange/10"
+              >
+                <Lightbulb className="h-3.5 w-3.5" />
+                TIPS
+              </Button>
+            </div>
           )}
-          {hasSections && (
-            <Button
-              variant={showSections ? "default" : "outline"}
-              size="sm"
-              onClick={() => setShowSections(!showSections)}
-              className={cn(
-                "gap-1.5 h-8 text-xs rounded-xl transition-all",
-                showSections 
-                  ? "bg-warm-blue/90 hover:bg-warm-blue text-white border-0" 
-                  : "border-warm-blue/30 text-warm-blue hover:bg-warm-blue/10"
-              )}
-            >
-              Sections
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setOpenAccordions(openAccordions.length > 0 ? [] : sections.map(s => s.id))}
-            className="gap-1.5 h-8 text-xs rounded-xl border-border/50 hover:bg-muted/50"
-          >
-            {openAccordions.length > 0 ? (
-              <><ChevronsDownUp className="h-3.5 w-3.5" />Fermer</>
-            ) : (
-              <><ChevronsUpDown className="h-3.5 w-3.5" />Ouvrir</>
+          
+          {/* Boutons de filtrage à droite */}
+          <div className="flex items-center gap-2 ml-auto">
+            {hasTips && (
+              <Button
+                variant={showTips ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowTips(!showTips)}
+                className={cn(
+                  "gap-1.5 h-8 text-xs rounded-xl transition-all",
+                  showTips 
+                    ? "bg-warm-orange/90 hover:bg-warm-orange text-white border-0" 
+                    : "border-warm-orange/30 text-warm-orange hover:bg-warm-orange/10"
+                )}
+              >
+                <Lightbulb className="h-3.5 w-3.5" />
+                TIPS
+              </Button>
             )}
-          </Button>
+            {hasSections && (
+              <Button
+                variant={showSections ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowSections(!showSections)}
+                className={cn(
+                  "gap-1.5 h-8 text-xs rounded-xl transition-all",
+                  showSections 
+                    ? "bg-warm-blue/90 hover:bg-warm-blue text-white border-0" 
+                    : "border-warm-blue/30 text-warm-blue hover:bg-warm-blue/10"
+                )}
+              >
+                Sections
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setOpenAccordions(openAccordions.length > 0 ? [] : sections.map(s => s.id))}
+              className="gap-1.5 h-8 text-xs rounded-xl border-border/50 hover:bg-muted/50"
+            >
+              {openAccordions.length > 0 ? (
+                <><ChevronsDownUp className="h-3.5 w-3.5" />Fermer</>
+              ) : (
+                <><ChevronsUpDown className="h-3.5 w-3.5" />Ouvrir</>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -291,6 +482,19 @@ export function InternalGuideCategoryPanel({ slug }: InternalGuideCategoryPanelP
               ? "Aucune section dans cette catégorie" 
               : "Utilisez les boutons TIPS / Sections pour afficher le contenu"}
           </p>
+          {isEditMode && sections.length === 0 && (
+            <div className="flex items-center justify-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleAddSection()}
+                className="gap-1.5 rounded-xl"
+              >
+                <Plus className="h-4 w-4" />
+                Ajouter une section
+              </Button>
+            </div>
+          )}
         </div>
       ) : (
         <Accordion
@@ -305,8 +509,29 @@ export function InternalGuideCategoryPanel({ slug }: InternalGuideCategoryPanelP
             // TIPS inline (pas d'accordéon)
             if (isTips && section.hideTitle) {
               return (
-                <div key={section.id}>
+                <div key={section.id} className="relative group">
                   {renderSectionContent(section)}
+                  {/* Boutons d'édition pour les TIPS inline */}
+                  {isEditMode && (
+                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 bg-background/80 hover:bg-background"
+                        onClick={() => handleEditSection(section)}
+                      >
+                        <Edit2 className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 bg-background/80 hover:bg-destructive/10 text-destructive"
+                        onClick={() => handleDeleteSection(section.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               );
             }
@@ -315,16 +540,87 @@ export function InternalGuideCategoryPanel({ slug }: InternalGuideCategoryPanelP
               <AccordionItem 
                 key={section.id} 
                 value={section.id} 
-                className="border border-border/40 rounded-2xl px-4 bg-card/50 backdrop-blur-sm shadow-sm"
+                className="border border-border/40 rounded-2xl px-4 bg-card/50 backdrop-blur-sm shadow-sm group"
               >
                 <AccordionTrigger className="text-left py-4 hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    {isTips && (
-                      <div className="w-7 h-7 rounded-lg bg-warm-orange/15 flex items-center justify-center">
-                        <Lightbulb className="w-4 h-4 text-warm-orange" />
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-3">
+                      {isTips && (
+                        <div className="w-7 h-7 rounded-lg bg-warm-orange/15 flex items-center justify-center">
+                          <Lightbulb className="w-4 h-4 text-warm-orange" />
+                        </div>
+                      )}
+                      <span className="text-sm font-medium">{section.title}</span>
+                    </div>
+                    
+                    {/* Boutons d'édition */}
+                    {isEditMode && (
+                      <div 
+                        className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity mr-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 hover:bg-primary/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddSection(section.id);
+                          }}
+                          title="Ajouter section après"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 hover:bg-warm-orange/10 text-warm-orange"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddTips(section.id);
+                          }}
+                          title="Ajouter TIPS après"
+                        >
+                          <Lightbulb className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 hover:bg-primary/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditSection(section);
+                          }}
+                          title="Modifier"
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 hover:bg-primary/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDuplicate(section);
+                          }}
+                          title="Dupliquer"
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 hover:bg-destructive/10 text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteSection(section.id);
+                          }}
+                          title="Supprimer"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
                     )}
-                    <span className="text-sm font-medium">{section.title}</span>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pb-4">
@@ -335,6 +631,68 @@ export function InternalGuideCategoryPanel({ slug }: InternalGuideCategoryPanelP
           })}
         </Accordion>
       )}
+
+      {/* Dialog d'édition */}
+      <Dialog open={!!editingSection} onOpenChange={(open) => !open && setEditingSection(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingSection?.contentType === 'tips' ? 'Modifier le TIPS' : 'Modifier la section'}
+            </DialogTitle>
+          </DialogHeader>
+          {editingSection && (
+            editingSection.contentType === 'tips' ? (
+              <TipsEditForm
+                sectionId={editingSection.id}
+                initialTitle={editingSection.title}
+                initialContent={editingSection.content}
+                initialTipsType={(editingSection.tipsType || 'information') as TipsType}
+                initialHideFromSidebar={editingSection.hideFromSidebar || false}
+                onSave={handleSaveTips}
+                onCancel={() => setEditingSection(null)}
+              />
+            ) : (
+              <SectionEditForm
+                sectionId={editingSection.id}
+                initialTitle={editingSection.title}
+                initialContent={editingSection.content}
+                initialColor={editingSection.colorPreset as ColorPreset}
+                initialHideFromSidebar={editingSection.hideFromSidebar || false}
+                initialSummary={editingSection.summary || ''}
+                initialShowSummary={editingSection.showSummary || false}
+                initialHideTitle={editingSection.hideTitle || false}
+                initialIsInProgress={editingSection.isInProgress || false}
+                initialCompletedAt={editingSection.completedAt}
+                initialContentUpdatedAt={editingSection.contentUpdatedAt}
+                initialIsEmpty={editingSection.isEmpty || false}
+                onSave={handleSaveSection}
+                onCancel={() => setEditingSection(null)}
+              />
+            )
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de confirmation de suppression */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cette section ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. La section sera définitivement supprimée.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete} 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
