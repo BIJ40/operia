@@ -46,8 +46,9 @@ interface SalariesFolderTabsProps {
 
 function formatCollaboratorName(c: RHCollaborator): string {
   const firstName = c.first_name || '';
-  const lastInitial = c.last_name?.charAt(0)?.toUpperCase() || '';
-  return lastInitial ? `${firstName} ${lastInitial}.` : firstName;
+  const lastName = c.last_name || '';
+  // Afficher le NOM pour éviter l'ambiguïté (ex: voir "PASQUIER")
+  return lastName ? `${lastName} ${firstName}`.trim() : firstName;
 }
 
 interface DraggableCollabTabProps {
@@ -94,6 +95,7 @@ function DraggableCollabTab({ collaborator, isActive, colorIndex, onClick }: Dra
           "rounded-t-2xl border-2 border-b-0",
           "font-medium text-sm transition-all duration-200",
           "relative -mb-[2px] z-10",
+          "shrink-0",
           "cursor-grab active:cursor-grabbing",
           isDragging && 'opacity-50 shadow-lg scale-105',
           isActive 
@@ -117,7 +119,7 @@ function DraggableCollabTab({ collaborator, isActive, colorIndex, onClick }: Dra
         >
           <User className="w-3 h-3" />
         </span>
-        <span className="whitespace-nowrap">{displayName}</span>
+        <span className="whitespace-nowrap max-w-[12rem] truncate">{displayName}</span>
       </button>
     </motion.div>
   );
@@ -214,6 +216,7 @@ export function SalariesFolderTabs({
             "rounded-t-2xl border-2 border-b-0",
             "font-medium text-sm transition-all duration-200",
             "relative -mb-[2px] z-10 cursor-pointer",
+            "shrink-0",
             activeCollaboratorId === null 
               ? "bg-background text-foreground shadow-md" 
               : "bg-muted/50 border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
