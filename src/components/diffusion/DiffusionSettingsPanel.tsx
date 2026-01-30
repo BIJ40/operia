@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -11,8 +11,9 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { Plus, Trash2, Info } from 'lucide-react';
 import { DiffusionSettings } from '@/hooks/use-diffusion-settings';
 
 interface DiffusionSettingsPanelProps {
@@ -22,6 +23,22 @@ interface DiffusionSettingsPanelProps {
   onSave: (settings: Partial<DiffusionSettings>) => Promise<void>;
 }
 
+const AVAILABLE_VARIABLES = [
+  { name: '{moisCourant}', desc: 'Nom du mois en cours (janvier, février...)' },
+  { name: '{annee}', desc: 'Année en cours (2025, 2026...)' },
+  { name: '{nbDossiersMax}', desc: 'Nombre de dossiers du mois record' },
+  { name: '{moisMax}', desc: 'Mois du record de dossiers' },
+  { name: '{nbProjetsMois}', desc: 'Nombre de projets ce mois' },
+  { name: '{caMoyenDossier}', desc: 'CA moyen par dossier' },
+  { name: '{caTotal}', desc: 'CA total du mois' },
+  { name: '{objectif}', desc: 'Objectif mensuel paramétré' },
+  { name: '{topTechnicien}', desc: 'Nom du meilleur technicien' },
+  { name: '{topApporteur}', desc: 'Nom du meilleur apporteur' },
+  { name: '{topUnivers}', desc: 'Univers le plus actif' },
+  { name: '{tauxSAV}', desc: 'Taux SAV en %' },
+  { name: '{nbTechsActifs}', desc: 'Nombre de techniciens actifs' },
+];
+
 export const DiffusionSettingsPanel = ({
   open,
   onOpenChange,
@@ -30,6 +47,11 @@ export const DiffusionSettingsPanel = ({
 }: DiffusionSettingsPanelProps) => {
   const [localSettings, setLocalSettings] = useState(settings);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Sync local state when settings prop changes
+  useEffect(() => {
+    setLocalSettings(settings);
+  }, [settings]);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -41,12 +63,32 @@ export const DiffusionSettingsPanel = ({
     }
   };
 
-  const slideOptions = [
-    { id: 'univers_apporteurs', label: 'Univers & Types Apporteurs' },
-    { id: 'ca_techniciens', label: 'CA par Technicien' },
-    { id: 'segmentation', label: 'Segmentation Particuliers/Apporteurs' },
-    { id: 'apporteurs_sav', label: 'Apporteurs & SAV' },
-  ];
+  const addTemplate = () => {
+    setLocalSettings({
+      ...localSettings,
+      saviez_vous_templates: [
+        ...localSettings.saviez_vous_templates,
+        '',
+      ],
+    });
+  };
+
+  const removeTemplate = (index: number) => {
+    const newTemplates = localSettings.saviez_vous_templates.filter((_, i) => i !== index);
+    setLocalSettings({
+      ...localSettings,
+      saviez_vous_templates: newTemplates,
+    });
+  };
+
+  const updateTemplate = (index: number, value: string) => {
+    const newTemplates = [...localSettings.saviez_vous_templates];
+    newTemplates[index] = value;
+    setLocalSettings({
+      ...localSettings,
+      saviez_vous_templates: newTemplates,
+    });
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -54,7 +96,7 @@ export const DiffusionSettingsPanel = ({
         <SheetHeader>
           <SheetTitle>Paramètres de diffusion</SheetTitle>
           <SheetDescription>
-            Configurez l'affichage du mode TV
+            Configurez l'affichage du mode TV avec rotation automatique
           </SheetDescription>
         </SheetHeader>
 
@@ -62,13 +104,19 @@ export const DiffusionSettingsPanel = ({
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="display">Affichage</TabsTrigger>
             <TabsTrigger value="objectif">Objectif</TabsTrigger>
-            <TabsTrigger value="saviez">Saviez-vous</TabsTrigger>
+            <TabsTrigger value="saviez">Messages</TabsTrigger>
           </TabsList>
 
           <TabsContent value="display" className="space-y-6 mt-6">
-            <div className="space-y-4">
+            <div className="space-y-6">
+              {/* Rotation automatique */}
               <div className="flex items-center justify-between">
-                <Label htmlFor="auto-rotation">Rotation automatique</Label>
+                <div className="space-y-0.5">
+                  <Label htmlFor="auto-rotation">Rotation automatique</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Alterne entre les pages KPIs, Apporteurs et Univers
+                  </p>
+                </div>
                 <Switch
                   id="auto-rotation"
                   checked={localSettings.auto_rotation_enabled}
@@ -78,53 +126,46 @@ export const DiffusionSettingsPanel = ({
                 />
               </div>
 
+              {/* Vitesse de rotation */}
               <div className="space-y-3">
-                <Label>Vitesse de rotation : {localSettings.rotation_speed_seconds}s</Label>
+                <div className="flex items-center justify-between">
+                  <Label>Vitesse de rotation</Label>
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {localSettings.rotation_speed_seconds} secondes
+                  </span>
+                </div>
                 <Slider
                   value={[localSettings.rotation_speed_seconds]}
                   onValueChange={([value]) =>
                     setLocalSettings({ ...localSettings, rotation_speed_seconds: value })
                   }
-                  min={5}
-                  max={60}
+                  min={10}
+                  max={120}
                   step={5}
                   className="w-full"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Chaque page s'affiche pendant {localSettings.rotation_speed_seconds} secondes avant de passer à la suivante
+                </p>
               </div>
 
-              <div className="space-y-3">
-                <Label>Slides incluses</Label>
-                <div className="space-y-2">
-                  {slideOptions.map((option) => (
-                    <div key={option.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={option.id}
-                        checked={localSettings.enabled_slides.includes(option.id)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setLocalSettings({
-                              ...localSettings,
-                              enabled_slides: [...localSettings.enabled_slides, option.id],
-                            });
-                          } else {
-                            setLocalSettings({
-                              ...localSettings,
-                              enabled_slides: localSettings.enabled_slides.filter(
-                                (s) => s !== option.id
-                              ),
-                            });
-                          }
-                        }}
-                      />
-                      <label
-                        htmlFor={option.id}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        {option.label}
-                      </label>
-                    </div>
-                  ))}
-                </div>
+              {/* Pages affichées */}
+              <div className="space-y-3 p-4 bg-muted/20 rounded-lg">
+                <Label className="text-sm font-medium">Pages en rotation</Label>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-warm-blue rounded-full" />
+                    <span><strong>KPIs & Podium</strong> — CA, objectif, tiles, classement techniciens</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-warm-orange rounded-full" />
+                    <span><strong>Apporteurs</strong> — Stats par type, segmentation, évolution</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-warm-purple rounded-full" />
+                    <span><strong>Univers</strong> — CA par domaine, répartition</span>
+                  </li>
+                </ul>
               </div>
             </div>
           </TabsContent>
@@ -139,7 +180,7 @@ export const DiffusionSettingsPanel = ({
                   onChange={(e) =>
                     setLocalSettings({ ...localSettings, objectif_title: e.target.value })
                   }
-                  placeholder="ex: OBJECTIF NOVEMBRE 2025"
+                  placeholder="ex: OBJECTIF JANVIER 2026"
                 />
               </div>
 
@@ -157,33 +198,81 @@ export const DiffusionSettingsPanel = ({
                   }
                   placeholder="ex: 117000"
                 />
+                <p className="text-xs text-muted-foreground">
+                  La tile "Objectif restant" affichera la différence entre cet objectif et le CA réalisé
+                </p>
               </div>
             </div>
           </TabsContent>
 
           <TabsContent value="saviez" className="space-y-6 mt-6">
             <div className="space-y-4">
-              <Label>Templates "Le Saviez-tu ?"</Label>
-              <p className="text-sm text-muted-foreground">
-                Variables disponibles : {'{moisMax}'}, {'{annee}'}, {'{nbDossiersMax}'},
-                {'{moisCourant}'}, {'{nbProjetsMois}'}, {'{caMoyenDossier}'}
-              </p>
-              {localSettings.saviez_vous_templates.map((template, index) => (
-                <Input
-                  key={index}
-                  value={template}
-                  onChange={(e) => {
-                    const newTemplates = [...localSettings.saviez_vous_templates];
-                    newTemplates[index] = e.target.value;
-                    setLocalSettings({ ...localSettings, saviez_vous_templates: newTemplates });
-                  }}
-                />
-              ))}
+              {/* Variables disponibles */}
+              <div className="p-4 bg-muted/20 rounded-lg space-y-3">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                  Variables disponibles
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {AVAILABLE_VARIABLES.map((v) => (
+                    <div key={v.name} className="flex flex-col">
+                      <code className="text-warm-blue font-mono">{v.name}</code>
+                      <span className="text-muted-foreground">{v.desc}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Templates */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>Messages "Le Saviez-tu ?"</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addTemplate}
+                    className="h-8"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Ajouter
+                  </Button>
+                </div>
+                
+                {localSettings.saviez_vous_templates.map((template, index) => (
+                  <div key={index} className="flex gap-2">
+                    <Textarea
+                      value={template}
+                      onChange={(e) => updateTemplate(index, e.target.value)}
+                      placeholder={`Ex: En {moisMax}, on a battu notre record avec {nbDossiersMax} dossiers !`}
+                      className="flex-1 min-h-[80px] text-sm"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeTemplate(index)}
+                      className="text-destructive hover:text-destructive h-8 w-8"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+
+                {localSettings.saviez_vous_templates.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    Aucun message configuré. Cliquez sur "Ajouter" pour en créer un.
+                  </p>
+                )}
+              </div>
             </div>
           </TabsContent>
         </Tabs>
 
-        <div className="mt-6 flex justify-end">
+        <div className="mt-6 flex justify-end gap-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Annuler
+          </Button>
           <Button onClick={handleSave} disabled={isSaving}>
             {isSaving ? 'Enregistrement...' : 'Enregistrer'}
           </Button>
