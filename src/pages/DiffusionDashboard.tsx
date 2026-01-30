@@ -1,23 +1,33 @@
+/**
+ * DiffusionDashboard - Page Diffusion TV refondée
+ * Thème Warm Pastel + KPIs mois en cours + Podium techniciens
+ */
+
 import { useState, useEffect } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
-import { Settings, Maximize, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Settings, Maximize, ArrowLeft, Minimize } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDiffusionSettings } from '@/hooks/use-diffusion-settings';
-import { useAutoRotation } from '@/hooks/use-auto-rotation';
-import { DiffusionBandeau } from '@/components/diffusion/DiffusionBandeau';
 import { DiffusionKpiTiles } from '@/components/diffusion/DiffusionKpiTiles';
+import { DiffusionTechPodium } from '@/components/diffusion/DiffusionTechPodium';
 import { DiffusionSaviezVous } from '@/components/diffusion/DiffusionSaviezVous';
 import { DiffusionSlides } from '@/components/diffusion/DiffusionSlides';
 import { DiffusionSettingsPanel } from '@/components/diffusion/DiffusionSettingsPanel';
+import { useDiffusionKpisStatia } from '@/components/diffusion/useDiffusionKpisStatia';
 import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
 import { AgencyProvider } from '@/apogee-connect/contexts/AgencyContext';
 
-// Route protégée par RoleGuard dans App.tsx
 export default function DiffusionDashboard() {
-  const { settings, isLoading, updateSettings } = useDiffusionSettings();
+  const { settings, isLoading: settingsLoading, updateSettings } = useDiffusionSettings();
   const navigate = useNavigate();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Mois en cours uniquement
+  const currentMonthIndex = new Date().getMonth();
+  
+  // Données KPI pour le podium
+  const { data: kpisData, isLoading: kpisLoading } = useDiffusionKpisStatia(currentMonthIndex);
 
   // Écouter les changements de mode plein écran
   useEffect(() => {
@@ -28,16 +38,6 @@ export default function DiffusionDashboard() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  const nbMonths = 12; // Mois de l'année
-  const nbSlides = settings?.enabled_slides?.length || 4;
-
-  const rotation = useAutoRotation({
-    enabled: settings?.auto_rotation_enabled || false,
-    rotationSpeedSeconds: settings?.rotation_speed_seconds || 15,
-    nbSlides,
-    nbMonths,
-  });
-
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen();
@@ -47,18 +47,16 @@ export default function DiffusionDashboard() {
   };
 
   const handleSettingsOpen = () => {
-    rotation.pause();
     setIsSettingsOpen(true);
   };
 
   const handleSettingsClose = () => {
-    rotation.resume();
     setIsSettingsOpen(false);
   };
 
-  if (isLoading || !settings) {
+  if (settingsLoading || !settings) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary/10 to-accent/10">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background via-warm-blue/5 to-warm-pink/5">
         <p className="text-2xl text-muted-foreground">Chargement...</p>
       </div>
     );
@@ -67,32 +65,33 @@ export default function DiffusionDashboard() {
   return (
     <ApiToggleProvider>
       <AgencyProvider>
-        <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-accent/5 overflow-hidden">
-          {/* Header avec boutons de contrôle - masqués en plein écran */}
+        <div className="min-h-screen bg-gradient-to-br from-background via-warm-blue/5 to-warm-pink/5 overflow-auto">
+          {/* Header avec boutons - masqués ou discrets en plein écran */}
           {!isFullscreen && (
-            <div className="absolute top-4 right-4 z-50 flex gap-2">
+            <div className="fixed top-4 right-4 z-50 flex gap-2">
               <Button
                 onClick={() => navigate(-1)}
-                variant="outline"
+                variant="ghost"
                 size="icon"
-                className="bg-background/80 backdrop-blur"
+                className="bg-background/60 backdrop-blur-sm hover:bg-background/80 opacity-50 hover:opacity-100 transition-opacity"
                 title="Retour"
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <Button
                 onClick={toggleFullscreen}
-                variant="outline"
+                variant="ghost"
                 size="icon"
-                className="bg-background/80 backdrop-blur"
+                className="bg-background/60 backdrop-blur-sm hover:bg-background/80 opacity-50 hover:opacity-100 transition-opacity"
                 title="Plein écran"
               >
                 <Maximize className="h-5 w-5" />
               </Button>
               <Button
                 onClick={handleSettingsOpen}
-                className="bg-green-500 hover:bg-green-600 text-white"
+                variant="ghost"
                 size="icon"
+                className="bg-background/60 backdrop-blur-sm hover:bg-background/80 opacity-50 hover:opacity-100 transition-opacity"
                 title="Paramètres"
               >
                 <Settings className="h-5 w-5" />
@@ -100,28 +99,51 @@ export default function DiffusionDashboard() {
             </div>
           )}
 
-          {/* Bandeau motivant */}
-          <DiffusionBandeau />
+          {/* Bouton exit fullscreen discret en mode plein écran */}
+          {isFullscreen && (
+            <Button
+              onClick={toggleFullscreen}
+              variant="ghost"
+              size="icon"
+              className="fixed bottom-4 right-4 z-50 bg-background/30 backdrop-blur-sm opacity-20 hover:opacity-100 transition-opacity"
+              title="Quitter plein écran"
+            >
+              <Minimize className="h-4 w-4" />
+            </Button>
+          )}
 
           {/* Conteneur principal */}
-          <div className="container max-w-[1920px] mx-auto px-8 py-6 space-y-6">
-            {/* Tuiles KPI - TOUJOURS le mois actuel, pas la rotation */}
+          <div className="container max-w-[1920px] mx-auto px-6 py-8 space-y-6">
+            {/* Titre du mois */}
+            <h1 className="text-2xl font-bold text-foreground capitalize">
+              {new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+            </h1>
+
+            {/* Section 1: KPI Tiles (8 tiles) */}
             <DiffusionKpiTiles 
-              currentMonthIndex={new Date().getMonth()}
+              currentMonthIndex={currentMonthIndex}
               settings={settings}
             />
 
-            {/* Le saviez-vous */}
-            <DiffusionSaviezVous 
-              currentMonthIndex={rotation.currentMonthIndex}
-              templates={settings.saviez_vous_templates}
+            {/* Section 2: Podium Techniciens */}
+            <DiffusionTechPodium 
+              ranking={kpisData?.allTechRanking || []}
+              isLoading={kpisLoading}
             />
 
-            {/* Zone de slides */}
+            {/* Section 3: Le saviez-vous (optionnel) */}
+            {settings.saviez_vous_templates && settings.saviez_vous_templates.length > 0 && (
+              <DiffusionSaviezVous 
+                currentMonthIndex={currentMonthIndex}
+                templates={settings.saviez_vous_templates}
+              />
+            )}
+
+            {/* Section 4: Graphique CA/Technicien 6 mois */}
             <DiffusionSlides
-              currentSlideIndex={rotation.currentSlideIndex}
-              currentMonthIndex={rotation.currentMonthIndex}
-              enabledSlides={settings.enabled_slides}
+              currentSlideIndex={0}
+              currentMonthIndex={currentMonthIndex}
+              enabledSlides={settings.enabled_slides || []}
             />
           </div>
 
