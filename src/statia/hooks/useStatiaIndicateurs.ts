@@ -58,7 +58,7 @@ export function useStatiaIndicateurs(selectedYear?: number) {
   const { filters } = useFilters();
   const { isApiEnabled } = useApiToggle();
   const { agencyChangeCounter, currentAgency, isAgencyReady } = useAgency();
-  const userAgency = currentAgency?.id || '';
+  const userAgency = currentAgency?.slug || '';
   const services = getGlobalApogeeDataServices();
 
   return useQuery({
