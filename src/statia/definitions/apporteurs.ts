@@ -311,10 +311,13 @@ export const topApporteursCA: StatDefinition = {
       metadata: baseResult.metadata,
       breakdown: {
         ...baseResult.breakdown,
-        ranking: topEntries.map(([id], index) => ({ 
+        ranking: topEntries.map(([name, ca], index) => ({ 
           rank: index + 1, 
-          id, 
-          label: baseResult.breakdown?.labels?.[id] 
+          id: name,      // L'ID est le nom de l'apporteur
+          name: name,    // Ajout explicite du nom
+          label: name,   // Pour compatibilité
+          ca: ca,        // AJOUT DU CA MANQUANT
+          totalCA: ca,   // Alias pour compatibilité
         })),
       }
     };

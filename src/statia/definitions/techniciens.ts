@@ -620,7 +620,30 @@ export const caParTechnicien: StatDefinition = {
       // Récupérer les interventions du projet
       const projectInterventions = interventionsByProject.get(projectId) || [];
       
-      // Construire le SET des techniciens productifs uniques
+      // === RÈGLE MÉTIER: Créer un set des techniciens ACTIFS et VALIDES ===
+      // Exclure: is_on=false (inactifs), type=commercial/admin
+      const validTechIds = new Set<string | number>();
+      for (const user of users) {
+        const isOn = user.is_on ?? user.data?.is_on ?? user.isOn ?? true;
+        if (!isOn) continue; // Exclure inactifs
+        
+        const userType = (user.type || '').toLowerCase();
+        
+        // Exclure commerciaux et admins
+        if (userType === 'commercial' || userType === 'admin') continue;
+        
+        // Règle: type="technicien" OU (type="utilisateur" ET universes non vide)
+        const hasUniverses = Array.isArray(user.data?.universes) && user.data.universes.length > 0;
+        const isTechRole = userType === 'technicien' || (userType === 'utilisateur' && hasUniverses);
+        
+        if (isTechRole) {
+          validTechIds.add(user.id);
+          validTechIds.add(String(user.id));
+          validTechIds.add(Number(user.id));
+        }
+      }
+      
+      // Construire le SET des techniciens productifs uniques (filtrés)
       const techsProductifs = new Set<string | number>();
       
       for (const intervention of projectInterventions) {
@@ -630,7 +653,10 @@ export const caParTechnicien: StatDefinition = {
         // Collecter les techniciens de cette intervention
         const interventionTechs = getProductiveTechnicians(intervention);
         for (const techId of interventionTechs) {
-          techsProductifs.add(techId);
+          // FILTRE: N'inclure que les techniciens valides
+          if (validTechIds.has(techId) || validTechIds.has(Number(techId)) || validTechIds.has(String(techId))) {
+            techsProductifs.add(techId);
+          }
         }
       }
       
