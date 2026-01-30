@@ -16,6 +16,7 @@ type BlockUpdate = Database['public']['Tables']['blocks']['Update'];
 interface EditorContextType {
   blocks: Block[];
   isEditMode: boolean;
+  canEdit: boolean;
   setIsEditMode: (mode: boolean) => void;
   toggleEditMode: () => void;
   addBlock: (block: Omit<Block, 'id'>) => Promise<string>;
@@ -41,8 +42,11 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   // V2: Remplace isAdmin par vérification de rôle + option module
   const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('help_academy', 'edition');
   
-  // Admins avec canEdit ont automatiquement le mode édition actif
-  const isEditMode = canEdit;
+  // État local pour le mode édition (toggle manuel)
+  const [editModeEnabled, setEditModeEnabled] = useState(false);
+  
+  // isEditMode = canEdit ET toggle activé
+  const isEditMode = canEdit && editModeEnabled;
 
   // Cache avec TTL de 5 minutes
   const CACHE_KEY = 'apogee_blocks_cache';
@@ -391,16 +395,23 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     toast({ title: 'Données réinitialisées', description: 'Les données par défaut ont été restaurées' });
   }, [toast]);
 
-  // toggleEditMode is now handled by URL parameter via UnifiedHeader
-  // This is kept for backwards compatibility but does nothing
+  // Toggle manuel du mode édition
   const toggleEditMode = useCallback(() => {
     if (!canEdit) {
       toast({ title: 'Accès refusé', description: 'Vous n\'avez pas les permissions nécessaires', variant: 'destructive' });
+      return;
     }
+    setEditModeEnabled(prev => !prev);
   }, [canEdit, toast]);
   
-  // setIsEditMode is now a no-op since edit mode is controlled via URL
-  const setIsEditMode = useCallback(() => {}, []);
+  // Setter pour le mode édition
+  const setIsEditMode = useCallback((mode: boolean) => {
+    if (!canEdit && mode) {
+      toast({ title: 'Accès refusé', description: 'Vous n\'avez pas les permissions nécessaires', variant: 'destructive' });
+      return;
+    }
+    setEditModeEnabled(mode);
+  }, [canEdit, toast]);
 
   const reloadBlocks = useCallback(async () => {
     setLoading(true);
@@ -460,6 +471,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       value={{
         blocks,
         isEditMode,
+        canEdit,
         setIsEditMode,
         toggleEditMode,
         addBlock,
