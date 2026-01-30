@@ -52,6 +52,23 @@ const getInterventionPlanningDate = (itv: any): Date | null => {
   return null;
 };
 
+// RÈGLE MÉTIER: Seules les interventions de type "travaux" ou "dépannage" génèrent du CA planifié
+const PRODUCTIVE_TYPES = ['travaux', 'tvx', 'work', 'depannage', 'dépannage', 'repair', 'reparation'];
+
+const isProductiveIntervention = (itv: any): boolean => {
+  const type = String(itv?.type ?? itv?.type2 ?? itv?.data?.type ?? '').trim().toLowerCase();
+  return PRODUCTIVE_TYPES.some(t => type.includes(t));
+};
+
+// RÈGLE: Intervention doit être validée/planifiée (pas brouillon ni annulée)
+const VALID_INTERVENTION_STATES = ['planned', 'planifié', 'validated', 'validée', 'in_progress', 'done', 'finished'];
+
+const isValidInterventionState = (itv: any): boolean => {
+  const state = String(itv?.state ?? itv?.status ?? '').trim().toLowerCase();
+  if (!state) return true; // Si pas d'état, on considère valide par défaut
+  return VALID_INTERVENTION_STATES.some(s => state.includes(s)) && !state.includes('cancel') && !state.includes('draft');
+};
+
 const isDevisToOrder = (d: any): boolean => {
   const state = String(d?.state ?? d?.status ?? d?.data?.state ?? '').trim().toLowerCase();
   return state === 'to order' || state === 'to_order' || state === 'order';
@@ -150,16 +167,21 @@ export function CAPlanifieCard({ projects, interventions, devis, factures }: CAP
       // Exclure les projets déjà facturés
       if (facturedProjectIds.has(projectId)) continue;
 
-      // Vérifier si ce projet a une intervention planifiée dans la période
+      // Vérifier si ce projet a une intervention PRODUCTIVE et VALIDE planifiée dans la période
       const projectInterventions = interventionsByProjectId.get(projectId) || [];
-      const hasInterventionInPeriod = projectInterventions.some((itv) => {
+      const hasProductiveInterventionInPeriod = projectInterventions.some((itv) => {
+        // Doit être une intervention productive (travaux/dépannage)
+        if (!isProductiveIntervention(itv)) return false;
+        // Doit être dans un état valide (pas brouillon, pas annulée)
+        if (!isValidInterventionState(itv)) return false;
+        // Doit être planifiée dans la période
         const planningDate = getInterventionPlanningDate(itv);
         if (!planningDate) return false;
         const t = planningDate.getTime();
         return t >= startMs && t <= endMs;
       });
 
-      if (!hasInterventionInPeriod) continue;
+      if (!hasProductiveInterventionInPeriod) continue;
 
       // Chercher un devis "to order" pour ce projet
       const projectDevis = devisByProjectId.get(projectId) || [];
