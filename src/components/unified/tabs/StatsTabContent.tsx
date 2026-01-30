@@ -12,6 +12,7 @@ import { TABS_CONFIG, TabId } from '@/apogee-connect/components/stats-hub/types'
 import { GeneralTab, ApporteursTab, TechniciensTab, UniversTab, SAVTab, PrevisionnelTab } from '@/apogee-connect/components/stats-hub/tabs';
 import { PeriodSelector } from '@/apogee-connect/components/filters/PeriodSelector';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
+import { PeriodDisplay } from '@/apogee-connect/components/filters/PeriodDisplay';
 import { ROUTES } from '@/config/routes';
 
 const STATS_TABS: PillTabConfig[] = [
@@ -49,8 +50,8 @@ export default function StatsTabContent() {
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabId)}>
         <PillTabsList tabs={STATS_TABS} />
 
-        {/* Diffusion TV + Sélecteur de période SOUS les onglets */}
-        <div className="flex items-center justify-between mt-4">
+        {/* Diffusion TV + Période sélectionnée + Sélecteur de période */}
+        <div className="flex items-center justify-between mt-4 gap-3">
           <Button 
             variant="outline" 
             size="sm"
@@ -61,7 +62,12 @@ export default function StatsTabContent() {
             Diffusion TV
             <ExternalLink className="h-3 w-3" />
           </Button>
-          {periodSelector}
+          
+          <div className="flex items-center gap-3">
+            {/* Affichage de la période sélectionnée */}
+            <PeriodDisplay />
+            {periodSelector}
+          </div>
         </div>
 
         <AnimatePresence mode="wait">
