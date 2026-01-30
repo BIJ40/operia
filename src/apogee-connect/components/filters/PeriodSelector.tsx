@@ -8,8 +8,8 @@ interface PeriodSelectorProps {
 export const PeriodSelector = ({ variant = 'default' }: PeriodSelectorProps) => {
   const { filters, setDateRange } = useFilters();
 
-  // Périodes futures pour le Prévisionnel
-  const previsionnelPeriods: PeriodValue[] = ['month-remaining', 'week+1', 'month+1', 'quarter+1', 'year-full'];
+  // Périodes futures pour le Prévisionnel (sans les périodes fixes, on utilise le month picker)
+  const previsionnelPeriods: PeriodValue[] = ['month-remaining', 'week+1', 'quarter+1'];
   
   // Périodes standard (passées/présentes)
   const standardPeriods: PeriodValue[] = ['today', 'yesterday', 'week', 'month', 'month-1', 'year', 'year-1', 'custom'];
@@ -27,6 +27,7 @@ export const PeriodSelector = ({ variant = 'default' }: PeriodSelectorProps) => 
       availablePeriods={availablePeriods}
       variant="compact"
       showCustomPicker={variant !== 'previsionnel'}
+      showMonthPicker={variant === 'previsionnel'}
     />
   );
 };

@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { 
   format, 
   startOfToday, 
@@ -23,7 +24,9 @@ import {
   addMonths,
   startOfQuarter,
   endOfQuarter,
-  addQuarters
+  addQuarters,
+  setMonth,
+  setYear
 } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useState } from "react";
@@ -45,7 +48,8 @@ export type PeriodValue =
   | 'month+1'
   | 'month-remaining'
   | 'quarter+1'
-  | 'year-full';
+  | 'year-full'
+  | 'specific-month'; // Nouveau: mois spécifique
 
 export interface PeriodConfig {
   value: PeriodValue;
@@ -59,8 +63,25 @@ interface UnifiedPeriodSelectorProps {
   availablePeriods?: PeriodValue[];
   variant?: 'default' | 'compact' | 'franchiseur';
   showCustomPicker?: boolean;
+  showMonthPicker?: boolean; // Nouveau: afficher le sélecteur de mois
   className?: string;
 }
+
+// Liste des mois en français
+const MONTHS = [
+  { value: 0, label: 'Janvier' },
+  { value: 1, label: 'Février' },
+  { value: 2, label: 'Mars' },
+  { value: 3, label: 'Avril' },
+  { value: 4, label: 'Mai' },
+  { value: 5, label: 'Juin' },
+  { value: 6, label: 'Juillet' },
+  { value: 7, label: 'Août' },
+  { value: 8, label: 'Septembre' },
+  { value: 9, label: 'Octobre' },
+  { value: 10, label: 'Novembre' },
+  { value: 11, label: 'Décembre' },
+];
 
 export function UnifiedPeriodSelector({
   value,
@@ -68,13 +89,18 @@ export function UnifiedPeriodSelector({
   availablePeriods = ['today', 'yesterday', 'week', 'month', 'month-1', 'year', 'year-1', 'custom'],
   variant = 'default',
   showCustomPicker = true,
+  showMonthPicker = false,
   className,
 }: UnifiedPeriodSelectorProps) {
   const [showPicker, setShowPicker] = useState(false);
   const [customStartDate, setCustomStartDate] = useState<Date | undefined>();
   const [customEndDate, setCustomEndDate] = useState<Date | undefined>();
-
+  
+  // État pour le sélecteur de mois spécifique
   const now = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+
   const currentMonth = format(now, "MMMM", { locale: fr });
   const currentYear = now.getFullYear();
   const lastMonth = format(subMonths(now, 1), "MMMM", { locale: fr });
@@ -245,6 +271,19 @@ export function UnifiedPeriodSelector({
         label: `année ${currentYear}`
       })
     },
+    'specific-month': {
+      value: 'specific-month',
+      label: 'MOIS',
+      getDates: () => {
+        const targetDate = setYear(setMonth(new Date(), selectedMonth), selectedYear);
+        const monthName = format(targetDate, "MMMM yyyy", { locale: fr });
+        return {
+          start: startOfMonth(targetDate),
+          end: endOfMonth(targetDate),
+          label: monthName
+        };
+      }
+    },
     custom: {
       value: 'custom',
       label: 'CHOISIR',
@@ -281,6 +320,30 @@ export function UnifiedPeriodSelector({
     }
   };
 
+  // Handler pour le sélecteur de mois spécifique
+  const handleMonthSelect = (monthValue: string) => {
+    const month = parseInt(monthValue, 10);
+    setSelectedMonth(month);
+    applySpecificMonth(month, selectedYear);
+  };
+
+  const handleYearChange = (delta: number) => {
+    const newYear = selectedYear + delta;
+    setSelectedYear(newYear);
+    applySpecificMonth(selectedMonth, newYear);
+  };
+
+  const applySpecificMonth = (month: number, year: number) => {
+    const targetDate = setYear(setMonth(new Date(), month), year);
+    const monthName = format(targetDate, "MMMM yyyy", { locale: fr });
+    onChange(
+      startOfMonth(targetDate),
+      endOfMonth(targetDate),
+      monthName,
+      'specific-month'
+    );
+  };
+
   // Styles selon la variante
   const buttonStyles = {
     default: {
@@ -301,7 +364,7 @@ export function UnifiedPeriodSelector({
 
   return (
     <div className={cn("flex flex-wrap gap-2 justify-center items-center", className)}>
-      {periods.filter(p => p.value !== 'custom').map((period) => {
+      {periods.filter(p => p.value !== 'custom' && p.value !== 'specific-month').map((period) => {
         const isActive = value === period.getDates().label || value === period.value;
         return (
           <Button
@@ -318,6 +381,41 @@ export function UnifiedPeriodSelector({
           </Button>
         );
       })}
+
+      {/* Sélecteur de mois spécifique pour le prévisionnel */}
+      {showMonthPicker && (
+        <div className="flex items-center gap-1 border rounded-lg px-2 py-1 bg-background">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={() => handleYearChange(-1)}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-xs font-medium min-w-[40px] text-center">{selectedYear}</span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={() => handleYearChange(1)}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Select value={String(selectedMonth)} onValueChange={handleMonthSelect}>
+            <SelectTrigger className="h-7 w-[100px] text-xs border-0 bg-transparent focus:ring-0">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {MONTHS.map((m) => (
+                <SelectItem key={m.value} value={String(m.value)} className="text-xs">
+                  {m.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {showCustomPicker && availablePeriods.includes('custom') && (
         <Popover open={showPicker} onOpenChange={setShowPicker}>
