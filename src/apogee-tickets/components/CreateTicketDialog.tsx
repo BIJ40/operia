@@ -97,7 +97,7 @@ export function CreateTicketDialog({
     setDialogWasOpen(open);
   }, [open, setDialogWasOpen]);
 
-  // Charger le prénom de l'utilisateur
+  // Charger le prénom de l'utilisateur et TOUJOURS le mettre comme reported_by
   useEffect(() => {
     async function loadUserName() {
       if (!user?.id) return;
@@ -107,12 +107,14 @@ export function CreateTicketDialog({
         .eq('id', user.id)
         .maybeSingle();
       if (data?.first_name) {
-        setUserFirstName(data.first_name);
-        setForm(prev => ({ ...prev, reported_by: data.first_name }));
+        const formattedName = data.first_name.toUpperCase();
+        setUserFirstName(formattedName);
+        // TOUJOURS écraser reported_by avec le nom de l'utilisateur connecté
+        setForm(prev => ({ ...prev, reported_by: formattedName }));
       }
     }
     loadUserName();
-  }, [user?.id]);
+  }, [user?.id, setForm]);
 
   const isDeveloper = userTicketRole === 'developer';
 
@@ -206,7 +208,7 @@ export function CreateTicketDialog({
         h_max: undefined,
         kanban_status: 'BACKLOG' as const,
         created_from: 'MANUAL' as const,
-        reported_by: userFirstName,
+        reported_by: userFirstName.toUpperCase(),
         impact_tags: [],
         heat_priority: DEFAULT_HEAT_PRIORITY,
         roadmap_enabled: false,
