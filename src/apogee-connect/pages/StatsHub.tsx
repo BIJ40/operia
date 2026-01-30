@@ -9,6 +9,7 @@ import { ApiToggleProvider } from '../contexts/ApiToggleContext';
 import { AgencyProvider } from '../contexts/AgencyContext';
 import { SecondaryFiltersProvider } from '../contexts/SecondaryFiltersContext';
 import { PeriodSelector } from '../components/filters/PeriodSelector';
+import { PeriodDisplay } from '../components/filters/PeriodDisplay';
 import { Button } from '@/components/ui/button';
 
 const TAB_ICONS: Record<TabId, React.ReactNode> = {
@@ -55,7 +56,7 @@ function StatsHubContent() {
           ))}
         </TabsList>
 
-      {/* Ligne 2 : Diffusion TV + Sélecteur de période */}
+      {/* Ligne 2 : Diffusion TV + Période affichée + Sélecteur */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
         <Button 
           variant="ghost" 
@@ -66,7 +67,8 @@ function StatsHubContent() {
           <ExternalLink className="h-4 w-4" />
           <span>Diffusion TV</span>
         </Button>
-        <div className="shrink-0">
+        <div className="flex items-center gap-3 shrink-0">
+          <PeriodDisplay />
           {periodSelector}
         </div>
       </div>
