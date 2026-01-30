@@ -216,13 +216,13 @@ export function CAPlanifieCard({ projects, interventions, devis, factures }: CAP
                 <CardTitle className="text-sm font-medium text-muted-foreground">CA Planifié</CardTitle>
                 <Euro className="h-5 w-5 text-warm-green" />
               </CardHeader>
-              <CardContent className="space-y-3">
-                {/* Sélecteur de mois compact */}
-                <div className="flex items-center gap-1 bg-background/80 rounded-md p-1 border border-border/50">
+              <CardContent>
+                {/* Sélecteur de mois compact - même ligne */}
+                <div className="flex items-center gap-0.5 mb-2">
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="h-6 w-6" 
+                    className="h-5 w-5 p-0" 
                     onClick={(e) => { e.stopPropagation(); handlePrevMonth(); }}
                   >
                     <ChevronLeft className="h-3 w-3" />
@@ -232,7 +232,7 @@ export function CAPlanifieCard({ projects, interventions, devis, factures }: CAP
                     onValueChange={(v) => setSelectedMonth(parseInt(v))}
                   >
                     <SelectTrigger 
-                      className="h-6 border-0 shadow-none bg-transparent text-xs font-medium px-1 w-auto min-w-[70px]"
+                      className="h-5 border-0 shadow-none bg-transparent text-xs font-medium px-0.5 w-auto min-w-[60px]"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <SelectValue />
@@ -250,7 +250,7 @@ export function CAPlanifieCard({ projects, interventions, devis, factures }: CAP
                     onValueChange={(v) => setSelectedYear(parseInt(v))}
                   >
                     <SelectTrigger 
-                      className="h-6 border-0 shadow-none bg-transparent text-xs font-medium px-1 w-auto min-w-[50px]"
+                      className="h-5 border-0 shadow-none bg-transparent text-xs font-medium px-0.5 w-auto min-w-[40px]"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <SelectValue />
@@ -266,7 +266,7 @@ export function CAPlanifieCard({ projects, interventions, devis, factures }: CAP
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="h-6 w-6" 
+                    className="h-5 w-5 p-0" 
                     onClick={(e) => { e.stopPropagation(); handleNextMonth(); }}
                   >
                     <ChevronRight className="h-3 w-3" />
@@ -275,8 +275,8 @@ export function CAPlanifieCard({ projects, interventions, devis, factures }: CAP
 
                 {/* Valeur */}
                 <div className="text-3xl font-bold text-warm-green">{formatCurrency(caPlanifie)}</div>
-                <p className="text-sm text-muted-foreground">devis acceptés</p>
-                <div className="flex gap-4 text-xs">
+                <p className="text-sm text-muted-foreground mt-1">devis acceptés</p>
+                <div className="flex gap-4 mt-3 text-xs">
                   <div className="flex items-center gap-1">
                     <FolderOpen className="h-3 w-3 text-muted-foreground" />
                     <span className="font-medium">{caPlanifieDevisCount}</span>
@@ -292,9 +292,6 @@ export function CAPlanifieCard({ projects, interventions, devis, factures }: CAP
               <p className="text-xs text-muted-foreground">
                 Somme des montants HT des devis acceptés (status = "to order") 
                 pour les dossiers avec interventions planifiées sur <strong>{selectedPeriod.label}</strong>.
-              </p>
-              <p className="text-xs text-muted-foreground">
-                1 seul devis comptabilisé par dossier (pas de double comptage).
               </p>
             </div>
           </TooltipContent>
