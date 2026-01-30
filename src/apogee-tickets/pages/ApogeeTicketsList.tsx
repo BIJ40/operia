@@ -475,6 +475,7 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
         open={showCreateDialog}
         onClose={() => setShowCreateDialog(false)}
         modules={modules}
+        statuses={statuses}
         onCreate={async (ticket) => {
           const result = await createTicket.mutateAsync(ticket);
           return result?.id;

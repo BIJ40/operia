@@ -20,7 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Paperclip, X, FileIcon } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
-import type { ApogeeModule, ApogeeTicketInsert, OwnerSide } from '../types';
+import type { ApogeeModule, ApogeeTicketInsert, OwnerSide, ApogeeTicketStatus } from '../types';
 import type { TicketRole } from '../hooks/useTicketPermissions';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,6 +35,7 @@ interface CreateTicketDialogProps {
   open: boolean;
   onClose: () => void;
   modules: ApogeeModule[];
+  statuses: ApogeeTicketStatus[];
   /** Retourne l'ID du ticket créé pour permettre l'upload des fichiers */
   onCreate: (ticket: ApogeeTicketInsert) => Promise<string | undefined>;
   isCreating?: boolean;
@@ -59,6 +60,7 @@ export function CreateTicketDialog({
   open,
   onClose,
   modules,
+  statuses,
   onCreate,
   isCreating,
   userTicketRole,
@@ -271,8 +273,8 @@ export function CreateTicketDialog({
             />
           </div>
 
-          {/* Module + Estimations en ligne */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Module + Statut en ligne */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Module (obligatoire) */}
             <div className="space-y-2">
               <Label htmlFor="module">Module *</Label>
@@ -292,36 +294,62 @@ export function CreateTicketDialog({
               </Select>
             </div>
 
-            {/* Estimations - uniquement pour les développeurs */}
-            {isDeveloper && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="h_min">Estimation min (h)</Label>
-                  <Input
-                    id="h_min"
-                    type="number"
-                    value={form.h_min || ''}
-                    onChange={(e) => setForm({ ...form, h_min: e.target.value ? Number(e.target.value) : undefined })}
-                    placeholder="0"
-                    min={0}
-                    step={0.5}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="h_max">Estimation max (h)</Label>
-                  <Input
-                    id="h_max"
-                    type="number"
-                    value={form.h_max || ''}
-                    onChange={(e) => setForm({ ...form, h_max: e.target.value ? Number(e.target.value) : undefined })}
-                    placeholder="0"
-                    min={0}
-                    step={0.5}
-                  />
-                </div>
-              </>
-            )}
+            {/* Statut */}
+            <div className="space-y-2">
+              <Label htmlFor="status">Statut</Label>
+              <Select
+                value={form.kanban_status || 'BACKLOG'}
+                onValueChange={(v) => setForm({ ...form, kanban_status: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner un statut" />
+                </SelectTrigger>
+                <SelectContent>
+                  {statuses.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      <span className="flex items-center gap-2">
+                        <span 
+                          className="w-2.5 h-2.5 rounded-full" 
+                          style={{ backgroundColor: s.color || '#6b7280' }}
+                        />
+                        {s.label}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+
+          {/* Estimations - uniquement pour les développeurs */}
+          {isDeveloper && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="h_min">Estimation min (h)</Label>
+                <Input
+                  id="h_min"
+                  type="number"
+                  value={form.h_min || ''}
+                  onChange={(e) => setForm({ ...form, h_min: e.target.value ? Number(e.target.value) : undefined })}
+                  placeholder="0"
+                  min={0}
+                  step={0.5}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="h_max">Estimation max (h)</Label>
+                <Input
+                  id="h_max"
+                  type="number"
+                  value={form.h_max || ''}
+                  onChange={(e) => setForm({ ...form, h_max: e.target.value ? Number(e.target.value) : undefined })}
+                  placeholder="0"
+                  min={0}
+                  step={0.5}
+                />
+              </div>
+            </div>
+          )}
 
           {/* PRIORITÉ */}
           <div className="space-y-2">
