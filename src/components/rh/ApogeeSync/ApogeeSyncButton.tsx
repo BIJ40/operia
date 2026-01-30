@@ -4,7 +4,6 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { RefreshCw, Loader2 } from 'lucide-react';
 import { useApogeeSync, SyncAction } from '@/hooks/useApogeeSync';
 import { ApogeeSyncDialog } from './ApogeeSyncDialog';
@@ -21,7 +20,6 @@ export function ApogeeSyncButton({ agencySlug, collaborators }: ApogeeSyncButton
   const {
     syncActions,
     loading,
-    totalChanges,
     executeSync,
     isSyncing,
     refetch,
@@ -50,20 +48,12 @@ export function ApogeeSyncButton({ agencySlug, collaborators }: ApogeeSyncButton
         size="sm"
         onClick={handleOpenDialog}
         disabled={loading || !agencySlug}
-        className="text-muted-foreground hover:text-foreground relative"
+        className="text-muted-foreground hover:text-foreground"
       >
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
           <RefreshCw className="h-4 w-4" />
-        )}
-        {totalChanges > 0 && !loading && (
-          <Badge 
-            variant="destructive" 
-            className="absolute -top-1 -right-1 h-4 min-w-4 p-0 flex items-center justify-center text-[10px]"
-          >
-            {totalChanges}
-          </Badge>
         )}
       </Button>
       
