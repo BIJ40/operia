@@ -92,33 +92,95 @@ export const nbInterventionsPeriode: StatDefinition = {
   aggregation: 'count',
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const { interventions } = data;
-    
+
+    // NOTE: Cette métrique est utilisée côté agence (onglet Général) pour alimenter
+    // la tuile "RT". On expose donc un breakdown.byType (dont byType.rt).
+    const byType: Record<string, number> = {};
+
+    // Résolution robuste du type réel d'une intervention (compatible données Apogée)
+    // - type2="A DEFINIR" => regarder biDepan/biTvx/biRt et leurs validations
+    // - sinon => utiliser type2/type
+    const resolveInterventionTypeForStats = (intervention: any): string => {
+      const rawType2 = (intervention.data?.type2 ?? intervention.type2 ?? '') as string;
+      const rawType = (intervention.data?.type ?? intervention.type ?? '') as string;
+
+      const type2 = String(rawType2 || '').trim();
+
+      const isADefinir = type2.toLowerCase() === 'a definir' || type2.toLowerCase() === 'à definir' || type2.toLowerCase() === 'a définir' || type2.toLowerCase() === 'à définir' || type2.toUpperCase() === 'A DEFINIR' || type2.toUpperCase() === 'A DÉFINIR';
+
+      const isValidatedFromBI = (bi: any): boolean => {
+        if (!bi) return false;
+
+        // Cas où le bloc expose directement isValidated / IsValidated
+        if (bi.isValidated === true || bi.IsValidated === true) return true;
+
+        // Cas items[] ou Items[]
+        const items = bi.items ?? bi.Items;
+        if (Array.isArray(items)) {
+          return items.some((it: any) => it?.isValidated === true || it?.IsValidated === true);
+        }
+
+        // Cas Items = { isValidated: true }
+        if (items && typeof items === 'object') {
+          return (items as any).isValidated === true || (items as any).IsValidated === true;
+        }
+
+        return false;
+      };
+
+      if (isADefinir) {
+        const biDepan = intervention.data?.biDepan ?? intervention.biDepan;
+        const biTvx = intervention.data?.biTvx ?? intervention.biTvx;
+        const biRt = intervention.data?.biRt ?? intervention.biRt;
+
+        // Ordre de résolution aligné sur rules.json (biDepan -> biTvx -> biRt)
+        if (isValidatedFromBI(biDepan)) return 'depannage';
+        if (isValidatedFromBI(biTvx)) return 'travaux';
+        if (isValidatedFromBI(biRt)) return 'rt';
+
+        return 'non_defini';
+      }
+
+      // type2 prioritaire, sinon type
+      return type2 || String(rawType || '').trim() || 'autre';
+    };
+
     let count = 0;
-    
+
     for (const intervention of interventions) {
       // Vérifier l'état
       if (!isValidInterventionState(intervention.state)) continue;
-      
+
       const dateStr = intervention.dateReelle || intervention.date || intervention.created_at;
       if (!dateStr) continue;
-      
+
       try {
         const date = parseISO(dateStr);
-        if (isWithinInterval(date, { start: params.dateRange.start, end: params.dateRange.end })) {
-          count++;
+        if (!isWithinInterval(date, { start: params.dateRange.start, end: params.dateRange.end })) {
+          continue;
         }
       } catch {
         continue;
       }
+
+      count++;
+
+      const resolvedType = resolveInterventionTypeForStats(intervention);
+      const typeKey = normalizeInterventionType(resolvedType);
+      byType[typeKey] = (byType[typeKey] || 0) + 1;
     }
-    
+
     return {
       value: count,
       metadata: {
         computedAt: new Date(),
         source: 'interventions',
         recordCount: count,
-      }
+      },
+      breakdown: {
+        byType,
+        rt: byType.rt ?? 0,
+      },
     };
   }
 };
