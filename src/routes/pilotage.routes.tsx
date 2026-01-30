@@ -67,6 +67,9 @@ export function PilotageRoutes() {
       {/* Diffusion */}
       <Route path="/agency/diffusion" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="diffusion"><DiffusionDashboard /></ModuleGuard></RoleGuard></AgencyLayout>} />
       
+      {/* TV Display - Route sans layout pour affichage plein écran TV */}
+      <Route path="/tv-display" element={<RoleGuard minRole="franchisee_admin"><DiffusionDashboard /></RoleGuard>} />
+      
       {/* RH Tech - redirige vers RH principal */}
       <Route path="/agency/rh-tech" element={<Navigate to="/rh/suivi" replace />} />
       <Route path="/agency/rh-tech/planning" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><PlanningHebdo /></ModuleGuard></RoleGuard></AgencyLayout>} />
