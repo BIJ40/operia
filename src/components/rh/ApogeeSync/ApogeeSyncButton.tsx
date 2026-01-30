@@ -24,7 +24,16 @@ export function ApogeeSyncButton({ agencySlug, collaborators }: ApogeeSyncButton
     totalChanges,
     executeSync,
     isSyncing,
+    refetch,
   } = useApogeeSync({ agencySlug, collaborators });
+  
+  const handleOpenDialog = async () => {
+    // Forcer un refresh des données avant d'ouvrir le dialogue
+    if (refetch) {
+      await refetch();
+    }
+    setDialogOpen(true);
+  };
   
   const handleConfirm = (selectedActions: SyncAction[]) => {
     executeSync(selectedActions, {
@@ -39,14 +48,22 @@ export function ApogeeSyncButton({ agencySlug, collaborators }: ApogeeSyncButton
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => setDialogOpen(true)}
+        onClick={handleOpenDialog}
         disabled={loading || !agencySlug}
-        className="text-muted-foreground hover:text-foreground"
+        className="text-muted-foreground hover:text-foreground relative"
       >
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
           <RefreshCw className="h-4 w-4" />
+        )}
+        {totalChanges > 0 && !loading && (
+          <Badge 
+            variant="destructive" 
+            className="absolute -top-1 -right-1 h-4 min-w-4 p-0 flex items-center justify-center text-[10px]"
+          >
+            {totalChanges}
+          </Badge>
         )}
       </Button>
       

@@ -31,7 +31,7 @@ export function useApogeeSync({ agencySlug, collaborators }: UseApogeeSyncOption
   const { agencyId } = useAuth();
   
   // Récupérer les utilisateurs Apogée
-  const { users: apogeeUsers, loading: loadingUsers } = useApogeeUsers({ agencySlug });
+  const { users: apogeeUsers, loading: loadingUsers, refetch } = useApogeeUsers({ agencySlug });
   
   // Calculer les actions de synchronisation
   const syncActions = useMemo(() => {
@@ -47,7 +47,15 @@ export function useApogeeSync({ agencySlug, collaborators }: UseApogeeSyncOption
       }
     });
     
-    for (const apogeeUser of apogeeUsers as ApogeeUserFull[]) {
+    // Filtrer les utilisateurs système avant le traitement
+    const validApogeeUsers = (apogeeUsers as ApogeeUserFull[]).filter(user => {
+      // Exclure les comptes système (Dynoco Admin, etc.)
+      if (user.firstname?.toLowerCase() === 'dynoco') return false;
+      if (user.id === 1) return false; // Compte admin système
+      return true;
+    });
+    
+    for (const apogeeUser of validApogeeUsers) {
       const existing = collaboratorsByApogeeId.get(apogeeUser.id);
       
       if (existing) {
@@ -200,5 +208,6 @@ export function useApogeeSync({ agencySlug, collaborators }: UseApogeeSyncOption
     departedCount: syncActions.filter(a => a.type === 'mark_departed').length,
     executeSync: syncMutation.mutate,
     isSyncing: syncMutation.isPending,
+    refetch,
   };
 }
