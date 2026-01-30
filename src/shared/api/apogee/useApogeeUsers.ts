@@ -9,7 +9,7 @@ export interface UseApogeeUsersOptions {
 export function useApogeeUsers(options: UseApogeeUsersOptions = {}) {
   const { agencySlug } = options;
 
-  const { data, isLoading, error } = useQuery<ApogeeUser[]>({
+  const { data, isLoading, error, refetch } = useQuery<ApogeeUser[]>({
     queryKey: ["apogee-users", agencySlug ?? "none"],
     queryFn: async () => {
       if (!agencySlug) return [];
@@ -24,5 +24,6 @@ export function useApogeeUsers(options: UseApogeeUsersOptions = {}) {
     users: data ?? [],
     loading: isLoading,
     error,
+    refetch,
   };
 }

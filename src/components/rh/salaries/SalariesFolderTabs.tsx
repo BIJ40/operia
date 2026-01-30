@@ -3,8 +3,8 @@
  * Style unifié avec bordures colorées comme dans les autres modules
  */
 
-import React, { useCallback } from 'react';
-import { Users } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Users, ChevronRight } from 'lucide-react';
 import { User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
@@ -128,11 +128,34 @@ export function SalariesFolderTabs({
   activeCollaboratorId,
   onSelectCollaborator,
 }: SalariesFolderTabsProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  
   // Ordre des onglets persisté
   const [tabOrder, setTabOrder] = useSessionState<string[]>(
     'salaries_tab_order',
     collaborators.map(c => c.id)
   );
+  
+  // Détecter si on peut scroller à droite
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    
+    const checkScroll = () => {
+      const hasMoreContent = container.scrollWidth > container.clientWidth + container.scrollLeft + 10;
+      setCanScrollRight(hasMoreContent);
+    };
+    
+    checkScroll();
+    container.addEventListener('scroll', checkScroll);
+    window.addEventListener('resize', checkScroll);
+    
+    return () => {
+      container.removeEventListener('scroll', checkScroll);
+      window.removeEventListener('resize', checkScroll);
+    };
+  }, [collaborators]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -171,8 +194,12 @@ export function SalariesFolderTabs({
   const overviewAccent = 'hsl(var(--warm-teal))';
 
   return (
-    <div className="flex items-end gap-1 overflow-x-auto scrollbar-hide pb-0">
-      {/* Onglet Vue d'ensemble */}
+    <div className="relative">
+      <div 
+        ref={containerRef}
+        className="flex items-end gap-1 overflow-x-auto scrollbar-hide pb-0"
+      >
+        {/* Onglet Vue d'ensemble */}
       <motion.div
         initial={{ opacity: 0, y: -5 }}
         animate={{ opacity: 1, y: 0 }}
@@ -237,6 +264,14 @@ export function SalariesFolderTabs({
           ))}
         </SortableContext>
       </DndContext>
+      </div>
+      
+      {/* Indicateur de scroll à droite */}
+      {canScrollRight && (
+        <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-background via-background/80 to-transparent pointer-events-none flex items-center justify-end pr-1">
+          <ChevronRight className="w-4 h-4 text-muted-foreground animate-pulse" />
+        </div>
+      )}
     </div>
   );
 }
