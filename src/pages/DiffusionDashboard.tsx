@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Settings, Maximize, ArrowLeft, Minimize } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDiffusionSettings } from '@/hooks/use-diffusion-settings';
@@ -29,10 +29,13 @@ const PAGES: { id: PageType; label: string }[] = [
 export default function DiffusionDashboard() {
   const { settings, isLoading: settingsLoading, updateSettings } = useDiffusionSettings();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+
+  const isAgencyDiffusionRoute = location.pathname === '/agency/diffusion';
 
   // Mois en cours uniquement
   const currentMonthIndex = new Date().getMonth();
@@ -60,11 +63,21 @@ export default function DiffusionDashboard() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
-    } else {
-      document.exitFullscreen();
+  const toggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        // IMPORTANT: sur /agency/diffusion on est dans MinimalLayout (Aide/Home/Retour).
+        // Pour l'affichage TV, on bascule d'abord sur /tv-display (sans layout) avant de passer en plein écran.
+        if (isAgencyDiffusionRoute) {
+          navigate('/tv-display', { replace: true });
+        }
+
+        await document.documentElement.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (_error) {
+      // Silencieux: certaines politiques navigateur peuvent bloquer le fullscreen.
     }
   };
 
