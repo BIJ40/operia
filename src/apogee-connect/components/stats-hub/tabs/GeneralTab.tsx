@@ -40,6 +40,18 @@ function useGeneralTabKpis() {
 
       const statiaParams = { dateRange: filters.dateRange };
 
+      // Calculer la période M-1 pour l'évolution
+      const currentStart = filters.dateRange.start;
+      const currentEnd = filters.dateRange.end;
+      
+      // Période M-1 : décaler d'un mois
+      const prevStart = new Date(currentStart);
+      prevStart.setMonth(prevStart.getMonth() - 1);
+      const prevEnd = new Date(currentEnd);
+      prevEnd.setMonth(prevEnd.getMonth() - 1);
+      
+      const prevStatiaParams = { dateRange: { start: prevStart, end: prevEnd } };
+
       const [
         caGlobal,
         nbDossiers,
@@ -51,6 +63,7 @@ function useGeneralTabKpis() {
         nbInterventions,
         caTrancheHoraire,
         topTechs,
+        caGlobalPrev,
       ] = await Promise.all([
         getMetricForAgency('ca_global_ht', agencySlug, statiaParams, services),
         getMetricForAgency('nb_dossiers_crees', agencySlug, statiaParams, services),
@@ -62,13 +75,14 @@ function useGeneralTabKpis() {
         getMetricForAgency('nb_interventions_periode', agencySlug, statiaParams, services),
         getMetricForAgency('ca_par_tranche_horaire', agencySlug, statiaParams, services),
         getMetricForAgency('top_techniciens_ca', agencySlug, statiaParams, services),
+        // CA du mois précédent pour l'évolution
+        getMetricForAgency('ca_global_ht', agencySlug, prevStatiaParams, services),
       ]);
 
       // Extraire nombre factures depuis breakdown CA
       const nbFactures = (caGlobal?.breakdown as any)?.factureCount ?? 0;
       
       // Extraire nombre RT depuis breakdown interventions
-      // Le breakdown peut être structuré différemment - chercher dans plusieurs chemins possibles
       const interventionsBreakdown = nbInterventions?.breakdown as any || {};
       const rtCount = interventionsBreakdown?.byType?.rt 
         ?? interventionsBreakdown?.byType?.['releve technique']
@@ -81,8 +95,13 @@ function useGeneralTabKpis() {
       const topTechBreakdown = topTechs?.breakdown as any;
       const nbTechsActifs = topTechBreakdown?.ranking?.length ?? 0;
 
+      // Calcul évolution CA : (CA_M - CA_M-1) / CA_M-1 * 100
+      const caM = Number(caGlobal?.value) || 0;
+      const caPrev = Number(caGlobalPrev?.value) || 0;
+      const evolutionCA = caPrev > 0 ? ((caM - caPrev) / caPrev) * 100 : 0;
+
       return {
-        caHT: Number(caGlobal?.value) || 0,
+        caHT: caM,
         nbFactures,
         nbDossiers: Number(nbDossiers?.value) || 0,
         nbDevis: Number(nbDevis?.value) || 0,
@@ -94,6 +113,8 @@ function useGeneralTabKpis() {
         nbInterventions: Number(nbInterventions?.value) || 0,
         nbTechsActifs,
         caTrancheHoraire: caTrancheHoraire?.value as Record<string, number> || {},
+        evolutionCA,
+        caPrev,
       };
     },
   });
@@ -167,7 +188,7 @@ export function GeneralTab() {
     { icon: Percent, title: 'Transfo', value: data?.tauxTransfo ?? 0, format: 'percent', color: 'teal' },
     { icon: Clock, title: 'Délai', value: data?.delaiMoyen ?? 0, format: 'days', color: 'cyan' },
     { icon: Target, title: 'RT', value: data?.nbRT ?? 0, format: 'number', color: 'purple' },
-    { icon: TrendingUp, title: 'Évolution', value: 0, format: 'percent', color: 'green' },
+    { icon: TrendingUp, title: 'Évolution', value: data?.evolutionCA ?? 0, format: 'evolution', color: 'green' },
     { icon: Users, title: 'Techniciens', value: data?.nbTechsActifs ?? 0, format: 'number', color: 'blue' },
   ];
 
@@ -175,6 +196,10 @@ export function GeneralTab() {
     switch (format) {
       case 'currency': return formatCurrency(value);
       case 'percent': return formatPercent(value);
+      case 'evolution': {
+        const sign = value >= 0 ? '+' : '';
+        return `${sign}${value.toFixed(1)}%`;
+      }
       case 'days': return `${Math.round(value)}j`;
       default: return String(value);
     }
