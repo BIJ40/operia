@@ -99,10 +99,10 @@ export function CreateTicketDialog({
     setDialogWasOpen(open);
   }, [open, setDialogWasOpen]);
 
-  // Charger le prénom de l'utilisateur et TOUJOURS le mettre comme reported_by
+  // Charger le prénom de l'utilisateur et TOUJOURS le mettre comme reported_by à chaque ouverture
   useEffect(() => {
     async function loadUserName() {
-      if (!user?.id) return;
+      if (!user?.id || !open) return;
       const { data } = await supabase
         .from('profiles')
         .select('first_name')
@@ -111,12 +111,12 @@ export function CreateTicketDialog({
       if (data?.first_name) {
         const formattedName = data.first_name.toUpperCase();
         setUserFirstName(formattedName);
-        // TOUJOURS écraser reported_by avec le nom de l'utilisateur connecté
+        // TOUJOURS écraser reported_by avec le nom de l'utilisateur connecté à chaque ouverture
         setForm(prev => ({ ...prev, reported_by: formattedName }));
       }
     }
     loadUserName();
-  }, [user?.id, setForm]);
+  }, [user?.id, open, setForm]);
 
   const isDeveloper = userTicketRole === 'developer';
 
