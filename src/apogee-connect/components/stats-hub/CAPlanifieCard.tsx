@@ -4,9 +4,8 @@
  */
 
 import { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Euro, FolderOpen, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { format, startOfMonth, endOfMonth, setMonth, setYear, addMonths } from 'date-fns';
@@ -212,78 +211,38 @@ export function CAPlanifieCard({ projects, interventions, devis, factures }: CAP
         <Tooltip>
           <TooltipTrigger asChild>
             <Card className="border-l-4 bg-warm-green/10 cursor-help" style={{ borderLeftColor: 'hsl(145, 60%, 55%)' }}>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">CA Planifié</CardTitle>
-                <Euro className="h-5 w-5 text-warm-green" />
-              </CardHeader>
-              <CardContent>
-                {/* Sélecteur de mois compact - même ligne */}
-                <div className="flex items-center gap-0.5 mb-2">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-5 w-5 p-0" 
-                    onClick={(e) => { e.stopPropagation(); handlePrevMonth(); }}
-                  >
-                    <ChevronLeft className="h-3 w-3" />
+              {/* Header */}
+              <div className="flex items-start justify-between p-4 pb-2">
+                <h4 className="text-sm font-medium text-muted-foreground">CA Planifié</h4>
+                <Euro className="h-4 w-4 text-warm-green" />
+              </div>
+
+              {/* Content */}
+              <div className="px-4 pb-4">
+                {/* Sélecteur inline ultra-compact */}
+                <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground mb-1">
+                  <Button variant="ghost" size="icon" className="h-4 w-4 p-0" onClick={(e) => { e.stopPropagation(); handlePrevMonth(); }}>
+                    <ChevronLeft className="h-2.5 w-2.5" />
                   </Button>
-                  <Select 
-                    value={selectedMonth.toString()} 
-                    onValueChange={(v) => setSelectedMonth(parseInt(v))}
-                  >
-                    <SelectTrigger 
-                      className="h-5 border-0 shadow-none bg-transparent text-xs font-medium px-0.5 w-auto min-w-[60px]"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {MONTHS.map(m => (
-                        <SelectItem key={m.value} value={m.value.toString()} className="text-xs">
-                          {m.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select 
-                    value={selectedYear.toString()} 
-                    onValueChange={(v) => setSelectedYear(parseInt(v))}
-                  >
-                    <SelectTrigger 
-                      className="h-5 border-0 shadow-none bg-transparent text-xs font-medium px-0.5 w-auto min-w-[40px]"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1, now.getFullYear() + 2].map(y => (
-                        <SelectItem key={y} value={y.toString()} className="text-xs">
-                          {y}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-5 w-5 p-0" 
-                    onClick={(e) => { e.stopPropagation(); handleNextMonth(); }}
-                  >
-                    <ChevronRight className="h-3 w-3" />
+                  <span className="font-medium">{MONTHS[selectedMonth].label.slice(0, 3)}. {selectedYear}</span>
+                  <Button variant="ghost" size="icon" className="h-4 w-4 p-0" onClick={(e) => { e.stopPropagation(); handleNextMonth(); }}>
+                    <ChevronRight className="h-2.5 w-2.5" />
                   </Button>
                 </div>
 
-                {/* Valeur */}
-                <div className="text-3xl font-bold text-warm-green">{formatCurrency(caPlanifie)}</div>
-                <p className="text-sm text-muted-foreground mt-1">devis acceptés</p>
-                <div className="flex gap-4 mt-3 text-xs">
-                  <div className="flex items-center gap-1">
-                    <FolderOpen className="h-3 w-3 text-muted-foreground" />
-                    <span className="font-medium">{caPlanifieDevisCount}</span>
-                    <span className="text-muted-foreground">dossiers</span>
+                {/* Value + Mini info */}
+                <div className="flex items-end justify-between">
+                  <div className="flex-1">
+                    <div className="text-2xl font-bold text-foreground">{formatCurrency(caPlanifie)}</div>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                      <FolderOpen className="h-3 w-3" />
+                      <span>{caPlanifieDevisCount} dossiers</span>
+                    </div>
                   </div>
+                  {/* Empty placeholder pour équilibrer avec les mini-graphs des autres cartes */}
+                  <div className="w-24 h-14 flex-shrink-0" />
                 </div>
-              </CardContent>
+              </div>
             </Card>
           </TooltipTrigger>
           <TooltipContent side="bottom" className="p-4 max-w-xs">
