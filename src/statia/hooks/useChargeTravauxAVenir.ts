@@ -196,6 +196,8 @@ export function useChargeTravauxAVenir() {
 
   return {
     data,
+    // Exposer les données brutes pour le composant CAPlanifieCard
+    rawData: globalQuery.data,
     isLoading: globalQuery.isLoading,
     isError: globalQuery.isError,
     error: globalQuery.error,
