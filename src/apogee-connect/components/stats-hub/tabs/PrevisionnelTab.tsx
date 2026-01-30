@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/table';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
 import { Button } from '@/components/ui/button';
+import { CAPlanifieCard } from '../CAPlanifieCard';
 
 // Formatage monétaire
 const formatCurrency = (value: number): string => {
@@ -126,7 +127,7 @@ const itemVariants = {
 
 export function PrevisionnelTab() {
   const { isAgencyReady } = useAgency();
-  const { data, isLoading } = useChargeTravauxAVenir();
+  const { data, rawData, isLoading } = useChargeTravauxAVenir();
   const [showAllDossiers, setShowAllDossiers] = useState(false);
 
   const chartData = useMemo(() => {
@@ -237,44 +238,15 @@ export function PrevisionnelTab() {
           );
         })}
         
-        {/* Card CA Planifié (devis "to order") */}
-        <motion.div variants={itemVariants}>
-          <TooltipProvider delayDuration={200}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Card className="border-l-4 bg-warm-green/10 cursor-help" style={{ borderLeftColor: 'hsl(145, 60%, 55%)' }}>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">CA Planifié</CardTitle>
-                    <Euro className="h-5 w-5 text-warm-green" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold text-warm-green">{formatCurrency(totaux.caPlanifie)}</div>
-                    <p className="text-sm text-muted-foreground mt-1">devis acceptés</p>
-                    <div className="flex gap-4 mt-3 text-xs">
-                      <div className="flex items-center gap-1">
-                        <FolderOpen className="h-3 w-3 text-muted-foreground" />
-                        <span className="font-medium">{debug.caPlanifieDevisCount || 0}</span>
-                        <span className="text-muted-foreground">dossiers</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="p-4 max-w-xs">
-                <div className="space-y-2">
-                  <p className="font-medium">CA Planifié = Σ devis "to order"</p>
-                  <p className="text-xs text-muted-foreground">
-                    Somme des montants HT des devis acceptés (status = "to order") 
-                    pour les dossiers en attente de travaux.
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    1 seul devis comptabilisé par dossier (pas de double comptage).
-                  </p>
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </motion.div>
+        {/* Card CA Planifié avec sélecteur de mois intégré */}
+        {rawData && (
+          <CAPlanifieCard 
+            projects={rawData.projects}
+            interventions={rawData.interventions}
+            devis={rawData.devis}
+            factures={rawData.factures}
+          />
+        )}
 
         {parEtat.length === 0 && (
           <motion.div variants={itemVariants} className="col-span-4">
