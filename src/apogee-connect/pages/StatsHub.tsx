@@ -34,9 +34,10 @@ function StatsHubContent() {
   const { activeTab, setActiveTab } = useStatsHub();
   const TabComponent = TAB_COMPONENTS[activeTab];
 
-  // Sélecteur de période différent pour l'onglet Prévisionnel (périodes futures)
+  // Pour l'onglet Prévisionnel, le sélecteur de période est DANS la carte CA Planifié
+  // Donc on n'affiche pas le sélecteur global
   const periodSelector = activeTab === 'previsionnel' 
-    ? <PeriodSelector variant="previsionnel" />
+    ? null 
     : <PeriodSelector />;
 
   return (
