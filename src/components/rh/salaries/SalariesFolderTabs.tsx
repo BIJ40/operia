@@ -3,9 +3,8 @@
  * Style unifié avec bordures colorées comme dans les autres modules
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Users, ChevronRight } from 'lucide-react';
-import { User } from 'lucide-react';
+import React, { useCallback } from 'react';
+import { Users, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
   DndContext,
@@ -47,8 +46,9 @@ interface SalariesFolderTabsProps {
 function formatCollaboratorName(c: RHCollaborator): string {
   const firstName = c.first_name || '';
   const lastName = c.last_name || '';
-  // Afficher le NOM pour éviter l'ambiguïté (ex: voir "PASQUIER")
-  return lastName ? `${lastName} ${firstName}`.trim() : firstName;
+  // Format très abrégé: Prénom + initiale nom (ex: Maxime P.)
+  const lastInitial = lastName ? `${lastName.charAt(0).toUpperCase()}.` : '';
+  return firstName ? `${firstName} ${lastInitial}`.trim() : lastName;
 }
 
 interface DraggableCollabTabProps {
@@ -91,11 +91,11 @@ function DraggableCollabTab({ collaborator, isActive, colorIndex, onClick }: Dra
         {...listeners}
         onClick={onClick}
         className={cn(
-          "flex items-center gap-2 px-4 py-2.5",
-          "rounded-t-2xl border-2 border-b-0",
-          "font-medium text-sm transition-all duration-200",
+          "flex items-center gap-1.5 px-2.5 py-2",
+          "rounded-t-xl border-2 border-b-0",
+          "font-medium text-xs transition-all duration-200",
           "relative -mb-[2px] z-10",
-          "shrink-0",
+          "min-w-0 max-w-[120px]",
           "cursor-grab active:cursor-grabbing",
           isDragging && 'opacity-50 shadow-lg scale-105',
           isActive 
@@ -110,16 +110,16 @@ function DraggableCollabTab({ collaborator, isActive, colorIndex, onClick }: Dra
       >
         <span 
           className={cn(
-            "flex items-center justify-center w-5 h-5 rounded-md",
+            "flex items-center justify-center w-4 h-4 rounded shrink-0",
             isActive ? "text-white" : "text-muted-foreground"
           )}
           style={{
             backgroundColor: isActive ? accentColor : 'transparent',
           }}
         >
-          <User className="w-3 h-3" />
+          <User className="w-2.5 h-2.5" />
         </span>
-        <span className="whitespace-nowrap max-w-[12rem] truncate">{displayName}</span>
+        <span className="truncate">{displayName}</span>
       </button>
     </motion.div>
   );
@@ -130,8 +130,6 @@ export function SalariesFolderTabs({
   activeCollaboratorId,
   onSelectCollaborator,
 }: SalariesFolderTabsProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [canScrollRight, setCanScrollRight] = useState(false);
   
   // Ordre des onglets persisté
   const [tabOrder, setTabOrder] = useSessionState<string[]>(
@@ -139,25 +137,6 @@ export function SalariesFolderTabs({
     collaborators.map(c => c.id)
   );
   
-  // Détecter si on peut scroller à droite
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    
-    const checkScroll = () => {
-      const hasMoreContent = container.scrollWidth > container.clientWidth + container.scrollLeft + 10;
-      setCanScrollRight(hasMoreContent);
-    };
-    
-    checkScroll();
-    container.addEventListener('scroll', checkScroll);
-    window.addEventListener('resize', checkScroll);
-    
-    return () => {
-      container.removeEventListener('scroll', checkScroll);
-      window.removeEventListener('resize', checkScroll);
-    };
-  }, [collaborators]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -197,10 +176,7 @@ export function SalariesFolderTabs({
 
   return (
     <div className="relative">
-      <div 
-        ref={containerRef}
-        className="flex items-end gap-1 overflow-x-auto scrollbar-hide pb-0"
-      >
+      <div className="flex items-end gap-0.5 flex-wrap pb-0">
         {/* Onglet Vue d'ensemble */}
       <motion.div
         initial={{ opacity: 0, y: -5 }}
@@ -212,11 +188,10 @@ export function SalariesFolderTabs({
         <button
           onClick={() => onSelectCollaborator(null)}
           className={cn(
-            "flex items-center gap-2 px-4 py-2.5",
-            "rounded-t-2xl border-2 border-b-0",
-            "font-medium text-sm transition-all duration-200",
+            "flex items-center gap-1.5 px-2.5 py-2",
+            "rounded-t-xl border-2 border-b-0",
+            "font-medium text-xs transition-all duration-200",
             "relative -mb-[2px] z-10 cursor-pointer",
-            "shrink-0",
             activeCollaboratorId === null 
               ? "bg-background text-foreground shadow-md" 
               : "bg-muted/50 border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -228,14 +203,14 @@ export function SalariesFolderTabs({
         >
           <span 
             className={cn(
-              "flex items-center justify-center w-5 h-5 rounded-md",
+              "flex items-center justify-center w-4 h-4 rounded shrink-0",
               activeCollaboratorId === null ? "text-white" : "text-muted-foreground"
             )}
             style={{
               backgroundColor: activeCollaboratorId === null ? overviewAccent : 'transparent',
             }}
           >
-            <Users className="w-3 h-3" />
+            <Users className="w-2.5 h-2.5" />
           </span>
           <span>Tous</span>
         </button>
@@ -269,12 +244,6 @@ export function SalariesFolderTabs({
       </DndContext>
       </div>
       
-      {/* Indicateur de scroll à droite */}
-      {canScrollRight && (
-        <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-background via-background/80 to-transparent pointer-events-none flex items-center justify-end pr-1">
-          <ChevronRight className="w-4 h-4 text-muted-foreground animate-pulse" />
-        </div>
-      )}
     </div>
   );
 }
