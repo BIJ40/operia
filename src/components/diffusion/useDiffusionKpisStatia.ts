@@ -114,13 +114,29 @@ export function useDiffusionKpisStatia(currentMonthIndex: number) {
       const panierMoyen = Number(panierResult.value) || 0;
       const delaiMoyen = Number(delaiResult.value) || 0;
 
-      // TOP 1 apporteur
-      const topApporteursRanking = (topApporteursResult.breakdown as any)?.ranking || [];
-      const topApporteurData = topApporteursRanking[0];
-      const topApporteur = topApporteurData ? {
-        name: topApporteurData.name || topApporteurData.id || 'Inconnu',
-        ca: topApporteurData.ca || topApporteurData.totalCA || 0,
-      } : null;
+      // TOP 1 apporteur - extraire depuis value (Record<id, ca>) ou breakdown
+      const topApporteursBreakdown = topApporteursResult.breakdown as any;
+      const topApporteursValue = topApporteursResult.value as Record<string, number> | null;
+      
+      let topApporteur: { name: string; ca: number } | null = null;
+      
+      // Priorité 1: breakdown.ranking
+      if (topApporteursBreakdown?.ranking?.length > 0) {
+        const top = topApporteursBreakdown.ranking[0];
+        topApporteur = {
+          name: top.name || top.label || top.id || 'Inconnu',
+          ca: top.ca || top.totalCA || 0,
+        };
+      }
+      // Priorité 2: value comme Record<apporteur, ca>
+      else if (topApporteursValue && typeof topApporteursValue === 'object') {
+        const entries = Object.entries(topApporteursValue)
+          .filter(([, val]) => typeof val === 'number' && val > 0)
+          .sort((a, b) => b[1] - a[1]);
+        if (entries.length > 0) {
+          topApporteur = { name: entries[0][0], ca: entries[0][1] };
+        }
+      }
 
       // TOP 1 univers (max CA)
       const universValues = caUniversResult.value as Record<string, number> | null;
