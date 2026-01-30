@@ -52,22 +52,9 @@ const getInterventionPlanningDate = (itv: any): Date | null => {
   return null;
 };
 
-// RÈGLE MÉTIER: Seules les interventions de type "travaux" ou "dépannage" génèrent du CA planifié
-const PRODUCTIVE_TYPES = ['travaux', 'tvx', 'work', 'depannage', 'dépannage', 'repair', 'reparation'];
-
-const isProductiveIntervention = (itv: any): boolean => {
-  const type = String(itv?.type ?? itv?.type2 ?? itv?.data?.type ?? '').trim().toLowerCase();
-  return PRODUCTIVE_TYPES.some(t => type.includes(t));
-};
-
-// RÈGLE: Intervention doit être validée/planifiée (pas brouillon ni annulée)
-const VALID_INTERVENTION_STATES = ['planned', 'planifié', 'validated', 'validée', 'in_progress', 'done', 'finished'];
-
-const isValidInterventionState = (itv: any): boolean => {
-  const state = String(itv?.state ?? itv?.status ?? '').trim().toLowerCase();
-  if (!state) return true; // Si pas d'état, on considère valide par défaut
-  return VALID_INTERVENTION_STATES.some(s => state.includes(s)) && !state.includes('cancel') && !state.includes('draft');
-};
+// Note: on ne filtre PAS par type/state d'intervention ici.
+// Le CA planifié est basé sur: devis "to_order" + existence d'une intervention planifiée dans la période.
+// (On garde en plus la règle "J+0 minimum" : pas de planifié sur du passé.)
 
 const isDevisToOrder = (d: any): boolean => {
   const state = String(d?.state ?? d?.status ?? d?.data?.state ?? '').trim().toLowerCase();
@@ -132,6 +119,17 @@ export function CAPlanifieCard({ projects, interventions, devis, factures }: CAP
     const startMs = selectedPeriod.start.getTime();
     const endMs = selectedPeriod.end.getTime();
 
+    // Date du jour à minuit pour le filtre J+0 minimum
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayMs = today.getTime();
+
+    // Doit être dans la période ET >= aujourd'hui (prévisionnel uniquement)
+    const isInRangeAndFuture = (d: Date) => {
+      const t = d.getTime();
+      return t >= startMs && t <= endMs && t >= todayMs;
+    };
+
     // Créer un Set des projectIds déjà facturés
     const facturedProjectIds = new Set<number>();
     for (const f of factures) {
@@ -167,21 +165,14 @@ export function CAPlanifieCard({ projects, interventions, devis, factures }: CAP
       // Exclure les projets déjà facturés
       if (facturedProjectIds.has(projectId)) continue;
 
-      // Vérifier si ce projet a une intervention PRODUCTIVE et VALIDE planifiée dans la période
+     // Vérifier si ce projet a une intervention planifiée dans la période
       const projectInterventions = interventionsByProjectId.get(projectId) || [];
-      const hasProductiveInterventionInPeriod = projectInterventions.some((itv) => {
-        // Doit être une intervention productive (travaux/dépannage)
-        if (!isProductiveIntervention(itv)) return false;
-        // Doit être dans un état valide (pas brouillon, pas annulée)
-        if (!isValidInterventionState(itv)) return false;
-        // Doit être planifiée dans la période
+      const hasInterventionInPeriod = projectInterventions.some((itv) => {
         const planningDate = getInterventionPlanningDate(itv);
-        if (!planningDate) return false;
-        const t = planningDate.getTime();
-        return t >= startMs && t <= endMs;
+        return planningDate ? isInRangeAndFuture(planningDate) : false;
       });
 
-      if (!hasProductiveInterventionInPeriod) continue;
+      if (!hasInterventionInPeriod) continue;
 
       // Chercher un devis "to order" pour ce projet
       const projectDevis = devisByProjectId.get(projectId) || [];
