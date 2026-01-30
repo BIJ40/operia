@@ -131,20 +131,7 @@ export default function DiffusionDashboard() {
               isLoading={kpisLoading}
             />
 
-            {/* Section 3: Le saviez-vous (optionnel) */}
-            {settings.saviez_vous_templates && settings.saviez_vous_templates.length > 0 && (
-              <DiffusionSaviezVous 
-                currentMonthIndex={currentMonthIndex}
-                templates={settings.saviez_vous_templates}
-              />
-            )}
-
-            {/* Section 4: Graphique CA/Technicien 6 mois */}
-            <DiffusionSlides
-              currentSlideIndex={0}
-              currentMonthIndex={currentMonthIndex}
-              enabledSlides={settings.enabled_slides || []}
-            />
+            {/* Sections Le saviez-vous et graphique retirées - page TV sans scroll */}
           </div>
 
           {/* Panneau de paramètres */}
