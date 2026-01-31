@@ -762,6 +762,12 @@ button[data-image-modal] {
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  background-color: hsl(var(--warm-red) / 0.15);
+  color: hsl(var(--warm-red));
+}
+
+.admin-main-tab:hover .admin-tab-icon {
+  background-color: hsl(var(--warm-red) / 0.25);
 }
 
 .admin-main-tab[data-state="active"] .admin-tab-icon {
