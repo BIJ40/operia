@@ -26,20 +26,13 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { FolderOpen, Loader2, Upload, Download } from 'lucide-react';
 import { useCollaboratorDocuments } from '@/hooks/useCollaboratorDocuments';
 import { useNestedFolders } from '@/hooks/useNestedFolders';
 import { useDocumentSearch } from '@/hooks/useDocumentSearch';
 import { useRHExport } from '@/hooks/useRHExport';
-import { CollaboratorDocument, DocumentType, DocumentVisibility, DOCUMENT_TYPES } from '@/types/collaboratorDocument';
+import { CollaboratorDocument, DocumentType, DocumentVisibility } from '@/types/collaboratorDocument';
 import { DocumentCategoryTabs } from './DocumentCategoryTabs';
 import { FolderGridView } from './FolderGridView';
 import { DocumentListView } from './DocumentListView';
@@ -48,7 +41,20 @@ import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { FolderNavigationBar } from './FolderNavigationBar';
 import { DocumentItem } from './DocumentItem';
 import { DocumentSearchBar } from './DocumentSearchBar';
+import { DocumentTypeSelector } from './DocumentTypeSelector';
 import { toast } from 'sonner';
+
+// Mapping type → nom de dossier par défaut
+const TYPE_TO_FOLDER: Record<DocumentType, string> = {
+  PAYSLIP: 'Salaires',
+  CONTRACT: 'Contrats',
+  AVENANT: 'Avenants',
+  ATTESTATION: 'Attestations',
+  MEDICAL_VISIT: 'Visites médicales',
+  SANCTION: 'Sanctions',
+  HR_NOTE: 'Notes RH',
+  OTHER: '',
+};
 
 interface HRDocumentManagerProps {
   collaboratorId: string;
@@ -105,7 +111,7 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
   const [previewDoc, setPreviewDoc] = useState<CollaboratorDocument | null>(null);
   const [documentToDelete, setDocumentToDelete] = useState<CollaboratorDocument | null>(null);
   const [documentToEdit, setDocumentToEdit] = useState<CollaboratorDocument | null>(null);
-  const [editForm, setEditForm] = useState({ title: '', doc_type: 'OTHER' as DocumentType, visibility: 'ADMIN_ONLY' as DocumentVisibility });
+  const [editForm, setEditForm] = useState({ title: '', doc_type: 'OTHER' as DocumentType, visibility: 'ADMIN_ONLY' as DocumentVisibility, subfolder: null as string | null });
   const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([]);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [currentUploadIndex, setCurrentUploadIndex] = useState(0);
@@ -494,7 +500,7 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
               onDelete={setDocumentToDelete}
               onEdit={(doc) => {
                 setDocumentToEdit(doc);
-                setEditForm({ title: doc.title, doc_type: doc.doc_type, visibility: doc.visibility });
+                setEditForm({ title: doc.title, doc_type: doc.doc_type, visibility: doc.visibility, subfolder: doc.subfolder || null });
               }}
               onRename={handleRename}
               onFolderClick={handleFolderClick}
@@ -512,7 +518,7 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
               onDelete={setDocumentToDelete}
               onEdit={(doc) => {
                 setDocumentToEdit(doc);
-                setEditForm({ title: doc.title, doc_type: doc.doc_type, visibility: doc.visibility });
+                setEditForm({ title: doc.title, doc_type: doc.doc_type, visibility: doc.visibility, subfolder: doc.subfolder || null });
               }}
               onFolderClick={handleFolderClick}
               canManage={canManage}
@@ -589,25 +595,35 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
                 />
               </div>
 
-              {/* Type */}
-              <div className="space-y-2">
-                <Label>Type de document</Label>
-                <Select
-                  value={currentUpload.doc_type}
-                  onValueChange={(v) => updatePendingUpload('doc_type', v as DocumentType)}
-                >
-                  <SelectTrigger className="bg-background">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background z-50">
-                    {DOCUMENT_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>
-                        {t.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Type / Subfolder selector with buttons */}
+              <DocumentTypeSelector
+                selectedType={currentUpload.doc_type}
+                selectedSubfolder={currentUpload.subfolder || null}
+                existingSubfolders={allFolders.filter(f => f.doc_type === currentUpload.doc_type || f.doc_type === 'OTHER').map(f => f.name)}
+                onTypeChange={(type, subfolder) => {
+                  setPendingUploads((prev) => {
+                    const newUploads = [...prev];
+                    // Update current document
+                    newUploads[currentUploadIndex] = {
+                      ...newUploads[currentUploadIndex],
+                      doc_type: type,
+                      subfolder: subfolder,
+                    };
+                    // Propagate to subsequent documents
+                    for (let i = currentUploadIndex + 1; i < newUploads.length; i++) {
+                      newUploads[i] = {
+                        ...newUploads[i],
+                        doc_type: type,
+                        subfolder: subfolder,
+                      };
+                    }
+                    return newUploads;
+                  });
+                }}
+                onCreateFolder={(folderName) => {
+                  createFolder('OTHER', folderName, null);
+                }}
+              />
             </div>
           )}
 
@@ -706,25 +722,18 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
               />
             </div>
 
-            {/* Type */}
-            <div className="space-y-2">
-              <Label>Type de document</Label>
-              <Select
-                value={editForm.doc_type}
-                onValueChange={(v) => setEditForm((prev) => ({ ...prev, doc_type: v as DocumentType }))}
-              >
-                <SelectTrigger className="bg-background">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-background z-50">
-                  {DOCUMENT_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Type / Subfolder selector */}
+            <DocumentTypeSelector
+              selectedType={editForm.doc_type}
+              selectedSubfolder={editForm.subfolder}
+              existingSubfolders={allFolders.filter(f => f.doc_type === editForm.doc_type || f.doc_type === 'OTHER').map(f => f.name)}
+              onTypeChange={(type, subfolder) => {
+                setEditForm(prev => ({ ...prev, doc_type: type, subfolder }));
+              }}
+              onCreateFolder={(folderName) => {
+                createFolder('OTHER', folderName, null);
+              }}
+            />
           </div>
 
           <DialogFooter>
@@ -740,6 +749,7 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
                       title: editForm.title.trim(),
                       doc_type: editForm.doc_type,
                       visibility: editForm.visibility,
+                      subfolder: editForm.subfolder,
                     },
                   });
                   setDocumentToEdit(null);

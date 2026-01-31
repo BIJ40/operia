@@ -17,3 +17,4 @@ export { DocumentSearchBar } from './DocumentSearchBar';
 export { FolderNavigationBar } from './FolderNavigationBar';
 export { FolderGridView } from './FolderGridView';
 export { DocumentListView } from './DocumentListView';
+export { DocumentTypeSelector } from './DocumentTypeSelector';
