@@ -102,8 +102,8 @@ export function MediaSidebar({ currentFolderId, onNavigate }: MediaSidebarProps)
           className={cn(
             "flex items-center gap-1 rounded-xl text-sm transition-all cursor-pointer",
             isActive
-              ? "bg-red-100/80 dark:bg-red-900/20 text-red-700 dark:text-red-300 font-medium border border-red-200/50 dark:border-red-800/30"
-              : "hover:bg-red-50/50 dark:hover:bg-red-950/20 text-foreground"
+              ? "bg-accent/80 text-accent-foreground font-medium border border-border/50"
+              : "hover:bg-accent/40 text-foreground"
           )}
           style={{ paddingLeft: `${12 + depth * 16}px` }}
         >
@@ -126,7 +126,7 @@ export function MediaSidebar({ currentFolderId, onNavigate }: MediaSidebarProps)
           >
             <Icon className={cn(
               "w-4 h-4",
-              folder.is_system ? "text-red-500 dark:text-red-400" : "text-muted-foreground"
+              folder.is_system ? "text-primary" : "text-muted-foreground"
             )} />
             <span className="truncate">{folder.name}</span>
           </button>
@@ -139,9 +139,9 @@ export function MediaSidebar({ currentFolderId, onNavigate }: MediaSidebarProps)
   };
 
   return (
-    <div className="w-56 border-r border-red-100/50 dark:border-red-900/30 bg-gradient-to-b from-red-50/30 to-background dark:from-red-950/10 dark:to-background flex flex-col">
-      <div className="p-3 border-b border-red-100/50 dark:border-red-900/30">
-        <h3 className="font-semibold text-sm text-red-600/70 dark:text-red-400/70 uppercase tracking-wider">
+    <div className="w-56 border-r border-border/40 bg-muted/20 flex flex-col">
+      <div className="p-3 border-b border-border/30">
+        <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
           Navigation
         </h3>
       </div>
@@ -153,8 +153,8 @@ export function MediaSidebar({ currentFolderId, onNavigate }: MediaSidebarProps)
           className={cn(
             "w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm transition-all",
             !currentFolderId
-              ? "bg-red-100/80 dark:bg-red-900/20 text-red-700 dark:text-red-300 font-medium border border-red-200/50 dark:border-red-800/30 shadow-sm"
-              : "hover:bg-red-50/50 dark:hover:bg-red-950/20 text-foreground"
+              ? "bg-accent/80 text-accent-foreground font-medium border border-border/50 shadow-sm"
+              : "hover:bg-accent/40 text-foreground"
           )}
         >
           <Home className="w-4 h-4" />

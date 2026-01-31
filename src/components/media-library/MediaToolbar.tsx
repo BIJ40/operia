@@ -66,7 +66,7 @@ export function MediaToolbar({
 
   return (
     <>
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-red-100/50 dark:border-red-900/30 bg-gradient-to-r from-red-50/40 to-transparent dark:from-red-950/10">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-border/30 bg-muted/10">
         {/* Search */}
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -81,7 +81,7 @@ export function MediaToolbar({
         <div className="flex-1" />
 
         {/* View mode toggle */}
-        <div className="flex items-center border border-red-200/50 dark:border-red-800/30 rounded-xl p-0.5 bg-red-50/30 dark:bg-red-950/20">
+        <div className="flex items-center border border-border/40 rounded-xl p-0.5 bg-muted/20">
           <Button
             variant={viewMode.type === 'grid' ? 'secondary' : 'ghost'}
             size="sm"
@@ -135,7 +135,7 @@ export function MediaToolbar({
         {/* New menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="sm" className="gap-2 bg-red-500 hover:bg-red-600 text-white shadow-md">
+            <Button size="sm" className="gap-2 shadow-sm">
               <Plus className="w-4 h-4" />
               Nouveau
             </Button>
