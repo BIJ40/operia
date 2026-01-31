@@ -79,8 +79,8 @@ export function MediaFolderGrid({
             onContextMenu={(e) => onContextMenu(e, { type: 'folder', data: folder })}
             className={cn(
               "group flex flex-col items-center p-4 rounded-2xl transition-all border border-transparent",
-              "hover:bg-accent/40 hover:border-border/40 focus:outline-none focus:ring-2 focus:ring-primary/40",
-              isSelected && "bg-accent/60 ring-2 ring-primary/40 border-border/40"
+              "hover:bg-muted/60 hover:border-border/40 focus:outline-none focus:ring-2 focus:ring-primary/40",
+              isSelected && "bg-muted/80 ring-2 ring-primary/40 border-border/50"
             )}
           >
             <div className={cn(
@@ -119,8 +119,8 @@ export function MediaFolderGrid({
             onContextMenu={(e) => onContextMenu(e, { type: 'file', data: link })}
             className={cn(
               "group flex flex-col items-center p-4 rounded-2xl transition-all border border-transparent",
-              "hover:bg-accent/40 hover:border-border/40 focus:outline-none focus:ring-2 focus:ring-primary/40",
-              isSelected && "bg-accent/60 ring-2 ring-primary/40 border-border/40"
+              "hover:bg-muted/60 hover:border-border/40 focus:outline-none focus:ring-2 focus:ring-primary/40",
+              isSelected && "bg-muted/80 ring-2 ring-primary/40 border-border/50"
             )}
           >
             <div className="w-16 h-16 rounded-2xl bg-muted/40 flex items-center justify-center mb-2 transition-transform group-hover:scale-105 overflow-hidden">

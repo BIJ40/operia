@@ -22,7 +22,7 @@ export function MediaBreadcrumbNav({
       <button
         onClick={onNavigateRoot}
         className={cn(
-          "flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-accent/50 transition-colors",
+          "flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-muted/60 transition-colors",
           "text-muted-foreground hover:text-foreground"
         )}
       >
@@ -36,9 +36,9 @@ export function MediaBreadcrumbNav({
           <button
             onClick={() => onNavigate(crumb.id)}
             className={cn(
-              "px-2.5 py-1 rounded-lg hover:bg-accent/50 transition-colors",
+              "px-2.5 py-1 rounded-lg hover:bg-muted/60 transition-colors",
               index === breadcrumbs.length - 1
-                ? "font-medium text-foreground bg-accent/40"
+                ? "font-medium text-foreground bg-muted/70"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
