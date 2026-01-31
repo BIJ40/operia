@@ -1,6 +1,8 @@
 /**
- * PERMISSIONS ENGINE V1.0 - Constants
+ * PERMISSIONS ENGINE V2.0 - Constants
  * Règles métier figées et documentées
+ * 
+ * V2.0: Basé sur global_role (N0-N6). Plus de références legacy.
  */
 
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';

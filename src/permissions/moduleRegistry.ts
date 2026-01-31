@@ -1,10 +1,10 @@
 /**
- * MODULE REGISTRY V1.0
+ * MODULE REGISTRY V2.0
  * 
  * Canon unique pour les modules et options.
  * Toutes les vérifications de validité passent par ce registry.
  * 
- * @see COMMIT 2 du plan "5 commits zéro casse"
+ * V2.0: Source de vérité alignée sur MODULE_DEFINITIONS de types/modules.ts
  */
 
 import { 

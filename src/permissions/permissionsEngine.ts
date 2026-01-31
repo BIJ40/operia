@@ -1,10 +1,13 @@
 /**
- * PERMISSIONS ENGINE V1.0
+ * PERMISSIONS ENGINE V2.0
  * 
  * Source de vérité UNIQUE pour tout le système de permissions.
  * Tout le reste (guards, menus, edge functions) consomme ce moteur.
  * 
- * @see docs/PERMISSIONS_ENGINE.md pour la documentation complète
+ * V2.0: Basé exclusivement sur global_role (N0-N6) + enabled_modules JSONB.
+ *       Les références V1 (isAdmin, roles legacy) sont obsolètes.
+ * 
+ * @see docs/MODULES_DOCUMENTATION.md pour la documentation complète
  */
 
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
