@@ -18,12 +18,12 @@ export function MediaBreadcrumbNav({
   onNavigateRoot 
 }: MediaBreadcrumbNavProps) {
   return (
-    <div className="flex items-center gap-1 px-4 py-2 border-b bg-muted/20 text-sm overflow-x-auto">
+    <div className="flex items-center gap-1 px-4 py-2.5 border-b border-red-100/50 dark:border-red-900/30 bg-gradient-to-r from-red-50/30 to-transparent dark:from-red-950/10 text-sm overflow-x-auto">
       <button
         onClick={onNavigateRoot}
         className={cn(
-          "flex items-center gap-1 px-2 py-1 rounded hover:bg-muted transition-colors",
-          "text-muted-foreground hover:text-foreground"
+          "flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-red-100/50 dark:hover:bg-red-900/20 transition-colors",
+          "text-red-600/70 dark:text-red-400/70 hover:text-red-700 dark:hover:text-red-300"
         )}
       >
         <Home className="w-4 h-4" />
@@ -32,14 +32,14 @@ export function MediaBreadcrumbNav({
 
       {breadcrumbs.map((crumb, index) => (
         <div key={crumb.id} className="flex items-center">
-          <ChevronRight className="w-4 h-4 text-muted-foreground/50 mx-1" />
+          <ChevronRight className="w-4 h-4 text-red-300/60 dark:text-red-700/60 mx-1" />
           <button
             onClick={() => onNavigate(crumb.id)}
             className={cn(
-              "px-2 py-1 rounded hover:bg-muted transition-colors",
+              "px-2.5 py-1 rounded-lg hover:bg-red-100/50 dark:hover:bg-red-900/20 transition-colors",
               index === breadcrumbs.length - 1
-                ? "font-medium text-foreground"
-                : "text-muted-foreground hover:text-foreground"
+                ? "font-medium text-red-700 dark:text-red-300 bg-red-100/40 dark:bg-red-900/20"
+                : "text-red-600/70 dark:text-red-400/70 hover:text-red-700 dark:hover:text-red-300"
             )}
           >
             {crumb.name}

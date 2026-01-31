@@ -78,18 +78,18 @@ export function MediaFolderGrid({
             onDoubleClick={() => onFolderClick(folder.id)}
             onContextMenu={(e) => onContextMenu(e, { type: 'folder', data: folder })}
             className={cn(
-              "group flex flex-col items-center p-4 rounded-xl transition-all",
-              "hover:bg-muted/70 focus:outline-none focus:ring-2 focus:ring-primary/50",
-              isSelected && "bg-primary/10 ring-2 ring-primary/50"
+              "group flex flex-col items-center p-4 rounded-2xl transition-all border border-transparent",
+              "hover:bg-red-50/60 dark:hover:bg-red-950/20 hover:border-red-200/50 dark:hover:border-red-800/30 focus:outline-none focus:ring-2 focus:ring-red-400/50",
+              isSelected && "bg-red-100/60 dark:bg-red-900/20 ring-2 ring-red-400/50 border-red-200/50 dark:border-red-800/30"
             )}
           >
             <div className={cn(
-              "w-16 h-16 rounded-xl flex items-center justify-center mb-2 transition-transform group-hover:scale-105",
-              folder.is_system ? "bg-primary/20" : "bg-muted"
+              "w-16 h-16 rounded-2xl flex items-center justify-center mb-2 transition-transform group-hover:scale-105",
+              folder.is_system ? "bg-red-100/80 dark:bg-red-900/30" : "bg-red-50/50 dark:bg-red-950/20"
             )}>
               <Folder className={cn(
                 "w-8 h-8",
-                folder.is_system ? "text-primary" : "text-muted-foreground"
+                folder.is_system ? "text-red-500 dark:text-red-400" : "text-red-400/70 dark:text-red-500/70"
               )} />
             </div>
             <span className="text-sm font-medium text-center line-clamp-2 w-full">
@@ -118,12 +118,12 @@ export function MediaFolderGrid({
             onDoubleClick={() => onFileClick(link)}
             onContextMenu={(e) => onContextMenu(e, { type: 'file', data: link })}
             className={cn(
-              "group flex flex-col items-center p-4 rounded-xl transition-all",
-              "hover:bg-muted/70 focus:outline-none focus:ring-2 focus:ring-primary/50",
-              isSelected && "bg-primary/10 ring-2 ring-primary/50"
+              "group flex flex-col items-center p-4 rounded-2xl transition-all border border-transparent",
+              "hover:bg-red-50/60 dark:hover:bg-red-950/20 hover:border-red-200/50 dark:hover:border-red-800/30 focus:outline-none focus:ring-2 focus:ring-red-400/50",
+              isSelected && "bg-red-100/60 dark:bg-red-900/20 ring-2 ring-red-400/50 border-red-200/50 dark:border-red-800/30"
             )}
           >
-            <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center mb-2 transition-transform group-hover:scale-105 overflow-hidden">
+            <div className="w-16 h-16 rounded-2xl bg-red-50/50 dark:bg-red-950/20 flex items-center justify-center mb-2 transition-transform group-hover:scale-105 overflow-hidden">
               {link.asset.mime_type?.startsWith('image/') ? (
                 <img
                   src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/${link.asset.storage_bucket}/${link.asset.storage_path}`}
@@ -136,7 +136,7 @@ export function MediaFolderGrid({
                 />
               ) : null}
               <Icon className={cn(
-                "w-8 h-8 text-muted-foreground",
+                "w-8 h-8 text-red-400/70 dark:text-red-500/70",
                 link.asset.mime_type?.startsWith('image/') && "hidden"
               )} />
             </div>
