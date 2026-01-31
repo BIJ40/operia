@@ -1,170 +1,233 @@
 
-# Plan d'implémentation Phase 1 : Médiathèque Centralisée v6
+# Plan : Médiathèque Unique + Éradication Legacy Documents
 
 ## Objectif
-Créer une médiathèque centralisée style Finder avec onglet principal "Documents", modèle Asset+Links, RLS granulaire par scope, et Edge Function pour téléchargement sécurisé.
+Faire de la **Médiathèque** la source unique de vérité pour TOUS les documents, tout en **supprimant proprement le code et les tables legacy** pour éviter toute confusion future.
 
 ---
 
-## Phase 1A : Migration SQL (Schema + Fonctions)
+## Inventaire Legacy à Supprimer
 
-### Tables à créer
+### Tables SQL à supprimer (après migration)
+| Table | Usage actuel |
+|-------|--------------|
+| `collaborator_documents` | Documents RH salariés |
+| `collaborator_document_folders` | Dossiers RH salariés |
+| `agency_admin_documents` | Documents admin agence |
+| `document_access_logs` | Logs d'accès (FK vers collaborator_documents) |
 
-| Table | Description |
-|-------|-------------|
-| `media_system_folders` | Dossiers racine système (RH, Véhicules, Admin...) avec `path_slug` normalisé |
-| `media_assets` | Fichiers physiques uniques (bucket + path) |
-| `media_folders` | Arborescence des dossiers avec héritage `access_scope` |
-| `media_links` | Liens N-N entre assets et dossiers (multi-emplacement) |
-| `media_system_routes` | Templates de routing par module (ex: `/rh/salaries/{id}/{subfolder}`) |
+### Fonctions SQL à supprimer
+- `search_collaborator_documents` (RPC)
+- `sync_collaborator_doc_to_media` (trigger) 
+- `sync_admin_doc_to_media` (trigger)
+- Triggers associés
 
-### Fonctions SQL à créer
+### Hooks TypeScript à supprimer
+| Fichier | Remplacé par |
+|---------|--------------|
+| `useCollaboratorDocuments.ts` | `useScopedMediaLibrary` |
+| `useNestedFolders.ts` | `useMediaFolders` (scoped) |
+| `useDocumentFolders.ts` | `useMediaFolders` (scoped) |
+| `useSubfolders.ts` | `useMediaFolders` (scoped) |
+| `useDocumentSearch.ts` | `useMediaLibrary.filters.search` |
+| `useAgencyAdminDocuments.ts` | `useScopedMediaLibrary` |
 
-| Fonction | Description |
-|----------|-------------|
-| `sanitize_path_segment(text)` | Normalise les slugs (accents, espaces → tirets) avec fallback 'inconnu' |
-| `has_module_option_v2(uuid, text, text)` | Vérifie option module dans `user_modules` table |
-| `can_access_folder_scope(uuid, text)` | Vérifie accès selon scope (general/rh/rh_sensitive/admin) |
-| `can_manage_media(uuid)` | Vérifie permission `divers_documents.gerer` |
-| `ensure_media_folder(uuid, text, text, uuid)` | Création idempotente dossiers avec héritage scope |
-| `resolve_route_template(text, jsonb)` | Résolution des templates de route |
+### Composants à supprimer (src/components/collaborators/documents/)
+| Composant | Remplacé par |
+|-----------|--------------|
+| `DocumentBreadcrumb.tsx` | `MediaBreadcrumbNav` |
+| `DocumentCategoryTabs.tsx` | Supprimé (structure dossiers) |
+| `DocumentDropzone.tsx` | Intégré dans `MediaToolbar` |
+| `DocumentGrid.tsx` | `MediaFolderGrid` |
+| `DocumentItem.tsx` | Intégré dans `MediaFolderGrid` |
+| `DocumentListView.tsx` | `MediaFolderGrid` (mode list) |
+| `DocumentPreviewModal.tsx` | `MediaQuickLook` |
+| `DocumentSearchBar.tsx` | `MediaToolbar` (search) |
+| `DocumentTypeSelector.tsx` | Supprimé |
+| `DraggableDocumentItem.tsx` | Supprimé (DnD natif Media) |
+| `DroppableFolder.tsx` | Supprimé |
+| `FolderGridView.tsx` | `MediaFolderGrid` |
+| `FolderNavigationBar.tsx` | `MediaBreadcrumbNav` + `MediaToolbar` |
+| `ReadOnlyDocumentGrid.tsx` | `MediaFolderGrid` (canManage=false) |
+| `ReadOnlyDocumentItem.tsx` | Supprimé |
+| `ReadOnlyDocumentBreadcrumb.tsx` | Supprimé |
+| `ReadOnlySubfolderButtons.tsx` | Supprimé |
+| `SubfolderButtons.tsx` | Supprimé |
+| `HRDocumentViewer.tsx` | `MediaLibraryPortal` |
 
-### Corrections critiques appliquées
-
-1. **Héritage access_scope** : Les sous-dossiers héritent du scope parent (ex: `/rh/salaries/jean/contrats` hérite de `rh`)
-2. **can_access_folder_scope('rh')** : Exige explicitement `rh.rh_viewer` ou `rh.rh_admin`, pas juste N2
-3. **Soft-delete corrigé** : Policy UPDATE distincte pour soft-delete avec vérification `is_system = false`
-4. **Protection dossiers système** : Trigger bloque rename/move/delete (même soft) sur `is_system = true`
-5. **Unique index compatible** : `COALESCE(parent_id, uuid_zero)` au lieu de `NULLS NOT DISTINCT`
-
-### RLS Policies
-
-| Table | SELECT | INSERT | UPDATE | Soft-DELETE |
-|-------|--------|--------|--------|-------------|
-| `media_folders` | scope + agency | `can_manage_media` | `can_manage_media` | `can_manage_media` + `is_system=false` |
-| `media_links` | via folder accessible | `can_manage_media` | `can_manage_media` | `can_manage_media` |
-| `media_assets` | via link accessible | `can_manage_media` | `can_manage_media` | - (via GC) |
-
----
-
-## Phase 1B : Edge Function `media-get-signed-url`
-
-### Flux sécurisé
-1. Authentifier l'utilisateur via JWT
-2. Vérifier `asset.agency_id === profile.agency_id` (sauf N5+)
-3. Vérifier accès via `media_links` + `can_access_folder_scope`
-4. Générer signed URL via `supabase.storage.createSignedUrl()`
-5. Logger l'accès dans `document_access_logs`
-
----
-
-## Phase 1C : Triggers de synchronisation
-
-### Trigger `sync_collaborator_document_to_media`
-- **Event** : `AFTER INSERT OR UPDATE OR DELETE`
-- **Logique** :
-  - INSERT : Créer asset + link vers `/rh/salaries/{id}-{nom}/{subfolder}`
-  - UPDATE : Si `subfolder` change → soft-delete ancien link + créer nouveau
-  - DELETE : Soft-delete le link
+### Types à nettoyer
+- `src/types/collaboratorDocument.ts` → Supprimer ou archiver
 
 ---
 
-## Phase 2 : Intégration UI
+## Architecture Cible
 
-### Modifications `src/types/modules.ts`
-```typescript
-divers_documents: {
-  consulter: 'divers_documents.consulter',  // Lecture
-  gerer: 'divers_documents.gerer',          // CRUD
-  corbeille_vider: 'divers_documents.corbeille_vider', // Purge
-},
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                    MÉDIATHÈQUE CENTRALE                         │
+│  media_folders + media_assets + media_links                     │
+│                                                                 │
+│  /                                                              │
+│  ├── rh/                                                        │
+│  │   └── salaries/                                              │
+│  │       ├── dupont-jean/                                       │
+│  │       │   ├── Contrats/                                      │
+│  │       │   ├── Salaires/                                      │
+│  │       │   └── [fichiers]                                     │
+│  │       └── martin-alice/                                      │
+│  │                                                              │
+│  ├── admin/                                                     │
+│  │   ├── Kbis/                                                  │
+│  │   ├── RC-Decennale/                                          │
+│  │   └── ...                                                    │
+│  │                                                              │
+│  └── reunions/                                                  │
+│      └── ...                                                    │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        │                     │                     │
+        ▼                     ▼                     ▼
+  ┌───────────┐        ┌───────────┐        ┌───────────┐
+  │ Salarié   │        │ Admin     │        │ Réunions  │
+  │ Documents │        │ Documents │        │ Documents │
+  └───────────┘        └───────────┘        └───────────┘
+  Scope: /rh/         Scope: /admin         Scope: /reunions
+  salaries/{id}
 ```
 
-### Modifications `src/pages/UnifiedWorkspace.tsx`
-- Ajouter `'documents'` dans `UnifiedTab`
-- Ajouter tab config avec `requiresOption: { module: 'divers_documents', option: 'consulter' }`
-- Mettre à jour `DEFAULT_TAB_ORDER`
-
-### Nouveaux composants
-| Composant | Description |
-|-----------|-------------|
-| `DocumentsTabContent` | Layout 3 sous-onglets (Médiathèque, Raccourcis, Corbeille) |
-| `MediaLibraryManager` | Interface Finder principale |
-| `MediaSidebar` | Arborescence dossiers |
-| `MediaFolderGrid` | Grille dossiers + fichiers |
-
-### Deep-linking
-- URL `/?tab=documents&path=/rh/salaries/uuid-jean` ouvre directement le dossier
-- Boutons "Voir dans médiathèque" depuis les modules existants
-
 ---
 
-## Matrice des droits finale
+## Étapes d'Implémentation
 
-| Scope | N2 sans RH | N2 avec RH | N3 | N4+ | N5/N6 |
-|-------|------------|------------|-----|-----|-------|
-| `general` | ✅ (si consulter) | ✅ | ✅ | ✅ | ✅ |
-| `rh` | ❌ | ✅ | ✅ (si module) | ✅ | ✅ |
-| `rh_sensitive` | ❌ | ❌ (sauf rh_admin) | ❌ | ✅ | ✅ |
-| `admin` | ❌ | ❌ | ❌ | ✅ | ✅ |
+### Phase 1 : Nouveaux hooks et composants réutilisables
+
+**1.1 Créer `useScopedMediaLibrary.ts`**
+Hook qui encapsule `useMediaLibrary` avec un dossier racine fixe.
+
+**1.2 Créer `MediaLibraryPortal.tsx`**
+Composant réutilisable pour afficher la médiathèque dans un contexte scopé (sans sidebar latérale).
+
+**Props principales :**
+- `rootPath` : Chemin du dossier racine (ex: `/rh/salaries/{collaborator_id}`)
+- `canManage` : Autorise les modifications
+- `showBreadcrumbRoot` : Affiche ou non la racine dans le breadcrumb
+
+### Phase 2 : Migration des données existantes
+
+**2.1 Migration SQL des documents collaborateurs**
+Vérifier que tous les documents de `collaborator_documents` sont dans `media_links`.
+(Le trigger existant les a normalement déjà synchronisés)
+
+**2.2 Migration SQL des documents admin**
+Idem pour `agency_admin_documents`.
+
+**2.3 Script de vérification**
+Avant suppression, vérifier qu'aucun document n'est orphelin.
+
+### Phase 3 : Remplacement des vues UI
+
+**3.1 `HRDocumentManager.tsx`**
+- Supprimer tout le code actuel
+- Remplacer par `<MediaLibraryPortal rootPath="/rh/salaries/{collaborator_id}" canManage={canManage} />`
+
+**3.2 `AgencyAdminDocuments.tsx`**  
+- Conserver l'UI actuelle (liste avec statuts/expiration) OU
+- Ajouter un bouton "Voir dans médiathèque" en deep-link
+- Les uploads utilisent la médiathèque en arrière-plan
+
+**3.3 `DocumentsTab.tsx`**
+- Simplifier pour juste wrapper `MediaLibraryPortal`
+
+### Phase 4 : Nettoyage total du legacy
+
+**4.1 Migration SQL de suppression**
+Après validation du fonctionnement :
+- DROP TABLE `collaborator_documents` CASCADE
+- DROP TABLE `collaborator_document_folders` CASCADE
+- DROP TABLE `document_access_logs` CASCADE
+- DROP TABLE `agency_admin_documents` CASCADE
+- DROP FUNCTION `sync_collaborator_doc_to_media`
+- DROP FUNCTION `sync_admin_doc_to_media`
+- DROP FUNCTION `search_collaborator_documents`
+
+**4.2 Suppression des fichiers TypeScript**
+- Supprimer tous les hooks listés ci-dessus
+- Supprimer tous les composants `src/components/collaborators/documents/*`
+- Supprimer ou archiver les types
+
+**4.3 Mise à jour de l'index**
+- `src/components/collaborators/documents/index.ts` → Supprimer
+- Mettre à jour les imports dans les fichiers qui les utilisaient
+
+### Phase 5 : Nettoyage edge functions
+
+**5.1 `generate-hr-document`**
+Modifier pour créer dans `media_assets` + `media_links` au lieu de `collaborator_documents`
+
+**5.2 `export-rh-documents`**  
+Modifier pour lire depuis `media_links` au lieu de `collaborator_documents`
 
 ---
 
 ## Fichiers à créer
 
-### Migration SQL
-- `supabase/migrations/xxx_media_library_phase1.sql`
+| Fichier | Description |
+|---------|-------------|
+| `src/hooks/useScopedMediaLibrary.ts` | Hook pour vue scopée de la médiathèque |
+| `src/components/media-library/MediaLibraryPortal.tsx` | Composant Finder intégrable |
 
-### Edge Functions
-- `supabase/functions/media-get-signed-url/index.ts`
-- `supabase/functions/media-garbage-collector/index.ts`
+## Fichiers à modifier significativement
 
-### Frontend
-- `src/components/unified/tabs/DocumentsTabContent.tsx`
-- `src/components/media-library/MediaLibraryManager.tsx`
-- `src/components/media-library/MediaSidebar.tsx`
-- `src/components/media-library/MediaFolderGrid.tsx`
-- `src/components/media-library/MediaContextMenu.tsx`
-- `src/components/media-library/MediaQuickLook.tsx`
-- `src/hooks/useMediaLibrary.ts`
-- `src/hooks/useMediaFolders.ts`
-- `src/hooks/useMediaLinks.ts`
+| Fichier | Modification |
+|---------|--------------|
+| `src/components/collaborators/documents/HRDocumentManager.tsx` | Remplacement total par MediaLibraryPortal |
+| `src/components/collaborators/DocumentsTab.tsx` | Simplification |
+| `supabase/functions/generate-hr-document/index.ts` | Écrire dans media_* |
+| `supabase/functions/export-rh-documents/index.ts` | Lire depuis media_* |
 
----
+## Fichiers à supprimer
 
-## Ordre d'exécution
+**Hooks (7 fichiers) :**
+- `useCollaboratorDocuments.ts`
+- `useNestedFolders.ts`  
+- `useDocumentFolders.ts`
+- `useSubfolders.ts`
+- `useDocumentSearch.ts`
+- `useAgencyAdminDocuments.ts` (potentiellement)
 
-1. ✅ **Jour 1-2** : Migration SQL Phase 1 (tables + fonctions + RLS + triggers)
-2. ✅ **Jour 3** : Edge Functions (signed-url + garbage-collector)
-3. ✅ **Jour 4** : Hooks React (useMediaLibrary, useMediaFolders, useMediaLinks)
-4. ✅ **Jour 5-6** : Composants Finder (Manager, Sidebar, Grid, ContextMenu, QuickLook, Toolbar, Breadcrumb)
-5. ✅ **Jour 7** : Intégration onglet Documents dans UnifiedWorkspace + Storage bucket
-6. ✅ **Jour 8** : Tests E2E + Trigger sync collaborator_documents → media
-7. ✅ **Jour 9** : Finalisation UI (ContextMenuPopover, Sidebar navigation, polish)
+**Composants (20 fichiers) :**
+- Tout le dossier `src/components/collaborators/documents/` sauf `HRDocumentManager.tsx` (réécrit)
 
----
-
-## Validation technique
-
-✅ Héritage `access_scope` dans `ensure_media_folder()`
-✅ `can_access_folder_scope('rh')` basé sur permissions RH explicites
-✅ Policies INSERT/UPDATE exigent `divers_documents.gerer`
-✅ Signed URL via Edge Function (pas RPC SQL)
-✅ Protection dossiers système via trigger
-✅ Soft-delete bloqué sur `is_system = true`
-✅ Unique index compatible Postgres ≥12
-✅ MediaQuickLook avec navigation clavier (←→, Espace, Échap)
-✅ MediaContextMenu avec protection dossiers système
-✅ Garbage collector avec dry-run et retention configurable
-✅ MediaContextMenuPopover positionné pour menu contextuel
-✅ MediaSidebar avec arborescence dépliable et navigation dossiers réels
+**Types :**
+- `src/types/collaboratorDocument.ts`
 
 ---
 
-## Statut : PHASE 1 COMPLETE
+## Stratégie de migration sans perte
 
-La Médiathèque Centralisée v6 est maintenant fonctionnelle avec :
-- Interface Finder complète (Sidebar, Grid, Toolbar, Breadcrumb, QuickLook, ContextMenu)
-- Edge Functions sécurisées (signed-url, garbage-collector)
-- Synchronisation automatique des documents RH
-- RLS granulaire par scope d'accès
+1. **Avant toute suppression** : Vérifier via SQL que tous les documents legacy existent dans `media_links`
+2. **Désactiver les triggers** d'abord (pour éviter les doublons)  
+3. **Tester la nouvelle UI** avec les données migrées
+4. **Supprimer les tables** seulement après validation utilisateur
+
+---
+
+## Avantages du nettoyage
+
+| Avant | Après |
+|-------|-------|
+| 2 systèmes de documents parallèles | 1 seul système unifié |
+| ~20 composants spécifiques RH | Réutilisation composants Media |
+| ~7 hooks documents | 3 hooks Media existants |
+| 4 tables legacy + triggers de sync | 3 tables Media natives |
+| Synchronisation complexe | Source unique de vérité |
+| Code difficile à maintenir | Architecture propre |
+
+---
+
+## Estimation
+
+- **Complexité** : Haute (migration données + réécriture UI + nettoyage)
+- **Temps** : 4-5 itérations
+- **Risque** : Moyen (atténué par vérification pré-suppression)
