@@ -1,0 +1,261 @@
+/**
+ * PerformanceDashboard - Dashboard principal Performance Terrain
+ * Vue équilibée, non punitive, orientée capacité & qualité
+ */
+
+import { useState, useMemo } from 'react';
+import { usePerformanceTerrain, TechnicianPerformance } from '@/hooks/usePerformanceTerrain';
+import { TeamHeatmap } from './TeamHeatmap';
+import { TechnicianRadarChart } from './TechnicianRadarChart';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Activity, 
+  Users, 
+  Clock, 
+  AlertTriangle,
+  TrendingUp,
+  ArrowLeft
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { formatPercent } from '@/lib/formatters';
+
+// Période par défaut: mois en cours
+function getDefaultDateRange() {
+  const now = new Date();
+  return {
+    start: new Date(now.getFullYear(), now.getMonth(), 1),
+    end: new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59),
+  };
+}
+
+export function PerformanceDashboard() {
+  const [dateRange] = useState(getDefaultDateRange);
+  const { data, isLoading, error } = usePerformanceTerrain(dateRange);
+  const [selectedTech, setSelectedTech] = useState<TechnicianPerformance | null>(null);
+
+  // Stats d'équipe
+  const teamInsights = useMemo(() => {
+    if (!data) return null;
+    
+    const underload = data.technicians.filter(t => t.loadZone === 'underload').length;
+    const overload = data.technicians.filter(t => t.loadZone === 'overload').length;
+    const optimal = data.technicians.filter(t => t.loadZone === 'balanced').length;
+    
+    const highSav = data.technicians.filter(t => t.savZone === 'critical').length;
+    
+    return { underload, overload, optimal, highSav };
+  }, [data]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-48" />
+        <div className="grid grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => (
+            <Skeleton key={i} className="h-24" />
+          ))}
+        </div>
+        <Skeleton className="h-64" />
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <Card className="border-destructive/50">
+        <CardContent className="pt-6">
+          <p className="text-destructive">Erreur lors du chargement des données performance.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Vue détail technicien
+  if (selectedTech) {
+    return (
+      <div className="space-y-4">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => setSelectedTech(null)}
+          className="gap-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Retour équipe
+        </Button>
+        
+        <div className="grid md:grid-cols-2 gap-4">
+          <TechnicianRadarChart technician={selectedTech} />
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Détail activité</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Temps */}
+              <div>
+                <div className="text-sm text-muted-foreground mb-2">Répartition temps</div>
+                <div className="flex h-4 rounded-full overflow-hidden bg-muted">
+                  <div 
+                    className="bg-primary"
+                    style={{ width: `${(selectedTech.timeProductive / Math.max(selectedTech.timeTotal, 1)) * 100}%` }}
+                  />
+                  <div 
+                    className="bg-accent"
+                    style={{ width: `${(selectedTech.timeNonProductive / Math.max(selectedTech.timeTotal, 1)) * 100}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                  <span>Productif: {Math.round(selectedTech.timeProductive / 60)}h</span>
+                  <span>Autre: {Math.round(selectedTech.timeNonProductive / 60)}h</span>
+                </div>
+              </div>
+              
+              {/* Métriques détaillées */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-muted/50 rounded-lg p-3">
+                  <div className="text-xs text-muted-foreground">Interventions</div>
+                  <div className="text-xl font-bold">{selectedTech.interventionsCount}</div>
+                </div>
+                <div className="bg-muted/50 rounded-lg p-3">
+                  <div className="text-xs text-muted-foreground">Dossiers traités</div>
+                  <div className="text-xl font-bold">{selectedTech.dossiersCount}</div>
+                </div>
+                <div className="bg-muted/50 rounded-lg p-3">
+                  <div className="text-xs text-muted-foreground">Taux SAV</div>
+                  <div className="text-xl font-bold">{formatPercent(selectedTech.savRate * 100)}</div>
+                </div>
+                <div className="bg-muted/50 rounded-lg p-3">
+                  <div className="text-xs text-muted-foreground">Charge/Capacité</div>
+                  <div className="text-xl font-bold">{formatPercent(selectedTech.loadRatio * 100)}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <Activity className="w-5 h-5 text-primary" />
+            Performance Terrain — {dateRange.start.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Pilotage équilibré, orienté capacité & qualité
+          </p>
+        </div>
+      </div>
+
+      {/* KPIs équipe */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+              <Users className="w-4 h-4" />
+              Techniciens
+            </div>
+            <div className="text-2xl font-bold">{data.technicians.length}</div>
+            {teamInsights && (
+              <div className="text-xs text-muted-foreground mt-1">
+                {teamInsights.optimal} en équilibre
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+              <TrendingUp className="w-4 h-4" />
+              Productivité moy.
+            </div>
+            <div className="text-2xl font-bold">
+              {formatPercent(data.teamStats.avgProductivityRate * 100)}
+            </div>
+            <Badge 
+              variant="outline" 
+              className={
+                data.teamStats.avgProductivityRate >= 0.65 
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 mt-1'
+                  : data.teamStats.avgProductivityRate >= 0.5
+                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 mt-1'
+                    : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 mt-1'
+              }
+            >
+              {data.teamStats.avgProductivityRate >= 0.65 ? 'Bon niveau' : 'À optimiser'}
+            </Badge>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+              <Clock className="w-4 h-4" />
+              Charge moyenne
+            </div>
+            <div className="text-2xl font-bold">
+              {formatPercent(data.teamStats.avgLoadRatio * 100)}
+            </div>
+            {teamInsights && teamInsights.overload > 0 && (
+              <div className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                {teamInsights.overload} en surcharge
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+              <AlertTriangle className="w-4 h-4" />
+              SAV total
+            </div>
+            <div className="text-2xl font-bold">{data.teamStats.totalSavCount}</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              sur {data.teamStats.totalInterventions} interventions
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Alertes équipe */}
+      {teamInsights && (teamInsights.overload > 0 || teamInsights.underload > 0 || teamInsights.highSav > 0) && (
+        <Card className="border-amber-500/50 bg-amber-500/5">
+          <CardContent className="pt-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <div className="font-medium">Points d'attention équipe</div>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  {teamInsights.overload > 0 && (
+                    <li>{teamInsights.overload} technicien(s) en surcharge - planification à ajuster</li>
+                  )}
+                  {teamInsights.underload > 0 && (
+                    <li>{teamInsights.underload} technicien(s) sous-chargé(s) - capacité disponible</li>
+                  )}
+                  {teamInsights.highSav > 0 && (
+                    <li>{teamInsights.highSav} technicien(s) avec taux SAV élevé - formation à prévoir</li>
+                  )}
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Heatmap équipe */}
+      <TeamHeatmap 
+        technicians={data.technicians} 
+        onSelectTechnician={setSelectedTech}
+      />
+    </div>
+  );
+}
