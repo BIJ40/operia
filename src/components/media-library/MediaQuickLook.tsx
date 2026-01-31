@@ -124,7 +124,7 @@ export function MediaQuickLook({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl w-[90vw] h-[80vh] p-0 gap-0 flex flex-col">
+      <DialogContent className="max-w-4xl w-[90vw] h-[80vh] p-0 gap-0 flex flex-col" hideCloseButton>
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/30">
           <div className="flex items-center gap-3 min-w-0">
