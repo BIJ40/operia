@@ -14,6 +14,62 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_type: Database["public"]["Enums"]["activity_actor_type"]
+          agency_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_label: string | null
+          entity_type: string
+          id: string
+          metadata: Json | null
+          module: string
+          new_values: Json | null
+          old_values: Json | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_type?: Database["public"]["Enums"]["activity_actor_type"]
+          agency_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_label?: string | null
+          entity_type: string
+          id?: string
+          metadata?: Json | null
+          module: string
+          new_values?: Json | null
+          old_values?: Json | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_type?: Database["public"]["Enums"]["activity_actor_type"]
+          agency_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_label?: string | null
+          entity_type?: string
+          id?: string
+          metadata?: Json | null
+          module?: string
+          new_values?: Json | null
+          old_values?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_log_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agency_admin_documents: {
         Row: {
           agency_id: string
@@ -8023,6 +8079,22 @@ export type Database = {
       }
       is_support_agent: { Args: { _user_id: string }; Returns: boolean }
       lock_document_request: { Args: { p_request_id: string }; Returns: Json }
+      log_activity: {
+        Args: {
+          p_action: string
+          p_actor_id?: string
+          p_actor_type?: Database["public"]["Enums"]["activity_actor_type"]
+          p_agency_id?: string
+          p_entity_id?: string
+          p_entity_label?: string
+          p_entity_type: string
+          p_metadata?: Json
+          p_module: string
+          p_new_values?: Json
+          p_old_values?: Json
+        }
+        Returns: string
+      }
       log_document_access: {
         Args: { p_access_type: string; p_document_id: string }
         Returns: undefined
@@ -8130,6 +8202,7 @@ export type Database = {
       unlock_document_request: { Args: { p_request_id: string }; Returns: Json }
     }
     Enums: {
+      activity_actor_type: "user" | "apporteur" | "system" | "ai"
       apogee_ticket_role: "developer" | "tester" | "franchiseur"
       collaborator_role:
         | "dirigeant"
@@ -8298,6 +8371,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      activity_actor_type: ["user", "apporteur", "system", "ai"],
       apogee_ticket_role: ["developer", "tester", "franchiseur"],
       collaborator_role: [
         "dirigeant",
