@@ -102,8 +102,8 @@ export function MediaSidebar({ currentFolderId, onNavigate }: MediaSidebarProps)
           className={cn(
             "flex items-center gap-1 rounded-xl text-sm transition-all cursor-pointer",
             isActive
-              ? "bg-accent/80 text-accent-foreground font-medium border border-border/50"
-              : "hover:bg-accent/40 text-foreground"
+              ? "bg-muted/80 text-foreground font-medium border border-border/50"
+              : "hover:bg-muted/50 text-foreground"
           )}
           style={{ paddingLeft: `${12 + depth * 16}px` }}
         >
@@ -153,8 +153,8 @@ export function MediaSidebar({ currentFolderId, onNavigate }: MediaSidebarProps)
           className={cn(
             "w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm transition-all",
             !currentFolderId
-              ? "bg-accent/80 text-accent-foreground font-medium border border-border/50 shadow-sm"
-              : "hover:bg-accent/40 text-foreground"
+              ? "bg-muted/80 text-foreground font-medium border border-border/50 shadow-sm"
+              : "hover:bg-muted/50 text-foreground"
           )}
         >
           <Home className="w-4 h-4" />
