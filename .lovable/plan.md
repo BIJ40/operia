@@ -139,7 +139,7 @@ divers_documents: {
 3. ✅ **Jour 4** : Hooks React (useMediaLibrary, useMediaFolders, useMediaLinks)
 4. ✅ **Jour 5-6** : Composants Finder (Manager, Sidebar, Grid, ContextMenu, QuickLook, Toolbar, Breadcrumb)
 5. ✅ **Jour 7** : Intégration onglet Documents dans UnifiedWorkspace + Storage bucket
-6. 🔲 **Jour 8** : Tests E2E + Trigger sync collaborator_documents → media
+6. ✅ **Jour 8** : Tests E2E + Trigger sync collaborator_documents → media
 
 ---
 
