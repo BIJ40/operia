@@ -16,10 +16,9 @@ import {
   CheckCircle2,
   Clock,
   Plus,
-  File,
   Eye,
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -53,7 +52,7 @@ import {
   type AgencyAdminDocument,
 } from '@/hooks/useAgencyAdminDocuments';
 
-interface DocumentCardProps {
+interface DocumentRowProps {
   docType: (typeof ADMIN_DOCUMENT_TYPES)[number];
   document?: AgencyAdminDocument;
   onUpload: (docType: string, label: string) => void;
@@ -61,6 +60,20 @@ interface DocumentCardProps {
   onDelete: (doc: AgencyAdminDocument) => void;
   onPreview: (doc: AgencyAdminDocument) => void;
 }
+
+const statusColors = {
+  ok: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  warning: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  expired: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  none: 'bg-muted text-muted-foreground',
+};
+
+const StatusIcons = {
+  ok: CheckCircle2,
+  warning: Clock,
+  expired: AlertTriangle,
+  none: FileText,
+};
 
 function getExpiryStatus(expiryDate: string | null): {
   status: 'ok' | 'warning' | 'expired' | 'none';
@@ -76,138 +89,125 @@ function getExpiryStatus(expiryDate: string | null): {
     return { status: 'expired', label: 'Expiré', daysLeft };
   }
   if (daysLeft <= 30) {
-    return { status: 'warning', label: `Expire dans ${daysLeft} jours`, daysLeft };
+    return { status: 'warning', label: `${daysLeft}j`, daysLeft };
   }
-  return { status: 'ok', label: `Valide jusqu'au ${format(expiry, 'dd/MM/yyyy')}`, daysLeft };
+  return { status: 'ok', label: 'Valide', daysLeft };
 }
 
-function DocumentCard({
+function DocumentRow({
   docType,
   document,
   onUpload,
   onDownload,
   onDelete,
   onPreview,
-}: DocumentCardProps) {
+}: DocumentRowProps) {
   const hasDocument = !!document?.file_path;
   const expiryInfo = document ? getExpiryStatus(document.expiry_date) : null;
-
-  const statusColors = {
-    ok: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-    warning: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-    expired: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-    none: 'bg-muted text-muted-foreground',
-  };
-
-  const StatusIcon = {
-    ok: CheckCircle2,
-    warning: Clock,
-    expired: AlertTriangle,
-    none: FileText,
-  }[expiryInfo?.status || 'none'];
+  const StatusIcon = StatusIcons[expiryInfo?.status || 'none'];
 
   return (
-    <Card
-      className={cn(
-        'relative transition-all duration-200 hover:shadow-md',
-        hasDocument ? 'border-border' : 'border-dashed border-muted-foreground/30'
-      )}
-    >
-      <CardHeader className="pb-2">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div
-              className={cn(
-                'w-10 h-10 rounded-xl flex items-center justify-center',
-                hasDocument
-                  ? 'bg-primary/10 text-primary'
-                  : 'bg-muted text-muted-foreground'
-              )}
-            >
-              <File className="w-5 h-5" />
-            </div>
-            <div>
-              <CardTitle className="text-base">{docType.label}</CardTitle>
-              {document?.file_name && (
-                <CardDescription className="text-xs truncate max-w-[180px]">
-                  {document.file_name}
-                </CardDescription>
-              )}
-            </div>
-          </div>
-        </div>
-      </CardHeader>
+    <div className="flex items-center gap-4 px-4 py-2.5 rounded-lg hover:bg-muted/50 transition-colors">
+      {/* Icône */}
+      <div
+        className={cn(
+          'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0',
+          hasDocument ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+        )}
+      >
+        <FileText className="w-4 h-4" />
+      </div>
 
-      <CardContent className="space-y-3">
-        {hasDocument && expiryInfo && docType.requiresExpiry && (
-          <Badge variant="secondary" className={cn('gap-1', statusColors[expiryInfo.status])}>
+      {/* Type de document */}
+      <div className="w-40 flex-shrink-0">
+        <span className="font-medium text-sm">{docType.label}</span>
+      </div>
+
+      {/* Nom du fichier */}
+      <div className="flex-1 min-w-0">
+        {document?.file_name ? (
+          <span className="text-sm text-muted-foreground truncate block">
+            {document.file_name}
+          </span>
+        ) : (
+          <span className="text-sm text-muted-foreground/50 italic">—</span>
+        )}
+      </div>
+
+      {/* Statut */}
+      <div className="w-28 flex-shrink-0">
+        {hasDocument && expiryInfo && docType.requiresExpiry ? (
+          <Badge
+            variant="secondary"
+            className={cn('gap-1 text-xs', statusColors[expiryInfo.status])}
+          >
             <StatusIcon className="w-3 h-3" />
             {expiryInfo.label}
           </Badge>
-        )}
+        ) : hasDocument ? (
+          <span className="text-xs text-muted-foreground">Sans expiration</span>
+        ) : null}
+      </div>
 
-        {hasDocument && document.uploaded_at && (
-          <p className="text-xs text-muted-foreground">
-            Mis à jour le {format(parseISO(document.uploaded_at), 'dd MMM yyyy', { locale: fr })}
-          </p>
-        )}
+      {/* Date expiration */}
+      <div className="w-24 flex-shrink-0 text-xs text-muted-foreground text-right">
+        {document?.expiry_date && format(parseISO(document.expiry_date), 'dd/MM/yyyy')}
+      </div>
 
-        <div className="flex gap-2 pt-2">
-          {hasDocument ? (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1"
-                onClick={() => onPreview(document)}
-              >
-                <Eye className="w-3.5 h-3.5 mr-1" />
-                Voir
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1"
-                onClick={() => onDownload(document)}
-              >
-                <Download className="w-3.5 h-3.5 mr-1" />
-                Télécharger
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-destructive hover:text-destructive"
-                onClick={() => onDelete(document)}
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </Button>
-            </>
-          ) : (
+      {/* Actions */}
+      <div className="flex items-center gap-1 flex-shrink-0">
+        {hasDocument ? (
+          <>
             <Button
-              variant="outline"
-              size="sm"
-              className="w-full"
-              onClick={() => onUpload(docType.id, docType.label)}
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => onPreview(document)}
+              title="Voir"
             >
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              Ajouter
+              <Eye className="w-3.5 h-3.5" />
             </Button>
-          )}
-        </div>
-
-        {hasDocument && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => onDownload(document)}
+              title="Télécharger"
+            >
+              <Download className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-destructive hover:text-destructive"
+              onClick={() => onDelete(document)}
+              title="Supprimer"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => onUpload(docType.id, docType.label)}
+              title="Remplacer"
+            >
+              <Upload className="w-3.5 h-3.5" />
+            </Button>
+          </>
+        ) : (
           <Button
             variant="ghost"
             size="sm"
-            className="w-full text-xs"
+            className="h-7 text-xs"
             onClick={() => onUpload(docType.id, docType.label)}
           >
-            <Upload className="w-3 h-3 mr-1" />
-            Remplacer
+            <Plus className="w-3 h-3 mr-1" />
+            Ajouter
           </Button>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -330,20 +330,27 @@ export function AgencyAdminDocuments() {
         )}
       </div>
 
-      {/* Document grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {ADMIN_DOCUMENT_TYPES.map((docType) => (
-          <DocumentCard
-            key={docType.id}
-            docType={docType}
-            document={getDocumentByType(docType.id)}
-            onUpload={handleUploadClick}
-            onDownload={handleDownload}
-            onDelete={(doc) => setDeleteDialog({ open: true, document: doc })}
-            onPreview={handlePreview}
-          />
-        ))}
-      </div>
+      {/* Document list */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Liste des documents</CardTitle>
+        </CardHeader>
+        <CardContent className="p-2">
+          <div className="divide-y divide-border/50">
+            {ADMIN_DOCUMENT_TYPES.map((docType) => (
+              <DocumentRow
+                key={docType.id}
+                docType={docType}
+                document={getDocumentByType(docType.id)}
+                onUpload={handleUploadClick}
+                onDownload={handleDownload}
+                onDelete={(doc) => setDeleteDialog({ open: true, document: doc })}
+                onPreview={handlePreview}
+              />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Upload Dialog */}
       <Dialog
@@ -356,9 +363,7 @@ export function AgencyAdminDocuments() {
               {getDocumentByType(uploadDialog.docType) ? 'Remplacer' : 'Ajouter'}{' '}
               {uploadDialog.label}
             </DialogTitle>
-            <DialogDescription>
-              Sélectionnez le fichier à téléverser
-            </DialogDescription>
+            <DialogDescription>Sélectionnez le fichier à téléverser</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -434,10 +439,7 @@ export function AgencyAdminDocuments() {
             >
               Annuler
             </Button>
-            <Button
-              onClick={handleUploadSubmit}
-              disabled={!selectedFile || uploadMutation.isPending}
-            >
+            <Button onClick={handleUploadSubmit} disabled={!selectedFile || uploadMutation.isPending}>
               {uploadMutation.isPending ? 'Envoi...' : 'Enregistrer'}
             </Button>
           </DialogFooter>
