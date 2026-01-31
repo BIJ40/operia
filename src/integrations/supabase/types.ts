@@ -8049,6 +8049,10 @@ export type Database = {
         }
         Returns: string
       }
+      ensure_collaborator_folder: {
+        Args: { p_agency_id: string; p_collaborator_id: string }
+        Returns: string
+      }
       ensure_media_folder: {
         Args: {
           p_agency_id: string
@@ -8056,6 +8060,10 @@ export type Database = {
           p_entity_type?: string
           p_path: string
         }
+        Returns: string
+      }
+      format_collaborator_folder_name: {
+        Args: { p_first_name: string; p_last_name: string }
         Returns: string
       }
       get_agency_enabled_modules: {
