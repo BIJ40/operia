@@ -4886,6 +4886,274 @@ export type Database = {
         }
         Relationships: []
       }
+      media_assets: {
+        Row: {
+          agency_id: string
+          created_at: string | null
+          created_by: string | null
+          deleted_at: string | null
+          description: string | null
+          file_name: string
+          file_size: number | null
+          id: string
+          metadata: Json | null
+          mime_type: string | null
+          storage_bucket: string
+          storage_path: string
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string | null
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          file_name: string
+          file_size?: number | null
+          id?: string
+          metadata?: Json | null
+          mime_type?: string | null
+          storage_bucket: string
+          storage_path: string
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          file_name?: string
+          file_size?: number | null
+          id?: string
+          metadata?: Json | null
+          mime_type?: string | null
+          storage_bucket?: string
+          storage_path?: string
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_assets_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_folders: {
+        Row: {
+          access_scope: Database["public"]["Enums"]["media_access_scope"]
+          agency_id: string
+          color: string | null
+          created_at: string | null
+          created_by: string | null
+          deleted_at: string | null
+          entity_id: string | null
+          entity_type: string | null
+          icon: string | null
+          id: string
+          is_system: boolean | null
+          name: string
+          parent_id: string | null
+          slug: string
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          access_scope?: Database["public"]["Enums"]["media_access_scope"]
+          agency_id: string
+          color?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          deleted_at?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          icon?: string | null
+          id?: string
+          is_system?: boolean | null
+          name: string
+          parent_id?: string | null
+          slug: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          access_scope?: Database["public"]["Enums"]["media_access_scope"]
+          agency_id?: string
+          color?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          deleted_at?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          icon?: string | null
+          id?: string
+          is_system?: boolean | null
+          name?: string
+          parent_id?: string | null
+          slug?: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_folders_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_folders_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "media_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_links: {
+        Row: {
+          agency_id: string
+          asset_id: string
+          created_at: string | null
+          created_by: string | null
+          deleted_at: string | null
+          folder_id: string
+          id: string
+          label: string | null
+          sort_order: number | null
+          source_id: string | null
+          source_module: string | null
+          source_table: string | null
+        }
+        Insert: {
+          agency_id: string
+          asset_id: string
+          created_at?: string | null
+          created_by?: string | null
+          deleted_at?: string | null
+          folder_id: string
+          id?: string
+          label?: string | null
+          sort_order?: number | null
+          source_id?: string | null
+          source_module?: string | null
+          source_table?: string | null
+        }
+        Update: {
+          agency_id?: string
+          asset_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          deleted_at?: string | null
+          folder_id?: string
+          id?: string
+          label?: string | null
+          sort_order?: number | null
+          source_id?: string | null
+          source_module?: string | null
+          source_table?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_links_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_links_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "media_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_links_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "media_orphan_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_links_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "media_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_system_folders: {
+        Row: {
+          access_scope: Database["public"]["Enums"]["media_access_scope"]
+          color: string
+          created_at: string | null
+          description: string | null
+          display_label: string
+          icon: string
+          id: string
+          path_slug: string
+          sort_order: number | null
+        }
+        Insert: {
+          access_scope?: Database["public"]["Enums"]["media_access_scope"]
+          color?: string
+          created_at?: string | null
+          description?: string | null
+          display_label: string
+          icon?: string
+          id?: string
+          path_slug: string
+          sort_order?: number | null
+        }
+        Update: {
+          access_scope?: Database["public"]["Enums"]["media_access_scope"]
+          color?: string
+          created_at?: string | null
+          description?: string | null
+          display_label?: string
+          icon?: string
+          id?: string
+          path_slug?: string
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
+      media_system_routes: {
+        Row: {
+          created_at: string | null
+          enabled: boolean | null
+          id: string
+          module_key: string
+          priority: number | null
+          route_template: string
+        }
+        Insert: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          module_key: string
+          priority?: number | null
+          route_template: string
+        }
+        Update: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          module_key?: string
+          priority?: number | null
+          route_template?: string
+        }
+        Relationships: []
+      }
       metrics_cache: {
         Row: {
           cache_key: string
@@ -7682,7 +7950,38 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      media_orphan_assets: {
+        Row: {
+          agency_id: string | null
+          deleted_at: string | null
+          id: string | null
+          storage_bucket: string | null
+          storage_path: string | null
+        }
+        Insert: {
+          agency_id?: string | null
+          deleted_at?: string | null
+          id?: string | null
+          storage_bucket?: string | null
+          storage_path?: string | null
+        }
+        Update: {
+          agency_id?: string | null
+          deleted_at?: string | null
+          id?: string | null
+          storage_bucket?: string | null
+          storage_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_assets_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       auto_generate_monthly_epi_acks: { Args: never; Returns: number }
@@ -7710,10 +8009,18 @@ export type Database = {
         Args: { _agency_id: string; _user_id: string }
         Returns: boolean
       }
+      can_access_folder_scope: {
+        Args: {
+          p_scope: Database["public"]["Enums"]["media_access_scope"]
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       can_insert_exchange_for_ticket: {
         Args: { p_ticket_id: string; p_user_id: string }
         Returns: boolean
       }
+      can_manage_media: { Args: { p_user_id: string }; Returns: boolean }
       can_manage_user_db: {
         Args: { p_editor_id: string; p_target_id: string }
         Returns: boolean
@@ -7739,6 +8046,15 @@ export type Database = {
           p_related_entity_type?: string
           p_title: string
           p_user_id: string
+        }
+        Returns: string
+      }
+      ensure_media_folder: {
+        Args: {
+          p_agency_id: string
+          p_entity_id?: string
+          p_entity_type?: string
+          p_path: string
         }
         Returns: string
       }
@@ -7869,6 +8185,10 @@ export type Database = {
         Args: { _min_level: number; _user_id: string }
         Returns: boolean
       }
+      has_module_option_v2: {
+        Args: { p_module_key: string; p_option_key: string; p_user_id: string }
+        Returns: boolean
+      }
       has_module_v2: {
         Args: { _module_key: string; _user_id: string }
         Returns: boolean
@@ -7985,6 +8305,11 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      resolve_route_template: {
+        Args: { p_context: Json; p_template: string }
+        Returns: string
+      }
+      sanitize_path_segment: { Args: { p_input: string }; Returns: string }
       search_collaborator_documents: {
         Args: { p_collaborator_id: string; p_search_query: string }
         Returns: {
@@ -8046,6 +8371,7 @@ export type Database = {
         | "franchisor_admin"
         | "platform_admin"
         | "superadmin"
+      media_access_scope: "general" | "rh" | "rh_sensitive" | "admin"
       rag_context_type:
         | "apogee"
         | "apporteurs"
@@ -8216,6 +8542,7 @@ export const Constants = {
         "platform_admin",
         "superadmin",
       ],
+      media_access_scope: ["general", "rh", "rh_sensitive", "admin"],
       rag_context_type: [
         "apogee",
         "apporteurs",
