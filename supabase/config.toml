@@ -159,3 +159,6 @@ verify_jwt = false
 
 [functions.apporteur-auth-logout]
 verify_jwt = false
+
+[functions.media-get-signed-url]
+verify_jwt = false
