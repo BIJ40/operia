@@ -254,13 +254,31 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
     setShowNewFolderDialog(true);
   }, [currentFolderId]);
 
+  // Determine the effective category (from active tab or from current folder's doc_type)
+  const getEffectiveCategory = useCallback((): DocumentType | null => {
+    if (activeCategory !== 'ALL') return activeCategory;
+    // If we're in a folder, use its doc_type
+    if (currentFolderId) {
+      const folder = getFolderById(currentFolderId);
+      if (folder) return folder.doc_type as DocumentType;
+    }
+    return null;
+  }, [activeCategory, currentFolderId, getFolderById]);
+
   // Handle create new subfolder - use captured parent ID
   const handleCreateSubfolder = () => {
-    if (!newFolderName.trim() || activeCategory === 'ALL') return;
+    if (!newFolderName.trim()) return;
+    
+    // Get category from active tab or parent folder
+    const effectiveCategory = getEffectiveCategory();
+    if (!effectiveCategory) {
+      toast.error('Veuillez d\'abord sélectionner une catégorie');
+      return;
+    }
     
     const folderName = newFolderName.trim();
-    console.log('[HRDocumentManager] Creating folder:', { folderName, parentId: newFolderParentId, activeCategory });
-    createFolder(activeCategory, folderName, newFolderParentId);
+    console.log('[HRDocumentManager] Creating folder:', { folderName, parentId: newFolderParentId, category: effectiveCategory });
+    createFolder(effectiveCategory, folderName, newFolderParentId);
     setShowNewFolderDialog(false);
     setNewFolderName('');
     setNewFolderParentId(null);
@@ -801,7 +819,7 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
             </Button>
             <Button
               onClick={handleCreateSubfolder}
-              disabled={!newFolderName.trim() || isCreating}
+              disabled={!newFolderName.trim() || isCreating || !getEffectiveCategory()}
             >
               {isCreating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Créer
