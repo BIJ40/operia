@@ -134,12 +134,12 @@ divers_documents: {
 
 ## Ordre d'exécution
 
-1. **Jour 1-2** : Migration SQL Phase 1 (tables + fonctions + RLS + triggers)
-2. **Jour 3** : Edge Functions (signed-url + garbage-collector)
-3. **Jour 4** : Hooks React (useMediaLibrary, useMediaFolders, useMediaLinks)
-4. **Jour 5-6** : Composants Finder (Manager, Sidebar, Grid, ContextMenu)
-5. **Jour 7** : Intégration onglet Documents dans UnifiedWorkspace
-6. **Jour 8** : Tests E2E + migration données existantes
+1. ✅ **Jour 1-2** : Migration SQL Phase 1 (tables + fonctions + RLS + triggers)
+2. ✅ **Jour 3** : Edge Functions (signed-url + garbage-collector)
+3. ✅ **Jour 4** : Hooks React (useMediaLibrary, useMediaFolders, useMediaLinks)
+4. ✅ **Jour 5-6** : Composants Finder (Manager, Sidebar, Grid, ContextMenu, QuickLook, Toolbar, Breadcrumb)
+5. ✅ **Jour 7** : Intégration onglet Documents dans UnifiedWorkspace + Storage bucket
+6. 🔲 **Jour 8** : Tests E2E + Trigger sync collaborator_documents → media
 
 ---
 
@@ -152,3 +152,6 @@ divers_documents: {
 ✅ Protection dossiers système via trigger
 ✅ Soft-delete bloqué sur `is_system = true`
 ✅ Unique index compatible Postgres ≥12
+✅ MediaQuickLook avec navigation clavier (←→, Espace, Échap)
+✅ MediaContextMenu avec protection dossiers système
+✅ Garbage collector avec dry-run et retention configurable
