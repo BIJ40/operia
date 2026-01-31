@@ -43,7 +43,7 @@ export function MediaLibraryManager() {
   }, [media.quickLook.link, media.downloadFile]);
 
   return (
-    <div className="flex h-[calc(100vh-280px)] min-h-[500px] border-2 border-warm-red/20 rounded-2xl bg-gradient-to-br from-background via-background to-red-50/30 dark:to-red-950/10 overflow-hidden shadow-lg">
+    <div className="flex h-[calc(100vh-280px)] min-h-[500px] border border-border/40 rounded-2xl bg-card/80 backdrop-blur-sm overflow-hidden shadow-warm">
       {/* Sidebar */}
       <MediaSidebar
         currentFolderId={media.currentFolderId}
