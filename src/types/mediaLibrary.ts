@@ -44,7 +44,7 @@ export interface MediaViewMode {
 export interface MediaQuickLookState {
   isOpen: boolean;
   asset: MediaAsset | null;
-  link: MediaLink | null;
+  link: MediaLinkWithAsset | null;
 }
 
 // API Response types
@@ -70,4 +70,5 @@ export interface MediaFilters {
 export interface MediaContextTarget {
   type: 'folder' | 'file';
   data: MediaFolder | MediaLinkWithAsset;
+  isSystem?: boolean;
 }
