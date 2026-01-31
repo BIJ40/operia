@@ -58,38 +58,72 @@ Modules: agence | stats | rh | parc | divers_apporteurs | divers_plannings | div
 
 ---
 
-## Système de Permissions
+## Système de Permissions V2.0
 
-### Hiérarchie des Rôles
+> **IMPORTANT**: Le système de permissions V2.0 est la source de vérité. 
+> Toute référence à "V1" ou aux flags legacy (`isAdmin`) est **obsolète**.
 
-| Niveau | Rôle | Description | Accès |
-|--------|------|-------------|-------|
-| N0 | `base_user` | Utilisateur de base | Guides, Aide |
-| N1 | `franchisee_user` | Salarié agence | Pilotage lecture |
-| N2 | `franchisee_admin` | Dirigeant agence | Pilotage complet |
-| N3 | `franchisor_user` | Animateur réseau | Multi-agences |
-| N4 | `franchisor_admin` | Admin réseau | Gestion réseau |
-| N5 | `platform_admin` | Admin plateforme | Tout sauf N6 |
-| N6 | `superadmin` | Super administrateur | Accès total |
+### Hiérarchie des Rôles (N0-N6)
 
-### Logique d'Accès
+| Niveau | Code technique | Label métier | Accès |
+|--------|---------------|--------------|-------|
+| N0 | `base_user` | Partenaire externe | Guides, Aide |
+| N1 | `franchisee_user` | Utilisateur agence (legacy) | Pilotage lecture |
+| N2 | `franchisee_admin` | Dirigeant agence | Pilotage complet, RH, Parc |
+| N3 | `franchisor_user` | Animateur réseau | Multi-agences assignées |
+| N4 | `franchisor_admin` | Direction réseau | Gestion réseau complète |
+| N5 | `platform_admin` | Support avancé | Bypass tous modules |
+| N6 | `superadmin` | Administrateur | Accès absolu inconditionnel |
+
+### Règle plancher agence
+
 ```typescript
-// Ordre de priorité
-1. BYPASS: N5+ → accès total
-2. PLAN: Modules inclus dans l'abonnement agence
-3. OVERRIDES: Surcharges par utilisateur
-4. WHITELIST: Modules forcés par admin
+// Trigger DB: enforce_agency_role_floor
+// Tout utilisateur avec agence → minimum N2 automatiquement
+if (user.agence && user.global_role < N2) {
+  user.global_role = 'franchisee_admin'; // Force N2
+}
 ```
 
-### Fichiers Permissions
+### Logique d'Accès V2.0
+
+```typescript
+// Ordre de priorité (permissionsEngine.hasAccess)
+1. BYPASS: N5/N6 → accès total immédiat
+2. MODULE_MIN_ROLES: Rôle insuffisant → refus
+3. AGENCY_REQUIRED: Module agence sans agence → refus
+4. ENABLED_MODULES: Module activé explicitement → accès
+5. DEFAULT_MODULES: Module par défaut du rôle → accès
+6. OPTION: Sous-option spécifique → vérification granulaire
+```
+
+### Source de vérité modules
+
+| Méthode | Source | Usage |
+|---------|--------|-------|
+| **V2 Relationnelle** | `user_modules` table | Source de vérité utilisateur |
+| **V2 Plan** | `plan_tiers` + `agency_subscription` | Modules inclus dans plan |
+| **Overrides** | `user_page_overrides` | Exceptions par page |
+| **Whitelist** | `protected_user_access` | Accès forcés (6 users clés) |
+
+### Fichiers Permissions V2
 ```
 src/permissions/
-├── index.ts           # Barrel exports
-├── types.ts           # Types PermissionContext, etc.
-├── constants.ts       # BYPASS_ROLES, MODULE_MIN_ROLES
-├── permissionsEngine.ts # hasAccess(), validateUserPermissions()
-├── moduleRegistry.ts  # Canon unique modules
-└── devValidator.ts    # Validation dev
+├── index.ts              # Barrel exports V2
+├── types.ts              # PermissionContext, HasAccessParams
+├── constants.ts          # BYPASS_ROLES, MODULE_MIN_ROLES (V2)
+├── permissionsEngine.ts  # hasAccess(), getEffectiveModules() (V2)
+├── moduleRegistry.ts     # Canon unique modules (V2)
+└── devValidator.ts       # Validation cohérence dev
+```
+
+### Hooks V2 (à utiliser)
+```typescript
+// AuthContext - Source de vérité
+const { hasGlobalRole, hasModule, hasModuleOption } = useAuth();
+
+// Hooks spécialisés
+import { useHasGlobalRole, useHasMinLevel } from '@/hooks/useHasGlobalRole';
 ```
 
 ---
@@ -292,33 +326,70 @@ epi_signatures          -- Signatures remise
 
 #### Tables Supabase
 ```sql
-apporteurs              -- Apporteurs (nom, type, logo)
-apporteur_contacts      -- Contacts apporteur
-apporteur_users         -- Utilisateurs portail
-apporteur_sessions      -- Sessions JWT
-apporteur_otp_codes     -- Codes OTP connexion
-apporteur_intervention_requests -- Demandes
-apporteur_project_links -- Liens projet Apogée
+-- CRM interne agence
+apporteurs                -- Apporteurs (nom, type, logo)
+apporteur_contacts        -- Contacts apporteur
+
+-- Portail autonome (PAS Supabase Auth!)
+apporteur_managers        -- Gestionnaires portail (email, role)
+apporteur_sessions        -- Sessions JWT custom (SHA-256)
+apporteur_otp_codes       -- Codes OTP 6 chiffres (15min TTL)
+apporteur_invitation_links-- Liens invitation (48h)
+
+-- Données métier
+apporteur_intervention_requests -- Demandes intervention
+apporteur_project_links   -- Liens vers projets Apogée
+apporteur_access_logs     -- Audit accès portail
 ```
 
-#### Authentification Portail
+#### Authentification Portail (AUTONOME)
+
+> **CRITIQUE**: Le portail apporteur utilise une authentification **100% autonome**.
+> Aucun lien avec `auth.users` ou Supabase Auth. Les apporteurs ne polluent PAS le répertoire utilisateurs interne.
+
 ```typescript
-// Authentification par OTP (email)
-// 1. Apporteur saisit email
-// 2. OTP envoyé
-// 3. Validation → JWT session
-// 4. Accès portail limité
+// Flux OTP complet
+1. Apporteur saisit email
+2. Edge Function: apporteur-auth-send-code
+   → Génère OTP 6 chiffres (SHA-256 hash)
+   → Stocke dans apporteur_otp_codes (TTL 15min)
+   → Envoie email via Resend
+3. Apporteur saisit code
+4. Edge Function: apporteur-auth-verify-code
+   → Valide hash OTP
+   → Crée session dans apporteur_sessions (90 jours)
+   → Retourne JWT custom
+5. Token stocké:
+   - Production: HttpOnly cookie (SameSite=Strict)
+   - Dev/Preview: localStorage fallback
+```
+
+#### Accès données (Edge Function Bridge)
+
+```typescript
+// RLS ne peut pas utiliser auth.uid() pour apporteurs
+// → Toutes les données passent par Edge Functions
+
+Edge Function: get-apporteur-dossiers
+  → Valide token custom
+  → Extrait apporteur_id de la session
+  → Service Role Key bypass RLS
+  → Filtre manuel par apporteur_id
+  → Retourne données sécurisées
 ```
 
 #### Composants
 ```
-src/components/apporteurs/
-├── ApporteursPage.tsx        # Vue principale
-├── ApporteurForm.tsx         # Création/édition
-├── ApporteurPortalSettings.tsx
-└── portal/
-    ├── ApporteurLogin.tsx
-    └── ApporteurDashboard.tsx
+src/apporteur/
+├── contexts/
+│   └── ApporteurSessionContext.tsx  # Auth state autonome
+├── pages/
+│   ├── ApporteurLoginPage.tsx       # Login OTP
+│   └── ApporteurDashboard.tsx       # Dashboard portail
+├── components/
+│   └── ApporteurGuard.tsx           # Protection routes
+└── hooks/
+    └── useApporteurAuth.ts          # Hook auth custom
 ```
 
 ---
