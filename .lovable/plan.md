@@ -1,198 +1,154 @@
 
-# Plan : Documents administratifs en vue liste compacte
+# Plan d'implémentation Phase 1 : Médiathèque Centralisée v6
 
 ## Objectif
-
-Remplacer l'affichage actuel en grosses tuiles (Card grid) par une présentation en **liste/tableau compact** avec les actions (œil, télécharger, supprimer) alignées en fin de ligne.
+Créer une médiathèque centralisée style Finder avec onglet principal "Documents", modèle Asset+Links, RLS granulaire par scope, et Edge Function pour téléchargement sécurisé.
 
 ---
 
-## Aperçu visuel
+## Phase 1A : Migration SQL (Schema + Fonctions)
 
-```text
-┌─────────────────────────────────────────────────────────────────────────┐
-│  Documents administratifs                     ⚠️ 2 documents à renouveler│
-├─────────────────────────────────────────────────────────────────────────┤
-│ 📄 Kbis (< 3 mois)        kbis_2025.pdf    ✓ Valide    30/04/2025  👁 ⬇ 🗑│
-│ 📄 RC Décennale           rc_dece.pdf      ⚠ 15 jours  15/02/2025  👁 ⬇ 🗑│
-│ 📄 RC Pro                 —                 [+ Ajouter]                  │
-│ 📄 Vigilance URSSAF       urssaf.pdf       ✓ Valide    01/06/2025  👁 ⬇ 🗑│
-│ 📄 Régularité fiscale     —                 [+ Ajouter]                  │
-│ 📄 RIB                    rib_hc.pdf       Sans expir.              👁 ⬇ 🗑│
-│ 📄 Autre                  —                 [+ Ajouter]                  │
-└─────────────────────────────────────────────────────────────────────────┘
+### Tables à créer
+
+| Table | Description |
+|-------|-------------|
+| `media_system_folders` | Dossiers racine système (RH, Véhicules, Admin...) avec `path_slug` normalisé |
+| `media_assets` | Fichiers physiques uniques (bucket + path) |
+| `media_folders` | Arborescence des dossiers avec héritage `access_scope` |
+| `media_links` | Liens N-N entre assets et dossiers (multi-emplacement) |
+| `media_system_routes` | Templates de routing par module (ex: `/rh/salaries/{id}/{subfolder}`) |
+
+### Fonctions SQL à créer
+
+| Fonction | Description |
+|----------|-------------|
+| `sanitize_path_segment(text)` | Normalise les slugs (accents, espaces → tirets) avec fallback 'inconnu' |
+| `has_module_option_v2(uuid, text, text)` | Vérifie option module dans `user_modules` table |
+| `can_access_folder_scope(uuid, text)` | Vérifie accès selon scope (general/rh/rh_sensitive/admin) |
+| `can_manage_media(uuid)` | Vérifie permission `divers_documents.gerer` |
+| `ensure_media_folder(uuid, text, text, uuid)` | Création idempotente dossiers avec héritage scope |
+| `resolve_route_template(text, jsonb)` | Résolution des templates de route |
+
+### Corrections critiques appliquées
+
+1. **Héritage access_scope** : Les sous-dossiers héritent du scope parent (ex: `/rh/salaries/jean/contrats` hérite de `rh`)
+2. **can_access_folder_scope('rh')** : Exige explicitement `rh.rh_viewer` ou `rh.rh_admin`, pas juste N2
+3. **Soft-delete corrigé** : Policy UPDATE distincte pour soft-delete avec vérification `is_system = false`
+4. **Protection dossiers système** : Trigger bloque rename/move/delete (même soft) sur `is_system = true`
+5. **Unique index compatible** : `COALESCE(parent_id, uuid_zero)` au lieu de `NULLS NOT DISTINCT`
+
+### RLS Policies
+
+| Table | SELECT | INSERT | UPDATE | Soft-DELETE |
+|-------|--------|--------|--------|-------------|
+| `media_folders` | scope + agency | `can_manage_media` | `can_manage_media` | `can_manage_media` + `is_system=false` |
+| `media_links` | via folder accessible | `can_manage_media` | `can_manage_media` | `can_manage_media` |
+| `media_assets` | via link accessible | `can_manage_media` | `can_manage_media` | - (via GC) |
+
+---
+
+## Phase 1B : Edge Function `media-get-signed-url`
+
+### Flux sécurisé
+1. Authentifier l'utilisateur via JWT
+2. Vérifier `asset.agency_id === profile.agency_id` (sauf N5+)
+3. Vérifier accès via `media_links` + `can_access_folder_scope`
+4. Générer signed URL via `supabase.storage.createSignedUrl()`
+5. Logger l'accès dans `document_access_logs`
+
+---
+
+## Phase 1C : Triggers de synchronisation
+
+### Trigger `sync_collaborator_document_to_media`
+- **Event** : `AFTER INSERT OR UPDATE OR DELETE`
+- **Logique** :
+  - INSERT : Créer asset + link vers `/rh/salaries/{id}-{nom}/{subfolder}`
+  - UPDATE : Si `subfolder` change → soft-delete ancien link + créer nouveau
+  - DELETE : Soft-delete le link
+
+---
+
+## Phase 2 : Intégration UI
+
+### Modifications `src/types/modules.ts`
+```typescript
+divers_documents: {
+  consulter: 'divers_documents.consulter',  // Lecture
+  gerer: 'divers_documents.gerer',          // CRUD
+  corbeille_vider: 'divers_documents.corbeille_vider', // Purge
+},
 ```
 
----
+### Modifications `src/pages/UnifiedWorkspace.tsx`
+- Ajouter `'documents'` dans `UnifiedTab`
+- Ajouter tab config avec `requiresOption: { module: 'divers_documents', option: 'consulter' }`
+- Mettre à jour `DEFAULT_TAB_ORDER`
 
-## Structure proposée
+### Nouveaux composants
+| Composant | Description |
+|-----------|-------------|
+| `DocumentsTabContent` | Layout 3 sous-onglets (Médiathèque, Raccourcis, Corbeille) |
+| `MediaLibraryManager` | Interface Finder principale |
+| `MediaSidebar` | Arborescence dossiers |
+| `MediaFolderGrid` | Grille dossiers + fichiers |
 
-Chaque ligne affiche :
-
-| Colonne | Contenu |
-|---------|---------|
-| **Icône** | Icône fichier (couleur selon statut) |
-| **Type** | Label du type de document |
-| **Fichier** | Nom du fichier ou "—" si absent |
-| **Statut** | Badge coloré (OK/Warning/Expiré/Sans expiration) |
-| **Date expiration** | Date formatée ou vide |
-| **Actions** | 3 icônes : Œil (voir), Download, Trash |
-
-Si pas de document : bouton "+ Ajouter" à la place des actions.
-
----
-
-## Modifications techniques
-
-### Fichier : `src/components/outils/AgencyAdminDocuments.tsx`
-
-**Changements :**
-
-1. **Supprimer le composant `DocumentCard`** (grosses tuiles)
-
-2. **Créer un composant `DocumentRow`** :
-   - Structure horizontale flex ou Table row
-   - Affiche toutes les infos sur une seule ligne
-   - Icônes d'action compactes en fin de ligne (ghost buttons, `h-7 w-7`)
-
-3. **Remplacer la grille par un conteneur liste** :
-   - `div` avec `space-y-1` ou `<table>` 
-   - Alternance de couleurs légère pour lisibilité (`odd:bg-muted/30`)
-
-4. **Conserver les dialogs existants** :
-   - Upload dialog (inchangé)
-   - Delete confirmation (inchangé)
-   - Preview dialog (inchangé)
+### Deep-linking
+- URL `/?tab=documents&path=/rh/salaries/uuid-jean` ouvre directement le dossier
+- Boutons "Voir dans médiathèque" depuis les modules existants
 
 ---
 
-## Code du nouveau composant `DocumentRow`
+## Matrice des droits finale
 
-```tsx
-function DocumentRow({
-  docType,
-  document,
-  onUpload,
-  onDownload,
-  onDelete,
-  onPreview,
-}: DocumentCardProps) {
-  const hasDocument = !!document?.file_path;
-  const expiryInfo = document ? getExpiryStatus(document.expiry_date) : null;
-
-  return (
-    <div className="flex items-center gap-4 px-4 py-2.5 rounded-lg hover:bg-muted/50 transition-colors">
-      {/* Icône */}
-      <div className={cn(
-        'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0',
-        hasDocument ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
-      )}>
-        <FileText className="w-4 h-4" />
-      </div>
-
-      {/* Type de document */}
-      <div className="w-40 flex-shrink-0">
-        <span className="font-medium text-sm">{docType.label}</span>
-      </div>
-
-      {/* Nom du fichier */}
-      <div className="flex-1 min-w-0">
-        {document?.file_name ? (
-          <span className="text-sm text-muted-foreground truncate block">
-            {document.file_name}
-          </span>
-        ) : (
-          <span className="text-sm text-muted-foreground/50 italic">—</span>
-        )}
-      </div>
-
-      {/* Statut */}
-      <div className="w-32 flex-shrink-0">
-        {hasDocument && expiryInfo && docType.requiresExpiry ? (
-          <Badge variant="secondary" className={cn('gap-1 text-xs', statusColors[expiryInfo.status])}>
-            <StatusIcon className="w-3 h-3" />
-            {expiryInfo.status === 'ok' ? 'Valide' : expiryInfo.label}
-          </Badge>
-        ) : hasDocument ? (
-          <span className="text-xs text-muted-foreground">Sans expiration</span>
-        ) : null}
-      </div>
-
-      {/* Date expiration */}
-      <div className="w-24 flex-shrink-0 text-xs text-muted-foreground">
-        {document?.expiry_date && format(parseISO(document.expiry_date), 'dd/MM/yyyy')}
-      </div>
-
-      {/* Actions */}
-      <div className="flex items-center gap-1 flex-shrink-0">
-        {hasDocument ? (
-          <>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onPreview(document)}>
-              <Eye className="w-3.5 h-3.5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onDownload(document)}>
-              <Download className="w-3.5 h-3.5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onDelete(document)}>
-              <Trash2 className="w-3.5 h-3.5" />
-            </Button>
-          </>
-        ) : (
-          <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => onUpload(docType.id, docType.label)}>
-            <Plus className="w-3 h-3 mr-1" />
-            Ajouter
-          </Button>
-        )}
-      </div>
-    </div>
-  );
-}
-```
+| Scope | N2 sans RH | N2 avec RH | N3 | N4+ | N5/N6 |
+|-------|------------|------------|-----|-----|-------|
+| `general` | ✅ (si consulter) | ✅ | ✅ | ✅ | ✅ |
+| `rh` | ❌ | ✅ | ✅ (si module) | ✅ | ✅ |
+| `rh_sensitive` | ❌ | ❌ (sauf rh_admin) | ❌ | ✅ | ✅ |
+| `admin` | ❌ | ❌ | ❌ | ✅ | ✅ |
 
 ---
 
-## Rendu principal modifié
+## Fichiers à créer
 
-```tsx
-{/* Liste des documents */}
-<Card>
-  <CardHeader className="pb-2">
-    <CardTitle className="text-base">Liste des documents</CardTitle>
-  </CardHeader>
-  <CardContent className="p-2">
-    <div className="divide-y divide-border/50">
-      {ADMIN_DOCUMENT_TYPES.map((docType) => (
-        <DocumentRow
-          key={docType.id}
-          docType={docType}
-          document={getDocumentByType(docType.id)}
-          onUpload={handleUploadClick}
-          onDownload={handleDownload}
-          onDelete={(doc) => setDeleteDialog({ open: true, document: doc })}
-          onPreview={handlePreview}
-        />
-      ))}
-    </div>
-  </CardContent>
-</Card>
-```
+### Migration SQL
+- `supabase/migrations/xxx_media_library_phase1.sql`
+
+### Edge Functions
+- `supabase/functions/media-get-signed-url/index.ts`
+- `supabase/functions/media-garbage-collector/index.ts`
+
+### Frontend
+- `src/components/unified/tabs/DocumentsTabContent.tsx`
+- `src/components/media-library/MediaLibraryManager.tsx`
+- `src/components/media-library/MediaSidebar.tsx`
+- `src/components/media-library/MediaFolderGrid.tsx`
+- `src/components/media-library/MediaContextMenu.tsx`
+- `src/components/media-library/MediaQuickLook.tsx`
+- `src/hooks/useMediaLibrary.ts`
+- `src/hooks/useMediaFolders.ts`
+- `src/hooks/useMediaLinks.ts`
 
 ---
 
-## Résultat attendu
+## Ordre d'exécution
 
-| Avant | Après |
-|-------|-------|
-| Grille de 4 colonnes de grosses cartes | Liste compacte sur toute la largeur |
-| ~200px de hauteur par document | ~45px par ligne |
-| Actions sous forme de boutons texte | Icônes compactes alignées à droite |
-| Beaucoup d'espace vide | Interface dense et lisible |
+1. **Jour 1-2** : Migration SQL Phase 1 (tables + fonctions + RLS + triggers)
+2. **Jour 3** : Edge Functions (signed-url + garbage-collector)
+3. **Jour 4** : Hooks React (useMediaLibrary, useMediaFolders, useMediaLinks)
+4. **Jour 5-6** : Composants Finder (Manager, Sidebar, Grid, ContextMenu)
+5. **Jour 7** : Intégration onglet Documents dans UnifiedWorkspace
+6. **Jour 8** : Tests E2E + migration données existantes
 
 ---
 
-## Fichiers modifiés
+## Validation technique
 
-| Fichier | Action |
-|---------|--------|
-| `src/components/outils/AgencyAdminDocuments.tsx` | Refactoring complet : `DocumentCard` → `DocumentRow` |
-
+✅ Héritage `access_scope` dans `ensure_media_folder()`
+✅ `can_access_folder_scope('rh')` basé sur permissions RH explicites
+✅ Policies INSERT/UPDATE exigent `divers_documents.gerer`
+✅ Signed URL via Edge Function (pas RPC SQL)
+✅ Protection dossiers système via trigger
+✅ Soft-delete bloqué sur `is_system = true`
+✅ Unique index compatible Postgres ≥12
