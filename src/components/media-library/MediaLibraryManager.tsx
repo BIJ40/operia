@@ -92,6 +92,9 @@ export function MediaLibraryManager() {
               onSelect={media.toggleSelection}
               onContextMenu={media.openContextMenu}
               onDownload={media.downloadFile}
+              onMoveFile={(linkId, targetFolderId) => {
+                media.moveFile.mutate({ linkId, newFolderId: targetFolderId });
+              }}
             />
           )}
         </div>
