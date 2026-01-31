@@ -143,21 +143,26 @@ function estimateDuration(intervention: any): number {
   return totalMinutes || 60; // Défaut 1h
 }
 
-// Détecter si c'est un SAV
+// Détecter si c'est un SAV (règles strictes selon memory/security/sav-detection-business-rules)
 function isSavIntervention(intervention: any, project: any): boolean {
   if (!intervention) return false;
-  const type2 = (intervention.type2 || '').toLowerCase();
+  
+  // 1. intervention.type2 === 'sav' (case-insensitive)
+  const type2 = (intervention.type2 || intervention.data?.type2 || '').toLowerCase().trim();
   if (type2 === 'sav') return true;
   
-  // Vérifier les visites
-  const visites = intervention.visites || [];
+  // 2. Vérifier les visites - chercher dans intervention.visites ET intervention.data.visites
+  const visites = intervention.visites || intervention.data?.visites || [];
   for (const v of visites) {
-    if ((v.type2 || '').toLowerCase() === 'sav') return true;
+    const vType2 = (v.type2 || '').toLowerCase().trim();
+    if (vType2 === 'sav') return true;
   }
   
-  // Vérifier les pictos
-  const pictos = project?.data?.pictosInterv || [];
-  if (pictos.some((p: string) => p.toLowerCase() === 'sav')) return true;
+  // 3. Vérifier les pictos du projet
+  const pictos = project?.data?.pictosInterv || project?.pictosInterv || [];
+  if (Array.isArray(pictos) && pictos.some((p: string) => (p || '').toLowerCase().trim() === 'sav')) {
+    return true;
+  }
   
   return false;
 }
