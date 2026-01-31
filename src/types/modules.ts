@@ -75,7 +75,11 @@ export const MODULE_OPTIONS = {
   },
   divers_plannings: {},
   divers_reunions: {},
-  divers_documents: {},
+  divers_documents: {
+    consulter: 'divers_documents.consulter',
+    gerer: 'divers_documents.gerer',
+    corbeille_vider: 'divers_documents.corbeille_vider',
+  },
   guides: {
     apogee: 'guides.apogee',
     apporteurs: 'guides.apporteurs',
@@ -241,11 +245,15 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
   {
     key: 'divers_documents',
     label: 'Documents',
-    description: 'Gestion documentaire',
-    icon: 'FileText',
+    description: 'Médiathèque centralisée style Finder',
+    icon: 'FolderOpen',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
-    options: [],
+    options: [
+      { key: 'consulter', path: 'divers_documents.consulter', label: 'Consulter', description: 'Voir les documents', defaultEnabled: true, routes: ['/?tab=documents'] },
+      { key: 'gerer', path: 'divers_documents.gerer', label: 'Gérer', description: 'Créer, modifier, déplacer', defaultEnabled: true, routes: ['/?tab=documents'] },
+      { key: 'corbeille_vider', path: 'divers_documents.corbeille_vider', label: 'Vider corbeille', description: 'Suppression définitive', defaultEnabled: false, routes: ['/?tab=documents'] },
+    ],
   },
   {
     key: 'guides',
