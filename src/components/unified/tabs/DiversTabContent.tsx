@@ -11,7 +11,7 @@
 import { lazy, Suspense, useCallback } from 'react';
 import { 
   FileText, Users2, Loader2, Users, CalendarDays, 
-  Radar, Car, FolderOpen, Settings, Eye
+  Radar, Car, FolderOpen, Settings, Eye, Activity
 } from 'lucide-react';
 import {
   DndContext,
@@ -42,9 +42,12 @@ const MesApporteursTab = lazy(() => import('@/components/pilotage/MesApporteursT
 const PlanningHebdo = lazy(() => import('@/pages/PlanningTechniciensSemaine'));
 const VeilleApporteursPage = lazy(() => import('@/pages/VeilleApporteursPage'));
 const VehiculesTabContent = lazy(() => import('@/components/unified/tabs/VehiculesTabContent'));
+const PerformanceDashboard = lazy(() => 
+  import('@/components/performance/PerformanceDashboard').then(m => ({ default: m.PerformanceDashboard }))
+);
 
 // Types pour les niveaux de navigation
-type OutilsMainTab = 'actions' | 'apporteurs' | 'administratif' | 'parc';
+type OutilsMainTab = 'actions' | 'apporteurs' | 'administratif' | 'parc' | 'performance';
 type ApporteursSubTab = 'espace' | 'veille';
 type AdminSubTab = 'reunions' | 'plannings' | 'documents';
 
@@ -54,6 +57,7 @@ const MAIN_TABS: PillTabConfig[] = [
   { id: 'apporteurs', label: 'Apporteurs', icon: Users, accent: 'purple' },
   { id: 'administratif', label: 'Administratif', icon: FolderOpen, accent: 'orange' },
   { id: 'parc', label: 'Parc', icon: Car, accent: 'green' },
+  { id: 'performance', label: 'Performance', icon: Activity, accent: 'pink' },
 ];
 
 function LoadingFallback() {
@@ -298,6 +302,12 @@ export default function DiversTabContent() {
         <TabsContent value="parc" className="mt-6 animate-fade-in">
           <Suspense fallback={<LoadingFallback />}>
             <VehiculesTabContent />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="performance" className="mt-6 animate-fade-in">
+          <Suspense fallback={<LoadingFallback />}>
+            <PerformanceDashboard />
           </Suspense>
         </TabsContent>
       </Tabs>
