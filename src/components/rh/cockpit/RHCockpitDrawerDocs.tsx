@@ -6,7 +6,7 @@
 import React from 'react';
 import { DrawerSection } from './RHCockpitDrawer';
 import { RHCollaborator } from '@/types/rh-suivi';
-import { FileText, FolderOpen, Check, AlertTriangle, Upload } from 'lucide-react';
+import { FolderOpen, Check, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,22 +27,46 @@ const REQUIRED_DOCS = [
 ];
 
 export function RHCockpitDrawerDocs({ collaborator, onOpenFinder, onUpdate }: RHCockpitDrawerDocsProps) {
-  // Récupérer les documents depuis la base
+  // Récupérer les documents depuis media_links via le slug du dossier collaborateur
   const { data: documents = [] } = useQuery({
     queryKey: ['rh-documents-check', collaborator.id],
     queryFn: async () => {
+      // Chercher les fichiers via media_links avec jointure sur folder et asset
       const { data, error } = await supabase
-        .from('collaborator_documents')
-        .select('doc_type')
-        .eq('collaborator_id', collaborator.id)
-        .in('doc_type', ['permis', 'cni']);
+        .from('media_links')
+        .select(`
+          id,
+          label,
+          asset:media_assets!inner(file_name),
+          folder:media_folders!inner(slug)
+        `)
+        .eq('agency_id', collaborator.agency_id)
+        .is('deleted_at', null);
       
       if (error) throw error;
-      return data || [];
+      
+      // Filtrer pour ne garder que les documents dans le dossier du collaborateur
+      const collabSlug = `salarie-${collaborator.id}`;
+      const filtered = (data || []).filter(d => {
+        const folderSlug = (d.folder as any)?.slug || '';
+        return folderSlug.includes(collabSlug);
+      });
+      
+      // Déterminer le type de document à partir du label ou du nom de fichier
+      return filtered.map(d => {
+        const name = ((d.label || (d.asset as any)?.file_name) || '').toLowerCase();
+        let docType: string | null = null;
+        if (name.includes('permis') || name.includes('license') || name.includes('driving')) {
+          docType = 'permis';
+        } else if (name.includes('cni') || name.includes('identité') || name.includes('identity') || name.includes('id_card')) {
+          docType = 'cni';
+        }
+        return { id: d.id, doc_type: docType };
+      }).filter(d => d.doc_type !== null);
     },
   });
 
-  // Vérifier les documents obligatoires (depuis la DB, pas les champs legacy)
+  // Vérifier les documents obligatoires
   const docStatus = REQUIRED_DOCS.map(doc => ({
     ...doc,
     present: documents.some(d => d.doc_type === doc.key),
@@ -85,8 +109,8 @@ export function RHCockpitDrawerDocs({ collaborator, onOpenFinder, onUpdate }: RH
               className={cn(
                 'flex items-center justify-between p-3 rounded-lg border',
                 doc.present 
-                  ? 'border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20 dark:border-emerald-800' 
-                  : 'border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800'
+                  ? 'border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20 dark:border-emerald-800' 
+                  : 'border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800'
               )}
             >
               <div className="flex items-center gap-3">

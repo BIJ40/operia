@@ -36,22 +36,47 @@ export function useMyDocumentRequests() {
     error,
   } = useQuery({
     queryKey: ['my-document-requests'],
-    queryFn: async () => {
-      const { data, error } = await supabase
+    queryFn: async (): Promise<DocumentRequestWithUnread[]> => {
+      // First get document requests
+      const { data: requestsData, error: requestsError } = await supabase
         .from('document_requests')
-        .select(`
-          *,
-          response_document:response_document_id (*)
-        `)
+        .select('*')
         .order('requested_at', { ascending: false });
 
-      if (error) throw error;
+      if (requestsError) throw requestsError;
       
-      // Add computed is_unread field
-      return (data as DocumentRequestWithDoc[]).map((req): DocumentRequestWithUnread => ({
-        ...req,
-        is_unread: (req.status === 'COMPLETED' || req.status === 'REJECTED') && !req.employee_seen_at,
-      }));
+      // For each request with a response_document_id, fetch the media_asset separately
+      const enrichedRequests = await Promise.all(
+        (requestsData || []).map(async (req): Promise<DocumentRequestWithUnread> => {
+          let responseDocument = null;
+          
+          if (req.response_document_id) {
+            const { data: asset } = await supabase
+              .from('media_assets')
+              .select('id, file_name, storage_path')
+              .eq('id', req.response_document_id)
+              .maybeSingle();
+            
+            if (asset) {
+              responseDocument = {
+                id: asset.id,
+                file_name: asset.file_name,
+                file_path: asset.storage_path
+              };
+            }
+          }
+          
+          return {
+            ...req,
+            request_type: req.request_type as DocumentRequestType,
+            status: req.status as DocumentRequestStatus,
+            response_document: responseDocument,
+            is_unread: (req.status === 'COMPLETED' || req.status === 'REJECTED') && !req.employee_seen_at,
+          };
+        })
+      );
+      
+      return enrichedRequests;
     },
   });
 
@@ -130,21 +155,48 @@ export function useAgencyDocumentRequests() {
     error,
   } = useQuery({
     queryKey: ['agency-document-requests'],
-    queryFn: async () => {
-      // RLS filtrera automatiquement par agency_id
-      const { data, error } = await supabase
+    queryFn: async (): Promise<(DocumentRequestWithDoc & { locked_by: string | null; locked_at: string | null })[]> => {
+      // Fetch requests without the join that's failing
+      const { data: requestsData, error: requestsError } = await supabase
         .from('document_requests')
-        .select(`
-          *,
-          response_document:response_document_id (*)
-        `)
+        .select('*')
         .order('requested_at', { ascending: false });
 
-      if (error) throw error;
-      return data as (DocumentRequestWithDoc & { 
-        locked_by: string | null;
-        locked_at: string | null;
-      })[];
+      if (requestsError) throw requestsError;
+      
+      // For each request with a response_document_id, fetch the media_asset separately
+      const enrichedRequests = await Promise.all(
+        (requestsData || []).map(async (req) => {
+          let responseDocument = null;
+          
+          if (req.response_document_id) {
+            const { data: asset } = await supabase
+              .from('media_assets')
+              .select('id, file_name, storage_path')
+              .eq('id', req.response_document_id)
+              .maybeSingle();
+            
+            if (asset) {
+              responseDocument = {
+                id: asset.id,
+                file_name: asset.file_name,
+                file_path: asset.storage_path
+              };
+            }
+          }
+          
+          return {
+            ...req,
+            request_type: req.request_type as DocumentRequestType,
+            status: req.status as DocumentRequestStatus,
+            response_document: responseDocument,
+            locked_by: req.locked_by,
+            locked_at: req.locked_at,
+          };
+        })
+      );
+      
+      return enrichedRequests;
     },
   });
 

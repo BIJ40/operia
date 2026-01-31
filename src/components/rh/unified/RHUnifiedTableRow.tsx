@@ -564,6 +564,7 @@ export function RHUnifiedTableRow({
               <TableCell key={col.id} className={cn(colIdx === 0 && "border-l", group.className, "px-1.5")}>
                 <DocumentIcons
                   collaboratorId={collaborator.id}
+                  agencyId={collaborator.agency_id}
                   onDocumentClick={(docType) => onDocumentClick(collaborator.id, docType)}
                   large
                 />

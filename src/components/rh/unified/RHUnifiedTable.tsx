@@ -1,13 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Search, Settings2, Save, Loader2, UserX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RHCollaborator } from '@/types/rh-suivi';
 import { RHUnifiedTableHeader } from './RHUnifiedTableHeader';
@@ -77,6 +70,7 @@ export function RHUnifiedTable({
   
   const queryClient = useQueryClient();
 
+  // Upload mutation using media library
   const uploadIdentityDocument = useMutation({
     mutationFn: async ({ collaboratorId, docType, file }: { collaboratorId: string; docType: DocumentType; file: File }) => {
       const collab = collaborators.find(c => c.id === collaboratorId);
@@ -86,52 +80,87 @@ export function RHUnifiedTable({
 
       const fileExt = file.name.split('.').pop();
       const fileName = `${docType}_${Date.now()}.${fileExt}`;
-      const filePath = `${agencyId}/${collaboratorId}/${fileName}`;
+      const storagePath = `${agencyId}/salaries/${collaboratorId}/${fileName}`;
 
+      // Upload to storage
       const { error: uploadError } = await supabase.storage
-        .from('rh-documents')
-        .upload(filePath, file, { upsert: true });
+        .from('media-library')
+        .upload(storagePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      const { data: { user } } = await supabase.auth.getUser();
+      // Get or create the folder for this collaborator
+      const folderSlug = `salarie-${collaboratorId}`;
+      const { data: folder } = await supabase
+        .from('media_folders')
+        .select('id')
+        .eq('agency_id', agencyId)
+        .eq('slug', folderSlug)
+        .maybeSingle();
 
+      let folderId = folder?.id;
+      if (!folderId) {
+        // Create folder if it doesn't exist
+        const { data: newFolder, error: folderError } = await supabase
+          .from('media_folders')
+          .insert({
+            agency_id: agencyId,
+            name: `Salarié ${collaboratorId}`,
+            slug: folderSlug,
+            access_scope: 'rh',
+          })
+          .select('id')
+          .single();
+        
+        if (folderError) throw folderError;
+        folderId = newFolder.id;
+      }
+
+      // Create media_asset
       const docInfo = DOCUMENT_TYPES.find(d => d.type === docType);
-
-      const { error: insertError } = await supabase
-        .from('collaborator_documents')
+      const { data: asset, error: assetError } = await supabase
+        .from('media_assets')
         .insert({
-          collaborator_id: collaboratorId,
           agency_id: agencyId,
-          doc_type: docType,
-          title: docInfo?.label || docType,
+          storage_bucket: 'media-library',
+          storage_path: storagePath,
           file_name: file.name,
-          file_path: filePath,
           file_size: file.size,
-          file_type: file.type,
-          uploaded_by: user?.id,
-          visibility: 'ADMIN_ONLY',
+          mime_type: file.type,
+          created_by: (await supabase.auth.getUser()).data.user?.id,
+        })
+        .select('id')
+        .single();
+
+      if (assetError) throw assetError;
+
+      // Create media_link
+      const { error: linkError } = await supabase
+        .from('media_links')
+        .insert({
+          agency_id: agencyId,
+          asset_id: asset.id,
+          folder_id: folderId,
+          label: docInfo?.label || docType,
         });
 
-      if (insertError) throw insertError;
+      if (linkError) throw linkError;
     },
     onSuccess: (_, variables) => {
       toast.success('Document ajouté');
-      queryClient.invalidateQueries({ queryKey: ['collaborator-documents', variables.collaboratorId] });
       queryClient.invalidateQueries({ queryKey: ['rh-documents-check', variables.collaboratorId] });
+      queryClient.invalidateQueries({ queryKey: ['scoped-media-library'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error?.message || 'Erreur lors de l\'upload du document');
     },
   });
 
   // Inline edit hook
   const {
-    isSaving,
     isEditable,
     handleValueChange,
     getLocalValue,
-    saveChanges,
     handleAssetsUpdate,
     hasPendingChanges,
   } = useRHInlineEdit(collaborators, onRefresh);
@@ -196,11 +225,6 @@ export function RHUnifiedTable({
       averageCompleteness,
     };
   }, [collaborators, groupedCollaborators]);
-
-  // Colonnes disponibles pour l'onglet actif
-  const availableColumns = useMemo(() => {
-    return TAB_COLUMNS[activeTab].flatMap(group => group.columns);
-  }, [activeTab]);
 
   // Compteurs d'alertes par onglet
   const alertCounts = useMemo(() => {

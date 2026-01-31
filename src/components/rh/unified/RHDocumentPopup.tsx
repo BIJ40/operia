@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useDropzone } from 'react-dropzone';
-import { Upload, FileText, CreditCard, Car, Heart, X, Eye, Download } from 'lucide-react';
+import { Upload, FileText, CreditCard, Car, Heart, Eye, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -157,78 +157,79 @@ export function RHDocumentPopup({
 // Composant pour afficher les icônes de documents dans le tableau
 interface DocumentIconsProps {
   collaboratorId: string;
+  agencyId: string;
   onDocumentClick: (type: DocumentType) => void;
-  large?: boolean; // Pour afficher des icônes plus grandes
-  showVisibilityToggle?: boolean; // Pour afficher le toggle coffre
+  large?: boolean;
+  showVisibilityToggle?: boolean;
 }
 
-export function DocumentIcons({ collaboratorId, onDocumentClick, large = false, showVisibilityToggle = false }: DocumentIconsProps) {
+export function DocumentIcons({ collaboratorId, agencyId, onDocumentClick, large = false }: DocumentIconsProps) {
   const [previewDoc, setPreviewDoc] = useState<{type: DocumentType; filePath: string; fileName: string} | null>(null);
 
-  // Query to check which document types exist for this collaborator
-  // Uses same queryKey pattern as RHDocumentCell for sync
+  // Query to check which document types exist via media_links
   const { data: existingDocs = [] } = useQuery({
     queryKey: ['rh-documents-check', collaboratorId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('collaborator_documents')
-        .select('doc_type, file_path, file_name')
-        .eq('collaborator_id', collaboratorId)
-        .in('doc_type', [
-          // Identité (anciens et nouveaux codes)
-          'permis', 'cni', 'carte_vitale',
-          'DRIVING_LICENSE', 'ID_CARD', 'VITALE', 'CARTE_VITALE',
-          // Contrat / RIB
-          'contrat', 'rib', 'CONTRACT', 'RIB',
-        ]);
+        .from('media_links')
+        .select(`
+          id,
+          label,
+          asset:media_assets!inner(storage_path, file_name)
+        `)
+        .eq('agency_id', agencyId)
+        .is('deleted_at', null);
       
       if (error) throw error;
-      return data || [];
+      
+      // Map to doc types based on label or file_name
+      return (data || []).map(d => {
+        const assetData = d.asset as { storage_path: string; file_name: string } | null;
+        const name = (d.label || assetData?.file_name || '').toLowerCase();
+        let docType: DocumentType | null = null;
+        if (name.includes('permis') || name.includes('license') || name.includes('driving')) {
+          docType = 'permis';
+        } else if (name.includes('cni') || name.includes('identité') || name.includes('identity') || name.includes('id_card')) {
+          docType = 'cni';
+        } else if (name.includes('vitale')) {
+          docType = 'carte_vitale';
+        } else if (name.includes('contrat')) {
+          docType = 'contrat';
+        } else if (name.includes('rib')) {
+          docType = 'rib';
+        }
+        return { 
+          doc_type: docType, 
+          file_path: assetData?.storage_path || '', 
+          file_name: assetData?.file_name || d.label || ''
+        };
+      }).filter(d => d.doc_type !== null);
     },
-    staleTime: 0, // Toujours refetch pour rester en synchro avec RHDocumentCell
+    staleTime: 0,
   });
 
   const handleClick = (docType: DocumentInfo, e: React.MouseEvent) => {
     e.stopPropagation();
-    // Chercher avec les anciens ET nouveaux codes
-    const typeMapping: Record<DocumentType, string[]> = {
-      cni: ['cni', 'ID_CARD'],
-      permis: ['permis', 'DRIVING_LICENSE'],
-      carte_vitale: ['carte_vitale', 'VITALE', 'CARTE_VITALE'],
-      contrat: ['contrat', 'CONTRACT'],
-      rib: ['rib', 'RIB'],
-    };
     
-    const doc = existingDocs.find(d => typeMapping[docType.type]?.includes(d.doc_type));
+    const doc = existingDocs.find(d => d.doc_type === docType.type);
     
     if (doc) {
-      // Document exists - show preview
       setPreviewDoc({
         type: docType.type,
         filePath: doc.file_path,
         fileName: doc.file_name
       });
     } else {
-      // No document - open upload
       onDocumentClick(docType.type);
     }
   };
 
-  // Check if document exists with old or new codes
   const hasDocument = (type: DocumentType) => {
-    const typeMapping: Record<DocumentType, string[]> = {
-      cni: ['cni', 'ID_CARD'],
-      permis: ['permis', 'DRIVING_LICENSE'],
-      carte_vitale: ['carte_vitale', 'VITALE', 'CARTE_VITALE'],
-      contrat: ['contrat', 'CONTRACT'],
-      rib: ['rib', 'RIB'],
-    };
-    return existingDocs.some(d => typeMapping[type]?.includes(d.doc_type));
+    return existingDocs.some(d => d.doc_type === type);
   };
 
   const docInfo = previewDoc ? DOCUMENT_TYPES.find(d => d.type === previewDoc.type) : null;
 
-  // Classes pour la taille des icônes
   const iconSize = large ? 'h-6 w-6' : 'h-4 w-4';
   const buttonPadding = large ? 'p-2' : 'p-1';
 
