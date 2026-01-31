@@ -316,7 +316,7 @@ export function AgencyAdminDocuments() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold">Documents administratifs</h2>
+          <h2 className="text-xl font-semibold">Docs administratifs</h2>
           <p className="text-sm text-muted-foreground">
             Documents récurrents demandés par vos clients
           </p>
