@@ -32,9 +32,9 @@ export function FolderNavigationBar({
   viewMode,
   onViewModeChange,
 }: FolderNavigationBarProps) {
-  if (activeCategory === 'ALL') return null;
-
-  const categoryLabel = DOCUMENT_TYPES.find((t) => t.value === activeCategory)?.label || activeCategory;
+  const categoryLabel = activeCategory !== 'ALL' 
+    ? DOCUMENT_TYPES.find((t) => t.value === activeCategory)?.label || activeCategory
+    : null;
 
   return (
     <div className="flex items-center justify-between gap-4 py-2 px-4 rounded-xl bg-gradient-to-r from-muted/30 to-muted/10 border border-border/30 backdrop-blur-sm">
@@ -42,25 +42,30 @@ export function FolderNavigationBar({
         {/* Home button */}
         <button
           onClick={onNavigateToRoot}
-          className="p-1.5 rounded-lg hover:bg-warm-green/10 transition-colors flex-shrink-0 group"
+          className={`p-1.5 rounded-lg hover:bg-warm-green/10 transition-colors flex-shrink-0 group ${
+            activeCategory === 'ALL' ? 'bg-warm-green/10' : ''
+          }`}
           title="Tous les documents"
         >
-          <Home className="h-4 w-4 text-muted-foreground group-hover:text-warm-green" />
+          <Home className={`h-4 w-4 ${activeCategory === 'ALL' ? 'text-warm-green' : 'text-muted-foreground group-hover:text-warm-green'}`} />
         </button>
         
-        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 flex-shrink-0" />
-        
-        {/* Category */}
-        <button
-          onClick={onNavigateToCategory}
-          className={`truncate transition-colors whitespace-nowrap px-2 py-1 rounded-lg ${
-            folderPath.length === 0 
-              ? 'font-semibold text-warm-green bg-warm-green/10' 
-              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-          }`}
-        >
-          {categoryLabel}
-        </button>
+        {/* Category - only show if not ALL */}
+        {categoryLabel && (
+          <>
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 flex-shrink-0" />
+            <button
+              onClick={onNavigateToCategory}
+              className={`truncate transition-colors whitespace-nowrap px-2 py-1 rounded-lg ${
+                folderPath.length === 0 
+                  ? 'font-semibold text-warm-green bg-warm-green/10' 
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+              }`}
+            >
+              {categoryLabel}
+            </button>
+          </>
+        )}
         
         {/* Folder path with chevrons */}
         {folderPath.map((folder, index) => (
