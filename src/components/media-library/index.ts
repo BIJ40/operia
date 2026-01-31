@@ -4,4 +4,5 @@ export { MediaFolderGrid } from './MediaFolderGrid';
 export { MediaBreadcrumbNav } from './MediaBreadcrumbNav';
 export { MediaToolbar } from './MediaToolbar';
 export { MediaContextMenu } from './MediaContextMenu';
+export { MediaContextMenuPopover } from './MediaContextMenuPopover';
 export { MediaQuickLook } from './MediaQuickLook';

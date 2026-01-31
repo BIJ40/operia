@@ -2,14 +2,16 @@
  * MediaLibraryManager - Interface Finder principale
  */
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useEffect } from 'react';
 import { useMediaLibrary } from '@/hooks/useMediaLibrary';
 import { MediaSidebar } from './MediaSidebar';
 import { MediaFolderGrid } from './MediaFolderGrid';
 import { MediaBreadcrumbNav } from './MediaBreadcrumbNav';
 import { MediaToolbar } from './MediaToolbar';
 import { MediaQuickLook } from './MediaQuickLook';
+import { MediaContextMenuPopover } from './MediaContextMenuPopover';
 import { Loader2 } from 'lucide-react';
+import { MediaLinkWithAsset, MediaContextTarget, MediaFolder } from '@/types/mediaLibrary';
 
 export function MediaLibraryManager() {
   const media = useMediaLibrary();
@@ -106,6 +108,40 @@ export function MediaLibraryManager() {
         hasNext={currentLinkIndex < media.links.length - 1}
         getSignedUrl={media.getSignedUrl}
       />
+
+      {/* Context Menu */}
+      {media.contextMenu && (
+        <MediaContextMenuPopover
+          x={media.contextMenu.x}
+          y={media.contextMenu.y}
+          target={media.contextMenu.target}
+          onClose={media.closeContextMenu}
+          onPreview={(link: MediaLinkWithAsset) => media.openQuickLook(link)}
+          onDownload={(link: MediaLinkWithAsset) => media.downloadFile(link)}
+          onRename={(target: MediaContextTarget) => {
+            if (target.type === 'folder') {
+              const folder = target.data as MediaFolder;
+              const name = prompt('Nouveau nom :', folder.name);
+              if (name) media.renameFolder.mutate({ folderId: folder.id, newName: name });
+            } else {
+              const link = target.data as MediaLinkWithAsset;
+              const name = prompt('Nouveau nom :', link.label || link.asset?.file_name);
+              if (name) media.renameFile.mutate({ linkId: link.id, newName: name });
+            }
+          }}
+          onDelete={(target: MediaContextTarget) => {
+            if (target.type === 'folder') {
+              if (confirm('Supprimer ce dossier ?')) media.deleteFolder.mutate(target.data.id);
+            } else {
+              if (confirm('Supprimer ce fichier ?')) media.deleteFile.mutate(target.data.id);
+            }
+          }}
+          onNewFolder={() => {
+            const name = prompt('Nom du dossier :');
+            if (name) media.createFolder.mutate({ name, parentId: media.currentFolderId });
+          }}
+        />
+      )}
     </div>
   );
 }
