@@ -15,6 +15,29 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.8.7",
+    title: "Médiathèque Unique",
+    date: "2026-01-31",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // CONSOLIDATION MÉDIATHÈQUE - SOURCE UNIQUE DE VÉRITÉ
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'MediaLibraryPortal : composant Finder intégrable dans tout module' },
+      { type: 'feature', description: 'useScopedMediaLibrary : hook pour vue médiathèque restreinte à un dossier' },
+      { type: 'improvement', description: 'Documents RH salariés migrés vers Médiathèque (/rh/salaries/{id})' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // NETTOYAGE LEGACY DOCUMENTS
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'Suppression table collaborator_documents (remplacée par media_links)' },
+      { type: 'improvement', description: 'Suppression table collaborator_document_folders' },
+      { type: 'improvement', description: 'Suppression table document_access_logs' },
+      { type: 'improvement', description: 'Suppression 19 composants legacy documents RH' },
+      { type: 'improvement', description: 'Suppression 5 hooks legacy (useCollaboratorDocuments, useNestedFolders, etc.)' },
+      { type: 'improvement', description: 'Refactoring RHDocumentManager → MediaLibraryPortal' },
+    ],
+  },
+  {
     version: "V0.8.6",
     title: "Audit Sécurité RLS",
     date: "2026-01-29",

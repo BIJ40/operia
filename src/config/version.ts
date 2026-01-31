@@ -1,26 +1,25 @@
-export const APP_VERSION = '0.8.6';
-export const APP_CODENAME = 'Audit Sécurité RLS';
+export const APP_VERSION = '0.8.7';
+export const APP_CODENAME = 'Médiathèque Unique';
 
 /**
- * Changelog v0.8.6 (2026-01-29)
+ * Changelog v0.8.7 (2026-01-31)
  * ==============================
  * 
- * AUDIT SÉCURITÉ RLS
- * ------------------
- * - Analyse 5 alertes sécurité : 100% faux positifs ou appropriées
- * - profiles : policy anon USING(false) correcte
- * - collaborator_sensitive_data : chiffrement AES-256-GCM + RLS
- * - salary_history : accès N2+ agence approprié
- * - collaborators : N1 limité à sa propre fiche
- * - employment_contracts : accès N2+ correct
+ * CONSOLIDATION MÉDIATHÈQUE
+ * -------------------------
+ * - MediaLibraryPortal : composant Finder intégrable
+ * - useScopedMediaLibrary : hook vue restreinte
+ * - Documents RH salariés → Médiathèque (/rh/salaries/{id})
  * 
- * VERSIONING
- * ----------
- * - Vérification version au focus onglet navigateur
- * - Force refresh automatique si nouvelle version
+ * NETTOYAGE LEGACY
+ * ----------------
+ * - Suppression tables: collaborator_documents, folders, access_logs
+ * - Suppression 19 composants legacy documents RH
+ * - Suppression 5 hooks legacy documents
+ * - Refactoring RHDocumentManager → MediaLibraryPortal
  * 
- * PRÉCÉDENT (v0.8.5 - 2026-01-28)
+ * PRÉCÉDENT (v0.8.6 - 2026-01-29)
  * --------------------------------
- * - Chatbot sidebar latéral
- * - Dashboard démo N0
+ * - Audit Sécurité RLS
+ * - Versioning auto-refresh
  */
