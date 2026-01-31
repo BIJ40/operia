@@ -6,8 +6,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAgency } from '@/apogee-connect/contexts/AgencyContext';
-import { getGlobalApogeeDataServices } from '@/statia/adapters/dataServiceAdapter';
 import { STATIA_RULES } from '@/statia/domain/rules';
+import { DataService } from '@/apogee-connect/services/dataService';
 import { logDebug, logError } from '@/lib/logger';
 
 // Types
@@ -90,20 +90,30 @@ const NON_PRODUCTIVE_TYPES = STATIA_RULES.technicians?.nonProductiveTypes || [
 
 // Vérifier si une intervention est productive
 function isProductiveIntervention(type: string | undefined, type2: string | undefined): boolean {
-  const t1 = (type || '').toLowerCase().trim();
-  const t2 = (type2 || '').toLowerCase().trim();
+  const norm = (s: string | undefined) =>
+    (s || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
+
+  const t1 = norm(type);
+  const t2 = norm(type2);
+  const nonProd = NON_PRODUCTIVE_TYPES.map((x) => norm(String(x)));
+  const prod = PRODUCTIVE_TYPES.map((x) => norm(String(x)));
   
   // Non productif si explicitement RT, diagnostic, SAV
-  if (NON_PRODUCTIVE_TYPES.some(np => t1.includes(np) || t2.includes(np))) {
+  if (nonProd.some(np => t1.includes(np) || t2.includes(np))) {
     return false;
   }
   
   // Productif si dépannage, travaux, etc.
-  return PRODUCTIVE_TYPES.some(p => t1.includes(p) || t2.includes(p));
+  return prod.some(p => t1.includes(p) || t2.includes(p));
 }
 
 // Estimer la durée d'une intervention en minutes
 function estimateDuration(intervention: any): number {
+  if (!intervention) return 60;
   // Priorité: durée explicite, sinon créneaux, sinon défaut
   if (intervention.duration) return intervention.duration;
   
@@ -129,6 +139,7 @@ function estimateDuration(intervention: any): number {
 
 // Détecter si c'est un SAV
 function isSavIntervention(intervention: any, project: any): boolean {
+  if (!intervention) return false;
   const type2 = (intervention.type2 || '').toLowerCase();
   if (type2 === 'sav') return true;
   
@@ -152,8 +163,7 @@ export function usePerformanceTerrain(dateRange: DateRange) {
   const { agence } = useAuth();
   const { isAgencyReady, currentAgency } = useAgency();
   
-  const agencySlug = currentAgency?.id || agence || '';
-  const services = getGlobalApogeeDataServices();
+  const agencySlug = currentAgency?.slug || currentAgency?.id || agence || '';
 
   return useQuery<PerformanceTerrainData | null>({
     queryKey: [
@@ -169,17 +179,25 @@ export function usePerformanceTerrain(dateRange: DateRange) {
       logDebug('PERF_TERRAIN', `Calcul pour ${agencySlug}`, { dateRange });
       
       try {
-        // Charger les données nécessaires
-        const [interventions, projects, users] = await Promise.all([
-          services.getInterventions(agencySlug, dateRange),
-          services.getProjects(agencySlug, dateRange),
-          services.getUsers(agencySlug),
-        ]);
+        // IMPORTANT: pour le prévisionnel / planifié, la source fiable est getInterventionsCreneaux
+        // (c'est ce que consomment déjà les pages de planning).
+        // On charge donc le bundle DataService (incluant creneaux) et on calcule à partir de ces créneaux.
+        const loaded = await DataService.loadAllData(true, false, agencySlug);
+        const interventions = loaded?.interventions || [];
+        const projects = loaded?.projects || [];
+        const users = loaded?.users || [];
+        const creneaux = loaded?.creneaux || [];
+
+        // Index interventions par ID pour lookup des types
+        const interventionsById = new Map<string, any>();
+        for (const i of interventions) {
+          if (i?.id != null) interventionsById.set(String(i.id), i);
+        }
 
         // Indexer projets par ID
-        const projectsById = new Map<number, any>();
+        const projectsById = new Map<string, any>();
         for (const p of projects) {
-          projectsById.set(p.id, p);
+          projectsById.set(String(p.id), p);
         }
 
         // Indexer users techniciens par ID
@@ -191,86 +209,155 @@ export function usePerformanceTerrain(dateRange: DateRange) {
           }
         }
 
-        // Filtrer interventions par période
         const startTs = dateRange.start.getTime();
         const endTs = dateRange.end.getTime();
-        
-        const filteredInterventions = interventions.filter((i: any) => {
-          const d = new Date(i.dateReelle || i.date);
-          return d.getTime() >= startTs && d.getTime() <= endTs;
-        });
+
+        type Slot = {
+          date: string;
+          duree: number;
+          usersIds: string[];
+          interventionId?: string;
+          projectId?: string;
+          type?: string;
+          type2?: string;
+        };
+
+        // 1) SOURCE PRINCIPALE (comme le planning): extraire les visites des interventions
+        const slotsFromVisites: Slot[] = [];
+        for (const intervention of interventions as any[]) {
+          const interventionId = intervention?.id != null ? String(intervention.id) : undefined;
+          const projectId = intervention?.projectId != null ? String(intervention.projectId) : undefined;
+
+          const visites = intervention?.data?.visites || intervention?.visites || [];
+          if (Array.isArray(visites) && visites.length > 0) {
+            for (const v of visites) {
+              const dateStr = v?.date || v?.dateIntervention || '';
+              if (!dateStr) continue;
+              const ts = new Date(dateStr).getTime();
+              if (isNaN(ts) || ts < startTs || ts > endTs) continue;
+
+              const usersRaw = v?.usersIds || v?.userIds || [];
+              const usersIds = Array.isArray(usersRaw) ? usersRaw.map((x: any) => String(x)) : [];
+              if (usersIds.length === 0) continue;
+
+              const duree =
+                Number(v?.duree) ||
+                Number(v?.dureeMinutes) ||
+                Number(v?.duration) ||
+                Number(intervention?.duree) ||
+                Number(intervention?.duration) ||
+                60;
+
+              slotsFromVisites.push({
+                date: dateStr,
+                duree,
+                usersIds,
+                interventionId,
+                projectId,
+                type: v?.type || intervention?.type,
+                type2: v?.type2 || intervention?.type2 || intervention?.data?.type2,
+              });
+            }
+          } else {
+            // Fallback: intervention sans visites (rare) -> utiliser date + userId
+            const dateStr = intervention?.date || intervention?.dateIntervention || '';
+            const ts = dateStr ? new Date(dateStr).getTime() : NaN;
+            if (!dateStr || isNaN(ts) || ts < startTs || ts > endTs) continue;
+
+            const uid = intervention?.userId != null ? String(intervention.userId) : undefined;
+            if (!uid) continue;
+
+            const duree = Number(intervention?.duree) || Number(intervention?.duration) || 60;
+            slotsFromVisites.push({
+              date: dateStr,
+              duree,
+              usersIds: [uid],
+              interventionId,
+              projectId,
+              type: intervention?.type,
+              type2: intervention?.type2 || intervention?.data?.type2,
+            });
+          }
+        }
+
+        // 2) SOURCE SECONDAIRE: getInterventionsCreneaux (si aucune visite exploitable)
+        const slotsFromCreneaux: Slot[] = (creneaux || [])
+          .map((c: any) => {
+            const dateStr = c?.date || '';
+            const ts = dateStr ? new Date(dateStr).getTime() : NaN;
+            if (!dateStr || isNaN(ts) || ts < startTs || ts > endTs) return null;
+
+            const usersRaw = c?.usersIds || [];
+            const usersIds = Array.isArray(usersRaw) ? usersRaw.map((x: any) => String(x)) : [];
+            if (usersIds.length === 0) return null;
+
+            const interventionId = c?.interventionId != null ? String(c.interventionId) : undefined;
+            const intervention = interventionId ? interventionsById.get(interventionId) : undefined;
+
+            return {
+              date: dateStr,
+              duree: Number(c?.duree) || 60,
+              usersIds,
+              interventionId,
+              projectId: intervention?.projectId != null ? String(intervention.projectId) : undefined,
+              type: intervention?.type,
+              type2: intervention?.type2 || intervention?.data?.type2,
+            } as Slot;
+          })
+          .filter((x: Slot | null): x is Slot => x !== null);
+
+        const slots: Slot[] = slotsFromVisites.length > 0 ? slotsFromVisites : slotsFromCreneaux;
 
         // Agréger par technicien
         const techStats = new Map<string, {
           timeTotal: number;
           timeProductive: number;
           timeNonProductive: number;
-          interventionsCount: number;
-          savCount: number;
+          interventionsSet: Set<string>;
+          savInterventionsSet: Set<string>;
           caGenerated: number;
-          dossiersSet: Set<number>;
+          dossiersSet: Set<string>;
         }>();
 
-        for (const intervention of filteredInterventions) {
-          // Récupérer les techniciens impliqués
-          const techIds: string[] = [];
-          
-          if (intervention.userId) {
-            techIds.push(String(intervention.userId));
-          }
-          
-          const visites = intervention.visites || [];
-          for (const v of visites) {
-            const userIds = v.usersIds || v.userIds || [];
-            for (const uid of userIds) {
-              if (!techIds.includes(String(uid))) {
-                techIds.push(String(uid));
-              }
-            }
-          }
+        for (const slot of slots) {
+          const interventionId = slot.interventionId;
+          const intervention = interventionId ? interventionsById.get(interventionId) : undefined;
 
-          if (techIds.length === 0) continue;
+          const techIds = slot.usersIds;
+          if (!techIds || techIds.length === 0) continue;
 
-          const duration = estimateDuration(intervention);
-          const isProductive = isProductiveIntervention(intervention.type, intervention.type2);
-          const project = projectsById.get(intervention.projectId);
+          const duration = Number(slot.duree) || estimateDuration(intervention);
+          if (!duration || duration <= 0) continue;
+
+          const isProductive = isProductiveIntervention(slot.type, slot.type2);
+          const projectId = slot.projectId || (intervention?.projectId != null ? String(intervention.projectId) : undefined);
+          const project = projectId ? projectsById.get(String(projectId)) : undefined;
           const isSav = isSavIntervention(intervention, project);
-
-          // Répartir le temps entre techniciens
-          const durationPerTech = duration / techIds.length;
 
           for (const techId of techIds) {
             if (!techsById.has(techId)) continue; // Ignorer non-techniciens
-            
+
             if (!techStats.has(techId)) {
               techStats.set(techId, {
                 timeTotal: 0,
                 timeProductive: 0,
                 timeNonProductive: 0,
-                interventionsCount: 0,
-                savCount: 0,
+                interventionsSet: new Set(),
+                savInterventionsSet: new Set(),
                 caGenerated: 0,
                 dossiersSet: new Set(),
               });
             }
 
             const stats = techStats.get(techId)!;
-            stats.timeTotal += durationPerTech;
-            stats.interventionsCount += 1;
-            
-            if (isProductive) {
-              stats.timeProductive += durationPerTech;
-            } else {
-              stats.timeNonProductive += durationPerTech;
-            }
-            
-            if (isSav) {
-              stats.savCount += 1;
-            }
-            
-            if (intervention.projectId) {
-              stats.dossiersSet.add(intervention.projectId);
-            }
+            // IMPORTANT: un créneau correspond à du temps planifié pour CHAQUE technicien (pas de division)
+            stats.timeTotal += duration;
+            if (isProductive) stats.timeProductive += duration;
+            else stats.timeNonProductive += duration;
+
+            if (interventionId) stats.interventionsSet.add(interventionId);
+            if (isSav && interventionId) stats.savInterventionsSet.add(interventionId);
+            if (projectId) stats.dossiersSet.add(String(projectId));
           }
         }
 
@@ -286,8 +373,12 @@ export function usePerformanceTerrain(dateRange: DateRange) {
           const user = techsById.get(techId);
           if (!user) continue;
 
-          const name = `${user.firstname || ''} ${user.lastname || ''}`.trim() || `Tech ${techId}`;
-          const capacityMinutes = 420; // 7h par défaut, pourrait venir de technician_capacity_config
+          const name = `${user.firstname || ''} ${user.lastname || user.name || ''}`.trim() || `Tech ${techId}`;
+
+          // Capacité = 7h/jour * nb jours du range (approx, sans gestion des congés/feriés)
+          const dayMs = 24 * 60 * 60 * 1000;
+          const days = Math.max(1, Math.ceil((dateRange.end.getTime() - dateRange.start.getTime() + 1) / dayMs));
+          const capacityMinutes = 420 * days;
           
           const productivityRate = stats.timeTotal > 0 
             ? stats.timeProductive / stats.timeTotal 
@@ -297,9 +388,9 @@ export function usePerformanceTerrain(dateRange: DateRange) {
             ? stats.timeTotal / capacityMinutes 
             : 0;
           
-          const savRate = stats.interventionsCount > 0 
-            ? stats.savCount / stats.interventionsCount 
-            : 0;
+          const savCount = stats.savInterventionsSet.size;
+          const interventionsCount = stats.interventionsSet.size;
+          const savRate = interventionsCount > 0 ? savCount / interventionsCount : 0;
 
           const perf: TechnicianPerformance = {
             id: techId,
@@ -313,8 +404,8 @@ export function usePerformanceTerrain(dateRange: DateRange) {
             productivityRate,
             productivityZone: getProductivityZone(productivityRate),
             
-            interventionsCount: stats.interventionsCount,
-            savCount: stats.savCount,
+            interventionsCount: stats.interventionsSet.size,
+            savCount,
             savRate,
             savZone: getSavZone(savRate),
             
@@ -329,8 +420,8 @@ export function usePerformanceTerrain(dateRange: DateRange) {
           technicians.push(perf);
           totalProductivity += productivityRate;
           totalLoad += loadRatio;
-          totalSav += stats.savCount;
-          totalInterventions += stats.interventionsCount;
+          totalSav += savCount;
+          totalInterventions += interventionsCount;
           totalCA += stats.caGenerated;
         }
 
