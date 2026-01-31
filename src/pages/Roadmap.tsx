@@ -1,25 +1,16 @@
-import { ArrowLeft, Rocket, Users, Building2, Sparkles, CheckCircle2, FileText, CreditCard } from 'lucide-react';
+import { ArrowLeft, Rocket, Users, Building2, Sparkles, CheckCircle2, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 const ROADMAP_ITEMS = [
   {
-    date: '01/26',
+    date: '02/26',
     title: 'Stabilisation & V1',
     description: 'Sortie de la version 1.0 stable',
     icon: Rocket,
     color: 'bg-green-500',
     borderColor: 'border-green-500',
     textColor: 'text-green-600',
-  },
-  {
-    date: '02/26',
-    title: 'Paiement Franchises',
-    description: 'Gestion des paiements en ligne via lien de suivi',
-    icon: CreditCard,
-    color: 'bg-pink-500',
-    borderColor: 'border-pink-500',
-    textColor: 'text-pink-600',
   },
   {
     date: '03/26',
