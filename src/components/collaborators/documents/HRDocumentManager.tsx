@@ -563,22 +563,24 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
         getSignedUrl={getSignedUrl}
       />
 
-      {/* Upload Dialog */}
+      {/* Upload Dialog - Theme Salariés (Vert) */}
       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-        <DialogContent className="sm:max-w-md bg-gradient-to-br from-card to-muted/10 border-border/30">
+        <DialogContent className="sm:max-w-lg border-2 border-[hsl(145,60%,55%)]/30 bg-gradient-to-br from-card via-card to-[hsl(145,60%,55%)]/5">
           <DialogHeader>
-            <DialogTitle className="text-warm-green">
+            <DialogTitle className="text-[hsl(145,60%,55%)] text-lg">
               Ajouter un document {pendingUploads.length > 1 && `(${currentUploadIndex + 1}/${pendingUploads.length})`}
             </DialogTitle>
           </DialogHeader>
 
           {currentUpload && (
-            <div className="space-y-4 py-4">
+            <div className="space-y-5 py-2">
               {/* File info */}
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-warm-green/5 border border-warm-green/20">
-                <Upload className="h-5 w-5 text-warm-green" />
+              <div className="flex items-center gap-3 p-3 rounded-2xl bg-[hsl(145,60%,55%)]/10 border border-[hsl(145,60%,55%)]/30">
+                <div className="p-2 rounded-xl bg-[hsl(145,60%,55%)]/20">
+                  <Upload className="h-5 w-5 text-[hsl(145,60%,55%)]" />
+                </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium truncate">{currentUpload.file.name}</p>
+                  <p className="font-medium truncate text-foreground">{currentUpload.file.name}</p>
                   <p className="text-xs text-muted-foreground">
                     {(currentUpload.file.size / 1024 / 1024).toFixed(2)} MB
                   </p>
@@ -587,11 +589,12 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
 
               {/* Title */}
               <div className="space-y-2">
-                <Label>Titre</Label>
+                <Label className="text-sm font-medium">Titre</Label>
                 <Input
                   value={currentUpload.title}
                   onChange={(e) => updatePendingUpload('title', e.target.value)}
                   placeholder="Titre du document"
+                  className="rounded-xl border-border/50 focus:border-[hsl(145,60%,55%)] focus:ring-[hsl(145,60%,55%)]/20"
                 />
               </div>
 
@@ -627,14 +630,14 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
             </div>
           )}
 
-          <DialogFooter className="flex flex-row justify-end gap-2 pt-4">
-            <Button variant="outline" onClick={() => setShowUploadDialog(false)} className="rounded-xl">
+          <DialogFooter className="flex flex-row justify-end gap-2 pt-4 border-t border-border/30 mt-2">
+            <Button variant="outline" onClick={() => setShowUploadDialog(false)} className="rounded-xl border-border/50">
               Annuler
             </Button>
             {pendingUploads.length > 1 && (
               <Button
                 variant="secondary"
-                className="rounded-xl bg-warm-purple/10 text-warm-purple hover:bg-warm-purple/20"
+                className="rounded-xl bg-[hsl(270,60%,65%)]/15 text-[hsl(270,60%,65%)] hover:bg-[hsl(270,60%,65%)]/25 border border-[hsl(270,60%,65%)]/30"
                 onClick={async () => {
                   if (!currentUpload) return;
                   // Apply current settings to all and upload all
@@ -671,7 +674,7 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
             <Button
               onClick={handleConfirmUpload}
               disabled={uploadDocument.isPending || !currentUpload?.title.trim()}
-              className="rounded-xl bg-warm-green hover:bg-warm-green/90"
+              className="rounded-xl bg-[hsl(145,60%,55%)] hover:bg-[hsl(145,60%,50%)] text-white shadow-md"
             >
               {uploadDocument.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {currentUploadIndex < pendingUploads.length - 1 ? 'Suivant' : 'Enregistrer'}

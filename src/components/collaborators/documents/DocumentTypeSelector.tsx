@@ -90,6 +90,11 @@ export function DocumentTypeSelector({
     return selectedSubfolder === option.folder;
   };
 
+  // Couleurs thème Salariés (vert)
+  const greenHsl = 'hsl(145, 60%, 55%)';
+  const purpleHsl = 'hsl(270, 60%, 65%)';
+  const orangeHsl = 'hsl(35, 90%, 60%)';
+  
   return (
     <div className="space-y-3">
       <Label className="text-sm font-medium text-foreground">Type / Dossier de destination</Label>
@@ -101,27 +106,35 @@ export function DocumentTypeSelector({
             type="button"
             onClick={() => handleSelectOption(option)}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all border',
+              'flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-medium transition-all border-2',
               isSelected(option) 
-                ? 'bg-warm-green text-white border-warm-green shadow-warm ring-2 ring-warm-green/30'
-                : 'bg-card/50 hover:bg-muted/50 text-muted-foreground hover:text-foreground border-border/30'
+                ? 'text-white shadow-md ring-2'
+                : 'bg-card hover:bg-muted/50 text-muted-foreground hover:text-foreground border-border/40'
             )}
+            style={isSelected(option) ? {
+              backgroundColor: greenHsl,
+              borderColor: greenHsl,
+              boxShadow: `0 0 0 3px ${greenHsl}30`,
+            } : undefined}
           >
             {option.isType ? (
-              <Badge 
-                variant="secondary" 
-                className={cn(
-                  "h-4 px-1 text-[10px] rounded-md",
-                  isSelected(option) ? 'bg-white/20 text-white' : 'bg-warm-green/10 text-warm-green'
-                )}
+              <span 
+                className="h-5 px-1.5 text-[10px] font-bold rounded-lg flex items-center"
+                style={{
+                  backgroundColor: isSelected(option) ? 'rgba(255,255,255,0.25)' : `${greenHsl}15`,
+                  color: isSelected(option) ? 'white' : greenHsl,
+                }}
               >
                 {option.label.slice(0, 3).toUpperCase()}
-              </Badge>
+              </span>
             ) : (
-              <FolderOpen className={cn('h-3.5 w-3.5', isSelected(option) ? 'text-white' : 'text-warm-orange')} />
+              <FolderOpen 
+                className="h-4 w-4" 
+                style={{ color: isSelected(option) ? 'white' : orangeHsl }}
+              />
             )}
             <span>{option.label}</span>
-            {isSelected(option) && <Check className="h-3 w-3 ml-1" />}
+            {isSelected(option) && <Check className="h-3.5 w-3.5 ml-1" />}
           </button>
         ))}
 
@@ -130,9 +143,13 @@ export function DocumentTypeSelector({
           <button
             type="button"
             onClick={() => setShowNewFolderInput(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all border border-dashed border-warm-purple/50 text-warm-purple hover:bg-warm-purple/10 hover:border-warm-purple"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-medium transition-all border-2 border-dashed"
+            style={{
+              borderColor: `${purpleHsl}50`,
+              color: purpleHsl,
+            }}
           >
-            <FolderPlus className="h-3.5 w-3.5" />
+            <FolderPlus className="h-4 w-4" />
             <span>Créer dossier</span>
           </button>
         ) : (
@@ -141,7 +158,10 @@ export function DocumentTypeSelector({
               value={newFolderName}
               onChange={(e) => setNewFolderName(e.target.value)}
               placeholder="Nom du dossier..."
-              className="h-8 w-32 text-xs rounded-lg border-warm-purple/30 focus:border-warm-purple focus:ring-warm-purple/20"
+              className="h-9 w-36 text-xs rounded-xl"
+              style={{
+                borderColor: `${purpleHsl}40`,
+              }}
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
@@ -159,9 +179,10 @@ export function DocumentTypeSelector({
               size="sm"
               onClick={handleCreateFolder}
               disabled={!newFolderName.trim()}
-              className="h-8 px-2 bg-warm-purple hover:bg-warm-purple/90 rounded-lg"
+              className="h-9 px-3 rounded-xl text-white"
+              style={{ backgroundColor: purpleHsl }}
             >
-              <Plus className="h-3.5 w-3.5" />
+              <Plus className="h-4 w-4" />
             </Button>
           </div>
         )}
@@ -169,10 +190,16 @@ export function DocumentTypeSelector({
 
       {/* Indication du dossier sélectionné */}
       {selectedSubfolder && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-warm-green/10 border border-warm-green/20">
-          <FolderOpen className="h-3.5 w-3.5 text-warm-green" />
+        <div 
+          className="flex items-center gap-2 px-3 py-2.5 rounded-xl border"
+          style={{
+            backgroundColor: `${greenHsl}10`,
+            borderColor: `${greenHsl}30`,
+          }}
+        >
+          <FolderOpen className="h-4 w-4" style={{ color: greenHsl }} />
           <span className="text-xs text-muted-foreground">
-            Sera rangé dans : <strong className="text-warm-green">{selectedSubfolder}</strong>
+            Sera rangé dans : <strong style={{ color: greenHsl }}>{selectedSubfolder}</strong>
           </span>
         </div>
       )}
