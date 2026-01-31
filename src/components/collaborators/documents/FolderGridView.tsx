@@ -55,21 +55,21 @@ function FolderCard({
       onClick={onClick}
       onDoubleClick={onClick}
       className={cn(
-        'group relative flex flex-col items-center p-4 rounded-xl border transition-all cursor-pointer',
-        'bg-gradient-to-br from-background to-muted/20',
-        'hover:border-helpconfort-blue/50 hover:shadow-md',
-        isOver && 'border-helpconfort-orange border-2 bg-helpconfort-orange/10 scale-105'
+        'group relative flex flex-col items-center p-4 rounded-2xl border transition-all cursor-pointer',
+        'bg-gradient-to-br from-card/80 to-muted/20 backdrop-blur-sm',
+        'hover:border-warm-orange/50 hover:shadow-warm',
+        isOver && 'border-warm-orange border-2 bg-warm-orange/10 scale-105'
       )}
     >
       <FolderOpen 
         className={cn(
           'h-12 w-12 mb-2 transition-colors',
-          isOver ? 'text-helpconfort-orange' : 'text-helpconfort-orange'
+          isOver ? 'text-warm-orange' : 'text-warm-orange'
         )} 
       />
       <p className="font-medium text-sm text-center truncate w-full">{folder.name}</p>
       {folder.documentCount > 0 && (
-        <Badge variant="secondary" className="mt-1 text-xs">
+        <Badge variant="secondary" className="mt-1 text-xs rounded-full bg-warm-orange/10 text-warm-orange">
           {folder.documentCount} doc{folder.documentCount > 1 ? 's' : ''}
         </Badge>
       )}

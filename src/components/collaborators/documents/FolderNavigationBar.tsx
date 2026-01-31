@@ -37,41 +37,41 @@ export function FolderNavigationBar({
   const categoryLabel = DOCUMENT_TYPES.find((t) => t.value === activeCategory)?.label || activeCategory;
 
   return (
-    <div className="flex items-center justify-between gap-4 py-2 px-3 rounded-lg bg-muted/30 border">
-      <div className="flex items-center gap-1.5 text-sm min-w-0 flex-1 overflow-hidden">
+    <div className="flex items-center justify-between gap-4 py-2 px-4 rounded-xl bg-gradient-to-r from-muted/30 to-muted/10 border border-border/30 backdrop-blur-sm">
+      <div className="flex items-center gap-2 text-sm min-w-0 flex-1 overflow-hidden">
         {/* Home button */}
         <button
           onClick={onNavigateToRoot}
-          className="p-1 rounded hover:bg-muted transition-colors flex-shrink-0"
+          className="p-1.5 rounded-lg hover:bg-warm-green/10 transition-colors flex-shrink-0 group"
           title="Tous les documents"
         >
-          <Home className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+          <Home className="h-4 w-4 text-muted-foreground group-hover:text-warm-green" />
         </button>
         
-        <span className="text-muted-foreground flex-shrink-0">-</span>
+        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 flex-shrink-0" />
         
         {/* Category */}
         <button
           onClick={onNavigateToCategory}
-          className={`truncate transition-colors whitespace-nowrap ${
+          className={`truncate transition-colors whitespace-nowrap px-2 py-1 rounded-lg ${
             folderPath.length === 0 
-              ? 'font-semibold text-foreground' 
-              : 'text-muted-foreground hover:text-foreground'
+              ? 'font-semibold text-warm-green bg-warm-green/10' 
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
           }`}
         >
           {categoryLabel}
         </button>
         
-        {/* Folder path with dashes */}
+        {/* Folder path with chevrons */}
         {folderPath.map((folder, index) => (
-          <div key={folder.id || `root-${index}`} className="flex items-center gap-1.5 flex-shrink-0">
-            <span className="text-muted-foreground">-</span>
+          <div key={folder.id || `root-${index}`} className="flex items-center gap-2 flex-shrink-0">
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
             <button
               onClick={() => onNavigateToFolder(folder.id)}
-              className={`truncate transition-colors whitespace-nowrap ${
+              className={`truncate transition-colors whitespace-nowrap px-2 py-1 rounded-lg ${
                 index === folderPath.length - 1
-                  ? 'font-semibold text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'font-semibold text-warm-green bg-warm-green/10'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
               }`}
             >
               {folder.name}
@@ -85,12 +85,22 @@ export function FolderNavigationBar({
         type="single" 
         value={viewMode} 
         onValueChange={(val) => val && onViewModeChange(val as 'grid' | 'list')}
-        className="flex-shrink-0"
+        className="flex-shrink-0 bg-muted/30 rounded-lg p-0.5"
       >
-        <ToggleGroupItem value="grid" aria-label="Vue grille" size="sm">
+        <ToggleGroupItem 
+          value="grid" 
+          aria-label="Vue grille" 
+          size="sm"
+          className="data-[state=on]:bg-warm-green data-[state=on]:text-white rounded-md"
+        >
           <LayoutGrid className="h-4 w-4" />
         </ToggleGroupItem>
-        <ToggleGroupItem value="list" aria-label="Vue liste" size="sm">
+        <ToggleGroupItem 
+          value="list" 
+          aria-label="Vue liste" 
+          size="sm"
+          className="data-[state=on]:bg-warm-green data-[state=on]:text-white rounded-md"
+        >
           <List className="h-4 w-4" />
         </ToggleGroupItem>
       </ToggleGroup>
