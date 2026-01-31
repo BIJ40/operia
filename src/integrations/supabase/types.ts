@@ -8081,6 +8081,10 @@ export type Database = {
           collaborator_id: string
         }[]
       }
+      get_collaborator_media_path: {
+        Args: { p_collaborator_id: string; p_subfolder?: string }
+        Returns: string
+      }
       get_collaborator_sensitive_data: {
         Args: { p_collaborator_id: string }
         Returns: {
