@@ -143,7 +143,6 @@ export function MediaToolbar({
           <DropdownMenuContent align="end">
             <DropdownMenuItem 
               onClick={() => setNewFolderDialogOpen(true)}
-              disabled={!currentFolderId}
             >
               <FolderPlus className="w-4 h-4 mr-2" />
               Nouveau dossier

@@ -24,6 +24,8 @@ const ICON_MAP: Record<string, React.ElementType> = {
   'file-text': FileText,
   building: Building2,
   folder: FolderOpen,
+  calendar: FolderOpen,       // Placeholder pour réunions
+  'layout-template': FileText, // Placeholder pour modèles
 };
 
 export function MediaSidebar({ currentFolderId, onNavigate }: MediaSidebarProps) {
