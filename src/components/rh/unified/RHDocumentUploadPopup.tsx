@@ -1,13 +1,12 @@
 /**
  * Popup d'upload de documents associés à un champ RH
- * Permet d'ajouter des PDFs/images avec type et visibilité
+ * Utilise la médiathèque centralisée (media_assets + media_links)
  */
 
 import { useState, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileUp, AlertCircle, X, FileText, Image } from 'lucide-react';
@@ -19,29 +18,7 @@ import {
   MAX_FILE_SIZE_BYTES,
   MAX_FILE_SIZE_MB 
 } from '@/utils/fileValidation';
-import { useCollaboratorDocuments } from '@/hooks/useCollaboratorDocuments';
-import { DocumentType, DOCUMENT_TYPES } from '@/types/collaboratorDocument';
-
-// Types de documents associables aux champs RH
-export const FIELD_DOCUMENT_TYPES: Record<string, { docType: DocumentType; label: string }> = {
-  // Parc & Matériel
-  vehicule: { docType: 'OTHER', label: 'Document véhicule' },
-  carte_carburant: { docType: 'OTHER', label: 'Carte carburant' },
-  carte_bancaire: { docType: 'OTHER', label: 'Carte bancaire' },
-  carte_autre: { docType: 'OTHER', label: 'Carte autre' },
-  // Compétences
-  habilitation_electrique: { docType: 'ATTESTATION', label: 'Habilitation électrique' },
-  caces: { docType: 'ATTESTATION', label: 'CACES' },
-  // Sécurité
-  epi: { docType: 'OTHER', label: 'Document EPI' },
-  visite_medicale: { docType: 'MEDICAL_VISIT', label: 'Visite médicale' },
-  // Contrats
-  contrat: { docType: 'CONTRACT', label: 'Contrat de travail' },
-  avenant: { docType: 'AVENANT', label: 'Avenant' },
-  // Autres
-  permis: { docType: 'OTHER', label: 'Permis de conduire' },
-  cni: { docType: 'OTHER', label: 'Carte d\'identité' },
-};
+import { useScopedMediaLibrary } from '@/hooks/useScopedMediaLibrary';
 
 interface RHDocumentUploadPopupProps {
   open: boolean;
@@ -72,9 +49,9 @@ export function RHDocumentUploadPopup({
   const [files, setFiles] = useState<FileToUpload[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   
-  const { uploadDocument } = useCollaboratorDocuments(collaboratorId);
-  
-  const fieldConfig = FIELD_DOCUMENT_TYPES[fieldKey] || { docType: 'OTHER' as DocumentType, label: fieldLabel };
+  // Use media library for uploads - path is relative to collaborator folder
+  const rootPath = `salaries/salarie-${collaboratorId}`;
+  const { uploadFile, currentFolderId } = useScopedMediaLibrary({ rootPath });
 
   const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: { file: File; errors: { code: string; message: string }[] }[]) => {
     // Show errors for rejected files
@@ -128,22 +105,16 @@ export function RHDocumentUploadPopup({
     setIsUploading(true);
     try {
       for (const fileData of files) {
-        await uploadDocument.mutateAsync({
-          collaborator_id: collaboratorId,
-          doc_type: fieldConfig.docType,
-          title: fileData.title,
-          description: `Document associé: ${fieldLabel}`,
-          visibility: 'ADMIN_ONLY',
-          subfolder: subfolder !== undefined ? subfolder : fieldKey,
-          file: fileData.file,
-        });
+        // Upload to media library in current folder
+        await uploadFile.mutateAsync({ file: fileData.file, folderId: currentFolderId || undefined });
       }
       
       setFiles([]);
       onOpenChange(false);
       onSuccess?.();
+      toast.success(`${files.length} document(s) ajouté(s)`);
     } catch (error) {
-      // Error handled by mutation
+      toast.error('Erreur lors de l\'upload');
     } finally {
       setIsUploading(false);
     }

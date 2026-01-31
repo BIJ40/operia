@@ -1,7 +1,6 @@
 /**
  * Section Documents (Cockpit) - Tuile en consultation.
- * Objectif: la tuile reste "figée" et ouvre une fenêtre flottante centrée
- * pour gérer les documents (suppression, dossiers imbriqués, drag & drop).
+ * Utilise MediaLibraryPortal pour la gestion des documents.
  */
 
 import React, { useMemo } from 'react';
@@ -15,41 +14,68 @@ import { FolderOpen, Maximize2, FileText, Image as ImageIcon } from 'lucide-reac
 import { cn } from '@/lib/utils';
 import { useHasMinLevel } from '@/hooks/useHasGlobalRole';
 import { HRDocumentManager } from '@/components/collaborators/documents';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Props {
   collaborator: RHCollaborator;
 }
 
-interface CollaboratorDocument {
+interface MediaLinkPreview {
   id: string;
-  title: string;
-  doc_type: string;
   file_name: string;
-  file_path: string;
   file_type: string | null;
   file_size: number | null;
   created_at: string;
-  period_year: number | null;
-  period_month: number | null;
-  subfolder: string | null;
 }
 
 export function RHSectionDocuments({ collaborator }: Props) {
   const [openManager, setOpenManager] = React.useState(false);
   const canManage = useHasMinLevel(2);
+  const { agencyId } = useAuth();
 
+  // Query documents from media_links (unified media library)
   const { data: documents = [], isLoading } = useQuery({
-    queryKey: ['collaborator-documents', collaborator.id],
-    queryFn: async (): Promise<CollaboratorDocument[]> => {
-      const { data, error } = await supabase
-        .from('collaborator_documents')
-        .select('*')
-        .eq('collaborator_id', collaborator.id)
-        .order('created_at', { ascending: false });
+    queryKey: ['media-links-preview', collaborator.id, agencyId],
+    queryFn: async (): Promise<MediaLinkPreview[]> => {
+      if (!agencyId) return [];
       
+      // Get the collaborator's folder
+      const { data: folder } = await supabase
+        .from('media_folders')
+        .select('id')
+        .eq('agency_id', agencyId)
+        .eq('slug', `salarie-${collaborator.id}`)
+        .maybeSingle();
+
+      if (!folder) return [];
+
+      // Get files from this folder and subfolders
+      const { data, error } = await supabase
+        .from('media_links')
+        .select(`
+          id,
+          created_at,
+          asset:media_assets!inner(
+            file_name,
+            file_type,
+            file_size
+          )
+        `)
+        .eq('agency_id', agencyId)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
       if (error) throw error;
-      return data || [];
+      
+      return (data || []).map((link: any) => ({
+        id: link.id,
+        file_name: link.asset?.file_name || 'Document',
+        file_type: link.asset?.file_type || null,
+        file_size: link.asset?.file_size || null,
+        created_at: link.created_at,
+      }));
     },
+    enabled: !!agencyId,
   });
 
   const previewDocs = useMemo(() => documents.slice(0, 1), [documents]);
@@ -133,7 +159,7 @@ export function RHSectionDocuments({ collaborator }: Props) {
                       </div>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">{doc.title}</p>
+                      <p className="text-sm font-medium truncate">{doc.file_name}</p>
                       <p className="text-xs text-muted-foreground">
                         {new Date(doc.created_at).toLocaleDateString('fr-FR')} {doc.file_size ? `• ${formatFileSize(doc.file_size)}` : ''}
                       </p>

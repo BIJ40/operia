@@ -1,3 +1,8 @@
+/**
+ * RHDocumentCell - Cellule pour upload/preview de documents obligatoires
+ * Utilise maintenant la médiathèque centralisée (media_assets + media_links)
+ */
+
 import React, { useState } from 'react';
 import { FileText, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -28,33 +33,98 @@ export function RHDocumentCell({ collaboratorId, agencyId, docType, className }:
   const [isUploading, setIsUploading] = useState(false);
   const queryClient = useQueryClient();
 
-  // Query existing document
+  // Query existing document from media_links
   const { data: existingDoc, isLoading } = useQuery({
-    queryKey: ['rh-document', collaboratorId, docType],
+    queryKey: ['rh-media-document', collaboratorId, docType, agencyId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('collaborator_documents')
-        .select('id, file_path, file_name, title')
-        .eq('collaborator_id', collaboratorId)
-        .eq('doc_type', docType)
+      // Find folder for this docType under the collaborator's folder
+      const { data: folder } = await supabase
+        .from('media_folders')
+        .select('id')
+        .eq('agency_id', agencyId)
+        .eq('slug', docType)
+        .maybeSingle();
+
+      if (!folder) return null;
+
+      // Get the latest file in this folder
+      const { data: link, error } = await supabase
+        .from('media_links')
+        .select(`
+          id,
+          asset:media_assets!inner(
+            id,
+            file_name,
+            file_path
+          )
+        `)
+        .eq('folder_id', folder.id)
+        .eq('agency_id', agencyId)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
-      
+
       if (error) throw error;
-      return data;
+      if (!link) return null;
+
+      return {
+        id: link.id,
+        file_path: (link.asset as any)?.file_path || '',
+        file_name: (link.asset as any)?.file_name || 'Document',
+      };
     },
+    enabled: !!agencyId,
   });
 
-  // Upload mutation
+  // Upload mutation using media library
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
       setIsUploading(true);
-      
-      // Upload file to storage
+
+      // 1. Ensure folder exists for this docType
+      const folderSlug = docType;
+      let folderId: string;
+
+      // Find or create the docType folder under collaborator's folder
+      const { data: existingFolder } = await supabase
+        .from('media_folders')
+        .select('id')
+        .eq('agency_id', agencyId)
+        .eq('slug', folderSlug)
+        .maybeSingle();
+
+      if (existingFolder) {
+        folderId = existingFolder.id;
+      } else {
+        // Get parent folder (salarie-xxx)
+        const { data: parentFolder } = await supabase
+          .from('media_folders')
+          .select('id')
+          .eq('agency_id', agencyId)
+          .eq('slug', `salarie-${collaboratorId}`)
+          .maybeSingle();
+
+        // Create folder
+        const { data: newFolder, error: folderError } = await supabase
+          .from('media_folders')
+          .insert({
+            agency_id: agencyId,
+            parent_id: parentFolder?.id || null,
+            name: DOC_TYPE_LABELS[docType],
+            slug: folderSlug,
+            access_scope: 'rh',
+          })
+          .select('id')
+          .single();
+
+        if (folderError) throw folderError;
+        folderId = newFolder.id;
+      }
+
+      // 2. Upload file to storage
       const fileExt = file.name.split('.').pop();
       const fileName = `${docType}_${Date.now()}.${fileExt}`;
-      const filePath = `${agencyId}/${collaboratorId}/${fileName}`;
+      const filePath = `media/${agencyId}/${folderId}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('rh-documents')
@@ -62,31 +132,41 @@ export function RHDocumentCell({ collaboratorId, agencyId, docType, className }:
 
       if (uploadError) throw uploadError;
 
-      // Create document record
+      // 3. Create media_asset
       const { data: { user } } = await supabase.auth.getUser();
-      
-      const { error: insertError } = await supabase
-        .from('collaborator_documents')
+
+      const { data: asset, error: assetError } = await supabase
+        .from('media_assets')
         .insert({
-          collaborator_id: collaboratorId,
           agency_id: agencyId,
-          doc_type: docType,
-          title: DOC_TYPE_LABELS[docType],
+          storage_bucket: 'rh-documents',
+          storage_path: filePath,
           file_name: file.name,
-          file_path: filePath,
           file_size: file.size,
-          file_type: file.type,
-          uploaded_by: user?.id,
-          visibility: 'rh_only',
-          employee_visible: false,
+          mime_type: file.type,
+          created_by: user?.id,
+        })
+        .select('id')
+        .single();
+
+      if (assetError) throw assetError;
+
+      // 4. Create media_link
+      const { error: linkError } = await supabase
+        .from('media_links')
+        .insert({
+          agency_id: agencyId,
+          asset_id: asset.id,
+          folder_id: folderId,
+          display_name: DOC_TYPE_LABELS[docType],
         });
 
-      if (insertError) throw insertError;
+      if (linkError) throw linkError;
     },
     onSuccess: () => {
       toast.success('Document uploadé avec succès');
-      queryClient.invalidateQueries({ queryKey: ['rh-document', collaboratorId, docType] });
-      queryClient.invalidateQueries({ queryKey: ['collaborator-documents', collaboratorId] });
+      queryClient.invalidateQueries({ queryKey: ['rh-media-document', collaboratorId, docType] });
+      queryClient.invalidateQueries({ queryKey: ['media-links-preview', collaboratorId] });
       queryClient.invalidateQueries({ queryKey: ['rh-documents-check', collaboratorId] });
       setIsUploadOpen(false);
     },
@@ -111,7 +191,6 @@ export function RHDocumentCell({ collaboratorId, agencyId, docType, className }:
     maxFiles: 1,
     disabled: isUploading,
   });
-
 
   if (isLoading) {
     return <div className={cn("h-7 w-7 animate-pulse bg-muted rounded", className)} />;
@@ -139,7 +218,7 @@ export function RHDocumentCell({ collaboratorId, agencyId, docType, className }:
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-        
+
         <RHDocumentPreviewPopup
           open={isPreviewOpen}
           onOpenChange={setIsPreviewOpen}
@@ -151,7 +230,7 @@ export function RHDocumentCell({ collaboratorId, agencyId, docType, className }:
             setIsUploadOpen(true);
           }}
         />
-        
+
         {/* Upload dialog for replacement */}
         <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
           <DialogContent className="sm:max-w-md">
