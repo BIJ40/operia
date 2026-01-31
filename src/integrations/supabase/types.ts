@@ -6984,6 +6984,112 @@ export type Database = {
         }
         Relationships: []
       }
+      technician_capacity_config: {
+        Row: {
+          agency_id: string
+          created_at: string
+          effective_from: string
+          effective_to: string | null
+          hours_per_week: number
+          id: string
+          technician_id: string
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          effective_from?: string
+          effective_to?: string | null
+          hours_per_week?: number
+          id?: string
+          technician_id: string
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          effective_from?: string
+          effective_to?: string | null
+          hours_per_week?: number
+          id?: string
+          technician_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technician_capacity_config_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      technician_performance_daily: {
+        Row: {
+          agency_id: string
+          ca_generated_ht: number
+          capacity_minutes: number | null
+          computed_at: string
+          created_at: string
+          date: string
+          dossiers_closed: number
+          id: string
+          interventions_count: number
+          sav_count: number
+          source_data: Json | null
+          technician_id: string
+          technician_name: string | null
+          time_non_productive_minutes: number
+          time_productive_minutes: number
+          time_total_minutes: number
+        }
+        Insert: {
+          agency_id: string
+          ca_generated_ht?: number
+          capacity_minutes?: number | null
+          computed_at?: string
+          created_at?: string
+          date: string
+          dossiers_closed?: number
+          id?: string
+          interventions_count?: number
+          sav_count?: number
+          source_data?: Json | null
+          technician_id: string
+          technician_name?: string | null
+          time_non_productive_minutes?: number
+          time_productive_minutes?: number
+          time_total_minutes?: number
+        }
+        Update: {
+          agency_id?: string
+          ca_generated_ht?: number
+          capacity_minutes?: number | null
+          computed_at?: string
+          created_at?: string
+          date?: string
+          dossiers_closed?: number
+          id?: string
+          interventions_count?: number
+          sav_count?: number
+          source_data?: Json | null
+          technician_id?: string
+          technician_name?: string | null
+          time_non_productive_minutes?: number
+          time_productive_minutes?: number
+          time_total_minutes?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technician_performance_daily_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_duplicate_suggestions: {
         Row: {
           created_at: string
@@ -7980,6 +8086,10 @@ export type Database = {
       get_my_apporteur_agency_id: { Args: never; Returns: string }
       get_my_apporteur_id: { Args: never; Returns: string }
       get_my_apporteur_user_id: { Args: never; Returns: string }
+      get_technician_capacity: {
+        Args: { p_agency_id: string; p_date?: string; p_technician_id: string }
+        Returns: number
+      }
       get_unread_notifications_count: {
         Args: { p_user_id?: string }
         Returns: number
