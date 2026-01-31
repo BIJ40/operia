@@ -140,6 +140,7 @@ divers_documents: {
 4. ✅ **Jour 5-6** : Composants Finder (Manager, Sidebar, Grid, ContextMenu, QuickLook, Toolbar, Breadcrumb)
 5. ✅ **Jour 7** : Intégration onglet Documents dans UnifiedWorkspace + Storage bucket
 6. ✅ **Jour 8** : Tests E2E + Trigger sync collaborator_documents → media
+7. ✅ **Jour 9** : Finalisation UI (ContextMenuPopover, Sidebar navigation, polish)
 
 ---
 
@@ -155,3 +156,15 @@ divers_documents: {
 ✅ MediaQuickLook avec navigation clavier (←→, Espace, Échap)
 ✅ MediaContextMenu avec protection dossiers système
 ✅ Garbage collector avec dry-run et retention configurable
+✅ MediaContextMenuPopover positionné pour menu contextuel
+✅ MediaSidebar avec arborescence dépliable et navigation dossiers réels
+
+---
+
+## Statut : PHASE 1 COMPLETE
+
+La Médiathèque Centralisée v6 est maintenant fonctionnelle avec :
+- Interface Finder complète (Sidebar, Grid, Toolbar, Breadcrumb, QuickLook, ContextMenu)
+- Edge Functions sécurisées (signed-url, garbage-collector)
+- Synchronisation automatique des documents RH
+- RLS granulaire par scope d'accès
