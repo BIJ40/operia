@@ -5,6 +5,7 @@
 
 import { useState, useMemo } from 'react';
 import { usePerformanceTerrain, TechnicianPerformance } from '@/hooks/usePerformanceTerrain';
+import { useFilters } from '@/apogee-connect/contexts/FiltersContext';
 import { TeamHeatmap } from './TeamHeatmap';
 import { TechnicianRadarChart } from './TechnicianRadarChart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,22 +17,16 @@ import {
   Clock, 
   AlertTriangle,
   TrendingUp,
-  ArrowLeft
+  ArrowLeft,
+  FileWarning
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatPercent } from '@/lib/formatters';
 
-// Période par défaut: mois en cours
-function getDefaultDateRange() {
-  const now = new Date();
-  return {
-    start: new Date(now.getFullYear(), now.getMonth(), 1),
-    end: new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59),
-  };
-}
-
 export function PerformanceDashboard() {
-  const [dateRange] = useState(getDefaultDateRange);
+  // Utiliser le contexte global de filtres
+  const { filters } = useFilters();
+  const dateRange = filters.dateRange;
   const { data, isLoading, error } = usePerformanceTerrain(dateRange);
   const [selectedTech, setSelectedTech] = useState<TechnicianPerformance | null>(null);
 
@@ -67,6 +62,24 @@ export function PerformanceDashboard() {
       <Card className="border-destructive/50">
         <CardContent className="pt-6">
           <p className="text-destructive">Erreur lors du chargement des données performance.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // État vide - aucun technicien trouvé
+  if (data.technicians.length === 0) {
+    return (
+      <Card className="border-muted">
+        <CardContent className="pt-6 text-center py-12">
+          <FileWarning className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="font-medium mb-2">Aucune donnée pour cette période</h3>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            Aucune intervention de technicien trouvée pour la période du{' '}
+            {dateRange.start.toLocaleDateString('fr-FR')} au {dateRange.end.toLocaleDateString('fr-FR')}.
+            <br />
+            Vérifiez vos filtres de période ou attendez que des interventions soient planifiées.
+          </p>
         </CardContent>
       </Card>
     );
