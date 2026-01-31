@@ -2,8 +2,6 @@
  * Types pour les demandes de documents RH - Phase 2.2
  */
 
-import type { CollaboratorDocument } from './collaboratorDocument';
-
 export type DocumentRequestType =
   | 'ATTESTATION_EMPLOYEUR'
   | 'SOLDE_CONGES'
@@ -42,10 +40,18 @@ export interface DocumentRequest {
   created_at: string;
 }
 
-export interface DocumentRequestWithUnread extends DocumentRequestWithDoc {
+// Document linked as response - now references media_assets
+export interface MediaAssetRef {
+  id: string;
+  file_name: string;
+  file_path: string;
+}
+
+export interface DocumentRequestWithUnread extends DocumentRequest {
   is_unread: boolean;
+  response_document?: MediaAssetRef | null;
 }
 
 export interface DocumentRequestWithDoc extends DocumentRequest {
-  response_document?: CollaboratorDocument | null;
+  response_document?: MediaAssetRef | null;
 }
