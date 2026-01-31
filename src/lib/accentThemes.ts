@@ -3,6 +3,7 @@ export type AccentThemeKey =
   | 'purple'
   | 'green'
   | 'orange'
+  | 'amber'
   | 'pink'
   | 'teal'
   | 'cyan'
@@ -49,6 +50,12 @@ export const ACCENT_THEMES: Record<
     solidBg: 'bg-warm-orange/80',
     text: 'text-warm-orange/90',
     dot: 'bg-warm-orange/70',
+  },
+  amber: {
+    gradient: 'from-amber-500/70 to-yellow-400/50',
+    solidBg: 'bg-amber-500/80',
+    text: 'text-amber-600',
+    dot: 'bg-amber-500/70',
   },
   pink: {
     gradient: 'from-warm-pink/70 to-warm-purple/50',

@@ -11,7 +11,7 @@ import { useSearchParams } from 'react-router-dom';
 import { 
   Home, BarChart3, ClipboardList, 
   MoreHorizontal, Ticket, HelpCircle,
-  Loader2, BookOpen, Shield, User, Building2, LogOut, Settings, Eye
+  Loader2, BookOpen, Shield, User, Building2, LogOut, Settings, Eye, FolderOpen
 } from 'lucide-react';
 import { 
   DndContext, 
@@ -74,12 +74,14 @@ const TicketingTabContent = lazy(() => import('@/components/unified/tabs/Ticketi
 const SupportTabContent = lazy(() => import('@/components/unified/tabs/SupportTabContent'));
 const AdminTabContent = lazy(() => import('@/components/unified/tabs/AdminTabContent'));
 const FranchiseurView = lazy(() => import('@/components/unified/views/FranchiseurView'));
+const DocumentsTabContent = lazy(() => import('@/components/unified/tabs/DocumentsTabContent'));
 
 type UnifiedTab = 
   | 'accueil' 
   | 'stats' 
   | 'salaries' 
   | 'outils' 
+  | 'documents'
   | 'guides'
   | 'ticketing' 
   | 'aide'
@@ -93,8 +95,8 @@ interface TabConfig {
 }
 
 // Ordre par défaut des onglets (hors Accueil qui est toujours premier)
-// Outils vient après Salariés, Parc est maintenant sous Outils
-const DEFAULT_TAB_ORDER: UnifiedTab[] = ['stats', 'salaries', 'outils', 'guides', 'ticketing', 'aide', 'admin'];
+// Documents après Outils
+const DEFAULT_TAB_ORDER: UnifiedTab[] = ['stats', 'salaries', 'outils', 'documents', 'guides', 'ticketing', 'aide', 'admin'];
 
 function LoadingFallback() {
   return (
@@ -150,12 +152,13 @@ function UnifiedWorkspaceContent() {
   
   // Configuration des onglets avec permissions
   // Chaque onglet a un requiresOption qui définit le module/option nécessaire
-  // Parc est maintenant intégré sous Outils
+  // Documents = médiathèque centralisée
   const allTabs: TabConfig[] = useMemo(() => [
     { id: 'accueil', label: 'Accueil', icon: Home },
     { id: 'stats', label: 'Stats', icon: BarChart3, requiresOption: { module: 'pilotage_agence', option: 'stats_hub' } },
     { id: 'salaries', label: 'Salariés', icon: ClipboardList, requiresOption: { module: 'pilotage_agence' } },
     { id: 'outils', label: 'Outils', icon: MoreHorizontal, requiresOption: { module: 'pilotage_agence' } },
+    { id: 'documents', label: 'Documents', icon: FolderOpen, requiresOption: { module: 'divers_documents', option: 'consulter' } },
     { id: 'guides', label: 'Guides', icon: BookOpen, requiresOption: { module: 'help_academy' } },
     { id: 'ticketing', label: 'Ticketing', icon: Ticket, requiresOption: { module: 'apogee_tickets' } },
     { id: 'aide', label: 'Aide', icon: HelpCircle, requiresOption: { module: 'support' } },
@@ -355,6 +358,7 @@ function UnifiedWorkspaceContent() {
     stats: 'pink',
     salaries: 'green',
     outils: 'purple',
+    documents: 'amber',
     guides: 'teal',
     ticketing: 'orange',
     aide: 'cyan',
@@ -518,6 +522,10 @@ function UnifiedWorkspaceContent() {
                 
                 <TabsContent value="outils" className="mt-0">
                   <DiversTabContent />
+                </TabsContent>
+                
+                <TabsContent value="documents" className="mt-0">
+                  <DocumentsTabContent />
                 </TabsContent>
                 
                 <TabsContent value="guides" className="mt-0">
