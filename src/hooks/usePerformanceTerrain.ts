@@ -1,6 +1,7 @@
 /**
  * Hook Performance Terrain - Calculs productivité techniciens
  * Utilise les règles StatIA pour classification temps productif/non-productif
+ * Capacité calculée depuis weekly_hours des contrats RH (employment_contracts)
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -8,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAgency } from '@/apogee-connect/contexts/AgencyContext';
 import { STATIA_RULES } from '@/statia/domain/rules';
 import { DataService } from '@/apogee-connect/services/dataService';
+import { supabase } from '@/integrations/supabase/client';
 import { logDebug, logError } from '@/lib/logger';
 
 // Types
@@ -35,6 +37,10 @@ export interface TechnicianPerformance {
   capacityMinutes: number;
   loadRatio: number; // 0-X
   loadZone: 'underload' | 'balanced' | 'overload';
+  
+  // Heures hebdo (depuis contrat RH)
+  weeklyHours: number;
+  weeklyHoursSource: 'contract' | 'default'; // 'contract' = RH, 'default' = 35h par défaut
   
   // CA
   caGenerated: number;
@@ -160,15 +166,17 @@ function isSavIntervention(intervention: any, project: any): boolean {
  * Hook principal Performance Terrain
  */
 export function usePerformanceTerrain(dateRange: DateRange) {
-  const { agence } = useAuth();
+  const { agence, agencyId } = useAuth();
   const { isAgencyReady, currentAgency } = useAgency();
   
   const agencySlug = currentAgency?.slug || currentAgency?.id || agence || '';
+  const effectiveAgencyId = currentAgency?.id || agencyId;
 
   return useQuery<PerformanceTerrainData | null>({
     queryKey: [
       'performance-terrain',
       agencySlug,
+      effectiveAgencyId,
       dateRange.start.toISOString(),
       dateRange.end.toISOString()
     ],
@@ -187,6 +195,55 @@ export function usePerformanceTerrain(dateRange: DateRange) {
         const projects = loaded?.projects || [];
         const users = loaded?.users || [];
         const creneaux = loaded?.creneaux || [];
+
+        // === CHARGER LES HEURES HEBDO DES COLLABORATEURS ===
+        // On récupère les collaborateurs avec leur contrat actif pour avoir weekly_hours
+        const weeklyHoursByApogeeId = new Map<string, number>();
+        
+        if (effectiveAgencyId) {
+          // Charger collaborateurs avec apogee_user_id
+          const { data: collaborators } = await supabase
+            .from('collaborators')
+            .select('id, apogee_user_id')
+            .eq('agency_id', effectiveAgencyId)
+            .not('apogee_user_id', 'is', null);
+          
+          if (collaborators && collaborators.length > 0) {
+            const collabIds = collaborators.map(c => c.id);
+            
+            // Charger contrats actifs avec weekly_hours
+            const { data: contracts } = await supabase
+              .from('employment_contracts')
+              .select('collaborator_id, weekly_hours')
+              .in('collaborator_id', collabIds)
+              .eq('is_current', true);
+            
+            if (contracts) {
+              // Mapper collaborator_id -> weekly_hours
+              const weeklyByCollabId = new Map<string, number>();
+              for (const c of contracts) {
+                if (c.weekly_hours) {
+                  weeklyByCollabId.set(c.collaborator_id, c.weekly_hours);
+                }
+              }
+              
+              // Mapper apogee_user_id -> weekly_hours
+              for (const collab of collaborators) {
+                if (collab.apogee_user_id && weeklyByCollabId.has(collab.id)) {
+                  weeklyHoursByApogeeId.set(
+                    String(collab.apogee_user_id), 
+                    weeklyByCollabId.get(collab.id)!
+                  );
+                }
+              }
+            }
+          }
+          
+          logDebug('PERF_TERRAIN', 'Heures hebdo chargées', { 
+            count: weeklyHoursByApogeeId.size,
+            sample: Array.from(weeklyHoursByApogeeId.entries()).slice(0, 3)
+          });
+        }
 
         // Index interventions par ID pour lookup des types
         const interventionsById = new Map<string, any>();
@@ -375,10 +432,16 @@ export function usePerformanceTerrain(dateRange: DateRange) {
 
           const name = `${user.firstname || ''} ${user.lastname || user.name || ''}`.trim() || `Tech ${techId}`;
 
-          // Capacité = 7h/jour * nb jours du range (approx, sans gestion des congés/feriés)
+          // === CAPACITÉ DEPUIS WEEKLY_HOURS DU CONTRAT RH ===
+          // Priorité: heures hebdo du contrat, sinon défaut 35h
+          const contractWeeklyHours = weeklyHoursByApogeeId.get(techId);
+          const weeklyHours = contractWeeklyHours || 35;
+          const weeklyHoursSource: 'contract' | 'default' = contractWeeklyHours ? 'contract' : 'default';
+          const dailyMinutes = (weeklyHours / 5) * 60; // Heures/jour en minutes
+          
           const dayMs = 24 * 60 * 60 * 1000;
           const days = Math.max(1, Math.ceil((dateRange.end.getTime() - dateRange.start.getTime() + 1) / dayMs));
-          const capacityMinutes = 420 * days;
+          const capacityMinutes = Math.round(dailyMinutes * days);
           
           const productivityRate = stats.timeTotal > 0 
             ? stats.timeProductive / stats.timeTotal 
@@ -412,6 +475,9 @@ export function usePerformanceTerrain(dateRange: DateRange) {
             capacityMinutes,
             loadRatio,
             loadZone: getLoadZone(loadRatio),
+            
+            weeklyHours,
+            weeklyHoursSource,
             
             caGenerated: stats.caGenerated,
             dossiersCount: stats.dossiersSet.size,
