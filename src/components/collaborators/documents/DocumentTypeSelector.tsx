@@ -92,52 +92,56 @@ export function DocumentTypeSelector({
 
   return (
     <div className="space-y-3">
-      <Label>Type / Dossier de destination</Label>
+      <Label className="text-sm font-medium text-foreground">Type / Dossier de destination</Label>
       
       <div className="flex flex-wrap gap-2">
         {allOptions.map((option) => (
-          <Button
+          <button
             key={option.id}
             type="button"
-            variant={isSelected(option) ? 'default' : 'outline'}
-            size="sm"
             onClick={() => handleSelectOption(option)}
             className={cn(
-              'gap-1.5 transition-all',
-              isSelected(option) && 'ring-2 ring-offset-2 ring-primary'
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all border',
+              isSelected(option) 
+                ? 'bg-warm-green text-white border-warm-green shadow-warm ring-2 ring-warm-green/30'
+                : 'bg-card/50 hover:bg-muted/50 text-muted-foreground hover:text-foreground border-border/30'
             )}
           >
             {option.isType ? (
-              <Badge variant="secondary" className="h-4 px-1 text-[10px]">
+              <Badge 
+                variant="secondary" 
+                className={cn(
+                  "h-4 px-1 text-[10px] rounded-md",
+                  isSelected(option) ? 'bg-white/20 text-white' : 'bg-warm-green/10 text-warm-green'
+                )}
+              >
                 {option.label.slice(0, 3).toUpperCase()}
               </Badge>
             ) : (
-              <FolderOpen className="h-3.5 w-3.5" />
+              <FolderOpen className={cn('h-3.5 w-3.5', isSelected(option) ? 'text-white' : 'text-warm-orange')} />
             )}
-            <span className="text-xs">{option.label}</span>
+            <span>{option.label}</span>
             {isSelected(option) && <Check className="h-3 w-3 ml-1" />}
-          </Button>
+          </button>
         ))}
 
         {/* Bouton nouveau dossier */}
         {!showNewFolderInput ? (
-          <Button
+          <button
             type="button"
-            variant="outline"
-            size="sm"
             onClick={() => setShowNewFolderInput(true)}
-            className="gap-1.5 border-dashed text-muted-foreground hover:text-foreground"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all border border-dashed border-warm-purple/50 text-warm-purple hover:bg-warm-purple/10 hover:border-warm-purple"
           >
             <FolderPlus className="h-3.5 w-3.5" />
-            <span className="text-xs">Créer dossier</span>
-          </Button>
+            <span>Créer dossier</span>
+          </button>
         ) : (
           <div className="flex items-center gap-1.5">
             <Input
               value={newFolderName}
               onChange={(e) => setNewFolderName(e.target.value)}
               placeholder="Nom du dossier..."
-              className="h-8 w-32 text-xs"
+              className="h-8 w-32 text-xs rounded-lg border-warm-purple/30 focus:border-warm-purple focus:ring-warm-purple/20"
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
@@ -155,7 +159,7 @@ export function DocumentTypeSelector({
               size="sm"
               onClick={handleCreateFolder}
               disabled={!newFolderName.trim()}
-              className="h-8 px-2"
+              className="h-8 px-2 bg-warm-purple hover:bg-warm-purple/90 rounded-lg"
             >
               <Plus className="h-3.5 w-3.5" />
             </Button>
@@ -165,10 +169,12 @@ export function DocumentTypeSelector({
 
       {/* Indication du dossier sélectionné */}
       {selectedSubfolder && (
-        <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-          <FolderOpen className="h-3 w-3" />
-          Sera rangé dans : <strong className="text-foreground">{selectedSubfolder}</strong>
-        </p>
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-warm-green/10 border border-warm-green/20">
+          <FolderOpen className="h-3.5 w-3.5 text-warm-green" />
+          <span className="text-xs text-muted-foreground">
+            Sera rangé dans : <strong className="text-warm-green">{selectedSubfolder}</strong>
+          </span>
+        </div>
       )}
     </div>
   );

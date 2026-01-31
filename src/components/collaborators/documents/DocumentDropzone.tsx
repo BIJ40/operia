@@ -75,10 +75,10 @@ export function DocumentDropzone({
     <div
       {...getRootProps()}
       className={cn(
-        'relative border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-200',
-        isDragActive && !isDragReject && 'border-helpconfort-blue bg-helpconfort-blue/5 scale-[1.01]',
-        isDragReject && 'border-destructive bg-destructive/5',
-        !isDragActive && !isUploading && 'border-border hover:border-helpconfort-blue/50 hover:bg-muted/30',
+        'relative border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all duration-200',
+        isDragActive && !isDragReject && 'border-warm-green bg-warm-green/5 scale-[1.01]',
+        isDragReject && 'border-warm-red bg-warm-red/5',
+        !isDragActive && !isUploading && 'border-border/50 hover:border-warm-green/50 hover:bg-warm-green/5',
         isUploading && 'opacity-50 cursor-not-allowed',
         className
       )}
@@ -88,15 +88,15 @@ export function DocumentDropzone({
       <div className="flex flex-col items-center gap-2">
         {isDragActive && isDragReject ? (
           <>
-            <AlertCircle className="h-10 w-10 text-destructive" />
-            <p className="font-medium text-destructive">
+            <AlertCircle className="h-10 w-10 text-warm-red" />
+            <p className="font-medium text-warm-red">
               Type de fichier non autorisé
             </p>
           </>
         ) : isDragActive ? (
           <>
-            <FileUp className="h-10 w-10 text-helpconfort-blue animate-bounce" />
-            <p className="font-medium text-helpconfort-blue">
+            <FileUp className="h-10 w-10 text-warm-green animate-bounce" />
+            <p className="font-medium text-warm-green">
               Déposez vos fichiers ici
             </p>
           </>
@@ -119,7 +119,7 @@ export function DocumentDropzone({
         </p>
         
         {activeCategory !== 'ALL' && (
-          <p className="text-xs text-helpconfort-blue mt-1">
+          <p className="text-xs text-warm-green mt-1">
             Les fichiers seront ajoutés à la catégorie active
           </p>
         )}

@@ -565,9 +565,9 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
 
       {/* Upload Dialog */}
       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-gradient-to-br from-card to-muted/10 border-border/30">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-warm-green">
               Ajouter un document {pendingUploads.length > 1 && `(${currentUploadIndex + 1}/${pendingUploads.length})`}
             </DialogTitle>
           </DialogHeader>
@@ -575,8 +575,8 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
           {currentUpload && (
             <div className="space-y-4 py-4">
               {/* File info */}
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                <Upload className="h-5 w-5 text-muted-foreground" />
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-warm-green/5 border border-warm-green/20">
+                <Upload className="h-5 w-5 text-warm-green" />
                 <div className="min-w-0 flex-1">
                   <p className="font-medium truncate">{currentUpload.file.name}</p>
                   <p className="text-xs text-muted-foreground">
@@ -628,12 +628,13 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
           )}
 
           <DialogFooter className="flex flex-row justify-end gap-2 pt-4">
-            <Button variant="outline" onClick={() => setShowUploadDialog(false)}>
+            <Button variant="outline" onClick={() => setShowUploadDialog(false)} className="rounded-xl">
               Annuler
             </Button>
             {pendingUploads.length > 1 && (
               <Button
                 variant="secondary"
+                className="rounded-xl bg-warm-purple/10 text-warm-purple hover:bg-warm-purple/20"
                 onClick={async () => {
                   if (!currentUpload) return;
                   // Apply current settings to all and upload all
@@ -670,6 +671,7 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
             <Button
               onClick={handleConfirmUpload}
               disabled={uploadDocument.isPending || !currentUpload?.title.trim()}
+              className="rounded-xl bg-warm-green hover:bg-warm-green/90"
             >
               {uploadDocument.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {currentUploadIndex < pendingUploads.length - 1 ? 'Suivant' : 'Enregistrer'}

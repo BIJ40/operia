@@ -48,14 +48,15 @@ const TYPE_ICONS: Record<DocumentType, React.ElementType> = {
   OTHER: FileWarning,
 };
 
+// Warm pastel theme colors
 const TYPE_COLORS: Record<DocumentType, string> = {
-  PAYSLIP: 'text-helpconfort-orange bg-helpconfort-orange/10',
-  CONTRACT: 'text-helpconfort-blue bg-helpconfort-blue/10',
-  AVENANT: 'text-helpconfort-blue bg-helpconfort-blue/10',
-  ATTESTATION: 'text-emerald-600 bg-emerald-100',
-  MEDICAL_VISIT: 'text-green-600 bg-green-100',
-  SANCTION: 'text-destructive bg-destructive/10',
-  HR_NOTE: 'text-amber-600 bg-amber-100',
+  PAYSLIP: 'text-warm-orange bg-warm-orange/10',
+  CONTRACT: 'text-warm-blue bg-warm-blue/10',
+  AVENANT: 'text-warm-purple bg-warm-purple/10',
+  ATTESTATION: 'text-warm-green bg-warm-green/10',
+  MEDICAL_VISIT: 'text-warm-teal bg-warm-teal/10',
+  SANCTION: 'text-warm-red bg-warm-red/10',
+  HR_NOTE: 'text-warm-pink bg-warm-pink/10',
   OTHER: 'text-muted-foreground bg-muted',
 };
 
@@ -135,11 +136,11 @@ export function DocumentItem({
   return (
     <div
       className={cn(
-        'group relative flex flex-col items-center p-4 rounded-xl border transition-all duration-200',
-        'bg-gradient-to-br from-background to-muted/20',
-        'hover:border-helpconfort-blue/50 hover:shadow-md hover:shadow-helpconfort-blue/5',
-        isHovered && 'border-helpconfort-blue/30',
-        isSelected && 'ring-2 ring-helpconfort-blue border-helpconfort-blue bg-helpconfort-blue/5'
+        'group relative flex flex-col items-center p-4 rounded-2xl border transition-all duration-200',
+        'bg-gradient-to-br from-card/80 to-muted/20 backdrop-blur-sm',
+        'hover:border-warm-green/50 hover:shadow-warm',
+        isHovered && 'border-warm-green/30',
+        isSelected && 'ring-2 ring-warm-green border-warm-green bg-warm-green/5'
       )}
       onClick={handleCardClick}
       onMouseEnter={() => setIsHovered(true)}
@@ -199,7 +200,7 @@ export function DocumentItem({
           <p>{formatFileSize(document.file_size)}</p>
         )}
         {document.period_month && document.period_year && (
-          <p className="text-helpconfort-blue">
+          <p className="text-warm-green font-medium">
             {new Date(document.period_year, document.period_month - 1).toLocaleString('fr-FR', { month: 'short', year: 'numeric' })}
           </p>
         )}
@@ -215,7 +216,7 @@ export function DocumentItem({
         <Button
           variant="secondary"
           size="icon"
-          className="h-8 w-8 bg-background/90 backdrop-blur-sm hover:bg-helpconfort-blue hover:text-white"
+          className="h-8 w-8 bg-card/90 backdrop-blur-sm hover:bg-warm-blue hover:text-white rounded-xl shadow-sm"
           onClick={(e) => handleButtonClick(e, onPreview)}
           title="Aperçu"
         >
@@ -224,7 +225,7 @@ export function DocumentItem({
         <Button
           variant="secondary"
           size="icon"
-          className="h-8 w-8 bg-background/90 backdrop-blur-sm hover:bg-helpconfort-blue hover:text-white"
+          className="h-8 w-8 bg-card/90 backdrop-blur-sm hover:bg-warm-teal hover:text-white rounded-xl shadow-sm"
           onClick={(e) => handleButtonClick(e, onDownload)}
           title="Télécharger"
         >
@@ -235,7 +236,7 @@ export function DocumentItem({
             <Button
               variant="secondary"
               size="icon"
-              className="h-8 w-8 bg-background/90 backdrop-blur-sm hover:bg-helpconfort-orange hover:text-white"
+              className="h-8 w-8 bg-card/90 backdrop-blur-sm hover:bg-warm-orange hover:text-white rounded-xl shadow-sm"
               onClick={(e) => handleButtonClick(e, onEdit)}
               title="Modifier"
             >
@@ -244,7 +245,7 @@ export function DocumentItem({
             <Button
               variant="secondary"
               size="icon"
-              className="h-8 w-8 bg-background/90 backdrop-blur-sm hover:bg-destructive hover:text-white"
+              className="h-8 w-8 bg-card/90 backdrop-blur-sm hover:bg-warm-red hover:text-white rounded-xl shadow-sm"
               onClick={(e) => handleButtonClick(e, onDelete)}
               title="Supprimer"
             >
