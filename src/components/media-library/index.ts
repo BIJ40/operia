@@ -1,4 +1,5 @@
 export { MediaLibraryManager } from './MediaLibraryManager';
+export { MediaLibraryPortal } from './MediaLibraryPortal';
 export { MediaSidebar } from './MediaSidebar';
 export { MediaFolderGrid } from './MediaFolderGrid';
 export { MediaBreadcrumbNav } from './MediaBreadcrumbNav';
