@@ -3,7 +3,7 @@
  * Navigation: DOSSIER 1 - DOSSIER 2 - DOSSIER 3
  */
 
-import { ChevronRight, Home, LayoutGrid, List } from 'lucide-react';
+import { ChevronRight, Home, LayoutGrid, List, FolderPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { DOCUMENT_TYPES, DocumentType } from '@/types/collaboratorDocument';
@@ -21,6 +21,8 @@ interface FolderNavigationBarProps {
   onNavigateToFolder: (folderId: string | null) => void;
   viewMode: 'grid' | 'list';
   onViewModeChange: (mode: 'grid' | 'list') => void;
+  canManage?: boolean;
+  onCreateFolder?: () => void;
 }
 
 export function FolderNavigationBar({
@@ -31,6 +33,8 @@ export function FolderNavigationBar({
   onNavigateToFolder,
   viewMode,
   onViewModeChange,
+  canManage = false,
+  onCreateFolder,
 }: FolderNavigationBarProps) {
   const categoryLabel = activeCategory !== 'ALL' 
     ? DOCUMENT_TYPES.find((t) => t.value === activeCategory)?.label || activeCategory
@@ -85,30 +89,45 @@ export function FolderNavigationBar({
         ))}
       </div>
       
-      {/* View mode toggle */}
-      <ToggleGroup 
-        type="single" 
-        value={viewMode} 
-        onValueChange={(val) => val && onViewModeChange(val as 'grid' | 'list')}
-        className="flex-shrink-0 bg-muted/30 rounded-lg p-0.5"
-      >
-        <ToggleGroupItem 
-          value="grid" 
-          aria-label="Vue grille" 
-          size="sm"
-          className="data-[state=on]:bg-warm-green data-[state=on]:text-white rounded-md"
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {/* Create folder button - only when in a category */}
+        {canManage && activeCategory !== 'ALL' && onCreateFolder && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onCreateFolder}
+            className="gap-1.5 text-muted-foreground hover:text-foreground hover:bg-warm-green/10"
+          >
+            <FolderPlus className="h-4 w-4" />
+            <span className="hidden sm:inline">Nouveau dossier</span>
+          </Button>
+        )}
+
+        {/* View mode toggle */}
+        <ToggleGroup 
+          type="single" 
+          value={viewMode} 
+          onValueChange={(val) => val && onViewModeChange(val as 'grid' | 'list')}
+          className="bg-muted/30 rounded-lg p-0.5"
         >
-          <LayoutGrid className="h-4 w-4" />
-        </ToggleGroupItem>
-        <ToggleGroupItem 
-          value="list" 
-          aria-label="Vue liste" 
-          size="sm"
-          className="data-[state=on]:bg-warm-green data-[state=on]:text-white rounded-md"
-        >
-          <List className="h-4 w-4" />
-        </ToggleGroupItem>
-      </ToggleGroup>
+          <ToggleGroupItem 
+            value="grid" 
+            aria-label="Vue grille" 
+            size="sm"
+            className="data-[state=on]:bg-warm-green data-[state=on]:text-white rounded-md"
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </ToggleGroupItem>
+          <ToggleGroupItem 
+            value="list" 
+            aria-label="Vue liste" 
+            size="sm"
+            className="data-[state=on]:bg-warm-green data-[state=on]:text-white rounded-md"
+          >
+            <List className="h-4 w-4" />
+          </ToggleGroupItem>
+        </ToggleGroup>
+      </div>
     </div>
   );
 }

@@ -477,6 +477,12 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
             onNavigateToFolder={navigateToFolder}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
+            canManage={canManage}
+            onCreateFolder={() => {
+              setNewFolderParentId(currentFolderId);
+              setNewFolderName('');
+              setShowNewFolderDialog(true);
+            }}
           />
 
           {/* Dropzone (only if can manage) */}
