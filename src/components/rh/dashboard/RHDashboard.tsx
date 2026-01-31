@@ -28,7 +28,6 @@ interface RHStats {
   };
   documents: {
     total: number;
-    byType: Record<string, number>;
     thisMonth: number;
   };
   requests: {
@@ -60,11 +59,16 @@ export function RHDashboard() {
         .select('id, type, leaving_date')
         .eq('agency_id', agencyId);
 
-      // Fetch documents
+      // Fetch documents from media_links (scoped to RH folders)
       const { data: documents } = await supabase
-        .from('collaborator_documents')
-        .select('id, doc_type, created_at')
-        .eq('agency_id', agencyId);
+        .from('media_links')
+        .select(`
+          id,
+          created_at,
+          folder:media_folders!inner(path)
+        `)
+        .eq('agency_id', agencyId)
+        .like('folder.path', '%/salaries/%');
 
       // Fetch requests
       const { data: requests } = await supabase
@@ -92,11 +96,6 @@ export function RHDashboard() {
       thisMonthStart.setDate(1);
       thisMonthStart.setHours(0, 0, 0, 0);
       
-      const docsByType = (documents || []).reduce((acc, d) => {
-        acc[d.doc_type] = (acc[d.doc_type] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-
       const docsThisMonth = (documents || []).filter(
         d => new Date(d.created_at) >= thisMonthStart
       ).length;
@@ -137,7 +136,6 @@ export function RHDashboard() {
         },
         documents: {
           total: (documents || []).length,
-          byType: docsByType,
           thisMonth: docsThisMonth,
         },
         requests: {
@@ -322,29 +320,6 @@ export function RHDashboard() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Documents by category */}
-      {Object.keys(stats.documents.byType).length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <FileText className="h-4 w-4" />
-              Documents par catégorie
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {Object.entries(stats.documents.byType)
-                .sort(([, a], [, b]) => b - a)
-                .map(([type, count]) => (
-                  <Badge key={type} variant="secondary" className="text-sm">
-                    {type}: {count}
-                  </Badge>
-                ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

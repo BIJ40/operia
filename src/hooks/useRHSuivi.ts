@@ -303,7 +303,7 @@ export function useDeleteCollaborator() {
       await supabase.from('rh_assets').delete().eq('collaborator_id', collaboratorId);
       await supabase.from('rh_it_access').delete().eq('collaborator_id', collaboratorId);
       await supabase.from('collaborator_sensitive_data').delete().eq('collaborator_id', collaboratorId);
-      await supabase.from('collaborator_documents').delete().eq('collaborator_id', collaboratorId);
+      // Note: media_links pour ce collaborateur sont conservés dans la médiathèque
       
       // Supprimer le collaborateur
       const { error } = await supabase
