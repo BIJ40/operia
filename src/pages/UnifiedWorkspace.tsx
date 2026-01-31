@@ -358,11 +358,11 @@ function UnifiedWorkspaceContent() {
     stats: 'pink',
     salaries: 'green',
     outils: 'purple',
-    documents: 'amber',
+    documents: 'red',
     guides: 'teal',
     ticketing: 'orange',
     aide: 'cyan',
-    admin: 'red',
+    admin: 'neutral',
   };
   
   return (
