@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { ModuleKey } from '@/types/modules';
+import { resolveEffectiveModulesFromBackend } from '@/lib/effectiveModulesResolver';
 
 export interface EffectiveModuleRow {
   module_key: string;
@@ -54,30 +55,44 @@ export function useEffectiveModules(): EffectiveModulesResult & { isLoading: boo
       }
       
       if (!effectiveUserId) return {} as Record<ModuleKey, { enabled: boolean; options: Record<string, boolean> }>;
-      
-      const { data, error } = await supabase.rpc('get_user_effective_modules', {
-        p_user_id: effectiveUserId
+
+      const { modules: resolved, source } = await resolveEffectiveModulesFromBackend({
+        userId: effectiveUserId,
+        agencyId: effectiveAuth.agencyId,
+        // Note: on n'utilise pas enabledModules ici comme fallback car on veut éviter
+        // toute dépendance à un cache potentiellement corrompu.
+        profileEnabledModules: null,
+        debugLabel: 'useEffectiveModules',
       });
-      
-      if (error) {
-        console.error('[useEffectiveModules] Error fetching effective modules:', error);
-        return {} as Record<ModuleKey, { enabled: boolean; options: Record<string, boolean> }>;
-      }
-      
-      // Convertir le tableau en Record
+
+      // Convertir EnabledModules -> Record attendu par ce hook
       const result: Record<string, { enabled: boolean; options: Record<string, boolean> }> = {};
-      for (const row of (data || [])) {
-        result[row.module_key as string] = {
-          enabled: row.enabled as boolean,
-          options: (typeof row.options === 'object' && row.options !== null && !Array.isArray(row.options)) 
-            ? row.options as Record<string, boolean>
-            : {},
+      for (const [key, value] of Object.entries(resolved || {})) {
+        if (!value) continue;
+        const enabled = typeof value === 'boolean' ? value : (value as any).enabled === true;
+        const optionsRaw =
+          typeof value === 'object' && value !== null && 'options' in (value as any)
+            ? (value as any).options
+            : {};
+
+        result[key] = {
+          enabled,
+          options:
+            typeof optionsRaw === 'object' && optionsRaw !== null && !Array.isArray(optionsRaw)
+              ? (optionsRaw as Record<string, boolean>)
+              : {},
         };
       }
-      
-      // Debug log
-      console.log('[useEffectiveModules] Loaded modules for user:', effectiveUserId, Object.keys(result));
-      
+
+      console.log(
+        '[useEffectiveModules] Loaded modules for user:',
+        effectiveUserId,
+        Object.keys(result),
+        '(source:',
+        source,
+        ')'
+      );
+
       return result as Record<ModuleKey, { enabled: boolean; options: Record<string, boolean> }>;
     },
     enabled: !!effectiveUserId,
