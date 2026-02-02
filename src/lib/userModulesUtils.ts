@@ -105,13 +105,18 @@ export function enabledModulesToRows(
     const isEnabled = typeof value === 'boolean' ? value : value.enabled;
     if (!isEnabled) continue;
     
-    const options = typeof value === 'object' && 'options' in value && value.options
-      ? filterTrueOptions(value.options)
+    const rawOptions = typeof value === 'object' && 'options' in value && value.options
+      ? value.options
       : null;
+    
+    // Filtrer pour ne garder que les options à true
+    const options = rawOptions ? filterTrueOptions(rawOptions) : null;
 
-    // Si quelqu'un a laissé un module "activé" mais toutes les options à false, on n'écrit rien.
-    // (évite de recréer des rows legacy incohérentes)
-    if (typeof value === 'object' && 'options' in value && value.options && options === null) {
+    // Si quelqu'un a laissé un module "activé" mais toutes les options existantes à false, on saute.
+    // MAIS si le module n'a pas d'options définies (objet vide ou null), on le sauvegarde quand même.
+    // Cela permet aux modules comme divers_plannings/divers_reunions d'être sauvegardés.
+    const hasDefinedOptions = rawOptions && Object.keys(rawOptions).length > 0;
+    if (hasDefinedOptions && options === null) {
       continue;
     }
     
