@@ -155,15 +155,18 @@ function UnifiedWorkspaceContent() {
   // IMPORTANT: Utiliser SOIT les nouveaux modules (agence, stats, guides, aide)
   // SOIT les legacy (pilotage_agence, help_academy, support) pour rétrocompatibilité
   // Documents = médiathèque centralisée
+  // Configuration des onglets - SIMPLIFIÉ: on vérifie juste si le module est activé
+  // (sans exiger une option spécifique, car c'est trop restrictif)
   const allTabs: TabConfig[] = useMemo(() => [
     { id: 'accueil', label: 'Accueil', icon: Home },
-    // Stats: vérifie stats OU pilotage_agence.stats_hub pour rétrocompatibilité
-    { id: 'stats', label: 'Stats', icon: BarChart3, requiresOption: { module: 'stats', option: 'stats_hub' } },
-    // Salariés: vérifie rh OU pilotage_agence
+    // Stats: vérifie stats OU pilotage_agence (pas d'option requise)
+    { id: 'stats', label: 'Stats', icon: BarChart3, requiresOption: { module: 'stats' } },
+    // Salariés: vérifie rh
     { id: 'salaries', label: 'Salariés', icon: ClipboardList, requiresOption: { module: 'rh' } },
-    // Outils: vérifie agence OU pilotage_agence
+    // Outils: vérifie agence
     { id: 'outils', label: 'Outils', icon: MoreHorizontal, requiresOption: { module: 'agence' } },
-    { id: 'documents', label: 'Documents', icon: FolderOpen, requiresOption: { module: 'divers_documents', option: 'consulter' } },
+    // Documents: vérifie divers_documents (pas d'option requise)
+    { id: 'documents', label: 'Documents', icon: FolderOpen, requiresOption: { module: 'divers_documents' } },
     // Guides: vérifie guides OU help_academy
     { id: 'guides', label: 'Guides', icon: BookOpen, requiresOption: { module: 'guides' } },
     // Ticketing: vérifie ticketing OU apogee_tickets
