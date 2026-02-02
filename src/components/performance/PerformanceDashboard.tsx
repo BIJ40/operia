@@ -148,16 +148,26 @@ export function PerformanceDashboard() {
                   <div className="text-xs text-muted-foreground">Dossiers traités</div>
                   <div className="text-xl font-bold">{selectedTech.dossiersCount}</div>
                 </div>
-                <button
-                  onClick={() => setSavDrawerTech(selectedTech)}
-                  className="bg-muted/50 rounded-lg p-3 text-left hover:bg-muted transition-colors cursor-pointer"
-                >
+                <div className="bg-muted/50 rounded-lg p-3 text-left">
                   <div className="text-xs text-muted-foreground">Taux SAV</div>
                   <div className="text-xl font-bold">{formatPercent(selectedTech.savRate * 100)}</div>
                   {selectedTech.savCount > 0 && (
-                    <div className="text-xs text-primary mt-1">Voir détails →</div>
+                    <div className="flex flex-col gap-1 mt-2">
+                      <button
+                        onClick={() => setSavDrawerTech(selectedTech)}
+                        className="text-xs text-primary hover:underline text-left"
+                      >
+                        Valider/Invalider SAV →
+                      </button>
+                      <a
+                        href={`/?tab=stats-hub&subtab=sav&technicien=${encodeURIComponent(selectedTech.id)}`}
+                        className="text-xs text-muted-foreground hover:text-primary hover:underline"
+                      >
+                        Voir dans Stats SAV →
+                      </a>
+                    </div>
                   )}
-                </button>
+                </div>
                 <div className="bg-muted/50 rounded-lg p-3">
                   <div className="text-xs text-muted-foreground">Charge/Capacité</div>
                   <div className="text-xl font-bold">{formatPercent(selectedTech.loadRatio * 100)}</div>
