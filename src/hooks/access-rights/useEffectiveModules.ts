@@ -60,7 +60,7 @@ export function useEffectiveModules(): EffectiveModulesResult & { isLoading: boo
       });
       
       if (error) {
-        console.error('Error fetching effective modules:', error);
+        console.error('[useEffectiveModules] Error fetching effective modules:', error);
         return {} as Record<ModuleKey, { enabled: boolean; options: Record<string, boolean> }>;
       }
       
@@ -75,25 +75,30 @@ export function useEffectiveModules(): EffectiveModulesResult & { isLoading: boo
         };
       }
       
+      // Debug log
+      console.log('[useEffectiveModules] Loaded modules for user:', effectiveUserId, Object.keys(result));
+      
       return result as Record<ModuleKey, { enabled: boolean; options: Record<string, boolean> }>;
     },
     enabled: !!effectiveUserId,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 30, // 30 secondes (au lieu de 5 minutes) pour recharger plus souvent
+    gcTime: 1000 * 60 * 2, // 2 minutes de cache
   });
   
   const modules = query.data || {} as Record<ModuleKey, { enabled: boolean; options: Record<string, boolean> }>;
   
-  // Mapping de rétrocompatibilité: nouveaux modules → anciens équivalents
+  // Mapping de rétrocompatibilité BIDIRECTIONNEL: nouveaux modules ↔ anciens équivalents
   const MODULE_COMPAT_MAP: Record<string, string[]> = {
     // Nouveau module → anciens modules à vérifier en fallback
-    'stats': ['pilotage_agence'],
-    'agence': ['pilotage_agence'],
-    'rh': ['pilotage_agence'],
+    'stats': ['pilotage_agence', 'agence'],
+    'agence': ['pilotage_agence', 'stats'],
+    'rh': ['pilotage_agence', 'agence'],
     'guides': ['help_academy'],
     'aide': ['support'],
     'ticketing': ['apogee_tickets'],
+    'divers_documents': ['agence', 'pilotage_agence'],
     // Et inversement pour le legacy
-    'pilotage_agence': ['agence', 'stats', 'rh'],
+    'pilotage_agence': ['agence', 'stats', 'rh', 'divers_documents'],
     'help_academy': ['guides'],
     'support': ['aide'],
     'apogee_tickets': ['ticketing'],
