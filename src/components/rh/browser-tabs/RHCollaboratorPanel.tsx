@@ -76,6 +76,7 @@ import { fr } from 'date-fns/locale';
 import { RHSectionSecurite } from '@/components/rh/sections/RHSectionSecurite';
 import { RHSectionCompetences } from '@/components/rh/sections/RHSectionCompetences';
 import { RHSectionDocuments } from '@/components/rh/sections/RHSectionDocuments';
+import { RHSectionContrat } from '@/components/rh/sections/RHSectionContrat';
 import { RHTaillesPopup } from '@/components/rh/unified/RHTaillesPopup';
 
 const TYPE_OPTIONS = [
@@ -513,9 +514,18 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Sections en grille - 3 colonnes: Compétences, Sécurité, Documents */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Compétences - colonne 1 */}
+      {/* Sections en grille - 2x2 : Contrat, Compétences, Sécurité, Documents */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Contrat & Salaire - colonne 1 */}
+        <CollapsibleSection 
+          title="Contrat & Salaire" 
+          icon={<Briefcase className="h-4 w-4" />}
+          defaultOpen={true}
+        >
+          <RHSectionContrat collaborator={collaborator} />
+        </CollapsibleSection>
+
+        {/* Compétences - colonne 2 */}
         <CollapsibleSection 
           title="Compétences" 
           icon={<Award className="h-4 w-4" />}
@@ -529,7 +539,7 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
           <RHSectionCompetences collaborator={collaborator} />
         </CollapsibleSection>
 
-        {/* Sécurité - colonne 2 */}
+        {/* Sécurité - colonne 3 */}
         <CollapsibleSection 
           title="Sécurité" 
           icon={<Shield className="h-4 w-4" />}
@@ -569,7 +579,7 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
           <RHSectionSecurite collaborator={collaborator} />
         </CollapsibleSection>
 
-        {/* Documents - colonne 3 */}
+        {/* Documents - colonne 4 */}
         <CollapsibleSection 
           title="Documents" 
           icon={<FolderOpen className="h-4 w-4" />}
