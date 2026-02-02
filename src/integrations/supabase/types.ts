@@ -6626,6 +6626,50 @@ export type Database = {
           },
         ]
       }
+      sav_validations: {
+        Row: {
+          agency_id: string
+          created_at: string
+          id: string
+          intervention_id: string
+          is_valid_sav: boolean
+          updated_at: string
+          validated_at: string
+          validated_by: string | null
+          validated_by_name: string | null
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          id?: string
+          intervention_id: string
+          is_valid_sav: boolean
+          updated_at?: string
+          validated_at?: string
+          validated_by?: string | null
+          validated_by_name?: string | null
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          id?: string
+          intervention_id?: string
+          is_valid_sav?: boolean
+          updated_at?: string
+          validated_at?: string
+          validated_by?: string | null
+          validated_by_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sav_validations_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sections: {
         Row: {
           category_id: string

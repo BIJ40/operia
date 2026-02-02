@@ -8,6 +8,8 @@ import { usePerformanceTerrain, TechnicianPerformance } from '@/hooks/usePerform
 import { useFilters } from '@/apogee-connect/contexts/FiltersContext';
 import { TeamHeatmap } from './TeamHeatmap';
 import { TechnicianRadarChart } from './TechnicianRadarChart';
+import { SavDetailsDrawer } from './SavDetailsDrawer';
+import { PerformanceLegend } from './PerformanceLegend';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +31,7 @@ export function PerformanceDashboard() {
   const dateRange = filters.dateRange;
   const { data, isLoading, error } = usePerformanceTerrain(dateRange);
   const [selectedTech, setSelectedTech] = useState<TechnicianPerformance | null>(null);
+  const [savDrawerTech, setSavDrawerTech] = useState<TechnicianPerformance | null>(null);
 
   // Stats d'équipe
   const teamInsights = useMemo(() => {
@@ -136,10 +139,16 @@ export function PerformanceDashboard() {
                   <div className="text-xs text-muted-foreground">Dossiers traités</div>
                   <div className="text-xl font-bold">{selectedTech.dossiersCount}</div>
                 </div>
-                <div className="bg-muted/50 rounded-lg p-3">
+                <button
+                  onClick={() => setSavDrawerTech(selectedTech)}
+                  className="bg-muted/50 rounded-lg p-3 text-left hover:bg-muted transition-colors cursor-pointer"
+                >
                   <div className="text-xs text-muted-foreground">Taux SAV</div>
                   <div className="text-xl font-bold">{formatPercent(selectedTech.savRate * 100)}</div>
-                </div>
+                  {selectedTech.savCount > 0 && (
+                    <div className="text-xs text-primary mt-1">Voir détails →</div>
+                  )}
+                </button>
                 <div className="bg-muted/50 rounded-lg p-3">
                   <div className="text-xs text-muted-foreground">Charge/Capacité</div>
                   <div className="text-xl font-bold">{formatPercent(selectedTech.loadRatio * 100)}</div>
@@ -165,6 +174,7 @@ export function PerformanceDashboard() {
             Pilotage équilibré, orienté capacité & qualité
           </p>
         </div>
+        <PerformanceLegend />
       </div>
 
       {/* KPIs équipe */}
@@ -268,6 +278,15 @@ export function PerformanceDashboard() {
       <TeamHeatmap 
         technicians={data.technicians} 
         onSelectTechnician={setSelectedTech}
+        onOpenSavDrawer={setSavDrawerTech}
+      />
+      
+      {/* Drawer SAV */}
+      <SavDetailsDrawer
+        technician={savDrawerTech}
+        dateRange={dateRange}
+        open={!!savDrawerTech}
+        onOpenChange={(open) => !open && setSavDrawerTech(null)}
       />
     </div>
   );
