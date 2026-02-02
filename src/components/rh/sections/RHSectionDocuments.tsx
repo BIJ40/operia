@@ -57,7 +57,7 @@ export function RHSectionDocuments({ collaborator }: Props) {
           created_at,
           asset:media_assets!inner(
             file_name,
-            file_type,
+            mime_type,
             file_size
           )
         `)
@@ -70,7 +70,7 @@ export function RHSectionDocuments({ collaborator }: Props) {
       return (data || []).map((link: any) => ({
         id: link.id,
         file_name: link.asset?.file_name || 'Document',
-        file_type: link.asset?.file_type || null,
+        file_type: link.asset?.mime_type || null,
         file_size: link.asset?.file_size || null,
         created_at: link.created_at,
       }));
