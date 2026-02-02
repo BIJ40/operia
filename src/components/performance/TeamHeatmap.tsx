@@ -12,6 +12,7 @@ import { Users } from 'lucide-react';
 interface Props {
   technicians: TechnicianPerformance[];
   onSelectTechnician?: (tech: TechnicianPerformance) => void;
+  onOpenSavDrawer?: (tech: TechnicianPerformance) => void;
 }
 
 // Couleurs par zone (non punitif)
@@ -34,10 +35,15 @@ function getZoneLabel(productivity: number, load: number): string {
   return 'Zone de tension';
 }
 
-export function TeamHeatmap({ technicians, onSelectTechnician }: Props) {
+export function TeamHeatmap({ technicians, onSelectTechnician, onOpenSavDrawer }: Props) {
   const sortedTechs = useMemo(() => {
     return [...technicians].sort((a, b) => b.productivityRate - a.productivityRate);
   }, [technicians]);
+
+  const handleSavClick = (e: React.MouseEvent, tech: TechnicianPerformance) => {
+    e.stopPropagation();
+    onOpenSavDrawer?.(tech);
+  };
 
   return (
     <Card>
@@ -81,11 +87,15 @@ export function TeamHeatmap({ technicians, onSelectTechnician }: Props) {
                       {Math.round(tech.productivityRate * 100)}%
                     </div>
                     
-                    {/* Indicateur SAV si > 0 */}
+                    {/* Indicateur SAV cliquable si > 0 */}
                     {tech.savCount > 0 && (
-                      <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-orange-500 text-white text-[10px] flex items-center justify-center">
+                      <button
+                        onClick={(e) => handleSavClick(e, tech)}
+                        className="absolute top-1 right-1 w-5 h-5 rounded-full bg-orange-500 hover:bg-orange-600 text-white text-[10px] flex items-center justify-center transition-colors"
+                        title="Voir les SAV"
+                      >
                         {tech.savCount}
-                      </div>
+                      </button>
                     )}
                   </button>
                 </TooltipTrigger>
