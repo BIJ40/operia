@@ -3,7 +3,8 @@
  * Vue équilibée, non punitive, orientée capacité & qualité
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { usePerformanceTerrain, TechnicianPerformance } from '@/hooks/usePerformanceTerrain';
 import { useFilters } from '@/apogee-connect/contexts/FiltersContext';
 import { TeamHeatmap } from './TeamHeatmap';
@@ -27,6 +28,8 @@ import { Button } from '@/components/ui/button';
 import { formatPercent } from '@/lib/formatters';
 
 export function PerformanceDashboard() {
+  const navigate = useNavigate();
+  
   // Utiliser le contexte global de filtres
   const { filters } = useFilters();
   const dateRange = filters.dateRange;
@@ -154,17 +157,27 @@ export function PerformanceDashboard() {
                   {selectedTech.savCount > 0 && (
                     <div className="flex flex-col gap-1 mt-2">
                       <button
-                        onClick={() => setSavDrawerTech(selectedTech)}
-                        className="text-xs text-primary hover:underline text-left"
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setSavDrawerTech(selectedTech);
+                        }}
+                        className="text-xs text-primary hover:underline text-left cursor-pointer"
                       >
                         Valider/Invalider SAV →
                       </button>
-                      <a
-                        href={`/?tab=stats-hub&subtab=sav&technicien=${encodeURIComponent(selectedTech.id)}`}
-                        className="text-xs text-muted-foreground hover:text-primary hover:underline"
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          navigate(`/?tab=stats&subtab=sav&technicien=${encodeURIComponent(selectedTech.id)}`);
+                        }}
+                        className="text-xs text-muted-foreground hover:text-primary hover:underline text-left cursor-pointer"
                       >
                         Voir dans Stats SAV →
-                      </a>
+                      </button>
                     </div>
                   )}
                 </div>
