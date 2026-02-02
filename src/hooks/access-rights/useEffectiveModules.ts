@@ -83,13 +83,45 @@ export function useEffectiveModules(): EffectiveModulesResult & { isLoading: boo
   
   const modules = query.data || {} as Record<ModuleKey, { enabled: boolean; options: Record<string, boolean> }>;
   
+  // Mapping de rétrocompatibilité: nouveaux modules → anciens équivalents
+  const MODULE_COMPAT_MAP: Record<string, string[]> = {
+    // Nouveau module → anciens modules à vérifier en fallback
+    'stats': ['pilotage_agence'],
+    'agence': ['pilotage_agence'],
+    'rh': ['pilotage_agence'],
+    'guides': ['help_academy'],
+    'aide': ['support'],
+    'ticketing': ['apogee_tickets'],
+    // Et inversement pour le legacy
+    'pilotage_agence': ['agence', 'stats', 'rh'],
+    'help_academy': ['guides'],
+    'support': ['aide'],
+    'apogee_tickets': ['ticketing'],
+  };
+  
   const hasModule = (moduleKey: ModuleKey): boolean => {
     // N5+ bypass - utiliser le rôle RÉEL pour le bypass admin
     // (un admin qui impersonne doit toujours avoir accès à tout)
     if (effectiveAuth.realGlobalRole === 'platform_admin' || effectiveAuth.realGlobalRole === 'superadmin') {
       return true;
     }
-    return modules[moduleKey]?.enabled ?? false;
+    
+    // Vérifier le module demandé directement
+    if (modules[moduleKey]?.enabled) {
+      return true;
+    }
+    
+    // Vérifier les modules équivalents (rétrocompatibilité)
+    const compatModules = MODULE_COMPAT_MAP[moduleKey];
+    if (compatModules) {
+      for (const compatKey of compatModules) {
+        if (modules[compatKey as ModuleKey]?.enabled) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
   };
   
   const hasModuleOption = (moduleKey: ModuleKey, optionKey: string): boolean => {
@@ -97,8 +129,24 @@ export function useEffectiveModules(): EffectiveModulesResult & { isLoading: boo
     if (effectiveAuth.realGlobalRole === 'platform_admin' || effectiveAuth.realGlobalRole === 'superadmin') {
       return true;
     }
-    if (!modules[moduleKey]?.enabled) return false;
-    return modules[moduleKey]?.options?.[optionKey] ?? false;
+    
+    // Vérifier directement sur le module demandé
+    if (modules[moduleKey]?.enabled && modules[moduleKey]?.options?.[optionKey]) {
+      return true;
+    }
+    
+    // Vérifier sur les modules équivalents
+    const compatModules = MODULE_COMPAT_MAP[moduleKey];
+    if (compatModules) {
+      for (const compatKey of compatModules) {
+        const compatModule = modules[compatKey as ModuleKey];
+        if (compatModule?.enabled && compatModule?.options?.[optionKey]) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
   };
   
   return {

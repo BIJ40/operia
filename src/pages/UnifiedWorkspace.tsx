@@ -152,16 +152,24 @@ function UnifiedWorkspaceContent() {
   
   // Configuration des onglets avec permissions
   // Chaque onglet a un requiresOption qui définit le module/option nécessaire
+  // IMPORTANT: Utiliser SOIT les nouveaux modules (agence, stats, guides, aide)
+  // SOIT les legacy (pilotage_agence, help_academy, support) pour rétrocompatibilité
   // Documents = médiathèque centralisée
   const allTabs: TabConfig[] = useMemo(() => [
     { id: 'accueil', label: 'Accueil', icon: Home },
-    { id: 'stats', label: 'Stats', icon: BarChart3, requiresOption: { module: 'pilotage_agence', option: 'stats_hub' } },
-    { id: 'salaries', label: 'Salariés', icon: ClipboardList, requiresOption: { module: 'pilotage_agence' } },
-    { id: 'outils', label: 'Outils', icon: MoreHorizontal, requiresOption: { module: 'pilotage_agence' } },
+    // Stats: vérifie stats OU pilotage_agence.stats_hub pour rétrocompatibilité
+    { id: 'stats', label: 'Stats', icon: BarChart3, requiresOption: { module: 'stats', option: 'stats_hub' } },
+    // Salariés: vérifie rh OU pilotage_agence
+    { id: 'salaries', label: 'Salariés', icon: ClipboardList, requiresOption: { module: 'rh' } },
+    // Outils: vérifie agence OU pilotage_agence
+    { id: 'outils', label: 'Outils', icon: MoreHorizontal, requiresOption: { module: 'agence' } },
     { id: 'documents', label: 'Documents', icon: FolderOpen, requiresOption: { module: 'divers_documents', option: 'consulter' } },
-    { id: 'guides', label: 'Guides', icon: BookOpen, requiresOption: { module: 'help_academy' } },
-    { id: 'ticketing', label: 'Ticketing', icon: Ticket, requiresOption: { module: 'apogee_tickets' } },
-    { id: 'aide', label: 'Aide', icon: HelpCircle, requiresOption: { module: 'support' } },
+    // Guides: vérifie guides OU help_academy
+    { id: 'guides', label: 'Guides', icon: BookOpen, requiresOption: { module: 'guides' } },
+    // Ticketing: vérifie ticketing OU apogee_tickets
+    { id: 'ticketing', label: 'Ticketing', icon: Ticket, requiresOption: { module: 'ticketing' } },
+    // Aide: vérifie aide OU support
+    { id: 'aide', label: 'Aide', icon: HelpCircle, requiresOption: { module: 'aide' } },
     { id: 'admin', label: 'Admin', icon: Shield, requiresOption: { module: 'admin_plateforme' } },
   ], []);
   
