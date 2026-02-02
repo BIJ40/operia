@@ -7,3 +7,4 @@ export { TechnicianRadarChart } from './TechnicianRadarChart';
 export { TeamHeatmap } from './TeamHeatmap';
 export { SavDetailsDrawer } from './SavDetailsDrawer';
 export { PerformanceLegend } from './PerformanceLegend';
+export { TechnicianQuickEditDialog } from './TechnicianQuickEditDialog';

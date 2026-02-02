@@ -10,6 +10,7 @@ import { TeamHeatmap } from './TeamHeatmap';
 import { TechnicianRadarChart } from './TechnicianRadarChart';
 import { SavDetailsDrawer } from './SavDetailsDrawer';
 import { PerformanceLegend } from './PerformanceLegend';
+import { TechnicianQuickEditDialog } from './TechnicianQuickEditDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +33,7 @@ export function PerformanceDashboard() {
   const { data, isLoading, error } = usePerformanceTerrain(dateRange);
   const [selectedTech, setSelectedTech] = useState<TechnicianPerformance | null>(null);
   const [savDrawerTech, setSavDrawerTech] = useState<TechnicianPerformance | null>(null);
+  const [editDialogTech, setEditDialogTech] = useState<TechnicianPerformance | null>(null);
 
   // Stats d'équipe
   const teamInsights = useMemo(() => {
@@ -106,8 +108,15 @@ export function PerformanceDashboard() {
           <TechnicianRadarChart technician={selectedTech} />
           
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-base">Détail activité</CardTitle>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setEditDialogTech(selectedTech)}
+              >
+                Modifier paramètres
+              </Button>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Temps */}
@@ -287,6 +296,13 @@ export function PerformanceDashboard() {
         dateRange={dateRange}
         open={!!savDrawerTech}
         onOpenChange={(open) => !open && setSavDrawerTech(null)}
+      />
+      
+      {/* Dialog édition rapide */}
+      <TechnicianQuickEditDialog
+        technician={editDialogTech}
+        open={!!editDialogTech}
+        onOpenChange={(open) => !open && setEditDialogTech(null)}
       />
     </div>
   );
