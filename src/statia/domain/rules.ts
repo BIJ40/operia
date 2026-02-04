@@ -284,6 +284,74 @@ export const SPECIAL_PRODUCTIVE_TYPE2 = [
  */
 export const SAV_TYPES = ['SAV'];
 
+// ============================================================================
+// CONSTANTES UNIFIÉES POUR CALCUL CA TECHNICIEN
+// Ces constantes sont la SOURCE DE VÉRITÉ pour tous les moteurs de calcul
+// ============================================================================
+
+/**
+ * Types d'utilisateurs EXCLUS du calcul CA technicien
+ * Ces profils ne sont JAMAIS considérés comme techniciens, même s'ils apparaissent
+ * dans les visites ou les interventions.
+ */
+export const EXCLUDED_USER_TYPES = [
+  'commercial',
+  'admin',
+  'assistant',
+  'assistante',
+  'administratif',
+  'direction',
+  'comptable',
+];
+
+/**
+ * Types d'intervention NON PRODUCTIFS (ne génèrent pas de CA)
+ * Utiliser pour filtrer les interventions AVANT le calcul de temps
+ */
+export const EXCLUDED_INTERVENTION_TYPES = [
+  'RT',
+  'rt',
+  'TH',
+  'th',
+  'SAV',
+  'sav',
+  'diagnostic',
+  'Diagnostic',
+  'releve technique',
+  'Releve technique',
+  'relevé technique',
+  'Relevé technique',
+  'rdv technique',
+  'RDV technique',
+  "taux d'humidité",
+  'taux humidite',
+];
+
+/**
+ * Types TOUJOURS productifs, même sans indicateur bi*
+ * "Recherche de fuite" est le cas particulier principal
+ */
+export const ALWAYS_PRODUCTIVE_TYPES = [
+  'recherche de fuite',
+  'Recherche de fuite',
+  'RECHERCHE DE FUITE',
+  'recherche fuite',
+  'Recherche Fuite',
+];
+
+/**
+ * États de facture à EXCLURE du calcul CA
+ */
+export const EXCLUDED_FACTURE_STATES = [
+  'canceled',
+  'annulee',
+  'annulée',
+  'pro_forma',
+  'proforma',
+  'draft',
+  'brouillon',
+];
+
 /**
  * Types RT uniquement (Relevés Techniques)
  */
