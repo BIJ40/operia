@@ -1,6 +1,5 @@
 /**
  * StatIA V1 - Définitions des métriques par Technicien
- * Réutilise les formules existantes Classe A de technicienUniversEngine
  * 
  * SOURCES UTILISÉES:
  * - apiGetFactures (via loaders.ts)
@@ -9,12 +8,15 @@
  * - apiGetUsers (via loaders.ts)
  * 
  * NOTE: La logique métier principale est définie dans:
- * - src/statia/engines/caParTechnicienCore.ts (SOURCE DE VÉRITÉ)
- * - supabase/functions/_shared/statiaEngines/caParTechnicien.ts (MIROIR EDGE)
+ * - src/statia/engines/unifiedTechCAEngine.ts (SOURCE DE VÉRITÉ UNIQUE)
  * 
- * Les helpers locaux (isRTIntervention, etc.) sont dupliqués pour compatibilité
- * avec les autres métriques du fichier. Pour le moteur principal ca_par_technicien,
- * considérer l'import depuis caParTechnicienCore.ts.
+ * Ce fichier utilise le moteur unifié pour garantir la cohérence entre
+ * toutes les vues (Top Techniciens, Heatmap, CA mensuel, etc.)
+ * 
+ * RÈGLE MÉTIER (validée 2024):
+ * - Répartition AU PRORATA DU TEMPS (pas égale)
+ * - Lissage pour les factures sans temps productif
+ * - États de factures inclus: tout sauf annulées/pro-forma
  */
 
 import { StatDefinition, LoadedData, StatParams, StatResult } from './types';
@@ -24,6 +26,12 @@ import {
 } from '../engine/normalizers';
 import { extractFactureMeta } from '../rules/rules';
 import { indexProjectsById, indexUsersById } from '../engine/loaders';
+import { 
+  computeUnifiedTechCAAsStatResult,
+  calculateTechTimeByProject as calculateTechTimeByProjectUnified,
+  isProductiveIntervention as isProductiveInterventionUnified,
+  isActiveTechnician,
+} from '../engines/unifiedTechCAEngine';
 
 /**
  * Interface pour les stats technicien
@@ -177,92 +185,30 @@ function getProductiveTechnicians(intervention: any): Set<string | number> {
 }
 
 /**
- * Calcule le temps passé par technicien par projet
- * Logique alignée sur DataService.calculateCAByTechnician (lignes 339-414)
- * Utilisé pour la métrique pondérée au temps
+ * Wrapper pour compatibilité: utilise le moteur unifié pour le calcul du temps
  */
-function calculateTechTimeByProject(
+function calculateTechTimeByProjectLocal(
   interventions: any[],
-  projectsById: Map<string | number, any>
+  projectsById: Map<string | number, any>,
+  usersMap: Map<number, any>
 ): { 
   dureeTechParProjet: Map<string, Map<string | number, number>>; 
   dureeTotaleParProjet: Map<string, number>;
 } {
-  const dureeTechParProjet = new Map<string, Map<string | number, number>>();
-  const dureeTotaleParProjet = new Map<string, number>();
+  const result = calculateTechTimeByProjectUnified(interventions, usersMap);
   
-  for (const intervention of interventions) {
-    // Filtrer les interventions non-productives
-    if (!isProductiveIntervention(intervention)) continue;
-    
-    const projectId = String(intervention.projectId || intervention.project_id);
-    if (!projectId) continue;
-    
-    let tempsReparti = false;
-    
-    // Priorité 1: biV3.items avec techTimeStart/techTimeEnd
-    if (intervention.data?.biV3?.items && Array.isArray(intervention.data.biV3.items)) {
-      for (const item of intervention.data.biV3.items) {
-        if (item.techTimeStart && item.techTimeEnd && item.usersIds) {
-          const start = new Date(item.techTimeStart).getTime();
-          const end = new Date(item.techTimeEnd).getTime();
-          const dureeMinutes = (end - start) / (1000 * 60);
-          const nbTechs = item.usersIds.length || 1;
-          const dureeParTech = dureeMinutes / nbTechs;
-          
-          for (const techId of item.usersIds) {
-            if (!techId) continue;
-            if (!dureeTechParProjet.has(projectId)) {
-              dureeTechParProjet.set(projectId, new Map());
-            }
-            const projectTechMap = dureeTechParProjet.get(projectId)!;
-            projectTechMap.set(techId, (projectTechMap.get(techId) || 0) + dureeParTech);
-            dureeTotaleParProjet.set(projectId, (dureeTotaleParProjet.get(projectId) || 0) + dureeParTech);
-          }
-          tempsReparti = true;
-        }
-      }
+  // Convertir le format Map<string, Map<string, number>> en Map<string, Map<string | number, number>>
+  const dureeTechParProjet = new Map<string, Map<string | number, number>>();
+  for (const [projectId, techMap] of result.dureeTechParProjet) {
+    const newTechMap = new Map<string | number, number>();
+    for (const [techId, duree] of techMap) {
+      newTechMap.set(techId, duree);
+      newTechMap.set(Number(techId), duree);
     }
-    
-    // Priorité 2: data.visites avec duree + usersIds
-    if (!tempsReparti) {
-      const visites = intervention.visites || intervention.data?.visites || [];
-      for (const visite of visites) {
-        if (visite.duree && visite.usersIds) {
-          const dureeMinutes = visite.duree;
-          const nbTechs = visite.usersIds.length || 1;
-          const dureeParTech = dureeMinutes / nbTechs;
-          
-          for (const techId of visite.usersIds) {
-            if (!techId) continue;
-            if (!dureeTechParProjet.has(projectId)) {
-              dureeTechParProjet.set(projectId, new Map());
-            }
-            const projectTechMap = dureeTechParProjet.get(projectId)!;
-            projectTechMap.set(techId, (projectTechMap.get(techId) || 0) + dureeParTech);
-            dureeTotaleParProjet.set(projectId, (dureeTotaleParProjet.get(projectId) || 0) + dureeParTech);
-          }
-          tempsReparti = true;
-        }
-      }
-    }
-    
-    // Priorité 3 (mode dégradé): collecter tous les techniciens avec 1 minute chacun
-    if (!tempsReparti) {
-      const techIds = getProductiveTechnicians(intervention);
-      for (const techId of techIds) {
-        const dureeMinutes = 1; // Mode dégradé: 1 minute par tech
-        if (!dureeTechParProjet.has(projectId)) {
-          dureeTechParProjet.set(projectId, new Map());
-        }
-        const projectTechMap = dureeTechParProjet.get(projectId)!;
-        projectTechMap.set(techId, (projectTechMap.get(techId) || 0) + dureeMinutes);
-        dureeTotaleParProjet.set(projectId, (dureeTotaleParProjet.get(projectId) || 0) + dureeMinutes);
-      }
-    }
+    dureeTechParProjet.set(projectId, newTechMap);
   }
   
-  return { dureeTechParProjet, dureeTotaleParProjet };
+  return { dureeTechParProjet, dureeTotaleParProjet: result.dureeTotaleParProjet };
 }
 
 /**
@@ -300,6 +246,7 @@ export const caParTechnicienUnivers: StatDefinition = {
     
     const projectsById = indexProjectsById(projects);
     const usersById = indexUsersById(users);
+    const usersMap = new Map<number, any>(users.map(u => [u.id, u]));
     
     // Créer un set des techniciens actifs (is_on: true)
     const activeTechIds = new Set<string | number>();
@@ -312,10 +259,11 @@ export const caParTechnicienUnivers: StatDefinition = {
       }
     }
     
-    // Calculer le temps par technicien par projet
-    const { dureeTechParProjet, dureeTotaleParProjet } = calculateTechTimeByProject(
+    // Calculer le temps par technicien par projet (moteur unifié)
+    const { dureeTechParProjet, dureeTotaleParProjet } = calculateTechTimeByProjectLocal(
       interventions, 
-      projectsById
+      projectsById,
+      usersMap
     );
     
     // Structure pour accumuler les stats
@@ -525,199 +473,53 @@ export const caParTechnicienUnivers: StatDefinition = {
 /**
  * CA par Technicien
  * 
- * RÈGLE MÉTIER (conforme spec CA_PAR_TECHNICIEN):
+ * RÈGLE MÉTIER (conforme spec UNIFIÉE v2.0):
  * - Pour chaque facture de la période, récupérer le projectId
- * - Identifier les techniciens productifs uniques (set de usersIds des visites + productives)
- * - Répartir CA_HT_total / nbTechsProductifs de manière ÉGALE (pas au prorata du temps)
+ * - Répartition AU PRORATA DU TEMPS (pas égale)
+ * - Lissage équitable pour les factures sans temps productif
  * - Avoirs intégrés en négatif
- * - Exclure RT, SAV non-facturant, visites annulées
+ * - Exclure RT, TH, SAV, diagnostics
  * 
  * SOURCES:
  * - apiGetFactures: CA HT, date, type facture
  * - apiGetProjects: lien facture → interventions
  * - apiGetInterventions: visites, usersIds, types
  * - apiGetUsers: noms techniciens
+ * 
+ * NOTE: Utilise le moteur unifié unifiedTechCAEngine.ts
  */
 export const caParTechnicien: StatDefinition = {
   id: 'ca_par_technicien',
   label: 'CA par Technicien',
-  description: 'Répartition du CA HT facturé par technicien productif, en divisant le CA des dossiers par le nombre de techniciens intervenus en production.',
+  description: 'Répartition du CA HT facturé par technicien au prorata du temps passé, avec lissage pour les factures sans temps productif.',
   category: 'technicien',
   source: ['factures', 'projects', 'interventions', 'users'],
   dimensions: ['technicien'],
   aggregation: 'sum',
   unit: '€',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    // Defensive array initialization
-    const factures = data.factures || [];
-    const projects = data.projects || [];
-    const interventions = data.interventions || [];
-    const users = data.users || [];
-    
-    
-    
-    const projectsById = indexProjectsById(projects);
-    const usersById = indexUsersById(users);
-    
-    // Indexer les interventions par projectId
-    const interventionsByProject = new Map<string, any[]>();
-    for (const intervention of interventions) {
-      const projectId = String(intervention.projectId || intervention.project_id);
-      if (!projectId) continue;
-      if (!interventionsByProject.has(projectId)) {
-        interventionsByProject.set(projectId, []);
+    // Utiliser le moteur unifié
+    const result = computeUnifiedTechCAAsStatResult(
+      {
+        factures: data.factures || [],
+        projects: data.projects || [],
+        interventions: data.interventions || [],
+        users: data.users || [],
+      },
+      {
+        dateRange: params.dateRange,
+        applySmoothing: true,
       }
-      interventionsByProject.get(projectId)!.push(intervention);
-    }
-    
-    // Structure pour accumuler CA par technicien
-    const techCA = new Map<string | number, number>();
-    const techInfo = new Map<string | number, { name: string; color: string }>();
-    
-    // Helper pour récupérer info user (essayer plusieurs formats d'ID)
-    const getUserInfo = (techId: string | number) => {
-      // Essayer avec l'ID tel quel, puis converti
-      let user = usersById.get(techId);
-      if (!user) user = usersById.get(Number(techId));
-      if (!user) user = usersById.get(String(techId));
-      
-      if (user) {
-        // API Apogée: firstname = prénom, name = nom (pas lastname!)
-        const prenom = (user.firstname || '').trim();
-        const nom = (user.name || user.lastname || '').trim();
-        const fullName = [prenom, nom].filter(Boolean).join(' ') || `Tech ${techId}`;
-        // Couleur depuis data.bgcolor.hex ou bgcolor.hex ou data.color.hex
-        const color = user.data?.bgcolor?.hex || user.bgcolor?.hex || user.data?.color?.hex || user.color?.hex || '#808080';
-        return { name: fullName, color };
-      }
-      return { name: `Tech ${techId}`, color: '#808080' };
-    };
-    
-    let totalCADistribue = 0;
-    let facturesTraitees = 0;
-    let dossiersIgnores = 0;
-    
-    // Parcourir les factures
-    for (const facture of factures) {
-      const meta = extractFactureMeta(facture);
-      
-      // Filtrer par période
-      const date = meta.date ? new Date(meta.date) : null;
-      if (!date || date < params.dateRange.start || date > params.dateRange.end) continue;
-      
-      // Exclure proforma
-      const typeFacture = (facture.typeFacture || facture.type || facture.data?.type || '').toLowerCase();
-      if (typeFacture === 'proforma' || typeFacture === 'pro_forma') continue;
-      
-      // Vérifier état facture - extraire depuis plusieurs sources comme dans ca.ts
-      const factureState = facture.state || facture.status || facture.statut 
-        || facture.data?.state || facture.data?.status || facture.paymentStatus || '';
-      if (!isFactureStateIncluded(factureState)) continue;
-      
-      const projectId = String(facture.projectId || facture.project_id);
-      if (!projectId) continue;
-      
-      // Récupérer les interventions du projet
-      const projectInterventions = interventionsByProject.get(projectId) || [];
-      
-      // === RÈGLE MÉTIER: Créer un set des techniciens ACTIFS et VALIDES ===
-      // Exclure: is_on=false (inactifs), type=commercial/admin
-      const validTechIds = new Set<string | number>();
-      for (const user of users) {
-        const isOn = user.is_on ?? user.data?.is_on ?? user.isOn ?? true;
-        if (!isOn) continue; // Exclure inactifs
-        
-        const userType = (user.type || '').toLowerCase();
-        
-        // Exclure commerciaux et admins
-        if (userType === 'commercial' || userType === 'admin') continue;
-        
-        // Règle: type="technicien" OU (type="utilisateur" ET universes non vide)
-        const hasUniverses = Array.isArray(user.data?.universes) && user.data.universes.length > 0;
-        const isTechRole = userType === 'technicien' || (userType === 'utilisateur' && hasUniverses);
-        
-        if (isTechRole) {
-          validTechIds.add(user.id);
-          validTechIds.add(String(user.id));
-          validTechIds.add(Number(user.id));
-        }
-      }
-      
-      // Construire le SET des techniciens productifs uniques (filtrés)
-      const techsProductifs = new Set<string | number>();
-      
-      for (const intervention of projectInterventions) {
-        // Filtrer les interventions non-productives (RT, SAV, diagnostic)
-        if (!isProductiveIntervention(intervention)) continue;
-        
-        // Collecter les techniciens de cette intervention
-        const interventionTechs = getProductiveTechnicians(intervention);
-        for (const techId of interventionTechs) {
-          // FILTRE: N'inclure que les techniciens valides
-          if (validTechIds.has(techId) || validTechIds.has(Number(techId)) || validTechIds.has(String(techId))) {
-            techsProductifs.add(techId);
-          }
-        }
-      }
-      
-      // Nombre de techniciens productifs uniques
-      const nbTechsProductifs = techsProductifs.size;
-      
-      // Si aucun technicien productif identifié, ignorer ce dossier
-      if (nbTechsProductifs === 0) {
-        dossiersIgnores++;
-        continue;
-      }
-      
-      // CA HT de la facture (avoirs en négatif via extractFactureMeta)
-      const caHT = meta.montantNetHT;
-      
-      // Quote-part égale pour chaque technicien
-      const quotePart = caHT / nbTechsProductifs;
-      
-      // Attribuer à chaque technicien du set
-      for (const techId of techsProductifs) {
-        techCA.set(techId, (techCA.get(techId) || 0) + quotePart);
-        
-        // Stocker les infos si pas encore fait
-        if (!techInfo.has(techId)) {
-          techInfo.set(techId, getUserInfo(techId));
-        }
-      }
-      
-      totalCADistribue += caHT;
-      facturesTraitees++;
-    }
-    
-    
-    
-    // Formater le résultat avec nom et couleur du technicien
-    const result: Record<string, { name: string; ca: number; color: string }> = {};
-    
-    for (const [techId, ca] of techCA.entries()) {
-      const id = String(techId);
-      const info = techInfo.get(techId) || { name: `Tech ${techId}`, color: '#808080' };
-      result[id] = {
-        name: info.name,
-        ca,
-        color: info.color,
-      };
-    }
+    );
     
     return {
-      value: result,
+      value: result.value,
       metadata: {
         computedAt: new Date(),
         source: 'factures',
-        recordCount: techCA.size,
+        recordCount: result.breakdown.technicianCount,
       },
-      breakdown: {
-        total: totalCADistribue,
-        technicianCount: techCA.size,
-        facturesTraitees,
-        dossiersIgnores,
-        formule: 'CA_HT / nbTechsProductifs (répartition égale)',
-      }
+      breakdown: result.breakdown,
     };
   }
 };
@@ -862,11 +664,13 @@ export const caParTechnicienTemps: StatDefinition = {
     
     const projectsById = indexProjectsById(projects);
     const usersById = indexUsersById(users);
+    const usersMap = new Map<number, any>(users.map(u => [u.id, u]));
     
-    // Calculer le temps par technicien par projet
-    const { dureeTechParProjet, dureeTotaleParProjet } = calculateTechTimeByProject(
+    // Calculer le temps par technicien par projet (moteur unifié)
+    const { dureeTechParProjet, dureeTotaleParProjet } = calculateTechTimeByProjectLocal(
       interventions, 
-      projectsById
+      projectsById,
+      usersMap
     );
     
     // Structure pour accumuler CA et temps par technicien
@@ -1007,11 +811,13 @@ export const caMoyenParHeureTousTechniciens: StatDefinition = {
 
     const projectsById = indexProjectsById(projects);
     const usersById = indexUsersById(users);
+    const usersMap = new Map<number, any>(users.map(u => [u.id, u]));
 
-    // Calculer le temps par technicien par projet (même logique que caParTechnicienTemps)
-    const { dureeTechParProjet, dureeTotaleParProjet } = calculateTechTimeByProject(
+    // Calculer le temps par technicien par projet (moteur unifié)
+    const { dureeTechParProjet, dureeTotaleParProjet } = calculateTechTimeByProjectLocal(
       interventions,
-      projectsById
+      projectsById,
+      usersMap
     );
 
     // Structure pour accumuler les stats par technicien

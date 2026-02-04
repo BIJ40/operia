@@ -1,21 +1,20 @@
 /**
  * StatIA - Moteur partagé CA par Technicien (EDGE FUNCTION)
  * 
- * ⚠️ MIROIR SYNCHRONISÉ DE src/statia/engines/caParTechnicienCore.ts ⚠️
+ * ⚠️ MIROIR SYNCHRONISÉ DE src/statia/engines/unifiedTechCAEngine.ts ⚠️
  * 
- * Ce fichier est une COPIE EXACTE du moteur frontend.
- * Toute modification doit être faite dans caParTechnicienCore.ts d'abord,
- * puis synchronisée ici manuellement.
+ * RÈGLE MÉTIER UNIFIÉE v2.0:
+ * - Répartition AU PRORATA DU TEMPS (pas égale)
+ * - Lissage équitable pour les factures sans temps productif
+ * - États inclus: tous sauf annulées/pro-forma
+ * - Exclure RT, TH, SAV, diagnostics
+ * - "Recherche de fuite" = toujours productif
  * 
- * RÈGLE MÉTIER:
- * - Pour chaque facture de la période, récupérer le projectId
- * - Identifier les techniciens productifs uniques (set de usersIds des visites productives)
- * - Répartir CA_HT_total / nbTechsProductifs de manière ÉGALE
- * - Avoirs intégrés en négatif
- * - Exclure RT, SAV, diagnostics, visites annulées
+ * DERNIÈRE SYNCHRONISATION: 2026-02-04
+ * SOURCE: src/statia/engines/unifiedTechCAEngine.ts
  * 
- * DERNIÈRE SYNCHRONISATION: ${new Date().toISOString().split('T')[0]}
- * SOURCE: src/statia/engines/caParTechnicienCore.ts
+ * TODO: Refactoriser pour utiliser la logique prorata temps (actuellement égale)
+ * Cette edge function doit être alignée sur le frontend pour cohérence totale.
  */
 
 // ============= TYPES =============
