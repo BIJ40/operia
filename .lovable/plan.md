@@ -1,6 +1,8 @@
 
 # Plan de Correction : Identification Techniciens + Calcul CA
 
+## ✅ APPLIQUÉ LE 2026-02-04
+
 ## 🎯 Objectif
 Corriger deux problèmes critiques :
 1. **Sébastien Caron** (non-technicien) reçoit du CA alors qu'il ne devrait pas
