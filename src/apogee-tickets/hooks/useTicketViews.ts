@@ -75,6 +75,40 @@ export function useMarkTicketAsViewed() {
 }
 
 /**
+ * Hook pour marquer plusieurs tickets comme lus en une seule opération
+ */
+export function useMarkAllTicketsAsViewed() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (ticketIds: string[]) => {
+      if (!user?.id) throw new Error('Non authentifié');
+      if (ticketIds.length === 0) return;
+
+      const now = new Date().toISOString();
+      const views = ticketIds.map(ticketId => ({
+        ticket_id: ticketId,
+        user_id: user.id,
+        viewed_at: now
+      }));
+
+      const { error } = await supabase
+        .from('apogee_ticket_views')
+        .upsert(views, { onConflict: 'ticket_id,user_id' });
+
+      if (error) {
+        logError(error, 'TICKET_VIEWS_MARK_ALL');
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['apogee-ticket-views'] });
+    },
+  });
+}
+
+/**
  * Hook utilitaire pour savoir si un ticket doit clignoter pour l'utilisateur courant
  * Un ticket clignote si:
  * 1. last_modified_by_user_id !== current user id (modifié par quelqu'un d'autre)

@@ -5,9 +5,9 @@
 
 import { useMemo, useState } from 'react';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
-import { useMyTicketViews } from '../hooks/useTicketViews';
+import { useMyTicketViews, useMarkAllTicketsAsViewed } from '../hooks/useTicketViews';
 import { useAuth } from '@/contexts/AuthContext';
-import { Sparkles, Clock, Flame, Snowflake, X, Filter, Loader2, User } from 'lucide-react';
+import { Sparkles, Clock, Flame, Snowflake, X, Filter, Loader2, User, CheckCheck } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -16,6 +16,18 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
 import type { ApogeeTicket } from '../types';
 
 // Gradient de couleurs du bleu glacé (0) au rouge foncé (12)
@@ -68,11 +80,13 @@ export function NewTicketsPanel({ onTicketClick }: NewTicketsPanelProps) {
   const [selectedPriorities, setSelectedPriorities] = useState<number[]>([]);
   const [popoverOpen, setPopoverOpen] = useState(false);
 
-  // Calculer le nombre total de tickets "nouveaux" (sans filtre priorité)
-  const totalNewTicketsCount = useMemo(() => {
-    if (!user?.id) return 0;
+  const { mutate: markAllAsViewed, isPending: isMarkingAll } = useMarkAllTicketsAsViewed();
+
+  // Calculer le nombre total de tickets "nouveaux" (sans filtre priorité) ET récupérer leurs IDs
+  const { totalNewTicketsCount, newTicketIds } = useMemo(() => {
+    if (!user?.id) return { totalNewTicketsCount: 0, newTicketIds: [] as string[] };
     
-    return tickets.filter(ticket => {
+    const filtered = tickets.filter(ticket => {
       if (!ticket.last_modified_by_user_id || !ticket.last_modified_at) {
         return false;
       }
@@ -85,8 +99,25 @@ export function NewTicketsPanel({ onTicketClick }: NewTicketsPanelProps) {
       if (!myView) return true;
       // Modifié après ma dernière vue
       return new Date(ticket.last_modified_at).getTime() > new Date(myView.viewed_at).getTime();
-    }).length;
+    });
+    
+    return {
+      totalNewTicketsCount: filtered.length,
+      newTicketIds: filtered.map(t => t.id)
+    };
   }, [tickets, myViews, user?.id]);
+
+  // Handler pour marquer tous comme lus
+  const handleMarkAllAsRead = () => {
+    markAllAsViewed(newTicketIds, {
+      onSuccess: () => {
+        toast.success(`${newTicketIds.length} ticket(s) marqué(s) comme lu(s)`);
+      },
+      onError: () => {
+        toast.error('Erreur lors du marquage des tickets');
+      }
+    });
+  };
 
   // Filtrer les tickets : nouveaux + priorité sélectionnée
   const newTickets = useMemo(() => {
@@ -265,9 +296,39 @@ export function NewTicketsPanel({ onTicketClick }: NewTicketsPanelProps) {
           </div>
         )}
 
-        <span className="text-xs text-muted-foreground ml-auto">
-          Modifiés depuis votre dernière visite
-        </span>
+        {/* Bouton Tout marquer comme lu */}
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-2 rounded-full border-border/50 ml-auto"
+              disabled={isMarkingAll || newTicketIds.length === 0}
+            >
+              {isMarkingAll ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <CheckCheck className="w-3.5 h-3.5" />
+              )}
+              <span className="hidden sm:inline">Tout marquer comme lu</span>
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Marquer tous les tickets comme lus ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Vous allez marquer {newTicketIds.length} ticket{newTicketIds.length > 1 ? 's' : ''} comme lu{newTicketIds.length > 1 ? 's' : ''}.
+                Cette action ne peut pas être annulée.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={handleMarkAllAsRead}>
+                Confirmer
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       {/* Liste des tickets cliquables */}
