@@ -2116,6 +2116,13 @@ export type Database = {
             referencedRelation: "blocks"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "blocks_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "blocks_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       categories: {
@@ -2760,6 +2767,13 @@ export type Database = {
             columns: ["block_id"]
             isOneToOne: false
             referencedRelation: "blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "blocks_public"
             referencedColumns: ["id"]
           },
         ]
@@ -7961,6 +7975,90 @@ export type Database = {
       }
     }
     Views: {
+      blocks_public: {
+        Row: {
+          attachments: Json | null
+          color_preset: string | null
+          completed_at: string | null
+          content: string | null
+          content_type: string | null
+          content_updated_at: string | null
+          hide_from_sidebar: boolean | null
+          hide_title: boolean | null
+          icon: string | null
+          id: string | null
+          is_empty: boolean | null
+          is_in_progress: boolean | null
+          order: number | null
+          parent_id: string | null
+          show_summary: boolean | null
+          slug: string | null
+          summary: string | null
+          tips_type: string | null
+          title: string | null
+          type: string | null
+        }
+        Insert: {
+          attachments?: Json | null
+          color_preset?: string | null
+          completed_at?: string | null
+          content?: string | null
+          content_type?: string | null
+          content_updated_at?: string | null
+          hide_from_sidebar?: boolean | null
+          hide_title?: boolean | null
+          icon?: string | null
+          id?: string | null
+          is_empty?: boolean | null
+          is_in_progress?: boolean | null
+          order?: number | null
+          parent_id?: string | null
+          show_summary?: boolean | null
+          slug?: string | null
+          summary?: string | null
+          tips_type?: string | null
+          title?: string | null
+          type?: string | null
+        }
+        Update: {
+          attachments?: Json | null
+          color_preset?: string | null
+          completed_at?: string | null
+          content?: string | null
+          content_type?: string | null
+          content_updated_at?: string | null
+          hide_from_sidebar?: boolean | null
+          hide_title?: boolean | null
+          icon?: string | null
+          id?: string | null
+          is_empty?: boolean | null
+          is_in_progress?: boolean | null
+          order?: number | null
+          parent_id?: string | null
+          show_summary?: boolean | null
+          slug?: string | null
+          summary?: string | null
+          tips_type?: string | null
+          title?: string | null
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocks_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blocks_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "blocks_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       media_orphan_assets: {
         Row: {
           agency_id: string | null
