@@ -262,7 +262,21 @@ export function calculateTechTimeByProject(
       // Ne compter que les techniciens actifs
       const technicienIds = usersIds.filter((userId: number) => {
         const user = usersMap.get(userId);
-        return isActiveTechnician(user);
+        const isActive = isActiveTechnician(user);
+        // DEBUG: Log les exclusions
+        if (!isActive && user && import.meta.env.DEV) {
+          const name = `${user.firstname || ''} ${user.name || user.lastname || ''}`.trim();
+          if (name.toLowerCase().includes('caron')) {
+            logDebug('[UNIFIED TECH CA] Caron EXCLU des visites car non-technicien:', {
+              userId,
+              name,
+              type: user.type,
+              isTechnicien: user.isTechnicien,
+              is_on: user.is_on,
+            });
+          }
+        }
+        return isActive;
       });
       
       if (technicienIds.length === 0) continue;
@@ -304,6 +318,28 @@ export function computeUnifiedTechCA(
   // Index structures
   const usersMap = new Map<number, any>(users.map(u => [u.id, u]));
   const projectsById = new Map<string | number, any>(projects.map(p => [p.id, p]));
+  
+  // DEBUG: Vérifier si Caron est dans les users et son profil
+  if (import.meta.env.DEV) {
+    for (const user of users) {
+      const name = `${user.firstname || ''} ${user.name || user.lastname || ''}`.trim().toLowerCase();
+      if (name.includes('caron')) {
+        const isTech = isActiveTechnician(user);
+        const hasUniverses = (Array.isArray(user?.data?.universes) && user.data.universes.length > 0) ||
+          (Array.isArray(user?.universes) && user.universes.length > 0);
+        logDebug('[UNIFIED TECH CA] Profil Caron trouvé:', {
+          id: user.id,
+          fullName: name,
+          type: user.type,
+          isTechnicien: user.isTechnicien,
+          is_on: user.is_on,
+          hasUniverses,
+          universes: user.data?.universes || user.universes,
+          isActiveTechnician: isTech,
+        });
+      }
+    }
+  }
   
   // Calculer le temps par technicien par projet
   const { dureeTechParProjet, dureeTotaleParProjet } = calculateTechTimeByProject(interventions, usersMap);
