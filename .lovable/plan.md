@@ -1,55 +1,126 @@
 
-# Plan : Ajout onglet Performance Terrain dans Outils
+# Plan de Correction : Identification Techniciens + Calcul CA
 
-## 1. Modification cible
+## 🎯 Objectif
+Corriger deux problèmes critiques :
+1. **Sébastien Caron** (non-technicien) reçoit du CA alors qu'il ne devrait pas
+2. **Techniciens manquants** dans les listes d'autres agences
 
-**Fichier** : `src/components/unified/tabs/DiversTabContent.tsx`
+## 📋 Résumé des changements
 
-## 2. Changements à effectuer
+### Fichier 1 : `src/apogee-connect/utils/techTools.ts`
 
-### 2.1 Import du composant
+**Modifications :**
+- Ajouter une liste de types utilisateurs exclus : `commercial`, `admin`, `assistant`, `administratif`
+- Normaliser la vérification `is_on` pour accepter `true`, `1`, `"1"`, `"true"` (évite les techniciens manquants)
+- Créer deux helpers réutilisables : `normalizeIsOn()` et `isExcludedUserType()`
+
+### Fichier 2 : `src/statia/domain/rules.ts`
+
+**Modifications :**
+- Ajouter `"TH"` (Taux d'Humidité) dans `nonProductiveTypes`
+- Ajouter `"recherche de fuite"` dans `productiveTypes`
+- Ajouter `excludedUserTypes` pour documenter les types non-techniciens
+- Enrichir les constantes `TH_TYPES` avec les variantes
+
+### Fichier 3 : `src/shared/utils/technicienUniversEngine.ts`
+
+**Modifications :**
+- Ajouter exclusion explicite des types TH dans `calculateTechTimeByProject()`
+- Ajouter cas spécial "recherche de fuite" = toujours productif (même sans biDepan/biTvx)
+- Utiliser les helpers normalisés de `techTools.ts`
+- Exclure les types utilisateurs non-techniciens (commercial, admin, etc.)
+
+### Fichier 4 : `src/apogee-connect/utils/technicienUniversCalculations.ts`
+
+**Modifications :**
+- Aligner la logique sur `technicienUniversEngine.ts`
+- Ajouter exclusion TH
+- Ajouter cas spécial "recherche de fuite"
+
+---
+
+## 🔧 Détail technique des changements
+
+### `techTools.ts` - Nouveau code
+
 ```typescript
-const PerformanceDashboard = lazy(() => 
-  import('@/components/performance/PerformanceDashboard').then(m => ({ default: m.PerformanceDashboard }))
-);
+// Types utilisateurs explicitement NON techniciens
+export const EXCLUDED_USER_TYPES = ['commercial', 'admin', 'assistant', 'administratif'];
+
+// Normalise is_on pour gérer tous les formats API
+export function normalizeIsOn(value: unknown): boolean {
+  if (value === true) return true;
+  if (value === 1) return true;
+  if (value === "1") return true;
+  if (typeof value === 'string' && value.toLowerCase() === 'true') return true;
+  return false;
+}
+
+// Vérifie si un type est exclu
+export function isExcludedUserType(userType: string): boolean {
+  return EXCLUDED_USER_TYPES.includes(userType.toLowerCase().trim());
+}
 ```
 
-### 2.2 Ajouter le type
+### `technicienUniversEngine.ts` - Exclusion TH + Recherche fuite
+
 ```typescript
-type OutilsMainTab = 'actions' | 'apporteurs' | 'administratif' | 'parc' | 'performance';
+// NOUVEAU: Exclure TH (Taux d'Humidité)
+const isTH = type2Lower === "th" || 
+             type2Lower.includes("taux d'humidité") || 
+             type2Lower.includes("taux humidite");
+if (isTH) return; // Ne génère pas de CA
+
+// NOUVEAU: Recherche de fuite = toujours productif
+const isRechercheFuite = type2Lower.includes('recherche de fuite') || 
+                         type2Lower.includes('recherche fuite');
+if (isRechercheFuite) {
+  // Traiter comme productif même sans biDepan/biTvx
+  // Continuer le traitement normalement
+}
 ```
 
-### 2.3 Ajouter dans MAIN_TABS
-```typescript
-const MAIN_TABS: PillTabConfig[] = [
-  { id: 'actions', label: 'Actions', icon: Settings, accent: 'blue' },
-  { id: 'apporteurs', label: 'Apporteurs', icon: Users, accent: 'purple' },
-  { id: 'administratif', label: 'Administratif', icon: FolderOpen, accent: 'orange' },
-  { id: 'parc', label: 'Parc', icon: Car, accent: 'green' },
-  { id: 'performance', label: 'Performance', icon: Activity, accent: 'pink' }, // NOUVEAU
-];
-```
+---
 
-### 2.4 Ajouter le TabsContent
-```tsx
-<TabsContent value="performance" className="mt-6 animate-fade-in">
-  <Suspense fallback={<LoadingFallback />}>
-    <PerformanceDashboard />
-  </Suspense>
-</TabsContent>
-```
+## ✅ Règles métier après correction
 
-## 3. Résultat attendu
+### Qui est un technicien ?
+| Condition | Résultat |
+|-----------|----------|
+| `isTechnicien === true` (ou 1) | ✅ Technicien |
+| `type === 'technicien'` | ✅ Technicien |
+| `type === 'utilisateur'` ET `universes` non vide | ✅ Technicien |
+| `is_on` normalisé = true | ✅ Actif |
+| `type` dans `[commercial, admin, assistant, administratif]` | ❌ Exclu |
 
-| Position | Onglet | Icône | Couleur |
-|----------|--------|-------|---------|
-| 1 | Actions | Settings | Blue |
-| 2 | Apporteurs | Users | Purple |
-| 3 | Administratif | FolderOpen | Orange |
-| 4 | Parc | Car | Green |
-| **5** | **Performance** | **Activity** | **Pink** |
+### Quelles interventions génèrent du CA ?
+| Type | Génère CA ? |
+|------|-------------|
+| Dépannage | ✅ Oui |
+| Travaux | ✅ Oui |
+| Recherche de fuite | ✅ Oui (cas spécial) |
+| RT (Relevé Technique) | ❌ Non |
+| TH (Taux Humidité) | ❌ Non |
+| SAV | ❌ Non |
+| Diagnostic | ❌ Non |
 
-## 4. Impact
-- Aucune modification de routing nécessaire
-- Le module Performance Terrain sera accessible via `/?tab=outils` puis clic sur "Performance"
-- Persistance de l'onglet actif via `useSessionState`
+---
+
+## 📁 Fichiers impactés
+
+| Fichier | Type de modification |
+|---------|---------------------|
+| `src/apogee-connect/utils/techTools.ts` | Ajout helpers + renforcement filtres |
+| `src/statia/domain/rules.ts` | Ajout TH + recherche fuite dans constantes |
+| `src/shared/utils/technicienUniversEngine.ts` | Exclusion TH + recherche fuite productive |
+| `src/apogee-connect/utils/technicienUniversCalculations.ts` | Alignement logique |
+
+---
+
+## 🧪 Résultat attendu
+
+1. **Sébastien Caron** (commercial/admin) ne recevra plus de CA
+2. **Techniciens manquants** apparaîtront grâce à la normalisation `is_on`
+3. **TH** n'impactera plus les stats technicien
+4. **Recherche de fuite** sera toujours comptée comme productive
