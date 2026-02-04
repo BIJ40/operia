@@ -1,6 +1,7 @@
 /**
  * PublicEditorContext - Contexte lecture seule pour le Guide Apogée public
  * Permet aux visiteurs anonymes de consulter les blocks sans authentification
+ * Utilise la vue sécurisée 'blocks_public' pour éviter l'accès direct à la table blocks
  */
 
 import { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
@@ -14,6 +15,30 @@ interface PublicEditorContextType {
 
 const PublicEditorContext = createContext<PublicEditorContextType | undefined>(undefined);
 
+// Interface pour les données brutes de la vue blocks_public
+interface BlockPublicRow {
+  id: string;
+  type: string;
+  title: string;
+  slug: string;
+  content: string | null;
+  parent_id: string | null;
+  order: number;
+  icon: string | null;
+  color_preset: string | null;
+  hide_from_sidebar: boolean | null;
+  hide_title: boolean | null;
+  attachments: unknown;
+  content_type: string | null;
+  tips_type: string | null;
+  summary: string | null;
+  show_summary: boolean | null;
+  is_in_progress: boolean | null;
+  completed_at: string | null;
+  content_updated_at: string | null;
+  is_empty: boolean | null;
+}
+
 export function PublicEditorProvider({ children }: { children: ReactNode }) {
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,38 +46,25 @@ export function PublicEditorProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const loadBlocks = async () => {
       try {
-        // Chargement des métadonnées sans contenu pour optimiser
+        // Utiliser la vue publique sécurisée blocks_public (accessible aux anonymes)
+        // Note: on utilise 'as any' car la vue n'est pas dans les types générés
         const { data, error } = await supabase
-          .from('blocks')
-          .select('id,type,title,slug,parent_id,order,icon,color_preset,hide_from_sidebar,hide_title,attachments,content_type,tips_type,summary,show_summary,is_in_progress,completed_at,content_updated_at,is_empty')
+          .from('blocks_public' as any)
+          .select('*')
           .order('order');
 
         if (error) throw error;
 
-        if (data && data.length > 0) {
-          // Charger le contenu par lots pour éviter les timeouts
-          const ids = data.map((b) => b.id);
-          const batchSize = 50;
-          const contentMap = new Map<string, string>();
-
-          for (let i = 0; i < ids.length; i += batchSize) {
-            const batchIds = ids.slice(i, i + batchSize);
-            const { data: contentData, error: contentError } = await supabase
-              .from('blocks')
-              .select('id,content')
-              .in('id', batchIds);
-
-            if (contentError) throw contentError;
-            contentData?.forEach((c) => contentMap.set(c.id, c.content || ''));
-          }
-
+        if (data && Array.isArray(data) && data.length > 0) {
+          const rawBlocks = data as unknown as BlockPublicRow[];
+          
           // Transformer les données pour correspondre à l'interface Block
-          const transformedBlocks: Block[] = data.map((block) => ({
+          const transformedBlocks: Block[] = rawBlocks.map((block) => ({
             id: block.id,
             type: block.type as Block['type'],
             title: block.title,
             slug: block.slug,
-            content: contentMap.get(block.id) || '',
+            content: block.content || '',
             parentId: block.parent_id,
             order: block.order,
             icon: block.icon,
