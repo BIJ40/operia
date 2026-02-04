@@ -632,6 +632,11 @@ export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusC
     setActiveTicket(ticket || null);
   };
 
+  // ============================================
+  // COLONNES PROTÉGÉES - Drop manuel interdit
+  // ============================================
+  const PROTECTED_DROP_TARGETS = ['USER', 'SUPPORT_RESOLU'];
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveTicket(null);
@@ -643,6 +648,15 @@ export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusC
 
     // Vérifier que c'est un statut valide
     if (!statuses.find((s) => s.id === newStatus)) return;
+
+    // ============================================
+    // RÈGLE: Interdire le drop dans USER et SUPPORT_RESOLU
+    // Ces colonnes sont réservées au système
+    // ============================================
+    if (PROTECTED_DROP_TARGETS.includes(newStatus)) {
+      toast.error('Cette colonne est réservée au système. Déplacement manuel interdit.');
+      return;
+    }
 
     const ticket = tickets.find((t) => t.id === ticketId);
     if (ticket && ticket.kanban_status !== newStatus) {
