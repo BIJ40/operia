@@ -1,6 +1,12 @@
 import { isWithinInterval } from "date-fns";
-import { buildTechMap, resolveTech } from "./techTools";
+import { 
+  buildTechMap, 
+  resolveTech, 
+  normalizeIsOn, 
+  isExcludedUserType 
+} from "./techTools";
 import { extractFactureMeta } from "@/statia/rules/rules";
+import { RT_TYPES, TH_TYPES, SPECIAL_PRODUCTIVE_TYPE2 } from "@/statia/domain/rules";
 
 /**
  * Normaliser les slugs d'univers de l'API vers nos labels
@@ -65,16 +71,54 @@ function calculateTechTimeByProject(
     const projectId = intervention.projectId || intervention.refProjectId;
     if (!projectId) return;
 
-    // Exclure les relevés techniques
-    const isRT =
-      intervention.data?.biRt?.isValidated === true ||
-      intervention.data?.type2 === "RT";
-    if (isRT) return;
+    // Extraction des types pour les règles
+    const type2Raw = (intervention.type2 || intervention.data?.type2 || "");
+    const type2Lower = type2Raw.toLowerCase().trim();
+    const typeRaw = (intervention.type || intervention.data?.type || "").toLowerCase().trim();
 
-    // Vérifier que c'est une intervention éligible (dépannage ou travaux)
-    const isEligible =
-      intervention.data?.biDepan || intervention.data?.biTvx;
-    if (!isEligible) return;
+    // ============================================
+    // RÈGLE: Exclure les RT (Relevés Techniques)
+    // ============================================
+    const isRTExplicit = RT_TYPES.some(rt => 
+      type2Lower === rt.toLowerCase() || 
+      typeRaw === rt.toLowerCase() ||
+      type2Lower.includes(rt.toLowerCase())
+    );
+    
+    const hasBiRt = intervention.data?.biRt?.isValidated === true;
+    const hasBiDepan = intervention.data?.biDepan;
+    const hasBiTvx = intervention.data?.biTvx;
+    const isRTViaBi = hasBiRt && !hasBiDepan && !hasBiTvx;
+    
+    if (isRTExplicit || isRTViaBi) return;
+
+    // ============================================
+    // RÈGLE: Exclure les TH (Taux d'Humidité)
+    // ============================================
+    const isTH = TH_TYPES.some(th => 
+      type2Lower === th.toLowerCase() || 
+      typeRaw === th.toLowerCase() ||
+      type2Lower.includes(th.toLowerCase())
+    );
+    if (isTH) return;
+
+    // ============================================
+    // RÈGLE: Exclure les SAV (égalité stricte)
+    // ============================================
+    const isSAV = type2Lower === "sav" || typeRaw === "sav";
+    if (isSAV) return;
+
+    // ============================================
+    // RÈGLE: "Recherche de fuite" = TOUJOURS productif
+    // ============================================
+    const isRechercheFuite = SPECIAL_PRODUCTIVE_TYPE2.some(rf => 
+      type2Lower.includes(rf.toLowerCase()) || 
+      typeRaw.includes(rf.toLowerCase())
+    );
+
+    // RÈGLE: Types productifs (biDepan ou biTvx requis, SAUF recherche de fuite)
+    const isProductive = hasBiDepan || hasBiTvx || isRechercheFuite;
+    if (!isProductive) return;
 
     // Initialiser le projet si nécessaire
     if (!dureeTechParProjet[projectId]) {

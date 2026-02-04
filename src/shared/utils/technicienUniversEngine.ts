@@ -14,11 +14,18 @@
  */
 
 import { isWithinInterval } from "date-fns";
-import { buildTechMap, resolveTech, TechnicienInfo } from "@/apogee-connect/utils/techTools";
+import { 
+  buildTechMap, 
+  resolveTech, 
+  TechnicienInfo, 
+  normalizeIsOn, 
+  isExcludedUserType 
+} from "@/apogee-connect/utils/techTools";
 import { extractFactureMeta } from "@/statia/rules/rules";
 // Import centralisé depuis StatIA normalizers (source unique de vérité)
 import { normalizeUniversSlug } from "@/statia/engine/normalizers";
 import { logDebug } from "@/lib/logger";
+import { RT_TYPES, TH_TYPES, SPECIAL_PRODUCTIVE_TYPE2 } from "@/statia/domain/rules";
 
 // ===============================
 // TYPES
@@ -87,27 +94,28 @@ const EXCLUDED_UNIVERSES = new Set([
 export function isActiveTechnician(user: any): boolean {
   if (!user) return false;
 
-  // Vérifier universes à plusieurs niveaux (data.universes ou universes direct)
+  // RÈGLE 1: Exclure les types non-techniciens (commercial, admin, etc.)
+  const userType = (user?.type || '').toString();
+  if (isExcludedUserType(userType)) return false;
+
+  // RÈGLE 2: Vérifier universes à plusieurs niveaux (data.universes ou universes direct)
   const hasUniverses = 
     (Array.isArray(user?.data?.universes) && user.data.universes.length > 0) ||
     (Array.isArray(user?.universes) && user.universes.length > 0);
   
+  // RÈGLE 3: Critères d'identification technicien
   const isTechnicien =
     user?.isTechnicien === true ||
     user?.isTechnicien === 1 ||
     user?.type === "technicien" ||
-    user?.type?.toLowerCase() === "technicien" ||
+    userType.toLowerCase() === "technicien" ||
     (user?.type === "utilisateur" && hasUniverses) ||
-    (user?.type?.toLowerCase() === "utilisateur" && hasUniverses);
+    (userType.toLowerCase() === "utilisateur" && hasUniverses);
 
-  // Vérification plus souple pour is_on/isActive (accepte true, 1, "1", "true")
+  // RÈGLE 4: Vérification is_on/isActive avec normalisation
   const isActive = 
-    user?.is_on === true || 
-    user?.is_on === 1 ||
-    user?.is_on === "1" ||
-    user?.isActive === true || 
-    user?.isActive === 1 ||
-    user?.isActive === "1" ||
+    normalizeIsOn(user?.is_on) || 
+    normalizeIsOn(user?.isActive) ||
     // Fallback: si pas de champ explicite, considérer actif par défaut si c'est un technicien
     (user?.is_on === undefined && user?.isActive === undefined);
 
@@ -139,19 +147,19 @@ export function calculateTechTimeByProject(
     const projectId = intervention.projectId || intervention.refProjectId;
     if (!projectId) return;
 
-    // RÈGLE RENFORCÉE: Exclure les RT (relevés techniques)
+    // Extraction des types pour les règles
     const type2Raw = (intervention.type2 || intervention.data?.type2 || "");
     const type2Lower = type2Raw.toLowerCase().trim();
     const typeRaw = (intervention.type || intervention.data?.type || "").toLowerCase().trim();
     
-    // RT explicite via type2 ou type
-    const isRTExplicit = 
-      type2Lower === "rt" ||
-      type2Lower.includes("relevé technique") ||
-      type2Lower.includes("releve technique") ||
-      type2Lower.includes("rdv technique") ||
-      typeRaw === "rt" ||
-      typeRaw.includes("relevé technique");
+    // ============================================
+    // RÈGLE: Exclure les RT (Relevés Techniques)
+    // ============================================
+    const isRTExplicit = RT_TYPES.some(rt => 
+      type2Lower === rt.toLowerCase() || 
+      typeRaw === rt.toLowerCase() ||
+      type2Lower.includes(rt.toLowerCase())
+    );
     
     // RT via biRt seul (sans travaux)
     const hasBiRt = intervention.data?.biRt?.isValidated === true || intervention.data?.isRT === true;
@@ -162,12 +170,32 @@ export function calculateTechTimeByProject(
     
     if (isRTExplicit || isRTViaBi) return;
 
+    // ============================================
+    // RÈGLE: Exclure les TH (Taux d'Humidité)
+    // ============================================
+    const isTH = TH_TYPES.some(th => 
+      type2Lower === th.toLowerCase() || 
+      typeRaw === th.toLowerCase() ||
+      type2Lower.includes(th.toLowerCase())
+    );
+    if (isTH) return;
+
+    // ============================================
     // RÈGLE: Exclure les SAV (égalité stricte)
+    // ============================================
     const isSAV = type2Lower === "sav" || typeRaw === "sav";
     if (isSAV) return;
 
-    // RÈGLE STRICTE: Types productifs uniquement (biDepan ou biTvx requis)
-    const isProductive = hasBiDepan || hasBiTvx;
+    // ============================================
+    // RÈGLE: "Recherche de fuite" = TOUJOURS productif
+    // ============================================
+    const isRechercheFuite = SPECIAL_PRODUCTIVE_TYPE2.some(rf => 
+      type2Lower.includes(rf.toLowerCase()) || 
+      typeRaw.includes(rf.toLowerCase())
+    );
+
+    // RÈGLE: Types productifs (biDepan ou biTvx requis, SAUF recherche de fuite)
+    const isProductive = hasBiDepan || hasBiTvx || isRechercheFuite;
     if (!isProductive) return;
 
     // Initialiser le projet si nécessaire

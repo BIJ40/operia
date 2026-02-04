@@ -239,6 +239,8 @@ export type DomainAwareMetricDefinition = MetricDefinitionJSON & {
 export const PRODUCTIVE_INTERVENTION_TYPES = [
   'Technique',      // Travaux (TVX)
   'Depannage',      // Dépannage (DEP)
+  'recherche de fuite', // Cas spécial: toujours productif
+  'Recherche de fuite',
 ];
 
 /**
@@ -251,9 +253,12 @@ export const PRODUCTIVE_INTERVENTION_TYPES = [
  */
 export const NON_PRODUCTIVE_INTERVENTION_TYPES = [
   'RT',           // Relevé technique pour chiffrage
-  'TH',           // Relevé taux d'humidité
+  'TH',           // Relevé taux d'humidité  
   'SAV',          // Service après-vente (garantie)
   'releve technique',
+  'Releve technique',
+  'taux humidite',
+  "taux d'humidité",
 ];
 
 /**
@@ -264,6 +269,7 @@ export const SPECIAL_PRODUCTIVE_TYPE2 = [
   'recherche de fuite',
   'Recherche de fuite',
   'RECHERCHE DE FUITE',
+  'recherche fuite',
 ];
 
 /**
@@ -279,14 +285,30 @@ export const SPECIAL_PRODUCTIVE_TYPE2 = [
 export const SAV_TYPES = ['SAV'];
 
 /**
- * Types RT uniquement
+ * Types RT uniquement (Relevés Techniques)
  */
-export const RT_TYPES = ['RT', 'releve technique', 'Releve technique'];
+export const RT_TYPES = [
+  'RT', 
+  'releve technique', 
+  'Releve technique',
+  'relevé technique',
+  'Relevé technique',
+  'rdv technique',
+  'RDV technique',
+];
 
 /**
- * Types TH uniquement (taux d'humidité)
+ * Types TH uniquement (Taux d'Humidité)
+ * Ces interventions ne génèrent JAMAIS de CA
  */
-export const TH_TYPES = ['TH'];
+export const TH_TYPES = [
+  'TH',
+  'taux humidite',
+  "taux d'humidité",
+  'Taux humidite',
+  "Taux d'humidité",
+  'TAUX HUMIDITE',
+];
 
 // ============================================================================
 // CONSTANTES MÉTIER - STATUTS DOSSIER
