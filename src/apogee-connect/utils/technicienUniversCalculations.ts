@@ -3,7 +3,8 @@ import {
   buildTechMap, 
   resolveTech, 
   normalizeIsOn, 
-  isExcludedUserType 
+  isExcludedUserType,
+  TechnicienInfo
 } from "./techTools";
 import { extractFactureMeta } from "@/statia/rules/rules";
 import { RT_TYPES, TH_TYPES, SPECIAL_PRODUCTIVE_TYPE2 } from "@/statia/domain/rules";
@@ -57,12 +58,50 @@ interface DureeTotaleParProjet {
 }
 
 /**
+ * Vérifie si un utilisateur est un technicien actif (non commercial/admin)
+ */
+function isActiveTechnician(user: any, TECHS: Record<number, TechnicienInfo>): boolean {
+  if (!user) return false;
+  
+  // RÈGLE 1: Exclure les types non-techniciens (commercial, admin, etc.)
+  const userType = (user?.type || '').toString();
+  if (isExcludedUserType(userType)) return false;
+  
+  // RÈGLE 2: L'utilisateur doit être dans le dictionnaire TECHS
+  const userId = typeof user === 'number' ? user : user?.id;
+  if (userId && TECHS[userId]) {
+    return TECHS[userId].actif;
+  }
+  
+  // Si pas dans TECHS, vérifier manuellement
+  const hasUniverses = 
+    (Array.isArray(user?.data?.universes) && user.data.universes.length > 0) ||
+    (Array.isArray(user?.universes) && user.universes.length > 0);
+  
+  const isTechnicien =
+    user?.isTechnicien === true ||
+    user?.isTechnicien === 1 ||
+    user?.type === "technicien" ||
+    userType.toLowerCase() === "technicien" ||
+    (user?.type === "utilisateur" && hasUniverses) ||
+    (userType.toLowerCase() === "utilisateur" && hasUniverses);
+
+  const isActive = normalizeIsOn(user?.is_on) || normalizeIsOn(user?.isActive);
+
+  return isTechnicien && isActive;
+}
+
+/**
  * Calcule le temps passé par chaque technicien sur chaque projet
  * en excluant les interventions RT et en ne comptant que les visites validées
+ * 
+ * RÈGLE AJOUTÉE: Exclure les utilisateurs non-techniciens (commercial, admin, etc.)
  */
 function calculateTechTimeByProject(
   interventions: any[],
-  projects: any[]
+  projects: any[],
+  usersMap: Map<number, any>,
+  TECHS: Record<number, TechnicienInfo>
 ): { dureeTechParProjet: DureeTechParProjet; dureeTotaleParProjet: DureeTotaleParProjet } {
   const dureeTechParProjet: DureeTechParProjet = {};
   const dureeTotaleParProjet: DureeTotaleParProjet = {};
@@ -132,14 +171,29 @@ function calculateTechTimeByProject(
       if (visite.state !== "validated") return;
 
       const duree = Number(visite.duree) || 0;
-      const usersIds = visite.usersIds || [];
+      if (duree <= 0) return;
+      
+      const usersIds: number[] = visite.usersIds || [];
 
-      usersIds.forEach((techId: string) => {
-        if (!dureeTechParProjet[projectId][techId]) {
-          dureeTechParProjet[projectId][techId] = 0;
+      // ============================================
+      // RÈGLE CRITIQUE: Ne compter que les VRAIS techniciens
+      // Exclure commercial, admin, assistant, administratif
+      // ============================================
+      const technicienIds = usersIds.filter((userId: number) => {
+        const user = usersMap.get(userId);
+        return isActiveTechnician(user, TECHS);
+      });
+
+      // Si aucun technicien sur cette visite, ignorer
+      if (technicienIds.length === 0) return;
+
+      technicienIds.forEach((techId: number) => {
+        const techKey = String(techId);
+        if (!dureeTechParProjet[projectId][techKey]) {
+          dureeTechParProjet[projectId][techKey] = 0;
         }
         // Chaque technicien compte la durée complète de la visite
-        dureeTechParProjet[projectId][techId] += duree;
+        dureeTechParProjet[projectId][techKey] += duree;
         dureeTotaleParProjet[projectId] += duree;
       });
     });
@@ -158,13 +212,19 @@ export function calculateTechnicienUniversStats(
   users: any[],
   dateRange: { start: Date; end: Date }
 ): TechnicienUniversStats[] {
+  // Construire le dictionnaire des techniciens AVANT le calcul des temps
+  const TECHS = buildTechMap(users);
+  
+  // Créer une map des utilisateurs pour le filtrage
+  const usersMap = new Map<number, any>(users.map((u) => [u.id, u]));
+
+  // Calculer les temps avec le filtre sur les types utilisateurs
   const { dureeTechParProjet, dureeTotaleParProjet } = calculateTechTimeByProject(
     interventions,
-    projects
+    projects,
+    usersMap,
+    TECHS
   );
-
-  // Construire le dictionnaire des techniciens
-  const TECHS = buildTechMap(users);
 
   // Map des projets pour accès rapide
   const projectsMap = new Map(projects.map((p) => [p.id, p]));
