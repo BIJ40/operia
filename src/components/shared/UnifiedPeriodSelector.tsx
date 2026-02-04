@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import type { DateRange } from "react-day-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
@@ -93,8 +94,7 @@ export function UnifiedPeriodSelector({
   className,
 }: UnifiedPeriodSelectorProps) {
   const [showPicker, setShowPicker] = useState(false);
-  const [customStartDate, setCustomStartDate] = useState<Date | undefined>();
-  const [customEndDate, setCustomEndDate] = useState<Date | undefined>();
+  const [customRange, setCustomRange] = useState<DateRange | undefined>();
   
   // État pour le sélecteur de mois spécifique
   const now = new Date();
@@ -311,12 +311,11 @@ export function UnifiedPeriodSelector({
   };
 
   const handleCustomRangeApply = () => {
-    if (customStartDate && customEndDate) {
-      const label = `${format(customStartDate, "dd/MM")} - ${format(customEndDate, "dd/MM")}`;
-      onChange(customStartDate, customEndDate, label, 'custom');
+    if (customRange?.from && customRange?.to) {
+      const label = `${format(customRange.from, "dd/MM")} - ${format(customRange.to, "dd/MM")}`;
+      onChange(customRange.from, customRange.to, label, 'custom');
       setShowPicker(false);
-      setCustomStartDate(undefined);
-      setCustomEndDate(undefined);
+      setCustomRange(undefined);
     }
   };
 
@@ -429,34 +428,29 @@ export function UnifiedPeriodSelector({
               CHOISIR
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 bg-background z-50" align="end">
-            <div className="p-4 space-y-4">
-              <div>
-                <p className="text-sm font-medium mb-2">Date de début</p>
-                <Calendar
-                  mode="single"
-                  selected={customStartDate}
-                  onSelect={setCustomStartDate}
-                  locale={fr}
-                  className={cn("rounded-md border pointer-events-auto")}
-                />
-              </div>
-              <div>
-                <p className="text-sm font-medium mb-2">Date de fin</p>
-                <Calendar
-                  mode="single"
-                  selected={customEndDate}
-                  onSelect={setCustomEndDate}
-                  locale={fr}
-                  disabled={(date) => customStartDate ? date < customStartDate : false}
-                  className={cn("rounded-md border pointer-events-auto")}
-                />
-              </div>
+          <PopoverContent className="w-auto p-3 bg-background z-50" align="end">
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground text-center">
+                {customRange?.from 
+                  ? customRange.to 
+                    ? `${format(customRange.from, "dd MMM", { locale: fr })} → ${format(customRange.to, "dd MMM", { locale: fr })}`
+                    : `Début: ${format(customRange.from, "dd MMM", { locale: fr })} — Choisir la fin`
+                  : "Sélectionner la période"
+                }
+              </p>
+              <Calendar
+                mode="range"
+                selected={customRange}
+                onSelect={setCustomRange}
+                locale={fr}
+                numberOfMonths={1}
+                className={cn("rounded-md border pointer-events-auto")}
+              />
               <div className="flex gap-2">
                 <Button
                   size="sm"
                   onClick={handleCustomRangeApply}
-                  disabled={!customStartDate || !customEndDate}
+                  disabled={!customRange?.from || !customRange?.to}
                   className="flex-1"
                 >
                   Appliquer
@@ -466,8 +460,7 @@ export function UnifiedPeriodSelector({
                   variant="outline"
                   onClick={() => {
                     setShowPicker(false);
-                    setCustomStartDate(undefined);
-                    setCustomEndDate(undefined);
+                    setCustomRange(undefined);
                   }}
                   className="flex-1"
                 >
