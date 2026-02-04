@@ -1,5 +1,6 @@
 /**
  * Composant liste des dossiers SAV avec gestion du coût et confirmation
+ * Affiche uniquement les dossiers SAV de la période sélectionnée
  */
 
 import { useState, useMemo } from "react";
@@ -27,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useSavOverrides } from "@/hooks/use-sav-overrides";
 import { formatEuros, formatUniverseLabel } from "@/apogee-connect/utils/formatters";
 import { TechnicienMultiSelect } from "./TechnicienMultiSelect";
+import { useSecondaryFilters } from "@/apogee-connect/contexts/SecondaryFiltersContext";
 
 export interface SAVTechnicien {
   id: number;
@@ -54,14 +56,31 @@ interface SAVDossierListProps {
 
 export function SAVDossierList({ dossiers, isLoading = false }: SAVDossierListProps) {
   const { overridesMap, upsertOverride, deleteOverride, isUpdating } = useSavOverrides();
+  const { filters } = useSecondaryFilters();
   const [showAll, setShowAll] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editCout, setEditCout] = useState<string>("");
   const [editNotes, setEditNotes] = useState<string>("");
 
+  // Filtrer les dossiers selon la période sélectionnée
+  const filteredDossiers = useMemo(() => {
+    if (!filters.dateRange?.start || !filters.dateRange?.end) {
+      return dossiers;
+    }
+    
+    const startTs = filters.dateRange.start.getTime();
+    const endTs = filters.dateRange.end.getTime();
+    
+    return dossiers.filter((d) => {
+      if (!d.dateSAV) return false;
+      const dossierDate = new Date(d.dateSAV).getTime();
+      return dossierDate >= startTs && dossierDate <= endTs;
+    });
+  }, [dossiers, filters.dateRange]);
+
   // Séparer en deux listes: à traiter vs traités
-  const dossiersATraiter = dossiers.filter((d) => !overridesMap.has(d.projectId));
-  const dossiersTraites = dossiers.filter((d) => overridesMap.has(d.projectId));
+  const dossiersATraiter = filteredDossiers.filter((d) => !overridesMap.has(d.projectId));
+  const dossiersTraites = filteredDossiers.filter((d) => overridesMap.has(d.projectId));
   
   const displayedATraiter = showAll ? dossiersATraiter : dossiersATraiter.slice(0, 10);
   const displayedTraites = showAll ? dossiersTraites : dossiersTraites.slice(0, 10);
