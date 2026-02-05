@@ -70,7 +70,13 @@ export default function DiffusionDashboard() {
         // Pour l'affichage TV, on bascule d'abord sur /tv-display (sans layout) avant de passer en plein écran.
         // ⚠️ En preview, il faut conserver __lovable_token sinon la session peut sembler "perdue".
         if (isAgencyDiffusionRoute) {
-          navigate({ pathname: '/tv-display', search: location.search }, { replace: true });
+          const params = new URLSearchParams(location.search);
+          const token = params.get('__lovable_token') ?? sessionStorage.getItem('__lovable_token');
+          const search = token
+            ? `?__lovable_token=${encodeURIComponent(token)}`
+            : location.search;
+
+          navigate({ pathname: '/tv-display', search }, { replace: true });
         }
 
         await document.documentElement.requestFullscreen();

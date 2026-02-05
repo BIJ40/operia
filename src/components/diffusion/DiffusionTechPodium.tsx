@@ -44,6 +44,23 @@ const MEDAL_CONFIG = [
   },
 ];
 
+const cleanPodiumLabel = (value: unknown): string => {
+  if (typeof value !== 'string') return '';
+  return value
+    .normalize('NFKC')
+    .replace(/[\u00AD\u061C\u180E\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, '')
+    .replace(/[\u00A0\u202F]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+const getTechDisplayName = (tech: TechnicienRanking): string => {
+  const name = cleanPodiumLabel(tech.nom);
+  if (name) return name;
+  // Fallback visuel : on affiche quelque chose dans la tile plutôt que "vide"
+  return `Technicien #${tech.rank}`;
+};
+
 export const DiffusionTechPodium = ({ ranking, isLoading }: DiffusionTechPodiumProps) => {
   if (isLoading) {
     return (
@@ -106,7 +123,7 @@ export const DiffusionTechPodium = ({ ranking, isLoading }: DiffusionTechPodiumP
             >
               <span className="text-3xl mb-2">{config.emoji}</span>
               <p className={cn('font-bold text-sm truncate max-w-full', config.textClass)}>
-                {tech.nom}
+                {getTechDisplayName(tech)}
               </p>
               <p className="text-lg font-bold text-foreground mt-1">
                 {formatEuros(tech.caHT)}
@@ -130,7 +147,7 @@ export const DiffusionTechPodium = ({ ranking, isLoading }: DiffusionTechPodiumP
               >
                 <span className="text-xs text-muted-foreground mb-1">#{tech.rank}</span>
                 <p className="font-medium text-sm text-foreground truncate max-w-full">
-                  {tech.nom}
+                  {getTechDisplayName(tech)}
                 </p>
                 <p className="text-sm font-semibold text-foreground">
                   {formatEuros(tech.caHT)}
