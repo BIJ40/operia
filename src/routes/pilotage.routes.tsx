@@ -65,10 +65,41 @@ export function PilotageRoutes() {
       <Route path="/agency/actions/category/:slug" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="actions_a_mener"><CategoryActionsAMener /></ModuleGuard></RoleGuard></AgencyLayout>} />
       
       {/* Diffusion */}
-      <Route path="/agency/diffusion" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence" requiredOption="diffusion"><DiffusionDashboard /></ModuleGuard></RoleGuard></AgencyLayout>} />
+      <Route
+        path="/agency/diffusion"
+        element={
+          <AgencyLayout>
+            <RoleGuard
+              minRole="franchisee_admin"
+              showError
+              errorMessage="Accès réservé : rôle insuffisant pour la Diffusion TV."
+            >
+              <ModuleGuard
+                moduleKey="pilotage_agence"
+                requiredOption="diffusion"
+                showError
+                errorMessage="Module Diffusion TV non activé pour votre profil."
+              >
+                <DiffusionDashboard />
+              </ModuleGuard>
+            </RoleGuard>
+          </AgencyLayout>
+        }
+      />
       
       {/* TV Display - Route sans layout pour affichage plein écran TV */}
-      <Route path="/tv-display" element={<RoleGuard minRole="franchisee_admin"><DiffusionDashboard /></RoleGuard>} />
+      <Route
+        path="/tv-display"
+        element={
+          <RoleGuard
+            minRole="franchisee_admin"
+            showError
+            errorMessage="Accès réservé : rôle insuffisant pour l'affichage TV."
+          >
+            <DiffusionDashboard />
+          </RoleGuard>
+        }
+      />
       
       {/* RH Tech - redirige vers RH principal */}
       <Route path="/agency/rh-tech" element={<Navigate to="/rh/suivi" replace />} />
