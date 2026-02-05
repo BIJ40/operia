@@ -68,6 +68,7 @@ export function useDiffusionKpisStatia(currentMonthIndex: number) {
         delaiResult,
         topApporteursResult,
         caUniversResult,
+        usersResult,
       ] = await Promise.all([
         getMetricForAgency('ca_global_ht', agence, { dateRange }, services),
         getMetricForAgency('taux_sav_global', agence, { dateRange }, services),
@@ -79,6 +80,7 @@ export function useDiffusionKpisStatia(currentMonthIndex: number) {
         getMetricForAgency('delai_moyen_prise_en_charge_intervention', agence, { dateRange }, services),
         getMetricForAgency('top_apporteurs_ca', agence, { dateRange }, services),
         getMetricForAgency('ca_par_univers', agence, { dateRange }, services),
+        services.getUsers(agence),
       ]);
 
       const currentMonthCA = Number(caResult.value) || 0;
@@ -88,26 +90,46 @@ export function useDiffusionKpisStatia(currentMonthIndex: number) {
       // Extraire ranking techniciens complet
       const topTechBreakdown = topTechResult.breakdown as any;
       const ranking = topTechBreakdown?.ranking || [];
-      
-      const allTechRanking: TechnicienRanking[] = ranking
-        .filter((tech: any) => {
-          // Exclure les techniciens sans nom valide (fantômes)
-          const hasValidName = tech.name && typeof tech.name === 'string' && tech.name.trim().length > 0;
-          return hasValidName;
-        })
-        .map((tech: any, index: number) => ({
-          id: tech.id || `tech-${index}`,
-          nom: (tech.name || tech.label || '').trim() || `Tech ${index + 1}`,
-          caHT: tech.ca || tech.totalCA || 0,
-          color: tech.color,
-          rank: index + 1,
-        }));
 
-      const topTechData = ranking[0];
-      const topTechnicien = topTechData ? {
-        nom: topTechData.name || `Tech ${topTechData.id}`,
-        caHT: topTechData.ca || topTechData.totalCA || 0,
-      } : null;
+      // Résoudre les noms manquants via la liste users (cas observé: #3 sans name)
+      const users = Array.isArray(usersResult) ? (usersResult as any[]) : [];
+      const usersById = new Map<string, any>(users.map((u: any) => [String(u?.id), u]));
+
+      const resolveUserFullName = (user: any): string => {
+        const prenom = (user?.firstname ?? user?.first_name ?? '').toString().trim();
+        const nom = (user?.lastname ?? user?.last_name ?? user?.name ?? '').toString().trim();
+        return [prenom, nom].filter(Boolean).join(' ').trim();
+      };
+
+      const resolveTechName = (tech: any, index: number): string => {
+        const direct = [tech?.name, tech?.label].find(
+          (v) => typeof v === 'string' && v.trim().length > 0
+        ) as string | undefined;
+        if (direct) return direct.trim();
+
+        const id = tech?.id ?? tech?.techId ?? tech?.technicienId ?? tech?.userId;
+        if (id != null) {
+          const user = usersById.get(String(id));
+          const fromUser = user ? resolveUserFullName(user) : '';
+          if (fromUser) return fromUser;
+          return `Tech ${id}`;
+        }
+
+        return `Tech ${index + 1}`;
+      };
+
+      const allTechRanking: TechnicienRanking[] = ranking.map((tech: any, index: number) => ({
+        id: String(tech.id ?? `tech-${index}`),
+        nom: resolveTechName(tech, index),
+        caHT: tech.ca || tech.totalCA || 0,
+        color: tech.color,
+        rank: tech.rank ?? index + 1,
+      }));
+
+      const topTechData = allTechRanking[0];
+      const topTechnicien = topTechData
+        ? { nom: topTechData.nom, caHT: topTechData.caHT }
+        : null;
       
       const nbTechsActifs = (caMoyenResult.breakdown as any)?.nbTechActifs || allTechRanking.length;
 
