@@ -101,12 +101,16 @@ export function useDiffusionKpisStatia(currentMonthIndex: number) {
           .normalize('NFKC')
           // Retire les caractères "format" invisibles (LRM/RLM, ZWSP, etc.)
           // qui peuvent rendre un libellé visuellement vide.
-          .replace(/[\u00AD\u061C\u180E\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, '')
+          .replace(/[\u034F\u00AD\u061C\u180E\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, '')
           // NBSP / NNBSP => espace normal
           .replace(/[\u00A0\u202F]/g, ' ')
           .replace(/\s+/g, ' ')
           .trim();
       };
+
+      // Un libellé "non vide" peut quand même être invisible (ex: only combining chars).
+      // On exige au moins une lettre/chiffre pour le considérer affichable.
+      const isMeaningfulLabel = (label: string): boolean => /[\p{L}\p{N}]/u.test(label);
 
       const resolveUserFullName = (user: any): string => {
         const prenom = cleanLabel(user?.firstname ?? user?.first_name ?? user?.firstName ?? '');
@@ -119,7 +123,7 @@ export function useDiffusionKpisStatia(currentMonthIndex: number) {
         // qui passent les checks `.trim()` mais s'affichent "vide" à l'écran.
         const direct = [tech?.name, tech?.label]
           .map(cleanLabel)
-          .find((v) => v.length > 0);
+          .find((v) => v.length > 0 && isMeaningfulLabel(v));
         if (direct) return direct;
 
         const id = tech?.id ?? tech?.techId ?? tech?.technicienId ?? tech?.userId;

@@ -18,6 +18,7 @@ export function openInNewTabPreservingPreviewToken(pathname: string) {
   if (tokenFromUrl) {
     try {
       sessionStorage.setItem("__lovable_token", tokenFromUrl);
+      localStorage.setItem("__lovable_token", tokenFromUrl);
     } catch {
       // ignore
     }
@@ -26,7 +27,9 @@ export function openInNewTabPreservingPreviewToken(pathname: string) {
   let previewToken: string | null = tokenFromUrl;
   if (!previewToken) {
     try {
-      previewToken = sessionStorage.getItem("__lovable_token");
+      previewToken =
+        sessionStorage.getItem("__lovable_token") ??
+        localStorage.getItem("__lovable_token");
     } catch {
       previewToken = null;
     }
