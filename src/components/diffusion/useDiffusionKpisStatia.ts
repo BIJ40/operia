@@ -95,17 +95,27 @@ export function useDiffusionKpisStatia(currentMonthIndex: number) {
       const users = Array.isArray(usersResult) ? (usersResult as any[]) : [];
       const usersById = new Map<string, any>(users.map((u: any) => [String(u?.id), u]));
 
+      const cleanLabel = (value: unknown): string => {
+        if (typeof value !== 'string') return '';
+        return value
+          .replace(/[\u200B-\u200D\uFEFF]/g, '') // retire les caractères invisibles
+          .replace(/\s+/g, ' ')
+          .trim();
+      };
+
       const resolveUserFullName = (user: any): string => {
-        const prenom = (user?.firstname ?? user?.first_name ?? '').toString().trim();
-        const nom = (user?.lastname ?? user?.last_name ?? user?.name ?? '').toString().trim();
-        return [prenom, nom].filter(Boolean).join(' ').trim();
+        const prenom = cleanLabel(user?.firstname ?? user?.first_name ?? user?.firstName ?? '');
+        const nom = cleanLabel(user?.lastname ?? user?.last_name ?? user?.lastName ?? user?.name ?? '');
+        return cleanLabel([prenom, nom].filter(Boolean).join(' '));
       };
 
       const resolveTechName = (tech: any, index: number): string => {
-        const direct = [tech?.name, tech?.label].find(
-          (v) => typeof v === 'string' && v.trim().length > 0
-        ) as string | undefined;
-        if (direct) return direct.trim();
+        // IMPORTANT: certains retours API contiennent des caractères invisibles (ex: \u200B)
+        // qui passent les checks `.trim()` mais s'affichent "vide" à l'écran.
+        const direct = [tech?.name, tech?.label]
+          .map(cleanLabel)
+          .find((v) => v.length > 0);
+        if (direct) return direct;
 
         const id = tech?.id ?? tech?.techId ?? tech?.technicienId ?? tech?.userId;
         if (id != null) {

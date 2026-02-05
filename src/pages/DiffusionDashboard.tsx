@@ -68,8 +68,9 @@ export default function DiffusionDashboard() {
       if (!document.fullscreenElement) {
         // IMPORTANT: sur /agency/diffusion on est dans MinimalLayout (Aide/Home/Retour).
         // Pour l'affichage TV, on bascule d'abord sur /tv-display (sans layout) avant de passer en plein écran.
+        // ⚠️ En preview, il faut conserver __lovable_token sinon la session peut sembler "perdue".
         if (isAgencyDiffusionRoute) {
-          navigate('/tv-display', { replace: true });
+          navigate({ pathname: '/tv-display', search: location.search }, { replace: true });
         }
 
         await document.documentElement.requestFullscreen();
