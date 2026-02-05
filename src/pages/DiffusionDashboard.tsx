@@ -71,7 +71,10 @@ export default function DiffusionDashboard() {
         // ⚠️ En preview, il faut conserver __lovable_token sinon la session peut sembler "perdue".
         if (isAgencyDiffusionRoute) {
           const params = new URLSearchParams(location.search);
-          const token = params.get('__lovable_token') ?? sessionStorage.getItem('__lovable_token');
+          const token =
+            params.get('__lovable_token') ??
+            sessionStorage.getItem('__lovable_token') ??
+            localStorage.getItem('__lovable_token');
           const search = token
             ? `?__lovable_token=${encodeURIComponent(token)}`
             : location.search;

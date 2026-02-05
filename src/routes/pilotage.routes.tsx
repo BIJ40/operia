@@ -17,6 +17,7 @@ const RdvMapPage = lazy(() => import("@/pages/agency/CartePage"));
 const ActionsAMener = lazy(() => import("@/pages/ActionsAMener"));
 const CategoryActionsAMener = lazy(() => import("@/pages/CategoryActionsAMener"));
 const DiffusionDashboard = lazy(() => import("@/pages/DiffusionDashboard"));
+const TvDisplayEntry = lazy(() => import("@/pages/TvDisplayEntry"));
 const CommercialPage = lazy(() => import("@/pages/CommercialPage"));
 const CommercialSupportPptx = lazy(() => import("@/commercial/pages/CommercialSupportPptx"));
 
@@ -96,7 +97,7 @@ export function PilotageRoutes() {
             showError
             errorMessage="Accès réservé : rôle insuffisant pour l'affichage TV."
           >
-            <DiffusionDashboard />
+            <TvDisplayEntry />
           </RoleGuard>
         }
       />

@@ -13,7 +13,10 @@ initSentry();
 try {
   const params = new URLSearchParams(window.location.search);
   const token = params.get("__lovable_token");
-  if (token) sessionStorage.setItem("__lovable_token", token);
+  if (token) {
+    sessionStorage.setItem("__lovable_token", token);
+    localStorage.setItem("__lovable_token", token);
+  }
 } catch {
   // ignore
 }

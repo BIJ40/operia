@@ -48,15 +48,17 @@ const cleanPodiumLabel = (value: unknown): string => {
   if (typeof value !== 'string') return '';
   return value
     .normalize('NFKC')
-    .replace(/[\u00AD\u061C\u180E\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, '')
+    .replace(/[\u034F\u00AD\u061C\u180E\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, '')
     .replace(/[\u00A0\u202F]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 };
 
+const isMeaningfulPodiumLabel = (label: string): boolean => /[\p{L}\p{N}]/u.test(label);
+
 const getTechDisplayName = (tech: TechnicienRanking): string => {
   const name = cleanPodiumLabel(tech.nom);
-  if (name) return name;
+  if (name && isMeaningfulPodiumLabel(name)) return name;
   // Fallback visuel : on affiche quelque chose dans la tile plutôt que "vide"
   return `Technicien #${tech.rank}`;
 };
