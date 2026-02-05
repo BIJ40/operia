@@ -11,7 +11,8 @@ import { SecondaryFiltersProvider } from '../contexts/SecondaryFiltersContext';
 import { PeriodSelector } from '../components/filters/PeriodSelector';
 import { PeriodDisplay } from '../components/filters/PeriodDisplay';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
+import { openInNewTabPreservingPreviewToken } from '@/lib/openInNewTab';
+import { ROUTES } from '@/config/routes';
 
 const TAB_ICONS: Record<TabId, React.ReactNode> = {
   general: <LayoutDashboard className="h-4 w-4" />,
@@ -34,7 +35,6 @@ const TAB_COMPONENTS: Record<TabId, React.ComponentType> = {
 function StatsHubContent() {
   const { activeTab, setActiveTab } = useStatsHub();
   const TabComponent = TAB_COMPONENTS[activeTab];
-  const navigate = useNavigate();
 
   // Pour l'onglet Prévisionnel, le sélecteur de période est DANS la carte CA Planifié
   // Donc on n'affiche pas le sélecteur global
@@ -43,7 +43,8 @@ function StatsHubContent() {
     : <PeriodSelector />;
 
   const handleOpenDiffusion = () => {
-    navigate('/agency/diffusion');
+    // Nouvel onglet + préservation du token de preview si présent
+    openInNewTabPreservingPreviewToken(ROUTES.agency.diffusion);
   };
 
   return (
