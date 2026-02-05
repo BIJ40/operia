@@ -1,4 +1,4 @@
-import { Building2, BarChart3, Users, Tv, ExternalLink } from 'lucide-react';
+import { Building2, BarChart3, Users, Tv } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { AgencyInfoCompact } from '@/components/pilotage/AgencyInfoCompact';
@@ -7,6 +7,7 @@ import { MesApporteursTab } from '@/components/pilotage/MesApporteursTab';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
 import { useSessionState } from '@/hooks/useSessionState';
+import { useNavigate } from 'react-router-dom';
 import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
 import { AgencyProvider } from '@/apogee-connect/contexts/AgencyContext';
 import { FiltersProvider } from '@/apogee-connect/contexts/FiltersContext';
@@ -42,13 +43,15 @@ const TAB_COMPONENTS: Record<TabId, React.ComponentType> = {
 function StatsHubContent() {
   const { activeTab, setActiveTab } = useStatsHub();
   const TabComponent = TAB_COMPONENTS[activeTab];
+  const navigate = useNavigate();
 
   const periodSelector = activeTab === 'previsionnel' 
     ? <PeriodSelector variant="previsionnel" />
     : <PeriodSelector />;
 
   const handleOpenDiffusion = () => {
-    window.open(ROUTES.agency.diffusion, '_blank');
+    // Navigation interne pour préserver la session auth
+    navigate(ROUTES.agency.diffusion);
   };
 
   return (
@@ -63,7 +66,6 @@ function StatsHubContent() {
         >
           <Tv className="h-4 w-4" />
           Diffusion TV
-          <ExternalLink className="h-3 w-3" />
         </Button>
         {periodSelector}
       </div>
