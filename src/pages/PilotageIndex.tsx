@@ -7,7 +7,6 @@ import { MesApporteursTab } from '@/components/pilotage/MesApporteursTab';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
 import { useSessionState } from '@/hooks/useSessionState';
-import { useNavigate } from 'react-router-dom';
 import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
 import { AgencyProvider } from '@/apogee-connect/contexts/AgencyContext';
 import { FiltersProvider } from '@/apogee-connect/contexts/FiltersContext';
@@ -19,6 +18,7 @@ import { PeriodSelector } from '@/apogee-connect/components/filters/PeriodSelect
 import { LayoutDashboard, Layers, AlertTriangle, CalendarClock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ROUTES } from '@/config/routes';
+import { openInNewTabPreservingPreviewToken } from '@/lib/openInNewTab';
 
 type MainTab = 'agence' | 'stats' | 'apporteurs';
 
@@ -43,15 +43,14 @@ const TAB_COMPONENTS: Record<TabId, React.ComponentType> = {
 function StatsHubContent() {
   const { activeTab, setActiveTab } = useStatsHub();
   const TabComponent = TAB_COMPONENTS[activeTab];
-  const navigate = useNavigate();
 
   const periodSelector = activeTab === 'previsionnel' 
     ? <PeriodSelector variant="previsionnel" />
     : <PeriodSelector />;
 
   const handleOpenDiffusion = () => {
-    // Navigation interne pour préserver la session auth
-    navigate(ROUTES.agency.diffusion);
+    // Nouveau onglet + préservation du token de preview si présent
+    openInNewTabPreservingPreviewToken(ROUTES.agency.diffusion);
   };
 
   return (
