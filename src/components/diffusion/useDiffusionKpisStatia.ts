@@ -89,13 +89,19 @@ export function useDiffusionKpisStatia(currentMonthIndex: number) {
       const topTechBreakdown = topTechResult.breakdown as any;
       const ranking = topTechBreakdown?.ranking || [];
       
-      const allTechRanking: TechnicienRanking[] = ranking.map((tech: any, index: number) => ({
-        id: tech.id || `tech-${index}`,
-        nom: tech.name || tech.label || `Tech ${index + 1}`,
-        caHT: tech.ca || tech.totalCA || 0,
-        color: tech.color,
-        rank: index + 1,
-      }));
+      const allTechRanking: TechnicienRanking[] = ranking
+        .filter((tech: any) => {
+          // Exclure les techniciens sans nom valide (fantômes)
+          const hasValidName = tech.name && typeof tech.name === 'string' && tech.name.trim().length > 0;
+          return hasValidName;
+        })
+        .map((tech: any, index: number) => ({
+          id: tech.id || `tech-${index}`,
+          nom: (tech.name || tech.label || '').trim() || `Tech ${index + 1}`,
+          caHT: tech.ca || tech.totalCA || 0,
+          color: tech.color,
+          rank: index + 1,
+        }));
 
       const topTechData = ranking[0];
       const topTechnicien = topTechData ? {
