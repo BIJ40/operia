@@ -7,13 +7,13 @@ import { Tv, ExternalLink, LayoutDashboard, Building2, Users, Layers, AlertTrian
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useStatsHub } from '@/apogee-connect/components/stats-hub/StatsHubContext';
 import { TABS_CONFIG, TabId } from '@/apogee-connect/components/stats-hub/types';
 import { GeneralTab, ApporteursTab, TechniciensTab, UniversTab, SAVTab, PrevisionnelTab } from '@/apogee-connect/components/stats-hub/tabs';
 import { PeriodSelector } from '@/apogee-connect/components/filters/PeriodSelector';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { PeriodDisplay } from '@/apogee-connect/components/filters/PeriodDisplay';
-import { ROUTES } from '@/config/routes';
 
 const STATS_TABS: PillTabConfig[] = [
   { id: 'general', label: 'Général', icon: LayoutDashboard },
@@ -36,6 +36,7 @@ const TAB_COMPONENTS: Record<TabId, React.ComponentType> = {
 export default function StatsTabContent() {
   const { activeTab, setActiveTab } = useStatsHub();
   const TabComponent = TAB_COMPONENTS[activeTab];
+  const navigate = useNavigate();
 
   // Pour l'onglet Prévisionnel, le sélecteur de période est DANS la carte CA Planifié
   // Donc on n'affiche pas le sélecteur global
@@ -44,7 +45,8 @@ export default function StatsTabContent() {
     : <PeriodSelector />;
 
   const handleOpenDiffusion = () => {
-    window.open(ROUTES.agency.diffusion, '_blank');
+    // Navigation interne pour préserver la session auth
+    navigate('/agency/diffusion');
   };
 
   return (
@@ -62,7 +64,6 @@ export default function StatsTabContent() {
           >
             <Tv className="h-4 w-4" />
             Diffusion TV
-            <ExternalLink className="h-3 w-3" />
           </Button>
           
           <div className="flex items-center gap-3">
