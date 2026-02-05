@@ -98,7 +98,12 @@ export function useDiffusionKpisStatia(currentMonthIndex: number) {
       const cleanLabel = (value: unknown): string => {
         if (typeof value !== 'string') return '';
         return value
-          .replace(/[\u200B-\u200D\uFEFF]/g, '') // retire les caractères invisibles
+          .normalize('NFKC')
+          // Retire les caractères "format" invisibles (LRM/RLM, ZWSP, etc.)
+          // qui peuvent rendre un libellé visuellement vide.
+          .replace(/[\u00AD\u061C\u180E\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, '')
+          // NBSP / NNBSP => espace normal
+          .replace(/[\u00A0\u202F]/g, ' ')
           .replace(/\s+/g, ' ')
           .trim();
       };
@@ -128,13 +133,25 @@ export function useDiffusionKpisStatia(currentMonthIndex: number) {
         return `Tech ${index + 1}`;
       };
 
-      const allTechRanking: TechnicienRanking[] = ranking.map((tech: any, index: number) => ({
-        id: String(tech.id ?? `tech-${index}`),
-        nom: resolveTechName(tech, index),
-        caHT: tech.ca || tech.totalCA || 0,
-        color: tech.color,
-        rank: tech.rank ?? index + 1,
-      }));
+      const allTechRanking: TechnicienRanking[] = ranking.map((tech: any, index: number) => {
+        const id = String(
+          tech?.id ??
+            tech?.techId ??
+            tech?.technicienId ??
+            tech?.userId ??
+            `tech-${index}`
+        );
+
+        const nom = cleanLabel(resolveTechName(tech, index)) || `Tech ${index + 1}`;
+
+        return {
+          id,
+          nom,
+          caHT: Number(tech?.ca ?? tech?.totalCA ?? 0) || 0,
+          color: tech?.color,
+          rank: Number(tech?.rank ?? index + 1) || index + 1,
+        };
+      });
 
       const topTechData = allTechRanking[0];
       const topTechnicien = topTechData

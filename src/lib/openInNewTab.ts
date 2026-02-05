@@ -11,7 +11,26 @@ export function openInNewTabPreservingPreviewToken(pathname: string) {
 
   const url = new URL(pathname, window.location.origin);
   const params = new URLSearchParams(window.location.search);
-  const previewToken = params.get("__lovable_token");
+
+  // En preview, le token peut avoir été perdu via certaines navigations internes.
+  // On le mémorise dès qu'on le voit, et on le réutilise ensuite pour les nouveaux onglets.
+  const tokenFromUrl = params.get("__lovable_token");
+  if (tokenFromUrl) {
+    try {
+      sessionStorage.setItem("__lovable_token", tokenFromUrl);
+    } catch {
+      // ignore
+    }
+  }
+
+  let previewToken: string | null = tokenFromUrl;
+  if (!previewToken) {
+    try {
+      previewToken = sessionStorage.getItem("__lovable_token");
+    } catch {
+      previewToken = null;
+    }
+  }
 
   if (previewToken) {
     url.searchParams.set("__lovable_token", previewToken);
