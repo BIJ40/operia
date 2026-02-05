@@ -356,7 +356,7 @@ export function computeUnifiedTechCA(
   let caSansTemps = 0;
   
   // Helper pour récupérer info user
-  const getUserInfo = (techId: string | number) => {
+  const getUserInfo = (techId: string | number): { name: string; color: string; isActive: boolean; exists: boolean } => {
     let user = usersMap.get(Number(techId));
     if (!user) {
       for (const [, u] of usersMap) {
@@ -370,9 +370,12 @@ export function computeUnifiedTechCA(
       const fullName = [prenom, nom].filter(Boolean).join(' ') || `Tech ${techId}`;
       const color = user.data?.bgcolor?.hex || user.bgcolor?.hex || user.data?.color?.hex || user.color?.hex || '#808080';
       const isActive = normalizeIsOn(user?.is_on) || normalizeIsOn(user?.isActive);
-      return { name: fullName, color, isActive };
+      return { name: fullName, color, isActive, exists: true };
     }
-    return { name: `Tech ${techId}`, color: '#808080', isActive: true };
+    
+    // Technicien fantôme : userId sans profil valide
+    logDebug('[UNIFIED TECH CA] Technicien fantôme détecté (sans profil API):', { techId });
+    return { name: `Tech ${techId}`, color: '#808080', isActive: false, exists: false };
   };
   
   // Traiter chaque facture
@@ -414,6 +417,14 @@ export function computeUnifiedTechCA(
     
     // RÈGLE: Répartir le CA AU PRORATA DU TEMPS
     for (const [techId, techTime] of projectTechTime.entries()) {
+      const userInfo = getUserInfo(techId);
+      
+      // CORRECTION: Ignorer les techniciens fantômes (sans profil valide)
+      if (!userInfo.exists) {
+        logDebug('[UNIFIED TECH CA] Technicien fantôme ignoré du calcul CA:', { techId, projectId, montant: meta.montantNetHT });
+        continue; // Son CA sera redistribué via le lissage
+      }
+      
       const proportion = techTime / totalProjectTime;
       const techCA = meta.montantNetHT * proportion;
       
@@ -421,7 +432,6 @@ export function computeUnifiedTechCA(
       
       // Initialiser ou mettre à jour les stats
       if (!techStats.has(techId)) {
-        const userInfo = getUserInfo(techId);
         techStats.set(techId, {
           id: techId,
           name: userInfo.name,
