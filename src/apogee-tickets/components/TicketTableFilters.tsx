@@ -16,6 +16,7 @@ import { FilterPresetSelector } from './FilterPresetSelector';
 import { endOfDay, format, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { ApogeeModule, ApogeeTicketStatus, TicketFilters, OwnerSide, ReportedBy } from '../types';
+import { useTicketTags } from '../hooks/useTicketTags';
 
 interface TicketTableFiltersProps {
   filters: TicketFilters;
@@ -38,8 +39,6 @@ const REPORTED_BY_OPTIONS: { value: ReportedBy; label: string }[] = [
   { value: 'AUTRE', label: 'Autre' },
 ];
 
-const DEFAULT_TAGS = ['BUG', 'EVO', 'NTH'];
-
 type DateRange = { from?: Date; to?: Date };
 
 function safeDate(iso?: string): Date | undefined {
@@ -61,6 +60,9 @@ export function TicketTableFilters({
   modules,
   statuses,
 }: TicketTableFiltersProps) {
+  // Hook pour récupérer les tags dynamiques depuis la base
+  const { tags: availableTags } = useTicketTags();
+  
   // États locaux synchronisés avec les filtres persistés
   const [localSearch, setLocalSearch] = useState(filters.search || '');
   const [heatRange, setHeatRange] = useState<[number, number]>([
@@ -419,13 +421,13 @@ export function TicketTableFilters({
             <div className="space-y-2">
               <div className="text-sm font-medium text-pink-600 dark:text-pink-400">Tags</div>
               <div className="space-y-1">
-                {DEFAULT_TAGS.map((tag) => (
+                {availableTags.map((tag) => (
                   <label
-                    key={tag}
+                    key={tag.id}
                     className="flex items-center gap-2 cursor-pointer hover:bg-pink-50/60 dark:hover:bg-pink-900/30 rounded-xl px-2.5 py-2 transition-colors"
                   >
-                    <Checkbox checked={selectedTags.includes(tag)} onCheckedChange={() => handleTagToggle(tag)} />
-                    <span className="text-sm">{tag}</span>
+                    <Checkbox checked={selectedTags.includes(tag.id)} onCheckedChange={() => handleTagToggle(tag.id)} />
+                    <span className="text-sm">{tag.label}</span>
                   </label>
                 ))}
               </div>
