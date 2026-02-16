@@ -15,6 +15,7 @@ interface RawProspectRow {
   categorie_juridique: string | null;
   adresse: string | null;
   code_postal: string | null;
+  ville: string | null;
   code_ape: string | null;
   activite_principale: string | null;
   denomination_unite_legale: string | null;
@@ -126,6 +127,13 @@ export function parseProspectExcel(file: File): Promise<RawProspectRow[]> {
           const { latitude, longitude } = parseCoordinates(mapped.coordonnees || null);
           mapped.latitude = latitude;
           mapped.longitude = longitude;
+
+          // Extract ville from adresse (format: "159 AV ...,40370 RION-DES-LANDES")
+          if (mapped.adresse && mapped.adresse.includes(',')) {
+            const lastPart = mapped.adresse.split(',').pop()?.trim() || '';
+            const villeMatch = lastPart.replace(/^\d{5}\s+/, '').trim();
+            mapped.ville = villeMatch || null;
+          }
 
           return mapped as RawProspectRow;
         }).filter(r => r.denomination || r.enseigne || r.siren); // Skip empty rows

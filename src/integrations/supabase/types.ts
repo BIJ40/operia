@@ -5764,6 +5764,7 @@ export type Database = {
           telephone: string | null
           tranche_effectif: string | null
           updated_at: string
+          ville: string | null
         }
         Insert: {
           adresse?: string | null
@@ -5789,6 +5790,7 @@ export type Database = {
           telephone?: string | null
           tranche_effectif?: string | null
           updated_at?: string
+          ville?: string | null
         }
         Update: {
           adresse?: string | null
@@ -5814,6 +5816,7 @@ export type Database = {
           telephone?: string | null
           tranche_effectif?: string | null
           updated_at?: string
+          ville?: string | null
         }
         Relationships: [
           {
@@ -5914,6 +5917,7 @@ export type Database = {
           site_web: string | null
           telephone: string | null
           tranche_effectif: string | null
+          ville: string | null
         }
         Insert: {
           activite_principale?: string | null
@@ -5942,6 +5946,7 @@ export type Database = {
           site_web?: string | null
           telephone?: string | null
           tranche_effectif?: string | null
+          ville?: string | null
         }
         Update: {
           activite_principale?: string | null
@@ -5970,6 +5975,7 @@ export type Database = {
           site_web?: string | null
           telephone?: string | null
           tranche_effectif?: string | null
+          ville?: string | null
         }
         Relationships: [
           {
