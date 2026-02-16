@@ -165,3 +165,6 @@ verify_jwt = false
 
 [functions.media-garbage-collector]
 verify_jwt = false
+
+[functions.compute-apporteur-metrics]
+verify_jwt = false
