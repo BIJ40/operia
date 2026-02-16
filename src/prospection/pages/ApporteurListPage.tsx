@@ -1,17 +1,20 @@
 /**
  * ApporteurListPage - Liste des apporteurs avec KPIs agrégés
+ * Inclut recherche live depuis Apogée (commanditaires)
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, TrendingDown, TrendingUp, Loader2 } from 'lucide-react';
+import { Search, TrendingDown, Loader2, Building2, MapPin, Phone, Mail } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApporteurListMetrics } from '../hooks/useApporteurListMetrics';
+import { useApogeeCommanditaires, type ApogeeCommanditaire } from '@/hooks/useApogeeCommanditaires';
 import { format, subDays, subMonths } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface Props {
   onSelectApporteur: (id: string) => void;
@@ -34,6 +37,7 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
   const { agencyId } = useAuth();
   const [period, setPeriod] = useState<PeriodKey>('90j');
   const [search, setSearch] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const { from, to } = getPeriodDates(period);
   const { data: apporteurs = [], isLoading } = useApporteurListMetrics({
@@ -42,11 +46,31 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
     dateTo: to,
   });
 
+  // Recherche Apogée commanditaires
+  const { data: commanditaires = [], isLoading: loadingApogee } = useApogeeCommanditaires();
+
+  // Suggestions filtrées depuis Apogée
+  const suggestions = useMemo(() => {
+    if (!search || search.length < 2) return [];
+    const q = search.toLowerCase();
+    return commanditaires
+      .filter(c => c.name.toLowerCase().includes(q) || String(c.id).includes(q))
+      .slice(0, 8);
+  }, [commanditaires, search]);
+
+  // Apporteurs filtrés dans les métriques locales
   const filtered = useMemo(() => {
     if (!search) return apporteurs;
     const q = search.toLowerCase();
     return apporteurs.filter(a => a.apporteur_id.toLowerCase().includes(q));
   }, [apporteurs, search]);
+
+  const handleSelectSuggestion = useCallback((cmd: ApogeeCommanditaire) => {
+    setSearch(cmd.name);
+    setShowSuggestions(false);
+    // Navigate to dashboard with the Apogée client ID as identifier
+    onSelectApporteur(String(cmd.id));
+  }, [onSelectApporteur]);
 
   const fmt = (n: number) => new Intl.NumberFormat('fr-FR').format(Math.round(n));
 
@@ -54,14 +78,88 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
     <div className="space-y-4">
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
+        <div className="relative flex-1 min-w-[200px] max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Rechercher un apporteur..."
+            placeholder="Rechercher un apporteur (nom ou ID Apogée)..."
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => {
+              setSearch(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
             className="pl-9"
           />
+
+          {/* Suggestions dropdown */}
+          {showSuggestions && search.length >= 2 && (
+            <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-lg max-h-80 overflow-y-auto">
+              {loadingApogee ? (
+                <div className="flex items-center gap-2 p-3 text-sm text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Recherche dans Apogée...
+                </div>
+              ) : suggestions.length > 0 ? (
+                <>
+                  <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground bg-muted/50 border-b border-border">
+                    Apporteurs Apogée
+                  </div>
+                  {suggestions.map(cmd => (
+                    <button
+                      key={cmd.id}
+                      type="button"
+                      className={cn(
+                        "w-full text-left px-3 py-2.5 hover:bg-accent/50 transition-colors",
+                        "border-b border-border/50 last:border-b-0"
+                      )}
+                      onMouseDown={() => handleSelectSuggestion(cmd)}
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <div className="shrink-0 mt-0.5 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Building2 className="w-4 h-4 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm text-foreground truncate">{cmd.name}</span>
+                            <Badge variant="outline" className="text-[10px] shrink-0">
+                              #{cmd.id}
+                            </Badge>
+                            {cmd.type && (
+                              <Badge variant="secondary" className="text-[10px] shrink-0">
+                                {cmd.type}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5 text-[11px] text-muted-foreground">
+                            {cmd.ville && (
+                              <span className="flex items-center gap-0.5">
+                                <MapPin className="w-3 h-3" />{cmd.ville}
+                              </span>
+                            )}
+                            {cmd.tel && (
+                              <span className="flex items-center gap-0.5">
+                                <Phone className="w-3 h-3" />{cmd.tel}
+                              </span>
+                            )}
+                            {cmd.email && (
+                              <span className="flex items-center gap-0.5">
+                                <Mail className="w-3 h-3" />{cmd.email}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </>
+              ) : (
+                <div className="p-3 text-sm text-muted-foreground text-center">
+                  Aucun apporteur trouvé dans Apogée
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <Select value={period} onValueChange={v => setPeriod(v as PeriodKey)}>
           <SelectTrigger className="w-32">
@@ -85,7 +183,9 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
             </div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-12 text-sm text-muted-foreground">
-              {apporteurs.length === 0 ? 'Aucune donnée. Lancez le calcul des métriques.' : 'Aucun résultat pour cette recherche.'}
+              {apporteurs.length === 0
+                ? 'Aucune donnée. Lancez le calcul des métriques.'
+                : 'Aucun résultat pour cette recherche. Essayez via les suggestions Apogée ci-dessus.'}
             </div>
           ) : (
             <div className="overflow-x-auto">
