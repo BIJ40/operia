@@ -5739,6 +5739,248 @@ export type Database = {
           },
         ]
       }
+      prospect_cards: {
+        Row: {
+          adresse: string | null
+          agency_id: string
+          chiffre_affaire: string | null
+          code_postal: string | null
+          created_at: string
+          denomination: string
+          enseigne: string | null
+          id: string
+          last_contact_at: string | null
+          next_rdv_at: string | null
+          notes: string | null
+          owner_user_id: string | null
+          pool_prospect_id: string | null
+          representant: string | null
+          score: number | null
+          siren: string | null
+          siret: string | null
+          site_web: string | null
+          status: string
+          tags: string[] | null
+          telephone: string | null
+          tranche_effectif: string | null
+          updated_at: string
+        }
+        Insert: {
+          adresse?: string | null
+          agency_id: string
+          chiffre_affaire?: string | null
+          code_postal?: string | null
+          created_at?: string
+          denomination: string
+          enseigne?: string | null
+          id?: string
+          last_contact_at?: string | null
+          next_rdv_at?: string | null
+          notes?: string | null
+          owner_user_id?: string | null
+          pool_prospect_id?: string | null
+          representant?: string | null
+          score?: number | null
+          siren?: string | null
+          siret?: string | null
+          site_web?: string | null
+          status?: string
+          tags?: string[] | null
+          telephone?: string | null
+          tranche_effectif?: string | null
+          updated_at?: string
+        }
+        Update: {
+          adresse?: string | null
+          agency_id?: string
+          chiffre_affaire?: string | null
+          code_postal?: string | null
+          created_at?: string
+          denomination?: string
+          enseigne?: string | null
+          id?: string
+          last_contact_at?: string | null
+          next_rdv_at?: string | null
+          notes?: string | null
+          owner_user_id?: string | null
+          pool_prospect_id?: string | null
+          representant?: string | null
+          score?: number | null
+          siren?: string | null
+          siret?: string | null
+          site_web?: string | null
+          status?: string
+          tags?: string[] | null
+          telephone?: string | null
+          tranche_effectif?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_cards_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospect_cards_pool_prospect_id_fkey"
+            columns: ["pool_prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_pool"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_interactions: {
+        Row: {
+          agency_id: string
+          card_id: string
+          created_at: string
+          id: string
+          interaction_at: string
+          interaction_type: string
+          next_action: string | null
+          next_action_at: string | null
+          summary: string | null
+          user_id: string | null
+        }
+        Insert: {
+          agency_id: string
+          card_id: string
+          created_at?: string
+          id?: string
+          interaction_at?: string
+          interaction_type: string
+          next_action?: string | null
+          next_action_at?: string | null
+          summary?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          agency_id?: string
+          card_id?: string
+          created_at?: string
+          id?: string
+          interaction_at?: string
+          interaction_type?: string
+          next_action?: string | null
+          next_action_at?: string | null
+          summary?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_interactions_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospect_interactions_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_pool: {
+        Row: {
+          activite_principale: string | null
+          adresse: string | null
+          agency_id: string
+          categorie_juridique: string | null
+          chiffre_affaire: string | null
+          code_ape: string | null
+          code_postal: string | null
+          coordonnees: string | null
+          date_cloture_exercice: string | null
+          date_creation_etablissement: string | null
+          denomination: string | null
+          denomination_unite_legale: string | null
+          enseigne: string | null
+          id: string
+          import_batch_id: string
+          imported_at: string
+          imported_by: string | null
+          latitude: number | null
+          longitude: number | null
+          nb_etablissements: number | null
+          representant: string | null
+          siren: string | null
+          siret: string | null
+          site_web: string | null
+          telephone: string | null
+          tranche_effectif: string | null
+        }
+        Insert: {
+          activite_principale?: string | null
+          adresse?: string | null
+          agency_id: string
+          categorie_juridique?: string | null
+          chiffre_affaire?: string | null
+          code_ape?: string | null
+          code_postal?: string | null
+          coordonnees?: string | null
+          date_cloture_exercice?: string | null
+          date_creation_etablissement?: string | null
+          denomination?: string | null
+          denomination_unite_legale?: string | null
+          enseigne?: string | null
+          id?: string
+          import_batch_id: string
+          imported_at?: string
+          imported_by?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          nb_etablissements?: number | null
+          representant?: string | null
+          siren?: string | null
+          siret?: string | null
+          site_web?: string | null
+          telephone?: string | null
+          tranche_effectif?: string | null
+        }
+        Update: {
+          activite_principale?: string | null
+          adresse?: string | null
+          agency_id?: string
+          categorie_juridique?: string | null
+          chiffre_affaire?: string | null
+          code_ape?: string | null
+          code_postal?: string | null
+          coordonnees?: string | null
+          date_cloture_exercice?: string | null
+          date_creation_etablissement?: string | null
+          denomination?: string | null
+          denomination_unite_legale?: string | null
+          enseigne?: string | null
+          id?: string
+          import_batch_id?: string
+          imported_at?: string
+          imported_by?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          nb_etablissements?: number | null
+          representant?: string | null
+          siren?: string | null
+          siret?: string | null
+          site_web?: string | null
+          telephone?: string | null
+          tranche_effectif?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_pool_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prospecting_followups: {
         Row: {
           agency_id: string
@@ -8681,6 +8923,8 @@ export type Database = {
         Returns: string
       }
       sanitize_path_segment: { Args: { p_input: string }; Returns: string }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       unlock_document_request: { Args: { p_request_id: string }; Returns: Json }
     }
     Enums: {
