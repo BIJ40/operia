@@ -1,5 +1,7 @@
 /**
- * ApporteurFunnel - Funnel visuel dossiers → devis → signés → factures
+ * ApporteurFunnel - Double funnel :
+ * 1. Devis → Factures (pipeline devis)
+ * 2. Dossiers → Factures (taux global de transformation)
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,7 +26,7 @@ function FunnelStep({ label, value, maxValue, color }: {
         <span className="text-muted-foreground">{label}</span>
         <span className="font-semibold text-foreground">{value} <span className="text-xs text-muted-foreground">({pct}%)</span></span>
       </div>
-      <div className="h-8 bg-muted/50 rounded-lg overflow-hidden">
+      <div className="h-7 bg-muted/50 rounded-lg overflow-hidden">
         <div
           className={`h-full rounded-lg ${color} transition-all duration-500 flex items-center justify-center`}
           style={{ width: `${widthPct}%` }}
@@ -37,18 +39,36 @@ function FunnelStep({ label, value, maxValue, color }: {
 }
 
 export function ApporteurFunnel({ kpis }: Props) {
-  const max = Math.max(kpis.dossiers_received, 1);
-
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-base">Funnel commercial</CardTitle>
+        <CardTitle className="text-base">Pipeline de transformation</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <FunnelStep label="Dossiers reçus" value={kpis.dossiers_received} maxValue={max} color="bg-blue-500" />
-        <FunnelStep label="Devis émis" value={kpis.devis_total} maxValue={max} color="bg-indigo-500" />
-        <FunnelStep label="Devis signés" value={kpis.devis_signed} maxValue={max} color="bg-green-500" />
-        <FunnelStep label="Factures" value={kpis.factures} maxValue={max} color="bg-emerald-500" />
+      <CardContent className="space-y-5">
+        {/* Pipeline Dossier → Facture */}
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">Dossier → Facture</p>
+          <div className="space-y-2">
+            <FunnelStep label="Dossiers reçus" value={kpis.dossiers_received} maxValue={Math.max(kpis.dossiers_received, 1)} color="bg-blue-500" />
+            <FunnelStep label="Facturés" value={kpis.factures} maxValue={Math.max(kpis.dossiers_received, 1)} color="bg-emerald-500" />
+            {kpis.dossiers_avec_facture_sans_devis > 0 && (
+              <p className="text-xs text-muted-foreground pl-1">
+                dont {kpis.dossiers_avec_facture_sans_devis} sans devis (facturation directe)
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Pipeline Devis → Signature */}
+        {kpis.devis_total > 0 && (
+          <div>
+            <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">Devis → Signature</p>
+            <div className="space-y-2">
+              <FunnelStep label="Devis émis" value={kpis.devis_total} maxValue={Math.max(kpis.devis_total, 1)} color="bg-indigo-500" />
+              <FunnelStep label="Devis signés" value={kpis.devis_signed} maxValue={Math.max(kpis.devis_total, 1)} color="bg-green-500" />
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

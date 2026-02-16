@@ -102,6 +102,22 @@ export function useApporteurDashboardLive({
       const devis_signed = signedDevis.length;
       const facturesCount = apporteurFactures.length;
 
+      // Dossiers avec facture (transformés) — qu'ils aient un devis ou non
+      const dossiersAvecFacture = periodProjects.filter((p: any) => {
+        const pid = p.id;
+        return apporteurFactures.some((f: any) => (f.projectId ?? f.project_id) == pid);
+      }).length;
+
+      // Dossiers sans devis MAIS avec facture = transformés directement
+      const dossiersSansDevis = periodProjects.filter((p: any) => {
+        const pid = p.id;
+        return !apporteurDevis.some((d: any) => (d.projectId ?? d.project_id) == pid);
+      });
+      const dossiersAvecFactureSansDevis = dossiersSansDevis.filter((p: any) => {
+        const pid = p.id;
+        return apporteurFactures.some((f: any) => (f.projectId ?? f.project_id) == pid);
+      }).length;
+
       const kpis: AggregatedKPIs = {
         dossiers_received,
         dossiers_closed: periodProjects.filter((p: any) => ['clos', 'done', 'closed', 'invoiced'].includes(p.state?.toLowerCase?.() || '')).length,
@@ -111,12 +127,11 @@ export function useApporteurDashboardLive({
         ca_ht: Math.round(caHT * 100) / 100,
         panier_moyen: facturesCount > 0 ? Math.round(caHT / facturesCount) : null,
         taux_transfo_devis: devis_total > 0 ? Math.round((devis_signed / devis_total) * 10000) / 100 : null,
-        dossiers_sans_devis: periodProjects.filter((p: any) => {
-          const pid = p.id;
-          return !apporteurDevis.some((d: any) => (d.projectId ?? d.project_id) == pid);
-        }).length,
+        taux_transfo_dossier: dossiers_received > 0 ? Math.round((dossiersAvecFacture / dossiers_received) * 10000) / 100 : null,
+        dossiers_sans_devis: dossiersSansDevis.length,
+        dossiers_avec_facture_sans_devis: dossiersAvecFactureSansDevis,
         devis_non_signes: devis_total - devis_signed,
-        delai_dossier_devis_avg: null, // TODO: calculer si dates disponibles
+        delai_dossier_devis_avg: null,
         delai_devis_signature_avg: null,
         delai_signature_facture_avg: null,
       };

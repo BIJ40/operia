@@ -41,8 +41,10 @@ export interface AggregatedKPIs {
   factures: number;
   ca_ht: number;
   panier_moyen: number | null;
-  taux_transfo_devis: number | null;
+  taux_transfo_devis: number | null;       // devis signés / devis émis
+  taux_transfo_dossier: number | null;     // dossiers avec facture / dossiers reçus
   dossiers_sans_devis: number;
+  dossiers_avec_facture_sans_devis: number; // dossiers transformés directement (sans devis)
   devis_non_signes: number;
   delai_dossier_devis_avg: number | null;
   delai_devis_signature_avg: number | null;
@@ -65,7 +67,8 @@ export function aggregateDailyMetrics(rows: DailyMetricRow[]): AggregatedKPIs {
     return {
       dossiers_received: 0, dossiers_closed: 0, devis_total: 0, devis_signed: 0,
       factures: 0, ca_ht: 0, panier_moyen: null, taux_transfo_devis: null,
-      dossiers_sans_devis: 0, devis_non_signes: 0,
+      taux_transfo_dossier: null, dossiers_sans_devis: 0, dossiers_avec_facture_sans_devis: 0,
+      devis_non_signes: 0,
       delai_dossier_devis_avg: null, delai_devis_signature_avg: null, delai_signature_facture_avg: null,
     };
   }
@@ -94,6 +97,8 @@ export function aggregateDailyMetrics(rows: DailyMetricRow[]): AggregatedKPIs {
     ...sums,
     panier_moyen: sums.factures > 0 ? Math.round(sums.ca_ht / sums.factures) : null,
     taux_transfo_devis: sums.devis_total > 0 ? Math.round((sums.devis_signed / sums.devis_total) * 10000) / 100 : null,
+    taux_transfo_dossier: sums.dossiers_received > 0 ? Math.round((sums.factures / sums.dossiers_received) * 10000) / 100 : null,
+    dossiers_avec_facture_sans_devis: 0, // Not available from daily aggregated rows
     delai_dossier_devis_avg: avgField('delai_dossier_vers_devis_avg_days'),
     delai_devis_signature_avg: avgField('delai_devis_vers_signature_avg_days'),
     delai_signature_facture_avg: avgField('delai_signature_vers_facture_avg_days'),
