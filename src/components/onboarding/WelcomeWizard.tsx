@@ -141,10 +141,16 @@ export function WelcomeWizard({
   const isCreatingCollaborator = createMutation.isPending;
 
   // Determine user level for adaptive content
+  // CRITICAL: Only dirigeants (franchise owners) get the full manager wizard
+  // Commercial, assistante, etc. are employees and should NOT manage agency/team
   const userRoleLevel = initialData.global_role 
     ? GLOBAL_ROLES[initialData.global_role as GlobalRole] ?? 0 
     : 0;
-  const isManager = userRoleLevel >= GLOBAL_ROLES.franchisee_admin; // N2+
+  const roleAgence = initialData.role_agence?.toLowerCase() ?? '';
+  
+  // N3+ = always manager (franchiseur/admin), N2 = only if role_agence is dirigeant
+  const isManager = userRoleLevel >= GLOBAL_ROLES.franchisor_user || 
+    (userRoleLevel >= GLOBAL_ROLES.franchisee_admin && roleAgence === 'dirigeant');
 
   // Sélection des steps selon le rôle
   const STEPS = isManager ? MANAGER_STEPS : STANDARD_STEPS;
