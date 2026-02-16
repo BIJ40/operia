@@ -363,7 +363,11 @@ export const UserAccordionItem = memo(function UserAccordionItem({
                           <div className="p-3 bg-background/50 border-t border-border/30">
                             <div className="grid grid-cols-2 gap-2">
                               {moduleDef.options!.map(option => {
-                                const optionEnabled = moduleOptions[option.key] ?? option.defaultEnabled;
+                                // ✅ FIX: Ne PAS utiliser defaultEnabled comme fallback
+                                // Si l'option n'est pas explicitement définie dans moduleOptions,
+                                // elle est considérée comme désactivée (false)
+                                // defaultEnabled ne s'applique qu'à la CRÉATION initiale des modules
+                                const optionEnabled = option.key in moduleOptions ? moduleOptions[option.key] : false;
                                 
                                 // Pour RH, vérifier si l'option est autorisée pour ce rôle
                                 const isOptionAllowed = isRhModule 
