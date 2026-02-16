@@ -87,28 +87,10 @@ export async function resolveEffectiveModulesFromBackend(params: {
     );
   }
 
-  // 2) Fallback: plan modules + user_modules merge
+  // 2) Fallback: user_modules table is the SOLE source of truth
+  // The agency plan modules are only used at user CREATION time (in create-user edge function)
+  // to seed initial modules. At runtime, only user_modules determines access.
   try {
-    const planModules: EnabledModules = {};
-
-    if (agencyId) {
-      const { data: agencyData, error: agencyError } = await supabase.rpc('get_agency_enabled_modules', {
-        p_agency_id: agencyId,
-      });
-
-      if (agencyError) {
-        console.warn(
-          '[effectiveModulesResolver] RPC get_agency_enabled_modules failed',
-          debugLabel ? { debugLabel, agencyId } : undefined,
-          agencyError
-        );
-      } else if (Array.isArray(agencyData) && agencyData.length > 0) {
-        for (const row of agencyData as RpcRow[]) {
-          upsertModule(planModules, row.module_key, row.enabled, row.options);
-        }
-      }
-    }
-
     const { data: userRows, error: userModulesError } = await supabase
       .from('user_modules')
       .select('module_key, options')
@@ -122,17 +104,12 @@ export async function resolveEffectiveModulesFromBackend(params: {
       );
     }
 
-    const merged: EnabledModules = { ...planModules };
+    const merged: EnabledModules = {};
 
     if (Array.isArray(userRows)) {
       for (const row of userRows as Array<{ module_key: string; options: unknown }>) {
         const key = row.module_key as ModuleKey;
-        const base = merged[key];
-        const baseOptions =
-          typeof base === 'object' && base !== null && 'options' in base ? (base as any).options : undefined;
-
-        const options = mergeModuleOptions(baseOptions, row.options);
-        merged[key] = { enabled: true, options } as any;
+        merged[key] = { enabled: true, options: normalizeOptions(row.options) } as any;
       }
     }
 
@@ -141,7 +118,7 @@ export async function resolveEffectiveModulesFromBackend(params: {
     }
   } catch (e) {
     console.warn(
-      '[effectiveModulesResolver] fallback plan+user_modules threw',
+      '[effectiveModulesResolver] fallback user_modules threw',
       debugLabel ? { debugLabel } : undefined,
       e
     );
