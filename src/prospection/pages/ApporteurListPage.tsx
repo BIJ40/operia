@@ -17,7 +17,7 @@ import { format, subDays, subMonths } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 interface Props {
-  onSelectApporteur: (id: string) => void;
+  onSelectApporteur: (id: string, name?: string) => void;
 }
 
 type PeriodKey = '30j' | '90j' | '6m' | '12m';
@@ -68,8 +68,7 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
   const handleSelectSuggestion = useCallback((cmd: ApogeeCommanditaire) => {
     setSearch(cmd.name);
     setShowSuggestions(false);
-    // Navigate to dashboard with the Apogée client ID as identifier
-    onSelectApporteur(String(cmd.id));
+    onSelectApporteur(String(cmd.id), cmd.name);
   }, [onSelectApporteur]);
 
   const fmt = (n: number) => new Intl.NumberFormat('fr-FR').format(Math.round(n));
