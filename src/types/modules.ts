@@ -100,7 +100,6 @@ export const MODULE_OPTIONS = {
   prospection: {
     dashboard: 'prospection.dashboard',
     comparateur: 'prospection.comparateur',
-    veille: 'prospection.veille',
     meetings: 'prospection.meetings',
   },
   reseau_franchiseur: {
@@ -304,15 +303,14 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
   },
   {
     key: 'prospection',
-    label: 'Prospection',
-    description: 'Prospection et suivi apporteurs',
+    label: 'Commercial',
+    description: 'Suivi commercial et prospection',
     icon: 'Target',
     defaultForRoles: [], // Attribué uniquement par override utilisateur
     minRole: 'franchisee_admin',
     options: [
-      { key: 'dashboard', path: 'prospection.dashboard', label: 'Dashboard', description: 'Fiche apporteur', defaultEnabled: true, routes: ['/?tab=prospection'] },
+      { key: 'dashboard', path: 'prospection.dashboard', label: 'Suivi client', description: 'Fiche apporteur', defaultEnabled: true, routes: ['/?tab=prospection'] },
       { key: 'comparateur', path: 'prospection.comparateur', label: 'Comparateur', description: 'Comparer apporteurs', defaultEnabled: true, routes: ['/?tab=prospection'] },
-      { key: 'veille', path: 'prospection.veille', label: 'Veille', description: 'Alertes et tendances', defaultEnabled: true, routes: ['/?tab=prospection'] },
       { key: 'meetings', path: 'prospection.meetings', label: 'RDV', description: 'Suivi commercial', defaultEnabled: true, routes: ['/?tab=prospection'] },
     ],
   },
@@ -462,7 +460,7 @@ export const MODULE_SHORT_LABELS: Record<ModuleKey, string> = {
   guides: 'Guides',
   ticketing: 'Ticketing',
   aide: 'Aide',
-  prospection: 'Prospection',
+  prospection: 'Commercial',
   reseau_franchiseur: 'Réseau',
   admin_plateforme: 'Admin',
   // Legacy
