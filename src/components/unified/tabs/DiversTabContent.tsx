@@ -11,7 +11,7 @@
 import { lazy, Suspense, useCallback } from 'react';
 import { 
   FileText, Users2, Loader2, Users, CalendarDays, 
-  Radar, Car, FolderOpen, Settings, Eye, Activity
+  Radar, Car, FolderOpen, Settings, Eye, Activity, Target
 } from 'lucide-react';
 import {
   DndContext,
@@ -45,9 +45,10 @@ const VehiculesTabContent = lazy(() => import('@/components/unified/tabs/Vehicul
 const PerformanceDashboard = lazy(() => 
   import('@/components/performance/PerformanceDashboard').then(m => ({ default: m.PerformanceDashboard }))
 );
+const ProspectionTabContent = lazy(() => import('@/prospection/pages/ProspectionTabContent'));
 
 // Types pour les niveaux de navigation
-type OutilsMainTab = 'actions' | 'apporteurs' | 'administratif' | 'parc' | 'performance';
+type OutilsMainTab = 'actions' | 'apporteurs' | 'administratif' | 'parc' | 'performance' | 'prospection';
 type ApporteursSubTab = 'espace' | 'veille';
 type AdminSubTab = 'reunions' | 'plannings' | 'documents';
 
@@ -58,6 +59,7 @@ const MAIN_TABS: PillTabConfig[] = [
   { id: 'administratif', label: 'Administratif', icon: FolderOpen, accent: 'orange' },
   { id: 'parc', label: 'Parc', icon: Car, accent: 'green' },
   { id: 'performance', label: 'Performance', icon: Activity, accent: 'pink' },
+  { id: 'prospection', label: 'Prospection', icon: Target, accent: 'orange' },
 ];
 
 function LoadingFallback() {
@@ -308,6 +310,12 @@ export default function DiversTabContent() {
         <TabsContent value="performance" className="mt-6 animate-fade-in">
           <Suspense fallback={<LoadingFallback />}>
             <PerformanceDashboard />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="prospection" className="mt-6 animate-fade-in">
+          <Suspense fallback={<LoadingFallback />}>
+            <ProspectionTabContent />
           </Suspense>
         </TabsContent>
       </Tabs>
