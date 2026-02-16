@@ -7,19 +7,17 @@
 import { useState, useCallback } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, type PillTabConfig } from '@/components/ui/pill-tabs';
-import { Building2, GitCompare, Bell, UserSearch } from 'lucide-react';
+import { Building2, GitCompare, UserSearch } from 'lucide-react';
 import { ApporteurTabsProvider, useApporteurTabs } from '../browser-tabs/ApporteurTabsContext';
 import { ApporteurTabsBar } from '../browser-tabs/ApporteurTabsBar';
 import { ApporteurTabsContent } from '../browser-tabs/ApporteurTabsContent';
 import { ApporteurListPage } from '../pages/ApporteurListPage';
 import { ApporteurComparisonPage } from '../pages/ApporteurComparisonPage';
-import { ApporteurAlertsPage } from '../pages/ApporteurAlertsPage';
 import { ProspectsUnifiedPage } from '../pages/ProspectsUnifiedPage';
 
 const TABS: PillTabConfig[] = [
-  { id: 'apporteurs', label: 'Apporteurs', icon: Building2 },
+  { id: 'apporteurs', label: 'Suivi client', icon: Building2 },
   { id: 'comparateur', label: 'Comparateur', icon: GitCompare },
-  { id: 'veille', label: 'Veille', icon: Bell },
   { id: 'prospects', label: 'Prospects', icon: UserSearch },
 ];
 
@@ -59,10 +57,6 @@ export default function ProspectionTabContent() {
 
         <TabsContent value="comparateur" className="mt-4">
           <ApporteurComparisonPage />
-        </TabsContent>
-
-        <TabsContent value="veille" className="mt-4">
-          <ApporteurAlertsPage onSelectApporteur={() => {}} />
         </TabsContent>
 
         <TabsContent value="prospects" className="mt-4">

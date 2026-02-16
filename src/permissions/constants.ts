@@ -159,5 +159,5 @@ export const MODULE_LABELS: Partial<Record<ModuleKey, string>> = {
   guides: 'Guides',
   ticketing: 'Ticketing',
   aide: 'Aide',
-  prospection: 'Prospection',
+  prospection: 'Commercial',
 };

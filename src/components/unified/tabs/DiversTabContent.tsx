@@ -62,7 +62,7 @@ const MAIN_TABS_CONFIG: (PillTabConfig & { requiresModule?: ModuleKey })[] = [
   { id: 'administratif', label: 'Administratif', icon: FolderOpen, accent: 'orange', requiresModule: 'agence' },
   { id: 'parc', label: 'Parc', icon: Car, accent: 'green', requiresModule: 'parc' },
   { id: 'performance', label: 'Performance', icon: Activity, accent: 'pink', requiresModule: 'agence' },
-  { id: 'prospection', label: 'Prospection', icon: Target, accent: 'orange', requiresModule: 'prospection' },
+  { id: 'prospection', label: 'Commercial', icon: Target, accent: 'orange', requiresModule: 'prospection' },
 ];
 
 function LoadingFallback() {
