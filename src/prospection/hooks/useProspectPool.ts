@@ -19,6 +19,7 @@ export interface ProspectPoolItem {
   categorie_juridique: string | null;
   adresse: string | null;
   code_postal: string | null;
+  ville: string | null;
   code_ape: string | null;
   activite_principale: string | null;
   denomination_unite_legale: string | null;
@@ -58,7 +59,7 @@ export function useProspectPool(filters: ProspectPoolFilters = {}) {
       }
 
       if (filters.ville) {
-        query = query.ilike('adresse', `%${filters.ville}%`);
+        query = query.ilike('ville', `%${filters.ville}%`);
       }
 
       if (filters.search) {

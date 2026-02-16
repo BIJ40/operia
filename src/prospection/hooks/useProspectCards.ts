@@ -19,6 +19,7 @@ export interface ProspectCard {
   enseigne: string | null;
   adresse: string | null;
   code_postal: string | null;
+  ville: string | null;
   telephone: string | null;
   site_web: string | null;
   representant: string | null;
@@ -125,6 +126,7 @@ export function useCreateProspectCards() {
         enseigne: item.enseigne,
         adresse: item.adresse,
         code_postal: item.code_postal,
+        ville: item.ville,
         telephone: item.telephone,
         site_web: item.site_web,
         representant: item.representant,
