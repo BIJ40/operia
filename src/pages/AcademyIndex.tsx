@@ -4,6 +4,7 @@ import { ROUTES } from '@/config/routes';
 import { useMenuLabels } from '@/hooks/use-page-metadata';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
 
 const ROUTE_TO_PAGE_KEY: Record<string, string> = {
   [ROUTES.academy.apogee]: 'academy_apogee',
@@ -42,6 +43,8 @@ const faqModule = {
 
 export default function AcademyIndex() {
   const menuLabels = useMenuLabels();
+  const { hasModuleOption } = useEffectiveModules();
+  const showFaq = hasModuleOption('guides' as any, 'faq');
 
   const getModuleTitle = (module: typeof academyModules[0]): string => {
     const pageKey = ROUTE_TO_PAGE_KEY[module.href];
@@ -71,7 +74,8 @@ export default function AcademyIndex() {
           />
         ))}
 
-        {/* FAQ Tile - non cliquable */}
+        {/* FAQ Tile - non cliquable, visible seulement si sous-option guides.faq activée */}
+        {showFaq && (
         <div className="group h-full rounded-xl p-5
           bg-gradient-to-r from-muted/50 via-muted/30 to-transparent
           border border-muted/40 border-l-4 border-l-muted
@@ -91,6 +95,7 @@ export default function AcademyIndex() {
             </div>
           </div>
         </div>
+        )}
       </div>
     </div>
   );
