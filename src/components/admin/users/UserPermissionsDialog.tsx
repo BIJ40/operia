@@ -198,7 +198,9 @@ export const UserPermissionsDialog = memo(function UserPermissionsDialog({
                         <div className="p-3 bg-background/50 border-t border-border/30">
                           <div className="grid grid-cols-2 gap-2">
                             {moduleDef.options!.map(option => {
-                              const optionEnabled = moduleOptions[option.key] ?? option.defaultEnabled;
+                              // ✅ FIX: Ne PAS utiliser defaultEnabled comme fallback
+                              // Si l'option n'est pas dans moduleOptions, elle est désactivée
+                              const optionEnabled = option.key in moduleOptions ? moduleOptions[option.key] : false;
                               const isOptionAllowed = isRhModule 
                                 ? isRhOptionAllowedForRole(effectiveRole, option.key)
                                 : true;
