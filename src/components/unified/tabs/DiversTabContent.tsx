@@ -8,11 +8,13 @@
  * Design: Warm Pastel theme avec navigation folder
  */
 
-import { lazy, Suspense, useCallback } from 'react';
+import { lazy, Suspense, useCallback, useMemo } from 'react';
 import { 
   FileText, Users2, Loader2, Users, CalendarDays, 
   Radar, Car, FolderOpen, Settings, Eye, Activity, Target
 } from 'lucide-react';
+import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
+import { ModuleKey } from '@/types/modules';
 import {
   DndContext,
   closestCenter,
@@ -53,13 +55,14 @@ type ApporteursSubTab = 'espace' | 'veille';
 type AdminSubTab = 'reunions' | 'plannings' | 'documents';
 
 // Configuration des onglets principaux (niveau 1)
-const MAIN_TABS: PillTabConfig[] = [
-  { id: 'actions', label: 'Actions', icon: Settings, accent: 'blue' },
-  { id: 'apporteurs', label: 'Apporteurs', icon: Users, accent: 'purple' },
-  { id: 'administratif', label: 'Administratif', icon: FolderOpen, accent: 'orange' },
-  { id: 'parc', label: 'Parc', icon: Car, accent: 'green' },
-  { id: 'performance', label: 'Performance', icon: Activity, accent: 'pink' },
-  { id: 'prospection', label: 'Prospection', icon: Target, accent: 'orange' },
+// Configuration des onglets principaux avec module requis
+const MAIN_TABS_CONFIG: (PillTabConfig & { requiresModule?: ModuleKey })[] = [
+  { id: 'actions', label: 'Actions', icon: Settings, accent: 'blue' }, // toujours visible
+  { id: 'apporteurs', label: 'Apporteurs', icon: Users, accent: 'purple', requiresModule: 'divers_apporteurs' },
+  { id: 'administratif', label: 'Administratif', icon: FolderOpen, accent: 'orange', requiresModule: 'agence' },
+  { id: 'parc', label: 'Parc', icon: Car, accent: 'green', requiresModule: 'parc' },
+  { id: 'performance', label: 'Performance', icon: Activity, accent: 'pink', requiresModule: 'agence' },
+  { id: 'prospection', label: 'Prospection', icon: Target, accent: 'orange', requiresModule: 'prospection' },
 ];
 
 function LoadingFallback() {
@@ -283,11 +286,19 @@ function AdministratifSection() {
 
 export default function DiversTabContent() {
   const [activeMainTab, setActiveMainTab] = useSessionState<OutilsMainTab>('outils_main_tab', 'actions');
+  const { hasModule } = useEffectiveModules();
+
+  const visibleTabs = useMemo(() => {
+    return MAIN_TABS_CONFIG.filter(tab => {
+      if (!tab.requiresModule) return true;
+      return hasModule(tab.requiresModule);
+    });
+  }, [hasModule]);
 
   return (
     <div className="py-6 px-2 sm:px-4 space-y-6">
       <Tabs value={activeMainTab} onValueChange={(v) => setActiveMainTab(v as OutilsMainTab)}>
-        <PillTabsList tabs={MAIN_TABS} />
+        <PillTabsList tabs={visibleTabs} />
 
         <TabsContent value="actions" className="mt-6 animate-fade-in">
           <ActionsAMenerTab />
