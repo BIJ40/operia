@@ -59,15 +59,20 @@ Deno.serve(async (req) => {
       ));
     }
 
-    // 2. Vérifier N2+ via RPC
+    // 2. Vérifier N2+ OU module prospection
     const { data: hasRole } = await supabase.rpc('has_min_global_role', {
       _user_id: user.id,
       _min_level: 2,
     });
 
-    if (!hasRole) {
+    const { data: hasProspection } = await supabase.rpc('has_module_v2', {
+      _user_id: user.id,
+      _module_key: 'prospection',
+    });
+
+    if (!hasRole && !hasProspection) {
       return withCors(req, new Response(
-        JSON.stringify({ success: false, error: 'Accès refusé (N2+ requis)' }),
+        JSON.stringify({ success: false, error: 'Accès refusé (N2+ ou module prospection requis)' }),
         { status: 403, headers: { 'Content-Type': 'application/json' } }
       ));
     }
