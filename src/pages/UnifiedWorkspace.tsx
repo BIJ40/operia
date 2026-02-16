@@ -11,7 +11,7 @@ import { useSearchParams } from 'react-router-dom';
 import { 
   Home, BarChart3, ClipboardList, 
   MoreHorizontal, Ticket, HelpCircle,
-  Loader2, BookOpen, Shield, User, Building2, LogOut, Settings, Eye, FolderOpen, Target
+  Loader2, BookOpen, Shield, User, Building2, LogOut, Settings, Eye, FolderOpen
 } from 'lucide-react';
 import { 
   DndContext, 
@@ -75,7 +75,7 @@ const SupportTabContent = lazy(() => import('@/components/unified/tabs/SupportTa
 const AdminTabContent = lazy(() => import('@/components/unified/tabs/AdminTabContent'));
 const FranchiseurView = lazy(() => import('@/components/unified/views/FranchiseurView'));
 const DocumentsTabContent = lazy(() => import('@/components/unified/tabs/DocumentsTabContent'));
-const ProspectionTabContent = lazy(() => import('@/prospection/pages/ProspectionTabContent'));
+
 type UnifiedTab = 
   | 'accueil' 
   | 'stats' 
@@ -85,8 +85,7 @@ type UnifiedTab =
   | 'guides'
   | 'ticketing' 
   | 'aide'
-  | 'admin'
-  | 'prospection';
+  | 'admin';
 
 interface TabConfig {
   id: UnifiedTab;
@@ -97,7 +96,7 @@ interface TabConfig {
 
 // Ordre par défaut des onglets (hors Accueil qui est toujours premier)
 // Documents après Outils
-const DEFAULT_TAB_ORDER: UnifiedTab[] = ['stats', 'salaries', 'outils', 'documents', 'guides', 'prospection', 'ticketing', 'aide', 'admin'];
+const DEFAULT_TAB_ORDER: UnifiedTab[] = ['stats', 'salaries', 'outils', 'documents', 'guides', 'ticketing', 'aide', 'admin'];
 
 function LoadingFallback() {
   return (
@@ -170,8 +169,6 @@ function UnifiedWorkspaceContent() {
     { id: 'documents', label: 'Documents', icon: FolderOpen, requiresOption: { module: 'divers_documents' } },
     // Guides: vérifie guides OU help_academy
     { id: 'guides', label: 'Guides', icon: BookOpen, requiresOption: { module: 'guides' } },
-    // Prospection: vérifie prospection (attribué manuellement)
-    { id: 'prospection', label: 'Prospection', icon: Target, requiresOption: { module: 'prospection' } },
     // Ticketing: vérifie ticketing OU apogee_tickets
     { id: 'ticketing', label: 'Ticketing', icon: Ticket, requiresOption: { module: 'ticketing' } },
     // Aide: vérifie aide OU support
@@ -374,7 +371,7 @@ function UnifiedWorkspaceContent() {
     outils: 'purple',
     documents: 'red',
     guides: 'teal',
-    prospection: 'orange',
+    
     ticketing: 'orange',
     aide: 'cyan',
     admin: 'neutral',
@@ -559,9 +556,6 @@ function UnifiedWorkspaceContent() {
                   <AdminTabContent />
                 </TabsContent>
                 
-                <TabsContent value="prospection" className="mt-0">
-                  <ProspectionTabContent />
-                </TabsContent>
               </Suspense>
             </main>
           </Tabs>
