@@ -5029,6 +5029,112 @@ export type Database = {
         }
         Relationships: []
       }
+      metrics_apporteur_daily: {
+        Row: {
+          agence_id: string
+          apporteur_id: string
+          ca_ht: number
+          date: string
+          delai_devis_vers_signature_avg_days: number | null
+          delai_dossier_vers_devis_avg_days: number | null
+          delai_signature_vers_facture_avg_days: number | null
+          devis_non_signes_count: number
+          devis_signed_count: number
+          devis_total_count: number
+          dossiers_closed_count: number
+          dossiers_received_count: number
+          dossiers_sans_devis_count: number
+          factures_count: number
+          panier_moyen: number
+          taux_transfo_devis: number
+        }
+        Insert: {
+          agence_id: string
+          apporteur_id: string
+          ca_ht?: number
+          date: string
+          delai_devis_vers_signature_avg_days?: number | null
+          delai_dossier_vers_devis_avg_days?: number | null
+          delai_signature_vers_facture_avg_days?: number | null
+          devis_non_signes_count?: number
+          devis_signed_count?: number
+          devis_total_count?: number
+          dossiers_closed_count?: number
+          dossiers_received_count?: number
+          dossiers_sans_devis_count?: number
+          factures_count?: number
+          panier_moyen?: number
+          taux_transfo_devis?: number
+        }
+        Update: {
+          agence_id?: string
+          apporteur_id?: string
+          ca_ht?: number
+          date?: string
+          delai_devis_vers_signature_avg_days?: number | null
+          delai_dossier_vers_devis_avg_days?: number | null
+          delai_signature_vers_facture_avg_days?: number | null
+          devis_non_signes_count?: number
+          devis_signed_count?: number
+          devis_total_count?: number
+          dossiers_closed_count?: number
+          dossiers_received_count?: number
+          dossiers_sans_devis_count?: number
+          factures_count?: number
+          panier_moyen?: number
+          taux_transfo_devis?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metrics_apporteur_daily_agence_id_fkey"
+            columns: ["agence_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      metrics_apporteur_univers_daily: {
+        Row: {
+          agence_id: string
+          apporteur_id: string
+          ca_ht: number
+          date: string
+          devis_count: number
+          dossiers_count: number
+          factures_count: number
+          univers_code: string
+        }
+        Insert: {
+          agence_id: string
+          apporteur_id: string
+          ca_ht?: number
+          date: string
+          devis_count?: number
+          dossiers_count?: number
+          factures_count?: number
+          univers_code: string
+        }
+        Update: {
+          agence_id?: string
+          apporteur_id?: string
+          ca_ht?: number
+          date?: string
+          devis_count?: number
+          dossiers_count?: number
+          factures_count?: number
+          univers_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metrics_apporteur_univers_daily_agence_id_fkey"
+            columns: ["agence_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       metrics_cache: {
         Row: {
           cache_key: string
@@ -5629,6 +5735,130 @@ export type Database = {
             columns: ["agency_id"]
             isOneToOne: false
             referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospecting_followups: {
+        Row: {
+          agency_id: string
+          apporteur_id: string
+          apporteur_name: string
+          created_at: string
+          id: string
+          last_meeting_at: string | null
+          next_action: string | null
+          next_action_at: string | null
+          notes: string | null
+          owner_user_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          apporteur_id: string
+          apporteur_name?: string
+          created_at?: string
+          id?: string
+          last_meeting_at?: string | null
+          next_action?: string | null
+          next_action_at?: string | null
+          notes?: string | null
+          owner_user_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          apporteur_id?: string
+          apporteur_name?: string
+          created_at?: string
+          id?: string
+          last_meeting_at?: string | null
+          next_action?: string | null
+          next_action_at?: string | null
+          notes?: string | null
+          owner_user_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospecting_followups_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospecting_followups_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospecting_meetings: {
+        Row: {
+          agency_id: string
+          apporteur_id: string
+          apporteur_name: string
+          created_at: string
+          followup_id: string | null
+          id: string
+          meeting_at: string
+          meeting_type: string
+          outcomes: string | null
+          owner_user_id: string
+          summary: string | null
+        }
+        Insert: {
+          agency_id: string
+          apporteur_id: string
+          apporteur_name?: string
+          created_at?: string
+          followup_id?: string | null
+          id?: string
+          meeting_at: string
+          meeting_type?: string
+          outcomes?: string | null
+          owner_user_id: string
+          summary?: string | null
+        }
+        Update: {
+          agency_id?: string
+          apporteur_id?: string
+          apporteur_name?: string
+          created_at?: string
+          followup_id?: string | null
+          id?: string
+          meeting_at?: string
+          meeting_type?: string
+          outcomes?: string | null
+          owner_user_id?: string
+          summary?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospecting_meetings_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospecting_meetings_followup_id_fkey"
+            columns: ["followup_id"]
+            isOneToOne: false
+            referencedRelation: "prospecting_followups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospecting_meetings_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

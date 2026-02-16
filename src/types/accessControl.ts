@@ -18,7 +18,7 @@ export interface AccessControlContext {
  * Modules nécessitant une agence pour être accessibles
  * Ces modules sont liés à la gestion d'une agence spécifique
  */
-const AGENCY_REQUIRED_MODULES: ModuleKey[] = ['pilotage_agence', 'rh', 'parc'];
+const AGENCY_REQUIRED_MODULES: ModuleKey[] = ['pilotage_agence', 'rh', 'parc', 'prospection'];
 
 /**
  * Vérifie si l'utilisateur a au minimum le rôle spécifié

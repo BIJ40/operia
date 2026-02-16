@@ -21,6 +21,7 @@ export const MODULES = {
   guides: 'guides',                       // Guides
   ticketing: 'ticketing',                 // Ticketing
   aide: 'aide',                           // Aide
+  prospection: 'prospection',             // Prospection Apporteurs
   // Modules réservés admin/réseau (non visibles dans les plans)
   reseau_franchiseur: 'reseau_franchiseur',
   admin_plateforme: 'admin_plateforme',
@@ -95,6 +96,12 @@ export const MODULE_OPTIONS = {
   aide: {
     user: 'aide.user',
     agent: 'aide.agent',
+  },
+  prospection: {
+    dashboard: 'prospection.dashboard',
+    comparateur: 'prospection.comparateur',
+    veille: 'prospection.veille',
+    meetings: 'prospection.meetings',
   },
   reseau_franchiseur: {
     dashboard: 'reseau_franchiseur.dashboard',
@@ -295,6 +302,20 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'agent', path: 'aide.agent', label: 'Agent', description: 'Répondre demandes', defaultEnabled: false, routes: ['/?tab=aide'] },
     ],
   },
+  {
+    key: 'prospection',
+    label: 'Prospection',
+    description: 'Prospection et suivi apporteurs',
+    icon: 'Target',
+    defaultForRoles: [], // Attribué uniquement par override utilisateur
+    minRole: 'franchisee_admin',
+    options: [
+      { key: 'dashboard', path: 'prospection.dashboard', label: 'Dashboard', description: 'Fiche apporteur', defaultEnabled: true, routes: ['/?tab=prospection'] },
+      { key: 'comparateur', path: 'prospection.comparateur', label: 'Comparateur', description: 'Comparer apporteurs', defaultEnabled: true, routes: ['/?tab=prospection'] },
+      { key: 'veille', path: 'prospection.veille', label: 'Veille', description: 'Alertes et tendances', defaultEnabled: true, routes: ['/?tab=prospection'] },
+      { key: 'meetings', path: 'prospection.meetings', label: 'RDV', description: 'Suivi commercial', defaultEnabled: true, routes: ['/?tab=prospection'] },
+    ],
+  },
   // Modules admin (non visibles dans les plans)
   {
     key: 'reseau_franchiseur',
@@ -341,6 +362,7 @@ export interface EnabledModules {
   guides?: boolean | ModuleOptionsState;
   ticketing?: boolean | ModuleOptionsState;
   aide?: boolean | ModuleOptionsState;
+  prospection?: boolean | ModuleOptionsState;
   reseau_franchiseur?: boolean | ModuleOptionsState;
   admin_plateforme?: boolean | ModuleOptionsState;
   // Legacy keys pour rétrocompatibilité
@@ -440,6 +462,7 @@ export const MODULE_SHORT_LABELS: Record<ModuleKey, string> = {
   guides: 'Guides',
   ticketing: 'Ticketing',
   aide: 'Aide',
+  prospection: 'Prospection',
   reseau_franchiseur: 'Réseau',
   admin_plateforme: 'Admin',
   // Legacy

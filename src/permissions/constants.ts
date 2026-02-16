@@ -23,7 +23,7 @@ export const BYPASS_MIN_LEVEL = GLOBAL_ROLES.platform_admin;
 // ============================================================================
 
 /** Modules qui nécessitent que l'utilisateur ait une agence assignée */
-export const AGENCY_REQUIRED_MODULES: ModuleKey[] = ['pilotage_agence', 'rh', 'parc'];
+export const AGENCY_REQUIRED_MODULES: ModuleKey[] = ['pilotage_agence', 'rh', 'parc', 'prospection'];
 
 // ============================================================================
 // RÈGLE 3: RÔLES AGENCE
@@ -83,6 +83,7 @@ export const MODULE_MIN_ROLES: Partial<Record<ModuleKey, GlobalRole>> = {
   guides: 'base_user',
   ticketing: 'base_user',
   aide: 'base_user',
+  prospection: 'franchisee_admin',
 };
 
 // ============================================================================
@@ -158,4 +159,5 @@ export const MODULE_LABELS: Partial<Record<ModuleKey, string>> = {
   guides: 'Guides',
   ticketing: 'Ticketing',
   aide: 'Aide',
+  prospection: 'Prospection',
 };
