@@ -18,6 +18,7 @@ import { InsightsPanel } from '../components/InsightsPanel';
 import { FollowupPanel } from '../components/FollowupPanel';
 import { MeetingTimeline } from '../components/MeetingTimeline';
 import { MeetingCreateDialog } from '../components/MeetingCreateDialog';
+import { ExportPitchButton } from '../components/ExportPitchButton';
 
 interface Props {
   apporteurId: string;
@@ -63,6 +64,16 @@ export function ApporteurDashboardPage({ apporteurId, onBack }: Props) {
         </div>
         <div className="flex items-center gap-2">
           <MeetingCreateDialog apporteurId={apporteurId} apporteurName={apporteurId} />
+          {data && (
+            <ExportPitchButton
+              apporteurName={apporteurId}
+              kpis={data.kpis}
+              universData={data.universData}
+              monthlyTrend={data.monthlyTrend}
+              insights={insights}
+              dateRange={`${from} → ${to}`}
+            />
+          )}
           <Select value={period} onValueChange={v => setPeriod(v as PeriodKey)}>
             <SelectTrigger className="w-32">
               <SelectValue />
