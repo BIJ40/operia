@@ -1,6 +1,9 @@
 /**
  * Insights Engine - Règles déterministes pour recommandations commerciales
  * Pas d'IA : règles codées en dur basées sur les seuils métier
+ * 
+ * IMPORTANT: Ne PAS inventer d'univers. Seuls les univers réellement présents
+ * dans les données Apogée sont utilisés.
  */
 
 import type { AggregatedKPIs, UniversAggregated } from './aggregators';
@@ -17,15 +20,9 @@ export interface Insight {
   threshold?: number;
 }
 
-// ─── Known universes for opportunity detection ──────────────────────
-const ALL_KNOWN_UNIVERSES = [
-  'Plomberie', 'Électricité', 'Menuiserie', 'Vitrerie',
-  'Peinture', 'Serrurerie', 'Chauffage', 'Climatisation',
-  'Rénovation', 'Multiservice',
-];
-
 /**
  * Génère les insights pour un apporteur individuel
+ * Basé uniquement sur les données réelles — pas d'univers inventés
  */
 export function generateApporteurInsights(
   kpis: AggregatedKPIs,
@@ -36,21 +33,62 @@ export function generateApporteurInsights(
 ): Insight[] {
   const insights: Insight[] = [];
 
-  // ─── Règle 1: Univers manquants (opportunité) ─────────────────────
-  const presentUniverses = new Set(universData.filter(u => u.ca_ht > 0).map(u => u.univers_code));
-  for (const univ of ALL_KNOWN_UNIVERSES) {
-    if (!presentUniverses.has(univ)) {
+  // ─── Règle 1: Concentration univers (opportunité de diversification) ──
+  if (universData.length >= 2) {
+    const totalCA = universData.reduce((s, u) => s + u.ca_ht, 0);
+    if (totalCA > 0 && universData[0]) {
+      const topPct = (universData[0].ca_ht / totalCA) * 100;
+      if (topPct > 70) {
+        insights.push({
+          id: 'univers_concentration',
+          level: 'info',
+          title: `${Math.round(topPct)}% du CA sur ${universData[0].univers_code}`,
+          description: `Forte concentration sur un seul univers. Diversifier pour réduire la dépendance.`,
+          metric: 'univers_concentration',
+          value: topPct,
+        });
+      }
+    }
+  }
+
+  // ─── Règle 2: Dossiers transformés directement (sans devis) ───────────
+  if (kpis.dossiers_avec_facture_sans_devis > 0 && kpis.dossiers_received >= 3) {
+    const pct = Math.round((kpis.dossiers_avec_facture_sans_devis / kpis.dossiers_received) * 100);
+    insights.push({
+      id: 'dossiers_directs',
+      level: 'info',
+      title: `${kpis.dossiers_avec_facture_sans_devis} dossier(s) facturé(s) sans devis`,
+      description: `${pct}% des dossiers ont été facturés directement (dépannages, urgences). Bonne réactivité.`,
+      metric: 'dossiers_directs',
+      value: pct,
+    });
+  }
+
+  // ─── Règle 3: Taux transfo dossier→facture ───────────────────────────
+  if (kpis.taux_transfo_dossier !== null && kpis.dossiers_received >= 5) {
+    if (kpis.taux_transfo_dossier < 50) {
       insights.push({
-        id: `univers_missing_${univ.toLowerCase()}`,
-        level: 'opportunity',
-        title: `Univers non exploité : ${univ}`,
-        description: `Aucun CA enregistré en ${univ} sur la période. Opportunité de développement commercial.`,
-        metric: 'univers',
+        id: 'transfo_dossier_faible',
+        level: 'warning',
+        title: `Taux dossier→facture faible: ${kpis.taux_transfo_dossier.toFixed(0)}%`,
+        description: `Moins de la moitié des dossiers aboutissent à une facture. Identifier les blocages.`,
+        metric: 'taux_transfo_dossier',
+        value: kpis.taux_transfo_dossier,
+        threshold: 50,
+      });
+    } else if (kpis.taux_transfo_dossier > 80) {
+      insights.push({
+        id: 'transfo_dossier_excellent',
+        level: 'info',
+        title: `Excellent taux dossier→facture: ${kpis.taux_transfo_dossier.toFixed(0)}%`,
+        description: `Plus de 80% des dossiers génèrent du CA. Apporteur de qualité.`,
+        metric: 'taux_transfo_dossier',
+        value: kpis.taux_transfo_dossier,
       });
     }
   }
 
-  // ─── Règle 2: Taux devis non signés élevé ─────────────────────────
+  // ─── Règle 4: Taux devis non signés élevé ─────────────────────────
   if (kpis.devis_total >= 10 && kpis.devis_non_signes > 0) {
     const tauxNonSignes = kpis.devis_non_signes / kpis.devis_total;
     if (tauxNonSignes > 0.45) {
@@ -66,7 +104,7 @@ export function generateApporteurInsights(
     }
   }
 
-  // ─── Règle 3: Panier moyen faible vs médiane ─────────────────────
+  // ─── Règle 5: Panier moyen faible vs médiane ─────────────────────
   if (allApporteursMedianPanier && kpis.panier_moyen !== null) {
     const seuil = allApporteursMedianPanier * 0.8;
     if (kpis.panier_moyen < seuil) {
@@ -82,7 +120,7 @@ export function generateApporteurInsights(
     }
   }
 
-  // ─── Règle 4: Tendance CA négative ────────────────────────────────
+  // ─── Règle 6: Tendance CA négative ────────────────────────────────
   if (kpisPreviousPeriod && kpisPreviousPeriod.ca_ht > 0) {
     const ratio = kpis.ca_ht / kpisPreviousPeriod.ca_ht;
     if (ratio < 0.85) {
@@ -99,7 +137,7 @@ export function generateApporteurInsights(
     }
   }
 
-  // ─── Règle 5: Tendance dossiers négative ──────────────────────────
+  // ─── Règle 7: Tendance dossiers négative ──────────────────────────
   if (kpisPreviousPeriod && kpisPreviousPeriod.dossiers_received > 0) {
     const ratio = kpis.dossiers_received / kpisPreviousPeriod.dossiers_received;
     if (ratio < 0.80) {
@@ -116,7 +154,7 @@ export function generateApporteurInsights(
     }
   }
 
-  // ─── Règle 6: Délai qui explose ───────────────────────────────────
+  // ─── Règle 8: Délai qui explose ───────────────────────────────────
   if (allApporteursMedianDelai && kpis.delai_dossier_devis_avg !== null) {
     const seuil = allApporteursMedianDelai * 1.5;
     if (kpis.delai_dossier_devis_avg > seuil) {
@@ -128,22 +166,6 @@ export function generateApporteurInsights(
         metric: 'delai_dossier_devis',
         value: kpis.delai_dossier_devis_avg,
         threshold: seuil,
-      });
-    }
-  }
-
-  // ─── Règle 7: Dossiers sans devis élevé ───────────────────────────
-  if (kpis.dossiers_received >= 5) {
-    const tauxSansDevis = kpis.dossiers_sans_devis / kpis.dossiers_received;
-    if (tauxSansDevis > 0.40) {
-      insights.push({
-        id: 'dossiers_sans_devis',
-        level: 'warning',
-        title: 'Beaucoup de dossiers sans devis',
-        description: `${Math.round(tauxSansDevis * 100)}% des dossiers n'ont pas de devis associé. Perte de CA potentiel.`,
-        metric: 'taux_sans_devis',
-        value: tauxSansDevis * 100,
-        threshold: 40,
       });
     }
   }

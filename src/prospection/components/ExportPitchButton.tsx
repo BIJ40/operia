@@ -90,6 +90,7 @@ export function ExportPitchButton({ apporteurName, kpis, universData, monthlyTre
       y = kpiRow('CA HT', fmtEuro(kpis.ca_ht), y);
       y = kpiRow('Panier moyen', kpis.panier_moyen ? fmtEuro(kpis.panier_moyen) : '—', y);
       y = kpiRow('Taux transfo devis', fmtPct(kpis.taux_transfo_devis), y);
+      y = kpiRow('Taux transfo dossier', fmtPct(kpis.taux_transfo_dossier), y);
 
       y += 4;
       drawLine(y);

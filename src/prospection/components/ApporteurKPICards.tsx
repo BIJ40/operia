@@ -1,9 +1,10 @@
 /**
  * ApporteurKPICards - Cards KPIs pour un apporteur
+ * Deux taux de transformation : devis→facture ET dossier→facture
  */
 
 import { Card, CardContent } from '@/components/ui/card';
-import { FileText, PenTool, CheckCircle, Receipt, Euro, ShoppingCart, TrendingUp, Clock } from 'lucide-react';
+import { FileText, PenTool, CheckCircle, Receipt, Euro, ShoppingCart, TrendingUp, Target, Clock } from 'lucide-react';
 import type { AggregatedKPIs } from '../engine/aggregators';
 
 interface Props {
@@ -47,8 +48,8 @@ export function ApporteurKPICards({ kpis }: Props) {
       <KPICard icon={Receipt} label="Factures" value={kpis.factures} color="bg-emerald-600" />
       <KPICard icon={Euro} label="CA HT" value={fmt(kpis.ca_ht)} suffix="€" color="bg-amber-600" />
       <KPICard icon={ShoppingCart} label="Panier moyen" value={kpis.panier_moyen != null ? fmt(kpis.panier_moyen) : '—'} suffix={kpis.panier_moyen != null ? '€' : ''} color="bg-orange-600" />
-      <KPICard icon={TrendingUp} label="Taux transfo" value={kpis.taux_transfo_devis != null ? `${kpis.taux_transfo_devis.toFixed(1)}` : '—'} suffix={kpis.taux_transfo_devis != null ? '%' : ''} color="bg-purple-600" />
-      <KPICard icon={Clock} label="Délai dossier→devis" value={kpis.delai_dossier_devis_avg != null ? `${kpis.delai_dossier_devis_avg.toFixed(1)}` : '—'} suffix={kpis.delai_dossier_devis_avg != null ? 'j' : ''} color="bg-rose-600" />
+      <KPICard icon={TrendingUp} label="Tx transfo devis" value={kpis.taux_transfo_devis != null ? `${kpis.taux_transfo_devis.toFixed(1)}` : '—'} suffix={kpis.taux_transfo_devis != null ? '%' : ''} color="bg-purple-600" />
+      <KPICard icon={Target} label="Tx transfo dossier" value={kpis.taux_transfo_dossier != null ? `${kpis.taux_transfo_dossier.toFixed(1)}` : '—'} suffix={kpis.taux_transfo_dossier != null ? '%' : ''} color="bg-rose-600" />
     </div>
   );
 }
