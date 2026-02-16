@@ -1,14 +1,16 @@
 /**
  * ApporteurDashboardPage - Fiche individuelle d'un apporteur
+ * Données calculées en LIVE depuis l'API Apogée
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { format, subDays, subMonths } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
-import { useApporteurDashboard } from '../hooks/useApporteurDashboard';
+import { useApporteurDashboardLive } from '../hooks/useApporteurDashboardLive';
+import { useApogeeCommanditaires } from '@/hooks/useApogeeCommanditaires';
 import { generateApporteurInsights } from '../engine/insights';
 import { ApporteurKPICards } from '../components/ApporteurKPICards';
 import { ApporteurFunnel } from '../components/ApporteurFunnel';
@@ -39,12 +41,18 @@ function getPeriodDates(period: PeriodKey): { from: string; to: string } {
 }
 
 export function ApporteurDashboardPage({ apporteurId, onBack }: Props) {
-  const { agencyId } = useAuth();
+  const { agence } = useAuth();
   const [period, setPeriod] = useState<PeriodKey>('6m');
 
+  // Résoudre le nom de l'apporteur depuis Apogée
+  const { data: commanditaires = [] } = useApogeeCommanditaires();
+  const apporteurName = useMemo(() => {
+    const found = commanditaires.find(c => String(c.id) === String(apporteurId));
+    return found?.name || `Apporteur #${apporteurId}`;
+  }, [commanditaires, apporteurId]);
+
   const { from, to } = getPeriodDates(period);
-  const { data, isLoading } = useApporteurDashboard({
-    agencyId,
+  const { data, isLoading } = useApporteurDashboardLive({
     apporteurId,
     dateFrom: from,
     dateTo: to,
@@ -60,13 +68,13 @@ export function ApporteurDashboardPage({ apporteurId, onBack }: Props) {
           <Button variant="ghost" size="sm" onClick={onBack}>
             <ArrowLeft className="w-4 h-4 mr-1" /> Retour
           </Button>
-          <h2 className="text-lg font-bold text-foreground">{apporteurId}</h2>
+          <h2 className="text-lg font-bold text-foreground">{apporteurName}</h2>
         </div>
         <div className="flex items-center gap-2">
-          <MeetingCreateDialog apporteurId={apporteurId} apporteurName={apporteurId} />
+          <MeetingCreateDialog apporteurId={apporteurId} apporteurName={apporteurName} />
           {data && (
             <ExportPitchButton
-              apporteurName={apporteurId}
+              apporteurName={apporteurName}
               kpis={data.kpis}
               universData={data.universData}
               monthlyTrend={data.monthlyTrend}
@@ -111,7 +119,7 @@ export function ApporteurDashboardPage({ apporteurId, onBack }: Props) {
 
           {/* Suivi commercial */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <FollowupPanel apporteurId={apporteurId} apporteurName={apporteurId} />
+            <FollowupPanel apporteurId={apporteurId} apporteurName={apporteurName} />
             <MeetingTimeline apporteurId={apporteurId} />
           </div>
         </>
