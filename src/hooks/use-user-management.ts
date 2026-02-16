@@ -387,11 +387,8 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       globalRole: GlobalRole; 
       sendEmail: boolean;
     }) => {
-      // 🛡️ RÈGLE AUTOMATIQUE: Dirigeant → N2 (franchisee_admin)
+      // Le rôle global est celui choisi par l'admin, pas de forçage automatique
       let effectiveGlobalRole = userData.globalRole;
-      if (userData.roleAgence?.toLowerCase() === 'dirigeant') {
-        effectiveGlobalRole = 'franchisee_admin';
-      }
       
       // ✅ VÉRIFICATION CRITIQUE : Le rôle cible est-il créable ?
       if (!capabilities.canCreateRoles.includes(effectiveGlobalRole)) {
@@ -488,11 +485,8 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
         apogee_user_id?: number | null;
       } 
     }) => {
-      // 🛡️ RÈGLE AUTOMATIQUE: Dirigeant → N2 (franchisee_admin)
+      // Le rôle global est celui choisi par l'admin, pas de forçage automatique
       let effectiveGlobalRole = data.global_role;
-      if (data.role_agence?.toLowerCase() === 'dirigeant') {
-        effectiveGlobalRole = 'franchisee_admin';
-      }
       
       // ✅ VÉRIFICATION : Si changement de rôle, est-il autorisé ?
       if (effectiveGlobalRole && !capabilities.canEditRoles.includes(effectiveGlobalRole)) {

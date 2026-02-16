@@ -83,15 +83,8 @@ export function useUserMutations({
 
   const createUserMutation = useMutation({
     mutationFn: async (userData: CreateUserData) => {
+      // Le rôle global est celui choisi par l'admin, pas de forçage automatique
       let effectiveGlobalRole = userData.globalRole;
-      
-      // Règle dirigeant legacy
-      if (userData.roleAgence?.toLowerCase() === 'dirigeant') {
-        effectiveGlobalRole = 'franchisee_admin';
-      }
-      
-      // V3.0 PHASE 5: Appliquer la règle du plancher agence >= N2
-      effectiveGlobalRole = enforceAgencyRoleFloor(userData.agence, effectiveGlobalRole) ?? effectiveGlobalRole;
       
       if (!capabilities.canCreateRoles.includes(effectiveGlobalRole)) {
         throw new Error('Vous ne pouvez pas créer un utilisateur avec ce rôle');
