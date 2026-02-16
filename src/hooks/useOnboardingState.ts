@@ -26,6 +26,7 @@ export interface OnboardingState {
   phone: string | null;
   email_notifications_enabled: boolean;
   global_role: string | null;
+  role_agence: string | null;
 }
 
 export interface OnboardingUpdateData {
@@ -62,7 +63,8 @@ export function useOnboardingState() {
           last_name,
           phone,
           email_notifications_enabled,
-          global_role
+          global_role,
+          role_agence
         `)
         .eq('id', user.id)
         .single();
@@ -83,6 +85,7 @@ export function useOnboardingState() {
         phone: data.phone,
         email_notifications_enabled: data.email_notifications_enabled ?? true,
         global_role: data.global_role,
+        role_agence: data.role_agence,
       });
     } catch (err) {
       console.error('[Onboarding] Unexpected error:', err);

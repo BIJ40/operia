@@ -4,7 +4,7 @@ import { Resend } from 'https://esm.sh/resend@4.0.0'
 import { GLOBAL_ROLES, getRoleLevel, canAccessUsersPage, canEditTarget } from '../_shared/roles.ts'
 import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts'
 import { validateString, validateOptionalString, validateOptionalBoolean } from '../_shared/validation.ts'
-import { getDefaultModulesForRole, EnabledModule } from '../_shared/defaultModules.ts'
+import { getDefaultModulesForCreation, EnabledModule } from '../_shared/defaultModules.ts'
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
 
@@ -233,7 +233,7 @@ serve(async (req) => {
     }
 
     // Insérer les modules par défaut dans user_modules (table relationnelle V2)
-    const defaultModules = getDefaultModulesForRole(globalRole)
+    const defaultModules = getDefaultModulesForCreation(globalRole, roleAgence)
     const moduleRows = Object.entries(defaultModules)
       .filter(([_, mod]: [string, EnabledModule]) => mod.enabled)
       .map(([moduleKey, mod]: [string, EnabledModule]) => ({
