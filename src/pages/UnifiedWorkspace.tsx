@@ -92,6 +92,7 @@ interface TabConfig {
   label: string;
   icon: React.ElementType;
   requiresOption?: { module: string; option?: string };
+  altModules?: string[]; // Modules alternatifs qui rendent cet onglet visible
 }
 
 // Ordre par défaut des onglets (hors Accueil qui est toujours premier)
@@ -163,8 +164,8 @@ function UnifiedWorkspaceContent() {
     { id: 'stats', label: 'Stats', icon: BarChart3, requiresOption: { module: 'stats' } },
     // Salariés: vérifie rh
     { id: 'salaries', label: 'Salariés', icon: ClipboardList, requiresOption: { module: 'rh' } },
-    // Outils: vérifie agence
-    { id: 'outils', label: 'Outils', icon: MoreHorizontal, requiresOption: { module: 'agence' } },
+    // Outils: vérifie agence OU prospection OU parc (tout module enfant d'Outils)
+    { id: 'outils', label: 'Outils', icon: MoreHorizontal, requiresOption: { module: 'agence' }, altModules: ['prospection', 'parc', 'divers_apporteurs', 'divers_plannings', 'divers_reunions'] },
     // Documents: vérifie divers_documents (pas d'option requise)
     { id: 'documents', label: 'Documents', icon: FolderOpen, requiresOption: { module: 'divers_documents' } },
     // Guides: vérifie guides OU help_academy
@@ -185,9 +186,19 @@ function UnifiedWorkspaceContent() {
     
     const { module, option } = tab.requiresOption;
     if (option) {
-      return hasModuleOption(module as any, option);
+      if (hasModuleOption(module as any, option)) return true;
+    } else {
+      if (hasModule(module as any)) return true;
     }
-    return hasModule(module as any);
+    
+    // Vérifier les modules alternatifs
+    if (tab.altModules) {
+      for (const altModule of tab.altModules) {
+        if (hasModule(altModule as any)) return true;
+      }
+    }
+    
+    return false;
   }, [effectiveIsPlatformAdmin, hasModule, hasModuleOption]);
   
   // L'admin réel peut toujours cliquer sur les onglets (pour naviguer)
