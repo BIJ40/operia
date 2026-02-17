@@ -112,8 +112,9 @@ export function useEffectiveModules(): EffectiveModulesResult & { isLoading: boo
     'aide': ['support'],
     'ticketing': ['apogee_tickets'],
     'divers_documents': ['agence', 'pilotage_agence'],
+    'prospection': ['agence', 'pilotage_agence'],
     // Et inversement pour le legacy
-    'pilotage_agence': ['agence', 'stats', 'rh', 'divers_documents'],
+    'pilotage_agence': ['agence', 'stats', 'rh', 'divers_documents', 'prospection'],
     'help_academy': ['guides'],
     'support': ['aide'],
     'apogee_tickets': ['ticketing'],
