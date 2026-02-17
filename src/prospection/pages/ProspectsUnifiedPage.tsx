@@ -9,7 +9,7 @@ import {
   Search, Upload, Plus, X, Filter, FileSpreadsheet, Users, UserCheck,
   Phone, Globe, MapPin, Calendar, Star, ChevronRight, Building2, User,
   Hash, PlusCircle, PhoneCall, Mail, MapPinned, RotateCcw, MessageSquare,
-  Edit2, Save, ArrowLeft, CheckSquare
+  Edit2, Save, ArrowLeft, CheckSquare, Trash2
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useProspectPool, useImportProspects, type ProspectPoolItem } from '../hooks/useProspectPool';
 import {
   useProspectCards, useProspectCard, useCreateProspectCards, useUpdateProspectCard,
+  useDeleteProspectCard,
   useProspectInteractions, useCreateInteraction,
   PROSPECT_STATUS_CONFIG, type ProspectCard, type ProspectStatus, type ProspectInteraction,
 } from '../hooks/useProspectCards';
@@ -91,22 +92,67 @@ export function ProspectsUnifiedPage() {
 }
 
 // ===================== POOL EXPLORER =====================
+function ColumnFilter({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="relative inline-flex items-center ml-1">
+      <button
+        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+        className={`p-0.5 rounded hover:bg-muted transition-colors ${value ? 'text-primary' : 'text-muted-foreground/50'}`}
+      >
+        <Filter className="w-3 h-3" />
+      </button>
+      {open && (
+        <div className="absolute top-full left-0 mt-1 z-50 bg-popover border rounded-md shadow-lg p-2 min-w-[160px]" onClick={e => e.stopPropagation()}>
+          <Input
+            autoFocus
+            placeholder={placeholder}
+            value={value}
+            onChange={e => onChange(e.target.value)}
+            className="h-7 text-xs"
+          />
+          {value && (
+            <button className="text-xs text-muted-foreground hover:text-foreground mt-1" onClick={() => { onChange(''); setOpen(false); }}>
+              Effacer
+            </button>
+          )}
+        </div>
+      )}
+    </span>
+  );
+}
+
 function PoolExplorer({ onCardsCreated }: { onCardsCreated: () => void }) {
-  const [search, setSearch] = useState('');
-  const [codePostal, setCodePostal] = useState('');
-  const [ville, setVille] = useState('');
+  const [filters, setFilters] = useState<Record<string, string>>({});
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: prospects = [], isLoading } = useProspectPool({
-    search: search || undefined,
-    codePostal: codePostal || undefined,
-    ville: ville || undefined,
+  // Use denomination filter as "search" for the backend, rest will be client-side
+  const { data: rawProspects = [], isLoading } = useProspectPool({
+    search: filters.denomination || undefined,
+    codePostal: filters.code_postal || undefined,
+    ville: filters.ville || undefined,
   });
+
+  // Additional client-side filtering for columns not supported by backend
+  const prospects = useMemo(() => {
+    let result = rawProspects;
+    const f = filters;
+    if (f.enseigne) result = result.filter(p => p.enseigne?.toLowerCase().includes(f.enseigne.toLowerCase()));
+    if (f.telephone) result = result.filter(p => p.telephone?.includes(f.telephone));
+    if (f.representant) result = result.filter(p => p.representant?.toLowerCase().includes(f.representant.toLowerCase()));
+    if (f.tranche_effectif) result = result.filter(p => p.tranche_effectif?.toLowerCase().includes(f.tranche_effectif.toLowerCase()));
+    if (f.chiffre_affaire) result = result.filter(p => p.chiffre_affaire?.includes(f.chiffre_affaire));
+    return result;
+  }, [rawProspects, filters]);
 
   const importMutation = useImportProspects();
   const createCardsMutation = useCreateProspectCards();
+
+  const setFilter = useCallback((key: string, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  }, []);
 
   const handleImport = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -151,13 +197,7 @@ function PoolExplorer({ onCardsCreated }: { onCardsCreated: () => void }) {
     onCardsCreated();
   }, [prospects, selectedIds, createCardsMutation, onCardsCreated]);
 
-  const clearFilters = useCallback(() => {
-    setSearch('');
-    setCodePostal('');
-    setVille('');
-  }, []);
-
-  const hasFilters = search || codePostal || ville;
+  const hasFilters = Object.values(filters).some(v => !!v);
 
   return (
     <>
@@ -171,6 +211,11 @@ function PoolExplorer({ onCardsCreated }: { onCardsCreated: () => void }) {
                 · {selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}
               </span>
             )}
+            {hasFilters && (
+              <button className="ml-2 text-xs text-muted-foreground hover:text-foreground underline" onClick={() => setFilters({})}>
+                Effacer les filtres
+              </button>
+            )}
           </p>
         </div>
         <div className="flex gap-2">
@@ -182,48 +227,8 @@ function PoolExplorer({ onCardsCreated }: { onCardsCreated: () => void }) {
         </div>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="pt-4 pb-3">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher par nom, enseigne, représentant..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <div className="relative w-full sm:w-44">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Ville"
-                value={ville}
-                onChange={e => setVille(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <div className="relative w-full sm:w-32">
-              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="CP"
-                value={codePostal}
-                onChange={e => setCodePostal(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            {hasFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters}>
-                <X className="w-4 h-4 mr-1" /> Effacer
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Empty state */}
-      {!isLoading && prospects.length === 0 && !hasFilters && (
+      {!isLoading && rawProspects.length === 0 && !hasFilters && (
         <Card>
           <CardContent className="py-12 text-center">
             <FileSpreadsheet className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
@@ -238,8 +243,8 @@ function PoolExplorer({ onCardsCreated }: { onCardsCreated: () => void }) {
         </Card>
       )}
 
-      {/* Table */}
-      {prospects.length > 0 && (
+      {/* Table with column filters */}
+      {(rawProspects.length > 0 || hasFilters) && (
         <Card>
           <CardContent className="p-0">
             <div className="overflow-auto max-h-[60vh]">
@@ -252,14 +257,38 @@ function PoolExplorer({ onCardsCreated }: { onCardsCreated: () => void }) {
                         onCheckedChange={selectAll}
                       />
                     </TableHead>
-                    <TableHead>Dénomination</TableHead>
-                    <TableHead>Enseigne</TableHead>
-                    <TableHead>Ville</TableHead>
-                    <TableHead>CP</TableHead>
-                    <TableHead>Téléphone</TableHead>
-                    <TableHead>Représentant</TableHead>
-                    <TableHead>Effectif</TableHead>
-                    <TableHead>CA</TableHead>
+                    <TableHead>
+                      Dénomination
+                      <ColumnFilter value={filters.denomination || ''} onChange={v => setFilter('denomination', v)} placeholder="Filtrer..." />
+                    </TableHead>
+                    <TableHead>
+                      Enseigne
+                      <ColumnFilter value={filters.enseigne || ''} onChange={v => setFilter('enseigne', v)} placeholder="Filtrer..." />
+                    </TableHead>
+                    <TableHead>
+                      Ville
+                      <ColumnFilter value={filters.ville || ''} onChange={v => setFilter('ville', v)} placeholder="Filtrer..." />
+                    </TableHead>
+                    <TableHead>
+                      CP
+                      <ColumnFilter value={filters.code_postal || ''} onChange={v => setFilter('code_postal', v)} placeholder="Filtrer..." />
+                    </TableHead>
+                    <TableHead>
+                      Téléphone
+                      <ColumnFilter value={filters.telephone || ''} onChange={v => setFilter('telephone', v)} placeholder="Filtrer..." />
+                    </TableHead>
+                    <TableHead>
+                      Représentant
+                      <ColumnFilter value={filters.representant || ''} onChange={v => setFilter('representant', v)} placeholder="Filtrer..." />
+                    </TableHead>
+                    <TableHead>
+                      Effectif
+                      <ColumnFilter value={filters.tranche_effectif || ''} onChange={v => setFilter('tranche_effectif', v)} placeholder="Filtrer..." />
+                    </TableHead>
+                    <TableHead>
+                      CA
+                      <ColumnFilter value={filters.chiffre_affaire || ''} onChange={v => setFilter('chiffre_affaire', v)} placeholder="Filtrer..." />
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -338,6 +367,7 @@ function PoolExplorer({ onCardsCreated }: { onCardsCreated: () => void }) {
 function MyProspects({ onSelectCard }: { onSelectCard: (id: string) => void }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const deleteMutation = useDeleteProspectCard();
 
   const { data: cards = [], isLoading } = useProspectCards({
     search: search || undefined,
@@ -350,6 +380,13 @@ function MyProspects({ onSelectCard }: { onSelectCard: (id: string) => void }) {
       return acc;
     }, {} as Record<string, number>);
   }, [cards]);
+
+  const handleDelete = useCallback((e: React.MouseEvent, cardId: string) => {
+    e.stopPropagation();
+    if (window.confirm('Supprimer ce prospect de votre liste ?')) {
+      deleteMutation.mutate(cardId);
+    }
+  }, [deleteMutation]);
 
   return (
     <>
@@ -410,7 +447,7 @@ function MyProspects({ onSelectCard }: { onSelectCard: (id: string) => void }) {
         </Card>
       )}
 
-      {/* Table view for cards - more practical than grid */}
+      {/* Table view for cards */}
       {cards.length > 0 && (
         <Card>
           <CardContent className="p-0">
@@ -426,6 +463,7 @@ function MyProspects({ onSelectCard }: { onSelectCard: (id: string) => void }) {
                     <TableHead>Téléphone</TableHead>
                     <TableHead>Représentant</TableHead>
                     <TableHead>Score</TableHead>
+                    <TableHead className="w-10"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -471,6 +509,17 @@ function MyProspects({ onSelectCard }: { onSelectCard: (id: string) => void }) {
                               ))}
                             </div>
                           ) : '—'}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                            onClick={(e) => handleDelete(e, card.id)}
+                            disabled={deleteMutation.isPending}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );

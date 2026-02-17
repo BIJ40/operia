@@ -174,6 +174,33 @@ export function useUpdateProspectCard() {
   });
 }
 
+export function useDeleteProspectCard() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (cardId: string) => {
+      // Delete interactions first
+      await supabase
+        .from('prospect_interactions')
+        .delete()
+        .eq('card_id', cardId);
+
+      const { error } = await supabase
+        .from('prospect_cards')
+        .delete()
+        .eq('id', cardId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prospect-cards'] });
+      toast.success('Prospect supprimé');
+    },
+    onError: (err: Error) => {
+      toast.error(`Erreur: ${err.message}`);
+    },
+  });
+}
+
 // Interactions
 export function useProspectInteractions(cardId: string | null) {
   return useQuery({
