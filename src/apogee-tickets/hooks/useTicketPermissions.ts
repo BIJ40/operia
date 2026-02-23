@@ -98,7 +98,8 @@ export function useMyTicketRole() {
             .from('user_modules')
             .select('module_key, options')
             .eq('user_id', user.id)
-            .eq('module_key', 'apogee_tickets')
+            .in('module_key', ['apogee_tickets', 'ticketing'])
+            .limit(1)
             .maybeSingle()
         ]);
         
