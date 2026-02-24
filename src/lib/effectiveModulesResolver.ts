@@ -30,7 +30,10 @@ function upsertModule(
   enabled: boolean,
   options: unknown
 ) {
-  const key = moduleKey as ModuleKey;
+  // Canonicalize legacy/new module keys
+  // - 'ticketing' (new) should behave like 'apogee_tickets' (canonical key in app)
+  const canonicalKey = moduleKey === 'ticketing' ? 'apogee_tickets' : moduleKey;
+  const key = canonicalKey as ModuleKey;
   acc[key] = {
     enabled: enabled === true,
     options: normalizeOptions(options),
@@ -108,8 +111,8 @@ export async function resolveEffectiveModulesFromBackend(params: {
 
     if (Array.isArray(userRows)) {
       for (const row of userRows as Array<{ module_key: string; options: unknown }>) {
-        const key = row.module_key as ModuleKey;
-        merged[key] = { enabled: true, options: normalizeOptions(row.options) } as any;
+        // enabled=true: existence in user_modules means active
+        upsertModule(merged, row.module_key, true, row.options);
       }
     }
 
