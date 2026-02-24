@@ -113,11 +113,11 @@ export function useMyTicketRole() {
           return { ...DEFAULT_TICKET_ROLE_INFO, reason: 'profile_not_found' };
         }
         
-        // Vérifier si le module apogee_tickets est activé via enabled_modules OU user_modules
+        // Vérifier si le module Ticketing est activé via enabled_modules OU user_modules
         const enabledModules = profile.enabled_modules as Record<string, { enabled?: boolean; options?: Record<string, boolean> }> | null;
-        const profileModuleConfig = enabledModules?.apogee_tickets;
+        const profileModuleConfig = enabledModules?.apogee_tickets ?? (enabledModules as any)?.ticketing;
         const isModuleEnabledViaProfile = profileModuleConfig?.enabled === true;
-        
+
         // Vérifier user_modules (activation individuelle - l'existence d'une entrée = activé)
         const userModule = userModuleResult.data;
         const isModuleEnabledViaUserModules = !!userModule;
