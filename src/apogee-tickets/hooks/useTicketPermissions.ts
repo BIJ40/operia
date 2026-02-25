@@ -124,7 +124,7 @@ export function useMyTicketRole() {
         const isN5Plus = ['platform_admin', 'superadmin'].includes(effectiveGlobalRole || '');
 
         // Vérifier si le module Ticketing est activé via backend (canonique)
-        const hasBackendTicketingAccess = rpcAccessResult.data === true;
+        const hasRpcTicketingAccess = rpcAccessResult.data === true;
 
         // Extraire la config profile (legacy) si disponible
         const enabledModules = profile?.enabled_modules as Record<string, { enabled?: boolean; options?: Record<string, boolean> }> | null;
@@ -132,6 +132,10 @@ export function useMyTicketRole() {
 
         // Extraire les sous-options depuis user_modules (priorité) et profile (fallback)
         const userModuleRows = (userModulesResult.data || []) as Array<{ module_key: string; options: Record<string, boolean> | null }>;
+        const isModuleEnabledViaUserModules = userModuleRows.length > 0;
+        const isModuleEnabledViaProfile = profileModuleConfig?.enabled === true;
+        const hasLocalTicketingAccess = isModuleEnabledViaUserModules || isModuleEnabledViaProfile;
+
         const userModuleOptions = userModuleRows.reduce<Record<string, boolean>>((acc, row) => {
           if (row?.options && typeof row.options === 'object') {
             Object.assign(acc, row.options);
@@ -146,8 +150,11 @@ export function useMyTicketRole() {
         const canImport = moduleOptions.import === true; // Default false
         const canManage = moduleOptions.manage !== false; // Default true if not explicitly false
 
+        // Accès effectif: RPC + fallback local (robuste si RPC indisponible ou migration en cours)
+        const hasEffectiveTicketingAccess = hasRpcTicketingAccess || hasLocalTicketingAccess;
+
         // Cas 2: Module non activé et pas admin
-        if (!hasBackendTicketingAccess && !isN5Plus) {
+        if (!hasEffectiveTicketingAccess && !isN5Plus) {
           return { ...DEFAULT_TICKET_ROLE_INFO, reason: 'module_disabled' };
         }
         
