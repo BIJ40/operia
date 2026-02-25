@@ -592,12 +592,16 @@ export function useApogeeTicket(ticketId: string | null) {
 
   const addComment = useMutation({
     mutationFn: async (comment: ApogeeTicketCommentInsert) => {
+      if (!user?.id) {
+        throw new Error('Votre session a expiré, reconnectez-vous puis réessayez');
+      }
+
       const result = await safeMutation<ApogeeTicketComment>(
         supabase
           .from('apogee_ticket_comments')
           .insert({
             ...comment,
-            created_by_user_id: user?.id,
+            created_by_user_id: user.id,
           })
           .select()
           .maybeSingle(),
