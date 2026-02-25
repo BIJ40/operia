@@ -87,8 +87,10 @@ export function useMyTicketRole() {
       }
       
       try {
-        // Récupérer le profil pour vérifier enabled_modules ET user_modules
-        const [profileResult, userModuleResult] = await Promise.all([
+        // Vérification robuste d'accès Ticketing:
+        // - RPC canonique (source de vérité backend)
+        // - + récupération options via user_modules/profile pour les droits granulaires
+        const [profileResult, userModulesResult, rpcAccessResult] = await Promise.all([
           supabase
             .from('profiles')
             .select('enabled_modules, global_role')
@@ -98,48 +100,54 @@ export function useMyTicketRole() {
             .from('user_modules')
             .select('module_key, options')
             .eq('user_id', user.id)
-            .in('module_key', ['apogee_tickets', 'ticketing'])
-            .limit(1)
-            .maybeSingle()
+            .in('module_key', ['apogee_tickets', 'ticketing']),
+          supabase
+            .rpc('has_apogee_tickets_access', { _user_id: user.id })
         ]);
-        
+
         if (profileResult.error) {
           logError('[MY-TICKET-ROLE] Error fetching profile', profileResult.error);
-          return { ...DEFAULT_TICKET_ROLE_INFO, reason: 'fetch_error' };
         }
-        
-        const profile = profileResult.data;
-        if (!profile) {
-          return { ...DEFAULT_TICKET_ROLE_INFO, reason: 'profile_not_found' };
-        }
-        
-        // Vérifier si le module Ticketing est activé via enabled_modules OU user_modules
-        const enabledModules = profile.enabled_modules as Record<string, { enabled?: boolean; options?: Record<string, boolean> }> | null;
-        const profileModuleConfig = enabledModules?.apogee_tickets ?? (enabledModules as any)?.ticketing;
-        const isModuleEnabledViaProfile = profileModuleConfig?.enabled === true;
 
-        // Vérifier user_modules (activation individuelle - l'existence d'une entrée = activé)
-        const userModule = userModuleResult.data;
-        const isModuleEnabledViaUserModules = !!userModule;
-        
-        // Module activé si l'une des deux sources l'active
-        const isModuleEnabled = isModuleEnabledViaProfile || isModuleEnabledViaUserModules;
-        
-        // Extraire les sous-options (priorité: user_modules > profile.enabled_modules)
-        const userModuleOptions = (userModule?.options as Record<string, boolean>) || {};
+        if (userModulesResult.error) {
+          logError('[MY-TICKET-ROLE] Error fetching user_modules for ticketing', userModulesResult.error);
+        }
+
+        if (rpcAccessResult.error) {
+          logError('[MY-TICKET-ROLE] Error calling has_apogee_tickets_access', rpcAccessResult.error);
+        }
+
+        const profile = profileResult.data;
+
+        // Vérifier le niveau de rôle global (N5+ = admin)
+        const effectiveGlobalRole = profile?.global_role || globalRole || null;
+        const isN5Plus = ['platform_admin', 'superadmin'].includes(effectiveGlobalRole || '');
+
+        // Vérifier si le module Ticketing est activé via backend (canonique)
+        const hasBackendTicketingAccess = rpcAccessResult.data === true;
+
+        // Extraire la config profile (legacy) si disponible
+        const enabledModules = profile?.enabled_modules as Record<string, { enabled?: boolean; options?: Record<string, boolean> }> | null;
+        const profileModuleConfig = enabledModules?.apogee_tickets ?? (enabledModules as any)?.ticketing;
+
+        // Extraire les sous-options depuis user_modules (priorité) et profile (fallback)
+        const userModuleRows = (userModulesResult.data || []) as Array<{ module_key: string; options: Record<string, boolean> | null }>;
+        const userModuleOptions = userModuleRows.reduce<Record<string, boolean>>((acc, row) => {
+          if (row?.options && typeof row.options === 'object') {
+            Object.assign(acc, row.options);
+          }
+          return acc;
+        }, {});
         const profileModuleOptions = profileModuleConfig?.options || {};
         const moduleOptions = { ...profileModuleOptions, ...userModuleOptions };
-        
+
         const canViewKanban = moduleOptions.kanban !== false; // Default true if not explicitly false
         const canCreate = moduleOptions.create !== false; // Default true if not explicitly false
         const canImport = moduleOptions.import === true; // Default false
         const canManage = moduleOptions.manage !== false; // Default true if not explicitly false
-        
-        // Vérifier le niveau de rôle global (N5+ = admin)
-        const isN5Plus = ['platform_admin', 'superadmin'].includes(profile.global_role || '');
-        
+
         // Cas 2: Module non activé et pas admin
-        if (!isModuleEnabled && !isN5Plus) {
+        if (!hasBackendTicketingAccess && !isN5Plus) {
           return { ...DEFAULT_TICKET_ROLE_INFO, reason: 'module_disabled' };
         }
         
