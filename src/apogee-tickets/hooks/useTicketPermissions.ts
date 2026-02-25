@@ -83,8 +83,11 @@ export function useMyTicketRole() {
     queryFn: async (): Promise<TicketRoleInfo> => {
       // Cas 1: Pas d'utilisateur connecté
       if (!user?.id) {
+        console.warn('[MY-TICKET-ROLE] ❌ No user.id — returning not_authenticated');
         return { ...DEFAULT_TICKET_ROLE_INFO, reason: 'not_authenticated' };
       }
+      
+      console.log('[MY-TICKET-ROLE] 🔍 Checking access for user:', user.id, 'email:', user.email);
       
       try {
         // Vérification robuste d'accès Ticketing:
@@ -104,6 +107,22 @@ export function useMyTicketRole() {
           supabase
             .rpc('has_apogee_tickets_access', { _user_id: user.id })
         ]);
+
+        // === DIAGNOSTIC LOGS ===
+        console.log('[MY-TICKET-ROLE] 📋 Profile result:', {
+          error: profileResult.error?.message || null,
+          globalRole: profileResult.data?.global_role,
+          hasEnabledModules: !!profileResult.data?.enabled_modules,
+        });
+        console.log('[MY-TICKET-ROLE] 📋 user_modules result:', {
+          error: userModulesResult.error?.message || null,
+          rowCount: userModulesResult.data?.length ?? 0,
+          rows: userModulesResult.data,
+        });
+        console.log('[MY-TICKET-ROLE] 📋 RPC has_apogee_tickets_access:', {
+          error: rpcAccessResult.error?.message || null,
+          data: rpcAccessResult.data,
+        });
 
         if (profileResult.error) {
           logError('[MY-TICKET-ROLE] Error fetching profile', profileResult.error);
@@ -153,8 +172,29 @@ export function useMyTicketRole() {
         // Accès effectif: RPC + fallback local (robuste si RPC indisponible ou migration en cours)
         const hasEffectiveTicketingAccess = hasRpcTicketingAccess || hasLocalTicketingAccess;
 
+        console.log('[MY-TICKET-ROLE] 🧮 Access decision:', {
+          effectiveGlobalRole,
+          isN5Plus,
+          hasRpcTicketingAccess,
+          isModuleEnabledViaUserModules,
+          isModuleEnabledViaProfile,
+          hasLocalTicketingAccess,
+          hasEffectiveTicketingAccess,
+          moduleOptions,
+          canViewKanban,
+          canCreate,
+          canManage,
+        });
+
         // Cas 2: Module non activé et pas admin
         if (!hasEffectiveTicketingAccess && !isN5Plus) {
+          console.warn('[MY-TICKET-ROLE] ❌ ACCESS DENIED — module_disabled', {
+            userId: user.id,
+            email: user.email,
+            hasRpcTicketingAccess,
+            hasLocalTicketingAccess,
+            isN5Plus,
+          });
           return { ...DEFAULT_TICKET_ROLE_INFO, reason: 'module_disabled' };
         }
         
@@ -188,7 +228,7 @@ export function useMyTicketRole() {
         }
         
         // Cas 4: Module activé, utilisateur standard - appliquer les options
-        return {
+        const result: TicketRoleInfo = {
           canUseTicketing: true,
           isPlatformAdmin: false,
           isSupport: ticketRole === 'franchiseur',
@@ -199,6 +239,8 @@ export function useMyTicketRole() {
           canImport,
           canManage,
         };
+        console.log('[MY-TICKET-ROLE] ✅ ACCESS GRANTED for', user.email, result);
+        return result;
         
       } catch (error) {
         logError('[MY-TICKET-ROLE] Unexpected error', error);
