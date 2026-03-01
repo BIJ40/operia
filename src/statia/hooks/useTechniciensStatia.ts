@@ -185,12 +185,13 @@ export function useTechniciensStatia(): TechniciensStatiaData {
         })
         .sort((a, b) => a.label.localeCompare(b.label));
       
-      // Calculs globaux
-      let caTotal = 0;
-      let heuresTotal = 0;
+      // Calculs globaux - utiliser le breakdown du moteur unifié pour caTotal
+      // Garantit la cohérence avec ca_par_technicien et top_techniciens_ca
+      const caTotal = (caParTechResult.breakdown as any)?.total || 
+        technicienUniversStats.reduce((sum, tech) => sum + tech.totaux.caHT, 0);
       
+      let heuresTotal = 0;
       technicienUniversStats.forEach(tech => {
-        caTotal += tech.totaux.caHT;
         heuresTotal += tech.totaux.heures;
       });
       
