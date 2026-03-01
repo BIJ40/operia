@@ -28,6 +28,7 @@ import { extractFactureMeta } from '../rules/rules';
 import { indexProjectsById, indexUsersById } from '../engine/loaders';
 import { 
   computeUnifiedTechCAAsStatResult,
+  computeUnifiedTechCA,
   calculateTechTimeByProject as calculateTechTimeByProjectUnified,
   isProductiveIntervention as isProductiveInterventionUnified,
   isActiveTechnician,
@@ -225,246 +226,140 @@ interface TechnicianStatsExtended extends TechnicianStats {
 
 /**
  * CA par Technicien × Univers
- * Conforme à computeTechUniversStatsForAgency de technicienUniversEngine
- * Filtre uniquement les techniciens actifs (is_on: true)
+ * 
+ * UTILISE LE MOTEUR UNIFIÉ pour garantir la cohérence avec ca_par_technicien et top_techniciens_ca.
+ * Étape 1: Appel au moteur unifié → CA total par technicien (avec lissage)
+ * Étape 2: Ventilation du CA par univers au prorata du temps par projet
  */
 export const caParTechnicienUnivers: StatDefinition = {
   id: 'ca_par_technicien_univers',
   label: 'CA par Technicien × Univers',
-  description: 'Répartition du CA entre techniciens ventilée par univers',
+  description: 'Répartition du CA entre techniciens ventilée par univers (moteur unifié)',
   category: 'technicien',
   source: ['factures', 'projects', 'interventions', 'users'],
   dimensions: ['technicien', 'univers'],
   aggregation: 'sum',
   unit: '€',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    // Defensive array initialization
     const factures = data.factures || [];
     const projects = data.projects || [];
     const interventions = data.interventions || [];
     const users = data.users || [];
+
+    // ── ÉTAPE 1 : CA par technicien via le moteur unifié ──
     
+    const usersMap = new Map<number, any>(users.map((u: any) => [u.id, u]));
     const projectsById = indexProjectsById(projects);
     const usersById = indexUsersById(users);
-    const usersMap = new Map<number, any>(users.map(u => [u.id, u]));
-    
-    // Créer un set des techniciens actifs (is_on: true)
-    const activeTechIds = new Set<string | number>();
-    for (const user of users) {
-      const isOn = user.is_on ?? user.data?.is_on ?? user.isOn ?? true;
-      if (isOn) {
-        activeTechIds.add(user.id);
-        activeTechIds.add(String(user.id));
-        activeTechIds.add(Number(user.id));
-      }
-    }
-    
-    // Calculer le temps par technicien par projet (moteur unifié)
-    const { dureeTechParProjet, dureeTotaleParProjet } = calculateTechTimeByProjectLocal(
-      interventions, 
-      projectsById,
-      usersMap
+
+    const unifiedResult = computeUnifiedTechCA(
+      factures, projects, interventions, users,
+      { dateRange: params.dateRange, applySmoothing: true }
     );
-    
-    // Structure pour accumuler les stats
-    const techStats = new Map<string | number, TechnicianStatsExtended>();
-    
-    // Helper pour récupérer info user
-    const getUserInfo = (techId: string | number) => {
-      let user = usersById.get(techId);
-      if (!user) user = usersById.get(Number(techId));
-      if (!user) user = usersById.get(String(techId));
-      
-      if (user) {
-        const prenom = (user.firstname || '').trim();
-        const nom = (user.name || user.lastname || '').trim();
-        const fullName = [prenom, nom].filter(Boolean).join(' ') || `Tech ${techId}`;
-        const color = user.data?.bgcolor?.hex || user.bgcolor?.hex || user.data?.color?.hex || user.color?.hex || '#808080';
-        const isOn = user.is_on ?? user.data?.is_on ?? user.isOn ?? true;
-        return { name: fullName, color, isOn };
-      }
-      return { name: `Tech ${techId}`, color: '#808080', isOn: true };
-    };
-    
-    // Compteurs de diagnostic
-    let facturesTraitees = 0;
-    let facturesSansTemps = 0;
-    let caSansTemps = 0;
-    let caAvecTemps = 0;
-    
-    // Tracker les projets déjà comptés pour les heures (éviter double comptage)
-    const projetsHeuresComptees = new Set<string>();
-    
-    // Parcourir les factures
-    for (const facture of factures) {
-      const meta = extractFactureMeta(facture);
-      
-      // Vérifier état facture
-      const factureState = facture.state || facture.status || facture.statut 
-        || facture.data?.state || facture.data?.status || facture.paymentStatus || '';
-      if (!isFactureStateIncluded(factureState)) continue;
-      
-      const date = meta.date ? new Date(meta.date) : null;
-      if (!date || date < params.dateRange.start || date > params.dateRange.end) continue;
-      
-      facturesTraitees++;
-      
-      const projectId = String(facture.projectId || facture.project_id);
-      const project = projectId ? projectsById.get(projectId) : null;
-      
-      // Récupérer les univers du projet
-      const universes = project?.data?.universes || project?.universes || ['non-classe'];
-      const normalizedUniverses = universes.map(normalizeUniversSlug);
-      
-      // Récupérer le temps des techniciens sur ce projet
-      const projectTechTime = dureeTechParProjet.get(projectId);
-      const totalProjectTime = dureeTotaleParProjet.get(projectId) || 0;
-      
-      if (!projectTechTime || totalProjectTime === 0) {
-        facturesSansTemps++;
-        caSansTemps += meta.montantNetHT;
-        
-        // Attribuer à "Agence / Non attribué" au lieu de skip
-        const agenceKey = 'agence';
-        if (!techStats.has(agenceKey)) {
-          techStats.set(agenceKey, {
-            technicianId: agenceKey,
-            technicianName: 'Agence / Non attribué',
-            totalCA: 0,
-            totalHeures: 0,
-            caParHeure: 0,
-            nbDossiers: 0,
-            dossiersByUnivers: {},
-            byUnivers: {},
-            isOn: true,
-            color: '#9ca3af', // Gris pour distinguer
-          });
+
+    // ── ÉTAPE 2 : Calculer le temps par tech par projet (même source que le moteur unifié) ──
+    const { dureeTechParProjet, dureeTotaleParProjet } = calculateTechTimeByProjectUnified(interventions, usersMap);
+
+    // ── ÉTAPE 3 : Calculer le temps par tech par UNIVERS ──
+    // Pour chaque projet, récupérer ses univers et répartir le temps proportionnellement
+    const techTimeByUnivers = new Map<string, Map<string, number>>(); // techId -> (univers -> durée)
+    const techTotalTime = new Map<string, number>(); // techId -> durée totale
+    const techDossiersByUnivers = new Map<string, Map<string, Set<string>>>(); // techId -> (univers -> Set<projectId>)
+
+    for (const [projectId, techMap] of dureeTechParProjet) {
+      const project = projectsById.get(projectId);
+      const projectUniverses = (project?.data?.universes || project?.universes || ['non-classe'])
+        .map(normalizeUniversSlug);
+
+      for (const [techId, duree] of techMap) {
+        if (!techTimeByUnivers.has(techId)) {
+          techTimeByUnivers.set(techId, new Map());
+          techTotalTime.set(techId, 0);
+          techDossiersByUnivers.set(techId, new Map());
         }
-        
-        const agenceStats = techStats.get(agenceKey)!;
-        agenceStats.totalCA += meta.montantNetHT;
-        
-        // Répartir par univers pour l'agence aussi
-        for (const univers of normalizedUniverses) {
-          if (!agenceStats.byUnivers[univers]) {
-            agenceStats.byUnivers[univers] = { ca: 0, heures: 0, nbDossiers: 0 };
-            agenceStats.dossiersByUnivers[univers] = new Set();
-          }
-          agenceStats.byUnivers[univers].ca += meta.montantNetHT / normalizedUniverses.length;
-          agenceStats.dossiersByUnivers[univers].add(projectId);
-        }
-        
-        continue;
-      }
-      
-      caAvecTemps += meta.montantNetHT;
-      
-      // Répartir le CA proportionnellement au temps
-      // IMPORTANT: On inclut TOUS les techniciens (actifs ET inactifs) pour le CA total correct
-      // Le filtre "actif/inactif" ne s'applique qu'à l'affichage, pas au calcul
-      for (const [techId, techTime] of projectTechTime.entries()) {
-        const proportion = techTime / totalProjectTime;
-        const techCA = meta.montantNetHT * proportion;
-        
-        // Initialiser les stats du technicien si nécessaire
-        if (!techStats.has(techId)) {
-          const userInfo = getUserInfo(techId);
-          techStats.set(techId, {
-            technicianId: techId,
-            technicianName: userInfo.name,
-            totalCA: 0,
-            totalHeures: 0,
-            caParHeure: 0,
-            nbDossiers: 0,
-            dossiersByUnivers: {},
-            byUnivers: {},
-            isOn: userInfo.isOn,
-            color: userInfo.color,
-          });
-        }
-        
-        const stats = techStats.get(techId)!;
-        stats.totalCA += techCA;
-        
-        // Ne compter les heures qu'une seule fois par projet par technicien
-        // IMPORTANT: techTime est en MINUTES, on convertit en HEURES
-        const projectTechKey = `${projectId}-${techId}`;
-        if (!projetsHeuresComptees.has(projectTechKey)) {
-          stats.totalHeures += techTime / 60; // Conversion minutes → heures
-          projetsHeuresComptees.add(projectTechKey);
-        }
-        
-        // Répartir par univers
-        const caParUnivers = techCA / normalizedUniverses.length;
-        const heuresParUnivers = techTime / normalizedUniverses.length;
-        
-        for (const univers of normalizedUniverses) {
-          if (!stats.byUnivers[univers]) {
-            stats.byUnivers[univers] = { ca: 0, heures: 0, nbDossiers: 0 };
-            stats.dossiersByUnivers[univers] = new Set();
-          }
-          stats.byUnivers[univers].ca += caParUnivers;
-          
-          // Ne compter les heures qu'une seule fois par projet par technicien par univers
-          // IMPORTANT: heuresParUnivers est en MINUTES, on convertit en HEURES
-          const projectTechUniversKey = `${projectId}-${techId}-${univers}`;
-          if (!projetsHeuresComptees.has(projectTechUniversKey)) {
-            stats.byUnivers[univers].heures += heuresParUnivers / 60; // Conversion minutes → heures
-            projetsHeuresComptees.add(projectTechUniversKey);
-          }
-          
-          // Ajouter le dossier au set pour compter les dossiers uniques
-          stats.dossiersByUnivers[univers].add(projectId);
+        techTotalTime.set(techId, (techTotalTime.get(techId) || 0) + duree);
+
+        const timePerUnivers = duree / projectUniverses.length;
+        const universMap = techTimeByUnivers.get(techId)!;
+        const dossierMap = techDossiersByUnivers.get(techId)!;
+
+        for (const univers of projectUniverses) {
+          universMap.set(univers, (universMap.get(univers) || 0) + timePerUnivers);
+          if (!dossierMap.has(univers)) dossierMap.set(univers, new Set());
+          dossierMap.get(univers)!.add(projectId);
         }
       }
     }
-    
-    // Calculer CA/heure et nbDossiers pour chaque technicien
-    for (const stats of techStats.values()) {
-      stats.caParHeure = stats.totalHeures > 0 ? stats.totalCA / stats.totalHeures : 0;
-      // Compter les dossiers uniques totaux et par univers
-      const allDossiers = new Set<string>();
-      for (const univers of Object.keys(stats.byUnivers)) {
-        const dossierSet = stats.dossiersByUnivers[univers] || new Set();
-        stats.byUnivers[univers].nbDossiers = dossierSet.size;
-        dossierSet.forEach(d => allDossiers.add(d));
-      }
-      stats.nbDossiers = allDossiers.size;
-    }
-    
-    // Formater le résultat
+
+    // ── ÉTAPE 4 : Ventiler le CA unifié par univers au prorata du temps ──
     const result: Record<string, any> = {};
     let totalCA = 0;
-    
-    for (const [techId, stats] of techStats.entries()) {
+
+    for (const [techId, stats] of unifiedResult.techStats) {
+      const universTimeMap = techTimeByUnivers.get(techId);
+      const totalTime = techTotalTime.get(techId) || 0;
+      const dossierMap = techDossiersByUnivers.get(techId);
+
+      // Infos utilisateur
+      let userInfo = usersById.get(techId) || usersById.get(Number(techId)) || usersById.get(String(techId));
+      const color = stats.color;
+      const isOn = stats.isActive;
+
+      const byUnivers: Record<string, { ca: number; heures: number; nbDossiers: number }> = {};
+
+      if (universTimeMap && totalTime > 0) {
+        for (const [univers, uTime] of universTimeMap) {
+          const proportion = uTime / totalTime;
+          const dossiers = dossierMap?.get(univers) || new Set();
+          byUnivers[univers] = {
+            ca: stats.totalCA * proportion,
+            heures: uTime / 60, // minutes → heures
+            nbDossiers: dossiers.size,
+          };
+        }
+      } else if (stats.totalCA > 0) {
+        // Technicien avec CA (via lissage) mais sans temps → mettre dans "non-classe"
+        byUnivers['non-classe'] = {
+          ca: stats.totalCA,
+          heures: 0,
+          nbDossiers: stats.nbDossiers,
+        };
+      }
+
+      // Compter les dossiers totaux
+      const allDossiers = new Set<string>();
+      if (dossierMap) {
+        for (const dSet of dossierMap.values()) {
+          dSet.forEach(d => allDossiers.add(d));
+        }
+      }
+
       result[String(techId)] = {
-        name: stats.technicianName,
+        name: stats.name,
         ca: stats.totalCA,
-        heures: stats.totalHeures,
+        heures: stats.totalDuree / 60, // minutes → heures
         caParHeure: stats.caParHeure,
-        nbDossiers: stats.nbDossiers,
-        byUnivers: stats.byUnivers,
-        color: stats.color,
-        isOn: stats.isOn,
+        nbDossiers: allDossiers.size || stats.nbDossiers,
+        byUnivers,
+        color,
+        isOn,
       };
       totalCA += stats.totalCA;
     }
-    
-    // Diagnostic available in metadata.breakdown
-    
+
     return {
       value: result,
       metadata: {
         computedAt: new Date(),
         source: 'factures',
-        recordCount: techStats.size,
+        recordCount: unifiedResult.techStats.size,
       },
       breakdown: {
-        total: totalCA,
-        technicianCount: techStats.size,
-        facturesSansTemps,
-        caSansTemps: Math.round(caSansTemps),
-        caAvecTemps: Math.round(caAvecTemps),
+        total: unifiedResult.totalCA,
+        totalCA: unifiedResult.totalCA,
+        technicianCount: unifiedResult.techStats.size,
+        facturesSansTemps: unifiedResult.facturesSansTemps,
+        ecartLissage: unifiedResult.ecartLissage,
       }
     };
   }
