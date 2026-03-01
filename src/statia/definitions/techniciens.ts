@@ -789,13 +789,13 @@ export const caMoyenParHeureTousTechniciens: StatDefinition = {
 
 /**
  * CA mensuel par technicien
- * Ventile le CA par technicien et par mois pour la période donnée
- * Permet de construire un tableau avec colonnes mensuelles + évolution
+ * UTILISE LE MOTEUR UNIFIÉ pour chaque mois afin de garantir la cohérence
+ * avec ca_par_technicien, top_techniciens_ca et ca_par_technicien_univers.
  */
 export const caMensuelParTechnicien: StatDefinition = {
   id: 'ca_mensuel_par_technicien',
   label: 'CA mensuel par technicien',
-  description: 'Répartition du CA par technicien ventilée par mois, avec calcul des évolutions',
+  description: 'Répartition du CA par technicien ventilée par mois (moteur unifié)',
   category: 'technicien',
   source: ['factures', 'projects', 'interventions', 'users'],
   dimensions: ['technicien', 'mois'],
@@ -806,125 +806,67 @@ export const caMensuelParTechnicien: StatDefinition = {
     const projects = data.projects || [];
     const interventions = data.interventions || [];
     const users = data.users || [];
-    
-    const projectsById = indexProjectsById(projects);
+
     const usersById = indexUsersById(users);
-    
-    // Indexer les interventions par projectId
-    const interventionsByProject = new Map<string, any[]>();
-    for (const intervention of interventions) {
-      const projectId = String(intervention.projectId || intervention.project_id);
-      if (!projectId) continue;
-      if (!interventionsByProject.has(projectId)) {
-        interventionsByProject.set(projectId, []);
-      }
-      interventionsByProject.get(projectId)!.push(intervention);
+
+    // Étendre la période pour inclure M-1 et année précédente (comparaison)
+    const extendedStart = new Date(params.dateRange.start);
+    extendedStart.setFullYear(extendedStart.getFullYear() - 1);
+    extendedStart.setDate(1);
+
+    // Générer la liste des mois entre extendedStart et dateRange.end
+    const months: { key: string; start: Date; end: Date }[] = [];
+    const cursor = new Date(extendedStart);
+    while (cursor <= params.dateRange.end) {
+      const monthStart = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+      const monthEnd = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0, 23, 59, 59, 999);
+      const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}`;
+      months.push({ key, start: monthStart, end: monthEnd > params.dateRange.end ? params.dateRange.end : monthEnd });
+      cursor.setMonth(cursor.getMonth() + 1);
     }
-    
-    // Structure: { techId: { name, color, isOn, months: { "2024-01": ca, "2024-02": ca, ... } } }
+
+    // Structure accumulée : techId -> { name, color, isOn, months }
     const techMonthlyCA = new Map<string, {
       name: string;
       color: string;
       isOn: boolean;
       months: Record<string, number>;
     }>();
-    
-    // Helper pour récupérer info user
-    const getUserInfo = (techId: string | number) => {
-      let user = usersById.get(techId);
-      if (!user) user = usersById.get(Number(techId));
-      if (!user) user = usersById.get(String(techId));
-      
-      if (user) {
-        const prenom = (user.firstname || '').trim();
-        const nom = (user.name || user.lastname || '').trim();
-        const fullName = [prenom, nom].filter(Boolean).join(' ') || `Tech ${techId}`;
-        const color = user.data?.bgcolor?.hex || user.bgcolor?.hex || user.data?.color?.hex || user.color?.hex || '#808080';
-        const isOn = user.is_on === true;
-        return { name: fullName, color, isOn };
-      }
-      return { name: `Tech ${techId}`, color: '#808080', isOn: false };
-    };
-    
-    // Étendre la période pour inclure les mois de comparaison (M-1 et année précédente)
-    const extendedStart = new Date(params.dateRange.start);
-    extendedStart.setFullYear(extendedStart.getFullYear() - 1);
-    extendedStart.setDate(1);
-    
-    // Parcourir les factures
-    for (const facture of factures) {
-      const meta = extractFactureMeta(facture);
-      
-      // Vérifier état facture
-      const factureState = facture.state || facture.status || facture.statut 
-        || facture.data?.state || facture.data?.status || facture.paymentStatus || '';
-      if (!isFactureStateIncluded(factureState)) continue;
-      
-      const date = meta.date ? new Date(meta.date) : null;
-      if (!date || date < extendedStart || date > params.dateRange.end) continue;
-      
-      // Exclure proforma
-      const typeFacture = (facture.typeFacture || facture.type || facture.data?.type || '').toLowerCase();
-      if (typeFacture === 'proforma' || typeFacture === 'pro_forma') continue;
-      
-      const projectId = String(facture.projectId || facture.project_id);
-      if (!projectId) continue;
-      
-      // Récupérer les interventions du projet
-      const projectInterventions = interventionsByProject.get(projectId) || [];
-      
-      // Construire le SET des techniciens productifs uniques
-      const techsProductifs = new Set<string | number>();
-      
-      for (const intervention of projectInterventions) {
-        if (!isProductiveIntervention(intervention)) continue;
-        const interventionTechs = getProductiveTechnicians(intervention);
-        for (const techId of interventionTechs) {
-          techsProductifs.add(techId);
-        }
-      }
-      
-      const nbTechsProductifs = techsProductifs.size;
-      if (nbTechsProductifs === 0) continue;
-      
-      const caHT = meta.montantNetHT;
-      const quotePart = caHT / nbTechsProductifs;
-      
-      // Clé du mois: "YYYY-MM"
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      
-      for (const techId of techsProductifs) {
-        const id = String(techId);
-        
-        if (!techMonthlyCA.has(id)) {
-          const info = getUserInfo(techId);
-          techMonthlyCA.set(id, {
-            name: info.name,
-            color: info.color,
-            isOn: info.isOn,
+
+    // Appeler le moteur unifié pour chaque mois
+    for (const month of months) {
+      const monthResult = computeUnifiedTechCA(
+        factures, projects, interventions, users,
+        { dateRange: { start: month.start, end: month.end }, applySmoothing: true }
+      );
+
+      for (const [techId, stats] of monthResult.techStats) {
+        if (!techMonthlyCA.has(techId)) {
+          techMonthlyCA.set(techId, {
+            name: stats.name,
+            color: stats.color,
+            isOn: stats.isActive,
             months: {},
           });
         }
-        
-        const techData = techMonthlyCA.get(id)!;
-        techData.months[monthKey] = (techData.months[monthKey] || 0) + quotePart;
+        const techData = techMonthlyCA.get(techId)!;
+        techData.months[month.key] = (techData.months[month.key] || 0) + stats.totalCA;
       }
     }
-    
-    // Construire le résultat
+
+    // Construire le résultat (filtrer les inactifs)
     const result: Record<string, {
       name: string;
       color: string;
       isOn: boolean;
       months: Record<string, number>;
     }> = {};
-    
+
     for (const [techId, data] of techMonthlyCA.entries()) {
-      // Filtrer: ne garder que les users avec is_on === true
       if (!data.isOn) continue;
       result[techId] = data;
     }
-    
+
     return {
       value: result,
       metadata: {
