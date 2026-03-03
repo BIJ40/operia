@@ -31,6 +31,7 @@ interface MapRdv {
   lat: number;
   lng: number;
   startAt: string;
+  endAt: string; // Fin du créneau (startAt + durationMin)
   durationMin: number;
   univers: string;
   address: string; // Adresse complète pour affichage
@@ -501,6 +502,11 @@ Deno.serve(async (req) => {
         };
       });
 
+      // Calculer endAt
+      const startDate = new Date(startAt);
+      const endAtDate = new Date(startDate.getTime() + durationMin * 60 * 1000);
+      const endAt = endAtDate.toISOString();
+
       mapRdvs.push({
         rdvId: intervention.id,
         projectId: intervention.projectId,
@@ -509,6 +515,7 @@ Deno.serve(async (req) => {
         lat: coords.lat,
         lng: coords.lng,
         startAt,
+        endAt,
         durationMin,
         univers: project.univers,
         address: formatAddress(client.address, client.postalCode, client.city),

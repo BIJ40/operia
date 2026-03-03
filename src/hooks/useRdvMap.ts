@@ -24,6 +24,7 @@ export interface MapRdv {
   lat: number;
   lng: number;
   startAt: string;
+  endAt?: string; // Fin du créneau (startAt + durationMin) - ajouté v2
   durationMin: number;
   univers: string;
   address: string;
