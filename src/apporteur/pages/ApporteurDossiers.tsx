@@ -418,7 +418,7 @@ export default function ApporteurDossiers() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FolderOpen className="w-5 h-5 text-primary" />
-              Dossier {selectedDossier?.ref}
+              Dossier — {selectedDossier?.clientName}
             </DialogTitle>
           </DialogHeader>
           {selectedDossier && (
