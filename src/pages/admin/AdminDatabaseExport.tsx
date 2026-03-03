@@ -23,13 +23,11 @@ export default function AdminDatabaseExport() {
     return data.session?.access_token;
   };
 
-  const callExport = async (table?: string) => {
+  const apiFetch = async (params: string = '') => {
     const token = await getToken();
     if (!token) throw new Error('Non authentifié');
     const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const url = table
-      ? `${baseUrl}/functions/v1/export-all-data?table=${encodeURIComponent(table)}`
-      : `${baseUrl}/functions/v1/export-all-data`;
+    const url = `${baseUrl}/functions/v1/export-all-data${params ? '?' + params : ''}`;
     const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -41,8 +39,30 @@ export default function AdminDatabaseExport() {
   const loadTables = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await callExport();
-      setTables(data.tables ?? []);
+      // Step 1: Get table names (fast)
+      const listData = await apiFetch();
+      const tableNames: string[] = (listData.tables ?? []).map((t: any) => t.name);
+      
+      // Initialize with count = -1 (loading)
+      const initial = tableNames.map(name => ({ name, count: -1 }));
+      setTables(initial);
+
+      // Step 2: Fetch counts in batches of 15
+      const BATCH = 15;
+      const updated = [...initial];
+      for (let i = 0; i < tableNames.length; i += BATCH) {
+        const batch = tableNames.slice(i, i + BATCH);
+        try {
+          const countData = await apiFetch(`countOnly=${batch.join(',')}`);
+          for (const t of countData.tables ?? []) {
+            const idx = updated.findIndex(u => u.name === t.name);
+            if (idx !== -1) updated[idx] = { ...updated[idx], count: t.count };
+          }
+          setTables([...updated]);
+        } catch {
+          // Leave as -1
+        }
+      }
     } catch (e: any) {
       toast.error(e.message);
     } finally {
@@ -65,7 +85,7 @@ export default function AdminDatabaseExport() {
   const exportSingleTable = async (tableName: string) => {
     try {
       toast.info(`Export de ${tableName}...`);
-      const result = await callExport(tableName);
+      const result = await apiFetch(`table=${encodeURIComponent(tableName)}`);
       downloadJson(result.data, `${tableName}-${new Date().toISOString().split('T')[0]}.json`);
       toast.success(`${tableName} : ${result.count} lignes exportées`);
     } catch (e: any) {
@@ -89,7 +109,7 @@ export default function AdminDatabaseExport() {
       const t = nonEmpty[i];
       setExportProgress({ current: i + 1, total: nonEmpty.length, tableName: t.name });
       try {
-        const result = await callExport(t.name);
+        const result = await apiFetch(`table=${encodeURIComponent(t.name)}`);
         consolidated[t.name] = result.data;
       } catch {
         errors++;
@@ -104,6 +124,7 @@ export default function AdminDatabaseExport() {
 
   const totalRows = tables.reduce((s, t) => s + Math.max(t.count, 0), 0);
   const progressPct = exportProgress.total > 0 ? (exportProgress.current / exportProgress.total) * 100 : 0;
+  const countsLoaded = tables.length > 0 && tables.every(t => t.count !== -1);
 
   return (
     <div className="space-y-6 p-1">
@@ -116,7 +137,7 @@ export default function AdminDatabaseExport() {
             </CardTitle>
             <CardDescription>
               {tables.length > 0
-                ? `${tables.length} tables · ${totalRows.toLocaleString()} lignes au total`
+                ? `${tables.length} tables${countsLoaded ? ` · ${totalRows.toLocaleString()} lignes au total` : ' · comptage en cours...'}`
                 : 'Chargez la liste des tables pour commencer'}
             </CardDescription>
           </div>
@@ -125,7 +146,7 @@ export default function AdminDatabaseExport() {
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
               {tables.length === 0 ? 'Charger' : 'Rafraîchir'}
             </Button>
-            {tables.length > 0 && (
+            {tables.length > 0 && countsLoaded && (
               <Button size="sm" onClick={exportAll} disabled={exporting}>
                 {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                 Tout exporter
@@ -164,7 +185,11 @@ export default function AdminDatabaseExport() {
                       <TableCell className="text-muted-foreground text-xs">{i + 1}</TableCell>
                       <TableCell className="font-mono text-xs">{t.name}</TableCell>
                       <TableCell className="text-right tabular-nums">
-                        {t.count >= 0 ? t.count.toLocaleString() : '—'}
+                        {t.count === -1 ? (
+                          <Loader2 className="h-3 w-3 animate-spin inline" />
+                        ) : (
+                          t.count.toLocaleString()
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button

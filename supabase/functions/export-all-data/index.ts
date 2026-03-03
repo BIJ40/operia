@@ -91,19 +91,28 @@ Deno.serve(async (req) => {
 
     const url = new URL(req.url);
     const tableParam = url.searchParams.get('table');
+    const countOnly = url.searchParams.get('countOnly');
 
-    // Mode 1: List all tables with row counts
-    if (!tableParam) {
-      const tables: { name: string; count: number }[] = [];
-      for (const name of ALL_TABLES) {
+    // Mode 1: List all tables (no counts - fast)
+    if (!tableParam && !countOnly) {
+      return withCors(req, new Response(JSON.stringify({ tables: ALL_TABLES.map(name => ({ name })), total: ALL_TABLES.length }), {
+        headers: { 'Content-Type': 'application/json' },
+      }));
+    }
+
+    // Mode 2: Count rows for a batch of tables (max 20 at a time)
+    if (countOnly) {
+      const tableNames = countOnly.split(',').filter(t => ALL_TABLES.includes(t)).slice(0, 20);
+      const results: { name: string; count: number }[] = [];
+      for (const name of tableNames) {
         try {
           const { count } = await serviceClient.from(name).select('*', { count: 'exact', head: true });
-          tables.push({ name, count: count ?? 0 });
+          results.push({ name, count: count ?? 0 });
         } catch {
-          tables.push({ name, count: -1 });
+          results.push({ name, count: -1 });
         }
       }
-      return withCors(req, new Response(JSON.stringify({ tables, total: ALL_TABLES.length }), {
+      return withCors(req, new Response(JSON.stringify({ tables: results }), {
         headers: { 'Content-Type': 'application/json' },
       }));
     }
