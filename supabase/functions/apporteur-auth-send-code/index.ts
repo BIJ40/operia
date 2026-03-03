@@ -29,8 +29,8 @@ function generateOTP(): string {
 
 // Rate limit configuration
 const RATE_LIMIT = {
-  maxRequests: 3,
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  maxRequests: 10,
+  windowMs: 5 * 60 * 1000, // 5 minutes
 };
 
 Deno.serve(async (req) => {
