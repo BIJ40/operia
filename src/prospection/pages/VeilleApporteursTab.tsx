@@ -1,88 +1,95 @@
 /**
  * VeilleApporteursTab - Onglet Veille dans le module Commercial
- * Vue globale de tous les apporteurs avec scoring, tri, filtrage
- * Réutilise le hook useVeilleApporteurs existant
+ * Vue consolidée de tous les apporteurs avec scoring adaptatif unifié
+ * Utilise exactement le même moteur que les fiches individuelles
  */
 
-import { useMemo, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useCallback } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Search, ArrowUpDown, Loader2, TrendingDown, TrendingUp,
-  AlertTriangle, CheckCircle, Moon, Minus, Radar, HelpCircle,
+  Minus, Radar, HelpCircle, Moon, AlertTriangle, CheckCircle2, Sparkles,
 } from 'lucide-react';
-import { useVeilleApporteurs, type VeilleFilterType, type VeilleSortKey } from '@/statia/hooks/useVeilleApporteurs';
-import type { VeilleApporteurConsolide } from '@/statia/engines/veilleApporteursEngine';
+import { useVeilleAdaptive, type VeilleFilterType, type VeilleSortKey, type VeilleApporteurRow } from '../hooks/useVeilleAdaptive';
+import type { RecentMonthsOption } from '../engine/adaptiveScoring';
 import { cn } from '@/lib/utils';
 
 interface Props {
   onSelectApporteur: (id: string, name: string) => void;
 }
 
-const euroFmt = (v: number) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v);
+const euroFmt = (v: number) =>
+  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v);
 
-// KPI card config
-interface KpiCardConfig {
+// ==================== KPI Filter Pills ====================
+
+interface FilterPill {
+  key: VeilleFilterType;
   label: string;
-  filterKey: VeilleFilterType;
   icon: React.ElementType;
   colorClass: string;
   tooltip: string;
+  countKey: keyof ReturnType<typeof useVeilleAdaptive>['kpis'];
 }
 
-const KPI_CARDS: KpiCardConfig[] = [
-  { label: 'Tous', filterKey: 'all', icon: Radar, colorClass: 'text-foreground', tooltip: 'Nombre total d\'apporteurs actifs dans la période' },
-  { label: 'Sains', filterKey: 'sains', icon: CheckCircle, colorClass: 'text-green-600', tooltip: 'Apporteurs sans aucun signal d\'alerte (ni dormant, ni en déclin, ni sous seuil)' },
-  { label: 'Dormants', filterKey: 'dormants', icon: Moon, colorClass: 'text-destructive', tooltip: 'Apporteurs n\'ayant confié aucun dossier depuis plus de 30 jours' },
-  { label: 'En déclin', filterKey: 'declassement', icon: TrendingDown, colorClass: 'text-amber-600', tooltip: 'Apporteurs dont le CA période récente est en baisse significative vs période précédente' },
-  { label: 'Sous seuil', filterKey: 'sous_seuil', icon: AlertTriangle, colorClass: 'text-amber-500', tooltip: 'Apporteurs dont le CA est inférieur au seuil de rentabilité défini (5 000€)' },
+const FILTER_PILLS: FilterPill[] = [
+  { key: 'all', label: 'Tous', icon: Radar, colorClass: 'text-foreground', tooltip: 'Tous les apporteurs avec historique', countKey: 'total' },
+  { key: 'dormants', label: 'Dormants', icon: Moon, colorClass: 'text-destructive', tooltip: 'Aucun dossier depuis le seuil configuré', countKey: 'dormants' },
+  { key: 'en_baisse', label: 'En baisse', icon: AlertTriangle, colorClass: 'text-amber-600', tooltip: 'Score adaptatif < 42 — tendance baissière vs leur propre moyenne', countKey: 'enBaisse' },
+  { key: 'stables', label: 'Stables', icon: CheckCircle2, colorClass: 'text-blue-600', tooltip: 'Score adaptatif entre 42 et 58 — activité conforme à leur historique', countKey: 'stables' },
+  { key: 'en_hausse', label: 'En hausse', icon: Sparkles, colorClass: 'text-green-600', tooltip: 'Score adaptatif > 58 — en progression vs leur propre moyenne', countKey: 'enHausse' },
 ];
 
-function StatusBadges({ a }: { a: VeilleApporteurConsolide }) {
-  return (
-    <div className="flex flex-wrap gap-1">
-      {a.isDormant && (
-        <Badge variant="destructive" className="text-[10px] gap-0.5">
-          <Moon className="w-3 h-3" /> Dormant
-        </Badge>
-      )}
-      {a.isEnDeclassement && (
-        <Badge className="text-[10px] gap-0.5 bg-amber-500/15 text-amber-700 border-amber-500/30">
-          <TrendingDown className="w-3 h-3" /> Déclin
-        </Badge>
-      )}
-      {a.isSousSeuil && (
-        <Badge variant="outline" className="text-[10px] gap-0.5 text-amber-600 border-amber-400/50">
-          <AlertTriangle className="w-3 h-3" /> Sous seuil
-        </Badge>
-      )}
-      {!a.isDormant && !a.isEnDeclassement && !a.isSousSeuil && (
-        <Badge variant="outline" className="text-[10px] gap-0.5 text-green-600 border-green-400/50">
-          <CheckCircle className="w-3 h-3" /> Sain
-        </Badge>
-      )}
-    </div>
-  );
-}
+// ==================== Sub-components ====================
 
-function ScoreBar({ score }: { score: number }) {
-  const color = score >= 65 ? 'bg-green-500' : score >= 45 ? 'bg-blue-500' : score >= 30 ? 'bg-amber-500' : 'bg-destructive';
+function ScoreGauge({ score }: { score: number }) {
+  if (score < 0) {
+    return (
+      <span className="text-xs text-muted-foreground italic">N/A</span>
+    );
+  }
+  const color =
+    score > 72 ? 'bg-green-500' :
+    score > 58 ? 'bg-emerald-400' :
+    score > 42 ? 'bg-blue-500' :
+    score > 30 ? 'bg-amber-500' :
+    'bg-destructive';
+
   return (
     <div className="flex items-center gap-2">
       <div className="w-16 h-2 rounded-full bg-muted overflow-hidden">
-        <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${score}%` }} />
+        <div className={cn('h-full rounded-full transition-all', color)} style={{ width: `${Math.max(score, 2)}%` }} />
       </div>
-      <span className="text-xs font-medium w-6 text-right">{score}</span>
+      <span className="text-xs font-semibold w-6 text-right tabular-nums">{score}</span>
     </div>
   );
 }
 
-function VariationCell({ pct }: { pct: number | null }) {
-  if (pct === null) return <span className="text-muted-foreground">—</span>;
+function TrendLabel({ row }: { row: VeilleApporteurRow }) {
+  if (row.score < 0) return <span className="text-xs text-muted-foreground">—</span>;
+
+  const colorMap: Record<string, string> = {
+    danger: 'text-destructive',
+    warning: 'text-amber-600',
+    stable: 'text-blue-600',
+    positive: 'text-emerald-600',
+    excellent: 'text-green-600',
+  };
+
+  return (
+    <span className={cn('text-xs font-medium', colorMap[row.level] || 'text-muted-foreground')}>
+      {row.label}
+    </span>
+  );
+}
+
+function VariationCell({ pct }: { pct: number }) {
   if (Math.abs(pct) < 3) {
     return (
       <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
@@ -104,21 +111,22 @@ function VariationCell({ pct }: { pct: number | null }) {
   );
 }
 
-function SortableHeader({ label, sortKey: key, currentKey, direction, onToggle, tooltip }: {
+function SortableHeader({ label, sortKey: key, currentKey, direction, onToggle, tooltip, className: cls }: {
   label: string;
   sortKey: VeilleSortKey;
   currentKey: VeilleSortKey;
   direction: 'asc' | 'desc';
   onToggle: (k: VeilleSortKey) => void;
   tooltip?: string;
+  className?: string;
 }) {
   const isActive = currentKey === key;
   return (
-    <TableHead className="text-right">
+    <TableHead className={cn('text-right', cls)}>
       <button
         onClick={() => onToggle(key)}
         className={cn(
-          'inline-flex items-center gap-1 text-xs hover:text-foreground transition-colors',
+          'inline-flex items-center gap-1 text-xs hover:text-foreground transition-colors whitespace-nowrap',
           isActive ? 'text-foreground font-semibold' : 'text-muted-foreground'
         )}
       >
@@ -139,58 +147,95 @@ function SortableHeader({ label, sortKey: key, currentKey, direction, onToggle, 
   );
 }
 
+function InactivityCell({ jours, isDormant }: { jours: number; isDormant: boolean }) {
+  if (jours >= 9999) return <span className="text-xs text-muted-foreground">—</span>;
+  return (
+    <span className={cn(
+      'text-xs tabular-nums',
+      isDormant ? 'text-destructive font-semibold' :
+      jours > 60 ? 'text-amber-600 font-medium' :
+      'text-muted-foreground'
+    )}>
+      {jours}j
+    </span>
+  );
+}
+
+// ==================== Main Component ====================
+
 export function VeilleApporteursTab({ onSelectApporteur }: Props) {
   const {
-    apporteurs, kpis, isLoading, activeFilter, sortKey, sortDirection, searchQuery,
-    setActiveFilter, toggleSort, setSearchQuery,
-  } = useVeilleApporteurs();
+    rows, kpis, isLoading,
+    recentMonths, setRecentMonths,
+    seuilDormantMois, setSeuilDormantMois,
+    activeFilter, setActiveFilter,
+    sortKey, sortDirection, toggleSort,
+    searchQuery, setSearchQuery,
+  } = useVeilleAdaptive();
 
-  const kpiValues: Record<VeilleFilterType, number> = useMemo(() => ({
-    all: kpis.totalActifs,
-    sains: kpis.sains,
-    dormants: kpis.dormants,
-    declassement: kpis.enDeclassement,
-    sous_seuil: kpis.sousSeuil,
-  }), [kpis]);
-
-  const handleRowClick = useCallback((a: VeilleApporteurConsolide) => {
-    onSelectApporteur(a.apporteurId, a.apporteurNom);
+  const handleRowClick = useCallback((r: VeilleApporteurRow) => {
+    onSelectApporteur(r.apporteurId, r.apporteurNom);
   }, [onSelectApporteur]);
 
   return (
     <TooltipProvider delayDuration={200}>
       <div className="space-y-4">
-        {/* KPI Pills */}
-        <div className="flex flex-wrap gap-2">
-          {KPI_CARDS.map(kpi => {
-            const Icon = kpi.icon;
-            const isActive = activeFilter === kpi.filterKey;
-            const count = kpiValues[kpi.filterKey];
-            return (
-              <Tooltip key={kpi.filterKey}>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant={isActive ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setActiveFilter(kpi.filterKey)}
-                    className={cn(
-                      'gap-1.5 text-xs',
-                      !isActive && kpi.colorClass
-                    )}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    {kpi.label}
-                    <Badge variant="secondary" className="ml-0.5 text-[10px] h-4 px-1.5">
-                      {count}
-                    </Badge>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-xs text-xs">
-                  {kpi.tooltip}
-                </TooltipContent>
-              </Tooltip>
-            );
-          })}
+        {/* Barre de contrôle */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Filter pills */}
+          <div className="flex flex-wrap gap-1.5">
+            {FILTER_PILLS.map(pill => {
+              const Icon = pill.icon;
+              const count = kpis[pill.countKey];
+              const isActive = activeFilter === pill.key;
+              return (
+                <Tooltip key={pill.key}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={isActive ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setActiveFilter(pill.key)}
+                      className={cn('gap-1.5 text-xs', !isActive && pill.colorClass)}
+                    >
+                      <Icon className="w-3.5 h-3.5" />
+                      {pill.label}
+                      <Badge variant="secondary" className="ml-0.5 text-[10px] h-4 px-1.5">
+                        {count}
+                      </Badge>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-xs text-xs">
+                    {pill.tooltip}
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </div>
+
+          {/* Controls */}
+          <div className="flex items-center gap-2 ml-auto">
+            <Select value={String(recentMonths)} onValueChange={v => setRecentMonths(Number(v) as RecentMonthsOption)}>
+              <SelectTrigger className="w-36 h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">Tendance 1 mois</SelectItem>
+                <SelectItem value="3">Tendance 3 mois</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={String(seuilDormantMois)} onValueChange={v => setSeuilDormantMois(Number(v))}>
+              <SelectTrigger className="w-44 h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">Dormant si &gt; 1 mois</SelectItem>
+                <SelectItem value="2">Dormant si &gt; 2 mois</SelectItem>
+                <SelectItem value="3">Dormant si &gt; 3 mois</SelectItem>
+                <SelectItem value="6">Dormant si &gt; 6 mois</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Search */}
@@ -200,7 +245,7 @@ export function VeilleApporteursTab({ onSelectApporteur }: Props) {
             placeholder="Rechercher un apporteur..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="pl-9"
+            className="pl-9 h-9"
           />
         </div>
 
@@ -211,7 +256,7 @@ export function VeilleApporteursTab({ onSelectApporteur }: Props) {
               <div className="flex items-center justify-center py-16">
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               </div>
-            ) : apporteurs.length === 0 ? (
+            ) : rows.length === 0 ? (
               <div className="text-center py-12 text-sm text-muted-foreground">
                 Aucun apporteur trouvé pour ce filtre.
               </div>
@@ -220,39 +265,41 @@ export function VeilleApporteursTab({ onSelectApporteur }: Props) {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <SortableHeader label="Apporteur" sortKey="nom" currentKey={sortKey} direction={sortDirection} onToggle={toggleSort} />
-                      <TableHead className="w-32">Statut</TableHead>
+                      <SortableHeader label="Apporteur" sortKey="nom" currentKey={sortKey} direction={sortDirection} onToggle={toggleSort} className="text-left" />
                       <SortableHeader
                         label="Score"
-                        sortKey="scoreRisque"
+                        sortKey="score"
                         currentKey={sortKey}
                         direction={sortDirection}
                         onToggle={toggleSort}
-                        tooltip="Score de risque 0-100. Plus le score est élevé, plus l'apporteur est à risque."
+                        tooltip="Score adaptatif 0-100 basé sur les variations CA (40%), dossiers (25%), taux transfo (20%), factures (15%) vs la moyenne historique propre à l'apporteur."
+                      />
+                      <TableHead className="text-center">
+                        <span className="text-xs text-muted-foreground">Tendance</span>
+                      </TableHead>
+                      <SortableHeader
+                        label="CA moy/mois"
+                        sortKey="caRecentMensuel"
+                        currentKey={sortKey}
+                        direction={sortDirection}
+                        onToggle={toggleSort}
+                        tooltip="Moyenne mensuelle historique → Moyenne récente"
                       />
                       <SortableHeader
-                        label="CA période A"
-                        sortKey="CA_A_HT"
+                        label="Var. CA"
+                        sortKey="caVariationPct"
                         currentKey={sortKey}
                         direction={sortDirection}
                         onToggle={toggleSort}
-                        tooltip="Chiffre d'affaires HT facturé sur la période récente (30 derniers jours)"
+                        tooltip="Variation % du CA récent vs la moyenne historique de l'apporteur"
                       />
                       <SortableHeader
-                        label="CA période B"
-                        sortKey="CA_B_HT"
+                        label="Dossiers/mois"
+                        sortKey="dossiersRecent"
                         currentKey={sortKey}
                         direction={sortDirection}
                         onToggle={toggleSort}
-                        tooltip="Chiffre d'affaires HT facturé sur la période précédente (30 jours avant)"
-                      />
-                      <SortableHeader
-                        label="Variation"
-                        sortKey="variationPct"
-                        currentKey={sortKey}
-                        direction={sortDirection}
-                        onToggle={toggleSort}
-                        tooltip="Évolution en % du CA entre les deux périodes. Négatif = baisse."
+                        tooltip="Volume moyen de dossiers par mois (historique → récent)"
                       />
                       <SortableHeader
                         label="Inactivité"
@@ -260,43 +307,79 @@ export function VeilleApporteursTab({ onSelectApporteur }: Props) {
                         currentKey={sortKey}
                         direction={sortDirection}
                         onToggle={toggleSort}
-                        tooltip="Nombre de jours depuis le dernier dossier confié par cet apporteur."
+                        tooltip="Nombre de jours depuis le dernier dossier confié"
                       />
+                      <TableHead className="text-center">
+                        <span className="text-xs text-muted-foreground">Alertes</span>
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {apporteurs.map(a => (
+                    {rows.map(row => (
                       <TableRow
-                        key={a.apporteurId}
+                        key={row.apporteurId}
                         className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => handleRowClick(a)}
+                        onClick={() => handleRowClick(row)}
                       >
-                        <TableCell className="font-medium">
-                          {a.apporteurNom || a.apporteurId}
+                        {/* Nom */}
+                        <TableCell className="font-medium max-w-[200px] truncate">
+                          {row.apporteurNom}
                         </TableCell>
-                        <TableCell>
-                          <StatusBadges a={a} />
-                        </TableCell>
+
+                        {/* Score gauge */}
                         <TableCell className="text-right">
-                          <ScoreBar score={a.scoreRisque} />
+                          <ScoreGauge score={row.score} />
                         </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {euroFmt(a.CA_A_HT)}
+
+                        {/* Tendance label */}
+                        <TableCell className="text-center">
+                          <TrendLabel row={row} />
                         </TableCell>
-                        <TableCell className="text-right text-muted-foreground">
-                          {euroFmt(a.CA_B_HT)}
-                        </TableCell>
+
+                        {/* CA historique → récent */}
                         <TableCell className="text-right">
-                          <VariationCell pct={a.variationPct} />
+                          <div className="flex flex-col items-end text-xs tabular-nums">
+                            <span className="text-muted-foreground">{euroFmt(row.caAvgMensuel)}</span>
+                            <span className="font-medium">{euroFmt(row.caRecentMensuel)}</span>
+                          </div>
                         </TableCell>
+
+                        {/* Variation CA */}
                         <TableCell className="text-right">
-                          <span className={cn(
-                            'text-sm',
-                            a.joursInactivite > 30 ? 'text-destructive font-medium' :
-                            a.joursInactivite > 14 ? 'text-amber-600' : 'text-muted-foreground'
-                          )}>
-                            {a.joursInactivite}j
-                          </span>
+                          <VariationCell pct={row.caVariationPct} />
+                        </TableCell>
+
+                        {/* Dossiers */}
+                        <TableCell className="text-right">
+                          <div className="flex flex-col items-end text-xs tabular-nums">
+                            <span className="text-muted-foreground">{row.dossiersAvg.toFixed(1)}</span>
+                            <span className="font-medium">{row.dossiersRecent.toFixed(1)}</span>
+                          </div>
+                        </TableCell>
+
+                        {/* Inactivité */}
+                        <TableCell className="text-right">
+                          <InactivityCell jours={row.joursInactivite} isDormant={row.isDormant} />
+                        </TableCell>
+
+                        {/* Alertes */}
+                        <TableCell className="text-center">
+                          {row.alerts.length > 0 ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-400/50 cursor-help">
+                                  {row.alerts.length}
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent side="left" className="max-w-sm text-xs space-y-1">
+                                {row.alerts.map((a, i) => (
+                                  <p key={i}>• {a}</p>
+                                ))}
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
