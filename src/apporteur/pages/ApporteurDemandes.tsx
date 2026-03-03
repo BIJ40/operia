@@ -103,7 +103,7 @@ export default function ApporteurDemandes() {
         </div>
         <Button onClick={() => navigate('/apporteur/nouvelle-demande')} className="gap-2">
           <PlusCircle className="w-4 h-4" />
-          Nouvelle demande
+          Demandes
         </Button>
       </div>
 

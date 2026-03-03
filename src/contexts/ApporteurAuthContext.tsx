@@ -84,12 +84,25 @@ export function ApporteurAuthProvider({ children }: { children: ReactNode }) {
           .from('apporteur_managers')
           .select('first_name, last_name')
           .eq('apporteur_id', data.apporteur_id)
-          .eq('email', authUser.email ?? '')
+          .ilike('email', authUser.email ?? '')
           .maybeSingle();
         if (managerData) {
           firstName = managerData.first_name || firstName;
           lastName = managerData.last_name || lastName;
         }
+      }
+
+      // Fallback final: metadata auth puis préfixe email
+      if (!firstName) {
+        const metaFirstName = authUser.user_metadata?.first_name;
+        if (typeof metaFirstName === 'string' && metaFirstName.trim()) {
+          firstName = metaFirstName.trim();
+        }
+      }
+      if (!firstName && authUser.email) {
+        const localPart = authUser.email.split('@')[0] || '';
+        const token = localPart.split(/[._-]/).find(Boolean) || '';
+        if (token) firstName = token.charAt(0).toUpperCase() + token.slice(1);
       }
 
       setApporteurUser({
