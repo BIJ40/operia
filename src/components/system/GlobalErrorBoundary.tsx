@@ -38,6 +38,10 @@ export class GlobalErrorBoundary extends Component<Props, State> {
     const correlationId = crypto.randomUUID();
     const errorCode = "UI_RUNTIME_ERROR";
 
+    // ALWAYS log to console for debugging (even if Sentry is not configured)
+    console.error(`[GlobalErrorBoundary] ${errorCode} (${correlationId}):`, error);
+    console.error(`[GlobalErrorBoundary] Component stack:`, errorInfo.componentStack);
+
     // Log to Sentry with full context
     Sentry.captureException(error, {
       tags: { 
