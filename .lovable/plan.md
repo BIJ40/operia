@@ -1,112 +1,135 @@
+## Refonte Veille Apporteurs — Scoring adaptatif unifié pour tous les apporteurs
 
+### Problème actuel
 
-## Scoring intelligent par apporteur basé sur ses propres moyennes historiques
+La Veille utilise un moteur séparé (`veilleApporteursEngine.ts` + `veilleApporteurs.ts`) avec des seuils fixes arbitraires (période A/B de 30j, seuil CA 5000€) qui ne correspondent à rien de concret. Le scoring adaptatif (moyennes historiques propres) n'existe que dans les fiches individuelles. Résultat : incohérence totale entre la vue liste et les fiches, et des classifications faussées (un apporteur à 0€ classé "sain").
 
-### Principe
+### Solution
 
-Au lieu de seuils fixes globaux, chaque apporteur a ses propres "normales" calculées sur tout l'historique disponible. On détecte les écarts par rapport à **ses propres moyennes mensuelles** sur les 2-3 derniers mois vs l'ensemble de la période.
+Abandonner l'ancien moteur de veille. Calculer le **score adaptatif** (celui des fiches individuelles) pour **TOUS** les apporteurs d'un coup, en un seul chargement de données Apogée. La Veille devient une vue consolidée utilisant exactement la même logique que les fiches.
 
-### Données déjà disponibles
+### Architecture
 
-Le hook `useApporteurDashboardLive` charge **toutes** les données de l'apporteur (projets, factures, devis) sans limite de date via le proxy Apogée, puis filtre par période pour les KPIs. Le `monthlyTrend` contient déjà les métriques mois par mois (dossiers, CA, taux transfo).
-
-On a donc tout ce qu'il faut pour calculer des moyennes historiques et détecter les tendances.
+```text
+apogeeProxy.getAllData(agence)
+        │
+        ▼
+useVeilleAdaptive()          ← NOUVEAU hook, remplace useVeilleApporteurs
+  │
+  ├─ Pour chaque apporteur :
+  │    └─ computeAdaptiveScore(monthlyTrendFull)  ← même engine que les fiches
+  │
+  └─ Retourne: VeilleApporteurRow[] avec score, level, metrics, alertes
+        │
+        ▼
+VeilleApporteursTab (refondu)
+  ├─ Filtres: Tous | Dormants (0 dossier depuis Xm) | En baisse | Stables | En hausse
+  ├─ Réglage: "Depuis X mois" pour dormants, "1 ou 3 mois" pour tendance
+  ├─ Tableau enrichi: Score, CA moy, CA récent, Variation, Dossiers, Devis, Factures
+  └─ Clic → ouvre la fiche individuelle
+```
 
 ### Plan d'implémentation
 
-#### 1. Nouveau moteur de scoring adaptatif
+#### 1. Nouveau hook `useVeilleAdaptive`
 
-**Nouveau fichier** : `src/prospection/engine/adaptiveScoring.ts`
+**Nouveau fichier** : `src/prospection/hooks/useVeilleAdaptive.ts`
 
-Logique :
-- **Entrée** : `monthlyTrend` (tableau mois par mois avec dossiers, ca_ht, taux_transfo) + KPIs période
-- **Calcul des moyennes historiques** : sur tous les mois disponibles (hors les 2-3 derniers)
-  - `avgCA` = moyenne mensuelle CA sur l'historique
-  - `avgDossiers` = moyenne mensuelle dossiers
-  - `avgDevis`, `avgFactures`, `avgTauxTransfo`
-- **Calcul de la tendance récente** : moyenne des 2-3 derniers mois
-  - `recentAvgCA`, `recentAvgDossiers`, etc.
-- **Variation %** pour chaque métrique : `(recent - historique) / historique * 100`
-- **Score composite** (0-100) : pondération des variations
-  - CA : poids 40%
-  - Dossiers : poids 25%
-  - Taux transfo : poids 20%
-  - Factures : poids 15%
-  - Score = 50 (neutre) +/- ajustements selon variations
-  - < 35 = alerte baisse, > 65 = tendance hausse, 35-65 = stable
+Ce hook remplace `useVeilleApporteurs` pour la vue Veille :
 
-```text
-Exemple concret :
-Apporteur "NESTENN" — historique 12 mois :
-  avgCA/mois = 12 000€, avgDossiers/mois = 8
+- Charge toutes les données de l'agence en une fois via `apogeeProxy.getAllData(agence)`
+- Regroupe projets, factures, devis par `commanditaireId`
+- Pour chaque apporteur, construit son `monthlyTrendFull` (identique à la logique de `useApporteurDashboardLive`)
+- Appelle `computeAdaptiveScore(monthlyTrendFull, recentMonths)` — le même moteur que les fiches
+- Calcule en plus : `joursDepuisDernierDossier` (date du dernier projet vs aujourd'hui)
+- Paramètre exposé : `recentMonths` (1 ou 3), `seuilDormantMois` (configurable, défaut 2)
 
-  3 derniers mois : avgCA = 9 500€, avgDossiers = 5
-  → variationCA = -20.8%, variationDossiers = -37.5%
-  → Score = 50 - (20.8*0.4 + 37.5*0.25 + ...) ≈ 32 → ALERTE BAISSE
+Structure retournée par apporteur :
 
-Apporteur "MAIF" — historique 12 mois :
-  avgCA/mois = 2 000€, avgDossiers/mois = 3
-
-  3 derniers mois : avgCA = 2 800€, avgDossiers = 4
-  → variationCA = +40%, variationDossiers = +33%
-  → Score = 50 + ... ≈ 72 → TENDANCE HAUSSE
-```
-
-**Retour** :
 ```typescript
-interface AdaptiveScore {
-  score: number;              // 0-100
-  level: 'danger' | 'warning' | 'stable' | 'positive' | 'excellent';
-  label: string;              // "En baisse", "Stable", "En hausse"
-  metrics: {
-    ca:        { avg: number; recent: number; variationPct: number };
-    dossiers:  { avg: number; recent: number; variationPct: number };
-    devis:     { avg: number; recent: number; variationPct: number };
-    factures:  { avg: number; recent: number; variationPct: number };
-    tauxTransfo: { avg: number | null; recent: number | null; variationPct: number | null };
-  };
-  alerts: string[];           // Messages contextuels
+interface VeilleApporteurRow {
+  apporteurId: string;
+  apporteurNom: string;
+  // Score adaptatif (même que fiche individuelle)
+  score: number;
+  level: ScoreLevel; // danger | warning | stable | positive | excellent
+  label: string;
+  // Métriques détaillées
+  caAvgMensuel: number;      // moyenne historique
+  caRecentMensuel: number;   // moyenne récente
+  caVariationPct: number;
+  dossiersAvg: number;
+  dossiersRecent: number;
+  dossiersVariationPct: number;
+  devisAvg: number;
+  facturesAvg: number;
+  tauxTransfoAvg: number | null;
+  // Dormance
+  dernierDossierDate: string | null;
+  joursInactivite: number;
+  isDormant: boolean;         // > seuilDormantMois sans dossier
+  // Alertes textuelles
+  alerts: string[];
+  // Données brutes pour drill-down
+  monthlyTrendFull: MonthlyTrendEntry[];
 }
 ```
 
-#### 2. Enrichir `useApporteurDashboardLive`
+KPIs agrégés :
 
-- Charger les données sur **toute la période connue** (pas de filtre date pour le calcul historique) en plus de la période sélectionnée
-- Calculer `monthlyTrendFull` (tous les mois disponibles, pas seulement la période)
-- Appeler `computeAdaptiveScore(monthlyTrendFull)` 
-- Ajouter `adaptiveScore: AdaptiveScore` au retour du hook
+```typescript
+{
+  total: number;
+  dormants: number;
+  enBaisse: number;    // score < 42
+  stables: number;     // score 42-58
+  enHausse: number;    // score > 58
+}
+```
 
-Concrètement : les données brutes sont déjà chargées sans filtre date (l.41-44). Il suffit de construire un 2e `monthlyTrend` sur l'ensemble avant de filtrer.
+#### 2. Refonte complète du composant `VeilleApporteursTab`
 
-#### 3. Nouveau composant `ApporteurScoreCard`
+**Réécriture** : `src/prospection/pages/VeilleApporteursTab.tsx`
 
-**Nouveau fichier** : `src/prospection/components/ApporteurScoreCard.tsx`
+Structure UI :
 
-Card compacte affichée en haut de la fiche apporteur :
-- **Jauge circulaire** : score 0-100 avec couleur (rouge < 35, orange 35-45, vert 45-65, bleu > 65)
-- **Label** : "En baisse", "Stable", "En hausse"
-- **Mini tableau** des 5 métriques : chacune avec sa moyenne historique, sa valeur récente, et la variation % (flèche verte/rouge)
-- **Alertes textuelles** : ex. "CA en baisse de 21% vs votre moyenne", "Dossiers en chute sur 3 mois consécutifs"
+- **Barre de contrôle** :
+  - Pilules de filtre : Tous | Dormants | En baisse | Stables | En hausse
+  - Select "Tendance sur" : 1 mois / 3 mois (change le `recentMonths` du scoring)
+  - Select "Dormant si inactif depuis" : 1 mois / 2 mois / 3 mois / 6 mois
+  - Recherche par nom
+- **Tableau** avec colonnes triables :
+  - Nom apporteur
+  - Score (jauge visuelle + valeur)
+  - Tendance (label : "En forte baisse", "Stable", etc.)
+  - CA moy/mois (historique)
+  - CA récent/mois
+  - Variation CA %
+  - Dossiers moy/mois
+  - Dernière activité (date + "il y a Xj")
+  - Alertes (nombre de signaux)
+- Chaque ligne cliquable → ouvre la fiche individuelle
+- **Tooltips** sur les en-têtes expliquant le calcul
 
-#### 4. Intégrer les alertes adaptatives dans `InsightsPanel`
+#### 3. Nettoyage
 
-Dans `generateApporteurInsights`, ajouter un paramètre optionnel `adaptiveScore` et générer des insights contextuels :
-- "Tendance baissière : CA moyen 9 500€/mois vs moyenne historique de 12 000€ (-21%)"
-- "Volume de dossiers en baisse constante sur 3 mois"
-- "Taux de transformation en amélioration (+15% vs historique)"
-
-#### 5. Intégrer dans `ApporteurDashboardPage`
-
-- Afficher `ApporteurScoreCard` juste après le header, avant les KPIs
-- Les insights enrichis apparaissent naturellement dans le panel existant
+- `useVeilleApporteurs` : conservé mais plus utilisé par la tab Veille (peut rester pour d'autres usages STATiA)
+- L'ancien `veilleApporteursEngine.ts` reste en place (utilisé par STATiA) mais n'est plus la source de la tab Veille
+- Pas de suppression pour éviter les régressions
 
 ### Fichiers impactés
 
-| Fichier | Action |
-|---------|--------|
-| `src/prospection/engine/adaptiveScoring.ts` | Nouveau — moteur de scoring |
-| `src/prospection/hooks/useApporteurDashboardLive.ts` | Ajout monthlyTrendFull + appel scoring |
-| `src/prospection/components/ApporteurScoreCard.tsx` | Nouveau — composant visuel |
-| `src/prospection/engine/insights.ts` | Ajout insights adaptatifs |
-| `src/prospection/pages/ApporteurDashboardPage.tsx` | Intégration du score card |
 
+| Fichier                                           | Action                               |
+| ------------------------------------------------- | ------------------------------------ |
+| `src/prospection/hooks/useVeilleAdaptive.ts`      | Nouveau — hook de données unifié     |
+| `src/prospection/pages/VeilleApporteursTab.tsx`   | Réécriture complète — nouveau design |
+| `src/prospection/pages/ProspectionTabContent.tsx` | Mise à jour import                   |
+
+
+### Cohérence garantie
+
+Le score affiché dans la Veille pour un apporteur sera **exactement le même** que celui affiché dans sa fiche individuelle, car ils utilisent tous les deux `computeAdaptiveScore()` avec les mêmes données `monthlyTrendFull`.  
+  
+  
+Penser az dégager le LEGACY
