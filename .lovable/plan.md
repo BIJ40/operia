@@ -1,135 +1,71 @@
-## Refonte Veille Apporteurs — Scoring adaptatif unifié pour tous les apporteurs
 
-### Problème actuel
 
-La Veille utilise un moteur séparé (`veilleApporteursEngine.ts` + `veilleApporteurs.ts`) avec des seuils fixes arbitraires (période A/B de 30j, seuil CA 5000€) qui ne correspondent à rien de concret. Le scoring adaptatif (moyennes historiques propres) n'existe que dans les fiches individuelles. Résultat : incohérence totale entre la vue liste et les fiches, et des classifications faussées (un apporteur à 0€ classé "sain").
+## Analyse : Permissions manquantes pour Veille et Prospects
 
-### Solution
+### Constat
 
-Abandonner l'ancien moteur de veille. Calculer le **score adaptatif** (celui des fiches individuelles) pour **TOUS** les apporteurs d'un coup, en un seul chargement de données Apogée. La Veille devient une vue consolidée utilisant exactement la même logique que les fiches.
+Le module `prospection` déclare 3 sous-options dans `MODULE_DEFINITIONS` :
+- `dashboard` (Suivi client)
+- `comparateur` (Comparateur)
+- `meetings` (RDV)
 
-### Architecture
+Il manque **`veille`** et **`prospects`**. Ces onglets ne sont pas enregistrés dans le système de permissions.
 
-```text
-apogeeProxy.getAllData(agence)
-        │
-        ▼
-useVeilleAdaptive()          ← NOUVEAU hook, remplace useVeilleApporteurs
-  │
-  ├─ Pour chaque apporteur :
-  │    └─ computeAdaptiveScore(monthlyTrendFull)  ← même engine que les fiches
-  │
-  └─ Retourne: VeilleApporteurRow[] avec score, level, metrics, alertes
-        │
-        ▼
-VeilleApporteursTab (refondu)
-  ├─ Filtres: Tous | Dormants (0 dossier depuis Xm) | En baisse | Stables | En hausse
-  ├─ Réglage: "Depuis X mois" pour dormants, "1 ou 3 mois" pour tendance
-  ├─ Tableau enrichi: Score, CA moy, CA récent, Variation, Dossiers, Devis, Factures
-  └─ Clic → ouvre la fiche individuelle
-```
+### Comportement actuel
 
-### Plan d'implémentation
+Actuellement, la page `ProspectionTabContent` affiche les 4 onglets (Suivi client, Comparateur, Veille, Prospects) **sans aucune vérification d'option**. Donc :
 
-#### 1. Nouveau hook `useVeilleAdaptive`
+- **Tout utilisateur ayant accès au module `prospection`** voit les 4 onglets, y compris Veille et Prospects.
+- Il n'y a **aucun contrôle granulaire** : on ne peut pas activer/désactiver Veille ou Prospects individuellement dans l'admin utilisateur.
+- Les N5/N6 (bypass) voient tout. Les autres voient tout dès que le module `prospection` est activé dans leur `user_modules`.
 
-**Nouveau fichier** : `src/prospection/hooks/useVeilleAdaptive.ts`
+### Ce qu'il faut corriger
 
-Ce hook remplace `useVeilleApporteurs` pour la vue Veille :
+#### 1. Enregistrer les options manquantes dans `MODULE_DEFINITIONS`
 
-- Charge toutes les données de l'agence en une fois via `apogeeProxy.getAllData(agence)`
-- Regroupe projets, factures, devis par `commanditaireId`
-- Pour chaque apporteur, construit son `monthlyTrendFull` (identique à la logique de `useApporteurDashboardLive`)
-- Appelle `computeAdaptiveScore(monthlyTrendFull, recentMonths)` — le même moteur que les fiches
-- Calcule en plus : `joursDepuisDernierDossier` (date du dernier projet vs aujourd'hui)
-- Paramètre exposé : `recentMonths` (1 ou 3), `seuilDormantMois` (configurable, défaut 2)
-
-Structure retournée par apporteur :
+Dans `src/types/modules.ts`, ajouter `veille` et `prospects` aux options du module `prospection` :
 
 ```typescript
-interface VeilleApporteurRow {
-  apporteurId: string;
-  apporteurNom: string;
-  // Score adaptatif (même que fiche individuelle)
-  score: number;
-  level: ScoreLevel; // danger | warning | stable | positive | excellent
-  label: string;
-  // Métriques détaillées
-  caAvgMensuel: number;      // moyenne historique
-  caRecentMensuel: number;   // moyenne récente
-  caVariationPct: number;
-  dossiersAvg: number;
-  dossiersRecent: number;
-  dossiersVariationPct: number;
-  devisAvg: number;
-  facturesAvg: number;
-  tauxTransfoAvg: number | null;
-  // Dormance
-  dernierDossierDate: string | null;
-  joursInactivite: number;
-  isDormant: boolean;         // > seuilDormantMois sans dossier
-  // Alertes textuelles
-  alerts: string[];
-  // Données brutes pour drill-down
-  monthlyTrendFull: MonthlyTrendEntry[];
-}
+prospection: {
+  dashboard: 'prospection.dashboard',
+  comparateur: 'prospection.comparateur',
+  meetings: 'prospection.meetings',
+  veille: 'prospection.veille',        // NOUVEAU
+  prospects: 'prospection.prospects',   // NOUVEAU
+},
 ```
 
-KPIs agrégés :
+Et dans le tableau `MODULE_DEFINITIONS`, ajouter les 2 `OptionDefinition` avec `defaultEnabled: true`.
+
+#### 2. Ajouter les min-roles dans `constants.ts`
 
 ```typescript
-{
-  total: number;
-  dormants: number;
-  enBaisse: number;    // score < 42
-  stables: number;     // score 42-58
-  enHausse: number;    // score > 58
-}
+'prospection.veille': 'franchisee_admin',
+'prospection.prospects': 'franchisee_admin',
 ```
 
-#### 2. Refonte complète du composant `VeilleApporteursTab`
+#### 3. Filtrer les onglets dans `ProspectionTabContent.tsx`
 
-**Réécriture** : `src/prospection/pages/VeilleApporteursTab.tsx`
+Utiliser `useAuth().hasModuleOption()` pour conditionner l'affichage de chaque onglet :
 
-Structure UI :
+```typescript
+const { hasModuleOption } = useAuth();
+const visibleTabs = TABS.filter(tab => {
+  const optionMap = { apporteurs: 'dashboard', comparateur: 'comparateur', veille: 'veille', prospects: 'prospects' };
+  return hasModuleOption('prospection', optionMap[tab.id]);
+});
+```
 
-- **Barre de contrôle** :
-  - Pilules de filtre : Tous | Dormants | En baisse | Stables | En hausse
-  - Select "Tendance sur" : 1 mois / 3 mois (change le `recentMonths` du scoring)
-  - Select "Dormant si inactif depuis" : 1 mois / 2 mois / 3 mois / 6 mois
-  - Recherche par nom
-- **Tableau** avec colonnes triables :
-  - Nom apporteur
-  - Score (jauge visuelle + valeur)
-  - Tendance (label : "En forte baisse", "Stable", etc.)
-  - CA moy/mois (historique)
-  - CA récent/mois
-  - Variation CA %
-  - Dossiers moy/mois
-  - Dernière activité (date + "il y a Xj")
-  - Alertes (nombre de signaux)
-- Chaque ligne cliquable → ouvre la fiche individuelle
-- **Tooltips** sur les en-têtes expliquant le calcul
+#### 4. Mettre à jour `modulesByRole.ts`
 
-#### 3. Nettoyage
-
-- `useVeilleApporteurs` : conservé mais plus utilisé par la tab Veille (peut rester pour d'autres usages STATiA)
-- L'ancien `veilleApporteursEngine.ts` reste en place (utilisé par STATiA) mais n'est plus la source de la tab Veille
-- Pas de suppression pour éviter les régressions
+Ajouter `veille: true, prospects: true` dans les rôles N2+ qui ont déjà `prospection` activé, pour que les utilisateurs existants ne perdent pas l'accès.
 
 ### Fichiers impactés
 
+| Fichier | Action |
+|---------|--------|
+| `src/types/modules.ts` | Ajouter options `veille` + `prospects` |
+| `src/permissions/constants.ts` | Ajouter min-roles pour les 2 options |
+| `src/prospection/pages/ProspectionTabContent.tsx` | Filtrer les onglets selon permissions |
+| `src/config/modulesByRole.ts` | Ajouter defaults pour les rôles existants |
 
-| Fichier                                           | Action                               |
-| ------------------------------------------------- | ------------------------------------ |
-| `src/prospection/hooks/useVeilleAdaptive.ts`      | Nouveau — hook de données unifié     |
-| `src/prospection/pages/VeilleApporteursTab.tsx`   | Réécriture complète — nouveau design |
-| `src/prospection/pages/ProspectionTabContent.tsx` | Mise à jour import                   |
-
-
-### Cohérence garantie
-
-Le score affiché dans la Veille pour un apporteur sera **exactement le même** que celui affiché dans sa fiche individuelle, car ils utilisent tous les deux `computeAdaptiveScore()` avec les mêmes données `monthlyTrendFull`.  
-  
-  
-Penser az dégager le LEGACY
