@@ -1,9 +1,12 @@
 /**
  * useApporteurApi - Hook pour les appels API authentifiés du portail apporteur
- * Gère automatiquement l'auth (cookie en prod, header en dev)
+ * Gère automatiquement l'auth:
+ * 1. Token OTP custom (portail apporteur autonome)
+ * 2. Fallback: JWT Supabase (utilisateur interne avec lien apporteur_users)
  */
 
 import { useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 // Check if we're in dev/preview mode
 const isDevMode = () => {
@@ -43,11 +46,19 @@ export function useApporteurApi() {
       ...(options.headers as Record<string, string> || {}),
     };
 
-    // In DEV mode, add token to header
-    if (isDevMode()) {
-      const token = getDevToken();
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+    // Try OTP token first (DEV mode localStorage)
+    const devToken = getDevToken();
+    if (devToken) {
+      headers['Authorization'] = `Bearer ${devToken}`;
+    } else {
+      // Fallback: use Supabase JWT for internal users with apporteur_users link
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          headers['Authorization'] = `Bearer ${session.access_token}`;
+        }
+      } catch (e) {
+        console.warn('[useApporteurApi] Failed to get Supabase session:', e);
       }
     }
 
