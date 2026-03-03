@@ -15,6 +15,7 @@ export interface Apporteur {
   type: string;
   apogee_client_id: number | null;
   is_active: boolean;
+  portal_enabled: boolean;
   logo_url: string | null;
   created_at: string;
   updated_at: string;
@@ -515,6 +516,32 @@ export function useUpdateApporteurApogeeId() {
           ? 'Apporteur lié à Apogée' 
           : 'Liaison Apogée supprimée'
       );
+    },
+    onError: () => {
+      toast.error('Erreur lors de la mise à jour');
+    },
+  });
+}
+
+/**
+ * Toggle portal_enabled d'un apporteur
+ */
+export function useTogglePortalEnabled() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, portal_enabled }: { id: string; portal_enabled: boolean }) => {
+      const { error } = await supabase
+        .from('apporteurs')
+        .update({ portal_enabled })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['apporteurs'] });
+      queryClient.invalidateQueries({ queryKey: ['apporteur', variables.id] });
+      toast.success(variables.portal_enabled ? 'Portail activé' : 'Portail désactivé');
     },
     onError: () => {
       toast.error('Erreur lors de la mise à jour');
