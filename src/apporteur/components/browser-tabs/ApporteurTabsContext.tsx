@@ -17,7 +17,7 @@ import { LayoutDashboard, FolderOpen, FilePlus, BarChart3, User } from 'lucide-r
 export const APPORTEUR_MODULES: ApporteurModuleDefinition[] = [
   { id: 'accueil', label: 'Tableau de bord', icon: LayoutDashboard, closable: false },
   { id: 'dossiers', label: 'Dossiers', icon: FolderOpen, closable: false },
-  { id: 'demandes', label: 'Nouvelle demande', icon: FilePlus, closable: false },
+  { id: 'demandes', label: 'Demandes', icon: FilePlus, closable: false },
   { id: 'rapport', label: 'Rapport', icon: BarChart3, closable: false },
   { id: 'profil', label: 'Profil', icon: User, closable: false },
 ];
