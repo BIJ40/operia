@@ -39,6 +39,7 @@ import { ChangePasswordDialog } from "./components/ChangePasswordDialog";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { GlobalErrorBoundary } from "./components/system/GlobalErrorBoundary";
 import { WelcomeWizardGate } from "./components/onboarding";
+import { ReadOnlyEnforcer } from "./components/ReadOnlyEnforcer";
 import { DataPreloadPopup } from "./components/preload/DataPreloadPopup";
 // REMOVED: AnnouncementGate - No auto-popup policy (see NO_POPUP_POLICY.md)
 // REMOVED: LiveSupportProvider - Simplifié en V3 (plus de live chat)
@@ -174,6 +175,7 @@ function AppContent() {
         onSuccess={() => setShowPasswordDialog(false)}
       />
       <ImpersonationBanner />
+      <ReadOnlyEnforcer />
       <PWAInstallPrompt />
     </>
   );
