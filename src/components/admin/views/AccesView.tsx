@@ -11,20 +11,18 @@ import {
   DraggableFolderContentContainer,
   FolderTabConfig 
 } from '@/components/ui/draggable-folder-tabs';
-import { Users, Activity, Loader2, Building2 } from 'lucide-react';
+import { Users, Activity, Loader2 } from 'lucide-react';
 import { useSessionState } from '@/hooks/useSessionState';
 
 const TDRUsersPage = lazy(() => import('@/pages/TDRUsersPage'));
 const AdminUserActivity = lazy(() => import('@/pages/AdminUserActivity'));
-const ApporteurManagersAdminView = lazy(() => import('@/components/admin/views/ApporteurManagersAdminView'));
 
 const SUB_TABS: FolderTabConfig[] = [
   { id: 'users', label: 'Utilisateurs', icon: Users, accent: 'blue' },
-  { id: 'apporteurs', label: 'Apporteurs', icon: Building2, accent: 'orange' },
   { id: 'activity', label: 'Activité', icon: Activity, accent: 'green' },
 ];
 
-const DEFAULT_TAB_ORDER = ['users', 'apporteurs', 'activity'];
+const DEFAULT_TAB_ORDER = ['users', 'activity'];
 
 function LoadingFallback() {
   return (
@@ -56,7 +54,6 @@ export function AccesView() {
   const accentColors: Record<string, string> = {
     blue: 'hsl(var(--warm-blue))',
     green: 'hsl(var(--warm-green))',
-    orange: 'hsl(var(--warm-orange, 30 90% 50%))',
   };
   const activeAccent = activeTab?.accent ? accentColors[activeTab.accent] : undefined;
 
@@ -75,12 +72,6 @@ export function AccesView() {
         <TabsContent value="users" className="mt-0 focus-visible:outline-none">
           <Suspense fallback={<LoadingFallback />}>
             <TDRUsersPage />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="apporteurs" className="mt-0 focus-visible:outline-none">
-          <Suspense fallback={<LoadingFallback />}>
-            <ApporteurManagersAdminView />
           </Suspense>
         </TabsContent>
 
