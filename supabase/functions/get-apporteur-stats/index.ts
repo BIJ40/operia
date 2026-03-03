@@ -452,7 +452,7 @@ Deno.serve(async (req) => {
         count: overdueInvoices.length,
         amount: totalAmount,
         risk_blockage: risk,
-        sample_refs: overdueInvoices.slice(0, 3).map(i => i.ref),
+        sample_refs: overdueInvoices.map(i => i.ref),
       });
     }
 
@@ -478,7 +478,7 @@ Deno.serve(async (req) => {
         severity: severity(risk),
         count: overdueDevis.length,
         risk_blockage: risk,
-        sample_refs: overdueDevis.slice(0, 3).map(d => d.ref),
+        sample_refs: overdueDevis.map(d => d.ref),
       });
     }
 
@@ -497,7 +497,7 @@ Deno.serve(async (req) => {
         severity: severity(risk),
         count: noRdvDossiers.length,
         risk_blockage: risk,
-        sample_refs: noRdvDossiers.slice(0, 3),
+        sample_refs: noRdvDossiers,
       });
     }
 
@@ -527,7 +527,7 @@ Deno.serve(async (req) => {
         severity: severity(risk),
         count: staleDossiers.length,
         risk_blockage: risk,
-        sample_refs: staleDossiers.slice(0, 3),
+        sample_refs: staleDossiers,
       });
     }
 
@@ -550,7 +550,7 @@ Deno.serve(async (req) => {
         severity: severity(risk),
         count: cancelledRdv.length,
         risk_blockage: risk,
-        sample_refs: cancelledRdv.slice(0, 3),
+        sample_refs: cancelledRdv,
       });
     }
 
@@ -571,7 +571,7 @@ Deno.serve(async (req) => {
         severity: severity(risk),
         count: refusedDevisRefs.length,
         risk_blockage: risk,
-        sample_refs: refusedDevisRefs.slice(0, 3),
+        sample_refs: refusedDevisRefs,
       });
     }
 
