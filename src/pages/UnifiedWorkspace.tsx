@@ -408,7 +408,7 @@ function UnifiedWorkspaceContent() {
         <div className={`min-h-screen bg-background ${topPadding}`}>
           <Tabs value={validActiveTab} onValueChange={(v) => setActiveTab(v as UnifiedTab)} className="flex flex-col h-screen">
             {/* Tab bar fixe en haut */}
-            <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm">
+            <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm print:hidden">
               <div className="container mx-auto max-w-7xl px-4 pt-3 pb-0">
                 <div className="flex items-end justify-between gap-4">
                   <DndContext

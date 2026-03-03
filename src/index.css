@@ -881,3 +881,23 @@ button[data-image-modal] {
   border-color: hsl(var(--warm-blue) / 0.5);
   box-shadow: 0 2px 8px -2px hsl(var(--warm-blue) / 0.15);
 }
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+@media print {
+  /* Masquer la navigation, les boutons flottants et éléments non-imprimables */
+  .fixed,
+  [class*="sticky"][class*="z-50"] {
+    display: none !important;
+  }
+  
+  /* Réinitialiser le layout pour l'impression */
+  body, html {
+    overflow: visible !important;
+  }
+  
+  main {
+    overflow: visible !important;
+  }
+}
