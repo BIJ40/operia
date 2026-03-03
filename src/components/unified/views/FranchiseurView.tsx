@@ -89,24 +89,29 @@ function LoadingFallback() {
   );
 }
 
-function FranchiseurViewContent() {
+function FranchiseurViewContent({ embedded = false }: { embedded?: boolean }) {
   const { isImpersonating } = useImpersonation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [tabOrder, setTabOrder] = useSessionState<FranchiseurTab[]>('franchiseur_view_tab_order', DEFAULT_TAB_ORDER);
   
-  // Support URL ?tab=XXX pour navigation directe
-  const urlTab = searchParams.get('tab') as FranchiseurTab | null;
+  // Use a different URL param when embedded inside AdminHub to avoid conflict with parent's ?tab=
+  const urlParamKey = embedded ? 'fTab' : 'tab';
+  
+  // Support URL ?tab=XXX (standalone) or ?fTab=XXX (embedded) pour navigation directe
+  const urlTab = searchParams.get(urlParamKey) as FranchiseurTab | null;
   const [activeTab, setActiveTabState] = useSessionState<FranchiseurTab>('franchiseur_view_tab', urlTab || 'accueil');
   
   // Synchroniser l'URL quand l'onglet change
   const setActiveTab = useCallback((tab: FranchiseurTab) => {
     setActiveTabState(tab);
+    const newParams = new URLSearchParams(searchParams);
     if (tab === 'accueil') {
-      setSearchParams({}, { replace: true });
+      newParams.delete(urlParamKey);
     } else {
-      setSearchParams({ tab }, { replace: true });
+      newParams.set(urlParamKey, tab);
     }
-  }, [setActiveTabState, setSearchParams]);
+    setSearchParams(newParams, { replace: true });
+  }, [setActiveTabState, setSearchParams, searchParams, urlParamKey]);
   
   // Sync depuis URL au mount
   useEffect(() => {
@@ -307,13 +312,13 @@ function FranchiseurViewContent() {
   );
 }
 
-export default function FranchiseurView() {
+export default function FranchiseurView({ embedded = false }: { embedded?: boolean }) {
   return (
     <FranchiseurProvider>
       <NetworkFiltersProvider>
         <AiUnifiedProvider>
           <TooltipProvider delayDuration={0}>
-            <FranchiseurViewContent />
+            <FranchiseurViewContent embedded={embedded} />
           </TooltipProvider>
         </AiUnifiedProvider>
       </NetworkFiltersProvider>
