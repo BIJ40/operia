@@ -129,6 +129,10 @@ export const MODULE_OPTION_MIN_ROLES: Record<string, GlobalRole> = {
   'pilotage_agence.mes_apporteurs': 'franchisee_admin',
   'pilotage_agence.gestion_apporteurs': 'franchisee_admin',
   
+  // Prospection
+  'prospection.veille': 'franchisee_admin',
+  'prospection.prospects': 'franchisee_admin',
+  
   // Admin
   'admin_plateforme.users': 'platform_admin',
   'admin_plateforme.faq': 'platform_admin',
