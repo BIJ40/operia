@@ -48,7 +48,8 @@ import {
   Euro,
   Loader2,
   AlertTriangle,
-  RefreshCw
+  RefreshCw,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
@@ -60,7 +61,7 @@ type SortDirection = 'asc' | 'desc';
 
 export default function DossiersTabContent() {
   const queryClient = useQueryClient();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data, isLoading, error, isFetching } = useApporteurDossiers();
   
   const [search, setSearch] = useState('');
@@ -68,13 +69,25 @@ export default function DossiersTabContent() {
   const [sortField, setSortField] = useState<SortField>('dateCreation');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [selectedDossier, setSelectedDossier] = useState<DossierRow | null>(null);
+  const [alerteRefs, setAlerteRefs] = useState<string[] | null>(null);
 
   useEffect(() => {
     const urlStatus = searchParams.get('status');
     if (urlStatus) {
       setStatusFilter(urlStatus);
     }
-  }, [searchParams]);
+    const urlAlerteRefs = searchParams.get('alerteRefs');
+    if (urlAlerteRefs) {
+      const refs = urlAlerteRefs.split(',').filter(Boolean);
+      setAlerteRefs(refs);
+      // Clean the param so it doesn't persist on refresh
+      setSearchParams(prev => {
+        const newParams = new URLSearchParams(prev);
+        newParams.delete('alerteRefs');
+        return newParams;
+      }, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const dossiers = data?.data?.dossiers || [];
   const totals = data?.data?.totals || { count: 0, resteDu: 0 };
@@ -89,6 +102,12 @@ export default function DossiersTabContent() {
 
   const filteredDossiers = useMemo(() => {
     let result = [...dossiers];
+
+    // Filtre par alerteRefs (prioritaire)
+    if (alerteRefs && alerteRefs.length > 0) {
+      const refsSet = new Set(alerteRefs.map(r => r.toLowerCase()));
+      result = result.filter(d => refsSet.has(d.ref.toLowerCase()));
+    }
 
     if (search) {
       const searchLower = search.toLowerCase();
@@ -129,7 +148,7 @@ export default function DossiersTabContent() {
     });
 
     return result;
-  }, [dossiers, search, statusFilter, sortField, sortDirection]);
+  }, [dossiers, search, statusFilter, sortField, sortDirection, alerteRefs]);
 
   const filteredTotals = useMemo(() => ({
     count: filteredDossiers.length,
@@ -228,6 +247,25 @@ export default function DossiersTabContent() {
           Actualiser
         </Button>
       </div>
+
+      {/* Bannière filtre alerte */}
+      {alerteRefs && alerteRefs.length > 0 && (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
+          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+          <span className="text-sm text-foreground flex-1">
+            Filtre actif : <strong>{alerteRefs.length} dossier(s)</strong> issus d'une alerte
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs h-7"
+            onClick={() => setAlerteRefs(null)}
+          >
+            <X className="w-3 h-3 mr-1" />
+            Effacer le filtre
+          </Button>
+        </div>
+      )}
 
       {/* Table Card */}
       <Card className="rounded-2xl">
