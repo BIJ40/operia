@@ -1,11 +1,13 @@
 /**
  * NouvelleDemandeDialog - Dialog pour créer une demande d'intervention
+ * Utilise useApporteurSession (OTP) comme source principale d'identité
+ * et soumet via Edge Function (pas d'insert direct Supabase)
  */
 
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useApporteurAuth } from '@/contexts/ApporteurAuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { useApporteurSession } from '@/apporteur/contexts/ApporteurSessionContext';
+import { useApporteurApi } from '@/apporteur/hooks/useApporteurApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -39,7 +41,8 @@ interface NouvelleDemandeDialogProps {
 }
 
 export function NouvelleDemandeDialog({ open, onOpenChange }: NouvelleDemandeDialogProps) {
-  const { apporteurUser, apporteurId, agencyId } = useApporteurAuth();
+  const { session, isAuthenticated, apporteurId, agencyId } = useApporteurSession();
+  const { post } = useApporteurApi();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
 
@@ -84,7 +87,7 @@ export function NouvelleDemandeDialog({ open, onOpenChange }: NouvelleDemandeDia
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!apporteurUser || !apporteurId || !agencyId) {
+    if (!isAuthenticated || !session || !apporteurId || !agencyId) {
       toast.error('Erreur de session. Veuillez vous reconnecter.');
       return;
     }
@@ -98,36 +101,22 @@ export function NouvelleDemandeDialog({ open, onOpenChange }: NouvelleDemandeDia
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('apporteur_intervention_requests')
-        .insert({
-          agency_id: agencyId,
-          apporteur_id: apporteurId,
-          apporteur_user_id: apporteurUser.id,
-          request_type: formData.requestType,
-          urgency: formData.urgency,
-          tenant_name: tenantFullName,
-          tenant_phone: formData.tenantPhone || null,
-          tenant_email: formData.tenantEmail || null,
-          owner_name: formData.ownerName || null,
-          address: formData.address,
-          postal_code: formData.postalCode || null,
-          city: formData.city || null,
-          description: formData.description,
-          availability: formData.availability || null,
-          comments: formData.comments || null,
-          status: 'pending',
-        })
-        .select('id')
-        .single();
+      const result = await post<{ success: boolean; id: string; reference?: string }>('/create-apporteur-request', {
+        request_type: formData.requestType,
+        urgency: formData.urgency,
+        tenant_name: tenantFullName,
+        tenant_phone: formData.tenantPhone || null,
+        tenant_email: formData.tenantEmail || null,
+        owner_name: formData.ownerName || null,
+        address: formData.address,
+        postal_code: formData.postalCode || null,
+        city: formData.city || null,
+        description: formData.description,
+        availability: formData.availability || null,
+        comments: formData.comments || null,
+      });
 
-      if (error) throw error;
-
-      if (data?.id) {
-        supabase.functions.invoke('notify-apporteur-request', {
-          body: { request_id: data.id }
-        }).catch(err => console.warn('Email notification failed:', err));
-      }
+      if (result.error) throw new Error(result.error);
 
       await queryClient.invalidateQueries({ queryKey: ['apporteur-demandes'] });
       
