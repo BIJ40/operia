@@ -79,18 +79,28 @@ export function useApporteurs() {
 
       if (error) throw error;
 
-      // Get user counts for each apporteur
-      const { data: userCounts, error: countError } = await supabase
-        .from('apporteur_users')
-        .select('apporteur_id')
-        .eq('agency_id', agencyId);
+      // Get user counts from both apporteur_users and apporteur_managers
+      const [usersRes, managersRes] = await Promise.all([
+        supabase
+          .from('apporteur_users')
+          .select('apporteur_id')
+          .eq('agency_id', agencyId),
+        supabase
+          .from('apporteur_managers')
+          .select('apporteur_id')
+          .eq('agency_id', agencyId),
+      ]);
 
-      if (countError) throw countError;
+      if (usersRes.error) throw usersRes.error;
+      if (managersRes.error) throw managersRes.error;
 
-      // Aggregate counts
+      // Aggregate counts from both tables
       const countsMap: Record<string, number> = {};
-      userCounts?.forEach(u => {
+      usersRes.data?.forEach(u => {
         countsMap[u.apporteur_id] = (countsMap[u.apporteur_id] || 0) + 1;
+      });
+      managersRes.data?.forEach(m => {
+        countsMap[m.apporteur_id] = (countsMap[m.apporteur_id] || 0) + 1;
       });
 
       return (apporteurs || []).map(a => ({
