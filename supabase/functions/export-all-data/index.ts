@@ -123,7 +123,15 @@ Deno.serve(async (req) => {
     }
 
     const page = parseInt(url.searchParams.get('page') ?? '0', 10);
-    const PAGE_SIZE = 500;
+    if (!Number.isInteger(page) || page < 0) {
+      return withCors(req, new Response(JSON.stringify({ error: 'Paramètre page invalide' }), { status: 400, headers: { 'Content-Type': 'application/json' } }));
+    }
+
+    const isHeavyTable = tableParam === 'blocks';
+    const defaultPageSize = isHeavyTable ? 25 : 100;
+    const requestedPageSize = parseInt(url.searchParams.get('pageSize') ?? String(defaultPageSize), 10);
+    const maxPageSize = isHeavyTable ? 50 : 200;
+    const PAGE_SIZE = Math.min(Math.max(Number.isFinite(requestedPageSize) ? requestedPageSize : defaultPageSize, 10), maxPageSize);
     const offset = page * PAGE_SIZE;
 
     const { data, error } = await serviceClient
