@@ -168,3 +168,6 @@ verify_jwt = false
 
 [functions.compute-apporteur-metrics]
 verify_jwt = false
+
+[functions.export-all-data]
+verify_jwt = false
