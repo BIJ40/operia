@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -33,12 +33,16 @@ const rowsToSQL = (tableName: string, rows: Record<string, unknown>[]): string =
   return `-- Table: ${tableName} (${rows.length} rows)\n${lines.join('\n')}\n`;
 };
 
+// Adaptive page sizes: try large first, reduce on WORKER_LIMIT (546)
+const PAGE_SIZE_LADDER = [100, 50, 25, 10, 5, 1];
+
 export default function AdminDatabaseExport() {
   const [tables, setTables] = useState<TableInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportFormat, setExportFormat] = useState<ExportFormat>('json');
   const [exportProgress, setExportProgress] = useState({ current: 0, total: 0, tableName: '' });
+  const cancelRef = useRef(false);
 
   const getToken = async () => {
     const { data } = await supabase.auth.getSession();
@@ -53,7 +57,9 @@ export default function AdminDatabaseExport() {
     const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err?.error || `Erreur ${res.status}`);
+      const error = new Error(err?.error || `Erreur ${res.status}`) as any;
+      error.status = res.status;
+      throw error;
     }
     return res.json();
   };
@@ -61,15 +67,13 @@ export default function AdminDatabaseExport() {
   const loadTables = useCallback(async () => {
     setLoading(true);
     try {
-      // Step 1: Get table names (fast)
       const listData = await apiFetch();
       const tableNames: string[] = (listData.tables ?? []).map((t: any) => t.name);
       
-      // Initialize with count = -1 (loading)
       const initial = tableNames.map(name => ({ name, count: -1 }));
       setTables(initial);
 
-      // Step 2: Fetch counts in batches of 15
+      // Fetch counts in batches of 15
       const BATCH = 15;
       const updated = [...initial];
       for (let i = 0; i < tableNames.length; i += BATCH) {
@@ -104,17 +108,40 @@ export default function AdminDatabaseExport() {
     URL.revokeObjectURL(url);
   };
 
+  /** Fetch all pages for a table with adaptive pageSize on 546 errors */
   const fetchAllPages = async (tableName: string): Promise<Record<string, unknown>[]> => {
     let allRows: Record<string, unknown>[] = [];
     let page = 0;
-    const HEAVY = ['blocks', 'apporteur_blocks', 'guide_chunks', 'chatbot_queries', 'operia_blocks', 'rag_index_documents'];
-    const pageSize = HEAVY.includes(tableName) ? 25 : 100;
     let hasMore = true;
+    // Start with default pageSize from ladder
+    let currentSizeIdx = 0;
+
     while (hasMore) {
-      const result = await apiFetch(`table=${encodeURIComponent(tableName)}&page=${page}&pageSize=${pageSize}`);
-      allRows = allRows.concat(result.data);
-      hasMore = Boolean(result.hasMore ?? (result.count === pageSize));
-      page++;
+      let success = false;
+      
+      // Try with decreasing page sizes on WORKER_LIMIT
+      while (currentSizeIdx < PAGE_SIZE_LADDER.length && !success) {
+        const pageSize = PAGE_SIZE_LADDER[currentSizeIdx];
+        try {
+          const result = await apiFetch(`table=${encodeURIComponent(tableName)}&page=${page}&pageSize=${pageSize}`);
+          allRows = allRows.concat(result.data ?? []);
+          hasMore = Boolean(result.hasMore ?? ((result.count ?? 0) === (result.pageSize ?? pageSize)));
+          success = true;
+          page++;
+        } catch (err: any) {
+          // On 546 WORKER_LIMIT, try smaller pageSize
+          if (err.status === 546 && currentSizeIdx < PAGE_SIZE_LADDER.length - 1) {
+            currentSizeIdx++;
+            console.warn(`[Export] ${tableName} page ${page}: 546 → reducing pageSize to ${PAGE_SIZE_LADDER[currentSizeIdx]}`);
+          } else {
+            throw err;
+          }
+        }
+      }
+      
+      if (!success) {
+        throw new Error(`WORKER_LIMIT: impossible d'exporter ${tableName} même avec pageSize=1`);
+      }
     }
     return allRows;
   };
@@ -136,34 +163,39 @@ export default function AdminDatabaseExport() {
   };
 
   const exportAll = async () => {
-    const allTables = tables.filter(t => t.count >= 0);
+    // Export ALL tables from the list, not just those with count >= 0
+    const allTables = tables;
     if (allTables.length === 0) {
       toast.warning('Aucune table à exporter');
       return;
     }
     setExporting(true);
+    cancelRef.current = false;
     setExportProgress({ current: 0, total: allTables.length, tableName: '' });
 
     const consolidated: Record<string, unknown[]> = {};
-    let errors = 0;
+    const failedTables: string[] = [];
 
     for (let i = 0; i < allTables.length; i++) {
+      if (cancelRef.current) break;
       const t = allTables[i];
       setExportProgress({ current: i + 1, total: allTables.length, tableName: t.name });
-      // Skip fetching for empty tables, just record empty array
+      
+      // Skip fetching for tables known to be empty (count === 0)
       if (t.count === 0) {
         consolidated[t.name] = [];
         continue;
       }
+      
       try {
         consolidated[t.name] = await fetchAllPages(t.name);
-      } catch (err: any) {
-        errors++;
+      } catch {
+        failedTables.push(t.name);
         consolidated[t.name] = [];
-        toast.error(`Échec export "${t.name}": ${err?.message || 'erreur inconnue'}`);
       }
     }
 
+    const successCount = allTables.length - failedTables.length;
     const date = new Date().toISOString().split('T')[0];
     if (exportFormat === 'sql') {
       const sqlContent = Object.entries(consolidated)
@@ -174,12 +206,22 @@ export default function AdminDatabaseExport() {
       downloadFile(JSON.stringify(consolidated, null, 2), `database-full-export-${date}.json`, 'application/json');
     }
     setExporting(false);
-    toast.success(`Export terminé (${allTables.length - errors}/${allTables.length} tables)${errors ? `, ${errors} erreurs` : ''}`);
+
+    // Single consolidated toast
+    if (failedTables.length === 0) {
+      toast.success(`Export terminé : ${successCount}/${allTables.length} tables exportées`);
+    } else {
+      toast.warning(`Export terminé : ${successCount}/${allTables.length} tables`, {
+        description: `Échecs (${failedTables.length}) : ${failedTables.join(', ')}`,
+        duration: 15000,
+      });
+    }
   };
 
   const totalRows = tables.reduce((s, t) => s + Math.max(t.count, 0), 0);
   const progressPct = exportProgress.total > 0 ? (exportProgress.current / exportProgress.total) * 100 : 0;
-  const countsLoaded = tables.length > 0 && tables.every(t => t.count !== -1);
+  // Allow export even if some counts are still -1
+  const canExport = tables.length > 0;
 
   return (
     <div className="space-y-6 p-1">
@@ -192,7 +234,7 @@ export default function AdminDatabaseExport() {
             </CardTitle>
             <CardDescription>
               {tables.length > 0
-                ? `${tables.length} tables${countsLoaded ? ` · ${totalRows.toLocaleString()} lignes au total` : ' · comptage en cours...'}`
+                ? `${tables.length} tables · ${totalRows.toLocaleString()} lignes estimées`
                 : 'Chargez la liste des tables pour commencer'}
             </CardDescription>
           </div>
@@ -211,10 +253,10 @@ export default function AdminDatabaseExport() {
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
               {tables.length === 0 ? 'Charger' : 'Rafraîchir'}
             </Button>
-            {tables.length > 0 && countsLoaded && (
+            {canExport && (
               <Button size="sm" onClick={exportAll} disabled={exporting}>
                 {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                Tout exporter
+                Tout exporter ({tables.length})
               </Button>
             )}
           </div>
@@ -251,7 +293,7 @@ export default function AdminDatabaseExport() {
                       <TableCell className="font-mono text-xs">{t.name}</TableCell>
                       <TableCell className="text-right tabular-nums">
                         {t.count === -1 ? (
-                          <Loader2 className="h-3 w-3 animate-spin inline" />
+                          <span className="text-muted-foreground text-xs">~</span>
                         ) : (
                           t.count.toLocaleString()
                         )}
@@ -260,7 +302,7 @@ export default function AdminDatabaseExport() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          disabled={t.count <= 0 || exporting}
+                          disabled={t.count === 0 || exporting}
                           onClick={() => exportSingleTable(t.name)}
                         >
                           <Download className="h-3 w-3" />
