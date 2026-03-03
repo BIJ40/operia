@@ -16,13 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+// Select removed - using buttons for status filter
 import {
   Dialog,
   DialogContent,
@@ -233,30 +227,43 @@ export default function ApporteurDossiers() {
         </Button>
       </div>
 
+      {/* Status filter buttons */}
+      <div className="flex flex-wrap gap-2">
+        <Button
+          variant={statusFilter === 'all' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setStatusFilter('all')}
+        >
+          Tous ({dossiers.length})
+        </Button>
+        {statuses.map(s => {
+          const count = dossiers.filter(d => d.status === s.value).length;
+          const conf = STATUS_CONFIG[s.value] || STATUS_CONFIG.en_cours;
+          return (
+            <Button
+              key={s.value}
+              variant={statusFilter === s.value ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setStatusFilter(s.value)}
+              className={statusFilter !== s.value ? cn(conf.bgColor, conf.color, 'border') : ''}
+            >
+              {s.label} ({count})
+            </Button>
+          );
+        })}
+      </div>
+
       {/* Table Card */}
       <Card>
         <CardHeader className="pb-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher (réf, client, ville)..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Tous les états" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les états</SelectItem>
-                {statuses.map(s => (
-                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="relative w-full max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
           </div>
         </CardHeader>
         <CardContent className="p-0">
