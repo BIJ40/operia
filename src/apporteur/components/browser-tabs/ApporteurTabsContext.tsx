@@ -35,9 +35,9 @@ function resolveTabsWithIcons(storedTabs: ApporteurStoredTabData[]): ApporteurTa
       if (!module) return null;
       return {
         id: tab.id,
-        label: tab.label,
+        label: module.label,
         icon: module.icon,
-        closable: tab.closable,
+        closable: module.closable,
       };
     })
     .filter((tab): tab is ApporteurTabData => tab !== null);

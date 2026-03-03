@@ -56,7 +56,7 @@ export default function ApporteurDashboard() {
         </div>
         <Button onClick={() => setDemandeOpen(true)} className="gap-2">
           <PlusCircle className="w-4 h-4" />
-          Nouvelle demande
+          Demandes
         </Button>
       </div>
 

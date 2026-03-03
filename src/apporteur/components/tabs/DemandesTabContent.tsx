@@ -99,7 +99,7 @@ export default function DemandesTabContent() {
         </div>
         <Button onClick={() => setDemandeDialogOpen(true)} className="gap-2 rounded-xl">
           <PlusCircle className="w-4 h-4" />
-          Nouvelle demande
+          Demandes
         </Button>
       </div>
 
