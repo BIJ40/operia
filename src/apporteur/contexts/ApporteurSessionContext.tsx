@@ -156,6 +156,13 @@ export function ApporteurSessionProvider({ children }: { children: ReactNode }) 
         }
       }
 
+      // In DEV mode without stored token, skip server validation (would always fail)
+      if (isDevMode() && !getDevToken()) {
+        setSession(null);
+        setIsLoading(false);
+        return;
+      }
+
       // Try to validate with server (will use cookie in prod)
       const response = await fetchWithAuth('/apporteur-auth-validate-session', {
         method: 'GET',
