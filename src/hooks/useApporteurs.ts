@@ -185,14 +185,26 @@ export function useCreateApporteurManager() {
         body: input,
       });
 
-      if (error) throw error;
+      if (error) {
+        // Extract clean error message from SDK wrapper
+        let msg = error.message || 'Erreur inconnue';
+        const jsonMatch = msg.match(/\{[^}]+\}/);
+        if (jsonMatch) {
+          try { msg = JSON.parse(jsonMatch[0]).error || msg; } catch { /* keep original */ }
+        }
+        throw new Error(msg);
+      }
       if (data?.error) throw new Error(data.error);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['apporteur-managers'] });
       queryClient.invalidateQueries({ queryKey: ['apporteurs'] });
-      toast.success('Gestionnaire créé avec succès. Il pourra se connecter via code email.');
+      if (data?.reactivated) {
+        toast.success('Gestionnaire réactivé avec succès.');
+      } else {
+        toast.success('Gestionnaire créé avec succès. Il pourra se connecter via code email.');
+      }
     },
     onError: (err: Error) => {
       toast.error(err.message || 'Erreur lors de la création');
