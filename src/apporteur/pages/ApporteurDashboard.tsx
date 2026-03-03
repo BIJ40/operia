@@ -48,7 +48,7 @@ export default function ApporteurDashboard() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
-            Bienvenue, {apporteurUser?.firstName || 'Partenaire'}
+            Bienvenue, {apporteurUser?.firstName || apporteurUser?.apporteurName || 'Partenaire'}
           </h1>
           <p className="text-muted-foreground">
             {apporteurUser?.apporteurName} - Tableau de bord
