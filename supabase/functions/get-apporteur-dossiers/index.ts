@@ -283,10 +283,16 @@ Deno.serve(async (req) => {
       if (clientId && display) clientsMap[clientId] = display;
     }
     console.log(`[GET-APPORTEUR-DOSSIERS] Built clientsMap with ${Object.keys(clientsMap).length} entries`);
+    console.log(`[GET-APPORTEUR-DOSSIERS] Looking for commanditaireId=${commanditaireId} (type: ${typeof commanditaireId}), total projects: ${allProjects.length}`);
+    
+    // Debug: log first few commanditaireIds found
+    const sampleCmdIds = allProjects.slice(0, 5).map((p: AnyRecord) => ({ id: p.id, cmdId: p.data?.commanditaireId, type: typeof p.data?.commanditaireId }));
+    console.log(`[GET-APPORTEUR-DOSSIERS] Sample commanditaireIds:`, JSON.stringify(sampleCmdIds));
 
     const projects = (allProjects || []).filter((p: AnyRecord) => {
       const cmdId = p.data?.commanditaireId;
-      return cmdId === commanditaireId;
+      // Compare loosely: API may return number or string
+      return cmdId != null && String(cmdId) === String(commanditaireId);
     });
 
     const facturesByProject: Record<number, AnyRecord> = {};

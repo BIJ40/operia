@@ -236,7 +236,7 @@ Deno.serve(async (req) => {
     
     for (const p of (allProjects || []) as AnyRecord[]) {
       const cmdId = p.data?.commanditaireId;
-      if (cmdId === commanditaireId) {
+      if (cmdId != null && String(cmdId) === String(commanditaireId)) {
         projectIds.add(Number(p.id));
         projectsMap[Number(p.id)] = p;
       }

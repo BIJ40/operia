@@ -164,7 +164,8 @@ Deno.serve(async (req) => {
       const cmdId = p.data && typeof p.data === 'object' 
         ? (p.data as Record<string, unknown>).commanditaireId 
         : null;
-      return cmdId === commanditaireId;
+      // Compare loosely: API may return number or string
+      return cmdId != null && String(cmdId) === String(commanditaireId);
     });
 
     const projectIds = new Set(projects.map((p: Record<string, unknown>) => p.id));
