@@ -8,9 +8,9 @@
  * - Compteur de RDV visible
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Maximize2, Users, Calendar, AlertCircle } from 'lucide-react';
+import { MapPin, Maximize2, Users, Calendar, AlertCircle, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -127,12 +127,26 @@ function MapContent({
   return null;
 }
 
+type MapTimeFilter = 'jour' | 'actuel';
+
 export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidgetProps) {
   const today = new Date();
   const { rdvs, isLoading, technicians } = useRdvMap({ date: today, agencySlug });
   const { data: mapboxToken, isLoading: tokenLoading, error: tokenError } = useMapboxToken();
   const [selectedRdv, setSelectedRdv] = useState<MapRdv | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [timeFilter, setTimeFilter] = useState<MapTimeFilter>('jour');
+
+  // Filter RDVs based on timeFilter
+  const filteredRdvs = useMemo(() => {
+    if (timeFilter === 'jour') return rdvs;
+    const now = new Date();
+    return rdvs.filter(rdv => {
+      const start = new Date(rdv.startAt);
+      const end = new Date(start.getTime() + rdv.durationMin * 60 * 1000);
+      return now >= start && now <= end;
+    });
+  }, [rdvs, timeFilter]);
 
   const compactMapRef = useRef<HTMLDivElement>(null);
   const expandedMapRef = useRef<HTMLDivElement>(null);
@@ -191,11 +205,39 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
           />
           
           <div className="flex items-center gap-2">
+            {/* Toggle Jour / Actuel */}
+            <div className="flex items-center rounded-full bg-white/80 dark:bg-background/80 border border-border/50 shadow-sm p-0.5">
+              <button
+                onClick={() => setTimeFilter('jour')}
+                className={cn(
+                  "flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all",
+                  timeFilter === 'jour'
+                    ? "bg-warm-blue text-white shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Calendar className="h-3 w-3" />
+                Jour
+              </button>
+              <button
+                onClick={() => setTimeFilter('actuel')}
+                className={cn(
+                  "flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all",
+                  timeFilter === 'actuel'
+                    ? "bg-warm-teal text-white shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Clock className="h-3 w-3" />
+                Actuel
+              </button>
+            </div>
+
             {/* Compteur de RDV */}
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 dark:bg-background/80 border border-border/50 shadow-sm">
               <Calendar className="h-3.5 w-3.5 text-warm-blue" />
               <span className="text-sm font-medium">
-                {rdvs.length} RDV
+                {filteredRdvs.length} RDV
               </span>
             </div>
 
@@ -229,7 +271,7 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
                 <div ref={expandedMapRef} className="flex-1 w-full h-full min-h-[500px]">
                   {isExpanded && (
                     <MapContent
-                      rdvs={rdvs}
+                      rdvs={filteredRdvs}
                       selectedRdv={selectedRdv}
                       onSelectRdv={setSelectedRdv}
                       containerRef={expandedMapRef}
@@ -248,7 +290,7 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
       <div ref={compactMapRef} className="w-full h-full min-h-[240px]">
         {!isExpanded && (
           <MapContent
-            rdvs={rdvs}
+            rdvs={filteredRdvs}
             selectedRdv={selectedRdv}
             onSelectRdv={setSelectedRdv}
             containerRef={compactMapRef}
@@ -299,11 +341,23 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
       )}
 
       {/* Message si pas de RDV */}
-      {rdvs.length === 0 && !isLoading && (
+      {filteredRdvs.length === 0 && !isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
           <div className="text-center">
-            <Calendar className="h-10 w-10 text-muted-foreground/50 mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">Pas de RDV aujourd'hui</p>
+            {timeFilter === 'actuel' ? (
+              <>
+                <Clock className="h-10 w-10 text-muted-foreground/50 mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">Aucun RDV en cours</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">
+                  {rdvs.length} RDV planifié{rdvs.length > 1 ? 's' : ''} aujourd'hui
+                </p>
+              </>
+            ) : (
+              <>
+                <Calendar className="h-10 w-10 text-muted-foreground/50 mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">Pas de RDV aujourd'hui</p>
+              </>
+            )}
           </div>
         </div>
       )}
