@@ -38,6 +38,19 @@ export interface ApporteurUser {
   updated_at: string;
 }
 
+export interface ApporteurManager {
+  id: string;
+  apporteur_id: string;
+  agency_id: string;
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
+  role: string;
+  is_active: boolean;
+  last_login_at: string | null;
+  created_at: string;
+}
+
 export interface CreateApporteurInput {
   name: string;
   type: string;
@@ -111,7 +124,7 @@ export function useApporteur(id: string | null) {
 }
 
 /**
- * Liste des utilisateurs d'un apporteur
+ * Liste des utilisateurs d'un apporteur (ancien système auth.users)
  */
 export function useApporteurUsers(apporteurId: string | null) {
   return useQuery({
@@ -129,6 +142,86 @@ export function useApporteurUsers(apporteurId: string | null) {
       return data as ApporteurUser[];
     },
     enabled: !!apporteurId,
+  });
+}
+
+/**
+ * Liste des gestionnaires d'un apporteur (système OTP autonome)
+ */
+export function useApporteurManagers(apporteurId: string | null) {
+  return useQuery({
+    queryKey: ['apporteur-managers', apporteurId],
+    queryFn: async () => {
+      if (!apporteurId) return [];
+
+      const { data, error } = await supabase
+        .from('apporteur_managers')
+        .select('id, apporteur_id, agency_id, email, first_name, last_name, role, is_active, last_login_at, created_at')
+        .eq('apporteur_id', apporteurId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as ApporteurManager[];
+    },
+    enabled: !!apporteurId,
+  });
+}
+
+/**
+ * Créer un gestionnaire apporteur (système OTP, sans mot de passe)
+ */
+export function useCreateApporteurManager() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: {
+      apporteur_id: string;
+      email: string;
+      first_name: string;
+      last_name: string;
+      role: 'reader' | 'manager';
+    }) => {
+      const { data, error } = await supabase.functions.invoke('create-apporteur-manager', {
+        body: input,
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['apporteur-managers'] });
+      queryClient.invalidateQueries({ queryKey: ['apporteurs'] });
+      toast.success('Gestionnaire créé avec succès. Il pourra se connecter via code email.');
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || 'Erreur lors de la création');
+    },
+  });
+}
+
+/**
+ * Toggle statut actif/inactif d'un gestionnaire apporteur
+ */
+export function useToggleApporteurManagerStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
+      const { error } = await supabase
+        .from('apporteur_managers')
+        .update({ is_active })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['apporteur-managers'] });
+      toast.success(variables.is_active ? 'Gestionnaire réactivé' : 'Gestionnaire désactivé');
+    },
+    onError: () => {
+      toast.error('Erreur lors de la mise à jour');
+    },
   });
 }
 
