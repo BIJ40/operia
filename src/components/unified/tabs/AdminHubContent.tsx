@@ -144,7 +144,7 @@ export default function AdminHubContent() {
 
           <TabsContent value="franchiseur" className="mt-0 focus-visible:outline-none">
             <Suspense fallback={<LoadingFallback />}>
-              <FranchiseurView />
+              <FranchiseurView embedded />
             </Suspense>
           </TabsContent>
 
