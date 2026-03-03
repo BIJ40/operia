@@ -143,7 +143,10 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
     const now = new Date();
     return rdvs.filter(rdv => {
       const start = new Date(rdv.startAt);
-      const end = new Date(start.getTime() + rdv.durationMin * 60 * 1000);
+      // Utiliser endAt (fin créneau planning) si disponible, sinon fallback sur startAt + durationMin
+      const end = rdv.endAt 
+        ? new Date(rdv.endAt) 
+        : new Date(start.getTime() + rdv.durationMin * 60 * 1000);
       return now >= start && now <= end;
     });
   }, [rdvs, timeFilter]);
