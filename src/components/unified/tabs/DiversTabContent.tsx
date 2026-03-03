@@ -11,7 +11,7 @@
 import { lazy, Suspense, useCallback, useMemo } from 'react';
 import { 
   FileText, Users2, Loader2, Users, CalendarDays, 
-  Radar, Car, FolderOpen, Settings, Eye, Activity, Target
+  Car, FolderOpen, Settings, Eye, Activity, Target
 } from 'lucide-react';
 import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
 import { ModuleKey } from '@/types/modules';
@@ -42,7 +42,7 @@ const RHMeetingsPage = lazy(() => import('@/pages/rh/RHMeetingsPage'));
 const AgencyAdminDocuments = lazy(() => import('@/components/outils/AgencyAdminDocuments').then(m => ({ default: m.AgencyAdminDocuments })));
 const MesApporteursTab = lazy(() => import('@/components/pilotage/MesApporteursTab').then(m => ({ default: m.MesApporteursTab })));
 const PlanningHebdo = lazy(() => import('@/pages/PlanningTechniciensSemaine'));
-const VeilleApporteursPage = lazy(() => import('@/pages/VeilleApporteursPage'));
+// VeilleApporteursPage retiré — veille intégrée dans les fiches individuelles du module Commercial
 const VehiculesTabContent = lazy(() => import('@/components/unified/tabs/VehiculesTabContent'));
 const PerformanceDashboard = lazy(() => 
   import('@/components/performance/PerformanceDashboard').then(m => ({ default: m.PerformanceDashboard }))
@@ -51,7 +51,7 @@ const ProspectionTabContent = lazy(() => import('@/prospection/pages/Prospection
 
 // Types pour les niveaux de navigation
 type OutilsMainTab = 'actions' | 'apporteurs' | 'administratif' | 'parc' | 'performance' | 'prospection';
-type ApporteursSubTab = 'espace' | 'veille';
+type ApporteursSubTab = 'espace';
 type AdminSubTab = 'reunions' | 'plannings' | 'documents';
 
 // Configuration des onglets principaux (niveau 1)
@@ -199,9 +199,8 @@ function DraggableFolderTabs({
 // Sous-onglets Apporteurs
 const APPORTEURS_TABS: FolderTabConfig[] = [
   { id: 'espace', label: 'Espace', icon: Eye },
-  { id: 'veille', label: 'Veille', icon: Radar },
 ];
-const DEFAULT_APPORTEURS_ORDER = ['espace', 'veille'];
+const DEFAULT_APPORTEURS_ORDER = ['espace'];
 
 function ApporteursSection() {
   const [subTab, setSubTab] = useSessionState<ApporteursSubTab>('outils_apporteurs_sub', 'espace');
@@ -225,11 +224,6 @@ function ApporteursSection() {
         {subTab === 'espace' && (
           <Suspense fallback={<LoadingFallback />}>
             <MesApporteursTab />
-          </Suspense>
-        )}
-        {subTab === 'veille' && (
-          <Suspense fallback={<LoadingFallback />}>
-            <VeilleApporteursPage />
           </Suspense>
         )}
       </div>
