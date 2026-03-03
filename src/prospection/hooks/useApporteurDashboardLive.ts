@@ -269,7 +269,7 @@ export function useApporteurDashboardLive({
           taux_transfo: d.devis_total > 0 ? Math.round((d.devis_signed / d.devis_total) * 10000) / 100 : null,
         }));
 
-      const adaptiveScore = computeAdaptiveScore(monthlyTrendFull);
+      const adaptiveScore = computeAdaptiveScore(monthlyTrendFull, 3, kpis);
 
       return { kpis, universData, monthlyTrend, adaptiveScore, monthlyTrendFull };
     },

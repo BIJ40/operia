@@ -88,9 +88,40 @@ function scoreLabel(level: ScoreLevel): string {
 /**
  * Calcule le score adaptatif d'un apporteur.
  * @param monthlyTrendFull - TOUS les mois disponibles (pas filtré par période UI)
+ * @param periodKpis - KPIs de la période UI sélectionnée (optionnel, pour cross-check)
  */
-export function computeAdaptiveScore(monthlyTrendFull: MonthlyTrendEntry[], recentMonths: RecentMonthsOption = DEFAULT_RECENT_MONTHS): AdaptiveScore | null {
+export function computeAdaptiveScore(
+  monthlyTrendFull: MonthlyTrendEntry[],
+  recentMonths: RecentMonthsOption = DEFAULT_RECENT_MONTHS,
+  periodKpis?: { dossiers_received: number; factures: number; ca_ht: number },
+): AdaptiveScore | null {
   if (monthlyTrendFull.length < MIN_HISTORY_MONTHS) return null;
+
+  // CROSS-CHECK : si les KPIs de la période UI montrent 0 activité,
+  // le score doit refléter cette réalité quel que soit l'historique
+  if (periodKpis && periodKpis.dossiers_received === 0 && periodKpis.factures === 0 && periodKpis.ca_ht === 0) {
+    // Vérifier s'il y avait de l'activité historique
+    const totalHistCA = monthlyTrendFull.reduce((s, m) => s + m.ca_ht, 0);
+    const hadHistory = totalHistCA > 0;
+    const score = hadHistory ? 15 : 35;
+    const level = scoreLevel(score);
+    const avgCA = avg(monthlyTrendFull.map(m => m.ca_ht));
+    return {
+      score,
+      level,
+      label: scoreLabel(level),
+      metrics: {
+        ca: { avg: Math.round(avgCA), recent: 0, variationPct: hadHistory ? -100 : 0 },
+        dossiers: { avg: Math.round(avg(monthlyTrendFull.map(m => m.dossiers)) * 10) / 10, recent: 0, variationPct: hadHistory ? -100 : 0 },
+        devis: { avg: 0, recent: 0, variationPct: 0 },
+        factures: { avg: Math.round(avg(monthlyTrendFull.map(m => m.factures ?? 0)) * 10) / 10, recent: 0, variationPct: hadHistory ? -100 : 0 },
+        tauxTransfo: { avg: null, recent: null, variationPct: null },
+      },
+      alerts: hadHistory
+        ? [`Aucune activité sur la période sélectionnée (CA historique moyen : ${formatEuro(avgCA)}/mois)`]
+        : [],
+    };
+  }
 
   // Trier chronologiquement
   const sorted = [...monthlyTrendFull].sort((a, b) => a.month.localeCompare(b.month));
