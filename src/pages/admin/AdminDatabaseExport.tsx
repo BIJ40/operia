@@ -7,15 +7,37 @@ import { Download, Loader2, RefreshCw, DatabaseIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+type ExportFormat = 'json' | 'sql';
+
 interface TableInfo {
   name: string;
   count: number;
 }
 
+const escapeSQL = (val: unknown): string => {
+  if (val === null || val === undefined) return 'NULL';
+  if (typeof val === 'number') return String(val);
+  if (typeof val === 'boolean') return val ? 'TRUE' : 'FALSE';
+  if (typeof val === 'object') return `'${JSON.stringify(val).replace(/'/g, "''")}'`;
+  return `'${String(val).replace(/'/g, "''")}'`;
+};
+
+const rowsToSQL = (tableName: string, rows: Record<string, unknown>[]): string => {
+  if (!rows.length) return `-- Table ${tableName}: empty\n`;
+  const cols = Object.keys(rows[0]);
+  const colList = cols.map(c => `"${c}"`).join(', ');
+  const lines = rows.map(row => {
+    const vals = cols.map(c => escapeSQL(row[c])).join(', ');
+    return `INSERT INTO public."${tableName}" (${colList}) VALUES (${vals});`;
+  });
+  return `-- Table: ${tableName} (${rows.length} rows)\n${lines.join('\n')}\n`;
+};
+
 export default function AdminDatabaseExport() {
   const [tables, setTables] = useState<TableInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [exportFormat, setExportFormat] = useState<ExportFormat>('json');
   const [exportProgress, setExportProgress] = useState({ current: 0, total: 0, tableName: '' });
 
   const getToken = async () => {
@@ -70,8 +92,8 @@ export default function AdminDatabaseExport() {
     }
   }, []);
 
-  const downloadJson = (data: unknown, filename: string) => {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const downloadFile = (content: string, filename: string, mime: string) => {
+    const blob = new Blob([content], { type: mime });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -86,8 +108,13 @@ export default function AdminDatabaseExport() {
     try {
       toast.info(`Export de ${tableName}...`);
       const result = await apiFetch(`table=${encodeURIComponent(tableName)}`);
-      downloadJson(result.data, `${tableName}-${new Date().toISOString().split('T')[0]}.json`);
-      toast.success(`${tableName} : ${result.count} lignes exportées`);
+      const date = new Date().toISOString().split('T')[0];
+      if (exportFormat === 'sql') {
+        downloadFile(rowsToSQL(tableName, result.data), `${tableName}-${date}.sql`, 'text/sql');
+      } else {
+        downloadFile(JSON.stringify(result.data, null, 2), `${tableName}-${date}.json`, 'application/json');
+      }
+      toast.success(`${tableName} : ${result.count} lignes exportées (${exportFormat.toUpperCase()})`);
     } catch (e: any) {
       toast.error(e.message);
     }
@@ -117,7 +144,15 @@ export default function AdminDatabaseExport() {
       }
     }
 
-    downloadJson(consolidated, `database-full-export-${new Date().toISOString().split('T')[0]}.json`);
+    const date = new Date().toISOString().split('T')[0];
+    if (exportFormat === 'sql') {
+      const sqlContent = Object.entries(consolidated)
+        .map(([name, rows]) => rowsToSQL(name, rows as Record<string, unknown>[]))
+        .join('\n');
+      downloadFile(sqlContent, `database-full-export-${date}.sql`, 'text/sql');
+    } else {
+      downloadFile(JSON.stringify(consolidated, null, 2), `database-full-export-${date}.json`, 'application/json');
+    }
     setExporting(false);
     toast.success(`Export terminé (${nonEmpty.length - errors}/${nonEmpty.length} tables)${errors ? `, ${errors} erreurs` : ''}`);
   };
@@ -141,7 +176,17 @@ export default function AdminDatabaseExport() {
                 : 'Chargez la liste des tables pour commencer'}
             </CardDescription>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            <div className="flex rounded-md border border-border overflow-hidden mr-1">
+              <button
+                className={`px-2.5 py-1 text-xs font-medium transition-colors ${exportFormat === 'json' ? 'bg-primary text-primary-foreground' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}`}
+                onClick={() => setExportFormat('json')}
+              >JSON</button>
+              <button
+                className={`px-2.5 py-1 text-xs font-medium transition-colors ${exportFormat === 'sql' ? 'bg-primary text-primary-foreground' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}`}
+                onClick={() => setExportFormat('sql')}
+              >SQL</button>
+            </div>
             <Button variant="outline" size="sm" onClick={loadTables} disabled={loading}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
               {tables.length === 0 ? 'Charger' : 'Rafraîchir'}
