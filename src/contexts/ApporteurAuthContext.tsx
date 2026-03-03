@@ -76,14 +76,30 @@ export function ApporteurAuthProvider({ children }: { children: ReactNode }) {
 
       const apporteurData = data.apporteurs as unknown as { name: string; is_active: boolean } | null;
 
+      // Fallback: si first_name manquant dans apporteur_users, chercher dans apporteur_managers
+      let firstName = data.first_name;
+      let lastName = data.last_name;
+      if (!firstName) {
+        const { data: managerData } = await supabase
+          .from('apporteur_managers')
+          .select('first_name, last_name')
+          .eq('apporteur_id', data.apporteur_id)
+          .eq('email', authUser.email ?? '')
+          .maybeSingle();
+        if (managerData) {
+          firstName = managerData.first_name || firstName;
+          lastName = managerData.last_name || lastName;
+        }
+      }
+
       setApporteurUser({
         id: data.id,
         apporteurId: data.apporteur_id,
         apporteurName: apporteurData?.name || 'Apporteur inconnu',
         agencyId: data.agency_id,
         email: data.email,
-        firstName: data.first_name,
-        lastName: data.last_name,
+        firstName,
+        lastName,
         role: data.role as 'reader' | 'manager',
         isActive: data.is_active,
         orgIsActive: apporteurData?.is_active ?? true,
