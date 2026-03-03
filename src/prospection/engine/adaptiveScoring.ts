@@ -38,8 +38,11 @@ export interface MonthlyTrendEntry {
   taux_transfo: number | null;
 }
 
-const RECENT_MONTHS = 3;
-const MIN_HISTORY_MONTHS = 4; // besoin d'au moins 4 mois pour comparer
+export const RECENT_MONTHS_OPTIONS = [1, 3] as const;
+export type RecentMonthsOption = typeof RECENT_MONTHS_OPTIONS[number];
+
+const DEFAULT_RECENT_MONTHS = 3;
+const MIN_HISTORY_MONTHS = 3; // besoin d'au moins 3 mois pour comparer
 
 // Pondérations
 const WEIGHTS = {
@@ -86,14 +89,14 @@ function scoreLabel(level: ScoreLevel): string {
  * Calcule le score adaptatif d'un apporteur.
  * @param monthlyTrendFull - TOUS les mois disponibles (pas filtré par période UI)
  */
-export function computeAdaptiveScore(monthlyTrendFull: MonthlyTrendEntry[]): AdaptiveScore | null {
+export function computeAdaptiveScore(monthlyTrendFull: MonthlyTrendEntry[], recentMonths: RecentMonthsOption = DEFAULT_RECENT_MONTHS): AdaptiveScore | null {
   if (monthlyTrendFull.length < MIN_HISTORY_MONTHS) return null;
 
   // Trier chronologiquement
   const sorted = [...monthlyTrendFull].sort((a, b) => a.month.localeCompare(b.month));
 
-  const recentSlice = sorted.slice(-RECENT_MONTHS);
-  const historicalSlice = sorted.slice(0, -RECENT_MONTHS);
+  const recentSlice = sorted.slice(-recentMonths);
+  const historicalSlice = sorted.slice(0, -recentMonths);
 
   if (historicalSlice.length < 1) return null;
 

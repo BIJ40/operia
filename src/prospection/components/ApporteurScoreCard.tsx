@@ -1,15 +1,17 @@
 /**
  * ApporteurScoreCard - Jauge de scoring adaptatif + détail métriques
- * Avec tooltips explicatifs au survol
+ * Toggle "dernier mois" vs "3 derniers mois" pour la comparaison
  */
 
+import { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { TrendingUp, TrendingDown, Minus, AlertTriangle, HelpCircle } from 'lucide-react';
-import type { AdaptiveScore, MetricVariation } from '../engine/adaptiveScoring';
+import { computeAdaptiveScore, type AdaptiveScore, type MetricVariation, type MonthlyTrendEntry, type RecentMonthsOption } from '../engine/adaptiveScoring';
 
 interface Props {
   score: AdaptiveScore;
+  monthlyTrendFull: MonthlyTrendEntry[];
 }
 
 const LEVEL_COLORS: Record<AdaptiveScore['level'], string> = {
@@ -29,8 +31,8 @@ const LEVEL_BG: Record<AdaptiveScore['level'], string> = {
 };
 
 const METRIC_TOOLTIPS: Record<string, string> = {
-  ca: 'Moyenne mensuelle du chiffre d\'affaires HT facturé. Comparaison entre les 3 derniers mois et la moyenne sur tout l\'historique connu.',
-  dossiers: 'Nombre moyen de dossiers confiés par mois. Comparaison récente (3 mois) vs historique complet.',
+  ca: 'Moyenne mensuelle du chiffre d\'affaires HT facturé. Comparaison entre la période récente et la moyenne sur tout l\'historique connu.',
+  dossiers: 'Nombre moyen de dossiers confiés par mois. Comparaison récente vs historique complet.',
   factures: 'Nombre moyen de factures émises par mois. Mesure le rythme de facturation réel.',
   tauxTransfo: 'Taux de transformation des devis en factures (en %). Compare le taux récent au taux historique.',
   score: 'Score composite 0-100 basé sur 4 métriques pondérées : CA (40%), Dossiers (25%), Taux transfo (20%), Factures (15%). 50 = stable, <35 = alerte baisse, >65 = hausse.',
@@ -43,39 +45,18 @@ function CircularGauge({ score, color }: { score: number; color: string }) {
 
   return (
     <svg width="100" height="100" viewBox="0 0 100 100" className="shrink-0">
+      <circle cx="50" cy="50" r={radius} fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
       <circle
         cx="50" cy="50" r={radius}
-        fill="none"
-        stroke="hsl(var(--muted))"
-        strokeWidth="8"
-      />
-      <circle
-        cx="50" cy="50" r={radius}
-        fill="none"
-        stroke={color}
-        strokeWidth="8"
+        fill="none" stroke={color} strokeWidth="8"
         strokeDasharray={circumference}
         strokeDashoffset={circumference - progress}
         strokeLinecap="round"
         transform="rotate(-90 50 50)"
         className="transition-all duration-700"
       />
-      <text
-        x="50" y="46"
-        textAnchor="middle"
-        className="fill-foreground text-xl font-bold"
-        fontSize="22"
-      >
-        {score}
-      </text>
-      <text
-        x="50" y="62"
-        textAnchor="middle"
-        className="fill-muted-foreground"
-        fontSize="10"
-      >
-        / 100
-      </text>
+      <text x="50" y="46" textAnchor="middle" className="fill-foreground text-xl font-bold" fontSize="22">{score}</text>
+      <text x="50" y="62" textAnchor="middle" className="fill-muted-foreground" fontSize="10">/ 100</text>
     </svg>
   );
 }
@@ -113,9 +94,7 @@ function MetricRow({ label, metric, format, tooltip }: { label: string; metric: 
             <TooltipTrigger asChild>
               <HelpCircle className="w-3 h-3 text-muted-foreground/50 cursor-help" />
             </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs text-xs">
-              {tooltip}
-            </TooltipContent>
+            <TooltipContent side="top" className="max-w-xs text-xs">{tooltip}</TooltipContent>
           </Tooltip>
         )}
       </span>
@@ -127,17 +106,15 @@ function MetricRow({ label, metric, format, tooltip }: { label: string; metric: 
             </span>
           </TooltipTrigger>
           <TooltipContent side="top" className="text-xs">
-            Moyenne mensuelle calculée sur tout l'historique (hors 3 derniers mois)
+            Moyenne mensuelle sur tout l'historique (hors période récente)
           </TooltipContent>
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="font-medium cursor-help">
-              {fmt(metric.recent)}
-            </span>
+            <span className="font-medium cursor-help">{fmt(metric.recent)}</span>
           </TooltipTrigger>
           <TooltipContent side="top" className="text-xs">
-            Moyenne mensuelle sur les 3 derniers mois
+            Valeur sur la période récente sélectionnée
           </TooltipContent>
         </Tooltip>
         <VariationBadge pct={metric.variationPct} />
@@ -150,12 +127,25 @@ const euroFmt = (v: number) => new Intl.NumberFormat('fr-FR', { style: 'currency
 const numFmt = (v: number) => v.toFixed(1);
 const pctFmt = (v: number) => `${v.toFixed(0)}%`;
 
-export function ApporteurScoreCard({ score }: Props) {
-  const color = LEVEL_COLORS[score.level];
+const PERIOD_LABELS: Record<RecentMonthsOption, string> = {
+  1: 'Dernier mois',
+  3: '3 derniers mois',
+};
+
+export function ApporteurScoreCard({ score: defaultScore, monthlyTrendFull }: Props) {
+  const [recentMonths, setRecentMonths] = useState<RecentMonthsOption>(3);
+
+  // Recompute score when user toggles period
+  const activeScore = useMemo(() => {
+    if (recentMonths === 3) return defaultScore;
+    return computeAdaptiveScore(monthlyTrendFull, recentMonths) ?? defaultScore;
+  }, [recentMonths, monthlyTrendFull, defaultScore]);
+
+  const color = LEVEL_COLORS[activeScore.level];
 
   return (
     <TooltipProvider delayDuration={200}>
-      <Card className={`border ${LEVEL_BG[score.level]}`}>
+      <Card className={`border ${LEVEL_BG[activeScore.level]}`}>
         <CardContent className="p-4">
           <div className="flex items-start gap-5">
             {/* Gauge */}
@@ -163,7 +153,7 @@ export function ApporteurScoreCard({ score }: Props) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="cursor-help">
-                    <CircularGauge score={score.score} color={color} />
+                    <CircularGauge score={activeScore.score} color={color} />
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="right" className="max-w-xs text-xs">
@@ -171,22 +161,41 @@ export function ApporteurScoreCard({ score }: Props) {
                 </TooltipContent>
               </Tooltip>
               <span className="text-sm font-semibold" style={{ color }}>
-                {score.label}
+                {activeScore.label}
               </span>
             </div>
 
             {/* Metrics */}
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-muted-foreground mb-2">
-                Tendance récente (3 mois) vs moyenne historique
-              </p>
-              <MetricRow label="CA / mois" metric={score.metrics.ca} format={euroFmt} tooltip={METRIC_TOOLTIPS.ca} />
-              <MetricRow label="Dossiers / mois" metric={score.metrics.dossiers} format={numFmt} tooltip={METRIC_TOOLTIPS.dossiers} />
-              <MetricRow label="Factures / mois" metric={score.metrics.factures} format={numFmt} tooltip={METRIC_TOOLTIPS.factures} />
-              {score.metrics.tauxTransfo.avg !== null && score.metrics.tauxTransfo.recent !== null && (
+              {/* Period toggle */}
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs text-muted-foreground">
+                  {PERIOD_LABELS[recentMonths]} vs moyenne historique
+                </p>
+                <div className="inline-flex rounded-md border border-border overflow-hidden">
+                  {([1, 3] as RecentMonthsOption[]).map(opt => (
+                    <button
+                      key={opt}
+                      onClick={() => setRecentMonths(opt)}
+                      className={`px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                        recentMonths === opt
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-background text-muted-foreground hover:bg-muted'
+                      }`}
+                    >
+                      {opt === 1 ? '1 mois' : '3 mois'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <MetricRow label="CA / mois" metric={activeScore.metrics.ca} format={euroFmt} tooltip={METRIC_TOOLTIPS.ca} />
+              <MetricRow label="Dossiers / mois" metric={activeScore.metrics.dossiers} format={numFmt} tooltip={METRIC_TOOLTIPS.dossiers} />
+              <MetricRow label="Factures / mois" metric={activeScore.metrics.factures} format={numFmt} tooltip={METRIC_TOOLTIPS.factures} />
+              {activeScore.metrics.tauxTransfo.avg !== null && activeScore.metrics.tauxTransfo.recent !== null && (
                 <MetricRow
                   label="Taux transfo"
-                  metric={score.metrics.tauxTransfo as MetricVariation}
+                  metric={activeScore.metrics.tauxTransfo as MetricVariation}
                   format={pctFmt}
                   tooltip={METRIC_TOOLTIPS.tauxTransfo}
                 />
@@ -195,9 +204,9 @@ export function ApporteurScoreCard({ score }: Props) {
           </div>
 
           {/* Alerts */}
-          {score.alerts.length > 0 && (
+          {activeScore.alerts.length > 0 && (
             <div className="mt-3 space-y-1.5">
-              {score.alerts.map((alert, i) => (
+              {activeScore.alerts.map((alert, i) => (
                 <div key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
                   <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0 text-amber-500" />
                   <span>{alert}</span>

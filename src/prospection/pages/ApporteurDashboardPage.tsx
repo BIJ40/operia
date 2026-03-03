@@ -105,7 +105,7 @@ export function ApporteurDashboardPage({ apporteurId, onBack }: Props) {
         <>
           {/* Score adaptatif */}
           {data.adaptiveScore && (
-            <ApporteurScoreCard score={data.adaptiveScore} />
+            <ApporteurScoreCard score={data.adaptiveScore} monthlyTrendFull={data.monthlyTrendFull} />
           )}
 
           {/* KPIs */}
