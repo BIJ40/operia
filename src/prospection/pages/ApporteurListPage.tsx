@@ -3,7 +3,8 @@
  * Inclut recherche live depuis Apogée (commanditaires)
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -38,6 +39,16 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
   const [period, setPeriod] = useState<PeriodKey>('90j');
   const [search, setSearch] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
+
+  // Update dropdown position when showing suggestions
+  useEffect(() => {
+    if (showSuggestions && search.length >= 2 && inputRef.current) {
+      const rect = inputRef.current.getBoundingClientRect();
+      setDropdownPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+    }
+  }, [showSuggestions, search]);
 
   const { from, to } = getPeriodDates(period);
   const { data: apporteurs = [], isLoading } = useApporteurListMetrics({
@@ -96,6 +107,7 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
         <div className="relative flex-1 min-w-[200px] max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
+            ref={inputRef}
             placeholder="Rechercher un apporteur (nom ou ID Apogée)..."
             value={search}
             onChange={e => {
@@ -107,9 +119,12 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
             className="pl-9"
           />
 
-          {/* Suggestions dropdown */}
-          {showSuggestions && search.length >= 2 && (
-            <div className="absolute z-[100] top-full left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-xl max-h-[400px] overflow-y-auto">
+          {/* Suggestions dropdown via portal */}
+          {showSuggestions && search.length >= 2 && dropdownPos && createPortal(
+            <div
+              className="fixed z-[9999] bg-popover border border-border rounded-lg shadow-xl max-h-[400px] overflow-y-auto"
+              style={{ top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width }}
+            >
               {loadingApogee ? (
                 <div className="flex items-center gap-2 p-3 text-sm text-muted-foreground">
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -173,7 +188,8 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
                   Aucun apporteur trouvé dans Apogée
                 </div>
               )}
-            </div>
+            </div>,
+            document.body
           )}
         </div>
         <Select value={period} onValueChange={v => setPeriod(v as PeriodKey)}>
