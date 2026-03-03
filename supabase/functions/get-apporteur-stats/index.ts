@@ -12,6 +12,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
 import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
+import { authenticateApporteur } from '../_shared/apporteurAuth.ts';
 
 interface StatsRequest {
   period?: 'month' | 'quarter' | 'year';
@@ -99,82 +100,16 @@ Deno.serve(async (req) => {
   if (corsResult) return corsResult;
 
   try {
-    // 1. Vérifier l'authentification
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
+    // Dual auth: custom apporteur token OR Supabase JWT
+    const authResult = await authenticateApporteur(req);
+    if (!authResult) {
       return withCors(req, new Response(
         JSON.stringify({ success: false, error: 'Non autorisé' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
       ));
     }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const { data: { user }, error: authErr } = await supabase.auth.getUser();
-    if (authErr || !user) {
-      return withCors(req, new Response(
-        JSON.stringify({ success: false, error: 'Non autorisé' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      ));
-    }
-
-    // 2. Vérifier que l'utilisateur est un apporteur actif
-    const { data: apporteurUser, error: apporteurUserError } = await supabase
-      .from('apporteur_users')
-      .select('id, apporteur_id, agency_id')
-      .eq('user_id', user.id)
-      .eq('is_active', true)
-      .single();
-
-    if (apporteurUserError || !apporteurUser) {
-      return withCors(req, new Response(
-        JSON.stringify({ success: false, error: 'Utilisateur apporteur non trouvé' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
-      ));
-    }
-
-    // 3. Récupérer l'apporteur et son apogee_client_id
-    const { data: apporteur, error: apporteurError } = await supabase
-      .from('apporteurs')
-      .select('id, name, apogee_client_id, agency_id')
-      .eq('id', apporteurUser.apporteur_id)
-      .single();
-
-    if (apporteurError || !apporteur) {
-      return withCors(req, new Response(
-        JSON.stringify({ success: false, error: 'Apporteur non trouvé' }),
-        { status: 404, headers: { 'Content-Type': 'application/json' } }
-      ));
-    }
-
-    if (!apporteur.apogee_client_id) {
-      return withCors(req, new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'non_raccorde',
-          message: 'Cet apporteur n\'est pas encore raccordé à Apogée. Contactez l\'agence.'
-        }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      ));
-    }
-
-    // 4. Récupérer l'agencySlug
-    const { data: agency, error: agencyError } = await supabase
-      .from('apogee_agencies')
-      .select('slug')
-      .eq('id', apporteur.agency_id)
-      .single();
-
-    if (agencyError || !agency?.slug) {
-      return withCors(req, new Response(
-        JSON.stringify({ success: false, error: 'Agence non trouvée' }),
-        { status: 404, headers: { 'Content-Type': 'application/json' } }
-      ));
-    }
+    const { apporteurId, apogeeClientId: commanditaireId, agencySlug } = authResult;
 
     // 5. Parser la requête
     const body: StatsRequest = await req.json().catch(() => ({}));
@@ -190,8 +125,7 @@ Deno.serve(async (req) => {
       ));
     }
 
-    const baseUrl = `https://${agency.slug}.hc-apogee.fr/api`;
-    const commanditaireId = apporteur.apogee_client_id;
+    const baseUrl = `https://${agencySlug}.hc-apogee.fr/api`;
 
     // Fetch projects, factures, devis en parallèle
     const [projectsRes, facturesRes, devisRes] = await Promise.all([
@@ -318,10 +252,14 @@ Deno.serve(async (req) => {
     }
 
     // 9. Récupérer les demandes d'intervention de l'apporteur
-    const { data: demands, error: demandsError } = await supabase
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+    const { data: demands, error: demandsError } = await supabaseAdmin
       .from('apporteur_intervention_requests')
       .select('id, status, created_at')
-      .eq('apporteur_id', apporteur.id)
+      .eq('apporteur_id', apporteurId)
       .gte('created_at', dateRange.start.toISOString())
       .lte('created_at', dateRange.end.toISOString());
 
@@ -370,7 +308,7 @@ Deno.serve(async (req) => {
       },
     };
 
-    console.log(`[GET-APPORTEUR-STATS] Stats for apporteur ${apporteur.name} (commanditaireId: ${commanditaireId})`);
+    console.log(`[GET-APPORTEUR-STATS] Stats for apporteur ${authResult.apporteurName} (commanditaireId: ${commanditaireId})`);
 
     return withCors(req, new Response(
       JSON.stringify({ success: true, data: stats }),

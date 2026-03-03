@@ -1,10 +1,10 @@
 /**
  * useApporteurDossiers - Hook pour récupérer les dossiers de l'apporteur
+ * Utilise useApporteurApi pour envoyer le token custom
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { isApporteurDevMode, MOCK_DOSSIERS_RESPONSE } from '../lib/devMode';
+import { useApporteurApi } from './useApporteurApi';
 
 export interface DossierRow {
   id: number;
@@ -42,34 +42,16 @@ interface DossiersResponse {
 }
 
 export function useApporteurDossiers() {
+  const { post } = useApporteurApi();
+
   return useQuery({
     queryKey: ['apporteur-dossiers'],
     queryFn: async (): Promise<DossiersResponse> => {
-      // En mode dev sans auth apporteur, retourner des données vides
-      if (isApporteurDevMode()) {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          return MOCK_DOSSIERS_RESPONSE;
-        }
-        // Vérifier si l'utilisateur est un apporteur
-        const { data: apporteurUser } = await supabase
-          .from('apporteur_users')
-          .select('id')
-          .eq('user_id', session.user.id)
-          .eq('is_active', true)
-          .maybeSingle();
-        
-        if (!apporteurUser) {
-          return MOCK_DOSSIERS_RESPONSE;
-        }
+      const result = await post<DossiersResponse>('/get-apporteur-dossiers', {});
+      if (result.error) {
+        return { success: false, error: result.error };
       }
-
-      const { data, error } = await supabase.functions.invoke('get-apporteur-dossiers', {
-        body: {},
-      });
-
-      if (error) throw error;
-      return data;
+      return result.data || { success: false, error: 'Réponse vide' };
     },
     staleTime: 60 * 1000, // 1 minute
     retry: 1,

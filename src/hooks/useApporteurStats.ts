@@ -4,7 +4,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useApporteurApi } from '@/apporteur/hooks/useApporteurApi';
 
 export interface ApporteurStats {
   period: { from: string; to: string };
@@ -50,6 +50,7 @@ interface StatsResponse {
 
 export function useApporteurStats(options: UseApporteurStatsOptions = {}) {
   const { period = 'month', from, to, enabled = true } = options;
+  const { post } = useApporteurApi();
 
   return useQuery({
     queryKey: ['apporteur-stats', period, from, to],
@@ -58,18 +59,14 @@ export function useApporteurStats(options: UseApporteurStatsOptions = {}) {
       if (from) body.from = from;
       if (to) body.to = to;
 
-      const { data, error } = await supabase.functions.invoke<StatsResponse>('get-apporteur-stats', {
-        body,
-      });
-
-      if (error) {
-        return { success: false, error: error.message };
+      const result = await post<StatsResponse>('/get-apporteur-stats', body);
+      if (result.error) {
+        return { success: false, error: result.error };
       }
-
-      return data || { success: false, error: 'Réponse vide' };
+      return result.data || { success: false, error: 'Réponse vide' };
     },
     enabled,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
     retry: 1,
   });
 }

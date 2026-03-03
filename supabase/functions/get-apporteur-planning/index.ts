@@ -6,6 +6,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
 import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
+import { authenticateApporteur } from '../_shared/apporteurAuth.ts';
 
 interface PlanningEvent {
   id: number;
@@ -70,71 +71,20 @@ Deno.serve(async (req) => {
   if (corsResult) return corsResult;
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return withCors(req, new Response(
-        JSON.stringify({ success: false, error: 'Non autorisé' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      ));
-    }
-
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const { data: { user }, error: authErr } = await supabase.auth.getUser();
-    if (authErr || !user) {
-      return withCors(req, new Response(
-        JSON.stringify({ success: false, error: 'Non autorisé' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      ));
-    }
-
-    // Parse request
+    // Parse request body first (before auth consumes the stream)
     const body = await req.json().catch(() => ({}));
     const weekOffset = Number(body.weekOffset || 0);
 
-    const { data: apporteurUser } = await supabase
-      .from('apporteur_users')
-      .select('id, apporteur_id, agency_id')
-      .eq('user_id', user.id)
-      .eq('is_active', true)
-      .single();
-
-    if (!apporteurUser) {
+    // Dual auth: custom apporteur token OR Supabase JWT
+    const authResult = await authenticateApporteur(req);
+    if (!authResult) {
       return withCors(req, new Response(
-        JSON.stringify({ success: false, error: 'Utilisateur apporteur non trouvé' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: false, error: 'Non autorisé' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
       ));
     }
 
-    const { data: apporteur } = await supabase
-      .from('apporteurs')
-      .select('id, name, apogee_client_id, agency_id')
-      .eq('id', apporteurUser.apporteur_id)
-      .single();
-
-    if (!apporteur?.apogee_client_id) {
-      return withCors(req, new Response(
-        JSON.stringify({ success: false, error: 'non_raccorde' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      ));
-    }
-
-    const { data: agency } = await supabase
-      .from('apogee_agencies')
-      .select('slug')
-      .eq('id', apporteur.agency_id)
-      .single();
-
-    if (!agency?.slug) {
-      return withCors(req, new Response(
-        JSON.stringify({ success: false, error: 'Agence non trouvée' }),
-        { status: 404, headers: { 'Content-Type': 'application/json' } }
-      ));
-    }
+    const { apogeeClientId: commanditaireId, agencySlug } = authResult;
 
     const apiKey = Deno.env.get('APOGEE_API_KEY');
     if (!apiKey) {
@@ -144,8 +94,7 @@ Deno.serve(async (req) => {
       ));
     }
 
-    const baseUrl = `https://${agency.slug}.hc-apogee.fr/api`;
-    const commanditaireId = apporteur.apogee_client_id;
+    const baseUrl = `https://${agencySlug}.hc-apogee.fr/api`;
     const weekBounds = getWeekBounds(weekOffset);
 
     function extractApogeeList(endpoint: string, parsed: unknown): AnyRecord[] {
