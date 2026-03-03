@@ -104,17 +104,30 @@ export default function AdminDatabaseExport() {
     URL.revokeObjectURL(url);
   };
 
+  const fetchAllPages = async (tableName: string): Promise<Record<string, unknown>[]> => {
+    let allRows: Record<string, unknown>[] = [];
+    let page = 0;
+    let hasMore = true;
+    while (hasMore) {
+      const result = await apiFetch(`table=${encodeURIComponent(tableName)}&page=${page}`);
+      allRows = allRows.concat(result.data);
+      hasMore = result.hasMore;
+      page++;
+    }
+    return allRows;
+  };
+
   const exportSingleTable = async (tableName: string) => {
     try {
       toast.info(`Export de ${tableName}...`);
-      const result = await apiFetch(`table=${encodeURIComponent(tableName)}`);
+      const rows = await fetchAllPages(tableName);
       const date = new Date().toISOString().split('T')[0];
       if (exportFormat === 'sql') {
-        downloadFile(rowsToSQL(tableName, result.data), `${tableName}-${date}.sql`, 'text/sql');
+        downloadFile(rowsToSQL(tableName, rows), `${tableName}-${date}.sql`, 'text/sql');
       } else {
-        downloadFile(JSON.stringify(result.data, null, 2), `${tableName}-${date}.json`, 'application/json');
+        downloadFile(JSON.stringify(rows, null, 2), `${tableName}-${date}.json`, 'application/json');
       }
-      toast.success(`${tableName} : ${result.count} lignes exportées (${exportFormat.toUpperCase()})`);
+      toast.success(`${tableName} : ${rows.length} lignes exportées (${exportFormat.toUpperCase()})`);
     } catch (e: any) {
       toast.error(e.message);
     }
@@ -136,8 +149,7 @@ export default function AdminDatabaseExport() {
       const t = nonEmpty[i];
       setExportProgress({ current: i + 1, total: nonEmpty.length, tableName: t.name });
       try {
-        const result = await apiFetch(`table=${encodeURIComponent(t.name)}`);
-        consolidated[t.name] = result.data;
+        consolidated[t.name] = await fetchAllPages(t.name);
       } catch {
         errors++;
         consolidated[t.name] = [];
