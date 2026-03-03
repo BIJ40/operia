@@ -170,7 +170,8 @@ export function useVeilleAdaptive() {
     // Index clients par id pour résolution noms
     const clientsById = new Map<string, string>();
     for (const c of clients) {
-      if (c.id && c.name) clientsById.set(String(c.id), c.name);
+      const nom = c.raisonSociale || c.nom || c.name || c.displayName;
+      if (c.id && nom) clientsById.set(String(c.id), nom);
     }
 
     // Grouper projets par commanditaireId
