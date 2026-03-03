@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { useApporteurAuth } from '@/contexts/ApporteurAuthContext';
+import { useApporteurSession } from '@/apporteur/contexts/ApporteurSessionContext';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Loader2, AlertTriangle, Euro, ShoppingCart, TrendingUp, FolderOpen, FileText, Receipt, Clock, Timer } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,8 +22,12 @@ import type { ApporteurStatsV2Request } from '../../types/apporteur-stats-v2';
 
 export default function AccueilTabContent() {
   const { apporteurUser } = useApporteurAuth();
+  const { session } = useApporteurSession();
   const [demandeOpen, setDemandeOpen] = useState(false);
   const [period, setPeriod] = useState<ApporteurStatsV2Request['period']>('month');
+
+  const displayFirstName = session?.firstName || apporteurUser?.firstName || apporteurUser?.apporteurName || 'Partenaire';
+  const displayApporteurName = session?.apporteurName || apporteurUser?.apporteurName || 'Votre espace';
 
   const { data, isLoading, error } = useApporteurKpis({ period });
   const stats = data?.data;
@@ -35,10 +40,10 @@ export default function AccueilTabContent() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
-            Bienvenue, {apporteurUser?.firstName || apporteurUser?.apporteurName || 'Partenaire'}
+            Bienvenue, {displayFirstName}
           </h1>
           <p className="text-muted-foreground">
-            {apporteurUser?.apporteurName} — Cockpit de pilotage
+            {displayApporteurName} — Cockpit de pilotage
           </p>
         </div>
         <div className="flex items-center gap-3">

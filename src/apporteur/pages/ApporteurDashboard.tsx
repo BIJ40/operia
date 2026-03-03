@@ -4,6 +4,7 @@
 
 import { useState, useMemo } from 'react';
 import { useApporteurAuth } from '@/contexts/ApporteurAuthContext';
+import { useApporteurSession } from '@/apporteur/contexts/ApporteurSessionContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { PlusCircle, FolderOpen, Receipt, FileText, Euro, Loader2, AlertTriangle } from 'lucide-react';
@@ -15,8 +16,12 @@ import { cn } from '@/lib/utils';
 
 export default function ApporteurDashboard() {
   const { apporteurUser } = useApporteurAuth();
+  const { session } = useApporteurSession();
   const navigate = useNavigate();
   const [demandeOpen, setDemandeOpen] = useState(false);
+
+  const displayFirstName = session?.firstName || apporteurUser?.firstName || apporteurUser?.apporteurName || 'Partenaire';
+  const displayApporteurName = session?.apporteurName || apporteurUser?.apporteurName || 'Votre espace';
   
   const { data, isLoading, error } = useApporteurDossiers();
   const dossiers = data?.data?.dossiers || [];
@@ -48,10 +53,10 @@ export default function ApporteurDashboard() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
-            Bienvenue, {apporteurUser?.firstName || apporteurUser?.apporteurName || 'Partenaire'}
+            Bienvenue, {displayFirstName}
           </h1>
           <p className="text-muted-foreground">
-            {apporteurUser?.apporteurName} - Tableau de bord
+            {displayApporteurName} - Tableau de bord
           </p>
         </div>
         <Button onClick={() => setDemandeOpen(true)} className="gap-2">
