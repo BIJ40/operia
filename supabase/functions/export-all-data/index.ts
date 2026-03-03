@@ -1,11 +1,13 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
 import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
 
-// Tiered page limits: ultra-heavy → 10, heavy → 25, standard → 100
-const ULTRA_HEAVY_TABLES = ['blocks', 'apporteur_blocks', 'guide_chunks', 'chatbot_queries', 'knowledge_base', 'rag_index_documents'];
+// Tiered page limits based on row payload size
+const EXTREME_TABLES = ['knowledge_base', 'guide_chunks', 'rag_index_documents'];
+const ULTRA_HEAVY_TABLES = ['blocks', 'apporteur_blocks', 'chatbot_queries'];
 const HEAVY_TABLES = ['operia_blocks', 'apogee_guides', 'apogee_tickets', 'activity_log', 'formation_content', 'apogee_ticket_comments', 'apogee_ticket_history'];
 
 function getMaxPageSize(tableName: string): number {
+  if (EXTREME_TABLES.includes(tableName)) return 3;
   if (ULTRA_HEAVY_TABLES.includes(tableName)) return 10;
   if (HEAVY_TABLES.includes(tableName)) return 25;
   return 100;
@@ -51,14 +53,17 @@ Deno.serve(async (req) => {
     const tableParam = url.searchParams.get('table');
     const countOnly = url.searchParams.get('countOnly');
 
-    // Mode 1: List all tables
+    // Mode 1: List all tables WITH maxPageSize per table
     if (!tableParam && !countOnly) {
-      return withCors(req, new Response(JSON.stringify({ tables: allTables.map(name => ({ name })), total: allTables.length }), {
+      return withCors(req, new Response(JSON.stringify({
+        tables: allTables.map(name => ({ name, maxPageSize: getMaxPageSize(name) })),
+        total: allTables.length
+      }), {
         headers: { 'Content-Type': 'application/json' },
       }));
     }
 
-    // Mode 2: Count rows for a batch of tables (use estimated counts to avoid expensive scans)
+    // Mode 2: Count rows for a batch of tables (use estimated counts)
     if (countOnly) {
       const tableNames = countOnly.split(',').filter(t => allTables.includes(t)).slice(0, 20);
       const results: { name: string; count: number }[] = [];
