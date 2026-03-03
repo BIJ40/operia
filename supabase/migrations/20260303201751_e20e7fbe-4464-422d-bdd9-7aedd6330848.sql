@@ -1,0 +1,1 @@
+UPDATE apogee_agencies SET slug = 'bordeaux-est' WHERE id = 'd83389ba-357e-40b6-839d-8bbad90fbd94' AND slug = 'bordeau-est';
