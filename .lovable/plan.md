@@ -1,44 +1,32 @@
 
 
-# Plan : Export complet DB + nouvel onglet "Database" dans Ops
+# Plan : Synchroniser la liste des tables avec la base réelle
 
-## 1. Réécriture `export-all-data/index.ts`
+## Problème
 
-Réécriture complète avec :
-- **Auth JWT** (N5+ requis) via le même pattern que `export-full-database` (plus de secret hardcodé)
-- **CORS** via `_shared/cors.ts` (`handleCorsPreflightOrReject` / `withCors`)
-- **2 modes** via query params :
-  - `GET` sans params → liste toutes les tables publiques avec row counts
-  - `GET ?table=profiles` → export complet d'une table avec pagination interne (boucle 1000 rows, aucune limite artificielle)
-- Service role client pour bypass RLS
-- Pas de `rpc('exec_sql')` — on liste les tables via un hardcoded array reprenant les 6 groupes de `export-full-database` (toutes les ~100 tables connues)
+L'edge function `export-all-data` utilise un tableau `ALL_TABLES` hardcodé de ~73 noms. La base de données contient en réalité ~132 tables publiques. Toutes les tables ajoutées après la création initiale de la liste sont manquantes.
 
-## 2. Nouvelle page `AdminDatabaseExport.tsx`
+## Solution
 
-Page complète avec :
-- **Phase 1** : appel sans params → affiche la liste des tables avec leurs row counts dans un tableau
-- **Bouton "Tout exporter"** : boucle sur chaque table, appelle `?table=xxx`, télécharge un fichier JSON par table (ou un seul fichier consolidé)
-- **Bouton par table** : export individuel d'une seule table
-- **Progress bar** : progression table par table (X/N)
-- Composants : `Card`, `Table`, `Button`, `Progress`
+Remplacer la liste hardcodée par une **requête dynamique** qui interroge `information_schema.tables` pour récupérer automatiquement toutes les tables du schéma `public`. Ainsi, chaque nouvelle table sera automatiquement incluse sans modifier le code.
 
-## 3. Ajout onglet "Database" dans `OpsView.tsx`
+## Changement
 
-- Nouveau tab `{ id: 'database', label: 'Database', icon: ServerIcon, accent: 'red' }`
-- Lazy load de `AdminDatabaseExport`
-- Ajout dans `DEFAULT_TAB_ORDER`
-- Ajout du `TabsContent`
+**`supabase/functions/export-all-data/index.ts`** :
 
-## 4. Config TOML
+- Supprimer le tableau `ALL_TABLES` hardcodé
+- Dans le mode "liste des tables", exécuter via le service client :
+  ```sql
+  SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename
+  ```
+- Stocker le résultat dynamiquement pour les validations (`countOnly`, `table=xxx`)
+- Conserver la liste `HEAVY_TABLES` hardcodée (elle ne concerne que la taille de page, pas l'inventaire)
 
-Vérifier/ajouter `[functions.export-all-data]` avec `verify_jwt = false` (validation manuelle dans le code comme `export-full-database`).
-
-## Fichiers impactés
+## Impact
 
 | Fichier | Action |
 |---|---|
-| `supabase/functions/export-all-data/index.ts` | Réécriture complète |
-| `src/pages/admin/AdminDatabaseExport.tsx` | Création |
-| `src/components/admin/views/OpsView.tsx` | Ajout onglet Database |
-| `supabase/config.toml` | Ajout entry si manquante |
+| `supabase/functions/export-all-data/index.ts` | Remplacer ALL_TABLES par requête dynamique |
+
+Aucun changement frontend nécessaire — la page affiche déjà ce que l'API retourne.
 
