@@ -12,6 +12,14 @@ type ExportFormat = 'json' | 'sql';
 interface TableInfo {
   name: string;
   count: number;
+  maxPageSize: number;
+}
+
+const FULL_LADDER = [100, 50, 25, 10, 5, 3, 1];
+
+/** Build a retry ladder starting at the table's maxPageSize */
+function buildLadder(maxPageSize: number): number[] {
+  return FULL_LADDER.filter(s => s <= maxPageSize);
 }
 
 const escapeSQL = (val: unknown): string => {
@@ -33,8 +41,7 @@ const rowsToSQL = (tableName: string, rows: Record<string, unknown>[]): string =
   return `-- Table: ${tableName} (${rows.length} rows)\n${lines.join('\n')}\n`;
 };
 
-// Adaptive page sizes: try large first, reduce on WORKER_LIMIT (546)
-const PAGE_SIZE_LADDER = [100, 50, 25, 10, 5, 1];
+const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
 
 export default function AdminDatabaseExport() {
   const [tables, setTables] = useState<TableInfo[]>([]);
@@ -68,14 +75,15 @@ export default function AdminDatabaseExport() {
     setLoading(true);
     try {
       const listData = await apiFetch();
-      const tableNames: string[] = (listData.tables ?? []).map((t: any) => t.name);
+      const rawTables: { name: string; maxPageSize: number }[] = listData.tables ?? [];
       
-      const initial = tableNames.map(name => ({ name, count: -1 }));
+      const initial: TableInfo[] = rawTables.map(t => ({ name: t.name, count: -1, maxPageSize: t.maxPageSize ?? 100 }));
       setTables(initial);
 
       // Fetch counts in batches of 15
       const BATCH = 15;
       const updated = [...initial];
+      const tableNames = rawTables.map(t => t.name);
       for (let i = 0; i < tableNames.length; i += BATCH) {
         const batch = tableNames.slice(i, i + BATCH);
         try {
@@ -108,20 +116,19 @@ export default function AdminDatabaseExport() {
     URL.revokeObjectURL(url);
   };
 
-  /** Fetch all pages for a table with adaptive pageSize on 546 errors */
-  const fetchAllPages = async (tableName: string): Promise<Record<string, unknown>[]> => {
+  /** Fetch all pages for a table with adaptive pageSize using the table's maxPageSize as ceiling */
+  const fetchAllPages = async (tableName: string, maxPageSize: number): Promise<Record<string, unknown>[]> => {
+    const ladder = buildLadder(maxPageSize);
     let allRows: Record<string, unknown>[] = [];
     let page = 0;
     let hasMore = true;
-    // Start with default pageSize from ladder
-    let currentSizeIdx = 0;
+    let ladderIdx = 0;
 
     while (hasMore) {
       let success = false;
       
-      // Try with decreasing page sizes on WORKER_LIMIT
-      while (currentSizeIdx < PAGE_SIZE_LADDER.length && !success) {
-        const pageSize = PAGE_SIZE_LADDER[currentSizeIdx];
+      while (ladderIdx < ladder.length && !success) {
+        const pageSize = ladder[ladderIdx];
         try {
           const result = await apiFetch(`table=${encodeURIComponent(tableName)}&page=${page}&pageSize=${pageSize}`);
           allRows = allRows.concat(result.data ?? []);
@@ -129,10 +136,9 @@ export default function AdminDatabaseExport() {
           success = true;
           page++;
         } catch (err: any) {
-          // On 546 WORKER_LIMIT, try smaller pageSize
-          if (err.status === 546 && currentSizeIdx < PAGE_SIZE_LADDER.length - 1) {
-            currentSizeIdx++;
-            console.warn(`[Export] ${tableName} page ${page}: 546 → reducing pageSize to ${PAGE_SIZE_LADDER[currentSizeIdx]}`);
+          if ((err.status === 546 || err.status === 500) && ladderIdx < ladder.length - 1) {
+            ladderIdx++;
+            console.warn(`[Export] ${tableName} page ${page}: ${err.status} → reducing pageSize to ${ladder[ladderIdx]}`);
           } else {
             throw err;
           }
@@ -147,9 +153,11 @@ export default function AdminDatabaseExport() {
   };
 
   const exportSingleTable = async (tableName: string) => {
+    const tableInfo = tables.find(t => t.name === tableName);
+    const maxPS = tableInfo?.maxPageSize ?? 100;
     try {
       toast.info(`Export de ${tableName}...`);
-      const rows = await fetchAllPages(tableName);
+      const rows = await fetchAllPages(tableName, maxPS);
       const date = new Date().toISOString().split('T')[0];
       if (exportFormat === 'sql') {
         downloadFile(rowsToSQL(tableName, rows), `${tableName}-${date}.sql`, 'text/sql');
@@ -163,7 +171,6 @@ export default function AdminDatabaseExport() {
   };
 
   const exportAll = async () => {
-    // Export ALL tables from the list, not just those with count >= 0
     const allTables = tables;
     if (allTables.length === 0) {
       toast.warning('Aucune table à exporter');
@@ -188,10 +195,15 @@ export default function AdminDatabaseExport() {
       }
       
       try {
-        consolidated[t.name] = await fetchAllPages(t.name);
+        consolidated[t.name] = await fetchAllPages(t.name, t.maxPageSize);
       } catch {
         failedTables.push(t.name);
         consolidated[t.name] = [];
+      }
+
+      // Throttle: 300ms between tables to avoid worker saturation
+      if (i < allTables.length - 1) {
+        await delay(300);
       }
     }
 
@@ -220,7 +232,6 @@ export default function AdminDatabaseExport() {
 
   const totalRows = tables.reduce((s, t) => s + Math.max(t.count, 0), 0);
   const progressPct = exportProgress.total > 0 ? (exportProgress.current / exportProgress.total) * 100 : 0;
-  // Allow export even if some counts are still -1
   const canExport = tables.length > 0;
 
   return (
@@ -283,6 +294,7 @@ export default function AdminDatabaseExport() {
                     <TableHead className="w-12">#</TableHead>
                     <TableHead>Table</TableHead>
                     <TableHead className="text-right w-28">Lignes</TableHead>
+                    <TableHead className="text-right w-20">Taille</TableHead>
                     <TableHead className="text-right w-28">Action</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -297,6 +309,9 @@ export default function AdminDatabaseExport() {
                         ) : (
                           t.count.toLocaleString()
                         )}
+                      </TableCell>
+                      <TableCell className="text-right text-xs text-muted-foreground">
+                        {t.maxPageSize <= 3 ? '🔴' : t.maxPageSize <= 10 ? '🟠' : t.maxPageSize <= 25 ? '🟡' : '🟢'}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
