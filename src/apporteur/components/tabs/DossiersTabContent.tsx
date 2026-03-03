@@ -86,12 +86,16 @@ export default function DossiersTabContent() {
   const dossiers = data?.data?.dossiers || [];
   const totals = data?.data?.totals || { count: 0, resteDu: 0 };
 
+  const STATUS_ORDER = ['en_cours', 'devis_envoye', 'devis_valide', 'att_paiement', 'clos', 'annule'];
+
   const statuses = useMemo(() => {
     const unique = new Set(dossiers.map(d => d.status));
-    return Array.from(unique).map(s => ({
-      value: s,
-      label: dossiers.find(d => d.status === s)?.statusLabel || s,
-    }));
+    return STATUS_ORDER
+      .filter(s => unique.has(s))
+      .map(s => ({
+        value: s,
+        label: dossiers.find(d => d.status === s)?.statusLabel || s,
+      }));
   }, [dossiers]);
 
   const filteredDossiers = useMemo(() => {
