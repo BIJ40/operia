@@ -6,7 +6,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Crown, Network } from 'lucide-react';
+import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Crown, Network, UserCheck } from 'lucide-react';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { 
   DraggableFolderTabsList, 
@@ -29,6 +29,7 @@ import { useSessionState } from '@/hooks/useSessionState';
 const TDRUsersPage = lazy(() => import('@/pages/TDRUsersPage'));
 const AdminUserActivity = lazy(() => import('@/pages/AdminUserActivity'));
 const FranchiseurView = lazy(() => import('@/components/unified/views/FranchiseurView'));
+const ApporteurManagersAdminView = lazy(() => import('@/components/admin/views/ApporteurManagersAdminView'));
 
 function LoadingFallback() {
   return (
@@ -51,12 +52,13 @@ const ADMIN_MAIN_TABS: PillTabConfig[] = [
 // Sous-onglets pour Gestion (style Folder) - 4 onglets directs
 const GESTION_SUB_TABS: FolderTabConfig[] = [
   { id: 'users', label: 'Utilisateurs', icon: Users, accent: 'blue' },
+  { id: 'apporteurs', label: 'Apporteurs', icon: UserCheck, accent: 'orange' },
   { id: 'agences', label: 'Agences', icon: Building2, accent: 'purple' },
   { id: 'plans', label: 'Plans', icon: Crown, accent: 'orange' },
   { id: 'activity', label: 'Activité', icon: Activity, accent: 'green' },
 ];
 
-const DEFAULT_GESTION_ORDER = ['users', 'agences', 'plans', 'activity'];
+const DEFAULT_GESTION_ORDER = ['users', 'apporteurs', 'agences', 'plans', 'activity'];
 
 export default function AdminHubContent() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -125,6 +127,13 @@ export default function AdminHubContent() {
                   </Suspense>
                 </TabsContent>
                 
+                
+                <TabsContent value="apporteurs" className="mt-0 focus-visible:outline-none">
+                  <Suspense fallback={<LoadingFallback />}>
+                    <ApporteurManagersAdminView />
+                  </Suspense>
+                </TabsContent>
+
                 <TabsContent value="agences" className="mt-0 focus-visible:outline-none">
                   <ReseauView />
                 </TabsContent>
