@@ -6,7 +6,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Crown } from 'lucide-react';
+import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Crown, Network } from 'lucide-react';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { 
   DraggableFolderTabsList, 
@@ -28,6 +28,7 @@ import { useSessionState } from '@/hooks/useSessionState';
 // Lazy load des composants directs
 const TDRUsersPage = lazy(() => import('@/pages/TDRUsersPage'));
 const AdminUserActivity = lazy(() => import('@/pages/AdminUserActivity'));
+const FranchiseurView = lazy(() => import('@/components/unified/views/FranchiseurView'));
 
 function LoadingFallback() {
   return (
@@ -40,6 +41,7 @@ function LoadingFallback() {
 // Configuration des onglets principaux (style Pill)
 const ADMIN_MAIN_TABS: PillTabConfig[] = [
   { id: 'gestion', label: 'Gestion', icon: Settings, accent: 'blue' },
+  { id: 'franchiseur', label: 'Franchiseur', icon: Network, accent: 'purple' },
   { id: 'ia', label: 'IA', icon: Brain, accent: 'green' },
   { id: 'contenu', label: 'Contenu', icon: FileText, accent: 'orange' },
   { id: 'ops', label: 'Ops', icon: Database, accent: 'pink' },
@@ -138,6 +140,12 @@ export default function AdminHubContent() {
                 </TabsContent>
               </DraggableFolderContentContainer>
             </Tabs>
+          </TabsContent>
+
+          <TabsContent value="franchiseur" className="mt-0 focus-visible:outline-none">
+            <Suspense fallback={<LoadingFallback />}>
+              <FranchiseurView />
+            </Suspense>
           </TabsContent>
 
           <TabsContent value="ia" className="mt-0 focus-visible:outline-none">
