@@ -327,14 +327,13 @@ export default function DossiersTabContent() {
                     </div>
                   </TableHead>
                   <TableHead className="hidden lg:table-cell">1er RDV</TableHead>
-                  <TableHead className="hidden lg:table-cell">Devis</TableHead>
-                  <TableHead className="hidden md:table-cell">Facturé</TableHead>
+                  <TableHead className="hidden lg:table-cell text-right">Devis HT</TableHead>
                   <TableHead 
                     className="text-right cursor-pointer hover:bg-muted/50"
                     onClick={() => handleSort('factureHT')}
                   >
                     <div className="flex items-center justify-end">
-                      Montant <SortIcon field="factureHT" />
+                      Facturé HT <SortIcon field="factureHT" />
                     </div>
                   </TableHead>
                   <TableHead 
@@ -350,7 +349,7 @@ export default function DossiersTabContent() {
               <TableBody>
                 {filteredDossiers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       Aucun dossier trouvé
                     </TableCell>
                   </TableRow>
@@ -377,31 +376,8 @@ export default function DossiersTabContent() {
                         <TableCell className="hidden lg:table-cell text-sm">
                           {formatDate(d.datePremierRdv)}
                         </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                          {d.devisId ? (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-7 px-2"
-                              onClick={(e) => { e.stopPropagation(); }}
-                            >
-                              <FileText className="w-3.5 h-3.5 mr-1" />
-                              {formatDate(d.dateDevisValide || d.dateDevisEnvoye)}
-                            </Button>
-                          ) : '-'}
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          {d.factureId ? (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-7 px-2"
-                              onClick={(e) => { e.stopPropagation(); }}
-                            >
-                              <Receipt className="w-3.5 h-3.5 mr-1" />
-                              {formatDate(d.dateFacture)}
-                            </Button>
-                          ) : '-'}
+                        <TableCell className="hidden lg:table-cell text-right font-medium">
+                          {d.devisHT > 0 ? formatCurrency(d.devisHT) : '-'}
                         </TableCell>
                         <TableCell className="text-right font-medium">
                           {d.factureHT > 0 ? formatCurrency(d.factureHT) : '-'}
