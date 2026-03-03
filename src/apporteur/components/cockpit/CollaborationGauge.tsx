@@ -1,0 +1,87 @@
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+import type { CollaborationScore, CollaborationLevel } from '../../types/apporteur-stats-v2';
+
+const LEVEL_CONFIG: Record<CollaborationLevel, { label: string; color: string; bg: string }> = {
+  bronze: { label: 'Bronze', color: 'text-amber-700', bg: 'bg-amber-100 dark:bg-amber-900/30' },
+  silver: { label: 'Silver', color: 'text-slate-600', bg: 'bg-slate-100 dark:bg-slate-800/50' },
+  gold: { label: 'Gold', color: 'text-yellow-600', bg: 'bg-yellow-100 dark:bg-yellow-900/30' },
+};
+
+const SCORE_LABELS: Record<string, string> = {
+  volume_score: 'Volume',
+  regularite_score: 'Régularité',
+  transfo_score: 'Transformation',
+  delay_score: 'Réactivité',
+};
+
+interface CollaborationGaugeProps {
+  data: CollaborationScore;
+}
+
+export function CollaborationGauge({ data }: CollaborationGaugeProps) {
+  const conf = LEVEL_CONFIG[data.level];
+  const circumference = 2 * Math.PI * 42;
+  const strokeDashoffset = circumference - (data.score / 100) * circumference;
+
+  return (
+    <Card className="rounded-2xl">
+      <CardContent className="pt-5 pb-4 px-5">
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Indice de collaboration
+          </p>
+          <Badge className={cn('text-xs', conf.bg, conf.color)}>
+            {conf.label}
+          </Badge>
+        </div>
+
+        <div className="flex items-center gap-6">
+          {/* Gauge */}
+          <div className="relative w-24 h-24 shrink-0">
+            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeWidth="6" className="text-muted/20" />
+              <circle
+                cx="50" cy="50" r="42"
+                fill="none" strokeWidth="6" strokeLinecap="round"
+                className={cn(
+                  data.level === 'gold' ? 'stroke-yellow-500' :
+                  data.level === 'silver' ? 'stroke-slate-400' :
+                  'stroke-amber-500'
+                )}
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+                style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-xl font-bold text-foreground">{Math.round(data.score)}</span>
+            </div>
+          </div>
+
+          {/* Breakdown */}
+          <div className="flex-1 space-y-2">
+            {Object.entries(data.details).map(([key, val]) => (
+              <div key={key} className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground w-24 truncate">
+                  {SCORE_LABELS[key] || key}
+                </span>
+                <div className="flex-1 h-1.5 bg-muted/30 rounded-full overflow-hidden">
+                  <div
+                    className={cn(
+                      'h-full rounded-full transition-all duration-500',
+                      val >= 75 ? 'bg-emerald-500' : val >= 50 ? 'bg-amber-500' : 'bg-rose-500'
+                    )}
+                    style={{ width: `${Math.min(100, val)}%` }}
+                  />
+                </div>
+                <span className="text-xs font-medium text-foreground w-8 text-right">{Math.round(val)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
