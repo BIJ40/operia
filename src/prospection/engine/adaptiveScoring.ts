@@ -125,6 +125,30 @@ export function computeAdaptiveScore(monthlyTrendFull: MonthlyTrendEntry[], rece
     .filter((v): v is number => v !== null && v !== undefined);
   const recentTransfo = recentTransfoArr.length > 0 ? avg(recentTransfoArr) : null;
 
+  // GARDE-FOU : si activité récente totalement nulle → score bas (dormant)
+  const recentActivityZero = recentCA === 0 && recentDossiers === 0 && recentFactures === 0;
+  if (recentActivityZero) {
+    // Si historique aussi nul → stable bas ; si historique existait → forte baisse
+    const hadHistory = avgCA > 0 || avgDossiers > 0 || avgFactures > 0;
+    const score = hadHistory ? 15 : 35; // danger si baisse, warning sinon
+    const level = scoreLevel(score);
+    return {
+      score,
+      level,
+      label: scoreLabel(level),
+      metrics: {
+        ca: { avg: Math.round(avgCA), recent: 0, variationPct: hadHistory ? -100 : 0 },
+        dossiers: { avg: Math.round(avgDossiers * 10) / 10, recent: 0, variationPct: hadHistory ? -100 : 0 },
+        devis: { avg: 0, recent: 0, variationPct: 0 },
+        factures: { avg: Math.round(avgFactures * 10) / 10, recent: 0, variationPct: hadHistory ? -100 : 0 },
+        tauxTransfo: { avg: avgTransfo !== null ? Math.round(avgTransfo * 10) / 10 : null, recent: null, variationPct: null },
+      },
+      alerts: hadHistory
+        ? [`Activité tombée à zéro sur les ${recentMonths} dernier(s) mois (CA historique moyen : ${formatEuro(avgCA)}/mois)`]
+        : [],
+    };
+  }
+
   // Variations %
   const varCA = variationPct(recentCA, avgCA);
   const varDossiers = variationPct(recentDossiers, avgDossiers);
