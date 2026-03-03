@@ -1,6 +1,5 @@
 /**
- * useApporteurPlanning - Hook pour récupérer le planning de l'apporteur
- * Utilise useApporteurApi pour envoyer le token custom
+ * useApporteurPlanning - Hook pour récupérer TOUS les RDV à venir de l'apporteur
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -23,28 +22,17 @@ interface PlanningResponse {
   success: boolean;
   data?: {
     events: PlanningEvent[];
-    week: {
-      start: string;
-      end: string;
-      offset: number;
-    };
   };
   error?: string;
 }
 
-interface UseApporteurPlanningOptions {
-  weekOffset?: number;
-  enabled?: boolean;
-}
-
-export function useApporteurPlanning(options: UseApporteurPlanningOptions = {}) {
-  const { weekOffset = 0, enabled = true } = options;
+export function useApporteurPlanning() {
   const { post } = useApporteurApi();
 
   return useQuery({
-    queryKey: ['apporteur-planning', weekOffset],
+    queryKey: ['apporteur-planning'],
     queryFn: async (): Promise<PlanningResponse> => {
-      const result = await post<PlanningResponse>('/get-apporteur-planning', { weekOffset });
+      const result = await post<PlanningResponse>('/get-apporteur-planning', {});
       if (result.error) {
         return { success: false, error: result.error };
       }
@@ -52,31 +40,10 @@ export function useApporteurPlanning(options: UseApporteurPlanningOptions = {}) 
     },
     staleTime: 60 * 1000,
     retry: 1,
-    enabled,
   });
 }
 
 export function formatTime(time: string | null): string {
   if (!time) return '';
   return time.substring(0, 5);
-}
-
-export function getWeekDays(weekStart: string): string[] {
-  const start = new Date(weekStart);
-  const days: string[] = [];
-  // Only Mon-Fri (5 days)
-  for (let i = 0; i < 5; i++) {
-    const day = new Date(start);
-    day.setDate(start.getDate() + i);
-    days.push(day.toISOString().split('T')[0]);
-  }
-  return days;
-}
-
-export function formatWeekRange(start: string, end: string): string {
-  const startDate = new Date(start);
-  const endDate = new Date(end);
-  const startDay = startDate.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
-  const endDay = endDate.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
-  return `${startDay} - ${endDay}`;
 }
