@@ -1,93 +1,147 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
+import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// Complete list of all public tables
+const ALL_TABLES = [
+  // Part 1 - Core users & agencies
+  "profiles", "apogee_agencies", "agency_commercial_profile", "agency_stamps",
+  "agency_rh_roles", "user_modules", "user_consents", "user_creation_requests",
+  "franchiseur_roles", "franchiseur_agency_assignments", "agency_royalty_config",
+  "agency_royalty_tiers", "agency_royalty_calculations", "french_holidays",
+  "categories", "feature_flags", "page_metadata",
+  // Part 2 - Collaborators & HR
+  "collaborators", "collaborator_documents", "collaborator_sensitive_data",
+  "collaborator_document_folders", "employment_contracts", "document_requests",
+  "document_access_logs", "hr_generated_documents", "payslip_data", "salary_history",
+  "rh_audit_log", "rh_notifications", "sensitive_data_access_log",
+  "leave_requests", "leave_balances", "user_connection_logs", "user_history",
+  // Part 3 - Support
+  "support_tickets", "support_ticket_actions", "support_ticket_views",
+  "support_attachments", "support_messages", "support_presence",
+  "live_support_sessions", "live_support_messages", "typing_status",
+  "user_presence", "chatbot_queries", "faq_categories", "faq_items",
+  "ai_search_cache", "rag_index_documents", "rag_index_jobs", "formation_content",
+  // Part 4 - Apogee Tickets
+  "apogee_tickets", "apogee_ticket_comments", "apogee_ticket_attachments",
+  "apogee_ticket_history", "apogee_ticket_views", "apogee_ticket_statuses",
+  "apogee_ticket_transitions", "apogee_ticket_user_roles",
+  "apogee_ticket_field_permissions", "apogee_ticket_tags", "apogee_impact_tags",
+  "apogee_modules", "apogee_priorities", "apogee_owner_sides",
+  "apogee_reported_by", "apogee_guides", "ticket_duplicate_suggestions",
+  // Part 5 - Content & Messaging
+  "blocks", "apporteur_blocks", "documents", "sections", "favorites",
+  "conversations", "conversation_members", "messages", "priority_announcements",
+  "announcement_reads", "home_cards", "tools", "planning_signatures",
+  "sav_dossier_overrides", "user_calendar_connections", "user_actions_config",
+  "user_quick_notes",
+  // Part 6 - Fleet, Maintenance, StatIA & Settings
+  "animator_visits", "expense_requests", "fleet_vehicles", "maintenance_events",
+  "maintenance_alerts", "maintenance_plan_items", "maintenance_plan_templates",
+  "metrics_definitions", "metrics_cache", "statia_custom_metrics",
+  "statia_metric_validations", "statia_widgets", "widget_templates",
+  "user_widgets", "user_widget_preferences", "user_dashboard_settings",
+  "app_notification_settings", "diffusion_settings", "storage_quota_alerts",
+  "rate_limits",
+  // Apporteurs
+  "apporteurs", "apporteur_contacts", "apporteur_users", "apporteur_managers",
+  "apporteur_sessions", "apporteur_otp_codes", "apporteur_intervention_requests",
+  "apporteur_invitation_links", "apporteur_project_links", "apporteur_access_logs",
+  // Subscriptions & modules
+  "agency_subscription", "agency_module_overrides", "plan_tiers", "plan_tier_modules",
+  // EPI
+  "epi_types", "epi_assignments", "epi_monthly_acks",
+  // Misc
+  "guide_chunks", "doc_templates", "doc_template_instances",
+  "maintenance_settings", "activity_log", "agency_admin_documents",
+  "apogee_ticket_support_exchanges", "monthly_reports",
+  "technician_capacity_config", "push_subscriptions",
+];
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
+  const corsResponse = handleCorsPreflightOrReject(req);
+  if (corsResponse) return corsResponse;
 
   try {
-    // Use service role to bypass RLS
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Parse request
-    const { table, secret } = await req.json();
-
-    // Simple secret protection
-    if (secret !== 'export-lovable-2026-temp') {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    // Auth: require N5+
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return withCors(req, new Response(JSON.stringify({ error: 'Non authentifié' }), { status: 401, headers: { 'Content-Type': 'application/json' } }));
     }
 
-    // If no table specified, list all tables with row counts
-    if (!table) {
-      const { data, error } = await supabase.rpc('exec_sql', {
-        query: `SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename`
-      }).throwOnError();
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnon = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseService = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-      // For each table, get count
+    // Verify user with anon client
+    const anonClient = createClient(supabaseUrl, supabaseAnon, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(authHeader.replace('Bearer ', ''));
+    if (claimsError || !claimsData?.claims?.sub) {
+      return withCors(req, new Response(JSON.stringify({ error: 'Token invalide' }), { status: 401, headers: { 'Content-Type': 'application/json' } }));
+    }
+
+    // Check N5+
+    const serviceClient = createClient(supabaseUrl, supabaseService);
+    const { data: profile } = await serviceClient.from('profiles').select('global_role').eq('id', claimsData.claims.sub).single();
+    const level = { superadmin: 6, platform_admin: 5 }[profile?.global_role as string] ?? 0;
+    if (level < 5) {
+      return withCors(req, new Response(JSON.stringify({ error: 'Accès réservé N5+' }), { status: 403, headers: { 'Content-Type': 'application/json' } }));
+    }
+
+    const url = new URL(req.url);
+    const tableParam = url.searchParams.get('table');
+
+    // Mode 1: List all tables with row counts
+    if (!tableParam) {
       const tables: { name: string; count: number }[] = [];
-      const tableList = Array.isArray(data) ? data : [];
-
-      for (const t of tableList) {
-        const name = t.tablename || t;
+      for (const name of ALL_TABLES) {
         try {
-          const { count } = await supabase.from(name).select('*', { count: 'exact', head: true });
-          tables.push({ name, count: count || 0 });
+          const { count } = await serviceClient.from(name).select('*', { count: 'exact', head: true });
+          tables.push({ name, count: count ?? 0 });
         } catch {
           tables.push({ name, count: -1 });
         }
       }
-
-      return new Response(JSON.stringify({ tables }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return withCors(req, new Response(JSON.stringify({ tables, total: ALL_TABLES.length }), {
+        headers: { 'Content-Type': 'application/json' },
+      }));
     }
 
-    // Export specific table (paginated)
-    const pageSize = 1000;
+    // Mode 2: Export a specific table (full pagination)
+    if (!ALL_TABLES.includes(tableParam)) {
+      return withCors(req, new Response(JSON.stringify({ error: `Table "${tableParam}" non autorisée` }), { status: 400, headers: { 'Content-Type': 'application/json' } }));
+    }
+
+    const PAGE_SIZE = 1000;
     let allData: unknown[] = [];
     let offset = 0;
     let hasMore = true;
 
     while (hasMore) {
-      const { data, error } = await supabase
-        .from(table)
+      const { data, error } = await serviceClient
+        .from(tableParam)
         .select('*')
-        .range(offset, offset + pageSize - 1);
+        .range(offset, offset + PAGE_SIZE - 1);
 
       if (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        return withCors(req, new Response(JSON.stringify({ error: error.message, table: tableParam }), { status: 400, headers: { 'Content-Type': 'application/json' } }));
       }
 
       if (data && data.length > 0) {
         allData = allData.concat(data);
-        offset += pageSize;
-        hasMore = data.length === pageSize;
+        offset += PAGE_SIZE;
+        hasMore = data.length === PAGE_SIZE;
       } else {
         hasMore = false;
       }
     }
 
-    return new Response(JSON.stringify({ table, count: allData.length, data: allData }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return withCors(req, new Response(JSON.stringify({ table: tableParam, count: allData.length, data: allData }), {
+      headers: { 'Content-Type': 'application/json' },
+    }));
 
   } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return withCors(req, new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: { 'Content-Type': 'application/json' } }));
   }
 });

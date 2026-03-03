@@ -11,7 +11,7 @@ import {
   DraggableFolderContentContainer,
   FolderTabConfig 
 } from '@/components/ui/draggable-folder-tabs';
-import { Database, Archive, HardDrive, FileJson, FileStack, Loader2 } from 'lucide-react';
+import { Database, Archive, HardDrive, FileJson, FileStack, Server, Loader2 } from 'lucide-react';
 import { useSessionState } from '@/hooks/useSessionState';
 
 const AdminBackup = lazy(() => import('@/pages/AdminBackup'));
@@ -19,6 +19,7 @@ const AdminHelpConfortBackup = lazy(() => import('@/pages/AdminHelpConfortBackup
 const AdminCacheBackup = lazy(() => import('@/pages/AdminCacheBackup'));
 const AdminApogeeReport = lazy(() => import('@/pages/admin/AdminApogeeReport'));
 const AdminStorageQuota = lazy(() => import('@/pages/AdminStorageQuota'));
+const AdminDatabaseExport = lazy(() => import('@/pages/admin/AdminDatabaseExport'));
 
 const SUB_TABS: FolderTabConfig[] = [
   { id: 'backup', label: 'Backups', icon: Database, accent: 'blue' },
@@ -26,9 +27,10 @@ const SUB_TABS: FolderTabConfig[] = [
   { id: 'cache', label: 'Cache', icon: Archive, accent: 'orange' },
   { id: 'report', label: 'Reports', icon: FileJson, accent: 'green' },
   { id: 'quota', label: 'Quota', icon: HardDrive, accent: 'teal' },
+  { id: 'database', label: 'Database', icon: Server, accent: 'pink' },
 ];
 
-const DEFAULT_TAB_ORDER = ['backup', 'imports', 'cache', 'report', 'quota'];
+const DEFAULT_TAB_ORDER = ['backup', 'imports', 'cache', 'report', 'quota', 'database'];
 
 function LoadingFallback() {
   return (
@@ -63,6 +65,7 @@ export function OpsView() {
     green: 'hsl(var(--warm-green))',
     orange: 'hsl(var(--warm-orange))',
     teal: 'hsl(var(--warm-teal))',
+    pink: 'hsl(var(--warm-pink))',
   };
   const activeAccent = activeTab?.accent ? accentColors[activeTab.accent] : undefined;
 
@@ -105,6 +108,12 @@ export function OpsView() {
         <TabsContent value="quota" className="mt-0 focus-visible:outline-none">
           <Suspense fallback={<LoadingFallback />}>
             <AdminStorageQuota />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="database" className="mt-0 focus-visible:outline-none">
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminDatabaseExport />
           </Suspense>
         </TabsContent>
       </DraggableFolderContentContainer>
