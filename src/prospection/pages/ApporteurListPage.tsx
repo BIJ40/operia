@@ -92,7 +92,7 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3 relative z-30">
         <div className="relative flex-1 min-w-[200px] max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -109,7 +109,7 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
 
           {/* Suggestions dropdown */}
           {showSuggestions && search.length >= 2 && (
-            <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-lg max-h-80 overflow-y-auto">
+            <div className="absolute z-[100] top-full left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-xl max-h-[400px] overflow-y-auto">
               {loadingApogee ? (
                 <div className="flex items-center gap-2 p-3 text-sm text-muted-foreground">
                   <Loader2 className="w-4 h-4 animate-spin" />
