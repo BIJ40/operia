@@ -6,6 +6,7 @@
 import { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApporteurSession } from '@/apporteur/contexts/ApporteurSessionContext';
+import { ApporteurAuthProvider } from '@/contexts/ApporteurAuthContext';
 import { ApporteurLoginPage } from '@/apporteur/pages/ApporteurLoginPage';
 import { ApporteurTabsProvider } from './browser-tabs/ApporteurTabsContext';
 import { ApporteurTabsBar } from './browser-tabs/ApporteurTabsBar';
@@ -88,75 +89,77 @@ export function ApporteurLayout({ children }: ApporteurLayoutProps) {
   };
 
   return (
-    <ApporteurTabsProvider>
-      <div className={cn("min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex flex-col", devBypass && "pt-9")}>
-        {/* Dev Mode Banner */}
-        {devBypass && (
-          <div className="fixed top-0 inset-x-0 z-[60] h-9 border-b border-border bg-accent text-accent-foreground flex items-center justify-center gap-2 px-3 text-xs">
-            <Bug className="w-4 h-4" />
-            <span className="font-medium">Mode DEV</span>
-            <span className="hidden sm:inline">— accès apporteur sans authentification</span>
-          </div>
-        )}
-
-        {/* Header avec onglets intégrés */}
-        <header
-          className={cn(
-            "sticky z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60",
-            devBypass ? "top-9" : "top-0"
-          )}
-        >
-          <div className="container flex h-14 items-center gap-4">
-            {/* Onglets de navigation - prennent toute la place */}
-            <div className="flex-1">
-              <ApporteurTabsBar />
+    <ApporteurAuthProvider>
+      <ApporteurTabsProvider>
+        <div className={cn("min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex flex-col", devBypass && "pt-9")}>
+          {/* Dev Mode Banner */}
+          {devBypass && (
+            <div className="fixed top-0 inset-x-0 z-[60] h-9 border-b border-border bg-accent text-accent-foreground flex items-center justify-center gap-2 px-3 text-xs">
+              <Bug className="w-4 h-4" />
+              <span className="font-medium">Mode DEV</span>
+              <span className="hidden sm:inline">— accès apporteur sans authentification</span>
             </div>
+          )}
 
-            {/* User Menu à droite */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-2 shrink-0">
-                  <User className="w-4 h-4" />
-                  <span className="hidden sm:inline max-w-[100px] truncate text-sm">
-                    {displayUser?.firstName || 'Compte'}
-                  </span>
-                  <ChevronDown className="w-3 h-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <div className="px-2 py-1.5">
-                  <p className="text-sm font-medium">{displayUser?.apporteurName}</p>
-                  <p className="text-xs text-muted-foreground">{displayUser?.email}</p>
-                </div>
-                {!devBypass && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Déconnexion
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </header>
+          {/* Header avec onglets intégrés */}
+          <header
+            className={cn(
+              "sticky z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60",
+              devBypass ? "top-9" : "top-0"
+            )}
+          >
+            <div className="container flex h-14 items-center gap-4">
+              {/* Onglets de navigation - prennent toute la place */}
+              <div className="flex-1">
+                <ApporteurTabsBar />
+              </div>
 
-        {/* Main Content */}
-        <main className="flex-1 overflow-auto">
-          <div className="container">
-            <ApporteurTabsContent />
-          </div>
-        </main>
+              {/* User Menu à droite */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="gap-2 shrink-0">
+                    <User className="w-4 h-4" />
+                    <span className="hidden sm:inline max-w-[100px] truncate text-sm">
+                      {displayUser?.firstName || 'Compte'}
+                    </span>
+                    <ChevronDown className="w-3 h-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="px-2 py-1.5">
+                    <p className="text-sm font-medium">{displayUser?.apporteurName}</p>
+                    <p className="text-xs text-muted-foreground">{displayUser?.email}</p>
+                  </div>
+                  {!devBypass && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Déconnexion
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </header>
 
-        {/* Footer */}
-        <footer className="border-t bg-muted/30 py-3 mt-auto">
-          <div className="container text-center text-sm text-muted-foreground">
-            <p>© {new Date().getFullYear()} HelpConfort Services - Espace Apporteur</p>
-          </div>
-        </footer>
-      </div>
-    </ApporteurTabsProvider>
+          {/* Main Content */}
+          <main className="flex-1 overflow-auto">
+            <div className="container">
+              <ApporteurTabsContent />
+            </div>
+          </main>
+
+          {/* Footer */}
+          <footer className="border-t bg-muted/30 py-3 mt-auto">
+            <div className="container text-center text-sm text-muted-foreground">
+              <p>© {new Date().getFullYear()} HelpConfort Services - Espace Apporteur</p>
+            </div>
+          </footer>
+        </div>
+      </ApporteurTabsProvider>
+    </ApporteurAuthProvider>
   );
 }
 
