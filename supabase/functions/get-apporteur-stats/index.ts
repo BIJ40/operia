@@ -131,7 +131,9 @@ function computePeriodKpis(
 ): PeriodKpis {
   // Règle métier : "Devis avec facture liée = automatiquement validé"
   // Construire le set des projectIds ayant au moins une facture sur la période
+  // + map projectId → date de première facture (pour le délai de validation)
   const projectsWithFacture = new Set<number>();
+  const firstInvoiceDateByProject = new Map<number, Date>();
   for (const f of allFactures) {
     if (!projectIds.has(f.projectId)) continue;
     const fd = parseDate(f.dateReelle || f.date);
@@ -139,6 +141,10 @@ function computePeriodKpis(
     const invoiceType = String(f.invoiceType || '').toLowerCase();
     if (!invoiceType.includes('avoir') && invoiceType !== 'credit_note') {
       projectsWithFacture.add(f.projectId);
+      const existing = firstInvoiceDateByProject.get(f.projectId);
+      if (!existing || fd < existing) {
+        firstInvoiceDateByProject.set(f.projectId, fd);
+      }
     }
   }
   const kpis: PeriodKpis = {
@@ -221,9 +227,11 @@ function computePeriodKpis(
 
     if (isAcceptedByState || isAcceptedByFacture) {
       kpis.devis_valides++;
-      // Delay: devis sent → validated (approximate via dates)
+      // Delay: devis envoyé → validé
       const sentDate = parseDate(d.dateReelle || d.date);
-      const validatedDate = parseDate(d.data?.dateValidation || d.data?.dateAccepted || d.dateValidation);
+      // Chercher la date de validation : d'abord dans le devis, sinon date 1ère facture du projet
+      const validatedDate = parseDate(d.data?.dateValidation || d.data?.dateAccepted || d.dateValidation)
+        || (isAcceptedByFacture ? firstInvoiceDateByProject.get(d.projectId) || null : null);
       if (sentDate && validatedDate && validatedDate >= sentDate) {
         kpis.devis_validated_with_dates++;
         kpis.devis_validation_delays.push(daysDiff(sentDate, validatedDate));
