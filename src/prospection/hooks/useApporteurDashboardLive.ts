@@ -81,12 +81,18 @@ export function useApporteurDashboardLive({
         return inDateRange(dt);
       });
 
+      // Set des projets facturés (preuve de transformation)
+      const facturatedProjectIds = new Set(
+        apporteurFactures.map((f: any) => String(f.projectId ?? f.project_id))
+      );
+
       // Devis signés (validés)
       const validDevisStates = ['validated', 'signed', 'order', 'accepted'];
       const signedDevis = apporteurDevis.filter((d: any) => {
         if (validDevisStates.includes(d.state?.toLowerCase?.())) return true;
-        // Devis avec facture liée = automatiquement validé
         if (d.refId || d.invoiceId) return true;
+        // Projet facturé = devis transformé
+        if (facturatedProjectIds.has(String(d.projectId ?? d.project_id))) return true;
         return false;
       });
 
@@ -183,7 +189,8 @@ export function useApporteurDashboardLive({
         if (!dt) continue;
         const m = monthMap.get(dt) || { dossiers: 0, ca_ht: 0, devis_total: 0, devis_signed: 0 };
         m.devis_total++;
-        if (validDevisStates.includes(d.state?.toLowerCase?.()) || d.refId || d.invoiceId) {
+        if (validDevisStates.includes(d.state?.toLowerCase?.()) || d.refId || d.invoiceId
+            || facturatedProjectIds.has(String(d.projectId ?? d.project_id))) {
           m.devis_signed++;
         }
         monthMap.set(dt, m);
