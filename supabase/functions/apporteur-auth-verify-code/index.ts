@@ -141,35 +141,42 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Hash the submitted code and verify against stored codes
-    const codeHash = await sha256(code);
+    // DEV TEST BYPASS: accept code "000000" for test account in dev/preview
+    const isTestBypass = isDevEnvironment(origin) && code === "000000" && normalizedEmail === "apporteur@test.com";
 
-    const { data: otpRecord, error: otpError } = await supabase
-      .from("apporteur_otp_codes")
-      .select("id, expires_at")
-      .eq("manager_id", manager.id)
-      .eq("code_hash", codeHash)
-      .is("used_at", null)
-      .gt("expires_at", new Date().toISOString())
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    if (!isTestBypass) {
+      // Hash the submitted code and verify against stored codes
+      const codeHash = await sha256(code);
 
-    if (otpError || !otpRecord) {
-      // Record failed attempt
-      await supabase.from("rate_limits").insert({ key: rateLimitKey });
-      console.log(`[APPORTEUR-AUTH] Invalid or expired OTP for ${normalizedEmail}`);
-      return new Response(
-        JSON.stringify({ success: false, error: "Code invalide ou expiré" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      const { data: otpRecord, error: otpError } = await supabase
+        .from("apporteur_otp_codes")
+        .select("id, expires_at")
+        .eq("manager_id", manager.id)
+        .eq("code_hash", codeHash)
+        .is("used_at", null)
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (otpError || !otpRecord) {
+        // Record failed attempt
+        await supabase.from("rate_limits").insert({ key: rateLimitKey });
+        console.log(`[APPORTEUR-AUTH] Invalid or expired OTP for ${normalizedEmail}`);
+        return new Response(
+          JSON.stringify({ success: false, error: "Code invalide ou expiré" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Mark OTP as used
+      await supabase
+        .from("apporteur_otp_codes")
+        .update({ used_at: new Date().toISOString() })
+        .eq("id", otpRecord.id);
+    } else {
+      console.log(`[APPORTEUR-AUTH] DEV TEST BYPASS used for ${normalizedEmail}`);
     }
-
-    // Mark OTP as used
-    await supabase
-      .from("apporteur_otp_codes")
-      .update({ used_at: new Date().toISOString() })
-      .eq("id", otpRecord.id);
 
     // Generate session token
     const sessionToken = generateSessionToken();
