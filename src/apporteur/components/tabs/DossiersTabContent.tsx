@@ -1,6 +1,6 @@
 /**
- * DossiersTabContent - Contenu de l'onglet Dossiers
- * Reprend le contenu de ApporteurDossiers sans le wrapper de page
+ * DossiersTabContent - Contenu de l'onglet Dossiers (V2 enrichi)
+ * Stepper horizontal + triple badges + colonne univers
  */
 
 import { useState, useMemo, useEffect } from 'react';
@@ -52,6 +52,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
+import { DossierStepper } from '../cockpit/DossierStepper';
+import type { DossierRowV2 } from '../../types/apporteur-dossier-v2';
 
 type SortField = 'ref' | 'clientName' | 'status' | 'dateCreation' | 'factureHT' | 'restedu';
 type SortDirection = 'asc' | 'desc';
@@ -415,6 +417,21 @@ export default function DossiersTabContent() {
           </DialogHeader>
           {selectedDossier && (
             <div className="space-y-4">
+              {/* V2 Stepper */}
+              <div className="pb-2">
+                <DossierStepper
+                  v2={(selectedDossier as DossierRowV2)?.v2}
+                  dates={{
+                    dateCreation: selectedDossier.dateCreation,
+                    datePremierRdv: selectedDossier.datePremierRdv,
+                    dateDevisEnvoye: selectedDossier.dateDevisEnvoye,
+                    dateDevisValide: selectedDossier.dateDevisValide,
+                    dateFacture: selectedDossier.dateFacture,
+                    dateReglement: selectedDossier.dateReglement,
+                  }}
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Client</p>
@@ -426,38 +443,61 @@ export default function DossiersTabContent() {
                 </div>
               </div>
 
+              {/* Triple badges (V2) or single badge (V1) */}
               <div>
-                <p className="text-sm text-muted-foreground mb-1">État</p>
-                <Badge className={cn(
-                  STATUS_CONFIG[selectedDossier.status]?.bgColor,
-                  STATUS_CONFIG[selectedDossier.status]?.color
-                )}>
-                  {selectedDossier.statusLabel}
-                </Badge>
-              </div>
-
-              <div className="border-t pt-4">
-                <p className="text-sm font-medium mb-3">Jalons</p>
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Création:</span>
-                    <span className="ml-2">{formatDate(selectedDossier.dateCreation)}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">1er RDV:</span>
-                    <span className="ml-2">{formatDate(selectedDossier.datePremierRdv)}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Devis envoyé:</span>
-                    <span className="ml-2">{formatDate(selectedDossier.dateDevisEnvoye)}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Devis validé:</span>
-                    <span className="ml-2">{formatDate(selectedDossier.dateDevisValide)}</span>
-                  </div>
+                <p className="text-sm text-muted-foreground mb-1.5">Statuts</p>
+                <div className="flex flex-wrap gap-2">
+                  {(() => {
+                    const v2 = (selectedDossier as DossierRowV2)?.v2;
+                    if (v2?.status) {
+                      return (
+                        <>
+                          <Badge className={cn(
+                            STATUS_CONFIG[selectedDossier.status]?.bgColor,
+                            STATUS_CONFIG[selectedDossier.status]?.color
+                          )}>
+                            📁 {selectedDossier.statusLabel}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            📄 Devis: {v2.status.devis.replace('_', ' ')}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            🧾 Facture: {v2.status.facture.replace('_', ' ')}
+                          </Badge>
+                        </>
+                      );
+                    }
+                    return (
+                      <Badge className={cn(
+                        STATUS_CONFIG[selectedDossier.status]?.bgColor,
+                        STATUS_CONFIG[selectedDossier.status]?.color
+                      )}>
+                        {selectedDossier.statusLabel}
+                      </Badge>
+                    );
+                  })()}
                 </div>
               </div>
 
+              {/* Univers (V2) */}
+              {(() => {
+                const v2 = (selectedDossier as DossierRowV2)?.v2;
+                if (v2?.universes && v2.universes.length > 0) {
+                  return (
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Univers</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {v2.universes.map(u => (
+                          <Badge key={u} variant="secondary" className="text-xs">{u}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+
+              {/* Financier */}
               {selectedDossier.factureHT > 0 && (
                 <div className="border-t pt-4">
                   <p className="text-sm font-medium mb-3">Financier</p>

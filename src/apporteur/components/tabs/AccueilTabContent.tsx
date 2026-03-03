@@ -1,47 +1,33 @@
 /**
- * AccueilTabContent - Contenu de l'onglet Accueil (Dashboard)
- * Reprend le contenu de ApporteurDashboard
+ * AccueilTabContent — Cockpit Dashboard V2
+ * Consomme useApporteurKpis pour afficher KPIs, collaboration, univers, alertes
  */
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useApporteurAuth } from '@/contexts/ApporteurAuthContext';
 import { Button } from '@/components/ui/button';
+import { PlusCircle, Loader2, AlertTriangle, Euro, ShoppingCart, TrendingUp, FolderOpen, FileText, Receipt, Clock, Timer } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { PlusCircle, FolderOpen, Receipt, FileText, Loader2, AlertTriangle } from 'lucide-react';
 import { ApporteurPlanningCard } from '../ApporteurPlanningCard';
 import { NouvelleDemandeDialog } from '../NouvelleDemandeDialog';
-import { useApporteurDossiers, formatCurrency } from '../../hooks/useApporteurDossiers';
-import { useApporteurTabs } from '../browser-tabs/ApporteurTabsContext';
-import { cn } from '@/lib/utils';
+import { useApporteurKpis } from '../../hooks/useApporteurKpis';
+import { KpiCard } from '../cockpit/KpiCard';
+import { CollaborationGauge } from '../cockpit/CollaborationGauge';
+import { UniversDonut } from '../cockpit/UniversDonut';
+import { AlertesBanner } from '../cockpit/AlertesBanner';
+import { PeriodSelector } from '../cockpit/PeriodSelector';
+import { formatCurrency } from '@/lib/formatters';
+import type { ApporteurStatsV2Request } from '../../types/apporteur-stats-v2';
 
 export default function AccueilTabContent() {
   const { apporteurUser } = useApporteurAuth();
-  const { setActiveTab } = useApporteurTabs();
   const [demandeOpen, setDemandeOpen] = useState(false);
-  
-  const { data, isLoading, error } = useApporteurDossiers();
-  const dossiers = data?.data?.dossiers || [];
+  const [period, setPeriod] = useState<ApporteurStatsV2Request['period']>('month');
 
-  // Compute KPIs
-  const kpis = useMemo(() => {
-    const enCours = dossiers.filter(d => !['regle', 'clos', 'annule'].includes(d.status));
-    const facturesNonReglees = dossiers.filter(d => d.factureId && d.restedu > 0);
-    const devisEnvoyes = dossiers.filter(d => d.status === 'devis_envoye');
-
-    return {
-      enCours: {
-        count: enCours.length,
-      },
-      facturesNonReglees: {
-        count: facturesNonReglees.length,
-        montant: facturesNonReglees.reduce((sum, d) => sum + d.restedu, 0),
-      },
-      devisEnvoyes: {
-        count: devisEnvoyes.length,
-        montant: devisEnvoyes.reduce((sum, d) => sum + d.devisHT, 0),
-      },
-    };
-  }, [dossiers]);
+  const { data, isLoading, error } = useApporteurKpis({ period });
+  const stats = data?.data;
+  const kpis = stats?.kpis;
+  const trends = stats?.trends;
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
@@ -52,107 +38,122 @@ export default function AccueilTabContent() {
             Bienvenue, {apporteurUser?.firstName || 'Partenaire'}
           </h1>
           <p className="text-muted-foreground">
-            {apporteurUser?.apporteurName} - Tableau de bord
+            {apporteurUser?.apporteurName} — Cockpit de pilotage
           </p>
         </div>
-        <Button onClick={() => setDemandeOpen(true)} className="gap-2 rounded-xl">
-          <PlusCircle className="w-4 h-4" />
-          Nouvelle demande
-        </Button>
+        <div className="flex items-center gap-3">
+          <PeriodSelector value={period} onChange={setPeriod} />
+          <Button onClick={() => setDemandeOpen(true)} className="gap-2 rounded-xl">
+            <PlusCircle className="w-4 h-4" />
+            Nouvelle demande
+          </Button>
+        </div>
       </div>
 
-      {/* KPIs */}
+      {/* Content */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-8">
+        <div className="flex items-center justify-center py-16">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
-      ) : error || data?.error === 'non_raccorde' ? (
+      ) : error || !stats?.kpis ? (
         <Card className="border-amber-300 bg-amber-50 dark:bg-amber-900/20 rounded-2xl">
           <CardContent className="py-6">
             <div className="flex items-center gap-3">
               <AlertTriangle className="w-5 h-5 text-amber-600" />
               <p className="text-amber-800 dark:text-amber-200">
-                {data?.error === 'non_raccorde' 
-                  ? 'Compte non raccordé à Apogée. Contactez l\'agence pour activer.'
-                  : 'Erreur de chargement des données.'}
+                {data?.error || 'Erreur de chargement des statistiques.'}
               </p>
             </div>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Dossiers en cours */}
-          <Card 
-            className="cursor-pointer hover:shadow-md transition-shadow rounded-2xl"
-            onClick={() => setActiveTab('dossiers')}
-          >
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Dossiers en cours</p>
-                  <p className="text-3xl font-bold text-foreground mt-1">
-                    {kpis.enCours.count}
-                  </p>
-                </div>
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <FolderOpen className="w-6 h-6 text-primary" />
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground mt-3">
-                Cliquez pour voir le détail →
-              </p>
-            </CardContent>
-          </Card>
+        <>
+          {/* Alertes */}
+          {stats.alertes && stats.alertes.length > 0 && (
+            <AlertesBanner alertes={stats.alertes} />
+          )}
 
-          {/* Factures non réglées */}
-          <Card 
-            className="cursor-pointer hover:shadow-md transition-shadow rounded-2xl"
-            onClick={() => setActiveTab('dossiers')}
-          >
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Factures non réglées</p>
-                  <p className="text-3xl font-bold text-foreground mt-1">
-                    {kpis.facturesNonReglees.count}
-                  </p>
-                  <p className={cn(
-                    "text-sm font-medium mt-1",
-                    kpis.facturesNonReglees.montant > 0 ? "text-rose-600" : "text-green-600"
-                  )}>
-                    {formatCurrency(kpis.facturesNonReglees.montant)}
-                  </p>
-                </div>
-                <div className="w-12 h-12 rounded-xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
-                  <Receipt className="w-6 h-6 text-rose-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* 8 KPI Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <KpiCard
+              label="CA Généré"
+              value={formatCurrency(kpis!.ca_genere)}
+              icon={Euro}
+              iconBg="bg-emerald-100 dark:bg-emerald-900/30"
+              iconColor="text-emerald-600"
+              trend={trends?.ca_genere}
+            />
+            <KpiCard
+              label="Panier moyen"
+              value={formatCurrency(kpis!.panier_moyen)}
+              icon={ShoppingCart}
+              iconBg="bg-blue-100 dark:bg-blue-900/30"
+              iconColor="text-blue-600"
+              trend={trends?.panier_moyen}
+            />
+            <KpiCard
+              label="Taux transfo"
+              value={`${kpis!.taux_transformation.toFixed(1)}%`}
+              icon={TrendingUp}
+              iconBg="bg-violet-100 dark:bg-violet-900/30"
+              iconColor="text-violet-600"
+              trend={trends?.taux_transformation}
+            />
+            <KpiCard
+              label="Dossiers en cours"
+              value={String(kpis!.dossiers_en_cours)}
+              icon={FolderOpen}
+              iconBg="bg-primary/10"
+              iconColor="text-primary"
+              trend={trends?.dossiers_en_cours}
+            />
+            <KpiCard
+              label="Devis envoyés"
+              value={String(kpis!.devis_envoyes)}
+              icon={FileText}
+              iconBg="bg-orange-100 dark:bg-orange-900/30"
+              iconColor="text-orange-600"
+              trend={trends?.devis_envoyes}
+            />
+            <KpiCard
+              label="Factures en attente"
+              value={formatCurrency(kpis!.factures_en_attente.amount)}
+              icon={Receipt}
+              iconBg="bg-rose-100 dark:bg-rose-900/30"
+              iconColor="text-rose-600"
+              subtitle={`${kpis!.factures_en_attente.count} facture(s)`}
+              trend={trends?.factures_en_attente}
+            />
+            <KpiCard
+              label="Délai RDV"
+              value={`${kpis!.avg_rdv_delay_days.toFixed(0)}j`}
+              icon={Clock}
+              iconBg="bg-sky-100 dark:bg-sky-900/30"
+              iconColor="text-sky-600"
+              subtitle={kpis!.coverage_rdv_delay < 100 ? `${kpis!.coverage_rdv_delay.toFixed(0)}% couverture` : undefined}
+              trend={trends?.avg_rdv_delay_days}
+            />
+            <KpiCard
+              label="Délai validation devis"
+              value={`${kpis!.avg_devis_validation_delay_days.toFixed(0)}j`}
+              icon={Timer}
+              iconBg="bg-teal-100 dark:bg-teal-900/30"
+              iconColor="text-teal-600"
+              subtitle={kpis!.coverage_devis_validation_delay < 100 ? `${kpis!.coverage_devis_validation_delay.toFixed(0)}% couverture` : undefined}
+              trend={trends?.avg_devis_validation_delay_days}
+            />
+          </div>
 
-          {/* Devis envoyés */}
-          <Card 
-            className="cursor-pointer hover:shadow-md transition-shadow rounded-2xl"
-            onClick={() => setActiveTab('dossiers')}
-          >
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Devis envoyés</p>
-                  <p className="text-3xl font-bold text-foreground mt-1">
-                    {kpis.devisEnvoyes.count}
-                  </p>
-                  <p className="text-sm font-medium text-muted-foreground mt-1">
-                    {formatCurrency(kpis.devisEnvoyes.montant)}
-                  </p>
-                </div>
-                <div className="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-                  <FileText className="w-6 h-6 text-orange-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+          {/* Collaboration + Univers */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {stats.collaboration && (
+              <CollaborationGauge data={stats.collaboration} />
+            )}
+            {stats.repartition_univers && stats.repartition_univers.length > 0 && (
+              <UniversDonut data={stats.repartition_univers} />
+            )}
+          </div>
+        </>
       )}
 
       {/* Planning Card */}
