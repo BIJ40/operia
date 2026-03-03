@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Building2, Users, ExternalLink, Check, X, Info, Link2, Link2Off, Archive, Trash2, Plus, Mail, UserPlus } from 'lucide-react';
-import { Apporteur, useToggleApporteurStatus, useApporteurManagers, useCreateApporteurManager, useToggleApporteurManagerStatus, useUpdateApporteurApogeeId, useDeleteApporteur } from '@/hooks/useApporteurs';
+import { Building2, Users, ExternalLink, Check, X, Info, Link2, Link2Off, Archive, Trash2, Plus, Mail, UserPlus, Globe } from 'lucide-react';
+import { Apporteur, useToggleApporteurStatus, useApporteurManagers, useCreateApporteurManager, useToggleApporteurManagerStatus, useUpdateApporteurApogeeId, useDeleteApporteur, useTogglePortalEnabled } from '@/hooks/useApporteurs';
+import { Switch } from '@/components/ui/switch';
 import { ApporteurContactsSection } from './ApporteurContactsSection';
 import { ApogeeCommanditaireSelector } from '@/components/shared/apporteurs/ApogeeCommanditaireSelector';
 import { useState } from 'react';
@@ -25,6 +26,7 @@ interface ApporteurDetailSheetProps {
 export function ApporteurDetailSheet({ apporteur, open, onOpenChange }: ApporteurDetailSheetProps) {
   const { hasGlobalRole } = useAuth();
   const toggleStatus = useToggleApporteurStatus();
+  const togglePortal = useTogglePortalEnabled();
   const deleteApporteur = useDeleteApporteur();
   const { data: managers } = useApporteurManagers(apporteur?.id || null);
   const createManager = useCreateApporteurManager();
@@ -116,6 +118,18 @@ export function ApporteurDetailSheet({ apporteur, open, onOpenChange }: Apporteu
                     </Badge>
                   )}
                 </div>
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Portail activé</span>
+                </div>
+                <Switch
+                  checked={apporteur.portal_enabled}
+                  onCheckedChange={(checked) => togglePortal.mutate({ id: apporteur.id, portal_enabled: checked })}
+                  disabled={togglePortal.isPending}
+                />
               </div>
             </CardContent>
           </Card>
