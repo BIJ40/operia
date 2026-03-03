@@ -236,7 +236,7 @@ export function ApporteurPlanningCard() {
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
               <FolderOpen className="w-5 h-5 text-primary" />
-              Dossier {selectedEvent?.projectRef}
+              Dossier — {selectedEvent?.clientName || selectedEvent?.projectRef}
             </SheetTitle>
           </SheetHeader>
           {selectedEvent && (
