@@ -1,32 +1,43 @@
 
+Objectif: exporter 168/168 tables (y compris vides) sans blocage WORKER_LIMIT.
 
-# Plan : Synchroniser la liste des tables avec la base réelle
+1) Constat confirmé
+- La base contient bien 168 tables publiques (`pg_tables`) et `list_public_tables()` renvoie aussi 168.
+- Le “102” vient des échecs d’export table par table (pas de la découverte des tables).
+- Cause principale observée: pagination trop agressive sur certaines tables volumineuses (ex. `knowledge_base`) + liste “heavy” incohérente entre frontend et fonction backend.
 
-## Problème
+2) Correctifs à implémenter
 
-L'edge function `export-all-data` utilise un tableau `ALL_TABLES` hardcodé de ~73 noms. La base de données contient en réalité ~132 tables publiques. Toutes les tables ajoutées après la création initiale de la liste sont manquantes.
+A. `src/pages/admin/AdminDatabaseExport.tsx`
+- Remplacer la logique “taille fixe” par une pagination adaptative:
+  - tentative pageSize: 100 → 50 → 25 → 10 → 5 → 1 en cas de `WORKER_LIMIT`/546.
+  - relancer la même page avec la taille inférieure jusqu’à succès ou échec final.
+- Synchroniser la liste des tables lourdes avec le backend (inclure au minimum `knowledge_base`, `apogee_guides`, `apogee_tickets`, `activity_log`, et idéalement `formation_content`).
+- Ne jamais exclure une table de l’export à cause d’un count incertain:
+  - exporter à partir de la liste brute des tables,
+  - `count === 0` => `[]` direct,
+  - `count === -1` => tenter quand même l’export.
+- Réduire le bruit UI:
+  - éviter 1 toast d’erreur par table,
+  - produire un récapitulatif final (succès/échecs + noms des tables échouées).
 
-## Solution
+B. `supabase/functions/export-all-data/index.ts`
+- Durcir la pagination côté backend:
+  - passer d’une logique binaire `HEAVY_TABLES` à une map `TABLE_PAGE_LIMITS` (ex: ultra-lourdes=10/25, standard=100),
+  - ignorer les `pageSize` trop élevés en les clampant strictement.
+- Alléger le mode `countOnly`:
+  - utiliser `count: 'estimated'` (ou `planned`) pour éviter les scans coûteux,
+  - conserver le fallback `-1` mais sans bloquer l’export global.
 
-Remplacer la liste hardcodée par une **requête dynamique** qui interroge `information_schema.tables` pour récupérer automatiquement toutes les tables du schéma `public`. Ainsi, chaque nouvelle table sera automatiquement incluse sans modifier le code.
+3) Validation end-to-end (obligatoire)
+- Recharger la liste: vérifier affichage de 168 tables.
+- Lancer “Tout exporter” en JSON:
+  - vérifier absence d’arrêt prématuré,
+  - vérifier résumé final proche de 168/168.
+- Vérifier que les tables vides sont présentes dans le fichier avec `[]`.
+- Tester explicitement des tables lourdes (`knowledge_base`, `blocks`, `formation_content`) en export unitaire.
 
-## Changement
-
-**`supabase/functions/export-all-data/index.ts`** :
-
-- Supprimer le tableau `ALL_TABLES` hardcodé
-- Dans le mode "liste des tables", exécuter via le service client :
-  ```sql
-  SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename
-  ```
-- Stocker le résultat dynamiquement pour les validations (`countOnly`, `table=xxx`)
-- Conserver la liste `HEAVY_TABLES` hardcodée (elle ne concerne que la taille de page, pas l'inventaire)
-
-## Impact
-
-| Fichier | Action |
-|---|---|
-| `supabase/functions/export-all-data/index.ts` | Remplacer ALL_TABLES par requête dynamique |
-
-Aucun changement frontend nécessaire — la page affiche déjà ce que l'API retourne.
-
+Section technique (résumé)
+- Problème = capacité compute par requête, pas inventaire des tables.
+- Fix = stratégie de “graceful degradation” (réduction automatique du pageSize) + alignement frontend/backend + counts non bloquants.
+- Aucun changement de schéma base requis; uniquement logique d’export (frontend + fonction backend).
