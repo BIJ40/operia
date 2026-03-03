@@ -886,18 +886,42 @@ button[data-image-modal] {
    PRINT STYLES
    ============================================ */
 @media print {
-  /* Masquer la navigation, les boutons flottants et éléments non-imprimables */
+  /* Masquer TOUS les éléments de navigation et UI non-imprimables */
+  /* Sticky headers (tab bars, nav) */
+  .sticky,
+  /* Fixed elements (floating buttons, chat, etc.) */
   .fixed,
-  [class*="sticky"][class*="z-50"] {
+  /* Tailwind print:hidden */
+  .print\:hidden,
+  /* Radix TabsList (onglets navigateur + pill tabs) */
+  [role="tablist"],
+  /* Boutons de contrôle non-imprimables */
+  nav,
+  header {
     display: none !important;
   }
   
   /* Réinitialiser le layout pour l'impression */
   body, html {
     overflow: visible !important;
+    height: auto !important;
   }
   
-  main {
+  /* Supprimer le flex h-screen qui force le contenu dans un viewport */
+  .h-screen, .min-h-screen {
+    height: auto !important;
+    min-height: auto !important;
+  }
+  
+  main, [role="main"] {
     overflow: visible !important;
+    height: auto !important;
+  }
+  
+  /* Supprimer les marges et paddings inutiles pour maximiser l'espace */
+  .container {
+    max-width: 100% !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
   }
 }
