@@ -100,7 +100,6 @@ export const MODULE_OPTIONS = {
   prospection: {
     dashboard: 'prospection.dashboard',
     comparateur: 'prospection.comparateur',
-    meetings: 'prospection.meetings',
     veille: 'prospection.veille',
     prospects: 'prospection.prospects',
   },
@@ -313,7 +312,6 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     options: [
       { key: 'dashboard', path: 'prospection.dashboard', label: 'Suivi client', description: 'Fiche apporteur', defaultEnabled: true, routes: ['/?tab=prospection'] },
       { key: 'comparateur', path: 'prospection.comparateur', label: 'Comparateur', description: 'Comparer apporteurs', defaultEnabled: true, routes: ['/?tab=prospection'] },
-      { key: 'meetings', path: 'prospection.meetings', label: 'RDV', description: 'Suivi commercial', defaultEnabled: true, routes: ['/?tab=prospection'] },
       { key: 'veille', path: 'prospection.veille', label: 'Veille', description: 'Monitoring apporteurs', defaultEnabled: true, routes: ['/?tab=prospection'] },
       { key: 'prospects', path: 'prospection.prospects', label: 'Prospects', description: 'Gestion prospects', defaultEnabled: true, routes: ['/?tab=prospection'] },
     ],
