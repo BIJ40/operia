@@ -5,8 +5,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { useApporteurAuth } from '@/contexts/ApporteurAuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { useApporteurSession } from '@/apporteur/contexts/ApporteurSessionContext';
+import { useApporteurApi } from '@/apporteur/hooks/useApporteurApi';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,47 +30,13 @@ const REQUEST_TYPES = [
 ];
 
 export default function ApporteurNouvelleDemande() {
-  const { apporteurUser, apporteurId, agencyId, isApporteurLoading, isApporteurAuthenticated } = useApporteurAuth();
+  const { session, isAuthenticated, isLoading: isApporteurLoading, apporteurId, agencyId } = useApporteurSession();
+  const { post } = useApporteurApi();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
 
-  // Show loading while context loads
-  if (isApporteurLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  // Show not authorized if not an apporteur user
-  if (!isApporteurAuthenticated || !apporteurUser) {
-    return (
-      <div className="max-w-2xl mx-auto">
-        <Card className="border-destructive/50 bg-destructive/5">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-destructive mt-0.5" />
-              <div>
-                <p className="font-medium text-destructive">
-                  Accès non autorisé
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Votre compte n'est pas configuré comme utilisateur apporteur. Veuillez contacter l'administrateur.
-                </p>
-                <Button variant="outline" size="sm" className="mt-4" onClick={() => navigate('/apporteur')}>
-                  Retour
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Form state
+  // Form state - must be before any conditional returns (React hooks rules)
   const [formData, setFormData] = useState({
     requestType: '',
     urgency: 'normal',
@@ -94,12 +60,11 @@ export default function ApporteurNouvelleDemande() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!apporteurUser || !apporteurId || !agencyId) {
+    if (!isAuthenticated || !session || !apporteurId || !agencyId) {
       toast.error('Erreur de session. Veuillez vous reconnecter.');
       return;
     }
 
-    // Validation
     if (!formData.requestType || !formData.tenantLastName || !formData.tenantFirstName || !formData.address || !formData.description) {
       toast.error('Veuillez remplir tous les champs obligatoires');
       return;
@@ -107,39 +72,23 @@ export default function ApporteurNouvelleDemande() {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('apporteur_intervention_requests')
-        .insert({
-          agency_id: agencyId,
-          apporteur_id: apporteurId,
-          apporteur_user_id: apporteurUser.id,
-          request_type: formData.requestType,
-          urgency: formData.urgency,
-          tenant_name: `${formData.tenantFirstName} ${formData.tenantLastName}`.trim(),
-          tenant_phone: formData.tenantPhone || null,
-          tenant_email: formData.tenantEmail || null,
-          owner_name: formData.ownerName || null,
-          address: formData.address,
-          postal_code: formData.postalCode || null,
-          city: formData.city || null,
-          description: formData.description,
-          availability: formData.availability || null,
-          comments: formData.comments || null,
-          status: 'pending',
-        })
-        .select('id')
-        .single();
+      const result = await post<{ success: boolean; id: string }>('/create-apporteur-request', {
+        request_type: formData.requestType,
+        urgency: formData.urgency,
+        tenant_name: `${formData.tenantFirstName} ${formData.tenantLastName}`.trim(),
+        tenant_phone: formData.tenantPhone || null,
+        tenant_email: formData.tenantEmail || null,
+        owner_name: formData.ownerName || null,
+        address: formData.address,
+        postal_code: formData.postalCode || null,
+        city: formData.city || null,
+        description: formData.description,
+        availability: formData.availability || null,
+        comments: formData.comments || null,
+      });
 
-      if (error) throw error;
+      if (result.error) throw new Error(result.error);
 
-      // Notification email à l'agence (non-bloquant)
-      if (data?.id) {
-        supabase.functions.invoke('notify-apporteur-request', {
-          body: { request_id: data.id }
-        }).catch(err => console.warn('Email notification failed:', err));
-      }
-
-      // Invalider le cache pour rafraîchir la liste
       await queryClient.invalidateQueries({ queryKey: ['apporteur-demandes'] });
       
       toast.success('Demande envoyée avec succès');
@@ -151,6 +100,41 @@ export default function ApporteurNouvelleDemande() {
       setLoading(false);
     }
   };
+
+  // Show loading while context loads
+  if (isApporteurLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Show not authorized if not an apporteur user
+  if (!isAuthenticated || !session) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-destructive mt-0.5" />
+              <div>
+                <p className="font-medium text-destructive">
+                  Accès non autorisé
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Votre compte n'est pas configuré comme utilisateur apporteur. Veuillez contacter l'administrateur.
+                </p>
+                <Button variant="outline" size="sm" className="mt-4" onClick={() => navigate('/apporteur')}>
+                  Retour
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
