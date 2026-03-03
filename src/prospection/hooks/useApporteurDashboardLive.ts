@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apogeeProxy } from '@/services/apogeeProxy';
 import type { AggregatedKPIs, UniversAggregated } from '../engine/aggregators';
 import type { ApporteurDashboardData } from './useApporteurDashboard';
+import { computeAdaptiveScore, type AdaptiveScore, type MonthlyTrendEntry } from '../engine/adaptiveScoring';
 
 interface UseApporteurDashboardLiveOptions {
   apporteurId: string | null;
@@ -22,6 +23,11 @@ interface UseApporteurDashboardLiveOptions {
 /**
  * Calcule les KPIs d'un apporteur directement depuis les données Apogée brutes
  */
+export interface ApporteurDashboardLiveData extends ApporteurDashboardData {
+  adaptiveScore: AdaptiveScore | null;
+  monthlyTrendFull: MonthlyTrendEntry[];
+}
+
 export function useApporteurDashboardLive({
   apporteurId,
   dateFrom,
@@ -30,9 +36,9 @@ export function useApporteurDashboardLive({
 }: UseApporteurDashboardLiveOptions) {
   const { agence } = useAuth();
 
-  return useQuery<ApporteurDashboardData>({
+  return useQuery<ApporteurDashboardLiveData>({
     queryKey: ['prospection-apporteur-live', agence, apporteurId, dateFrom, dateTo],
-    queryFn: async (): Promise<ApporteurDashboardData> => {
+    queryFn: async (): Promise<ApporteurDashboardLiveData> => {
       if (!agence || !apporteurId) throw new Error('Missing params');
 
       const numericId = Number(apporteurId);
@@ -167,27 +173,28 @@ export function useApporteurDashboardLive({
         .map(u => ({ ...u, dossiers: Math.round(u.dossiers), devis: Math.round(u.devis), factures: Math.round(u.factures), ca_ht: Math.round(u.ca_ht) }))
         .sort((a, b) => b.ca_ht - a.ca_ht);
 
-      // Tendances mensuelles
-      const monthMap = new Map<string, { dossiers: number; ca_ht: number; devis_total: number; devis_signed: number }>();
+      // Tendances mensuelles (période sélectionnée)
+      const monthMap = new Map<string, { dossiers: number; ca_ht: number; devis_total: number; devis_signed: number; factures: number }>();
       
       for (const p of periodProjects) {
         const d = (p.dateReelle || p.date || p.created_at || '').slice(0, 7);
         if (!d) continue;
-        const m = monthMap.get(d) || { dossiers: 0, ca_ht: 0, devis_total: 0, devis_signed: 0 };
+        const m = monthMap.get(d) || { dossiers: 0, ca_ht: 0, devis_total: 0, devis_signed: 0, factures: 0 };
         m.dossiers++;
         monthMap.set(d, m);
       }
       for (const f of apporteurFactures) {
         const d = (f.dateReelle || f.date || f.created_at || '').slice(0, 7);
         if (!d) continue;
-        const m = monthMap.get(d) || { dossiers: 0, ca_ht: 0, devis_total: 0, devis_signed: 0 };
+        const m = monthMap.get(d) || { dossiers: 0, ca_ht: 0, devis_total: 0, devis_signed: 0, factures: 0 };
         m.ca_ht += Number(f.data?.totalHT ?? f.totalHT ?? 0) || 0;
+        m.factures++;
         monthMap.set(d, m);
       }
       for (const d of apporteurDevis) {
         const dt = (d.dateReelle || d.date || d.created_at || '').slice(0, 7);
         if (!dt) continue;
-        const m = monthMap.get(dt) || { dossiers: 0, ca_ht: 0, devis_total: 0, devis_signed: 0 };
+        const m = monthMap.get(dt) || { dossiers: 0, ca_ht: 0, devis_total: 0, devis_signed: 0, factures: 0 };
         m.devis_total++;
         if (validDevisStates.includes(d.state?.toLowerCase?.()) || d.refId || d.invoiceId
             || facturatedProjectIds.has(String(d.projectId ?? d.project_id))) {
@@ -205,7 +212,66 @@ export function useApporteurDashboardLive({
           taux_transfo: d.devis_total > 0 ? Math.round((d.devis_signed / d.devis_total) * 10000) / 100 : null,
         }));
 
-      return { kpis, universData, monthlyTrend };
+      // ─── Monthly trend FULL (tous mois, sans filtre date) pour scoring adaptatif ───
+      const fullMonthMap = new Map<string, { dossiers: number; ca_ht: number; devis_total: number; devis_signed: number; factures: number }>();
+
+      for (const p of apporteurProjects) {
+        const d = (p.dateReelle || p.date || p.created_at || '').slice(0, 7);
+        if (!d) continue;
+        const m = fullMonthMap.get(d) || { dossiers: 0, ca_ht: 0, devis_total: 0, devis_signed: 0, factures: 0 };
+        m.dossiers++;
+        fullMonthMap.set(d, m);
+      }
+
+      // Toutes factures de l'apporteur (sans filtre date)
+      const allApporteurFactures = (factures || []).filter((f: any) => {
+        const fProjectId = f.projectId ?? f.project_id;
+        return projectIds.has(fProjectId) || projectIds.has(Number(fProjectId)) || projectIds.has(String(fProjectId));
+      });
+      for (const f of allApporteurFactures) {
+        const d = (f.dateReelle || f.date || f.created_at || '').slice(0, 7);
+        if (!d) continue;
+        const m = fullMonthMap.get(d) || { dossiers: 0, ca_ht: 0, devis_total: 0, devis_signed: 0, factures: 0 };
+        m.ca_ht += Number(f.data?.totalHT ?? f.totalHT ?? 0) || 0;
+        m.factures++;
+        fullMonthMap.set(d, m);
+      }
+
+      // Tous devis de l'apporteur (sans filtre date)
+      const allApporteurDevis = (devis || []).filter((d: any) => {
+        const dProjectId = d.projectId ?? d.project_id;
+        return projectIds.has(dProjectId) || projectIds.has(Number(dProjectId)) || projectIds.has(String(dProjectId));
+      });
+      const allFacturatedProjectIds = new Set(
+        allApporteurFactures.map((f: any) => String(f.projectId ?? f.project_id))
+      );
+      for (const d of allApporteurDevis) {
+        const dt = (d.dateReelle || d.date || d.created_at || '').slice(0, 7);
+        if (!dt) continue;
+        const m = fullMonthMap.get(dt) || { dossiers: 0, ca_ht: 0, devis_total: 0, devis_signed: 0, factures: 0 };
+        m.devis_total++;
+        if (validDevisStates.includes(d.state?.toLowerCase?.()) || d.refId || d.invoiceId
+            || allFacturatedProjectIds.has(String(d.projectId ?? d.project_id))) {
+          m.devis_signed++;
+        }
+        fullMonthMap.set(dt, m);
+      }
+
+      const monthlyTrendFull: MonthlyTrendEntry[] = Array.from(fullMonthMap.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([month, d]) => ({
+          month,
+          dossiers: d.dossiers,
+          ca_ht: Math.round(d.ca_ht),
+          factures: d.factures,
+          devis_total: d.devis_total,
+          devis_signed: d.devis_signed,
+          taux_transfo: d.devis_total > 0 ? Math.round((d.devis_signed / d.devis_total) * 10000) / 100 : null,
+        }));
+
+      const adaptiveScore = computeAdaptiveScore(monthlyTrendFull);
+
+      return { kpis, universData, monthlyTrend, adaptiveScore, monthlyTrendFull };
     },
     enabled: enabled && !!agence && !!apporteurId,
     staleTime: 5 * 60 * 1000,
