@@ -58,12 +58,28 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
       .slice(0, 8);
   }, [commanditaires, search]);
 
+  // Index commanditaires par id pour résolution de noms
+  const commanditairesById = useMemo(() => {
+    const map = new Map<string, ApogeeCommanditaire>();
+    for (const c of commanditaires) {
+      map.set(String(c.id), c);
+    }
+    return map;
+  }, [commanditaires]);
+
+  const getApporteurName = useCallback((id: string) => {
+    return commanditairesById.get(id)?.name || `Apporteur #${id}`;
+  }, [commanditairesById]);
+
   // Apporteurs filtrés dans les métriques locales
   const filtered = useMemo(() => {
     if (!search) return apporteurs;
     const q = search.toLowerCase();
-    return apporteurs.filter(a => a.apporteur_id.toLowerCase().includes(q));
-  }, [apporteurs, search]);
+    return apporteurs.filter(a => {
+      const name = getApporteurName(a.apporteur_id).toLowerCase();
+      return name.includes(q) || a.apporteur_id.toLowerCase().includes(q);
+    });
+  }, [apporteurs, search, getApporteurName]);
 
   const handleSelectSuggestion = useCallback((cmd: ApogeeCommanditaire) => {
     setSearch(cmd.name);
@@ -204,11 +220,11 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
                     <TableRow
                       key={a.apporteur_id}
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => onSelectApporteur(a.apporteur_id)}
+                      onClick={() => onSelectApporteur(a.apporteur_id, getApporteurName(a.apporteur_id))}
                     >
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
-                          {a.apporteur_id}
+                          {getApporteurName(a.apporteur_id)}
                           {a.kpis.taux_transfo_devis != null && a.kpis.taux_transfo_devis < 30 && a.kpis.devis_total >= 5 && (
                             <Badge variant="destructive" className="text-[10px]">
                               <TrendingDown className="w-3 h-3 mr-0.5" />Alerte
