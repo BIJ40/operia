@@ -95,8 +95,15 @@ export function computeAdaptiveScore(monthlyTrendFull: MonthlyTrendEntry[], rece
   // Trier chronologiquement
   const sorted = [...monthlyTrendFull].sort((a, b) => a.month.localeCompare(b.month));
 
-  const recentSlice = sorted.slice(-recentMonths);
-  const historicalSlice = sorted.slice(0, -recentMonths);
+  // Exclure le mois en cours (incomplet) pour ne comparer que des mois complets
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const completedMonths = sorted.filter(m => m.month < currentMonth);
+
+  if (completedMonths.length < MIN_HISTORY_MONTHS) return null;
+
+  const recentSlice = completedMonths.slice(-recentMonths);
+  const historicalSlice = completedMonths.slice(0, -recentMonths);
 
   if (historicalSlice.length < 1) return null;
 
