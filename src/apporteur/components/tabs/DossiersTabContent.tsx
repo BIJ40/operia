@@ -86,7 +86,7 @@ export default function DossiersTabContent() {
   const dossiers = data?.data?.dossiers || [];
   const totals = data?.data?.totals || { count: 0, resteDu: 0 };
 
-  const STATUS_ORDER = ['en_cours', 'devis_envoye', 'devis_valide', 'att_paiement', 'clos', 'annule'];
+  const STATUS_ORDER = ['en_cours', 'stand_by', 'devis_en_cours', 'devis_envoye', 'devis_valide', 'attente_paiement', 'facture', 'regle', 'clos', 'annule'];
 
   const statuses = useMemo(() => {
     const unique = new Set(dossiers.map(d => d.status));
@@ -370,7 +370,7 @@ export default function DossiersTabContent() {
                         </TableCell>
                         <TableCell>
                           <Badge className={cn('text-xs', statusConf.bgColor, statusConf.color)}>
-                            {d.statusLabel}
+                            {d.status === 'stand_by' ? '⏳ ' : ''}{d.statusLabel}
                           </Badge>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell text-sm">
@@ -453,6 +453,12 @@ export default function DossiersTabContent() {
                   <p className="text-sm text-muted-foreground">Ville</p>
                   <p className="font-medium">{selectedDossier.city || '-'}</p>
                 </div>
+                {selectedDossier.rawState && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">État Apogée</p>
+                    <p className="font-medium">{selectedDossier.rawState}</p>
+                  </div>
+                )}
               </div>
 
               {/* Triple badges (V2) or single badge (V1) */}

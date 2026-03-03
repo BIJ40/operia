@@ -96,6 +96,7 @@ export interface DossierRowV2 {
   city: string;
   status: string;
   statusLabel: string;
+  rawState: string;
   dateCreation: string | null;
   datePremierRdv: string | null;
   dateDevisEnvoye: string | null;
@@ -110,5 +111,5 @@ export interface DossierRowV2 {
   devisId: number | null;
   factureId: number | null;
   // V2 enrichment
-  v2: DossierV2Data;
+  v2?: DossierV2Data;
 }
