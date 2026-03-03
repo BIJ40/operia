@@ -170,6 +170,8 @@ export default function AdminDatabaseExport() {
     }
   };
 
+  const NUM_PARTS = 4;
+
   const exportAll = async () => {
     const allTables = tables;
     if (allTables.length === 0) {
@@ -180,50 +182,69 @@ export default function AdminDatabaseExport() {
     cancelRef.current = false;
     setExportProgress({ current: 0, total: allTables.length, tableName: '' });
 
-    const consolidated: Record<string, unknown[]> = {};
+    // Split tables into NUM_PARTS chunks
+    const chunkSize = Math.ceil(allTables.length / NUM_PARTS);
+    const chunks: TableInfo[][] = [];
+    for (let c = 0; c < NUM_PARTS; c++) {
+      chunks.push(allTables.slice(c * chunkSize, (c + 1) * chunkSize));
+    }
+
     const failedTables: string[] = [];
+    let globalIdx = 0;
 
-    for (let i = 0; i < allTables.length; i++) {
+    for (let partIdx = 0; partIdx < chunks.length; partIdx++) {
       if (cancelRef.current) break;
-      const t = allTables[i];
-      setExportProgress({ current: i + 1, total: allTables.length, tableName: t.name });
-      
-      // Skip fetching for tables known to be empty (count === 0)
-      if (t.count === 0) {
-        consolidated[t.name] = [];
-        continue;
-      }
-      
-      try {
-        consolidated[t.name] = await fetchAllPages(t.name, t.maxPageSize);
-      } catch {
-        failedTables.push(t.name);
-        consolidated[t.name] = [];
+      const chunk = chunks[partIdx];
+      const partData: Record<string, unknown[]> = {};
+
+      for (let i = 0; i < chunk.length; i++) {
+        if (cancelRef.current) break;
+        const t = chunk[i];
+        globalIdx++;
+        setExportProgress({ current: globalIdx, total: allTables.length, tableName: `[${partIdx + 1}/${NUM_PARTS}] ${t.name}` });
+
+        if (t.count === 0) {
+          partData[t.name] = [];
+          continue;
+        }
+
+        try {
+          partData[t.name] = await fetchAllPages(t.name, t.maxPageSize);
+        } catch {
+          failedTables.push(t.name);
+          partData[t.name] = [];
+        }
+
+        // Throttle between tables
+        await delay(300);
       }
 
-      // Throttle: 300ms between tables to avoid worker saturation
-      if (i < allTables.length - 1) {
-        await delay(300);
+      // Download this part immediately
+      const date = new Date().toISOString().split('T')[0];
+      const partNum = partIdx + 1;
+      if (exportFormat === 'sql') {
+        const sqlContent = Object.entries(partData)
+          .map(([name, rows]) => rowsToSQL(name, rows as Record<string, unknown>[]))
+          .join('\n');
+        downloadFile(sqlContent, `database-export-part${partNum}-${date}.sql`, 'text/sql');
+      } else {
+        downloadFile(JSON.stringify(partData, null, 2), `database-export-part${partNum}-${date}.json`, 'application/json');
+      }
+      toast.info(`Partie ${partNum}/${NUM_PARTS} téléchargée (${chunk.length} tables)`);
+
+      // Small delay between part downloads
+      if (partIdx < chunks.length - 1) {
+        await delay(800);
       }
     }
 
     const successCount = allTables.length - failedTables.length;
-    const date = new Date().toISOString().split('T')[0];
-    if (exportFormat === 'sql') {
-      const sqlContent = Object.entries(consolidated)
-        .map(([name, rows]) => rowsToSQL(name, rows as Record<string, unknown>[]))
-        .join('\n');
-      downloadFile(sqlContent, `database-full-export-${date}.sql`, 'text/sql');
-    } else {
-      downloadFile(JSON.stringify(consolidated, null, 2), `database-full-export-${date}.json`, 'application/json');
-    }
     setExporting(false);
 
-    // Single consolidated toast
     if (failedTables.length === 0) {
-      toast.success(`Export terminé : ${successCount}/${allTables.length} tables exportées`);
+      toast.success(`Export terminé : ${successCount}/${allTables.length} tables en ${NUM_PARTS} fichiers`);
     } else {
-      toast.warning(`Export terminé : ${successCount}/${allTables.length} tables`, {
+      toast.warning(`Export terminé : ${successCount}/${allTables.length} tables en ${NUM_PARTS} fichiers`, {
         description: `Échecs (${failedTables.length}) : ${failedTables.join(', ')}`,
         duration: 15000,
       });
@@ -267,7 +288,7 @@ export default function AdminDatabaseExport() {
             {canExport && (
               <Button size="sm" onClick={exportAll} disabled={exporting}>
                 {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                Tout exporter ({tables.length})
+                Tout exporter ({tables.length} tables → {NUM_PARTS} fichiers)
               </Button>
             )}
           </div>
