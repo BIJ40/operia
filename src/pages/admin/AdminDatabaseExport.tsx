@@ -107,7 +107,8 @@ export default function AdminDatabaseExport() {
   const fetchAllPages = async (tableName: string): Promise<Record<string, unknown>[]> => {
     let allRows: Record<string, unknown>[] = [];
     let page = 0;
-    const pageSize = tableName === 'blocks' ? 25 : 100;
+    const HEAVY = ['blocks', 'apporteur_blocks', 'guide_chunks', 'chatbot_queries', 'operia_blocks', 'rag_index_documents'];
+    const pageSize = HEAVY.includes(tableName) ? 25 : 100;
     let hasMore = true;
     while (hasMore) {
       const result = await apiFetch(`table=${encodeURIComponent(tableName)}&page=${page}&pageSize=${pageSize}`);
@@ -151,9 +152,10 @@ export default function AdminDatabaseExport() {
       setExportProgress({ current: i + 1, total: nonEmpty.length, tableName: t.name });
       try {
         consolidated[t.name] = await fetchAllPages(t.name);
-      } catch {
+      } catch (err: any) {
         errors++;
         consolidated[t.name] = [];
+        toast.error(`Échec export "${t.name}": ${err?.message || 'erreur inconnue'}`);
       }
     }
 

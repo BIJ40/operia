@@ -127,7 +127,8 @@ Deno.serve(async (req) => {
       return withCors(req, new Response(JSON.stringify({ error: 'Paramètre page invalide' }), { status: 400, headers: { 'Content-Type': 'application/json' } }));
     }
 
-    const isHeavyTable = tableParam === 'blocks';
+    const HEAVY_TABLES = ['blocks', 'apporteur_blocks', 'guide_chunks', 'chatbot_queries', 'operia_blocks', 'rag_index_documents'];
+    const isHeavyTable = HEAVY_TABLES.includes(tableParam);
     const defaultPageSize = isHeavyTable ? 25 : 100;
     const requestedPageSize = parseInt(url.searchParams.get('pageSize') ?? String(defaultPageSize), 10);
     const maxPageSize = isHeavyTable ? 50 : 200;
