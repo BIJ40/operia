@@ -407,7 +407,11 @@ Deno.serve(async (req) => {
 
     for (const c of clients) {
       const data = c.data || {};
-      const name = c.name || data.nom || data.name || 'Client inconnu';
+      // Résolution robuste du nom client : nom direct, data.nom, composition prénom+nom, etc.
+      const rawName = c.name || c.nom || data.nom || data.name;
+      const composedName = [c.prenom || c.firstname || data.prenom, c.nom_famille || c.lastname || data.nom_famille]
+        .filter(Boolean).join(' ').trim();
+      const name = rawName || composedName || `Client #${c.id}`;
       const address = data.adresse || c.adresse || c.address || '';
       const postalCode = data.codePostal || c.codePostal || c.postalCode || '';
       const city = data.ville || c.ville || c.city || '';
