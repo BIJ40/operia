@@ -49,21 +49,10 @@ function getTypeLabel(type: string): string {
   return 'Intervention';
 }
 
-function getWeekBounds(weekOffset: number = 0): { start: Date; end: Date } {
+function getAllFutureBounds(): { start: Date } {
   const now = new Date();
-  const dayOfWeek = now.getDay();
-  const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-  
-  const monday = new Date(now);
-  monday.setDate(now.getDate() + diff + (weekOffset * 7));
-  monday.setHours(0, 0, 0, 0);
-  
-  // End on Friday (Lun-Ven only, no Sat/Sun)
-  const friday = new Date(monday);
-  friday.setDate(monday.getDate() + 4);
-  friday.setHours(23, 59, 59, 999);
-  
-  return { start: monday, end: friday };
+  now.setHours(0, 0, 0, 0);
+  return { start: now };
 }
 
 Deno.serve(async (req) => {
@@ -73,7 +62,7 @@ Deno.serve(async (req) => {
   try {
     // Parse request body first (before auth consumes the stream)
     const body = await req.json().catch(() => ({}));
-    const weekOffset = Number(body.weekOffset || 0);
+    // weekOffset ignored now — we return all upcoming events
 
     // Dual auth: custom apporteur token OR Supabase JWT
     const authResult = await authenticateApporteur(req);
@@ -94,8 +83,7 @@ Deno.serve(async (req) => {
       ));
     }
 
-    const baseUrl = `https://${agencySlug}.hc-apogee.fr/api`;
-    const weekBounds = getWeekBounds(weekOffset);
+    const bounds = getAllFutureBounds();
 
     function extractApogeeList(endpoint: string, parsed: unknown): AnyRecord[] {
       if (Array.isArray(parsed)) return parsed as AnyRecord[];
@@ -250,7 +238,7 @@ Deno.serve(async (req) => {
       if (!projectIds.has(projectId)) continue;
 
       const intDate = parseDate(i.dateReelle || i.date);
-      if (!intDate || intDate < weekBounds.start || intDate > weekBounds.end) continue;
+      if (!intDate || intDate < bounds.start) continue;
 
       const project = projectsMap[projectId];
       const clientData = project?.data || {};
@@ -289,18 +277,13 @@ Deno.serve(async (req) => {
       return 0;
     });
 
-    console.log(`[GET-APPORTEUR-PLANNING] ${events.length} events for week offset ${weekOffset}`);
+    console.log(`[GET-APPORTEUR-PLANNING] ${events.length} upcoming events`);
 
     return withCors(req, new Response(
       JSON.stringify({ 
         success: true, 
         data: {
           events,
-          week: {
-            start: weekBounds.start.toISOString().split('T')[0],
-            end: weekBounds.end.toISOString().split('T')[0],
-            offset: weekOffset,
-          }
         }
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }

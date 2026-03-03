@@ -16,8 +16,6 @@ import {
   useApporteurPlanning, 
   PlanningEvent,
   formatTime, 
-  getWeekDays,
-  formatWeekRange
 } from '../hooks/useApporteurPlanning';
 import { 
   useApporteurDossiers, 
@@ -27,9 +25,7 @@ import {
   formatDate 
 } from '../hooks/useApporteurDossiers';
 import { 
-  Calendar, 
-  ChevronLeft, 
-  ChevronRight, 
+  Calendar,
   Clock,
   MapPin,
   User,
@@ -108,14 +104,12 @@ function DossierStepper({ dossier }: { dossier: DossierRow }) {
 }
 
 export function ApporteurPlanningCard() {
-  const [weekOffset, setWeekOffset] = useState(0);
   const [selectedEvent, setSelectedEvent] = useState<PlanningEvent | null>(null);
   
-  const { data, isLoading, error } = useApporteurPlanning({ weekOffset });
+  const { data, isLoading, error } = useApporteurPlanning();
   const { data: dossiersData } = useApporteurDossiers();
 
   const events = data?.data?.events || [];
-  const week = data?.data?.week;
   const dossiers = dossiersData?.data?.dossiers || [];
 
   // Index dossiers by projectId for quick lookup
@@ -153,38 +147,13 @@ export function ApporteurPlanningCard() {
     <>
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-primary" />
-              Planning
-            </CardTitle>
-            <div className="flex items-center gap-1">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8"
-                onClick={() => setWeekOffset(w => w - 1)}
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs"
-                onClick={() => setWeekOffset(0)}
-              >
-                {week ? formatWeekRange(week.start, week.end) : 'Cette semaine'}
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8"
-                onClick={() => setWeekOffset(w => w + 1)}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-primary" />
+            Prochains RDV
+            {events.length > 0 && (
+              <Badge variant="secondary" className="text-xs ml-auto">{events.length}</Badge>
+            )}
+          </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
           {isLoading ? (
