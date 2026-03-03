@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
 import { ModuleKey } from '@/types/modules';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   DndContext,
   closestCenter,
@@ -231,44 +232,65 @@ function ApporteursSection() {
   );
 }
 
-// Sous-onglets Administratif
-const ADMIN_TABS: FolderTabConfig[] = [
-  { id: 'reunions', label: 'Réunions', icon: Users2 },
-  { id: 'plannings', label: 'Plannings', icon: CalendarDays },
-  { id: 'documents', label: 'Documents', icon: FileText },
+// Sous-onglets Administratif avec module requis
+const ADMIN_TABS_CONFIG: (FolderTabConfig & { requiresModule?: ModuleKey })[] = [
+  { id: 'reunions', label: 'Réunions', icon: Users2, requiresModule: 'divers_reunions' },
+  { id: 'plannings', label: 'Plannings', icon: CalendarDays, requiresModule: 'divers_plannings' },
+  { id: 'documents', label: 'Documents', icon: FileText, requiresModule: 'divers_documents' },
 ];
-const DEFAULT_ADMIN_ORDER = ['reunions', 'plannings', 'documents'];
 
 function AdministratifSection() {
-  const [subTab, setSubTab] = useSessionState<AdminSubTab>('outils_admin_sub', 'reunions');
-  const [tabOrder, setTabOrder] = useSessionState<string[]>('outils_admin_order', DEFAULT_ADMIN_ORDER);
+  const { hasModule } = useEffectiveModules();
+  
+  const visibleAdminTabs = useMemo(() => {
+    return ADMIN_TABS_CONFIG.filter(tab => {
+      if (!tab.requiresModule) return true;
+      return hasModule(tab.requiresModule);
+    });
+  }, [hasModule]);
+
+  const defaultTab = visibleAdminTabs[0]?.id as AdminSubTab ?? 'reunions';
+  const [subTab, setSubTab] = useSessionState<AdminSubTab>('outils_admin_sub', defaultTab);
+  const defaultOrder = visibleAdminTabs.map(t => t.id);
+  const [tabOrder, setTabOrder] = useSessionState<string[]>('outils_admin_order', defaultOrder);
+  
+  // Ensure active tab is still visible
+  const effectiveSubTab = visibleAdminTabs.some(t => t.id === subTab) ? subTab : defaultTab;
 
   const handleReorder = useCallback((newOrder: string[]) => {
     setTabOrder(newOrder);
   }, [setTabOrder]);
 
+  if (visibleAdminTabs.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-16 text-muted-foreground">
+        Aucun outil administratif activé.
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-0">
       <DraggableFolderTabs 
-        tabs={ADMIN_TABS} 
+        tabs={visibleAdminTabs} 
         tabOrder={tabOrder}
-        activeTab={subTab} 
+        activeTab={effectiveSubTab} 
         onTabChange={(t) => setSubTab(t as AdminSubTab)}
         onReorder={handleReorder}
         storageKey="outils_admin_order"
       />
       <div className="rounded-2xl rounded-tl-none border-2 border-border bg-background p-4 sm:p-6 shadow-sm">
-        {subTab === 'reunions' && (
+        {effectiveSubTab === 'reunions' && (
           <Suspense fallback={<LoadingFallback />}>
             <RHMeetingsPage />
           </Suspense>
         )}
-        {subTab === 'plannings' && (
+        {effectiveSubTab === 'plannings' && (
           <Suspense fallback={<LoadingFallback />}>
             <PlanningHebdo />
           </Suspense>
         )}
-        {subTab === 'documents' && (
+        {effectiveSubTab === 'documents' && (
           <Suspense fallback={<LoadingFallback />}>
             <AgencyAdminDocuments />
           </Suspense>
