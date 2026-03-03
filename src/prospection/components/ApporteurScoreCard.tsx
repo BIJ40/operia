@@ -1,9 +1,11 @@
 /**
  * ApporteurScoreCard - Jauge de scoring adaptatif + détail métriques
+ * Avec tooltips explicatifs au survol
  */
 
 import { Card, CardContent } from '@/components/ui/card';
-import { TrendingUp, TrendingDown, Minus, AlertTriangle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { TrendingUp, TrendingDown, Minus, AlertTriangle, HelpCircle } from 'lucide-react';
 import type { AdaptiveScore, MetricVariation } from '../engine/adaptiveScoring';
 
 interface Props {
@@ -24,6 +26,14 @@ const LEVEL_BG: Record<AdaptiveScore['level'], string> = {
   stable: 'bg-blue-500/10 border-blue-500/30',
   positive: 'bg-green-500/10 border-green-500/30',
   excellent: 'bg-emerald-500/10 border-emerald-500/30',
+};
+
+const METRIC_TOOLTIPS: Record<string, string> = {
+  ca: 'Moyenne mensuelle du chiffre d\'affaires HT facturé. Comparaison entre les 3 derniers mois et la moyenne sur tout l\'historique connu.',
+  dossiers: 'Nombre moyen de dossiers confiés par mois. Comparaison récente (3 mois) vs historique complet.',
+  factures: 'Nombre moyen de factures émises par mois. Mesure le rythme de facturation réel.',
+  tauxTransfo: 'Taux de transformation des devis en factures (en %). Compare le taux récent au taux historique.',
+  score: 'Score composite 0-100 basé sur 4 métriques pondérées : CA (40%), Dossiers (25%), Taux transfo (20%), Factures (15%). 50 = stable, <35 = alerte baisse, >65 = hausse.',
 };
 
 function CircularGauge({ score, color }: { score: number; color: string }) {
@@ -92,14 +102,44 @@ function VariationBadge({ pct }: { pct: number }) {
   );
 }
 
-function MetricRow({ label, metric, format }: { label: string; metric: MetricVariation; format?: (v: number) => string }) {
+function MetricRow({ label, metric, format, tooltip }: { label: string; metric: MetricVariation; format?: (v: number) => string; tooltip?: string }) {
   const fmt = format || ((v: number) => String(v));
   return (
     <div className="flex items-center justify-between text-sm py-1.5 border-b border-border/50 last:border-0">
-      <span className="text-muted-foreground">{label}</span>
+      <span className="text-muted-foreground flex items-center gap-1">
+        {label}
+        {tooltip && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <HelpCircle className="w-3 h-3 text-muted-foreground/50 cursor-help" />
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-xs text-xs">
+              {tooltip}
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </span>
       <div className="flex items-center gap-3">
-        <span className="text-muted-foreground text-xs">moy. {fmt(metric.avg)}</span>
-        <span className="font-medium">{fmt(metric.recent)}</span>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="text-muted-foreground text-xs cursor-help underline decoration-dotted underline-offset-2">
+              moy. {fmt(metric.avg)}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="text-xs">
+            Moyenne mensuelle calculée sur tout l'historique (hors 3 derniers mois)
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="font-medium cursor-help">
+              {fmt(metric.recent)}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="text-xs">
+            Moyenne mensuelle sur les 3 derniers mois
+          </TooltipContent>
+        </Tooltip>
         <VariationBadge pct={metric.variationPct} />
       </div>
     </div>
@@ -114,47 +154,59 @@ export function ApporteurScoreCard({ score }: Props) {
   const color = LEVEL_COLORS[score.level];
 
   return (
-    <Card className={`border ${LEVEL_BG[score.level]}`}>
-      <CardContent className="p-4">
-        <div className="flex items-start gap-5">
-          {/* Gauge */}
-          <div className="flex flex-col items-center gap-1">
-            <CircularGauge score={score.score} color={color} />
-            <span className="text-sm font-semibold" style={{ color }}>
-              {score.label}
-            </span>
+    <TooltipProvider delayDuration={200}>
+      <Card className={`border ${LEVEL_BG[score.level]}`}>
+        <CardContent className="p-4">
+          <div className="flex items-start gap-5">
+            {/* Gauge */}
+            <div className="flex flex-col items-center gap-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="cursor-help">
+                    <CircularGauge score={score.score} color={color} />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="max-w-xs text-xs">
+                  {METRIC_TOOLTIPS.score}
+                </TooltipContent>
+              </Tooltip>
+              <span className="text-sm font-semibold" style={{ color }}>
+                {score.label}
+              </span>
+            </div>
+
+            {/* Metrics */}
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-muted-foreground mb-2">
+                Tendance récente (3 mois) vs moyenne historique
+              </p>
+              <MetricRow label="CA / mois" metric={score.metrics.ca} format={euroFmt} tooltip={METRIC_TOOLTIPS.ca} />
+              <MetricRow label="Dossiers / mois" metric={score.metrics.dossiers} format={numFmt} tooltip={METRIC_TOOLTIPS.dossiers} />
+              <MetricRow label="Factures / mois" metric={score.metrics.factures} format={numFmt} tooltip={METRIC_TOOLTIPS.factures} />
+              {score.metrics.tauxTransfo.avg !== null && score.metrics.tauxTransfo.recent !== null && (
+                <MetricRow
+                  label="Taux transfo"
+                  metric={score.metrics.tauxTransfo as MetricVariation}
+                  format={pctFmt}
+                  tooltip={METRIC_TOOLTIPS.tauxTransfo}
+                />
+              )}
+            </div>
           </div>
 
-          {/* Metrics */}
-          <div className="flex-1 min-w-0">
-            <p className="text-xs text-muted-foreground mb-2">
-              Tendance récente (3 mois) vs moyenne historique
-            </p>
-            <MetricRow label="CA / mois" metric={score.metrics.ca} format={euroFmt} />
-            <MetricRow label="Dossiers / mois" metric={score.metrics.dossiers} format={numFmt} />
-            <MetricRow label="Factures / mois" metric={score.metrics.factures} format={numFmt} />
-            {score.metrics.tauxTransfo.avg !== null && score.metrics.tauxTransfo.recent !== null && (
-              <MetricRow
-                label="Taux transfo"
-                metric={score.metrics.tauxTransfo as MetricVariation}
-                format={pctFmt}
-              />
-            )}
-          </div>
-        </div>
-
-        {/* Alerts */}
-        {score.alerts.length > 0 && (
-          <div className="mt-3 space-y-1.5">
-            {score.alerts.map((alert, i) => (
-              <div key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
-                <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0 text-amber-500" />
-                <span>{alert}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          {/* Alerts */}
+          {score.alerts.length > 0 && (
+            <div className="mt-3 space-y-1.5">
+              {score.alerts.map((alert, i) => (
+                <div key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
+                  <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0 text-amber-500" />
+                  <span>{alert}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </TooltipProvider>
   );
 }
