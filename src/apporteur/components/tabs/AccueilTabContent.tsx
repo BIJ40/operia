@@ -119,8 +119,8 @@ export default function AccueilTabContent() {
               label="Factures en attente"
               value={formatCurrency(kpis!.factures_en_attente.amount)}
               icon={Receipt}
-              iconBg="bg-rose-100 dark:bg-rose-900/30"
-              iconColor="text-rose-600"
+              iconBg="bg-amber-100 dark:bg-amber-900/30"
+              iconColor="text-amber-600"
               subtitle={`${kpis!.factures_en_attente.count} facture(s)`}
               trend={trends?.factures_en_attente}
             />

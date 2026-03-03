@@ -50,7 +50,7 @@ const TYPE_COLORS: Record<string, string> = {
   rt: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   travaux: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
   depannage: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-  sav: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+  sav: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
   default: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
 };
 
@@ -365,7 +365,7 @@ export function ApporteurPlanningCard() {
                         </div>
                         <p className={cn(
                           "font-semibold",
-                          selectedDossier.restedu > 0 ? "text-rose-600" : "text-green-600"
+                          selectedDossier.restedu > 0 ? "text-foreground" : "text-foreground"
                         )}>
                           {selectedDossier.restedu > 0 
                             ? formatCurrency(selectedDossier.restedu) 

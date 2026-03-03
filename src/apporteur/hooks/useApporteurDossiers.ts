@@ -65,11 +65,11 @@ export const STATUS_CONFIG: Record<string, { color: string; bgColor: string }> =
   devis_valide: { color: 'text-indigo-700', bgColor: 'bg-indigo-100 dark:bg-indigo-900/30' },
   rdv_travaux: { color: 'text-purple-700', bgColor: 'bg-purple-100 dark:bg-purple-900/30' },
   facture: { color: 'text-teal-700', bgColor: 'bg-teal-100 dark:bg-teal-900/30' },
-  attente_paiement: { color: 'text-rose-700', bgColor: 'bg-rose-100 dark:bg-rose-900/30' },
+  attente_paiement: { color: 'text-amber-700', bgColor: 'bg-amber-100 dark:bg-amber-900/30' },
   regle: { color: 'text-green-700', bgColor: 'bg-green-100 dark:bg-green-900/30' },
   clos: { color: 'text-gray-600', bgColor: 'bg-gray-100 dark:bg-gray-800' },
   en_cours: { color: 'text-cyan-700', bgColor: 'bg-cyan-100 dark:bg-cyan-900/30' },
-  annule: { color: 'text-red-700', bgColor: 'bg-red-100 dark:bg-red-900/30' },
+  annule: { color: 'text-slate-600', bgColor: 'bg-slate-100 dark:bg-slate-800' },
 };
 
 export function formatCurrency(amount: number): string {
