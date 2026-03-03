@@ -121,6 +121,18 @@ function computePeriodKpis(
   start: Date,
   end: Date
 ): PeriodKpis {
+  // Règle métier : "Devis avec facture liée = automatiquement validé"
+  // Construire le set des projectIds ayant au moins une facture sur la période
+  const projectsWithFacture = new Set<number>();
+  for (const f of allFactures) {
+    if (!projectIds.has(f.projectId)) continue;
+    const fd = parseDate(f.dateReelle || f.date);
+    if (!fd || fd < start || fd > end) continue;
+    const invoiceType = String(f.invoiceType || '').toLowerCase();
+    if (!invoiceType.includes('avoir') && invoiceType !== 'credit_note') {
+      projectsWithFacture.add(f.projectId);
+    }
+  }
   const kpis: PeriodKpis = {
     dossiers_en_cours: 0, devis_envoyes: 0, devis_valides: 0, devis_refuses: 0,
     factures_en_attente_count: 0, factures_en_attente_amount: 0,
@@ -195,12 +207,14 @@ function computePeriodKpis(
     kpis.devis_envoyes++;
     kpis.devis_total_for_coverage++;
 
-    if (ACCEPTED_DEVIS.some(s => state.includes(s))) {
+    // Un devis est "validé" si son statut est accepté OU si son projet a une facture
+    const isAcceptedByState = ACCEPTED_DEVIS.some(s => state.includes(s));
+    const isAcceptedByFacture = projectsWithFacture.has(d.projectId);
+
+    if (isAcceptedByState || isAcceptedByFacture) {
       kpis.devis_valides++;
       // Delay: devis sent → validated (approximate via dates)
-      // Use dateReelle as both sent and validated date proxy
       const sentDate = parseDate(d.dateReelle || d.date);
-      // Look for validated date in data if available
       const validatedDate = parseDate(d.data?.dateValidation || d.data?.dateAccepted || d.dateValidation);
       if (sentDate && validatedDate && validatedDate >= sentDate) {
         kpis.devis_validated_with_dates++;
@@ -587,7 +601,16 @@ Deno.serve(async (req) => {
       }
       series_ca.push({ month: monthKey, value: round2(mCa) });
 
-      // Transfo
+      // Transfo — même règle : devis facturé = validé
+      const mProjectsWithFacture = new Set<number>();
+      for (const f of allFactures) {
+        if (!projectIds.has(f.projectId)) continue;
+        const fd = parseDate(f.dateReelle || f.date);
+        if (!fd || fd < mDate || fd > mEnd) continue;
+        const it = String(f.invoiceType || '').toLowerCase();
+        if (!it.includes('avoir') && it !== 'credit_note') mProjectsWithFacture.add(f.projectId);
+      }
+
       let mDevisTotal = 0, mDevisValides = 0;
       for (const d of allDevis) {
         if (!projectIds.has(d.projectId)) continue;
@@ -596,7 +619,7 @@ Deno.serve(async (req) => {
         const state = String(d.state || '').toLowerCase();
         if (isCancelledLike(state)) continue;
         mDevisTotal++;
-        if (ACCEPTED_DEVIS.some(s => state.includes(s))) mDevisValides++;
+        if (ACCEPTED_DEVIS.some(s => state.includes(s)) || mProjectsWithFacture.has(d.projectId)) mDevisValides++;
       }
       series_transfo.push({ month: monthKey, value: mDevisTotal > 0 ? round2((mDevisValides / mDevisTotal) * 100) : 0 });
 
