@@ -136,20 +136,25 @@ export default function AdminDatabaseExport() {
   };
 
   const exportAll = async () => {
-    const nonEmpty = tables.filter(t => t.count > 0);
-    if (nonEmpty.length === 0) {
+    const allTables = tables.filter(t => t.count >= 0);
+    if (allTables.length === 0) {
       toast.warning('Aucune table à exporter');
       return;
     }
     setExporting(true);
-    setExportProgress({ current: 0, total: nonEmpty.length, tableName: '' });
+    setExportProgress({ current: 0, total: allTables.length, tableName: '' });
 
     const consolidated: Record<string, unknown[]> = {};
     let errors = 0;
 
-    for (let i = 0; i < nonEmpty.length; i++) {
-      const t = nonEmpty[i];
-      setExportProgress({ current: i + 1, total: nonEmpty.length, tableName: t.name });
+    for (let i = 0; i < allTables.length; i++) {
+      const t = allTables[i];
+      setExportProgress({ current: i + 1, total: allTables.length, tableName: t.name });
+      // Skip fetching for empty tables, just record empty array
+      if (t.count === 0) {
+        consolidated[t.name] = [];
+        continue;
+      }
       try {
         consolidated[t.name] = await fetchAllPages(t.name);
       } catch (err: any) {
@@ -169,7 +174,7 @@ export default function AdminDatabaseExport() {
       downloadFile(JSON.stringify(consolidated, null, 2), `database-full-export-${date}.json`, 'application/json');
     }
     setExporting(false);
-    toast.success(`Export terminé (${nonEmpty.length - errors}/${nonEmpty.length} tables)${errors ? `, ${errors} erreurs` : ''}`);
+    toast.success(`Export terminé (${allTables.length - errors}/${allTables.length} tables)${errors ? `, ${errors} erreurs` : ''}`);
   };
 
   const totalRows = tables.reduce((s, t) => s + Math.max(t.count, 0), 0);
