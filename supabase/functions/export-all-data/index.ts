@@ -117,36 +117,26 @@ Deno.serve(async (req) => {
       }));
     }
 
-    // Mode 2: Export a specific table (full pagination)
+    // Mode 3: Export a specific table page (paginated, not buffered)
     if (!ALL_TABLES.includes(tableParam)) {
       return withCors(req, new Response(JSON.stringify({ error: `Table "${tableParam}" non autorisée` }), { status: 400, headers: { 'Content-Type': 'application/json' } }));
     }
 
-    const PAGE_SIZE = 1000;
-    let allData: unknown[] = [];
-    let offset = 0;
-    let hasMore = true;
+    const page = parseInt(url.searchParams.get('page') ?? '0', 10);
+    const PAGE_SIZE = 500;
+    const offset = page * PAGE_SIZE;
 
-    while (hasMore) {
-      const { data, error } = await serviceClient
-        .from(tableParam)
-        .select('*')
-        .range(offset, offset + PAGE_SIZE - 1);
+    const { data, error } = await serviceClient
+      .from(tableParam)
+      .select('*')
+      .range(offset, offset + PAGE_SIZE - 1);
 
-      if (error) {
-        return withCors(req, new Response(JSON.stringify({ error: error.message, table: tableParam }), { status: 400, headers: { 'Content-Type': 'application/json' } }));
-      }
-
-      if (data && data.length > 0) {
-        allData = allData.concat(data);
-        offset += PAGE_SIZE;
-        hasMore = data.length === PAGE_SIZE;
-      } else {
-        hasMore = false;
-      }
+    if (error) {
+      return withCors(req, new Response(JSON.stringify({ error: error.message, table: tableParam }), { status: 400, headers: { 'Content-Type': 'application/json' } }));
     }
 
-    return withCors(req, new Response(JSON.stringify({ table: tableParam, count: allData.length, data: allData }), {
+    const rows = data ?? [];
+    return withCors(req, new Response(JSON.stringify({ table: tableParam, page, pageSize: PAGE_SIZE, count: rows.length, hasMore: rows.length === PAGE_SIZE, data: rows }), {
       headers: { 'Content-Type': 'application/json' },
     }));
 
