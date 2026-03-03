@@ -186,11 +186,31 @@ export function useCreateApporteurManager() {
       });
 
       if (error) {
-        // Extract clean error message from SDK wrapper
-        let msg = error.message || 'Erreur inconnue';
-        const jsonMatch = msg.match(/\{[^}]+\}/);
-        if (jsonMatch) {
-          try { msg = JSON.parse(jsonMatch[0]).error || msg; } catch { /* keep original */ }
+        // The SDK wraps non-2xx as FunctionsHttpError - extract the body
+        let msg = 'Erreur inconnue';
+        try {
+          // Try to get the response body from the error context
+          const contextBody = (error as any)?.context?.body;
+          if (contextBody) {
+            const reader = contextBody.getReader?.();
+            if (reader) {
+              const { value } = await reader.read();
+              const text = new TextDecoder().decode(value);
+              const parsed = JSON.parse(text);
+              msg = parsed.error || msg;
+            }
+          }
+        } catch { /* fallback */ }
+        // Fallback: try parsing from error.message
+        if (msg === 'Erreur inconnue') {
+          const raw = error.message || '';
+          // Match JSON anywhere in the message
+          const jsonMatch = raw.match(/\{.*"error"\s*:\s*"[^"]+"\s*.*\}/);
+          if (jsonMatch) {
+            try { msg = JSON.parse(jsonMatch[0]).error || raw; } catch { msg = raw; }
+          } else {
+            msg = raw || 'Erreur inconnue';
+          }
         }
         throw new Error(msg);
       }
