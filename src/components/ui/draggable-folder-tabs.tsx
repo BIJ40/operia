@@ -159,8 +159,13 @@ export function DraggableFolderTabsList({
     })
   );
 
-  // Utiliser l'ordre fourni ou l'ordre par défaut
-  const effectiveOrder = tabOrder || tabs.map(t => t.id);
+  // Utiliser l'ordre fourni ou l'ordre par défaut, en ajoutant les tabs manquantes
+  const allTabIds = tabs.map(t => t.id);
+  const baseOrder = tabOrder || allTabIds;
+  // Add any new tabs not in saved order, remove any stale ones
+  const missingIds = allTabIds.filter(id => !baseOrder.includes(id));
+  const validOrder = baseOrder.filter(id => allTabIds.includes(id));
+  const effectiveOrder = [...validOrder, ...missingIds];
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
