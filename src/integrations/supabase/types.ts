@@ -8811,6 +8811,12 @@ export type Database = {
         Returns: boolean
       }
       is_support_agent: { Args: { _user_id: string }; Returns: boolean }
+      list_public_tables: {
+        Args: never
+        Returns: {
+          tablename: string
+        }[]
+      }
       lock_document_request: { Args: { p_request_id: string }; Returns: Json }
       log_activity: {
         Args: {
