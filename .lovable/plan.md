@@ -1,43 +1,48 @@
 
-Objectif: exporter 168/168 tables (y compris vides) sans blocage WORKER_LIMIT.
 
-1) Constat confirmé
-- La base contient bien 168 tables publiques (`pg_tables`) et `list_public_tables()` renvoie aussi 168.
-- Le “102” vient des échecs d’export table par table (pas de la découverte des tables).
-- Cause principale observée: pagination trop agressive sur certaines tables volumineuses (ex. `knowledge_base`) + liste “heavy” incohérente entre frontend et fonction backend.
+# Plan : Export 168/168 tables sans WORKER_LIMIT
 
-2) Correctifs à implémenter
+## Probleme identifie
 
-A. `src/pages/admin/AdminDatabaseExport.tsx`
-- Remplacer la logique “taille fixe” par une pagination adaptative:
-  - tentative pageSize: 100 → 50 → 25 → 10 → 5 → 1 en cas de `WORKER_LIMIT`/546.
-  - relancer la même page avec la taille inférieure jusqu’à succès ou échec final.
-- Synchroniser la liste des tables lourdes avec le backend (inclure au minimum `knowledge_base`, `apogee_guides`, `apogee_tickets`, `activity_log`, et idéalement `formation_content`).
-- Ne jamais exclure une table de l’export à cause d’un count incertain:
-  - exporter à partir de la liste brute des tables,
-  - `count === 0` => `[]` direct,
-  - `count === -1` => tenter quand même l’export.
-- Réduire le bruit UI:
-  - éviter 1 toast d’erreur par table,
-  - produire un récapitulatif final (succès/échecs + noms des tables échouées).
+Le retry adaptatif du frontend est **inefficace** : il envoie pageSize 100 → 50 → 25 → 10 → 5 → 1, mais le backend clamp deja les ULTRA_HEAVY tables a 10. Donc les 4 premieres tentatives utilisent toutes pageSize=10 cote serveur et crashent identiquement. Seules les tentatives a 5 et 1 changent reellement la taille, mais pour des tables comme `knowledge_base` (gros JSONB avec embeddings), meme 10 lignes depasse la limite memoire.
 
-B. `supabase/functions/export-all-data/index.ts`
-- Durcir la pagination côté backend:
-  - passer d’une logique binaire `HEAVY_TABLES` à une map `TABLE_PAGE_LIMITS` (ex: ultra-lourdes=10/25, standard=100),
-  - ignorer les `pageSize` trop élevés en les clampant strictement.
-- Alléger le mode `countOnly`:
-  - utiliser `count: 'estimated'` (ou `planned`) pour éviter les scans coûteux,
-  - conserver le fallback `-1` mais sans bloquer l’export global.
+Le resultat : les tables lourdes echouent toutes en boucle, et le frontend enregistre `[]` pour chacune. 168 - ~66 tables echouees = ~102 reussies.
 
-3) Validation end-to-end (obligatoire)
-- Recharger la liste: vérifier affichage de 168 tables.
-- Lancer “Tout exporter” en JSON:
-  - vérifier absence d’arrêt prématuré,
-  - vérifier résumé final proche de 168/168.
-- Vérifier que les tables vides sont présentes dans le fichier avec `[]`.
-- Tester explicitement des tables lourdes (`knowledge_base`, `blocks`, `formation_content`) en export unitaire.
+## Solution en 2 fichiers
 
-Section technique (résumé)
-- Problème = capacité compute par requête, pas inventaire des tables.
-- Fix = stratégie de “graceful degradation” (réduction automatique du pageSize) + alignement frontend/backend + counts non bloquants.
-- Aucun changement de schéma base requis; uniquement logique d’export (frontend + fonction backend).
+### A. Backend : `supabase/functions/export-all-data/index.ts`
+
+1. **Reduire les limites des tables a gros JSONB** :
+   - Nouvelle categorie EXTREME : `knowledge_base`, `guide_chunks`, `rag_index_documents` → maxPageSize = **3**
+   - ULTRA_HEAVY (`blocks`, `apporteur_blocks`, `chatbot_queries`) → 10
+   - HEAVY → 25, standard → 100
+
+2. **Retourner `maxPageSize` dans la reponse liste** pour que le frontend connaisse le plafond :
+   ```json
+   { "tables": [{ "name": "knowledge_base", "maxPageSize": 3 }, ...] }
+   ```
+
+3. **Ajouter un delai de securite** : si une requete prend trop de memoire, renvoyer une erreur 507 au lieu de laisser le runtime crasher (impossible a garantir, mais le clampage plus agressif suffit).
+
+### B. Frontend : `src/pages/admin/AdminDatabaseExport.tsx`
+
+1. **Stocker le `maxPageSize` par table** dans le state (retourne par le backend).
+
+2. **Demarrer le retry ladder au plafond de la table**, pas a 100 :
+   - Si `maxPageSize = 3` → ladder = [3, 1]
+   - Si `maxPageSize = 25` → ladder = [25, 10, 5, 1]
+   - Si `maxPageSize = 100` → ladder = [100, 50, 25, 10, 5, 1]
+
+3. **Ajouter un delai de 300ms entre chaque table** pour eviter de saturer les workers edge.
+
+4. **Garder le comportement actuel** : tables echouees → `[]` + recapitulatif final.
+
+## Impact
+
+| Fichier | Changement |
+|---|---|
+| `supabase/functions/export-all-data/index.ts` | Tier EXTREME (3), retourner maxPageSize |
+| `src/pages/admin/AdminDatabaseExport.tsx` | Ladder dynamique, delai inter-table |
+
+Aucune migration DB necessaire.
+
