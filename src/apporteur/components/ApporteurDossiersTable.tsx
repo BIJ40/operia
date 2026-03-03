@@ -315,10 +315,8 @@ export function ApporteurDossiersTable() {
                         <TableCell className="text-right font-medium">
                           {d.factureHT > 0 ? formatCurrency(d.factureHT) : '-'}
                         </TableCell>
-                        <TableCell className={cn(
-                          "text-right font-medium",
-                          d.restedu > 0 ? "text-rose-600" : "text-green-600"
-                        )}>
+                        <TableCell className="text-right font-medium text-foreground">
+                          {d.restedu > 0 ? formatCurrency(d.restedu) : d.factureHT > 0 ? '✓' : '-'}
                           {d.restedu > 0 ? formatCurrency(d.restedu) : d.factureHT > 0 ? '✓' : '-'}
                         </TableCell>
                       </TableRow>
@@ -344,10 +342,8 @@ export function ApporteurDossiersTable() {
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-muted-foreground">Reste dû:</span>
-                <span className={cn(
-                  "font-semibold",
-                  filteredTotals.resteDu > 0 ? "text-rose-600" : "text-green-600"
-                )}>
+                <span className="font-semibold text-foreground">
+                  {formatCurrency(filteredTotals.resteDu)}
                   {formatCurrency(filteredTotals.resteDu)}
                 </span>
               </div>
@@ -438,10 +434,8 @@ export function ApporteurDossiersTable() {
                     selectedDossier.restedu > 0 ? "bg-rose-100 dark:bg-rose-900/30" : "bg-green-100 dark:bg-green-900/30"
                   )}>
                     <p className="text-xs text-muted-foreground">Reste dû</p>
-                    <p className={cn(
-                      "font-semibold",
-                      selectedDossier.restedu > 0 ? "text-rose-600" : "text-green-600"
-                    )}>
+                    <p className="font-semibold text-foreground">
+                      {formatCurrency(selectedDossier.restedu)}
                       {formatCurrency(selectedDossier.restedu)}
                     </p>
                   </div>

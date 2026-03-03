@@ -25,13 +25,13 @@ const ALERTE_CONFIG: Record<string, { icon: typeof AlertTriangle; label: string 
 };
 
 const SEVERITY_STYLES: Record<string, string> = {
-  high: 'border-rose-300 bg-rose-50 dark:bg-rose-950/20',
+  high: 'border-amber-300 bg-amber-50 dark:bg-amber-950/20',
   medium: 'border-amber-300 bg-amber-50 dark:bg-amber-950/20',
   low: 'border-slate-200 bg-slate-50 dark:bg-slate-900/20',
 };
 
 const SEVERITY_BADGE: Record<string, string> = {
-  high: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
+  high: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
   medium: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
   low: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
 };
@@ -77,7 +77,7 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
                 <div className="flex items-center gap-3">
                   <Icon className={cn(
                     'w-4 h-4 shrink-0',
-                    alerte.severity === 'high' ? 'text-rose-600' : 'text-amber-600'
+                    alerte.severity === 'high' ? 'text-amber-600' : 'text-amber-600'
                   )} />
                   <div className="flex-1 min-w-0">
                     <span className="text-sm font-medium text-foreground">
@@ -105,7 +105,7 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
                 <SheetTitle className="flex items-center gap-2">
                   <openConf.icon className={cn(
                     'w-5 h-5',
-                    openAlerte.severity === 'high' ? 'text-rose-600' : 'text-amber-600'
+                    openAlerte.severity === 'high' ? 'text-amber-600' : 'text-amber-600'
                   )} />
                   {openConf.label}
                 </SheetTitle>
