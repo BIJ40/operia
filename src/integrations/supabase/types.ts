@@ -5660,6 +5660,7 @@ export type Database = {
           global_role: Database["public"]["Enums"]["global_role"] | null
           id: string
           is_active: boolean | null
+          is_read_only: boolean
           is_salaried_manager: boolean | null
           last_name: string | null
           must_change_password: boolean | null
@@ -5688,6 +5689,7 @@ export type Database = {
           global_role?: Database["public"]["Enums"]["global_role"] | null
           id: string
           is_active?: boolean | null
+          is_read_only?: boolean
           is_salaried_manager?: boolean | null
           last_name?: string | null
           must_change_password?: boolean | null
@@ -5716,6 +5718,7 @@ export type Database = {
           global_role?: Database["public"]["Enums"]["global_role"] | null
           id?: string
           is_active?: boolean | null
+          is_read_only?: boolean
           is_salaried_manager?: boolean | null
           last_name?: string | null
           must_change_password?: boolean | null

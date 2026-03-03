@@ -83,6 +83,9 @@ interface AuthContextType {
   hasFaqAdminRole: boolean;            // Module admin_plateforme.faq_admin activé
   canAccessFaqAdmin: boolean;          // faq_admin OU N5+
   
+  // Read-only mode
+  isReadOnly: boolean;
+  
   // Auth actions
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
@@ -110,6 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roleAgence, setRoleAgence] = useState<string | null>(null);
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [isActive, setIsActive] = useState(true);
+  const [isReadOnly, setIsReadOnly] = useState(false);
   
   // ============================================================================
   // SYSTÈME V2.0 - États principaux
@@ -196,7 +200,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Requête profil
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('first_name, last_name, agence, agency_id, role_agence, must_change_password, global_role, enabled_modules, is_active')
+        .select('first_name, last_name, agence, agency_id, role_agence, must_change_password, global_role, enabled_modules, is_active, is_read_only')
         .eq('id', userId)
         .single();
       
@@ -223,6 +227,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAgencyId(profile?.agency_id || null);
       setRoleAgence(profile?.role_agence || null);
       setMustChangePassword(profile?.must_change_password || false);
+      setIsReadOnly(profile?.is_read_only === true);
       
       // Vérifier si le compte est actif
       const accountActive = profile?.is_active !== false; // true par défaut
@@ -454,9 +459,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setRoleAgence(null);
           setMustChangePassword(false);
           setIsActive(true);
-          setGlobalRole(null);
-          setEnabledModules(null);
-          setIsAuthLoading(false);
+      setGlobalRole(null);
+      setEnabledModules(null);
+      setIsReadOnly(false);
+      setIsAuthLoading(false);
         }
       }
     );
@@ -518,6 +524,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsActive(true);
       setGlobalRole(null);
       setEnabledModules(null);
+      setIsReadOnly(false);
       setUser(null);
     } catch (error) {
       logAuth.error('Erreur déconnexion', error);
@@ -567,6 +574,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // FAQ Admin flags
       hasFaqAdminRole,
       canAccessFaqAdmin,
+      // Read-only mode
+      isReadOnly,
       // Auth actions
       login, 
       logout,
