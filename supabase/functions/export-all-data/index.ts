@@ -1,7 +1,15 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
 import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
 
-const HEAVY_TABLES = ['blocks', 'apporteur_blocks', 'guide_chunks', 'chatbot_queries', 'operia_blocks', 'rag_index_documents', 'knowledge_base', 'apogee_guides', 'apogee_tickets', 'activity_log'];
+// Tiered page limits: ultra-heavy → 10, heavy → 25, standard → 100
+const ULTRA_HEAVY_TABLES = ['blocks', 'apporteur_blocks', 'guide_chunks', 'chatbot_queries', 'knowledge_base', 'rag_index_documents'];
+const HEAVY_TABLES = ['operia_blocks', 'apogee_guides', 'apogee_tickets', 'activity_log', 'formation_content', 'apogee_ticket_comments', 'apogee_ticket_history'];
+
+function getMaxPageSize(tableName: string): number {
+  if (ULTRA_HEAVY_TABLES.includes(tableName)) return 10;
+  if (HEAVY_TABLES.includes(tableName)) return 25;
+  return 100;
+}
 
 Deno.serve(async (req) => {
   const corsResponse = handleCorsPreflightOrReject(req);
@@ -50,13 +58,13 @@ Deno.serve(async (req) => {
       }));
     }
 
-    // Mode 2: Count rows for a batch of tables
+    // Mode 2: Count rows for a batch of tables (use estimated counts to avoid expensive scans)
     if (countOnly) {
       const tableNames = countOnly.split(',').filter(t => allTables.includes(t)).slice(0, 20);
       const results: { name: string; count: number }[] = [];
       for (const name of tableNames) {
         try {
-          const { count } = await serviceClient.from(name).select('*', { count: 'exact', head: true });
+          const { count } = await serviceClient.from(name).select('*', { count: 'estimated', head: true });
           results.push({ name, count: count ?? 0 });
         } catch {
           results.push({ name, count: -1 });
@@ -77,11 +85,10 @@ Deno.serve(async (req) => {
       return withCors(req, new Response(JSON.stringify({ error: 'Paramètre page invalide' }), { status: 400, headers: { 'Content-Type': 'application/json' } }));
     }
 
-    const isHeavyTable = HEAVY_TABLES.includes(tableParam);
-    const defaultPageSize = isHeavyTable ? 25 : 100;
-    const requestedPageSize = parseInt(url.searchParams.get('pageSize') ?? String(defaultPageSize), 10);
-    const maxPageSize = isHeavyTable ? 50 : 200;
-    const PAGE_SIZE = Math.min(Math.max(Number.isFinite(requestedPageSize) ? requestedPageSize : defaultPageSize, 10), maxPageSize);
+    // Clamp pageSize strictly based on table tier
+    const maxPageSize = getMaxPageSize(tableParam);
+    const requestedPageSize = parseInt(url.searchParams.get('pageSize') ?? String(maxPageSize), 10);
+    const PAGE_SIZE = Math.min(Math.max(Number.isFinite(requestedPageSize) ? requestedPageSize : maxPageSize, 1), maxPageSize);
     const offset = page * PAGE_SIZE;
 
     const { data, error } = await serviceClient
