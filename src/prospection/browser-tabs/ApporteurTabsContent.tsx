@@ -18,10 +18,10 @@ export function ApporteurTabsContent({ overviewContent }: ApporteurTabsContentPr
   const handleBack = () => setActiveTab('overview');
 
   return (
-    <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+    <div className="flex-1 min-h-0 flex flex-col">
       {/* Vue d'ensemble (recherche / liste) */}
       <div className={cn(
-        activeTabId === 'overview' ? 'flex flex-col flex-1 min-h-0 overflow-auto' : 'hidden'
+        activeTabId === 'overview' ? 'flex flex-col flex-1 min-h-0 overflow-x-hidden overflow-y-auto' : 'hidden'
       )}>
         {overviewContent}
       </div>
