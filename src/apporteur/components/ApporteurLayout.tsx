@@ -53,7 +53,7 @@ export function ApporteurLayout({ children }: ApporteurLayoutProps) {
   } = useApporteurSession();
   const navigate = useNavigate();
 
-  const devBypass = isDevMode() && !isAuthenticated;
+  const devBypass = false; // Disabled: use real auth flow even in dev
   
   const displayUser = devBypass
     ? {
