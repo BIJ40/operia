@@ -925,3 +925,55 @@ button[data-image-modal] {
     padding-right: 0.5rem !important;
   }
 }
+
+/* ============================================
+   READ-ONLY MODE - Global enforcement
+   ============================================
+   When body[data-read-only] is set, visually disable
+   all mutation UI elements globally.
+   ============================================ */
+
+body[data-read-only] button[type="submit"],
+body[data-read-only] .bg-destructive,
+body[data-read-only] [data-readonly-block] {
+  opacity: 0.4 !important;
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+  user-select: none !important;
+}
+
+/* Input/textarea fields: allow viewing but not editing */
+body[data-read-only] input:not([type="search"]):not([data-readonly-exempt]),
+body[data-read-only] textarea:not([data-readonly-exempt]),
+body[data-read-only] [contenteditable="true"]:not([data-readonly-exempt]) {
+  pointer-events: none !important;
+  opacity: 0.7 !important;
+  cursor: default !important;
+}
+
+/* Selects / dropdowns inside forms: block changes */
+body[data-read-only] select:not([data-readonly-exempt]) {
+  pointer-events: none !important;
+  opacity: 0.7 !important;
+}
+
+/* File upload zones */
+body[data-read-only] input[type="file"],
+body[data-read-only] [data-dropzone] {
+  pointer-events: none !important;
+  opacity: 0.4 !important;
+}
+
+/* Checkboxes and switches inside forms */
+body[data-read-only] [role="checkbox"]:not([data-readonly-exempt]),
+body[data-read-only] [role="switch"]:not([data-readonly-exempt]) {
+  pointer-events: none !important;
+  opacity: 0.6 !important;
+}
+
+/* DnD drag handles */
+body[data-read-only] [data-dnd-draggable],
+body[data-read-only] [draggable="true"] {
+  pointer-events: none !important;
+  cursor: default !important;
+}
