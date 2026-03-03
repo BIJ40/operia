@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
 import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
 
-const HEAVY_TABLES = ['blocks', 'apporteur_blocks', 'guide_chunks', 'chatbot_queries', 'operia_blocks', 'rag_index_documents'];
+const HEAVY_TABLES = ['blocks', 'apporteur_blocks', 'guide_chunks', 'chatbot_queries', 'operia_blocks', 'rag_index_documents', 'knowledge_base', 'apogee_guides', 'apogee_tickets', 'activity_log'];
 
 Deno.serve(async (req) => {
   const corsResponse = handleCorsPreflightOrReject(req);
