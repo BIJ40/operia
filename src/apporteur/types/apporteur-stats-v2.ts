@@ -5,7 +5,7 @@
 
 // ── Request ──────────────────────────────────────────────
 export interface ApporteurStatsV2Request {
-  period: 'month' | 'quarter' | 'year' | 'custom';
+  period: 'month' | 'quarter' | '6months' | 'year' | '12months' | 'custom';
   from?: string; // YYYY-MM-DD (requis si custom)
   to?: string;   // YYYY-MM-DD (requis si custom)
   tz?: string;   // default "Europe/Paris"

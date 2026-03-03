@@ -7,7 +7,9 @@ type Period = ApporteurStatsV2Request['period'];
 const PERIODS: { value: Period; label: string }[] = [
   { value: 'month', label: 'Mois' },
   { value: 'quarter', label: 'Trimestre' },
+  { value: '6months', label: '6 mois' },
   { value: 'year', label: 'Année' },
+  { value: '12months', label: '12 mois' },
 ];
 
 interface PeriodSelectorProps {

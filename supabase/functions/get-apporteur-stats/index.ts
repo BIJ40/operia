@@ -56,6 +56,14 @@ function getDateRange(period: string | undefined, from: string | undefined, to: 
       case 'year':
         start = new Date(now.getFullYear(), 0, 1);
         break;
+      case '12months': {
+        start = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+        break;
+      }
+      case '6months': {
+        start = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+        break;
+      }
       case 'quarter': {
         const q = Math.floor(now.getMonth() / 3);
         start = new Date(now.getFullYear(), q * 3, 1);
