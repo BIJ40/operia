@@ -16,6 +16,7 @@ interface DossierRow {
   city: string;
   status: string;
   statusLabel: string;
+  rawState: string;
   dateCreation: string | null;
   datePremierRdv: string | null;
   dateDevisEnvoye: string | null;
@@ -23,7 +24,7 @@ interface DossierRow {
   dateRdvTravaux: string | null;
   dateFacture: string | null;
   dateReglement: string | null;
-  lastModified: string | null; // Date de dernière modification (toute action)
+  lastModified: string | null;
   devisHT: number;
   factureHT: number;
   restedu: number;
@@ -103,7 +104,12 @@ function getStatusFromProject(project: AnyRecord, facture: AnyRecord | null, dev
     }
   }
 
-  // PRIORITÉ 5: États intermédiaires
+  // PRIORITÉ 5: Stand-by / en attente
+  if (['stand_by', 'standby', 'stand by', 'en attente', 'attente', 'suspendu'].some((s) => state.includes(s))) {
+    return { status: 'stand_by', label: 'Stand-by' };
+  }
+
+  // PRIORITÉ 6: États intermédiaires
   if (['rdv_tvx', 'rdv travaux', 'travaux planifié'].some((s) => state.includes(s))) {
     return { status: 'rdv_travaux', label: 'RDV Travaux' };
   }
@@ -476,6 +482,7 @@ Deno.serve(async (req) => {
         city,
         status,
         statusLabel: label,
+        rawState: String(p.state ?? p.data?.state ?? '').trim(),
         dateCreation: formatDateISO(projectDate),
         datePremierRdv: formatDateISO(premierRdv),
         dateDevisEnvoye: devis && !devisValide && !devisIsCancelled ? formatDateISO(devisDate) : null,
