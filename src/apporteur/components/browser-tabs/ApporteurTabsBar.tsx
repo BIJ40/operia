@@ -12,7 +12,7 @@ const TAB_ACCENTS: Record<string, AccentThemeKey> = {
   accueil: 'blue',
   dossiers: 'purple',
   demandes: 'pink',
-  divers: 'orange',
+  rapport: 'orange',
   profil: 'green',
 };
 

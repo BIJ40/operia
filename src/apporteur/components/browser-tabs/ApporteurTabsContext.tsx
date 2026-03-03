@@ -11,14 +11,14 @@ import {
   ApporteurTabsState, 
   ApporteurModuleDefinition 
 } from './types';
-import { Home, FolderOpen, FileText, MoreHorizontal, User } from 'lucide-react';
+import { LayoutDashboard, FolderOpen, FilePlus, BarChart3, User } from 'lucide-react';
 
 // Définition de tous les modules disponibles pour l'espace Apporteur
 export const APPORTEUR_MODULES: ApporteurModuleDefinition[] = [
-  { id: 'accueil', label: 'Accueil', icon: Home, closable: false },
+  { id: 'accueil', label: 'Tableau de bord', icon: LayoutDashboard, closable: false },
   { id: 'dossiers', label: 'Dossiers', icon: FolderOpen, closable: false },
-  { id: 'demandes', label: 'Demandes', icon: FileText, closable: false },
-  { id: 'divers', label: 'Divers', icon: MoreHorizontal, closable: false },
+  { id: 'demandes', label: 'Nouvelle demande', icon: FilePlus, closable: false },
+  { id: 'rapport', label: 'Rapport', icon: BarChart3, closable: false },
   { id: 'profil', label: 'Profil', icon: User, closable: false },
 ];
 

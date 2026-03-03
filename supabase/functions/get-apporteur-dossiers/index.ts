@@ -407,6 +407,67 @@ Deno.serve(async (req) => {
       const allDates = [projectDate, premierRdv, devisDate, rdvTravaux, factureDate, dateReglement].filter(Boolean) as Date[];
       const lastModified = allDates.length > 0 ? allDates.reduce((a, b) => a > b ? a : b) : projectDate;
 
+      // ── V2 enrichment ─────────────────────────────────
+      // Universes
+      const universes: string[] = (p.data?.universes || []).map((u: unknown) =>
+        typeof u === 'string' ? u : ((u as R)?.code || (u as R)?.label || String(u))
+      );
+
+      // Triple status
+      const devisState2 = devis ? String(devis.state ?? devis.data?.state ?? devis.status ?? '').toLowerCase() : '';
+      let devisStatusV2: string = 'aucun';
+      if (devis && !devisIsCancelled) {
+        if (devisValide) devisStatusV2 = 'valide';
+        else if (['refused', 'refusé', 'refuse'].some(s => devisState2.includes(s))) devisStatusV2 = 'refuse';
+        else if (['sent', 'envoyé', 'envoye'].some(s => devisState2.includes(s))) devisStatusV2 = 'envoye';
+        else devisStatusV2 = 'en_cours';
+      } else if (devis && devisIsCancelled) {
+        devisStatusV2 = 'annule';
+      }
+
+      let factureStatusV2: string = 'non_facture';
+      if (facture) {
+        const fResteDu = Number(facture.data?.calcReglementsReste || facture.calcReglementsReste || 0);
+        if (fResteDu <= 0) factureStatusV2 = 'reglee';
+        else if (factureHT > 0 && resteDuHT < factureHT) factureStatusV2 = 'partiellement_reglee';
+        else factureStatusV2 = 'emise';
+      }
+
+      // Stepper (6 étapes)
+      const stepperCompleted: string[] = ['created'];
+      if (premierRdv) stepperCompleted.push('rdv_planned');
+      if (devisDate && !devisIsCancelled) stepperCompleted.push('devis_sent');
+      if (devisValide) stepperCompleted.push('devis_validated');
+      if (factureDate) stepperCompleted.push('invoice_sent');
+      if (dateReglement) stepperCompleted.push('invoice_paid');
+
+      const v2 = {
+        universes,
+        status: {
+          dossier: status,
+          devis: devisStatusV2,
+          facture: factureStatusV2,
+        },
+        amounts: {
+          devis_ht: Math.round(devisHT * 100) / 100,
+          facture_ht: Math.round(factureHT * 100) / 100,
+          reste_du: Math.round(Math.max(0, resteDuHT) * 100) / 100,
+        },
+        dates: {
+          created_at: formatDateISO(projectDate),
+          first_rdv_at: formatDateISO(premierRdv),
+          devis_sent_at: devis && !devisIsCancelled ? formatDateISO(devisDate) : null,
+          devis_validated_at: devisValide ? formatDateISO(devisDate) : null,
+          invoice_sent_at: formatDateISO(factureDate),
+          invoice_paid_at: formatDateISO(dateReglement),
+          last_activity_at: lastModified ? lastModified.toISOString() : null,
+        },
+        stepper: {
+          status: stepperCompleted[stepperCompleted.length - 1],
+          completed: stepperCompleted,
+        },
+      };
+
       dossiers.push({
         id: projectId,
         ref: String(p.ref || ''),
@@ -428,6 +489,7 @@ Deno.serve(async (req) => {
         restedu: Math.round(Math.max(0, resteDuHT) * 100) / 100,
         devisId: devis && !devisIsCancelled ? Number(devis.id) : null,
         factureId: facture ? Number(facture.id) : null,
+        v2,
       });
     }
 

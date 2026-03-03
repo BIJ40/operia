@@ -12,7 +12,7 @@ import { Loader2 } from 'lucide-react';
 const AccueilContent = lazy(() => import('../tabs/AccueilTabContent'));
 const DossiersContent = lazy(() => import('../tabs/DossiersTabContent'));
 const DemandesContent = lazy(() => import('../tabs/DemandesTabContent'));
-const DiversContent = lazy(() => import('../tabs/DiversTabContent'));
+const RapportContent = lazy(() => import('../tabs/RapportTabContent'));
 const ProfilContent = lazy(() => import('../tabs/ProfilTabContent'));
 
 // Map des modules vers leurs composants
@@ -20,7 +20,7 @@ const TAB_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentTy
   accueil: AccueilContent,
   dossiers: DossiersContent,
   demandes: DemandesContent,
-  divers: DiversContent,
+  rapport: RapportContent,
   profil: ProfilContent,
 };
 
