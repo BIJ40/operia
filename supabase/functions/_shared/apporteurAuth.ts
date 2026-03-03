@@ -25,15 +25,48 @@ async function sha256(message: string): Promise<string> {
 
 /**
  * Authenticate an apporteur from the request.
- * Tries custom token first (Bearer token → apporteur_sessions),
- * then falls back to Supabase JWT (Bearer token → auth.users → apporteur_users).
+ * Tries custom token first (x-apporteur-token / cookie / Bearer non-JWT),
+ * then falls back to Supabase JWT.
  * Returns apporteur info or null.
  */
-export async function authenticateApporteur(req: Request): Promise<ApporteurAuthResult | null> {
-  const authHeader = req.headers.get('Authorization');
+function extractBearerToken(req: Request): string | null {
+  const authHeader = req.headers.get('Authorization') ?? req.headers.get('authorization');
   if (!authHeader?.startsWith('Bearer ')) return null;
+  return authHeader.substring(7);
+}
 
-  const token = authHeader.substring(7);
+function extractCookieToken(req: Request): string | null {
+  const cookieHeader = req.headers.get('cookie');
+  if (!cookieHeader) return null;
+  const cookies = cookieHeader.split(';').map((c) => c.trim());
+  const tokenCookie = cookies.find((c) => c.startsWith('apporteur_token='));
+  if (!tokenCookie) return null;
+  return tokenCookie.split('=')[1] || null;
+}
+
+function extractCustomApporteurToken(req: Request): string | null {
+  const headerToken = req.headers.get('x-apporteur-token') ?? req.headers.get('X-Apporteur-Token');
+  if (headerToken?.trim()) return headerToken.trim();
+
+  const cookieToken = extractCookieToken(req);
+  if (cookieToken) return cookieToken;
+
+  // Backward compatibility: old clients sent custom token in Authorization header
+  const bearerToken = extractBearerToken(req);
+  if (bearerToken && !bearerToken.includes('.')) {
+    return bearerToken;
+  }
+
+  return null;
+}
+
+export async function authenticateApporteur(req: Request): Promise<ApporteurAuthResult | null> {
+  const authHeader = req.headers.get('Authorization') ?? req.headers.get('authorization');
+  const customToken = extractCustomApporteurToken(req);
+
+  // Need at least one auth mechanism
+  if (!customToken && !authHeader) return null;
+
   const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
   const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
@@ -41,52 +74,56 @@ export async function authenticateApporteur(req: Request): Promise<ApporteurAuth
   const supabaseAdmin = createClient(supabaseUrl, serviceKey);
 
   // --- Try 1: Custom apporteur session token ---
-  try {
-    const tokenHash = await sha256(token);
-    const { data: session } = await supabaseAdmin
-      .from('apporteur_sessions')
-      .select(`
-        id, manager_id, expires_at, revoked_at,
-        apporteur_managers:manager_id (
-          id, apporteur_id, agency_id, is_active,
-          apporteurs:apporteur_id (id, name, apogee_client_id, is_active, portal_enabled)
-        )
-      `)
-      .eq('token_hash', tokenHash)
-      .is('revoked_at', null)
-      .gt('expires_at', new Date().toISOString())
-      .maybeSingle();
+  if (customToken) {
+    try {
+      const tokenHash = await sha256(customToken);
+      const { data: session } = await supabaseAdmin
+        .from('apporteur_sessions')
+        .select(`
+          id, manager_id, expires_at, revoked_at,
+          apporteur_managers:manager_id (
+            id, apporteur_id, agency_id, is_active,
+            apporteurs:apporteur_id (id, name, apogee_client_id, is_active, portal_enabled)
+          )
+        `)
+        .eq('token_hash', tokenHash)
+        .is('revoked_at', null)
+        .gt('expires_at', new Date().toISOString())
+        .maybeSingle();
 
-    if (session) {
-      // deno-lint-ignore no-explicit-any
-      const manager = session.apporteur_managers as any;
-      if (manager?.is_active && manager.apporteurs?.is_active) {
-        const apporteur = manager.apporteurs;
-        if (!apporteur.apogee_client_id) return null; // non raccordé
+      if (session) {
+        // deno-lint-ignore no-explicit-any
+        const manager = session.apporteur_managers as any;
+        if (manager?.is_active && manager.apporteurs?.is_active) {
+          const apporteur = manager.apporteurs;
+          if (!apporteur.apogee_client_id) return null; // non raccordé
 
-        // Get agency slug
-        const { data: agency } = await supabaseAdmin
-          .from('apogee_agencies')
-          .select('slug')
-          .eq('id', manager.agency_id)
-          .single();
+          // Get agency slug
+          const { data: agency } = await supabaseAdmin
+            .from('apogee_agencies')
+            .select('slug')
+            .eq('id', manager.agency_id)
+            .single();
 
-        if (!agency?.slug) return null;
+          if (!agency?.slug) return null;
 
-        return {
-          apporteurId: apporteur.id,
-          agencyId: manager.agency_id,
-          apogeeClientId: apporteur.apogee_client_id,
-          agencySlug: agency.slug,
-          apporteurName: apporteur.name,
-        };
+          return {
+            apporteurId: apporteur.id,
+            agencyId: manager.agency_id,
+            apogeeClientId: apporteur.apogee_client_id,
+            agencySlug: agency.slug,
+            apporteurName: apporteur.name,
+          };
+        }
       }
+    } catch (e) {
+      console.warn('[apporteurAuth] Custom token check failed:', e);
     }
-  } catch (e) {
-    console.warn('[apporteurAuth] Custom token check failed:', e);
   }
 
   // --- Try 2: Supabase JWT ---
+  if (!authHeader?.startsWith('Bearer ')) return null;
+
   try {
     const supabaseUser = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },

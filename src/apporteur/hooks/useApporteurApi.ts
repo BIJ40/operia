@@ -40,26 +40,34 @@ export function useApporteurApi() {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> => {
     const baseUrl = getApiBaseUrl();
+    const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '',
+      'apikey': publishableKey,
       ...(options.headers as Record<string, string> || {}),
     };
 
-    // Try OTP token first (DEV mode localStorage)
+    // Always provide a valid JWT for edge functions with verify_jwt=true
+    // Prefer user JWT, fallback to publishable key JWT
+    let bearerToken = publishableKey;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        bearerToken = session.access_token;
+      }
+    } catch (e) {
+      console.warn('[useApporteurApi] Failed to get Supabase session:', e);
+    }
+
+    if (bearerToken) {
+      headers['Authorization'] = `Bearer ${bearerToken}`;
+    }
+
+    // Custom apporteur token (OTP auth) sent in dedicated header
+    // to avoid collision with JWT verification at edge gateway level
     const devToken = getDevToken();
     if (devToken) {
-      headers['Authorization'] = `Bearer ${devToken}`;
-    } else {
-      // Fallback: use Supabase JWT for internal users with apporteur_users link
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.access_token) {
-          headers['Authorization'] = `Bearer ${session.access_token}`;
-        }
-      } catch (e) {
-        console.warn('[useApporteurApi] Failed to get Supabase session:', e);
-      }
+      headers['x-apporteur-token'] = devToken;
     }
 
     try {
