@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const DAY_NAMES = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'];
+const DAY_NAMES_FULL = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 const TYPE_COLORS: Record<string, string> = {
   rt: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   travaux: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
@@ -123,75 +123,72 @@ export function ApporteurPlanningCard() {
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
             </div>
-          ) : (
-            <div className="grid grid-cols-5 gap-1">
-              {/* Day headers */}
-              {DAY_NAMES.map((day, i) => (
-                <div key={day} className="text-center py-1">
-                  <span className="text-xs font-medium text-muted-foreground">{day}</span>
-                  {weekDays[i] && (
-                    <div className={cn(
-                      "text-xs",
-                      weekDays[i] === new Date().toISOString().split('T')[0] 
-                        ? "text-primary font-semibold" 
-                        : "text-muted-foreground"
-                    )}>
-                      {new Date(weekDays[i]).getDate()}
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {/* Event cells */}
-              {weekDays.map((date, i) => {
-                const dayEvents = eventsByDay[date] || [];
-                const isToday = date === new Date().toISOString().split('T')[0];
-                
-                return (
-                  <div 
-                    key={date}
-                    className={cn(
-                      "min-h-[60px] border rounded-md p-1 space-y-1",
-                      isToday ? "bg-primary/5 border-primary/30" : "bg-muted/20"
-                    )}
-                  >
-                    {dayEvents.length === 0 ? (
-                      <div className="h-full flex items-center justify-center">
-                        <span className="text-xs text-muted-foreground/50">-</span>
-                      </div>
-                    ) : (
-                      dayEvents.slice(0, 2).map((event) => (
-                        <div
-                          key={event.id}
-                          className={cn(
-                            "text-xs p-1 rounded cursor-pointer hover:opacity-80 truncate",
-                            getTypeColor(event.type)
-                          )}
-                          onClick={() => setSelectedEvent(event)}
-                          title={`${event.clientName} - ${event.typeLabel}`}
-                        >
-                          {formatTime(event.time)} {event.clientName.split(' ')[0]}
-                        </div>
-                      ))
-                    )}
-                    {dayEvents.length > 2 && (
-                      <div 
-                        className="text-xs text-muted-foreground text-center cursor-pointer hover:text-primary"
-                        onClick={() => setSelectedEvent(dayEvents[2])}
-                      >
-                        +{dayEvents.length - 2}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {events.length === 0 && !isLoading && (
-            <p className="text-center text-sm text-muted-foreground py-4">
-              Aucun RDV cette semaine
+          ) : Object.keys(eventsByDay).length === 0 ? (
+            <p className="text-center text-sm text-muted-foreground py-6">
+              Aucun RDV planifié cette semaine
             </p>
+          ) : (
+            <div className="space-y-3">
+              {Object.entries(eventsByDay)
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([date, dayEvents]) => {
+                  const d = new Date(date);
+                  const isToday = date === new Date().toISOString().split('T')[0];
+                  const dayName = DAY_NAMES_FULL[d.getDay()];
+                  const dayNum = d.getDate();
+                  const monthStr = d.toLocaleDateString('fr-FR', { month: 'short' });
+
+                  return (
+                    <div key={date} className={cn(
+                      "rounded-xl border p-3",
+                      isToday ? "bg-primary/5 border-primary/30" : "bg-muted/20 border-border"
+                    )}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={cn(
+                          "text-sm font-semibold capitalize",
+                          isToday ? "text-primary" : "text-foreground"
+                        )}>
+                          {dayName} {dayNum} {monthStr}
+                        </span>
+                        {isToday && (
+                          <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-primary/40 text-primary">
+                            Aujourd'hui
+                          </Badge>
+                        )}
+                        <Badge variant="secondary" className="text-[10px] h-4 px-1.5 ml-auto">
+                          {dayEvents.length} RDV
+                        </Badge>
+                      </div>
+                      <div className="space-y-1.5">
+                        {dayEvents
+                          .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
+                          .map((event) => (
+                          <div
+                            key={event.id}
+                            className={cn(
+                              "flex items-center gap-2 px-2.5 py-1.5 rounded-lg cursor-pointer transition-all hover:scale-[1.01] hover:shadow-sm",
+                              getTypeColor(event.type)
+                            )}
+                            onClick={() => setSelectedEvent(event)}
+                          >
+                            {event.time && (
+                              <span className="text-xs font-mono font-medium shrink-0 opacity-80">
+                                {formatTime(event.time)}
+                              </span>
+                            )}
+                            <span className="text-xs font-medium truncate flex-1">
+                              {event.clientName}
+                            </span>
+                            <span className="text-[10px] opacity-70 shrink-0">
+                              {event.typeLabel}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
           )}
         </CardContent>
       </Card>
