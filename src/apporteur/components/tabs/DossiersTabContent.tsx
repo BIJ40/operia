@@ -17,13 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+// Select removed - using buttons for status filter
 import {
   Dialog,
   DialogContent,
@@ -267,30 +261,44 @@ export default function DossiersTabContent() {
         </div>
       )}
 
+      {/* Status filter buttons */}
+      <div className="flex flex-wrap gap-2">
+        <Button
+          variant={statusFilter === 'all' ? 'default' : 'outline'}
+          size="sm"
+          className="rounded-xl"
+          onClick={() => setStatusFilter('all')}
+        >
+          Tous ({dossiers.length})
+        </Button>
+        {statuses.map(s => {
+          const count = dossiers.filter(d => d.status === s.value).length;
+          const conf = STATUS_CONFIG[s.value] || STATUS_CONFIG.en_cours;
+          return (
+            <Button
+              key={s.value}
+              variant={statusFilter === s.value ? 'default' : 'outline'}
+              size="sm"
+              className={cn('rounded-xl', statusFilter !== s.value ? cn(conf.bgColor, conf.color, 'border') : '')}
+              onClick={() => setStatusFilter(s.value)}
+            >
+              {s.label} ({count})
+            </Button>
+          );
+        })}
+      </div>
+
       {/* Table Card */}
       <Card className="rounded-2xl">
         <CardHeader className="pb-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher (réf, client, ville)..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 rounded-xl"
-              />
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-48 rounded-xl">
-                <SelectValue placeholder="Tous les états" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les états</SelectItem>
-                {statuses.map(s => (
-                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="relative w-full max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 rounded-xl"
+            />
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -403,10 +411,7 @@ export default function DossiersTabContent() {
                         <TableCell className="text-right font-medium">
                           {d.factureHT > 0 ? formatCurrency(d.factureHT) : '-'}
                         </TableCell>
-                        <TableCell className={cn(
-                          "text-right font-medium",
-                          d.restedu > 0 ? "text-rose-600" : "text-green-600"
-                        )}>
+                        <TableCell className="text-right font-medium text-foreground">
                           {d.restedu > 0 ? formatCurrency(d.restedu) : d.factureHT > 0 ? '✓' : '-'}
                         </TableCell>
                       </TableRow>
@@ -432,10 +437,8 @@ export default function DossiersTabContent() {
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-muted-foreground">Reste dû:</span>
-                <span className={cn(
-                  "font-semibold",
-                  filteredTotals.resteDu > 0 ? "text-rose-600" : "text-green-600"
-                )}>
+                <span className="font-semibold text-foreground">
+                  {formatCurrency(filteredTotals.resteDu)}
                   {formatCurrency(filteredTotals.resteDu)}
                 </span>
               </div>
