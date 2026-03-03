@@ -107,11 +107,12 @@ export default function AdminDatabaseExport() {
   const fetchAllPages = async (tableName: string): Promise<Record<string, unknown>[]> => {
     let allRows: Record<string, unknown>[] = [];
     let page = 0;
+    const pageSize = tableName === 'blocks' ? 25 : 100;
     let hasMore = true;
     while (hasMore) {
-      const result = await apiFetch(`table=${encodeURIComponent(tableName)}&page=${page}`);
+      const result = await apiFetch(`table=${encodeURIComponent(tableName)}&page=${page}&pageSize=${pageSize}`);
       allRows = allRows.concat(result.data);
-      hasMore = result.hasMore;
+      hasMore = Boolean(result.hasMore ?? (result.count === pageSize));
       page++;
     }
     return allRows;
