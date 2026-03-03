@@ -7,6 +7,7 @@
  */
 
 import type { AggregatedKPIs, UniversAggregated } from './aggregators';
+import type { AdaptiveScore } from './adaptiveScoring';
 
 export type InsightLevel = 'info' | 'warning' | 'danger' | 'opportunity';
 
@@ -30,8 +31,62 @@ export function generateApporteurInsights(
   kpisPreviousPeriod?: AggregatedKPIs,
   allApporteursMedianPanier?: number,
   allApporteursMedianDelai?: number,
+  adaptiveScore?: AdaptiveScore | null,
 ): Insight[] {
   const insights: Insight[] = [];
+
+  // ─── Insights adaptatifs (basés sur le scoring historique) ─────────
+  if (adaptiveScore) {
+    const { metrics, level } = adaptiveScore;
+    
+    if (level === 'danger' || level === 'warning') {
+      if (metrics.ca.variationPct < -15) {
+        insights.push({
+          id: 'adaptive_ca_baisse',
+          level: level === 'danger' ? 'danger' : 'warning',
+          title: `CA en baisse de ${Math.abs(metrics.ca.variationPct)}% vs historique`,
+          description: `Moyenne récente ${formatEuroInsight(metrics.ca.recent)}/mois vs moyenne historique ${formatEuroInsight(metrics.ca.avg)}/mois. Tendance à surveiller.`,
+          metric: 'ca_trend',
+          value: metrics.ca.variationPct,
+        });
+      }
+      if (metrics.dossiers.variationPct < -20) {
+        insights.push({
+          id: 'adaptive_dossiers_baisse',
+          level: 'warning',
+          title: `Volume dossiers en baisse de ${Math.abs(metrics.dossiers.variationPct)}%`,
+          description: `${metrics.dossiers.recent}/mois récemment vs ${metrics.dossiers.avg}/mois en moyenne. L'apporteur confie moins de dossiers.`,
+          metric: 'dossiers_trend',
+          value: metrics.dossiers.variationPct,
+        });
+      }
+    }
+
+    if (level === 'positive' || level === 'excellent') {
+      if (metrics.ca.variationPct > 20) {
+        insights.push({
+          id: 'adaptive_ca_hausse',
+          level: 'opportunity',
+          title: `CA en hausse de ${metrics.ca.variationPct}% vs historique`,
+          description: `Moyenne récente ${formatEuroInsight(metrics.ca.recent)}/mois vs ${formatEuroInsight(metrics.ca.avg)}/mois. Apporteur en croissance, à fidéliser.`,
+          metric: 'ca_trend',
+          value: metrics.ca.variationPct,
+        });
+      }
+    }
+
+    if (metrics.tauxTransfo.variationPct !== null && Math.abs(metrics.tauxTransfo.variationPct) > 15) {
+      const isUp = metrics.tauxTransfo.variationPct > 0;
+      insights.push({
+        id: 'adaptive_transfo_trend',
+        level: isUp ? 'opportunity' : 'warning',
+        title: `Taux de transformation ${isUp ? 'en amélioration' : 'en baisse'} (${isUp ? '+' : ''}${metrics.tauxTransfo.variationPct}%)`,
+        description: `Récent: ${metrics.tauxTransfo.recent}% vs historique: ${metrics.tauxTransfo.avg}%.`,
+        metric: 'transfo_trend',
+        value: metrics.tauxTransfo.variationPct,
+      });
+    }
+  }
 
   // ─── Règle 1: Concentration univers (opportunité de diversification) ──
   if (universData.length >= 2) {
@@ -171,6 +226,10 @@ export function generateApporteurInsights(
   }
 
   return insights;
+}
+
+function formatEuroInsight(v: number): string {
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v);
 }
 
 /**

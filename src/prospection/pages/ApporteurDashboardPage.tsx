@@ -13,6 +13,7 @@ import { useApporteurDashboardLive } from '../hooks/useApporteurDashboardLive';
 import { useApogeeCommanditaires } from '@/hooks/useApogeeCommanditaires';
 import { generateApporteurInsights } from '../engine/insights';
 import { ApporteurKPICards } from '../components/ApporteurKPICards';
+import { ApporteurScoreCard } from '../components/ApporteurScoreCard';
 import { ApporteurFunnel } from '../components/ApporteurFunnel';
 import { ApporteurUniversChart } from '../components/ApporteurUniversChart';
 import { ApporteurTrendCharts } from '../components/ApporteurTrendCharts';
@@ -58,7 +59,7 @@ export function ApporteurDashboardPage({ apporteurId, onBack }: Props) {
     dateTo: to,
   });
 
-  const insights = data ? generateApporteurInsights(data.kpis, data.universData) : [];
+  const insights = data ? generateApporteurInsights(data.kpis, data.universData, undefined, undefined, undefined, data.adaptiveScore) : [];
 
   return (
     <div className="space-y-4">
@@ -102,6 +103,11 @@ export function ApporteurDashboardPage({ apporteurId, onBack }: Props) {
         </div>
       ) : data ? (
         <>
+          {/* Score adaptatif */}
+          {data.adaptiveScore && (
+            <ApporteurScoreCard score={data.adaptiveScore} />
+          )}
+
           {/* KPIs */}
           <ApporteurKPICards kpis={data.kpis} />
 
