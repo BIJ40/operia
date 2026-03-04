@@ -148,6 +148,13 @@ export default function PlanningAugmenteAdmin() {
           {/* Main layout: Dossier search + Planning grid */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4" style={{ minHeight: '600px' }}>
             <div className="lg:col-span-3">
+              {/* DEBUG: Affiche les states uniques des projets */}
+              {projectsData?._debugStates && (
+                <div className="mb-2 p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded text-[10px] text-yellow-800 dark:text-yellow-200 max-h-24 overflow-auto">
+                  <strong>States ({projectsData._debugStates.length}):</strong>{' '}
+                  {projectsData._debugStates.join(' | ')}
+                </div>
+              )}
               <DossierSearchPanel
                 planifiableProjects={projectsData?.planifiable ?? []}
                 allProjects={projectsData?.all ?? []}
