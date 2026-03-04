@@ -18,9 +18,7 @@ const ORIGINE_CONFIG: Record<string, { label: string; color: string; textColor: 
   MATHILDE: { label: 'Mathilde', color: 'hsl(271, 81%, 56%)', textColor: 'white' },
   APOGEE: { label: 'Apogée', color: 'hsl(258, 90%, 66%)', textColor: 'white' },
   HUGO: { label: 'Hugo', color: 'hsl(239, 84%, 67%)', textColor: 'white' },
-  AUTRE: { label: 'Autre', color: 'hsl(220, 9%, 46%)', textColor: 'white' },
   MAIL: { label: 'Email', color: 'hsl(174, 72%, 40%)', textColor: 'white' },
-  AGENCE: { label: 'Agence', color: 'hsl(200, 70%, 50%)', textColor: 'white' },
 };
 
 // Génère une couleur stable à partir d'un string (pour noms/emails non prédéfinis)
