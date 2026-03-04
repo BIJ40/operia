@@ -36,16 +36,12 @@ function isEmail(str: string): boolean {
   return str.includes('@');
 }
 
-// Formate un nom "PRENOM NOM" → "Prénom N."
-function formatName(name: string): string {
+// Extrait le prénom d'un nom complet "PRENOM NOM" → "Prénom"
+function extractFirstName(name: string): string {
   const parts = name.trim().split(/\s+/);
   if (parts.length === 0) return name;
-  if (parts.length === 1) {
-    return parts[0].charAt(0).toUpperCase() + parts[0].slice(1).toLowerCase();
-  }
-  const firstName = parts[0].charAt(0).toUpperCase() + parts[0].slice(1).toLowerCase();
-  const lastInitial = parts[parts.length - 1].charAt(0).toUpperCase() + '.';
-  return `${firstName} ${lastInitial}`;
+  const first = parts[0];
+  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
 }
 
 export function OrigineBadge({ origine, size = 'sm' }: OrigineBadgeProps) {
@@ -73,7 +69,7 @@ export function OrigineBadge({ origine, size = 'sm' }: OrigineBadgeProps) {
     showMailIcon = true;
   } else {
     // Nom complet (ex: "VALENTIN DUPONT") : formater et générer couleur
-    label = formatName(origine);
+    label = extractFirstName(origine);
     const hue = stringToHue(normalizedOrigine);
     color = `hsl(${hue}, 65%, 45%)`;
   }
