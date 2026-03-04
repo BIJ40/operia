@@ -92,6 +92,7 @@ export interface AlerteEntry {
   amount?: number;
   risk_blockage: number; // 0–100
   sample_refs: string[];
+  sample_labels?: string[]; // Noms clients associés aux refs
 }
 
 // ── Series 12 mois ───────────────────────────────────────
