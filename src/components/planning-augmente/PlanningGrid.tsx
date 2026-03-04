@@ -44,6 +44,10 @@ interface PlanningGridProps {
   isLoading: boolean;
   weekStart: Date;
   onWeekChange: (date: Date) => void;
+  /** Fonction de compatibilité tech × dossier sélectionné */
+  isCompatible?: (techId: number) => boolean | null;
+  /** Compétences matchées pour un tech */
+  getMatchedCompetences?: (techId: number) => string[];
 }
 
 // ============================================================================
@@ -202,7 +206,7 @@ function DayColumn({ creneaux }: { creneaux: EnrichedCreneau[] }) {
 // MAIN COMPONENT
 // ============================================================================
 
-export function PlanningGrid({ technicians, creneaux, isLoading, weekStart, onWeekChange }: PlanningGridProps) {
+export function PlanningGrid({ technicians, creneaux, isLoading, weekStart, onWeekChange, isCompatible, getMatchedCompetences }: PlanningGridProps) {
   const [selectedTechId, setSelectedTechId] = useState<number | null>(null);
   const weekDays = useMemo(() => getWeekDays(weekStart), [weekStart]);
 
@@ -272,27 +276,49 @@ export function PlanningGrid({ technicians, creneaux, isLoading, weekStart, onWe
             {technicians.map(tech => {
               const isActive = tech.id === activeTechId;
               const initials = tech.label.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+              const compat = isCompatible ? isCompatible(tech.id) : null;
+              const matched = getMatchedCompetences ? getMatchedCompetences(tech.id) : [];
+              
               return (
-                <button
-                  key={tech.id}
-                  onClick={() => setSelectedTechId(tech.id)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all border ${
-                    isActive
-                      ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                      : 'border-border bg-card text-foreground hover:bg-muted hover:border-primary/30'
-                  }`}
-                >
-                  <div
-                    className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
-                    style={{
-                      backgroundColor: isActive ? 'rgba(255,255,255,0.25)' : (tech.color || 'hsl(var(--muted))'),
-                      color: isActive ? 'inherit' : 'white',
-                    }}
-                  >
-                    {initials}
-                  </div>
-                  {tech.label}
-                </button>
+                <TooltipProvider key={tech.id} delayDuration={300}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => setSelectedTechId(tech.id)}
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all border ${
+                          isActive
+                            ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                            : compat === false
+                              ? 'border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 hover:bg-red-100'
+                              : compat === true
+                                ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-300 hover:bg-green-100'
+                                : 'border-border bg-card text-foreground hover:bg-muted hover:border-primary/30'
+                        }`}
+                      >
+                        <div
+                          className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
+                          style={{
+                            backgroundColor: isActive ? 'rgba(255,255,255,0.25)' : (tech.color || 'hsl(var(--muted))'),
+                            color: isActive ? 'inherit' : 'white',
+                          }}
+                        >
+                          {initials}
+                        </div>
+                        {tech.label}
+                        {compat === true && !isActive && <span className="text-green-600 dark:text-green-400 text-[10px]">✓</span>}
+                        {compat === false && !isActive && <span className="text-red-500 text-[10px]">✗</span>}
+                      </button>
+                    </TooltipTrigger>
+                    {compat !== null && (
+                      <TooltipContent side="bottom" className="text-xs max-w-xs">
+                        {compat
+                          ? `Compatible : ${matched.join(', ')}`
+                          : 'Aucune compétence correspondante aux univers du dossier'
+                        }
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
               );
             })}
           </div>

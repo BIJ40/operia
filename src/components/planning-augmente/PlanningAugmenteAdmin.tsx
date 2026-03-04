@@ -12,6 +12,7 @@ import { usePlanningData, useApogeeUsersNormalized } from '@/shared/api/apogee/u
 import { buildUserMap } from '@/shared/planning/planningMapper';
 import { isTechnician, isActiveUser } from '@/shared/planning/normalize';
 import { useOptimizerConfig } from '@/hooks/usePlanningAugmente';
+import { useTechCompetenceMatch } from '@/hooks/useTechCompetenceMatch';
 import { DossierSearchPanel } from './DossierSearchPanel';
 import { PlanningGrid } from './PlanningGrid';
 import { SuggestPlanningButton } from './SuggestPlanningButton';
@@ -41,6 +42,7 @@ export default function PlanningAugmenteAdmin() {
   const { users, loading: usersLoading } = useApogeeUsersNormalized();
   const { data: projectsData, isLoading: projectsLoading } = usePlanningProjects(agencySlug ?? undefined);
   const { data: config, isLoading: configLoading } = useOptimizerConfig(agencyId ?? undefined);
+  const { isCompatible: checkCompat, getMatchedCompetences: getMatched } = useTechCompetenceMatch(agencyId ?? undefined);
 
   // Construire la map users complète (pour labels/couleurs)
   const userMap = useMemo(() => buildUserMap(users as any), [users]);
@@ -88,6 +90,22 @@ export default function PlanningAugmenteAdmin() {
   };
 
   const weekStartISO = useMemo(() => weekStart.toISOString().split('T')[0], [weekStart]);
+
+  // Univers du dossier sélectionné pour le matching compétences
+  const selectedUniverses = useMemo(() => {
+    return selectedDossier?.data?.universes ?? [];
+  }, [selectedDossier]);
+
+  // Fonctions de compatibilité liées au dossier sélectionné
+  const techIsCompatible = useMemo(() => {
+    if (!selectedDossier || selectedUniverses.length === 0) return undefined;
+    return (techId: number) => checkCompat(techId, selectedUniverses);
+  }, [selectedDossier, selectedUniverses, checkCompat]);
+
+  const techGetMatched = useMemo(() => {
+    if (!selectedDossier || selectedUniverses.length === 0) return undefined;
+    return (techId: number) => getMatched(techId, selectedUniverses);
+  }, [selectedDossier, selectedUniverses, getMatched]);
 
   return (
     <div className="space-y-4">
@@ -145,6 +163,8 @@ export default function PlanningAugmenteAdmin() {
                 isLoading={creneauxLoading || usersLoading}
                 weekStart={weekStart}
                 onWeekChange={setWeekStart}
+                isCompatible={techIsCompatible}
+                getMatchedCompetences={techGetMatched}
               />
             </div>
           </div>
@@ -161,6 +181,14 @@ export default function PlanningAugmenteAdmin() {
                     <span className="ml-3 text-xs text-muted-foreground">
                       {selectedDossier.clientName} • {selectedDossier.ville}
                     </span>
+                    {selectedUniverses.length > 0 && (
+                      <div className="mt-1 flex items-center gap-1">
+                        <span className="text-[10px] text-muted-foreground">Univers :</span>
+                        {selectedUniverses.map(u => (
+                          <Badge key={u} variant="outline" className="text-[10px] px-1.5 py-0">{u}</Badge>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   {agencyId && (
                     <SuggestPlanningButton agencyId={agencyId} dossierId={selectedDossier.id} variant="default" size="sm" />
