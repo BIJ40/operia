@@ -145,18 +145,36 @@ Deno.serve(async (req) => {
     }
 
     const emailData = payload.data;
-    // Debug: log all available keys to understand Resend payload structure
-    console.log("Email payload keys:", Object.keys(emailData));
-    console.log("Email payload text length:", emailData.text?.length ?? "null");
-    console.log("Email payload html length:", emailData.html?.length ?? "null");
-    console.log("Email payload body length:", (emailData as any).body?.length ?? "null");
-    console.log("Email payload raw sample:", JSON.stringify(emailData).slice(0, 500));
+    const emailId = emailData.email_id;
 
     const { name: senderName, email: senderEmail } = parseFrom(
       emailData.from || emailData.envelope?.from || "",
     );
     const subject = emailData.subject || "(Sans objet)";
-    const textBody = sanitizeText(emailData.text || emailData.html || (emailData as any).body || "");
+
+    // Fetch actual email content via Resend API (webhook only contains metadata)
+    let textBody = "";
+    if (emailId) {
+      const resendApiKey = Deno.env.get("RESEND_API_KEY");
+      if (resendApiKey) {
+        try {
+          const res = await fetch(`https://api.resend.com/emails/receiving/${emailId}`, {
+            headers: { "Authorization": `Bearer ${resendApiKey}` },
+          });
+          if (res.ok) {
+            const emailDetail = await res.json();
+            console.log("Resend email detail keys:", Object.keys(emailDetail));
+            textBody = sanitizeText(emailDetail.text || emailDetail.html || "");
+          } else {
+            console.error("Resend API error:", res.status, await res.text());
+          }
+        } catch (fetchErr) {
+          console.error("Error fetching email content:", fetchErr);
+        }
+      } else {
+        console.warn("RESEND_API_KEY not configured, cannot fetch email body");
+      }
+    }
 
     // Supabase admin client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
