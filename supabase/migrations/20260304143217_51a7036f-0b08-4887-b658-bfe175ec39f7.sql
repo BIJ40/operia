@@ -1,0 +1,2 @@
+ALTER TABLE public.apogee_tickets DROP CONSTRAINT apogee_tickets_created_from_check;
+ALTER TABLE public.apogee_tickets ADD CONSTRAINT apogee_tickets_created_from_check CHECK (created_from = ANY (ARRAY['MANUAL'::text, 'IMPORT'::text, 'EXCEL'::text, 'IMPORT_DYSFONCTIONNEMENTS'::text, 'IMPORT_BUGS'::text, 'IMPORT_TRAITE'::text, 'support'::text, 'email'::text]));
