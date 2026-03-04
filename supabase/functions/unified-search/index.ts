@@ -909,12 +909,30 @@ serve(async (req) => {
     const roleLevel = getRoleLevel(globalRole);
     
     // Déterminer les types de blocs autorisés pour la recherche documentaire
-    const enabledModules = profile?.enabled_modules || {};
-    const hasHelpAcademy = roleLevel >= 5 || enabledModules?.help_academy?.enabled === true;
-    const allowedBlockTypes = hasHelpAcademy 
-      ? ['apogee', 'helpconfort', 'document', 'faq'] 
-      : ['faq']; // Sans accès à l'Academy, seulement FAQ publique
-    console.log(`[unified-search] Doc permissions: hasHelpAcademy=${hasHelpAcademy}, allowedBlockTypes=[${allowedBlockTypes.join(', ')}]`);
+    // Source de vérité : user_modules (pas enabled_modules legacy)
+    // N5+ (platform_admin/superadmin) ont accès à tout inconditionnellement
+    const allowedBlockTypes: string[] = ['faq']; // FAQ toujours accessible
+    
+    if (roleLevel >= 5) {
+      // Superadmin/platform_admin : accès total
+      allowedBlockTypes.push('apogee', 'helpconfort', 'document');
+    } else {
+      // Vérifier les modules via user_modules (source de vérité)
+      const { data: userModules } = await supabase
+        .from('user_modules')
+        .select('module_key')
+        .eq('user_id', user.id)
+        .in('module_key', ['guides', 'help_academy']);
+      
+      const moduleKeys = (userModules || []).map((m: any) => m.module_key);
+      const hasGuidesAccess = moduleKeys.includes('guides') || moduleKeys.includes('help_academy');
+      
+      if (hasGuidesAccess) {
+        allowedBlockTypes.push('apogee', 'helpconfort', 'document');
+      }
+      console.log(`[unified-search] user_modules check: modules=[${moduleKeys.join(', ')}], hasGuidesAccess=${hasGuidesAccess}`);
+    }
+    console.log(`[unified-search] Doc permissions: roleLevel=N${roleLevel}, allowedBlockTypes=[${allowedBlockTypes.join(', ')}]`);
     const agencySlug = profile?.agence || '';
     
     const context: AiSearchContext = { userId: user.id, role: globalRole, roleLevel, agencyId: null, agencySlug: agencySlug || null, allowedAgencyIds: roleLevel >= 3 ? [] : undefined };
