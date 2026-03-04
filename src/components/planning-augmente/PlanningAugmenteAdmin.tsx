@@ -10,7 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { usePlanningProjects, type PlanningProject } from '@/hooks/usePlanningData';
 import { usePlanningData, useApogeeUsersNormalized } from '@/shared/api/apogee/usePlanningData';
 import { buildUserMap } from '@/shared/planning/planningMapper';
-import { isTechnician } from '@/shared/planning/normalize';
+import { isTechnician, isActiveUser } from '@/shared/planning/normalize';
 import { useOptimizerConfig } from '@/hooks/usePlanningAugmente';
 import { DossierSearchPanel } from './DossierSearchPanel';
 import { PlanningGrid } from './PlanningGrid';
@@ -58,10 +58,10 @@ export default function PlanningAugmenteAdmin() {
       }
     }
 
-    // Aussi inclure les techniciens typés qui ont des congés (mais pas de visite-interv)
+    // Techniciens typés ET actifs (is_on = true dans Apogée)
     const techTypedIds = new Set<number>();
     for (const u of users) {
-      if (isTechnician(u as any)) {
+      if (isTechnician(u as any) && isActiveUser(u as any)) {
         techTypedIds.add((u as any).id);
       }
     }
