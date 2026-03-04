@@ -243,6 +243,27 @@ Deno.serve(async (req) => {
     // Store requester email + destination in notes_internes for agent reply
     const notesInternes = `📧 Email expéditeur: ${senderEmail}\n👤 Nom: ${senderName}\n📬 Adresse contactée: ${toAddress}`;
 
+    // ── Try to match sender email to a known profile ──
+    let reportedBy = senderEmail; // Default: show raw email
+    let matchedUserId: string | null = null;
+    
+    const { data: matchedProfile } = await supabase
+      .from("profiles")
+      .select("id, first_name, last_name")
+      .eq("email", senderEmail.toLowerCase())
+      .maybeSingle();
+    
+    if (matchedProfile?.first_name || matchedProfile?.last_name) {
+      reportedBy = [matchedProfile.first_name, matchedProfile.last_name]
+        .filter(Boolean)
+        .join(' ')
+        .toUpperCase();
+      matchedUserId = matchedProfile.id;
+      console.log(`Email sender matched to profile: ${reportedBy} (${matchedProfile.id})`);
+    } else {
+      console.log(`No profile match for email: ${senderEmail}, using email as reported_by`);
+    }
+
     const { data: newTicket, error: createError } = await supabase
       .from("apogee_tickets")
       .insert({
@@ -250,12 +271,14 @@ Deno.serve(async (req) => {
         description: textBody.slice(0, 5000),
         kanban_status: "USER",
         created_from: "email",
-        reported_by: "AUTRE",
+        reported_by: reportedBy,
         heat_priority: route.priority,
         notes_internes: notesInternes,
         impact_tags: ["EMAIL", route.tag],
+        support_initiator_user_id: matchedUserId,
         initiator_profile: {
-          first_name: senderName,
+          first_name: matchedProfile?.first_name || senderName,
+          last_name: matchedProfile?.last_name || '',
           email: senderEmail,
         },
       })
