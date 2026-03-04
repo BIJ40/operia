@@ -173,7 +173,7 @@ export function CreateProjectTicketDialog({
             heat_priority: formData.heatPriority || 6,
             ticket_type: formData.ticketType || 'bug',
             needs_completion: true,
-            reported_by: 'agence',
+            reported_by: profile?.first_name?.toUpperCase() || user.email || 'INCONNU',
             is_urgent_support: true,
             initiator_profile: profile ? {
               first_name: profile.first_name,
