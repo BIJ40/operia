@@ -1,8 +1,8 @@
 /**
  * PlanningGrid - Vue grille hebdomadaire avec timeline horaire
- * Affiche les créneaux positionnés en heures par technicien par jour
+ * Sélecteur de technicien en haut, affiche le planning d'un seul tech à la fois
  */
-import { useMemo, useState, useRef } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -203,7 +203,11 @@ function DayColumn({ creneaux }: { creneaux: EnrichedCreneau[] }) {
 // ============================================================================
 
 export function PlanningGrid({ technicians, creneaux, isLoading, weekStart, onWeekChange }: PlanningGridProps) {
+  const [selectedTechId, setSelectedTechId] = useState<number | null>(null);
   const weekDays = useMemo(() => getWeekDays(weekStart), [weekStart]);
+
+  // Auto-select first tech if none selected
+  const activeTechId = selectedTechId ?? technicians[0]?.id ?? null;
 
   // Indexer les créneaux: clé = `techId-YYYY-MM-DD` → créneaux[]
   const creneauxByTechDay = useMemo(() => {
@@ -211,7 +215,6 @@ export function PlanningGrid({ technicians, creneaux, isLoading, weekStart, onWe
     for (const c of creneaux) {
       const d = parseDateSafe(c.date);
       if (!d) continue;
-
       for (const uid of c.usersIds) {
         for (const day of weekDays) {
           if (isSameDay(d, day)) {
@@ -225,32 +228,26 @@ export function PlanningGrid({ technicians, creneaux, isLoading, weekStart, onWe
     return map;
   }, [creneaux, weekDays]);
 
-  // Stats
-  const weekCreneauxCount = useMemo(() => {
-    let count = 0;
-    for (const c of creneaux) {
-      const d = parseDateSafe(c.date);
-      if (!d) continue;
-      if (weekDays.some(day => isSameDay(d, day))) count++;
+  // Stats du tech sélectionné cette semaine
+  const techStats = useMemo(() => {
+    if (!activeTechId) return { count: 0, minutes: 0 };
+    let count = 0, minutes = 0;
+    for (const day of weekDays) {
+      const key = `${activeTechId}-${format(day, 'yyyy-MM-dd')}`;
+      const slots = creneauxByTechDay.get(key) || [];
+      count += slots.length;
+      minutes += slots.reduce((s, c) => s + c.duree, 0);
     }
-    return count;
-  }, [creneaux, weekDays]);
-
-  const totalMinutes = useMemo(() => {
-    let sum = 0;
-    for (const c of creneaux) {
-      const d = parseDateSafe(c.date);
-      if (!d) continue;
-      if (weekDays.some(day => isSameDay(d, day))) sum += c.duree;
-    }
-    return sum;
-  }, [creneaux, weekDays]);
+    return { count, minutes };
+  }, [activeTechId, creneauxByTechDay, weekDays]);
 
   const weekLabel = `${format(weekStart, 'dd MMM', { locale: fr })} — ${format(addDays(weekStart, 5), 'dd MMM yyyy', { locale: fr })}`;
+  const activeTech = technicians.find(t => t.id === activeTechId);
 
   return (
     <Card className="h-full flex flex-col">
-      <CardHeader className="pb-3 shrink-0">
+      <CardHeader className="pb-3 shrink-0 space-y-3">
+        {/* Navigation semaine */}
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2">
             <Calendar className="w-4 h-4" />
@@ -268,28 +265,59 @@ export function PlanningGrid({ technicians, creneaux, isLoading, weekStart, onWe
             </Button>
           </div>
         </div>
-        {!isLoading && (
-          <div className="flex gap-2 mt-1 flex-wrap">
-            <Badge variant="outline" className="text-[10px]">{technicians.length} techniciens</Badge>
-            <Badge variant="outline" className="text-[10px]">{weekCreneauxCount} créneaux cette semaine</Badge>
-            <Badge variant="outline" className="text-[10px]">{Math.round(totalMinutes / 60)}h planifiées</Badge>
+
+        {/* Sélecteur techniciens */}
+        {!isLoading && technicians.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {technicians.map(tech => {
+              const isActive = tech.id === activeTechId;
+              const initials = tech.label.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+              return (
+                <button
+                  key={tech.id}
+                  onClick={() => setSelectedTechId(tech.id)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all border ${
+                    isActive
+                      ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                      : 'border-border bg-card text-foreground hover:bg-muted hover:border-primary/30'
+                  }`}
+                >
+                  <div
+                    className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
+                    style={{
+                      backgroundColor: isActive ? 'rgba(255,255,255,0.25)' : (tech.color || 'hsl(var(--muted))'),
+                      color: isActive ? 'inherit' : 'white',
+                    }}
+                  >
+                    {initials}
+                  </div>
+                  {tech.label}
+                </button>
+              );
+            })}
           </div>
         )}
-        {/* Légende */}
-        {!isLoading && (
-          <div className="flex gap-3 mt-2 flex-wrap">
-            {[
-              { label: 'RT/RDV', cls: 'bg-amber-200 dark:bg-amber-800' },
-              { label: 'TVX', cls: 'bg-purple-200 dark:bg-purple-800' },
-              { label: 'Dépannage', cls: 'bg-orange-200 dark:bg-orange-800' },
-              { label: 'Autre', cls: 'bg-blue-200 dark:bg-blue-800' },
-              { label: 'Congé', cls: 'bg-red-200 dark:bg-red-800' },
-            ].map(l => (
-              <div key={l.label} className="flex items-center gap-1">
-                <div className={`w-2.5 h-2.5 rounded-sm ${l.cls}`} />
-                <span className="text-[10px] text-muted-foreground">{l.label}</span>
-              </div>
-            ))}
+
+        {/* Stats + légende */}
+        {!isLoading && activeTech && (
+          <div className="flex items-center justify-between">
+            <div className="flex gap-2 flex-wrap">
+              <Badge variant="outline" className="text-[10px]">{techStats.count} créneaux</Badge>
+              <Badge variant="outline" className="text-[10px]">{Math.round(techStats.minutes / 60)}h planifiées</Badge>
+            </div>
+            <div className="flex gap-3 flex-wrap">
+              {[
+                { label: 'RT/RDV', cls: 'bg-amber-200 dark:bg-amber-800' },
+                { label: 'TVX', cls: 'bg-purple-200 dark:bg-purple-800' },
+                { label: 'Dép.', cls: 'bg-orange-200 dark:bg-orange-800' },
+                { label: 'Congé', cls: 'bg-red-200 dark:bg-red-800' },
+              ].map(l => (
+                <div key={l.label} className="flex items-center gap-1">
+                  <div className={`w-2 h-2 rounded-sm ${l.cls}`} />
+                  <span className="text-[9px] text-muted-foreground">{l.label}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </CardHeader>
@@ -300,46 +328,28 @@ export function PlanningGrid({ technicians, creneaux, isLoading, weekStart, onWe
             <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
             <span className="ml-2 text-sm text-muted-foreground">Chargement planning...</span>
           </div>
-        ) : technicians.length === 0 ? (
+        ) : !activeTech ? (
           <p className="text-sm text-muted-foreground text-center py-8">Aucun technicien trouvé</p>
         ) : (
           <ScrollArea className="h-full">
-            {technicians.map(tech => (
-              <div key={tech.id} className="mb-4">
-                {/* Nom technicien */}
-                <div className="flex items-center gap-2 mb-1 sticky top-0 bg-card z-10 py-1">
-                  <div
-                    className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
-                    style={{
-                      backgroundColor: tech.color || 'hsl(var(--primary))',
-                      color: 'white',
-                    }}
-                  >
-                    {tech.label.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase()}
+            {/* Timeline du technicien sélectionné */}
+            <div className="flex">
+              <TimeScale />
+              <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${WEEK_DAYS_COUNT}, 1fr)` }}>
+                {/* Entêtes jours */}
+                {weekDays.map((day, i) => (
+                  <div key={i} className="text-[10px] font-medium text-center text-muted-foreground pb-1 border-l border-border/20">
+                    {format(day, 'EEE dd', { locale: fr })}
                   </div>
-                  <span className="text-xs font-medium text-foreground truncate">{tech.label}</span>
-                </div>
-
-                {/* Timeline semaine */}
-                <div className="flex">
-                  <TimeScale />
-                  <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${WEEK_DAYS_COUNT}, 1fr)` }}>
-                    {/* Entêtes jours */}
-                    {weekDays.map((day, i) => (
-                      <div key={i} className="text-[10px] font-medium text-center text-muted-foreground pb-1 border-l border-border/20">
-                        {format(day, 'EEE dd', { locale: fr })}
-                      </div>
-                    ))}
-                    {/* Colonnes jours */}
-                    {weekDays.map((day, i) => {
-                      const key = `${tech.id}-${format(day, 'yyyy-MM-dd')}`;
-                      const cellCreneaux = creneauxByTechDay.get(key) || [];
-                      return <DayColumn key={i} creneaux={cellCreneaux} />;
-                    })}
-                  </div>
-                </div>
+                ))}
+                {/* Colonnes jours */}
+                {weekDays.map((day, i) => {
+                  const key = `${activeTechId}-${format(day, 'yyyy-MM-dd')}`;
+                  const cellCreneaux = creneauxByTechDay.get(key) || [];
+                  return <DayColumn key={i} creneaux={cellCreneaux} />;
+                })}
               </div>
-            ))}
+            </div>
           </ScrollArea>
         )}
       </CardContent>
