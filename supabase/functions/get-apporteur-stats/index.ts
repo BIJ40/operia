@@ -326,16 +326,23 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const [allProjects, allFactures, allDevis, allInterventions, demandsResult] = await Promise.all([
+    const [allProjects, allFactures, allDevis, allInterventions, allClients, demandsResult] = await Promise.all([
       fetchEndpoint('apiGetProjects'),
       fetchEndpoint('apiGetFactures'),
       fetchEndpoint('apiGetDevis'),
       fetchEndpoint('apiGetInterventions'),
+      fetchEndpoint('apiGetClients'),
       supabaseAdmin
         .from('apporteur_intervention_requests')
         .select('id, status, created_at')
         .eq('apporteur_id', apporteurId),
     ]);
+
+    // Index clients by id for name resolution
+    const clientsById: Record<number, R> = {};
+    for (const c of allClients) {
+      if (c.id != null) clientsById[Number(c.id)] = c;
+    }
 
     // ── Filter projects by commanditaireId once ──────────
     const projects = allProjects.filter((p: R) => {
@@ -435,11 +442,22 @@ Deno.serve(async (req) => {
     // ── Helper: résoudre le nom client d'un projet ──────
     function resolveClientName(proj: R | undefined): string {
       if (!proj) return '';
-      const client = proj.client || proj.data?.client;
-      if (client) {
-        return client.raisonSociale || client.nom || client.name || client.displayName || '';
+      // 1. Chercher le client via clientId dans le dictionnaire clients
+      const clientId = proj.clientId || proj.client_id;
+      if (clientId != null) {
+        const client = clientsById[Number(clientId)];
+        if (client) {
+          const name = client.raisonSociale || client.nom || client.name || client.displayName || '';
+          if (name) return name;
+        }
       }
-      // Fallback: label du projet contient parfois le nom du client
+      // 2. Client embarqué dans le projet
+      const embeddedClient = proj.client || proj.data?.client;
+      if (embeddedClient) {
+        const name = embeddedClient.raisonSociale || embeddedClient.nom || embeddedClient.name || embeddedClient.displayName || '';
+        if (name) return name;
+      }
+      // 3. Fallback: label du projet
       return proj.label || '';
     }
 
