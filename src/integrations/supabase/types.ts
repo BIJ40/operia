@@ -5045,8 +5045,8 @@ export type Database = {
           dossiers_received_count: number
           dossiers_sans_devis_count: number
           factures_count: number
-          panier_moyen: number
-          taux_transfo_devis: number
+          panier_moyen: number | null
+          taux_transfo_devis: number | null
         }
         Insert: {
           agence_id: string
@@ -5063,8 +5063,8 @@ export type Database = {
           dossiers_received_count?: number
           dossiers_sans_devis_count?: number
           factures_count?: number
-          panier_moyen?: number
-          taux_transfo_devis?: number
+          panier_moyen?: number | null
+          taux_transfo_devis?: number | null
         }
         Update: {
           agence_id?: string
@@ -5081,8 +5081,8 @@ export type Database = {
           dossiers_received_count?: number
           dossiers_sans_devis_count?: number
           factures_count?: number
-          panier_moyen?: number
-          taux_transfo_devis?: number
+          panier_moyen?: number | null
+          taux_transfo_devis?: number | null
         }
         Relationships: [
           {
@@ -5098,7 +5098,7 @@ export type Database = {
         Row: {
           agence_id: string
           apporteur_id: string
-          ca_ht: number
+          ca_ht: number | null
           date: string
           devis_count: number
           dossiers_count: number
@@ -5108,7 +5108,7 @@ export type Database = {
         Insert: {
           agence_id: string
           apporteur_id: string
-          ca_ht?: number
+          ca_ht?: number | null
           date: string
           devis_count?: number
           dossiers_count?: number
@@ -5118,7 +5118,7 @@ export type Database = {
         Update: {
           agence_id?: string
           apporteur_id?: string
-          ca_ht?: number
+          ca_ht?: number | null
           date?: string
           devis_count?: number
           dossiers_count?: number

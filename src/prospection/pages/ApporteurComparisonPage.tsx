@@ -3,17 +3,21 @@
  * Sélection depuis la liste Apogée (commanditaires)
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { X, Loader2, GitCompare, Search, Building2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { X, Loader2, GitCompare, Search, Building2, RefreshCw } from 'lucide-react';
 import { format, subDays, subMonths } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApporteurComparison } from '../hooks/useApporteurComparison';
 import { useApogeeCommanditaires, type ApogeeCommanditaire } from '@/hooks/useApogeeCommanditaires';
 import { ComparisonTable } from '../components/ComparisonTable';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 type PeriodKey = '30j' | '90j' | '6m' | '12m';
 
@@ -35,10 +39,29 @@ interface SelectedApporteur {
 
 export function ApporteurComparisonPage() {
   const { agencyId } = useAuth();
+  const queryClient = useQueryClient();
   const [period, setPeriod] = useState<PeriodKey>('6m');
   const [selected, setSelected] = useState<SelectedApporteur[]>([]);
   const [search, setSearch] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isRecalculating, setIsRecalculating] = useState(false);
+
+  const handleRecalculate = useCallback(async () => {
+    if (!agencyId) return;
+    setIsRecalculating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('compute-apporteur-metrics', {
+        body: { agency_id: agencyId },
+      });
+      if (error) throw error;
+      toast.success(`Métriques recalculées (${data?.data?.daily_rows ?? 0} lignes)`);
+      queryClient.invalidateQueries({ queryKey: ['prospection-apporteur-comparison'] });
+    } catch (e: any) {
+      toast.error(`Erreur : ${e.message}`);
+    } finally {
+      setIsRecalculating(false);
+    }
+  }, [agencyId, queryClient]);
 
   const { from, to } = getPeriodDates(period);
 
@@ -102,6 +125,16 @@ export function ApporteurComparisonPage() {
             <SelectItem value="12m">12 mois</SelectItem>
           </SelectContent>
         </Select>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRecalculate}
+          disabled={isRecalculating}
+        >
+          <RefreshCw className={`w-4 h-4 ${isRecalculating ? 'animate-spin' : ''}`} />
+          {isRecalculating ? 'Calcul…' : 'Recalculer'}
+        </Button>
       </div>
 
       {/* Sélection apporteurs */}
