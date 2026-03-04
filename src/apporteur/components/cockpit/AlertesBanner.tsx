@@ -138,24 +138,36 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
                 </div>
                 <ScrollArea className="h-[calc(100vh-280px)]">
                   <div className="space-y-1.5 pr-4">
-                    {openAlerte.sample_refs.map((ref, idx) => (
-                      <div
-                        key={`${ref}-${idx}`}
-                        className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
-                        onClick={() => {
-                          setSearchParams(prev => {
-                            const newParams = new URLSearchParams(prev);
-                            newParams.set('tab', 'dossiers');
-                            newParams.set('alerteRefs', ref);
-                            return newParams;
-                          });
-                          setOpenAlerte(null);
-                        }}
-                      >
-                        <span className="font-mono text-sm font-medium">{ref}</span>
-                        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
-                      </div>
-                    ))}
+                    {openAlerte.sample_refs.map((ref, idx) => {
+                      const label = openAlerte.sample_labels?.[idx];
+                      const displayName = label && label !== ref ? label : null;
+                      
+                      return (
+                        <div
+                          key={`${ref}-${idx}`}
+                          className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
+                          onClick={() => {
+                            setSearchParams(prev => {
+                              const newParams = new URLSearchParams(prev);
+                              newParams.set('tab', 'dossiers');
+                              newParams.set('alerteRefs', ref);
+                              return newParams;
+                            });
+                            setOpenAlerte(null);
+                          }}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <span className="text-sm font-medium truncate block">
+                              {displayName || `Dossier ${ref}`}
+                            </span>
+                            {displayName && (
+                              <span className="text-xs text-muted-foreground font-mono">{ref}</span>
+                            )}
+                          </div>
+                          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0 ml-2" />
+                        </div>
+                      );
+                    })}
                   </div>
                 </ScrollArea>
               </div>

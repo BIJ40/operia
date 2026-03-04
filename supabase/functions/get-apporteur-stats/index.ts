@@ -432,15 +432,26 @@ Deno.serve(async (req) => {
     const collabScore = round2(transfo_score + volume_score + regularite_score + delay_score);
     const collabLevel = collabScore >= 75 ? 'gold' : collabScore >= 55 ? 'silver' : 'bronze';
 
+    // ── Helper: résoudre le nom client d'un projet ──────
+    function resolveClientName(proj: R | undefined): string {
+      if (!proj) return '';
+      const client = proj.client || proj.data?.client;
+      if (client) {
+        return client.raisonSociale || client.nom || client.name || client.displayName || '';
+      }
+      // Fallback: label du projet contient parfois le nom du client
+      return proj.label || '';
+    }
+
     // ── Alertes ──────────────────────────────────────────
     const alertes: Array<{
       type: string; severity: string; count: number; amount?: number;
-      risk_blockage: number; sample_refs: string[];
+      risk_blockage: number; sample_refs: string[]; sample_labels: string[];
     }> = [];
     const now = new Date();
 
     // Factures > 30j
-    const overdueInvoices: { ref: string; days: number; amount: number }[] = [];
+    const overdueInvoices: { ref: string; label: string; days: number; amount: number }[] = [];
     for (const f of allFactures) {
       if (!projectIds.has(f.projectId)) continue;
       const resteDu = Number(f.data?.calcReglementsReste || f.calcReglementsReste || 0);
@@ -450,9 +461,13 @@ Deno.serve(async (req) => {
       const age = daysDiff(fd, now);
       if (age > 30) {
         const totalHT = Number(f.data?.totalHT || f.totalHT || 0);
-        // Find project ref
         const proj = projects.find((p: R) => Number(p.id) === Number(f.projectId));
-        overdueInvoices.push({ ref: String(proj?.ref || f.projectId), days: age, amount: totalHT });
+        overdueInvoices.push({ 
+          ref: String(proj?.ref || f.projectId), 
+          label: resolveClientName(proj) || String(proj?.ref || f.projectId),
+          days: age, 
+          amount: totalHT 
+        });
       }
     }
     if (overdueInvoices.length > 0) {
@@ -469,11 +484,12 @@ Deno.serve(async (req) => {
         amount: totalAmount,
         risk_blockage: risk,
         sample_refs: overdueInvoices.map(i => i.ref),
+        sample_labels: overdueInvoices.map(i => i.label),
       });
     }
 
     // Devis non validés > 15j
-    const overdueDevis: { ref: string }[] = [];
+    const overdueDevis: { ref: string; label: string }[] = [];
     for (const d of allDevis) {
       if (!projectIds.has(d.projectId)) continue;
       const state = String(d.state || '').toLowerCase();
@@ -484,7 +500,8 @@ Deno.serve(async (req) => {
       if (!dd) continue;
       if (daysDiff(dd, now) > 15) {
         const proj = projects.find((p: R) => Number(p.id) === Number(d.projectId));
-        overdueDevis.push({ ref: String(proj?.ref || d.projectId) });
+        const ref = String(proj?.ref || d.projectId);
+        overdueDevis.push({ ref, label: resolveClientName(proj) || ref });
       }
     }
     if (overdueDevis.length > 0) {
@@ -495,35 +512,37 @@ Deno.serve(async (req) => {
         count: overdueDevis.length,
         risk_blockage: risk,
         sample_refs: overdueDevis.map(d => d.ref),
+        sample_labels: overdueDevis.map(d => d.label),
       });
     }
 
     // Dossiers sans RDV
-    const noRdvDossiers: string[] = [];
+    const noRdvItems: { ref: string; label: string }[] = [];
     for (const p of periodProjects) {
       const interventions = interventionsByProject[Number(p.id)] || [];
       if (interventions.length === 0) {
-        noRdvDossiers.push(String(p.ref || p.id));
+        const ref = String(p.ref || p.id);
+        noRdvItems.push({ ref, label: resolveClientName(p) || ref });
       }
     }
-    if (noRdvDossiers.length > 0) {
-      const risk = clamp(noRdvDossiers.length * 20, 0, 100);
+    if (noRdvItems.length > 0) {
+      const risk = clamp(noRdvItems.length * 20, 0, 100);
       alertes.push({
         type: 'dossier_sans_rdv',
         severity: severity(risk),
-        count: noRdvDossiers.length,
+        count: noRdvItems.length,
         risk_blockage: risk,
-        sample_refs: noRdvDossiers,
+        sample_refs: noRdvItems.map(d => d.ref),
+        sample_labels: noRdvItems.map(d => d.label),
       });
     }
 
     // Dossiers sans action > 7j
-    const staleDossiers: string[] = [];
+    const staleItems: { ref: string; label: string }[] = [];
     for (const p of periodProjects) {
       const state = String(p.state || '').toLowerCase();
       if (['clos', 'closed', 'terminé', 'done'].some(s => state.includes(s))) continue;
       if (isCancelledLike(state)) continue;
-      // Last activity = max date across all related data
       const dates: Date[] = [];
       const pd = parseDate(p.dateReelle || p.date);
       if (pd) dates.push(pd);
@@ -533,61 +552,67 @@ Deno.serve(async (req) => {
       }
       const lastActivity = dates.length > 0 ? dates.reduce((a, b) => a > b ? a : b) : null;
       if (lastActivity && daysDiff(lastActivity, now) > 7) {
-        staleDossiers.push(String(p.ref || p.id));
+        const ref = String(p.ref || p.id);
+        staleItems.push({ ref, label: resolveClientName(p) || ref });
       }
     }
-    if (staleDossiers.length > 0) {
-      const risk = clamp(staleDossiers.length * 20, 0, 100);
+    if (staleItems.length > 0) {
+      const risk = clamp(staleItems.length * 20, 0, 100);
       alertes.push({
         type: 'dossier_sans_action_7j',
         severity: severity(risk),
-        count: staleDossiers.length,
+        count: staleItems.length,
         risk_blockage: risk,
-        sample_refs: staleDossiers,
+        sample_refs: staleItems.map(d => d.ref),
+        sample_labels: staleItems.map(d => d.label),
       });
     }
 
     // RDV annulés
-    const cancelledRdv: string[] = [];
+    const cancelledItems: { ref: string; label: string }[] = [];
     for (const [pid, interventions] of Object.entries(interventionsByProject)) {
       for (const i of interventions) {
         const s = String(i.state || '').toLowerCase();
         if (['cancelled', 'canceled', 'annulé', 'annule'].some(k => s.includes(k))) {
           const proj = projects.find((p: R) => Number(p.id) === Number(pid));
-          cancelledRdv.push(String(proj?.ref || pid));
-          break; // one per project
+          const ref = String(proj?.ref || pid);
+          cancelledItems.push({ ref, label: resolveClientName(proj) || ref });
+          break;
         }
       }
     }
-    if (cancelledRdv.length > 0) {
-      const risk = clamp(cancelledRdv.length * 15, 0, 100);
+    if (cancelledItems.length > 0) {
+      const risk = clamp(cancelledItems.length * 15, 0, 100);
       alertes.push({
         type: 'rdv_annule',
         severity: severity(risk),
-        count: cancelledRdv.length,
+        count: cancelledItems.length,
         risk_blockage: risk,
-        sample_refs: cancelledRdv,
+        sample_refs: cancelledItems.map(d => d.ref),
+        sample_labels: cancelledItems.map(d => d.label),
       });
     }
 
     // Devis refusés
-    const refusedDevisRefs: string[] = [];
+    const refusedItems: { ref: string; label: string }[] = [];
     for (const d of allDevis) {
       if (!projectIds.has(d.projectId)) continue;
       const state = String(d.state || '').toLowerCase();
       if (REFUSED_DEVIS.some(s => state.includes(s))) {
         const proj = projects.find((p: R) => Number(p.id) === Number(d.projectId));
-        refusedDevisRefs.push(String(proj?.ref || d.projectId));
+        const ref = String(proj?.ref || d.projectId);
+        refusedItems.push({ ref, label: resolveClientName(proj) || ref });
       }
     }
-    if (refusedDevisRefs.length > 0) {
-      const risk = clamp(refusedDevisRefs.length * 10, 0, 100);
+    if (refusedItems.length > 0) {
+      const risk = clamp(refusedItems.length * 10, 0, 100);
       alertes.push({
         type: 'devis_refuse',
         severity: severity(risk),
-        count: refusedDevisRefs.length,
+        count: refusedItems.length,
         risk_blockage: risk,
-        sample_refs: refusedDevisRefs,
+        sample_refs: refusedItems.map(d => d.ref),
+        sample_labels: refusedItems.map(d => d.label),
       });
     }
 
