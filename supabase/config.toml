@@ -171,3 +171,9 @@ verify_jwt = false
 
 [functions.export-all-data]
 verify_jwt = false
+
+[functions.email-to-ticket]
+verify_jwt = false
+
+[functions.reply-ticket-email]
+verify_jwt = false

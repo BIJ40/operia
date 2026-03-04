@@ -37,6 +37,7 @@ const REPORTED_BY_OPTIONS: { value: ReportedBy; label: string }[] = [
   { value: 'ERIC', label: 'Éric' },
   { value: 'APOGEE', label: 'Apogée' },
   { value: 'AUTRE', label: 'Autre' },
+  { value: 'MAIL' as ReportedBy, label: '📧 Email' },
 ];
 
 type DateRange = { from?: Date; to?: Date };

@@ -3,7 +3,7 @@
  * Affiche l'origine du ticket dans un format ovale/arrondi
  */
 
-import { User } from 'lucide-react';
+import { User, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ReportedBy } from '../types';
 
@@ -21,6 +21,7 @@ const ORIGINE_CONFIG: Record<string, { label: string; color: string; textColor: 
   APOGEE: { label: 'Apogée', color: 'hsl(258, 90%, 66%)', textColor: 'white' },
   HUGO: { label: 'Hugo', color: 'hsl(239, 84%, 67%)', textColor: 'white' },
   AUTRE: { label: 'Autre', color: 'hsl(220, 9%, 46%)', textColor: 'white' },
+  MAIL: { label: 'Email', color: 'hsl(174, 72%, 40%)', textColor: 'white' },
 };
 
 export function OrigineBadge({ origine, size = 'sm' }: OrigineBadgeProps) {
@@ -47,7 +48,11 @@ export function OrigineBadge({ origine, size = 'sm' }: OrigineBadgeProps) {
         color: config.textColor,
       }}
     >
-      <User className={size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} />
+      {normalizedOrigine === 'MAIL' ? (
+        <Mail className={size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} />
+      ) : (
+        <User className={size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} />
+      )}
       <span>{config.label}</span>
     </span>
   );
