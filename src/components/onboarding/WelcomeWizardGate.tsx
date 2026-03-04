@@ -1,17 +1,18 @@
 /**
- * Controller component that decides if the Welcome Wizard should be shown
- * Based on onboarding_completed_at and onboarding_dismissed_until
+ * Controller component that decides if the Welcome Wizard should be shown.
+ * Now also handles mustChangePassword by integrating it as the first wizard step.
  * 
  * Exception to NO_POPUP_POLICY: This is a business-critical first-login onboarding,
  * similar to ChangePasswordDialog (security requirement).
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useOnboardingState } from '@/hooks/useOnboardingState';
+import { useAuth } from '@/contexts/AuthContext';
 import { WelcomeWizard } from './WelcomeWizard';
-import { Loader2 } from 'lucide-react';
 
 export function WelcomeWizardGate() {
+  const { mustChangePassword } = useAuth();
   const {
     state,
     isLoading,
@@ -22,23 +23,23 @@ export function WelcomeWizardGate() {
   } = useOnboardingState();
   
   const [open, setOpen] = useState(false);
+  const [passwordHandled, setPasswordHandled] = useState(false);
 
-  // Open wizard when conditions are met (after loading)
+  // Show wizard when: onboarding needed OR password change needed
+  const needsWizard = shouldShowWizard || (mustChangePassword && !passwordHandled);
+
   useEffect(() => {
-    if (!isLoading && shouldShowWizard && state) {
+    if (!isLoading && needsWizard && state) {
       setOpen(true);
     }
-  }, [isLoading, shouldShowWizard, state]);
+  }, [isLoading, needsWizard, state]);
 
-  // Don't render anything while loading
-  if (isLoading) {
-    return null;
-  }
+  const handlePasswordChanged = useCallback(() => {
+    setPasswordHandled(true);
+  }, []);
 
-  // Don't render if wizard shouldn't be shown
-  if (!shouldShowWizard || !state) {
-    return null;
-  }
+  if (isLoading) return null;
+  if (!needsWizard || !state) return null;
 
   return (
     <WelcomeWizard
@@ -48,6 +49,8 @@ export function WelcomeWizardGate() {
       onDismiss={dismissOnboarding}
       isMutating={isMutating}
       initialData={state}
+      mustChangePassword={mustChangePassword && !passwordHandled}
+      onPasswordChanged={handlePasswordChanged}
     />
   );
 }

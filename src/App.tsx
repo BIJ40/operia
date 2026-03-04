@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useState, useEffect, lazy, Suspense } from "react";
+import { lazy, Suspense } from "react";
 
 import { MinimalLayout } from "./components/layout";
 import { Loader2 } from "lucide-react";
@@ -35,7 +35,7 @@ import { ApporteurEditorProvider } from "./contexts/ApporteurEditorContext";
 import { ImpersonationProvider } from "./contexts/ImpersonationContext";
 import { DataPreloadProvider } from "./contexts/DataPreloadContext";
 // REMOVED: RoleSimulatorProvider - fonctionnalité supprimée (simulation non fonctionnelle)
-import { ChangePasswordDialog } from "./components/ChangePasswordDialog";
+// ChangePasswordDialog is now integrated into WelcomeWizardGate
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { GlobalErrorBoundary } from "./components/system/GlobalErrorBoundary";
 import { WelcomeWizardGate } from "./components/onboarding";
@@ -87,16 +87,11 @@ import { PWAInstallPrompt } from "./components/pwa/PWAInstallPrompt";
 import { useVersionCheck } from "./hooks/useVersionCheck";
 
 function AppContent() {
-  const { mustChangePassword, user, isAuthLoading } = useAuth();
+  const { user, isAuthLoading } = useAuth();
   const { isBlocked, message, isLoading: isMaintenanceLoading } = useMaintenanceMode();
-  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 
   // Auto-check for app updates and force refresh if needed
   useVersionCheck();
-
-  useEffect(() => {
-    setShowPasswordDialog(mustChangePassword);
-  }, [mustChangePassword]);
 
   // Afficher le blocage maintenance si l'utilisateur n'est pas dans la whitelist
   if (!isAuthLoading && !isMaintenanceLoading && user && isBlocked) {
@@ -166,14 +161,7 @@ function AppContent() {
         </Suspense>
       </AuthRouter>
       
-      <ChangePasswordDialog 
-        open={showPasswordDialog} 
-        onOpenChange={(open) => {
-          if (!open && mustChangePassword) return;
-          setShowPasswordDialog(open);
-        }}
-        onSuccess={() => setShowPasswordDialog(false)}
-      />
+      {/* ChangePasswordDialog is now integrated into WelcomeWizardGate */}
       <ImpersonationBanner />
       <ReadOnlyEnforcer />
       <PWAInstallPrompt />
