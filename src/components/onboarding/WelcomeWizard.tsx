@@ -1,16 +1,23 @@
 /**
  * Wizard de bienvenue multi-étapes
- * Adaptatif selon le rôle utilisateur (N2+ = 4 étapes, autres = 2 étapes)
+ * Adaptatif selon le rôle utilisateur:
  * 
- * N2+ (franchisés/admins):
+ * Franchiseur (N3+):
+ * - Étape 0 (si must_change_password): Changement mot de passe
  * - Étape 1: Profil (nom, prénom, téléphone)
- * - Étape 2: Agence (nom long, adresse, téléphone)
- * - Étape 3: Équipe (création collaborateurs)
- * - Étape 4: Terminé
+ * - Étape finale: Terminé
+ * 
+ * Dirigeant agence (N2 + role_agence=dirigeant):
+ * - Étape 0 (si must_change_password): Changement mot de passe
+ * - Étape 1: Profil
+ * - Étape 2: Agence
+ * - Étape 3: Équipe
+ * - Étape finale: Terminé
  * 
  * Autres utilisateurs:
+ * - Étape 0 (si must_change_password): Changement mot de passe
  * - Étape 1: Profil
- * - Étape 2: Terminé
+ * - Étape finale: Terminé
  */
 
 import { useState, useMemo, useCallback } from 'react';
@@ -33,6 +40,7 @@ import {
   FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -50,6 +58,8 @@ import {
   Sparkles,
   Plus,
   UserPlus,
+  KeyRound,
+  AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GLOBAL_ROLES, GlobalRole } from '@/types/globalRoles';
@@ -60,14 +70,13 @@ import { toast } from 'sonner';
 import { CollaboratorWizard } from '@/components/collaborators';
 import { useCollaborators } from '@/hooks/useCollaborators';
 import { CollaboratorFormData } from '@/types/collaborator';
+import { logError } from '@/lib/logger';
 
-// Schema pour N2+ (avec infos agence)
+// Schema pour N2 dirigeant (avec infos agence)
 const managerFormSchema = z.object({
-  // Étape 1 - Profil
   first_name: z.string().min(1, 'Prénom requis'),
   last_name: z.string().min(1, 'Nom requis'),
   phone: z.string().optional(),
-  // Étape 2 - Agence
   agence_nom_long: z.string().optional(),
   agence_adresse: z.string().optional(),
   agence_ville: z.string().optional(),
@@ -76,7 +85,7 @@ const managerFormSchema = z.object({
   agence_email: z.string().email('Email invalide').optional().or(z.literal('')),
 });
 
-// Schema pour utilisateurs standard
+// Schema pour utilisateurs standard + franchiseurs
 const standardFormSchema = z.object({
   first_name: z.string().min(1, 'Prénom requis'),
   last_name: z.string().min(1, 'Nom requis'),
@@ -84,27 +93,12 @@ const standardFormSchema = z.object({
 });
 
 type ManagerFormValues = z.infer<typeof managerFormSchema>;
-type StandardFormValues = z.infer<typeof standardFormSchema>;
 
 interface StepConfig {
-  id: number;
+  id: string;
   title: string;
   icon: React.ElementType;
 }
-
-// Steps pour N2+
-const MANAGER_STEPS: StepConfig[] = [
-  { id: 1, title: 'Profil', icon: User },
-  { id: 2, title: 'Agence', icon: Building2 },
-  { id: 3, title: 'Équipe', icon: Users },
-  { id: 4, title: 'Terminé', icon: CheckCircle },
-];
-
-// Steps pour utilisateurs standard
-const STANDARD_STEPS: StepConfig[] = [
-  { id: 1, title: 'Profil', icon: User },
-  { id: 2, title: 'Terminé', icon: CheckCircle },
-];
 
 interface WelcomeWizardProps {
   open: boolean;
@@ -113,7 +107,12 @@ interface WelcomeWizardProps {
   onDismiss: () => Promise<{ success: boolean }>;
   isMutating: boolean;
   initialData: OnboardingState;
+  mustChangePassword?: boolean;
+  onPasswordChanged?: () => void;
 }
+
+// Password validation regex
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/])[A-Za-z\d!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/]{8,100}$/;
 
 export function WelcomeWizard({
   open,
@@ -122,10 +121,17 @@ export function WelcomeWizard({
   onDismiss,
   isMutating,
   initialData,
+  mustChangePassword = false,
+  onPasswordChanged,
 }: WelcomeWizardProps) {
   const { agencyId } = useAuth();
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [showCollaboratorWizard, setShowCollaboratorWizard] = useState(false);
+  const [passwordChanged, setPasswordChanged] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
   const [agencyInfo, setAgencyInfo] = useState<{
     agence_nom_long?: string;
     adresse?: string;
@@ -135,29 +141,55 @@ export function WelcomeWizard({
     contact_email?: string;
   }>({});
   
-  // Fetch collaborators pour afficher le nombre créé
   const { collaborators, createMutation } = useCollaborators();
   const createdCollaboratorsCount = collaborators?.length ?? 0;
   const isCreatingCollaborator = createMutation.isPending;
 
-  // Determine user level for adaptive content
-  // CRITICAL: Only dirigeants (franchise owners) get the full manager wizard
-  // Commercial, assistante, etc. are employees and should NOT manage agency/team
+  // Determine user type
   const userRoleLevel = initialData.global_role 
     ? GLOBAL_ROLES[initialData.global_role as GlobalRole] ?? 0 
     : 0;
   const roleAgence = initialData.role_agence?.toLowerCase() ?? '';
   
-  // N3+ = always manager (franchiseur/admin), N2 = only if role_agence is dirigeant
-  const isManager = userRoleLevel >= GLOBAL_ROLES.franchisor_user || 
-    (userRoleLevel >= GLOBAL_ROLES.franchisee_admin && roleAgence === 'dirigeant');
+  // Franchiseur = N3+ (no agency/team steps)
+  const isFranchiseur = userRoleLevel >= GLOBAL_ROLES.franchisor_user;
+  // Dirigeant agence = N2 + role_agence dirigeant (gets agency + team steps)
+  const isDirigeantAgence = !isFranchiseur && 
+    userRoleLevel >= GLOBAL_ROLES.franchisee_admin && 
+    roleAgence === 'dirigeant';
 
-  // Sélection des steps selon le rôle
-  const STEPS = isManager ? MANAGER_STEPS : STANDARD_STEPS;
+  // Build dynamic steps based on role + password requirement
+  const STEPS = useMemo(() => {
+    const steps: StepConfig[] = [];
+    
+    // Password step (only if needed and not yet changed)
+    if (mustChangePassword && !passwordChanged) {
+      steps.push({ id: 'password', title: 'Sécurité', icon: KeyRound });
+    }
+    
+    // Profile step (everyone)
+    steps.push({ id: 'profile', title: 'Profil', icon: User });
+    
+    // Agency step (dirigeant agence only, NOT franchiseur)
+    if (isDirigeantAgence) {
+      steps.push({ id: 'agency', title: 'Agence', icon: Building2 });
+      steps.push({ id: 'team', title: 'Équipe', icon: Users });
+    }
+    
+    // Final step
+    steps.push({ id: 'done', title: 'Terminé', icon: CheckCircle });
+    
+    return steps;
+  }, [mustChangePassword, passwordChanged, isDirigeantAgence]);
+
   const TOTAL_STEPS = STEPS.length;
+  const currentStep = STEPS[currentStepIndex];
+  const isLastStep = currentStepIndex === TOTAL_STEPS - 1;
+  const isPasswordStep = currentStep?.id === 'password';
+  const needsPasswordFirst = mustChangePassword && !passwordChanged;
 
   const form = useForm<ManagerFormValues>({
-    resolver: zodResolver(isManager ? managerFormSchema : standardFormSchema),
+    resolver: zodResolver(isDirigeantAgence ? managerFormSchema : standardFormSchema),
     defaultValues: {
       first_name: initialData.first_name || '',
       last_name: initialData.last_name || '',
@@ -173,8 +205,7 @@ export function WelcomeWizard({
 
   // Fetch agency info on mount
   useMemo(() => {
-    if (isManager && agencyId) {
-      // Fetch from apogee_agencies
+    if (isDirigeantAgence && agencyId) {
       supabase
         .from('apogee_agencies')
         .select('label, adresse, ville, code_postal, contact_phone, contact_email')
@@ -199,33 +230,81 @@ export function WelcomeWizard({
           }
         });
     }
-  }, [isManager, agencyId]);
+  }, [isDirigeantAgence, agencyId]);
 
-  // Prevent accidental close (only via buttons)
   const handleOpenChange = useCallback((openState: boolean) => {
-    // Only allow programmatic close, not click outside or X button
     if (!openState) return;
     onOpenChange(openState);
   }, [onOpenChange]);
 
+  // Handle password change
+  const handlePasswordSubmit = async () => {
+    setPasswordError('');
+    
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Les mots de passe ne correspondent pas');
+      return;
+    }
+    
+    if (!PASSWORD_REGEX.test(newPassword)) {
+      setPasswordError('Le mot de passe doit contenir au moins 8 caractères avec une majuscule, une minuscule, un chiffre et un symbole');
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+      if (updateError) throw updateError;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from('profiles')
+          .update({ must_change_password: false } as any)
+          .eq('id', user.id);
+      }
+
+      setPasswordChanged(true);
+      setNewPassword('');
+      setConfirmPassword('');
+      onPasswordChanged?.();
+      toast.success('Mot de passe mis à jour avec succès');
+      
+      // Move to next step (steps will rebuild without password step)
+      // Since steps rebuild, index 0 will now be 'profile'
+      setCurrentStepIndex(0);
+    } catch (error: any) {
+      logError('PASSWORD_CHANGE', 'Erreur changement mot de passe', { error });
+      if (error.message?.includes('session') || error.message?.includes('Session')) {
+        toast.error('Session expirée. Veuillez vous reconnecter.');
+        setTimeout(() => {
+          onOpenChange(false);
+          supabase.auth.signOut();
+        }, 1000);
+      } else {
+        setPasswordError(error.message || 'Impossible de changer le mot de passe');
+      }
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
   const handleNext = async () => {
-    // Validate current step fields
-    if (currentStep === 1) {
+    if (currentStep?.id === 'profile') {
       const valid = await form.trigger(['first_name', 'last_name', 'phone']);
       if (!valid) return;
-    } else if (currentStep === 2 && isManager) {
-      // Agency step - optional validation
+    } else if (currentStep?.id === 'agency') {
       await form.trigger(['agence_nom_long', 'agence_email']);
     }
     
-    if (currentStep < TOTAL_STEPS) {
-      setCurrentStep(currentStep + 1);
+    if (currentStepIndex < TOTAL_STEPS - 1) {
+      setCurrentStepIndex(currentStepIndex + 1);
     }
   };
 
   const handlePrevious = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
+    if (currentStepIndex > 0) {
+      setCurrentStepIndex(currentStepIndex - 1);
     }
   };
 
@@ -239,8 +318,7 @@ export function WelcomeWizard({
   const handleComplete = async () => {
     const values = form.getValues();
     
-    // Save agency info if manager
-    if (isManager && agencyId) {
+    if (isDirigeantAgence && agencyId) {
       try {
         await supabase
           .from('apogee_agencies')
@@ -265,7 +343,7 @@ export function WelcomeWizard({
       first_name: values.first_name,
       last_name: values.last_name,
       phone: values.phone || undefined,
-      email_notifications_enabled: true, // Activé par défaut
+      email_notifications_enabled: true,
       onboarding_payload: payload,
     });
 
@@ -282,11 +360,7 @@ export function WelcomeWizard({
     });
   };
 
-  const progress = (currentStep / TOTAL_STEPS) * 100;
-
-  // Déterminer si on est sur la dernière étape
-  const isLastStep = currentStep === TOTAL_STEPS;
-  const isTeamStep = isManager && currentStep === 3;
+  const progress = ((currentStepIndex + 1) / TOTAL_STEPS) * 100;
 
   return (
     <>
@@ -309,25 +383,26 @@ export function WelcomeWizard({
             <Progress value={progress} className="h-2" />
             
             <div className="flex justify-between">
-              {STEPS.map((step) => {
+              {STEPS.map((step, index) => {
                 const Icon = step.icon;
-                const isActive = currentStep === step.id;
-                const isCompleted = currentStep > step.id;
+                const isActive = currentStepIndex === index;
+                const isCompleted = currentStepIndex > index;
                 
                 return (
                   <button
                     type="button"
                     key={step.id}
                     onClick={() => {
-                      // Allow going back but not forward
-                      if (step.id < currentStep) {
-                        setCurrentStep(step.id);
+                      if (index < currentStepIndex) {
+                        // Don't go back to password step if already changed
+                        if (step.id === 'password' && passwordChanged) return;
+                        setCurrentStepIndex(index);
                       }
                     }}
                     className={cn(
                       "flex flex-col items-center gap-1 flex-1 transition-all",
-                      step.id < currentStep && "cursor-pointer hover:opacity-80",
-                      step.id >= currentStep && "cursor-default",
+                      index < currentStepIndex && "cursor-pointer hover:opacity-80",
+                      index >= currentStepIndex && "cursor-default",
                       isActive && "text-primary",
                       isCompleted && "text-primary",
                       !isActive && !isCompleted && "text-muted-foreground"
@@ -356,8 +431,59 @@ export function WelcomeWizard({
 
           <Form {...form}>
             <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
-              {/* Étape 1 - Profil */}
-              {currentStep === 1 && (
+              
+              {/* ===== PASSWORD STEP ===== */}
+              {isPasswordStep && (
+                <div className="space-y-4 animate-in fade-in-50 duration-300">
+                  <div className="space-y-2">
+                    <h3 className="font-semibold text-lg flex items-center gap-2">
+                      <KeyRound className="h-5 w-5 text-primary" />
+                      Sécurité du compte
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Vous devez définir un mot de passe personnel avant de continuer.
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                    <p className="text-sm text-amber-800 dark:text-amber-200">
+                      Le mot de passe provisoire doit être remplacé par un mot de passe personnel sécurisé.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="newPassword">Nouveau mot de passe</Label>
+                      <Input
+                        id="newPassword"
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => { setNewPassword(e.target.value); setPasswordError(''); }}
+                        placeholder="8+ caractères (MAJ, min, chiffre, symbole)"
+                        autoFocus
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(''); }}
+                        placeholder="Retapez le nouveau mot de passe"
+                      />
+                    </div>
+
+                    {passwordError && (
+                      <p className="text-sm text-destructive">{passwordError}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* ===== PROFILE STEP ===== */}
+              {currentStep?.id === 'profile' && (
                 <div className="space-y-4 animate-in fade-in-50 duration-300">
                   <div className="space-y-2">
                     <h3 className="font-semibold text-lg flex items-center gap-2">
@@ -417,8 +543,8 @@ export function WelcomeWizard({
                 </div>
               )}
 
-              {/* Étape 2 - Agence (N2+ uniquement) */}
-              {currentStep === 2 && isManager && (
+              {/* ===== AGENCY STEP (dirigeant agence only) ===== */}
+              {currentStep?.id === 'agency' && (
                 <div className="space-y-4 animate-in fade-in-50 duration-300">
                   <div className="space-y-2">
                     <h3 className="font-semibold text-lg flex items-center gap-2">
@@ -517,8 +643,8 @@ export function WelcomeWizard({
                 </div>
               )}
 
-              {/* Étape 3 - Équipe (N2+ uniquement) */}
-              {isTeamStep && (
+              {/* ===== TEAM STEP (dirigeant agence only) ===== */}
+              {currentStep?.id === 'team' && (
                 <div className="space-y-4 animate-in fade-in-50 duration-300">
                   <div className="space-y-2">
                     <h3 className="font-semibold text-lg flex items-center gap-2">
@@ -531,7 +657,6 @@ export function WelcomeWizard({
                     </p>
                   </div>
 
-                  {/* Liste des collaborateurs créés */}
                   {createdCollaboratorsCount > 0 && (
                     <div className="p-4 rounded-lg bg-muted/50">
                       <div className="flex items-center justify-between">
@@ -549,7 +674,6 @@ export function WelcomeWizard({
                     </div>
                   )}
 
-                  {/* Bouton ajouter collaborateur */}
                   <Button
                     type="button"
                     variant="outline"
@@ -575,8 +699,8 @@ export function WelcomeWizard({
                 </div>
               )}
 
-              {/* Étape Terminé */}
-              {isLastStep && (
+              {/* ===== DONE STEP ===== */}
+              {currentStep?.id === 'done' && (
                 <div className="space-y-4 animate-in fade-in-50 duration-300">
                   <div className="space-y-2 text-center">
                     <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
@@ -605,7 +729,16 @@ export function WelcomeWizard({
                       <span className="text-sm text-muted-foreground">Notifications email</span>
                       <Badge variant="default">Activées</Badge>
                     </div>
-                    {isManager && (
+                    {(mustChangePassword || passwordChanged) && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Mot de passe</span>
+                        <Badge variant="default" className="bg-green-600">
+                          <Check className="h-3 w-3 mr-1" />
+                          Sécurisé
+                        </Badge>
+                      </div>
+                    )}
+                    {isDirigeantAgence && (
                       <>
                         <Separator />
                         {form.getValues('agence_ville') && (
@@ -634,19 +767,24 @@ export function WelcomeWizard({
 
               {/* Navigation */}
               <div className="flex items-center justify-between pt-4 border-t">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={handleDismiss}
-                  disabled={isMutating}
-                  className="text-muted-foreground"
-                >
-                  <Clock className="h-4 w-4 mr-2" />
-                  Faire plus tard
-                </Button>
+                {/* Dismiss button — hidden if password change is pending */}
+                {needsPasswordFirst ? (
+                  <div />
+                ) : (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={handleDismiss}
+                    disabled={isMutating}
+                    className="text-muted-foreground"
+                  >
+                    <Clock className="h-4 w-4 mr-2" />
+                    Faire plus tard
+                  </Button>
+                )}
 
                 <div className="flex gap-2">
-                  {currentStep > 1 && (
+                  {currentStepIndex > 0 && !isPasswordStep && (
                     <Button
                       type="button"
                       variant="outline"
@@ -658,7 +796,20 @@ export function WelcomeWizard({
                     </Button>
                   )}
                   
-                  {!isLastStep ? (
+                  {isPasswordStep ? (
+                    <Button
+                      type="button"
+                      onClick={handlePasswordSubmit}
+                      disabled={passwordLoading || !newPassword || !confirmPassword}
+                    >
+                      {passwordLoading ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <KeyRound className="h-4 w-4 mr-2" />
+                      )}
+                      Changer le mot de passe
+                    </Button>
+                  ) : !isLastStep ? (
                     <Button
                       type="button"
                       onClick={handleNext}
