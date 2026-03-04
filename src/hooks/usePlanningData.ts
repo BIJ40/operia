@@ -113,16 +113,22 @@ export function usePlanningProjects(agencySlug: string | undefined) {
       const uniqueStates = [...new Set(enriched.map(p => p.state))].sort();
       console.log('[PlanningData] States uniques des projets:', uniqueStates);
       console.log('[PlanningData] Total projets:', enriched.length);
+      
+      // DEBUG TEMPORAIRE: stocker les states dans window pour diagnostic
+      (window as any).__PLANNING_STATES__ = uniqueStates;
 
       const planifiable = enriched.filter(p => {
         const st = (p.state || '').toLowerCase();
         // Matching large : "planif" dans le state = à planifier
-        return st.includes('planif') || st.includes('a planifier') || st.includes('à planifier');
+        return st.includes('planif') || st.includes('a planifier') || st.includes('à planifier')
+          || st.includes('a_planifier') || st.includes('devis_accept') || st.includes('devis_valid')
+          || st.includes('rt_fait') || st.includes('devis_a_faire')
+          || st.includes('stand_by') || st.includes('standby');
       });
 
-      console.log('[PlanningData] Projets à planifier trouvés:', planifiable.length, planifiable.slice(0, 3).map(p => ({ ref: p.ref, state: p.state })));
+      console.log('[PlanningData] Projets à planifier trouvés:', planifiable.length, 'states:', uniqueStates.join(', '));
 
-      return { planifiable, all: enriched };
+      return { planifiable, all: enriched, _debugStates: uniqueStates };
     },
     enabled: !!agencySlug,
     staleTime: 5 * 60 * 1000, // 5 min
