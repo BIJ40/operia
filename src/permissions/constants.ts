@@ -84,6 +84,7 @@ export const MODULE_MIN_ROLES: Partial<Record<ModuleKey, GlobalRole>> = {
   ticketing: 'base_user',
   aide: 'base_user',
   prospection: 'franchisee_admin',
+  planning_augmente: 'franchisee_admin',
 };
 
 // ============================================================================
@@ -133,6 +134,11 @@ export const MODULE_OPTION_MIN_ROLES: Record<string, GlobalRole> = {
   'prospection.veille': 'franchisee_admin',
   'prospection.prospects': 'franchisee_admin',
   
+  // Planification Augmentée
+  'planning_augmente.suggest': 'franchisee_admin',
+  'planning_augmente.optimize': 'franchisee_admin',
+  'planning_augmente.admin': 'platform_admin',
+  
   // Admin
   'admin_plateforme.users': 'platform_admin',
   'admin_plateforme.faq': 'platform_admin',
@@ -164,4 +170,5 @@ export const MODULE_LABELS: Partial<Record<ModuleKey, string>> = {
   ticketing: 'Ticketing',
   aide: 'Aide',
   prospection: 'Commercial',
+  planning_augmente: 'Planification Augmentée',
 };

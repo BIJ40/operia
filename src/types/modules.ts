@@ -22,6 +22,7 @@ export const MODULES = {
   ticketing: 'ticketing',                 // Ticketing
   aide: 'aide',                           // Aide
   prospection: 'prospection',             // Prospection Apporteurs
+  planning_augmente: 'planning_augmente', // Planification Augmentée (IA)
   // Modules réservés admin/réseau (non visibles dans les plans)
   reseau_franchiseur: 'reseau_franchiseur',
   admin_plateforme: 'admin_plateforme',
@@ -102,6 +103,11 @@ export const MODULE_OPTIONS = {
     comparateur: 'prospection.comparateur',
     veille: 'prospection.veille',
     prospects: 'prospection.prospects',
+  },
+  planning_augmente: {
+    suggest: 'planning_augmente.suggest',
+    optimize: 'planning_augmente.optimize',
+    admin: 'planning_augmente.admin',
   },
   reseau_franchiseur: {
     dashboard: 'reseau_franchiseur.dashboard',
@@ -316,6 +322,20 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'prospects', path: 'prospection.prospects', label: 'Prospects', description: 'Gestion prospects', defaultEnabled: true, routes: ['/?tab=prospection'] },
     ],
   },
+  {
+    key: 'planning_augmente',
+    label: 'Planification Augmentée',
+    description: 'Optimisation intelligente du planning techniciens',
+    icon: 'Brain',
+    defaultForRoles: [],
+    minRole: 'franchisee_admin',
+    adminOnly: true,
+    options: [
+      { key: 'suggest', path: 'planning_augmente.suggest', label: 'Suggestion', description: 'Suggérer un créneau', defaultEnabled: true, routes: [] },
+      { key: 'optimize', path: 'planning_augmente.optimize', label: 'Optimisation', description: 'Scanner & optimiser', defaultEnabled: true, routes: [] },
+      { key: 'admin', path: 'planning_augmente.admin', label: 'Admin', description: 'Configuration pondérations', defaultEnabled: false, routes: [] },
+    ],
+  },
   // Modules admin (non visibles dans les plans)
   {
     key: 'reseau_franchiseur',
@@ -363,6 +383,7 @@ export interface EnabledModules {
   ticketing?: boolean | ModuleOptionsState;
   aide?: boolean | ModuleOptionsState;
   prospection?: boolean | ModuleOptionsState;
+  planning_augmente?: boolean | ModuleOptionsState;
   reseau_franchiseur?: boolean | ModuleOptionsState;
   admin_plateforme?: boolean | ModuleOptionsState;
   // Legacy keys pour rétrocompatibilité
@@ -463,6 +484,7 @@ export const MODULE_SHORT_LABELS: Record<ModuleKey, string> = {
   ticketing: 'Ticketing',
   aide: 'Aide',
   prospection: 'Commercial',
+  planning_augmente: 'Planif. IA',
   reseau_franchiseur: 'Réseau',
   admin_plateforme: 'Admin',
   // Legacy

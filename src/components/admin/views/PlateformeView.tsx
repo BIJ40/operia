@@ -11,7 +11,7 @@ import {
   DraggableFolderContentContainer,
   FolderTabConfig 
 } from '@/components/ui/draggable-folder-tabs';
-import { Activity, Map, GitBranch, ToggleRight, Loader2 } from 'lucide-react';
+import { Activity, Map, GitBranch, ToggleRight, Brain, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { MaintenanceModeCard } from '@/components/admin/MaintenanceModeCard';
 import { useSessionState } from '@/hooks/useSessionState';
@@ -20,15 +20,17 @@ const AdminSystemHealth = lazy(() => import('@/pages/AdminSystemHealth'));
 const AdminFeatureFlags = lazy(() => import('@/pages/admin/AdminFeatureFlags'));
 const AdminSitemap = lazy(() => import('@/pages/admin/AdminSitemap'));
 const AdminFlow = lazy(() => import('@/pages/admin/AdminFlow'));
+const PlanningAugmenteAdmin = lazy(() => import('@/components/planning-augmente/PlanningAugmenteAdmin'));
 
 const SUB_TABS: FolderTabConfig[] = [
   { id: 'health', label: 'Santé', icon: Activity, accent: 'green' },
   { id: 'modules', label: 'Modules', icon: ToggleRight, accent: 'blue' },
   { id: 'sitemap', label: 'Sitemap', icon: Map, accent: 'purple' },
   { id: 'flow', label: 'Flow', icon: GitBranch, accent: 'orange' },
+  { id: 'planning-ia', label: 'Planif. IA', icon: Brain, accent: 'blue' },
 ];
 
-const DEFAULT_TAB_ORDER = ['health', 'modules', 'sitemap', 'flow'];
+const DEFAULT_TAB_ORDER = ['health', 'modules', 'sitemap', 'flow', 'planning-ia'];
 
 function LoadingFallback() {
   return (
@@ -104,6 +106,12 @@ export function PlateformeView() {
           <TabsContent value="flow" className="mt-0 focus-visible:outline-none">
             <Suspense fallback={<LoadingFallback />}>
               <AdminFlow />
+            </Suspense>
+          </TabsContent>
+
+          <TabsContent value="planning-ia" className="mt-0 focus-visible:outline-none">
+            <Suspense fallback={<LoadingFallback />}>
+              <PlanningAugmenteAdmin />
             </Suspense>
           </TabsContent>
         </DraggableFolderContentContainer>
