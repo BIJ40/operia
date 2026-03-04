@@ -1,13 +1,16 @@
 /**
  * PlanningAugmenteAdmin - Page admin Planification Augmentée
- * Vue complète : recherche dossier + grille planning + suggestion IA + optimisation
+ * Utilise les données réelles Apogée via usePlanningData (créneaux enrichis)
  */
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Settings, Loader2, Zap, AlertCircle } from 'lucide-react';
+import { Brain, Settings, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { usePlanningProjects, usePlanningTechnicians, usePlanningSlots, type PlanningProject } from '@/hooks/usePlanningData';
+import { usePlanningProjects, type PlanningProject } from '@/hooks/usePlanningData';
+import { usePlanningData, useApogeeUsersNormalized } from '@/shared/api/apogee/usePlanningData';
+import { buildUserMap } from '@/shared/planning/planningMapper';
+import { isTechnician, isActiveUser } from '@/shared/planning/normalize';
 import { useOptimizerConfig } from '@/hooks/usePlanningAugmente';
 import { DossierSearchPanel } from './DossierSearchPanel';
 import { PlanningGrid } from './PlanningGrid';
@@ -33,19 +36,30 @@ export default function PlanningAugmenteAdmin() {
   const [selectedDossier, setSelectedDossier] = useState<PlanningProject | null>(null);
   const [weekStart, setWeekStart] = useState<Date>(getMonday);
 
-  // Data hooks
+  // Data hooks - créneaux enrichis + users depuis le bon hook
+  const { creneaux, loading: creneauxLoading } = usePlanningData();
+  const { users, loading: usersLoading } = useApogeeUsersNormalized();
   const { data: projectsData, isLoading: projectsLoading } = usePlanningProjects(agencySlug ?? undefined);
-  const { data: technicians, isLoading: techLoading } = usePlanningTechnicians(agencySlug ?? undefined);
-  const { data: slots, isLoading: slotsLoading } = usePlanningSlots(agencySlug ?? undefined);
   const { data: config, isLoading: configLoading } = useOptimizerConfig(agencyId ?? undefined);
+
+  // Filtrer techniciens actifs
+  const technicians = useMemo(() => {
+    const uMap = buildUserMap(
+      users.filter(u => isActiveUser(u) && isTechnician(u)) as any
+    );
+    return Array.from(uMap.entries()).map(([id, info]) => ({
+      id,
+      label: info.label,
+      color: info.color,
+      type: info.type,
+    }));
+  }, [users]);
 
   const weights = (config as any)?.weights as Record<string, number> ?? {
     sla: 0.3, ca: 0.2, route: 0.2, coherence: 0.15, equity: 0.1, continuity: 0.05,
   };
 
   const weekStartISO = useMemo(() => weekStart.toISOString().split('T')[0], [weekStart]);
-
-  const isDataReady = !projectsLoading && !techLoading && !slotsLoading;
 
   return (
     <div className="space-y-4">
@@ -58,29 +72,17 @@ export default function PlanningAugmenteAdmin() {
           <div>
             <h2 className="text-lg font-semibold text-foreground">Planification Augmentée</h2>
             <p className="text-sm text-muted-foreground">
-              Données Apogée en temps réel • Moteur V1 heuristique
+              Données Apogée en temps réel • Timeline horaire
             </p>
           </div>
           <Badge variant="secondary" className="ml-2">V1</Badge>
         </div>
-
-        {/* Action buttons */}
         <div className="flex items-center gap-2">
           {agencyId && (
-            <OptimizeWeekButton
-              agencyId={agencyId}
-              weekStart={weekStartISO}
-              variant="outline"
-              size="sm"
-            />
+            <OptimizeWeekButton agencyId={agencyId} weekStart={weekStartISO} variant="outline" size="sm" />
           )}
           {agencyId && selectedDossier && (
-            <SuggestPlanningButton
-              agencyId={agencyId}
-              dossierId={selectedDossier.id}
-              variant="default"
-              size="sm"
-            />
+            <SuggestPlanningButton agencyId={agencyId} dossierId={selectedDossier.id} variant="default" size="sm" />
           )}
         </div>
       </div>
@@ -90,9 +92,7 @@ export default function PlanningAugmenteAdmin() {
         <Card className="border-destructive/30 bg-destructive/5">
           <CardContent className="p-4 flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-destructive" />
-            <p className="text-sm text-destructive">
-              Aucune agence configurée. Impossible de charger les données Apogée.
-            </p>
+            <p className="text-sm text-destructive">Aucune agence configurée.</p>
           </CardContent>
         </Card>
       )}
@@ -100,9 +100,8 @@ export default function PlanningAugmenteAdmin() {
       {agencySlug && (
         <>
           {/* Main layout: Dossier search + Planning grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4" style={{ minHeight: '500px' }}>
-            {/* Left panel: Dossier search */}
-            <div className="lg:col-span-4 xl:col-span-3">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4" style={{ minHeight: '600px' }}>
+            <div className="lg:col-span-3">
               <DossierSearchPanel
                 planifiableProjects={projectsData?.planifiable ?? []}
                 allProjects={projectsData?.all ?? []}
@@ -111,13 +110,11 @@ export default function PlanningAugmenteAdmin() {
                 onSelectDossier={setSelectedDossier}
               />
             </div>
-
-            {/* Right panel: Planning grid */}
-            <div className="lg:col-span-8 xl:col-span-9">
+            <div className="lg:col-span-9">
               <PlanningGrid
-                technicians={technicians ?? []}
-                slots={slots ?? []}
-                isLoading={techLoading || slotsLoading}
+                technicians={technicians}
+                creneaux={creneaux}
+                isLoading={creneauxLoading || usersLoading}
                 weekStart={weekStart}
                 onWeekChange={setWeekStart}
               />
@@ -138,19 +135,14 @@ export default function PlanningAugmenteAdmin() {
                     </span>
                   </div>
                   {agencyId && (
-                    <SuggestPlanningButton
-                      agencyId={agencyId}
-                      dossierId={selectedDossier.id}
-                      variant="default"
-                      size="sm"
-                    />
+                    <SuggestPlanningButton agencyId={agencyId} dossierId={selectedDossier.id} variant="default" size="sm" />
                   )}
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {/* Weights config (collapsible) */}
+          {/* Weights config */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
