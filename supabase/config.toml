@@ -177,3 +177,12 @@ verify_jwt = false
 
 [functions.reply-ticket-email]
 verify_jwt = false
+
+[functions.suggest-planning]
+verify_jwt = true
+
+[functions.optimize-week]
+verify_jwt = true
+
+[functions.apply-planning-action]
+verify_jwt = true

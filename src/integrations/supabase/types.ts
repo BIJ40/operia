@@ -2778,6 +2778,44 @@ export type Database = {
           },
         ]
       }
+      duration_calibration: {
+        Row: {
+          agency_id: string
+          id: string
+          planned_to_real_ratio: number | null
+          sample_size: number | null
+          tech_apogee_id: number
+          univers: string
+          updated_at: string | null
+        }
+        Insert: {
+          agency_id: string
+          id?: string
+          planned_to_real_ratio?: number | null
+          sample_size?: number | null
+          tech_apogee_id: number
+          univers: string
+          updated_at?: string | null
+        }
+        Update: {
+          agency_id?: string
+          id?: string
+          planned_to_real_ratio?: number | null
+          sample_size?: number | null
+          tech_apogee_id?: number
+          univers?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "duration_calibration_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employment_contracts: {
         Row: {
           agency_id: string
@@ -5516,6 +5554,79 @@ export type Database = {
         }
         Relationships: []
       }
+      planning_moves: {
+        Row: {
+          agency_id: string
+          created_at: string | null
+          id: string
+          input_json: Json
+          moves_json: Json
+          requested_by: string | null
+          summary_gains_json: Json | null
+          week_start: string
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string | null
+          id?: string
+          input_json: Json
+          moves_json: Json
+          requested_by?: string | null
+          summary_gains_json?: Json | null
+          week_start: string
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string | null
+          id?: string
+          input_json?: Json
+          moves_json?: Json
+          requested_by?: string | null
+          summary_gains_json?: Json | null
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planning_moves_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      planning_optimizer_config: {
+        Row: {
+          agency_id: string
+          hard_constraints: Json | null
+          id: string
+          updated_at: string | null
+          weights: Json | null
+        }
+        Insert: {
+          agency_id: string
+          hard_constraints?: Json | null
+          id?: string
+          updated_at?: string | null
+          weights?: Json | null
+        }
+        Update: {
+          agency_id?: string
+          hard_constraints?: Json | null
+          id?: string
+          updated_at?: string | null
+          weights?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planning_optimizer_config_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: true
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       planning_package_recipients: {
         Row: {
           collaborator_id: string
@@ -5589,6 +5700,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "planning_packages_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      planning_suggestions: {
+        Row: {
+          agency_id: string
+          created_at: string | null
+          dossier_id: number
+          id: string
+          input_json: Json
+          output_json: Json
+          requested_by: string | null
+          score_breakdown_json: Json | null
+          status: string | null
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string | null
+          dossier_id: number
+          id?: string
+          input_json: Json
+          output_json: Json
+          requested_by?: string | null
+          score_breakdown_json?: Json | null
+          status?: string | null
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string | null
+          dossier_id?: number
+          id?: string
+          input_json?: Json
+          output_json?: Json
+          requested_by?: string | null
+          score_breakdown_json?: Json | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planning_suggestions_agency_id_fkey"
             columns: ["agency_id"]
             isOneToOne: false
             referencedRelation: "apogee_agencies"
@@ -7523,6 +7678,41 @@ export type Database = {
         }
         Relationships: []
       }
+      tech_skills: {
+        Row: {
+          agency_id: string
+          id: string
+          level: number | null
+          tech_apogee_id: number
+          univers: string
+          updated_at: string | null
+        }
+        Insert: {
+          agency_id: string
+          id?: string
+          level?: number | null
+          tech_apogee_id: number
+          univers: string
+          updated_at?: string | null
+        }
+        Update: {
+          agency_id?: string
+          id?: string
+          level?: number | null
+          tech_apogee_id?: number
+          univers?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tech_skills_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       technician_capacity_config: {
         Row: {
           agency_id: string
@@ -7826,6 +8016,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      travel_cache: {
+        Row: {
+          from_geohash: string
+          id: string
+          minutes_estimate: number
+          to_geohash: string
+          updated_at: string | null
+        }
+        Insert: {
+          from_geohash: string
+          id?: string
+          minutes_estimate: number
+          to_geohash: string
+          updated_at?: string | null
+        }
+        Update: {
+          from_geohash?: string
+          id?: string
+          minutes_estimate?: number
+          to_geohash?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       unified_notifications: {
         Row: {
