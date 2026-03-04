@@ -36,6 +36,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import ReactMarkdown from 'react-markdown';
 import { useQueryClient } from '@tanstack/react-query';
 
 // Types pour les messages
@@ -501,7 +502,13 @@ export function SimplifiedSupportChat({
                     : "bg-muted/50 border border-border/40"
                 )}
               >
-                {msg.content}
+                {msg.role === 'user' ? (
+                  msg.content
+                ) : (
+                  <div className="prose prose-sm max-w-none dark:prose-invert [&>p]:my-1 [&>ul]:my-1 [&>ol]:my-1">
+                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  </div>
+                )}
                 {msg.isIncomplete && (
                   <Badge variant="outline" className="mt-2 text-xs rounded-full">
                     Réponse partielle
