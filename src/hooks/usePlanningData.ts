@@ -109,11 +109,18 @@ export function usePlanningProjects(agencySlug: string | undefined) {
         };
       });
 
-      const planifiable = enriched.filter(p =>
-        PLANIFIABLE_STATES.some(s => 
-          (p.state || '').toLowerCase().replace(/[éè]/g, 'e').replace(/\s+/g, '_').includes(s)
-        )
-      );
+      // DEBUG: log tous les states uniques pour identifier les bons
+      const uniqueStates = [...new Set(enriched.map(p => p.state))].sort();
+      console.log('[PlanningData] States uniques des projets:', uniqueStates);
+      console.log('[PlanningData] Total projets:', enriched.length);
+
+      const planifiable = enriched.filter(p => {
+        const st = (p.state || '').toLowerCase();
+        // Matching large : "planif" dans le state = à planifier
+        return st.includes('planif') || st.includes('a planifier') || st.includes('à planifier');
+      });
+
+      console.log('[PlanningData] Projets à planifier trouvés:', planifiable.length, planifiable.slice(0, 3).map(p => ({ ref: p.ref, state: p.state })));
 
       return { planifiable, all: enriched };
     },
