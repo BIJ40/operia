@@ -6,10 +6,10 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
 import { authenticateApporteur } from '../_shared/apporteurAuth.ts';
-import { withCors, handleCorsOptions } from '../_shared/cors.ts';
+import { withCors, handleCorsPreflightOrReject } from '../_shared/cors.ts';
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return handleCorsOptions(req);
+  if (req.method === 'OPTIONS') return handleCorsPreflightOrReject(req) ?? new Response(null, { status: 204 });
   if (req.method !== 'POST') {
     return withCors(req, new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 }));
   }
