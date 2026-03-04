@@ -224,9 +224,24 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ── Route by destination address ──
+    const toAddresses: string[] = emailData.to || [];
+    const toAddress = toAddresses[0]?.toLowerCase() || "";
+    const toLocal = toAddress.split("@")[0]; // e.g. "bug", "support", "dev"
+
+    // Mapping: adresse destination → tag + priorité
+    const EMAIL_ROUTING: Record<string, { tag: string; priority: number }> = {
+      "bug":     { tag: "BUG",     priority: 12 },
+      "dev":     { tag: "EVO",     priority: 4 },
+      "support": { tag: "AIDE",    priority: 11 },
+    };
+
+    const route = EMAIL_ROUTING[toLocal] || { tag: "TICKET MAIL", priority: 10 };
+    console.log(`Email routing: to=${toAddress}, local=${toLocal}, tag=${route.tag}, priority=${route.priority}`);
+
     // ── Create new ticket ──
-    // Store requester email in notes_internes for agent reply
-    const notesInternes = `📧 Email expéditeur: ${senderEmail}\n👤 Nom: ${senderName}`;
+    // Store requester email + destination in notes_internes for agent reply
+    const notesInternes = `📧 Email expéditeur: ${senderEmail}\n👤 Nom: ${senderName}\n📬 Adresse contactée: ${toAddress}`;
 
     const { data: newTicket, error: createError } = await supabase
       .from("apogee_tickets")
@@ -236,9 +251,9 @@ Deno.serve(async (req) => {
         kanban_status: "USER",
         created_from: "email",
         reported_by: "AUTRE",
-        heat_priority: 6,
+        heat_priority: route.priority,
         notes_internes: notesInternes,
-        impact_tags: ["EMAIL"],
+        impact_tags: ["EMAIL", route.tag],
         initiator_profile: {
           first_name: senderName,
           email: senderEmail,
