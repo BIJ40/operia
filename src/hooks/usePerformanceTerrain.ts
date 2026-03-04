@@ -42,6 +42,10 @@ export interface TechnicianPerformance {
   weeklyHours: number;
   weeklyHoursSource: 'contract' | 'default'; // 'contract' = RH, 'default' = 35h par défaut
   
+  // Absence / Arrêt
+  isAbsent: boolean;
+  absenceLabel?: string; // ex: "Arrêt maladie"
+  
   // CA
   caGenerated: number;
   dossiersCount: number;
@@ -370,6 +374,41 @@ export function usePerformanceTerrain(dateRange: DateRange) {
 
         const slots: Slot[] = slotsFromVisites.length > 0 ? slotsFromVisites : slotsFromCreneaux;
 
+        // === DÉTECTER LES ABSENCES (arrêt maladie, etc.) ===
+        // Les absences apparaissent comme des créneaux avec un type contenant "arrêt" ou "maladie" ou "absence"
+        const absentTechs = new Map<string, string>(); // techId -> label
+        const allSlotSources = [...(creneaux || []), ...(interventions as any[])];
+        for (const item of allSlotSources) {
+          const type = ((item?.type || item?.data?.type || '') as string).toLowerCase();
+          const type2 = ((item?.type2 || item?.data?.type2 || '') as string).toLowerCase();
+          const label = (item?.label || item?.data?.label || '') as string;
+          const combined = `${type} ${type2} ${label.toLowerCase()}`;
+          
+          if (combined.includes('arret') || combined.includes('arrêt') || 
+              combined.includes('maladie') || combined.includes('absence') ||
+              combined.includes('conge') || combined.includes('congé')) {
+            const usersRaw = item?.usersIds || item?.data?.usersIds || [];
+            const userId = item?.userId != null ? String(item.userId) : undefined;
+            const ids = Array.isArray(usersRaw) ? usersRaw.map((x: any) => String(x)) : [];
+            if (userId) ids.push(userId);
+            
+            // Determine the best label
+            const absLabel = combined.includes('maladie') ? 'Arrêt maladie' 
+              : combined.includes('arret') || combined.includes('arrêt') ? 'En arrêt'
+              : combined.includes('conge') || combined.includes('congé') ? 'En congé'
+              : 'Absent';
+            
+            for (const id of ids) {
+              if (!absentTechs.has(id)) absentTechs.set(id, absLabel);
+            }
+          }
+        }
+        
+        logDebug('PERF_TERRAIN', 'Absences détectées', { 
+          count: absentTechs.size,
+          techs: Array.from(absentTechs.entries())
+        });
+
         // Agréger par technicien
         const techStats = new Map<string, {
           timeTotal: number;
@@ -460,6 +499,9 @@ export function usePerformanceTerrain(dateRange: DateRange) {
           const interventionsCount = stats.interventionsSet.size;
           const savRate = interventionsCount > 0 ? savCount / interventionsCount : 0;
 
+          const isAbsent = absentTechs.has(techId);
+          const absenceLabel = absentTechs.get(techId);
+
           const perf: TechnicianPerformance = {
             id: techId,
             name,
@@ -484,25 +526,32 @@ export function usePerformanceTerrain(dateRange: DateRange) {
             weeklyHours,
             weeklyHoursSource,
             
+            isAbsent,
+            absenceLabel,
+            
             caGenerated: stats.caGenerated,
             dossiersCount: stats.dossiersSet.size,
           };
 
           technicians.push(perf);
-          totalProductivity += productivityRate;
-          totalLoad += loadRatio;
+          // Exclure les absents des moyennes d'équipe
+          if (!isAbsent) {
+            totalProductivity += productivityRate;
+            totalLoad += loadRatio;
+          }
           totalSav += savCount;
           totalInterventions += interventionsCount;
           totalCA += stats.caGenerated;
         }
 
-        const count = technicians.length || 1;
+        const activeTechs = technicians.filter(t => !t.isAbsent);
+        const activeCount = activeTechs.length || 1;
 
         return {
           technicians: technicians.sort((a, b) => b.productivityRate - a.productivityRate),
           teamStats: {
-            avgProductivityRate: totalProductivity / count,
-            avgLoadRatio: totalLoad / count,
+            avgProductivityRate: totalProductivity / activeCount,
+            avgLoadRatio: totalLoad / activeCount,
             totalSavCount: totalSav,
             totalInterventions,
             totalCA,

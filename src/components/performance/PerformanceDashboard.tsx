@@ -6,7 +6,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePerformanceTerrain, TechnicianPerformance } from '@/hooks/usePerformanceTerrain';
-import { useFilters } from '@/apogee-connect/contexts/FiltersContext';
 import { TeamHeatmap } from './TeamHeatmap';
 import { TechnicianRadarChart } from './TechnicianRadarChart';
 import { SavDetailsDrawer } from './SavDetailsDrawer';
@@ -22,17 +21,41 @@ import {
   AlertTriangle,
   TrendingUp,
   ArrowLeft,
-  FileWarning
+  FileWarning,
+  ChevronLeft,
+  ChevronRight,
+  Calendar
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatPercent } from '@/lib/formatters';
+import { startOfMonth, endOfMonth, addMonths, subMonths, format, isThisMonth } from 'date-fns';
+import { fr } from 'date-fns/locale';
+
+function usePerformancePeriod() {
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  
+  const dateRange = useMemo(() => {
+    const start = startOfMonth(currentMonth);
+    // For current month: include future (end of month) for planning visibility
+    const end = endOfMonth(currentMonth);
+    return { start, end };
+  }, [currentMonth]);
+  
+  const goToPreviousMonth = useCallback(() => setCurrentMonth(prev => subMonths(prev, 1)), []);
+  const goToNextMonth = useCallback(() => setCurrentMonth(prev => addMonths(prev, 1)), []);
+  const goToCurrentMonth = useCallback(() => setCurrentMonth(new Date()), []);
+  
+  const isCurrentMonth = isThisMonth(currentMonth);
+  const label = format(currentMonth, 'MMMM yyyy', { locale: fr });
+  
+  return { dateRange, currentMonth, goToPreviousMonth, goToNextMonth, goToCurrentMonth, isCurrentMonth, label };
+}
 
 export function PerformanceDashboard() {
   const navigate = useNavigate();
   
-  // Utiliser le contexte global de filtres
-  const { filters } = useFilters();
-  const dateRange = filters.dateRange;
+  // Sélecteur de période dédié (mois en cours par défaut + navigation)
+  const { dateRange, goToPreviousMonth, goToNextMonth, goToCurrentMonth, isCurrentMonth, label: periodLabel } = usePerformancePeriod();
   const { data, isLoading, error } = usePerformanceTerrain(dateRange);
   const [selectedTech, setSelectedTech] = useState<TechnicianPerformance | null>(null);
   const [savDrawerTech, setSavDrawerTech] = useState<TechnicianPerformance | null>(null);
@@ -195,18 +218,37 @@ export function PerformanceDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Header with month selector */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <Activity className="w-5 h-5 text-primary" />
-            Performance Terrain — {dateRange.start.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+            Performance Terrain
           </h2>
           <p className="text-sm text-muted-foreground">
             Pilotage équilibré, orienté capacité & qualité
           </p>
         </div>
-        <PerformanceLegend />
+        
+        {/* Sélecteur de mois */}
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={goToPreviousMonth}>
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <Button 
+            variant={isCurrentMonth ? "default" : "outline"} 
+            size="sm" 
+            className="min-w-[140px] capitalize"
+            onClick={goToCurrentMonth}
+          >
+            <Calendar className="w-4 h-4 mr-2" />
+            {periodLabel}
+          </Button>
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={goToNextMonth}>
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+          <PerformanceLegend />
+        </div>
       </div>
 
       {/* KPIs équipe */}
