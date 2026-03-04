@@ -1,39 +1,48 @@
 
 
-## Problème
+## Mise à jour du Changelog — Semaine du 25 février au 4 mars 2026
 
-1. **`CreateProjectTicketDialog.tsx`** (ligne 176) : `reported_by` est hardcodé à `'agence'` au lieu d'utiliser le prénom de l'utilisateur connecté
-2. **`OrigineBadge.tsx`** : `AGENCE` et `AUTRE` sont encore dans la config connue — ils ne devraient plus exister comme origines valides. Le badge doit toujours afficher soit un **prénom** (icône User), soit un **email** (icône Mail)
+### Constat
+Le changelog est bloqué à V0.8.7 (31 janvier). Il manque plus d'un mois de travail, notamment les changements majeurs de cette dernière semaine.
 
-## Corrections
+### Nouvelle version : V0.9.0
 
-### A. `CreateProjectTicketDialog.tsx` — Utiliser le prénom au lieu de "agence"
+**Nom de code suggéré** : "Commercial & CRM"
 
-Le profil utilisateur est déjà chargé (ligne 155-159). Remplacer :
-```
-reported_by: 'agence'
-```
-par :
-```
-reported_by: profile?.first_name?.toUpperCase() || user.email || 'INCONNU'
-```
+**Date** : 2026-03-04
 
-### B. `OrigineBadge.tsx` — Supprimer AGENCE/AUTRE de la config
+### Entrées changelog prévues
 
-- Retirer `AGENCE` et `AUTRE` de `ORIGINE_CONFIG` pour qu'ils ne soient plus traités comme des origines connues
-- Toute valeur non email et non dans la liste des prénoms connus passera dans la branche "nom dynamique" → affichera le prénom formaté avec couleur générée
-- Les emails continueront d'afficher avec l'icône Mail
+#### Module Commercial (feature)
+- Module Commercial complet avec 4 onglets : Suivi client, Comparateur, Veille, Prospects
+- Scoring adaptatif des apporteurs (score composite 0-100 avec 4 métriques pondérées)
+- Veille globale avec classement des partenaires + ScoreCard individuelle
+- Comparateur de métriques apporteurs avec calcul automatique quotidien (cron 02h30)
+- Bouton "Recalculer" pour rafraîchissement manuel des métriques
 
-### C. Migration des données existantes
+#### CRM Prospects (feature)
+- Pipeline prospects en 6 états (Nouveau → Contacté → RDV → Négociation → Gagné/Perdu)
+- Import prospects via Excel avec mapping flexible
+- Pool de prospects importés avant création de fiche
+- Scoring 5 étoiles et extraction automatique de la ville depuis l'adresse
+- Panneau de détail avec notes, RDV et historique des interactions
 
-Mettre à jour les tickets existants qui ont `reported_by = 'agence'` ou `'AGENCE'` pour les remplacer par le prénom de l'utilisateur qui les a créés (via `created_by_user_id` → `profiles.first_name`). Requête SQL :
+#### Renommages (improvement)
+- Prospection → Commercial (clé module inchangée : 'prospection')
+- Apporteurs → Suivi client
+- Navigation par onglets navigateur pour les fiches partenaires
 
-```sql
-UPDATE apogee_tickets t
-SET reported_by = UPPER(p.first_name)
-FROM profiles p
-WHERE t.created_by_user_id = p.id
-  AND UPPER(t.reported_by) IN ('AGENCE', 'AUTRE')
-  AND p.first_name IS NOT NULL;
-```
+#### Fix Tickets — Origine (fix)
+- reported_by utilise désormais le prénom de l'utilisateur connecté (au lieu de "agence")
+- Suppression des origines AGENCE et AUTRE du badge OrigineBadge
+- Migration des tickets existants avec reported_by = AGENCE/AUTRE
+
+#### Gating granulaire (improvement)
+- Sous-permissions par module : options 'dashboard', 'comparateur', 'veille', 'prospects'
+- Visibilité sous-onglets Outils filtrée par module activé
+
+### Fichiers modifiés
+
+1. **`src/config/changelog.ts`** — Ajout entrée V0.9.0 en première position du tableau `CHANGELOG`
+2. **`src/config/version.ts`** — Bump `APP_VERSION` à `'0.9.0'` et `APP_CODENAME` à `'Commercial & CRM'`
 
