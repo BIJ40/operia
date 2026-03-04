@@ -22,6 +22,11 @@ export function isActiveUser(u: unknown): boolean {
   if (!u || typeof u !== "object") return false;
   const obj = u as Record<string, unknown>;
   const v = obj.is_on ?? obj.isOn ?? obj.is_active ?? obj.isActive;
+
+  // Si l'API ne fournit pas le flag, on considère l'utilisateur actif
+  // (sinon on perd des techniciens valides dans certaines agences)
+  if (v === undefined || v === null || v === "") return true;
+
   return v === true || v === 1 || v === "1" || norm(v) === "true";
 }
 
@@ -35,9 +40,16 @@ export function isTechnician(u: unknown): boolean {
   if (!u || typeof u !== "object") return false;
   const obj = u as Record<string, unknown>;
   const type = norm(obj.type);
-  // Accepter type "technicien" strictement, rejeter les types exclus
+
   if (EXCLUDED_USER_TYPES.has(type)) return false;
-  return type === "technicien";
+
+  // Variantes rencontrées selon agences
+  return (
+    type === "technicien" ||
+    type.includes("techn") ||
+    type.includes("ouvrier") ||
+    type.includes("intervenant")
+  );
 }
 
 export interface NormalizedCreneau {
