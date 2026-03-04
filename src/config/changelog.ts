@@ -15,6 +15,50 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.9.0",
+    title: "Commercial & CRM",
+    date: "2026-03-04",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // MODULE COMMERCIAL COMPLET
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Module Commercial complet avec 4 onglets : Suivi client, Comparateur, Veille, Prospects' },
+      { type: 'feature', description: 'Scoring adaptatif des apporteurs (score composite 0-100 avec 4 métriques pondérées)' },
+      { type: 'feature', description: 'Veille globale avec classement des partenaires + ScoreCard individuelle' },
+      { type: 'feature', description: 'Comparateur de métriques apporteurs avec calcul automatique quotidien (cron 02h30)' },
+      { type: 'feature', description: 'Bouton "Recalculer" pour rafraîchissement manuel des métriques' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // CRM PROSPECTS
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Pipeline prospects en 6 états (Nouveau → Contacté → RDV → Négociation → Gagné/Perdu)' },
+      { type: 'feature', description: 'Import prospects via Excel avec mapping flexible' },
+      { type: 'feature', description: 'Pool de prospects importés avant création de fiche' },
+      { type: 'feature', description: 'Scoring 5 étoiles et extraction automatique de la ville depuis l\'adresse' },
+      { type: 'feature', description: 'Panneau de détail avec notes, RDV et historique des interactions' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // RENOMMAGES & NAVIGATION
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'Renommage Prospection → Commercial (clé module inchangée : \'prospection\')' },
+      { type: 'improvement', description: 'Renommage Apporteurs → Suivi client' },
+      { type: 'improvement', description: 'Navigation par onglets navigateur pour les fiches partenaires' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // GATING GRANULAIRE
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'Sous-permissions par module : options dashboard, comparateur, veille, prospects' },
+      { type: 'improvement', description: 'Visibilité sous-onglets Outils filtrée par module activé' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // FIX TICKETS — ORIGINE
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'fix', description: 'reported_by utilise désormais le prénom de l\'utilisateur connecté (au lieu de "agence")' },
+      { type: 'fix', description: 'Suppression des origines AGENCE et AUTRE du badge OrigineBadge' },
+      { type: 'fix', description: 'Migration des tickets existants avec reported_by = AGENCE/AUTRE' },
+    ],
+  },
+  {
     version: "V0.8.7",
     title: "Médiathèque Unique",
     date: "2026-01-31",

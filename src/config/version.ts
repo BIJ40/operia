@@ -1,5 +1,5 @@
-export const APP_VERSION = '0.8.7';
-export const APP_CODENAME = 'Médiathèque Unique';
+export const APP_VERSION = '0.9.0';
+export const APP_CODENAME = 'Commercial & CRM';
 
 /**
  * Changelog v0.8.7 (2026-01-31)
