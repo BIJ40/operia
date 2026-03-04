@@ -4,7 +4,7 @@
  * Accès depuis la page Performance Terrain
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -25,13 +25,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Clock, User, Briefcase, Save, Loader2, AlertCircle, ExternalLink } from 'lucide-react';
+import { Clock, User, Briefcase, Save, Loader2, AlertCircle, ExternalLink, Link2 } from 'lucide-react';
 import { TechnicianPerformance } from '@/hooks/usePerformanceTerrain';
 import { useEmploymentContracts } from '@/hooks/useEmploymentContracts';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
+import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 import type { JobCategory } from '@/types/collaborator';
 
 interface Props {
@@ -50,9 +51,11 @@ const COLLABORATOR_TYPES: { value: JobCategory; label: string }[] = [
 
 export function TechnicianQuickEditDialog({ technician, open, onOpenChange }: Props) {
   const queryClient = useQueryClient();
+  const { agencyId } = useEffectiveAuth();
   const [weeklyHours, setWeeklyHours] = useState<string>('');
   const [collabType, setCollabType] = useState<JobCategory>('TECHNICIEN');
   const [role, setRole] = useState<string>('');
+  const [isLinking, setIsLinking] = useState(false);
 
   // Fetch collaborator by apogee_user_id
   const { data: collaborator, isLoading: isLoadingCollab } = useQuery({
@@ -192,19 +195,67 @@ export function TechnicianQuickEditDialog({ technician, open, onOpenChange }: Pr
             <Skeleton className="h-10 w-full" />
           </div>
         ) : !collaborator ? (
-          <div className="py-6 text-center">
-            <AlertCircle className="w-12 h-12 text-warning mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground mb-4">
+          <div className="py-6 text-center space-y-4">
+            <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">
               Ce technicien n'a pas de fiche salarié liée.
               <br />
-              Vérifiez que le lien Apogée est configuré dans le module Salariés.
+              <span className="text-xs">ID Apogée : {technician?.id || 'inconnu'}</span>
             </p>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/?tab=rh">
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Ouvrir le module Salariés
-              </Link>
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button 
+                variant="default" 
+                size="sm"
+                disabled={isLinking}
+                onClick={async () => {
+                  if (!technician?.id || !agencyId) return;
+                  setIsLinking(true);
+                  try {
+                    const apogeeId = parseInt(technician.id, 10);
+                    if (isNaN(apogeeId)) throw new Error('ID Apogée invalide');
+                    
+                    // Créer automatiquement la fiche collaborateur liée
+                    const nameParts = technician.name.split(' ');
+                    const firstName = nameParts[0] || '';
+                    const lastName = nameParts.slice(1).join(' ') || '';
+                    
+                    const { error } = await supabase
+                      .from('collaborators')
+                      .insert({
+                        agency_id: agencyId,
+                        first_name: firstName,
+                        last_name: lastName,
+                        apogee_user_id: apogeeId,
+                        type: 'TECHNICIEN',
+                        role: 'Technicien',
+                        is_registered_user: false,
+                      });
+                    
+                    if (error) throw error;
+                    
+                    queryClient.invalidateQueries({ queryKey: ['collaborator-by-apogee-id', technician.id] });
+                    toast.success('Fiche collaborateur créée et liée');
+                  } catch (err: any) {
+                    console.error('Error creating collaborator link:', err);
+                    toast.error(`Erreur: ${err.message}`);
+                  } finally {
+                    setIsLinking(false);
+                  }
+                }}
+              >
+                {isLinking ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Création...</>
+                ) : (
+                  <><Link2 className="w-4 h-4 mr-2" />Créer la fiche salarié</>
+                )}
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/?tab=rh">
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Ouvrir le module Salariés
+                </Link>
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="space-y-5 py-4">

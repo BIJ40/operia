@@ -60,18 +60,28 @@ export function TeamHeatmap({ technicians, onSelectTechnician, onOpenSavDrawer }
         <TooltipProvider>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
             {sortedTechs.map((tech) => (
-              <Tooltip key={tech.id}>
+                <Tooltip key={tech.id}>
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => onSelectTechnician?.(tech)}
                     className={`
                       relative p-3 rounded-lg border transition-all cursor-pointer
-                      ${getZoneBgColor(tech.productivityRate, tech.loadRatio, tech.savRate)}
+                      ${tech.isAbsent 
+                        ? 'bg-muted/50 hover:bg-muted/70 border-muted-foreground/30 opacity-70' 
+                        : getZoneBgColor(tech.productivityRate, tech.loadRatio, tech.savRate)
+                      }
                     `}
                   >
+                    {/* Badge absence */}
+                    {tech.isAbsent && (
+                      <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded-full bg-muted-foreground/80 text-white text-[8px] font-medium whitespace-nowrap z-10">
+                        {tech.absenceLabel || 'Absent'}
+                      </div>
+                    )}
+                    
                     {/* Avatar avec initiales */}
                     <div 
-                      className="w-10 h-10 rounded-full mx-auto mb-2 flex items-center justify-center text-white text-sm font-bold"
+                      className={`w-10 h-10 rounded-full mx-auto mb-2 flex items-center justify-center text-white text-sm font-bold ${tech.isAbsent ? 'grayscale' : ''}`}
                       style={{ backgroundColor: tech.color || 'hsl(var(--primary))' }}
                     >
                       {tech.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
@@ -84,7 +94,7 @@ export function TeamHeatmap({ technicians, onSelectTechnician, onOpenSavDrawer }
                     
                     {/* Indicateur productivité */}
                     <div className="text-[10px] text-muted-foreground text-center mt-1">
-                      {Math.round(tech.productivityRate * 100)}%
+                      {tech.isAbsent ? '—' : `${Math.round(tech.productivityRate * 100)}%`}
                     </div>
                     
                     {/* Indicateur SAV cliquable si > 0 */}
