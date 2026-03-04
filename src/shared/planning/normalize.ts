@@ -25,10 +25,19 @@ export function isActiveUser(u: unknown): boolean {
   return v === true || v === 1 || v === "1" || norm(v) === "true";
 }
 
+/** Types exclus du planning technicien */
+const EXCLUDED_USER_TYPES = new Set([
+  'interimaire', 'commercial', 'admin', 'administratif',
+  'assistante', 'assistant', 'utilisateur', 'comptable', 'direction',
+]);
+
 export function isTechnician(u: unknown): boolean {
   if (!u || typeof u !== "object") return false;
   const obj = u as Record<string, unknown>;
-  return norm(obj.type) === "technicien";
+  const type = norm(obj.type);
+  // Accepter type "technicien" strictement, rejeter les types exclus
+  if (EXCLUDED_USER_TYPES.has(type)) return false;
+  return type === "technicien";
 }
 
 export interface NormalizedCreneau {
