@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { usePlanningProjects, type PlanningProject } from '@/hooks/usePlanningData';
 import { usePlanningData, useApogeeUsersNormalized } from '@/shared/api/apogee/usePlanningData';
 import { buildUserMap } from '@/shared/planning/planningMapper';
+import { isTechnician } from '@/shared/planning/normalize';
 import { useOptimizerConfig } from '@/hooks/usePlanningAugmente';
 import { DossierSearchPanel } from './DossierSearchPanel';
 import { PlanningGrid } from './PlanningGrid';
@@ -41,31 +42,21 @@ export default function PlanningAugmenteAdmin() {
   const { data: projectsData, isLoading: projectsLoading } = usePlanningProjects(agencySlug ?? undefined);
   const { data: config, isLoading: configLoading } = useOptimizerConfig(agencyId ?? undefined);
 
-  // Construire la map complète des users pour les labels/couleurs
-  const userMap = useMemo(() => buildUserMap(users as any), [users]);
-
-  // Dériver les techniciens depuis les créneaux réels de la semaine
-  // → on affiche uniquement ceux qui ont des créneaux planifiés
+  // Filtrer uniquement les techniciens (type === "technicien") depuis l'API
+  // On les affiche TOUS, même ceux sans créneaux (arrêt, congé, disponible)
   const technicians = useMemo(() => {
-    const techIdsWithCreneaux = new Set<number>();
-    for (const c of creneaux) {
-      for (const uid of c.usersIds) {
-        techIdsWithCreneaux.add(uid);
-      }
-    }
-
-    return Array.from(techIdsWithCreneaux)
-      .map(id => {
-        const info = userMap.get(id);
-        return {
-          id,
-          label: info?.label ?? `User #${id}`,
-          color: info?.color,
-          type: info?.type,
-        };
-      })
+    const uMap = buildUserMap(
+      users.filter(u => isTechnician(u)) as any
+    );
+    return Array.from(uMap.entries())
+      .map(([id, info]) => ({
+        id,
+        label: info.label,
+        color: info.color,
+        type: info.type,
+      }))
       .sort((a, b) => a.label.localeCompare(b.label));
-  }, [creneaux, userMap]);
+  }, [users]);
 
   const weights = (config as any)?.weights as Record<string, number> ?? {
     sla: 0.3, ca: 0.2, route: 0.2, coherence: 0.15, equity: 0.1, continuity: 0.05,
