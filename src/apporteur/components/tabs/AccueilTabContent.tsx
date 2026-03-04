@@ -50,7 +50,7 @@ export default function AccueilTabContent() {
           <PeriodSelector value={period} onChange={setPeriod} />
           <Button onClick={() => setDemandeOpen(true)} className="gap-2 rounded-xl">
             <PlusCircle className="w-4 h-4" />
-            Demandes
+            Nouvelle demande
           </Button>
         </div>
       </div>
