@@ -176,6 +176,11 @@ function DraggableTicketCard({
                 📩 Support
               </Badge>
             )}
+            {ticket.created_from === 'email' && (
+              <Badge className="bg-teal-100 text-teal-700 text-xs border border-teal-200">
+                📧 Email
+              </Badge>
+            )}
             {isUrgentSupport && (
               <Badge variant="destructive" className="text-xs gap-1">
                 🔥 Urgent

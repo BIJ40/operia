@@ -625,6 +625,20 @@ export function TicketDetailDrawer({
                         </span>
                         {ticket.reported_by && <span className="text-muted-foreground">• {ticket.reported_by}</span>}
                       </div>
+                    ) : ticket.created_from === 'email' ? (
+                      // Ticket créé depuis un email: affichage badge email + expéditeur
+                      <div className="h-auto mt-1 px-3 py-2 rounded-md border bg-teal-50 text-sm space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-teal-100 text-teal-700 text-xs font-medium">
+                            📧 Email
+                          </span>
+                        </div>
+                        {ticket.initiator_profile?.email && (
+                          <div className="text-xs text-muted-foreground">
+                            De: <a href={`mailto:${ticket.initiator_profile.email}`} className="hover:underline text-teal-700">{ticket.initiator_profile.first_name ? `${ticket.initiator_profile.first_name} <${ticket.initiator_profile.email}>` : ticket.initiator_profile.email}</a>
+                          </div>
+                        )}
+                      </div>
                     ) : ticket.created_from === 'MANUAL' ? (
                       // Ticket créé manuellement: affichage en lecture seule
                       <div className="h-9 mt-1 px-3 py-2 rounded-md border bg-muted/50 text-sm">
