@@ -1,110 +1,250 @@
 /**
- * PlanningGrid - Vue grille hebdomadaire des techniciens et créneaux
- * Affiche les créneaux occupés/libres par technicien par jour
+ * PlanningGrid - Vue grille hebdomadaire avec timeline horaire
+ * Affiche les créneaux positionnés en heures par technicien par jour
  */
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Calendar, ChevronLeft, ChevronRight, Loader2, User } from 'lucide-react';
-import { format, startOfWeek, addDays, addWeeks, isSameDay, parseISO } from 'date-fns';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Calendar, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { format, addDays, addWeeks, isSameDay, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import type { PlanningTechnician, PlanningSlot } from '@/hooks/usePlanningData';
+import type { EnrichedCreneau } from '@/shared/api/apogee/usePlanningData';
+
+// ============================================================================
+// CONSTANTES
+// ============================================================================
+
+/** Amplitude horaire affichée (7h → 18h) */
+const DAY_START_HOUR = 7;
+const DAY_END_HOUR = 18;
+const TOTAL_HOURS = DAY_END_HOUR - DAY_START_HOUR; // 11h
+const HOUR_HEIGHT_PX = 48; // hauteur d'1 heure en pixels
+const TIMELINE_HEIGHT = TOTAL_HOURS * HOUR_HEIGHT_PX;
+
+/** Jours de la semaine affichés (Lun → Sam) */
+const WEEK_DAYS_COUNT = 6;
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+interface TechInfo {
+  id: number;
+  label: string;
+  color?: string;
+  type?: string;
+}
 
 interface PlanningGridProps {
-  technicians: PlanningTechnician[];
-  slots: PlanningSlot[];
+  technicians: TechInfo[];
+  creneaux: EnrichedCreneau[];
   isLoading: boolean;
   weekStart: Date;
   onWeekChange: (date: Date) => void;
 }
 
+// ============================================================================
+// HELPERS
+// ============================================================================
+
 function getWeekDays(weekStart: Date): Date[] {
-  return Array.from({ length: 6 }, (_, i) => addDays(weekStart, i)); // Lun-Sam
+  return Array.from({ length: WEEK_DAYS_COUNT }, (_, i) => addDays(weekStart, i));
 }
 
-function getTechName(tech: PlanningTechnician): string {
-  return tech.name || `${tech.prenom || tech.firstname || ''} ${tech.nom || tech.lastname || ''}`.trim() || `Tech #${tech.id}`;
-}
-
-function getTechInitials(tech: PlanningTechnician): string {
-  if (tech.initiales) return tech.initiales;
-  const name = getTechName(tech);
-  return name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
-}
-
-function parseDateSafe(dateStr: string | undefined): Date | null {
+function parseDateSafe(dateStr: string): Date | null {
   if (!dateStr) return null;
-  try {
-    return parseISO(dateStr);
-  } catch {
-    return null;
-  }
+  try { return parseISO(dateStr); } catch { return null; }
 }
 
-function SlotCell({ slotsForCell }: { slotsForCell: PlanningSlot[] }) {
-  if (slotsForCell.length === 0) {
-    return (
-      <div className="h-full min-h-[48px] bg-green-50 dark:bg-green-950/20 rounded border border-dashed border-green-200 dark:border-green-900/40 flex items-center justify-center">
-        <span className="text-[10px] text-green-500 dark:text-green-600">Libre</span>
-      </div>
-    );
+/** Couleur par refType */
+function getCreneauColor(refType: string, interventionType?: string): { bg: string; border: string; text: string } {
+  const rt = (refType || '').toLowerCase();
+  const it = (interventionType || '').toLowerCase();
+
+  if (rt === 'conge') return { bg: 'bg-red-100 dark:bg-red-900/30', border: 'border-red-300 dark:border-red-800', text: 'text-red-800 dark:text-red-200' };
+  if (rt === 'rappel') return { bg: 'bg-yellow-100 dark:bg-yellow-900/30', border: 'border-yellow-300 dark:border-yellow-800', text: 'text-yellow-800 dark:text-yellow-200' };
+
+  // visite-interv: couleur selon type intervention
+  if (it.includes('rt') || it.includes('releve') || it.includes('rdv')) {
+    return { bg: 'bg-amber-100 dark:bg-amber-900/30', border: 'border-amber-300 dark:border-amber-800', text: 'text-amber-900 dark:text-amber-200' };
+  }
+  if (it.includes('tvx') || it.includes('travaux')) {
+    return { bg: 'bg-purple-100 dark:bg-purple-900/30', border: 'border-purple-300 dark:border-purple-800', text: 'text-purple-900 dark:text-purple-200' };
+  }
+  if (it.includes('dep') || it.includes('depannage') || it.includes('dépannage')) {
+    return { bg: 'bg-orange-100 dark:bg-orange-900/30', border: 'border-orange-300 dark:border-orange-800', text: 'text-orange-900 dark:text-orange-200' };
+  }
+  if (it.includes('sav')) {
+    return { bg: 'bg-pink-100 dark:bg-pink-900/30', border: 'border-pink-300 dark:border-pink-800', text: 'text-pink-900 dark:text-pink-200' };
   }
 
+  return { bg: 'bg-blue-100 dark:bg-blue-900/30', border: 'border-blue-300 dark:border-blue-800', text: 'text-blue-900 dark:text-blue-200' };
+}
+
+/** Calcule position top (%) et height (%) dans la timeline */
+function getCreneauPosition(dateStr: string, dureeMin: number) {
+  const d = parseDateSafe(dateStr);
+  if (!d) return null;
+  const h = d.getHours() + d.getMinutes() / 60;
+  const startOffset = h - DAY_START_HOUR;
+  if (startOffset < 0 || startOffset >= TOTAL_HOURS) return null;
+
+  const topPx = startOffset * HOUR_HEIGHT_PX;
+  const heightPx = Math.max((dureeMin / 60) * HOUR_HEIGHT_PX, 16); // min 16px
+  return { topPx, heightPx };
+}
+
+// ============================================================================
+// SUB-COMPONENTS
+// ============================================================================
+
+/** Échelle horaire verticale */
+function TimeScale() {
+  const hours = Array.from({ length: TOTAL_HOURS + 1 }, (_, i) => DAY_START_HOUR + i);
   return (
-    <div className="space-y-1 min-h-[48px]">
-      {slotsForCell.slice(0, 3).map((slot, i) => {
-        const type = ((slot.type || slot.label || '') as string).toLowerCase();
-        const isRT = type.includes('rt') || type.includes('releve');
-        const isTVX = type.includes('tvx') || type.includes('travaux');
-        const isDep = type.includes('dep') || type.includes('depannage');
-
-        let bgClass = 'bg-blue-100 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800';
-        if (isRT) bgClass = 'bg-amber-100 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800';
-        if (isTVX) bgClass = 'bg-purple-100 dark:bg-purple-900/30 border-purple-200 dark:border-purple-800';
-        if (isDep) bgClass = 'bg-orange-100 dark:bg-orange-900/30 border-orange-200 dark:border-orange-800';
-
-        return (
-          <div
-            key={i}
-            className={`px-1.5 py-1 rounded border text-[10px] truncate ${bgClass}`}
-            title={`${slot.ref || ''} - ${slot.label || slot.type || ''}`}
-          >
-            <span className="font-medium">{slot.ref || `#${slot.projectId || '?'}`}</span>
-            {slot.label && <span className="ml-1 opacity-70">{String(slot.label).substring(0, 15)}</span>}
-          </div>
-        );
-      })}
-      {slotsForCell.length > 3 && (
-        <span className="text-[10px] text-muted-foreground pl-1">+{slotsForCell.length - 3} autres</span>
-      )}
+    <div className="relative shrink-0" style={{ width: 36, height: TIMELINE_HEIGHT }}>
+      {hours.map((h, i) => (
+        <div
+          key={h}
+          className="absolute left-0 right-0 text-[10px] text-muted-foreground text-right pr-1"
+          style={{ top: i * HOUR_HEIGHT_PX - 6 }}
+        >
+          {h}h
+        </div>
+      ))}
     </div>
   );
 }
 
-export function PlanningGrid({ technicians, slots, isLoading, weekStart, onWeekChange }: PlanningGridProps) {
+/** Lignes de fond horaires */
+function HourLines() {
+  const lines = Array.from({ length: TOTAL_HOURS + 1 }, (_, i) => i);
+  return (
+    <>
+      {lines.map(i => (
+        <div
+          key={i}
+          className="absolute left-0 right-0 border-t border-border/30"
+          style={{ top: i * HOUR_HEIGHT_PX }}
+        />
+      ))}
+    </>
+  );
+}
+
+/** Un créneau positionné dans la timeline */
+function CreneauBlock({ creneau }: { creneau: EnrichedCreneau }) {
+  const pos = getCreneauPosition(creneau.date, creneau.duree);
+  if (!pos) return null;
+
+  const colors = getCreneauColor(creneau.refType, creneau.interventionType);
+  const startDate = parseDateSafe(creneau.date);
+  const timeLabel = startDate ? format(startDate, 'HH:mm') : '';
+  const endDate = startDate ? new Date(startDate.getTime() + creneau.duree * 60000) : null;
+  const endLabel = endDate ? format(endDate, 'HH:mm') : '';
+
+  const label = creneau.refType === 'conge'
+    ? 'Congé'
+    : creneau.refType === 'rappel'
+      ? 'Rappel'
+      : creneau.projectRef || creneau.interventionType || creneau.refType;
+
+  const tooltipText = [
+    `${timeLabel} → ${endLabel} (${creneau.duree}min)`,
+    creneau.projectRef ? `Dossier: ${creneau.projectRef}` : null,
+    creneau.interventionType ? `Type: ${creneau.interventionType}` : null,
+    creneau.clientName ? `Client: ${creneau.clientName}` : null,
+    creneau.clientCity ? `Ville: ${creneau.clientCity}` : null,
+  ].filter(Boolean).join('\n');
+
+  return (
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div
+            className={`absolute left-0.5 right-0.5 rounded border px-1 overflow-hidden cursor-default ${colors.bg} ${colors.border}`}
+            style={{ top: pos.topPx, height: pos.heightPx }}
+          >
+            <div className={`text-[9px] font-semibold truncate leading-tight pt-0.5 ${colors.text}`}>
+              {timeLabel} {label}
+            </div>
+            {pos.heightPx > 28 && creneau.clientName && (
+              <div className={`text-[8px] truncate opacity-70 ${colors.text}`}>
+                {creneau.clientName}
+              </div>
+            )}
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="right" className="whitespace-pre-line text-xs max-w-xs">
+          {tooltipText}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+/** Colonne d'un jour pour un technicien */
+function DayColumn({ creneaux }: { creneaux: EnrichedCreneau[] }) {
+  return (
+    <div className="relative border-l border-border/20" style={{ height: TIMELINE_HEIGHT }}>
+      <HourLines />
+      {creneaux.map((c, i) => (
+        <CreneauBlock key={`${c.id}-${i}`} creneau={c} />
+      ))}
+    </div>
+  );
+}
+
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
+
+export function PlanningGrid({ technicians, creneaux, isLoading, weekStart, onWeekChange }: PlanningGridProps) {
   const weekDays = useMemo(() => getWeekDays(weekStart), [weekStart]);
 
-  // Index slots by techId + date
-  const slotsByTechDate = useMemo(() => {
-    const map = new Map<string, PlanningSlot[]>();
-    for (const slot of slots) {
-      const techId = slot.userId;
-      const dateStr = slot.date || slot.dateDebut;
-      const date = parseDateSafe(dateStr as string);
-      if (!techId || !date) continue;
+  // Indexer les créneaux: clé = `techId-YYYY-MM-DD` → créneaux[]
+  const creneauxByTechDay = useMemo(() => {
+    const map = new Map<string, EnrichedCreneau[]>();
+    for (const c of creneaux) {
+      const d = parseDateSafe(c.date);
+      if (!d) continue;
 
-      for (const day of weekDays) {
-        if (isSameDay(date, day)) {
-          const key = `${techId}-${format(day, 'yyyy-MM-dd')}`;
-          if (!map.has(key)) map.set(key, []);
-          map.get(key)!.push(slot);
+      for (const uid of c.usersIds) {
+        for (const day of weekDays) {
+          if (isSameDay(d, day)) {
+            const key = `${uid}-${format(day, 'yyyy-MM-dd')}`;
+            if (!map.has(key)) map.set(key, []);
+            map.get(key)!.push(c);
+          }
         }
       }
     }
     return map;
-  }, [slots, weekDays]);
+  }, [creneaux, weekDays]);
+
+  // Stats
+  const weekCreneauxCount = useMemo(() => {
+    let count = 0;
+    for (const c of creneaux) {
+      const d = parseDateSafe(c.date);
+      if (!d) continue;
+      if (weekDays.some(day => isSameDay(d, day))) count++;
+    }
+    return count;
+  }, [creneaux, weekDays]);
+
+  const totalMinutes = useMemo(() => {
+    let sum = 0;
+    for (const c of creneaux) {
+      const d = parseDateSafe(c.date);
+      if (!d) continue;
+      if (weekDays.some(day => isSameDay(d, day))) sum += c.duree;
+    }
+    return sum;
+  }, [creneaux, weekDays]);
 
   const weekLabel = `${format(weekStart, 'dd MMM', { locale: fr })} — ${format(addDays(weekStart, 5), 'dd MMM yyyy', { locale: fr })}`;
 
@@ -117,95 +257,89 @@ export function PlanningGrid({ technicians, slots, isLoading, weekStart, onWeekC
             Planning semaine
           </CardTitle>
           <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => onWeekChange(addWeeks(weekStart, -1))}
-            >
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onWeekChange(addWeeks(weekStart, -1))}>
               <ChevronLeft className="w-4 h-4" />
             </Button>
             <span className="text-xs font-medium text-muted-foreground min-w-[140px] text-center">
               {weekLabel}
             </span>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => onWeekChange(addWeeks(weekStart, 1))}
-            >
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onWeekChange(addWeeks(weekStart, 1))}>
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
         </div>
         {!isLoading && (
-          <div className="flex gap-2 mt-1">
-            <Badge variant="outline" className="text-[10px]">
-              {technicians.length} techniciens
-            </Badge>
-            <Badge variant="outline" className="text-[10px]">
-              {slots.length} créneaux
-            </Badge>
+          <div className="flex gap-2 mt-1 flex-wrap">
+            <Badge variant="outline" className="text-[10px]">{technicians.length} techniciens</Badge>
+            <Badge variant="outline" className="text-[10px]">{weekCreneauxCount} créneaux cette semaine</Badge>
+            <Badge variant="outline" className="text-[10px]">{Math.round(totalMinutes / 60)}h planifiées</Badge>
+          </div>
+        )}
+        {/* Légende */}
+        {!isLoading && (
+          <div className="flex gap-3 mt-2 flex-wrap">
+            {[
+              { label: 'RT/RDV', cls: 'bg-amber-200 dark:bg-amber-800' },
+              { label: 'TVX', cls: 'bg-purple-200 dark:bg-purple-800' },
+              { label: 'Dépannage', cls: 'bg-orange-200 dark:bg-orange-800' },
+              { label: 'Autre', cls: 'bg-blue-200 dark:bg-blue-800' },
+              { label: 'Congé', cls: 'bg-red-200 dark:bg-red-800' },
+            ].map(l => (
+              <div key={l.label} className="flex items-center gap-1">
+                <div className={`w-2.5 h-2.5 rounded-sm ${l.cls}`} />
+                <span className="text-[10px] text-muted-foreground">{l.label}</span>
+              </div>
+            ))}
           </div>
         )}
       </CardHeader>
 
-      <CardContent className="flex-1 overflow-hidden p-0 px-4 pb-4">
+      <CardContent className="flex-1 overflow-hidden p-0 px-2 pb-2">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
             <span className="ml-2 text-sm text-muted-foreground">Chargement planning...</span>
           </div>
         ) : technicians.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">
-            Aucun technicien trouvé
-          </p>
+          <p className="text-sm text-muted-foreground text-center py-8">Aucun technicien trouvé</p>
         ) : (
           <ScrollArea className="h-full">
-            <div className="min-w-[600px]">
-              {/* Header row */}
-              <div className="grid gap-1 mb-2" style={{ gridTemplateColumns: '120px repeat(6, 1fr)' }}>
-                <div className="text-xs font-medium text-muted-foreground p-1">Technicien</div>
-                {weekDays.map((day, i) => (
-                  <div key={i} className="text-xs font-medium text-center text-muted-foreground p-1">
-                    {format(day, 'EEE dd', { locale: fr })}
+            {technicians.map(tech => (
+              <div key={tech.id} className="mb-4">
+                {/* Nom technicien */}
+                <div className="flex items-center gap-2 mb-1 sticky top-0 bg-card z-10 py-1">
+                  <div
+                    className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
+                    style={{
+                      backgroundColor: tech.color || 'hsl(var(--primary))',
+                      color: 'white',
+                    }}
+                  >
+                    {tech.label.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase()}
                   </div>
-                ))}
-              </div>
-
-              {/* Tech rows */}
-              {technicians.map((tech) => (
-                <div
-                  key={tech.id}
-                  className="grid gap-1 mb-1"
-                  style={{ gridTemplateColumns: '120px repeat(6, 1fr)' }}
-                >
-                  <div className="flex items-center gap-1.5 p-1">
-                    <div
-                      className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
-                      style={{
-                        backgroundColor: (tech.bgcolor as string) || 'hsl(var(--primary))',
-                        color: (tech.color as string) || 'white',
-                      }}
-                    >
-                      {getTechInitials(tech)}
-                    </div>
-                    <span className="text-xs truncate text-foreground">
-                      {getTechName(tech)}
-                    </span>
-                  </div>
-                  {weekDays.map((day, i) => {
-                    const key = `${tech.id}-${format(day, 'yyyy-MM-dd')}`;
-                    const cellSlots = slotsByTechDate.get(key) || [];
-                    return (
-                      <div key={i} className="p-0.5">
-                        <SlotCell slotsForCell={cellSlots} />
-                      </div>
-                    );
-                  })}
+                  <span className="text-xs font-medium text-foreground truncate">{tech.label}</span>
                 </div>
-              ))}
-            </div>
+
+                {/* Timeline semaine */}
+                <div className="flex">
+                  <TimeScale />
+                  <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${WEEK_DAYS_COUNT}, 1fr)` }}>
+                    {/* Entêtes jours */}
+                    {weekDays.map((day, i) => (
+                      <div key={i} className="text-[10px] font-medium text-center text-muted-foreground pb-1 border-l border-border/20">
+                        {format(day, 'EEE dd', { locale: fr })}
+                      </div>
+                    ))}
+                    {/* Colonnes jours */}
+                    {weekDays.map((day, i) => {
+                      const key = `${tech.id}-${format(day, 'yyyy-MM-dd')}`;
+                      const cellCreneaux = creneauxByTechDay.get(key) || [];
+                      return <DayColumn key={i} creneaux={cellCreneaux} />;
+                    })}
+                  </div>
+                </div>
+              </div>
+            ))}
           </ScrollArea>
         )}
       </CardContent>
