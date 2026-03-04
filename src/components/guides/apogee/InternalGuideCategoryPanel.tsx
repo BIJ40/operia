@@ -3,7 +3,10 @@
  * Version Warm Pastel avec accordéons stylisés + mode édition pour admins
  */
 
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, ReactNode } from 'react';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useEditor } from '@/contexts/EditorContext';
 import { useInternalGuideTabs } from './InternalGuideTabsContext';
 import { Button } from '@/components/ui/button';
@@ -18,7 +21,8 @@ import {
   Edit2,
   Trash2,
   Copy,
-  Pencil
+  Pencil,
+  GripVertical
 } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
@@ -64,6 +68,23 @@ const TIPS_COLORS: Record<string, { bg: string; border: string; icon: string }> 
   success: { bg: 'bg-warm-green/10', border: 'border-l-warm-green', icon: 'text-warm-green' },
   information: { bg: 'bg-warm-blue/10', border: 'border-l-warm-blue', icon: 'text-warm-blue' },
 };
+
+// Sortable wrapper for drag-and-drop
+function SortableSectionWrapper({ id, children }: { id: string; children: (props: { dragAttributes: Record<string, any>; dragListeners: Record<string, any> | undefined }) => ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    position: 'relative' as const,
+    zIndex: isDragging ? 50 : undefined,
+  };
+  return (
+    <div ref={setNodeRef} style={style}>
+      {children({ dragAttributes: attributes, dragListeners: listeners })}
+    </div>
+  );
+}
 
 interface InternalGuideCategoryPanelProps {
   slug: string;
@@ -129,6 +150,29 @@ export function InternalGuideCategoryPanel({ slug }: InternalGuideCategoryPanelP
       return showSections;
     });
   }, [sections, showTips, showSections]);
+
+  // DnD sensors & handler
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
+
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = filteredSections.findIndex(s => s.id === active.id);
+    const newIndex = filteredSections.findIndex(s => s.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(filteredSections, oldIndex, newIndex);
+    
+    for (let i = 0; i < reordered.length; i++) {
+      if (reordered[i].order !== i) {
+        await updateBlock(reordered[i].id, { order: i });
+      }
+    }
+    toast({ title: 'Ordre mis à jour' });
+  }, [filteredSections, updateBlock, toast]);
 
   const getIcon = (iconName?: string): LucideIcon => {
     if (!iconName) return BookOpen;
@@ -497,139 +541,168 @@ export function InternalGuideCategoryPanel({ slug }: InternalGuideCategoryPanelP
           )}
         </div>
       ) : (
-        <Accordion
-          type="multiple"
-          value={openAccordions}
-          onValueChange={setOpenAccordions}
-          className="space-y-3"
-        >
-          {filteredSections.map((section) => {
-            const isTips = section.contentType === 'tips';
-            
-            // TIPS inline (pas d'accordéon)
-            if (isTips && section.hideTitle) {
-              return (
-                <div key={section.id} className="relative group">
-                  {renderSectionContent(section)}
-                  {/* Boutons d'édition pour les TIPS inline */}
-                  {isEditMode && (
-                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 bg-background/80 hover:bg-background"
-                        onClick={() => handleEditSection(section)}
-                      >
-                        <Edit2 className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 bg-background/80 hover:bg-destructive/10 text-destructive"
-                        onClick={() => handleDeleteSection(section.id)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              );
-            }
-
-            return (
-              <AccordionItem 
-                key={section.id} 
-                value={section.id} 
-                className="border border-border/40 rounded-2xl px-4 bg-card/50 backdrop-blur-sm shadow-sm group"
-              >
-                <AccordionTrigger className="text-left py-4 hover:no-underline">
-                  <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center gap-3">
-                      {isTips && (
-                        <div className="w-7 h-7 rounded-lg bg-warm-orange/15 flex items-center justify-center">
-                          <Lightbulb className="w-4 h-4 text-warm-orange" />
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={filteredSections.map(s => s.id)} strategy={verticalListSortingStrategy}>
+            <Accordion
+              type="multiple"
+              value={openAccordions}
+              onValueChange={setOpenAccordions}
+              className="space-y-3"
+            >
+              {filteredSections.map((section) => {
+                const isTips = section.contentType === 'tips';
+                
+                // TIPS inline (pas d'accordéon)
+                if (isTips && section.hideTitle) {
+                  return (
+                    <SortableSectionWrapper key={section.id} id={section.id}>
+                      {({ dragAttributes, dragListeners }) => (
+                        <div className="relative group">
+                          {renderSectionContent(section)}
+                          {isEditMode && (
+                            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 bg-background/80 hover:bg-background cursor-move"
+                                {...dragAttributes}
+                                {...dragListeners}
+                              >
+                                <GripVertical className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 bg-background/80 hover:bg-background"
+                                onClick={() => handleEditSection(section)}
+                              >
+                                <Edit2 className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 bg-background/80 hover:bg-destructive/10 text-destructive"
+                                onClick={() => handleDeleteSection(section.id)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       )}
-                      <span className="text-sm font-medium">{section.title}</span>
-                    </div>
-                    
-                    {/* Boutons d'édition */}
-                    {isEditMode && (
-                      <div 
-                        className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity mr-2"
-                        onClick={(e) => e.stopPropagation()}
+                    </SortableSectionWrapper>
+                  );
+                }
+
+                return (
+                  <SortableSectionWrapper key={section.id} id={section.id}>
+                    {({ dragAttributes, dragListeners }) => (
+                      <AccordionItem 
+                        value={section.id} 
+                        className="border border-border/40 rounded-2xl px-4 bg-card/50 backdrop-blur-sm shadow-sm group"
                       >
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 hover:bg-primary/10"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAddSection(section.id);
-                          }}
-                          title="Ajouter section après"
-                        >
-                          <Plus className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 hover:bg-warm-orange/10 text-warm-orange"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAddTips(section.id);
-                          }}
-                          title="Ajouter TIPS après"
-                        >
-                          <Lightbulb className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 hover:bg-primary/10"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditSection(section);
-                          }}
-                          title="Modifier"
-                        >
-                          <Edit2 className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 hover:bg-primary/10"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDuplicate(section);
-                          }}
-                          title="Dupliquer"
-                        >
-                          <Copy className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 hover:bg-destructive/10 text-destructive"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteSection(section.id);
-                          }}
-                          title="Supprimer"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
+                        <AccordionTrigger className="text-left py-4 hover:no-underline">
+                          <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center gap-3">
+                              {isTips && (
+                                <div className="w-7 h-7 rounded-lg bg-warm-orange/15 flex items-center justify-center">
+                                  <Lightbulb className="w-4 h-4 text-warm-orange" />
+                                </div>
+                              )}
+                              <span className="text-sm font-medium">{section.title}</span>
+                            </div>
+                            
+                            {/* Boutons d'édition */}
+                            {isEditMode && (
+                              <div 
+                                className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity mr-2"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 hover:bg-muted cursor-move"
+                                  {...dragAttributes}
+                                  {...dragListeners}
+                                  title="Déplacer"
+                                >
+                                  <GripVertical className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 hover:bg-primary/10"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleAddSection(section.id);
+                                  }}
+                                  title="Ajouter section après"
+                                >
+                                  <Plus className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 hover:bg-warm-orange/10 text-warm-orange"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleAddTips(section.id);
+                                  }}
+                                  title="Ajouter TIPS après"
+                                >
+                                  <Lightbulb className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 hover:bg-primary/10"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditSection(section);
+                                  }}
+                                  title="Modifier"
+                                >
+                                  <Edit2 className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 hover:bg-primary/10"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDuplicate(section);
+                                  }}
+                                  title="Dupliquer"
+                                >
+                                  <Copy className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 hover:bg-destructive/10 text-destructive"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteSection(section.id);
+                                  }}
+                                  title="Supprimer"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pb-4">
+                          {renderSectionContent(section)}
+                        </AccordionContent>
+                      </AccordionItem>
                     )}
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pb-4">
-                  {renderSectionContent(section)}
-                </AccordionContent>
-              </AccordionItem>
-            );
-          })}
-        </Accordion>
+                  </SortableSectionWrapper>
+                );
+              })}
+            </Accordion>
+          </SortableContext>
+        </DndContext>
       )}
 
       {/* Dialog d'édition */}
