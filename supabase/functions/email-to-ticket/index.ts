@@ -145,11 +145,18 @@ Deno.serve(async (req) => {
     }
 
     const emailData = payload.data;
+    // Debug: log all available keys to understand Resend payload structure
+    console.log("Email payload keys:", Object.keys(emailData));
+    console.log("Email payload text length:", emailData.text?.length ?? "null");
+    console.log("Email payload html length:", emailData.html?.length ?? "null");
+    console.log("Email payload body length:", (emailData as any).body?.length ?? "null");
+    console.log("Email payload raw sample:", JSON.stringify(emailData).slice(0, 500));
+
     const { name: senderName, email: senderEmail } = parseFrom(
       emailData.from || emailData.envelope?.from || "",
     );
     const subject = emailData.subject || "(Sans objet)";
-    const textBody = sanitizeText(emailData.text || emailData.html || "");
+    const textBody = sanitizeText(emailData.text || emailData.html || (emailData as any).body || "");
 
     // Supabase admin client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
