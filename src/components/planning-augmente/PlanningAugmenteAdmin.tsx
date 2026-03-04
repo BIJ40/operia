@@ -42,21 +42,46 @@ export default function PlanningAugmenteAdmin() {
   const { data: projectsData, isLoading: projectsLoading } = usePlanningProjects(agencySlug ?? undefined);
   const { data: config, isLoading: configLoading } = useOptimizerConfig(agencyId ?? undefined);
 
-  // Filtrer uniquement les techniciens (type === "technicien") depuis l'API
-  // On les affiche TOUS, même ceux sans créneaux (arrêt, congé, disponible)
+  // Construire la map users complète (pour labels/couleurs)
+  const userMap = useMemo(() => buildUserMap(users as any), [users]);
+
+  // Approche hybride robuste (fonctionne pour toutes les agences) :
+  // 1. Identifier les users qui ont des créneaux "visite-interv" (terrain réel)
+  // 2. Croiser avec le type API pour exclure non-techs (interimaire, commercial, etc.)
+  // 3. Résultat = techniciens terrain, sans config manuelle par agence
   const technicians = useMemo(() => {
-    const uMap = buildUserMap(
-      users.filter(u => isTechnician(u)) as any
-    );
-    return Array.from(uMap.entries())
-      .map(([id, info]) => ({
-        id,
-        label: info.label,
-        color: info.color,
-        type: info.type,
-      }))
+    // Set des users ayant au moins 1 créneau visite-interv
+    const fieldUserIds = new Set<number>();
+    for (const c of creneaux) {
+      if (c.refType === 'visite-interv') {
+        for (const uid of c.usersIds) fieldUserIds.add(uid);
+      }
+    }
+
+    // Aussi inclure les techniciens typés qui ont des congés (mais pas de visite-interv)
+    const techTypedIds = new Set<number>();
+    for (const u of users) {
+      if (isTechnician(u as any)) {
+        techTypedIds.add((u as any).id);
+      }
+    }
+
+    // Union : techniciens typés OU users terrain (visite-interv)
+    // Puis filtrer les types exclus
+    const allIds = new Set([...fieldUserIds, ...techTypedIds]);
+
+    return Array.from(allIds)
+      .map(id => {
+        const info = userMap.get(id);
+        return { id, label: info?.label ?? `#${id}`, color: info?.color, type: info?.type };
+      })
+      // Exclure les types non-terrain même s'ils ont des créneaux
+      .filter(t => {
+        const type = (t.type || '').toLowerCase();
+        return !['interimaire', 'commercial', 'admin', 'assistante', 'assistant', 'utilisateur', 'comptable', 'direction'].includes(type);
+      })
       .sort((a, b) => a.label.localeCompare(b.label));
-  }, [users]);
+  }, [creneaux, users, userMap]);
 
   const weights = (config as any)?.weights as Record<string, number> ?? {
     sla: 0.3, ca: 0.2, route: 0.2, coherence: 0.15, equity: 0.1, continuity: 0.05,
