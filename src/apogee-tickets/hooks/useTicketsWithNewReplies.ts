@@ -25,7 +25,19 @@ export function useTicketsWithNewReplies() {
     queryFn: async () => {
       if (!user) return [];
 
-      // Get all unread support exchanges NOT from current user (= replies from users)
+      // 1. Get tickets where the support HAS already replied at least once
+      const { data: supportReplies, error: errSupport } = await supabase
+        .from('apogee_ticket_support_exchanges')
+        .select('ticket_id')
+        .eq('is_from_support', true);
+
+      if (errSupport) throw errSupport;
+
+      const ticketsWithSupportReply = new Set(
+        (supportReplies ?? []).map((r) => r.ticket_id)
+      );
+
+      // 2. Get unread user messages (not from support, not from current user)
       const { data: exchanges, error } = await supabase
         .from('apogee_ticket_support_exchanges')
         .select('ticket_id, created_at')
@@ -37,9 +49,12 @@ export function useTicketsWithNewReplies() {
       if (error) throw error;
       if (!exchanges?.length) return [];
 
-      // Group by ticket
+      // 3. Only keep exchanges on tickets where support already replied
+      //    (= real back-and-forth replies, not initial messages)
       const map = new Map<string, TicketWithNewReply>();
       for (const ex of exchanges) {
+        if (!ticketsWithSupportReply.has(ex.ticket_id)) continue;
+
         const existing = map.get(ex.ticket_id);
         if (existing) {
           existing.unreadCount++;
