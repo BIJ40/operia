@@ -1,6 +1,6 @@
 /**
  * Hook pour croiser compétences techniciens (module RH) × univers dossiers
- * Matching souple (fuzzy) : normalise et compare les chaînes
+ * Utilise un mapping explicite compétence→univers + fallback fuzzy
  */
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -29,25 +29,100 @@ export interface CompetenceMatchResult {
 }
 
 // ============================================================================
-// NORMALISATION (matching souple)
+// MAPPING EXPLICITE compétence catalogue → slugs univers Apogée
 // ============================================================================
 
-/** Normalise une chaîne pour le matching fuzzy */
+/**
+ * Chaque clé = label normalisé de compétence (lowercase, sans accents)
+ * Chaque valeur = liste de slugs univers Apogée (normalisés) qui matchent
+ * 
+ * Ce mapping est la source de vérité pour le matching compétence ↔ univers.
+ * Il couvre les labels du catalogue par défaut ET les slugs courants Apogée.
+ */
+const COMPETENCE_TO_UNIVERS: Record<string, string[]> = {
+  // Catalogue par défaut
+  'plomberie':            ['plomberie', 'sanitaire', 'sanitaires', 'plomb'],
+  'electricite':          ['electricite', 'elec', 'electrique'],
+  'serrurerie':           ['serrurerie', 'serrure', 'serrurier', 'serr'],
+  'vitrerie':             ['vitrerie', 'vitre', 'vitres', 'vitrier', 'miroiterie', 'vitr'],
+  'menuiserie':           ['menuiserie', 'menuisier', 'bois', 'porte', 'portes', 'fenetre', 'fenetres'],
+  'chauffage':            ['chauffage', 'chaudiere', 'climatisation', 'clim', 'cvc', 'pac', 'pompe_a_chaleur'],
+  'volet roulant':        ['volet_roulant', 'volets_roulants', 'volet', 'volets', 'store', 'stores'],
+  'pmr / accessibilite':  ['pmr', 'amelioration_logement', 'ame_logement', 'pmr_amenagement', 'accessibilite'],
+  'renovation':           ['renovation', 'reno', 'travaux'],
+  'multiservices':        ['multiservices', 'multi'],
+  'peinture':             ['peinture', 'peintre', 'revetement'],
+  'carrelage / faience':  ['carrelage', 'faience', 'carreleur'],
+  'recherche de fuite':   ['recherche_fuite', 'recherche_de_fuite', 'fuite'],
+};
+
+// ============================================================================
+// NORMALISATION
+// ============================================================================
+
+/** Normalise une chaîne pour le matching (lowercase, sans accents, sans ponctuation superflue) */
 function normalize(s: string): string {
   return (s || '')
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '') // supprime accents
-    .replace(/[^a-z0-9]/g, '');      // ne garde que alphanum
+    .trim();
 }
 
-/** Vérifie si deux chaînes matchent en mode souple */
-function fuzzyMatch(competence: string, univers: string): boolean {
-  const normComp = normalize(competence);
-  const normUni = normalize(univers);
+/** Normalise un slug univers Apogée */
+function normalizeSlug(s: string): string {
+  return normalize(s).replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+}
+
+// ============================================================================
+// Construit le reverse map : slug univers → set de compétences normalisées
+// ============================================================================
+
+const UNIVERS_TO_COMPETENCES = new Map<string, Set<string>>();
+
+for (const [compLabel, universSlugs] of Object.entries(COMPETENCE_TO_UNIVERS)) {
+  for (const slug of universSlugs) {
+    const normSlug = normalizeSlug(slug);
+    if (!UNIVERS_TO_COMPETENCES.has(normSlug)) {
+      UNIVERS_TO_COMPETENCES.set(normSlug, new Set());
+    }
+    UNIVERS_TO_COMPETENCES.get(normSlug)!.add(compLabel);
+  }
+}
+
+/**
+ * Vérifie si une compétence (label RH) matche un univers (slug Apogée)
+ * 1. Matching via la table explicite (priorité)
+ * 2. Fallback fuzzy (l'un contient l'autre)
+ */
+function competenceMatchesUnivers(competenceLabel: string, universSlug: string): boolean {
+  const normComp = normalize(competenceLabel);
+  const normUni = normalizeSlug(universSlug);
+  
   if (!normComp || !normUni) return false;
-  // L'un contient l'autre (dans les deux sens)
-  return normComp.includes(normUni) || normUni.includes(normComp);
+  
+  // 1. Lookup explicite : est-ce que la compétence est dans le mapping pour cet univers ?
+  const matchingComps = UNIVERS_TO_COMPETENCES.get(normUni);
+  if (matchingComps) {
+    // Vérifier si la compétence normalisée est dans le set
+    for (const mappedComp of matchingComps) {
+      if (normComp === mappedComp || normComp.includes(mappedComp) || mappedComp.includes(normComp)) {
+        return true;
+      }
+    }
+  }
+  
+  // 2. Lookup direct : est-ce que la compétence a une entrée dans COMPETENCE_TO_UNIVERS ?
+  const directMatch = COMPETENCE_TO_UNIVERS[normComp];
+  if (directMatch) {
+    return directMatch.some(slug => normalizeSlug(slug) === normUni);
+  }
+  
+  // 3. Fallback fuzzy (pour les compétences custom hors catalogue)
+  const compAlpha = normComp.replace(/[^a-z0-9]/g, '');
+  const uniAlpha = normUni.replace(/[^a-z0-9]/g, '');
+  return compAlpha.length >= 3 && uniAlpha.length >= 3 && 
+    (compAlpha.includes(uniAlpha) || uniAlpha.includes(compAlpha));
 }
 
 // ============================================================================
@@ -87,7 +162,7 @@ export function useTechCompetenceMatch(agencyId: string | undefined): Competence
       })) as TechCompetenceInfo[];
     },
     enabled: !!agencyId,
-    staleTime: 10 * 60 * 1000, // 10 min cache
+    staleTime: 10 * 60 * 1000,
   });
 
   const techCompetences = useMemo(() => {
@@ -103,13 +178,13 @@ export function useTechCompetenceMatch(agencyId: string | undefined): Competence
   const isCompatible = useMemo(() => {
     return (apogeeUserId: number, universes: string[]): boolean => {
       const comps = techCompetences.get(apogeeUserId);
-      // Pas de compétences renseignées → on considère compatible par défaut (pas de données = pas de filtrage)
+      // Pas de compétences renseignées → compatible par défaut
       if (!comps || comps.length === 0) return true;
       if (!universes || universes.length === 0) return true;
       
       // Au moins une compétence doit matcher au moins un univers
       return universes.some(uni => 
-        comps.some(comp => fuzzyMatch(comp, uni))
+        comps.some(comp => competenceMatchesUnivers(comp, uni))
       );
     };
   }, [techCompetences]);
@@ -119,7 +194,7 @@ export function useTechCompetenceMatch(agencyId: string | undefined): Competence
       const comps = techCompetences.get(apogeeUserId);
       if (!comps || !universes) return [];
       return comps.filter(comp => 
-        universes.some(uni => fuzzyMatch(comp, uni))
+        universes.some(uni => competenceMatchesUnivers(comp, uni))
       );
     };
   }, [techCompetences]);
