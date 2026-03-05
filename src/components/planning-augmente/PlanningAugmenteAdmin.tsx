@@ -10,7 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { usePlanningProjects, type PlanningProject } from '@/hooks/usePlanningData';
 import { usePlanningData, useApogeeUsersNormalized } from '@/shared/api/apogee/usePlanningData';
 import { buildUserMap } from '@/shared/planning/planningMapper';
-import { isTechnician, isActiveUser } from '@/shared/planning/normalize';
+import { isTechnician, isActiveUser, isExcludedOfficeType } from '@/shared/planning/normalize';
 import { useOptimizerConfig } from '@/hooks/usePlanningAugmente';
 import { useTechCompetenceMatch } from '@/hooks/useTechCompetenceMatch';
 import { DossierSearchPanel } from './DossierSearchPanel';
@@ -42,17 +42,16 @@ export default function PlanningAugmenteAdmin() {
   const { users, loading: usersLoading } = useApogeeUsersNormalized();
   const { data: projectsData, isLoading: projectsLoading } = usePlanningProjects(agencySlug ?? undefined);
   const { data: config, isLoading: configLoading } = useOptimizerConfig(agencyId ?? undefined);
-  const { isCompatible: checkCompat, getMatchedCompetences: getMatched } = useTechCompetenceMatch(agencyId ?? undefined);
+  const { isCompatible: checkCompat, getMatchedCompetences: getMatched, techRoster } = useTechCompetenceMatch(agencyId ?? undefined);
 
   // Construire la map users complète (pour labels/couleurs)
   const userMap = useMemo(() => buildUserMap(users as any), [users]);
 
   // Approche hybride robuste (fonctionne pour toutes les agences) :
-  // 1. Identifier les users qui ont des créneaux "visite-interv" (terrain réel)
-  // 2. Croiser avec le type API pour exclure non-techs (interimaire, commercial, etc.)
-  // 3. Résultat = techniciens terrain, sans config manuelle par agence
+  // 1. users terrain depuis les créneaux visite-interv
+  // 2. users typés techniques + actifs
+  // 3. fallback roster RH (collaborateurs avec apogee_user_id)
   const technicians = useMemo(() => {
-    // Set des users ayant au moins 1 créneau visite-interv
     const fieldUserIds = new Set<number>();
     for (const c of creneaux) {
       if (c.refType === 'visite-interv') {
@@ -60,7 +59,6 @@ export default function PlanningAugmenteAdmin() {
       }
     }
 
-    // Techniciens typés ET actifs (is_on = true dans Apogée)
     const techTypedIds = new Set<number>();
     for (const u of users) {
       if (isTechnician(u as any) && isActiveUser(u as any)) {
@@ -68,22 +66,23 @@ export default function PlanningAugmenteAdmin() {
       }
     }
 
-    // Union : techniciens typés OU users terrain (visite-interv)
-    // Puis filtrer les types exclus
-    const allIds = new Set([...fieldUserIds, ...techTypedIds]);
+    const rhRosterIds = new Set<number>(Array.from(techRoster.keys()));
+    const allIds = new Set([...fieldUserIds, ...techTypedIds, ...rhRosterIds]);
 
     return Array.from(allIds)
       .map(id => {
         const info = userMap.get(id);
-        return { id, label: info?.label ?? `#${id}`, color: info?.color, type: info?.type };
+        const roster = techRoster.get(id);
+        return {
+          id,
+          label: info?.label ?? roster?.name ?? `#${id}`,
+          color: info?.color,
+          type: info?.type,
+        };
       })
-      // Exclure les types non-terrain même s'ils ont des créneaux
-      .filter(t => {
-        const type = (t.type || '').toLowerCase();
-        return !['interimaire', 'commercial', 'admin', 'assistante', 'assistant', 'utilisateur', 'comptable', 'direction'].includes(type);
-      })
+      .filter(t => !isExcludedOfficeType(t.type))
       .sort((a, b) => a.label.localeCompare(b.label));
-  }, [creneaux, users, userMap]);
+  }, [creneaux, users, userMap, techRoster]);
 
   const weights = (config as any)?.weights as Record<string, number> ?? {
     sla: 0.3, ca: 0.2, route: 0.2, coherence: 0.15, equity: 0.1, continuity: 0.05,

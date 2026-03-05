@@ -30,26 +30,41 @@ export function isActiveUser(u: unknown): boolean {
   return v === true || v === 1 || v === "1" || norm(v) === "true";
 }
 
-/** Types exclus du planning technicien */
-const EXCLUDED_USER_TYPES = new Set([
-  'interimaire', 'commercial', 'admin', 'administratif',
-  'assistante', 'assistant', 'utilisateur', 'comptable', 'direction',
-]);
+/** Types/roles bureau à exclure du planning terrain */
+const EXCLUDED_USER_TYPE_KEYWORDS = [
+  'interimaire', 'interim', 'commercial', 'admin', 'administratif',
+  'assist', 'utilisateur', 'comptable', 'direction', 'secret',
+];
+
+/** Signaux "terrain" autorisés pour reconnaître un salarié technique */
+const TECHNICIAN_HINT_KEYWORDS = [
+  'techn', 'ouvrier', 'intervenant',
+  'plomb', 'peint', 'menuis', 'chauff', 'elect', 'serrur',
+  'vitr', 'carrel', 'reno', 'multi', 'fuite',
+];
+
+export function isExcludedOfficeType(rawType: unknown): boolean {
+  const type = norm(rawType);
+  if (!type) return false;
+  return EXCLUDED_USER_TYPE_KEYWORDS.some((k) => type.includes(k));
+}
+
+function hasTechnicianHint(rawType: unknown): boolean {
+  const type = norm(rawType);
+  if (!type) return false;
+  return TECHNICIAN_HINT_KEYWORDS.some((k) => type.includes(k));
+}
 
 export function isTechnician(u: unknown): boolean {
   if (!u || typeof u !== "object") return false;
   const obj = u as Record<string, unknown>;
-  const type = norm(obj.type);
 
-  if (EXCLUDED_USER_TYPES.has(type)) return false;
+  const type = obj.type;
+  const role = obj.role ?? obj.role_agence ?? obj.fonction ?? obj.job;
 
-  // Variantes rencontrées selon agences
-  return (
-    type === "technicien" ||
-    type.includes("techn") ||
-    type.includes("ouvrier") ||
-    type.includes("intervenant")
-  );
+  if (isExcludedOfficeType(type) || isExcludedOfficeType(role)) return false;
+
+  return hasTechnicianHint(type) || hasTechnicianHint(role);
 }
 
 export interface NormalizedCreneau {

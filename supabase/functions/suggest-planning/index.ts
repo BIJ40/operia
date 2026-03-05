@@ -47,6 +47,29 @@ function normalizeSlug(s: string): string {
   return normalize(s).replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
 }
 
+const EXCLUDED_TYPE_KEYWORDS = [
+  'interimaire', 'interim', 'commercial', 'admin', 'administratif',
+  'assist', 'utilisateur', 'comptable', 'direction', 'secret',
+];
+
+const TECHNICIAN_HINT_KEYWORDS = [
+  'techn', 'ouvrier', 'intervenant',
+  'plomb', 'peint', 'menuis', 'chauff', 'elect', 'serrur',
+  'vitr', 'carrel', 'reno', 'multi', 'fuite',
+];
+
+function isExcludedOfficeType(typeRaw: unknown): boolean {
+  const type = normalize(String(typeRaw || ''));
+  if (!type) return false;
+  return EXCLUDED_TYPE_KEYWORDS.some((k) => type.includes(k));
+}
+
+function hasTechnicianHint(typeRaw: unknown): boolean {
+  const type = normalize(String(typeRaw || ''));
+  if (!type) return false;
+  return TECHNICIAN_HINT_KEYWORDS.some((k) => type.includes(k));
+}
+
 // Build reverse map: univers slug → competence labels
 const UNIVERS_TO_COMPETENCES = new Map<string, Set<string>>();
 for (const [compLabel, slugs] of Object.entries(COMPETENCE_TO_UNIVERS)) {
@@ -289,15 +312,15 @@ Deno.serve(async (req: Request) => {
     // =====================================================================
     console.log(`[SUGGEST-PLANNING] Fetching data for agency ${agency.slug}, dossier ${dossier_id}`);
 
-    const [apogeeUsers, interventionsCreneaux, interventionsDetailed, projects, rhCompetences] = await Promise.all([
+    const [apogeeUsers, interventionsCreneaux, interventionsDetailed, projects, rhRosterRows] = await Promise.all([
       fetchApogee(agency.slug, 'apiGetUsers', apiKey),
       fetchApogee(agency.slug, 'getInterventionsCreneaux', apiKey),
       fetchApogee(agency.slug, 'apiGetInterventions', apiKey),
       fetchApogee(agency.slug, 'apiGetProjects', apiKey),
-      // Load RH competences from DB
+      // Roster RH: fallback pour ne pas perdre des salariés techniques absents/mal typés dans apiGetUsers
       supabase
         .from('collaborators')
-        .select('apogee_user_id, rh_competencies(competences_techniques)')
+        .select('apogee_user_id, first_name, last_name, type, role, rh_competencies(competences_techniques)')
         .eq('agency_id', agency_id)
         .not('apogee_user_id', 'is', null)
         .is('leaving_date', null)
@@ -305,39 +328,110 @@ Deno.serve(async (req: Request) => {
     ]);
 
     console.log(
-      `[SUGGEST-PLANNING] Loaded: ${apogeeUsers.length} users, ${interventionsCreneaux.length} creneaux, ${interventionsDetailed.length} interventions, ${projects.length} projects, ${rhCompetences.length} RH records`
+      `[SUGGEST-PLANNING] Loaded: ${apogeeUsers.length} users, ${interventionsCreneaux.length} creneaux, ${interventionsDetailed.length} interventions, ${projects.length} projects, ${rhRosterRows.length} RH records`
     );
 
-    // Build competences map: apogeeUserId → string[]
+    // Build RH maps: apogeeUserId → competences + roster
     const competencesMap = new Map<number, string[]>();
-    for (const c of rhCompetences) {
-      const uid = c.apogee_user_id as number;
-      const comps = (c as any).rh_competencies?.competences_techniques as string[] || [];
-      if (uid) competencesMap.set(uid, comps);
+    const collaboratorRoster = new Map<number, {
+      firstName: string;
+      lastName: string;
+      type: string;
+      role: string;
+      hasCompetences: boolean;
+    }>();
+
+    for (const c of rhRosterRows as any[]) {
+      const uid = Number(c?.apogee_user_id);
+      if (!Number.isFinite(uid)) continue;
+
+      const comps = ((c as any).rh_competencies?.competences_techniques as string[]) || [];
+      competencesMap.set(uid, comps);
+
+      collaboratorRoster.set(uid, {
+        firstName: String(c?.first_name || '').trim(),
+        lastName: String(c?.last_name || '').trim(),
+        type: String(c?.type || ''),
+        role: String(c?.role || ''),
+        hasCompetences: comps.length > 0,
+      });
     }
 
     // Find the target dossier
     const dossier = projects.find((p: any) => p.id === dossier_id || p.id === String(dossier_id));
     const dossierUniverses: string[] = extractDossierUniverses(dossier);
 
-    // Filter technicians (exclude office staff) + dedupe by numeric ID
-    const EXCLUDED_TYPES = new Set(['interimaire', 'commercial', 'admin', 'assistante', 'assistant', 'utilisateur', 'comptable', 'direction']);
+    // Users avec activité terrain explicite (visite-interv) pour éviter les faux négatifs
+    const terrainUserIds = new Set<number>();
+    for (const creneau of interventionsCreneaux) {
+      const refType = normalizeSlug((creneau as any)?.refType || '');
+      if (refType !== 'visite_interv') continue;
+
+      const techIds = Array.isArray((creneau as any)?.usersIds)
+        ? (creneau as any).usersIds
+        : [(creneau as any)?.userId, (creneau as any)?.user_id].filter(Boolean);
+
+      for (const techId of techIds) {
+        const n = Number(techId);
+        if (Number.isFinite(n)) terrainUserIds.add(n);
+      }
+    }
+
+    // Filter technicians + dedupe by numeric ID
     const techniciansMap = new Map<number, any>();
 
     for (const rawUser of apogeeUsers) {
       const techId = Number((rawUser as any)?.id);
       if (!Number.isFinite(techId)) continue;
 
-      const type = String((rawUser as any)?.type || '').toLowerCase();
-      if (EXCLUDED_TYPES.has(type)) continue;
+      const typeRaw = (rawUser as any)?.type;
+      const roleRaw = (rawUser as any)?.role ?? (rawUser as any)?.fonction;
+      if (isExcludedOfficeType(typeRaw) || isExcludedOfficeType(roleRaw)) continue;
 
-      const isTerrain = type.includes('tech') || type.includes('ouvrier') || type.includes('intervenant');
-      const isActive = (rawUser as any)?.is_on !== false;
-      if (!isTerrain && !isActive) continue;
+      const isActive =
+        (rawUser as any)?.is_on !== false &&
+        (rawUser as any)?.isOn !== false &&
+        (rawUser as any)?.is_active !== false &&
+        (rawUser as any)?.isActive !== false;
 
+      const hasTerrainActivity = terrainUserIds.has(techId);
+      const inCollaboratorRoster = collaboratorRoster.has(techId);
+      const isTechByType = hasTechnicianHint(typeRaw) || hasTechnicianHint(roleRaw);
+
+      if (!(isTechByType || inCollaboratorRoster || hasTerrainActivity)) continue;
+      if (!isActive && !hasTerrainActivity && !inCollaboratorRoster) continue;
+
+      const collab = collaboratorRoster.get(techId);
       if (!techniciansMap.has(techId)) {
-        techniciansMap.set(techId, { ...rawUser, id: techId });
+        techniciansMap.set(techId, {
+          ...rawUser,
+          id: techId,
+          prenom: (rawUser as any)?.prenom || (rawUser as any)?.firstname || collab?.firstName,
+          nom: (rawUser as any)?.nom || (rawUser as any)?.lastname || collab?.lastName,
+        });
       }
+    }
+
+    // Fallback RH: ajoute les techniciens présents côté collaborateurs même s'ils n'arrivent pas dans apiGetUsers
+    for (const [techId, collab] of collaboratorRoster.entries()) {
+      if (techniciansMap.has(techId)) continue;
+
+      const hasTerrainActivity = terrainUserIds.has(techId);
+      const isTechByRoster = collab.hasCompetences || hasTechnicianHint(collab.type) || hasTechnicianHint(collab.role);
+      if (!isTechByRoster && !hasTerrainActivity) continue;
+      if (isExcludedOfficeType(collab.type) || isExcludedOfficeType(collab.role)) continue;
+
+      const fallbackName = `${collab.firstName} ${collab.lastName}`.trim() || `Tech #${techId}`;
+      techniciansMap.set(techId, {
+        id: techId,
+        prenom: collab.firstName,
+        nom: collab.lastName,
+        firstname: collab.firstName,
+        lastname: collab.lastName,
+        name: fallbackName,
+        type: collab.type || 'technicien',
+        is_on: true,
+      });
     }
 
     const technicians = Array.from(techniciansMap.values());
