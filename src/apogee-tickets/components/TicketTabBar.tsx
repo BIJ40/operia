@@ -1,10 +1,10 @@
 /**
  * Barre d'onglets style navigateur pour la vue Liste
- * Onglet "LISTE" fixe à gauche + optionnel "NOUVEAUX" + "RETARD" + tickets ouverts à droite
+ * Onglet "LISTE" fixe à gauche + optionnel "NOUVEAUX" + "RÉPONSES" + "RETARD" + tickets ouverts à droite
  * Style "folder tab" avec bordure continue vers le contenu
  */
 
-import { X, Loader2, List, AlertTriangle, Sparkles } from 'lucide-react';
+import { X, Loader2, List, AlertTriangle, Sparkles, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -25,6 +25,10 @@ interface TicketTabBarProps {
   isNewTabActive?: boolean;
   onNewTabClick?: () => void;
   newCount?: number;
+  showRepliesTab?: boolean;
+  isRepliesTabActive?: boolean;
+  onRepliesTabClick?: () => void;
+  repliesCount?: number;
 }
 
 export function TicketTabBar({
@@ -42,9 +46,13 @@ export function TicketTabBar({
   isNewTabActive = false,
   onNewTabClick,
   newCount = 0,
+  showRepliesTab = false,
+  isRepliesTabActive = false,
+  onRepliesTabClick,
+  repliesCount = 0,
 }: TicketTabBarProps) {
-  const isListeActive = activeTabId === null && !isLateTabActive && !isNewTabActive;
-  const isTicketActive = activeTabId !== null && !isLateTabActive && !isNewTabActive;
+  const isListeActive = activeTabId === null && !isLateTabActive && !isNewTabActive && !isRepliesTabActive;
+  const isTicketActive = activeTabId !== null && !isLateTabActive && !isNewTabActive && !isRepliesTabActive;
 
   return (
     <div className="relative mx-2 pt-2">
@@ -87,6 +95,35 @@ export function TicketTabBar({
                 )}
               >
                 {newCount}
+              </Badge>
+            )}
+          </button>
+        )}
+
+        {/* Onglet RÉPONSES - visible si showRepliesTab */}
+        {showRepliesTab && (
+          <button
+            onClick={onRepliesTabClick}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-all shrink-0 rounded-t-xl relative ml-1",
+              isRepliesTabActive
+                ? "bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 border-2 border-b-0 border-blue-400 dark:border-blue-500 mb-[-2px] pb-[calc(0.625rem+2px)]"
+                : "bg-slate-100/80 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 hover:text-blue-600 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 border border-transparent mb-[2px]"
+            )}
+          >
+            <MessageCircle className={cn("h-4 w-4", isRepliesTabActive && "text-blue-600 dark:text-blue-400")} />
+            RÉPONSES
+            {repliesCount > 0 && (
+              <Badge 
+                variant="secondary" 
+                className={cn(
+                  "h-5 min-w-5 px-1.5 text-xs",
+                  isRepliesTabActive 
+                    ? "bg-blue-500 text-white" 
+                    : "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400 animate-pulse"
+                )}
+              >
+                {repliesCount}
               </Badge>
             )}
           </button>
@@ -135,7 +172,7 @@ export function TicketTabBar({
             )}
           >
             {tabs.map((tab) => {
-              const isActive = activeTabId === tab.id && !isLateTabActive && !isNewTabActive;
+              const isActive = activeTabId === tab.id && !isLateTabActive && !isNewTabActive && !isRepliesTabActive;
               return (
                 <button
                   key={tab.id}

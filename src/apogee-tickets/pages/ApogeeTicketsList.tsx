@@ -28,6 +28,7 @@ import {
   ShieldAlert,
   AlertTriangle,
   Sparkles,
+  MessageCircle,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApogeeTicket, useApogeeTickets } from '../hooks/useApogeeTickets';
@@ -43,6 +44,8 @@ import { TicketInlinePanel } from '../components/TicketInlinePanel';
 import { CreateTicketDialog } from '../components/CreateTicketDialog';
 import { LateTicketsPanel } from '../components/LateTicketsPanel';
 import { NewTicketsPanel } from '../components/NewTicketsPanel';
+import { NewRepliesPanel } from '../components/NewRepliesPanel';
+import { useTicketsWithNewReplies } from '../hooks/useTicketsWithNewReplies';
 import { exportToCSV, exportToExcel, exportToPDF } from '../utils/exportKanban';
 import type { ApogeeTicket } from '../types';
 import { ROUTES } from '@/config/routes';
@@ -135,6 +138,10 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
   const [showNewTab, setShowNewTab] = useState(false);
   const [isNewTabActive, setIsNewTabActive] = useState(false);
 
+  // État pour afficher l'onglet RÉPONSES
+  const [showRepliesTab, setShowRepliesTab] = useState(false);
+  const [isRepliesTabActive, setIsRepliesTabActive] = useState(false);
+
   const {
     tickets,
     statuses,
@@ -148,6 +155,10 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
 
   // Récupérer les vues de l'utilisateur pour calculer les "nouveaux"
   const { data: myViews = [] } = useMyTicketViews();
+
+  // Récupérer les tickets avec nouvelles réponses
+  const { data: repliesData = [] } = useTicketsWithNewReplies();
+  const repliesCount = repliesData.length;
 
   // Compter les tickets en retard (BUG > 48h)
   const lateTicketsCount = useMemo(() => {
@@ -215,9 +226,9 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
   const activeTicket = activeTicketFromList ?? activeTicketFromDb;
 
   const handleTicketClick = (ticket: ApogeeTicket) => {
-    // Fermer les onglets spéciaux quand on ouvre un ticket depuis ceux-ci
     setIsLateTabActive(false);
     setIsNewTabActive(false);
+    setIsRepliesTabActive(false);
     openTicketTab(ticket);
   };
 
@@ -226,36 +237,42 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
     closeTab(id);
   };
 
-  // Handle inline ticket updates via queue (auto-save)
   const handleTicketQueueChange = (ticketId: string, updates: Partial<ApogeeTicket>) => {
     queueChange(ticketId, updates);
   };
 
-  // Gérer le clic sur l'onglet RETARD
   const handleLateTabClick = () => {
     setIsLateTabActive(true);
     setIsNewTabActive(false);
+    setIsRepliesTabActive(false);
     setActiveTabId(null);
   };
 
-  // Gérer le clic sur l'onglet NOUVEAUX
   const handleNewTabClick = () => {
     setIsNewTabActive(true);
     setIsLateTabActive(false);
+    setIsRepliesTabActive(false);
     setActiveTabId(null);
   };
 
-  // Gérer le clic sur liste ou ticket (désactive les onglets spéciaux)
+  const handleRepliesTabClick = () => {
+    setIsRepliesTabActive(true);
+    setIsNewTabActive(false);
+    setIsLateTabActive(false);
+    setActiveTabId(null);
+  };
+
   const handleTabClick = (tabId: string | null) => {
     setIsLateTabActive(false);
     setIsNewTabActive(false);
+    setIsRepliesTabActive(false);
     setActiveTabId(tabId);
   };
 
-  // Vue active: détermine quel contenu afficher
   const showingNew = isNewTabActive;
-  const showingLate = isLateTabActive && !isNewTabActive;
-  const showingList = activeTabId === null && !isLateTabActive && !isNewTabActive;
+  const showingReplies = isRepliesTabActive && !isNewTabActive;
+  const showingLate = isLateTabActive && !isNewTabActive && !isRepliesTabActive;
+  const showingList = activeTabId === null && !isLateTabActive && !isNewTabActive && !isRepliesTabActive;
 
   return (
     <div className={embedded ? "flex flex-col h-full" : "container mx-auto py-8 px-4 flex flex-col h-[calc(100vh-6rem)]"}>
@@ -337,6 +354,41 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
               </span>
             )}
           </Button>
+
+          {/* Bouton Réponses */}
+          <Button
+            variant={showRepliesTab ? "secondary" : "outline"}
+            size="sm"
+            onClick={() => {
+              if (!showRepliesTab) {
+                setShowRepliesTab(true);
+                setIsRepliesTabActive(true);
+                setIsNewTabActive(false);
+                setIsLateTabActive(false);
+                setActiveTabId(null);
+              } else {
+                setShowRepliesTab(false);
+                setIsRepliesTabActive(false);
+              }
+            }}
+            className={cn(
+              "gap-2 transition-all",
+              repliesCount > 0 && !showRepliesTab && "border-blue-500/50 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+            )}
+          >
+            <MessageCircle className="h-4 w-4" />
+            <span className="hidden sm:inline">Réponses</span>
+            {repliesCount > 0 && (
+              <span className={cn(
+                "inline-flex items-center justify-center h-5 min-w-5 px-1.5 text-xs font-medium rounded-full",
+                showRepliesTab 
+                  ? "bg-blue-500 text-white" 
+                  : "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400 animate-pulse"
+              )}>
+                {repliesCount}
+              </span>
+            )}
+          </Button>
           
           {/* Bouton En retard */}
           <Button
@@ -390,24 +442,30 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
         isLateTabActive={isLateTabActive}
         onLateTabClick={handleLateTabClick}
         lateCount={lateTicketsCount}
+        showRepliesTab={showRepliesTab}
+        isRepliesTabActive={isRepliesTabActive}
+        onRepliesTabClick={handleRepliesTabClick}
+        repliesCount={repliesCount}
       />
 
-      {/* Zone de contenu: soit la liste, soit NOUVEAUX, soit RETARD, soit le ticket actif */}
+      {/* Zone de contenu */}
       <div className={cn(
         "flex-1 overflow-hidden mx-2 mb-2 border-2",
         showingNew
           ? "bg-emerald-50/50 dark:bg-emerald-950/30 border-emerald-400 dark:border-emerald-500 rounded-2xl"
-          : showingLate
-            ? "bg-destructive/5 dark:bg-destructive/10 border-destructive/30 rounded-2xl"
-            : showingList 
-              ? "bg-sky-50 dark:bg-sky-950/50 border-sky-400 dark:border-sky-500 rounded-tr-2xl rounded-br-2xl rounded-bl-2xl"
-              : "bg-violet-50 dark:bg-violet-950/50 border-violet-400 dark:border-violet-500 rounded-2xl"
+          : showingReplies
+            ? "bg-blue-50/50 dark:bg-blue-950/30 border-blue-400 dark:border-blue-500 rounded-2xl"
+            : showingLate
+              ? "bg-destructive/5 dark:bg-destructive/10 border-destructive/30 rounded-2xl"
+              : showingList 
+                ? "bg-sky-50 dark:bg-sky-950/50 border-sky-400 dark:border-sky-500 rounded-tr-2xl rounded-br-2xl rounded-bl-2xl"
+                : "bg-violet-50 dark:bg-violet-950/50 border-violet-400 dark:border-violet-500 rounded-2xl"
       )}>
         {showingNew ? (
-          /* Vue Nouveaux */
           <NewTicketsPanel onTicketClick={handleTicketClick} />
+        ) : showingReplies ? (
+          <NewRepliesPanel onTicketClick={handleTicketClick} />
         ) : showingLate ? (
-          /* Vue En retard */
           <LateTicketsPanel onTicketClick={handleTicketClick} />
         ) : showingList ? (
           /* Vue Liste */

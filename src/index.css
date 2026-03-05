@@ -676,6 +676,20 @@ button[data-image-modal] {
   animation: pulse-subtle 2s ease-in-out infinite;
 }
 
+/* Blink animation for tickets with new replies */
+@keyframes reply-blink {
+  0%, 100% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: hsl(217 91% 60% / 0.08);
+  }
+}
+
+.animate-reply-blink {
+  animation: reply-blink 2s ease-in-out infinite;
+}
+
 /* Hide scrollbar but keep functionality */
 .scrollbar-hide {
   -ms-overflow-style: none;
