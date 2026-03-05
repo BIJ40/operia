@@ -20,6 +20,8 @@ export interface TechCompetenceInfo {
 export interface CompetenceMatchResult {
   /** Map apogeeUserId → liste de compétences techniques */
   techCompetences: Map<number, string[]>;
+  /** Map apogeeUserId → infos RH (nom collaborateur) */
+  techRoster: Map<number, { name: string }>;
   /** Vérifie si un tech (apogeeUserId) est compatible avec un ensemble d'univers */
   isCompatible: (apogeeUserId: number, universes: string[]) => boolean;
   /** Retourne les compétences matchées pour un tech × univers */
@@ -175,6 +177,16 @@ export function useTechCompetenceMatch(agencyId: string | undefined): Competence
     return map;
   }, [data]);
 
+  const techRoster = useMemo(() => {
+    const map = new Map<number, { name: string }>();
+    for (const t of data || []) {
+      if (t.apogeeUserId) {
+        map.set(t.apogeeUserId, { name: t.name || `#${t.apogeeUserId}` });
+      }
+    }
+    return map;
+  }, [data]);
+
   const isCompatible = useMemo(() => {
     return (apogeeUserId: number, universes: string[]): boolean => {
       const comps = techCompetences.get(apogeeUserId);
@@ -199,5 +211,5 @@ export function useTechCompetenceMatch(agencyId: string | undefined): Competence
     };
   }, [techCompetences]);
 
-  return { techCompetences, isCompatible, getMatchedCompetences, isLoading };
+  return { techCompetences, techRoster, isCompatible, getMatchedCompetences, isLoading };
 }
