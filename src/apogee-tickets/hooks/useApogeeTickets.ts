@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { logError } from '@/lib/logger';
 import { safeMutation, safeQuery } from '@/lib/safeQuery';
 import { errorToast, successToast } from '@/lib/toastHelpers';
+import { notifyNewTicket } from '@/utils/notifyNewTicket';
 import type { Json } from '@/integrations/supabase/types';
 import type {
   ApogeeTicket,
@@ -384,9 +385,22 @@ export function useApogeeTickets(filters?: TicketFilters) {
       }
       return result.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['apogee-tickets'] });
       successToast('Ticket créé');
+
+      // Fire-and-forget notification
+      if (data) {
+        notifyNewTicket({
+          ticket_id: data.id,
+          ticket_number: data.ticket_number,
+          subject: data.element_concerne,
+          description: data.description || undefined,
+          heat_priority: data.heat_priority,
+          module: data.module || undefined,
+          created_from: data.created_from,
+        });
+      }
     },
     onError: (error: Error) => {
       errorToast(error.message);
