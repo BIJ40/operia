@@ -1,212 +1,105 @@
 /**
- * Slider pour la prise en charge Apogée ↔ HC
- * Valeurs: null (non déterminé), 0 (Apogée), 25 (75/25), 50 (50/50), 75 (25/75), 100 (HC)
+ * Sélecteur de prise en charge Apogée ↔ HC
+ * 5 boutons toggle : APO | 75/25 | 50/50 | 25/75 | HC
+ * Clic sur le bouton actif = désélection (null)
  */
 
-import { Slider } from '@/components/ui/slider';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface OwnerSideSliderProps {
-  value: number | null; // null = non déterminé, 0-100 = valeur
+  value: number | null; // null = non déterminé, 0/25/50/75/100
   onChange: (value: number | null) => void;
   disabled?: boolean;
   compact?: boolean;
 }
 
 const STEPS = [
-  { value: 0, label: 'Apogée', apogee: 100, hc: 0 },
-  { value: 25, label: '75/25', apogee: 75, hc: 25 },
-  { value: 50, label: '50/50', apogee: 50, hc: 50 },
-  { value: 75, label: '25/75', apogee: 25, hc: 75 },
-  { value: 100, label: 'HC', apogee: 0, hc: 100 },
+  { value: 0, label: 'APO', labelFull: 'Apogée', apogee: 100, hc: 0, color: 'bg-blue-500', text: 'text-blue-700', bg: 'bg-blue-100', ring: 'ring-blue-400' },
+  { value: 25, label: '75/25', labelFull: '75/25', apogee: 75, hc: 25, color: 'bg-blue-400', text: 'text-indigo-700', bg: 'bg-indigo-100', ring: 'ring-indigo-400' },
+  { value: 50, label: '50/50', labelFull: '50/50', apogee: 50, hc: 50, color: 'bg-purple-500', text: 'text-purple-700', bg: 'bg-purple-100', ring: 'ring-purple-400' },
+  { value: 75, label: '25/75', labelFull: '25/75', apogee: 25, hc: 75, color: 'bg-orange-400', text: 'text-orange-700', bg: 'bg-orange-100', ring: 'ring-orange-400' },
+  { value: 100, label: 'HC', labelFull: 'HC', apogee: 0, hc: 100, color: 'bg-orange-500', text: 'text-orange-700', bg: 'bg-orange-100', ring: 'ring-orange-400' },
 ];
 
 export function OwnerSideSlider({ value, onChange, disabled, compact = false }: OwnerSideSliderProps) {
-  const isUndetermined = value === null;
-  const currentValue = value ?? 50; // Position visuelle par défaut au milieu
-  const currentStep = isUndetermined ? null : STEPS.reduce((prev, curr) => 
-    Math.abs(curr.value - currentValue) < Math.abs(prev.value - currentValue) ? curr : prev
-  );
+  const currentStep = value !== null
+    ? STEPS.reduce((prev, curr) => Math.abs(curr.value - value) < Math.abs(prev.value - value) ? curr : prev)
+    : null;
 
-  const handleSliderChange = (v: number) => {
-    onChange(v);
+  const handleClick = (stepValue: number) => {
+    if (disabled) return;
+    // Toggle: clic sur le bouton actif = désélection
+    onChange(currentStep?.value === stepValue ? null : stepValue);
   };
 
-  const handleReset = () => {
-    onChange(null);
-  };
-
-  // Compact mode: slim row with reference points and reset icon
   if (compact) {
     return (
-      <div className="flex items-center gap-1.5 h-6">
-        <span className="text-[10px] text-blue-600 font-medium shrink-0">APO</span>
-        <div className="flex-1 relative min-w-[80px]">
-          <Slider
-            value={[currentValue]}
-            onValueChange={([v]) => {
-              const snappedValue = STEPS.reduce((prev, curr) => 
-                Math.abs(curr.value - v) < Math.abs(prev.value - v) ? curr : prev
-              ).value;
-              handleSliderChange(snappedValue);
-            }}
-            min={0}
-            max={100}
-            step={1}
-            disabled={disabled}
-            className={cn("cursor-pointer", isUndetermined && "opacity-50")}
-            trackClassName="h-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-orange-500"
-            rangeClassName="bg-transparent"
-          />
-          {/* Reference points */}
-          <div className="absolute top-0.5 left-0 right-0 flex justify-between pointer-events-none">
-            {STEPS.map((step) => (
-              <div
-                key={step.value}
-                className={cn(
-                  "w-1 h-1 rounded-full",
-                  !isUndetermined && currentValue === step.value
-                    ? "bg-white ring-1 ring-primary"
-                    : "bg-white/60"
-                )}
-              />
-            ))}
-          </div>
-        </div>
-        <span className="text-[10px] text-orange-600 font-medium shrink-0">HC</span>
-        {!isUndetermined && currentStep && (
-          <span className="text-[10px] px-1 py-0.5 rounded bg-muted font-medium min-w-[32px] text-center">
-            {currentStep.label}
-          </span>
-        )}
-        {isUndetermined && (
-          <span className="text-[10px] px-1 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">?</span>
-        )}
-        {!isUndetermined && !disabled && (
-          <button
-            type="button"
-            onClick={handleReset}
-            className="p-0.5 text-muted-foreground hover:text-destructive transition-colors"
-            title="Réinitialiser"
-          >
-            <X className="h-3 w-3" />
-          </button>
-        )}
+      <div className="flex items-center gap-0.5">
+        {STEPS.map((step) => {
+          const isActive = currentStep?.value === step.value;
+          return (
+            <button
+              key={step.value}
+              type="button"
+              onClick={() => handleClick(step.value)}
+              disabled={disabled}
+              className={cn(
+                "px-1.5 py-0.5 text-[10px] font-semibold rounded transition-all leading-tight",
+                "border border-transparent",
+                isActive
+                  ? cn(step.bg, step.text, "border-current/20 ring-1", step.ring)
+                  : "text-muted-foreground/60 hover:bg-muted hover:text-muted-foreground",
+                disabled && "opacity-50 cursor-not-allowed"
+              )}
+            >
+              {step.label}
+            </button>
+          );
+        })}
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
-      {/* Header avec état et bouton reset */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-blue-600">Apogée</span>
-          {isUndetermined && (
-            <Badge variant="outline" className="text-amber-600 border-amber-300 text-xs">
-              P.E.C à définir
-            </Badge>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {!isUndetermined && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={handleReset}
-              disabled={disabled}
-              className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive"
-            >
-              <X className="h-3 w-3 mr-1" />
-              Réinitialiser
-            </Button>
-          )}
-          <span className="text-sm font-medium text-orange-600">HC</span>
-        </div>
-      </div>
-      
-      {/* Slider */}
-      <div className="relative pt-1">
-        <Slider
-          value={[currentValue]}
-          onValueChange={([v]) => {
-            // Snap to nearest step value
-            const snappedValue = STEPS.reduce((prev, curr) => 
-              Math.abs(curr.value - v) < Math.abs(prev.value - v) ? curr : prev
-            ).value;
-            handleSliderChange(snappedValue);
-          }}
-          min={0}
-          max={100}
-          step={1}
-          disabled={disabled}
-          className={cn("cursor-pointer", isUndetermined && "opacity-50")}
-          trackClassName="h-3 bg-gradient-to-r from-blue-500 via-purple-500 to-orange-500"
-          rangeClassName="bg-transparent"
-        />
-        
-        {/* Step markers - cliquables */}
-        <div className="absolute top-1 left-0 right-0 flex justify-between">
-          {STEPS.map((step) => (
+    <div className="space-y-2">
+      {/* Boutons */}
+      <div className="flex items-center gap-1">
+        {STEPS.map((step) => {
+          const isActive = currentStep?.value === step.value;
+          return (
             <button
               key={step.value}
               type="button"
-              onClick={() => !disabled && handleSliderChange(step.value)}
+              onClick={() => handleClick(step.value)}
               disabled={disabled}
               className={cn(
-                "w-3 h-3 rounded-full border-2 transition-all cursor-pointer hover:scale-110",
-                !isUndetermined && currentValue === step.value
-                  ? "bg-white border-primary scale-125"
-                  : "bg-white/50 border-white/70 hover:bg-white hover:border-white"
+                "flex-1 px-2 py-1.5 text-xs font-semibold rounded-md transition-all",
+                "border-2",
+                isActive
+                  ? cn(step.bg, step.text, "border-current/30 shadow-sm")
+                  : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted hover:border-border",
+                disabled && "opacity-50 cursor-not-allowed"
               )}
-            />
-          ))}
-        </div>
+            >
+              {step.labelFull}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Labels */}
-      <div className="flex justify-between text-xs text-muted-foreground">
-        {STEPS.map((step) => (
-          <button
-            key={step.value}
-            type="button"
-            onClick={() => !disabled && handleSliderChange(step.value)}
-            disabled={disabled}
-            className={cn(
-              "px-1.5 py-0.5 rounded transition-colors",
-              !isUndetermined && currentValue === step.value
-                ? "bg-primary/10 text-primary font-medium"
-                : "hover:bg-muted"
-            )}
-          >
-            {step.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Current selection display */}
-      <div className="flex items-center justify-center gap-3 text-sm">
-        {isUndetermined ? (
-          <span className="px-2 py-1 rounded bg-amber-100 text-amber-700">
+      {/* Affichage sélection */}
+      <div className="flex items-center justify-center gap-3 text-xs">
+        {!currentStep ? (
+          <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-700">
             Non déterminé
           </span>
         ) : (
           <>
-            <span className={cn(
-              "px-2 py-1 rounded",
-              currentStep && currentStep.apogee > 0 ? "bg-blue-100 text-blue-700" : "bg-muted text-muted-foreground"
-            )}>
-              Apogée: {currentStep?.apogee ?? 0}%
+            <span className={cn("px-2 py-0.5 rounded", currentStep.apogee > 0 ? "bg-blue-100 text-blue-700" : "bg-muted text-muted-foreground")}>
+              Apogée: {currentStep.apogee}%
             </span>
-            <span className={cn(
-              "px-2 py-1 rounded",
-              currentStep && currentStep.hc > 0 ? "bg-orange-100 text-orange-700" : "bg-muted text-muted-foreground"
-            )}>
-              HC: {currentStep?.hc ?? 0}%
+            <span className={cn("px-2 py-0.5 rounded", currentStep.hc > 0 ? "bg-orange-100 text-orange-700" : "bg-muted text-muted-foreground")}>
+              HC: {currentStep.hc}%
             </span>
           </>
         )}
@@ -237,7 +130,7 @@ export function ownerSideToSliderValue(ownerSide: string | null): number | null 
     case 'HELPCONFORT': 
       return 100;
     default: 
-      return null; // Non déterminé
+      return null;
   }
 }
 
@@ -250,12 +143,10 @@ export function sliderValueToOwnerSide(value: number | null): 'APOGEE' | '75_25'
   return 'HC';
 }
 
-// Vérifie si la P.E.C est incomplète
 export function isOwnerSideIncomplete(ownerSide: string | null): boolean {
   return ownerSide === null || ownerSide === undefined || ownerSide === '';
 }
 
-// Stocke aussi le ratio exact pour affichage
 export function sliderValueToRatio(value: number | null): { apogee: number; hc: number } | null {
   if (value === null) return null;
   const step = STEPS.reduce((prev, curr) => 
