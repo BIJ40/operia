@@ -92,8 +92,21 @@ export default function PlanningAugmenteAdmin() {
   const weekStartISO = useMemo(() => weekStart.toISOString().split('T')[0], [weekStart]);
 
   // Univers du dossier sélectionné pour le matching compétences
+  // On enrichit avec les mots-clés du label pour un matching plus intelligent
+  // Ex: dossier "PLATRERIE - PEINTURE" avec univers ["renovation"] 
+  //     → on ajoute "platrerie" et "peinture" pour matcher les compétences techs
   const selectedUniverses = useMemo(() => {
-    return selectedDossier?.data?.universes ?? [];
+    const universes = [...(selectedDossier?.data?.universes ?? [])];
+    const label = (selectedDossier as any)?.label || (selectedDossier?.data as any)?.label || '';
+    if (label) {
+      // Extraire les mots significatifs du label (> 3 chars, séparés par espaces/tirets/slashes)
+      const labelWords = label
+        .split(/[\s\-\/\+,;:]+/)
+        .map((w: string) => w.trim().toLowerCase())
+        .filter((w: string) => w.length > 3 && !universes.some(u => u.toLowerCase() === w));
+      universes.push(...labelWords);
+    }
+    return universes;
   }, [selectedDossier]);
 
   // Fonctions de compatibilité liées au dossier sélectionné
