@@ -82,15 +82,31 @@ export function usePlanningProjects(agencySlug: string | undefined) {
     queryFn: async () => {
       if (!agencySlug) return { planifiable: [] as PlanningProject[], all: [] as PlanningProject[] };
 
-      const [projects, clients] = await Promise.all([
+      const [projects, clients, interventions] = await Promise.all([
         apogeeProxy.getProjects({ agencySlug }),
         apogeeProxy.getClients({ agencySlug }),
+        apogeeProxy.getInterventions({ agencySlug }),
       ]);
 
       // Index clients by id
       const clientsById = new Map<number, any>();
       (clients || []).forEach((c: any) => {
         clientsById.set(c.id, c);
+      });
+
+      // Build a set of projectIds that already have a planned/validated TVX intervention
+      // These are no longer truly "à planifier travaux"
+      const projectsWithPlannedTvx = new Set<number>();
+      (interventions || []).forEach((interv: any) => {
+        const type = (interv.type || interv.type2 || '').toLowerCase();
+        const state = (interv.state || '').toLowerCase();
+        const isTvx = type.includes('travaux') || type.includes('tvx') || type.includes('work');
+        const isPlanned = state.includes('planned') || state.includes('planifi') || 
+                          state.includes('validated') || state.includes('done') || 
+                          state.includes('in_progress') || state.includes('finished');
+        if (isTvx && isPlanned && interv.projectId) {
+          projectsWithPlannedTvx.add(interv.projectId);
+        }
       });
 
       // Enrich projects with client name
@@ -119,11 +135,17 @@ export function usePlanningProjects(agencySlug: string | undefined) {
 
       const planifiable = enriched.filter(p => {
         const st = (p.state || '').toLowerCase();
-        // States exacts "à planifier" identifiés via debug
-        return st === 'new' || st === 'to_planify_tvx';
+        if (st === 'new') return true;
+        if (st === 'to_planify_tvx') {
+          // Exclure les dossiers to_planify_tvx qui ont déjà une intervention TVX planifiée
+          // (le state Apogée n'a pas été mis à jour mais l'intervention existe déjà)
+          return !projectsWithPlannedTvx.has(p.id);
+        }
+        return false;
       });
 
-      console.log('[PlanningData] Projets à planifier trouvés:', planifiable.length, 'states:', uniqueStates.join(', '));
+      console.log('[PlanningData] Projets à planifier trouvés:', planifiable.length, 
+        '(exclu', projectsWithPlannedTvx.size, 'projets avec TVX déjà planifié)');
 
       return { planifiable, all: enriched, _debugStates: uniqueStates };
     },
