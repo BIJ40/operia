@@ -28,7 +28,7 @@ Nous étudions actuellement la situation et ne manquerons pas de vous tenir info
 N'hésitez pas à répondre à cet email si vous avez des éléments complémentaires à nous transmettre.
 
 Cordialement,
-L'équipe Support HelpConfort`;
+L'équipe Support Apogée / Help!Confort`;
 }
 
 export function PecButton({ ticketId, ticketCreatedFrom, requesterName, subject, className }: PecButtonProps) {
