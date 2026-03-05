@@ -1,6 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
 
+const ENGINE_VERSION = 'v2-2weeks';
+const MAX_DAY_LOAD = 420;
+
 interface Move {
   type: 'swap' | 'move' | 'reassign';
   description: string;
@@ -10,346 +13,249 @@ interface Move {
   gain_ca: number;
   risk: 'low' | 'medium' | 'high';
   explanation: string;
+  why: string[];
 }
-
-// =============================================================================
-// APOGEE API HELPER
-// =============================================================================
-
-async function fetchApogee(agencySlug: string, endpoint: string, apiKey: string): Promise<any[]> {
-  const url = `https://${agencySlug}.hc-apogee.fr/api/${endpoint}`;
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ API_KEY: apiKey }),
-  });
-  if (!response.ok) throw new Error(`Apogée ${endpoint}: ${response.status}`);
-  const data = await response.json();
-  return Array.isArray(data) ? data : [];
-}
-
-// =============================================================================
-// TECH DISCOVERY (aligned with suggest-planning)
-// =============================================================================
 
 function normalize(s: string): string {
   return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
 }
 
-const EXCLUDED_TYPE_KEYWORDS = [
-  'interimaire', 'interim', 'commercial', 'admin', 'administratif',
-  'assist', 'utilisateur', 'comptable', 'direction', 'secret',
-];
+const EXCLUDED_TYPES = ['interimaire','interim','commercial','admin','administratif','assist','utilisateur','comptable','direction','secret'];
 
-const TECHNICIAN_HINT_KEYWORDS = [
-  'techn', 'ouvrier', 'intervenant',
-  'plomb', 'peint', 'menuis', 'chauff', 'elect', 'serrur',
-  'vitr', 'carrel', 'reno', 'multi', 'fuite',
-];
-
-function isExcludedOfficeType(typeRaw: unknown): boolean {
-  const type = normalize(String(typeRaw || ''));
-  if (!type) return false;
-  return EXCLUDED_TYPE_KEYWORDS.some((k) => type.includes(k));
+function isExcluded(t: unknown): boolean {
+  const s = normalize(String(t || ''));
+  return s ? EXCLUDED_TYPES.some(k => s.includes(k)) : false;
 }
 
-function hasTechnicianHint(typeRaw: unknown): boolean {
-  const type = normalize(String(typeRaw || ''));
-  if (!type) return false;
-  return TECHNICIAN_HINT_KEYWORDS.some((k) => type.includes(k));
+async function fetchApogee(slug: string, endpoint: string, key: string): Promise<any[]> {
+  try {
+    const res = await fetch(`https://${slug}.hc-apogee.fr/api/${endpoint}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ API_KEY: key }),
+    });
+    if (!res.ok) return [];
+    const d = await res.json();
+    return Array.isArray(d) ? d : [];
+  } catch { return []; }
 }
 
-function discoverTechnicians(users: any[], interventions: any[], rhCollaborators: any[]): any[] {
-  // 1. Users with tech hint or non-excluded type with interventions
-  const userIdsWithInterventions = new Set<number>();
-  for (const interv of interventions) {
-    const uid = interv.userId || interv.user_id;
-    if (uid) userIdsWithInterventions.add(Number(uid));
-  }
-
-  const techMap = new Map<number, any>();
-  
-  for (const u of users) {
-    const uid = Number(u.id);
-    if (isExcludedOfficeType(u.type)) continue;
-    
-    if (hasTechnicianHint(u.type) || userIdsWithInterventions.has(uid)) {
-      techMap.set(uid, u);
-    }
-  }
-
-  // 2. Add RH collaborators with apogee_user_id that aren't already included
-  for (const collab of rhCollaborators) {
-    const apogeeId = collab.apogee_user_id;
-    if (!apogeeId || techMap.has(Number(apogeeId))) continue;
-    
-    const collabType = normalize(collab.type || collab.role || '');
-    if (collabType.includes('technic') || collabType.includes('ouvrier') || 
-        userIdsWithInterventions.has(Number(apogeeId))) {
-      // Create a synthetic user entry
-      techMap.set(Number(apogeeId), {
-        id: Number(apogeeId),
-        firstname: collab.first_name || '',
-        lastname: collab.last_name || '',
-        prenom: collab.first_name || '',
-        nom: collab.last_name || '',
-        type: collab.type || 'technicien',
-      });
-    }
-  }
-
-  return Array.from(techMap.values());
+function parseDT(v: unknown): { date: string; min: number } | null {
+  if (!v) return null;
+  const m = String(v).match(/(\d{4}-\d{2}-\d{2})[T\s](\d{2}):(\d{2})/);
+  return m ? { date: m[1], min: +m[2] * 60 + +m[3] } : null;
 }
 
-// =============================================================================
-// OPTIMIZATION LOGIC
-// =============================================================================
-
-interface TechDayLoad {
+interface TechDay {
   techId: number;
-  techName: string;
+  name: string;
   date: string;
-  interventions: any[];
-  totalMinutes: number;
+  load: number;
+  events: { start: number; dur: number; ref?: string }[];
 }
-
-function detectSwapOpportunities(techLoads: TechDayLoad[]): Move[] {
-  const moves: Move[] = [];
-
-  const byDate = new Map<string, TechDayLoad[]>();
-  for (const tl of techLoads) {
-    if (!byDate.has(tl.date)) byDate.set(tl.date, []);
-    byDate.get(tl.date)!.push(tl);
-  }
-
-  for (const [date, dayLoads] of byDate) {
-    const avgLoad = dayLoads.reduce((s, t) => s + t.totalMinutes, 0) / Math.max(dayLoads.length, 1);
-    const overloaded = dayLoads.filter(t => t.totalMinutes > avgLoad + 60);
-    const underloaded = dayLoads.filter(t => t.totalMinutes < avgLoad - 60);
-
-    for (const over of overloaded) {
-      for (const under of underloaded) {
-        if (over.interventions.length > 0 && moves.length < 8) {
-          const gainMin = Math.round((over.totalMinutes - under.totalMinutes) / 2);
-          moves.push({
-            type: 'reassign',
-            description: `Réassigner intervention de ${over.techName} → ${under.techName} le ${date}`,
-            from: `${over.techName} (${over.totalMinutes}min chargé)`,
-            to: `${under.techName} (${under.totalMinutes}min chargé)`,
-            gain_minutes: gainMin,
-            gain_ca: 0,
-            risk: gainMin > 90 ? 'medium' : 'low',
-            explanation: `${over.techName} est surchargé (${over.totalMinutes}min) vs ${under.techName} (${under.totalMinutes}min). Rééquilibrage de ~${gainMin}min.`,
-          });
-        }
-      }
-    }
-  }
-
-  return moves;
-}
-
-function detectGapOptimizations(techLoads: TechDayLoad[]): Move[] {
-  const moves: Move[] = [];
-
-  const byTech = new Map<number, TechDayLoad[]>();
-  for (const tl of techLoads) {
-    if (!byTech.has(tl.techId)) byTech.set(tl.techId, []);
-    byTech.get(tl.techId)!.push(tl);
-  }
-
-  for (const [_techId, days] of byTech) {
-    days.sort((a, b) => a.date.localeCompare(b.date));
-    for (let i = 0; i < days.length - 1; i++) {
-      const today = days[i];
-      const tomorrow = days[i + 1];
-      if (today.totalMinutes > 420 && tomorrow.totalMinutes < 180 && today.interventions.length > 1) {
-        moves.push({
-          type: 'move',
-          description: `Déplacer dernière intervention de ${today.techName} du ${today.date} → ${tomorrow.date}`,
-          from: `${today.date} — ${today.techName} (${today.totalMinutes}min)`,
-          to: `${tomorrow.date} — ${today.techName} (${tomorrow.totalMinutes}min)`,
-          gain_minutes: 0,
-          gain_ca: 0,
-          risk: 'low',
-          explanation: `Lissage charge : ${today.date} surchargé (${today.totalMinutes}min) vs ${tomorrow.date} sous-chargé (${tomorrow.totalMinutes}min)`,
-        });
-        if (moves.length >= 5) break;
-      }
-    }
-  }
-
-  return moves;
-}
-
-// =============================================================================
-// MAIN HANDLER
-// =============================================================================
 
 Deno.serve(async (req: Request) => {
-  const corsResponse = handleCorsPreflightOrReject(req);
-  if (corsResponse) return corsResponse;
+  const cors = handleCorsPreflightOrReject(req);
+  if (cors) return cors;
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const apiKey = Deno.env.get('APOGEE_API_KEY');
-    const authHeader = req.headers.get('Authorization');
+    const auth = req.headers.get('Authorization');
 
-    const supabaseAuth = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
-      global: { headers: { Authorization: authHeader ?? '' } },
+    const sAuth = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
+      global: { headers: { Authorization: auth ?? '' } },
     });
-    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
-    if (authError || !user) {
-      return withCors(req, new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }));
-    }
+    const { data: { user }, error } = await sAuth.auth.getUser();
+    if (error || !user) return withCors(req, new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }));
 
     const { agency_id, week_start } = await req.json();
-    if (!agency_id || !week_start) {
-      return withCors(req, new Response(JSON.stringify({ error: 'agency_id and week_start required' }), { status: 400 }));
-    }
+    if (!agency_id || !week_start) return withCors(req, new Response(JSON.stringify({ error: 'Missing params' }), { status: 400 }));
 
-    const supabase = createClient(supabaseUrl, serviceKey);
+    const sb = createClient(supabaseUrl, serviceKey);
+    const { data: agency } = await sb.from('apogee_agencies').select('slug').eq('id', agency_id).single();
+    if (!agency?.slug || !apiKey) return withCors(req, new Response(JSON.stringify({ error: 'No agency/key' }), { status: 400 }));
 
-    // Get agency slug
-    const { data: agency } = await supabase
-      .from('apogee_agencies')
-      .select('slug')
-      .eq('id', agency_id)
-      .single();
+    console.log(`[OPTIMIZE] agency=${agency.slug} week=${week_start}`);
 
-    if (!agency?.slug || !apiKey) {
-      return withCors(req, new Response(JSON.stringify({ error: 'Agency not found or API key missing' }), { status: 400 }));
-    }
-
-    // Load weights + RH collaborators in parallel
-    const [configResult, collabResult] = await Promise.all([
-      supabase
-        .from('planning_optimizer_config')
-        .select('weights')
-        .eq('agency_id', agency_id)
-        .maybeSingle(),
-      supabase
-        .from('collaborators')
-        .select('id, first_name, last_name, type, role, apogee_user_id')
-        .eq('agency_id', agency_id)
-        .not('apogee_user_id', 'is', null),
-    ]);
-
-    const configRow = configResult.data;
-    const rhCollaborators = collabResult.data || [];
-
-    // Fetch real data from Apogée
-    console.log(`[OPTIMIZE-WEEK] Fetching data for agency ${agency.slug}, week ${week_start}`);
-    
-    const [users, creneaux, interventions] = await Promise.all([
+    // Parallel data fetch
+    const [users, creneaux, interventions, collabs, skillRows] = await Promise.all([
       fetchApogee(agency.slug, 'apiGetUsers', apiKey),
       fetchApogee(agency.slug, 'getInterventionsCreneaux', apiKey),
       fetchApogee(agency.slug, 'apiGetInterventions', apiKey),
+      sb.from('collaborators').select('id, apogee_user_id, first_name, last_name, type, role')
+        .eq('agency_id', agency_id).not('apogee_user_id', 'is', null).is('leaving_date', null)
+        .then(r => r.data || []),
+      sb.from('technician_skills').select('collaborator_id, univers_code, level')
+        .then(r => r.data || []),
     ]);
 
-    console.log(`[OPTIMIZE-WEEK] Loaded: ${users.length} users, ${creneaux.length} créneaux, ${interventions.length} interventions`);
-
-    // Discover technicians using robust logic
-    const technicians = discoverTechnicians(users, [...creneaux, ...interventions], rhCollaborators);
-    console.log(`[OPTIMIZE-WEEK] Discovered ${technicians.length} technicians`);
-
-    // Build 2-week range (14 days)
-    const weekStartDate = new Date(week_start);
-    const rangeEndDate = new Date(weekStartDate);
-    rangeEndDate.setDate(rangeEndDate.getDate() + 13); // 2 weeks = 14 days
-    const rangeStartStr = weekStartDate.toISOString().split('T')[0];
-    const rangeEndStr = rangeEndDate.toISOString().split('T')[0];
-
-    // Merge créneaux + interventions for comprehensive occupancy
-    const allSlots = [...creneaux, ...interventions];
-    
-    // Filter for 2-week range
-    const rangeSlots = allSlots.filter((interv: any) => {
-      const dateStr = (interv.date || interv.dateDebut || '').split('T')[0];
-      return dateStr >= rangeStartStr && dateStr <= rangeEndStr;
-    });
-
-    console.log(`[OPTIMIZE-WEEK] ${rangeSlots.length} slots in 2-week range ${rangeStartStr} → ${rangeEndStr}`);
-
-    // Build tech-day loads
-    const techMap = new Map<number, any>();
-    for (const tech of technicians) techMap.set(Number(tech.id), tech);
-
-    const loadMap = new Map<string, TechDayLoad>();
-    for (const interv of rangeSlots) {
-      const techId = Number(interv.userId || interv.user_id);
-      const dateStr = (interv.date || interv.dateDebut || '').split('T')[0];
-      if (!techId || !dateStr) continue;
-      if (!techMap.has(techId)) continue; // Only count discovered technicians
-
-      const key = `${techId}-${dateStr}`;
-      if (!loadMap.has(key)) {
-        const tech = techMap.get(techId);
-        loadMap.set(key, {
-          techId,
-          techName: tech ? `${tech.prenom || tech.firstname || ''} ${tech.nom || tech.lastname || ''}`.trim() : `Tech #${techId}`,
-          date: dateStr,
-          interventions: [],
-          totalMinutes: 0,
-        });
-      }
-      const load = loadMap.get(key)!;
-      load.interventions.push(interv);
-      
-      // Compute duration from créneaux (30min slots) or explicit duration
-      const duration = interv.duration || 30;
-      load.totalMinutes += duration;
+    // Build tech roster
+    const techMap = new Map<number, { name: string; skills: string[] }>();
+    const skillByCollab = new Map<string, string[]>();
+    for (const s of (skillRows as any[])) {
+      if (!skillByCollab.has(s.collaborator_id)) skillByCollab.set(s.collaborator_id, []);
+      skillByCollab.get(s.collaborator_id)!.push(s.univers_code);
     }
 
-    const allTechLoads = Array.from(loadMap.values());
+    for (const c of (collabs as any[])) {
+      const uid = Number(c.apogee_user_id);
+      if (!Number.isFinite(uid) || isExcluded(c.type) || isExcluded(c.role)) continue;
+      const apUser = users.find((u: any) => Number(u.id) === uid);
+      if (apUser && (apUser.is_on === false)) continue;
+      const name = `${c.first_name || ''} ${c.last_name || ''}`.trim() || `Tech #${uid}`;
+      techMap.set(uid, { name, skills: skillByCollab.get(c.id) || [] });
+    }
 
-    // Detect optimization opportunities
-    const swapMoves = detectSwapOpportunities(allTechLoads);
-    const gapMoves = detectGapOptimizations(allTechLoads);
-    const moves = [...swapMoves, ...gapMoves].slice(0, 8);
+    console.log(`[OPTIMIZE] ${techMap.size} technicians`);
 
-    const summaryGains = {
-      total_gain_minutes: moves.reduce((s, m) => s + m.gain_minutes, 0),
-      total_gain_ca: moves.reduce((s, m) => s + m.gain_ca, 0),
-      moves_count: moves.length,
-      low_risk_count: moves.filter(m => m.risk === 'low').length,
+    // 2-week range (14 days, Mon-Fri only)
+    const start = new Date(week_start);
+    const rangeDays: string[] = [];
+    const d = new Date(start);
+    for (let i = 0; i < 14; i++) {
+      const dow = d.getDay();
+      if (dow >= 1 && dow <= 5) rangeDays.push(d.toISOString().split('T')[0]);
+      d.setDate(d.getDate() + 1);
+    }
+
+    // Build occupancy
+    const techDays = new Map<string, TechDay>();
+    const seen = new Set<string>();
+
+    const addSlot = (techId: number, dateStr: string, startMin: number, dur: number, ref?: string) => {
+      if (!techMap.has(techId) || !rangeDays.includes(dateStr)) return;
+      dur = Math.max(30, dur || 120);
+      const dd = `${techId}-${dateStr}-${startMin}-${dur}`;
+      if (seen.has(dd)) return;
+      seen.add(dd);
+
+      const key = `${techId}-${dateStr}`;
+      if (!techDays.has(key)) techDays.set(key, { techId, name: techMap.get(techId)!.name, date: dateStr, load: 0, events: [] });
+      const td = techDays.get(key)!;
+      td.events.push({ start: startMin, dur, ref });
+      td.load += dur;
     };
 
-    // Audit trail (non-blocking)
-    supabase.from('planning_moves').insert({
+    for (const c of creneaux) {
+      const p = parseDT((c as any)?.date);
+      if (!p) continue;
+      const dur = (c as any)?.duree || 120;
+      const ids = Array.isArray((c as any)?.usersIds) ? (c as any).usersIds : [(c as any)?.userId].filter(Boolean);
+      for (const id of ids) addSlot(Number(id), p.date, p.min, dur, (c as any)?.projectRef);
+    }
+
+    for (const interv of interventions) {
+      const visites = Array.isArray((interv as any)?.data?.visites) ? (interv as any).data.visites : [];
+      for (const v of visites) {
+        const p = parseDT((v as any)?.date || (interv as any)?.date);
+        if (!p) continue;
+        const dur = (v as any)?.duree || 120;
+        const ids = Array.isArray((v as any)?.usersIds) ? (v as any).usersIds : [(interv as any)?.userId].filter(Boolean);
+        for (const id of ids) addSlot(Number(id), p.date, p.min, dur);
+      }
+    }
+
+    const allTDs = Array.from(techDays.values());
+    console.log(`[OPTIMIZE] ${allTDs.length} tech-days in range`);
+
+    // =========================================================================
+    // MOVE DETECTION
+    // =========================================================================
+    const moves: Move[] = [];
+
+    // Type A: Move within same tech (lissage charge)
+    const byTech = new Map<number, TechDay[]>();
+    for (const td of allTDs) {
+      if (!byTech.has(td.techId)) byTech.set(td.techId, []);
+      byTech.get(td.techId)!.push(td);
+    }
+    for (const [_, days] of byTech) {
+      days.sort((a, b) => a.date.localeCompare(b.date));
+      for (let i = 0; i < days.length - 1; i++) {
+        const t = days[i], n = days[i + 1];
+        if (t.load > MAX_DAY_LOAD && n.load < 180 && t.events.length > 1) {
+          moves.push({
+            type: 'move',
+            description: `Déplacer 1 intervention de ${t.name} du ${t.date} → ${n.date}`,
+            from: `${t.date} (${t.load}min)`,
+            to: `${n.date} (${n.load}min)`,
+            gain_minutes: Math.round((t.load - n.load) / 3),
+            gain_ca: 0,
+            risk: 'low',
+            explanation: `Lissage: ${t.date} surchargé (${t.load}min) vs ${n.date} sous-chargé (${n.load}min)`,
+            why: ['Rééquilibrage journalier', 'Même technicien'],
+          });
+        }
+      }
+    }
+
+    // Type C: Reassign between techs on same day
+    const byDate = new Map<string, TechDay[]>();
+    for (const td of allTDs) {
+      if (!byDate.has(td.date)) byDate.set(td.date, []);
+      byDate.get(td.date)!.push(td);
+    }
+    for (const [date, dayTDs] of byDate) {
+      const avgDay = dayTDs.reduce((s, t) => s + t.load, 0) / Math.max(dayTDs.length, 1);
+      const over = dayTDs.filter(t => t.load > avgDay + 60);
+      const under = dayTDs.filter(t => t.load < avgDay - 60);
+      for (const o of over) {
+        for (const u of under) {
+          if (moves.length >= 10) break;
+          const gain = Math.round((o.load - u.load) / 2);
+          moves.push({
+            type: 'reassign',
+            description: `Réassigner de ${o.name} → ${u.name} le ${date}`,
+            from: `${o.name} (${o.load}min)`,
+            to: `${u.name} (${u.load}min)`,
+            gain_minutes: gain,
+            gain_ca: 0,
+            risk: gain > 90 ? 'medium' : 'low',
+            explanation: `${o.name} surchargé vs ${u.name} disponible`,
+            why: ['Rééquilibrage inter-techniciens'],
+          });
+        }
+      }
+    }
+
+    // Sort by gain desc, limit to 8
+    moves.sort((a, b) => b.gain_minutes - a.gain_minutes);
+    const topMoves = moves.slice(0, 8);
+
+    const summary = {
+      total_gain_minutes: topMoves.reduce((s, m) => s + m.gain_minutes, 0),
+      total_gain_ca: 0,
+      moves_count: topMoves.length,
+      low_risk_count: topMoves.filter(m => m.risk === 'low').length,
+    };
+
+    // Audit (non-blocking)
+    sb.from('planning_moves').insert({
       agency_id,
       week_start,
       requested_by: user.id,
-      input_json: { agency_id, week_start, techs: technicians.length, slots_in_range: rangeSlots.length },
-      moves_json: moves,
-      summary_gains_json: summaryGains,
-    }).then(() => {}).catch(e => console.warn('[OPTIMIZE-WEEK] Audit insert failed:', e));
+      input_json: { agency_id, week_start, techs: techMap.size, days: rangeDays.length },
+      moves_json: topMoves,
+      summary_gains_json: summary,
+    }).then(() => {}).catch(e => console.warn('[OPTIMIZE] Audit error:', e));
 
     return withCors(req, new Response(JSON.stringify({
       success: true,
-      moves,
-      summary: summaryGains,
+      moves: topMoves,
+      summary,
       meta: {
-        engine_version: 'v1-heuristic-2weeks',
-        weights: configRow?.weights ?? null,
-        technicians_count: technicians.length,
-        range_slots: rangeSlots.length,
-        range: `${rangeStartStr} → ${rangeEndStr}`,
+        engine_version: ENGINE_VERSION,
+        technicians_count: techMap.size,
+        range: `${rangeDays[0]} → ${rangeDays[rangeDays.length - 1]}`,
+        working_days: rangeDays.length,
+        tech_days_analyzed: allTDs.length,
       },
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    }));
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
   } catch (err) {
-    console.error('[OPTIMIZE-WEEK] error:', err);
-    return withCors(req, new Response(JSON.stringify({ 
-      success: false, 
-      error: 'Internal error', 
-      details: String(err) 
-    }), { 
-      status: 200, // Return 200 to avoid FunctionsHttpError
-      headers: { 'Content-Type': 'application/json' },
-    }));
+    console.error('[OPTIMIZE] error:', err);
+    return withCors(req, new Response(JSON.stringify({
+      success: false, error: 'Internal error', details: String(err),
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
   }
 });

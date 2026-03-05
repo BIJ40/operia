@@ -7819,6 +7819,107 @@ export type Database = {
           },
         ]
       }
+      technician_profile: {
+        Row: {
+          collaborator_id: string
+          created_at: string
+          day_end: string
+          day_start: string
+          home_base_label: string | null
+          home_lat: number | null
+          home_lng: number | null
+          lunch_end: string
+          lunch_start: string
+          max_drive_minutes_per_day: number
+          updated_at: string
+          work_days: Json
+        }
+        Insert: {
+          collaborator_id: string
+          created_at?: string
+          day_end?: string
+          day_start?: string
+          home_base_label?: string | null
+          home_lat?: number | null
+          home_lng?: number | null
+          lunch_end?: string
+          lunch_start?: string
+          max_drive_minutes_per_day?: number
+          updated_at?: string
+          work_days?: Json
+        }
+        Update: {
+          collaborator_id?: string
+          created_at?: string
+          day_end?: string
+          day_start?: string
+          home_base_label?: string | null
+          home_lat?: number | null
+          home_lng?: number | null
+          lunch_end?: string
+          lunch_start?: string
+          max_drive_minutes_per_day?: number
+          updated_at?: string
+          work_days?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technician_profile_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: true
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      technician_skills: {
+        Row: {
+          collaborator_id: string
+          created_at: string
+          id: string
+          is_primary: boolean
+          level: number
+          notes: string | null
+          univers_code: string
+          updated_at: string
+        }
+        Insert: {
+          collaborator_id: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          level?: number
+          notes?: string | null
+          univers_code: string
+          updated_at?: string
+        }
+        Update: {
+          collaborator_id?: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          level?: number
+          notes?: string | null
+          univers_code?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technician_skills_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "technician_skills_univers_code_fkey"
+            columns: ["univers_code"]
+            isOneToOne: false
+            referencedRelation: "univers_catalog"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       ticket_duplicate_suggestions: {
         Row: {
           created_at: string
@@ -8135,6 +8236,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      univers_catalog: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       user_actions_config: {
         Row: {
