@@ -185,7 +185,7 @@ export function TicketTableRow({
 
       {/* Statut - Index 5 */}
       {isVisible(5) && (
-        <TableCell className={cn("overflow-hidden py-3", !canEditStatus && disabledCellClass)} style={cellStyle(5)}>
+        <TableCell className={cn("overflow-hidden py-3", !canEditStatus && disabledCellClass)} style={cellStyle(5)} onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
           {canEditStatus ? (
             <Select
               value={ticket.kanban_status}
@@ -224,7 +224,7 @@ export function TicketTableRow({
 
       {/* PEC - Index 6 */}
       {isVisible(6) && (
-        <TableCell className={cn("overflow-hidden py-3", !canEditOwnerSide && disabledCellClass)} style={cellStyle(6)}>
+        <TableCell className={cn("overflow-hidden py-3", !canEditOwnerSide && disabledCellClass)} style={cellStyle(6)} onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
           {canEditOwnerSide ? (
             <Select
               value={ticket.owner_side || 'none'}

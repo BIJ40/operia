@@ -67,13 +67,13 @@ export function TagSelector({ selectedTags, onTagsChange, disabled, compact = fa
           <span className="text-xs text-muted-foreground">+{selectedTags.length - 2}</span>
         )}
         {!disabled && (
-          <Popover open={isOpen} onOpenChange={setIsOpen} modal={false}>
+          <Popover open={isOpen} onOpenChange={setIsOpen} modal={true}>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
                 <Plus className="h-3.5 w-3.5" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-64 bg-background z-50" align="start">
+            <PopoverContent className="w-64 bg-background z-50" align="start" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
               <div className="space-y-3">
                 <div className="text-sm font-medium">Tags disponibles</div>
                 <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
@@ -83,6 +83,7 @@ export function TagSelector({ selectedTags, onTagsChange, disabled, compact = fa
                       variant={selectedTags.includes(tag.id) ? "default" : "outline"}
                       className={`cursor-pointer ${selectedTags.includes(tag.id) ? getTagColor(tag.id) : ''}`}
                       onClick={() => handleToggleTag(tag.id)}
+                      onPointerDown={(e) => e.stopPropagation()}
                     >
                       {tag.label}
                     </Badge>
@@ -137,14 +138,14 @@ export function TagSelector({ selectedTags, onTagsChange, disabled, compact = fa
           </Badge>
         ))}
         {!disabled && (
-          <Popover open={isOpen} onOpenChange={setIsOpen} modal={false}>
+          <Popover open={isOpen} onOpenChange={setIsOpen} modal={true}>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="h-6">
                 <Plus className="h-3 w-3 mr-1" />
                 Ajouter tag
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-64 bg-background z-50" align="start">
+            <PopoverContent className="w-64 bg-background z-50" align="start" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
               <div className="space-y-3">
                 <div className="text-sm font-medium">Tags disponibles</div>
                 <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
@@ -154,6 +155,7 @@ export function TagSelector({ selectedTags, onTagsChange, disabled, compact = fa
                       variant={selectedTags.includes(tag.id) ? "default" : "outline"}
                       className={`cursor-pointer ${selectedTags.includes(tag.id) ? getTagColor(tag.id) : ''}`}
                       onClick={() => handleToggleTag(tag.id)}
+                      onPointerDown={(e) => e.stopPropagation()}
                     >
                       {tag.label}
                     </Badge>
