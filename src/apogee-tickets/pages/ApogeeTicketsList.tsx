@@ -157,7 +157,7 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
   const { data: myViews = [] } = useMyTicketViews();
 
   // Récupérer les tickets avec nouvelles réponses
-  const { data: repliesData = [] } = useTicketsWithNewReplies();
+  const { data: repliesData = [], markAsRead } = useTicketsWithNewReplies();
   const repliesCount = repliesData.length;
 
   // Compter les tickets en retard (BUG > 48h)
@@ -230,6 +230,8 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
     setIsNewTabActive(false);
     setIsRepliesTabActive(false);
     openTicketTab(ticket);
+    // Mark replies as read for this ticket
+    markAsRead(ticket.id);
   };
 
   const handleTicketDelete = (id: string) => {
