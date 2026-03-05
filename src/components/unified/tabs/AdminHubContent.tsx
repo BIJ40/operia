@@ -21,9 +21,10 @@ import {
   PlateformeView,
   PlansManagerView,
 } from '@/components/admin/views';
-import { lazy, Suspense, useCallback } from 'react';
+import { lazy, Suspense, useCallback, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useSessionState } from '@/hooks/useSessionState';
+import { usePersistedTab } from '@/hooks/usePersistedState';
 
 // Lazy load des composants directs
 const TDRUsersPage = lazy(() => import('@/pages/TDRUsersPage'));
@@ -58,26 +59,44 @@ const GESTION_SUB_TABS: FolderTabConfig[] = [
   { id: 'activity', label: 'Activité', icon: Activity, accent: 'green' },
 ];
 
+const ADMIN_MAIN_TAB_IDS = ADMIN_MAIN_TABS.map(tab => tab.id);
 const DEFAULT_GESTION_ORDER = ['users', 'apporteurs', 'agences', 'plans', 'activity'];
 
 export default function AdminHubContent() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('adminTab') || 'gestion';
+  const [persistedMainTab, setPersistedMainTab] = usePersistedTab('admin_main_tab', 'gestion', ADMIN_MAIN_TAB_IDS);
+  const activeTabParam = searchParams.get('adminTab');
+  const activeTab = activeTabParam && ADMIN_MAIN_TAB_IDS.includes(activeTabParam) ? activeTabParam : persistedMainTab;
   const activeSubTab = searchParams.get('adminView') || 'users';
   const [gestionTabOrder, setGestionTabOrder] = useSessionState<string[]>('admin_gestion_tab_order', DEFAULT_GESTION_ORDER);
 
+  useEffect(() => {
+    if (activeTabParam && ADMIN_MAIN_TAB_IDS.includes(activeTabParam)) {
+      if (activeTabParam !== persistedMainTab) {
+        setPersistedMainTab(activeTabParam);
+      }
+      return;
+    }
+
+    const next = new URLSearchParams(searchParams);
+    next.set('tab', 'admin');
+    next.set('adminTab', persistedMainTab);
+    setSearchParams(next, { replace: true });
+  }, [activeTabParam, persistedMainTab, searchParams, setSearchParams, setPersistedMainTab]);
+
   const handleTabChange = (value: string) => {
+    setPersistedMainTab(value);
     const next = new URLSearchParams(searchParams);
     next.set('tab', 'admin');
     next.set('adminTab', value);
     next.delete('adminView');
-    setSearchParams(next);
+    setSearchParams(next, { replace: true });
   };
 
   const handleSubTabChange = (value: string) => {
     const next = new URLSearchParams(searchParams);
     next.set('adminView', value);
-    setSearchParams(next);
+    setSearchParams(next, { replace: true });
   };
 
   const handleGestionReorder = useCallback((newOrder: string[]) => {
