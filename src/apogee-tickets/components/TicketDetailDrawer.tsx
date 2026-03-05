@@ -67,6 +67,7 @@ import { errorToast, successToast } from '@/lib/toastHelpers';
 import { TagSelector } from './TagSelector';
 import { RoadmapEditor } from './RoadmapEditor';
 import { TicketSupportExchanges } from './TicketSupportExchanges';
+import { QuickReplyMenu } from './QuickReplyMenu';
 import type { ApogeeTicket, ApogeeModule, ApogeePriority, ApogeeTicketStatus, AuthorType, ReportedBy } from '../types';
 
 interface TicketDetailDrawerProps {
@@ -875,31 +876,41 @@ export function TicketDetailDrawer({
                         className="flex-1 resize-none"
                       />
                     </div>
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        onClick={handleAddComment}
-                        disabled={!newComment.trim() || addComment.isPending || isSendingCommentEmail}
-                        size="sm"
-                        variant={showCommentMailButton ? "outline" : "default"}
-                      >
-                        <Send className="h-4 w-4 mr-1" />
-                        Répondre
-                      </Button>
-                      {showCommentMailButton && (
+                    <div className="flex items-center justify-between">
+                      <QuickReplyMenu
+                        context={{
+                          requesterName: (ticket.initiator_profile as any)?.first_name || (ticket.reported_by as string) || undefined,
+                          ticketRef: ticketRef,
+                          subject: ticket.element_concerne,
+                        }}
+                        onSelect={(msg) => setNewComment(msg)}
+                      />
+                      <div className="flex gap-2">
                         <Button
-                          onClick={handleAddCommentWithEmail}
+                          onClick={handleAddComment}
                           disabled={!newComment.trim() || addComment.isPending || isSendingCommentEmail}
                           size="sm"
-                          className="gap-1"
+                          variant={showCommentMailButton ? "outline" : "default"}
                         >
-                          {isSendingCommentEmail ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Mail className="h-4 w-4" />
-                          )}
-                          Répondre + Mail
+                          <Send className="h-4 w-4 mr-1" />
+                          Répondre
                         </Button>
-                      )}
+                        {showCommentMailButton && (
+                          <Button
+                            onClick={handleAddCommentWithEmail}
+                            disabled={!newComment.trim() || addComment.isPending || isSendingCommentEmail}
+                            size="sm"
+                            className="gap-1"
+                          >
+                            {isSendingCommentEmail ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Mail className="h-4 w-4" />
+                            )}
+                            Répondre + Mail
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
 

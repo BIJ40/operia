@@ -57,6 +57,7 @@ import { errorToast, successToast } from '@/lib/toastHelpers';
 import { TagSelector } from './TagSelector';
 import { RoadmapEditor } from './RoadmapEditor';
 import { TicketSupportExchanges } from './TicketSupportExchanges';
+import { QuickReplyMenu } from './QuickReplyMenu';
 import { StatusSelector } from './StatusSelector';
 import type { ApogeeTicket, ApogeeModule, ApogeePriority, ApogeeTicketStatus, AuthorType } from '../types';
 
@@ -611,21 +612,31 @@ export function TicketInlinePanel({
                       className="flex-1 resize-none text-sm"
                     />
                   </div>
-                  <div className="flex justify-end gap-2">
-                    <Button onClick={handleAddComment} disabled={!newComment.trim() || addComment.isPending || isSendingCommentEmail} size="sm" variant={showCommentMailButton ? "outline" : "default"}>
-                      <Send className="h-3.5 w-3.5 mr-1" />
-                      Répondre
-                    </Button>
-                    {showCommentMailButton && (
-                      <Button onClick={handleAddCommentWithEmail} disabled={!newComment.trim() || addComment.isPending || isSendingCommentEmail} size="sm" className="gap-1">
-                        {isSendingCommentEmail ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <Mail className="h-3.5 w-3.5" />
-                        )}
-                        Répondre + Mail
+                  <div className="flex items-center justify-between">
+                    <QuickReplyMenu
+                      context={{
+                        requesterName: (ticket.initiator_profile as any)?.first_name || (ticket.reported_by as string) || undefined,
+                        ticketRef: ticketRef,
+                        subject: ticket.element_concerne,
+                      }}
+                      onSelect={(msg) => setNewComment(msg)}
+                    />
+                    <div className="flex gap-2">
+                      <Button onClick={handleAddComment} disabled={!newComment.trim() || addComment.isPending || isSendingCommentEmail} size="sm" variant={showCommentMailButton ? "outline" : "default"}>
+                        <Send className="h-3.5 w-3.5 mr-1" />
+                        Répondre
                       </Button>
-                    )}
+                      {showCommentMailButton && (
+                        <Button onClick={handleAddCommentWithEmail} disabled={!newComment.trim() || addComment.isPending || isSendingCommentEmail} size="sm" className="gap-1">
+                          {isSendingCommentEmail ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Mail className="h-3.5 w-3.5" />
+                          )}
+                          Répondre + Mail
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
 
