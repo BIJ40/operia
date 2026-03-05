@@ -138,74 +138,76 @@ export function TagSelector({ selectedTags, onTagsChange, disabled, compact = fa
 
   if (compact) {
     return (
-      <div className="flex items-center gap-1 flex-wrap">
-        {selectedTags.map(tag => (
-          <Badge
-            key={tag}
-            variant="secondary"
-            className={cn("text-[10px] py-0 px-1.5 gap-0.5 leading-tight", getTagColor(tag))}
-          >
-            {tag}
-            {!disabled && (
-              <button
-                onClick={(e) => { e.stopPropagation(); handleRemoveTag(tag); }}
-                className="hover:text-destructive"
+      <Popover open={isOpen} onOpenChange={setIsOpen} modal={true}>
+        <PopoverTrigger asChild>
+          <div className="flex items-center gap-1 flex-wrap cursor-pointer group">
+            {selectedTags.map(tag => (
+              <Badge
+                key={tag}
+                variant="secondary"
+                className={cn("text-[10px] py-0 px-1.5 gap-0.5 leading-tight", getTagColor(tag))}
               >
-                <X className="h-2.5 w-2.5" />
-              </button>
-            )}
-          </Badge>
-        ))}
-        {!disabled && (
-          <Popover open={isOpen} onOpenChange={setIsOpen} modal={true}>
-            <PopoverTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-5 w-5 p-0 rounded">
+                {tag}
+                {!disabled && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleRemoveTag(tag); }}
+                    className="hover:text-destructive"
+                  >
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                )}
+              </Badge>
+            ))}
+            {!disabled && (
+              <span className="inline-flex items-center justify-center h-5 w-5 rounded text-muted-foreground group-hover:text-foreground transition-colors">
                 <Plus className="h-3 w-3" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-56 p-2 bg-popover z-50" align="start" sideOffset={4}>
-              {popoverContent}
-            </PopoverContent>
-          </Popover>
-        )}
-      </div>
+              </span>
+            )}
+          </div>
+        </PopoverTrigger>
+        <PopoverContent className="w-56 p-2 bg-popover z-50" side="top" align="start" sideOffset={4}>
+          {popoverContent}
+        </PopoverContent>
+      </Popover>
     );
   }
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap gap-1.5 items-center">
-        {selectedTags.map(tag => (
-          <Badge
-            key={tag}
-            variant="secondary"
-            className={cn("gap-1", getTagColor(tag))}
-          >
-            {tag}
-            {!disabled && (
-              <button
-                onClick={() => handleRemoveTag(tag)}
-                className="hover:text-destructive"
+    <Popover open={isOpen} onOpenChange={setIsOpen} modal={true}>
+      <PopoverTrigger asChild>
+        <div className="space-y-2 cursor-pointer group">
+          <div className="flex flex-wrap gap-1.5 items-center">
+            {selectedTags.map(tag => (
+              <Badge
+                key={tag}
+                variant="secondary"
+                className={cn("gap-1", getTagColor(tag))}
               >
-                <X className="h-3 w-3" />
-              </button>
-            )}
-          </Badge>
-        ))}
-        {!disabled && (
-          <Popover open={isOpen} onOpenChange={setIsOpen} modal={true}>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="h-6 gap-1 text-xs">
-                <Tag className="h-3 w-3" />
-                Ajouter
+                {tag}
+                {!disabled && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleRemoveTag(tag); }}
+                    className="hover:text-destructive"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </Badge>
+            ))}
+            {!disabled && (
+              <Button variant="outline" size="sm" className="h-6 gap-1 text-xs" asChild>
+                <span>
+                  <Tag className="h-3 w-3" />
+                  Ajouter
+                </span>
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-56 p-2 bg-popover z-50" align="start" sideOffset={4}>
-              {popoverContent}
-            </PopoverContent>
-          </Popover>
-        )}
-      </div>
-    </div>
+            )}
+          </div>
+        </div>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-2 bg-popover z-50" side="top" align="start" sideOffset={4}>
+        {popoverContent}
+      </PopoverContent>
+    </Popover>
   );
 }
