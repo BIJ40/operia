@@ -634,14 +634,16 @@ export function TicketInlinePanel({
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1">
-                      <QuickReplyMenu
-                        context={{
-                          requesterName: (ticket.initiator_profile as any)?.first_name || (ticket.reported_by as string) || undefined,
-                          ticketRef: ticketRef,
-                          subject: ticket.element_concerne,
-                        }}
-                        onSelect={(msg) => setNewComment(msg)}
-                      />
+                      {ticket.created_from === 'email' && (
+                        <QuickReplyMenu
+                          context={{
+                            requesterName: (ticket.initiator_profile as any)?.first_name || (ticket.reported_by as string) || undefined,
+                            ticketRef: ticketRef,
+                            subject: ticket.element_concerne,
+                          }}
+                          onSelect={(msg) => setNewComment(msg)}
+                        />
+                      )}
                       <PecButton
                         ticketId={ticket.id}
                         ticketCreatedFrom={ticket.created_from}
