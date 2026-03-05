@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X, Plus } from "lucide-react";
+import { X, Plus, Check, Search, Tag } from "lucide-react";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useTicketTags } from "../hooks/useTicketTags";
+import { cn } from "@/lib/utils";
 
 interface TagSelectorProps {
   selectedTags: string[];
@@ -20,95 +21,150 @@ interface TagSelectorProps {
 export function TagSelector({ selectedTags, onTagsChange, disabled, compact = false }: TagSelectorProps) {
   const [newTag, setNewTag] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const { tags, ensureTagExists, getTagColor } = useTicketTags();
 
-  const handleAddTag = (tag: string) => {
+  const handleAddTag = useCallback((tag: string) => {
     const upperTag = tag.toUpperCase().trim();
     if (upperTag && !selectedTags.includes(upperTag)) {
       onTagsChange([...selectedTags, upperTag]);
-      ensureTagExists(upperTag); // fire-and-forget
+      ensureTagExists(upperTag);
     }
     setNewTag('');
-  };
+  }, [selectedTags, onTagsChange, ensureTagExists]);
 
-  const handleRemoveTag = (tag: string) => {
+  const handleRemoveTag = useCallback((tag: string) => {
     onTagsChange(selectedTags.filter(t => t !== tag));
-  };
+  }, [selectedTags, onTagsChange]);
 
-  const handleToggleTag = (tag: string) => {
+  const handleToggleTag = useCallback((tag: string) => {
     if (selectedTags.includes(tag)) {
       handleRemoveTag(tag);
     } else {
       handleAddTag(tag);
     }
-  };
+  }, [selectedTags, handleRemoveTag, handleAddTag]);
+
+  // Filter tags based on search input
+  const filteredTags = useMemo(() => {
+    const search = newTag.toUpperCase().trim();
+    if (!search) return tags;
+    return tags.filter(t => t.id.includes(search) || t.label.includes(search));
+  }, [tags, newTag]);
+
+  // Check if the typed text matches an existing tag exactly
+  const isNewTagUnique = useMemo(() => {
+    const search = newTag.toUpperCase().trim();
+    if (!search) return false;
+    return !tags.some(t => t.id === search);
+  }, [tags, newTag]);
+
+  const popoverContent = (
+    <div
+      className="space-y-2"
+      onClick={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+    >
+      {/* Search / create input */}
+      <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+        <Input
+          ref={inputRef}
+          placeholder="Rechercher ou créer…"
+          value={newTag}
+          onChange={(e) => setNewTag(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              if (newTag.trim()) handleAddTag(newTag);
+            }
+          }}
+          className="h-8 pl-8 text-sm"
+          autoFocus
+        />
+      </div>
+
+      {/* Tag list */}
+      <div className="flex flex-col gap-0.5 max-h-[200px] overflow-y-auto -mx-1 px-1">
+        {filteredTags.map(tag => {
+          const isSelected = selectedTags.includes(tag.id);
+          return (
+            <button
+              key={tag.id}
+              type="button"
+              className={cn(
+                "flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-left text-sm transition-colors",
+                isSelected
+                  ? "bg-accent font-medium"
+                  : "hover:bg-muted/80"
+              )}
+              onClick={() => handleToggleTag(tag.id)}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <div className={cn(
+                "flex items-center justify-center w-4 h-4 rounded border transition-colors",
+                isSelected
+                  ? "bg-primary border-primary text-primary-foreground"
+                  : "border-muted-foreground/30"
+              )}>
+                {isSelected && <Check className="h-3 w-3" />}
+              </div>
+              <Badge variant="secondary" className={cn("text-xs py-0 px-1.5 pointer-events-none", getTagColor(tag.id))}>
+                {tag.label}
+              </Badge>
+            </button>
+          );
+        })}
+
+        {/* Create new tag option */}
+        {isNewTagUnique && newTag.trim() && (
+          <button
+            type="button"
+            className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-left text-sm hover:bg-muted/80 text-primary font-medium"
+            onClick={() => handleAddTag(newTag)}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <Plus className="h-4 w-4" />
+            <span>Créer "{newTag.toUpperCase().trim()}"</span>
+          </button>
+        )}
+
+        {filteredTags.length === 0 && !isNewTagUnique && (
+          <p className="text-xs text-muted-foreground text-center py-3">Aucun tag trouvé</p>
+        )}
+      </div>
+    </div>
+  );
 
   if (compact) {
     return (
-      <div className="flex items-center gap-1.5 flex-wrap">
-        {selectedTags.length > 0 ? (
-          selectedTags.slice(0, 2).map(tag => (
-            <Badge
-              key={tag}
-              variant="secondary"
-              className={`${getTagColor(tag)} text-xs py-0 px-1.5`}
-            >
-              {tag}
-              {!disabled && (
-                <button onClick={() => handleRemoveTag(tag)} className="ml-1 hover:text-destructive">
-                  <X className="h-2.5 w-2.5" />
-                </button>
-              )}
-            </Badge>
-          ))
-        ) : null}
-        {selectedTags.length > 2 && (
-          <span className="text-xs text-muted-foreground">+{selectedTags.length - 2}</span>
-        )}
+      <div className="flex items-center gap-1 flex-wrap">
+        {selectedTags.map(tag => (
+          <Badge
+            key={tag}
+            variant="secondary"
+            className={cn("text-[10px] py-0 px-1.5 gap-0.5 leading-tight", getTagColor(tag))}
+          >
+            {tag}
+            {!disabled && (
+              <button
+                onClick={(e) => { e.stopPropagation(); handleRemoveTag(tag); }}
+                className="hover:text-destructive"
+              >
+                <X className="h-2.5 w-2.5" />
+              </button>
+            )}
+          </Badge>
+        ))}
         {!disabled && (
           <Popover open={isOpen} onOpenChange={setIsOpen} modal={true}>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                <Plus className="h-3.5 w-3.5" />
+              <Button variant="ghost" size="sm" className="h-5 w-5 p-0 rounded">
+                <Plus className="h-3 w-3" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-64 bg-background z-50" align="start" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
-              <div className="space-y-3">
-                <div className="text-sm font-medium">Tags disponibles</div>
-                <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-                  {tags.map(tag => (
-                    <Badge
-                      key={tag.id}
-                      variant={selectedTags.includes(tag.id) ? "default" : "outline"}
-                      className={`cursor-pointer ${selectedTags.includes(tag.id) ? getTagColor(tag.id) : ''}`}
-                      onClick={() => handleToggleTag(tag.id)}
-                      onPointerDown={(e) => e.stopPropagation()}
-                    >
-                      {tag.label}
-                    </Badge>
-                  ))}
-                </div>
-                <div className="border-t pt-3">
-                  <div className="text-sm font-medium mb-2">Créer un tag</div>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Nouveau tag..."
-                      value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddTag(newTag);
-                        }
-                      }}
-                      className="h-8"
-                    />
-                    <Button size="sm" onClick={() => handleAddTag(newTag)} disabled={!newTag.trim()}>
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
+            <PopoverContent className="w-56 p-2 bg-popover z-50" align="start" sideOffset={4}>
+              {popoverContent}
             </PopoverContent>
           </Popover>
         )}
@@ -118,18 +174,18 @@ export function TagSelector({ selectedTags, onTagsChange, disabled, compact = fa
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5 items-center">
         {selectedTags.map(tag => (
           <Badge
             key={tag}
             variant="secondary"
-            className={getTagColor(tag)}
+            className={cn("gap-1", getTagColor(tag))}
           >
             {tag}
             {!disabled && (
               <button
                 onClick={() => handleRemoveTag(tag)}
-                className="ml-1 hover:text-destructive"
+                className="hover:text-destructive"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -139,52 +195,13 @@ export function TagSelector({ selectedTags, onTagsChange, disabled, compact = fa
         {!disabled && (
           <Popover open={isOpen} onOpenChange={setIsOpen} modal={true}>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="h-6">
-                <Plus className="h-3 w-3 mr-1" />
-                Ajouter tag
+              <Button variant="outline" size="sm" className="h-6 gap-1 text-xs">
+                <Tag className="h-3 w-3" />
+                Ajouter
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-64 bg-background z-50" align="start" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
-              <div className="space-y-3">
-                <div className="text-sm font-medium">Tags disponibles</div>
-                <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-                  {tags.map(tag => (
-                    <Badge
-                      key={tag.id}
-                      variant={selectedTags.includes(tag.id) ? "default" : "outline"}
-                      className={`cursor-pointer ${selectedTags.includes(tag.id) ? getTagColor(tag.id) : ''}`}
-                      onClick={() => handleToggleTag(tag.id)}
-                      onPointerDown={(e) => e.stopPropagation()}
-                    >
-                      {tag.label}
-                    </Badge>
-                  ))}
-                </div>
-                <div className="border-t pt-3">
-                  <div className="text-sm font-medium mb-2">Créer un tag</div>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Nouveau tag..."
-                      value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddTag(newTag);
-                        }
-                      }}
-                      className="h-8"
-                    />
-                    <Button
-                      size="sm"
-                      onClick={() => handleAddTag(newTag)}
-                      disabled={!newTag.trim()}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
+            <PopoverContent className="w-56 p-2 bg-popover z-50" align="start" sideOffset={4}>
+              {popoverContent}
             </PopoverContent>
           </Popover>
         )}
