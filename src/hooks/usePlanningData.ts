@@ -119,11 +119,8 @@ export function usePlanningProjects(agencySlug: string | undefined) {
 
       const planifiable = enriched.filter(p => {
         const st = (p.state || '').toLowerCase();
-        // Matching large : "planif" dans le state = à planifier
-        return st.includes('planif') || st.includes('a planifier') || st.includes('à planifier')
-          || st.includes('a_planifier') || st.includes('devis_accept') || st.includes('devis_valid')
-          || st.includes('rt_fait') || st.includes('devis_a_faire')
-          || st.includes('stand_by') || st.includes('standby');
+        // States exacts "à planifier" identifiés via debug
+        return st === 'new' || st === 'to_planify_tvx';
       });
 
       console.log('[PlanningData] Projets à planifier trouvés:', planifiable.length, 'states:', uniqueStates.join(', '));
