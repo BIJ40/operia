@@ -48,7 +48,9 @@ import {
   X,
   Check,
   Maximize2,
-  Minimize2
+  Minimize2,
+  Mail,
+  Loader2,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -61,7 +63,7 @@ import { Slider } from '@/components/ui/slider';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMyTicketRole, useAllowedTransitions, useTicketHistory } from '../hooks/useTicketPermissions';
 import { TicketTimelineTab } from './TicketTimelineTab';
-import { errorToast } from '@/lib/toastHelpers';
+import { errorToast, successToast } from '@/lib/toastHelpers';
 import { TagSelector } from './TagSelector';
 import { RoadmapEditor } from './RoadmapEditor';
 import { TicketSupportExchanges } from './TicketSupportExchanges';
@@ -152,6 +154,7 @@ export function TicketDetailDrawer({
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentBody, setEditingCommentBody] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isSendingCommentEmail, setIsSendingCommentEmail] = useState(false);
 
   // Auto-déterminer le type d'auteur selon le rôle
   // Developer = APOGEE, Tester/Franchiseur = HC
@@ -283,12 +286,11 @@ export function TicketDetailDrawer({
   // Early return MUST be after all hooks
   if (!ticket) return null;
 
+  const showCommentMailButton = ticket.created_from === 'email';
+
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
-    
-    // Utilise l'email de l'utilisateur connecté comme nom
     const authorName = user?.email?.split('@')[0] || 'Utilisateur';
-    
     await addComment.mutateAsync({
       ticket_id: ticket.id,
       author_type: autoCommentType,
@@ -297,11 +299,35 @@ export function TicketDetailDrawer({
       is_internal: false,
       created_by_user_id: user?.id,
     });
-    
     setNewComment('');
-    // Clear draft from localStorage after sending
-    if (draftKey) {
-      localStorage.removeItem(draftKey);
+    if (draftKey) localStorage.removeItem(draftKey);
+  };
+
+  const handleAddCommentWithEmail = async () => {
+    if (!newComment.trim()) return;
+    const msg = newComment.trim();
+    setIsSendingCommentEmail(true);
+    try {
+      const authorName = user?.email?.split('@')[0] || 'Utilisateur';
+      await addComment.mutateAsync({
+        ticket_id: ticket.id,
+        author_type: autoCommentType,
+        author_name: authorName,
+        body: msg,
+        is_internal: false,
+        created_by_user_id: user?.id,
+      });
+      const { error } = await supabase.functions.invoke('reply-ticket-email', {
+        body: { ticket_id: ticket.id, message: msg },
+      });
+      if (error) throw error;
+      successToast('Réponse envoyée par email au demandeur');
+      setNewComment('');
+      if (draftKey) localStorage.removeItem(draftKey);
+    } catch (err: any) {
+      errorToast(err?.message || "Erreur lors de l'envoi email");
+    } finally {
+      setIsSendingCommentEmail(false);
     }
   };
 
@@ -849,15 +875,31 @@ export function TicketDetailDrawer({
                         className="flex-1 resize-none"
                       />
                     </div>
-                    <div className="flex justify-end">
+                    <div className="flex justify-end gap-2">
                       <Button
                         onClick={handleAddComment}
-                        disabled={!newComment.trim() || addComment.isPending}
+                        disabled={!newComment.trim() || addComment.isPending || isSendingCommentEmail}
                         size="sm"
+                        variant={showCommentMailButton ? "outline" : "default"}
                       >
                         <Send className="h-4 w-4 mr-1" />
-                        Envoyer
+                        Répondre
                       </Button>
+                      {showCommentMailButton && (
+                        <Button
+                          onClick={handleAddCommentWithEmail}
+                          disabled={!newComment.trim() || addComment.isPending || isSendingCommentEmail}
+                          size="sm"
+                          className="gap-1"
+                        >
+                          {isSendingCommentEmail ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Mail className="h-4 w-4" />
+                          )}
+                          Répondre + Mail
+                        </Button>
+                      )}
                     </div>
                   </div>
 

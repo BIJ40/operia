@@ -37,6 +37,8 @@ import {
   Pencil,
   X,
   Check,
+  Mail,
+  Loader2,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -51,7 +53,7 @@ import { OwnerSideSlider, ownerSideToSliderValue, sliderValueToOwnerSide } from 
 import { useAuth } from '@/contexts/AuthContext';
 import { useMyTicketRole, useAllowedTransitions } from '../hooks/useTicketPermissions';
 import { TicketTimelineTab } from './TicketTimelineTab';
-import { errorToast } from '@/lib/toastHelpers';
+import { errorToast, successToast } from '@/lib/toastHelpers';
 import { TagSelector } from './TagSelector';
 import { RoadmapEditor } from './RoadmapEditor';
 import { TicketSupportExchanges } from './TicketSupportExchanges';
@@ -115,6 +117,7 @@ export function TicketInlinePanel({
   const [showAllComments, setShowAllComments] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentBody, setEditingCommentBody] = useState('');
+  const [isSendingCommentEmail, setIsSendingCommentEmail] = useState(false);
   
   // Mode édition pour titre/description (verrouillé par défaut)
   const [isEditingContent, setIsEditingContent] = useState(false);
@@ -257,6 +260,8 @@ export function TicketInlinePanel({
 
   const ticketRef = `APO-${String(ticket.ticket_number || 0).padStart(3, '0')}`;
 
+  const showCommentMailButton = ticket.created_from === 'email';
+
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
     
@@ -273,6 +278,34 @@ export function TicketInlinePanel({
     
     setNewComment('');
     localStorage.removeItem(draftKey);
+  };
+
+  const handleAddCommentWithEmail = async () => {
+    if (!newComment.trim()) return;
+    const msg = newComment.trim();
+    setIsSendingCommentEmail(true);
+    try {
+      const authorName = user?.email?.split('@')[0] || 'Utilisateur';
+      await addComment.mutateAsync({
+        ticket_id: ticket.id,
+        author_type: autoCommentType,
+        author_name: authorName,
+        body: msg,
+        is_internal: false,
+        created_by_user_id: user?.id,
+      });
+      const { error } = await supabase.functions.invoke('reply-ticket-email', {
+        body: { ticket_id: ticket.id, message: msg },
+      });
+      if (error) throw error;
+      successToast('Réponse envoyée par email au demandeur');
+      setNewComment('');
+      localStorage.removeItem(draftKey);
+    } catch (err: any) {
+      errorToast(err?.message || "Erreur lors de l'envoi email");
+    } finally {
+      setIsSendingCommentEmail(false);
+    }
   };
 
   const handleEditComment = async () => {
@@ -578,11 +611,21 @@ export function TicketInlinePanel({
                       className="flex-1 resize-none text-sm"
                     />
                   </div>
-                  <div className="flex justify-end">
-                    <Button onClick={handleAddComment} disabled={!newComment.trim() || addComment.isPending} size="sm">
+                  <div className="flex justify-end gap-2">
+                    <Button onClick={handleAddComment} disabled={!newComment.trim() || addComment.isPending || isSendingCommentEmail} size="sm" variant={showCommentMailButton ? "outline" : "default"}>
                       <Send className="h-3.5 w-3.5 mr-1" />
-                      Envoyer
+                      Répondre
                     </Button>
+                    {showCommentMailButton && (
+                      <Button onClick={handleAddCommentWithEmail} disabled={!newComment.trim() || addComment.isPending || isSendingCommentEmail} size="sm" className="gap-1">
+                        {isSendingCommentEmail ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Mail className="h-3.5 w-3.5" />
+                        )}
+                        Répondre + Mail
+                      </Button>
+                    )}
                   </div>
                 </div>
 
