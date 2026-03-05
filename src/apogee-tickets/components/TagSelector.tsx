@@ -150,6 +150,7 @@ export function TagSelector({ selectedTags, onTagsChange, disabled, compact = fa
                 {tag}
                 {!disabled && (
                   <button
+                    onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
                     onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleRemoveTag(tag); }}
                     className="hover:text-destructive"
                   >
@@ -186,6 +187,7 @@ export function TagSelector({ selectedTags, onTagsChange, disabled, compact = fa
                 {tag}
                 {!disabled && (
                   <button
+                    onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
                     onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleRemoveTag(tag); }}
                     className="hover:text-destructive"
                   >
