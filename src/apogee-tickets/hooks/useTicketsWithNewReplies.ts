@@ -3,7 +3,8 @@
  * (échanges support reçus de la part des utilisateurs)
  */
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -19,8 +20,9 @@ export interface TicketWithNewReply {
  */
 export function useTicketsWithNewReplies() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['tickets-with-new-replies', user?.id],
     queryFn: async () => {
       if (!user) return [];
@@ -50,7 +52,6 @@ export function useTicketsWithNewReplies() {
       if (!exchanges?.length) return [];
 
       // 3. Only keep exchanges on tickets where support already replied
-      //    (= real back-and-forth replies, not initial messages)
       const map = new Map<string, TicketWithNewReply>();
       for (const ex of exchanges) {
         if (!ticketsWithSupportReply.has(ex.ticket_id)) continue;
@@ -70,6 +71,25 @@ export function useTicketsWithNewReplies() {
       return Array.from(map.values());
     },
     enabled: !!user,
-    refetchInterval: 30_000, // Poll every 30s
+    refetchInterval: 30_000,
   });
+
+  /**
+   * Marque toutes les réponses non lues d'un ticket comme lues
+   */
+  const markAsRead = useCallback(async (ticketId: string) => {
+    if (!user) return;
+
+    await supabase
+      .from('apogee_ticket_support_exchanges')
+      .update({ read_at: new Date().toISOString() })
+      .eq('ticket_id', ticketId)
+      .eq('is_from_support', false)
+      .is('read_at', null);
+
+    // Invalidate to refresh counts
+    queryClient.invalidateQueries({ queryKey: ['tickets-with-new-replies'] });
+  }, [user, queryClient]);
+
+  return { ...query, markAsRead };
 }
