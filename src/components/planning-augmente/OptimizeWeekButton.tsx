@@ -51,7 +51,7 @@ export function OptimizeWeekButton({ agencyId, weekStart, variant = 'outline', s
               Optimisation semaine
             </DialogTitle>
             <DialogDescription>
-              Propositions de modifications pour optimiser le planning
+              Propositions d'optimisation sur 2 semaines glissantes
             </DialogDescription>
           </DialogHeader>
 
