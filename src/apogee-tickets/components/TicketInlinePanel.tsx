@@ -58,6 +58,7 @@ import { TagSelector } from './TagSelector';
 import { RoadmapEditor } from './RoadmapEditor';
 import { TicketSupportExchanges } from './TicketSupportExchanges';
 import { QuickReplyMenu } from './QuickReplyMenu';
+import { PecButton } from './PecButton';
 import { StatusSelector } from './StatusSelector';
 import type { ApogeeTicket, ApogeeModule, ApogeePriority, ApogeeTicketStatus, AuthorType } from '../types';
 
@@ -613,14 +614,22 @@ export function TicketInlinePanel({
                     />
                   </div>
                   <div className="flex items-center justify-between">
-                    <QuickReplyMenu
-                      context={{
-                        requesterName: (ticket.initiator_profile as any)?.first_name || (ticket.reported_by as string) || undefined,
-                        ticketRef: ticketRef,
-                        subject: ticket.element_concerne,
-                      }}
-                      onSelect={(msg) => setNewComment(msg)}
-                    />
+                    <div className="flex items-center gap-1">
+                      <QuickReplyMenu
+                        context={{
+                          requesterName: (ticket.initiator_profile as any)?.first_name || (ticket.reported_by as string) || undefined,
+                          ticketRef: ticketRef,
+                          subject: ticket.element_concerne,
+                        }}
+                        onSelect={(msg) => setNewComment(msg)}
+                      />
+                      <PecButton
+                        ticketId={ticket.id}
+                        ticketCreatedFrom={ticket.created_from}
+                        requesterName={(ticket.initiator_profile as any)?.first_name || (ticket.reported_by as string) || undefined}
+                        subject={ticket.element_concerne}
+                      />
+                    </div>
                     <div className="flex gap-2">
                       <Button onClick={handleAddComment} disabled={!newComment.trim() || addComment.isPending || isSendingCommentEmail} size="sm" variant={showCommentMailButton ? "outline" : "default"}>
                         <Send className="h-3.5 w-3.5 mr-1" />
