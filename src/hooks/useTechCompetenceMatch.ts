@@ -1,6 +1,7 @@
 /**
- * Hook pour croiser compétences techniciens (module RH) × univers dossiers
- * Utilise un mapping explicite compétence→univers + fallback fuzzy
+ * Hook pour croiser compétences techniciens × univers dossiers
+ * Source de vérité UNIQUE : technician_skills (table structurée)
+ * Fallback : rh_competencies.competences_techniques (ancien système)
  */
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -14,134 +15,147 @@ export interface TechCompetenceInfo {
   apogeeUserId: number;
   collaboratorId: string;
   name: string;
-  competences: string[];
+  /** New structured skills from technician_skills table */
+  structuredSkills: { code: string; level: number; is_primary: boolean }[];
+  /** Legacy competences from rh_competencies */
+  legacyCompetences: string[];
 }
 
 export interface CompetenceMatchResult {
-  /** Map apogeeUserId → liste de compétences techniques */
   techCompetences: Map<number, string[]>;
-  /** Map apogeeUserId → infos RH (nom collaborateur) */
-  techRoster: Map<number, { name: string }>;
-  /** Vérifie si un tech (apogeeUserId) est compatible avec un ensemble d'univers */
+  techRoster: Map<number, { name: string; collaboratorId: string }>;
   isCompatible: (apogeeUserId: number, universes: string[]) => boolean;
-  /** Retourne les compétences matchées pour un tech × univers */
   getMatchedCompetences: (apogeeUserId: number, universes: string[]) => string[];
-  /** Loading state */
   isLoading: boolean;
 }
 
 // ============================================================================
-// MAPPING EXPLICITE compétence catalogue → slugs univers Apogée
+// MAPPING compétence catalogue → slugs univers Apogée
 // ============================================================================
 
-/**
- * Chaque clé = label normalisé de compétence (lowercase, sans accents)
- * Chaque valeur = liste de slugs univers Apogée (normalisés) qui matchent
- * 
- * Ce mapping est la source de vérité pour le matching compétence ↔ univers.
- * Il couvre les labels du catalogue par défaut ET les slugs courants Apogée.
- */
 const COMPETENCE_TO_UNIVERS: Record<string, string[]> = {
-  // Catalogue par défaut
   'plomberie':            ['plomberie', 'sanitaire', 'sanitaires', 'plomb'],
   'electricite':          ['electricite', 'elec', 'electrique'],
   'serrurerie':           ['serrurerie', 'serrure', 'serrurier', 'serr'],
   'vitrerie':             ['vitrerie', 'vitre', 'vitres', 'vitrier', 'miroiterie', 'vitr'],
   'menuiserie':           ['menuiserie', 'menuisier', 'bois', 'porte', 'portes', 'fenetre', 'fenetres'],
   'chauffage':            ['chauffage', 'chaudiere', 'climatisation', 'clim', 'cvc', 'pac', 'pompe_a_chaleur'],
-  'volet roulant':        ['volet_roulant', 'volets_roulants', 'volet', 'volets', 'store', 'stores'],
-  'pmr / accessibilite':  ['pmr', 'amelioration_logement', 'ame_logement', 'pmr_amenagement', 'accessibilite'],
+  'volet_roulant':        ['volet_roulant', 'volets_roulants', 'volet', 'volets', 'store', 'stores', 'tablier', 'tabliers'],
+  'pmr':                  ['pmr', 'amelioration_logement', 'ame_logement', 'pmr_amenagement', 'accessibilite'],
   'renovation':           ['renovation', 'reno', 'travaux'],
   'multiservices':        ['multiservices', 'multi'],
   'peinture':             ['peinture', 'peintre', 'revetement'],
-  'carrelage / faience':  ['carrelage', 'faience', 'carreleur'],
-  'recherche de fuite':   ['recherche_fuite', 'recherche_de_fuite', 'fuite'],
+  'carrelage':            ['carrelage', 'faience', 'carreleur'],
+  'recherche_fuite':      ['recherche_fuite', 'recherche_de_fuite', 'fuite'],
+  'platrerie':            ['platrerie', 'platre', 'platrier'],
 };
 
 // ============================================================================
 // NORMALISATION
 // ============================================================================
 
-/** Normalise une chaîne pour le matching (lowercase, sans accents, sans ponctuation superflue) */
 function normalize(s: string): string {
   return (s || '')
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // supprime accents
+    .replace(/[\u0300-\u036f]/g, '')
     .trim();
 }
 
-/** Normalise un slug univers Apogée */
 function normalizeSlug(s: string): string {
   return normalize(s).replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
 }
 
-// ============================================================================
-// Construit le reverse map : slug univers → set de compétences normalisées
-// ============================================================================
-
+// Build reverse map: slug univers → set of competence codes
 const UNIVERS_TO_COMPETENCES = new Map<string, Set<string>>();
-
-for (const [compLabel, universSlugs] of Object.entries(COMPETENCE_TO_UNIVERS)) {
+for (const [compCode, universSlugs] of Object.entries(COMPETENCE_TO_UNIVERS)) {
   for (const slug of universSlugs) {
     const normSlug = normalizeSlug(slug);
     if (!UNIVERS_TO_COMPETENCES.has(normSlug)) {
       UNIVERS_TO_COMPETENCES.set(normSlug, new Set());
     }
-    UNIVERS_TO_COMPETENCES.get(normSlug)!.add(compLabel);
+    UNIVERS_TO_COMPETENCES.get(normSlug)!.add(compCode);
   }
 }
 
 /**
- * Vérifie si une compétence (label RH) matche un univers (slug Apogée)
- * 1. Matching via la table explicite (priorité)
- * 2. Fallback fuzzy (l'un contient l'autre)
+ * Check if a competence code matches a universe slug
  */
-function competenceMatchesUnivers(competenceLabel: string, universSlug: string): boolean {
-  const normComp = normalize(competenceLabel);
+function codeMatchesUnivers(competenceCode: string, universSlug: string): boolean {
+  const normCode = normalizeSlug(competenceCode);
   const normUni = normalizeSlug(universSlug);
   
-  if (!normComp || !normUni) return false;
+  if (!normCode || !normUni) return false;
   
-  // 1. Lookup explicite : est-ce que la compétence est dans le mapping pour cet univers ?
+  // Direct match
+  if (normCode === normUni) return true;
+  
+  // Lookup via mapping table
   const matchingComps = UNIVERS_TO_COMPETENCES.get(normUni);
-  if (matchingComps) {
-    // Vérifier si la compétence normalisée est dans le set
-    for (const mappedComp of matchingComps) {
-      if (normComp === mappedComp || normComp.includes(mappedComp) || mappedComp.includes(normComp)) {
-        return true;
-      }
+  if (matchingComps?.has(normCode)) return true;
+  
+  // Check if the code has an entry in the forward map
+  const directMatch = COMPETENCE_TO_UNIVERS[normCode];
+  if (directMatch?.some(slug => normalizeSlug(slug) === normUni)) return true;
+  
+  // Fuzzy fallback
+  const codeAlpha = normCode.replace(/[^a-z0-9]/g, '');
+  const uniAlpha = normUni.replace(/[^a-z0-9]/g, '');
+  return codeAlpha.length >= 3 && uniAlpha.length >= 3 && 
+    (codeAlpha.includes(uniAlpha) || uniAlpha.includes(codeAlpha));
+}
+
+/** Check if a legacy competence label matches a universe slug */
+function legacyLabelMatchesUnivers(label: string, universSlug: string): boolean {
+  const normLabel = normalize(label);
+  const normUni = normalizeSlug(universSlug);
+  if (!normLabel || !normUni) return false;
+
+  // Check forward map with fuzzy key match
+  for (const [compKey, universSlugs] of Object.entries(COMPETENCE_TO_UNIVERS)) {
+    if (normLabel === compKey || normLabel.includes(compKey) || compKey.includes(normLabel)) {
+      if (universSlugs.some(s => normalizeSlug(s) === normUni)) return true;
     }
   }
-  
-  // 2. Lookup direct : est-ce que la compétence a une entrée dans COMPETENCE_TO_UNIVERS ?
-  const directMatch = COMPETENCE_TO_UNIVERS[normComp];
-  if (directMatch) {
-    return directMatch.some(slug => normalizeSlug(slug) === normUni);
-  }
-  
-  // 3. Fallback fuzzy (pour les compétences custom hors catalogue)
-  const compAlpha = normComp.replace(/[^a-z0-9]/g, '');
+
+  // Fuzzy
+  const labelAlpha = normLabel.replace(/[^a-z0-9]/g, '');
   const uniAlpha = normUni.replace(/[^a-z0-9]/g, '');
-  return compAlpha.length >= 3 && uniAlpha.length >= 3 && 
-    (compAlpha.includes(uniAlpha) || uniAlpha.includes(compAlpha));
+  return labelAlpha.length >= 3 && uniAlpha.length >= 3 && 
+    (labelAlpha.includes(uniAlpha) || uniAlpha.includes(labelAlpha));
 }
 
 // ============================================================================
 // HOOK
 // ============================================================================
 
-/**
- * Charge les compétences techniques des collaborateurs de l'agence
- * et fournit des fonctions de matching avec les univers
- */
 export function useTechCompetenceMatch(agencyId: string | undefined): CompetenceMatchResult {
-  const { data, isLoading } = useQuery({
-    queryKey: ['tech-competences', agencyId],
+  // Load structured skills from technician_skills
+  const { data: structuredData, isLoading: structuredLoading } = useQuery({
+    queryKey: ['tech-structured-skills', agencyId],
     queryFn: async () => {
       if (!agencyId) return [];
-      
-      const { data: collabs, error } = await supabase
+      const { data, error } = await supabase
+        .from('technician_skills' as any)
+        .select(`
+          collaborator_id,
+          univers_code,
+          level,
+          is_primary
+        `);
+      if (error) throw error;
+      return (data || []) as unknown as { collaborator_id: string; univers_code: string; level: number; is_primary: boolean }[];
+    },
+    enabled: !!agencyId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Load collaborators with legacy competences
+  const { data: collabData, isLoading: collabLoading } = useQuery({
+    queryKey: ['tech-competences-collabs', agencyId],
+    queryFn: async () => {
+      if (!agencyId) return [];
+      const { data, error } = await supabase
         .from('collaborators')
         .select(`
           id,
@@ -153,63 +167,103 @@ export function useTechCompetenceMatch(agencyId: string | undefined): Competence
         .eq('agency_id', agencyId)
         .not('apogee_user_id', 'is', null)
         .is('leaving_date', null);
-      
       if (error) throw error;
-      
-      return (collabs || []).map(c => ({
-        apogeeUserId: c.apogee_user_id as number,
-        collaboratorId: c.id,
-        name: `${c.first_name || ''} ${c.last_name || ''}`.trim(),
-        competences: ((c as any).rh_competencies?.competences_techniques as string[]) || [],
-      })) as TechCompetenceInfo[];
+      return data || [];
     },
     enabled: !!agencyId,
     staleTime: 10 * 60 * 1000,
   });
 
+  // Build structured skills map: collaborator_id → skills[]
+  const skillsByCollaborator = useMemo(() => {
+    const map = new Map<string, { code: string; level: number; is_primary: boolean }[]>();
+    for (const s of structuredData || []) {
+      if (!map.has(s.collaborator_id)) map.set(s.collaborator_id, []);
+      map.get(s.collaborator_id)!.push({ code: s.univers_code, level: s.level, is_primary: s.is_primary });
+    }
+    return map;
+  }, [structuredData]);
+
+  // Merge into per-tech info
+  const techInfos = useMemo(() => {
+    return (collabData || []).map(c => {
+      const apogeeId = c.apogee_user_id as number;
+      const collabId = c.id;
+      const structured = skillsByCollaborator.get(collabId) || [];
+      const legacy = ((c as any).rh_competencies?.competences_techniques as string[]) || [];
+      return {
+        apogeeUserId: apogeeId,
+        collaboratorId: collabId,
+        name: `${c.first_name || ''} ${c.last_name || ''}`.trim(),
+        structuredSkills: structured,
+        legacyCompetences: legacy,
+      } as TechCompetenceInfo;
+    });
+  }, [collabData, skillsByCollaborator]);
+
   const techCompetences = useMemo(() => {
     const map = new Map<number, string[]>();
-    for (const t of data || []) {
-      if (t.apogeeUserId) {
-        map.set(t.apogeeUserId, t.competences);
+    for (const t of techInfos) {
+      if (!t.apogeeUserId) continue;
+      // Structured skills take priority; if none, fall back to legacy
+      if (t.structuredSkills.length > 0) {
+        map.set(t.apogeeUserId, t.structuredSkills.map(s => s.code));
+      } else {
+        map.set(t.apogeeUserId, t.legacyCompetences);
       }
     }
     return map;
-  }, [data]);
+  }, [techInfos]);
 
   const techRoster = useMemo(() => {
-    const map = new Map<number, { name: string }>();
-    for (const t of data || []) {
+    const map = new Map<number, { name: string; collaboratorId: string }>();
+    for (const t of techInfos) {
       if (t.apogeeUserId) {
-        map.set(t.apogeeUserId, { name: t.name || `#${t.apogeeUserId}` });
+        map.set(t.apogeeUserId, { name: t.name || `#${t.apogeeUserId}`, collaboratorId: t.collaboratorId });
       }
     }
     return map;
-  }, [data]);
+  }, [techInfos]);
 
   const isCompatible = useMemo(() => {
     return (apogeeUserId: number, universes: string[]): boolean => {
       const comps = techCompetences.get(apogeeUserId);
-      // Pas de compétences renseignées → compatible par défaut
+      // No competences defined → compatible by default (allows adding skills later)
       if (!comps || comps.length === 0) return true;
       if (!universes || universes.length === 0) return true;
       
-      // Au moins une compétence doit matcher au moins un univers
-      return universes.some(uni => 
-        comps.some(comp => competenceMatchesUnivers(comp, uni))
-      );
+      const info = techInfos.find(t => t.apogeeUserId === apogeeUserId);
+      const hasStructured = info && info.structuredSkills.length > 0;
+      
+      if (hasStructured) {
+        // Structured: check code matches
+        return universes.some(uni => 
+          comps.some(code => codeMatchesUnivers(code, uni))
+        );
+      } else {
+        // Legacy: check label matches
+        return universes.some(uni => 
+          comps.some(label => legacyLabelMatchesUnivers(label, uni))
+        );
+      }
     };
-  }, [techCompetences]);
+  }, [techCompetences, techInfos]);
 
   const getMatchedCompetences = useMemo(() => {
     return (apogeeUserId: number, universes: string[]): string[] => {
       const comps = techCompetences.get(apogeeUserId);
       if (!comps || !universes) return [];
-      return comps.filter(comp => 
-        universes.some(uni => competenceMatchesUnivers(comp, uni))
-      );
+      
+      const info = techInfos.find(t => t.apogeeUserId === apogeeUserId);
+      const hasStructured = info && info.structuredSkills.length > 0;
+      
+      if (hasStructured) {
+        return comps.filter(code => universes.some(uni => codeMatchesUnivers(code, uni)));
+      } else {
+        return comps.filter(label => universes.some(uni => legacyLabelMatchesUnivers(label, uni)));
+      }
     };
-  }, [techCompetences]);
+  }, [techCompetences, techInfos]);
 
-  return { techCompetences, techRoster, isCompatible, getMatchedCompetences, isLoading };
+  return { techCompetences, techRoster, isCompatible, getMatchedCompetences, isLoading: structuredLoading || collabLoading };
 }

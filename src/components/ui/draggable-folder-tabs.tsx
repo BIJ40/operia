@@ -167,6 +167,14 @@ export function DraggableFolderTabsList({
   const validOrder = baseOrder.filter(id => allTabIds.includes(id));
   const effectiveOrder = [...validOrder, ...missingIds];
 
+  // Self-heal: persist the reconciled order if it differs from saved
+  React.useEffect(() => {
+    if (onReorder && missingIds.length > 0) {
+      onReorder(effectiveOrder);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [missingIds.length]);
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id && onReorder) {
