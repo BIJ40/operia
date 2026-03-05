@@ -266,13 +266,32 @@ export function useTicketTabs() {
       queryClient.invalidateQueries({ queryKey: ['apogee-tickets'] });
       queryClient.invalidateQueries({ queryKey: ['ticket-history', variables.id] });
     },
-    onError: (error: Error) => {
+    onError: (error: Error, variables) => {
       logError('ticket-tabs', 'Auto-save failed', error);
+      queryClient.invalidateQueries({ queryKey: ['apogee-tickets'] });
+      if (variables?.id) {
+        queryClient.invalidateQueries({ queryKey: ['apogee-ticket', variables.id] });
+      }
       import('sonner').then(({ toast }) => {
         toast.error('Erreur de sauvegarde du ticket', { description: error.message });
       });
     },
   });
+
+  // Apply optimistic updates instantly to cache (UI responsiveness)
+  const applyOptimisticTicketUpdate = useCallback((ticketId: string, updates: Partial<ApogeeTicket>) => {
+    queryClient.setQueriesData<ApogeeTicket[]>({ queryKey: ['apogee-tickets'] }, (current) => {
+      if (!Array.isArray(current)) return current;
+      return current.map((ticket) =>
+        ticket.id === ticketId ? { ...ticket, ...updates } : ticket
+      );
+    });
+
+    queryClient.setQueryData<ApogeeTicket | null>(['apogee-ticket', ticketId], (current) => {
+      if (!current) return current;
+      return { ...current, ...updates };
+    });
+  }, [queryClient]);
   
   // Flush pending changes immediately
   const flushPendingChanges = useCallback(async (ticketId: string) => {
@@ -298,6 +317,9 @@ export function useTicketTabs() {
   
   // Queue a change for auto-save (debounced)
   const queueChange = useCallback((ticketId: string, updates: Partial<ApogeeTicket>) => {
+    // Optimistic UI first
+    applyOptimisticTicketUpdate(ticketId, updates);
+
     // Merge with pending changes
     pendingChangesRef.current[ticketId] = {
       ...pendingChangesRef.current[ticketId],
@@ -313,7 +335,7 @@ export function useTicketTabs() {
     saveTimeoutRef.current[ticketId] = setTimeout(() => {
       flushPendingChanges(ticketId);
     }, AUTO_SAVE_DELAY);
-  }, [flushPendingChanges]);
+  }, [flushPendingChanges, applyOptimisticTicketUpdate]);
   
   // Flush all on unmount
   useEffect(() => {
