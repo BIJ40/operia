@@ -1,50 +1,37 @@
 
 
-## Plan: Notification email à la création d'un ticket
+## Plan: Deux boutons "Répondre" et "Répondre + Mail"
 
-### Principe
+### Objectif
+Remplacer le bouton unique "Envoyer" par deux boutons distincts dans la zone d'échange support :
+- **Répondre** : sauvegarde le message en interne uniquement (base de données)
+- **Répondre + Mail** : sauvegarde le message ET envoie un email au demandeur via `reply-ticket-email`
 
-Quand un nouveau ticket est inséré dans `apogee_tickets`, un **database webhook** (trigger) appelle une edge function qui envoie un email via **Resend** aux adresses configurées.
+Le bouton "Répondre + Mail" n'apparaît que côté support (`isSupport=true`) et quand le ticket a une origine email (`created_from === 'email'`).
 
-### Architecture
+### Modifications
 
-```text
-INSERT apogee_tickets
-  → trigger pg_net (webhook)
-    → Edge Function "notify-new-ticket"
-      → Resend API → email(s)
-```
+**1. `TicketSupportExchanges.tsx`**
+- Ajouter une prop `ticketCreatedFrom?: string` et `ticketId` (déjà présent)
+- Ajouter une fonction `handleSendWithEmail()` qui :
+  1. Appelle `sendMessage()` (sauvegarde interne)
+  2. Appelle `supabase.functions.invoke('reply-ticket-email', { body: { ticket_id, message } })`
+  3. Affiche un toast succès/erreur pour l'envoi email
+- Remplacer le bouton unique par deux boutons côte à côte :
+  - `Répondre` (icône Send) → appelle `handleSend()` existant
+  - `Répondre + Mail` (icône Mail) → appelle `handleSendWithEmail()`, visible uniquement si `isSupport && ticketCreatedFrom === 'email'`
+- Raccourci clavier Enter → "Répondre" (interne seulement)
 
-### Étapes
+**2. Parents : `TicketInlinePanel.tsx` et `TicketDetailDrawer.tsx`**
+- Passer la prop `ticketCreatedFrom={ticket.created_from}` au composant `TicketSupportExchanges`
 
-1. **Vérifier que le secret `RESEND_API_KEY` existe** (déjà utilisé par `email-to-ticket` et `reply-ticket-email`, donc probablement en place).
+**3. Parent : `ProjectTicketDetailPanel.tsx`**
+- Ajouter `created_from` dans la query select
+- Passer `ticketCreatedFrom={ticket.created_from}` (côté utilisateur, le bouton mail ne s'affichera pas car `isSupport=false`)
 
-2. **Créer une table `ticket_notification_recipients`** pour stocker les adresses email destinataires (configurable par les admins, sans hardcoder les adresses) :
-   - `id`, `email`, `label` (optionnel), `is_active`, `created_at`
-   - RLS : lecture/écriture N5+ uniquement
-
-3. **Créer l'edge function `notify-new-ticket`** :
-   - Reçoit le payload du ticket (id, subject, description, initiator, heat_priority, module...)
-   - Récupère les destinataires actifs depuis `ticket_notification_recipients`
-   - Envoie un email HTML formaté via Resend avec les infos clés du ticket
-   - Expéditeur : `tickets@ticket.helpconfort.services` (cohérent avec le système existant)
-
-4. **Créer un trigger SQL** sur `apogee_tickets` (AFTER INSERT) qui appelle la function via `pg_net` ou alternatively, on intercepte côté applicatif (dans le code React qui crée les tickets) pour invoquer la function.
-
-   → Option recommandée : **appel depuis le code applicatif** après insertion réussie, car `pg_net` n'est pas toujours disponible et c'est plus simple à debugger.
-
-5. **UI admin optionnelle** : un petit formulaire dans les settings pour gérer les adresses destinataires (ajouter/supprimer/activer).
-
-### Détails techniques
-
-- L'edge function utilise `verify_jwt = false` dans `config.toml` et valide le JWT en code
-- Email HTML sobre : sujet du ticket, priorité, module, description tronquée, lien vers le ticket
-- Les appels existants de création de ticket (Kanban, support, email-to-ticket) devront invoquer `notify-new-ticket` après insertion
-
-### Fichiers à créer/modifier
-
-- **Nouveau** : `supabase/functions/notify-new-ticket/index.ts`
-- **Migration SQL** : table `ticket_notification_recipients` + seed initial
-- **Modifier** : les hooks/composants qui créent des tickets pour ajouter l'appel à la notification
-- **Modifier** : `supabase/config.toml` (ajouter la function)
+### UX
+- Les deux boutons sont empilés verticalement à droite du textarea
+- "Répondre" : bouton secondaire (variant outline)
+- "Répondre + Mail" : bouton primary avec icône Mail, petit label en dessous "📧 + email"
+- Pendant l'envoi email, un spinner spécifique sur le bouton mail
 
