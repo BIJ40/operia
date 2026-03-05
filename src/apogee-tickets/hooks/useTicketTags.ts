@@ -23,6 +23,10 @@ const TAG_COLORS: Record<string, string> = {
   NTH: 'gray',
 };
 
+/** Tags legacy à ignorer (préfixe impact_) */
+export const isLegacyImpactTag = (tag: string) =>
+  /^impact_/i.test(tag);
+
 const COLOR_CLASSES: Record<string, string> = {
   red: 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300',
   blue: 'bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300',
@@ -46,7 +50,7 @@ export function useTicketTags() {
         logError('[TICKET-TAGS] Error fetching tags', error);
         return [];
       }
-      return (data || []) as TicketTag[];
+      return ((data || []) as TicketTag[]).filter(t => !isLegacyImpactTag(t.id));
     },
   });
 

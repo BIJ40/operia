@@ -8,7 +8,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useTicketTags } from "../hooks/useTicketTags";
+import { useTicketTags, isLegacyImpactTag } from "../hooks/useTicketTags";
 import { cn } from "@/lib/utils";
 
 interface TagSelectorProps {
@@ -23,6 +23,7 @@ export function TagSelector({ selectedTags, onTagsChange, disabled, compact = fa
   const [isOpen, setIsOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const { tags, ensureTagExists, getTagColor } = useTicketTags();
+  const cleanSelectedTags = useMemo(() => selectedTags.filter(t => !isLegacyImpactTag(t)), [selectedTags]);
 
   const handleAddTag = useCallback((tag: string) => {
     const upperTag = tag.toUpperCase().trim();
@@ -87,7 +88,7 @@ export function TagSelector({ selectedTags, onTagsChange, disabled, compact = fa
       {/* Tag list */}
       <div className="flex flex-col gap-0.5 max-h-[200px] overflow-y-auto -mx-1 px-1">
         {filteredTags.map(tag => {
-          const isSelected = selectedTags.includes(tag.id);
+          const isSelected = cleanSelectedTags.includes(tag.id);
           return (
             <button
               key={tag.id}
@@ -141,7 +142,7 @@ export function TagSelector({ selectedTags, onTagsChange, disabled, compact = fa
       <Popover open={isOpen} onOpenChange={setIsOpen} modal={true}>
         <PopoverTrigger asChild>
           <div className="flex items-center gap-1 flex-wrap cursor-pointer group">
-            {selectedTags.map(tag => (
+            {cleanSelectedTags.map(tag => (
               <Badge
                 key={tag}
                 variant="secondary"
@@ -178,7 +179,7 @@ export function TagSelector({ selectedTags, onTagsChange, disabled, compact = fa
       <PopoverTrigger asChild>
         <div className="space-y-2 cursor-pointer group">
           <div className="flex flex-wrap gap-1.5 items-center">
-            {selectedTags.map(tag => (
+            {cleanSelectedTags.map(tag => (
               <Badge
                 key={tag}
                 variant="secondary"
