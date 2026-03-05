@@ -1,45 +1,35 @@
 
 
-## Fix : Latence des Tags dans le ticket ouvert
+## Remplacement du Slider "Porteur" par 5 boutons radio
 
-### Cause racine identifiée
+### Changement
 
-Le problème n'est **pas** un problème d'événements (les `stopPropagation` et `modal={true}` sont déjà en place). C'est un problème de **latence async** :
+Remplacer le composant `OwnerSideSlider` (slider Radix avec snapping) par **5 boutons toggle** : `APO | 75/25 | 50/50 | 25/75 | HC`, sélection unique, avec possibilité de désélectionner (retour à `null`).
 
-1. Quand l'utilisateur clique sur un tag pour l'ajouter, `handleToggleTag` appelle `handleAddTag` qui fait **`await ensureTagExists(upperTag)`** — un appel base de données — **avant** de mettre à jour l'UI via `onTagsChange`.
-2. Ce `await` crée un délai perceptible (200-500ms réseau) pendant lequel rien ne se passe visuellement.
-3. Même pour les tags existants (BUG, EVO, NTH), le hook vérifie la liste en mémoire puis potentiellement fait un `mutateAsync` + `invalidateQueries`, ce qui provoque un re-render global.
+### Implémentation
 
-### Correction
+**Fichier unique** : `src/apogee-tickets/components/OwnerSideSlider.tsx`
 
-Rendre l'ajout de tag **optimiste** : mettre à jour l'UI immédiatement, puis persister le tag en base en arrière-plan (fire-and-forget).
+- Supprimer le `Slider` Radix et le remplacer par un groupe de 5 boutons
+- **Mode compact** (utilisé dans le panel inline et les tables) : boutons petits en ligne, style pill/toggle
+- **Mode normal** (drawer, création) : boutons plus grands avec label + reset
 
-### Fichier à modifier
+```text
+Mode compact :
+┌─────┬───────┬───────┬───────┬────┐
+│ APO │ 75/25 │ 50/50 │ 25/75 │ HC │  ← 5 boutons, le sélectionné est coloré
+└─────┴───────┴───────┴───────┴────┘
 
-**`src/apogee-tickets/components/TagSelector.tsx`** :
-- `handleAddTag` : appeler `onTagsChange` **avant** `ensureTagExists`, pas après
-- `ensureTagExists` en fire-and-forget (pas de `await`)
-- `handleToggleTag` : retirer le `async/await` inutile
-
-```typescript
-// AVANT (latent)
-const handleAddTag = async (tag: string) => {
-  const upperTag = tag.toUpperCase().trim();
-  if (upperTag && !selectedTags.includes(upperTag)) {
-    await ensureTagExists(upperTag);      // ← bloque l'UI
-    onTagsChange([...selectedTags, upperTag]);
-  }
-};
-
-// APRÈS (optimiste)
-const handleAddTag = (tag: string) => {
-  const upperTag = tag.toUpperCase().trim();
-  if (upperTag && !selectedTags.includes(upperTag)) {
-    onTagsChange([...selectedTags, upperTag]);  // ← UI immédiate
-    ensureTagExists(upperTag);                   // ← fire-and-forget
-  }
-};
+Mode normal :
+Porteur du projet
+┌──────────┬───────┬───────┬───────┬──────┐
+│  Apogée  │ 75/25 │ 50/50 │ 25/75 │  HC  │  + bouton reset
+└──────────┴───────┴───────┴───────┴──────┘
+  Apogée: 75%              HC: 25%
 ```
 
-Changement minimal, impact maximal sur la réactivité.
+- Couleurs : APO = bleu, HC = orange, intermédiaires = violet/gradient
+- Clic sur le bouton déjà sélectionné = désélection (retour `null`)
+- Les helpers `ownerSideToSliderValue`, `sliderValueToOwnerSide`, etc. restent inchangés (même API)
+- Aucun autre fichier à modifier : tous les parents utilisent déjà `value`/`onChange` avec les mêmes valeurs numériques
 
