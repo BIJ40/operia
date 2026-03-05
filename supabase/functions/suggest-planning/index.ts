@@ -279,15 +279,20 @@ Deno.serve(async (req: Request) => {
     }));
 
     // Audit trail
-    await supabase.from('planning_suggestions').insert({
-      agency_id,
-      dossier_id,
-      requested_by: user.id,
-      input_json: { agency_id, dossier_id, weights, technicians_count: technicians.length },
-      output_json: { suggestions },
-      score_breakdown_json: { weights, techs: technicians.length, interventions: interventions.length },
-      status: 'pending',
-    }).catch(e => console.warn('[SUGGEST-PLANNING] Audit insert failed:', e));
+    try {
+      const { error: auditErr } = await supabase.from('planning_suggestions').insert({
+        agency_id,
+        dossier_id,
+        requested_by: user.id,
+        input_json: { agency_id, dossier_id, weights, technicians_count: technicians.length },
+        output_json: { suggestions },
+        score_breakdown_json: { weights, techs: technicians.length, interventions: interventions.length },
+        status: 'pending',
+      });
+      if (auditErr) console.warn('[SUGGEST-PLANNING] Audit insert failed:', auditErr.message);
+    } catch (e) {
+      console.warn('[SUGGEST-PLANNING] Audit insert exception:', e);
+    }
 
     return withCors(req, new Response(JSON.stringify({
       success: true,
