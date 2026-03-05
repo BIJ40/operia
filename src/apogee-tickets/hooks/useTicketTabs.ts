@@ -268,11 +268,14 @@ export function useTicketTabs() {
     },
     onError: (error: Error) => {
       logError('ticket-tabs', 'Auto-save failed', error);
+      import('sonner').then(({ toast }) => {
+        toast.error('Erreur de sauvegarde du ticket', { description: error.message });
+      });
     },
   });
   
   // Flush pending changes immediately
-  const flushPendingChanges = useCallback((ticketId: string) => {
+  const flushPendingChanges = useCallback(async (ticketId: string) => {
     const pending = pendingChangesRef.current[ticketId];
     if (pending && Object.keys(pending).length > 0) {
       // Clear timeout
@@ -281,11 +284,15 @@ export function useTicketTabs() {
         delete saveTimeoutRef.current[ticketId];
       }
       
-      // Save immediately
-      updateMutation.mutate({ id: ticketId, ...pending });
-      
-      // Clear pending
+      // Clear pending first to avoid double-flush
       delete pendingChangesRef.current[ticketId];
+      
+      // Save immediately and await
+      try {
+        await updateMutation.mutateAsync({ id: ticketId, ...pending });
+      } catch (error) {
+        logError('ticket-tabs', 'Flush save failed', error);
+      }
     }
   }, [updateMutation]);
   

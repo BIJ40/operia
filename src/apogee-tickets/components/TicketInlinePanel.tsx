@@ -194,6 +194,25 @@ export function TicketInlinePanel({
     setLocalHMax(ticket.h_max?.toString() || '');
   }, [ticket.id, ticket.element_concerne, ticket.description, ticket.h_min, ticket.h_max]);
 
+  // Flush unsaved local fields on unmount
+  const localHMinRef = useRef(localHMin);
+  const localHMaxRef = useRef(localHMax);
+  localHMinRef.current = localHMin;
+  localHMaxRef.current = localHMax;
+
+  useEffect(() => {
+    return () => {
+      const pendingUpdates: Partial<ApogeeTicket> = {};
+      const hMinVal = localHMinRef.current ? parseFloat(localHMinRef.current) : null;
+      const hMaxVal = localHMaxRef.current ? parseFloat(localHMaxRef.current) : null;
+      if (hMinVal !== ticket.h_min) pendingUpdates.h_min = hMinVal;
+      if (hMaxVal !== ticket.h_max) pendingUpdates.h_max = hMaxVal;
+      if (Object.keys(pendingUpdates).length > 0) {
+        onQueueChange(ticket.id, pendingUpdates);
+      }
+    };
+  }, [ticket.id]);
+
   // Auto-save on blur for text fields
   const handleTitleBlur = () => {
     if (localTitle !== ticket.element_concerne) {
@@ -579,7 +598,7 @@ export function TicketInlinePanel({
                     />
                   </div>
                 </div>
-                <div className="flex-1 min-w-[320px] max-w-[560px]">
+                <div className="flex-1 min-w-[320px] max-w-[560px]" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
                   <label className="text-xs text-muted-foreground">Porteur</label>
                   <OwnerSideSlider
                     value={ownerSideToSliderValue(ticket.owner_side)}
