@@ -190,7 +190,7 @@ export function DraggableFolderTabsList({
       onDragEnd={handleDragEnd}
     >
       <SortableContext items={effectiveOrder} strategy={horizontalListSortingStrategy}>
-        <div className={cn("flex gap-1 bg-transparent h-auto p-0 mb-0", className)}>
+        <div className={cn("flex flex-wrap gap-1 bg-transparent h-auto p-0 mb-0", className)}>
           {sortedTabs.map((tab, index) => (
             <DraggableFolderTab
               key={tab.id}
