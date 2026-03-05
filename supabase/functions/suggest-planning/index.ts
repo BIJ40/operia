@@ -81,9 +81,44 @@ function competenceMatchesUnivers(competenceLabel: string, universSlug: string):
 }
 
 function techMatchesDossierUniverses(techCompetences: string[], dossierUniverses: string[]): boolean {
-  if (!techCompetences || techCompetences.length === 0) return true; // no data = compatible
+  // Sans univers dossier, on ne filtre pas
   if (!dossierUniverses || dossierUniverses.length === 0) return true;
+
+  // Si univers connus mais aucune compétence tech renseignée, on considère NON compatible
+  // (on basculera en fallback global plus loin si aucun tech compatible n'existe)
+  if (!techCompetences || techCompetences.length === 0) return false;
+
   return dossierUniverses.some(uni => techCompetences.some(comp => competenceMatchesUnivers(comp, uni)));
+}
+
+const DOSSIER_LABEL_STOPWORDS = new Set([
+  'de', 'du', 'des', 'les', 'pour', 'avec', 'sans', 'sur', 'dans', 'chez', 'client', 'dossier',
+]);
+
+function extractDossierUniverses(dossier: any): string[] {
+  if (!dossier) return [];
+
+  const fromUniverses = [
+    ...(Array.isArray(dossier?.data?.universes) ? dossier.data.universes : []),
+    ...(Array.isArray(dossier?.universes) ? dossier.universes : []),
+  ]
+    .map((u: string) => normalizeSlug(u))
+    .filter(Boolean);
+
+  const labelSource = [
+    dossier?.label,
+    dossier?.data?.label,
+    ...(Array.isArray(dossier?.data?.pictosInterv) ? dossier.data.pictosInterv : []),
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const labelTokens = labelSource
+    .split(/[\s\-\/\+,;:|()]+/)
+    .map((w: string) => normalizeSlug(w))
+    .filter((w: string) => w.length >= 4 && !DOSSIER_LABEL_STOPWORDS.has(w));
+
+  return Array.from(new Set([...fromUniverses, ...labelTokens]));
 }
 
 // =============================================================================
@@ -254,9 +289,10 @@ Deno.serve(async (req: Request) => {
     // =====================================================================
     console.log(`[SUGGEST-PLANNING] Fetching data for agency ${agency.slug}, dossier ${dossier_id}`);
 
-    const [apogeeUsers, interventions, projects, rhCompetences] = await Promise.all([
+    const [apogeeUsers, interventionsCreneaux, interventionsDetailed, projects, rhCompetences] = await Promise.all([
       fetchApogee(agency.slug, 'apiGetUsers', apiKey),
       fetchApogee(agency.slug, 'getInterventionsCreneaux', apiKey),
+      fetchApogee(agency.slug, 'apiGetInterventions', apiKey),
       fetchApogee(agency.slug, 'apiGetProjects', apiKey),
       // Load RH competences from DB
       supabase
@@ -268,7 +304,9 @@ Deno.serve(async (req: Request) => {
         .then(r => r.data || []),
     ]);
 
-    console.log(`[SUGGEST-PLANNING] Loaded: ${apogeeUsers.length} users, ${interventions.length} interventions, ${projects.length} projects, ${rhCompetences.length} RH records`);
+    console.log(
+      `[SUGGEST-PLANNING] Loaded: ${apogeeUsers.length} users, ${interventionsCreneaux.length} creneaux, ${interventionsDetailed.length} interventions, ${projects.length} projects, ${rhCompetences.length} RH records`
+    );
 
     // Build competences map: apogeeUserId → string[]
     const competencesMap = new Map<number, string[]>();
@@ -280,16 +318,29 @@ Deno.serve(async (req: Request) => {
 
     // Find the target dossier
     const dossier = projects.find((p: any) => p.id === dossier_id || p.id === String(dossier_id));
-    const dossierUniverses: string[] = dossier?.data?.universes || dossier?.universes || [];
+    const dossierUniverses: string[] = extractDossierUniverses(dossier);
 
-    // Filter technicians (exclude office staff)
+    // Filter technicians (exclude office staff) + dedupe by numeric ID
     const EXCLUDED_TYPES = new Set(['interimaire', 'commercial', 'admin', 'assistante', 'assistant', 'utilisateur', 'comptable', 'direction']);
-    const technicians = apogeeUsers.filter((u: any) => {
-      const type = (u.type || '').toLowerCase();
-      if (EXCLUDED_TYPES.has(type)) return false;
-      return type.includes('tech') || type.includes('ouvrier') || type.includes('intervenant') || 
-             (u.is_on !== false); // include active users not in excluded list
-    });
+    const techniciansMap = new Map<number, any>();
+
+    for (const rawUser of apogeeUsers) {
+      const techId = Number((rawUser as any)?.id);
+      if (!Number.isFinite(techId)) continue;
+
+      const type = String((rawUser as any)?.type || '').toLowerCase();
+      if (EXCLUDED_TYPES.has(type)) continue;
+
+      const isTerrain = type.includes('tech') || type.includes('ouvrier') || type.includes('intervenant');
+      const isActive = (rawUser as any)?.is_on !== false;
+      if (!isTerrain && !isActive) continue;
+
+      if (!techniciansMap.has(techId)) {
+        techniciansMap.set(techId, { ...rawUser, id: techId });
+      }
+    }
+
+    const technicians = Array.from(techniciansMap.values());
 
     // Build tech availability for next 5 working days
     const today = new Date();
@@ -305,45 +356,97 @@ Deno.serve(async (req: Request) => {
 
     // =====================================================================
     // INDEX OCCUPIED SLOTS: tech+date → occupied half-hours + total minutes
+    // Sources: getInterventionsCreneaux + apiGetInterventions(data.visites)
     // =====================================================================
     const occupiedSlots = new Map<string, Set<string>>();
     const dayLoadMinutes = new Map<string, number>();
+    const seenOccupancy = new Set<string>();
 
-    for (const interv of interventions) {
-      // Support multiple user IDs per intervention
-      const techIds: number[] = [];
-      if (interv.usersIds && Array.isArray(interv.usersIds)) {
-        techIds.push(...interv.usersIds);
-      } else if (interv.userId || interv.user_id) {
-        techIds.push(interv.userId || interv.user_id);
+    const parseDateAndTime = (dateLike: unknown): { dateStr: string; startMinutes: number } | null => {
+      if (!dateLike) return null;
+      const s = String(dateLike);
+
+      // Preferred parse (stable, timezone-safe for Apogée local format)
+      const m = s.match(/(\d{4}-\d{2}-\d{2})[T\s](\d{2}):(\d{2})/);
+      if (m) {
+        return {
+          dateStr: m[1],
+          startMinutes: Number(m[2]) * 60 + Number(m[3]),
+        };
       }
 
-      const dateStr = (interv.date || interv.dateDebut || '').split('T')[0];
-      if (!dateStr || !workingDays.includes(dateStr)) continue;
+      // Fallback parse
+      const d = new Date(s);
+      if (Number.isNaN(d.getTime())) return null;
+      return {
+        dateStr: d.toISOString().split('T')[0],
+        startMinutes: d.getUTCHours() * 60 + d.getUTCMinutes(),
+      };
+    };
 
-      const duration = interv.duree || interv.duration || 120;
-      
-      // Parse start time
-      const timeMatch = (interv.date || interv.dateDebut || '').match(/T(\d{2}):(\d{2})/);
-      const startHour = timeMatch ? parseInt(timeMatch[1]) : 8;
-      const startMin = timeMatch ? parseInt(timeMatch[2]) : 0;
+    const addOccupiedSlot = (techIdRaw: unknown, dateStr: string, startMinutes: number, durationRaw: unknown) => {
+      const techId = Number(techIdRaw);
+      if (!Number.isFinite(techId) || !workingDays.includes(dateStr)) return;
+
+      const duration = Math.max(30, Number(durationRaw) || 120);
+      const dedupeKey = `${techId}-${dateStr}-${startMinutes}-${duration}`;
+      if (seenOccupancy.has(dedupeKey)) return;
+      seenOccupancy.add(dedupeKey);
+
+      const key = `${techId}-${dateStr}`;
+      if (!occupiedSlots.has(key)) occupiedSlots.set(key, new Set());
+
+      let currentMin = Math.max(startMinutes, 8 * 60);
+      const endMin = Math.min(startMinutes + duration, 18 * 60);
+      while (currentMin < endMin) {
+        const h = Math.floor(currentMin / 60);
+        const m = currentMin % 60;
+        occupiedSlots.get(key)!.add(`${h.toString().padStart(2, '0')}:${m < 30 ? '00' : '30'}`);
+        currentMin += 30;
+      }
+
+      dayLoadMinutes.set(key, (dayLoadMinutes.get(key) || 0) + duration);
+    };
+
+    // Source 1: getInterventionsCreneaux
+    for (const creneau of interventionsCreneaux) {
+      const parsed = parseDateAndTime((creneau as any)?.date || (creneau as any)?.dateDebut);
+      if (!parsed) continue;
+
+      const duration = (creneau as any)?.duree || (creneau as any)?.duration || 120;
+      const techIds = Array.isArray((creneau as any)?.usersIds)
+        ? (creneau as any).usersIds
+        : [
+            (creneau as any)?.userId,
+            (creneau as any)?.user_id,
+          ].filter(Boolean);
 
       for (const techId of techIds) {
-        const key = `${techId}-${dateStr}`;
-        if (!occupiedSlots.has(key)) occupiedSlots.set(key, new Set());
-        
-        // Mark occupied half-hours
-        let currentMin = startHour * 60 + startMin;
-        const endMin = currentMin + duration;
-        while (currentMin < endMin && currentMin < 18 * 60) {
-          const h = Math.floor(currentMin / 60);
-          const m = currentMin % 60;
-          occupiedSlots.get(key)!.add(`${h.toString().padStart(2, '0')}:${m < 30 ? '00' : '30'}`);
-          currentMin += 30;
-        }
+        addOccupiedSlot(techId, parsed.dateStr, parsed.startMinutes, duration);
+      }
+    }
 
-        // Track total load
-        dayLoadMinutes.set(key, (dayLoadMinutes.get(key) || 0) + duration);
+    // Source 2: apiGetInterventions(data.visites)
+    for (const interv of interventionsDetailed) {
+      const visites = Array.isArray((interv as any)?.data?.visites)
+        ? (interv as any).data.visites
+        : [];
+
+      for (const visite of visites) {
+        const parsed = parseDateAndTime((visite as any)?.date || (interv as any)?.date || (interv as any)?.dateDebut);
+        if (!parsed) continue;
+
+        const duration = (visite as any)?.duree || (visite as any)?.duration || (interv as any)?.duree || 120;
+        const techIds = Array.isArray((visite as any)?.usersIds) && (visite as any).usersIds.length > 0
+          ? (visite as any).usersIds
+          : [
+              (interv as any)?.userId,
+              (interv as any)?.user_id,
+            ].filter(Boolean);
+
+        for (const techId of techIds) {
+          addOccupiedSlot(techId, parsed.dateStr, parsed.startMinutes, duration);
+        }
       }
     }
 
@@ -417,18 +520,35 @@ Deno.serve(async (req: Request) => {
     }
 
     // =====================================================================
-    // SCORE & RANK — diversify: max 1 suggestion per tech
+    // SCORE & RANK — priorité à la compatibilité compétence↔univers
     // =====================================================================
+    const compatibleSlots = allTechSlots.filter(t => t.isCompatibleWithDossier);
+    const hasDossierUniverses = dossierUniverses.length > 0;
+    const fallbackToIncompatible = hasDossierUniverses && compatibleSlots.length === 0;
+    const candidatePool = hasDossierUniverses && !fallbackToIncompatible
+      ? compatibleSlots
+      : allTechSlots;
+
     const candidates: Array<Suggestion & { rawScore: number }> = [];
-    for (const ts of allTechSlots) {
+    for (const ts of candidatePool) {
       // Only take the first (best) free slot per tech-day
       const bestSlot = ts.freeSlots[0];
       if (!bestSlot) continue;
 
-      const { score, reasons } = scoreSuggestion(ts, bestSlot.hour, weights, allTechSlots);
-      
-      // Bonus for compatible techs
-      const finalScore = ts.isCompatibleWithDossier ? score + 10 : score;
+      const { score, reasons } = scoreSuggestion(ts, bestSlot.hour, weights, candidatePool);
+
+      // Le score doit refléter fortement la cohérence technique
+      let finalScore = score;
+      if (ts.isCompatibleWithDossier) {
+        finalScore += 12;
+      } else {
+        finalScore -= 25;
+      }
+
+      const finalReasons = [...reasons];
+      if (fallbackToIncompatible && hasDossierUniverses) {
+        finalReasons.push('⚠ Aucun technicien avec compétence explicite trouvée (fallback)');
+      }
 
       candidates.push({
         rank: 0,
@@ -439,7 +559,7 @@ Deno.serve(async (req: Request) => {
         duration: Math.min(bestSlot.duration, 120), // cap at 2h default
         buffer: 15,
         score: finalScore,
-        reasons,
+        reasons: finalReasons,
         rawScore: finalScore,
       });
     }
@@ -469,11 +589,11 @@ Deno.serve(async (req: Request) => {
 
     // If fewer than 3 different techs, allow same tech on different days
     if (suggestions.length < 3) {
-      const usedKeys = new Set(suggestions.map(s => `${s.tech_id}-${s.date}`));
+      const usedTechDays = new Set(suggestions.map(s => `${s.tech_id}-${s.date}`));
       for (const c of candidates) {
-        const key = `${c.tech_id}-${c.date}`;
-        if (usedKeys.has(key)) continue;
-        usedKeys.add(key);
+        const techDayKey = `${c.tech_id}-${c.date}`;
+        if (usedTechDays.has(techDayKey)) continue;
+        usedTechDays.add(techDayKey);
         suggestions.push({
           rank: suggestions.length + 1,
           date: c.date,
@@ -495,9 +615,22 @@ Deno.serve(async (req: Request) => {
         agency_id,
         dossier_id,
         requested_by: user.id,
-        input_json: { agency_id, dossier_id, weights, technicians_count: technicians.length },
+        input_json: {
+          agency_id,
+          dossier_id,
+          weights,
+          technicians_count: technicians.length,
+          dossier_universes: dossierUniverses,
+        },
         output_json: { suggestions },
-        score_breakdown_json: { weights, techs: technicians.length, interventions: interventions.length, rh_competences: competencesMap.size },
+        score_breakdown_json: {
+          weights,
+          techs: technicians.length,
+          creneaux: interventionsCreneaux.length,
+          interventions: interventionsDetailed.length,
+          rh_competences: competencesMap.size,
+          fallback_to_incompatible: fallbackToIncompatible,
+        },
         status: 'pending',
       });
       if (auditErr) console.warn('[SUGGEST-PLANNING] Audit insert failed:', auditErr.message);
@@ -512,11 +645,13 @@ Deno.serve(async (req: Request) => {
         engine_version: 'v1-heuristic-live',
         weights,
         skills_loaded: competencesMap.size,
-        calibrations_loaded: interventions.length,
+        calibrations_loaded: interventionsCreneaux.length,
         dossier_found: !!dossier,
         dossier_universes: dossierUniverses,
         techs_total: technicians.length,
-        techs_compatible: allTechSlots.filter(t => t.isCompatibleWithDossier).length,
+        techs_with_slots: allTechSlots.length,
+        techs_compatible: compatibleSlots.length,
+        fallback_to_incompatible: fallbackToIncompatible,
       },
     }), {
       status: 200,
