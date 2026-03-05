@@ -6,16 +6,18 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTicketExchanges } from '../hooks/useTicketExchanges';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Send, Loader2, User, HeadphonesIcon, Check, CheckCheck } from 'lucide-react';
+import { Send, Loader2, User, HeadphonesIcon, Check, CheckCheck, Mail } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { successToast, errorToast } from '@/lib/toastHelpers';
 
 interface TicketSupportExchangesProps {
   ticketId: string;
@@ -28,6 +30,7 @@ interface TicketSupportExchangesProps {
     agence?: string;
   } | null;
   isSupport?: boolean;
+  ticketCreatedFrom?: string;
   className?: string;
 }
 
@@ -36,11 +39,14 @@ export function TicketSupportExchanges({
   initiatorUserId,
   initiatorProfile,
   isSupport = false,
+  ticketCreatedFrom,
   className,
 }: TicketSupportExchangesProps) {
   const { user } = useAuth();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [message, setMessage] = useState('');
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const showMailButton = isSupport && ticketCreatedFrom === 'email';
 
   const {
     exchanges,
@@ -69,6 +75,25 @@ export function TicketSupportExchanges({
     if (!message.trim()) return;
     await sendMessage(message.trim(), isSupport);
     setMessage('');
+  };
+
+  const handleSendWithEmail = async () => {
+    if (!message.trim()) return;
+    const msg = message.trim();
+    setIsSendingEmail(true);
+    try {
+      await sendMessage(msg, isSupport);
+      const { error } = await supabase.functions.invoke('reply-ticket-email', {
+        body: { ticket_id: ticketId, message: msg },
+      });
+      if (error) throw error;
+      successToast('Réponse envoyée par email au demandeur');
+      setMessage('');
+    } catch (err: any) {
+      errorToast(err?.message || "Erreur lors de l'envoi email");
+    } finally {
+      setIsSendingEmail(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -235,17 +260,39 @@ export function TicketSupportExchanges({
               className="min-h-[60px] resize-none"
               rows={2}
             />
-            <Button
-              onClick={handleSend}
-              disabled={!message.trim() || isSending}
-              className="self-end"
-            >
-              {isSending ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Send className="w-4 h-4" />
+            <div className="flex flex-col gap-1 self-end">
+              <Button
+                variant={showMailButton ? "outline" : "default"}
+                size="sm"
+                onClick={handleSend}
+                disabled={!message.trim() || isSending || isSendingEmail}
+                title="Répondre (interne)"
+              >
+                {isSending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+              </Button>
+              {showMailButton && (
+                <Button
+                  size="sm"
+                  onClick={handleSendWithEmail}
+                  disabled={!message.trim() || isSending || isSendingEmail}
+                  title="Répondre + envoyer par email"
+                  className="gap-1"
+                >
+                  {isSendingEmail ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Mail className="w-4 h-4" />
+                      <span className="text-xs">+mail</span>
+                    </>
+                  )}
+                </Button>
               )}
-            </Button>
+            </div>
           </div>
         </div>
       </CardContent>
