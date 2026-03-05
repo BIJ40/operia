@@ -7906,6 +7906,30 @@ export type Database = {
           },
         ]
       }
+      ticket_notification_recipients: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          is_active: boolean
+          label: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+        }
+        Relationships: []
+      }
       time_events: {
         Row: {
           collaborator_id: string

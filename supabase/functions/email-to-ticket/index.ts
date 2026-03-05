@@ -339,6 +339,40 @@ Deno.serve(async (req) => {
 
     console.log(`New ticket created: TKT-${newTicket.ticket_number} from ${senderEmail}`);
 
+    // Fire-and-forget: notify recipients about new ticket
+    try {
+      const { data: recipients } = await supabase
+        .from("ticket_notification_recipients")
+        .select("email")
+        .eq("is_active", true);
+
+      if (recipients && recipients.length > 0) {
+        const resendApiKey = Deno.env.get("RESEND_API_KEY");
+        if (resendApiKey) {
+          const appUrl = Deno.env.get("APP_URL") || "https://helpconfort.services";
+          const ticketUrl = `${appUrl}/tickets?id=${newTicket.id}`;
+          const priorityLabel = route.priority >= 10 ? "🔴 Bloquant" : route.priority >= 8 ? "🟠 Urgent" : route.priority >= 5 ? "🟡 Important" : "🔵 Normal";
+          const descPreview = textBody.slice(0, 300).replace(/<[^>]*>/g, "");
+
+          const htmlBody = `<!DOCTYPE html><html><body style="font-family:sans-serif;background:#f4f4f5;padding:20px;"><div style="max-width:600px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.1)"><div style="background:#1a1a2e;color:#fff;padding:20px 24px"><h1 style="margin:0;font-size:18px">🎫 Nouveau ticket TKT-${newTicket.ticket_number}</h1></div><div style="padding:24px"><table style="width:100%;border-collapse:collapse;margin-bottom:16px"><tr><td style="padding:8px 0;color:#71717a;width:120px">Sujet</td><td style="padding:8px 0;font-weight:600">${subject}</td></tr><tr><td style="padding:8px 0;color:#71717a">Priorité</td><td style="padding:8px 0">${priorityLabel}</td></tr><tr><td style="padding:8px 0;color:#71717a">Source</td><td style="padding:8px 0">Email (${senderEmail})</td></tr></table><div style="background:#f4f4f5;border-radius:6px;padding:16px;margin-bottom:20px"><p style="margin:0;color:#3f3f46;font-size:14px;line-height:1.5">${descPreview}…</p></div><a href="${ticketUrl}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500">Voir le ticket →</a></div><div style="padding:16px 24px;background:#fafafa;color:#a1a1aa;font-size:12px;text-align:center">HelpConfort – Notification automatique</div></div></body></html>`;
+
+          await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${resendApiKey}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              from: "Tickets HelpConfort <tickets@ticket.helpconfort.services>",
+              to: recipients.map((r: any) => r.email),
+              subject: `[TKT-${newTicket.ticket_number}] ${subject}`,
+              html: htmlBody,
+            }),
+          });
+          console.log(`Notification sent to ${recipients.length} recipients`);
+        }
+      }
+    } catch (notifErr) {
+      console.error("Notification error (non-blocking):", notifErr);
+    }
+
     return new Response(
       JSON.stringify({
         ok: true,

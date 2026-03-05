@@ -5,6 +5,7 @@
  */
 
 import React, { useState } from 'react';
+import { notifyNewTicket } from '@/utils/notifyNewTicket';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ExternalLink, FileText, Sparkles, MessageCircle, HelpCircle, User, Bot, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -56,7 +57,7 @@ export function AiInlineResult({ messages, isLoading, onClose, onContactSupport,
     setIsSendingTicket(true);
     try {
       // Create ticket in apogee_tickets (Gestion de Projet system)
-      const { error } = await supabase.from('apogee_tickets').insert({
+      const { data: ticket, error } = await supabase.from('apogee_tickets').insert({
         element_concerne: 'Question depuis l\'IA Assistant',
         description: supportMessage,
         kanban_status: 'USER',
@@ -66,9 +67,20 @@ export function AiInlineResult({ messages, isLoading, onClose, onContactSupport,
         created_by_user_id: user.id,
         created_from: 'support_chat',
         initiator_profile: { agency_slug: agence },
-      });
+      }).select('id, ticket_number').single();
 
       if (error) throw error;
+
+      // Fire-and-forget notification
+      notifyNewTicket({
+        ticket_id: ticket.id,
+        ticket_number: ticket.ticket_number,
+        subject: 'Question depuis l\'IA Assistant',
+        description: supportMessage,
+        heat_priority: 4,
+        created_from: 'support_chat',
+        initiator_email: user.email,
+      });
 
       toast.success('Votre demande a été envoyée au support');
       setShowSupportDialog(false);

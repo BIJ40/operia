@@ -186,3 +186,6 @@ verify_jwt = true
 
 [functions.apply-planning-action]
 verify_jwt = true
+
+[functions.notify-new-ticket]
+verify_jwt = false

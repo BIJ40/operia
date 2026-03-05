@@ -11,6 +11,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
+import { notifyNewTicket } from '@/utils/notifyNewTicket';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -200,6 +201,20 @@ export function SimplifiedSupportChat({
         .single();
 
       if (error) throw error;
+
+      // Fire-and-forget notification
+      if (ticket) {
+        notifyNewTicket({
+          ticket_id: ticket.id,
+          ticket_number: ticket.ticket_number,
+          subject: ticketData.element_concerne,
+          description: ticketData.description,
+          heat_priority: ticketData.heat_priority,
+          created_from: 'support',
+          initiator_name: [profile?.first_name, profile?.last_name].filter(Boolean).join(' '),
+          initiator_email: profile?.email || user.email,
+        });
+      }
 
       // Invalidate queries to refresh Kanban and user tickets
       queryClient.invalidateQueries({ queryKey: ['apogee-tickets'] });

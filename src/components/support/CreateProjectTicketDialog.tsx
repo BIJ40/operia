@@ -3,6 +3,7 @@
  * Crée directement dans apogee_tickets (et non support_tickets)
  */
 import { useState, useMemo } from 'react';
+import { notifyNewTicket } from '@/utils/notifyNewTicket';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -159,7 +160,7 @@ export function CreateProjectTicketDialog({
         .maybeSingle();
 
       // Créer le ticket dans apogee_tickets
-      const result = await safeMutation<{ id: string }>(
+      const result = await safeMutation<{ id: string; ticket_number: number }>(
         supabase
           .from('apogee_tickets')
           .insert({
@@ -181,7 +182,7 @@ export function CreateProjectTicketDialog({
               agence: profile.agence,
             } : null,
           } as any)
-          .select('id')
+          .select('id, ticket_number')
           .single(),
         'CREATE_PROJECT_TICKET_FROM_SUPPORT'
       );
@@ -192,6 +193,19 @@ export function CreateProjectTicketDialog({
       }
 
       const ticketId = result.data.id;
+
+      // Fire-and-forget notification
+      notifyNewTicket({
+        ticket_id: ticketId,
+        ticket_number: result.data.ticket_number,
+        subject: trimmedSubject,
+        description: trimmedDescription,
+        heat_priority: formData.heatPriority || 6,
+        module: formData.module || undefined,
+        created_from: 'support',
+        initiator_name: profile ? `${profile.first_name} ${profile.last_name}` : undefined,
+        initiator_email: user.email,
+      });
 
       // Upload des fichiers si présents
       if (files.length > 0) {
