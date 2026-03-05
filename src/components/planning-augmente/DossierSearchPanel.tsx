@@ -28,8 +28,7 @@ interface DossierSearchPanelProps {
  * States: a_planifier, planifie_rt (en attente), rt_fait → devis_a_faire
  */
 const PREMIER_RDV_STATES = [
-  'a_planifier',
-  'planifie_rt',
+  'new',
 ];
 
 /** 
@@ -37,9 +36,7 @@ const PREMIER_RDV_STATES = [
  * States: a_planifier_travaux, devis_accepte, devis_valide
  */
 const TRAVAUX_STATES = [
-  'a_planifier_travaux',
-  'devis_accepte',
-  'devis_valide',
+  'to_planify_tvx',
 ];
 
 function normalizeState(state: string): string {
