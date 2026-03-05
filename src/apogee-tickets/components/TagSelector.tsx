@@ -22,12 +22,11 @@ export function TagSelector({ selectedTags, onTagsChange, disabled, compact = fa
   const [isOpen, setIsOpen] = useState(false);
   const { tags, ensureTagExists, getTagColor } = useTicketTags();
 
-  const handleAddTag = async (tag: string) => {
+  const handleAddTag = (tag: string) => {
     const upperTag = tag.toUpperCase().trim();
     if (upperTag && !selectedTags.includes(upperTag)) {
-      // Ensure tag exists in database
-      await ensureTagExists(upperTag);
       onTagsChange([...selectedTags, upperTag]);
+      ensureTagExists(upperTag); // fire-and-forget
     }
     setNewTag('');
   };
@@ -36,11 +35,11 @@ export function TagSelector({ selectedTags, onTagsChange, disabled, compact = fa
     onTagsChange(selectedTags.filter(t => t !== tag));
   };
 
-  const handleToggleTag = async (tag: string) => {
+  const handleToggleTag = (tag: string) => {
     if (selectedTags.includes(tag)) {
       handleRemoveTag(tag);
     } else {
-      await handleAddTag(tag);
+      handleAddTag(tag);
     }
   };
 
