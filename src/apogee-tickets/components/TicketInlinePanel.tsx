@@ -690,6 +690,7 @@ export function TicketInlinePanel({
                 initiatorUserId={ticket.support_initiator_user_id}
                 initiatorProfile={ticket.initiator_profile}
                 isSupport={true}
+                ticketCreatedFrom={ticket.created_from}
               />
             </div>
           </TabsContent>

@@ -33,6 +33,7 @@ export function ProjectTicketDetailPanel({ ticketId, onBack }: ProjectTicketDeta
           kanban_status,
           heat_priority,
           created_at,
+          created_from,
           is_urgent_support,
           apogee_ticket_statuses(id, label, color, is_final)
         `)
@@ -125,6 +126,7 @@ export function ProjectTicketDetailPanel({ ticketId, onBack }: ProjectTicketDeta
       <TicketSupportExchanges 
         ticketId={ticketId}
         isSupport={false}
+        ticketCreatedFrom={ticket.created_from}
         className="min-h-[300px]"
       />
     </div>
