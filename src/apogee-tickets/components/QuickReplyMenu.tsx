@@ -43,7 +43,7 @@ const TEMPLATES: QuickReplyTemplate[] = [
     icon: <Bug className="w-3.5 h-3.5 text-destructive" />,
     category: 'bug',
     getMessage: (ctx) =>
-      `Bonjour${ctx.requesterName ? ` ${ctx.requesterName}` : ''},\n\nNous avons bien pris en compte votre remontée de bug${ctx.subject ? ` concernant "${ctx.subject}"` : ''} et vous en remercions.\n\nNous sommes actuellement sur le sujet et ne manquerons pas de vous tenir informé(e) de l'évolution.\n\nCordialement,\nL'équipe Support HelpConfort`,
+      `Bonjour${ctx.requesterName ? ` ${ctx.requesterName}` : ''},\n\nNous avons bien pris en compte votre remontée de bug${ctx.subject ? ` concernant "${ctx.subject}"` : ''} et vous en remercions.\n\nNous sommes actuellement sur le sujet et ne manquerons pas de vous tenir informé(e) de l'évolution.\n\nCordialement,\nL'équipe Support Apogée / Help!Confort`,
   },
   {
     id: 'feature-ack',
@@ -51,7 +51,7 @@ const TEMPLATES: QuickReplyTemplate[] = [
     icon: <Lightbulb className="w-3.5 h-3.5 text-amber-500" />,
     category: 'feature',
     getMessage: (ctx) =>
-      `Bonjour${ctx.requesterName ? ` ${ctx.requesterName}` : ''},\n\nNous avons bien reçu votre demande${ctx.subject ? ` concernant "${ctx.subject}"` : ''} et nous vous remercions pour cette suggestion.\n\nVotre retour a été transmis à l'équipe en charge, qui l'étudiera dans les meilleurs délais. Nous reviendrons vers vous dès que nous aurons plus d'informations.\n\nCordialement,\nL'équipe Support HelpConfort`,
+      `Bonjour${ctx.requesterName ? ` ${ctx.requesterName}` : ''},\n\nNous avons bien reçu votre demande${ctx.subject ? ` concernant "${ctx.subject}"` : ''} et nous vous remercions pour cette suggestion.\n\nVotre retour a été transmis à l'équipe en charge, qui l'étudiera dans les meilleurs délais. Nous reviendrons vers vous dès que nous aurons plus d'informations.\n\nCordialement,\nL'équipe Support Apogée / Help!Confort`,
   },
   {
     id: 'general-ack',
@@ -59,7 +59,7 @@ const TEMPLATES: QuickReplyTemplate[] = [
     icon: <HelpCircle className="w-3.5 h-3.5 text-primary" />,
     category: 'general',
     getMessage: (ctx) =>
-      `Bonjour${ctx.requesterName ? ` ${ctx.requesterName}` : ''},\n\nNous avons bien reçu votre message${ctx.subject ? ` concernant "${ctx.subject}"` : ''} et nous vous en remercions.\n\nNous revenons vers vous dans les plus brefs délais.\n\nCordialement,\nL'équipe Support HelpConfort`,
+      `Bonjour${ctx.requesterName ? ` ${ctx.requesterName}` : ''},\n\nNous avons bien reçu votre message${ctx.subject ? ` concernant "${ctx.subject}"` : ''} et nous vous en remercions.\n\nNous revenons vers vous dans les plus brefs délais.\n\nCordialement,\nL'équipe Support Apogée / Help!Confort`,
   },
 ];
 
