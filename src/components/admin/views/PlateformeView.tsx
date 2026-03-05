@@ -3,7 +3,7 @@
  * Utilise DraggableFolderTabs avec bordures colorées
  */
 
-import { lazy, Suspense, useCallback } from 'react';
+import { lazy, Suspense, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { 
@@ -15,6 +15,7 @@ import { Activity, Map, GitBranch, ToggleRight, Brain, Bell, Loader2 } from 'luc
 import { useAuth } from '@/contexts/AuthContext';
 import { MaintenanceModeCard } from '@/components/admin/MaintenanceModeCard';
 import { useSessionState } from '@/hooks/useSessionState';
+import { usePersistedTab } from '@/hooks/usePersistedState';
 
 const AdminSystemHealth = lazy(() => import('@/pages/AdminSystemHealth'));
 const AdminFeatureFlags = lazy(() => import('@/pages/admin/AdminFeatureFlags'));
@@ -33,6 +34,7 @@ const SUB_TABS: FolderTabConfig[] = [
 ];
 
 const DEFAULT_TAB_ORDER = ['health', 'modules', 'sitemap', 'flow', 'planning-ia', 'notifications'];
+const PLATFORM_TAB_IDS = SUB_TABS.map(tab => tab.id);
 
 function LoadingFallback() {
   return (
@@ -46,15 +48,33 @@ export function PlateformeView() {
   const { hasGlobalRole } = useAuth();
   const isSuperadmin = hasGlobalRole('superadmin');
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeView = searchParams.get('adminView') || 'health';
+  const [persistedView, setPersistedView] = usePersistedTab('admin_plateforme_active_view', 'health', PLATFORM_TAB_IDS);
+  const activeViewParam = searchParams.get('adminView');
+  const activeView = activeViewParam && PLATFORM_TAB_IDS.includes(activeViewParam) ? activeViewParam : persistedView;
   const [tabOrder, setTabOrder] = useSessionState<string[]>('admin_plateforme_tab_order', DEFAULT_TAB_ORDER);
 
+  useEffect(() => {
+    if (activeViewParam && PLATFORM_TAB_IDS.includes(activeViewParam)) {
+      if (activeViewParam !== persistedView) {
+        setPersistedView(activeViewParam);
+      }
+      return;
+    }
+
+    const next = new URLSearchParams(searchParams);
+    next.set('tab', 'admin');
+    next.set('adminTab', 'plateforme');
+    next.set('adminView', persistedView);
+    setSearchParams(next, { replace: true });
+  }, [activeViewParam, persistedView, searchParams, setSearchParams, setPersistedView]);
+
   const handleViewChange = (value: string) => {
+    setPersistedView(value);
     const next = new URLSearchParams(searchParams);
     next.set('tab', 'admin');
     next.set('adminTab', 'plateforme');
     next.set('adminView', value);
-    setSearchParams(next);
+    setSearchParams(next, { replace: true });
   };
 
   const handleReorder = useCallback((newOrder: string[]) => {
