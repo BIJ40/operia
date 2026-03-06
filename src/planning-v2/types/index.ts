@@ -180,3 +180,36 @@ export interface PlanningFilters {
   showUnconfirmed: boolean;
   granularity: 15 | 30 | 60;
 }
+
+// ─── Display Settings (hover / carte) ───────────────────────────────────────
+export interface HoverDisplaySettings {
+  showClient: boolean;
+  showCity: boolean;
+  showAddress: boolean;
+  showType: boolean;
+  showUniverse: boolean;
+  showDuration: boolean;
+  showStatus: boolean;
+  showApporteur: boolean;
+  showProjectRef: boolean;
+  showNotes: boolean;
+  showTechnicians: boolean;
+  showPriority: boolean;
+  showTime: boolean;
+}
+
+export const DEFAULT_HOVER_SETTINGS: HoverDisplaySettings = {
+  showClient: true,
+  showCity: true,
+  showAddress: true,
+  showType: true,
+  showUniverse: true,
+  showDuration: true,
+  showStatus: true,
+  showApporteur: false,
+  showProjectRef: false,
+  showNotes: false,
+  showTechnicians: true,
+  showPriority: true,
+  showTime: true,
+};
