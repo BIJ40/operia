@@ -112,87 +112,26 @@ export function RHMetiersMultiSelect({
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-1">
-              {allMetiers.map((label) => {
-                const catalogueItem = catalogue.find(c => c.label.toLowerCase() === label.toLowerCase());
-                const canDelete = catalogueItem && !catalogueItem.is_default;
-                
-                return (
-                  <div
-                    key={label}
-                    className="group flex items-center gap-1 px-2 py-1.5 rounded hover:bg-muted"
-                  >
-                    <label className="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
-                      <Checkbox
-                        checked={localSelected.includes(label)}
-                        onCheckedChange={() => handleToggle(label)}
-                      />
-                      <span className="text-xs truncate" title={label}>{label}</span>
-                    </label>
-                    {canDelete && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (catalogueItem) {
-                            deleteCompetence.mutate(catalogueItem.id);
-                            setLocalSelected(prev => prev.filter(m => m.toLowerCase() !== label.toLowerCase()));
-                          }
-                        }}
-                        className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-destructive/20 rounded transition-opacity"
-                        title="Supprimer du catalogue"
-                      >
-                        <X className="h-3 w-3 text-destructive" />
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
+              {allMetiers.map((label) => (
+                <div
+                  key={label}
+                  className="group flex items-center gap-1 px-2 py-1.5 rounded hover:bg-muted"
+                >
+                  <label className="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+                    <Checkbox
+                      checked={localSelected.includes(label)}
+                      onCheckedChange={() => handleToggle(label)}
+                    />
+                    <span className="text-xs truncate" title={label}>{label}</span>
+                  </label>
+                </div>
+              ))}
             </div>
           )}
         </ScrollArea>
-        
-        <div className="border-t mt-2 pt-2">
-          {showAddInput ? (
-            <div className="flex gap-1">
-              <Input
-                value={newMetier}
-                onChange={(e) => setNewMetier(e.target.value)}
-                placeholder="Nouveau métier..."
-                className="h-7 text-sm"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleAddMetier();
-                  if (e.key === 'Escape') {
-                    setShowAddInput(false);
-                    setNewMetier('');
-                  }
-                }}
-                autoFocus
-              />
-              <Button 
-                size="sm" 
-                className="h-7 px-2"
-                onClick={handleAddMetier}
-                disabled={addCompetence.isPending || !newMetier.trim()}
-              >
-                {addCompetence.isPending ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                  <Plus className="h-3 w-3" />
-                )}
-              </Button>
-            </div>
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full h-7 text-xs justify-start gap-1"
-              onClick={() => setShowAddInput(true)}
-            >
-              <Plus className="h-3 w-3" />
-              Ajouter un métier
-            </Button>
-          )}
-        </div>
+        <p className="text-[10px] text-muted-foreground mt-2 pt-2 border-t italic">
+          Les univers sont synchronisés depuis Apogée
+        </p>
       </PopoverContent>
     </Popover>
   );
