@@ -189,3 +189,6 @@ verify_jwt = true
 
 [functions.notify-new-ticket]
 verify_jwt = false
+
+[functions.migrate-export]
+verify_jwt = false
