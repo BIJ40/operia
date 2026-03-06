@@ -5,6 +5,8 @@
  */
 
 import { useMemo, useRef, useState } from "react";
+import { format } from "date-fns";
+import { toast } from "sonner";
 import { HOUR_START, HOUR_END, HOUR_HEIGHT_PX, LUNCH_START, LUNCH_END, TECH_COLUMN_MIN_WIDTH, TIME_AXIS_WIDTH, GRID_TOTAL_HEIGHT, UNAVAILABLE_BLOCK_TYPES } from "../../constants";
 import { TechColumnHeader } from "./TechColumnHeader";
 import { TechContextMenu } from "./TechContextMenu";
@@ -260,14 +262,34 @@ export function DayDispatchView({
                     }}
                   />
 
-                  {/* Blocks */}
-                  {techBlocks.map((block) => (
-                    <BlockCard
-                      key={block.id}
-                      block={block}
-                      selectedDate={selectedDate}
-                    />
-                  ))}
+                  {/* Blocks — compact types get stacked as icons */}
+                  {(() => {
+                    const COMPACT_TYPES = ["tache", "rappel", "atelier", "formation"];
+                    // Group compact blocks by start hour to compute stack index
+                    const stackCounters = new Map<string, number>();
+                    return techBlocks.map((block) => {
+                      let stackIndex = 0;
+                      if (COMPACT_TYPES.includes(block.type)) {
+                        const hourKey = `${block.start.getHours()}:${block.start.getMinutes()}`;
+                        stackIndex = stackCounters.get(hourKey) ?? 0;
+                        stackCounters.set(hourKey, stackIndex + 1);
+                      }
+                      return (
+                        <BlockCard
+                          key={block.id}
+                          block={block}
+                          selectedDate={selectedDate}
+                          stackIndex={stackIndex}
+                          onViewDetails={(b) => {
+                            // Open detail for the block - reuse the appointment detail or show toast
+                            toast.info(`${b.label}`, {
+                              description: `${b.type} — ${format(b.start, "HH:mm")} à ${format(b.end, "HH:mm")}`,
+                            });
+                          }}
+                        />
+                      );
+                    });
+                  })()}
 
                   {/* Appointments — side by side when overlapping */}
                   {(() => {
