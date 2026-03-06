@@ -44,7 +44,8 @@ function dateKey(d: Date): string {
 
 /** Check if a tech is unavailable for the whole day:
  *  - has absence/congé/repos blocks covering ≥6h, OR
- *  - has 0 appointments and 0 work blocks (not scheduled at all)
+ *  - has 0 appointments and 0 work blocks (not scheduled at all), OR
+ *  - ALL appointments are on a "REPOS" client/project (convention HelpConfort)
  */
 function isTechUnavailable(
   techId: number,
@@ -65,11 +66,22 @@ function isTechUnavailable(
     if (totalMin >= 360) return true;
   }
 
-  // No appointments at all for this tech on this day
   const techAppts = appointments.filter(
     (a) => a.technicianIds.includes(techId) && dateKey(a.start) === dk
   );
+
+  // No appointments and no blocks at all
   if (techAppts.length === 0 && techBlocks.length === 0) return true;
+
+  // All appointments are on "REPOS" client → tech is resting
+  if (techAppts.length > 0) {
+    const allRepos = techAppts.every((a) => {
+      const clientUpper = (a.client || "").toUpperCase().trim();
+      const refUpper = (a.projectRef || "").toUpperCase().trim();
+      return clientUpper.includes("REPOS") || refUpper.includes("REPOS");
+    });
+    if (allRepos) return true;
+  }
 
   return false;
 }
