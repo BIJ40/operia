@@ -17,7 +17,7 @@ WARNINGS=0
 echo "🔍 Vérification de cohérence ARCHITECTURE.md vs Code..."
 echo ""
 
-# ==============================================================================
+# ============================================================================== 
 # 1. Vérifier que les fonctions legacy ne sont plus utilisées
 # ==============================================================================
 echo "📋 1. Vérification des fonctions V1 legacy..."
