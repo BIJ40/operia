@@ -6,6 +6,7 @@
  */
 
 import { useMemo, useRef, useState } from "react";
+import { ZoneIndicator } from "../day/ZoneIndicator";
 import { format, startOfWeek, addDays, isToday } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
