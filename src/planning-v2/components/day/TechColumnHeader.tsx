@@ -9,9 +9,10 @@ interface TechColumnHeaderProps {
   tech: PlanningTechnician;
   load?: TechDayLoad;
   density: DisplayDensity;
+  isUnavailable?: boolean;
 }
 
-export function TechColumnHeader({ tech, load, density }: TechColumnHeaderProps) {
+export function TechColumnHeader({ tech, load, density, isUnavailable }: TechColumnHeaderProps) {
   const chargePercent = load?.chargePercent ?? 0;
   const rdvCount = load?.rdvCount ?? 0;
   const hasConflict = load?.hasConflict ?? false;
