@@ -94,6 +94,13 @@ export function DayDispatchView({
 
   const hiddenCount = technicians.length - visibleTechs.length;
 
+  // Tech lookup map for partner info
+  const techMap = useMemo(() => {
+    const map = new Map<number, PlanningTechnician>();
+    for (const t of technicians) map.set(t.id, t);
+    return map;
+  }, [technicians]);
+
   // Grouper par technicien
   const apptsByTech = useMemo(() => {
     const map = new Map<number, PlanningAppointment[]>();
