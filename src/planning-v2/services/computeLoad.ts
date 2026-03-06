@@ -240,8 +240,9 @@ export function computeWeeklyHeatmap(
         const refUpper = (a.projectRef || "").toUpperCase().trim();
         return clientUpper.includes("REPOS") || refUpper.includes("REPOS");
       });
+      // Absent = bloc d'absence explicite (congé, maladie…) OU toutes les entrées sont "REPOS"
+      // Un tech sans RDV n'est PAS absent, il est simplement libre (charge 0%)
       const isAbsent = (hasAbsenceBlocks && load.rdvCount === 0)
-        || (dayAppts.length === 0 && dayBlocks.length === 0)
         || allRepos;
 
       let status: LoadStatus = "normal";
