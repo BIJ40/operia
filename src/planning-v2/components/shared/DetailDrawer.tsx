@@ -4,8 +4,7 @@
 
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { X, MapPin, Clock, User, Building2, FileText, AlertTriangle, Users } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { MapPin, Clock, User, Building2, FileText, AlertTriangle, Users, Info, Tag, FolderOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -59,7 +58,7 @@ export function DetailDrawer({ appointment: a, technicians, open, onClose }: Det
             </div>
           )}
 
-          {/* Type + univers */}
+          {/* Type + univers + badges */}
           <div className="flex items-center gap-2 flex-wrap">
             {typeBadge && (
               <span
@@ -84,6 +83,18 @@ export function DetailDrawer({ appointment: a, technicians, open, onClose }: Det
               {a.priority}
             </Badge>
           </div>
+
+          {/* Pictos / zones */}
+          {a.pictosInterv.length > 0 && (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              {a.pictosInterv.map((p, i) => (
+                <Badge key={i} variant="outline" className="text-[10px] capitalize">
+                  {p}
+                </Badge>
+              ))}
+            </div>
+          )}
 
           <Separator />
 
@@ -129,6 +140,34 @@ export function DetailDrawer({ appointment: a, technicians, open, onClose }: Det
             </div>
           )}
 
+          {/* Dossier ID */}
+          {a.dossierId && (
+            <div className="space-y-1">
+              <div className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                <FolderOpen className="h-3.5 w-3.5" /> N° dossier Apogée
+              </div>
+              <span className="text-sm font-mono">{a.dossierId}</span>
+            </div>
+          )}
+
+          {/* Description / label intervention */}
+          {(a.description || a.interventionLabel) && (
+            <>
+              <Separator />
+              <div className="space-y-1">
+                <div className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                  <Info className="h-3.5 w-3.5" /> Description
+                </div>
+                {a.interventionLabel && (
+                  <p className="text-sm text-foreground">{a.interventionLabel}</p>
+                )}
+                {a.description && a.description !== a.interventionLabel && (
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{a.description}</p>
+                )}
+              </div>
+            </>
+          )}
+
           {/* Notes */}
           {a.notes && (
             <>
@@ -142,9 +181,14 @@ export function DetailDrawer({ appointment: a, technicians, open, onClose }: Det
 
           {/* Statut */}
           <Separator />
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
             <span>Statut :</span>
             <Badge variant="outline" className="capitalize">{a.status}</Badge>
+            {a.projectState && a.projectState !== a.status && (
+              <Badge variant="outline" className="capitalize text-muted-foreground">
+                Dossier: {a.projectState}
+              </Badge>
+            )}
             {!a.confirmed && (
               <Badge variant="outline" className="text-amber-600 border-amber-300 gap-1">
                 <AlertTriangle className="h-3 w-3" /> Non confirmé

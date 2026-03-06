@@ -61,6 +61,9 @@ export interface PlanningAppointment {
   projectRef: string | null;
   updatedAt: Date | null;
   pictosInterv: string[];
+  description: string | null;
+  projectState: string | null;
+  interventionLabel: string | null;
 }
 
 // ─── Blocs (congés, pauses, tâches…) ────────────────────────────────────────

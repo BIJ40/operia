@@ -112,10 +112,12 @@ interface RawProject {
   ref?: string;
   clientId?: number;
   state?: string;
+  label?: string;
   data?: {
     commanditaireId?: number;
     universes?: string[];
     pictosInterv?: string[];
+    description?: string;
   };
 }
 
@@ -141,6 +143,9 @@ interface RawPlanningCreneau {
   date?: string;
   duree?: number;
   usersIds?: number[];
+  label?: string;
+  title?: string;
+  objet?: string;
 }
 
 // ─── Normalisation principale ───────────────────────────────────────────────
@@ -207,6 +212,16 @@ export function normalizeApogeeData(
         clientName = `${p} ${n}`.trim() || "Inconnu";
       }
 
+      // Resolve apporteur name from commanditaireId
+      let apporteurName: string | null = null;
+      const commanditaireId = project?.data?.commanditaireId;
+      if (commanditaireId) {
+        const apporteurClient = clientMap.get(commanditaireId);
+        if (apporteurClient) {
+          apporteurName = [apporteurClient.prenom, apporteurClient.nom].filter(Boolean).join(" ").trim() || null;
+        }
+      }
+
       appointments.push({
         id: `appt-${c.id}`,
         apogeeId: c.id,
@@ -228,12 +243,15 @@ export function normalizeApogeeData(
         status: "planned",
         confirmed: true,
         isBinome: c.usersIds.length > 1,
-        apporteur: null,
+        apporteur: apporteurName,
         requiredSkills: [],
         notes: null,
         projectRef: project?.ref ?? null,
         updatedAt: null,
         pictosInterv: (project?.data?.pictosInterv ?? []).map((p: any) => String(p)),
+        description: project?.data?.description || project?.label || null,
+        projectState: project?.state ?? null,
+        interventionLabel: interv?.label ?? null,
       });
     } else {
       // Block (congé, tâche, absence, rappel…)
@@ -245,7 +263,7 @@ export function normalizeApogeeData(
           type: blockType,
           start,
           end,
-          label: BLOCK_LABELS[blockType] || c.refType || "Bloc",
+          label: c.label || c.title || c.objet || BLOCK_LABELS[blockType] || c.refType || "Bloc",
           color: null,
           source: "apogee",
         });
