@@ -81,7 +81,7 @@ export function AppointmentCard({
           top,
           height,
           borderLeft: `3px solid ${techColor}`,
-          backgroundColor: "hsl(var(--card))",
+          backgroundColor: `${techColor}12`,
           boxShadow: "0 1px 3px 0 hsl(var(--foreground) / 0.06)",
         }}
         onClick={() => onViewDetails?.(a)}
