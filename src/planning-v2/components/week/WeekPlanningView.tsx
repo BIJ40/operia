@@ -7,6 +7,8 @@
 
 import { useMemo, useRef, useState } from "react";
 import { ZoneIndicator } from "../day/ZoneIndicator";
+import { ClipboardList } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, startOfWeek, addDays, isToday } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
