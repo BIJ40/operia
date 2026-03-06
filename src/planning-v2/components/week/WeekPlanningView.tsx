@@ -202,11 +202,12 @@ export function WeekPlanningView({
             const dayAppts = appointments.filter(a => dateKey(a.start) === dk);
             const dayBlocks = blocks.filter(b => dateKey(b.start) === dk);
 
+            const dayVisibleTechs = visibleTechsByDay.get(dk) ?? [];
+
             return (
               <div
                 key={dk}
-                className={`shrink-0 border-r-2 border-border/60 ${today ? "bg-primary/[0.02]" : ""}`}
-                style={{ width: visibleTechs.length * WEEK_TECH_COL_WIDTH }}
+                className={`flex-1 min-w-0 border-r-2 border-border/60 ${today ? "bg-primary/[0.02]" : ""}`}
               >
                 {/* Day header - sticky top */}
                 <div className={`sticky top-0 z-20 border-b border-border text-center py-1.5 px-1 ${today ? "bg-primary/10" : "bg-card"}`}>
@@ -220,7 +221,7 @@ export function WeekPlanningView({
 
                 {/* Tech sub-columns within this day */}
                 <div className="flex" style={{ height: WEEK_GRID_HEIGHT }}>
-                  {visibleTechs.map((tech) => {
+                  {dayVisibleTechs.map((tech) => {
                     const techAppts = dayAppts.filter(a => a.technicianIds.includes(tech.id));
                     const techBlocks = dayBlocks.filter(b => b.techId === tech.id);
                     const isUnavail = isTechUnavailableForDay(tech.id, dayBlocks, dayAppts, dk);
