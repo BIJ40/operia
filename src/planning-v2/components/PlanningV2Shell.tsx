@@ -130,53 +130,62 @@ function PlanningV2ShellContent() {
       </div>
 
       {/* ── Content ── */}
-      <div className="flex-1 min-h-0 overflow-hidden">
-        {data.isLoading && data.technicians.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="flex flex-col items-center gap-3 text-muted-foreground">
-              <RotateCcw className="h-8 w-8 animate-spin" />
-              <span className="text-sm">Chargement du planning…</span>
-            </div>
-          </div>
-        ) : data.error ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-sm text-destructive">
-              Erreur de chargement : {data.error.message}
-            </div>
-          </div>
-        ) : data.technicians.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-sm text-muted-foreground">
-              Aucun technicien trouvé pour cette agence
-            </div>
-          </div>
-        ) : (
-          <>
-            {filters.view === "day" && (
-              <DayDispatchView
-                technicians={data.technicians}
-                appointments={data.appointments}
-                blocks={data.blocks}
-                alerts={data.alerts}
-                loads={data.loads}
-                selectedDate={filters.selectedDate}
-                density={filters.density}
-                hoverSettings={hoverSettings}
-                showUnavailable={showUnavailable}
-              />
-            )}
-            {filters.view === "week" && (
-              <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                Vue Semaine — à venir (Phase 5)
+      <div className="flex-1 min-h-0 overflow-hidden flex">
+        <div className="flex-1 min-w-0 overflow-hidden">
+          {data.isLoading && data.technicians.length === 0 ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="flex flex-col items-center gap-3 text-muted-foreground">
+                <RotateCcw className="h-8 w-8 animate-spin" />
+                <span className="text-sm">Chargement du planning…</span>
               </div>
-            )}
-            {filters.view === "map" && (
-              <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                Vue Carte — à venir (Phase 9)
+            </div>
+          ) : data.error ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-sm text-destructive">
+                Erreur de chargement : {data.error.message}
               </div>
-            )}
-          </>
-        )}
+            </div>
+          ) : data.technicians.length === 0 ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-sm text-muted-foreground">
+                Aucun technicien trouvé pour cette agence
+              </div>
+            </div>
+          ) : (
+            <>
+              {filters.view === "day" && (
+                <DayDispatchView
+                  technicians={data.technicians}
+                  appointments={data.appointments}
+                  blocks={data.blocks}
+                  alerts={data.alerts}
+                  loads={data.loads}
+                  selectedDate={filters.selectedDate}
+                  density={filters.density}
+                  hoverSettings={hoverSettings}
+                  showUnavailable={showUnavailable}
+                />
+              )}
+              {filters.view === "week" && (
+                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                  Vue Semaine — à venir (Phase 5)
+                </div>
+              )}
+              {filters.view === "map" && (
+                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                  Vue Carte — à venir (Phase 9)
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Unscheduled Panel */}
+        <UnscheduledPanel
+          items={data.unscheduled}
+          open={unscheduledOpen}
+          onToggle={() => setUnscheduledOpen(!unscheduledOpen)}
+        />
       </div>
     </div>
   );
