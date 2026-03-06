@@ -45,11 +45,66 @@ function isTechUnavailable(techId: number, blocks: PlanningBlock[], dk: string):
     (b) => b.techId === techId && dateKey(b.start) === dk && UNAVAILABLE_BLOCK_TYPES.includes(b.type)
   );
   if (techBlocks.length === 0) return false;
-  // Sum minutes of unavailable blocks
   const totalMin = techBlocks.reduce((sum, b) => {
     return sum + (b.end.getTime() - b.start.getTime()) / 60_000;
   }, 0);
-  return totalMin >= 360; // ≥6h = considered fully unavailable
+  return totalMin >= 360;
+}
+
+/** Compute side-by-side column layout for overlapping appointments */
+function computeOverlapLayout(appts: PlanningAppointment[]): Map<string, { colIndex: number; totalCols: number }> {
+  const result = new Map<string, { colIndex: number; totalCols: number }>();
+  if (appts.length === 0) return result;
+
+  const sorted = [...appts].sort((a, b) => a.start.getTime() - b.start.getTime() || a.end.getTime() - b.end.getTime());
+
+  // Build overlap groups (connected components)
+  const groups: PlanningAppointment[][] = [];
+  let currentGroup: PlanningAppointment[] = [sorted[0]];
+  let groupEnd = sorted[0].end.getTime();
+
+  for (let i = 1; i < sorted.length; i++) {
+    const appt = sorted[i];
+    if (appt.start.getTime() < groupEnd) {
+      // Overlaps with current group
+      currentGroup.push(appt);
+      groupEnd = Math.max(groupEnd, appt.end.getTime());
+    } else {
+      groups.push(currentGroup);
+      currentGroup = [appt];
+      groupEnd = appt.end.getTime();
+    }
+  }
+  groups.push(currentGroup);
+
+  // For each group, assign column indices greedily
+  for (const group of groups) {
+    const columns: number[] = []; // end times per column
+    const assignments = new Map<string, number>();
+
+    for (const appt of group) {
+      let placed = false;
+      for (let c = 0; c < columns.length; c++) {
+        if (appt.start.getTime() >= columns[c]) {
+          columns[c] = appt.end.getTime();
+          assignments.set(appt.id, c);
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) {
+        assignments.set(appt.id, columns.length);
+        columns.push(appt.end.getTime());
+      }
+    }
+
+    const totalCols = columns.length;
+    for (const appt of group) {
+      result.set(appt.id, { colIndex: assignments.get(appt.id)!, totalCols });
+    }
+  }
+
+  return result;
 }
 
 export function DayDispatchView({

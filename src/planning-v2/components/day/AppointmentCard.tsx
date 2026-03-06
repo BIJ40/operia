@@ -28,6 +28,10 @@ interface AppointmentCardProps {
   onViewDetails?: (a: PlanningAppointment) => void;
   /** Other techs assigned to this same appointment (binôme) */
   partnerTechs?: PartnerTechInfo[];
+  /** Column index when overlapping (0-based) */
+  colIndex?: number;
+  /** Total columns in overlap group */
+  totalCols?: number;
 }
 
 /** Compute visual segments, splitting around lunch break */
