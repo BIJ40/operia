@@ -94,17 +94,20 @@ export function AppointmentCard({
           left: `calc(${leftPercent}% + ${gap}px)`,
           width: `calc(${colWidthPercent}% - ${gap * 2}px)`,
           borderLeft: `3px solid ${techColor}`,
-          backgroundColor: `${techColor}12`,
+          backgroundColor: isBinome && partnerColor
+            ? undefined
+            : `${techColor}12`,
           boxShadow: "0 1px 3px 0 hsl(var(--foreground) / 0.06)",
         }}
         onClick={() => onViewDetails?.(a)}
       >
-
-        {/* Right border accent for partner color */}
+        {/* Diagonal bi-color fill for binôme */}
         {isBinome && partnerColor && (
           <div
-            className="absolute right-0 top-0 bottom-0 w-[3px]"
-            style={{ backgroundColor: partnerColor }}
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: `linear-gradient(135deg, ${techColor}30 50%, ${partnerColor}30 50%)`,
+            }}
           />
         )}
 
