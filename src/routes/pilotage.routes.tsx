@@ -20,6 +20,7 @@ const DiffusionDashboard = lazy(() => import("@/pages/DiffusionDashboard"));
 const TvDisplayEntry = lazy(() => import("@/pages/TvDisplayEntry"));
 const CommercialPage = lazy(() => import("@/pages/CommercialPage"));
 const CommercialSupportPptx = lazy(() => import("@/commercial/pages/CommercialSupportPptx"));
+const PlanningV2Shell = lazy(() => import("@/planning-v2/components/PlanningV2Shell"));
 
 function PageLoader() {
   return (
