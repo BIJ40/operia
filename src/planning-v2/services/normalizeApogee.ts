@@ -74,6 +74,7 @@ function resolveBlockType(refType: string): BlockType {
   const n = norm(refType);
   if (n === "conge") return "conge";
   if (n === "absence") return "absence";
+  if (n === "repos") return "repos";
   if (n === "rappel") return "rappel";
   if (n === "tache") return "tache";
   if (n === "formation") return "formation";
