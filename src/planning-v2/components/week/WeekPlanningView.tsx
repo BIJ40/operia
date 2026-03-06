@@ -144,15 +144,20 @@ export function WeekPlanningView({
     return m;
   }, [technicians]);
 
-  // Filter techs: show only those active at least one day this week
-  const visibleTechs = useMemo(() => {
-    if (showUnavailable) return technicians;
-    return technicians.filter(tech => {
-      return weekDays.some(day => {
-        const dk = dateKey(day);
-        return !isTechUnavailableForDay(tech.id, blocks, appointments, dk);
-      });
-    });
+  // Per-day visible techs (filter unavailable per day, not globally)
+  const visibleTechsByDay = useMemo(() => {
+    const map = new Map<string, PlanningTechnician[]>();
+    for (const day of weekDays) {
+      const dk = dateKey(day);
+      if (showUnavailable) {
+        map.set(dk, technicians);
+      } else {
+        map.set(dk, technicians.filter(tech =>
+          !isTechUnavailableForDay(tech.id, blocks, appointments, dk)
+        ));
+      }
+    }
+    return map;
   }, [technicians, showUnavailable, weekDays, blocks, appointments]);
 
   // Conflict IDs
