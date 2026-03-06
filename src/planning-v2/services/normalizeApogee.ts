@@ -141,6 +141,9 @@ interface RawPlanningCreneau {
   date?: string;
   duree?: number;
   usersIds?: number[];
+  label?: string;
+  title?: string;
+  objet?: string;
 }
 
 // ─── Normalisation principale ───────────────────────────────────────────────
