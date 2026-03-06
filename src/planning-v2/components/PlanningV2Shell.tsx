@@ -82,8 +82,12 @@ function PlanningV2ShellContent() {
               Jour
             </TabsTrigger>
             <TabsTrigger value="week" className="text-xs gap-1 px-3 h-7">
-              <BarChart3 className="h-3.5 w-3.5" />
+              <CalendarRange className="h-3.5 w-3.5" />
               Semaine
+            </TabsTrigger>
+            <TabsTrigger value="charge" className="text-xs gap-1 px-3 h-7">
+              <BarChart3 className="h-3.5 w-3.5" />
+              Charge
             </TabsTrigger>
             <TabsTrigger value="map" className="text-xs gap-1 px-3 h-7">
               <Map className="h-3.5 w-3.5" />
