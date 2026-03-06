@@ -81,11 +81,13 @@ export function computeTechDayLoad(
   const totalOccupied = interventionMinutes + blockedMinutes;
   const dayTotalMinutes = (HOUR_END - HOUR_START) * 60; // 720
   const freeMinutes = Math.max(0, dayTotalMinutes - totalOccupied);
-  const chargePercent = Math.min(100, Math.round((totalOccupied / maxDaily) * 100));
+  const chargePercent = effectiveMax > 0
+    ? Math.min(100, Math.round((totalOccupied / effectiveMax) * 100))
+    : 0;
 
   // Détection conflits
   const hasConflict = detectConflictsForDay(dayAppts).length > 0;
-  const hasAmplitudeOverflow = totalOccupied > maxDaily;
+  const hasAmplitudeOverflow = totalOccupied > effectiveMax;
 
   // Calcul des trous
   const gapSlots = computeGaps(date, dayAppts, dayBlocks);
