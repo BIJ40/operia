@@ -60,6 +60,7 @@ export interface PlanningAppointment {
   notes: string | null;
   projectRef: string | null;
   updatedAt: Date | null;
+  pictosInterv: string[];
 }
 
 // ─── Blocs (congés, pauses, tâches…) ────────────────────────────────────────
