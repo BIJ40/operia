@@ -115,6 +115,7 @@ interface RawProject {
   data?: {
     commanditaireId?: number;
     universes?: string[];
+    pictosInterv?: string[];
   };
 }
 
@@ -232,6 +233,7 @@ export function normalizeApogeeData(
         notes: null,
         projectRef: project?.ref ?? null,
         updatedAt: null,
+        pictosInterv: (project?.data?.pictosInterv ?? []).map((p: any) => String(p)),
       });
     } else {
       // Block (congé, tâche, absence, rappel…)

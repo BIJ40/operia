@@ -247,6 +247,9 @@ export function DayDispatchView({
             const load = loads.get(`${tech.id}:${dk}`);
             const isUnavailable = unavailableTechIds.has(tech.id);
 
+            // Collect all pictosInterv for this tech's appointments today
+            const techZones = techAppts.flatMap(a => a.pictosInterv ?? []);
+
             return (
               <div
                 key={tech.id}
@@ -257,7 +260,7 @@ export function DayDispatchView({
                 <div className="sticky top-0 z-20 bg-card border-b border-border">
                   <TechContextMenu tech={tech}>
                     <div>
-                      <TechColumnHeader tech={tech} load={load} density={density} isUnavailable={isUnavailable} />
+                      <TechColumnHeader tech={tech} load={load} density={density} isUnavailable={isUnavailable} zones={techZones} />
                     </div>
                   </TechContextMenu>
                 </div>
