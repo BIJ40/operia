@@ -10,6 +10,8 @@ import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { normalizeApogeeData } from "../services/normalizeApogee";
 import { computeTechDayLoad, computeScheduleConflicts } from "../services/computeLoad";
 import { computeTechDayTravel } from "../services/computeTravel";
+import { useTechSchedules } from "./useTechSchedules";
+import { getScheduleForDayOfWeek } from "../types/schedule";
 import type {
   PlanningTechnician,
   PlanningAppointment,
