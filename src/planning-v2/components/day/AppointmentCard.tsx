@@ -28,6 +28,10 @@ interface AppointmentCardProps {
   onViewDetails?: (a: PlanningAppointment) => void;
   /** Other techs assigned to this same appointment (binôme) */
   partnerTechs?: PartnerTechInfo[];
+  /** Column index when overlapping (0-based) */
+  colIndex?: number;
+  /** Total columns in overlap group */
+  totalCols?: number;
 }
 
 /** Compute visual segments, splitting around lunch break */
@@ -52,6 +56,8 @@ export function AppointmentCard({
   hoverSettings,
   onViewDetails,
   partnerTechs = [],
+  colIndex = 0,
+  totalCols = 1,
 }: AppointmentCardProps) {
   const segments = computeSegments(a);
   const typeKey = a.type.toLowerCase();
@@ -68,10 +74,15 @@ export function AppointmentCard({
     // Build diagonal gradient for binôme
     const partnerColor = isBinome ? partnerTechs[0].color : null;
 
+    // Side-by-side layout for overlapping appointments
+    const colWidthPercent = 100 / totalCols;
+    const leftPercent = colIndex * colWidthPercent;
+    const gap = totalCols > 1 ? 2 : 4; // px gap
+
     return (
       <div
         key={index}
-        className={`absolute left-1 right-1 overflow-hidden cursor-pointer
+        className={`absolute overflow-hidden cursor-pointer
           transition-shadow hover:shadow-md hover:z-10
           ${hasConflict ? "ring-2 ring-destructive ring-offset-1" : ""}
           ${isFirst ? "rounded-t-md" : "rounded-b-md"}
@@ -80,6 +91,8 @@ export function AppointmentCard({
         style={{
           top,
           height,
+          left: `calc(${leftPercent}% + ${gap}px)`,
+          width: `calc(${colWidthPercent}% - ${gap * 2}px)`,
           borderLeft: `3px solid ${techColor}`,
           backgroundColor: `${techColor}12`,
           boxShadow: "0 1px 3px 0 hsl(var(--foreground) / 0.06)",
