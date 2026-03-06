@@ -104,8 +104,8 @@ Deno.serve(async (req) => {
     }
 
     // Build email
-    const appUrl = Deno.env.get("APP_URL") || "https://helpconfort.services";
-    const ticketUrl = `${appUrl}/tickets?id=${body.ticket_id}`;
+    const appUrl = Deno.env.get("APP_URL") || "https://helpconfort-services.lovable.app";
+    const ticketUrl = `${appUrl}/?tab=ticketing&ticket=${body.ticket_id}`;
     const priorityLabel = getPriorityLabel(body.heat_priority);
     const descriptionPreview = truncate(body.description, 300);
 
