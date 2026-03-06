@@ -227,13 +227,24 @@ export function computeWeeklyHeatmap(
     for (const date of dates) {
       const load = computeTechDayLoad(techId, date, appointments, blocks);
 
-      // Absent = jour entier bloqué
+      // Absent = jour entier bloqué OR all appointments on "REPOS"
       const dayBlocks = blocks.filter(
         (b) => b.techId === techId && dateKey(b.start) === date
       );
-      const isAbsent = dayBlocks.some(
-        (b) => b.type === "conge" || b.type === "absence"
-      ) && load.rdvCount === 0;
+      const dayAppts = appointments.filter(
+        (a) => a.technicianIds.includes(techId) && dateKey(a.start) === date
+      );
+      const hasAbsenceBlocks = dayBlocks.some(
+        (b) => b.type === "conge" || b.type === "absence" || b.type === "repos"
+      );
+      const allRepos = dayAppts.length > 0 && dayAppts.every((a) => {
+        const clientUpper = (a.client || "").toUpperCase().trim();
+        const refUpper = (a.projectRef || "").toUpperCase().trim();
+        return clientUpper.includes("REPOS") || refUpper.includes("REPOS");
+      });
+      const isAbsent = (hasAbsenceBlocks && load.rdvCount === 0)
+        || (dayAppts.length === 0 && dayBlocks.length === 0)
+        || allRepos;
 
       let status: LoadStatus = "normal";
       if (isAbsent) status = "absent";
