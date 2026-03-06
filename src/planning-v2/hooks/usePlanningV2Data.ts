@@ -34,9 +34,6 @@ interface PlanningV2Result {
   refresh: () => void;
 }
 
-function dateKey(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
 
 export function usePlanningV2Data(selectedDate: Date): PlanningV2Result {
   const { currentAgency, isAgencyReady } = useAgency();

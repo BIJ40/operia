@@ -30,9 +30,6 @@ interface WeekHeatmapViewProps {
   onDayClick?: (date: Date) => void;
 }
 
-function dateKey(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
 
 // Colors for load status
 function getCellStyle(cell: WeekHeatmapCell): { bg: string; text: string; border: string } {

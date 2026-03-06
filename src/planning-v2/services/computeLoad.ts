@@ -21,11 +21,9 @@ import type {
   LoadStatus,
 } from "../types";
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+import { dateKey } from "../utils/dateUtils";
 
-function dateKey(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
 function minutesOverlap(a: { start: Date; end: Date }, b: { start: Date; end: Date }): number {
   const overlapStart = Math.max(a.start.getTime(), b.start.getTime());

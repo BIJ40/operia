@@ -39,9 +39,6 @@ interface DayDispatchViewProps {
   showUnavailable: boolean;
 }
 
-function dateKey(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
 
 /** Check if a tech is unavailable for the whole day:
  *  - has absence/congé/repos blocks covering ≥6h, OR
