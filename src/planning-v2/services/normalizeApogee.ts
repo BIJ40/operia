@@ -89,6 +89,7 @@ interface RawIntervention {
   type?: string;
   type2?: string;
   state?: string;
+  label?: string;
   data?: {
     visites?: Array<{
       pEventId?: number;
@@ -96,7 +97,12 @@ interface RawIntervention {
       usersIds?: number[];
       type?: string;
       type2?: string;
+      state?: string;
     }>;
+    dureeEstimee?: number;
+    priorite?: string;
+    competences?: string[];
+    motifAttente?: string;
   };
 }
 
