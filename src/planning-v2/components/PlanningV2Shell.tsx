@@ -1,0 +1,167 @@
+/**
+ * Planning V2 — Shell principal (layout + tabs + navigation date)
+ */
+
+import { useState } from "react";
+import { format, addDays, subDays, startOfWeek, isToday } from "date-fns";
+import { fr } from "date-fns/locale";
+import {
+  CalendarDays,
+  BarChart3,
+  Map,
+  ChevronLeft,
+  ChevronRight,
+  RotateCcw,
+  Layers,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useFilters } from "../hooks/useFilters";
+import { usePlanningV2Data } from "../hooks/usePlanningV2Data";
+import { DayDispatchView } from "./day/DayDispatchView";
+import type { PlanningView, DisplayDensity } from "../types";
+
+export default function PlanningV2Shell() {
+  const { filters, setDate, setView, setDensity } = useFilters();
+  const data = usePlanningV2Data(filters.selectedDate);
+
+  const goToday = () => setDate(new Date());
+  const goPrev = () => setDate(subDays(filters.selectedDate, 1));
+  const goNext = () => setDate(addDays(filters.selectedDate, 1));
+
+  const dateLabel = format(filters.selectedDate, "EEEE d MMMM yyyy", { locale: fr });
+  const todayActive = isToday(filters.selectedDate);
+
+  return (
+    <div className="flex flex-col h-full min-h-0 bg-background">
+      {/* ── Toolbar ── */}
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-card shrink-0 flex-wrap">
+        {/* Navigation date */}
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" onClick={goPrev} className="h-8 w-8">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={todayActive ? "default" : "outline"}
+            size="sm"
+            onClick={goToday}
+            className="h-8 text-xs"
+          >
+            Aujourd'hui
+          </Button>
+          <Button variant="ghost" size="icon" onClick={goNext} className="h-8 w-8">
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <span className="text-sm font-semibold capitalize text-foreground min-w-[180px]">
+          {dateLabel}
+        </span>
+
+        {/* Tabs vue */}
+        <Tabs
+          value={filters.view}
+          onValueChange={(v) => setView(v as PlanningView)}
+          className="ml-auto"
+        >
+          <TabsList className="h-8">
+            <TabsTrigger value="day" className="text-xs gap-1 px-3 h-7">
+              <CalendarDays className="h-3.5 w-3.5" />
+              Jour
+            </TabsTrigger>
+            <TabsTrigger value="week" className="text-xs gap-1 px-3 h-7">
+              <BarChart3 className="h-3.5 w-3.5" />
+              Semaine
+            </TabsTrigger>
+            <TabsTrigger value="map" className="text-xs gap-1 px-3 h-7">
+              <Map className="h-3.5 w-3.5" />
+              Carte
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {/* Densité */}
+        <Select
+          value={filters.density}
+          onValueChange={(v) => setDensity(v as DisplayDensity)}
+        >
+          <SelectTrigger className="w-[120px] h-8 text-xs">
+            <Layers className="h-3.5 w-3.5 mr-1" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="compact">Compact</SelectItem>
+            <SelectItem value="standard">Standard</SelectItem>
+            <SelectItem value="detailed">Détaillé</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Refresh */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={data.refresh}
+          className="h-8 w-8"
+          disabled={data.isLoading}
+        >
+          <RotateCcw className={`h-4 w-4 ${data.isLoading ? "animate-spin" : ""}`} />
+        </Button>
+      </div>
+
+      {/* ── Content ── */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        {data.isLoading && data.technicians.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="flex flex-col items-center gap-3 text-muted-foreground">
+              <RotateCcw className="h-8 w-8 animate-spin" />
+              <span className="text-sm">Chargement du planning…</span>
+            </div>
+          </div>
+        ) : data.error ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-sm text-destructive">
+              Erreur de chargement : {data.error.message}
+            </div>
+          </div>
+        ) : data.technicians.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-sm text-muted-foreground">
+              Aucun technicien trouvé pour cette agence
+            </div>
+          </div>
+        ) : (
+          <>
+            {filters.view === "day" && (
+              <DayDispatchView
+                technicians={data.technicians}
+                appointments={data.appointments}
+                blocks={data.blocks}
+                alerts={data.alerts}
+                loads={data.loads}
+                selectedDate={filters.selectedDate}
+                density={filters.density}
+              />
+            )}
+            {filters.view === "week" && (
+              <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                Vue Semaine — à venir (Phase 5)
+              </div>
+            )}
+            {filters.view === "map" && (
+              <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                Vue Carte — à venir (Phase 9)
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
