@@ -209,34 +209,39 @@ export function DayDispatchView({
                     />
                   ))}
 
-                  {/* Appointments */}
-                  {techAppts.map((appt) => {
-                    // Build partner techs list (other techs on this binôme appt)
-                    const partners: PartnerTechInfo[] = appt.isBinome
-                      ? appt.technicianIds
-                          .filter((tid) => tid !== tech.id)
-                          .map((tid) => {
-                            const t = techMap.get(tid);
-                            return t
-                              ? { id: t.id, initials: t.initials, color: t.color, name: t.name }
-                              : { id: tid, initials: "??", color: "#888", name: `Tech #${tid}` };
-                          })
-                      : [];
+                  {/* Appointments — side by side when overlapping */}
+                  {(() => {
+                    const layout = computeOverlapLayout(techAppts);
+                    return techAppts.map((appt) => {
+                      const info = layout.get(appt.id) ?? { colIndex: 0, totalCols: 1 };
+                      const partners: PartnerTechInfo[] = appt.isBinome
+                        ? appt.technicianIds
+                            .filter((tid) => tid !== tech.id)
+                            .map((tid) => {
+                              const t = techMap.get(tid);
+                              return t
+                                ? { id: t.id, initials: t.initials, color: t.color, name: t.name }
+                                : { id: tid, initials: "??", color: "#888", name: `Tech #${tid}` };
+                            })
+                        : [];
 
-                    return (
-                      <AppointmentCard
-                        key={appt.id}
-                        appointment={appt}
-                        techColor={tech.color}
-                        density={density}
-                        hasConflict={conflictIds.has(appt.id)}
-                        selectedDate={selectedDate}
-                        hoverSettings={hoverSettings}
-                        onViewDetails={setSelectedAppt}
-                        partnerTechs={partners}
-                      />
-                    );
-                  })}
+                      return (
+                        <AppointmentCard
+                          key={appt.id}
+                          appointment={appt}
+                          techColor={tech.color}
+                          density={density}
+                          hasConflict={conflictIds.has(appt.id)}
+                          selectedDate={selectedDate}
+                          hoverSettings={hoverSettings}
+                          onViewDetails={setSelectedAppt}
+                          partnerTechs={partners}
+                          colIndex={info.colIndex}
+                          totalCols={info.totalCols}
+                        />
+                      );
+                    });
+                  })()}
 
                   {/* Current time line */}
                   <CurrentTimeLine selectedDate={selectedDate} />
