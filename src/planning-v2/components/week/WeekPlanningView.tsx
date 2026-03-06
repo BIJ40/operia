@@ -63,8 +63,9 @@ function isTechUnavailableForDay(
     const totalMin = unavailBlocks.reduce((s, b) => s + (b.end.getTime() - b.start.getTime()) / 60_000, 0);
     if (totalMin >= 360) return true;
   }
-  // Un tech sans RDV n'est PAS absent — il est libre (charge 0%)
+  // Tech sans aucune activité → masquable via toggle (mais pas "absent" dans la charge)
   const techAppts = appointments.filter(a => a.technicianIds.includes(techId) && dateKey(a.start) === dk);
+  if (techAppts.length === 0 && techBlocks.length === 0) return true;
   if (techAppts.length > 0) {
     const allRepos = techAppts.every(a => {
       const c = (a.client || "").toUpperCase();
