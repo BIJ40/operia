@@ -89,6 +89,7 @@ interface RawIntervention {
   type?: string;
   type2?: string;
   state?: string;
+  label?: string;
   data?: {
     visites?: Array<{
       pEventId?: number;
@@ -96,7 +97,12 @@ interface RawIntervention {
       usersIds?: number[];
       type?: string;
       type2?: string;
+      state?: string;
     }>;
+    dureeEstimee?: number;
+    priorite?: string;
+    competences?: string[];
+    motifAttente?: string;
   };
 }
 
@@ -244,7 +250,69 @@ export function normalizeApogeeData(
     }
   }
 
-  return { technicians, appointments, blocks, unscheduled: [] };
+  // ── Unscheduled: interventions sans créneau planifié ──
+  const scheduledIntervIds = new Set<number>();
+  for (const c of creneaux) {
+    if (c.refType === "visite-interv") {
+      const interv = pEventToInterv.get(c.id);
+      if (interv) scheduledIntervIds.add(interv.id);
+    }
+  }
+
+  const unscheduled: PlanningUnscheduled[] = [];
+  const EXCLUDED_STATES = new Set(["cancelled", "canceled", "refused", "annule", "clos"]);
+
+  for (const interv of interventions) {
+    if (scheduledIntervIds.has(interv.id)) continue;
+    const stateN = norm(interv.state);
+    if (EXCLUDED_STATES.has(stateN)) continue;
+
+    const project = interv.projectId ? projectMap.get(interv.projectId) : undefined;
+    const client = project?.clientId ? clientMap.get(project.clientId) : undefined;
+
+    let clientName = "Inconnu";
+    if (client) {
+      const p = (client.prenom || "").trim();
+      const n = (client.nom || "").trim();
+      clientName = `${p} ${n}`.trim() || "Inconnu";
+    }
+
+    // Determine reason
+    let reason: PlanningUnscheduled["reason"] = "a_planifier";
+    const motif = norm(interv.data?.motifAttente);
+    const prioriteN = norm(interv.data?.priorite);
+    if (prioriteN === "urgent" || prioriteN === "urgente") reason = "urgent";
+    else if (motif.includes("client")) reason = "en_attente_client";
+    else if (motif.includes("piece") || motif.includes("pièce")) reason = "en_attente_piece";
+    else if (motif.includes("devis")) reason = "en_attente_devis";
+
+    // Priority mapping
+    let priority: AppointmentPriority = "normal";
+    if (prioriteN === "urgent" || prioriteN === "urgente") priority = "urgent";
+    else if (prioriteN === "haute" || prioriteN === "high") priority = "high";
+    else if (prioriteN === "basse" || prioriteN === "low") priority = "low";
+
+    const rawType = interv.type2 || interv.type;
+    const type = resolveInterventionType(rawType);
+
+    unscheduled.push({
+      id: `unsched-${interv.id}`,
+      apogeeId: interv.id,
+      dossierId: interv.projectId ?? 0,
+      client: clientName,
+      city: client?.ville || client?.city || null,
+      universe: project?.data?.universes?.[0] ?? null,
+      priority,
+      estimatedDuration: interv.data?.dureeEstimee || DURATION_FALLBACK[type] || DURATION_FALLBACK.default,
+      requiredSkills: interv.data?.competences ?? [],
+      reason,
+      dueDate: null,
+      status: interv.state || "unknown",
+      apporteur: null,
+    });
+  }
+
+  return { technicians, appointments, blocks, unscheduled };
 }
 
 // ─── Normalisation techniciens ──────────────────────────────────────────────
