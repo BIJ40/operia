@@ -1,10 +1,11 @@
 /**
  * Planning V2 — Vue Jour Dispatch
  * Grille verticale (heures) × horizontale (techniciens)
+ * Gère la coupure visuelle pause déjeuner + masquage des indisponibles
  */
 
 import { useMemo, useRef, useState } from "react";
-import { HOUR_START, HOUR_END, HOUR_HEIGHT_PX, TECH_COLUMN_MIN_WIDTH, TIME_AXIS_WIDTH, GRID_TOTAL_HEIGHT } from "../../constants";
+import { HOUR_START, HOUR_END, HOUR_HEIGHT_PX, LUNCH_START, LUNCH_END, TECH_COLUMN_MIN_WIDTH, TIME_AXIS_WIDTH, GRID_TOTAL_HEIGHT, UNAVAILABLE_BLOCK_TYPES } from "../../constants";
 import { TechColumnHeader } from "./TechColumnHeader";
 import { AppointmentCard } from "./AppointmentCard";
 import { BlockCard } from "./BlockCard";
@@ -30,10 +31,24 @@ interface DayDispatchViewProps {
   selectedDate: Date;
   density: DisplayDensity;
   hoverSettings: HoverDisplaySettings;
+  showUnavailable: boolean;
 }
 
 function dateKey(d: Date): string {
   return d.toISOString().slice(0, 10);
+}
+
+/** Check if a tech is unavailable for the whole day (absence, congé, repos covering ≥6h) */
+function isTechUnavailable(techId: number, blocks: PlanningBlock[], dk: string): boolean {
+  const techBlocks = blocks.filter(
+    (b) => b.techId === techId && dateKey(b.start) === dk && UNAVAILABLE_BLOCK_TYPES.includes(b.type)
+  );
+  if (techBlocks.length === 0) return false;
+  // Sum minutes of unavailable blocks
+  const totalMin = techBlocks.reduce((sum, b) => {
+    return sum + (b.end.getTime() - b.start.getTime()) / 60_000;
+  }, 0);
+  return totalMin >= 360; // ≥6h = considered fully unavailable
 }
 
 export function DayDispatchView({
@@ -45,6 +60,7 @@ export function DayDispatchView({
   selectedDate,
   density,
   hoverSettings,
+  showUnavailable,
 }: DayDispatchViewProps) {
   const dk = dateKey(selectedDate);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -59,6 +75,23 @@ export function DayDispatchView({
     () => blocks.filter((b) => dateKey(b.start) === dk),
     [blocks, dk]
   );
+
+  // Identifier les techs indisponibles
+  const unavailableTechIds = useMemo(() => {
+    const ids = new Set<number>();
+    for (const tech of technicians) {
+      if (isTechUnavailable(tech.id, dayBlocks, dk)) ids.add(tech.id);
+    }
+    return ids;
+  }, [technicians, dayBlocks, dk]);
+
+  // Filtrer les techs visibles
+  const visibleTechs = useMemo(() => {
+    if (showUnavailable) return technicians;
+    return technicians.filter((t) => !unavailableTechIds.has(t.id));
+  }, [technicians, showUnavailable, unavailableTechIds]);
+
+  const hiddenCount = technicians.length - visibleTechs.length;
 
   // Grouper par technicien
   const apptsByTech = useMemo(() => {
@@ -90,6 +123,10 @@ export function DayDispatchView({
     return ids;
   }, [alerts]);
 
+  // Lunch break position
+  const lunchTop = (LUNCH_START - HOUR_START) * HOUR_HEIGHT_PX;
+  const lunchHeight = (LUNCH_END - LUNCH_START) * HOUR_HEIGHT_PX;
+
   return (
     <>
       <div className="h-full overflow-auto" ref={scrollRef}>
@@ -108,20 +145,21 @@ export function DayDispatchView({
           </div>
 
           {/* ── Technician Columns ── */}
-          {technicians.map((tech) => {
+          {visibleTechs.map((tech) => {
             const techAppts = apptsByTech.get(tech.id) ?? [];
             const techBlocks = blocksByTech.get(tech.id) ?? [];
             const load = loads.get(`${tech.id}:${dk}`);
+            const isUnavailable = unavailableTechIds.has(tech.id);
 
             return (
               <div
                 key={tech.id}
-                className="shrink-0 border-r border-border"
+                className={`shrink-0 border-r border-border ${isUnavailable ? "opacity-50" : ""}`}
                 style={{ minWidth: TECH_COLUMN_MIN_WIDTH, width: TECH_COLUMN_MIN_WIDTH }}
               >
                 {/* Sticky header */}
                 <div className="sticky top-0 z-20 bg-card border-b border-border">
-                  <TechColumnHeader tech={tech} load={load} density={density} />
+                  <TechColumnHeader tech={tech} load={load} density={density} isUnavailable={isUnavailable} />
                 </div>
 
                 {/* Grid body */}
@@ -143,6 +181,16 @@ export function DayDispatchView({
                       style={{ top: i * HOUR_HEIGHT_PX + HOUR_HEIGHT_PX / 2, height: 1 }}
                     />
                   ))}
+
+                  {/* Lunch break zone */}
+                  <div
+                    className="absolute left-0 right-0 pointer-events-none"
+                    style={{
+                      top: lunchTop,
+                      height: lunchHeight,
+                      background: "repeating-linear-gradient(135deg, transparent, transparent 4px, hsl(var(--muted) / 0.5) 4px, hsl(var(--muted) / 0.5) 5px)",
+                    }}
+                  />
 
                   {/* Blocks */}
                   {techBlocks.map((block) => (

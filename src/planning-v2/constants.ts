@@ -5,6 +5,11 @@
 // ─── Grille horaire ─────────────────────────────────────────────────────────
 export const HOUR_START = 7;
 export const HOUR_END = 19;
+export const LUNCH_START = 12;
+export const LUNCH_END = 13;
+
+// ─── Types de blocs considérés comme "indisponible" ────────────────────────
+export const UNAVAILABLE_BLOCK_TYPES = ["conge", "absence", "repos"];
 export const TOTAL_HOURS = HOUR_END - HOUR_START; // 12
 export const HOUR_HEIGHT_PX = 80; // px par heure dans la vue jour
 export const GRID_TOTAL_HEIGHT = TOTAL_HOURS * HOUR_HEIGHT_PX;
