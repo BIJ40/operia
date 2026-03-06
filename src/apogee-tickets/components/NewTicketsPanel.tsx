@@ -122,7 +122,7 @@ export function NewTicketsPanel({ tickets, statuses, modules, isLoading = false,
     return status?.color || 'gray';
   };
 
-  if (isLoading || isLoadingViews) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader2 className="mr-2 h-5 w-5 animate-spin text-muted-foreground" />

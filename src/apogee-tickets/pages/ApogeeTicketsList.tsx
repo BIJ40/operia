@@ -468,7 +468,7 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
                 : "bg-violet-50 dark:bg-violet-950/50 border-violet-400 dark:border-violet-500 rounded-2xl"
       )}>
         {showingNew ? (
-          <NewTicketsPanel onTicketClick={handleTicketClick} />
+          <NewTicketsPanel onTicketClick={handleTicketClick} tickets={newTickets} statuses={statuses} modules={modules} isLoading={isLoading} />
         ) : showingReplies ? (
           <NewRepliesPanel onTicketClick={handleTicketClick} />
         ) : showingLate ? (
