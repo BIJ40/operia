@@ -126,9 +126,10 @@ export function AppointmentCard({
                 </span>
               </div>
 
-              {density !== "compact" && height > 36 && a.city && (
-                <div className="mt-0.5">
-                  <div className="text-[10px] text-muted-foreground truncate">{a.city}</div>
+              {/* City — always shown if space allows (including compact/week) */}
+              {height > 32 && a.city && (
+                <div className="text-[10px] font-medium text-foreground/70 truncate leading-tight mt-0.5">
+                  {a.city}
                 </div>
               )}
 
