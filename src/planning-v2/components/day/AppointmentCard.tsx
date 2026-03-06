@@ -60,6 +60,7 @@ export function AppointmentCard({
   partnerTechs = [],
   colIndex = 0,
   totalCols = 1,
+  hourHeight = HOUR_HEIGHT_PX,
 }: AppointmentCardProps) {
   const segments = computeSegments(a);
   const typeKey = a.type.toLowerCase();
