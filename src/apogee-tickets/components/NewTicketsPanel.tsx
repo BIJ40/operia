@@ -4,9 +4,7 @@
  */
 
 import { useMemo, useState } from 'react';
-import { useApogeeTickets } from '../hooks/useApogeeTickets';
-import { useMyTicketViews, useMarkAllTicketsAsViewed } from '../hooks/useTicketViews';
-import { useAuth } from '@/contexts/AuthContext';
+import { useMarkAllTicketsAsViewed } from '../hooks/useTicketViews';
 import { Sparkles, Clock, Flame, Snowflake, X, Filter, Loader2, User, CheckCheck } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -28,7 +26,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import type { ApogeeTicket } from '../types';
+import type { ApogeeModule, ApogeeTicket, ApogeeTicketStatus } from '../types';
 
 // Gradient de couleurs du bleu glacé (0) au rouge foncé (12)
 const getHeatColor = (priority: number): string => {
@@ -70,13 +68,14 @@ const PRIORITY_OPTIONS = Array.from({ length: 13 }, (_, i) => ({
 }));
 
 interface NewTicketsPanelProps {
+  tickets: ApogeeTicket[];
+  statuses: ApogeeTicketStatus[];
+  modules: ApogeeModule[];
+  isLoading?: boolean;
   onTicketClick: (ticket: ApogeeTicket) => void;
 }
 
-export function NewTicketsPanel({ onTicketClick }: NewTicketsPanelProps) {
-  const { user } = useAuth();
-  const { tickets, statuses, modules, isLoading } = useApogeeTickets();
-  const { data: myViews = [], isLoading: isLoadingViews } = useMyTicketViews();
+export function NewTicketsPanel({ tickets, statuses, modules, isLoading = false, onTicketClick }: NewTicketsPanelProps) {
   const [selectedPriorities, setSelectedPriorities] = useState<number[]>([]);
   const [popoverOpen, setPopoverOpen] = useState(false);
 

@@ -174,25 +174,29 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
     }).length;
   }, [tickets, statuses]);
 
-  // Compter les tickets "nouveaux" (modifiés depuis la dernière visite)
-  const newTicketsCount = useMemo(() => {
-    if (!user?.id) return 0;
-    
-    return tickets.filter(ticket => {
-      if (!ticket.last_modified_by_user_id || !ticket.last_modified_at) {
-        return false;
-      }
-      // Pas modifié par moi-même
-      if (ticket.last_modified_by_user_id === user.id) {
-        return false;
-      }
-      const myView = myViews.find(v => v.ticket_id === ticket.id);
-      // Jamais vu = nouveau
-      if (!myView) return true;
-      // Modifié après ma dernière vue
-      return new Date(ticket.last_modified_at).getTime() > new Date(myView.viewed_at).getTime();
-    }).length;
+  // Tickets "nouveaux" (modifiés depuis la dernière visite)
+  const newTickets = useMemo(() => {
+    if (!user?.id) return [];
+
+    return tickets
+      .filter((ticket) => {
+        if (!ticket.last_modified_by_user_id || !ticket.last_modified_at) {
+          return false;
+        }
+
+        if (ticket.last_modified_by_user_id === user.id) {
+          return false;
+        }
+
+        const myView = myViews.find((v) => v.ticket_id === ticket.id);
+        if (!myView) return true;
+
+        return new Date(ticket.last_modified_at).getTime() > new Date(myView.viewed_at).getTime();
+      })
+      .sort((a, b) => new Date(b.last_modified_at!).getTime() - new Date(a.last_modified_at!).getTime());
   }, [tickets, myViews, user?.id]);
+
+  const newTicketsCount = newTickets.length;
 
   // Récupérer toutes les transitions autorisées
   const { data: allTransitions = [] } = useTicketTransitions();
