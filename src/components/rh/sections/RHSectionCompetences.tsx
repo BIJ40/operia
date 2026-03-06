@@ -85,10 +85,9 @@ export function RHSectionCompetences({ collaborator }: Props) {
   };
 
   const allCompetences = React.useMemo(() => {
-    const base = catalogueCompetences.map(c => c.label);
-    const extras = competencesTech.filter(c => !base.some(b => b.toLowerCase() === c.toLowerCase()));
-    return [...base, ...extras];
-  }, [catalogueCompetences, competencesTech]);
+    // Source unique : univers Apogée depuis univers_catalog
+    return universCatalog.map(u => u.label);
+  }, [universCatalog]);
 
   return (
     <div className="space-y-3">
