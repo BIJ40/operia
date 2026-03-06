@@ -22,6 +22,7 @@ import { ApiToggleProvider } from "@/apogee-connect/contexts/ApiToggleContext";
 import { useFilters } from "../hooks/useFilters";
 import { usePlanningV2Data } from "../hooks/usePlanningV2Data";
 import { DayDispatchView } from "./day/DayDispatchView";
+import { WeekHeatmapView } from "./week/WeekHeatmapView";
 import { DisplaySettings } from "./shared/DisplaySettings";
 import { UnscheduledPanel } from "./shared/UnscheduledPanel";
 import type { PlanningView } from "../types";
