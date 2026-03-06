@@ -167,3 +167,13 @@ function PlanningV2ShellContent() {
     </div>
   );
 }
+
+export default function PlanningV2Shell() {
+  return (
+    <ApiToggleProvider>
+      <AgencyProvider>
+        <PlanningV2ShellContent />
+      </AgencyProvider>
+    </ApiToggleProvider>
+  );
+}
