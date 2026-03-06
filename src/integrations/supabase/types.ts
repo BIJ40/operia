@@ -9118,6 +9118,15 @@ export type Database = {
         }[]
       }
       get_current_collaborator_id: { Args: never; Returns: string }
+      get_fk_dependencies: {
+        Args: never
+        Returns: {
+          child_table: string
+          fk_column: string
+          parent_table: string
+          ref_column: string
+        }[]
+      }
       get_helpi_stats: {
         Args: never
         Returns: {
