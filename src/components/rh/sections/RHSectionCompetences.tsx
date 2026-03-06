@@ -22,7 +22,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Zap, Plus, X, Clock, Check, Loader2, ChevronDown } from 'lucide-react';
 import { useAutoSaveCompetencies } from '@/hooks/useAutoSaveCollaborator';
-import { useCompetencesCatalogue } from '@/hooks/useRHCompetencesCatalogue';
+import { useUniversCatalog } from '@/hooks/useUniversCatalog';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { RHCollaborator, CACESEntry } from '@/types/rh-suivi';
@@ -52,7 +52,7 @@ const HAB_ELEC_OPTIONS = [
 export function RHSectionCompetences({ collaborator }: Props) {
   const comp = collaborator.competencies;
   const { saveField, isSaving } = useAutoSaveCompetencies(collaborator.id);
-  const { data: catalogueCompetences = [] } = useCompetencesCatalogue();
+  const { data: universCatalog = [] } = useUniversCatalog();
   
   const [caces, setCaces] = useState<CACESEntry[]>((comp?.caces || []) as CACESEntry[]);
   const [competencesTech, setCompetencesTech] = useState<string[]>((comp?.competences_techniques || []) as string[]);
@@ -85,10 +85,9 @@ export function RHSectionCompetences({ collaborator }: Props) {
   };
 
   const allCompetences = React.useMemo(() => {
-    const base = catalogueCompetences.map(c => c.label);
-    const extras = competencesTech.filter(c => !base.some(b => b.toLowerCase() === c.toLowerCase()));
-    return [...base, ...extras];
-  }, [catalogueCompetences, competencesTech]);
+    // Source unique : univers Apogée depuis univers_catalog
+    return universCatalog.map(u => u.label);
+  }, [universCatalog]);
 
   return (
     <div className="space-y-3">
@@ -96,7 +95,7 @@ export function RHSectionCompetences({ collaborator }: Props) {
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
           <Label className="text-xs text-muted-foreground flex items-center gap-1">
-            Compétences techniques
+            Univers / Compétences (Apogée)
             {isSaving && <Loader2 className="h-3 w-3 animate-spin" />}
           </Label>
         </div>
