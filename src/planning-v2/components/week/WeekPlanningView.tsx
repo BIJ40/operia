@@ -174,8 +174,8 @@ export function WeekPlanningView({
 
   return (
     <>
-      <div className="h-full overflow-auto" ref={scrollRef}>
-        <div className="inline-flex min-w-full">
+       <div className="h-full overflow-auto" ref={scrollRef}>
+        <div className="flex min-w-0 w-full">
           {/* Time axis - sticky left */}
           <div
             className="sticky left-0 z-30 bg-card border-r border-border shrink-0"
