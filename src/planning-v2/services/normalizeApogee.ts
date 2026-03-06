@@ -248,7 +248,7 @@ export function normalizeApogeeData(
           type: blockType,
           start,
           end,
-          label: BLOCK_LABELS[blockType] || c.refType || "Bloc",
+          label: c.label || c.title || c.objet || BLOCK_LABELS[blockType] || c.refType || "Bloc",
           color: null,
           source: "apogee",
         });
