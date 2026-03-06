@@ -87,7 +87,7 @@ export function BlockCard({ block, stackIndex = 0, hourHeight = HOUR_HEIGHT_PX, 
   }
 
   // Full-size block (congé, absence, repos, pause)
-  const height = Math.max((endHour - startHour) * HOUR_HEIGHT_PX, 20);
+  const height = Math.max((endHour - startHour) * hh, 20);
 
   return (
     <div

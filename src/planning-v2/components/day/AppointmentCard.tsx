@@ -70,8 +70,8 @@ export function AppointmentCard({
   const isBinome = partnerTechs.length > 0;
 
   const renderSegment = (seg: { topHour: number; bottomHour: number }, index: number) => {
-    const top = (seg.topHour - HOUR_START) * HOUR_HEIGHT_PX;
-    const height = Math.max((seg.bottomHour - seg.topHour) * HOUR_HEIGHT_PX, 24);
+    const top = (seg.topHour - HOUR_START) * hourHeight;
+    const height = Math.max((seg.bottomHour - seg.topHour) * hourHeight, 24);
     const isFirst = index === 0;
 
     // Build diagonal gradient for binôme
