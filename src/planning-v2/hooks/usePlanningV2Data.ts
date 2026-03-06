@@ -10,6 +10,8 @@ import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { normalizeApogeeData } from "../services/normalizeApogee";
 import { computeTechDayLoad, computeScheduleConflicts } from "../services/computeLoad";
 import { computeTechDayTravel } from "../services/computeTravel";
+import { useTechSchedules } from "./useTechSchedules";
+import { getScheduleForDayOfWeek } from "../types/schedule";
 import type {
   PlanningTechnician,
   PlanningAppointment,
@@ -37,6 +39,7 @@ function dateKey(d: Date): string {
 
 export function usePlanningV2Data(selectedDate: Date): PlanningV2Result {
   const { currentAgency, isAgencyReady } = useAgency();
+  const { schedulesByApogeeId } = useTechSchedules();
   const agencySlug = currentAgency?.slug;
 
   const { data: rawData, isLoading, error, refetch } = useQuery({
@@ -79,14 +82,22 @@ export function usePlanningV2Data(selectedDate: Date): PlanningV2Result {
     if (!normalized) return new Map<string, TechDayLoad>();
     const map = new Map<string, TechDayLoad>();
     const dk = dateKey(selectedDate);
+    const dayOfWeek = selectedDate.getDay(); // 0=Dim, 1=Lun...
 
     for (const tech of normalized.technicians) {
+      // Get schedule for this tech's day of week
+      const techSchedule = schedulesByApogeeId.get(tech.apogeeId);
+      const daySchedule = techSchedule
+        ? getScheduleForDayOfWeek(techSchedule, dayOfWeek)
+        : undefined;
+
       const load = computeTechDayLoad(
         tech.id,
         dk,
         normalized.appointments,
         normalized.blocks,
-        tech.maxDailyMinutes
+        tech.maxDailyMinutes,
+        daySchedule
       );
 
       // Enrichir avec le temps de trajet
@@ -99,7 +110,7 @@ export function usePlanningV2Data(selectedDate: Date): PlanningV2Result {
     }
 
     return map;
-  }, [normalized, selectedDate]);
+  }, [normalized, selectedDate, schedulesByApogeeId]);
 
   return {
     technicians: normalized?.technicians ?? [],

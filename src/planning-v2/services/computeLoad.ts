@@ -9,6 +9,8 @@ import {
   CHARGE_LIGHT_THRESHOLD,
   CHARGE_OVERLOAD_THRESHOLD,
 } from "../constants";
+import type { TechDaySchedule } from "../types/schedule";
+import { getWorkingMinutesForDay } from "../types/schedule";
 import type {
   PlanningAppointment,
   PlanningBlock,
@@ -38,8 +40,31 @@ export function computeTechDayLoad(
   date: string,
   appointments: PlanningAppointment[],
   blocks: PlanningBlock[],
-  maxDaily: number = DEFAULT_MAX_DAILY_MINUTES
+  maxDaily: number = DEFAULT_MAX_DAILY_MINUTES,
+  daySchedule?: TechDaySchedule
 ): TechDayLoad {
+  // If schedule says rest day, return empty load
+  if (daySchedule && !daySchedule.isWorking) {
+    return {
+      techId,
+      date,
+      rdvCount: 0,
+      interventionMinutes: 0,
+      blockedMinutes: 0,
+      travelMinutes: 0,
+      freeMinutes: 0,
+      chargePercent: 0,
+      gapSlots: [],
+      hasConflict: false,
+      hasSkillMismatch: false,
+      hasAmplitudeOverflow: false,
+    };
+  }
+
+  // Use schedule-based capacity if available
+  const effectiveMax = daySchedule
+    ? getWorkingMinutesForDay(daySchedule)
+    : maxDaily;
   const dayAppts = appointments.filter(
     (a) => a.technicianIds.includes(techId) && dateKey(a.start) === date
   );
@@ -56,11 +81,13 @@ export function computeTechDayLoad(
   const totalOccupied = interventionMinutes + blockedMinutes;
   const dayTotalMinutes = (HOUR_END - HOUR_START) * 60; // 720
   const freeMinutes = Math.max(0, dayTotalMinutes - totalOccupied);
-  const chargePercent = Math.min(100, Math.round((totalOccupied / maxDaily) * 100));
+  const chargePercent = effectiveMax > 0
+    ? Math.min(100, Math.round((totalOccupied / effectiveMax) * 100))
+    : 0;
 
   // Détection conflits
   const hasConflict = detectConflictsForDay(dayAppts).length > 0;
-  const hasAmplitudeOverflow = totalOccupied > maxDaily;
+  const hasAmplitudeOverflow = totalOccupied > effectiveMax;
 
   // Calcul des trous
   const gapSlots = computeGaps(date, dayAppts, dayBlocks);

@@ -7935,6 +7935,47 @@ export type Database = {
           },
         ]
       }
+      technician_weekly_schedule: {
+        Row: {
+          collaborator_id: string
+          day_of_week: number
+          id: string
+          is_working: boolean
+          lunch_end: string | null
+          lunch_start: string | null
+          work_end: string | null
+          work_start: string | null
+        }
+        Insert: {
+          collaborator_id: string
+          day_of_week: number
+          id?: string
+          is_working?: boolean
+          lunch_end?: string | null
+          lunch_start?: string | null
+          work_end?: string | null
+          work_start?: string | null
+        }
+        Update: {
+          collaborator_id?: string
+          day_of_week?: number
+          id?: string
+          is_working?: boolean
+          lunch_end?: string | null
+          lunch_start?: string | null
+          work_end?: string | null
+          work_start?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technician_weekly_schedule_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_duplicate_suggestions: {
         Row: {
           created_at: string

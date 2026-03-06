@@ -1,6 +1,6 @@
 /**
- * Planning V2 — Dialog paramétrage technicien (horaires, jours de travail)
- * Synchronisé avec la table collaborators via apogee_user_id
+ * Planning V2 — Dialog semaine type technicien
+ * 7 lignes (Lun→Dim) avec toggle travaillé/repos + horaires par jour
  */
 
 import { useEffect, useState } from "react";
@@ -14,10 +14,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { PlanningTechnician } from "../../types";
+import {
+  type TechDaySchedule,
+  getDefaultWeekSchedule,
+} from "../../types/schedule";
 
 interface TechSettingsDialogProps {
   tech: PlanningTechnician;
@@ -25,52 +29,76 @@ interface TechSettingsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const DAYS_OF_WEEK = [
-  { value: 1, label: "Lundi" },
-  { value: 2, label: "Mardi" },
-  { value: 3, label: "Mercredi" },
-  { value: 4, label: "Jeudi" },
-  { value: 5, label: "Vendredi" },
-  { value: 6, label: "Samedi" },
-  { value: 0, label: "Dimanche" },
-];
+const DAY_LABELS: Record<number, string> = {
+  1: "Lundi",
+  2: "Mardi",
+  3: "Mercredi",
+  4: "Jeudi",
+  5: "Vendredi",
+  6: "Samedi",
+  0: "Dimanche",
+};
+
+const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
 export function TechSettingsDialog({ tech, open, onOpenChange }: TechSettingsDialogProps) {
-  const [workStart, setWorkStart] = useState(tech.workStart || "07:00");
-  const [workEnd, setWorkEnd] = useState(tech.workEnd || "18:00");
-  const [lunchStart, setLunchStart] = useState(tech.lunchStart || "12:00");
-  const [lunchEnd, setLunchEnd] = useState(tech.lunchEnd || "13:00");
-  const [workDays, setWorkDays] = useState<number[]>([1, 2, 3, 4, 5]);
+  const [schedule, setSchedule] = useState<TechDaySchedule[]>(getDefaultWeekSchedule());
   const [loading, setLoading] = useState(false);
   const [collaboratorId, setCollaboratorId] = useState<string | null>(null);
 
-  // Charger les données depuis collaborators
   useEffect(() => {
     if (!open || !tech.apogeeId) return;
 
-    async function loadSettings() {
-      const { data } = await supabase
+    async function load() {
+      // Find collaborator
+      const { data: collab } = await supabase
         .from("collaborators")
-        .select("id, work_start, work_end, lunch_start, lunch_end, work_days")
+        .select("id")
         .eq("apogee_user_id", tech.apogeeId)
         .maybeSingle();
 
-      if (data) {
-        setCollaboratorId(data.id);
-        setWorkStart((data as any).work_start || "07:00");
-        setWorkEnd((data as any).work_end || "18:00");
-        setLunchStart((data as any).lunch_start || "12:00");
-        setLunchEnd((data as any).lunch_end || "13:00");
-        setWorkDays((data as any).work_days || [1, 2, 3, 4, 5]);
+      if (!collab) {
+        setCollaboratorId(null);
+        setSchedule(getDefaultWeekSchedule());
+        return;
+      }
+
+      setCollaboratorId(collab.id);
+
+      // Load existing schedule
+      const { data: rows } = await supabase
+        .from("technician_weekly_schedule")
+        .select("*")
+        .eq("collaborator_id", collab.id);
+
+      if (rows && rows.length > 0) {
+        const defaultSched = getDefaultWeekSchedule();
+        const merged = defaultSched.map((def) => {
+          const row = rows.find((r: any) => r.day_of_week === def.dayOfWeek);
+          if (row) {
+            return {
+              dayOfWeek: row.day_of_week as number,
+              isWorking: row.is_working as boolean,
+              workStart: (row.work_start as string) || def.workStart,
+              workEnd: (row.work_end as string) || def.workEnd,
+              lunchStart: (row.lunch_start as string) || def.lunchStart,
+              lunchEnd: (row.lunch_end as string) || def.lunchEnd,
+            };
+          }
+          return def;
+        });
+        setSchedule(merged);
+      } else {
+        setSchedule(getDefaultWeekSchedule());
       }
     }
 
-    loadSettings();
+    load();
   }, [open, tech.apogeeId]);
 
-  const toggleDay = (day: number) => {
-    setWorkDays((prev) =>
-      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort()
+  const updateDay = (dayOfWeek: number, patch: Partial<TechDaySchedule>) => {
+    setSchedule((prev) =>
+      prev.map((d) => (d.dayOfWeek === dayOfWeek ? { ...d, ...patch } : d))
     );
   };
 
@@ -82,23 +110,33 @@ export function TechSettingsDialog({ tech, open, onOpenChange }: TechSettingsDia
 
     setLoading(true);
     try {
+      // Upsert all 7 days
+      const rows = schedule.map((d) => ({
+        collaborator_id: collaboratorId,
+        day_of_week: d.dayOfWeek,
+        is_working: d.isWorking,
+        work_start: d.workStart,
+        work_end: d.workEnd,
+        lunch_start: d.lunchStart,
+        lunch_end: d.lunchEnd,
+      }));
+
+      // Delete existing + insert (simpler than upsert with composite key)
+      await supabase
+        .from("technician_weekly_schedule")
+        .delete()
+        .eq("collaborator_id", collaboratorId);
+
       const { error } = await supabase
-        .from("collaborators")
-        .update({
-          work_start: workStart,
-          work_end: workEnd,
-          lunch_start: lunchStart,
-          lunch_end: lunchEnd,
-          work_days: workDays,
-        } as any)
-        .eq("id", collaboratorId);
+        .from("technician_weekly_schedule")
+        .insert(rows as any);
 
       if (error) throw error;
 
-      toast.success("Paramètres enregistrés");
+      toast.success("Semaine type enregistrée");
       onOpenChange(false);
     } catch (err: any) {
-      toast.error("Erreur lors de la sauvegarde : " + err.message);
+      toast.error("Erreur : " + err.message);
     } finally {
       setLoading(false);
     }
@@ -106,7 +144,7 @@ export function TechSettingsDialog({ tech, open, onOpenChange }: TechSettingsDia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div
@@ -115,13 +153,13 @@ export function TechSettingsDialog({ tech, open, onOpenChange }: TechSettingsDia
             >
               {tech.initials}
             </div>
-            {tech.name} — Paramètres
+            {tech.name} — Semaine type
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-5 py-2">
+        <div className="space-y-1 py-2">
           {/* Compétences (lecture seule) */}
-          <div>
+          <div className="mb-4">
             <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">
               Compétences (Univers Apogée)
             </Label>
@@ -136,85 +174,80 @@ export function TechSettingsDialog({ tech, open, onOpenChange }: TechSettingsDia
                   </span>
                 ))
               ) : (
-                <span className="text-xs text-muted-foreground italic">Aucun univers défini dans Apogée</span>
+                <span className="text-xs text-muted-foreground italic">
+                  Aucun univers défini dans Apogée
+                </span>
               )}
             </div>
           </div>
 
-          {/* Horaires de travail */}
-          <div>
-            <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-              Horaires de travail
-            </Label>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-[11px]">Début</Label>
-                <Input
-                  type="time"
-                  value={workStart}
-                  onChange={(e) => setWorkStart(e.target.value)}
-                  className="h-8 text-sm"
-                />
-              </div>
-              <div>
-                <Label className="text-[11px]">Fin</Label>
-                <Input
-                  type="time"
-                  value={workEnd}
-                  onChange={(e) => setWorkEnd(e.target.value)}
-                  className="h-8 text-sm"
-                />
-              </div>
+          {/* Grille semaine */}
+          <div className="border border-border rounded-lg overflow-hidden">
+            {/* Header */}
+            <div className="grid grid-cols-[100px_60px_1fr] gap-0 bg-muted/50 px-3 py-2 text-[11px] font-medium text-muted-foreground border-b border-border">
+              <span>Jour</span>
+              <span>Statut</span>
+              <span className="text-center">Horaires</span>
             </div>
-          </div>
 
-          {/* Pause déjeuner */}
-          <div>
-            <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-              Pause déjeuner
-            </Label>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-[11px]">Début</Label>
-                <Input
-                  type="time"
-                  value={lunchStart}
-                  onChange={(e) => setLunchStart(e.target.value)}
-                  className="h-8 text-sm"
-                />
-              </div>
-              <div>
-                <Label className="text-[11px]">Fin</Label>
-                <Input
-                  type="time"
-                  value={lunchEnd}
-                  onChange={(e) => setLunchEnd(e.target.value)}
-                  className="h-8 text-sm"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Jours de travail */}
-          <div>
-            <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-              Jours de travail
-            </Label>
-            <div className="grid grid-cols-4 gap-2">
-              {DAYS_OF_WEEK.map((day) => (
-                <label
-                  key={day.value}
-                  className="flex items-center gap-1.5 text-xs cursor-pointer"
+            {DAY_ORDER.map((dow) => {
+              const day = schedule.find((d) => d.dayOfWeek === dow)!;
+              return (
+                <div
+                  key={dow}
+                  className={`grid grid-cols-[100px_60px_1fr] gap-0 items-center px-3 py-2 border-b border-border/50 last:border-0 transition-colors ${
+                    !day.isWorking ? "bg-muted/30" : ""
+                  }`}
                 >
-                  <Checkbox
-                    checked={workDays.includes(day.value)}
-                    onCheckedChange={() => toggleDay(day.value)}
-                    className="h-3.5 w-3.5"
+                  {/* Jour */}
+                  <span className={`text-xs font-medium ${!day.isWorking ? "text-muted-foreground" : "text-foreground"}`}>
+                    {DAY_LABELS[dow]}
+                  </span>
+
+                  {/* Toggle */}
+                  <Switch
+                    checked={day.isWorking}
+                    onCheckedChange={(v) => updateDay(dow, { isWorking: v })}
+                    className="h-4 w-7"
                   />
-                  {day.label}
-                </label>
-              ))}
-            </div>
+
+                  {/* Horaires */}
+                  {day.isWorking ? (
+                    <div className="flex items-center gap-1.5 text-[11px]">
+                      <Input
+                        type="time"
+                        value={day.workStart}
+                        onChange={(e) => updateDay(dow, { workStart: e.target.value })}
+                        className="h-7 w-[82px] text-xs px-1.5"
+                      />
+                      <span className="text-muted-foreground">—</span>
+                      <Input
+                        type="time"
+                        value={day.workEnd}
+                        onChange={(e) => updateDay(dow, { workEnd: e.target.value })}
+                        className="h-7 w-[82px] text-xs px-1.5"
+                      />
+                      <span className="text-muted-foreground text-[10px] ml-1">pause</span>
+                      <Input
+                        type="time"
+                        value={day.lunchStart}
+                        onChange={(e) => updateDay(dow, { lunchStart: e.target.value })}
+                        className="h-7 w-[72px] text-xs px-1.5"
+                      />
+                      <span className="text-muted-foreground">—</span>
+                      <Input
+                        type="time"
+                        value={day.lunchEnd}
+                        onChange={(e) => updateDay(dow, { lunchEnd: e.target.value })}
+                        className="h-7 w-[72px] text-xs px-1.5"
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground italic ml-2">Repos</span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 
