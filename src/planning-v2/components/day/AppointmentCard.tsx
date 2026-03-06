@@ -168,8 +168,8 @@ export function AppointmentCard({
           )}
         </div>
 
-        {/* Partner tech badges (top-right corner) */}
-        {isBinome && isFirst && (
+        {/* Partner tech badges (top-right corner) — hidden in compact/week */}
+        {isBinome && isFirst && density !== "compact" && (
           <div className="absolute top-1 right-1.5 flex items-center gap-0.5 z-[2]">
             {partnerTechs.map((pt) => (
               <div
