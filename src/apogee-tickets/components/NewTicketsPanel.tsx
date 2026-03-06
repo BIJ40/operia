@@ -4,9 +4,7 @@
  */
 
 import { useMemo, useState } from 'react';
-import { useApogeeTickets } from '../hooks/useApogeeTickets';
-import { useMyTicketViews, useMarkAllTicketsAsViewed } from '../hooks/useTicketViews';
-import { useAuth } from '@/contexts/AuthContext';
+import { useMarkAllTicketsAsViewed } from '../hooks/useTicketViews';
 import { Sparkles, Clock, Flame, Snowflake, X, Filter, Loader2, User, CheckCheck } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -28,7 +26,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import type { ApogeeTicket } from '../types';
+import type { ApogeeModule, ApogeeTicket, ApogeeTicketStatus } from '../types';
 
 // Gradient de couleurs du bleu glacé (0) au rouge foncé (12)
 const getHeatColor = (priority: number): string => {
@@ -70,44 +68,34 @@ const PRIORITY_OPTIONS = Array.from({ length: 13 }, (_, i) => ({
 }));
 
 interface NewTicketsPanelProps {
+  tickets: ApogeeTicket[];
+  statuses: ApogeeTicketStatus[];
+  modules: ApogeeModule[];
+  isLoading?: boolean;
   onTicketClick: (ticket: ApogeeTicket) => void;
 }
 
-export function NewTicketsPanel({ onTicketClick }: NewTicketsPanelProps) {
-  const { user } = useAuth();
-  const { tickets, statuses, modules, isLoading } = useApogeeTickets();
-  const { data: myViews = [], isLoading: isLoadingViews } = useMyTicketViews();
+export function NewTicketsPanel({ tickets, statuses, modules, isLoading = false, onTicketClick }: NewTicketsPanelProps) {
   const [selectedPriorities, setSelectedPriorities] = useState<number[]>([]);
   const [popoverOpen, setPopoverOpen] = useState(false);
 
   const { mutate: markAllAsViewed, isPending: isMarkingAll } = useMarkAllTicketsAsViewed();
 
-  // Calculer le nombre total de tickets "nouveaux" (sans filtre priorité) ET récupérer leurs IDs
-  const { totalNewTicketsCount, newTicketIds } = useMemo(() => {
-    if (!user?.id) return { totalNewTicketsCount: 0, newTicketIds: [] as string[] };
-    
-    const filtered = tickets.filter(ticket => {
-      if (!ticket.last_modified_by_user_id || !ticket.last_modified_at) {
-        return false;
-      }
-      // Pas modifié par moi-même
-      if (ticket.last_modified_by_user_id === user.id) {
-        return false;
-      }
-      const myView = myViews.find(v => v.ticket_id === ticket.id);
-      // Jamais vu = nouveau
-      if (!myView) return true;
-      // Modifié après ma dernière vue
-      return new Date(ticket.last_modified_at).getTime() > new Date(myView.viewed_at).getTime();
-    });
-    
-    return {
-      totalNewTicketsCount: filtered.length,
-      newTicketIds: filtered.map(t => t.id)
-    };
-  }, [tickets, myViews, user?.id]);
+  // Source unique (même calcul que le badge parent)
+  const totalNewTicketsCount = tickets.length;
+  const newTicketIds = useMemo(() => tickets.map((t) => t.id), [tickets]);
 
-  // Handler pour marquer tous comme lus
+  // Filtre priorité local
+  const newTickets = useMemo(() => {
+    if (selectedPriorities.length === 0) {
+      return tickets;
+    }
+
+    return tickets.filter((ticket) =>
+      ticket.heat_priority !== null && selectedPriorities.includes(ticket.heat_priority)
+    );
+  }, [tickets, selectedPriorities]);
+
   const handleMarkAllAsRead = () => {
     markAllAsViewed(newTicketIds, {
       onSuccess: () => {
@@ -118,34 +106,6 @@ export function NewTicketsPanel({ onTicketClick }: NewTicketsPanelProps) {
       }
     });
   };
-
-  // Filtrer les tickets : nouveaux + priorité sélectionnée
-  const newTickets = useMemo(() => {
-    if (!user?.id) return [];
-
-    return tickets.filter(ticket => {
-      if (!ticket.last_modified_by_user_id || !ticket.last_modified_at) {
-        return false;
-      }
-      // Pas modifié par moi-même
-      if (ticket.last_modified_by_user_id === user.id) {
-        return false;
-      }
-      const myView = myViews.find(v => v.ticket_id === ticket.id);
-      // Jamais vu = nouveau
-      const isNew = !myView || new Date(ticket.last_modified_at).getTime() > new Date(myView.viewed_at).getTime();
-      if (!isNew) return false;
-
-      // Filtre priorité
-      if (selectedPriorities.length > 0) {
-        if (!selectedPriorities.includes(ticket.heat_priority)) return false;
-      }
-
-      return true;
-    }).sort((a, b) => 
-      new Date(b.last_modified_at!).getTime() - new Date(a.last_modified_at!).getTime()
-    );
-  }, [tickets, myViews, user?.id, selectedPriorities]);
 
   const togglePriority = (priority: number) => {
     setSelectedPriorities(prev => 
@@ -175,7 +135,7 @@ export function NewTicketsPanel({ onTicketClick }: NewTicketsPanelProps) {
     return status?.color || 'gray';
   };
 
-  if (isLoading || isLoadingViews) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader2 className="mr-2 h-5 w-5 animate-spin text-muted-foreground" />
