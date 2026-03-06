@@ -15,7 +15,7 @@ import {
   Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AgencyProvider } from "@/apogee-connect/contexts/AgencyContext";
 import { ApiToggleProvider } from "@/apogee-connect/contexts/ApiToggleContext";
 import { useFilters } from "../hooks/useFilters";
