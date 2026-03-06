@@ -99,21 +99,6 @@ export function AppointmentCard({
         }}
         onClick={() => onViewDetails?.(a)}
       >
-        {/* Diagonal stripe overlay for binôme */}
-        {isBinome && partnerColor && (
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background: `repeating-linear-gradient(
-                -45deg,
-                transparent,
-                transparent 6px,
-                ${partnerColor}20 6px,
-                ${partnerColor}20 8px
-              )`,
-            }}
-          />
-        )}
 
         {/* Right border accent for partner color */}
         {isBinome && partnerColor && (
