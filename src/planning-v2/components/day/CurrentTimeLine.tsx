@@ -30,7 +30,7 @@ export function CurrentTimeLine({ selectedDate, hourHeight = HOUR_HEIGHT_PX }: C
   const currentHour = now.getHours() + now.getMinutes() / 60;
   if (currentHour < HOUR_START || currentHour > HOUR_END) return null;
 
-  const top = (currentHour - HOUR_START) * HOUR_HEIGHT_PX;
+  const top = (currentHour - HOUR_START) * hourHeight;
 
   return (
     <div
