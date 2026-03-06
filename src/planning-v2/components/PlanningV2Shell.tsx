@@ -177,6 +177,18 @@ function PlanningV2ShellContent() {
                 />
               )}
               {filters.view === "week" && (
+                <WeekPlanningView
+                  technicians={data.technicians}
+                  appointments={data.appointments}
+                  blocks={data.blocks}
+                  alerts={data.alerts}
+                  loads={data.loads}
+                  selectedDate={filters.selectedDate}
+                  hoverSettings={hoverSettings}
+                  showUnavailable={showUnavailable}
+                />
+              )}
+              {filters.view === "charge" && (
                 <WeekHeatmapView
                   technicians={data.technicians}
                   appointments={data.appointments}
