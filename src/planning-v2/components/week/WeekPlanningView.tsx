@@ -228,16 +228,17 @@ export function WeekPlanningView({
                     const techBlocks = dayBlocks.filter(b => b.techId === tech.id);
                     const isUnavail = isTechUnavailableForDay(tech.id, dayBlocks, dayAppts, dk);
                     const layout = computeOverlapLayout(techAppts);
+                    const techZones = techAppts.flatMap(a => a.pictosInterv ?? []);
 
                     return (
                       <div
                         key={tech.id}
                         className={`relative border-r border-border/30 flex-1 min-w-0 ${isUnavail ? "opacity-30 bg-muted/20" : ""}`}
                       >
-                        {/* Initials header at top of column */}
+                        {/* Initials header + zone indicator at top of column */}
                         <div
-                          className="absolute top-0 left-0 right-0 z-10 flex items-center justify-center py-0.5"
-                          style={{ height: 18 }}
+                          className="absolute top-0 left-0 right-0 z-10 flex flex-col items-center gap-0.5 py-0.5"
+                          style={{ minHeight: 18 }}
                         >
                           <span
                             className="text-[8px] font-bold text-white px-1 rounded"
@@ -245,6 +246,11 @@ export function WeekPlanningView({
                           >
                             {tech.initials}
                           </span>
+                          {techZones.length > 0 && (
+                            <div className="scale-75 origin-top">
+                              <ZoneIndicator zones={techZones} />
+                            </div>
+                          )}
                         </div>
 
                         {/* Hour grid lines */}
