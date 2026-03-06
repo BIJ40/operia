@@ -33,8 +33,9 @@ function PlanningV2ShellContent() {
   const [showUnavailable, setShowUnavailable] = useState(false);
   const [unscheduledOpen, setUnscheduledOpen] = useState(false);
   const goToday = () => setDate(new Date());
-  const goPrev = () => setDate(subDays(filters.selectedDate, 1));
-  const goNext = () => setDate(addDays(filters.selectedDate, 1));
+  const isWeekView = filters.view === "week";
+  const goPrev = () => setDate(isWeekView ? subWeeks(filters.selectedDate, 1) : subDays(filters.selectedDate, 1));
+  const goNext = () => setDate(isWeekView ? addWeeks(filters.selectedDate, 1) : addDays(filters.selectedDate, 1));
 
   const dateLabel = format(filters.selectedDate, "EEEE d MMMM yyyy", { locale: fr });
   const todayActive = isToday(filters.selectedDate);
