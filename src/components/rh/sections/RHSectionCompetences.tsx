@@ -52,7 +52,7 @@ const HAB_ELEC_OPTIONS = [
 export function RHSectionCompetences({ collaborator }: Props) {
   const comp = collaborator.competencies;
   const { saveField, isSaving } = useAutoSaveCompetencies(collaborator.id);
-  const { data: catalogueCompetences = [] } = useCompetencesCatalogue();
+  const { data: universCatalog = [] } = useUniversCatalog();
   
   const [caces, setCaces] = useState<CACESEntry[]>((comp?.caces || []) as CACESEntry[]);
   const [competencesTech, setCompetencesTech] = useState<string[]>((comp?.competences_techniques || []) as string[]);
