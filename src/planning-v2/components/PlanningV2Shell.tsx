@@ -23,12 +23,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AgencyProvider } from "@/apogee-connect/contexts/AgencyContext";
+import { ApiToggleProvider } from "@/apogee-connect/contexts/ApiToggleContext";
 import { useFilters } from "../hooks/useFilters";
 import { usePlanningV2Data } from "../hooks/usePlanningV2Data";
 import { DayDispatchView } from "./day/DayDispatchView";
 import type { PlanningView, DisplayDensity } from "../types";
 
-export default function PlanningV2Shell() {
+function PlanningV2ShellContent() {
   const { filters, setDate, setView, setDensity } = useFilters();
   const data = usePlanningV2Data(filters.selectedDate);
 
