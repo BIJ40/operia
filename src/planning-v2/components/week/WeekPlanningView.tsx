@@ -37,9 +37,8 @@ import type {
 
 // Compact constants for week view
 const WEEK_HOUR_HEIGHT = 50; // smaller than day view's 80
-const WEEK_TECH_COL_WIDTH = 100; // much narrower
 const WEEK_GRID_HEIGHT = (HOUR_END - HOUR_START) * WEEK_HOUR_HEIGHT;
-const WEEK_TIME_AXIS_WIDTH = 40;
+const WEEK_TIME_AXIS_WIDTH = 36;
 
 interface WeekPlanningViewProps {
   technicians: PlanningTechnician[];
@@ -145,15 +144,20 @@ export function WeekPlanningView({
     return m;
   }, [technicians]);
 
-  // Filter techs: show only those active at least one day this week
-  const visibleTechs = useMemo(() => {
-    if (showUnavailable) return technicians;
-    return technicians.filter(tech => {
-      return weekDays.some(day => {
-        const dk = dateKey(day);
-        return !isTechUnavailableForDay(tech.id, blocks, appointments, dk);
-      });
-    });
+  // Per-day visible techs (filter unavailable per day, not globally)
+  const visibleTechsByDay = useMemo(() => {
+    const map = new Map<string, PlanningTechnician[]>();
+    for (const day of weekDays) {
+      const dk = dateKey(day);
+      if (showUnavailable) {
+        map.set(dk, technicians);
+      } else {
+        map.set(dk, technicians.filter(tech =>
+          !isTechUnavailableForDay(tech.id, blocks, appointments, dk)
+        ));
+      }
+    }
+    return map;
   }, [technicians, showUnavailable, weekDays, blocks, appointments]);
 
   // Conflict IDs
@@ -170,8 +174,8 @@ export function WeekPlanningView({
 
   return (
     <>
-      <div className="h-full overflow-auto" ref={scrollRef}>
-        <div className="inline-flex min-w-full">
+       <div className="h-full overflow-auto" ref={scrollRef}>
+        <div className="flex min-w-0 w-full">
           {/* Time axis - sticky left */}
           <div
             className="sticky left-0 z-30 bg-card border-r border-border shrink-0"
@@ -198,11 +202,12 @@ export function WeekPlanningView({
             const dayAppts = appointments.filter(a => dateKey(a.start) === dk);
             const dayBlocks = blocks.filter(b => dateKey(b.start) === dk);
 
+            const dayVisibleTechs = visibleTechsByDay.get(dk) ?? [];
+
             return (
               <div
                 key={dk}
-                className={`shrink-0 border-r-2 border-border/60 ${today ? "bg-primary/[0.02]" : ""}`}
-                style={{ width: visibleTechs.length * WEEK_TECH_COL_WIDTH }}
+                className={`flex-1 min-w-0 border-r-2 border-border/60 ${today ? "bg-primary/[0.02]" : ""}`}
               >
                 {/* Day header - sticky top */}
                 <div className={`sticky top-0 z-20 border-b border-border text-center py-1.5 px-1 ${today ? "bg-primary/10" : "bg-card"}`}>
@@ -216,7 +221,7 @@ export function WeekPlanningView({
 
                 {/* Tech sub-columns within this day */}
                 <div className="flex" style={{ height: WEEK_GRID_HEIGHT }}>
-                  {visibleTechs.map((tech) => {
+                  {dayVisibleTechs.map((tech) => {
                     const techAppts = dayAppts.filter(a => a.technicianIds.includes(tech.id));
                     const techBlocks = dayBlocks.filter(b => b.techId === tech.id);
                     const isUnavail = isTechUnavailableForDay(tech.id, dayBlocks, dayAppts, dk);
@@ -225,8 +230,7 @@ export function WeekPlanningView({
                     return (
                       <div
                         key={tech.id}
-                        className={`relative border-r border-border/30 ${isUnavail ? "opacity-30 bg-muted/20" : ""}`}
-                        style={{ width: WEEK_TECH_COL_WIDTH }}
+                        className={`relative border-r border-border/30 flex-1 min-w-0 ${isUnavail ? "opacity-30 bg-muted/20" : ""}`}
                       >
                         {/* Initials header at top of column */}
                         <div
