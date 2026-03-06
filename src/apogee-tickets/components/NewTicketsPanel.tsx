@@ -81,70 +81,18 @@ export function NewTicketsPanel({ tickets, statuses, modules, isLoading = false,
 
   const { mutate: markAllAsViewed, isPending: isMarkingAll } = useMarkAllTicketsAsViewed();
 
-  // Calculer le nombre total de tickets "nouveaux" (sans filtre priorité) ET récupérer leurs IDs
-  const { totalNewTicketsCount, newTicketIds } = useMemo(() => {
-    if (!user?.id) return { totalNewTicketsCount: 0, newTicketIds: [] as string[] };
-    
-    const filtered = tickets.filter(ticket => {
-      if (!ticket.last_modified_by_user_id || !ticket.last_modified_at) {
-        return false;
-      }
-      // Pas modifié par moi-même
-      if (ticket.last_modified_by_user_id === user.id) {
-        return false;
-      }
-      const myView = myViews.find(v => v.ticket_id === ticket.id);
-      // Jamais vu = nouveau
-      if (!myView) return true;
-      // Modifié après ma dernière vue
-      return new Date(ticket.last_modified_at).getTime() > new Date(myView.viewed_at).getTime();
-    });
-    
-    return {
-      totalNewTicketsCount: filtered.length,
-      newTicketIds: filtered.map(t => t.id)
-    };
-  }, [tickets, myViews, user?.id]);
+  // Source unique (même calcul que le badge parent)
+  const totalNewTicketsCount = tickets.length;
+  const newTicketIds = useMemo(() => tickets.map((t) => t.id), [tickets]);
 
-  // Handler pour marquer tous comme lus
-  const handleMarkAllAsRead = () => {
-    markAllAsViewed(newTicketIds, {
-      onSuccess: () => {
-        toast.success(`${newTicketIds.length} ticket(s) marqué(s) comme lu(s)`);
-      },
-      onError: () => {
-        toast.error('Erreur lors du marquage des tickets');
-      }
-    });
-  };
-
-  // Filtrer les tickets : nouveaux + priorité sélectionnée
+  // Filtre priorité local
   const newTickets = useMemo(() => {
-    if (!user?.id) return [];
+    if (selectedPriorities.length === 0) {
+      return tickets;
+    }
 
-    return tickets.filter(ticket => {
-      if (!ticket.last_modified_by_user_id || !ticket.last_modified_at) {
-        return false;
-      }
-      // Pas modifié par moi-même
-      if (ticket.last_modified_by_user_id === user.id) {
-        return false;
-      }
-      const myView = myViews.find(v => v.ticket_id === ticket.id);
-      // Jamais vu = nouveau
-      const isNew = !myView || new Date(ticket.last_modified_at).getTime() > new Date(myView.viewed_at).getTime();
-      if (!isNew) return false;
-
-      // Filtre priorité
-      if (selectedPriorities.length > 0) {
-        if (!selectedPriorities.includes(ticket.heat_priority)) return false;
-      }
-
-      return true;
-    }).sort((a, b) => 
-      new Date(b.last_modified_at!).getTime() - new Date(a.last_modified_at!).getTime()
-    );
-  }, [tickets, myViews, user?.id, selectedPriorities]);
+    return tickets.filter((ticket) => selectedPriorities.includes(ticket.heat_priority));
+  }, [tickets, selectedPriorities]);
 
   const togglePriority = (priority: number) => {
     setSelectedPriorities(prev => 
