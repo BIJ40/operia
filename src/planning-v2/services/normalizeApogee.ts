@@ -115,6 +115,7 @@ interface RawProject {
   data?: {
     commanditaireId?: number;
     universes?: string[];
+    pictosInterv?: string[];
   };
 }
 
