@@ -42,16 +42,36 @@ function dateKey(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-/** Check if a tech is unavailable for the whole day (absence, congé, repos covering ≥6h) */
-function isTechUnavailable(techId: number, blocks: PlanningBlock[], dk: string): boolean {
+/** Check if a tech is unavailable for the whole day:
+ *  - has absence/congé/repos blocks covering ≥6h, OR
+ *  - has 0 appointments and 0 work blocks (not scheduled at all)
+ */
+function isTechUnavailable(
+  techId: number,
+  blocks: PlanningBlock[],
+  appointments: PlanningAppointment[],
+  dk: string
+): boolean {
   const techBlocks = blocks.filter(
-    (b) => b.techId === techId && dateKey(b.start) === dk && UNAVAILABLE_BLOCK_TYPES.includes(b.type)
+    (b) => b.techId === techId && dateKey(b.start) === dk
   );
-  if (techBlocks.length === 0) return false;
-  const totalMin = techBlocks.reduce((sum, b) => {
-    return sum + (b.end.getTime() - b.start.getTime()) / 60_000;
-  }, 0);
-  return totalMin >= 360;
+  const unavailBlocks = techBlocks.filter((b) => UNAVAILABLE_BLOCK_TYPES.includes(b.type));
+
+  // Explicit absence ≥6h
+  if (unavailBlocks.length > 0) {
+    const totalMin = unavailBlocks.reduce((sum, b) => {
+      return sum + (b.end.getTime() - b.start.getTime()) / 60_000;
+    }, 0);
+    if (totalMin >= 360) return true;
+  }
+
+  // No appointments at all for this tech on this day
+  const techAppts = appointments.filter(
+    (a) => a.technicianIds.includes(techId) && dateKey(a.start) === dk
+  );
+  if (techAppts.length === 0 && techBlocks.length === 0) return true;
+
+  return false;
 }
 
 /** Compute side-by-side column layout for overlapping appointments */
@@ -139,10 +159,10 @@ export function DayDispatchView({
   const unavailableTechIds = useMemo(() => {
     const ids = new Set<number>();
     for (const tech of technicians) {
-      if (isTechUnavailable(tech.id, dayBlocks, dk)) ids.add(tech.id);
+      if (isTechUnavailable(tech.id, dayBlocks, dayAppointments, dk)) ids.add(tech.id);
     }
     return ids;
-  }, [technicians, dayBlocks, dk]);
+  }, [technicians, dayBlocks, dayAppointments, dk]);
 
   // Filtrer les techs visibles
   const visibleTechs = useMemo(() => {
