@@ -56,6 +56,8 @@ export function AppointmentCard({
   hoverSettings,
   onViewDetails,
   partnerTechs = [],
+  colIndex = 0,
+  totalCols = 1,
 }: AppointmentCardProps) {
   const segments = computeSegments(a);
   const typeKey = a.type.toLowerCase();
