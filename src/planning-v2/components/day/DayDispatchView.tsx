@@ -223,7 +223,11 @@ export function DayDispatchView({
               >
                 {/* Sticky header */}
                 <div className="sticky top-0 z-20 bg-card border-b border-border">
-                  <TechColumnHeader tech={tech} load={load} density={density} isUnavailable={isUnavailable} />
+                  <TechContextMenu tech={tech}>
+                    <div>
+                      <TechColumnHeader tech={tech} load={load} density={density} isUnavailable={isUnavailable} />
+                    </div>
+                  </TechContextMenu>
                 </div>
 
                 {/* Grid body */}
