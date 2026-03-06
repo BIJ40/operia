@@ -2345,6 +2345,8 @@ export type Database = {
           is_registered_user: boolean
           last_name: string
           leaving_date: string | null
+          lunch_end: string | null
+          lunch_start: string | null
           notes: string | null
           permis: string | null
           phone: string | null
@@ -2354,6 +2356,9 @@ export type Database = {
           type: string | null
           updated_at: string
           user_id: string | null
+          work_days: number[] | null
+          work_end: string | null
+          work_start: string | null
         }
         Insert: {
           address?: string | null
@@ -2371,6 +2376,8 @@ export type Database = {
           is_registered_user?: boolean
           last_name: string
           leaving_date?: string | null
+          lunch_end?: string | null
+          lunch_start?: string | null
           notes?: string | null
           permis?: string | null
           phone?: string | null
@@ -2380,6 +2387,9 @@ export type Database = {
           type?: string | null
           updated_at?: string
           user_id?: string | null
+          work_days?: number[] | null
+          work_end?: string | null
+          work_start?: string | null
         }
         Update: {
           address?: string | null
@@ -2397,6 +2407,8 @@ export type Database = {
           is_registered_user?: boolean
           last_name?: string
           leaving_date?: string | null
+          lunch_end?: string | null
+          lunch_start?: string | null
           notes?: string | null
           permis?: string | null
           phone?: string | null
@@ -2406,6 +2418,9 @@ export type Database = {
           type?: string | null
           updated_at?: string
           user_id?: string | null
+          work_days?: number[] | null
+          work_end?: string | null
+          work_start?: string | null
         }
         Relationships: [
           {
