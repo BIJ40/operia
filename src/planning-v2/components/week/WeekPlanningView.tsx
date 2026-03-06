@@ -231,7 +231,6 @@ export function WeekPlanningView({
                       <div
                         key={tech.id}
                         className={`relative border-r border-border/30 flex-1 min-w-0 ${isUnavail ? "opacity-30 bg-muted/20" : ""}`}
-                        >
                       >
                         {/* Initials header at top of column */}
                         <div
