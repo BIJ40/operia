@@ -20,6 +20,7 @@ const DiffusionDashboard = lazy(() => import("@/pages/DiffusionDashboard"));
 const TvDisplayEntry = lazy(() => import("@/pages/TvDisplayEntry"));
 const CommercialPage = lazy(() => import("@/pages/CommercialPage"));
 const CommercialSupportPptx = lazy(() => import("@/commercial/pages/CommercialSupportPptx"));
+const PlanningV2Shell = lazy(() => import("@/planning-v2/components/PlanningV2Shell"));
 
 function PageLoader() {
   return (
@@ -116,6 +117,8 @@ export function PilotageRoutes() {
       <Route path="/agency/commercial" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><CommercialPage /></ModuleGuard></RoleGuard></AgencyLayout>} />
       <Route path="/agency/commercial/support-pptx" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><CommercialSupportPptx /></ModuleGuard></RoleGuard></AgencyLayout>} />
       
+      {/* Planning V2 Dispatch Board */}
+      <Route path="/planning-v2" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><Suspense fallback={<PageLoader />}><PlanningV2Shell /></Suspense></ModuleGuard></RoleGuard></AgencyLayout>} />
       {/* Legacy /hc-agency redirects */}
       <Route path="/hc-agency" element={<Navigate to="/?tab=agence" replace />} />
       <Route path="/hc-agency/*" element={<Navigate to="/?tab=agence" replace />} />
