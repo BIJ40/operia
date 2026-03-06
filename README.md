@@ -1,5 +1,5 @@
 # Manuel CRM Apogée - Guide d'utilisation éditable
-
+ 
 Application React permettant de gérer et éditer le guide d'utilisation du CRM Apogée avec un système de blocs modulaires, navigation conditionnelle et édition visuelle.
 
 ## 🚀 Fonctionnalités
