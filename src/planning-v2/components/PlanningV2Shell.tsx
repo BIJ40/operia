@@ -39,7 +39,7 @@ function PlanningV2ShellContent() {
   const goPrev = () => setDate(isWeekNav ? subWeeks(filters.selectedDate, 1) : subDays(filters.selectedDate, 1));
   const goNext = () => setDate(isWeekNav ? addWeeks(filters.selectedDate, 1) : addDays(filters.selectedDate, 1));
 
-  const dateLabel = isWeekView
+  const dateLabel = isWeekNav
     ? `Semaine du ${format(startOfWeek(filters.selectedDate, { weekStartsOn: 1 }), "d MMM", { locale: fr })} au ${format(endOfWeek(filters.selectedDate, { weekStartsOn: 1 }), "d MMM yyyy", { locale: fr })}`
     : format(filters.selectedDate, "EEEE d MMMM yyyy", { locale: fr });
   const todayActive = isToday(filters.selectedDate);
