@@ -3,7 +3,7 @@
  * 7 lignes (Lun→Dim) avec toggle travaillé/repos + horaires par jour
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +21,7 @@ import type { PlanningTechnician } from "../../types";
 import {
   type TechDaySchedule,
   getDefaultWeekSchedule,
+  getWorkingMinutesForDay,
 } from "../../types/schedule";
 
 interface TechSettingsDialogProps {
@@ -249,6 +250,21 @@ export function TechSettingsDialog({ tech, open, onOpenChange }: TechSettingsDia
               );
             })}
           </div>
+
+          {/* Total heures théoriques */}
+          {(() => {
+            const totalMin = schedule.reduce((sum, d) => sum + getWorkingMinutesForDay(d), 0);
+            const h = Math.floor(totalMin / 60);
+            const m = totalMin % 60;
+            return (
+              <div className="flex justify-end items-center gap-2 mt-2 px-1">
+                <span className="text-xs text-muted-foreground">Total théorique hebdo :</span>
+                <span className="text-sm font-semibold text-foreground">
+                  {h}h{String(m).padStart(2, "0")}
+                </span>
+              </div>
+            );
+          })()}
         </div>
 
         <DialogFooter>
