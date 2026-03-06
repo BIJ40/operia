@@ -8,6 +8,7 @@ import { useMemo, useState } from "react";
 import { format, startOfWeek, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { dateKey } from "../../utils/dateUtils";
 import { computeWeeklyHeatmap } from "../../services/computeLoad";
 import { WEEK_DAYS } from "../../constants";
 import type {
@@ -29,9 +30,6 @@ interface WeekHeatmapViewProps {
   onDayClick?: (date: Date) => void;
 }
 
-function dateKey(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
 
 // Colors for load status
 function getCellStyle(cell: WeekHeatmapCell): { bg: string; text: string; border: string } {

@@ -12,6 +12,7 @@ import { computeTechDayLoad, computeScheduleConflicts } from "../services/comput
 import { computeTechDayTravel } from "../services/computeTravel";
 import { useTechSchedules } from "./useTechSchedules";
 import { getScheduleForDayOfWeek } from "../types/schedule";
+import { dateKey } from "../utils/dateUtils";
 import type {
   PlanningTechnician,
   PlanningAppointment,
@@ -33,9 +34,6 @@ interface PlanningV2Result {
   refresh: () => void;
 }
 
-function dateKey(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
 
 export function usePlanningV2Data(selectedDate: Date): PlanningV2Result {
   const { currentAgency, isAgencyReady } = useAgency();

@@ -16,6 +16,7 @@ import { BlockCard } from "./BlockCard";
 import { TimeAxis } from "./TimeAxis";
 import { CurrentTimeLine } from "./CurrentTimeLine";
 import { DetailDrawer } from "../shared/DetailDrawer";
+import { dateKey } from "../../utils/dateUtils";
 import type {
   PlanningTechnician,
   PlanningAppointment,
@@ -38,9 +39,6 @@ interface DayDispatchViewProps {
   showUnavailable: boolean;
 }
 
-function dateKey(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
 
 /** Check if a tech is unavailable for the whole day:
  *  - has absence/congé/repos blocks covering ≥6h, OR
