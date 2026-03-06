@@ -7,6 +7,8 @@
 
 import { useMemo, useRef, useState } from "react";
 import { ZoneIndicator } from "../day/ZoneIndicator";
+import { ClipboardList } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, startOfWeek, addDays, isToday } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
@@ -230,26 +232,58 @@ export function WeekPlanningView({
                     const layout = computeOverlapLayout(techAppts);
                     const techZones = techAppts.flatMap(a => a.pictosInterv ?? []);
 
+                    // Filter task-like blocks for the dropdown
+                    const TASK_BLOCK_TYPES = ["tache", "rappel", "atelier", "formation"];
+                    const taskBlocks = techBlocks.filter(b => TASK_BLOCK_TYPES.includes(b.type));
+                    const nonTaskBlocks = techBlocks.filter(b => !TASK_BLOCK_TYPES.includes(b.type));
+
                     return (
                       <div
                         key={tech.id}
                         className={`relative border-r border-border/30 flex-1 min-w-0 ${isUnavail ? "opacity-30 bg-muted/20" : ""}`}
                       >
-                        {/* Initials header + zone indicator at top of column */}
+                        {/* Initials header + zone wheel + task icon */}
                         <div
                           className="absolute top-0 left-0 right-0 z-10 flex flex-col items-center gap-0.5 py-0.5"
                           style={{ minHeight: 18 }}
                         >
-                          <span
-                            className="text-[8px] font-bold text-white px-1 rounded"
-                            style={{ backgroundColor: tech.color }}
-                          >
-                            {tech.initials}
-                          </span>
+                          <div className="flex items-center gap-0.5">
+                            <span
+                              className="text-[8px] font-bold text-white px-1 rounded"
+                              style={{ backgroundColor: tech.color }}
+                            >
+                              {tech.initials}
+                            </span>
+                            {taskBlocks.length > 0 && (
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <button className="relative p-0.5 rounded hover:bg-muted/60 transition-colors">
+                                    <ClipboardList className="h-3 w-3 text-muted-foreground" />
+                                    <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-primary text-[7px] text-primary-foreground rounded-full flex items-center justify-center font-bold">
+                                      {taskBlocks.length}
+                                    </span>
+                                  </button>
+                                </PopoverTrigger>
+                                <PopoverContent side="bottom" align="start" className="w-48 p-2">
+                                  <div className="text-[10px] font-semibold text-foreground mb-1.5">
+                                    Tâches du jour ({taskBlocks.length})
+                                  </div>
+                                  <div className="space-y-1">
+                                    {taskBlocks.map(b => (
+                                      <div key={b.id} className="flex items-center gap-1.5 text-[10px]">
+                                        <span className="text-muted-foreground shrink-0">
+                                          {format(b.start, "HH:mm")}
+                                        </span>
+                                        <span className="truncate text-foreground">{b.label}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            )}
+                          </div>
                           {techZones.length > 0 && (
-                            <div className="scale-75 origin-top">
-                              <ZoneIndicator zones={techZones} />
-                            </div>
+                            <ZoneIndicator zones={techZones} size={20} />
                           )}
                         </div>
 
@@ -272,8 +306,8 @@ export function WeekPlanningView({
                           }}
                         />
 
-                        {/* Blocks */}
-                        {techBlocks.map((block) => (
+                        {/* Non-task blocks (congés, absences) still rendered */}
+                        {nonTaskBlocks.map((block) => (
                           <BlockCard
                             key={block.id}
                             block={block}
