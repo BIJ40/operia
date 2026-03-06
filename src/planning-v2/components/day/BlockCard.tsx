@@ -21,6 +21,10 @@ interface BlockCardProps {
   selectedDate: Date;
   /** Stack index for compact blocks at the same time (0-based) */
   stackIndex?: number;
+  /** Override hour height for week view */
+  hourHeight?: number;
+  /** Force compact rendering */
+  compact?: boolean;
   onViewDetails?: (block: PlanningBlock) => void;
 }
 
