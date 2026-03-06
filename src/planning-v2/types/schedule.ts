@@ -19,10 +19,21 @@ export function getWorkingMinutesForDay(schedule: TechDaySchedule | undefined): 
 
   const [wsh, wsm] = schedule.workStart.split(":").map(Number);
   const [weh, wem] = schedule.workEnd.split(":").map(Number);
+
+  const workMinutes = (weh * 60 + wem) - (wsh * 60 + wsm);
+
+  // Pause optionnelle
+  if (!schedule.lunchStart || !schedule.lunchEnd || schedule.lunchStart === "" || schedule.lunchEnd === "") {
+    return Math.max(0, workMinutes);
+  }
+
   const [lsh, lsm] = schedule.lunchStart.split(":").map(Number);
   const [leh, lem] = schedule.lunchEnd.split(":").map(Number);
 
-  const workMinutes = (weh * 60 + wem) - (wsh * 60 + wsm);
+  if (isNaN(lsh) || isNaN(lsm) || isNaN(leh) || isNaN(lem)) {
+    return Math.max(0, workMinutes);
+  }
+
   const lunchMinutes = (leh * 60 + lem) - (lsh * 60 + lsm);
 
   return Math.max(0, workMinutes - Math.max(0, lunchMinutes));
