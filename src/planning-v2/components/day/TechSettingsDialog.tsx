@@ -3,7 +3,7 @@
  * 7 lignes (Lun→Dim) avec toggle travaillé/repos + horaires par jour
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +21,7 @@ import type { PlanningTechnician } from "../../types";
 import {
   type TechDaySchedule,
   getDefaultWeekSchedule,
+  getWorkingMinutesForDay,
 } from "../../types/schedule";
 
 interface TechSettingsDialogProps {
