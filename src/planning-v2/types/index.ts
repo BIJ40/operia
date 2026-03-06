@@ -6,7 +6,7 @@
 // ─── Display ────────────────────────────────────────────────────────────────
 export type DisplayDensity = "compact" | "standard" | "detailed";
 
-export type PlanningView = "day" | "week" | "map";
+export type PlanningView = "day" | "week" | "charge" | "map";
 
 // ─── Technicien ─────────────────────────────────────────────────────────────
 export interface PlanningTechnician {

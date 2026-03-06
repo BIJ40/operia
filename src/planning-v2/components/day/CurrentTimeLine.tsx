@@ -7,9 +7,10 @@ import { HOUR_START, HOUR_END, HOUR_HEIGHT_PX } from "../../constants";
 
 interface CurrentTimeLineProps {
   selectedDate: Date;
+  hourHeight?: number;
 }
 
-export function CurrentTimeLine({ selectedDate }: CurrentTimeLineProps) {
+export function CurrentTimeLine({ selectedDate, hourHeight = HOUR_HEIGHT_PX }: CurrentTimeLineProps) {
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -29,7 +30,7 @@ export function CurrentTimeLine({ selectedDate }: CurrentTimeLineProps) {
   const currentHour = now.getHours() + now.getMinutes() / 60;
   if (currentHour < HOUR_START || currentHour > HOUR_END) return null;
 
-  const top = (currentHour - HOUR_START) * HOUR_HEIGHT_PX;
+  const top = (currentHour - HOUR_START) * hourHeight;
 
   return (
     <div

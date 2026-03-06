@@ -21,6 +21,10 @@ interface BlockCardProps {
   selectedDate: Date;
   /** Stack index for compact blocks at the same time (0-based) */
   stackIndex?: number;
+  /** Override hour height for week view */
+  hourHeight?: number;
+  /** Force compact rendering */
+  compact?: boolean;
   onViewDetails?: (block: PlanningBlock) => void;
 }
 
@@ -34,11 +38,12 @@ const BLOCK_ICONS: Record<string, React.ComponentType<{ className?: string }>> =
   pause: Coffee,
 };
 
-export function BlockCard({ block, stackIndex = 0, onViewDetails }: BlockCardProps) {
+export function BlockCard({ block, stackIndex = 0, hourHeight = HOUR_HEIGHT_PX, compact: forceCompact, onViewDetails }: BlockCardProps) {
+  const hh = hourHeight;
   const startHour = block.start.getHours() + block.start.getMinutes() / 60;
   const endHour = block.end.getHours() + block.end.getMinutes() / 60;
-  const top = (startHour - HOUR_START) * HOUR_HEIGHT_PX;
-  const isCompact = COMPACT_BLOCK_TYPES.includes(block.type);
+  const top = (startHour - HOUR_START) * hh;
+  const isCompact = forceCompact || COMPACT_BLOCK_TYPES.includes(block.type);
 
   const bgColor = block.color || BLOCK_COLORS[block.type] || "hsl(210 10% 94%)";
   const typeLabel = BLOCK_LABELS[block.type] || block.type;
@@ -82,7 +87,7 @@ export function BlockCard({ block, stackIndex = 0, onViewDetails }: BlockCardPro
   }
 
   // Full-size block (congé, absence, repos, pause)
-  const height = Math.max((endHour - startHour) * HOUR_HEIGHT_PX, 20);
+  const height = Math.max((endHour - startHour) * hh, 20);
 
   return (
     <div

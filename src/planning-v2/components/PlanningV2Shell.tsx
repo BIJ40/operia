@@ -13,6 +13,7 @@ import {
   RotateCcw,
   EyeOff,
   Eye,
+  CalendarRange,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,6 +24,7 @@ import { useFilters } from "../hooks/useFilters";
 import { usePlanningV2Data } from "../hooks/usePlanningV2Data";
 import { DayDispatchView } from "./day/DayDispatchView";
 import { WeekHeatmapView } from "./week/WeekHeatmapView";
+import { WeekPlanningView } from "./week/WeekPlanningView";
 import { DisplaySettings } from "./shared/DisplaySettings";
 import { UnscheduledPanel } from "./shared/UnscheduledPanel";
 import type { PlanningView } from "../types";
@@ -33,11 +35,11 @@ function PlanningV2ShellContent() {
   const [showUnavailable, setShowUnavailable] = useState(false);
   const [unscheduledOpen, setUnscheduledOpen] = useState(false);
   const goToday = () => setDate(new Date());
-  const isWeekView = filters.view === "week";
-  const goPrev = () => setDate(isWeekView ? subWeeks(filters.selectedDate, 1) : subDays(filters.selectedDate, 1));
-  const goNext = () => setDate(isWeekView ? addWeeks(filters.selectedDate, 1) : addDays(filters.selectedDate, 1));
+  const isWeekNav = filters.view === "week" || filters.view === "charge";
+  const goPrev = () => setDate(isWeekNav ? subWeeks(filters.selectedDate, 1) : subDays(filters.selectedDate, 1));
+  const goNext = () => setDate(isWeekNav ? addWeeks(filters.selectedDate, 1) : addDays(filters.selectedDate, 1));
 
-  const dateLabel = isWeekView
+  const dateLabel = isWeekNav
     ? `Semaine du ${format(startOfWeek(filters.selectedDate, { weekStartsOn: 1 }), "d MMM", { locale: fr })} au ${format(endOfWeek(filters.selectedDate, { weekStartsOn: 1 }), "d MMM yyyy", { locale: fr })}`
     : format(filters.selectedDate, "EEEE d MMMM yyyy", { locale: fr });
   const todayActive = isToday(filters.selectedDate);
@@ -80,8 +82,12 @@ function PlanningV2ShellContent() {
               Jour
             </TabsTrigger>
             <TabsTrigger value="week" className="text-xs gap-1 px-3 h-7">
-              <BarChart3 className="h-3.5 w-3.5" />
+              <CalendarRange className="h-3.5 w-3.5" />
               Semaine
+            </TabsTrigger>
+            <TabsTrigger value="charge" className="text-xs gap-1 px-3 h-7">
+              <BarChart3 className="h-3.5 w-3.5" />
+              Charge
             </TabsTrigger>
             <TabsTrigger value="map" className="text-xs gap-1 px-3 h-7">
               <Map className="h-3.5 w-3.5" />
@@ -171,6 +177,18 @@ function PlanningV2ShellContent() {
                 />
               )}
               {filters.view === "week" && (
+                <WeekPlanningView
+                  technicians={data.technicians}
+                  appointments={data.appointments}
+                  blocks={data.blocks}
+                  alerts={data.alerts}
+                  loads={data.loads}
+                  selectedDate={filters.selectedDate}
+                  hoverSettings={hoverSettings}
+                  showUnavailable={showUnavailable}
+                />
+              )}
+              {filters.view === "charge" && (
                 <WeekHeatmapView
                   technicians={data.technicians}
                   appointments={data.appointments}

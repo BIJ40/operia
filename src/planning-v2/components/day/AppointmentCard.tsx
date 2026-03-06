@@ -18,7 +18,7 @@ export interface PartnerTechInfo {
   name: string;
 }
 
-interface AppointmentCardProps {
+export interface AppointmentCardProps {
   appointment: PlanningAppointment;
   techColor: string;
   density: DisplayDensity;
@@ -32,6 +32,8 @@ interface AppointmentCardProps {
   colIndex?: number;
   /** Total columns in overlap group */
   totalCols?: number;
+  /** Override hour height for week view */
+  hourHeight?: number;
 }
 
 /** Compute visual segments, splitting around lunch break */
@@ -58,6 +60,7 @@ export function AppointmentCard({
   partnerTechs = [],
   colIndex = 0,
   totalCols = 1,
+  hourHeight = HOUR_HEIGHT_PX,
 }: AppointmentCardProps) {
   const segments = computeSegments(a);
   const typeKey = a.type.toLowerCase();
@@ -67,8 +70,8 @@ export function AppointmentCard({
   const isBinome = partnerTechs.length > 0;
 
   const renderSegment = (seg: { topHour: number; bottomHour: number }, index: number) => {
-    const top = (seg.topHour - HOUR_START) * HOUR_HEIGHT_PX;
-    const height = Math.max((seg.bottomHour - seg.topHour) * HOUR_HEIGHT_PX, 24);
+    const top = (seg.topHour - HOUR_START) * hourHeight;
+    const height = Math.max((seg.bottomHour - seg.topHour) * hourHeight, 24);
     const isFirst = index === 0;
 
     // Build diagonal gradient for binôme
