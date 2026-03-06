@@ -9,9 +9,10 @@ interface TechColumnHeaderProps {
   tech: PlanningTechnician;
   load?: TechDayLoad;
   density: DisplayDensity;
+  isUnavailable?: boolean;
 }
 
-export function TechColumnHeader({ tech, load, density }: TechColumnHeaderProps) {
+export function TechColumnHeader({ tech, load, density, isUnavailable }: TechColumnHeaderProps) {
   const chargePercent = load?.chargePercent ?? 0;
   const rdvCount = load?.rdvCount ?? 0;
   const hasConflict = load?.hasConflict ?? false;
@@ -27,10 +28,13 @@ export function TechColumnHeader({ tech, load, density }: TechColumnHeaderProps)
       {/* Ligne 1 : avatar + nom */}
       <div className="flex items-center gap-2">
         <div
-          className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
+          className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 relative"
           style={{ backgroundColor: tech.color }}
         >
           {tech.initials}
+          {isUnavailable && (
+            <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-destructive rounded-full border-2 border-card" />
+          )}
         </div>
         <div className="min-w-0">
           <div className="text-xs font-semibold text-foreground truncate leading-tight">
