@@ -40,8 +40,31 @@ export function computeTechDayLoad(
   date: string,
   appointments: PlanningAppointment[],
   blocks: PlanningBlock[],
-  maxDaily: number = DEFAULT_MAX_DAILY_MINUTES
+  maxDaily: number = DEFAULT_MAX_DAILY_MINUTES,
+  daySchedule?: TechDaySchedule
 ): TechDayLoad {
+  // If schedule says rest day, return empty load
+  if (daySchedule && !daySchedule.isWorking) {
+    return {
+      techId,
+      date,
+      rdvCount: 0,
+      interventionMinutes: 0,
+      blockedMinutes: 0,
+      travelMinutes: 0,
+      freeMinutes: 0,
+      chargePercent: 0,
+      gapSlots: [],
+      hasConflict: false,
+      hasSkillMismatch: false,
+      hasAmplitudeOverflow: false,
+    };
+  }
+
+  // Use schedule-based capacity if available
+  const effectiveMax = daySchedule
+    ? getWorkingMinutesForDay(daySchedule)
+    : maxDaily;
   const dayAppts = appointments.filter(
     (a) => a.technicianIds.includes(techId) && dateKey(a.start) === date
   );
