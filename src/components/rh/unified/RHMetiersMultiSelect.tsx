@@ -56,29 +56,6 @@ export function RHMetiersMultiSelect({
     }
   };
 
-  const handleAddMetier = async () => {
-    if (!newMetier.trim()) return;
-    
-    const normalizedLabel = newMetier.trim();
-    const exists = catalogue.some(c => c.label.toLowerCase() === normalizedLabel.toLowerCase());
-    
-    if (exists) {
-      toast.error("Ce métier existe déjà");
-      return;
-    }
-
-    try {
-      await addCompetence.mutateAsync(normalizedLabel);
-      // Auto-select the new metier
-      setLocalSelected([...localSelected, normalizedLabel]);
-      setNewMetier('');
-      setShowAddInput(false);
-      toast.success("Métier ajouté");
-    } catch (error) {
-      toast.error("Erreur lors de l'ajout");
-    }
-  };
-
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
       // Sauvegarde systématique à la fermeture pour ne pas perdre la saisie

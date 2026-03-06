@@ -95,7 +95,7 @@ export function RHSectionCompetences({ collaborator }: Props) {
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
           <Label className="text-xs text-muted-foreground flex items-center gap-1">
-            Compétences techniques
+            Univers / Compétences (Apogée)
             {isSaving && <Loader2 className="h-3 w-3 animate-spin" />}
           </Label>
         </div>
