@@ -1,11 +1,13 @@
 /**
- * Planning V2 — Carte rendez-vous (3 densités)
+ * Planning V2 — Carte rendez-vous (3 densités) + tooltip + context menu
  */
 
 import { AlertTriangle, Users } from "lucide-react";
 import { HOUR_START, HOUR_HEIGHT_PX, TYPE_LABELS, TYPE_BADGE_COLORS } from "../../constants";
-import type { PlanningAppointment, DisplayDensity } from "../../types";
+import type { PlanningAppointment, DisplayDensity, HoverDisplaySettings } from "../../types";
 import { format } from "date-fns";
+import { AppointmentHoverTooltip } from "./AppointmentHoverTooltip";
+import { AppointmentContextMenu } from "./AppointmentContextMenu";
 
 interface AppointmentCardProps {
   appointment: PlanningAppointment;
@@ -13,6 +15,8 @@ interface AppointmentCardProps {
   density: DisplayDensity;
   hasConflict: boolean;
   selectedDate: Date;
+  hoverSettings: HoverDisplaySettings;
+  onViewDetails?: (a: PlanningAppointment) => void;
 }
 
 export function AppointmentCard({
@@ -20,8 +24,9 @@ export function AppointmentCard({
   techColor,
   density,
   hasConflict,
+  hoverSettings,
+  onViewDetails,
 }: AppointmentCardProps) {
-  // Position verticale basée sur l'heure
   const startHour = a.start.getHours() + a.start.getMinutes() / 60;
   const endHour = a.end.getHours() + a.end.getMinutes() / 60;
   const top = (startHour - HOUR_START) * HOUR_HEIGHT_PX;
@@ -33,7 +38,7 @@ export function AppointmentCard({
 
   const timeStr = format(a.start, "HH:mm");
 
-  return (
+  const cardContent = (
     <div
       className={`absolute left-1 right-1 rounded-md overflow-hidden cursor-pointer
         transition-shadow hover:shadow-md hover:z-10
@@ -46,6 +51,7 @@ export function AppointmentCard({
         backgroundColor: "hsl(var(--card))",
         boxShadow: "0 1px 3px 0 hsl(var(--foreground) / 0.06)",
       }}
+      onClick={() => onViewDetails?.(a)}
     >
       <div className="px-1.5 py-1 h-full flex flex-col overflow-hidden">
         {/* Ligne 1: heure + client */}
@@ -111,5 +117,13 @@ export function AppointmentCard({
         )}
       </div>
     </div>
+  );
+
+  return (
+    <AppointmentContextMenu appointment={a} onViewDetails={onViewDetails}>
+      <AppointmentHoverTooltip appointment={a} settings={hoverSettings}>
+        {cardContent}
+      </AppointmentHoverTooltip>
+    </AppointmentContextMenu>
   );
 }

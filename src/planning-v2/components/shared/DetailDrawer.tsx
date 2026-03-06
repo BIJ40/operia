@@ -1,0 +1,158 @@
+/**
+ * Planning V2 — Panneau latéral de détail d'un rendez-vous
+ */
+
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { X, MapPin, Clock, User, Building2, FileText, AlertTriangle, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { TYPE_LABELS, TYPE_BADGE_COLORS } from "../../constants";
+import type { PlanningAppointment, PlanningTechnician } from "../../types";
+
+interface DetailDrawerProps {
+  appointment: PlanningAppointment | null;
+  technicians: PlanningTechnician[];
+  open: boolean;
+  onClose: () => void;
+}
+
+export function DetailDrawer({ appointment: a, technicians, open, onClose }: DetailDrawerProps) {
+  if (!a) return null;
+
+  const typeLabel = TYPE_LABELS[a.type.toLowerCase()] ?? a.type;
+  const typeBadge = TYPE_BADGE_COLORS[a.type.toLowerCase()];
+  const assignedTechs = technicians.filter((t) => a.technicianIds.includes(t.id));
+
+  return (
+    <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
+      <SheetContent className="w-[380px] sm:w-[420px] overflow-y-auto">
+        <SheetHeader className="pb-4">
+          <SheetTitle className="text-base font-semibold">{a.client}</SheetTitle>
+        </SheetHeader>
+
+        <div className="space-y-4 text-sm">
+          {/* Horaires */}
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Clock className="h-4 w-4 shrink-0" />
+            <span>
+              {format(a.start, "EEEE d MMMM yyyy", { locale: fr })}
+              {" · "}
+              {format(a.start, "HH:mm")} – {format(a.end, "HH:mm")}
+              {" · "}
+              {a.durationMinutes} min
+            </span>
+          </div>
+
+          {/* Adresse */}
+          {(a.address || a.city) && (
+            <div className="flex items-start gap-2 text-muted-foreground">
+              <MapPin className="h-4 w-4 shrink-0 mt-0.5" />
+              <div>
+                {a.address && <div>{a.address}</div>}
+                {(a.postalCode || a.city) && (
+                  <div>{[a.postalCode, a.city].filter(Boolean).join(" ")}</div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Type + univers */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {typeBadge && (
+              <span
+                className="text-xs font-medium px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: typeBadge.bg, color: typeBadge.text }}
+              >
+                {typeLabel}
+              </span>
+            )}
+            {a.universe && (
+              <Badge variant="outline" className="text-xs">{a.universe}</Badge>
+            )}
+            {a.isBinome && (
+              <Badge variant="outline" className="text-xs gap-1">
+                <Users className="h-3 w-3" /> Binôme
+              </Badge>
+            )}
+            <Badge
+              variant={a.priority === "urgent" ? "destructive" : "outline"}
+              className="text-xs capitalize"
+            >
+              {a.priority}
+            </Badge>
+          </div>
+
+          <Separator />
+
+          {/* Techniciens */}
+          <div className="space-y-1.5">
+            <div className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+              <User className="h-3.5 w-3.5" /> Technicien(s)
+            </div>
+            {assignedTechs.length > 0 ? (
+              assignedTechs.map((t) => (
+                <div key={t.id} className="flex items-center gap-2">
+                  <div
+                    className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0"
+                    style={{ backgroundColor: t.color }}
+                  >
+                    {t.initials}
+                  </div>
+                  <span className="text-sm">{t.name}</span>
+                </div>
+              ))
+            ) : (
+              <span className="text-xs text-muted-foreground italic">Non affecté</span>
+            )}
+          </div>
+
+          {/* Apporteur */}
+          {a.apporteur && (
+            <div className="space-y-1">
+              <div className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                <Building2 className="h-3.5 w-3.5" /> Apporteur
+              </div>
+              <span className="text-sm">{a.apporteur}</span>
+            </div>
+          )}
+
+          {/* Réf dossier */}
+          {a.projectRef && (
+            <div className="space-y-1">
+              <div className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                <FileText className="h-3.5 w-3.5" /> Référence dossier
+              </div>
+              <span className="text-sm font-mono">{a.projectRef}</span>
+            </div>
+          )}
+
+          {/* Notes */}
+          {a.notes && (
+            <>
+              <Separator />
+              <div className="space-y-1">
+                <div className="text-xs font-medium text-muted-foreground">Notes</div>
+                <p className="text-sm text-foreground whitespace-pre-wrap">{a.notes}</p>
+              </div>
+            </>
+          )}
+
+          {/* Statut */}
+          <Separator />
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span>Statut :</span>
+            <Badge variant="outline" className="capitalize">{a.status}</Badge>
+            {!a.confirmed && (
+              <Badge variant="outline" className="text-amber-600 border-amber-300 gap-1">
+                <AlertTriangle className="h-3 w-3" /> Non confirmé
+              </Badge>
+            )}
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}

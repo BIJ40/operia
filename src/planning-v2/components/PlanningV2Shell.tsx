@@ -2,8 +2,7 @@
  * Planning V2 — Shell principal (layout + tabs + navigation date)
  */
 
-import { useState } from "react";
-import { format, addDays, subDays, startOfWeek, isToday } from "date-fns";
+import { format, addDays, subDays, isToday } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   CalendarDays,
@@ -12,26 +11,19 @@ import {
   ChevronLeft,
   ChevronRight,
   RotateCcw,
-  Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { AgencyProvider } from "@/apogee-connect/contexts/AgencyContext";
 import { ApiToggleProvider } from "@/apogee-connect/contexts/ApiToggleContext";
 import { useFilters } from "../hooks/useFilters";
 import { usePlanningV2Data } from "../hooks/usePlanningV2Data";
 import { DayDispatchView } from "./day/DayDispatchView";
-import type { PlanningView, DisplayDensity } from "../types";
+import { DisplaySettings } from "./shared/DisplaySettings";
+import type { PlanningView } from "../types";
 
 function PlanningV2ShellContent() {
-  const { filters, setDate, setView, setDensity } = useFilters();
+  const { filters, setDate, setView, setFilters, setDensity, hoverSettings, setHoverSettings } = useFilters();
   const data = usePlanningV2Data(filters.selectedDate);
 
   const goToday = () => setDate(new Date());
@@ -89,21 +81,19 @@ function PlanningV2ShellContent() {
           </TabsList>
         </Tabs>
 
-        {/* Densité */}
-        <Select
-          value={filters.density}
-          onValueChange={(v) => setDensity(v as DisplayDensity)}
-        >
-          <SelectTrigger className="w-[120px] h-8 text-xs">
-            <Layers className="h-3.5 w-3.5 mr-1" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="compact">Compact</SelectItem>
-            <SelectItem value="standard">Standard</SelectItem>
-            <SelectItem value="detailed">Détaillé</SelectItem>
-          </SelectContent>
-        </Select>
+        {/* Display Settings */}
+        <DisplaySettings
+          density={filters.density}
+          onDensityChange={setDensity}
+          granularity={filters.granularity}
+          onGranularityChange={(g) => setFilters({ granularity: g })}
+          showBlocks={filters.showBlocks}
+          onShowBlocksChange={(v) => setFilters({ showBlocks: v })}
+          showUnconfirmed={filters.showUnconfirmed}
+          onShowUnconfirmedChange={(v) => setFilters({ showUnconfirmed: v })}
+          hoverSettings={hoverSettings}
+          onHoverSettingsChange={setHoverSettings}
+        />
 
         {/* Refresh */}
         <Button
@@ -149,6 +139,7 @@ function PlanningV2ShellContent() {
                 loads={data.loads}
                 selectedDate={filters.selectedDate}
                 density={filters.density}
+                hoverSettings={hoverSettings}
               />
             )}
             {filters.view === "week" && (
