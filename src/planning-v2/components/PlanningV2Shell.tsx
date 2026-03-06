@@ -15,6 +15,7 @@ import {
   Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AgencyProvider } from "@/apogee-connect/contexts/AgencyContext";
 import { ApiToggleProvider } from "@/apogee-connect/contexts/ApiToggleContext";
@@ -27,6 +28,7 @@ import type { PlanningView } from "../types";
 function PlanningV2ShellContent() {
   const { filters, setDate, setView, setFilters, setDensity, hoverSettings, setHoverSettings } = useFilters();
   const data = usePlanningV2Data(filters.selectedDate);
+  const [showUnavailable, setShowUnavailable] = useState(false);
 
   const goToday = () => setDate(new Date());
   const goPrev = () => setDate(subDays(filters.selectedDate, 1));
@@ -82,6 +84,23 @@ function PlanningV2ShellContent() {
             </TabsTrigger>
           </TabsList>
         </Tabs>
+
+        {/* Toggle indisponibles */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant={showUnavailable ? "secondary" : "ghost"}
+              size="icon"
+              onClick={() => setShowUnavailable(!showUnavailable)}
+              className="h-8 w-8"
+            >
+              {showUnavailable ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <p className="text-xs">{showUnavailable ? "Masquer indisponibles" : "Voir indisponibles"}</p>
+          </TooltipContent>
+        </Tooltip>
 
         {/* Display Settings */}
         <DisplaySettings
@@ -142,6 +161,7 @@ function PlanningV2ShellContent() {
                 selectedDate={filters.selectedDate}
                 density={filters.density}
                 hoverSettings={hoverSettings}
+                showUnavailable={showUnavailable}
               />
             )}
             {filters.view === "week" && (
