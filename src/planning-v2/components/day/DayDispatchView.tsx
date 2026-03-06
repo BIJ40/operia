@@ -263,8 +263,6 @@ export function DayDispatchView({
                       <TechColumnHeader tech={tech} load={load} density={density} isUnavailable={isUnavailable} zones={techZones} />
                     </div>
                   </TechContextMenu>
-                    </div>
-                  </TechContextMenu>
                 </div>
 
                 {/* Grid body */}
