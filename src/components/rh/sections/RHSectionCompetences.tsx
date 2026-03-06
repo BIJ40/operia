@@ -22,7 +22,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Zap, Plus, X, Clock, Check, Loader2, ChevronDown } from 'lucide-react';
 import { useAutoSaveCompetencies } from '@/hooks/useAutoSaveCollaborator';
-import { useCompetencesCatalogue } from '@/hooks/useRHCompetencesCatalogue';
+import { useUniversCatalog } from '@/hooks/useUniversCatalog';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { RHCollaborator, CACESEntry } from '@/types/rh-suivi';
