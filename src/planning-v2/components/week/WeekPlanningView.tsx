@@ -37,9 +37,8 @@ import type {
 
 // Compact constants for week view
 const WEEK_HOUR_HEIGHT = 50; // smaller than day view's 80
-const WEEK_TECH_COL_WIDTH = 100; // much narrower
 const WEEK_GRID_HEIGHT = (HOUR_END - HOUR_START) * WEEK_HOUR_HEIGHT;
-const WEEK_TIME_AXIS_WIDTH = 40;
+const WEEK_TIME_AXIS_WIDTH = 36;
 
 interface WeekPlanningViewProps {
   technicians: PlanningTechnician[];
