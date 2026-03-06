@@ -4,15 +4,18 @@
 
 import { User, Clock, AlertTriangle } from "lucide-react";
 import type { PlanningTechnician, TechDayLoad, DisplayDensity } from "../../types";
+import { ZoneIndicator } from "./ZoneIndicator";
 
 interface TechColumnHeaderProps {
   tech: PlanningTechnician;
   load?: TechDayLoad;
   density: DisplayDensity;
   isUnavailable?: boolean;
+  /** pictosInterv aggregated from all appointments for this tech today */
+  zones?: string[];
 }
 
-export function TechColumnHeader({ tech, load, density, isUnavailable }: TechColumnHeaderProps) {
+export function TechColumnHeader({ tech, load, density, isUnavailable, zones }: TechColumnHeaderProps) {
   const chargePercent = load?.chargePercent ?? 0;
   const rdvCount = load?.rdvCount ?? 0;
   const hasConflict = load?.hasConflict ?? false;
@@ -47,6 +50,11 @@ export function TechColumnHeader({ tech, load, density, isUnavailable }: TechCol
           )}
         </div>
       </div>
+
+      {/* Zone indicator */}
+      {zones && zones.length > 0 && (
+        <ZoneIndicator zones={zones} />
+      )}
 
       {/* Ligne 2 : stats jour */}
       <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
