@@ -171,9 +171,18 @@ function PlanningV2ShellContent() {
                 />
               )}
               {filters.view === "week" && (
-                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                  Vue Semaine — à venir (Phase 5)
-                </div>
+                <WeekHeatmapView
+                  technicians={data.technicians}
+                  appointments={data.appointments}
+                  blocks={data.blocks}
+                  alerts={data.alerts}
+                  selectedDate={filters.selectedDate}
+                  showUnavailable={showUnavailable}
+                  onDayClick={(day) => {
+                    setDate(day);
+                    setView("day");
+                  }}
+                />
               )}
               {filters.view === "map" && (
                 <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
