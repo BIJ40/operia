@@ -2,7 +2,7 @@
  * Planning V2 — Shell principal (layout + tabs + navigation date)
  */
 import { useState } from "react";
-import { format, addDays, subDays, isToday } from "date-fns";
+import { format, addDays, subDays, addWeeks, subWeeks, startOfWeek, endOfWeek, isToday } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   CalendarDays,
@@ -22,6 +22,7 @@ import { ApiToggleProvider } from "@/apogee-connect/contexts/ApiToggleContext";
 import { useFilters } from "../hooks/useFilters";
 import { usePlanningV2Data } from "../hooks/usePlanningV2Data";
 import { DayDispatchView } from "./day/DayDispatchView";
+import { WeekHeatmapView } from "./week/WeekHeatmapView";
 import { DisplaySettings } from "./shared/DisplaySettings";
 import { UnscheduledPanel } from "./shared/UnscheduledPanel";
 import type { PlanningView } from "../types";
@@ -32,10 +33,13 @@ function PlanningV2ShellContent() {
   const [showUnavailable, setShowUnavailable] = useState(false);
   const [unscheduledOpen, setUnscheduledOpen] = useState(false);
   const goToday = () => setDate(new Date());
-  const goPrev = () => setDate(subDays(filters.selectedDate, 1));
-  const goNext = () => setDate(addDays(filters.selectedDate, 1));
+  const isWeekView = filters.view === "week";
+  const goPrev = () => setDate(isWeekView ? subWeeks(filters.selectedDate, 1) : subDays(filters.selectedDate, 1));
+  const goNext = () => setDate(isWeekView ? addWeeks(filters.selectedDate, 1) : addDays(filters.selectedDate, 1));
 
-  const dateLabel = format(filters.selectedDate, "EEEE d MMMM yyyy", { locale: fr });
+  const dateLabel = isWeekView
+    ? `Semaine du ${format(startOfWeek(filters.selectedDate, { weekStartsOn: 1 }), "d MMM", { locale: fr })} au ${format(endOfWeek(filters.selectedDate, { weekStartsOn: 1 }), "d MMM yyyy", { locale: fr })}`
+    : format(filters.selectedDate, "EEEE d MMMM yyyy", { locale: fr });
   const todayActive = isToday(filters.selectedDate);
 
   return (
@@ -167,9 +171,18 @@ function PlanningV2ShellContent() {
                 />
               )}
               {filters.view === "week" && (
-                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                  Vue Semaine — à venir (Phase 5)
-                </div>
+                <WeekHeatmapView
+                  technicians={data.technicians}
+                  appointments={data.appointments}
+                  blocks={data.blocks}
+                  alerts={data.alerts}
+                  selectedDate={filters.selectedDate}
+                  showUnavailable={showUnavailable}
+                  onDayClick={(day) => {
+                    setDate(day);
+                    setView("day");
+                  }}
+                />
               )}
               {filters.view === "map" && (
                 <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
