@@ -159,10 +159,10 @@ export function DayDispatchView({
   const unavailableTechIds = useMemo(() => {
     const ids = new Set<number>();
     for (const tech of technicians) {
-      if (isTechUnavailable(tech.id, dayBlocks, dk)) ids.add(tech.id);
+      if (isTechUnavailable(tech.id, dayBlocks, dayAppointments, dk)) ids.add(tech.id);
     }
     return ids;
-  }, [technicians, dayBlocks, dk]);
+  }, [technicians, dayBlocks, dayAppointments, dk]);
 
   // Filtrer les techs visibles
   const visibleTechs = useMemo(() => {
