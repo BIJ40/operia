@@ -23,35 +23,14 @@ export function RHMetiersMultiSelect({
 }: RHMetiersMultiSelectProps) {
   const [open, setOpen] = useState(false);
   const [localSelected, setLocalSelected] = useState<string[]>(selectedMetiers);
-  const [newMetier, setNewMetier] = useState('');
-  const [showAddInput, setShowAddInput] = useState(false);
   
-  const { data: catalogue = [], isLoading: loadingCatalogue } = useCompetencesCatalogue();
-  const { data: collaborators = [] } = useRHCollaborators();
-  const addCompetence = useAddCompetenceCatalogue();
-  const deleteCompetence = useDeleteCompetenceCatalogue();
+  const { data: universCatalog = [], isLoading: loadingCatalogue } = useUniversCatalog();
   const updateCompetencies = useUpdateCompetencies();
 
-  // Catalogue complet + tous les métiers réellement utilisés dans l'agence
+  // Source unique : univers Apogée
   const allMetiers = React.useMemo(() => {
-    const base = catalogue.map(c => c.label);
-    const fromTechs = collaborators.flatMap(c => c.competencies?.competences_techniques || []);
-    const extras = [...fromTechs, ...localSelected].filter(label =>
-      !base.some(b => b.toLowerCase() === label.toLowerCase())
-    );
-
-    const unique: string[] = [];
-    const pushIfNotExists = (label: string) => {
-      if (!unique.some(b => b.toLowerCase() === label.toLowerCase())) {
-        unique.push(label);
-      }
-    };
-
-    base.forEach(pushIfNotExists);
-    extras.forEach(pushIfNotExists);
-
-    return unique.sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
-  }, [catalogue, collaborators, localSelected]);
+    return universCatalog.map(u => u.label);
+  }, [universCatalog]);
 
   // On initialise à partir des props mais on ne resynchronise pas ensuite
   // pour éviter d'effacer la sélection locale quand la requête de rafraîchissement
