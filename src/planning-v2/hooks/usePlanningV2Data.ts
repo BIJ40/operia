@@ -39,6 +39,7 @@ function dateKey(d: Date): string {
 
 export function usePlanningV2Data(selectedDate: Date): PlanningV2Result {
   const { currentAgency, isAgencyReady } = useAgency();
+  const { schedulesByApogeeId } = useTechSchedules();
   const agencySlug = currentAgency?.slug;
 
   const { data: rawData, isLoading, error, refetch } = useQuery({
