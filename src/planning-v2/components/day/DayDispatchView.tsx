@@ -8,6 +8,7 @@ import { useMemo, useRef, useState } from "react";
 import { HOUR_START, HOUR_END, HOUR_HEIGHT_PX, LUNCH_START, LUNCH_END, TECH_COLUMN_MIN_WIDTH, TIME_AXIS_WIDTH, GRID_TOTAL_HEIGHT, UNAVAILABLE_BLOCK_TYPES } from "../../constants";
 import { TechColumnHeader } from "./TechColumnHeader";
 import { AppointmentCard } from "./AppointmentCard";
+import type { PartnerTechInfo } from "./AppointmentCard";
 import { BlockCard } from "./BlockCard";
 import { TimeAxis } from "./TimeAxis";
 import { CurrentTimeLine } from "./CurrentTimeLine";
@@ -92,6 +93,13 @@ export function DayDispatchView({
   }, [technicians, showUnavailable, unavailableTechIds]);
 
   const hiddenCount = technicians.length - visibleTechs.length;
+
+  // Tech lookup map for partner info
+  const techMap = useMemo(() => {
+    const map = new Map<number, PlanningTechnician>();
+    for (const t of technicians) map.set(t.id, t);
+    return map;
+  }, [technicians]);
 
   // Grouper par technicien
   const apptsByTech = useMemo(() => {
@@ -202,18 +210,33 @@ export function DayDispatchView({
                   ))}
 
                   {/* Appointments */}
-                  {techAppts.map((appt) => (
-                    <AppointmentCard
-                      key={appt.id}
-                      appointment={appt}
-                      techColor={tech.color}
-                      density={density}
-                      hasConflict={conflictIds.has(appt.id)}
-                      selectedDate={selectedDate}
-                      hoverSettings={hoverSettings}
-                      onViewDetails={setSelectedAppt}
-                    />
-                  ))}
+                  {techAppts.map((appt) => {
+                    // Build partner techs list (other techs on this binôme appt)
+                    const partners: PartnerTechInfo[] = appt.isBinome
+                      ? appt.technicianIds
+                          .filter((tid) => tid !== tech.id)
+                          .map((tid) => {
+                            const t = techMap.get(tid);
+                            return t
+                              ? { id: t.id, initials: t.initials, color: t.color, name: t.name }
+                              : { id: tid, initials: "??", color: "#888", name: `Tech #${tid}` };
+                          })
+                      : [];
+
+                    return (
+                      <AppointmentCard
+                        key={appt.id}
+                        appointment={appt}
+                        techColor={tech.color}
+                        density={density}
+                        hasConflict={conflictIds.has(appt.id)}
+                        selectedDate={selectedDate}
+                        hoverSettings={hoverSettings}
+                        onViewDetails={setSelectedAppt}
+                        partnerTechs={partners}
+                      />
+                    );
+                  })}
 
                   {/* Current time line */}
                   <CurrentTimeLine selectedDate={selectedDate} />

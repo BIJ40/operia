@@ -1,6 +1,7 @@
 /**
  * Planning V2 — Carte rendez-vous (3 densités) + tooltip + context menu
  * Coupe visuellement les RDV qui chevauchent la pause déjeuner (12h-13h)
+ * Indicateur visuel binôme : bande diagonale couleur partenaire + pastilles
  */
 
 import { AlertTriangle, Users } from "lucide-react";
@@ -10,6 +11,13 @@ import { format } from "date-fns";
 import { AppointmentHoverTooltip } from "./AppointmentHoverTooltip";
 import { AppointmentContextMenu } from "./AppointmentContextMenu";
 
+export interface PartnerTechInfo {
+  id: number;
+  initials: string;
+  color: string;
+  name: string;
+}
+
 interface AppointmentCardProps {
   appointment: PlanningAppointment;
   techColor: string;
@@ -18,6 +26,8 @@ interface AppointmentCardProps {
   selectedDate: Date;
   hoverSettings: HoverDisplaySettings;
   onViewDetails?: (a: PlanningAppointment) => void;
+  /** Other techs assigned to this same appointment (binôme) */
+  partnerTechs?: PartnerTechInfo[];
 }
 
 /** Compute visual segments, splitting around lunch break */
@@ -25,7 +35,6 @@ function computeSegments(a: PlanningAppointment): Array<{ topHour: number; botto
   const startH = a.start.getHours() + a.start.getMinutes() / 60;
   const endH = a.end.getHours() + a.end.getMinutes() / 60;
 
-  // If the appointment spans across lunch, split it
   if (startH < LUNCH_START && endH > LUNCH_END) {
     return [
       { topHour: startH, bottomHour: LUNCH_START },
@@ -42,17 +51,22 @@ export function AppointmentCard({
   hasConflict,
   hoverSettings,
   onViewDetails,
+  partnerTechs = [],
 }: AppointmentCardProps) {
   const segments = computeSegments(a);
   const typeKey = a.type.toLowerCase();
   const typeLabel = TYPE_LABELS[typeKey];
   const typeBadge = TYPE_BADGE_COLORS[typeKey];
   const timeStr = format(a.start, "HH:mm");
+  const isBinome = partnerTechs.length > 0;
 
   const renderSegment = (seg: { topHour: number; bottomHour: number }, index: number) => {
     const top = (seg.topHour - HOUR_START) * HOUR_HEIGHT_PX;
     const height = Math.max((seg.bottomHour - seg.topHour) * HOUR_HEIGHT_PX, 24);
     const isFirst = index === 0;
+
+    // Build diagonal gradient for binôme
+    const partnerColor = isBinome ? partnerTechs[0].color : null;
 
     return (
       <div
@@ -72,8 +86,31 @@ export function AppointmentCard({
         }}
         onClick={() => onViewDetails?.(a)}
       >
-        <div className="px-1.5 py-1 h-full flex flex-col overflow-hidden">
-          {/* Only show content on first segment (or single) */}
+        {/* Diagonal stripe overlay for binôme */}
+        {isBinome && partnerColor && (
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: `repeating-linear-gradient(
+                -45deg,
+                transparent,
+                transparent 6px,
+                ${partnerColor}20 6px,
+                ${partnerColor}20 8px
+              )`,
+            }}
+          />
+        )}
+
+        {/* Right border accent for partner color */}
+        {isBinome && partnerColor && (
+          <div
+            className="absolute right-0 top-0 bottom-0 w-[3px]"
+            style={{ backgroundColor: partnerColor }}
+          />
+        )}
+
+        <div className="px-1.5 py-1 h-full flex flex-col overflow-hidden relative z-[1]">
           {isFirst && (
             <>
               <div className="flex items-start gap-1 min-w-0">
@@ -101,11 +138,6 @@ export function AppointmentCard({
                       {typeLabel}
                     </span>
                   )}
-                  {a.isBinome && (
-                    <span className="text-[9px] flex items-center gap-0.5 text-muted-foreground">
-                      <Users className="h-2.5 w-2.5" />
-                    </span>
-                  )}
                   {hasConflict && <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />}
                 </div>
               )}
@@ -124,13 +156,33 @@ export function AppointmentCard({
             </>
           )}
 
-          {/* Second segment: show "suite" label */}
           {!isFirst && (
             <div className="flex items-start gap-1 min-w-0">
               <span className="text-[10px] text-muted-foreground italic">suite — {a.client}</span>
             </div>
           )}
         </div>
+
+        {/* Partner tech badges (top-right corner) */}
+        {isBinome && isFirst && (
+          <div className="absolute top-1 right-1.5 flex items-center gap-0.5 z-[2]">
+            {partnerTechs.map((pt) => (
+              <div
+                key={pt.id}
+                className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-white shadow-sm border border-white/80"
+                style={{ backgroundColor: pt.color }}
+                title={pt.name}
+              >
+                {pt.initials}
+              </div>
+            ))}
+            {a.technicianIds.length > 2 && (
+              <span className="text-[8px] font-bold text-muted-foreground ml-0.5">
+                +{a.technicianIds.length - 2}
+              </span>
+            )}
+          </div>
+        )}
       </div>
     );
   };
