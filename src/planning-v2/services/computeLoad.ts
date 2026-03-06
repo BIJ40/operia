@@ -9,6 +9,8 @@ import {
   CHARGE_LIGHT_THRESHOLD,
   CHARGE_OVERLOAD_THRESHOLD,
 } from "../constants";
+import type { TechDaySchedule } from "../types/schedule";
+import { getWorkingMinutesForDay } from "../types/schedule";
 import type {
   PlanningAppointment,
   PlanningBlock,
