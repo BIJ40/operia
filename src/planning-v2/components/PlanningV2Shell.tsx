@@ -30,7 +30,7 @@ function PlanningV2ShellContent() {
   const { filters, setDate, setView, setFilters, setDensity, hoverSettings, setHoverSettings } = useFilters();
   const data = usePlanningV2Data(filters.selectedDate);
   const [showUnavailable, setShowUnavailable] = useState(false);
-
+  const [unscheduledOpen, setUnscheduledOpen] = useState(false);
   const goToday = () => setDate(new Date());
   const goPrev = () => setDate(subDays(filters.selectedDate, 1));
   const goNext = () => setDate(addDays(filters.selectedDate, 1));
