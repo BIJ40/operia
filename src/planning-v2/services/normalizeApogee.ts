@@ -112,10 +112,12 @@ interface RawProject {
   ref?: string;
   clientId?: number;
   state?: string;
+  label?: string;
   data?: {
     commanditaireId?: number;
     universes?: string[];
     pictosInterv?: string[];
+    description?: string;
   };
 }
 
