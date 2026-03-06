@@ -18,7 +18,7 @@ export interface PartnerTechInfo {
   name: string;
 }
 
-interface AppointmentCardProps {
+export interface AppointmentCardProps {
   appointment: PlanningAppointment;
   techColor: string;
   density: DisplayDensity;
@@ -32,6 +32,8 @@ interface AppointmentCardProps {
   colIndex?: number;
   /** Total columns in overlap group */
   totalCols?: number;
+  /** Override hour height for week view */
+  hourHeight?: number;
 }
 
 /** Compute visual segments, splitting around lunch break */
