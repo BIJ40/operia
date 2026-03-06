@@ -2,13 +2,12 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ChevronDown, Plus, Loader2, X } from 'lucide-react';
+import { ChevronDown, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useCompetencesCatalogue, useAddCompetenceCatalogue, useDeleteCompetenceCatalogue } from '@/hooks/useRHCompetencesCatalogue';
-import { useUpdateCompetencies, useRHCollaborators } from '@/hooks/useRHSuivi';
+import { useUniversCatalog } from '@/hooks/useUniversCatalog';
+import { useUpdateCompetencies } from '@/hooks/useRHSuivi';
 import { toast } from 'sonner';
 
 interface RHMetiersMultiSelectProps {
