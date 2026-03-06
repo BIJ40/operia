@@ -91,8 +91,21 @@ export function NewTicketsPanel({ tickets, statuses, modules, isLoading = false,
       return tickets;
     }
 
-    return tickets.filter((ticket) => selectedPriorities.includes(ticket.heat_priority));
+    return tickets.filter((ticket) =>
+      ticket.heat_priority !== null && selectedPriorities.includes(ticket.heat_priority)
+    );
   }, [tickets, selectedPriorities]);
+
+  const handleMarkAllAsRead = () => {
+    markAllAsViewed(newTicketIds, {
+      onSuccess: () => {
+        toast.success(`${newTicketIds.length} ticket(s) marqué(s) comme lu(s)`);
+      },
+      onError: () => {
+        toast.error('Erreur lors du marquage des tickets');
+      }
+    });
+  };
 
   const togglePriority = (priority: number) => {
     setSelectedPriorities(prev => 
