@@ -15,6 +15,24 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.9.1",
+    title: "Permissions Unifiées",
+    date: "2026-03-07",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // PURGE LEGACY — SOURCE UNIQUE user_modules
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'security', description: 'Suppression complète du champ legacy profiles.enabled_modules (JSONB) — plus aucune lecture' },
+      { type: 'security', description: 'Réécriture de 6 fonctions SQL (has_apogee_tickets_access, has_franchiseur_access, has_support_access, is_support_agent, get_collaborator_sensitive_data, handle_document_request) vers has_module_v2 / has_module_option_v2' },
+      { type: 'security', description: 'Migration de ~20 politiques RLS (9 tables) pour utiliser user_modules au lieu du JSONB' },
+      { type: 'improvement', description: 'Suppression du fichier doublon src/types/accessControl.ts — guards centralisés dans @/permissions' },
+      { type: 'improvement', description: 'Nettoyage dead code : hasProjectManagementAccess(), hasKanbanAccess() supprimés de moduleRegistry' },
+      { type: 'improvement', description: 'Edge Function create-user : n\'écrit plus dans le JSONB legacy' },
+      { type: 'improvement', description: 'Edge Function _shared/auth.ts : enabledModules retiré du contexte utilisateur' },
+      { type: 'improvement', description: 'AuthContext migré vers @/permissions comme unique source de guards frontend' },
+    ],
+  },
+  {
     version: "V0.9.0",
     title: "Commercial & CRM",
     date: "2026-03-04",
