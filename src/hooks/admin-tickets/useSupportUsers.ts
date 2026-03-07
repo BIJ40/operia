@@ -1,9 +1,9 @@
 /**
  * Gestion des utilisateurs support
+ * Source de vérité: table user_modules (pas profiles.enabled_modules)
  */
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { safeQuery } from '@/lib/safeQuery';
 import { logError } from '@/lib/logger';
 import { SupportUser } from './types';
 
@@ -18,46 +18,56 @@ export function useSupportUsers() {
   };
 
   const loadSupportUsers = useCallback(async () => {
-    const profilesResult = await safeQuery<any[]>(
-      supabase
+    try {
+      // 1. Fetch users who have the 'aide' module with agent option from user_modules
+      const { data: agentModules, error: modulesError } = await supabase
+        .from('user_modules')
+        .select('user_id, options')
+        .eq('module_key', 'aide');
+      
+      if (modulesError) {
+        logError('[ADMIN-TICKETS] Error loading support modules', modulesError);
+        setSupportUsers([]);
+        return;
+      }
+
+      // Filter to only agent or admin users
+      const supportUserIds = (agentModules || [])
+        .filter(m => {
+          const opts = m.options as Record<string, boolean> | null;
+          return opts?.agent === true || opts?.admin === true;
+        })
+        .map(m => m.user_id);
+
+      if (supportUserIds.length === 0) {
+        setSupportUsers([]);
+        return;
+      }
+
+      // 2. Fetch profiles for those users
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, global_role, enabled_modules')
-        .eq('is_active', true),
-      'ADMIN_TICKETS_LOAD_PROFILES'
-    );
+        .select('id, first_name, last_name, global_role')
+        .in('id', supportUserIds)
+        .eq('is_active', true);
 
-    if (!profilesResult.success) {
-      logError('[ADMIN-TICKETS] Error loading support users', profilesResult.error);
+      if (profilesError) {
+        logError('[ADMIN-TICKETS] Error loading support profiles', profilesError);
+        setSupportUsers([]);
+        return;
+      }
+
+      // Merge derived franchiseur_role into profiles
+      const usersWithRoles = (profiles || []).map(profile => ({
+        ...profile,
+        franchiseur_role: deriveFranchiseurRole(profile.global_role)
+      }));
+
+      setSupportUsers(usersWithRoles as SupportUser[]);
+    } catch (err) {
+      logError('[ADMIN-TICKETS] Unexpected error loading support users', err);
       setSupportUsers([]);
-      return;
     }
-
-    const profiles = profilesResult.data || [];
-    if (profiles.length === 0) {
-      setSupportUsers([]);
-      return;
-    }
-
-    // Filtrer les profils qui ont accès support activé
-    const supportProfiles = profiles.filter(p => {
-      const modules = p.enabled_modules as any;
-      if (!modules?.support?.enabled) return false;
-      const options = modules.support.options || {};
-      return options.agent === true || options.admin === true;
-    });
-
-    if (supportProfiles.length === 0) {
-      setSupportUsers([]);
-      return;
-    }
-
-    // Merge derived franchiseur_role into profiles
-    const usersWithRoles = supportProfiles.map(profile => ({
-      ...profile,
-      franchiseur_role: deriveFranchiseurRole(profile.global_role)
-    }));
-
-    setSupportUsers(usersWithRoles as SupportUser[]);
   }, []);
 
   return {

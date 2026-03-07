@@ -57,39 +57,68 @@ export default function SupportSettings() {
   const [isSaving, setIsSaving] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<Map<string, Partial<SupportAgentConfig>>>(new Map());
 
-  // Charger les agents support
+  // Charger les agents support depuis user_modules (source de vérité)
   const loadAgents = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      // 1. Fetch aide modules from user_modules
+      const { data: aideModules, error: modError } = await supabase
+        .from('user_modules')
+        .select('user_id, options')
+        .eq('module_key', 'aide');
+      
+      if (modError) throw modError;
+
+      // 2. Also include platform_admin/superadmin users
+      const { data: adminProfiles, error: adminError } = await supabase
         .from('profiles')
-        .select('id, email, first_name, last_name, global_role, support_level, enabled_modules')
+        .select('id')
+        .eq('is_active', true)
+        .in('global_role', ['platform_admin', 'superadmin']);
+      
+      if (adminError) throw adminError;
+
+      // Combine user IDs
+      const moduleUserIds = (aideModules || []).map(m => m.user_id);
+      const adminUserIds = (adminProfiles || []).map(p => p.id);
+      const allUserIds = [...new Set([...moduleUserIds, ...adminUserIds])];
+
+      if (allUserIds.length === 0) {
+        setAgents([]);
+        setIsLoading(false);
+        return;
+      }
+
+      // 3. Fetch profiles for those users
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, email, first_name, last_name, global_role, support_level')
+        .in('id', allUserIds)
         .eq('is_active', true)
         .order('first_name');
 
-      if (error) throw error;
+      if (profileError) throw profileError;
 
-      const formattedAgents: SupportAgentConfig[] = (data || [])
-        .filter(p => {
-          const modules = p.enabled_modules as any;
-          return modules?.support?.enabled || 
-                 ['platform_admin', 'superadmin'].includes(p.global_role || '');
-        })
-        .map(p => {
-          const modules = p.enabled_modules as any;
-          const options = modules?.support?.options || {};
-          return {
-            id: p.id,
-            email: p.email,
-            first_name: p.first_name,
-            last_name: p.last_name,
-            global_role: p.global_role,
-            support_level: p.support_level ?? options.level ?? null,
-            isAgent: options.agent === true,
-            isAdmin: options.admin === true,
-            skills: options.skills ?? [],
-          };
-        });
+      // Build options map from user_modules
+      const optionsMap = new Map<string, Record<string, any>>();
+      (aideModules || []).forEach(m => {
+        optionsMap.set(m.user_id, (m.options as Record<string, any>) || {});
+      });
+
+      const formattedAgents: SupportAgentConfig[] = (profiles || []).map(p => {
+        const options = optionsMap.get(p.id) || {};
+        return {
+          id: p.id,
+          email: p.email,
+          first_name: p.first_name,
+          last_name: p.last_name,
+          global_role: p.global_role,
+          support_level: p.support_level ?? null,
+          isAgent: options.agent === true,
+          isAdmin: options.admin === true,
+          skills: options.skills ?? [],
+        };
+      });
 
       setAgents(formattedAgents);
     } catch (error) {
@@ -132,45 +161,33 @@ export default function SupportSettings() {
         const agent = agents.find(a => a.id === agentId);
         if (!agent) continue;
 
-        // Préparer les mises à jour
-        const updates: any = {};
-        
+        // Update support_level in profiles if changed
         if ('support_level' in changes) {
-          updates.support_level = changes.support_level;
-        }
-
-        if ('isAgent' in changes || 'isAdmin' in changes || 'skills' in changes) {
-          // Récupérer les enabled_modules actuels
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('enabled_modules')
-            .eq('id', agentId)
-            .single();
-
-          const currentModules = (profile?.enabled_modules || {}) as any;
-          const supportOptions = currentModules.support?.options || {};
-
-          updates.enabled_modules = {
-            ...currentModules,
-            support: {
-              ...currentModules.support,
-              enabled: true,
-              options: {
-                ...supportOptions,
-                agent: 'isAgent' in changes ? changes.isAgent : agent.isAgent,
-                admin: 'isAdmin' in changes ? changes.isAdmin : agent.isAdmin,
-                skills: 'skills' in changes ? changes.skills : agent.skills,
-              },
-            },
-          };
-        }
-
-        if (Object.keys(updates).length > 0) {
           const { error } = await supabase
             .from('profiles')
-            .update(updates)
+            .update({ support_level: changes.support_level })
             .eq('id', agentId);
+          if (error) throw error;
+        }
 
+        // Update agent/admin/skills in user_modules
+        if ('isAgent' in changes || 'isAdmin' in changes || 'skills' in changes) {
+          const newOptions = {
+            agent: 'isAgent' in changes ? changes.isAgent : agent.isAgent,
+            admin: 'isAdmin' in changes ? changes.isAdmin : agent.isAdmin,
+            skills: 'skills' in changes ? changes.skills : agent.skills,
+          };
+
+          const { error } = await supabase
+            .from('user_modules')
+            .upsert({
+              user_id: agentId,
+              module_key: 'aide',
+              options: newOptions,
+              enabled_at: new Date().toISOString(),
+            }, {
+              onConflict: 'user_id,module_key',
+            });
           if (error) throw error;
         }
       }

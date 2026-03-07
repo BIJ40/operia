@@ -1502,12 +1502,12 @@ export const RULES_JSON_CONFIG = {
       N1_N4: 'managers_direction_agence_animateurs_reseau',
       N5_N6: 'franchiseur_super_admin',
     },
-    /** Accès modules conditionné par: globalRole, scope agence, enabled_modules */
-    moduleAccess: ['globalRole', 'manageScope', 'viewScope', 'enabled_modules'],
+    /** Accès modules conditionné par: globalRole, scope agence, user_modules + plan_tier_modules */
+    moduleAccess: ['globalRole', 'manageScope', 'viewScope', 'user_modules'],
     
     /** SUPPORT_AGENT_ROLE: Accès console Support */
     supportAgent: {
-      condition: 'enabled_modules.support.options.agent',
+      condition: 'user_modules.aide.options.agent',
       anyRole: true,
       chatFlottant: ['N3', 'N4'],
       consoleFull: 'agent_declared',

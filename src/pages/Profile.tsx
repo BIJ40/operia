@@ -25,7 +25,8 @@ import { AgencyProvider } from '@/apogee-connect/contexts/AgencyContext';
 import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
 import { GlobalRole } from '@/types/globalRoles';
 import { VISIBLE_ROLE_LABELS, VISIBLE_ROLE_COLORS } from '@/lib/visibleRoleLabels';
-import { MODULE_DEFINITIONS, EnabledModules } from '@/types/modules';
+import { MODULE_DEFINITIONS } from '@/types/modules';
+import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
 import { ALL_USER_QUERY_PATTERNS } from '@/lib/queryKeys';
 import { WarmPageContainer } from '@/components/ui/warm-page-container';
 import { WarmCard } from '@/components/ui/warm-card';
@@ -50,7 +51,6 @@ interface ProfileData {
   role_agence: string | null;
   avatar_url: string | null;
   global_role: GlobalRole | null;
-  enabled_modules: EnabledModules | null;
   phone: string | null;
 }
 
@@ -65,6 +65,7 @@ const ROLE_AGENCE_LABELS: Record<string, string> = {
 
 export default function Profile() {
   const { user, isAuthenticated, globalRole } = useAuth();
+  const { modules: effectiveModulesData } = useEffectiveModules();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -94,7 +95,7 @@ export default function Profile() {
       setIsLoading(true);
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, first_name, last_name, agence, role_agence, avatar_url, global_role, enabled_modules, phone')
+        .select('id, email, first_name, last_name, agence, role_agence, avatar_url, global_role, phone')
         .eq('id', user.id)
         .maybeSingle();
 
@@ -202,14 +203,10 @@ export default function Profile() {
     }
   };
 
-  const getEnabledModulesList = (modules: EnabledModules | null): string[] => {
-    if (!modules) return [];
-    
+  const getEnabledModulesList = (): string[] => {
     return MODULE_DEFINITIONS.filter(mod => {
-      const state = modules[mod.key];
-      if (typeof state === 'boolean') return state;
-      if (typeof state === 'object') return state.enabled;
-      return false;
+      const state = effectiveModulesData[mod.key];
+      return state?.enabled === true;
     }).map(mod => mod.label);
   };
 
@@ -228,7 +225,7 @@ export default function Profile() {
   }
 
   const effectiveRole = profile?.global_role || globalRole;
-  const enabledModules = getEnabledModulesList(profile?.enabled_modules);
+  const enabledModules = getEnabledModulesList();
 
   return (
     <WarmPageContainer maxWidth="4xl">

@@ -27,7 +27,6 @@ interface UserResult {
   global_role: GlobalRole | null;
   agence: string | null;
   role_agence: string | null;
-  enabled_modules: Record<string, any> | null;
 }
 
 interface RealUserImpersonationDialogProps {
@@ -45,17 +44,7 @@ const ROLE_LABELS: Record<GlobalRole, string> = {
   superadmin: 'Super Admin (N6)',
 };
 
-function getModulesList(enabledModules: Record<string, any> | null): string[] {
-  if (!enabledModules) return [];
-  return Object.entries(enabledModules)
-    .filter(([_, value]) => {
-      if (typeof value === 'object' && value !== null) {
-        return value.enabled === true;
-      }
-      return Boolean(value);
-    })
-    .map(([key]) => key);
-}
+// Modules are now loaded via RPC in startRealUserImpersonation, not from search results
 
 export function RealUserImpersonationDialog({ open, onOpenChange }: RealUserImpersonationDialogProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -70,7 +59,7 @@ export function RealUserImpersonationDialog({ open, onOpenChange }: RealUserImpe
       
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, first_name, last_name, global_role, agence, role_agence, enabled_modules')
+        .select('id, email, first_name, last_name, global_role, agence, role_agence')
         .or(`email.ilike.%${searchQuery}%,first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%`)
         .limit(20);
       
@@ -105,10 +94,7 @@ export function RealUserImpersonationDialog({ open, onOpenChange }: RealUserImpe
     setSearchQuery('');
   }, [onOpenChange]);
 
-  const selectedModules = useMemo(() => {
-    if (!selectedUser) return [];
-    return getModulesList(selectedUser.enabled_modules);
-  }, [selectedUser]);
+  // Modules are resolved server-side during impersonation start
 
   const selectedRoleLabel = useMemo(() => {
     if (!selectedUser?.global_role) return 'Non défini';
@@ -223,26 +209,9 @@ export function RealUserImpersonationDialog({ open, onOpenChange }: RealUserImpe
                 </div>
               </div>
 
-              {selectedModules.length > 0 && (
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Package className="h-4 w-4" />
-                    <span>Modules activés :</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {selectedModules.slice(0, 6).map((mod) => (
-                      <Badge key={mod} variant="secondary" className="text-xs">
-                        {mod}
-                      </Badge>
-                    ))}
-                    {selectedModules.length > 6 && (
-                      <Badge variant="outline" className="text-xs">
-                        +{selectedModules.length - 6}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              )}
+              <p className="text-xs text-muted-foreground italic">
+                Les modules seront chargés lors de l'impersonation
+              </p>
             </div>
           )}
         </div>

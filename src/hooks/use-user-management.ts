@@ -509,16 +509,15 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
           throw new Error('Le niveau SA0 n\'existe pas. Utilisez level=null ou désactivez le statut agent.');
         }
         
-        const { data: currentProfile } = await supabase
-          .from('profiles')
-          .select('enabled_modules')
-          .eq('id', userId)
-          .single();
+        // Check agent status from user_modules table
+        const { data: agentModule } = await supabase
+          .from('user_modules')
+          .select('options')
+          .eq('user_id', userId)
+          .eq('module_key', 'aide')
+          .maybeSingle();
         
-        const modules = (currentProfile?.enabled_modules as any) || {};
-        const supportModule = modules.support || { enabled: false };
-        const supportOptions = supportModule.options || {};
-        const isAgent = supportOptions.agent === true;
+        const isAgent = (agentModule?.options as Record<string, boolean> | null)?.agent === true;
         
         // ✅ RÈGLE CRITIQUE: Seuls les agents support (agent=true) peuvent avoir un level > 0
         if (data.support_level > 0 && !isAgent) {
