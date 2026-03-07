@@ -198,7 +198,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Requête profil
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('first_name, last_name, agence, agency_id, role_agence, must_change_password, global_role, enabled_modules, is_active, is_read_only')
+        .select('first_name, last_name, agence, agency_id, role_agence, must_change_password, global_role, is_active, is_read_only')
         .eq('id', userId)
         .single();
       

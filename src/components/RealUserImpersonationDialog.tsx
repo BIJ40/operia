@@ -94,10 +94,7 @@ export function RealUserImpersonationDialog({ open, onOpenChange }: RealUserImpe
     setSearchQuery('');
   }, [onOpenChange]);
 
-  const selectedModules = useMemo(() => {
-    if (!selectedUser) return [];
-    return getModulesList(selectedUser.enabled_modules);
-  }, [selectedUser]);
+  // Modules are resolved server-side during impersonation start
 
   const selectedRoleLabel = useMemo(() => {
     if (!selectedUser?.global_role) return 'Non défini';
