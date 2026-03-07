@@ -4,6 +4,7 @@ const MIGRATION_SECRET = Deno.env.get('MIGRATION_SECRET') ?? '';
 
 import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
 
+// jsonResponse is used inside the handler; CORS is applied via withCors wrapper at call sites
 function jsonResponse(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
