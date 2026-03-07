@@ -162,7 +162,7 @@ serve(async (req) => {
     const isAdmin = ['platform_admin', 'superadmin'].includes(profile.global_role);
     const isDirigeant = ['franchisee_admin', 'franchisor_admin', 'franchisor_user'].includes(profile.global_role);
 
-    const hasAccess = isSelf || isAdmin || (isSameAgency && (isRHAdmin || isDirigeant));
+    const hasAccess = isSelf || isAdmin || (isSameAgency && (hasRhOption || isDirigeant));
 
     if (!hasAccess) {
       console.log(`[SENSITIVE-DATA] Access denied for user ${user.id} to collaborator ${collaboratorId}`);
