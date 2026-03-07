@@ -154,26 +154,15 @@ function UnifiedWorkspaceContent() {
   
   // Configuration des onglets avec permissions
   // Chaque onglet a un requiresOption qui définit le module/option nécessaire
-  // IMPORTANT: Utiliser SOIT les nouveaux modules (agence, stats, guides, aide)
-  // SOIT les legacy (pilotage_agence, help_academy, support) pour rétrocompatibilité
-  // Documents = médiathèque centralisée
-  // Configuration des onglets - SIMPLIFIÉ: on vérifie juste si le module est activé
-  // (sans exiger une option spécifique, car c'est trop restrictif)
+  // La compat map dans useEffectiveModules gère automatiquement les clés legacy
   const allTabs: TabConfig[] = useMemo(() => [
     { id: 'accueil', label: 'Accueil', icon: Home },
-    // Stats: vérifie stats OU pilotage_agence (pas d'option requise)
     { id: 'stats', label: 'Stats', icon: BarChart3, requiresOption: { module: 'stats' } },
-    // Salariés: vérifie rh
     { id: 'salaries', label: 'Salariés', icon: ClipboardList, requiresOption: { module: 'rh' } },
-    // Outils: vérifie agence OU prospection OU parc (tout module enfant d'Outils)
     { id: 'outils', label: 'Outils', icon: MoreHorizontal, requiresOption: { module: 'agence' }, altModules: ['prospection', 'parc', 'divers_apporteurs', 'divers_plannings', 'divers_reunions'] },
-    // Documents: vérifie divers_documents (pas d'option requise)
     { id: 'documents', label: 'Documents', icon: FolderOpen, requiresOption: { module: 'divers_documents' } },
-    // Guides: vérifie guides OU help_academy
     { id: 'guides', label: 'Guides', icon: BookOpen, requiresOption: { module: 'guides' } },
-    // Ticketing: vérifie ticketing OU apogee_tickets
     { id: 'ticketing', label: 'Ticketing', icon: Ticket, requiresOption: { module: 'ticketing' } },
-    // Aide: vérifie aide OU support
     { id: 'aide', label: 'Aide', icon: HelpCircle, requiresOption: { module: 'aide' } },
     { id: 'admin', label: 'Admin', icon: Shield, requiresOption: { module: 'admin_plateforme' } },
     { id: 'test', label: 'TEST', icon: FlaskConical },

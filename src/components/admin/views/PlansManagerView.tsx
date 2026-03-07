@@ -24,19 +24,16 @@ const LEGACY_MODULE_KEYS = ['help_academy', 'pilotage_agence', 'support', 'apoge
 const CATEGORY_LABELS: Record<ModuleCategory, string> = {
   agence: 'Agence & Stats',
   rh: 'Ressources Humaines',
-  parc: 'Parc & Équipements',
   outils: 'Outils',
-  documents: 'Documents',
   guides: 'Guides',
   ticketing: 'Ticketing',
   support: 'Aide & Support',
-  commercial: 'Commercial',
   reseau: 'Réseau',
   admin: 'Administration',
 };
 
 const CATEGORY_ORDER: ModuleCategory[] = [
-  'agence', 'rh', 'parc', 'outils', 'documents', 'guides', 'ticketing', 'support', 'commercial',
+  'agence', 'rh', 'outils', 'guides', 'ticketing', 'support',
 ];
 
 export function PlansManagerView() {

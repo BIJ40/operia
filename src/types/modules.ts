@@ -138,7 +138,7 @@ export const MODULE_OPTIONS = {
 export type ModuleOptionPath = typeof MODULE_OPTIONS[ModuleKey][keyof typeof MODULE_OPTIONS[ModuleKey]];
 
 // Métadonnées des modules pour l'UI
-export type ModuleCategory = 'agence' | 'rh' | 'parc' | 'outils' | 'documents' | 'guides' | 'ticketing' | 'support' | 'commercial' | 'reseau' | 'admin';
+export type ModuleCategory = 'agence' | 'rh' | 'outils' | 'guides' | 'ticketing' | 'support' | 'reseau' | 'admin';
 
 export interface ModuleDefinition {
   key: ModuleKey;
@@ -212,7 +212,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Parc',
     description: 'Véhicules et équipements',
     icon: 'Truck',
-    category: 'parc',
+    category: 'outils',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
@@ -259,7 +259,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Documents',
     description: 'Médiathèque centralisée style Finder',
     icon: 'FolderOpen',
-    category: 'documents',
+    category: 'outils',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
@@ -316,7 +316,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Commercial',
     description: 'Suivi commercial et prospection',
     icon: 'Target',
-    category: 'commercial',
+    category: 'outils',
     deployed: false, // Pas encore déployé officiellement
     defaultForRoles: [],
     minRole: 'franchisee_admin',
