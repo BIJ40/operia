@@ -57,7 +57,7 @@ const GESTION_SUB_TABS: FolderTabConfig[] = [
   { id: 'inscriptions', label: 'Inscriptions', icon: UserPlus, accent: 'orange' },
   { id: 'apporteurs', label: 'Apporteurs', icon: UserCheck, accent: 'orange' },
   { id: 'agences', label: 'Agences', icon: Building2, accent: 'purple' },
-  { id: 'modules', label: 'Modules', icon: Crown, accent: 'orange' },
+  { id: 'modules', label: 'Droits', icon: Shield, accent: 'orange' },
   { id: 'activity', label: 'Activité', icon: Activity, accent: 'green' },
 ];
 
