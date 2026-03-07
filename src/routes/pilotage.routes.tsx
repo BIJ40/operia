@@ -77,7 +77,7 @@ export function PilotageRoutes() {
               errorMessage="Accès réservé : rôle insuffisant pour la Diffusion TV."
             >
               <ModuleGuard
-                moduleKey="pilotage_agence"
+                moduleKey="agence"
                 requiredOption="diffusion"
                 showError
                 errorMessage="Module Diffusion TV non activé pour votre profil."
