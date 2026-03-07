@@ -1,4 +1,4 @@
-import jsPDF from 'jspdf';
+import type jsPDF from 'jspdf';
 import { 
   MODULES_DOCS, 
   EDGE_FUNCTIONS_DOCS, 
