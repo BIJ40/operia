@@ -295,27 +295,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // ========================================================================
-      // PHASE 0 - FORÇAGE ACCÈS /projects POUR UTILISATEURS PROTÉGÉS
-      // ========================================================================
-      // Vérifier d'abord le hardcode (filet de sécurité), puis la table
-      let isProjectsProtected = isHardcodedProtectedUser(userId);
-      if (!isProjectsProtected) {
-        isProjectsProtected = await checkProtectedAccess(userId, 'projects');
-      }
-      
-      if (isProjectsProtected) {
-        // Forcer l'accès au module ticketing avec toutes les options
-        const ticketingAccess = {
-          enabled: true,
-          options: { kanban: true, create: true, history: true },
-        } as any;
-        resolvedModules.ticketing = ticketingAccess;
-        
-        if (import.meta.env.DEV) {
-          logAuth.info('[AUTH][PROTECTED] User has protected /projects access:', userId);
-        }
-      }
 
       // Définir le rôle global (valeur par défaut si non défini)
       setGlobalRole(dbGlobalRole || 'base_user');

@@ -148,7 +148,6 @@ export function UserFullDialog({
   
   const { data: planTiers } = usePlanTiers();
   
-  const isProtected = isHardcodedProtectedUser(userId);
   const userLevel = globalRole ? GLOBAL_ROLES[globalRole] ?? 0 : 0;
   const isN5Plus = userLevel >= GLOBAL_ROLES.platform_admin;
   
