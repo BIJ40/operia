@@ -136,7 +136,7 @@ function ModuleRow({ node, onToggleDeploy, onTogglePlan, isUpdating }: ModuleRow
   return (
     <div
       className={cn(
-        'grid grid-cols-[minmax(200px,max-content)_80px_60px_80px_80px_80px] gap-2 items-center py-2 px-3 border-b border-border/50 text-sm',
+        'grid grid-cols-[minmax(200px,max-content)_80px_60px_80px_80px] gap-2 items-center py-2 px-3 border-b border-border/50 text-sm',
         'hover:bg-muted/30 transition-colors',
         !node.effectiveDeployed && 'opacity-50',
         isNeutralized && 'bg-destructive/5',
