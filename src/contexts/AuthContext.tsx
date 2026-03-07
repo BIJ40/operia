@@ -133,19 +133,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isSupport = checkModuleEnabled(enabledModules, 'aide') || checkModuleEnabled(enabledModules, 'support');
 
   // ============================================================================
-  // MODULE SUPPORT - Logique granulaire (P1.2 - Option B)
+  // MODULE SUPPORT/AIDE - Logique granulaire
   // ============================================================================
-  // Parser le module support depuis enabled_modules (structure: support.options.agent)
-  const supportModuleConfig = enabledModules?.support;
+  // Vérifier les deux clés (legacy 'support' + nouveau 'aide')
+  const supportModuleConfig = enabledModules?.aide ?? enabledModules?.support;
   const supportOptions: SupportModuleOptions = 
     (typeof supportModuleConfig === 'object' && supportModuleConfig !== null && 'options' in supportModuleConfig)
       ? (supportModuleConfig.options as SupportModuleOptions)
       : {};
   
-  // P1.2 - Option B, P2.1 - Sémantique clarifiée
-  const canAccessSupportUser = true; // Tous les utilisateurs peuvent accéder au portail Mes Demandes
-  const hasSupportAgentRole = supportOptions.agent === true; // Module support.agent activé
-  const isSupportAdmin = supportOptions.admin === true; // Admin support (non utilisé pour console)
+  const canAccessSupportUser = true;
+  const hasSupportAgentRole = supportOptions.agent === true;
+  const isSupportAdmin = supportOptions.admin === true;
   
   // Console Support = support.agent OU N5+
   const canAccessSupportConsoleUI = hasSupportAgentRole || isAdmin;
