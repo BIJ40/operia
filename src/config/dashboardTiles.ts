@@ -162,7 +162,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: SCOPE_SLUGS.APOGEE_TICKETS,
     color: 'accent',
     group: 'projects',
-    requiresModule: 'apogee_tickets',
+    requiresModule: 'ticketing',
   },
   // Espace Technicien
   {
