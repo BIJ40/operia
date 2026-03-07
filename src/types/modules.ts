@@ -256,6 +256,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     icon: 'Calendar',
     category: 'outils',
     uiSubTab: 'administratif',
+    defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [],
   },
