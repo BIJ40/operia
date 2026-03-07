@@ -1,48 +1,62 @@
-# Refonte du système de modules/permissions
 
-## Étape 1 : Source unique consolidée ✅ FAIT
-- `MODULE_DEFINITIONS` dans `src/types/modules.ts` = source unique
-- `category: ModuleCategory` + `deployed?: boolean` par module
-- `DEPLOYED_MODULES` / `PLAN_VISIBLE_MODULES` auto-dérivés
 
-## Étape 2 : Gestion fine des options dans les plans ✅ FAIT
-- `PlansManagerView` : options togglables individuellement via `options_override` JSONB
-- Logique 3 états: hérité | activé | exclu
+# Entrées manquantes dans `module_registry`
 
-## Étape 3 : Cascade Plan → Rôle → Override utilisateur ✅ FAIT
-- RPC `get_user_effective_modules` : Plan agence → User overrides (serveur)
-- `useEffectiveModules` : filtre par `minRole` (client)
-- N5+ bypass complet
+## Constat
 
-## Étape 4 : Nettoyage legacy ✅ FAIT
+En comparant les clés dans `module_registry` (DB) avec ce que `MODULE_DEFINITIONS` (code) déclare et ce que le code utilise réellement via `hasModuleOption`, voici les entrées **absentes** du registre :
 
-### Changements effectués
+| Clé manquante | Parent | Type | Description | min_role | Plan | Déployé |
+|---|---|---|---|---|---|---|
+| `aide.agent` | `aide` | feature | Agent support (répondre aux demandes) | 0 | STARTER | true |
+| `admin_plateforme.users` | `admin_plateforme` | feature | Gestion des utilisateurs | 5 | PRO | true |
+| `admin_plateforme.agencies` | `admin_plateforme` | feature | Configuration agences | 5 | PRO | true |
+| `admin_plateforme.permissions` | `admin_plateforme` | feature | Gestion des droits | 5 | PRO | true |
+| `guides.edition` | `guides` | feature | Édition des guides (utilisé par `hasModuleOption('help_academy','edition')` et `hasModuleOption('guides','edition')`) | 5 | PRO | true |
 
-1. **`src/permissions/constants.ts`** :
-   - Réécrit proprement avec modules V3 comme source principale
-   - Legacy entries conservées en section `// Legacy compat` annotée
-   - `@deprecated` sur MODULE_MIN_ROLES et MODULE_LABELS (utiliser MODULE_DEFINITIONS)
+### Modules non-déployés (à considérer pour plus tard) :
 
-2. **`src/contexts/AuthContext.tsx`** :
-   - `isSupport` vérifie maintenant `aide` ET `support` (legacy compat)
-   - Support agent/admin detection cherche `aide` en priorité, `support` en fallback
+| Clé | Description | Statut dans le code |
+|---|---|---|
+| `outils.prospection.*` | Commercial / Prospection (dashboard, comparateur, veille, prospects) | `deployed: false` dans MODULE_DEFINITIONS |
+| `planning_augmente.*` | Planification IA (suggest, optimize, admin) | `deployed: false` dans MODULE_DEFINITIONS |
 
-3. **`src/types/accessControl.ts`** :
-   - `isSupportAgent()` et `isSupportAdmin()` vérifient `aide` + `support`
+### Clés dans le registre SANS équivalent dans MODULE_DEFINITIONS (orphelines) :
 
-4. **`src/contexts/DataPreloadContext.tsx`** :
-   - Suppression fallback `pilotage_agence.stats_hub` (utilise `stats.stats_hub` uniquement)
+| Clé | Remarque |
+|---|---|
+| `outils.commercial` | Section vide, pas d'enfants. Doublon potentiel avec prospection ? |
+| `outils.performance` | Section vide, pas d'enfants |
+| `stats.sav` | Pas dans MODULE_OPTIONS |
+| `stats.previsionnel` | Pas dans MODULE_OPTIONS |
+| `stats.techniciens` | Pas dans MODULE_OPTIONS |
+| `stats.univers` | Pas dans MODULE_OPTIONS |
+| `stats.apporteurs` | Pas dans MODULE_OPTIONS |
 
-5. **`src/hooks/useGlobalFeatureFlags.ts`** :
-   - Simplifié : plus de mapping legacy complexe
-   - Note claire : "outil de dev tracking, pas de permissions"
+Les stats supplémentaires (sav, previsionnel, techniciens, univers, apporteurs) existent dans le registre mais pas dans `MODULE_OPTIONS`. Elles sont probablement des écrans de stats valides mais non modélisés côté code.
 
-6. **`src/hooks/access-rights/useEffectiveModules.ts`** :
-   - `MODULE_COMPAT_MAP` conservé (seul endroit de rétrocompat runtime)
-   - Sera supprimé quand `user_modules` sera migré en base
+## Plan d'action
 
-### Ce qui reste legacy (volontairement conservé)
-- `MODULES` const dans `types/modules.ts` : clés legacy (help_academy, etc.) pour le type ModuleKey
-- `EnabledModules` interface : propriétés legacy pour rétrocompat
-- `MODULE_COMPAT_MAP` dans `useEffectiveModules` : mapping runtime
-- `sitemapData.ts` : guards legacy (à migrer vers nouveaux module keys)
+### Migration SQL — Insérer les 5 entrées manquantes confirmées
+
+```sql
+INSERT INTO module_registry (key, label, parent_key, node_type, sort_order, is_deployed, required_plan, min_role)
+VALUES
+  ('aide.agent',                  'Agent',        'aide',              'feature', 2, true, 'STARTER', 0),
+  ('admin_plateforme.users',      'Utilisateurs', 'admin_plateforme',  'feature', 1, true, 'PRO', 5),
+  ('admin_plateforme.agencies',   'Agences',      'admin_plateforme',  'feature', 2, true, 'PRO', 5),
+  ('admin_plateforme.permissions','Permissions',  'admin_plateforme',  'feature', 3, true, 'PRO', 5),
+  ('guides.edition',              'Édition',      'guides',            'feature', 5, true, 'PRO', 5);
+```
+
+### Aucun changement UI nécessaire
+
+Le `ModulesMasterView` lit dynamiquement le registre — les nouvelles lignes apparaîtront automatiquement.
+
+### Question pour toi
+
+Les clés orphelines (`outils.commercial`, `outils.performance`, `stats.sav`, `stats.previsionnel`, `stats.techniciens`, `stats.univers`, `stats.apporteurs`) :
+- Faut-il les garder telles quelles ?
+- Faut-il en supprimer certaines ?
+- Faut-il ajouter les stats manquantes dans `MODULE_OPTIONS` côté code ?
+
