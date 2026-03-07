@@ -95,7 +95,7 @@ export function useUpsertCommercialProfile() {
       toast.success('Profil commercial enregistré');
     },
     onError: (error) => {
-      console.error('Error saving commercial profile:', error);
+      logError('Error saving commercial profile:', error);
       toast.error('Erreur lors de la sauvegarde');
     },
   });
