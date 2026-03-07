@@ -121,9 +121,12 @@ export function useTicketExchanges({ ticketId, enabled = true }: UseTicketExchan
     },
   });
 
+  // Guard against concurrent/retry-loop calls
+  const markingRef = useRef(false);
+
   // Mark all unread messages as read (for the current user's perspective)
-  const markAllAsRead = async () => {
-    if (!user) return;
+  const markAllAsRead = useCallback(async () => {
+    if (!user || markingRef.current) return;
 
     // Get unread messages sent TO me (opposite of is_from_support based on who I am)
     const unreadIds = exchanges
@@ -131,9 +134,16 @@ export function useTicketExchanges({ ticketId, enabled = true }: UseTicketExchan
       .map(e => e.id);
 
     if (unreadIds.length > 0) {
-      await markAsReadMutation.mutateAsync(unreadIds);
+      markingRef.current = true;
+      try {
+        await markAsReadMutation.mutateAsync(unreadIds);
+      } catch {
+        // Silently fail - avoid retry loops
+      } finally {
+        markingRef.current = false;
+      }
     }
-  };
+  }, [user, exchanges, markAsReadMutation]);
 
   // Count unread messages for the user
   const unreadCount = exchanges.filter(
