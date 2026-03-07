@@ -82,6 +82,7 @@ function PageLoader() {
   );
 }
 
+import { supabase } from "@/integrations/supabase/client";
 import { useMaintenanceMode } from "./hooks/useMaintenanceMode";
 import { MaintenanceBlock } from "./components/maintenance/MaintenanceBlock";
 import { PWAInstallPrompt } from "./components/pwa/PWAInstallPrompt";
