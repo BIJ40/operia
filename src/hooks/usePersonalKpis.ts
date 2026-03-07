@@ -152,13 +152,9 @@ function calculateTechnicienKpisStatia(
   });
   const caMonth = myTechData?.value || 0;
   
-  console.log('[usePersonalKpis] Technician CA extraction:', { 
-    apogeeUserId, 
-    myTechName,
-    myTechData,
-    caMonth,
-    allRankingNames: techRanking.map((t: any) => t.label || t.name).slice(0, 5)
-  });
+  if (import.meta.env.DEV) {
+    console.log('[usePersonalKpis] CA extraction:', { apogeeUserId, myTechName, caMonth });
+  }
 
   // Convertir l'ID pour comparaison flexible
   const apogeeUserIdStr = String(apogeeUserId);
