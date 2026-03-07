@@ -5,6 +5,7 @@
  */
 
 import { useMemo } from 'react';
+import { logError } from '@/lib/logger';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useApogeeUsers } from '@/shared/api/apogee/useApogeeUsers';
