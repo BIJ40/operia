@@ -71,7 +71,7 @@ export function useOnboardingState() {
         .single();
 
       if (error) {
-        console.error('[Onboarding] Fetch error:', error);
+        logError('[Onboarding] Fetch error:', error);
         setIsLoading(false);
         return;
       }
