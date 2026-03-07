@@ -85,7 +85,8 @@ type UnifiedTab =
   | 'guides'
   | 'ticketing' 
   | 'aide'
-  | 'admin';
+  | 'admin'
+  | 'test';
 
 interface TabConfig {
   id: UnifiedTab;
