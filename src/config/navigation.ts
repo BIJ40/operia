@@ -144,7 +144,7 @@ export const NAV_GROUPS: NavGroup[] = [
         title: 'Console Support', 
         url: ROUTES.support.console, 
         icon: Headset, 
-        scope: 'apogee_tickets', 
+        scope: 'ticketing', 
         description: 'Traiter les demandes de support' 
       },
     ],
