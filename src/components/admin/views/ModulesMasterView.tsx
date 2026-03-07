@@ -189,11 +189,11 @@ function OverridesPopover({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Badge
-          variant="outline"
+        <button
+          type="button"
           className={cn(
-            'text-[11px] cursor-pointer select-none transition-opacity font-medium px-2 py-0.5',
-            'hover:opacity-80',
+            'inline-flex items-center rounded-full border text-[11px] cursor-pointer select-none transition-opacity font-medium px-2 py-0.5',
+            'hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1',
             dimmed && 'opacity-40',
             count > 0
               ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700'
@@ -201,7 +201,7 @@ function OverridesPopover({
           )}
         >
           {count > 0 ? count : '—'}
-        </Badge>
+        </button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-0 z-50" align="end" sideOffset={5}>
         <div className="p-3 pb-2">
