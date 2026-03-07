@@ -263,7 +263,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     description: 'Gestion des réunions',
     icon: 'Video',
     category: 'outils',
-    defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
+    uiSubTab: 'administratif',
     minRole: 'franchisee_admin',
     options: [],
   },
