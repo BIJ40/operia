@@ -378,11 +378,11 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
 export const DEPLOYED_MODULES: ModuleDefinition[] = MODULE_DEFINITIONS.filter(m => m.deployed !== false);
 
 // Modules visibles dans la gestion des plans (auto-dérivé de MODULE_DEFINITIONS)
-// Exclut les modules adminOnly, legacy, et non déployés
-const LEGACY_MODULE_KEYS: ModuleKey[] = ['help_academy', 'pilotage_agence', 'support', 'apogee_tickets', 'unified_search'];
+// Exclut les modules adminOnly et non déployés
+const INTERNAL_ONLY_KEYS: ModuleKey[] = ['unified_search'];
 
 export const PLAN_VISIBLE_MODULES: ModuleKey[] = MODULE_DEFINITIONS
-  .filter(m => !m.adminOnly && !LEGACY_MODULE_KEYS.includes(m.key) && m.deployed !== false)
+  .filter(m => !m.adminOnly && !INTERNAL_ONLY_KEYS.includes(m.key) && m.deployed !== false)
   .map(m => m.key);
 
 
