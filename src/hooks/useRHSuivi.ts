@@ -320,7 +320,7 @@ export function useDeleteCollaborator() {
       toast.success('Collaborateur supprimé définitivement');
     },
     onError: (error) => {
-      console.error('Delete error:', error);
+      logError('Delete error:', error);
       toast.error('Erreur lors de la suppression');
     },
   });
