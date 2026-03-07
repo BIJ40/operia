@@ -11,7 +11,7 @@ import { useSearchParams } from 'react-router-dom';
 import { 
   Home, BarChart3, ClipboardList, 
   MoreHorizontal, Ticket, HelpCircle,
-  Loader2, BookOpen, Shield, User, Building2, LogOut, Settings, Eye, FolderOpen
+  Loader2, BookOpen, Shield, User, Building2, LogOut, Settings, Eye, FolderOpen, FlaskConical
 } from 'lucide-react';
 import { 
   DndContext, 
@@ -85,7 +85,8 @@ type UnifiedTab =
   | 'guides'
   | 'ticketing' 
   | 'aide'
-  | 'admin';
+  | 'admin'
+  | 'test';
 
 interface TabConfig {
   id: UnifiedTab;
@@ -97,7 +98,7 @@ interface TabConfig {
 
 // Ordre par défaut des onglets (hors Accueil qui est toujours premier)
 // Documents après Outils
-const DEFAULT_TAB_ORDER: UnifiedTab[] = ['stats', 'salaries', 'outils', 'documents', 'guides', 'ticketing', 'aide', 'admin'];
+const DEFAULT_TAB_ORDER: UnifiedTab[] = ['stats', 'salaries', 'outils', 'documents', 'guides', 'ticketing', 'aide', 'admin', 'test'];
 
 function LoadingFallback() {
   return (
@@ -175,6 +176,7 @@ function UnifiedWorkspaceContent() {
     // Aide: vérifie aide OU support
     { id: 'aide', label: 'Aide', icon: HelpCircle, requiresOption: { module: 'aide' } },
     { id: 'admin', label: 'Admin', icon: Shield, requiresOption: { module: 'admin_plateforme' } },
+    { id: 'test', label: 'TEST', icon: FlaskConical },
   ], []);
   
   // Vérifier si un onglet est accessible pour l'utilisateur EFFECTIF (impersonné)
@@ -386,6 +388,7 @@ function UnifiedWorkspaceContent() {
     ticketing: 'orange',
     aide: 'cyan',
     admin: 'neutral',
+    test: 'teal',
   };
   
   return (
@@ -565,6 +568,14 @@ function UnifiedWorkspaceContent() {
                 
                 <TabsContent value="admin" className="mt-0">
                   <AdminTabContent />
+                </TabsContent>
+                
+                <TabsContent value="test" className="mt-0">
+                  <div className="p-8 text-center space-y-4">
+                    <FlaskConical className="w-12 h-12 mx-auto text-muted-foreground" />
+                    <h2 className="text-xl font-semibold text-foreground">Onglet TEST</h2>
+                    <p className="text-muted-foreground">Cet onglet est réservé aux tests.</p>
+                  </div>
                 </TabsContent>
                 
               </Suspense>
