@@ -106,7 +106,7 @@ export function useCreateDocInstance() {
     },
     onError: (error) => {
       toast.error("Erreur lors de la création");
-      console.error(error);
+      logError(error);
     },
   });
 }
