@@ -190,7 +190,7 @@ Deno.serve(async (req) => {
         .range(offset, offset + pageSize - 1);
 
       if (error) {
-        return jsonResponse({ error: error.message, table }, 400);
+        return respond({ error: error.message, table }, 400);
       }
 
       const rows = data ?? [];
