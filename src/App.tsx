@@ -148,6 +148,7 @@ function AppContent() {
             {/* PUBLIC PAGES */}
             {/* ============================================ */}
             <Route path="/qr/:token" element={<QrAssetPage />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             
             {/* ============================================ */}
             {/* ERROR PAGES */}
