@@ -102,7 +102,7 @@ export function HcServicesSection({
           {TipsIcon && <TipsIcon className="w-5 h-5 mt-0.5 flex-shrink-0" />}
           <div 
             className="prose prose-sm dark:prose-invert max-w-none flex-1"
-            dangerouslySetInnerHTML={{ __html: section.content }}
+            dangerouslySetInnerHTML={createSanitizedHtml(section.content)}
           />
         </div>
       </div>
