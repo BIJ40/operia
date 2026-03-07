@@ -211,7 +211,7 @@ function OverridesPopover({
 
           {/* Current overrides */}
           {count > 0 && (
-            <ScrollArea className="max-h-32 mb-2">
+            <ScrollArea className="max-h-48 overflow-y-auto mb-2">
               <div className="space-y-1">
                 {overrides.map(o => (
                   <div key={o.userId} className="group flex items-center justify-between gap-2 text-xs py-1.5 px-2 rounded hover:bg-muted/50">
