@@ -27,7 +27,6 @@ interface UserResult {
   global_role: GlobalRole | null;
   agence: string | null;
   role_agence: string | null;
-  enabled_modules: Record<string, any> | null;
 }
 
 interface RealUserImpersonationDialogProps {
