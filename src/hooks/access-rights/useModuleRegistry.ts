@@ -24,6 +24,7 @@ export interface RegistryRow {
   sort_order: number;
   is_deployed: boolean;
   required_plan: PlanLevel;
+  min_role: number;
 }
 
 export interface RegistryNode extends RegistryRow {
