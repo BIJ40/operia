@@ -19,6 +19,7 @@ interface PendingRegistration {
   last_name: string;
   phone: string | null;
   company_name: string | null;
+  agency_name: string | null;
   message: string | null;
   status: string;
   reviewed_at: string | null;
