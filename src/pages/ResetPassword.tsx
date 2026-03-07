@@ -19,22 +19,36 @@ export default function ResetPassword() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Supabase auto-processes the recovery token from the URL hash
-    // and establishes a session. We listen for that.
+    let mounted = true;
+
+    // Listen for PASSWORD_RECOVERY event (fires if token is in URL hash)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
+      if (mounted && event === 'PASSWORD_RECOVERY') {
         setSessionReady(true);
       }
     });
 
-    // Also check if already in a session (e.g. page refresh after token processed)
+    // Check if already in a session (redirected from App.tsx after PASSWORD_RECOVERY)
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
+      if (mounted && session) {
         setSessionReady(true);
+      } else if (mounted) {
+        // Give Supabase a moment to process the hash token, then check again
+        setTimeout(() => {
+          supabase.auth.getSession().then(({ data: { session: s } }) => {
+            if (mounted) {
+              // Show the form regardless — updateUser will fail gracefully if no session
+              setSessionReady(true);
+            }
+          });
+        }, 2000);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/])[A-Za-z\d!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/]{8,100}$/;
