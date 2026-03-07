@@ -82,12 +82,6 @@ export const MODULE_MIN_ROLES: Partial<Record<ModuleKey, GlobalRole>> = {
   planning_augmente: 'franchisee_admin',
   reseau_franchiseur: 'franchisor_user',
   admin_plateforme: 'platform_admin',
-  // Legacy compat (à supprimer quand user_modules sera migré)
-  help_academy: 'base_user',
-  pilotage_agence: 'franchisee_user',
-  support: 'base_user',
-  apogee_tickets: 'base_user',
-  unified_search: 'franchisee_user',
 };
 
 // ============================================================================
