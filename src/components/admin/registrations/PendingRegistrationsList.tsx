@@ -1,16 +1,19 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { CheckCircle2, XCircle, Clock, Loader2, UserPlus, Mail, Phone, Building2, MessageSquare, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { GlobalRole } from '@/types/globalRoles';
+import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 
 interface PendingRegistration {
   id: string;
@@ -27,12 +30,29 @@ interface PendingRegistration {
   created_at: string;
 }
 
+interface Agency {
+  id: string;
+  slug: string;
+  label: string;
+  is_active: boolean;
+}
+
+const ASSIGNABLE_ROLES: GlobalRole[] = [
+  'base_user',
+  'franchisee_admin',
+  'franchisor_user',
+  'franchisor_admin',
+];
+
 export default function PendingRegistrationsList() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [selectedRegistration, setSelectedRegistration] = useState<PendingRegistration | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [selectedRole, setSelectedRole] = useState<GlobalRole>('franchisee_admin');
+  const [selectedAgency, setSelectedAgency] = useState<string>('');
   const [filter, setFilter] = useState<'pending' | 'all'>('pending');
 
   const { data: registrations, isLoading } = useQuery({
@@ -42,14 +62,23 @@ export default function PendingRegistrationsList() {
         .from('pending_registrations')
         .select('*')
         .order('created_at', { ascending: false });
-
-      if (filter === 'pending') {
-        query = query.eq('status', 'pending');
-      }
-
+      if (filter === 'pending') query = query.eq('status', 'pending');
       const { data, error } = await query;
       if (error) throw error;
       return data as PendingRegistration[];
+    },
+  });
+
+  const { data: agencies } = useQuery({
+    queryKey: ['agencies-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('apogee_agencies')
+        .select('id, slug, label, is_active')
+        .eq('is_active', true)
+        .order('label');
+      if (error) throw error;
+      return data as Agency[];
     },
   });
 
@@ -66,30 +95,84 @@ export default function PendingRegistrationsList() {
         .eq('id', id);
       if (error) throw error;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pending-registrations'] });
-      toast({
-        title: variables.status === 'approved' ? 'Demande approuvée' : 'Demande rejetée',
-        description: variables.status === 'approved'
-          ? "N'oubliez pas de créer le compte utilisateur dans la gestion des utilisateurs."
-          : 'La demande a été rejetée.',
-      });
     },
     onError: (err: any) => {
       toast({ title: 'Erreur', description: err.message, variant: 'destructive' });
     },
   });
 
+  const createAccount = useMutation({
+    mutationFn: async (reg: PendingRegistration) => {
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: {
+          email: reg.email,
+          firstName: reg.first_name,
+          lastName: reg.last_name,
+          globalRole: selectedRole,
+          agence: selectedAgency || undefined,
+          role_agence: selectedRole === 'franchisee_admin' ? 'dirigeant' : undefined,
+          sendEmail: true,
+        },
+      });
+
+      if (error) throw new Error(error.message || 'Erreur lors de la création du compte');
+      if (data?.error) throw new Error(data.error);
+
+      // Mark as approved
+      await updateStatus.mutateAsync({ id: reg.id, status: 'approved' });
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pending-registrations'] });
+      toast({
+        title: 'Compte créé',
+        description: 'Le compte a été créé et un email a été envoyé à l\'utilisateur.',
+      });
+      setApproveDialogOpen(false);
+      setSelectedRegistration(null);
+    },
+    onError: (err: any) => {
+      toast({ title: 'Erreur de création', description: err.message, variant: 'destructive' });
+    },
+  });
+
+  const handleOpenApprove = (reg: PendingRegistration) => {
+    setSelectedRegistration(reg);
+    setSelectedRole('franchisee_admin');
+    // Pre-select agency if the registration mentions one
+    if (reg.agency_name && agencies) {
+      const match = agencies.find(a =>
+        a.label.toLowerCase().includes(reg.agency_name!.toLowerCase()) ||
+        a.slug.toLowerCase().includes(reg.agency_name!.toLowerCase())
+      );
+      setSelectedAgency(match?.slug || '');
+    } else {
+      setSelectedAgency('');
+    }
+    setApproveDialogOpen(true);
+  };
+
+  const handleApprove = () => {
+    if (!selectedRegistration) return;
+    createAccount.mutate(selectedRegistration);
+  };
+
   const handleReject = () => {
     if (!selectedRegistration) return;
-    updateStatus.mutate({
-      id: selectedRegistration.id,
-      status: 'rejected',
-      rejection_reason: rejectionReason.trim() || undefined,
-    });
-    setRejectDialogOpen(false);
-    setRejectionReason('');
-    setSelectedRegistration(null);
+    updateStatus.mutate(
+      { id: selectedRegistration.id, status: 'rejected', rejection_reason: rejectionReason.trim() || undefined },
+      {
+        onSuccess: () => {
+          toast({ title: 'Demande rejetée' });
+          setRejectDialogOpen(false);
+          setRejectionReason('');
+          setSelectedRegistration(null);
+        },
+      }
+    );
   };
 
   const statusBadge = (status: string) => {
@@ -102,6 +185,7 @@ export default function PendingRegistrationsList() {
   };
 
   const pendingCount = registrations?.filter(r => r.status === 'pending').length ?? 0;
+  const needsAgency = ['franchisee_admin', 'franchisee_user'].includes(selectedRole);
 
   return (
     <div className="space-y-4">
@@ -155,7 +239,7 @@ export default function PendingRegistrationsList() {
                       </p>
                     )}
                     {reg.rejection_reason && (
-                      <p className="text-sm text-red-600">Motif : {reg.rejection_reason}</p>
+                      <p className="text-sm text-destructive">Motif : {reg.rejection_reason}</p>
                     )}
                     <p className="text-xs text-muted-foreground">
                       Demandé le {format(new Date(reg.created_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
@@ -167,8 +251,8 @@ export default function PendingRegistrationsList() {
                         size="sm"
                         variant="outline"
                         className="text-green-600 border-green-300 hover:bg-green-50"
-                        onClick={() => updateStatus.mutate({ id: reg.id, status: 'approved' })}
-                        disabled={updateStatus.isPending}
+                        onClick={() => handleOpenApprove(reg)}
+                        disabled={createAccount.isPending || updateStatus.isPending}
                       >
                         <CheckCircle2 className="w-4 h-4 mr-1" />
                         Approuver
@@ -178,7 +262,7 @@ export default function PendingRegistrationsList() {
                         variant="outline"
                         className="text-red-600 border-red-300 hover:bg-red-50"
                         onClick={() => { setSelectedRegistration(reg); setRejectDialogOpen(true); }}
-                        disabled={updateStatus.isPending}
+                        disabled={createAccount.isPending || updateStatus.isPending}
                       >
                         <XCircle className="w-4 h-4 mr-1" />
                         Rejeter
@@ -192,6 +276,70 @@ export default function PendingRegistrationsList() {
         </div>
       )}
 
+      {/* Approve Dialog */}
+      <Dialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Créer le compte</DialogTitle>
+            <DialogDescription>
+              Création du compte pour <strong>{selectedRegistration?.first_name} {selectedRegistration?.last_name}</strong> ({selectedRegistration?.email})
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Rôle système</Label>
+              <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as GlobalRole)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ASSIGNABLE_ROLES.map(role => (
+                    <SelectItem key={role} value={role}>
+                      {VISIBLE_ROLE_LABELS[role]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {needsAgency && (
+              <div className="space-y-2">
+                <Label>Agence</Label>
+                <Select value={selectedAgency} onValueChange={setSelectedAgency}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner une agence" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {agencies?.map(a => (
+                      <SelectItem key={a.slug} value={a.slug}>{a.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedRegistration?.agency_name && (
+                  <p className="text-xs text-muted-foreground">
+                    L'utilisateur a indiqué : « {selectedRegistration.agency_name} »
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setApproveDialogOpen(false)}>Annuler</Button>
+            <Button
+              onClick={handleApprove}
+              disabled={createAccount.isPending || (needsAgency && !selectedAgency)}
+              className="gap-2"
+            >
+              {createAccount.isPending ? (
+                <><Loader2 className="w-4 h-4 animate-spin" />Création…</>
+              ) : (
+                <><UserPlus className="w-4 h-4" />Créer le compte</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Dialog */}
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
