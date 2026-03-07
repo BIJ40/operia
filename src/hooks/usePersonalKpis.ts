@@ -241,7 +241,7 @@ function calculateTechnicienKpis(
  * Calcule les KPIs assistante
  */
 function calculateAssistanteKpis(
-  apiData: any,
+  apiData: ApogeeLoadedData,
   apogeeUserId: number,
   monthStart: Date,
   monthEnd: Date
