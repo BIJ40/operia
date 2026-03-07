@@ -152,6 +152,168 @@
     --cyan: 200 100% 50%;
     --cyan-foreground: 0 0% 100%;
   }
+
+  /* ============================================
+     THEME ZEN NATURE — Beige, Sable, Vert Sauge
+     Wabi-sabi inspired, warm earth tones
+     ============================================ */
+  .theme-zen-nature {
+    --background: 40 30% 96%;
+    --foreground: 30 15% 25%;
+
+    --card: 40 25% 94%;
+    --card-foreground: 30 15% 25%;
+
+    --popover: 40 30% 96%;
+    --popover-foreground: 30 15% 25%;
+
+    --primary: 100 20% 55%;
+    --primary-foreground: 40 30% 96%;
+    --primary-dark: 100 25% 45%;
+
+    --secondary: 40 20% 90%;
+    --secondary-foreground: 30 15% 30%;
+
+    --muted: 40 15% 90%;
+    --muted-foreground: 30 10% 50%;
+
+    --accent: 80 20% 50%;
+    --accent-foreground: 40 30% 96%;
+    --accent-dark: 80 25% 42%;
+
+    --destructive: 0 50% 55%;
+    --destructive-foreground: 40 30% 96%;
+
+    --border: 35 18% 82%;
+    --input: 35 18% 85%;
+    --ring: 100 20% 55%;
+
+    --sidebar-background: 38 22% 92%;
+    --sidebar-foreground: 30 15% 25%;
+    --sidebar-primary: 100 20% 55%;
+    --sidebar-primary-foreground: 40 30% 96%;
+    --sidebar-accent: 38 18% 88%;
+    --sidebar-accent-foreground: 30 15% 30%;
+    --sidebar-border: 35 18% 82%;
+    --sidebar-ring: 100 20% 55%;
+
+    --warm-blue: 100 20% 55%;
+    --warm-green: 100 30% 50%;
+    --warm-orange: 35 40% 60%;
+    --warm-purple: 100 15% 55%;
+    --warm-pink: 340 25% 65%;
+    --warm-teal: 160 25% 50%;
+    --warm-cyan: 100 20% 60%;
+    --warm-red: 0 40% 55%;
+  }
+
+  /* ============================================
+     THEME ZEN BLEU — Bleu poudre, ciel, glacier
+     Serene & professional blue palette
+     ============================================ */
+  .theme-zen-blue {
+    --background: 210 30% 97%;
+    --foreground: 210 20% 22%;
+
+    --card: 210 25% 95%;
+    --card-foreground: 210 20% 22%;
+
+    --popover: 210 30% 97%;
+    --popover-foreground: 210 20% 22%;
+
+    --primary: 207 45% 62%;
+    --primary-foreground: 210 30% 97%;
+    --primary-dark: 210 50% 52%;
+
+    --secondary: 210 20% 92%;
+    --secondary-foreground: 210 20% 28%;
+
+    --muted: 210 15% 92%;
+    --muted-foreground: 210 10% 50%;
+
+    --accent: 207 35% 55%;
+    --accent-foreground: 210 30% 97%;
+    --accent-dark: 210 40% 48%;
+
+    --destructive: 0 50% 55%;
+    --destructive-foreground: 210 30% 97%;
+
+    --border: 210 18% 85%;
+    --input: 210 18% 87%;
+    --ring: 207 45% 62%;
+
+    --sidebar-background: 210 22% 94%;
+    --sidebar-foreground: 210 20% 22%;
+    --sidebar-primary: 207 45% 62%;
+    --sidebar-primary-foreground: 210 30% 97%;
+    --sidebar-accent: 210 18% 90%;
+    --sidebar-accent-foreground: 210 20% 28%;
+    --sidebar-border: 210 18% 85%;
+    --sidebar-ring: 207 45% 62%;
+
+    --warm-blue: 207 45% 62%;
+    --warm-green: 170 35% 55%;
+    --warm-orange: 35 40% 60%;
+    --warm-purple: 240 30% 65%;
+    --warm-pink: 340 25% 65%;
+    --warm-teal: 190 35% 52%;
+    --warm-cyan: 195 40% 58%;
+    --warm-red: 0 40% 55%;
+  }
+
+  /* ============================================
+     THEME SOMBRE — Gris profond (pas noir)
+     Sophisticated dark gray, easy on the eyes
+     ============================================ */
+  .theme-sombre {
+    --background: 220 10% 18%;
+    --foreground: 220 10% 90%;
+
+    --card: 220 10% 22%;
+    --card-foreground: 220 10% 90%;
+
+    --popover: 220 10% 22%;
+    --popover-foreground: 220 10% 90%;
+
+    --primary: 200 70% 55%;
+    --primary-foreground: 220 10% 95%;
+    --primary-dark: 200 70% 45%;
+
+    --secondary: 220 8% 28%;
+    --secondary-foreground: 220 10% 85%;
+
+    --muted: 220 8% 26%;
+    --muted-foreground: 220 8% 55%;
+
+    --accent: 43 80% 55%;
+    --accent-foreground: 220 10% 15%;
+    --accent-dark: 38 80% 48%;
+
+    --destructive: 0 55% 50%;
+    --destructive-foreground: 220 10% 95%;
+
+    --border: 220 8% 30%;
+    --input: 220 8% 30%;
+    --ring: 200 70% 55%;
+
+    --sidebar-background: 220 10% 15%;
+    --sidebar-foreground: 220 10% 90%;
+    --sidebar-primary: 200 70% 55%;
+    --sidebar-primary-foreground: 220 10% 95%;
+    --sidebar-accent: 220 8% 22%;
+    --sidebar-accent-foreground: 220 10% 85%;
+    --sidebar-border: 220 8% 25%;
+    --sidebar-ring: 200 70% 55%;
+
+    --warm-blue: 200 70% 55%;
+    --warm-green: 145 50% 50%;
+    --warm-orange: 35 70% 55%;
+    --warm-purple: 270 45% 60%;
+    --warm-pink: 340 50% 60%;
+    --warm-teal: 175 50% 48%;
+    --warm-cyan: 185 55% 52%;
+    --warm-red: 0 55% 55%;
+  }
 }
 
 @layer base {

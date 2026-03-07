@@ -35,6 +35,7 @@ import { EditorProvider } from "./contexts/EditorContext";
 import { ApporteurEditorProvider } from "./contexts/ApporteurEditorContext";
 import { ImpersonationProvider } from "./contexts/ImpersonationContext";
 import { DataPreloadProvider } from "./contexts/DataPreloadContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 // REMOVED: RoleSimulatorProvider - fonctionnalité supprimée (simulation non fonctionnelle)
 // ChangePasswordDialog is now integrated into WelcomeWizardGate
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
@@ -191,15 +192,17 @@ function App() {
           <AuthProvider>
             <ImpersonationProvider>
               <DataPreloadProvider>
-                <EditorProvider>
-                  <ApporteurEditorProvider>
-                    <GlobalErrorBoundary>
-                      <AppContent />
-                    </GlobalErrorBoundary>
-                    <Toaster />
-                    <Sonner />
-                  </ApporteurEditorProvider>
-                </EditorProvider>
+                <ThemeProvider>
+                  <EditorProvider>
+                    <ApporteurEditorProvider>
+                      <GlobalErrorBoundary>
+                        <AppContent />
+                      </GlobalErrorBoundary>
+                      <Toaster />
+                      <Sonner />
+                    </ApporteurEditorProvider>
+                  </EditorProvider>
+                </ThemeProvider>
               </DataPreloadProvider>
             </ImpersonationProvider>
           </AuthProvider>

@@ -30,6 +30,7 @@ import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
 import { ALL_USER_QUERY_PATTERNS } from '@/lib/queryKeys';
 import { WarmPageContainer } from '@/components/ui/warm-page-container';
 import { WarmCard } from '@/components/ui/warm-card';
+import { AppearanceSection } from '@/components/profile/AppearanceSection';
 
 // ✅ SYNCHRONISATION COMPLÈTE: fonction pour invalider TOUTES les query keys utilisateurs
 function invalidateAllUserQueries(queryClient: ReturnType<typeof useQueryClient>) {
@@ -412,6 +413,9 @@ export default function Profile() {
             </div>
           </WarmCard>
         </section>
+
+        {/* ====================== SECTION APPARENCE ====================== */}
+        <AppearanceSection />
 
         {/* Actions */}
         <div className="flex gap-4 pt-4">
