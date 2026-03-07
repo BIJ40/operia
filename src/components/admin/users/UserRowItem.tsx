@@ -193,14 +193,14 @@ export const UserRowItem = memo(function UserRowItem({
                 <TooltipContent>Modifier les informations</TooltipContent>
               </Tooltip>
 
-              {/* Permissions */}
+              {/* Fiche utilisateur */}
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPermissionsOpen(true)}>
-                    <Shield className="w-4 h-4" />
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setProfileOpen(true)}>
+                    <Eye className="w-4 h-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Permissions & Accès</TooltipContent>
+                <TooltipContent>Fiche utilisateur</TooltipContent>
               </Tooltip>
 
               {/* Désactiver / Réactiver */}
