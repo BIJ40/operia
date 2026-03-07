@@ -5,6 +5,7 @@
 
 import { StatDefinition, LoadedData, StatParams, StatResult } from './types';
 import { parseISO, isWithinInterval } from 'date-fns';
+import { logError } from '@/lib/logger';
 import { 
   computeTechUniversStatsForAgency, 
   isActiveTechnician 
