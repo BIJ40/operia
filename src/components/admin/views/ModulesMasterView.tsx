@@ -309,13 +309,12 @@ export function ModulesMasterView() {
         </CardHeader>
         <CardContent className="p-0">
           {/* Header */}
-          <div className="grid grid-cols-[minmax(200px,max-content)_80px_60px_80px_80px_80px] gap-2 items-center py-2 px-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          <div className="grid grid-cols-[minmax(200px,max-content)_80px_60px_80px_80px] gap-2 items-center py-2 px-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
             <div>Module</div>
             <div className="text-center">Type</div>
             <div className="text-center">Déployé</div>
             <div className="text-center">Plan min.</div>
             <div className="text-center">Effectif</div>
-            <div className="text-center">État</div>
           </div>
 
           {/* Rows */}
