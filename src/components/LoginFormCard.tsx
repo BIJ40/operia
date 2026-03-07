@@ -107,16 +107,62 @@ export function LoginFormCard() {
     }
   };
 
+  if (forgotMode) {
+    return (
+      <Card className="w-full max-w-md shadow-2xl border-border/50">
+        <CardHeader className="text-center pb-4">
+          <CardTitle className="text-xl">Mot de passe oublié</CardTitle>
+          <CardDescription>
+            {forgotSent
+              ? "Un email de réinitialisation a été envoyé. Vérifiez votre boîte de réception (et vos spams)."
+              : "Saisissez votre adresse email pour recevoir un lien de réinitialisation."}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {forgotSent ? (
+            <Button variant="outline" className="w-full" onClick={() => { setForgotMode(false); setForgotSent(false); }}>
+              Retour à la connexion
+            </Button>
+          ) : (
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="forgotEmail">Email</Label>
+                <Input
+                  id="forgotEmail"
+                  type="email"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  placeholder="votre.email@exemple.com"
+                  required
+                  autoComplete="email"
+                />
+              </div>
+              <Button type="submit" disabled={forgotLoading} className="w-full gap-2">
+                {forgotLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Envoi en cours…
+                  </>
+                ) : (
+                  'Envoyer le lien de réinitialisation'
+                )}
+              </Button>
+              <Button variant="ghost" type="button" className="w-full text-sm" onClick={() => setForgotMode(false)}>
+                Retour à la connexion
+              </Button>
+            </form>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="w-full max-w-md shadow-2xl border-border/50">
       <CardHeader className="text-center pb-4">
         <CardTitle className="text-xl">Connexion</CardTitle>
         <CardDescription>
           Connectez-vous avec votre email et votre mot de passe.
-          <br />
-          <span className="text-xs text-muted-foreground">
-            Si vous avez perdu votre mot de passe, contactez votre administrateur.
-          </span>
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -139,7 +185,16 @@ export function LoginFormCard() {
             {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Mot de passe</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Mot de passe</Label>
+              <button
+                type="button"
+                className="text-xs text-primary hover:underline"
+                onClick={() => { setForgotMode(true); setForgotEmail(email); }}
+              >
+                Mot de passe oublié ?
+              </button>
+            </div>
             <Input
               id="password"
               type="password"

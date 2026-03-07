@@ -24,6 +24,7 @@ const Agency = lazy(() => import("./pages/Agency"));
 const Changelog = lazy(() => import("./pages/Changelog"));
 const Roadmap = lazy(() => import("./pages/Roadmap"));
 const QrAssetPage = lazy(() => import("./pages/QrAssetPage"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 
 // Dev pages
 const UnifiedSearchAnimationPlayground = lazy(() => import("./pages/dev/UnifiedSearchAnimationPlayground"));
