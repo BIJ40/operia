@@ -113,7 +113,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'help_academy' },
+      moduleGuard: { moduleKey: 'guides' },
     },
   },
   {
@@ -123,7 +123,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'help_academy' },
+      moduleGuard: { moduleKey: 'guides' },
     },
   },
   {
@@ -133,7 +133,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'help_academy' },
+      moduleGuard: { moduleKey: 'guides' },
     },
     isDynamic: true,
   },
@@ -144,7 +144,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'help_academy' },
+      moduleGuard: { moduleKey: 'guides' },
     },
   },
   {
@@ -154,7 +154,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'help_academy' },
+      moduleGuard: { moduleKey: 'guides' },
     },
     isDynamic: true,
   },
@@ -165,7 +165,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'help_academy' },
+      moduleGuard: { moduleKey: 'guides' },
     },
     isDynamic: true,
   },
@@ -176,7 +176,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'help_academy' },
+      moduleGuard: { moduleKey: 'guides' },
     },
   },
   {
@@ -186,7 +186,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'help_academy' },
+      moduleGuard: { moduleKey: 'guides' },
     },
     isDynamic: true,
   },
@@ -217,7 +217,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'help_academy' },
+      moduleGuard: { moduleKey: 'guides' },
     },
   },
   {
@@ -227,7 +227,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'help_academy' },
+      moduleGuard: { moduleKey: 'guides' },
     },
     isDynamic: true,
   },
