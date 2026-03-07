@@ -249,19 +249,14 @@ export const UserRowItem = memo(function UserRowItem({
         </div>
       </div>
 
-      {/* Permissions Dialog */}
-      <UserPermissionsDialog
-        open={permissionsOpen}
-        onOpenChange={setPermissionsOpen}
+      {/* User Profile Sheet */}
+      <UserProfileSheet
+        open={profileOpen}
+        onOpenChange={setProfileOpen}
         user={user}
         effectiveRole={effectiveRole}
         effectiveModules={effectiveModules}
-        canEdit={canEdit}
-        isSaving={isSaving}
-        isModified={isModified}
-        onSaveChanges={onSaveChanges}
-        onModuleToggle={onModuleToggle}
-        onModuleOptionToggle={onModuleOptionToggle}
+        agencyLabel={user.agencyLabel || agencyLabelsMap?.get(user.agence || '')}
       />
     </>
   );
