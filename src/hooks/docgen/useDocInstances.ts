@@ -169,7 +169,7 @@ export function useGeneratePreview() {
     },
     onError: (error) => {
       toast.error("Erreur lors de la génération de l'aperçu");
-      console.error(error);
+      logError(error);
     },
   });
 }
