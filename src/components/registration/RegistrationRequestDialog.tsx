@@ -192,6 +192,16 @@ export function RegistrationRequestDialog({ open, onOpenChange }: RegistrationRe
           </div>
 
           <div className="space-y-1.5">
+            <Label htmlFor="reg-agency">Agence (si franchisé)</Label>
+            <Input
+              id="reg-agency"
+              value={form.agency_name}
+              onChange={e => updateField('agency_name', e.target.value)}
+              placeholder="Nom de votre agence"
+            />
+          </div>
+
+          <div className="space-y-1.5">
             <Label htmlFor="reg-message">Message (optionnel)</Label>
             <Textarea
               id="reg-message"
