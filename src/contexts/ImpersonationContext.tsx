@@ -109,7 +109,7 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
       // Charger le profil utilisateur depuis la DB
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('id, email, first_name, last_name, global_role, enabled_modules, agence, agency_id, role_agence')
+        .select('id, email, first_name, last_name, global_role, agence, agency_id, role_agence')
         .eq('id', userId)
         .single();
       
