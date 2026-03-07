@@ -145,7 +145,7 @@ export function usePlanningProjects(agencySlug: string | undefined) {
         console.log('[PlanningData] Projets à planifier:', planifiable.length);
       }
 
-      return { planifiable, all: enriched, _debugStates: uniqueStates };
+      return { planifiable, all: enriched };
     },
     enabled: !!agencySlug,
     staleTime: 5 * 60 * 1000, // 5 min
