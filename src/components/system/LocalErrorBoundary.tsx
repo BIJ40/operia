@@ -5,6 +5,7 @@
 
 import { Component, ReactNode, ErrorInfo } from "react";
 import * as Sentry from "@sentry/react";
+import { logError } from "@/lib/logger";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
