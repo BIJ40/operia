@@ -136,7 +136,7 @@ function ModuleRow({ node, onToggleDeploy, onTogglePlan, isUpdating }: ModuleRow
   return (
     <div
       className={cn(
-        'grid grid-cols-[minmax(200px,max-content)_80px_60px_80px_80px_80px] gap-2 items-center py-2 px-3 border-b border-border/50 text-sm',
+        'grid grid-cols-[minmax(200px,max-content)_80px_60px_80px_80px] gap-2 items-center py-2 px-3 border-b border-border/50 text-sm',
         'hover:bg-muted/30 transition-colors',
         !node.effectiveDeployed && 'opacity-50',
         isNeutralized && 'bg-destructive/5',
@@ -192,10 +192,6 @@ function ModuleRow({ node, onToggleDeploy, onTogglePlan, isUpdating }: ModuleRow
         <PlanBadge plan={node.effectivePlan} readOnly dimmed={!node.effectiveDeployed} />
       </div>
 
-      {/* Status indicator */}
-      <div className="flex justify-center">
-        <StatusIndicator node={node} />
-      </div>
     </div>
   );
 }
@@ -313,13 +309,12 @@ export function ModulesMasterView() {
         </CardHeader>
         <CardContent className="p-0">
           {/* Header */}
-          <div className="grid grid-cols-[minmax(200px,max-content)_80px_60px_80px_80px_80px] gap-2 items-center py-2 px-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          <div className="grid grid-cols-[minmax(200px,max-content)_80px_60px_80px_80px] gap-2 items-center py-2 px-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
             <div>Module</div>
             <div className="text-center">Type</div>
             <div className="text-center">Déployé</div>
             <div className="text-center">Plan min.</div>
             <div className="text-center">Effectif</div>
-            <div className="text-center">État</div>
           </div>
 
           {/* Rows */}
