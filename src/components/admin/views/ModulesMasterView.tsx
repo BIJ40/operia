@@ -233,6 +233,7 @@ export function ModulesMasterView() {
       const cycle: PlanLevel[] = ['STARTER', 'PRO', 'NONE'];
       const idx = cycle.indexOf(node.required_plan);
       const newValue: PlanLevel = cycle[(idx + 1) % cycle.length];
+      const descendants = getDescendantKeys(node);
 
       // Update this node
       updateNode.mutate({ key: node.key, updates: { required_plan: newValue } });
