@@ -297,9 +297,11 @@ interface ModuleRowProps {
   onTogglePlan: (node: RegistryNode) => void;
   onChangeRole: (node: RegistryNode, newRole: number) => void;
   isUpdating: boolean;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
-function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole, isUpdating }: ModuleRowProps) {
+function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole, isUpdating, isCollapsed, onToggleCollapse }: ModuleRowProps) {
   const isNeutralized = !node.effectiveDeployed && node.is_deployed;
   const depthColors = ['text-primary', 'text-blue-500', 'text-violet-500', 'text-emerald-500'];
   const branchColor = depthColors[Math.min(node.depth, depthColors.length - 1)];
@@ -315,9 +317,15 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
       )}
     >
       {/* Name */}
-      <div className="flex items-center min-w-0" style={{ paddingLeft: `${node.depth * 16}px` }}>
+      <div
+        className={cn('flex items-center min-w-0', node.depth === 0 && 'cursor-pointer select-none')}
+        style={{ paddingLeft: `${node.depth * 16}px` }}
+        onClick={node.depth === 0 ? onToggleCollapse : undefined}
+      >
         {node.depth > 0 && <CornerDownRight className={cn('w-3.5 h-3.5 mr-1.5 shrink-0', branchColor)} />}
-        {node.depth === 0 && <ChevronRight className={cn('w-4 h-4 mr-1.5 shrink-0', branchColor)} />}
+        {node.depth === 0 && (
+          <ChevronRight className={cn('w-4 h-4 mr-1.5 shrink-0 transition-transform duration-200', branchColor, !isCollapsed && 'rotate-90')} />
+        )}
         <span className={cn('truncate', node.depth === 0 && 'font-semibold text-foreground', node.depth === 1 && 'font-medium')}>
           {node.label}
         </span>
@@ -364,6 +372,7 @@ interface PropagateDialogState {
 export function ModulesMasterView() {
   const { tree, flatNodes, isLoading } = useModuleRegistry();
   const { overrides } = useModuleOverrides();
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const updateNode = useUpdateModuleNode();
   const propagate = usePropagateToChildren();
 
@@ -459,7 +468,14 @@ export function ModulesMasterView() {
             <div className="text-center">Privil.</div>
           </div>
 
-          {flatNodes.map(node => (
+          {flatNodes
+            .filter(node => {
+              if (node.depth === 0) return true;
+              // Hide if any ancestor root key is collapsed
+              const rootKey = node.key.split('.')[0];
+              return !collapsed.has(rootKey);
+            })
+            .map(node => (
             <ModuleRow
               key={node.key}
               node={node}
@@ -468,6 +484,13 @@ export function ModulesMasterView() {
               onTogglePlan={handleTogglePlan}
               onChangeRole={handleChangeRole}
               isUpdating={updateNode.isPending || propagate.isPending}
+              isCollapsed={node.depth === 0 ? collapsed.has(node.key) : undefined}
+              onToggleCollapse={node.depth === 0 ? () => setCollapsed(prev => {
+                const next = new Set(prev);
+                if (next.has(node.key)) next.delete(node.key);
+                else next.add(node.key);
+                return next;
+              }) : undefined}
             />
           ))}
 
