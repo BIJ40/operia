@@ -4,6 +4,7 @@
  */
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { logError } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
@@ -118,7 +119,7 @@ export function ApporteurAuthProvider({ children }: { children: ReactNode }) {
         orgIsActive: apporteurData?.is_active ?? true,
       });
     } catch (err) {
-      console.error('Error loading apporteur data:', err);
+      logError('Error loading apporteur data:', err);
       setApporteurUser(null);
     }
   }, []);
@@ -168,7 +169,7 @@ export function ApporteurAuthProvider({ children }: { children: ReactNode }) {
       setApporteurUser(null);
       toast.success('Déconnexion réussie');
     } catch (error) {
-      console.error('Logout error:', error);
+      logError('Logout error:', error);
       toast.error('Erreur lors de la déconnexion');
     }
   }, []);

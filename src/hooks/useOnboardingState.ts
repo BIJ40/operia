@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { logError } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -70,7 +71,7 @@ export function useOnboardingState() {
         .single();
 
       if (error) {
-        console.error('[Onboarding] Fetch error:', error);
+        logError('[Onboarding] Fetch error:', error);
         setIsLoading(false);
         return;
       }
@@ -88,7 +89,7 @@ export function useOnboardingState() {
         role_agence: data.role_agence,
       });
     } catch (err) {
-      console.error('[Onboarding] Unexpected error:', err);
+      logError('[Onboarding] Unexpected error:', err);
     } finally {
       setIsLoading(false);
     }
@@ -135,7 +136,7 @@ export function useOnboardingState() {
         .eq('id', user.id);
 
       if (error) {
-        console.error('[Onboarding] Dismiss error:', error);
+        logError('[Onboarding] Dismiss error:', error);
         toast.error('Erreur lors de la sauvegarde');
         return { success: false };
       }
@@ -171,7 +172,7 @@ export function useOnboardingState() {
         .eq('id', user.id);
 
       if (error) {
-        console.error('[Onboarding] Complete error:', error);
+        logError('[Onboarding] Complete error:', error);
         toast.error('Erreur lors de la sauvegarde');
         return { success: false };
       }

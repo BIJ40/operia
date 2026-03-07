@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import { logError } from '@/lib/logger';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { GlobalRole } from '@/types/globalRoles';
@@ -114,7 +115,7 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
         .single();
       
       if (profileError || !profile) {
-        console.error('[IMPERSONATION] Erreur chargement profil:', profileError);
+        logError('[IMPERSONATION] Erreur chargement profil:', profileError);
         toast.error('Impossible de charger le profil utilisateur');
         return false;
       }
@@ -169,7 +170,7 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
       
       return true;
     } catch (error) {
-      console.error('[IMPERSONATION] Erreur:', error);
+      logError('[IMPERSONATION] Erreur:', error);
       toast.error('Une erreur est survenue');
       return false;
     } finally {

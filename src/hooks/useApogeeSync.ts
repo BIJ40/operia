@@ -5,6 +5,7 @@
  */
 
 import { useMemo } from 'react';
+import { logError } from '@/lib/logger';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useApogeeUsers } from '@/shared/api/apogee/useApogeeUsers';
@@ -194,7 +195,7 @@ export function useApogeeSync({ agencySlug, collaborators }: UseApogeeSyncOption
       queryClient.invalidateQueries({ queryKey: ['collaborators'] });
     },
     onError: (error) => {
-      console.error('Sync error:', error);
+      logError('Sync error:', error);
       toast.error('Erreur lors de la synchronisation');
     },
   });

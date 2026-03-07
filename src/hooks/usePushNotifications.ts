@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 import { useState, useEffect, useCallback } from 'react';
+import { logError } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -79,7 +80,7 @@ export function usePushNotifications() {
         isLoading: false,
       }));
     } catch (error) {
-      console.error('[Push] Error checking subscription:', error);
+      logError('[Push] Error checking subscription:', error);
       setState(prev => ({ ...prev, isLoading: false }));
     }
   }, []);
@@ -91,7 +92,7 @@ export function usePushNotifications() {
     }
 
     if (!VAPID_PUBLIC_KEY) {
-      console.error('[Push] VAPID public key not configured');
+      logError('[Push] VAPID public key not configured');
       toast.error('Configuration push incomplète');
       return false;
     }
@@ -146,7 +147,7 @@ export function usePushNotifications() {
       return true;
 
     } catch (error) {
-      console.error('[Push] Error subscribing:', error);
+      logError('[Push] Error subscribing:', error);
       toast.error('Erreur lors de l\'activation des notifications');
       setState(prev => ({ ...prev, isLoading: false }));
       return false;
@@ -178,7 +179,7 @@ export function usePushNotifications() {
       return true;
 
     } catch (error) {
-      console.error('[Push] Error unsubscribing:', error);
+      logError('[Push] Error unsubscribing:', error);
       toast.error('Erreur lors de la désactivation');
       setState(prev => ({ ...prev, isLoading: false }));
       return false;

@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { logError } from '@/lib/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -105,7 +106,7 @@ export function useCreateDocInstance() {
     },
     onError: (error) => {
       toast.error("Erreur lors de la création");
-      console.error(error);
+      logError(error);
     },
   });
 }
@@ -128,7 +129,7 @@ export function useUpdateDocInstance() {
     },
     onError: (error) => {
       toast.error("Erreur lors de la mise à jour");
-      console.error(error);
+      logError(error);
     },
   });
 }
@@ -151,7 +152,7 @@ export function useDeleteDocInstance() {
     },
     onError: (error) => {
       toast.error("Erreur lors de la suppression");
-      console.error(error);
+      logError(error);
     },
   });
 }
@@ -168,7 +169,7 @@ export function useGeneratePreview() {
     },
     onError: (error) => {
       toast.error("Erreur lors de la génération de l'aperçu");
-      console.error(error);
+      logError(error);
     },
   });
 }
@@ -192,7 +193,7 @@ export function useFinalizeDocument() {
     },
     onError: (error) => {
       toast.error("Erreur lors de la finalisation");
-      console.error(error);
+      logError(error);
     },
   });
 }

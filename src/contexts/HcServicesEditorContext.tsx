@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { logError } from '@/lib/logger';
 import { useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -110,7 +111,7 @@ export function HcServicesEditorProvider({ children }: { children: ReactNode }) 
       setBlocks(mappedBlocks);
       CacheManager.setItem(CACHE_KEY, mappedBlocks, 5 * 60 * 1000);
     } catch (error) {
-      console.error('Error loading operia blocks:', error);
+      logError('Error loading operia blocks:', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de charger le guide HC Services',
@@ -164,7 +165,7 @@ export function HcServicesEditorProvider({ children }: { children: ReactNode }) 
 
       return data.id;
     } catch (error) {
-      console.error('Error adding block:', error);
+      logError('Error adding block:', error);
       toast({
         title: 'Erreur',
         description: 'Impossible d\'ajouter le bloc',
@@ -211,7 +212,7 @@ export function HcServicesEditorProvider({ children }: { children: ReactNode }) 
         return updated;
       });
     } catch (error) {
-      console.error('Error updating block:', error);
+      logError('Error updating block:', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de mettre à jour le bloc',
@@ -236,7 +237,7 @@ export function HcServicesEditorProvider({ children }: { children: ReactNode }) 
         return updated;
       });
     } catch (error) {
-      console.error('Error deleting block:', error);
+      logError('Error deleting block:', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de supprimer le bloc',
@@ -270,7 +271,7 @@ export function HcServicesEditorProvider({ children }: { children: ReactNode }) 
         return updated;
       });
     } catch (error) {
-      console.error('Error reordering blocks:', error);
+      logError('Error reordering blocks:', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de réordonner les blocs',

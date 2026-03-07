@@ -3,6 +3,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { logError } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
@@ -319,7 +320,7 @@ export function useDeleteCollaborator() {
       toast.success('Collaborateur supprimé définitivement');
     },
     onError: (error) => {
-      console.error('Delete error:', error);
+      logError('Delete error:', error);
       toast.error('Erreur lors de la suppression');
     },
   });
@@ -347,7 +348,7 @@ export function useUpdateCollaboratorType() {
       toast.success('Classification mise à jour');
     },
     onError: (error) => {
-      console.error('Update type error:', error);
+      logError('Update type error:', error);
       toast.error('Erreur lors de la mise à jour');
     },
   });

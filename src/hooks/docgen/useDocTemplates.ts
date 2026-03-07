@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { logError } from '@/lib/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -96,7 +97,7 @@ export function useCreateDocTemplate() {
     },
     onError: (error) => {
       toast.error("Erreur lors de la création du template");
-      console.error(error);
+      logError(error);
     },
   });
 }
@@ -125,7 +126,7 @@ export function useUpdateDocTemplate() {
     },
     onError: (error) => {
       toast.error("Erreur lors de la mise à jour");
-      console.error(error);
+      logError(error);
     },
   });
 }
@@ -148,7 +149,7 @@ export function useDeleteDocTemplate() {
     },
     onError: (error) => {
       toast.error("Erreur lors de la suppression");
-      console.error(error);
+      logError(error);
     },
   });
 }
@@ -180,7 +181,7 @@ export function useParseDocxTokens() {
     },
     onError: (error) => {
       toast.error("Erreur lors de l'analyse du document");
-      console.error(error);
+      logError(error);
     },
   });
 }
