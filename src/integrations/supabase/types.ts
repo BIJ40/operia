@@ -9257,6 +9257,8 @@ export type Database = {
           title: string
         }[]
       }
+      purge_expired_ai_cache: { Args: never; Returns: number }
+      purge_expired_rate_limits: { Args: never; Returns: number }
       request_document: {
         Args: { p_description?: string; p_request_type: string }
         Returns: {
