@@ -573,25 +573,18 @@ has_module_enabled(module_key text) → boolean`);
     
     this.addChapterTitle('Chapitre 4 — Modules Activables');
     
-    this.addParagraph('Chaque utilisateur a des modules activés via enabled_modules (JSONB) dans profiles:');
+    this.addParagraph('Les modules sont gérés via la table relationnelle user_modules et résolus par la RPC get_user_effective_modules:');
     
-    this.addCode(`// Structure enabled_modules
-{
-  "help_academy": { "enabled": true },
-  "pilotage_agence": { "enabled": true },
-  "support": { 
-    "enabled": true, 
-    "options": { "agent": true }  // Accès console support
-  },
-  "rh": { 
-    "enabled": true, 
-    "options": { 
-      "coffre": true,      // Coffre personnel
-      "rh_viewer": false,  // Vue équipe sans salaires
-      "rh_admin": false    // Admin complet RH
-    }
-  }
-}`);
+    this.addCode(`// Table user_modules (source de vérité)
+-- user_id UUID → l'utilisateur
+-- module_key TEXT → clé du module (aide, rh, agence, etc.)
+-- options JSONB → options spécifiques { "agent": true, "rh_admin": true }
+
+// Cascade de résolution (RPC get_user_effective_modules):
+// 1. module_registry → modules déployés
+// 2. plan_tier_modules → modules du plan agence (STARTER/PRO)
+// 3. user_modules → overrides individuels
+// 4. Filtre min_role → exclusion par niveau de rôle`);
     
     this.addSectionTitle('Guards UI');
     this.addBullet('RoleGuard: Vérifie le niveau de rôle minimum requis');
