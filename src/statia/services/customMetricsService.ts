@@ -82,7 +82,8 @@ export async function listCustomMetrics(
     .from('statia_custom_metrics')
     .select('*')
     .eq('is_active', true)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(200);
 
   if (scope) {
     query = query.eq('scope', scope);

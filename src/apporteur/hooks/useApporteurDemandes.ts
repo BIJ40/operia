@@ -38,7 +38,8 @@ export function useApporteurDemandes() {
       const { data, error } = await supabase
         .from('apporteur_intervention_requests')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(500);
 
       if (error) {
         console.error('Error fetching apporteur demandes:', error);

@@ -95,7 +95,8 @@ export function useTechnicianSavDetails(technicianId: string | null, dateRange: 
         const { data: validations } = await supabase
           .from('sav_validations')
           .select('*')
-          .eq('agency_id', effectiveAgencyId);
+          .eq('agency_id', effectiveAgencyId)
+          .limit(1000);
         
         const validationsMap = new Map<string, any>();
         for (const v of validations || []) {

@@ -89,8 +89,8 @@ export default function AdminAgencies() {
     setIsLoading(true);
     try {
       const [agenciesResult, usersResult] = await Promise.all([
-        supabase.from('apogee_agencies').select('*').order('label'),
-        supabase.from('profiles').select('id, first_name, last_name, email, agence, role_agence').order('first_name'),
+        supabase.from('apogee_agencies').select('*').order('label').limit(500),
+        supabase.from('profiles').select('id, first_name, last_name, email, agence, role_agence').order('first_name').limit(1000),
       ]);
 
       if (agenciesResult.error) throw agenciesResult.error;

@@ -16,7 +16,8 @@ export async function listBlocks(): Promise<QuestionBlock[]> {
     .select('*')
     .eq('is_active', true)
     .order('category', { ascending: true })
-    .order('name', { ascending: true });
+    .order('name', { ascending: true })
+    .limit(500);
 
   if (error) {
     logError('Failed to list flow blocks', error);
@@ -80,7 +81,8 @@ export async function listSchemas(domain?: FlowDomain): Promise<FlowSchema[]> {
   let query = supabase
     .from('flow_schemas')
     .select('*')
-    .order('updated_at', { ascending: false });
+    .order('updated_at', { ascending: false })
+    .limit(200);
 
   if (domain) {
     query = query.eq('domain', domain);

@@ -23,7 +23,8 @@ export function useMediaFolders(parentId: string | null = null) {
         .select('*')
         .eq('agency_id', agencyId)
         .is('deleted_at', null)
-        .order('name');
+        .order('name')
+        .limit(500);
 
       if (parentId) {
         query = query.eq('parent_id', parentId);

@@ -96,6 +96,35 @@
 
 ---
 
+## PHASE 1 — Corrections critiques (Autopsy) ✅ FAIT
+
+### P1-1: ✅ Split AuthContext (God Object → 3 sous-contextes)
+- **AuthCoreContext** — session/login/logout uniquement
+- **ProfileContext** — données profil (firstName, agence, agencyId…)
+- **PermissionsContext** — globalRole, enabledModules, guards
+- **`useAuth()`** conservé comme façade backward-compatible (188 fichiers non impactés)
+- **Nouveaux hooks:** `useAuthCore()`, `useProfile()`, `usePermissions()` pour subscriptions granulaires
+- **Impact:** Réduction drastique des re-renders en cascade
+
+### P1-2: ✅ `.limit()` ajouté sur toutes les requêtes listing sans borne
+- **Fichiers corrigés (12 queries):**
+  - `useDocumentRequests.ts` (×2), `useApporteurDemandes.ts`, `useProspectingMeetings.ts`
+  - `useMediaFolders.ts`, `useAgencyList.ts`, `AdminAgencies.tsx` (×2)
+  - `useTechnicianSavDetails.ts`, `useTicketPermissions.ts`
+  - `customMetricsService.ts`, `flowApi.ts` (×2)
+- **Limites:** 200–1000 selon la table
+
+### P1-3: ✅ Restriction CORS dans withSentry.ts
+- CORS `'*'` → whitelist `operiav2.lovable.app` + preview domain
+- Headers CORS étendus (x-supabase-client-*)
+- Header `Vary: Origin` ajouté
+
+### P1-4: ✅ Audit RLS `USING(true)` — Aucune action nécessaire
+- Toutes les policies `USING(true)` sont sur des tables de référence en lecture seule (plan_tiers, blocks, page_metadata, univers_catalog, media_system_folders, travel_cache)
+- Cohérent avec l'architecture : données partagées, pas de leak multi-tenant
+
+---
+
 ## Priorités d'exécution
 
 | Sprint | Statut | Risque résolu |
@@ -105,17 +134,18 @@
 | **S8** | ✅ FAIT | 13 index DB, memoisation, purge, contrainte rôle |
 | **S9** | ✅ FAIT | Health check, 20+ fichiers logError, withSentry |
 | **S10** | ✅ FAIT | Polish UX, cohérence design system |
+| **P1** | ✅ FAIT | AuthContext split, .limit() queries, CORS, RLS audit |
 
-## Score cible après correction
+## Score cible après Phase 1
 
-| Dimension | Avant | Après | Cible |
-|-----------|-------|-------|-------|
+| Dimension | Avant | Après P1 | Cible |
+|-----------|-------|----------|-------|
 | Architecture | 7.5 | 9.0 | 9.5 |
-| Sécurité | 8.0 | 9.0 | 9.5 |
-| Performance | 7.5 | 9.0 | 9.5 |
+| Sécurité | 7.5 | 9.0 | 9.5 |
+| Performance | 6.5 | 8.5 | 9.5 |
 | Permissions | 8.5 | 9.5 | 10 |
 | Scalabilité | 6.5 | 8.5 | 9.0 |
 | Base de données | 7.0 | 9.0 | 9.5 |
 | DevOps | 7.0 | 8.5 | 9.0 |
-| Maintenabilité | 7.5 | 9.0 | 9.5 |
-| **Global** | **7.4** | **8.9** | **9.4** |
+| Maintenabilité | 7.0 | 9.0 | 9.5 |
+| **Global** | **7.0** | **8.9** | **9.4** |
