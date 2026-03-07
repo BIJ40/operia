@@ -121,7 +121,7 @@ serve(async (req) => {
     // Verify user has access to this collaborator's data
     const { data: profile } = await supabaseClient
       .from('profiles')
-      .select('agency_id, global_role, enabled_modules')
+      .select('agency_id, global_role')
       .eq('id', user.id)
       .single();
 
@@ -146,11 +146,20 @@ serve(async (req) => {
       ));
     }
 
+    // Check RH admin via user_modules (source de vérité unique)
+    const { data: rhAdminModule } = await supabaseClient
+      .from('user_modules')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('module_key', 'rh')
+      .maybeSingle();
+    
+    const hasRhOption = rhAdminModule != null;
+
     // Access check: user is the collaborator, or is admin/RH of same agency
     const isSelf = collaborator.user_id === user.id;
     const isSameAgency = collaborator.agency_id === profile.agency_id;
     const isAdmin = ['platform_admin', 'superadmin'].includes(profile.global_role);
-    const isRHAdmin = profile.enabled_modules?.rh?.options?.rh_admin === true;
     const isDirigeant = ['franchisee_admin', 'franchisor_admin', 'franchisor_user'].includes(profile.global_role);
 
     const hasAccess = isSelf || isAdmin || (isSameAgency && (isRHAdmin || isDirigeant));
