@@ -335,6 +335,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     icon: 'Target',
     category: 'outils',
     uiSubTab: 'prospection',
+    deployed: false, // Pas encore déployé officiellement
     defaultForRoles: [],
     minRole: 'franchisee_admin',
     options: [
