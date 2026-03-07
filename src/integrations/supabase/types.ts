@@ -5264,6 +5264,7 @@ export type Database = {
           is_deployed: boolean
           key: string
           label: string
+          min_role: number
           node_type: string
           parent_key: string | null
           required_plan: string
@@ -5273,6 +5274,7 @@ export type Database = {
           is_deployed?: boolean
           key: string
           label: string
+          min_role?: number
           node_type: string
           parent_key?: string | null
           required_plan?: string
@@ -5282,6 +5284,7 @@ export type Database = {
           is_deployed?: boolean
           key?: string
           label?: string
+          min_role?: number
           node_type?: string
           parent_key?: string | null
           required_plan?: string

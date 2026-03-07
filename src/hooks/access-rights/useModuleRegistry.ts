@@ -24,6 +24,7 @@ export interface RegistryRow {
   sort_order: number;
   is_deployed: boolean;
   required_plan: PlanLevel;
+  min_role: number;
 }
 
 export interface RegistryNode extends RegistryRow {
@@ -35,6 +36,7 @@ export interface RegistryNode extends RegistryRow {
   // Override indicators
   isDeployOverridden: boolean; // stored ≠ effective for deploy
   isPlanOverridden: boolean;   // stored ≠ effective for plan
+  // min_role is stored per-node (no inheritance, like required_plan)
 }
 
 // ============================================================================
@@ -150,7 +152,7 @@ export function useUpdateModuleNode() {
   return useMutation({
     mutationFn: async (params: {
       key: string;
-      updates: { is_deployed?: boolean; required_plan?: PlanLevel };
+      updates: { is_deployed?: boolean; required_plan?: PlanLevel; min_role?: number };
     }) => {
       const { error } = await supabase
         .from('module_registry' as any)
@@ -174,7 +176,7 @@ export function usePropagateToChildren() {
   return useMutation({
     mutationFn: async (params: {
       keys: string[];
-      updates: { is_deployed?: boolean; required_plan?: PlanLevel };
+      updates: { is_deployed?: boolean; required_plan?: PlanLevel; min_role?: number };
     }) => {
       // Batch update all descendants
       const { error } = await supabase
