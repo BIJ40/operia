@@ -15,7 +15,6 @@ import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { ModuleKey, MODULE_DEFINITIONS } from '@/types/modules';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
-import { GlobalRole } from '@/types/globalRoles';
 import { resolveEffectiveModulesFromBackend } from '@/lib/effectiveModulesResolver';
 
 export interface EffectiveModuleRow {
