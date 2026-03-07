@@ -127,9 +127,7 @@ export function UserEditForm({
   }, [user]);
 
   const isSupportAgentEnabled = () => {
-    if (!user?.enabled_modules) return false;
-    const modules = user.enabled_modules as any;
-    return modules?.support?.options?.agent === true;
+    return !!user?.support_level && user.support_level > 0;
   };
 
   const isFieldReadOnly = (field: string) => readOnlyFields.includes(field);

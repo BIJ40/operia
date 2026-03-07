@@ -150,7 +150,7 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
         firstName: profile.first_name,
         lastName: profile.last_name,
         globalRole: (profile.global_role as GlobalRole) || 'base_user',
-        enabledModules: Object.keys(resolvedModules).length > 0 ? resolvedModules : (profile.enabled_modules as EnabledModules),
+        enabledModules: Object.keys(resolvedModules).length > 0 ? resolvedModules : null,
         agence: profile.agence,
         agencyId: profile.agency_id,
         roleAgence: profile.role_agence,
