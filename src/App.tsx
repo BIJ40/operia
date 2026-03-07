@@ -192,15 +192,17 @@ function App() {
           <AuthProvider>
             <ImpersonationProvider>
               <DataPreloadProvider>
-                <EditorProvider>
-                  <ApporteurEditorProvider>
-                    <GlobalErrorBoundary>
-                      <AppContent />
-                    </GlobalErrorBoundary>
-                    <Toaster />
-                    <Sonner />
-                  </ApporteurEditorProvider>
-                </EditorProvider>
+                <ThemeProvider>
+                  <EditorProvider>
+                    <ApporteurEditorProvider>
+                      <GlobalErrorBoundary>
+                        <AppContent />
+                      </GlobalErrorBoundary>
+                      <Toaster />
+                      <Sonner />
+                    </ApporteurEditorProvider>
+                  </EditorProvider>
+                </ThemeProvider>
               </DataPreloadProvider>
             </ImpersonationProvider>
           </AuthProvider>

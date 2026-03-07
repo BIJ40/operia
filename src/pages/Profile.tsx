@@ -414,6 +414,9 @@ export default function Profile() {
           </WarmCard>
         </section>
 
+        {/* ====================== SECTION APPARENCE ====================== */}
+        <AppearanceSection />
+
         {/* Actions */}
         <div className="flex gap-4 pt-4">
           <Button
