@@ -644,7 +644,7 @@ has_module_enabled(module_key text) → boolean`);
       [25, 40, 95]
     );
     
-    this.addInfoBox('Info', 'Les niveaux SA sont exclusifs aux agents support (enabled_modules.support.options.agent = true). Un utilisateur non-agent est implicitement SA0.', 'info');
+    this.addInfoBox('Info', 'Les niveaux SA sont exclusifs aux agents support (user_modules.aide.options.agent = true). Un utilisateur non-agent est implicitement SA0.', 'info');
   }
 
   addStatiaSection(): void {
