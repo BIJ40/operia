@@ -336,12 +336,6 @@ export function UserFullDialog({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {isProtected && (
-                <Badge variant="outline" className="text-warning border-warning/50 gap-1">
-                  <Lock className="h-3 w-3" />
-                  Protégé
-                </Badge>
-              )}
               {!isActive && (
                 <Badge variant="destructive" className="gap-1">Inactif</Badge>
               )}
