@@ -372,6 +372,7 @@ interface PropagateDialogState {
 export function ModulesMasterView() {
   const { tree, flatNodes, isLoading } = useModuleRegistry();
   const { overrides } = useModuleOverrides();
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const updateNode = useUpdateModuleNode();
   const propagate = usePropagateToChildren();
 
