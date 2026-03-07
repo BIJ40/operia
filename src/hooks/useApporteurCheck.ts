@@ -26,7 +26,7 @@ export function useApporteurCheck() {
         .maybeSingle();
       
       if (error) {
-        console.error('[useApporteurCheck] Error checking apporteur status:', error);
+        logError('[useApporteurCheck] Error checking apporteur status:', error);
         return false;
       }
       

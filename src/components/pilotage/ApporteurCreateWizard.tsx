@@ -194,7 +194,7 @@ export function ApporteurCreateWizard({ open, onOpenChange }: ApporteurCreateWiz
           name: `${contact.prenom || ''} ${contact.nom || ''}`.trim() || contact.email!,
         });
       } catch (err: any) {
-        console.error(`Failed to create user ${contact.email}:`, err);
+        logError(`Failed to create user ${contact.email}:`, err);
         toast.error(`Erreur pour ${contact.email}: ${err.message}`);
       }
     }

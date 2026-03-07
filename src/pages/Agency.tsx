@@ -51,7 +51,7 @@ export default function Agency() {
         setProfile(data as ProfileData);
       }
     } catch (error) {
-      console.error('Error loading profile:', error);
+      logError('Error loading profile:', error);
     } finally {
       setIsLoading(false);
     }

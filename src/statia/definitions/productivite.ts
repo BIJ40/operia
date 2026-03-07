@@ -226,7 +226,7 @@ export const nbHeuresProductives: StatDefinition = {
     
     // GARDE-FOU: dateRange obligatoire pour éviter de compter tout l'historique
     if (!params.dateRange?.start || !params.dateRange?.end) {
-      console.error('[nb_heures_productives] ERREUR: dateRange est obligatoire');
+      logError('[nb_heures_productives] ERREUR: dateRange est obligatoire');
       return {
         value: 0,
         metadata: {

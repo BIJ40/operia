@@ -178,7 +178,7 @@ export function useUploadTemplate() {
       toast.success('Template maître mis à jour');
     },
     onError: (error) => {
-      console.error('Error uploading template:', error);
+      logError('Error uploading template:', error);
       toast.error('Erreur lors de l\'upload du template');
     },
   });
