@@ -46,3 +46,23 @@
 - `EnabledModules` interface : propriétés legacy pour rétrocompat
 - `MODULE_COMPAT_MAP` dans `useEffectiveModules` : mapping runtime
 - `sitemapData.ts` : guards legacy (à migrer vers nouveaux module keys)
+
+---
+
+## Audit Remédiation — Sprint 1 ✅ FAIT (P0)
+- P0-1: Secret migrate-export → `Deno.env.get('MIGRATION_SECRET')`
+- P0-2: XSS HcServicesSection → `createSanitizedHtml()`
+- P0-3: Session OTP 365j → 90j
+- P0-4: CORS `*` create-dev-account → `_shared/cors.ts`
+- P0-5: `useMemo` AuthContext provider value
+- P0-6: `useMemo` accessContext
+- P0-7: Onglet TEST → `import.meta.env.DEV` only
+- P1-1: `Promise.all` loadUserData (profil + modules en parallèle)
+
+## Audit Remédiation — Sprint 2 ✅ FAIT (P1 + P2-4)
+- P1-2: CRON_SECRET sur compute-apporteur-metrics + media-garbage-collector
+- P1-3: Dynamic import xlsx (−200KB bundle)
+- P1-4: Guides disabled tabs masqués (non plus grisés)
+- P1-5: Table dupliquée sensitive_data_access_log supprimée
+- P1-6: 10 index FK créés (tickets, comments, history, attachments, activity_log, collaborators)
+- P2-4: CORS migrate-export → `_shared/cors.ts` + `withCors`
