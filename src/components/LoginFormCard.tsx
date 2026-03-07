@@ -26,6 +26,7 @@ export function LoginFormCard() {
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
+  const [registrationOpen, setRegistrationOpen] = useState(false);
   const { toast } = useToast();
 
   const handleForgotPassword = async (e: React.FormEvent) => {
