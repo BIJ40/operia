@@ -119,20 +119,23 @@ const CHECKLIST_PRE_PROD = [
 // ============================================================================
 
 class ComprehensivePDFGenerator {
-  private doc: jsPDF;
+  private doc!: JsPDFInstance;
   private currentY: number = 25;
   private pageNumber: number = 1;
   private tocEntries: { title: string; page: number; level: number }[] = [];
-  private pageWidth: number;
-  private pageHeight: number;
+  private pageWidth!: number;
+  private pageHeight!: number;
   private margin: number = 20;
-  private contentWidth: number;
+  private contentWidth!: number;
 
-  constructor() {
-    this.doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    this.pageWidth = this.doc.internal.pageSize.getWidth();
-    this.pageHeight = this.doc.internal.pageSize.getHeight();
-    this.contentWidth = this.pageWidth - this.margin * 2;
+  static async create(): Promise<ComprehensivePDFGenerator> {
+    const instance = new ComprehensivePDFGenerator();
+    const { default: jsPDF } = await import('jspdf');
+    instance.doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    instance.pageWidth = instance.doc.internal.pageSize.getWidth();
+    instance.pageHeight = instance.doc.internal.pageSize.getHeight();
+    instance.contentWidth = instance.pageWidth - instance.margin * 2;
+    return instance;
   }
 
   private addNewPage(): void {
