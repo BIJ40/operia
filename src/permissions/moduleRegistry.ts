@@ -166,12 +166,10 @@ export function hasProjectManagementAccess(
 ): boolean {
   if (!enabledModules) return false;
   
-  const moduleState = enabledModules['apogee_tickets'];
+  const moduleState = enabledModules['ticketing'];
   
-  // Module activé en booléen
   if (typeof moduleState === 'boolean') return moduleState;
   
-  // Module activé en objet
   if (typeof moduleState === 'object' && moduleState !== null) {
     const state = moduleState as { enabled?: boolean };
     return state.enabled === true;
