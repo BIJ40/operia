@@ -3,7 +3,7 @@
  * Formats supportés: CSV, Excel (.xlsx), PDF
  */
 
-import type * as XLSXType from 'xlsx';
+// xlsx is loaded dynamically to reduce bundle size (~200KB)
 import jsPDF from 'jspdf';
 import type { ApogeeTicket, ApogeeTicketStatus, ApogeeModule, ApogeePriority, ApogeeOwnerSide } from '../types';
 
