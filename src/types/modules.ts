@@ -316,7 +316,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Aide',
     description: 'Support et assistance',
     icon: 'HelpCircle',
-    category: 'support',
+    category: 'aide',
     defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
     minRole: 'base_user',
     options: [
