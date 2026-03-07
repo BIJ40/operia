@@ -506,6 +506,33 @@ function UnifiedWorkspaceContent() {
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
+                        <DropdownMenuSub>
+                          <DropdownMenuSubTrigger className="flex items-center gap-2 cursor-pointer">
+                            <Palette className="w-4 h-4" />
+                            Apparence
+                          </DropdownMenuSubTrigger>
+                          <DropdownMenuPortal>
+                            <DropdownMenuSubContent className="w-48">
+                              {([
+                                { key: 'default' as AppTheme, label: 'Classique', icon: Monitor },
+                                { key: 'zen-nature' as AppTheme, label: 'Zen Nature', icon: Leaf },
+                                { key: 'zen-blue' as AppTheme, label: 'Zen Bleu', icon: Droplets },
+                                { key: 'sombre' as AppTheme, label: 'Sombre', icon: Moon },
+                              ]).map(opt => (
+                                <DropdownMenuItem
+                                  key={opt.key}
+                                  onClick={() => setTheme(opt.key)}
+                                  className="flex items-center gap-2 cursor-pointer"
+                                >
+                                  <opt.icon className="w-4 h-4" />
+                                  {opt.label}
+                                  {theme === opt.key && <span className="ml-auto w-2 h-2 rounded-full bg-primary" />}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuPortal>
+                        </DropdownMenuSub>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onClick={logout}
                           className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
