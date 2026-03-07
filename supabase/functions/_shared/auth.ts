@@ -59,7 +59,7 @@ export async function getUserContext(req: Request): Promise<AuthResult | AuthErr
   // Charger le profil avec les champs critiques
   const { data: profile, error: profileErr } = await supabase
     .from('profiles')
-    .select('agence, agency_id, global_role, enabled_modules, support_level')
+    .select('agence, agency_id, global_role, support_level')
     .eq('id', user.id)
     .single();
 
