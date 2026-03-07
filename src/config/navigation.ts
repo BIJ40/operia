@@ -233,7 +233,7 @@ export const NAV_GROUPS: NavGroup[] = [
         title: 'Gestion Projet', 
         url: ROUTES.projects.kanban, 
         icon: LifeBuoy, 
-        scope: 'apogee_tickets',
+        scope: 'ticketing',
         description: 'Gérer les tickets projet'
       },
       { 
