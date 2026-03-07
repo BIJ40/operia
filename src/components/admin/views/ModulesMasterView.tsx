@@ -192,10 +192,6 @@ function ModuleRow({ node, onToggleDeploy, onTogglePlan, isUpdating }: ModuleRow
         <PlanBadge plan={node.effectivePlan} readOnly dimmed={!node.effectiveDeployed} />
       </div>
 
-      {/* Status indicator */}
-      <div className="flex justify-center">
-        <StatusIndicator node={node} />
-      </div>
     </div>
   );
 }
