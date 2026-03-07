@@ -172,6 +172,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Mon agence',
     description: 'Tableau de bord, KPIs et actions',
     icon: 'Building2',
+    category: 'agence',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
@@ -185,6 +186,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Stats',
     description: 'Statistiques et tableaux de bord',
     icon: 'BarChart3',
+    category: 'agence',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
@@ -197,6 +199,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Salariés',
     description: 'Gestion des ressources humaines',
     icon: 'Users',
+    category: 'rh',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
@@ -209,6 +212,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Parc',
     description: 'Véhicules et équipements',
     icon: 'Truck',
+    category: 'parc',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
@@ -222,6 +226,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Apporteurs',
     description: 'Gestion des apporteurs',
     icon: 'Handshake',
+    category: 'outils',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
@@ -234,6 +239,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Plannings',
     description: 'Gestion des plannings',
     icon: 'Calendar',
+    category: 'outils',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [],
@@ -243,6 +249,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Réunions',
     description: 'Gestion des réunions',
     icon: 'Video',
+    category: 'outils',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [],
@@ -252,6 +259,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Documents',
     description: 'Médiathèque centralisée style Finder',
     icon: 'FolderOpen',
+    category: 'documents',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
@@ -265,6 +273,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Guides',
     description: 'Documentation et guides',
     icon: 'BookOpen',
+    category: 'guides',
     defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
     minRole: 'base_user',
     options: [
@@ -279,6 +288,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Ticketing',
     description: 'Suivi des développements',
     icon: 'Kanban',
+    category: 'ticketing',
     defaultForRoles: ['platform_admin', 'superadmin'],
     minRole: 'base_user',
     options: [
@@ -293,6 +303,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Aide',
     description: 'Support et assistance',
     icon: 'HelpCircle',
+    category: 'support',
     defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
     minRole: 'base_user',
     options: [
@@ -305,7 +316,9 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Commercial',
     description: 'Suivi commercial et prospection',
     icon: 'Target',
-    defaultForRoles: [], // Attribué uniquement par override utilisateur
+    category: 'commercial',
+    deployed: false, // Pas encore déployé officiellement
+    defaultForRoles: [],
     minRole: 'franchisee_admin',
     options: [
       { key: 'dashboard', path: 'prospection.dashboard', label: 'Suivi client', description: 'Fiche apporteur', defaultEnabled: true, routes: ['/?tab=prospection'] },
@@ -319,6 +332,8 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Planification Augmentée',
     description: 'Optimisation intelligente du planning techniciens',
     icon: 'Brain',
+    category: 'outils',
+    deployed: false, // En cours de développement, pas dans les permissions/plans
     defaultForRoles: [],
     minRole: 'franchisee_admin',
     adminOnly: true,
@@ -334,6 +349,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Réseau Franchiseur',
     description: 'Vision multi-agences',
     icon: 'Network',
+    category: 'reseau',
     defaultForRoles: ['franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisor_user',
     adminOnly: true,
@@ -350,6 +366,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Administration',
     description: 'Gestion plateforme',
     icon: 'Settings',
+    category: 'admin',
     defaultForRoles: ['platform_admin', 'superadmin'],
     minRole: 'platform_admin',
     adminOnly: true,
@@ -361,12 +378,19 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
   },
 ];
 
+// ============================================================================
+// MODULES DÉPLOYÉS (filtre les modules en cours de développement)
+// ============================================================================
+
+/** Modules effectivement déployés (deployed !== false) */
+export const DEPLOYED_MODULES: ModuleDefinition[] = MODULE_DEFINITIONS.filter(m => m.deployed !== false);
+
 // Modules visibles dans la gestion des plans (auto-dérivé de MODULE_DEFINITIONS)
-// Exclut les modules adminOnly et les legacy keys
+// Exclut les modules adminOnly, legacy, et non déployés
 const LEGACY_MODULE_KEYS: ModuleKey[] = ['help_academy', 'pilotage_agence', 'support', 'apogee_tickets', 'unified_search'];
 
 export const PLAN_VISIBLE_MODULES: ModuleKey[] = MODULE_DEFINITIONS
-  .filter(m => !m.adminOnly && !LEGACY_MODULE_KEYS.includes(m.key))
+  .filter(m => !m.adminOnly && !LEGACY_MODULE_KEYS.includes(m.key) && m.deployed !== false)
   .map(m => m.key);
 
 
