@@ -16,7 +16,8 @@ export async function listBlocks(): Promise<QuestionBlock[]> {
     .select('*')
     .eq('is_active', true)
     .order('category', { ascending: true })
-    .order('name', { ascending: true });
+    .order('name', { ascending: true })
+    .limit(500);
 
   if (error) {
     logError('Failed to list flow blocks', error);
