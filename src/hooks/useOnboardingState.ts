@@ -172,7 +172,7 @@ export function useOnboardingState() {
         .eq('id', user.id);
 
       if (error) {
-        console.error('[Onboarding] Complete error:', error);
+        logError('[Onboarding] Complete error:', error);
         toast.error('Erreur lors de la sauvegarde');
         return { success: false };
       }

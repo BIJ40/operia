@@ -195,7 +195,7 @@ export function useApogeeSync({ agencySlug, collaborators }: UseApogeeSyncOption
       queryClient.invalidateQueries({ queryKey: ['collaborators'] });
     },
     onError: (error) => {
-      console.error('Sync error:', error);
+      logError('Sync error:', error);
       toast.error('Erreur lors de la synchronisation');
     },
   });
