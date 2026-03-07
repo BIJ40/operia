@@ -212,7 +212,7 @@ export function HcServicesEditorProvider({ children }: { children: ReactNode }) 
         return updated;
       });
     } catch (error) {
-      console.error('Error updating block:', error);
+      logError('Error updating block:', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de mettre à jour le bloc',
