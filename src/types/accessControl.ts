@@ -90,7 +90,7 @@ export function hasModuleOption(ctx: AccessControlContext, moduleKey: ModuleKey,
  * Vérifie si l'utilisateur peut éditer le contenu
  */
 export function canEdit(ctx: AccessControlContext): boolean {
-  return hasModuleOption(ctx, 'help_academy', 'edition') || hasGlobalRole(ctx, 'platform_admin');
+  return hasModuleOption(ctx, 'guides', 'edition') || hasGlobalRole(ctx, 'platform_admin');
 }
 
 /**
