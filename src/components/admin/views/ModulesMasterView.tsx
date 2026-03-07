@@ -9,9 +9,12 @@
  * - Effectif (badge read-only)
  * - Rôle min. (badge dropdown)
  * - Privilèges (badge compteur + popover user overrides)
+ * 
+ * Section "En cours de développement" en bas pour les modules non déployés.
+ * Seul N6 (superadmin) peut changer le statut is_deployed.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   useModuleRegistry,
   useUpdateModuleNode,
@@ -28,6 +31,7 @@ import {
   useSearchProfiles,
   type UserOverride,
 } from '@/hooks/access-rights/useModuleOverrides';
+import { useAuth } from '@/contexts/AuthContext';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
@@ -55,7 +59,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { Layers, Monitor, Zap, TreePine, ChevronRight, CornerDownRight, X, Search, Users } from 'lucide-react';
+import { Layers, Monitor, Zap, TreePine, ChevronRight, CornerDownRight, X, Search, Users, Construction } from 'lucide-react';
 
 // ============================================================================
 // Role config for badges
@@ -300,9 +304,11 @@ interface ModuleRowProps {
   isUpdating: boolean;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
+  canDeploy: boolean;
+  isDevSection?: boolean;
 }
 
-function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole, isUpdating, isCollapsed, onToggleCollapse }: ModuleRowProps) {
+function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole, isUpdating, isCollapsed, onToggleCollapse, canDeploy, isDevSection }: ModuleRowProps) {
   const isNeutralized = !node.effectiveDeployed && node.is_deployed;
   const depthColors = ['text-primary', 'text-blue-500', 'text-violet-500', 'text-emerald-500'];
   const branchColor = depthColors[Math.min(node.depth, depthColors.length - 1)];
@@ -312,35 +318,51 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
       className={cn(
         `grid ${GRID_COLS} gap-2 items-center py-2 px-3 border-b border-border/50 text-sm`,
         'hover:bg-muted/30 transition-colors',
-        !node.effectiveDeployed && 'opacity-50',
+        !node.effectiveDeployed && !isDevSection && 'opacity-50',
         isNeutralized && 'bg-destructive/5',
-        node.depth === 0 && 'bg-muted/20'
+        node.depth === 0 && !isDevSection && 'bg-muted/20',
+        isDevSection && 'bg-amber-500/5'
       )}
     >
       {/* Name */}
       <div
-        className={cn('flex items-center min-w-0', node.depth === 0 && 'cursor-pointer select-none')}
-        style={{ paddingLeft: `${node.depth * 16}px` }}
-        onClick={node.depth === 0 ? onToggleCollapse : undefined}
+        className={cn('flex items-center min-w-0', node.depth === 0 && !isDevSection && 'cursor-pointer select-none')}
+        style={{ paddingLeft: `${(isDevSection ? 0 : node.depth) * 16}px` }}
+        onClick={node.depth === 0 && !isDevSection ? onToggleCollapse : undefined}
       >
-        {node.depth > 0 && <CornerDownRight className={cn('w-3.5 h-3.5 mr-1.5 shrink-0', branchColor)} />}
-        {node.depth === 0 && (
+        {node.depth > 0 && !isDevSection && <CornerDownRight className={cn('w-3.5 h-3.5 mr-1.5 shrink-0', branchColor)} />}
+        {node.depth === 0 && !isDevSection && (
           <ChevronRight className={cn('w-4 h-4 mr-1.5 shrink-0 transition-transform duration-200', branchColor, !isCollapsed && 'rotate-90')} />
+        )}
+        {isDevSection && (
+          <Construction className="w-3.5 h-3.5 mr-1.5 shrink-0 text-amber-500" />
         )}
         <span className={cn(
           'truncate',
-          node.depth === 0 && 'font-semibold text-foreground uppercase tracking-wide',
-          node.depth === 1 && 'font-medium text-blue-600 dark:text-blue-400',
-          node.depth >= 2 && 'text-violet-600 dark:text-violet-400'
+          isDevSection && 'text-amber-700 dark:text-amber-400 font-medium',
+          !isDevSection && node.depth === 0 && 'font-semibold text-foreground uppercase tracking-wide',
+          !isDevSection && node.depth === 1 && 'font-medium text-blue-600 dark:text-blue-400',
+          !isDevSection && node.depth >= 2 && 'text-violet-600 dark:text-violet-400'
         )}>
           {node.label}
         </span>
+        {isDevSection && node.parent_key && (
+          <span className="ml-2 text-[10px] text-muted-foreground">
+            ({node.parent_key})
+          </span>
+        )}
       </div>
 
       <div><NodeTypeBadge nodeType={node.node_type} /></div>
 
       <div className="flex justify-center">
-        <Switch checked={node.is_deployed} onCheckedChange={() => onToggleDeploy(node)} disabled={isUpdating} className="scale-90" />
+        <Switch
+          checked={node.is_deployed}
+          onCheckedChange={() => onToggleDeploy(node)}
+          disabled={isUpdating || !canDeploy}
+          className="scale-90"
+          title={!canDeploy ? 'Seul un superadmin (N6) peut déployer' : undefined}
+        />
       </div>
 
       <div className="flex justify-center">
@@ -378,9 +400,39 @@ interface PropagateDialogState {
 export function ModulesMasterView() {
   const { tree, flatNodes, isLoading } = useModuleRegistry();
   const { overrides } = useModuleOverrides();
+  const { hasGlobalRole } = useAuth();
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const updateNode = useUpdateModuleNode();
   const propagate = usePropagateToChildren();
+
+  // Only N6 (superadmin) can toggle is_deployed
+  const canDeploy = hasGlobalRole('superadmin');
+
+  // Split nodes into deployed (main tree) and non-deployed (dev section)
+  const { deployedNodes, devNodes } = useMemo(() => {
+    const deployed: RegistryNode[] = [];
+    const dev: RegistryNode[] = [];
+
+    // Collect root-level non-deployed nodes and all their descendants
+    const devRootKeys = new Set<string>();
+    for (const node of flatNodes) {
+      if (node.depth === 0 && !node.is_deployed) {
+        devRootKeys.add(node.key);
+      }
+    }
+
+    for (const node of flatNodes) {
+      // A node is "dev" if it's a non-deployed root, or any descendant of one
+      const rootKey = node.key.split('.')[0];
+      if (devRootKeys.has(rootKey) || (!node.is_deployed && !node.effectiveDeployed)) {
+        dev.push(node);
+      } else {
+        deployed.push(node);
+      }
+    }
+
+    return { deployedNodes: deployed, devNodes: dev };
+  }, [flatNodes]);
 
   const [dialog, setDialog] = useState<PropagateDialogState>({
     open: false, node: null, field: 'is_deployed', newValue: false, descendantCount: 0,
@@ -448,8 +500,23 @@ export function ModulesMasterView() {
     );
   }
 
+  const headerRow = (
+    <div className={cn(
+      `grid ${GRID_COLS} gap-2 items-center py-2 px-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide`
+    )}>
+      <div>Nom</div>
+      <div className="text-center">Type</div>
+      <div className="text-center">Déployé</div>
+      <div className="text-center">Plan min.</div>
+      <div className="text-center">Effectif</div>
+      <div className="text-center">Rôle min.</div>
+      <div className="text-center">Privil.</div>
+    </div>
+  );
+
   return (
     <>
+      {/* Main deployed modules */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
@@ -461,23 +528,11 @@ export function ModulesMasterView() {
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          {/* Header */}
-          <div className={cn(
-            `grid ${GRID_COLS} gap-2 items-center py-2 px-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide`
-          )}>
-            <div>Nom</div>
-            <div className="text-center">Type</div>
-            <div className="text-center">Déployé</div>
-            <div className="text-center">Plan min.</div>
-            <div className="text-center">Effectif</div>
-            <div className="text-center">Rôle min.</div>
-            <div className="text-center">Privil.</div>
-          </div>
+          {headerRow}
 
-          {flatNodes
+          {deployedNodes
             .filter(node => {
               if (node.depth === 0) return true;
-              // Hide if any ancestor root key is collapsed
               const rootKey = node.key.split('.')[0];
               return !collapsed.has(rootKey);
             })
@@ -490,6 +545,7 @@ export function ModulesMasterView() {
               onTogglePlan={handleTogglePlan}
               onChangeRole={handleChangeRole}
               isUpdating={updateNode.isPending || propagate.isPending}
+              canDeploy={canDeploy}
               isCollapsed={node.depth === 0 ? collapsed.has(node.key) : undefined}
               onToggleCollapse={node.depth === 0 ? () => setCollapsed(prev => {
                 const next = new Set(prev);
@@ -500,13 +556,54 @@ export function ModulesMasterView() {
             />
           ))}
 
-          {flatNodes.length === 0 && (
+          {deployedNodes.length === 0 && (
             <div className="py-12 text-center text-muted-foreground">
-              Aucun module dans le registre. Vérifiez le seed de la migration.
+              Aucun module déployé dans le registre.
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Dev section — non-deployed modules */}
+      {devNodes.length > 0 && (
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <Construction className="w-5 h-5 text-amber-500" />
+              <CardTitle className="text-lg text-amber-700 dark:text-amber-400">
+                En cours de développement
+              </CardTitle>
+              <Badge className="bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-500/30 text-[10px]">
+                {devNodes.length}
+              </Badge>
+            </div>
+            <CardDescription>
+              Modules non encore déployés. Ils apparaîtront automatiquement dans la section correspondante une fois activés.
+              {!canDeploy && (
+                <span className="block mt-1 text-amber-600 dark:text-amber-400 font-medium">
+                  🔒 Seul un superadmin (N6) peut activer le déploiement.
+                </span>
+              )}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            {headerRow}
+            {devNodes.map(node => (
+              <ModuleRow
+                key={node.key}
+                node={node}
+                overrides={overrides.get(node.key) ?? []}
+                onToggleDeploy={handleToggleDeploy}
+                onTogglePlan={handleTogglePlan}
+                onChangeRole={handleChangeRole}
+                isUpdating={updateNode.isPending || propagate.isPending}
+                canDeploy={canDeploy}
+                isDevSection
+              />
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       <AlertDialog open={dialog.open} onOpenChange={(open) => setDialog(prev => ({ ...prev, open }))}>
         <AlertDialogContent>
