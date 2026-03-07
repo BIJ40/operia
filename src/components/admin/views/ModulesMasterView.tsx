@@ -97,7 +97,7 @@ function StatusIndicator({ node }: { node: RegistryNode }) {
       </span>
     );
   }
-  if (node.isDeployOverridden || node.isPlanOverridden) {
+  if (node.isDeployOverridden) {
     return (
       <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">
         hérité
