@@ -339,7 +339,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
 ];
 
 export const DASHBOARD_GROUPS = {
-  help_academy: {
+  guides: {
     title: 'Help! Academy',
     icon: GraduationCap,
     colorClass: 'text-primary',

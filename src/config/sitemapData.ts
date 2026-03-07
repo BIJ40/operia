@@ -721,7 +721,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'projects',
     guards: {
       roleGuard: { minRole: 'base_user' },
-      moduleGuard: { moduleKey: 'apogee_tickets' },
+      moduleGuard: { moduleKey: 'ticketing' },
     },
   },
   {
@@ -731,7 +731,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'projects',
     guards: {
       roleGuard: { minRole: 'base_user' },
-      moduleGuard: { moduleKey: 'apogee_tickets' },
+      moduleGuard: { moduleKey: 'ticketing' },
     },
   },
   {
@@ -741,7 +741,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'projects',
     guards: {
       roleGuard: { minRole: 'base_user' },
-      moduleGuard: { moduleKey: 'apogee_tickets' },
+      moduleGuard: { moduleKey: 'ticketing' },
     },
   },
   {
@@ -751,7 +751,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'projects',
     guards: {
       roleGuard: { minRole: 'base_user' },
-      moduleGuard: { moduleKey: 'apogee_tickets' },
+      moduleGuard: { moduleKey: 'ticketing' },
     },
   },
   {
@@ -761,7 +761,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'projects',
     guards: {
       roleGuard: { minRole: 'base_user' },
-      moduleGuard: { moduleKey: 'apogee_tickets' },
+      moduleGuard: { moduleKey: 'ticketing' },
     },
   },
   {
@@ -771,7 +771,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'projects',
     guards: {
       roleGuard: { minRole: 'base_user' },
-      moduleGuard: { moduleKey: 'apogee_tickets' },
+      moduleGuard: { moduleKey: 'ticketing' },
     },
   },
   {
@@ -781,7 +781,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'projects',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'apogee_tickets' },
+      moduleGuard: { moduleKey: 'ticketing' },
     },
   },
   // Duplicate scan feature removed v0.8.3
