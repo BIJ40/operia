@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { CheckCircle2, XCircle, Clock, Loader2, UserPlus, Mail, Phone, Building2, MessageSquare } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, Loader2, UserPlus, Mail, Phone, Building2, MessageSquare, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
