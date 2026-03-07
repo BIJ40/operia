@@ -64,9 +64,11 @@ export function TicketSupportExchanges({
     }
   }, [exchanges]);
 
-  // Mark as read when component mounts or receives new messages
+  // Mark as read once when component mounts with unread messages
+  const hasMarkedRef = useRef(false);
   useEffect(() => {
-    if (unreadCount > 0) {
+    if (unreadCount > 0 && !hasMarkedRef.current) {
+      hasMarkedRef.current = true;
       markAllAsRead();
     }
   }, [unreadCount, markAllAsRead]);
