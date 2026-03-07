@@ -1,48 +1,53 @@
-# Refonte du système de modules/permissions
 
-## Étape 1 : Source unique consolidée ✅ FAIT
-- `MODULE_DEFINITIONS` dans `src/types/modules.ts` = source unique
-- `category: ModuleCategory` + `deployed?: boolean` par module
-- `DEPLOYED_MODULES` / `PLAN_VISIBLE_MODULES` auto-dérivés
 
-## Étape 2 : Gestion fine des options dans les plans ✅ FAIT
-- `PlansManagerView` : options togglables individuellement via `options_override` JSONB
-- Logique 3 états: hérité | activé | exclu
+# Ajouter `reseau_franchiseur` et `admin_plateforme` au registre des modules
 
-## Étape 3 : Cascade Plan → Rôle → Override utilisateur ✅ FAIT
-- RPC `get_user_effective_modules` : Plan agence → User overrides (serveur)
-- `useEffectiveModules` : filtre par `minRole` (client)
-- N5+ bypass complet
+## Constat
 
-## Étape 4 : Nettoyage legacy ✅ FAIT
+La table `module_registry` ne contient que les 7 modules "classiques" (stats, salaries, outils, documents, guides, ticketing, aide). Il manque :
 
-### Changements effectués
+- **`reseau_franchiseur`** — module Franchiseur (N3+) avec 5 sous-modules : dashboard, stats, agences, redevances, comparatifs
+- **`admin_plateforme`** — module Admin plateforme (N5+), pas de sous-modules définis
 
-1. **`src/permissions/constants.ts`** :
-   - Réécrit proprement avec modules V3 comme source principale
-   - Legacy entries conservées en section `// Legacy compat` annotée
-   - `@deprecated` sur MODULE_MIN_ROLES et MODULE_LABELS (utiliser MODULE_DEFINITIONS)
+Ces modules existent dans `MODULE_DEFINITIONS` (types/modules.ts) et dans `feature_flags`, mais pas dans le registre qui alimente l'écran "Droits".
 
-2. **`src/contexts/AuthContext.tsx`** :
-   - `isSupport` vérifie maintenant `aide` ET `support` (legacy compat)
-   - Support agent/admin detection cherche `aide` en priorité, `support` en fallback
+## Plan
 
-3. **`src/types/accessControl.ts`** :
-   - `isSupportAgent()` et `isSupportAdmin()` vérifient `aide` + `support`
+### Migration SQL unique
 
-4. **`src/contexts/DataPreloadContext.tsx`** :
-   - Suppression fallback `pilotage_agence.stats_hub` (utilise `stats.stats_hub` uniquement)
+```sql
+-- Ajout de reseau_franchiseur (sort_order 80, après aide=70)
+INSERT INTO module_registry (key, label, parent_key, node_type, sort_order, is_deployed, required_plan, min_role)
+VALUES
+  ('reseau_franchiseur', 'Réseau Franchiseur', NULL, 'section', 80, true, 'PRO', 3);
 
-5. **`src/hooks/useGlobalFeatureFlags.ts`** :
-   - Simplifié : plus de mapping legacy complexe
-   - Note claire : "outil de dev tracking, pas de permissions"
+-- Enfants
+INSERT INTO module_registry (key, label, parent_key, node_type, sort_order, is_deployed, required_plan, min_role)
+VALUES
+  ('reseau_franchiseur.dashboard',   'Dashboard',    'reseau_franchiseur', 'screen',  1, true,  'PRO', 3),
+  ('reseau_franchiseur.stats',       'Stats',        'reseau_franchiseur', 'screen',  2, true,  'PRO', 3),
+  ('reseau_franchiseur.agences',     'Agences',      'reseau_franchiseur', 'screen',  3, true,  'PRO', 3),
+  ('reseau_franchiseur.redevances',  'Redevances',   'reseau_franchiseur', 'screen',  4, false, 'PRO', 4),
+  ('reseau_franchiseur.comparatifs', 'Comparatifs',  'reseau_franchiseur', 'screen',  5, true,  'PRO', 3);
 
-6. **`src/hooks/access-rights/useEffectiveModules.ts`** :
-   - `MODULE_COMPAT_MAP` conservé (seul endroit de rétrocompat runtime)
-   - Sera supprimé quand `user_modules` sera migré en base
+-- Ajout de admin_plateforme (sort_order 90)
+INSERT INTO module_registry (key, label, parent_key, node_type, sort_order, is_deployed, required_plan, min_role)
+VALUES
+  ('admin_plateforme', 'Administration', NULL, 'section', 90, true, 'PRO', 5);
+```
 
-### Ce qui reste legacy (volontairement conservé)
-- `MODULES` const dans `types/modules.ts` : clés legacy (help_academy, etc.) pour le type ModuleKey
-- `EnabledModules` interface : propriétés legacy pour rétrocompat
-- `MODULE_COMPAT_MAP` dans `useEffectiveModules` : mapping runtime
-- `sitemapData.ts` : guards legacy (à migrer vers nouveaux module keys)
+Valeurs `min_role` basées sur le hardcode actuel :
+- `reseau_franchiseur.*` → 3 (franchisor_user / N3)
+- `reseau_franchiseur.redevances` → 4 (franchisor_admin / N4)
+- `admin_plateforme` → 5 (platform_admin / N5)
+
+### Aucun changement UI
+
+Le `ModulesMasterView` lit déjà tout l'arbre `module_registry` dynamiquement. Les nouveaux nœuds apparaîtront automatiquement dans l'écran "Droits" après la migration.
+
+## Fichiers impactés
+
+| Fichier | Action |
+|---------|--------|
+| Nouvelle migration SQL | INSERT des 7 lignes manquantes |
+
