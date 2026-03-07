@@ -44,17 +44,7 @@ const ROLE_LABELS: Record<GlobalRole, string> = {
   superadmin: 'Super Admin (N6)',
 };
 
-function getModulesList(enabledModules: Record<string, any> | null): string[] {
-  if (!enabledModules) return [];
-  return Object.entries(enabledModules)
-    .filter(([_, value]) => {
-      if (typeof value === 'object' && value !== null) {
-        return value.enabled === true;
-      }
-      return Boolean(value);
-    })
-    .map(([key]) => key);
-}
+// Modules are now loaded via RPC in startRealUserImpersonation, not from search results
 
 export function RealUserImpersonationDialog({ open, onOpenChange }: RealUserImpersonationDialogProps) {
   const [searchQuery, setSearchQuery] = useState('');
