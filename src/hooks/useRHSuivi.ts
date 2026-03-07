@@ -348,7 +348,7 @@ export function useUpdateCollaboratorType() {
       toast.success('Classification mise à jour');
     },
     onError: (error) => {
-      console.error('Update type error:', error);
+      logError('Update type error:', error);
       toast.error('Erreur lors de la mise à jour');
     },
   });
