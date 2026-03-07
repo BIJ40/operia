@@ -1,13 +1,14 @@
 /**
- * ModulesMasterView — Écran maître unique pour la gouvernance des modules
+ * ModulesMasterView — Écran maître unique pour la gouvernance des droits
  * 
  * Affiche l'arbre module_registry avec :
  * - Nom (indenté par niveau)
  * - Type (section/screen/feature)
- * - Déployé (switch, valeur propre)
- * - Plan minimum (badge cliquable, valeur propre)
+ * - Déployé (switch)
+ * - Plan minimum (badge cliquable)
  * - Effectif (badge read-only)
- * - Rôle min. (badge dropdown cliquable)
+ * - Rôle min. (badge dropdown)
+ * - Privilèges (badge compteur + popover user overrides)
  */
 
 import { useState, useCallback } from 'react';
@@ -20,10 +21,23 @@ import {
   type RegistryNode,
   type PlanLevel,
 } from '@/hooks/access-rights/useModuleRegistry';
+import {
+  useModuleOverrides,
+  useAddOverride,
+  useRemoveOverride,
+  useSearchProfiles,
+  type UserOverride,
+} from '@/hooks/access-rights/useModuleOverrides';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Separator } from '@/components/ui/separator';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,10 +55,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { Layers, Monitor, Zap, TreePine, ChevronRight, CornerDownRight } from 'lucide-react';
+import { Layers, Monitor, Zap, TreePine, ChevronRight, CornerDownRight, X, Search, Users } from 'lucide-react';
 
 // ============================================================================
-// Role config for badges (matching the PJ screenshot)
+// Role config for badges
 // ============================================================================
 
 interface RoleConfig {
@@ -90,16 +104,8 @@ function NodeTypeBadge({ nodeType }: { nodeType: string }) {
 }
 
 function PlanBadge({
-  plan,
-  onClick,
-  readOnly = false,
-  dimmed = false,
-}: {
-  plan: PlanLevel;
-  onClick?: () => void;
-  readOnly?: boolean;
-  dimmed?: boolean;
-}) {
+  plan, onClick, readOnly = false, dimmed = false,
+}: { plan: PlanLevel; onClick?: () => void; readOnly?: boolean; dimmed?: boolean; }) {
   const config = plan === 'NONE'
     ? { label: 'Individuel', className: 'bg-destructive/10 text-destructive border-destructive/30' }
     : plan === 'STARTER'
@@ -123,18 +129,9 @@ function PlanBadge({
 }
 
 function RoleBadge({
-  minRole,
-  onChangeRole,
-  dimmed = false,
-  disabled = false,
-}: {
-  minRole: number;
-  onChangeRole: (newRole: number) => void;
-  dimmed?: boolean;
-  disabled?: boolean;
-}) {
+  minRole, onChangeRole, dimmed = false, disabled = false,
+}: { minRole: number; onChangeRole: (newRole: number) => void; dimmed?: boolean; disabled?: boolean; }) {
   const config = getRoleConfig(minRole);
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild disabled={disabled}>
@@ -142,9 +139,7 @@ function RoleBadge({
           variant="outline"
           className={cn(
             'text-[11px] cursor-pointer select-none transition-opacity font-medium px-2 py-0.5',
-            'hover:opacity-80',
-            dimmed && 'opacity-40',
-            config.className
+            'hover:opacity-80', dimmed && 'opacity-40', config.className
           )}
         >
           {config.shortLabel}
@@ -155,15 +150,9 @@ function RoleBadge({
           <DropdownMenuItem
             key={rc.level}
             onClick={() => onChangeRole(rc.level)}
-            className={cn(
-              'text-xs cursor-pointer',
-              rc.level === minRole && 'bg-accent font-semibold'
-            )}
+            className={cn('text-xs cursor-pointer', rc.level === minRole && 'bg-accent font-semibold')}
           >
-            <Badge
-              variant="outline"
-              className={cn('text-[10px] mr-2 px-1.5 py-0', rc.className)}
-            >
+            <Badge variant="outline" className={cn('text-[10px] mr-2 px-1.5 py-0', rc.className)}>
               {rc.shortLabel}
             </Badge>
             {rc.label.split(' · ')[1]}
@@ -175,95 +164,186 @@ function RoleBadge({
 }
 
 // ============================================================================
+// Overrides Popover
+// ============================================================================
+
+function OverridesPopover({
+  moduleKey,
+  overrides,
+  dimmed,
+}: {
+  moduleKey: string;
+  overrides: UserOverride[];
+  dimmed: boolean;
+}) {
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search, 300);
+  const { data: searchResults, isLoading: searching } = useSearchProfiles(debouncedSearch);
+  const addOverride = useAddOverride();
+  const removeOverride = useRemoveOverride();
+
+  const count = overrides.length;
+  const existingIds = new Set(overrides.map(o => o.userId));
+  const filteredResults = (searchResults ?? []).filter(p => !existingIds.has(p.id));
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Badge
+          variant="outline"
+          className={cn(
+            'text-[11px] cursor-pointer select-none transition-opacity font-medium px-2 py-0.5',
+            'hover:opacity-80',
+            dimmed && 'opacity-40',
+            count > 0
+              ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700'
+              : 'bg-muted text-muted-foreground border-border'
+          )}
+        >
+          {count > 0 ? count : '—'}
+        </Badge>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-0" align="end">
+        <div className="p-3 pb-2">
+          <p className="text-xs font-medium text-foreground mb-2">
+            Privilèges — <span className="text-muted-foreground font-normal">{moduleKey}</span>
+          </p>
+
+          {/* Current overrides */}
+          {count > 0 && (
+            <ScrollArea className="max-h-32 mb-2">
+              <div className="space-y-1">
+                {overrides.map(o => (
+                  <div key={o.userId} className="flex items-center justify-between gap-2 text-xs py-1 px-1 rounded hover:bg-muted/50">
+                    <div className="min-w-0 truncate">
+                      <span className="font-medium">
+                        {[o.firstName, o.lastName].filter(Boolean).join(' ') || 'Inconnu'}
+                      </span>
+                      {o.email && (
+                        <span className="text-muted-foreground ml-1 text-[10px]">{o.email}</span>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5 shrink-0"
+                      onClick={() => removeOverride.mutate({ userId: o.userId, moduleKey })}
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          )}
+
+          {count > 0 && <Separator className="my-2" />}
+
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher un utilisateur…"
+              className="h-8 text-xs pl-7"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          {/* Results */}
+          {debouncedSearch.length >= 2 && (
+            <ScrollArea className="max-h-32 mt-2">
+              {searching ? (
+                <p className="text-[10px] text-muted-foreground text-center py-2">Recherche…</p>
+              ) : filteredResults.length === 0 ? (
+                <p className="text-[10px] text-muted-foreground text-center py-2">Aucun résultat</p>
+              ) : (
+                <div className="space-y-0.5">
+                  {filteredResults.map(p => (
+                    <button
+                      key={p.id}
+                      className="w-full flex items-center gap-2 text-xs py-1.5 px-1 rounded hover:bg-muted/50 text-left"
+                      onClick={() => {
+                        addOverride.mutate({ userId: p.id, moduleKey });
+                        setSearch('');
+                      }}
+                    >
+                      <Users className="w-3 h-3 shrink-0 text-muted-foreground" />
+                      <span className="truncate font-medium">
+                        {[p.first_name, p.last_name].filter(Boolean).join(' ') || p.email}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// ============================================================================
 // Row component
 // ============================================================================
 
+const GRID_COLS = 'grid-cols-[minmax(200px,1fr)_80px_60px_80px_80px_60px_70px]';
+
 interface ModuleRowProps {
   node: RegistryNode;
+  overrides: UserOverride[];
   onToggleDeploy: (node: RegistryNode) => void;
   onTogglePlan: (node: RegistryNode) => void;
   onChangeRole: (node: RegistryNode, newRole: number) => void;
   isUpdating: boolean;
 }
 
-function ModuleRow({ node, onToggleDeploy, onTogglePlan, onChangeRole, isUpdating }: ModuleRowProps) {
+function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole, isUpdating }: ModuleRowProps) {
   const isNeutralized = !node.effectiveDeployed && node.is_deployed;
-
-  const depthColors = [
-    'text-primary',
-    'text-blue-500',
-    'text-violet-500',
-    'text-emerald-500',
-  ];
+  const depthColors = ['text-primary', 'text-blue-500', 'text-violet-500', 'text-emerald-500'];
   const branchColor = depthColors[Math.min(node.depth, depthColors.length - 1)];
 
   return (
     <div
       className={cn(
-        'grid grid-cols-[minmax(200px,1fr)_80px_60px_80px_80px_60px] gap-2 items-center py-2 px-3 border-b border-border/50 text-sm',
+        `grid ${GRID_COLS} gap-2 items-center py-2 px-3 border-b border-border/50 text-sm`,
         'hover:bg-muted/30 transition-colors',
         !node.effectiveDeployed && 'opacity-50',
         isNeutralized && 'bg-destructive/5',
         node.depth === 0 && 'bg-muted/20'
       )}
     >
-      {/* Name with tree branch indicators */}
-      <div
-        className="flex items-center min-w-0"
-        style={{ paddingLeft: `${node.depth * 16}px` }}
-      >
-        {node.depth > 0 && (
-          <CornerDownRight className={cn('w-3.5 h-3.5 mr-1.5 shrink-0', branchColor)} />
-        )}
-        {node.depth === 0 && (
-          <ChevronRight className={cn('w-4 h-4 mr-1.5 shrink-0', branchColor)} />
-        )}
-        <span className={cn(
-          'truncate',
-          node.depth === 0 && 'font-semibold text-foreground',
-          node.depth === 1 && 'font-medium',
-        )}>
+      {/* Name */}
+      <div className="flex items-center min-w-0" style={{ paddingLeft: `${node.depth * 16}px` }}>
+        {node.depth > 0 && <CornerDownRight className={cn('w-3.5 h-3.5 mr-1.5 shrink-0', branchColor)} />}
+        {node.depth === 0 && <ChevronRight className={cn('w-4 h-4 mr-1.5 shrink-0', branchColor)} />}
+        <span className={cn('truncate', node.depth === 0 && 'font-semibold text-foreground', node.depth === 1 && 'font-medium')}>
           {node.label}
         </span>
       </div>
 
-      {/* Node Type */}
-      <div>
-        <NodeTypeBadge nodeType={node.node_type} />
-      </div>
+      <div><NodeTypeBadge nodeType={node.node_type} /></div>
 
-      {/* Deploy Switch (stored value) */}
       <div className="flex justify-center">
-        <Switch
-          checked={node.is_deployed}
-          onCheckedChange={() => onToggleDeploy(node)}
-          disabled={isUpdating}
-          className="scale-90"
-        />
+        <Switch checked={node.is_deployed} onCheckedChange={() => onToggleDeploy(node)} disabled={isUpdating} className="scale-90" />
       </div>
 
-      {/* Plan minimum (stored value, clickable) */}
       <div className="flex justify-center">
-        <PlanBadge
-          plan={node.required_plan}
-          onClick={() => onTogglePlan(node)}
-          dimmed={!node.effectiveDeployed}
-        />
+        <PlanBadge plan={node.required_plan} onClick={() => onTogglePlan(node)} dimmed={!node.effectiveDeployed} />
       </div>
 
-      {/* Effective plan (read-only) */}
       <div className="flex justify-center">
         <PlanBadge plan={node.effectivePlan} readOnly dimmed={!node.effectiveDeployed} />
       </div>
 
-      {/* Rôle min. (dropdown) */}
       <div className="flex justify-center">
-        <RoleBadge
-          minRole={node.min_role}
-          onChangeRole={(newRole) => onChangeRole(node, newRole)}
-          dimmed={!node.effectiveDeployed}
-          disabled={isUpdating}
-        />
+        <RoleBadge minRole={node.min_role} onChangeRole={(r) => onChangeRole(node, r)} dimmed={!node.effectiveDeployed} disabled={isUpdating} />
+      </div>
+
+      {/* Privilèges */}
+      <div className="flex justify-center">
+        <OverridesPopover moduleKey={node.key} overrides={overrides} dimmed={!node.effectiveDeployed} />
       </div>
     </div>
   );
@@ -283,63 +363,49 @@ interface PropagateDialogState {
 
 export function ModulesMasterView() {
   const { tree, flatNodes, isLoading } = useModuleRegistry();
+  const { overrides } = useModuleOverrides();
   const updateNode = useUpdateModuleNode();
   const propagate = usePropagateToChildren();
 
   const [dialog, setDialog] = useState<PropagateDialogState>({
-    open: false,
-    node: null,
-    field: 'is_deployed',
-    newValue: false,
-    descendantCount: 0,
+    open: false, node: null, field: 'is_deployed', newValue: false, descendantCount: 0,
   });
 
-  const handleToggleDeploy = useCallback(
-    (node: RegistryNode) => {
-      const newValue = !node.is_deployed;
-      const descendants = getDescendantKeys(node);
-      updateNode.mutate({ key: node.key, updates: { is_deployed: newValue } });
-      if (descendants.length > 0) {
-        setDialog({ open: true, node, field: 'is_deployed', newValue, descendantCount: descendants.length });
-      }
-    },
-    [updateNode]
-  );
+  const handleToggleDeploy = useCallback((node: RegistryNode) => {
+    const newValue = !node.is_deployed;
+    const descendants = getDescendantKeys(node);
+    updateNode.mutate({ key: node.key, updates: { is_deployed: newValue } });
+    if (descendants.length > 0) {
+      setDialog({ open: true, node, field: 'is_deployed', newValue, descendantCount: descendants.length });
+    }
+  }, [updateNode]);
 
-  const handleTogglePlan = useCallback(
-    (node: RegistryNode) => {
-      const cycle: PlanLevel[] = ['STARTER', 'PRO', 'NONE'];
-      const idx = cycle.indexOf(node.required_plan);
-      const newValue: PlanLevel = cycle[(idx + 1) % cycle.length];
-      const descendants = getDescendantKeys(node);
-      updateNode.mutate({ key: node.key, updates: { required_plan: newValue } });
-      if (descendants.length > 0) {
-        setDialog({ open: true, node, field: 'required_plan', newValue, descendantCount: descendants.length });
-      }
-    },
-    [updateNode]
-  );
+  const handleTogglePlan = useCallback((node: RegistryNode) => {
+    const cycle: PlanLevel[] = ['STARTER', 'PRO', 'NONE'];
+    const idx = cycle.indexOf(node.required_plan);
+    const newValue: PlanLevel = cycle[(idx + 1) % cycle.length];
+    const descendants = getDescendantKeys(node);
+    updateNode.mutate({ key: node.key, updates: { required_plan: newValue } });
+    if (descendants.length > 0) {
+      setDialog({ open: true, node, field: 'required_plan', newValue, descendantCount: descendants.length });
+    }
+  }, [updateNode]);
 
-  const handleChangeRole = useCallback(
-    (node: RegistryNode, newRole: number) => {
-      const descendants = getDescendantKeys(node);
-      updateNode.mutate({ key: node.key, updates: { min_role: newRole } });
-      if (descendants.length > 0) {
-        setDialog({ open: true, node, field: 'min_role', newValue: newRole, descendantCount: descendants.length });
-      }
-    },
-    [updateNode]
-  );
+  const handleChangeRole = useCallback((node: RegistryNode, newRole: number) => {
+    const descendants = getDescendantKeys(node);
+    updateNode.mutate({ key: node.key, updates: { min_role: newRole } });
+    if (descendants.length > 0) {
+      setDialog({ open: true, node, field: 'min_role', newValue: newRole, descendantCount: descendants.length });
+    }
+  }, [updateNode]);
 
   const handlePropagate = useCallback(() => {
     if (!dialog.node) return;
     const keys = getDescendantKeys(dialog.node);
     const updates =
-      dialog.field === 'is_deployed'
-        ? { is_deployed: dialog.newValue as boolean }
-        : dialog.field === 'required_plan'
-        ? { required_plan: dialog.newValue as PlanLevel }
-        : { min_role: dialog.newValue as number };
+      dialog.field === 'is_deployed' ? { is_deployed: dialog.newValue as boolean }
+      : dialog.field === 'required_plan' ? { required_plan: dialog.newValue as PlanLevel }
+      : { min_role: dialog.newValue as number };
     propagate.mutate({ keys, updates });
     setDialog(prev => ({ ...prev, open: false }));
   }, [dialog, propagate]);
@@ -359,13 +425,9 @@ export function ModulesMasterView() {
   if (isLoading) {
     return (
       <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-48" />
-        </CardHeader>
+        <CardHeader><Skeleton className="h-6 w-48" /></CardHeader>
         <CardContent className="space-y-2">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-10 w-full" />
-          ))}
+          {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
         </CardContent>
       </Card>
     );
@@ -377,28 +439,31 @@ export function ModulesMasterView() {
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
             <TreePine className="w-5 h-5 text-primary" />
-            <CardTitle className="text-lg">Registre des Modules</CardTitle>
+            <CardTitle className="text-lg">Gestion des Droits</CardTitle>
           </div>
           <CardDescription>
-            Source de vérité unique. Chaque nœud porte son état de déploiement, son plan minimum requis et son rôle minimum.
+            Source de vérité unique. Déploiement, plans, rôles et privilèges individuels sur chaque nœud.
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {/* Header */}
-          <div className="grid grid-cols-[minmax(200px,1fr)_80px_60px_80px_80px_60px] gap-2 items-center py-2 px-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          <div className={cn(
+            `grid ${GRID_COLS} gap-2 items-center py-2 px-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide`
+          )}>
             <div>Module</div>
             <div className="text-center">Type</div>
             <div className="text-center">Déployé</div>
             <div className="text-center">Plan min.</div>
             <div className="text-center">Effectif</div>
             <div className="text-center">Rôle</div>
+            <div className="text-center">Privil.</div>
           </div>
 
-          {/* Rows */}
           {flatNodes.map(node => (
             <ModuleRow
               key={node.key}
               node={node}
+              overrides={overrides.get(node.key) ?? []}
               onToggleDeploy={handleToggleDeploy}
               onTogglePlan={handleTogglePlan}
               onChangeRole={handleChangeRole}
@@ -414,7 +479,6 @@ export function ModulesMasterView() {
         </CardContent>
       </Card>
 
-      {/* Propagation dialog */}
       <AlertDialog open={dialog.open} onOpenChange={(open) => setDialog(prev => ({ ...prev, open }))}>
         <AlertDialogContent>
           <AlertDialogHeader>
