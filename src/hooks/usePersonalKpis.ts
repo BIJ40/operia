@@ -73,21 +73,22 @@ export function usePersonalKpis(options?: UsePersonalKpisOptions) {
       const isTechnicien = roleAgence.includes('technic') || roleAgence.includes('tech');
       const isAssistante = roleAgence.includes('assist') || roleAgence.includes('secr') || roleAgence.includes('admin');
 
-      console.log('[usePersonalKpis] Profile:', { apogeeUserId, roleAgence, isTechnicien, isAssistante });
-      console.log('[usePersonalKpis] DateRange utilisé:', { 
-        start: dateRange.start.toISOString(), 
-        end: dateRange.end.toISOString() 
-      });
+      if (import.meta.env.DEV) {
+        console.log('[usePersonalKpis] Profile:', { apogeeUserId, roleAgence, isTechnicien, isAssistante });
+        console.log('[usePersonalKpis] DateRange:', { start: dateRange.start.toISOString(), end: dateRange.end.toISOString() });
+      }
 
       // Charger les données via DataService (même source que StatIA)
       const apiData = await DataService.loadAllData(true, false, agence);
       
-      console.log('[usePersonalKpis] Data loaded:', {
-        factures: apiData.factures?.length || 0,
-        interventions: apiData.interventions?.length || 0,
-        projects: apiData.projects?.length || 0,
-        users: apiData.users?.length || 0,
-      });
+      if (import.meta.env.DEV) {
+        console.log('[usePersonalKpis] Data loaded:', {
+          factures: apiData.factures?.length || 0,
+          interventions: apiData.interventions?.length || 0,
+          projects: apiData.projects?.length || 0,
+          users: apiData.users?.length || 0,
+        });
+      }
 
       if (isTechnicien) {
         return {
