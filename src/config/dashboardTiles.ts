@@ -108,7 +108,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: SCOPE_SLUGS.DIFFUSION,
     color: 'accent',
     group: 'pilotage',
-    requiresModule: 'pilotage_agence',
+    requiresModule: 'agence',
     featureFlagKey: 'pilotage.diffusion',
     badge: 'En cours',
   },
