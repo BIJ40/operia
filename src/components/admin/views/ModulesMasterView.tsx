@@ -326,7 +326,12 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
         {node.depth === 0 && (
           <ChevronRight className={cn('w-4 h-4 mr-1.5 shrink-0 transition-transform duration-200', branchColor, !isCollapsed && 'rotate-90')} />
         )}
-        <span className={cn('truncate', node.depth === 0 && 'font-semibold text-foreground', node.depth === 1 && 'font-medium')}>
+        <span className={cn(
+          'truncate',
+          node.depth === 0 && 'font-semibold text-foreground uppercase tracking-wide',
+          node.depth === 1 && 'font-medium text-blue-600 dark:text-blue-400',
+          node.depth >= 2 && 'text-violet-600 dark:text-violet-400'
+        )}>
           {node.label}
         </span>
       </div>
