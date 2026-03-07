@@ -225,7 +225,7 @@ export default function Profile() {
   }
 
   const effectiveRole = profile?.global_role || globalRole;
-  const enabledModules = getEnabledModulesList(profile?.enabled_modules);
+  const enabledModules = getEnabledModulesList();
 
   return (
     <WarmPageContainer maxWidth="4xl">
