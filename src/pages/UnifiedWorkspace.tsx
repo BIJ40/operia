@@ -46,6 +46,7 @@ import { AiUnifiedProvider } from '@/components/ai';
 import { DraggableTab } from '@/components/unified/DraggableTab';
 import { SidebarChat } from '@/components/chat/SidebarChat';
 // REMOVED: SimulationBanner, RoleSimulatorDropdown, RealUserImpersonationDialog - fonctionnalités supprimées
+import { LocalErrorBoundary } from '@/components/system/LocalErrorBoundary';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ACCENT_THEMES, type AccentThemeKey } from '@/lib/accentThemes';
