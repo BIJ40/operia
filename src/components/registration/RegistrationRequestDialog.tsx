@@ -94,7 +94,7 @@ export function RegistrationRequestDialog({ open, onOpenChange }: RegistrationRe
     if (submitted) {
       setTimeout(() => {
         setSubmitted(false);
-        setForm({ first_name: '', last_name: '', email: '', phone: '', company_name: '', message: '' });
+        setForm({ first_name: '', last_name: '', email: '', phone: '', company_name: '', agency_name: '', message: '' });
       }, 300);
     }
   };
