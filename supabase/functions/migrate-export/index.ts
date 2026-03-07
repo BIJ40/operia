@@ -78,9 +78,8 @@ function topoSort(allTables: string[], deps: { child_table: string; parent_table
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return jsonResponse({ ok: true });
-  }
+  const corsResult = handleCorsPreflightOrReject(req);
+  if (corsResult) return corsResult;
 
   try {
     const url = new URL(req.url);
