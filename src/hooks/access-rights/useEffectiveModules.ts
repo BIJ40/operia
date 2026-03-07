@@ -5,6 +5,7 @@
  * 1. Plan agence (plan_tier_modules) → modules de base
  * 2. User overrides (user_modules) → prennent le dessus
  * 3. Filtre par rôle (MODULE_DEFINITIONS.minRole) → côté client
+ * 4. Projection legacy: clés registre → clés plates (legacyModuleMapping)
  * 
  * IMPERSONATION: Utilise useEffectiveAuth pour respecter l'impersonation
  */
@@ -16,6 +17,7 @@ import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { ModuleKey, MODULE_DEFINITIONS } from '@/types/modules';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { resolveEffectiveModulesFromBackend } from '@/lib/effectiveModulesResolver';
+import { projectToLegacyModules } from '@/config/legacyModuleMapping';
 
 export interface EffectiveModuleRow {
   module_key: string;
@@ -47,7 +49,6 @@ const MODULE_COMPAT_MAP: Record<string, string[]> = {
 
 /**
  * Filtre les modules par le rôle minimum requis (MODULE_DEFINITIONS.minRole)
- * Les modules non définis dans MODULE_DEFINITIONS passent le filtre (legacy compat)
  */
 function filterByRole(
   modules: Record<string, { enabled: boolean; options: Record<string, boolean> }>,
@@ -60,14 +61,10 @@ function filterByRole(
   
   for (const [key, value] of Object.entries(modules)) {
     const moduleDef = MODULE_DEFINITIONS.find(m => m.key === key);
-    
-    // Si pas de définition (legacy module), laisser passer
     if (!moduleDef) {
       result[key] = value;
       continue;
     }
-    
-    // Vérifier minRole
     const minRoleLevel = GLOBAL_ROLES[moduleDef.minRole] ?? 0;
     if (roleLevel >= minRoleLevel) {
       result[key] = value;
@@ -75,6 +72,40 @@ function filterByRole(
   }
   
   return result;
+}
+
+/**
+ * Merge les clés registre brutes avec la projection legacy.
+ * Les clés registre (stats.general, outils.parc.vehicules, etc.) sont projetées
+ * vers les clés plates legacy (stats, parc, etc.) attendues par le reste du code.
+ * Les deux formats coexistent dans le résultat.
+ */
+function mergeWithLegacyProjection(
+  rawModules: Record<string, { enabled: boolean; options: Record<string, boolean> }>
+): Record<string, { enabled: boolean; options: Record<string, boolean> }> {
+  const activeKeys = new Set(
+    Object.entries(rawModules)
+      .filter(([, v]) => v.enabled)
+      .map(([k]) => k)
+  );
+
+  const legacyProjected = projectToLegacyModules(activeKeys);
+
+  // Merge: legacy projected values are additive (don't overwrite existing)
+  const merged = { ...rawModules };
+  for (const [legacyKey, legacyValue] of Object.entries(legacyProjected)) {
+    if (merged[legacyKey]) {
+      // Merge options additively
+      merged[legacyKey] = {
+        enabled: merged[legacyKey].enabled || legacyValue.enabled,
+        options: { ...merged[legacyKey].options, ...legacyValue.options },
+      };
+    } else {
+      merged[legacyKey] = legacyValue;
+    }
+  }
+
+  return merged;
 }
 
 export function useEffectiveModules(): EffectiveModulesResult & { isLoading: boolean } {
@@ -91,7 +122,6 @@ export function useEffectiveModules(): EffectiveModulesResult & { isLoading: boo
   const query = useQuery({
     queryKey: ['effective-modules', effectiveUserId, isRealUserImpersonation],
     queryFn: async (): Promise<Record<ModuleKey, { enabled: boolean; options: Record<string, boolean> }>> => {
-      // Si impersonation active, utiliser directement les modules de l'utilisateur impersonné
       if (isRealUserImpersonation && impersonatedUser?.enabledModules) {
         const result: Record<string, { enabled: boolean; options: Record<string, boolean> }> = {};
         for (const [key, value] of Object.entries(impersonatedUser.enabledModules)) {
@@ -131,25 +161,27 @@ export function useEffectiveModules(): EffectiveModulesResult & { isLoading: boo
         };
       }
 
+      // Project registry keys to legacy keys
+      const withLegacy = mergeWithLegacyProjection(result);
+
       if (import.meta.env.DEV) {
         console.log(
           '[useEffectiveModules] Loaded modules for user:',
           effectiveUserId,
-          Object.keys(result),
+          Object.keys(withLegacy),
           '(source:',
           source,
           ')'
         );
       }
 
-      return result as Record<ModuleKey, { enabled: boolean; options: Record<string, boolean> }>;
+      return withLegacy as Record<ModuleKey, { enabled: boolean; options: Record<string, boolean> }>;
     },
     enabled: !!effectiveUserId,
     staleTime: 1000 * 30,
     gcTime: 1000 * 60 * 2,
   });
   
-  // Appliquer le filtre par rôle côté client (étape 3 de la cascade)
   const rawModules = query.data || {} as Record<ModuleKey, { enabled: boolean; options: Record<string, boolean> }>;
   
   // N5+ bypass: pas de filtrage par rôle
@@ -159,31 +191,22 @@ export function useEffectiveModules(): EffectiveModulesResult & { isLoading: boo
     : filterByRole(rawModules, effectiveGlobalRole) as Record<ModuleKey, { enabled: boolean; options: Record<string, boolean> }>;
   
   const hasModule = (moduleKey: ModuleKey): boolean => {
-    // N5+ bypass
     if (isAdminBypass) return true;
-    
-    // Vérifier le module demandé directement
     if (modules[moduleKey]?.enabled) return true;
     
-    // Vérifier les modules équivalents (rétrocompatibilité)
     const compatModules = MODULE_COMPAT_MAP[moduleKey];
     if (compatModules) {
       for (const compatKey of compatModules) {
         if (modules[compatKey as ModuleKey]?.enabled) return true;
       }
     }
-    
     return false;
   };
   
   const hasModuleOption = (moduleKey: ModuleKey, optionKey: string): boolean => {
-    // N5+ bypass
     if (isAdminBypass) return true;
-    
-    // Vérifier directement sur le module demandé
     if (modules[moduleKey]?.enabled && modules[moduleKey]?.options?.[optionKey]) return true;
     
-    // Vérifier sur les modules équivalents
     const compatModules = MODULE_COMPAT_MAP[moduleKey];
     if (compatModules) {
       for (const compatKey of compatModules) {
@@ -191,7 +214,6 @@ export function useEffectiveModules(): EffectiveModulesResult & { isLoading: boo
         if (compatModule?.enabled && compatModule?.options?.[optionKey]) return true;
       }
     }
-    
     return false;
   };
   

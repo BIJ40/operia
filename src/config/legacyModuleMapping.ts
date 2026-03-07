@@ -78,7 +78,7 @@ export const REGISTRY_TO_LEGACY: Record<string, LegacyMapping> = {
   // Aide → support
   'aide':       { legacyModule: 'support' },
   'aide.user':  { legacyModule: 'support', legacyOption: 'user' },
-  'aide.agent': { legacyModule: 'support', legacyOption: 'agent' },
+  
 };
 
 /**
