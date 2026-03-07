@@ -4,7 +4,7 @@
  */
 
 // xlsx is loaded dynamically to reduce bundle size (~200KB)
-import jsPDF from 'jspdf';
+// jsPDF loaded dynamically to reduce bundle
 import type { ApogeeTicket, ApogeeTicketStatus, ApogeeModule, ApogeePriority, ApogeeOwnerSide } from '../types';
 
 // Liste des colonnes à exporter

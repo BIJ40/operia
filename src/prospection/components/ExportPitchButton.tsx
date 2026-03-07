@@ -7,7 +7,7 @@
 import { useState } from 'react';
 import { FileDown, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import jsPDF from 'jspdf';
+// jsPDF loaded dynamically to reduce bundle
 import type { AggregatedKPIs, UniversAggregated } from '../engine/aggregators';
 import type { Insight } from '../engine/insights';
 

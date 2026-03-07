@@ -896,7 +896,7 @@ export async function exportDocsPdf(
     includeSecurity = true,
   } = options;
 
-  const pdf = new ComprehensivePDFGenerator();
+  const pdf = await ComprehensivePDFGenerator.create();
   
   onProgress?.(5, 'Génération de la page de couverture...');
   pdf.addCoverPage();
