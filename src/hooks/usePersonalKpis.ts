@@ -140,7 +140,7 @@ export function usePersonalKpis(options?: UsePersonalKpisOptions) {
  * Calcule les KPIs technicien en utilisant le moteur StatIA
  */
 function calculateTechnicienKpis(
-  apiData: any,
+  apiData: ApogeeLoadedData,
   apogeeUserId: number,
   monthStart: Date,
   monthEnd: Date
