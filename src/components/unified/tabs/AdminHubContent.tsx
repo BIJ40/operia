@@ -19,7 +19,7 @@ import {
   ContenuView,
   OpsView,
   PlateformeView,
-  PlansManagerView,
+  ModulesMasterView,
 } from '@/components/admin/views';
 import { lazy, Suspense, useCallback, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
@@ -57,12 +57,12 @@ const GESTION_SUB_TABS: FolderTabConfig[] = [
   { id: 'inscriptions', label: 'Inscriptions', icon: UserPlus, accent: 'orange' },
   { id: 'apporteurs', label: 'Apporteurs', icon: UserCheck, accent: 'orange' },
   { id: 'agences', label: 'Agences', icon: Building2, accent: 'purple' },
-  { id: 'plans', label: 'Plans', icon: Crown, accent: 'orange' },
+  { id: 'modules', label: 'Modules', icon: Crown, accent: 'orange' },
   { id: 'activity', label: 'Activité', icon: Activity, accent: 'green' },
 ];
 
 const ADMIN_MAIN_TAB_IDS = ADMIN_MAIN_TABS.map(tab => tab.id);
-const DEFAULT_GESTION_ORDER = ['users', 'inscriptions', 'apporteurs', 'agences', 'plans', 'activity'];
+const DEFAULT_GESTION_ORDER = ['users', 'inscriptions', 'apporteurs', 'agences', 'modules', 'activity'];
 
 export default function AdminHubContent() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -164,8 +164,8 @@ export default function AdminHubContent() {
                   <ReseauView />
                 </TabsContent>
 
-                <TabsContent value="plans" className="mt-0 focus-visible:outline-none">
-                  <PlansManagerView />
+                <TabsContent value="modules" className="mt-0 focus-visible:outline-none">
+                  <ModulesMasterView />
                 </TabsContent>
 
                 <TabsContent value="activity" className="mt-0 focus-visible:outline-none">
