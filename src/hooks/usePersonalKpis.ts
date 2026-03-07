@@ -69,7 +69,7 @@ function isTechInIntervention(inter: Record<string, unknown>, apogeeUserId: numb
   )) return true;
 
   // 3. userId simple
-  const userId = inter.userId || inter.user_id;
+  const userId = (inter.userId || inter.user_id) as string | number | undefined;
   if (matchesUserId(userId, apogeeUserId)) return true;
 
   return false;
