@@ -193,7 +193,7 @@ export function useFinalizeDocument() {
     },
     onError: (error) => {
       toast.error("Erreur lors de la finalisation");
-      console.error(error);
+      logError(error);
     },
   });
 }

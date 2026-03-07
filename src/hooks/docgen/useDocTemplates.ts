@@ -181,7 +181,7 @@ export function useParseDocxTokens() {
     },
     onError: (error) => {
       toast.error("Erreur lors de l'analyse du document");
-      console.error(error);
+      logError(error);
     },
   });
 }

@@ -179,7 +179,7 @@ export function usePushNotifications() {
       return true;
 
     } catch (error) {
-      console.error('[Push] Error unsubscribing:', error);
+      logError('[Push] Error unsubscribing:', error);
       toast.error('Erreur lors de la désactivation');
       setState(prev => ({ ...prev, isLoading: false }));
       return false;
