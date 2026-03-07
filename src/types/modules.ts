@@ -498,10 +498,5 @@ export const MODULE_SHORT_LABELS: Record<ModuleKey, string> = {
   planning_augmente: 'Planif. IA',
   reseau_franchiseur: 'Réseau',
   admin_plateforme: 'Admin',
-  // Legacy
-  help_academy: 'Academy',
-  pilotage_agence: 'Pilotage',
-  support: 'Support',
-  apogee_tickets: 'Tickets',
   unified_search: 'Recherche',
 };
