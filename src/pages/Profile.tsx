@@ -50,7 +50,6 @@ interface ProfileData {
   role_agence: string | null;
   avatar_url: string | null;
   global_role: GlobalRole | null;
-  enabled_modules: EnabledModules | null;
   phone: string | null;
 }
 
