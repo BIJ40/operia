@@ -165,7 +165,7 @@ export function HcServicesEditorProvider({ children }: { children: ReactNode }) 
 
       return data.id;
     } catch (error) {
-      console.error('Error adding block:', error);
+      logError('Error adding block:', error);
       toast({
         title: 'Erreur',
         description: 'Impossible d\'ajouter le bloc',
