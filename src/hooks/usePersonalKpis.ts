@@ -149,7 +149,7 @@ function calculateTechnicienKpis(
   const interval = { start: monthStart, end: monthEnd };
 
   // Find tech name for CA matching
-  const myUser = (users || []).find((u: any) => u.id === apogeeUserId);
+  const myUser = (users || []).find((u) => u.id === apogeeUserId);
   const myTechName = myUser ? `${myUser.firstname || ''} ${myUser.name || ''}`.trim().toUpperCase() : null;
 
   // === 1. CA du mois via StatIA ===
