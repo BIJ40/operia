@@ -20,8 +20,6 @@ import { getRoleCapabilities } from '@/config/roleMatrix';
 import { hasAccess, hasMinRole, getUserManagementCapabilities, isModuleEnabled, isModuleOptionEnabled } from '@/permissions';
 import { userModulesToEnabledModules } from '@/lib/userModulesUtils';
 
-// PHASE 0 - Protection des accès spéciaux (whitelist /projects)
-import { checkProtectedAccess, isHardcodedProtectedUser } from '@/hooks/access-rights/useProtectedAccess';
 
 // Types pour le module Support
 interface SupportModuleOptions {
