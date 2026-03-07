@@ -36,20 +36,13 @@ export const MODULES = {
 
 export type ModuleKey = keyof typeof MODULES;
 
-// Modules visibles dans la gestion des plans (excluant admin/réseau)
-export const PLAN_VISIBLE_MODULES: ModuleKey[] = [
-  'agence',
-  'stats', 
-  'rh',
-  'parc',
-  'divers_apporteurs',
-  'divers_plannings',
-  'divers_reunions',
-  'divers_documents',
-  'guides',
-  'ticketing',
-  'aide',
-];
+// Modules visibles dans la gestion des plans (auto-dérivé de MODULE_DEFINITIONS)
+// Exclut les modules adminOnly et les legacy keys
+const LEGACY_MODULE_KEYS: ModuleKey[] = ['help_academy', 'pilotage_agence', 'support', 'apogee_tickets', 'unified_search'];
+
+export const PLAN_VISIBLE_MODULES: ModuleKey[] = MODULE_DEFINITIONS
+  .filter(m => !m.adminOnly && !LEGACY_MODULE_KEYS.includes(m.key))
+  .map(m => m.key);
 
 // Sous-options par module
 export const MODULE_OPTIONS = {
