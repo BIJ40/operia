@@ -147,7 +147,7 @@ export function usePushNotifications() {
       return true;
 
     } catch (error) {
-      console.error('[Push] Error subscribing:', error);
+      logError('[Push] Error subscribing:', error);
       toast.error('Erreur lors de l\'activation des notifications');
       setState(prev => ({ ...prev, isLoading: false }));
       return false;
