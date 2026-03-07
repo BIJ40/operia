@@ -2,15 +2,13 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
 
 const MIGRATION_SECRET = Deno.env.get('MIGRATION_SECRET') ?? '';
 
-import { handleCorsPreflightOrReject, withCors, getCorsHeaders, isOriginAllowed } from '../_shared/cors.ts';
+import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
 
-function jsonResponse(req: Request, data: unknown, status = 200): Response {
-  const origin = req.headers.get('origin') ?? '';
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(isOriginAllowed(origin) ? getCorsHeaders(origin) : {}),
-  };
-  return new Response(JSON.stringify(data), { status, headers });
+function jsonResponse(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 
 async function listAllTables(admin: any): Promise<string[]> {
