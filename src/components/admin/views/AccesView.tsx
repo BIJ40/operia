@@ -11,18 +11,20 @@ import {
   DraggableFolderContentContainer,
   FolderTabConfig 
 } from '@/components/ui/draggable-folder-tabs';
-import { Users, Activity, Loader2 } from 'lucide-react';
+import { Users, Activity, UserPlus, Loader2 } from 'lucide-react';
 import { useSessionState } from '@/hooks/useSessionState';
 
 const TDRUsersPage = lazy(() => import('@/pages/TDRUsersPage'));
 const AdminUserActivity = lazy(() => import('@/pages/AdminUserActivity'));
+const PendingRegistrationsList = lazy(() => import('@/components/admin/registrations/PendingRegistrationsList'));
 
 const SUB_TABS: FolderTabConfig[] = [
   { id: 'users', label: 'Utilisateurs', icon: Users, accent: 'blue' },
+  { id: 'inscriptions', label: 'Inscriptions', icon: UserPlus, accent: 'amber' },
   { id: 'activity', label: 'Activité', icon: Activity, accent: 'green' },
 ];
 
-const DEFAULT_TAB_ORDER = ['users', 'activity'];
+const DEFAULT_TAB_ORDER = ['users', 'inscriptions', 'activity'];
 
 function LoadingFallback() {
   return (
