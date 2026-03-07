@@ -168,9 +168,10 @@ export function hasModuleOption(
 
 /**
  * Vérifie si l'utilisateur est un agent support
+ * Note: Pour une vérification fiable, utiliser is_support_agent() SQL
  */
 export function isSupportAgent(context: UserContext): boolean {
-  return hasModuleOption(context, 'support', 'agent');
+  return context.globalRoleLevel >= GLOBAL_ROLES.platform_admin;
 }
 
 /**
