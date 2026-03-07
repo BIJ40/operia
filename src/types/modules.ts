@@ -267,6 +267,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     icon: 'Video',
     category: 'outils',
     uiSubTab: 'administratif',
+    defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [],
   },

@@ -22,18 +22,19 @@ const LEGACY_MODULE_KEYS = ['help_academy', 'pilotage_agence', 'support', 'apoge
 
 // Catégorie config pour le regroupement
 const CATEGORY_LABELS: Record<ModuleCategory, string> = {
-  agence: 'Agence & Stats',
-  rh: 'Ressources Humaines',
+  stats: 'Statistiques',
+  salaries: 'Salariés',
   outils: 'Outils',
+  documents: 'Documents',
   guides: 'Guides',
   ticketing: 'Ticketing',
-  support: 'Aide & Support',
+  aide: 'Aide & Support',
   reseau: 'Réseau',
   admin: 'Administration',
 };
 
 const CATEGORY_ORDER: ModuleCategory[] = [
-  'agence', 'rh', 'outils', 'guides', 'ticketing', 'support',
+  'stats', 'salaries', 'outils', 'documents', 'guides', 'ticketing', 'aide',
 ];
 
 export function PlansManagerView() {
