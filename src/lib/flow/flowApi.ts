@@ -81,7 +81,8 @@ export async function listSchemas(domain?: FlowDomain): Promise<FlowSchema[]> {
   let query = supabase
     .from('flow_schemas')
     .select('*')
-    .order('updated_at', { ascending: false });
+    .order('updated_at', { ascending: false })
+    .limit(200);
 
   if (domain) {
     query = query.eq('domain', domain);
