@@ -120,7 +120,7 @@ export function useGeneratePptx() {
       };
     },
     onError: (error) => {
-      console.error('Error generating PPTX:', error);
+      logError('Error generating PPTX:', error);
       toast.error(error.message || 'Erreur lors de la génération');
     },
   });
