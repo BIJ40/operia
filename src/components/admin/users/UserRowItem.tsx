@@ -63,7 +63,7 @@ export const UserRowItem = memo(function UserRowItem({
   agencyLabelsMap,
 }: UserRowItemProps) {
   const isDeactivated = user.is_active === false;
-  const [permissionsOpen, setPermissionsOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const getInitials = () => {
     const first = user.first_name?.[0] || '';
