@@ -176,7 +176,7 @@ export function usePropagateToChildren() {
   return useMutation({
     mutationFn: async (params: {
       keys: string[];
-      updates: { is_deployed?: boolean; required_plan?: PlanLevel };
+      updates: { is_deployed?: boolean; required_plan?: PlanLevel; min_role?: number };
     }) => {
       // Batch update all descendants
       const { error } = await supabase
