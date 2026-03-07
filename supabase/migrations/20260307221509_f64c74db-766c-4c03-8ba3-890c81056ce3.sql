@@ -1,0 +1,1 @@
+UPDATE blocks SET is_empty = false WHERE is_empty = true AND (length(content) > 0 OR EXISTS (SELECT 1 FROM blocks c WHERE c.parent_id = blocks.id))
