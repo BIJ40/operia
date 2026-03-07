@@ -10,10 +10,11 @@
 
 | Catégorie | Identifiés | Résolus | Restants |
 |-----------|-----------|-------------------|----------|
-| 🔴 **À SUPPRIMER** | 15+ fichiers | ✅ 8 résolus | ~7 restants |
+| 🔴 **À SUPPRIMER** | 15+ fichiers | ✅ 12 résolus | ~3 restants |
 | 🟠 **À SIMPLIFIER** | 8+ modules | ⏳ Non traité | 8 restants |
 | 🟡 **À CONSOLIDER** | 5+ systèmes | ✅ 1 résolu (permissions) | ~4 restants |
 | 🟢 **OK (à garder)** | Système core | ✅ Renforcé | Stable |
+| 🔒 **Sécurité RLS** | 6 vulnérabilités | ✅ 6 corrigées | 0 |
 
 ---
 
