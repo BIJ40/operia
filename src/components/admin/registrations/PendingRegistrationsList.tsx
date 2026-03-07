@@ -146,6 +146,7 @@ export default function PendingRegistrationsList() {
                       <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" />{reg.email}</span>
                       {reg.phone && <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" />{reg.phone}</span>}
                       {reg.company_name && <span className="flex items-center gap-1"><Building2 className="w-3.5 h-3.5" />{reg.company_name}</span>}
+                      {reg.agency_name && <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />Agence : {reg.agency_name}</span>}
                     </div>
                     {reg.message && (
                       <p className="text-sm text-muted-foreground flex items-start gap-1">
