@@ -310,6 +310,7 @@ serve(async (req) => {
         `
 
         console.log('[create-user] Envoi email à:', email)
+        const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
         const emailResult = await resend.emails.send({
           from: 'HelpConfort Services <noreply@helpconfort.services>',
           to: [email],
