@@ -82,6 +82,7 @@ function PageLoader() {
   );
 }
 
+import { supabase } from "@/integrations/supabase/client";
 import { useMaintenanceMode } from "./hooks/useMaintenanceMode";
 import { MaintenanceBlock } from "./components/maintenance/MaintenanceBlock";
 import { PWAInstallPrompt } from "./components/pwa/PWAInstallPrompt";
@@ -95,13 +96,14 @@ function AppContent() {
   // Auto-check for app updates and force refresh if needed
   useVersionCheck();
 
-  // Detect recovery token in URL hash and redirect to /reset-password
+  // Listen for PASSWORD_RECOVERY event from Supabase and redirect to reset page
   useEffect(() => {
-    const hash = window.location.hash;
-    if (hash && hash.includes('type=recovery')) {
-      // Preserve the hash fragment for Supabase to process
-      navigate('/reset-password' + hash, { replace: true });
-    }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        navigate('/reset-password', { replace: true });
+      }
+    });
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   // Afficher le blocage maintenance si l'utilisateur n'est pas dans la whitelist
