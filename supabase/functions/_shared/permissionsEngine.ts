@@ -1,14 +1,14 @@
 /**
- * PERMISSIONS ENGINE V1.0 - EDGE FUNCTIONS VERSION
+ * PERMISSIONS ENGINE V2.0 - EDGE FUNCTIONS VERSION
  * ⚠️ SYNCHRONISÉ AVEC: src/permissions/permissionsEngine.ts
- * 📅 Dernière sync: 2025-12-10
+ * 📅 Dernière sync: 2026-03-07
  * 
  * RÈGLE: Toute modification doit être répliquée dans les deux fichiers
  * Ce fichier est une version adaptée pour Deno (edge functions)
  */
 
 // ============================================================================
-// TYPES (repliqués de src/permissions/types.ts)
+// TYPES (repliqués de src/types/globalRoles.ts + src/types/modules.ts)
 // ============================================================================
 
 export type GlobalRole = 
@@ -20,21 +20,36 @@ export type GlobalRole =
   | 'platform_admin' 
   | 'superadmin';
 
+// ModuleKey V3 — aligné avec src/types/modules.ts
 export type ModuleKey = 
-  | 'help_academy'
-  | 'pilotage_agence'
-  | 'reseau_franchiseur'
-  | 'support'
-  | 'admin_plateforme'
-  | 'apogee_tickets'
+  | 'agence'
+  | 'stats'
   | 'rh'
   | 'parc'
-  | 'messaging'
+  | 'divers_apporteurs'
+  | 'divers_plannings'
+  | 'divers_reunions'
+  | 'divers_documents'
+  | 'guides'
+  | 'ticketing'
+  | 'aide'
+  | 'prospection'
+  | 'planning_augmente'
+  | 'reseau_franchiseur'
+  | 'admin_plateforme'
   | 'unified_search';
+
+// Legacy module keys → V3 mapping (pour rétrocompat des données en base)
+export const MODULE_COMPAT_MAP: Record<string, ModuleKey> = {
+  'help_academy': 'guides',
+  'pilotage_agence': 'agence',
+  'support': 'aide',
+  'apogee_tickets': 'ticketing',
+  'messaging': 'aide',
+};
 
 export interface PermissionContext {
   globalRole: GlobalRole | null;
-  enabledModules?: Record<string, any> | null; // DEPRECATED - kept for signature compat
   agencyId: string | null;
   supportLevel?: number | null;
 }
@@ -53,12 +68,12 @@ export interface PermissionIssue {
 }
 
 // ============================================================================
-// CONSTANTS (repliqués de src/permissions/constants.ts)
+// CONSTANTS (synchronisés avec src/permissions/constants.ts)
 // ============================================================================
 
 export const BYPASS_ROLES: GlobalRole[] = ['superadmin', 'platform_admin'];
 
-export const AGENCY_REQUIRED_MODULES: ModuleKey[] = ['pilotage_agence', 'rh', 'parc'];
+export const AGENCY_REQUIRED_MODULES: ModuleKey[] = ['agence', 'rh', 'parc', 'prospection'];
 
 export const AGENCY_ROLES: GlobalRole[] = ['franchisee_user', 'franchisee_admin'];
 
@@ -76,17 +91,22 @@ export const ROLE_HIERARCHY: Record<GlobalRole, number> = {
   superadmin: 6,
 };
 
-export const MODULE_MIN_ROLES: Record<ModuleKey, GlobalRole> = {
-  help_academy: 'base_user',
-  pilotage_agence: 'franchisee_user',
-  reseau_franchiseur: 'franchisor_user',
-  support: 'base_user',
-  admin_plateforme: 'platform_admin',
-  apogee_tickets: 'base_user',
+export const MODULE_MIN_ROLES: Partial<Record<ModuleKey, GlobalRole>> = {
+  agence: 'franchisee_admin',
+  stats: 'franchisee_admin',
   rh: 'base_user',
   parc: 'franchisee_user',
-  messaging: 'franchisee_user',
-  unified_search: 'franchisee_user',
+  divers_apporteurs: 'franchisee_admin',
+  divers_plannings: 'franchisee_admin',
+  divers_reunions: 'franchisee_admin',
+  divers_documents: 'franchisee_admin',
+  guides: 'base_user',
+  ticketing: 'base_user',
+  aide: 'base_user',
+  prospection: 'franchisee_admin',
+  planning_augmente: 'franchisee_admin',
+  reseau_franchiseur: 'franchisor_user',
+  admin_plateforme: 'platform_admin',
 };
 
 // ============================================================================
@@ -109,10 +129,20 @@ export function isBypassRole(role: GlobalRole | null): boolean {
 }
 
 /**
+ * Normalise un module_key legacy vers V3
+ */
+export function normalizeModuleKey(key: string): ModuleKey | null {
+  if (key in MODULE_MIN_ROLES) return key as ModuleKey;
+  if (key in MODULE_COMPAT_MAP) return MODULE_COMPAT_MAP[key];
+  return null;
+}
+
+/**
  * FONCTION CENTRALE: Vérifie l'accès à un module/option
+ * Version edge simplifiée — la RPC get_user_effective_modules gère la cascade complète
  */
 export function hasAccess(params: HasAccessParams): boolean {
-  const { globalRole, enabledModules, agencyId, moduleId, optionId } = params;
+  const { globalRole, agencyId, moduleId } = params;
   
   // 1. Bypass N5+
   if (globalRole && isBypassRole(globalRole)) {
@@ -135,26 +165,8 @@ export function hasAccess(params: HasAccessParams): boolean {
     return false;
   }
   
-  // 5. Vérifier activation du module
-  if (!enabledModules) return false;
-  
-  const moduleState = enabledModules[moduleId];
-  if (!moduleState) return false;
-  
-  const isEnabled = typeof moduleState === 'boolean' 
-    ? moduleState 
-    : moduleState?.enabled ?? false;
-    
-  if (!isEnabled) return false;
-  
-  // 6. Vérifier option spécifique
-  if (optionId) {
-    if (typeof moduleState === 'object' && moduleState?.options) {
-      return moduleState.options[optionId] === true;
-    }
-    return false;
-  }
-  
+  // Note: la vérification enabled_modules est déléguée à la RPC SQL côté serveur
+  // Les edge functions utilisent canAccessEdgeFunction() qui appelle hasAccess() pour les checks rôle/agence
   return true;
 }
 
@@ -163,7 +175,7 @@ export function hasAccess(params: HasAccessParams): boolean {
  */
 export function validateUserPermissions(ctx: PermissionContext): PermissionIssue[] {
   const issues: PermissionIssue[] = [];
-  const { globalRole, enabledModules, agencyId, supportLevel } = ctx;
+  const { globalRole, agencyId, supportLevel } = ctx;
   
   // Règle 1: N1/N2 sans agence
   if (globalRole && AGENCY_ROLES.includes(globalRole) && !agencyId) {
@@ -173,54 +185,6 @@ export function validateUserPermissions(ctx: PermissionContext): PermissionIssue
       message: `Le rôle ${globalRole} nécessite une agence`,
       fix: 'Assigner une agence',
     });
-  }
-  
-  // Règle 2: enabled_modules null
-  if (!enabledModules || Object.keys(enabledModules).length === 0) {
-    issues.push({
-      type: 'warning',
-      code: 'NO_EXPLICIT_MODULES',
-      message: 'Modules non configurés',
-      fix: 'Appliquer template rôle',
-    });
-  }
-  
-  // Règle 3: Modules agence pour N3/N4 sans agence
-  if (globalRole && ['franchisor_user', 'franchisor_admin'].includes(globalRole) && enabledModules) {
-    for (const moduleKey of AGENCY_REQUIRED_MODULES) {
-      const moduleState = enabledModules[moduleKey];
-      const isEnabled = typeof moduleState === 'boolean' 
-        ? moduleState 
-        : (moduleState?.enabled ?? false);
-        
-      if (isEnabled && !agencyId) {
-        issues.push({
-          type: 'error',
-          code: 'NETWORK_ROLE_WITH_AGENCY_MODULES',
-          message: `Module ${moduleKey} activé sans agence`,
-          fix: 'Désactiver ou assigner agence',
-          moduleId: moduleKey as ModuleKey,
-        });
-      }
-    }
-  }
-  
-  // Règle 4: Support level sans agent
-  if (supportLevel && supportLevel > 0) {
-    const supportModule = enabledModules?.support;
-    const isAgentEnabled = typeof supportModule === 'object' 
-      ? supportModule?.options?.agent === true
-      : false;
-      
-    if (!isAgentEnabled) {
-      issues.push({
-        type: 'error',
-        code: 'SUPPORT_LEVEL_NO_AGENT',
-        message: `SA${supportLevel} sans option agent`,
-        fix: 'Activer support.agent',
-        moduleId: 'support',
-      });
-    }
   }
   
   return issues;
@@ -246,7 +210,7 @@ export function extractPermissionContext(profile: any): PermissionContext {
  */
 export function canAccessEdgeFunction(
   profile: any, 
-  requiredModule?: ModuleKey,
+  requiredModule?: ModuleKey | string,
   requiredOption?: string
 ): { allowed: boolean; reason?: string } {
   const ctx = extractPermissionContext(profile);
@@ -256,16 +220,25 @@ export function canAccessEdgeFunction(
     return { allowed: true };
   }
   
+  // Normaliser la clé de module (legacy → V3)
+  const normalizedModule = normalizeModuleKey(requiredModule);
+  if (!normalizedModule) {
+    return {
+      allowed: false,
+      reason: `Module inconnu: ${requiredModule}`,
+    };
+  }
+  
   const allowed = hasAccess({
     ...ctx,
-    moduleId: requiredModule,
+    moduleId: normalizedModule,
     optionId: requiredOption,
   });
   
   if (!allowed) {
     return {
       allowed: false,
-      reason: `Accès refusé: module ${requiredModule}${requiredOption ? `.${requiredOption}` : ''} non autorisé`,
+      reason: `Accès refusé: module ${normalizedModule}${requiredOption ? `.${requiredOption}` : ''} non autorisé`,
     };
   }
   

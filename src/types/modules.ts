@@ -366,6 +366,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'users', path: 'admin_plateforme.users', label: 'Utilisateurs', description: 'Gestion comptes', defaultEnabled: true, routes: ['/?tab=admin'] },
       { key: 'agencies', path: 'admin_plateforme.agencies', label: 'Agences', description: 'Config agences', defaultEnabled: true, routes: ['/?tab=admin'] },
       { key: 'permissions', path: 'admin_plateforme.permissions', label: 'Permissions', description: 'Droits accès', defaultEnabled: true, routes: ['/?tab=admin'] },
+      { key: 'faq_admin', path: 'admin_plateforme.faq_admin', label: 'FAQ Admin', description: 'Gestion FAQ', defaultEnabled: true, routes: ['/?tab=admin'] },
     ],
   },
 ];

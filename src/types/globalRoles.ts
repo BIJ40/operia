@@ -88,24 +88,7 @@ export function getAllRolesSorted(): GlobalRole[] {
 }
 
 /**
- * Obtient les rôles assignables par un utilisateur donné
- * Délègue au système de gestion de permissions centralisé (roleMatrix.ts)
- * pour garantir la cohérence des règles d'assignation.
- * 
- * Note: Cette fonction importe dynamiquement depuis roleMatrix pour éviter
- * les dépendances circulaires et garantir que roleMatrix.ts reste la source de vérité.
+ * Obtient les rôles assignables par un utilisateur donné.
+ * @deprecated Utiliser getUserManagementCapabilities() depuis permissionsEngine.ts
+ * Exemple: getUserManagementCapabilities(role).canCreateRoles
  */
-export function getAssignableRoles(assignerRole: GlobalRole | null): GlobalRole[] {
-  if (!assignerRole) return [];
-  
-  // Déléguer à roleMatrix.ts qui est la source de vérité pour les permissions
-  // Import dynamique pour éviter les dépendances circulaires
-  try {
-    const { getUserManagementCapabilities } = require('@/config/roleMatrix');
-    const capabilities = getUserManagementCapabilities(assignerRole);
-    return capabilities.canCreateRoles;
-  } catch (error) {
-    console.error('Erreur lors de la récupération des rôles assignables:', error);
-    return [];
-  }
-}

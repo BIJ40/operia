@@ -108,7 +108,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
   const canAccessPage = capabilities.viewScope !== 'none' || isAdmin;
   const canCreateUsers = capabilities.canCreateRoles.length > 0;
   const canDeleteUsers = capabilities.canDeleteUsers;
-  // ✅ FIX: Utiliser directement capabilities.canCreateRoles au lieu de getAssignableRoles() qui échoue avec require()
+  // Utilise directement capabilities.canCreateRoles (source de vérité: permissionsEngine.ts)
   const assignableRoles = useMemo(() => capabilities.canCreateRoles, [capabilities.canCreateRoles]);
   const isSuperAdmin = effectiveUserRole === 'superadmin';
 
