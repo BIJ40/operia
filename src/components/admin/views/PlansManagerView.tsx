@@ -12,21 +12,14 @@ import { Crown, Check, X, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getPlanColorClass } from '@/config/planTiers';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { PLAN_VISIBLE_MODULES, MODULE_DEFINITIONS } from '@/types/modules';
 
-// Définition des modules avec labels UI
-// Note: 'ticketing' is excluded - it's an individual user permission, not a plan-level module
-const MODULE_CATALOG = [
-  { key: 'agence', label: 'Mon agence', group: null },
-  { key: 'stats', label: 'Statistiques', group: null },
-  { key: 'rh', label: 'Salariés (RH)', group: null },
-  { key: 'parc', label: 'Parc', group: null },
-  { key: 'divers_apporteurs', label: 'Apporteurs', group: 'Divers' },
-  { key: 'divers_plannings', label: 'Plannings', group: 'Divers' },
-  { key: 'divers_reunions', label: 'Réunions', group: 'Divers' },
-  { key: 'divers_documents', label: 'Documents', group: 'Divers' },
-  { key: 'guides', label: 'Guides', group: null },
-  { key: 'aide', label: 'Aide', group: null },
-] as const;
+// Auto-généré depuis MODULE_DEFINITIONS (source unique de vérité)
+const MODULE_CATALOG = PLAN_VISIBLE_MODULES.map(key => {
+  const def = MODULE_DEFINITIONS.find(m => m.key === key)!;
+  const group = key.startsWith('divers_') ? 'Divers' : null;
+  return { key, label: def.label, group };
+});
 
 export function PlansManagerView() {
   const { data: planTiers, isLoading } = usePlanTiers();
