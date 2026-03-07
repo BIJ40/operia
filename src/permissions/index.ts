@@ -64,8 +64,6 @@ export {
   logValidationIssues,
   PROTECTED_MODULES,
   isProtectedModule,
-  hasProjectManagementAccess,
-  hasKanbanAccess,
 } from './moduleRegistry';
 
 // Dev Validator (COMMIT 2)
