@@ -89,7 +89,7 @@ export function useOnboardingState() {
         role_agence: data.role_agence,
       });
     } catch (err) {
-      console.error('[Onboarding] Unexpected error:', err);
+      logError('[Onboarding] Unexpected error:', err);
     } finally {
       setIsLoading(false);
     }
