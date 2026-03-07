@@ -156,11 +156,9 @@ export function useEffectiveModules(): EffectiveModulesResult & { isLoading: boo
   
   const rawModules = query.data || {} as Record<ModuleKey, { enabled: boolean; options: Record<string, boolean> }>;
   
-  // N5+ bypass: pas de filtrage par rôle
-  const isAdminBypass = effectiveAuth.realGlobalRole === 'platform_admin' || effectiveAuth.realGlobalRole === 'superadmin';
-  const modules = isAdminBypass 
-    ? rawModules 
-    : filterByRole(rawModules, effectiveGlobalRole) as Record<ModuleKey, { enabled: boolean; options: Record<string, boolean> }>;
+  // min_role filtering is now handled server-side in the RPC
+  // N5+ bypass is also handled server-side
+  const modules = rawModules;
   
   const hasModule = (moduleKey: ModuleKey): boolean => {
     if (isAdminBypass) return true;
