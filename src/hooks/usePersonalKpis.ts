@@ -161,15 +161,12 @@ function calculateTechnicienKpisStatia(
   const apogeeUserIdNum = Number(apogeeUserId);
 
   // Debug: examiner la structure des interventions (champs réels de l'API Apogée)
-  const sampleInter = (interventions || [])[0];
-  console.log('[usePersonalKpis] Sample intervention:', {
-    apogeeUserId,
-    // L'API Apogée utilise usersIds (tableau) pas userId
-    usersIds: sampleInter?.usersIds,
-    dataVisites: sampleInter?.data?.visites?.length,
-    type: sampleInter?.type,
-    type2: sampleInter?.type2,
-  });
+  if (import.meta.env.DEV) {
+    const sampleInter = (interventions || [])[0];
+    console.log('[usePersonalKpis] Sample intervention:', {
+      apogeeUserId, usersIds: sampleInter?.usersIds, type: sampleInter?.type,
+    });
+  }
 
   // Helper pour vérifier si technicien est dans l'intervention
   const isTechInIntervention = (inter: any): boolean => {
