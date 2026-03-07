@@ -56,7 +56,7 @@ export function AccesView() {
   const accentColors: Record<string, string> = {
     blue: 'hsl(var(--warm-blue))',
     green: 'hsl(var(--warm-green))',
-    amber: 'hsl(40, 96%, 50%)',
+    orange: 'hsl(var(--warm-orange, 30 90% 50%))',
   };
   const activeAccent = activeTab?.accent ? accentColors[activeTab.accent] : undefined;
 
