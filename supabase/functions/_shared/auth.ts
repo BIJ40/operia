@@ -18,7 +18,6 @@ export interface UserContext {
   globalRoleLevel: number;
   agencyId: string | null;
   agencySlug: string | null;
-  enabledModules: Record<string, any> | null;
   supportLevel: number | null;
 }
 
