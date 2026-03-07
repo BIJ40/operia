@@ -103,28 +103,6 @@ export const MODULE_OPTIONS = {
     agencies: 'admin_plateforme.agencies',
     permissions: 'admin_plateforme.permissions',
   },
-  // Legacy modules pour rétrocompatibilité
-  help_academy: {
-    apogee: 'help_academy.apogee',
-    helpconfort: 'help_academy.helpconfort',
-    apporteurs: 'help_academy.apporteurs',
-    edition: 'help_academy.edition',
-  },
-  pilotage_agence: {
-    indicateurs: 'pilotage_agence.indicateurs',
-    stats_hub: 'pilotage_agence.stats_hub',
-    carte_rdv: 'pilotage_agence.carte_rdv',
-  },
-  support: {
-    user: 'support.user',
-    agent: 'support.agent',
-  },
-  apogee_tickets: {
-    kanban: 'apogee_tickets.kanban',
-    create: 'apogee_tickets.create',
-    manage: 'apogee_tickets.manage',
-    import: 'apogee_tickets.import',
-  },
   unified_search: {
     stats: 'unified_search.stats',
     docs: 'unified_search.docs',
