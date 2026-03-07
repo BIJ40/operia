@@ -157,7 +157,7 @@ export const NAV_GROUPS: NavGroup[] = [
         title: 'Kanban', 
         url: ROUTES.projects.kanban, 
         icon: Kanban, 
-        scope: 'apogee_tickets', 
+        scope: 'ticketing', 
         description: 'Tableau de bord projet' 
       },
       { 
