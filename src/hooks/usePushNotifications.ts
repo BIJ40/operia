@@ -80,7 +80,7 @@ export function usePushNotifications() {
         isLoading: false,
       }));
     } catch (error) {
-      console.error('[Push] Error checking subscription:', error);
+      logError('[Push] Error checking subscription:', error);
       setState(prev => ({ ...prev, isLoading: false }));
     }
   }, []);
