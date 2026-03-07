@@ -2116,13 +2116,6 @@ export type Database = {
             referencedRelation: "blocks"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "blocks_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "blocks_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       categories: {
@@ -2183,6 +2176,7 @@ export type Database = {
           status: string | null
           univers_code_used: string | null
           user_id: string | null
+          user_pseudo: string | null
         }
         Insert: {
           admin_notes?: string | null
@@ -2208,6 +2202,7 @@ export type Database = {
           status?: string | null
           univers_code_used?: string | null
           user_id?: string | null
+          user_pseudo?: string | null
         }
         Update: {
           admin_notes?: string | null
@@ -2233,6 +2228,7 @@ export type Database = {
           status?: string | null
           univers_code_used?: string | null
           user_id?: string | null
+          user_pseudo?: string | null
         }
         Relationships: []
       }
@@ -2782,13 +2778,6 @@ export type Database = {
             columns: ["block_id"]
             isOneToOne: false
             referencedRelation: "blocks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_block_id_fkey"
-            columns: ["block_id"]
-            isOneToOne: false
-            referencedRelation: "blocks_public"
             referencedColumns: ["id"]
           },
         ]
@@ -4226,18 +4215,21 @@ export type Database = {
       }
       french_holidays: {
         Row: {
+          created_at: string | null
           date: string
           id: string
           name: string
           year: number | null
         }
         Insert: {
+          created_at?: string | null
           date: string
           id?: string
           name: string
           year?: number | null
         }
         Update: {
+          created_at?: string | null
           date?: string
           id?: string
           name?: string
@@ -4254,7 +4246,7 @@ export type Database = {
           chunk_index: number
           chunk_text: string
           content: string | null
-          context_type: Database["public"]["Enums"]["rag_context_type"]
+          context_type: Database["public"]["Enums"]["rag_context_type"] | null
           created_at: string | null
           embedding: Json
           id: string
@@ -4272,7 +4264,7 @@ export type Database = {
           chunk_index: number
           chunk_text: string
           content?: string | null
-          context_type: Database["public"]["Enums"]["rag_context_type"]
+          context_type?: Database["public"]["Enums"]["rag_context_type"] | null
           created_at?: string | null
           embedding: Json
           id?: string
@@ -4290,7 +4282,7 @@ export type Database = {
           chunk_index?: number
           chunk_text?: string
           content?: string | null
-          context_type?: Database["public"]["Enums"]["rag_context_type"]
+          context_type?: Database["public"]["Enums"]["rag_context_type"] | null
           created_at?: string | null
           embedding?: Json
           id?: string
@@ -5001,13 +4993,6 @@ export type Database = {
             columns: ["asset_id"]
             isOneToOne: false
             referencedRelation: "media_assets"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "media_links_asset_id_fkey"
-            columns: ["asset_id"]
-            isOneToOne: false
-            referencedRelation: "media_orphan_assets"
             referencedColumns: ["id"]
           },
           {
@@ -8709,6 +8694,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_signatures: {
         Row: {
           created_at: string | null
@@ -8881,122 +8887,7 @@ export type Database = {
       }
     }
     Views: {
-      blocks_public: {
-        Row: {
-          attachments: Json | null
-          color_preset: string | null
-          completed_at: string | null
-          content: string | null
-          content_type: string | null
-          content_updated_at: string | null
-          hide_from_sidebar: boolean | null
-          hide_title: boolean | null
-          icon: string | null
-          id: string | null
-          is_empty: boolean | null
-          is_in_progress: boolean | null
-          order: number | null
-          parent_id: string | null
-          show_summary: boolean | null
-          slug: string | null
-          summary: string | null
-          tips_type: string | null
-          title: string | null
-          type: string | null
-        }
-        Insert: {
-          attachments?: Json | null
-          color_preset?: string | null
-          completed_at?: string | null
-          content?: string | null
-          content_type?: string | null
-          content_updated_at?: string | null
-          hide_from_sidebar?: boolean | null
-          hide_title?: boolean | null
-          icon?: string | null
-          id?: string | null
-          is_empty?: boolean | null
-          is_in_progress?: boolean | null
-          order?: number | null
-          parent_id?: string | null
-          show_summary?: boolean | null
-          slug?: string | null
-          summary?: string | null
-          tips_type?: string | null
-          title?: string | null
-          type?: string | null
-        }
-        Update: {
-          attachments?: Json | null
-          color_preset?: string | null
-          completed_at?: string | null
-          content?: string | null
-          content_type?: string | null
-          content_updated_at?: string | null
-          hide_from_sidebar?: boolean | null
-          hide_title?: boolean | null
-          icon?: string | null
-          id?: string | null
-          is_empty?: boolean | null
-          is_in_progress?: boolean | null
-          order?: number | null
-          parent_id?: string | null
-          show_summary?: boolean | null
-          slug?: string | null
-          summary?: string | null
-          tips_type?: string | null
-          title?: string | null
-          type?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "blocks_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "blocks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "blocks_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "blocks_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      media_orphan_assets: {
-        Row: {
-          agency_id: string | null
-          deleted_at: string | null
-          id: string | null
-          storage_bucket: string | null
-          storage_path: string | null
-        }
-        Insert: {
-          agency_id?: string | null
-          deleted_at?: string | null
-          id?: string | null
-          storage_bucket?: string | null
-          storage_path?: string | null
-        }
-        Update: {
-          agency_id?: string | null
-          deleted_at?: string | null
-          id?: string | null
-          storage_bucket?: string | null
-          storage_path?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "media_assets_agency_id_fkey"
-            columns: ["agency_id"]
-            isOneToOne: false
-            referencedRelation: "apogee_agencies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
       auto_generate_monthly_epi_acks: { Args: never; Returns: number }
@@ -9118,6 +9009,11 @@ export type Database = {
         }[]
       }
       get_current_collaborator_id: { Args: never; Returns: string }
+      get_effective_permission_level: {
+        Args: { _scope_slug: string; _user_id: string }
+        Returns: number
+      }
+      get_email_from_pseudo: { Args: { _pseudo: string }; Returns: string }
       get_fk_dependencies: {
         Args: never
         Returns: {
@@ -9143,6 +9039,7 @@ export type Database = {
       get_my_apporteur_agency_id: { Args: never; Returns: string }
       get_my_apporteur_id: { Args: never; Returns: string }
       get_my_apporteur_user_id: { Args: never; Returns: string }
+      get_schema_ddl: { Args: never; Returns: Json }
       get_technician_capacity: {
         Args: { p_agency_id: string; p_date?: string; p_technician_id: string }
         Returns: number
@@ -9151,7 +9048,6 @@ export type Database = {
         Args: { p_user_id?: string }
         Returns: number
       }
-      get_unread_rh_notifications_count: { Args: never; Returns: number }
       get_user_agency: { Args: { _user_id: string }; Returns: string }
       get_user_agency_id: { Args: { _user_id: string }; Returns: string }
       get_user_assigned_agencies: {
@@ -9233,6 +9129,13 @@ export type Database = {
         Args: { _module_key: string; _user_id: string }
         Returns: boolean
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_support_access: { Args: { _user_id: string }; Returns: boolean }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_agency_dirigeant: {
@@ -9240,10 +9143,6 @@ export type Database = {
         Returns: boolean
       }
       is_apporteur_user: { Args: never; Returns: boolean }
-      is_conversation_member: {
-        Args: { conv_id: string; uid: string }
-        Returns: boolean
-      }
       is_support_agent: { Args: { _user_id: string }; Returns: boolean }
       list_public_tables: {
         Args: never
@@ -9379,6 +9278,7 @@ export type Database = {
     Enums: {
       activity_actor_type: "user" | "apporteur" | "system" | "ai"
       apogee_ticket_role: "developer" | "tester" | "franchiseur"
+      app_role: "admin" | "user" | "support" | "franchiseur"
       collaborator_role:
         | "dirigeant"
         | "assistant"
@@ -9548,6 +9448,7 @@ export const Constants = {
     Enums: {
       activity_actor_type: ["user", "apporteur", "system", "ai"],
       apogee_ticket_role: ["developer", "tester", "franchiseur"],
+      app_role: ["admin", "user", "support", "franchiseur"],
       collaborator_role: [
         "dirigeant",
         "assistant",
