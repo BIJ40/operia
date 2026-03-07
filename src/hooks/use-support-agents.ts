@@ -2,10 +2,9 @@
  * Hook V2 pour charger les agents support assignables
  * 
  * Un agent support est défini par:
- * - profiles.enabled_modules.support.enabled = true
- * - ET (options.agent = true OU options.admin = true)
+ * - user_modules avec module_key = 'aide' et options.agent = true
  * 
- * Ne plus utiliser support_level ou autres attributs legacy.
+ * Source de vérité: table user_modules (pas profiles.enabled_modules)
  */
 
 import { useState, useEffect } from 'react';
@@ -19,28 +18,14 @@ export interface SupportAgent {
   last_name: string | null;
   agence: string | null;
   global_role: string | null;
-  // Options support V2
   isAgent: boolean;
   isAdmin: boolean;
   level: number | null;
   skills: string[];
 }
 
-interface EnabledModules {
-  support?: {
-    enabled?: boolean;
-    options?: {
-      agent?: boolean;
-      admin?: boolean;
-      level?: number;
-      skills?: string[];
-    };
-  };
-  [key: string]: any;
-}
-
 /**
- * Hook pour récupérer la liste des agents support V2
+ * Hook pour récupérer la liste des agents support via user_modules
  */
 export function useSupportAgents() {
   const [agents, setAgents] = useState<SupportAgent[]>([]);
@@ -56,40 +41,56 @@ export function useSupportAgents() {
     setError(null);
 
     try {
-      const { data, error: queryError } = await supabase
+      // Chercher les user_modules avec aide.agent = true
+      const { data: moduleRows, error: modulesError } = await supabase
+        .from('user_modules')
+        .select('user_id, options')
+        .eq('module_key', 'aide');
+
+      if (modulesError) throw modulesError;
+
+      // Filtrer ceux qui ont agent: true
+      const agentUserIds = (moduleRows || [])
+        .filter(row => {
+          const opts = row.options as Record<string, boolean> | null;
+          return opts?.agent === true;
+        })
+        .map(row => row.user_id);
+
+      if (agentUserIds.length === 0) {
+        setAgents([]);
+        return;
+      }
+
+      // Charger les profils correspondants
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, email, first_name, last_name, agence, global_role, enabled_modules, support_level')
+        .select('id, email, first_name, last_name, agence, global_role, support_level')
+        .in('id', agentUserIds)
         .eq('is_active', true);
 
-      if (queryError) throw queryError;
+      if (profilesError) throw profilesError;
 
-      // Filtrer les profils qui sont des agents support V2
-      const supportAgents: SupportAgent[] = (data || [])
-        .filter(profile => {
-          const modules = profile.enabled_modules as EnabledModules | null;
-          if (!modules?.support?.enabled) return false;
-          
-          const options = modules.support.options || {};
-          return options.agent === true || options.admin === true;
-        })
-        .map(profile => {
-          const modules = profile.enabled_modules as EnabledModules;
-          const options = modules.support?.options || {};
-          
-          return {
-            id: profile.id,
-            email: profile.email,
-            first_name: profile.first_name,
-            last_name: profile.last_name,
-            agence: profile.agence,
-            global_role: profile.global_role,
-            isAgent: options.agent === true,
-            isAdmin: options.admin === true,
-            // V2: Utiliser profiles.support_level avec fallback sur options.level
-            level: (profile as any).support_level ?? options.level ?? null,
-            skills: options.skills ?? [],
-          };
-        });
+      // Construire les agents
+      const optionsMap = new Map(
+        (moduleRows || []).map(r => [r.user_id, r.options as Record<string, any> | null])
+      );
+
+      const supportAgents: SupportAgent[] = (profiles || []).map(profile => {
+        const opts = optionsMap.get(profile.id) || {};
+        return {
+          id: profile.id,
+          email: profile.email,
+          first_name: profile.first_name,
+          last_name: profile.last_name,
+          agence: profile.agence,
+          global_role: profile.global_role,
+          isAgent: opts.agent === true,
+          isAdmin: opts.admin === true,
+          level: (profile as any).support_level ?? opts.level ?? null,
+          skills: opts.skills ?? [],
+        };
+      });
 
       setAgents(supportAgents);
     } catch (err) {

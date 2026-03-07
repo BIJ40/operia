@@ -904,7 +904,7 @@ serve(async (req) => {
     const rateLimitResult = await checkRateLimit(`unified-search:${user.id}`, { limit: 30, windowMs: 60000 });
     if (!rateLimitResult.allowed) return rateLimitResponse(rateLimitResult.retryAfter || 60, corsHeaders);
 
-    const { data: profile } = await supabase.from('profiles').select('agence, global_role, first_name, last_name, enabled_modules').eq('id', user.id).maybeSingle();
+    const { data: profile } = await supabase.from('profiles').select('agence, global_role, first_name, last_name').eq('id', user.id).maybeSingle();
     const globalRole = profile?.global_role || 'base_user';
     const roleLevel = getRoleLevel(globalRole);
     

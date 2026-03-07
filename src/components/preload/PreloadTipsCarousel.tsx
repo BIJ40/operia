@@ -15,7 +15,7 @@ const TIPS_BY_MODULE: Record<string, string[]> = {
     '📊 Filtrez les données par période pour affiner l\'analyse',
     '📈 Comparez les performances mois par mois',
   ],
-  pilotage_agence: [
+  agence: [
     '🎯 Les indicateurs clés sont visibles sur le tableau de bord',
     '📈 Suivez l\'évolution du CA mensuel en temps réel',
     '🔍 Cliquez sur un graphique pour voir les détails',
@@ -24,8 +24,8 @@ const TIPS_BY_MODULE: Record<string, string[]> = {
     '👥 Gérez vos collaborateurs depuis l\'espace RH',
     '📅 Planifiez les congés et absences facilement',
   ],
-  academy: [
-    '🎓 Accédez aux formations depuis l\'Academy',
+  guides: [
+    '🎓 Accédez aux formations depuis les Guides',
     '📚 Consultez les guides et ressources disponibles',
   ],
 };

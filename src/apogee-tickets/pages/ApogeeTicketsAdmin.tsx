@@ -97,40 +97,36 @@ function UserRolesTab() {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [selectedRole, setSelectedRole] = useState<TicketRole | ''>('');
   
-  // Get all users with apogee_tickets module (via profiles OR user_modules) or admins
+  // Get all users with ticketing module (via user_modules) or admins
   const { data: eligibleUsers, refetch } = useQuery({
     queryKey: ['eligible-ticket-users'],
     queryFn: async () => {
-      // Fetch profiles and user_modules in parallel
       const [profilesResult, userModulesResult] = await Promise.all([
         supabase
           .from('profiles')
-          .select('id, email, first_name, last_name, enabled_modules, global_role')
+          .select('id, email, first_name, last_name, global_role')
           .eq('is_active', true)
           .order('email'),
         supabase
           .from('user_modules')
           .select('user_id')
-          .eq('module_key', 'apogee_tickets')
+          .eq('module_key', 'ticketing')
       ]);
       
       if (profilesResult.error) throw profilesResult.error;
       
-      // Create set of user IDs with module enabled via user_modules table
       const userModuleSet = new Set(
         userModulesResult.data?.map(um => um.user_id) || []
       );
       
-      // Filter users with apogee_tickets module enabled (via profile OR user_modules) or admins (N5+)
+      // Filter users with ticketing module via user_modules or admins (N5+)
       return (profilesResult.data || []).filter((u: any) => {
-        const modules = u.enabled_modules as any;
-        const hasModuleViaProfile = modules?.apogee_tickets?.enabled === true;
         const hasModuleViaUserModules = userModuleSet.has(u.id);
         const isAdmin = u.global_role === 'platform_admin' || u.global_role === 'superadmin';
-        return hasModuleViaProfile || hasModuleViaUserModules || isAdmin;
+        return hasModuleViaUserModules || isAdmin;
       });
     },
-    staleTime: 0, // Always refetch to get latest user permissions
+    staleTime: 0,
   });
   
   const handleAssign = () => {

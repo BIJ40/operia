@@ -96,33 +96,17 @@ export function useMyTicketRole() {
         const [profileResult, userModulesResult, rpcAccessResult] = await Promise.all([
           supabase
             .from('profiles')
-            .select('enabled_modules, global_role')
+            .select('global_role')
             .eq('id', user.id)
             .maybeSingle(),
           supabase
             .from('user_modules')
             .select('module_key, options')
             .eq('user_id', user.id)
-            .in('module_key', ['apogee_tickets', 'ticketing']),
+            .eq('module_key', 'ticketing'),
           supabase
             .rpc('has_apogee_tickets_access', { _user_id: user.id })
         ]);
-
-        // === DIAGNOSTIC LOGS ===
-        console.log('[MY-TICKET-ROLE] 📋 Profile result:', {
-          error: profileResult.error?.message || null,
-          globalRole: profileResult.data?.global_role,
-          hasEnabledModules: !!profileResult.data?.enabled_modules,
-        });
-        console.log('[MY-TICKET-ROLE] 📋 user_modules result:', {
-          error: userModulesResult.error?.message || null,
-          rowCount: userModulesResult.data?.length ?? 0,
-          rows: userModulesResult.data,
-        });
-        console.log('[MY-TICKET-ROLE] 📋 RPC has_apogee_tickets_access:', {
-          error: rpcAccessResult.error?.message || null,
-          data: rpcAccessResult.data,
-        });
 
         if (profileResult.error) {
           logError('[MY-TICKET-ROLE] Error fetching profile', profileResult.error);
@@ -145,15 +129,10 @@ export function useMyTicketRole() {
         // Vérifier si le module Ticketing est activé via backend (canonique)
         const hasRpcTicketingAccess = rpcAccessResult.data === true;
 
-        // Extraire la config profile (legacy) si disponible
-        const enabledModules = profile?.enabled_modules as Record<string, { enabled?: boolean; options?: Record<string, boolean> }> | null;
-        const profileModuleConfig = enabledModules?.apogee_tickets ?? (enabledModules as any)?.ticketing;
-
-        // Extraire les sous-options depuis user_modules (priorité) et profile (fallback)
+        // Extraire les sous-options depuis user_modules
         const userModuleRows = (userModulesResult.data || []) as Array<{ module_key: string; options: Record<string, boolean> | null }>;
         const isModuleEnabledViaUserModules = userModuleRows.length > 0;
-        const isModuleEnabledViaProfile = profileModuleConfig?.enabled === true;
-        const hasLocalTicketingAccess = isModuleEnabledViaUserModules || isModuleEnabledViaProfile;
+        const hasLocalTicketingAccess = isModuleEnabledViaUserModules;
 
         const userModuleOptions = userModuleRows.reduce<Record<string, boolean>>((acc, row) => {
           if (row?.options && typeof row.options === 'object') {
@@ -161,30 +140,15 @@ export function useMyTicketRole() {
           }
           return acc;
         }, {});
-        const profileModuleOptions = profileModuleConfig?.options || {};
-        const moduleOptions = { ...profileModuleOptions, ...userModuleOptions };
+        const moduleOptions = { ...userModuleOptions };
 
-        const canViewKanban = moduleOptions.kanban !== false; // Default true if not explicitly false
-        const canCreate = moduleOptions.create !== false; // Default true if not explicitly false
-        const canImport = moduleOptions.import === true; // Default false
-        const canManage = moduleOptions.manage !== false; // Default true if not explicitly false
+        const canViewKanban = moduleOptions.kanban !== false;
+        const canCreate = moduleOptions.create !== false;
+        const canImport = moduleOptions.import === true;
+        const canManage = moduleOptions.manage !== false;
 
-        // Accès effectif: RPC + fallback local (robuste si RPC indisponible ou migration en cours)
+        // Accès effectif: RPC + fallback local
         const hasEffectiveTicketingAccess = hasRpcTicketingAccess || hasLocalTicketingAccess;
-
-        console.log('[MY-TICKET-ROLE] 🧮 Access decision:', {
-          effectiveGlobalRole,
-          isN5Plus,
-          hasRpcTicketingAccess,
-          isModuleEnabledViaUserModules,
-          isModuleEnabledViaProfile,
-          hasLocalTicketingAccess,
-          hasEffectiveTicketingAccess,
-          moduleOptions,
-          canViewKanban,
-          canCreate,
-          canManage,
-        });
 
         // Cas 2: Module non activé et pas admin
         if (!hasEffectiveTicketingAccess && !isN5Plus) {
