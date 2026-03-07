@@ -151,7 +151,7 @@ export function ApporteurCreateWizard({ open, onOpenChange }: ApporteurCreateWiz
       
       toast.success('Espace apporteur créé avec succès');
     } catch (err: any) {
-      console.error('Create error:', err);
+      logError('Create error:', err);
       toast.error(err.message || 'Erreur lors de la création');
     } finally {
       setIsCreating(false);
