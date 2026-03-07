@@ -4,6 +4,7 @@ import { GripVertical, Edit, Trash2, Plus, Lightbulb, AlertCircle, Info, AlertTr
 import { Button } from '@/components/ui/button';
 import { AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { OperiaBlock } from '@/contexts/HcServicesEditorContext';
+import { createSanitizedHtml } from '@/lib/sanitize';
 
 interface HcServicesSectionProps {
   section: OperiaBlock;
