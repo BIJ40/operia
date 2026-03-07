@@ -64,22 +64,11 @@
 - **Cause:** Utilisation non systématique dans toutes les edge functions
 - **Action:** Wrapper toutes les edge functions avec `withSentry()` ou try/catch + reportError
 
-## Sprint 10 — UX & Polish (P2)
+## Sprint 10 — UX & Polish ✅ FAIT
 
-### S10-1: Tokens sémantiques pour badges de rôles
-- **Fichier:** `src/types/globalRoles.ts:46-54`
-- **Cause:** Classes Tailwind hardcodées (`bg-gray-100 text-gray-800`)
-- **Action:** Utiliser des tokens sémantiques du design system
-
-### S10-2: Transition CSS sur changement de thème
-- **Fichier:** `src/index.css` ou composant ThemeProvider
-- **Cause:** Changement de thème instantané sans animation
-- **Action:** Ajouter `transition: background-color 0.3s, color 0.3s` sur `body`
-
-### S10-3: Option `faq_admin` manquante dans admin_plateforme
-- **Fichier:** `src/types/modules.ts` (MODULE_DEFINITIONS)
-- **Cause:** `admin_plateforme.faq_admin` défini dans constants.ts mais absent de MODULE_DEFINITIONS
-- **Action:** Ajouter l'option dans MODULE_DEFINITIONS pour cohérence
+### S10-1: ✅ Tokens sémantiques pour badges de rôles (bg-muted, bg-primary/10, etc.)
+### S10-2: ✅ Transition CSS sur body pour changement de thème (0.3s ease)
+### S10-3: ✅ Option `faq_admin` ajoutée dans admin_plateforme MODULE_DEFINITIONS
 
 ---
 
@@ -98,13 +87,13 @@
 
 ## Priorités d'exécution
 
-| Sprint | Priorité | Effort estimé | Risque résolu |
-|--------|----------|---------------|---------------|
-| **S6** | P0 | 1-2h | Dead code, sync permissions, vulnérabilités |
-| **S7** | P1 | 2-3h | Absence de tests permissions |
-| **S8** | P1 | 3-4h | Scalabilité listes, calculs lourds |
-| **S9** | P2 | 2-3h | Observabilité, logs production |
-| **S10** | P2 | 1-2h | Polish UX, cohérence design system |
+| Sprint | Statut | Risque résolu |
+|--------|--------|---------------|
+| **S6** | ✅ FAIT | Dead code, sync permissions, vulnérabilités |
+| **S7** | ✅ FAIT | 31 tests unitaires permissions |
+| **S8** | À faire | Scalabilité listes, calculs lourds |
+| **S9** | À faire | Observabilité, logs production |
+| **S10** | ✅ FAIT | Polish UX, cohérence design system |
 
 ## Score cible après correction
 
