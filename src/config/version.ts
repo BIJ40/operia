@@ -1,5 +1,5 @@
-export const APP_VERSION = '0.9.0';
-export const APP_CODENAME = 'Commercial & CRM';
+export const APP_VERSION = '0.9.1';
+export const APP_CODENAME = 'Permissions Unifiées';
 
 /**
  * Changelog v0.8.7 (2026-01-31)
