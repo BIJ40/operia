@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
           page++;
         }
 
-        return jsonResponse({
+        return respond({
           table,
           count: allRows.length,
           complete: true,
