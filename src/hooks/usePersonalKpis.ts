@@ -51,7 +51,7 @@ function isInInterval(dateStr: string | null | undefined, interval: { start: Dat
 }
 
 /** Checks if a user ID matches an apogee user (flexible comparison) */
-function matchesUserId(uid: any, apogeeUserId: number): boolean {
+function matchesUserId(uid: string | number | null | undefined, apogeeUserId: number): boolean {
   return uid === apogeeUserId || uid === String(apogeeUserId) || Number(uid) === apogeeUserId;
 }
 
