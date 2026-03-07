@@ -194,7 +194,7 @@ Deno.serve(async (req) => {
       }
 
       const rows = data ?? [];
-      return jsonResponse({
+      return respond({
         table,
         page,
         pageSize,
