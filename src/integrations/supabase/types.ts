@@ -7417,48 +7417,6 @@ export type Database = {
           },
         ]
       }
-      sensitive_data_access_log: {
-        Row: {
-          access_type: string
-          accessed_at: string | null
-          accessed_by: string
-          collaborator_id: string
-          id: string
-          ip_address: string | null
-        }
-        Insert: {
-          access_type: string
-          accessed_at?: string | null
-          accessed_by: string
-          collaborator_id: string
-          id?: string
-          ip_address?: string | null
-        }
-        Update: {
-          access_type?: string
-          accessed_at?: string | null
-          accessed_by?: string
-          collaborator_id?: string
-          id?: string
-          ip_address?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "sensitive_data_access_log_accessed_by_fkey"
-            columns: ["accessed_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sensitive_data_access_log_collaborator_id_fkey"
-            columns: ["collaborator_id"]
-            isOneToOne: false
-            referencedRelation: "collaborators"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       sensitive_data_access_logs: {
         Row: {
           access_type: string
