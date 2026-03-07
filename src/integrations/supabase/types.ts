@@ -5458,6 +5458,7 @@ export type Database = {
       }
       pending_registrations: {
         Row: {
+          agency_name: string | null
           company_name: string | null
           created_at: string
           email: string
@@ -5472,6 +5473,7 @@ export type Database = {
           status: string
         }
         Insert: {
+          agency_name?: string | null
           company_name?: string | null
           created_at?: string
           email: string
@@ -5486,6 +5488,7 @@ export type Database = {
           status?: string
         }
         Update: {
+          agency_name?: string | null
           company_name?: string | null
           created_at?: string
           email?: string

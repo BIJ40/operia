@@ -20,6 +20,7 @@ const registrationSchema = z.object({
   email: z.string().trim().email("L'adresse email n'est pas valide").max(255),
   phone: z.string().trim().max(20).optional().or(z.literal('')),
   company_name: z.string().trim().max(200).optional().or(z.literal('')),
+  agency_name: z.string().trim().max(200).optional().or(z.literal('')),
   message: z.string().trim().max(1000).optional().or(z.literal('')),
 });
 
@@ -30,6 +31,7 @@ export function RegistrationRequestDialog({ open, onOpenChange }: RegistrationRe
     email: '',
     phone: '',
     company_name: '',
+    agency_name: '',
     message: '',
   });
   const [loading, setLoading] = useState(false);
@@ -64,6 +66,7 @@ export function RegistrationRequestDialog({ open, onOpenChange }: RegistrationRe
         email: form.email.trim().toLowerCase(),
         phone: form.phone.trim() || null,
         company_name: form.company_name.trim() || null,
+        agency_name: form.agency_name.trim() || null,
         message: form.message.trim() || null,
       });
 
@@ -91,7 +94,7 @@ export function RegistrationRequestDialog({ open, onOpenChange }: RegistrationRe
     if (submitted) {
       setTimeout(() => {
         setSubmitted(false);
-        setForm({ first_name: '', last_name: '', email: '', phone: '', company_name: '', message: '' });
+        setForm({ first_name: '', last_name: '', email: '', phone: '', company_name: '', agency_name: '', message: '' });
       }, 300);
     }
   };
@@ -185,6 +188,16 @@ export function RegistrationRequestDialog({ open, onOpenChange }: RegistrationRe
               value={form.company_name}
               onChange={e => updateField('company_name', e.target.value)}
               placeholder="Nom de votre entreprise"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="reg-agency">Agence (si franchisé)</Label>
+            <Input
+              id="reg-agency"
+              value={form.agency_name}
+              onChange={e => updateField('agency_name', e.target.value)}
+              placeholder="Nom de votre agence"
             />
           </div>
 

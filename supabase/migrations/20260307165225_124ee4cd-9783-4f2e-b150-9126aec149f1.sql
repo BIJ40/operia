@@ -1,0 +1,1 @@
+ALTER TABLE public.pending_registrations ADD COLUMN agency_name text;

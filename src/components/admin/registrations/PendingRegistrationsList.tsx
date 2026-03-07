@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { CheckCircle2, XCircle, Clock, Loader2, UserPlus, Mail, Phone, Building2, MessageSquare } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, Loader2, UserPlus, Mail, Phone, Building2, MessageSquare, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -19,6 +19,7 @@ interface PendingRegistration {
   last_name: string;
   phone: string | null;
   company_name: string | null;
+  agency_name: string | null;
   message: string | null;
   status: string;
   reviewed_at: string | null;
@@ -145,6 +146,7 @@ export default function PendingRegistrationsList() {
                       <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" />{reg.email}</span>
                       {reg.phone && <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" />{reg.phone}</span>}
                       {reg.company_name && <span className="flex items-center gap-1"><Building2 className="w-3.5 h-3.5" />{reg.company_name}</span>}
+                      {reg.agency_name && <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />Agence : {reg.agency_name}</span>}
                     </div>
                     {reg.message && (
                       <p className="text-sm text-muted-foreground flex items-start gap-1">
