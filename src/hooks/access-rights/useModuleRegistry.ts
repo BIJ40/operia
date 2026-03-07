@@ -36,6 +36,7 @@ export interface RegistryNode extends RegistryRow {
   // Override indicators
   isDeployOverridden: boolean; // stored ≠ effective for deploy
   isPlanOverridden: boolean;   // stored ≠ effective for plan
+  // min_role is stored per-node (no inheritance, like required_plan)
 }
 
 // ============================================================================
