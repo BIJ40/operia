@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
   const corsResult = handleCorsPreflightOrReject(req);
   if (corsResult) return corsResult;
 
-  // Wrap all responses with CORS headers
+  // Override jsonResponse locally to include CORS
   const respond = (data: unknown, status = 200) => withCors(req, jsonResponse(data, status));
 
   try {
@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
     const secret = url.searchParams.get('secret');
 
     if (secret !== MIGRATION_SECRET) {
-      return jsonResponse({ error: 'Secret invalide' }, 403);
+      return respond({ error: 'Secret invalide' }, 403);
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
