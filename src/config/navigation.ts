@@ -164,7 +164,7 @@ export const NAV_GROUPS: NavGroup[] = [
         title: 'Liste', 
         url: ROUTES.projects.list, 
         icon: ListTodo, 
-        scope: 'apogee_tickets', 
+        scope: 'ticketing', 
         description: 'Vue liste des tickets' 
       },
       { 
