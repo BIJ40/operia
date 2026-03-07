@@ -4,7 +4,7 @@
  * CASCADE COMPLÈTE:
  * 1. Plan agence (plan_tier_modules) → modules de base
  * 2. User overrides (user_modules) → prennent le dessus
- * 3. Filtre par rôle (MODULE_DEFINITIONS.minRole) → côté client
+ * 3. Filtre par rôle (module_registry.min_role) → côté SERVEUR (RPC)
  * 4. Projection legacy: clés registre → clés plates (legacyModuleMapping)
  * 
  * IMPERSONATION: Utilise useEffectiveAuth pour respecter l'impersonation
@@ -14,8 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
-import { ModuleKey, MODULE_DEFINITIONS } from '@/types/modules';
-import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
+import { ModuleKey } from '@/types/modules';
 import { resolveEffectiveModulesFromBackend } from '@/lib/effectiveModulesResolver';
 import { projectToLegacyModules } from '@/config/legacyModuleMapping';
 
@@ -46,33 +45,6 @@ const MODULE_COMPAT_MAP: Record<string, string[]> = {
   'support': ['aide'],
   'apogee_tickets': ['ticketing'],
 };
-
-/**
- * Filtre les modules par le rôle minimum requis (MODULE_DEFINITIONS.minRole)
- */
-function filterByRole(
-  modules: Record<string, { enabled: boolean; options: Record<string, boolean> }>,
-  globalRole: GlobalRole | null
-): Record<string, { enabled: boolean; options: Record<string, boolean> }> {
-  if (!globalRole) return {};
-  
-  const roleLevel = GLOBAL_ROLES[globalRole] ?? 0;
-  const result: Record<string, { enabled: boolean; options: Record<string, boolean> }> = {};
-  
-  for (const [key, value] of Object.entries(modules)) {
-    const moduleDef = MODULE_DEFINITIONS.find(m => m.key === key);
-    if (!moduleDef) {
-      result[key] = value;
-      continue;
-    }
-    const minRoleLevel = GLOBAL_ROLES[moduleDef.minRole] ?? 0;
-    if (roleLevel >= minRoleLevel) {
-      result[key] = value;
-    }
-  }
-  
-  return result;
-}
 
 /**
  * Merge les clés registre brutes avec la projection legacy.
