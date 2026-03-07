@@ -6,7 +6,7 @@ import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts'
 import { validateString, validateOptionalString, validateOptionalBoolean } from '../_shared/validation.ts'
 import { getDefaultModulesForCreation, EnabledModule } from '../_shared/defaultModules.ts'
 
-const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
+// Resend initialized lazily inside handler to avoid boot crash on invalid API key chars
 
 serve(async (req) => {
   // Handle CORS preflight or reject unauthorized origins
@@ -310,6 +310,7 @@ serve(async (req) => {
         `
 
         console.log('[create-user] Envoi email à:', email)
+        const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
         const emailResult = await resend.emails.send({
           from: 'HelpConfort Services <noreply@helpconfort.services>',
           to: [email],
