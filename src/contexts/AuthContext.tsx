@@ -156,26 +156,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const hasFaqAdminRole = adminOptions.faq_admin === true; // Module admin_plateforme.faq_admin activé
   const canAccessFaqAdmin = hasFaqAdminRole || isAdmin; // faq_admin OU N5+
 
-  // Contexte d'accès V2.0
-  const accessContext: AccessControlContext = {
+  // Contexte d'accès V2.0 — PermissionContext de @/permissions
+  const accessContext: PermissionContext = {
     globalRole: globalRole ?? 'base_user',
     enabledModules: enabledModules ?? {},
-    agencyId, // Pour les contrôles de modules nécessitant une agence (agence, rh, parc)
+    agencyId,
   };
 
   // ============================================================================
-  // Guards V2.0 - À utiliser partout
+  // Guards V2.0 - À utiliser partout (délègue vers @/permissions/permissionsEngine)
   // ============================================================================
   const hasGlobalRoleGuard = useCallback((requiredRole: GlobalRole): boolean => {
-    return hasGlobalRoleFn(accessContext, requiredRole);
-  }, [accessContext]);
+    return hasMinRole(globalRole, requiredRole);
+  }, [globalRole]);
 
   const hasModuleGuard = useCallback((moduleKey: ModuleKey): boolean => {
-    return hasModuleFn(accessContext, moduleKey);
+    return hasAccess({ ...accessContext, moduleId: moduleKey });
   }, [accessContext]);
 
   const hasModuleOptionGuard = useCallback((moduleKey: ModuleKey, optionKey: string): boolean => {
-    return hasModuleOptionFn(accessContext, moduleKey, optionKey);
+    return hasAccess({ ...accessContext, moduleId: moduleKey, optionId: optionKey });
   }, [accessContext]);
 
   // Helper convertUserModulesToEnabledModules déplacé vers src/lib/userModulesUtils.ts
