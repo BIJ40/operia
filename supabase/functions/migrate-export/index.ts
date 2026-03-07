@@ -224,7 +224,7 @@ Deno.serve(async (req) => {
         page++;
       }
 
-      return jsonResponse({
+      return respond({
         mode: 'auth_users',
         count: allUsers.length,
         data: allUsers,
