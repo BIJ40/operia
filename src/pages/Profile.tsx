@@ -203,14 +203,10 @@ export default function Profile() {
     }
   };
 
-  const getEnabledModulesList = (modules: EnabledModules | null): string[] => {
-    if (!modules) return [];
-    
+  const getEnabledModulesList = (): string[] => {
     return MODULE_DEFINITIONS.filter(mod => {
-      const state = modules[mod.key];
-      if (typeof state === 'boolean') return state;
-      if (typeof state === 'object') return state.enabled;
-      return false;
+      const state = effectiveModulesData[mod.key];
+      return state?.enabled === true;
     }).map(mod => mod.label);
   };
 
