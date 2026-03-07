@@ -586,7 +586,7 @@ export function getAssignableRolesList(assignerRole: GlobalRole | null): GlobalR
 // Mapping pour dashboardTiles et navigation
 // ============================================================================
 
-export type TileGroup = 'help_academy' | 'pilotage' | 'rh' | 'support' | 'projects' | 'franchiseur' | 'admin';
+export type TileGroup = 'guides' | 'pilotage' | 'rh' | 'support' | 'projects' | 'franchiseur' | 'admin';
 
 /**
  * Vérifie si un groupe de tuiles est visible pour un rôle
@@ -599,7 +599,7 @@ export function canAccessTileGroup(
   const caps = getRoleCapabilities(role);
   
   switch (group) {
-    case 'help_academy':
+    case 'guides':
       return caps.canAccessHelpAcademy;
     case 'pilotage':
       if (caps.requiresAgencyForPilotage && !options?.agence) {
@@ -612,7 +612,7 @@ export function canAccessTileGroup(
     case 'support':
       return caps.canAccessSupport;
     case 'projects':
-      // Accessible si le module apogee_tickets est activé (vérifié au niveau tile)
+      // Accessible si le module ticketing est activé (vérifié au niveau tile)
       return true;
     case 'franchiseur':
       return caps.canAccessFranchiseur;
