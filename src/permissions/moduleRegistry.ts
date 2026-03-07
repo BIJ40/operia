@@ -186,16 +186,14 @@ export function hasKanbanAccess(
 ): boolean {
   if (!hasProjectManagementAccess(enabledModules)) return false;
   
-  const moduleState = enabledModules?.['apogee_tickets'];
+  const moduleState = enabledModules?.['ticketing'];
   
   if (typeof moduleState === 'object' && moduleState !== null) {
     const state = moduleState as { options?: { kanban?: boolean } };
-    // Si options non définies, kanban est activé par défaut
     if (!state.options) return true;
     return state.options.kanban !== false;
   }
   
-  // Si booléen true, toutes les options sont activées
   return typeof moduleState === 'boolean' && moduleState;
 }
 
