@@ -1,4 +1,5 @@
-import type jsPDF from 'jspdf';
+// jsPDF is loaded dynamically to reduce initial bundle size (~300KB)
+type JsPDFInstance = InstanceType<typeof import('jspdf').default>;
 import { 
   MODULES_DOCS, 
   EDGE_FUNCTIONS_DOCS, 
