@@ -267,8 +267,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           (reseauModule && typeof reseauModule === 'object' && reseauModule.enabled)
         );
 
-        // Appliquer sur le nouveau module 'agence' ET le legacy 'pilotage_agence' (compat)
-        const agenceModule = resolvedModules.agence as any ?? resolvedModules.pilotage_agence as any;
+        // Appliquer sur le module 'agence'
+        const agenceModule = resolvedModules.agence as any;
         if (isProAgency && agenceModule && typeof agenceModule === 'object' && agenceModule.enabled) {
           const agenceOptions = (agenceModule.options && typeof agenceModule.options === 'object')
             ? agenceModule.options as Record<string, boolean>
@@ -283,9 +283,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             },
           } as any;
 
-          // Mettre à jour les deux clés pour la compat
           resolvedModules.agence = enriched;
-          resolvedModules.pilotage_agence = enriched;
         }
 
         if (import.meta.env.DEV) {
