@@ -36,7 +36,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
-import { Layers, Monitor, Zap, TreePine } from 'lucide-react';
+import { Layers, Monitor, Zap, TreePine, ChevronRight, CornerDownRight } from 'lucide-react';
 
 // ============================================================================
 // Sub-components
@@ -124,21 +124,41 @@ interface ModuleRowProps {
 function ModuleRow({ node, onToggleDeploy, onTogglePlan, isUpdating }: ModuleRowProps) {
   const isNeutralized = !node.effectiveDeployed && node.is_deployed;
 
+  // Depth-based colors for tree lines
+  const depthColors = [
+    'text-primary',           // depth 0: root sections
+    'text-blue-500',          // depth 1
+    'text-violet-500',        // depth 2
+    'text-emerald-500',       // depth 3+
+  ];
+  const branchColor = depthColors[Math.min(node.depth, depthColors.length - 1)];
+
   return (
     <div
       className={cn(
         'grid grid-cols-[1fr_80px_60px_80px_80px_80px] gap-2 items-center py-2 px-3 border-b border-border/50 text-sm',
         'hover:bg-muted/30 transition-colors',
         !node.effectiveDeployed && 'opacity-50',
-        isNeutralized && 'bg-destructive/5'
+        isNeutralized && 'bg-destructive/5',
+        node.depth === 0 && 'bg-muted/20'
       )}
     >
-      {/* Name with indentation */}
+      {/* Name with tree branch indicators */}
       <div
-        className="flex items-center gap-1.5 min-w-0"
-        style={{ paddingLeft: `${node.depth * 20}px` }}
+        className="flex items-center min-w-0"
+        style={{ paddingLeft: `${node.depth * 16}px` }}
       >
-        <span className={cn('truncate', node.depth === 0 && 'font-semibold')}>
+        {node.depth > 0 && (
+          <CornerDownRight className={cn('w-3.5 h-3.5 mr-1.5 shrink-0', branchColor)} />
+        )}
+        {node.depth === 0 && (
+          <ChevronRight className={cn('w-4 h-4 mr-1.5 shrink-0', branchColor)} />
+        )}
+        <span className={cn(
+          'truncate',
+          node.depth === 0 && 'font-semibold text-foreground',
+          node.depth === 1 && 'font-medium',
+        )}>
           {node.label}
         </span>
       </div>
