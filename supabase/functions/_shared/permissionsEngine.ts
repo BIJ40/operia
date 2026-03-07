@@ -34,7 +34,7 @@ export type ModuleKey =
 
 export interface PermissionContext {
   globalRole: GlobalRole | null;
-  enabledModules: Record<string, any> | null;
+  enabledModules?: Record<string, any> | null; // DEPRECATED - kept for signature compat
   agencyId: string | null;
   supportLevel?: number | null;
 }
