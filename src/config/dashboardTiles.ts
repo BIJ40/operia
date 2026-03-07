@@ -84,7 +84,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: SCOPE_SLUGS.ACTIONS_A_MENER,
     color: 'accent',
     group: 'pilotage',
-    requiresModule: 'pilotage_agence',
+    requiresModule: 'agence',
     featureFlagKey: 'pilotage.actions-mener',
   },
   // HIDDEN: Veille Apporteurs - temporairement désactivé (voir /admin/hidden-features)
