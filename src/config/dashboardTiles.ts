@@ -29,7 +29,7 @@ export interface DashboardTile {
 }
 
 export const DASHBOARD_TILES: DashboardTile[] = [
-  // Help Academy
+  // Guides (ex-Help Academy)
   {
     id: 'GUIDE_APOGEE',
     title: 'Guide Apogée',
@@ -38,8 +38,8 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     route: ROUTES.academy.apogee,
     scopeSlug: SCOPE_SLUGS.APOGEE,
     color: 'primary',
-    group: 'help_academy',
-    requiresModule: 'help_academy',
+    group: 'guides',
+    requiresModule: 'guides',
   },
   {
     id: 'GUIDE_APPORTEURS',
@@ -49,8 +49,8 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     route: ROUTES.academy.apporteurs,
     scopeSlug: SCOPE_SLUGS.APPORTEURS,
     color: 'primary',
-    group: 'help_academy',
-    requiresModule: 'help_academy',
+    group: 'guides',
+    requiresModule: 'guides',
   },
   {
     id: 'BASE_DOCUMENTAIRE',
@@ -60,8 +60,8 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     route: ROUTES.academy.documents,
     scopeSlug: SCOPE_SLUGS.BASE_DOCUMENTAIRE,
     color: 'primary',
-    group: 'help_academy',
-    requiresModule: 'help_academy',
+    group: 'guides',
+    requiresModule: 'guides',
   },
   // Pilotage Agence
   {
