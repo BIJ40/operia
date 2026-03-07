@@ -307,13 +307,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       if (isProjectsProtected) {
-        // Forcer l'accès au module ticketing (et legacy apogee_tickets) avec toutes les options
+        // Forcer l'accès au module ticketing avec toutes les options
         const ticketingAccess = {
           enabled: true,
           options: { kanban: true, create: true, history: true },
         } as any;
         resolvedModules.ticketing = ticketingAccess;
-        resolvedModules.apogee_tickets = ticketingAccess;
         
         if (import.meta.env.DEV) {
           logAuth.info('[AUTH][PROTECTED] User has protected /projects access:', userId);

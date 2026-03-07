@@ -40,7 +40,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
   
   // V2: Remplace isAdmin par vérification de rôle + option module
-  const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('help_academy', 'edition');
+  const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('guides', 'edition');
   
   // État local pour le mode édition (toggle manuel)
   const [editModeEnabled, setEditModeEnabled] = useState(false);
