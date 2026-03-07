@@ -214,22 +214,23 @@ function OverridesPopover({
             <ScrollArea className="max-h-32 mb-2">
               <div className="space-y-1">
                 {overrides.map(o => (
-                  <div key={o.userId} className="flex items-center justify-between gap-2 text-xs py-1 px-1 rounded hover:bg-muted/50">
-                    <div className="min-w-0 truncate">
-                      <span className="font-medium">
+                  <div key={o.userId} className="group flex items-center justify-between gap-2 text-xs py-1.5 px-2 rounded hover:bg-muted/50">
+                    <div className="min-w-0 flex-1">
+                      <span className="font-medium truncate block">
                         {[o.firstName, o.lastName].filter(Boolean).join(' ') || 'Inconnu'}
                       </span>
                       {o.email && (
-                        <span className="text-muted-foreground ml-1 text-[10px]">{o.email}</span>
+                        <span className="text-muted-foreground text-[10px] truncate block">{o.email}</span>
                       )}
                     </div>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-5 w-5 shrink-0"
+                      className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                      title="Retirer ce privilège"
                       onClick={() => removeOverride.mutate({ userId: o.userId, moduleKey })}
                     >
-                      <X className="w-3 h-3" />
+                      <X className="w-3.5 h-3.5" />
                     </Button>
                   </div>
                 ))}
