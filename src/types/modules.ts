@@ -355,7 +355,15 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
   },
 ];
 
-// Structure de stockage des modules activés
+// Modules visibles dans la gestion des plans (auto-dérivé de MODULE_DEFINITIONS)
+// Exclut les modules adminOnly et les legacy keys
+const LEGACY_MODULE_KEYS: ModuleKey[] = ['help_academy', 'pilotage_agence', 'support', 'apogee_tickets', 'unified_search'];
+
+export const PLAN_VISIBLE_MODULES: ModuleKey[] = MODULE_DEFINITIONS
+  .filter(m => !m.adminOnly && !LEGACY_MODULE_KEYS.includes(m.key))
+  .map(m => m.key);
+
+
 export interface EnabledModules {
   agence?: boolean | ModuleOptionsState;
   stats?: boolean | ModuleOptionsState;
