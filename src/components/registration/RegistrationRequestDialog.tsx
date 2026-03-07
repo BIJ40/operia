@@ -66,6 +66,7 @@ export function RegistrationRequestDialog({ open, onOpenChange }: RegistrationRe
         email: form.email.trim().toLowerCase(),
         phone: form.phone.trim() || null,
         company_name: form.company_name.trim() || null,
+        agency_name: form.agency_name.trim() || null,
         message: form.message.trim() || null,
       });
 
