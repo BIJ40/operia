@@ -10,7 +10,7 @@ import { startOfMonth, endOfMonth, parseISO, isWithinInterval } from 'date-fns';
 import { computeCaParTechnicienCore, CaParTechnicienParams } from '@/statia/engines/caParTechnicienCore';
 import { DataService } from '@/apogee-connect/services/dataService';
 import { logDebug } from '@/lib/logger';
-import type { ApogeeLoadedData } from '@/types/apogee';
+// ApogeeLoadedData type available in src/types/apogee.ts for future typed migrations
 
 interface TechnicienKpis {
   caMonth: number;
