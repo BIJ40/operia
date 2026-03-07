@@ -184,7 +184,8 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Mon agence',
     description: 'Tableau de bord, KPIs et actions',
     icon: 'Building2',
-    category: 'agence',
+    category: 'outils',
+    uiSubTab: 'actions',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
@@ -198,7 +199,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Stats',
     description: 'Statistiques et tableaux de bord',
     icon: 'BarChart3',
-    category: 'agence',
+    category: 'stats',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
@@ -211,7 +212,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Salariés',
     description: 'Gestion des ressources humaines',
     icon: 'Users',
-    category: 'rh',
+    category: 'salaries',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
