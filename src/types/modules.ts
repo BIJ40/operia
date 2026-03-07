@@ -272,7 +272,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Documents',
     description: 'Médiathèque centralisée style Finder',
     icon: 'FolderOpen',
-    category: 'outils',
+    category: 'documents',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
