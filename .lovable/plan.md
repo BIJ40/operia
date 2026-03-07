@@ -13,38 +13,46 @@
    - `PLAN_VISIBLE_MODULES` filtre aussi les non-déployés
 
 2. **`src/components/users/UserModulesTab.tsx`** :
-   - Suppression de TOUTES les maps hardcodées (MODULE_CATEGORY_MAP, MODULE_ICONS, OPTIONS_BY_ROLE, OPTION_FEATURES, OPTION_TARGET_USERS)
+   - Suppression de TOUTES les maps hardcodées
    - Dérivation complète depuis `DEPLOYED_MODULES` + `MODULE_DEFINITIONS`
    - Affichage en arbre : Module → Options (en escalier avec └)
-   - Filtrage automatique des modules legacy et non déployés
    - Catégories basées sur `moduleDef.category`
 
 3. **`src/components/admin/views/PlansManagerView.tsx`** :
    - Affichage en arbre avec catégories groupées
    - Options expandables par module (chevron)
-   - Options héritent du toggle parent pour l'instant
    - Filtrage des modules non déployés
 
 ## Étape 2 : Gestion fine des options dans les plans ✅ FAIT
 
 ### Changements effectués
 
-1. **`src/components/admin/views/PlansManagerView.tsx`** :
-   - Chaque option peut maintenant être togglée individuellement par plan
-   - Utilise `options_override` JSONB dans `plan_tier_modules` (colonne existante)
-   - Logique 3 états: hérité (du parent) | activé explicitement | exclu
-   - Cocher le module parent propage aux enfants (reset les overrides)
-   - Cliquer sur une option l'exclut individuellement
-   - Re-cliquer supprime l'override (retour à héritage)
-   - Légende claire avec labels "hérité" / "exclu"
+1. **`PlansManagerView.tsx`** : Options togglables individuellement par plan via `options_override` JSONB
+2. Logique 3 états: hérité | activé | exclu. Toggle parent reset les overrides.
 
-2. **`src/hooks/access-rights/usePlanTiers.ts`** :
-   - Le hook `useUpdatePlanTierModule` supporte déjà `optionsOverride`
-   - La table `plan_tier_modules` a déjà la colonne `options_override` JSONB
+## Étape 3 : Cascade Plan → Rôle → Override utilisateur ✅ FAIT
 
-## Étape 3 : TODO — Cascade Plan → Rôle → Override utilisateur
-- `useEffectiveModules` doit calculer : Plan agence → filtre rôle → override utilisateur
-- Montrer dans UserModulesTab ce qui vient du plan (lecture seule) vs override (éditable)
+### Changements effectués
+
+1. **RPC `get_user_effective_modules`** (migration SQL) :
+   - Cascade serveur: Plan agence (`plan_tier_modules`) → User overrides (`user_modules`)
+   - Récupère le plan actif de l'agence via `agency_subscription`
+   - Fusionne options plan + options user (user gagne)
+   - Modules user hors plan aussi retournés (grants explicites)
+
+2. **`src/hooks/access-rights/useEffectiveModules.ts`** :
+   - Ajout filtre par rôle côté client via `MODULE_DEFINITIONS.minRole`
+   - Fonction `filterByRole()` : compare `GLOBAL_ROLES[userRole]` vs `GLOBAL_ROLES[moduleDef.minRole]`
+   - N5+ bypass le filtre rôle (accès total)
+   - Modules legacy sans définition passent le filtre (rétrocompat)
+
+3. **Cascade complète** :
+   ```
+   Plan agence (plan_tier_modules)
+     → Merge user overrides (user_modules prennent le dessus)  [serveur]
+     → Filtre par rôle (MODULE_DEFINITIONS.minRole)            [client]
+     → N5+ bypass complet                                      [client]
+   ```
 
 ## Étape 4 : TODO — Fusionner/nettoyer feature flags
 - Décider du sort de la table `feature_flags` vs `MODULE_DEFINITIONS`
