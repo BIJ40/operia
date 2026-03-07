@@ -7,8 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Pencil, UserX, UserCheck, Trash2, AlertCircle, Shield, ChevronDown } from 'lucide-react';
-import { UserPermissionsDialog } from './UserPermissionsDialog';
+import { Pencil, UserX, UserCheck, Trash2, AlertCircle, Eye, ChevronDown } from 'lucide-react';
+import { UserProfileSheet } from './UserProfileSheet';
 
 // Postes disponibles
 const ROLE_AGENCE_LABELS: Record<string, string> = {
