@@ -570,6 +570,14 @@ function UnifiedWorkspaceContent() {
                   <AdminTabContent />
                 </TabsContent>
                 
+                <TabsContent value="test" className="mt-0">
+                  <div className="p-8 text-center space-y-4">
+                    <FlaskConical className="w-12 h-12 mx-auto text-muted-foreground" />
+                    <h2 className="text-xl font-semibold text-foreground">Onglet TEST</h2>
+                    <p className="text-muted-foreground">Cet onglet est réservé aux tests.</p>
+                  </div>
+                </TabsContent>
+                
               </Suspense>
             </main>
           </Tabs>
