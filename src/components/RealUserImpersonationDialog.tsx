@@ -59,7 +59,7 @@ export function RealUserImpersonationDialog({ open, onOpenChange }: RealUserImpe
       
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, first_name, last_name, global_role, agence, role_agence, enabled_modules')
+        .select('id, email, first_name, last_name, global_role, agence, role_agence')
         .or(`email.ilike.%${searchQuery}%,first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%`)
         .limit(20);
       
