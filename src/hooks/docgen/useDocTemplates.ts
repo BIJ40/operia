@@ -97,7 +97,7 @@ export function useCreateDocTemplate() {
     },
     onError: (error) => {
       toast.error("Erreur lors de la création du template");
-      console.error(error);
+      logError(error);
     },
   });
 }
