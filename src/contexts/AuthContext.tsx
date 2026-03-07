@@ -11,83 +11,33 @@ import { setSentryUser, clearSentryUser } from '@/lib/sentry';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { EnabledModules, ModuleKey, isModuleEnabled as checkModuleEnabled } from '@/types/modules';
 import { 
-  hasAccess, hasMinRole, getUserManagementCapabilities, isModuleEnabled, isModuleOptionEnabled,
+  hasAccess, hasMinRole, 
   type PermissionContext,
 } from '@/permissions';
-import { getRoleCapabilities } from '@/config/roleMatrix';
 import { userModulesToEnabledModules } from '@/lib/userModulesUtils';
 
+// Sub-contexts (Phase 1 split)
+import { AuthCoreContext, type AuthCoreContextType } from './AuthCoreContext';
+import { ProfileContext, type ProfileContextType } from './ProfileContext';
+import { PermissionsContext, type PermissionsContextType } from './PermissionsContext';
 
 // Types pour le module Support
 interface SupportModuleOptions {
-  user?: boolean;   // Portail Mes Demandes
-  agent?: boolean;  // Accès console support
-  admin?: boolean;  // Admin support
+  user?: boolean;
+  agent?: boolean;
+  admin?: boolean;
 }
 
 // Types pour le module Admin Plateforme
 interface AdminPlatformeModuleOptions {
-  faq_admin?: boolean; // Admin FAQ sans accès /admin complet
+  faq_admin?: boolean;
 }
 
-interface AuthContextType {
-  // État utilisateur
-  isAuthenticated: boolean;
-  isAuthLoading: boolean;
-  user: User | null;
-  isLoggingOut: boolean;
-  
-  // Profil utilisateur
-  firstName: string | null;
-  lastName: string | null;
-  agence: string | null;
-  agencyId: string | null; // UUID de l'agence
-  roleAgence: string | null;
-  mustChangePassword: boolean;
-  isActive: boolean;
-  
-  // ============================================================================
-  // SYSTÈME V2.0 - Source de vérité unique
-  // ============================================================================
-  globalRole: GlobalRole | null;
-  enabledModules: EnabledModules | null;
-  accessContext: PermissionContext;
-  
-  // Guards V2.0 - À UTILISER PARTOUT
-  hasGlobalRole: (requiredRole: GlobalRole) => boolean;
-  hasModule: (moduleKey: ModuleKey) => boolean;
-  hasModuleOption: (moduleKey: ModuleKey, optionKey: string) => boolean;
-  
-  // Helpers de niveau V2
-  isAdmin: boolean;
-  isSupport: boolean;
-  isFranchiseur: boolean;
-  
-  // ============================================================================
-  // MODULE SUPPORT - Flags granulaires (P1.2 - Option B, P2.1 - Sémantique)
-  // ============================================================================
-  canAccessSupportUser: boolean;       // Portail Mes Demandes (toujours true)
-  hasSupportAgentRole: boolean;        // Module support.agent activé
-  isSupportAdmin: boolean;             // Module support.admin activé
-  canAccessSupportConsoleUI: boolean;  // Console Support = support.agent OU N5+
-  canManageTickets: boolean;           // Alias de canAccessSupportConsoleUI
-  
-  // ============================================================================
-  // MODULE FAQ ADMIN - Accès /admin/faq sans accès /admin complet
-  // ============================================================================
-  hasFaqAdminRole: boolean;            // Module admin_plateforme.faq_admin activé
-  canAccessFaqAdmin: boolean;          // faq_admin OU N5+
-  
-  // Read-only mode
-  isReadOnly: boolean;
-  
-  // Auth actions
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  logout: () => Promise<void>;
-  
-  // Compatibilité minimale
+// ============================================================================
+// Legacy AuthContextType — kept for backward-compat with useAuth()
+// ============================================================================
+interface AuthContextType extends AuthCoreContextType, ProfileContextType, PermissionsContextType {
   hasAccessToScope: (scope: string) => boolean;
-  suggestedGlobalRole: GlobalRole;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -110,26 +60,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isActive, setIsActive] = useState(true);
   const [isReadOnly, setIsReadOnly] = useState(false);
   
-  // ============================================================================
-  // SYSTÈME V2.0 - États principaux
-  // ============================================================================
+  // Permissions V2
   const [globalRole, setGlobalRole] = useState<GlobalRole | null>(null);
   const [enabledModules, setEnabledModules] = useState<EnabledModules | null>(null);
   
-  // Ref to track user ID across auth events (prevents tab-switch UI resets)
   const currentUserIdRef = useRef<string | null>(null);
 
   // ============================================================================
-  // Calculs dérivés V2
+  // Derived permission flags (memoized)
   // ============================================================================
   const globalRoleLevel = globalRole ? GLOBAL_ROLES[globalRole] : 0;
-  const isAdmin = globalRoleLevel >= GLOBAL_ROLES.platform_admin; // N5+
-  const isFranchiseur = globalRoleLevel >= GLOBAL_ROLES.franchisor_user; // N3+
+  const isAdmin = globalRoleLevel >= GLOBAL_ROLES.platform_admin;
+  const isFranchiseur = globalRoleLevel >= GLOBAL_ROLES.franchisor_user;
   const isSupport = checkModuleEnabled(enabledModules, 'aide');
 
-  // ============================================================================
-  // MODULE AIDE - Logique granulaire
-  // ============================================================================
+  // Support module
   const supportModuleConfig = enabledModules?.aide;
   const supportOptions: SupportModuleOptions = 
     (typeof supportModuleConfig === 'object' && supportModuleConfig !== null && 'options' in supportModuleConfig)
@@ -139,33 +84,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const canAccessSupportUser = true;
   const hasSupportAgentRole = supportOptions.agent === true;
   const isSupportAdmin = supportOptions.admin === true;
-  
-  // Console Support = support.agent OU N5+
   const canAccessSupportConsoleUI = hasSupportAgentRole || isAdmin;
-  const canManageTickets = canAccessSupportConsoleUI; // Alias pour compatibilité
+  const canManageTickets = canAccessSupportConsoleUI;
 
-  // ============================================================================
-  // MODULE FAQ ADMIN - Logique granulaire
-  // ============================================================================
+  // FAQ Admin module
   const adminModuleConfig = enabledModules?.admin_plateforme;
   const adminOptions: AdminPlatformeModuleOptions = 
     (typeof adminModuleConfig === 'object' && adminModuleConfig !== null && 'options' in adminModuleConfig)
       ? (adminModuleConfig.options as AdminPlatformeModuleOptions)
       : {};
   
-  const hasFaqAdminRole = adminOptions.faq_admin === true; // Module admin_plateforme.faq_admin activé
-  const canAccessFaqAdmin = hasFaqAdminRole || isAdmin; // faq_admin OU N5+
+  const hasFaqAdminRole = adminOptions.faq_admin === true;
+  const canAccessFaqAdmin = hasFaqAdminRole || isAdmin;
 
-  // Contexte d'accès V2.0 — PermissionContext de @/permissions (mémorisé)
+  // Permission context
   const accessContext: PermissionContext = useMemo(() => ({
     globalRole: globalRole ?? 'base_user',
     enabledModules: enabledModules ?? {},
     agencyId,
   }), [globalRole, enabledModules, agencyId]);
 
-  // ============================================================================
-  // Guards V2.0 - À utiliser partout (délègue vers @/permissions/permissionsEngine)
-  // ============================================================================
+  // Guards
   const hasGlobalRoleGuard = useCallback((requiredRole: GlobalRole): boolean => {
     return hasMinRole(globalRole, requiredRole);
   }, [globalRole]);
@@ -178,19 +117,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return hasAccess({ ...accessContext, moduleId: moduleKey, optionId: optionKey });
   }, [accessContext]);
 
-  // Helper convertUserModulesToEnabledModules déplacé vers src/lib/userModulesUtils.ts
-
   // ============================================================================
-  // Chargement des données utilisateur (V2 + user_modules table)
+  // Chargement des données utilisateur
   // ============================================================================
   const loadUserData = useCallback(async (userId: string) => {
     try {
-      // Requêtes parallèles avec timeout global
       const timeoutId = setTimeout(() => {
         throw new Error('Timeout: chargement profil trop long');
       }, 10000);
 
-      // Requêtes parallèles : profil + modules effectifs
       const [profileResult, modulesResult] = await Promise.all([
         supabase
           .from('profiles')
@@ -222,11 +157,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setMustChangePassword(profile?.must_change_password || false);
       setIsReadOnly(profile?.is_read_only === true);
       
-      // Vérifier si le compte est actif
-      const accountActive = profile?.is_active !== false; // true par défaut
+      const accountActive = profile?.is_active !== false;
       setIsActive(accountActive);
       
-      // Si le compte est désactivé, forcer la déconnexion
       if (!accountActive) {
         logAuth.warn('[AUTH] Compte désactivé, déconnexion forcée');
         await supabase.auth.signOut();
@@ -236,11 +169,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // V2.0 - Utiliser directement les valeurs de la DB
       const dbGlobalRole = profile?.global_role as GlobalRole | null;
       
-      // Convertir le résultat de la RPC get_user_effective_modules en EnabledModules
-      // La RPC combine: plan agence (plan_tier_modules) + overrides agence + overrides utilisateur
       let resolvedModules: EnabledModules = {};
       if (effectiveModules && Array.isArray(effectiveModules) && effectiveModules.length > 0) {
         for (const row of effectiveModules) {
@@ -253,8 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
         }
 
-        // Règle métier: dans le plan PRO, certaines options de stats/agence sont incluses d'office
-        // On considère qu'une agence est en PRO si elle a accès à parc ou reseau_franchiseur
+        // PRO plan auto-enrichment
         const parcModule = resolvedModules.parc as any;
         const reseauModule = resolvedModules.reseau_franchiseur as any;
         const isProAgency = !!(
@@ -262,44 +191,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           (reseauModule && typeof reseauModule === 'object' && reseauModule.enabled)
         );
 
-        // Appliquer sur le module 'agence'
         const agenceModule = resolvedModules.agence as any;
         if (isProAgency && agenceModule && typeof agenceModule === 'object' && agenceModule.enabled) {
           const agenceOptions = (agenceModule.options && typeof agenceModule.options === 'object')
             ? agenceModule.options as Record<string, boolean>
             : {};
 
-          const enriched = {
+          resolvedModules.agence = {
             enabled: true,
-            options: {
-              ...agenceOptions,
-              // Stats Hub inclus dans le plan PRO (mais pas dans STARTER)
-              stats_hub: true,
-            },
+            options: { ...agenceOptions, stats_hub: true },
           } as any;
-
-          resolvedModules.agence = enriched;
         }
 
         if (import.meta.env.DEV) {
-          logAuth.info('[AUTH] Modules loaded from RPC get_user_effective_modules:', effectiveModules.length);
+          logAuth.info('[AUTH] Modules loaded from RPC:', effectiveModules.length);
         }
       } else {
-        // Fallback minimal si RPC échoue ou retourne vide
         resolvedModules = {};
         if (import.meta.env.DEV) {
           logAuth.info('[AUTH] No effective modules returned from RPC');
         }
       }
 
-
-      // Définir le rôle global (valeur par défaut si non défini)
       setGlobalRole(dbGlobalRole || 'base_user');
-      
-      // Définir les modules activés
       setEnabledModules(resolvedModules);
 
-      // Configurer Sentry avec le contexte utilisateur
+      // Sentry user context
       const { data: userData } = await supabase.auth.getUser();
       if (userData?.user) {
         setSentryUser({
@@ -310,23 +227,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
       }
 
-      // Logging en dev
       if (import.meta.env.DEV) {
         logAuth.info('[AUTH][V2] User loaded:', {
           userId,
           globalRole: dbGlobalRole || 'base_user (default)',
           modulesCount: Object.keys(resolvedModules).length,
-          moduleSource: 'rpc_get_user_effective_modules',
         });
       }
-
     } catch (error) {
       logAuth.error('Erreur chargement données utilisateur', error);
     }
   }, []);
 
   // ============================================================================
-  // Gestion de l'authentification Supabase
+  // Auth state management
   // ============================================================================
   useEffect(() => {
     let isLoadingUserData = false;
@@ -335,13 +249,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const init = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        
         if (!isMounted) return;
         
         setUser(session?.user ?? null);
-        // IMPORTANT: keep a stable userId reference from the very first session load.
-        // If this stays null until the first auth event, a later focus/tab event can
-        // look like a "user change" and retrigger loadUserData(), causing the micro-loader.
         currentUserIdRef.current = session?.user?.id ?? null;
         
         if (session?.user) {
@@ -354,9 +264,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } catch (error) {
               logAuth.error('Erreur init loadUserData:', error);
             } finally {
-              if (isMounted) {
-                setIsAuthLoading(false);
-              }
+              if (isMounted) setIsAuthLoading(false);
               isLoadingUserData = false;
             }
           }, 0);
@@ -365,26 +273,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } catch (error) {
         logAuth.error('Erreur initialisation auth', error);
-        if (isMounted) {
-          setIsAuthLoading(false);
-        }
+        if (isMounted) setIsAuthLoading(false);
       }
     };
     
     init();
     
-    // Keep current user id across auth events (prevents tab-switch UI resets)
-    // Using a ref ensures we don't re-render just to track this.
     const getCurrentUserId = () => currentUserIdRef.current;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        // Skip initial session - handled by init()
         if (event === 'INITIAL_SESSION') return;
 
-        // IMPORTANT: Supabase emits TOKEN_REFRESHED when switching browser tabs.
-        // We do NOT want to trigger any UI state resets (dialogs, filters, etc.)
-        // on a token refresh, since the user hasn't changed.
         if (event === 'TOKEN_REFRESHED') {
           if (session?.user?.id && getCurrentUserId() !== session.user.id) {
             currentUserIdRef.current = session.user.id;
@@ -396,12 +296,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const newUserId = session?.user?.id ?? null;
         currentUserIdRef.current = newUserId;
 
-        // Skip no-op events when user didn't change.
-        // We also ignore a redundant SIGNED_IN for the same userId (seen on some tab-focus flows),
-        // otherwise it can briefly set isAuthLoading(true) and unmount guarded routes.
-        if (newUserId === prevUserId && event !== 'SIGNED_OUT') {
-          return;
-        }
+        if (newUserId === prevUserId && event !== 'SIGNED_OUT') return;
 
         setUser(session?.user ?? null);
 
@@ -409,36 +304,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setTimeout(async () => {
             if (!isMounted || isLoadingUserData) return;
             isLoadingUserData = true;
-
-            // Only show loading for actual sign-in
-            if (event === 'SIGNED_IN') {
-              setIsAuthLoading(true);
-            }
-
+            if (event === 'SIGNED_IN') setIsAuthLoading(true);
             try {
               await loadUserData(session.user.id);
             } catch (error) {
               logAuth.error('Erreur chargement données utilisateur', error);
             }
-
-            if (isMounted) {
-              setIsAuthLoading(false);
-            }
+            if (isMounted) setIsAuthLoading(false);
             isLoadingUserData = false;
           }, 0);
         } else {
-          // Reset state on logout
-          setFirstName(null);
-          setLastName(null);
-          setAgence(null);
-          setAgencyId(null);
-          setRoleAgence(null);
-          setMustChangePassword(false);
-          setIsActive(true);
-      setGlobalRole(null);
-      setEnabledModules(null);
-      setIsReadOnly(false);
-      setIsAuthLoading(false);
+          // Reset on logout
+          resetState();
+          setIsAuthLoading(false);
         }
       }
     );
@@ -449,10 +327,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [loadUserData]);
 
+  const resetState = useCallback(() => {
+    setFirstName(null);
+    setLastName(null);
+    setAgence(null);
+    setAgencyId(null);
+    setRoleAgence(null);
+    setMustChangePassword(false);
+    setIsActive(true);
+    setGlobalRole(null);
+    setEnabledModules(null);
+    setIsReadOnly(false);
+  }, []);
+
   // ============================================================================
-  // Actions d'authentification
+  // Auth actions
   // ============================================================================
-  const login = async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) return { success: false, error: error.message };
@@ -461,69 +352,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logAuth.error('Erreur connexion', err);
       return { success: false, error: 'Une erreur est survenue' };
     }
-  };
+  }, []);
 
-
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       setIsLoggingOut(true);
       await new Promise((resolve) => setTimeout(resolve, 800));
       await supabase.auth.signOut();
 
-      // Reset préchargement (sessionStorage) :
-      // - permet de ré-afficher la pop-up à la prochaine connexion
-      // - évite les effets de bord entre sessions
       try {
         Object.keys(sessionStorage)
           .filter((key) => key.startsWith('preload:') || key.startsWith('preload_ui_shown:'))
           .forEach((key) => sessionStorage.removeItem(key));
-      } catch {
-        // Ignore
-      }
+      } catch { /* ignore */ }
 
       Object.keys(localStorage)
         .filter((key) => key.startsWith('sb-'))
         .forEach((key) => localStorage.removeItem(key));
 
       localStorage.removeItem('editMode');
-      
-      // Clear Sentry user context
       clearSentryUser();
-      
-      // Reset V2 state
-      setFirstName(null);
-      setLastName(null);
-      setAgence(null);
-      setAgencyId(null);
-      setRoleAgence(null);
-      setMustChangePassword(false);
-      setIsActive(true);
-      setGlobalRole(null);
-      setEnabledModules(null);
-      setIsReadOnly(false);
+      resetState();
       setUser(null);
     } catch (error) {
       logAuth.error('Erreur déconnexion', error);
     } finally {
       window.location.href = '/';
     }
-  };
+  }, [resetState]);
 
-  // Wrappers minimaux de compatibilité
   const hasAccessToScope = useCallback((_scope: string): boolean => true, []);
 
   // ============================================================================
-  // IMPERSONATION OVERRIDE - Substituer les données si impersonation active
+  // Sub-context values (memoized independently to prevent cascading re-renders)
   // ============================================================================
-  // NOTE: On ne peut pas utiliser useImpersonation() ici car AuthContext enveloppe
-  // ImpersonationContext. La gestion de l'override se fait donc dans le wrapper
-  // AuthProviderWithImpersonation ci-dessous.
-  
-  const providerValue = useMemo(() => ({
+  const coreValue: AuthCoreContextType = useMemo(() => ({
+    user,
     isAuthenticated: !!user,
     isAuthLoading,
-    user,
     isLoggingOut,
+    login,
+    logout,
+  }), [user, isAuthLoading, isLoggingOut, login, logout]);
+
+  const profileValue: ProfileContextType = useMemo(() => ({
     firstName,
     lastName,
     agence,
@@ -531,6 +403,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     roleAgence,
     mustChangePassword,
     isActive,
+    isReadOnly,
+  }), [firstName, lastName, agence, agencyId, roleAgence, mustChangePassword, isActive, isReadOnly]);
+
+  const permissionsValue: PermissionsContextType = useMemo(() => ({
     globalRole,
     enabledModules,
     accessContext,
@@ -547,30 +423,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     canManageTickets,
     hasFaqAdminRole,
     canAccessFaqAdmin,
-    isReadOnly,
-    login, 
-    logout,
-    hasAccessToScope,
     suggestedGlobalRole: globalRole ?? 'base_user',
   }), [
-    user, isAuthLoading, isLoggingOut,
-    firstName, lastName, agence, agencyId, roleAgence,
-    mustChangePassword, isActive, globalRole, enabledModules, accessContext,
+    globalRole, enabledModules, accessContext,
     hasGlobalRoleGuard, hasModuleGuard, hasModuleOptionGuard,
     isAdmin, isSupport, isFranchiseur,
     canAccessSupportUser, hasSupportAgentRole, isSupportAdmin,
     canAccessSupportConsoleUI, canManageTickets,
     hasFaqAdminRole, canAccessFaqAdmin,
-    isReadOnly, login, logout, hasAccessToScope,
   ]);
 
+  // Legacy combined value for useAuth() backward compat
+  const legacyValue: AuthContextType = useMemo(() => ({
+    ...coreValue,
+    ...profileValue,
+    ...permissionsValue,
+    hasAccessToScope,
+  }), [coreValue, profileValue, permissionsValue, hasAccessToScope]);
+
   return (
-    <AuthContext.Provider value={providerValue}>
-      {children}
+    <AuthContext.Provider value={legacyValue}>
+      <AuthCoreContext.Provider value={coreValue}>
+        <ProfileContext.Provider value={profileValue}>
+          <PermissionsContext.Provider value={permissionsValue}>
+            {children}
+          </PermissionsContext.Provider>
+        </ProfileContext.Provider>
+      </AuthCoreContext.Provider>
     </AuthContext.Provider>
   );
 }
 
+/**
+ * useAuth() — Backward-compatible facade.
+ * 
+ * For new code, prefer the granular hooks:
+ * - `useAuthCore()` — session/login/logout only
+ * - `useProfile()` — user profile data only
+ * - `usePermissions()` — roles and modules only
+ */
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
