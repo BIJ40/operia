@@ -6,7 +6,7 @@ import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts'
 import { validateString, validateOptionalString, validateOptionalBoolean } from '../_shared/validation.ts'
 import { getDefaultModulesForCreation, EnabledModule } from '../_shared/defaultModules.ts'
 
-const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
+// Resend initialized lazily inside handler to avoid boot crash on invalid API key chars
 
 serve(async (req) => {
   // Handle CORS preflight or reject unauthorized origins
