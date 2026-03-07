@@ -203,7 +203,7 @@ function OverridesPopover({
           {count > 0 ? count : '—'}
         </Badge>
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-0" align="end">
+      <PopoverContent className="w-72 p-0 z-50" align="end" sideOffset={5}>
         <div className="p-3 pb-2">
           <p className="text-xs font-medium text-foreground mb-2">
             Privilèges — <span className="text-muted-foreground font-normal">{moduleKey}</span>
@@ -288,7 +288,7 @@ function OverridesPopover({
 // Row component
 // ============================================================================
 
-const GRID_COLS = 'grid-cols-[minmax(200px,max-content)_80px_60px_80px_80px_60px_70px]';
+const GRID_COLS = 'grid-cols-[minmax(200px,max-content)_80px_60px_80px_80px_60px_80px]';
 
 interface ModuleRowProps {
   node: RegistryNode;
@@ -355,7 +355,7 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
       </div>
 
       {/* Privilèges */}
-      <div className="flex justify-center">
+      <div className="flex justify-center relative z-10">
         <OverridesPopover moduleKey={node.key} overrides={overrides} dimmed={!node.effectiveDeployed} />
       </div>
     </div>
