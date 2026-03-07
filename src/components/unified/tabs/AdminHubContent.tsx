@@ -31,6 +31,7 @@ const TDRUsersPage = lazy(() => import('@/pages/TDRUsersPage'));
 const AdminUserActivity = lazy(() => import('@/pages/AdminUserActivity'));
 const FranchiseurView = lazy(() => import('@/components/unified/views/FranchiseurView'));
 const ApporteurManagersAdminView = lazy(() => import('@/components/admin/views/ApporteurManagersAdminView'));
+const PendingRegistrationsList = lazy(() => import('@/components/admin/registrations/PendingRegistrationsList'));
 
 function LoadingFallback() {
   return (
