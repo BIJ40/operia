@@ -3,3 +3,4 @@ export { UserFilters } from './UserFilters';
 export { UserAccordionItem } from './UserAccordionItem';
 export { UserRowItem } from './UserRowItem';
 export { UserPermissionsDialog } from './UserPermissionsDialog';
+export { UserProfileSheet } from './UserProfileSheet';
