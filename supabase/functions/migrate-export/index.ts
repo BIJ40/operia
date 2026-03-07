@@ -238,7 +238,7 @@ Deno.serve(async (req) => {
     if (mode === 'storage') {
       const { data: buckets, error } = await admin.storage.listBuckets();
       if (error) {
-        return jsonResponse({ error: error.message }, 500);
+        return respond({ error: error.message }, 500);
       }
 
       const bucketsWithFiles: any[] = [];
