@@ -138,15 +138,27 @@ export const MODULE_OPTIONS = {
 export type ModuleOptionPath = typeof MODULE_OPTIONS[ModuleKey][keyof typeof MODULE_OPTIONS[ModuleKey]];
 
 // Métadonnées des modules pour l'UI
-export type ModuleCategory = 'agence' | 'rh' | 'outils' | 'guides' | 'ticketing' | 'support' | 'reseau' | 'admin';
+// Les catégories correspondent EXACTEMENT aux onglets de niveau 1 du workspace
+export type ModuleCategory = 
+  | 'stats'       // Onglet "Stats"
+  | 'salaries'    // Onglet "Salariés"
+  | 'outils'      // Onglet "Outils" (Actions, Apporteurs, Administratif, Parc, Performance, Commercial)
+  | 'documents'   // Onglet "Documents" (Médiathèque)
+  | 'guides'      // Onglet "Guides" (Apogée, Apporteurs, HelpConfort, FAQ)
+  | 'ticketing'   // Onglet "Ticketing" (Liste, Kanban, Revue, Historique)
+  | 'aide'        // Onglet "Aide" (Support)
+  | 'reseau'      // Onglet "Franchiseur" (visible N3+)
+  | 'admin';      // Onglet "Admin" (visible N5+)
 
 export interface ModuleDefinition {
   key: ModuleKey;
   label: string;
   description: string;
   icon: string;
-  /** Catégorie UI pour le regroupement (reflète les onglets principaux) */
+  /** Catégorie UI = onglet de niveau 1 du workspace */
   category: ModuleCategory;
+  /** Sous-onglet de niveau 2 dans l'onglet parent (ex: 'parc' dans Outils) */
+  uiSubTab?: string;
   defaultForRoles: GlobalRole[];
   minRole: GlobalRole;
   options: ModuleOptionDefinition[];
@@ -172,7 +184,8 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Mon agence',
     description: 'Tableau de bord, KPIs et actions',
     icon: 'Building2',
-    category: 'agence',
+    category: 'outils',
+    uiSubTab: 'actions',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
@@ -186,7 +199,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Stats',
     description: 'Statistiques et tableaux de bord',
     icon: 'BarChart3',
-    category: 'agence',
+    category: 'stats',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
@@ -199,7 +212,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Salariés',
     description: 'Gestion des ressources humaines',
     icon: 'Users',
-    category: 'rh',
+    category: 'salaries',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
@@ -213,6 +226,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     description: 'Véhicules et équipements',
     icon: 'Truck',
     category: 'outils',
+    uiSubTab: 'parc',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
@@ -227,6 +241,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     description: 'Gestion des apporteurs',
     icon: 'Handshake',
     category: 'outils',
+    uiSubTab: 'apporteurs',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
@@ -240,6 +255,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     description: 'Gestion des plannings',
     icon: 'Calendar',
     category: 'outils',
+    uiSubTab: 'administratif',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [],
@@ -250,6 +266,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     description: 'Gestion des réunions',
     icon: 'Video',
     category: 'outils',
+    uiSubTab: 'administratif',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [],
@@ -259,7 +276,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Documents',
     description: 'Médiathèque centralisée style Finder',
     icon: 'FolderOpen',
-    category: 'outils',
+    category: 'documents',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
@@ -303,7 +320,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Aide',
     description: 'Support et assistance',
     icon: 'HelpCircle',
-    category: 'support',
+    category: 'aide',
     defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
     minRole: 'base_user',
     options: [
@@ -317,6 +334,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     description: 'Suivi commercial et prospection',
     icon: 'Target',
     category: 'outils',
+    uiSubTab: 'prospection',
     deployed: false, // Pas encore déployé officiellement
     defaultForRoles: [],
     minRole: 'franchisee_admin',
