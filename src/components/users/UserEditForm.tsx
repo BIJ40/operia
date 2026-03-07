@@ -61,11 +61,11 @@ export interface UserProfile {
   last_name: string | null;
   agence: string | null;
   global_role: GlobalRole | null;
-  enabled_modules: any;
   role_agence: string | null;
   is_active: boolean | null;
   must_change_password: boolean | null;
   apogee_user_id?: number | null;
+  support_level?: number | null;
 }
 
 export interface UserEditFormProps {
