@@ -2,15 +2,13 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
 
 const MIGRATION_SECRET = Deno.env.get('MIGRATION_SECRET') ?? '';
 
+import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
+
+// jsonResponse is used inside the handler; CORS is applied via withCors wrapper at call sites
 function jsonResponse(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'authorization, apikey, content-type',
-    },
+    headers: { 'Content-Type': 'application/json' },
   });
 }
 
@@ -81,16 +79,18 @@ function topoSort(allTables: string[], deps: { child_table: string; parent_table
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return jsonResponse({ ok: true });
-  }
+  const corsResult = handleCorsPreflightOrReject(req);
+  if (corsResult) return corsResult;
+
+  // Override jsonResponse locally to include CORS
+  const respond = (data: unknown, status = 200) => withCors(req, jsonResponse(data, status));
 
   try {
     const url = new URL(req.url);
     const secret = url.searchParams.get('secret');
 
     if (secret !== MIGRATION_SECRET) {
-      return jsonResponse({ error: 'Secret invalide' }, 403);
+      return respond({ error: 'Secret invalide' }, 403);
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
 
       const totalRows = tableInfos.reduce((sum, t) => sum + Math.max(t.count, 0), 0);
 
-      return jsonResponse({
+      return respond({
         mode: 'tables',
         tables: tableInfos.sort((a, b) => a.import_position - b.import_position),
         import_order: importOrder,
@@ -143,7 +143,7 @@ Deno.serve(async (req) => {
     if (mode === 'export') {
       const table = url.searchParams.get('table');
       if (!table) {
-        return jsonResponse({ error: 'Parametre table requis' }, 400);
+        return respond({ error: 'Parametre table requis' }, 400);
       }
 
       const pageParam = url.searchParams.get('page');
@@ -162,14 +162,14 @@ Deno.serve(async (req) => {
             .range(page * pageSize, (page + 1) * pageSize - 1);
 
           if (error) {
-            return jsonResponse({ error: error.message, table }, 400);
+            return respond({ error: error.message, table }, 400);
           }
           allRows.push(...(data ?? []));
           hasMore = (data?.length ?? 0) === pageSize;
           page++;
         }
 
-        return jsonResponse({
+        return respond({
           table,
           count: allRows.length,
           complete: true,
@@ -190,11 +190,11 @@ Deno.serve(async (req) => {
         .range(offset, offset + pageSize - 1);
 
       if (error) {
-        return jsonResponse({ error: error.message, table }, 400);
+        return respond({ error: error.message, table }, 400);
       }
 
       const rows = data ?? [];
-      return jsonResponse({
+      return respond({
         table,
         page,
         pageSize,
@@ -217,14 +217,14 @@ Deno.serve(async (req) => {
       while (hasMore) {
         const { data: { users }, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
         if (error) {
-          return jsonResponse({ error: error.message }, 500);
+          return respond({ error: error.message }, 500);
         }
         allUsers.push(...users);
         hasMore = users.length === 1000;
         page++;
       }
 
-      return jsonResponse({
+      return respond({
         mode: 'auth_users',
         count: allUsers.length,
         data: allUsers,
@@ -238,7 +238,7 @@ Deno.serve(async (req) => {
     if (mode === 'storage') {
       const { data: buckets, error } = await admin.storage.listBuckets();
       if (error) {
-        return jsonResponse({ error: error.message }, 500);
+        return respond({ error: error.message }, 500);
       }
 
       const bucketsWithFiles: any[] = [];
@@ -280,7 +280,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      return jsonResponse({
+      return respond({
         mode: 'storage',
         buckets: bucketsWithFiles,
         total_buckets: bucketsWithFiles.length,
@@ -288,7 +288,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    return jsonResponse({
+    return respond({
       error: 'Mode invalide',
       modes: {
         tables: 'Liste tables + counts + ordre import FK',
@@ -299,6 +299,6 @@ Deno.serve(async (req) => {
     }, 400);
 
   } catch (err) {
-    return jsonResponse({ error: String(err) }, 500);
+    return respond({ error: String(err) }, 500);
   }
 });

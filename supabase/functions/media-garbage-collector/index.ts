@@ -1,9 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.0';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { handleCorsPreflightOrReject, withCors, getCorsHeaders, isOriginAllowed } from '../_shared/cors.ts';
 
 interface OrphanedAsset {
   id: string;
@@ -13,9 +9,11 @@ interface OrphanedAsset {
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
+  const corsResponse = handleCorsPreflightOrReject(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get('origin') ?? '';
+  const corsHeaders = isOriginAllowed(origin) ? getCorsHeaders(origin) : { 'Content-Type': 'application/json' };
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -24,9 +22,12 @@ Deno.serve(async (req) => {
     // Service role client for admin operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify caller is admin (via cron or manual trigger with service key)
+    // Auth: CRON_SECRET or valid JWT required
     const authHeader = req.headers.get('Authorization');
-    if (authHeader) {
+    const cronSecret = Deno.env.get('CRON_SECRET');
+    if (cronSecret && authHeader === `Bearer ${cronSecret}`) {
+      // CRON call — authorized
+    } else if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.replace('Bearer ', '');
       const { data: { user }, error: authError } = await supabase.auth.getUser(token);
       
@@ -61,8 +62,12 @@ Deno.serve(async (req) => {
           { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
+    } else {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Non authentifié — CRON_SECRET ou JWT requis' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
-
     const body = await req.json().catch(() => ({}));
     const dryRun = body.dry_run !== false; // Default to dry run for safety
     const olderThanDays = body.older_than_days || 30; // Default 30 days retention

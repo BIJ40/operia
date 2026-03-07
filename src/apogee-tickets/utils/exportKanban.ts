@@ -3,7 +3,7 @@
  * Formats supportés: CSV, Excel (.xlsx), PDF
  */
 
-import * as XLSX from 'xlsx';
+// xlsx is loaded dynamically to reduce bundle size (~200KB)
 import jsPDF from 'jspdf';
 import type { ApogeeTicket, ApogeeTicketStatus, ApogeeModule, ApogeePriority, ApogeeOwnerSide } from '../types';
 
@@ -195,7 +195,8 @@ export function exportToCSV(options: ExportOptions): void {
 
 // ============ EXPORT EXCEL ============
 
-export function exportToExcel(options: ExportOptions): void {
+export async function exportToExcel(options: ExportOptions): Promise<void> {
+  const XLSX = await import('xlsx');
   const { tickets, statuses, modules, priorities, ownerSides } = options;
   
   const workbook = XLSX.utils.book_new();

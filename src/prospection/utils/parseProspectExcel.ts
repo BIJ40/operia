@@ -2,7 +2,7 @@
  * Utilitaire de parsing Excel pour les prospects
  * Supporte le format: Siren, Siret, Dénomination, Enseigne, etc.
  */
-import * as XLSX from 'xlsx';
+// xlsx is loaded dynamically to reduce bundle size (~200KB)
 
 interface RawProspectRow {
   import_batch_id: string;
@@ -87,8 +87,9 @@ function cellToString(val: unknown): string | null {
 export function parseProspectExcel(file: File): Promise<RawProspectRow[]> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
+        const XLSX = await import('xlsx');
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];

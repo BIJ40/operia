@@ -17,8 +17,6 @@ type GuideTab = 'apogee' | 'apporteurs' | 'helpconfort' | 'faq';
 
 const GUIDE_TABS: PillTabConfig[] = [
   { id: 'apogee', label: 'Apogée', icon: BookOpen },
-  { id: 'apporteurs', label: 'Apporteurs', icon: Users, disabled: true },
-  { id: 'helpconfort', label: 'HelpConfort', icon: Building2, disabled: true },
   { id: 'faq', label: 'FAQ', icon: HelpCircle },
 ];
 
