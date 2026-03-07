@@ -119,7 +119,7 @@ export function ApporteurAuthProvider({ children }: { children: ReactNode }) {
         orgIsActive: apporteurData?.is_active ?? true,
       });
     } catch (err) {
-      console.error('Error loading apporteur data:', err);
+      logError('Error loading apporteur data:', err);
       setApporteurUser(null);
     }
   }, []);
